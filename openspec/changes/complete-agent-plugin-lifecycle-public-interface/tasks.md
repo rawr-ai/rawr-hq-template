@@ -44,6 +44,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   and adversarial heuristics that are not generic service law.
   Advance the provenance reference when Magic commits the same working tree;
   do not delay enforcement or introduce a second RAWR architecture.
+- [x] 1.1c Replace the relaxed working-tree adaptation with the complete
+  committed Magic Migration service packet at
+  `543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
+  `2a9160183b80badacedbb6006b95829bd166470a`. Preserve its closed spine,
+  generic anchors, direct Effect-oRPC ownership hops, context flow, module
+  isolation, declarative TypeBox contract authority, and module-owned oRPC
+  errors. Adapt only RAWR packet identity and the canonical
+  `@rawr/hq-sdk` TypeBox bridge.
 - [x] 1.2 Adopt the current generic service topology with one `router.ts` per
   module. Keep procedure behavior on that oRPC surface and domain matter under
   the module model; do not introduce a second router container.
@@ -91,10 +99,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `typescript@6.0.3` as compiler-API authority, and expose the narrow
   `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
   make path mappings explicit. Do not run every check twice.
-- [ ] 1.5e After every selected service rule passes the live Template corpus,
+- [ ] 1.5e After every selected service rule passes the admitted Template
+  service corpus,
   extend the one `check:policy` batch with exact service-source,
   service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
-  Invoke the six service rules in the existing single Habitat acquisition.
+  Invoke the one topology rule and six source rules through one owner-local
+  Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, or duplicate rule discovery in a script.
 - [ ] 1.5g Make TypeScript/Knip identify the declared public cross-package
@@ -293,6 +303,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `implementEffect` roots, require root context before middleware, and preserve
   `service` as the embedded API-plugin interior name. Keep the remaining module
   router migration under task 5.2 and owner-local sealing under task 5.7.
+- [ ] 5.2b Supersede the relaxed task 5.2a shape with the committed generic
+  service law: `base.ts` directly owns `implementEffect(contract, ...)`,
+  `impl.ts` directly exports `service` from imported `base`, and each module
+  directly exports its matching `service.<module>` branch. Root code may import
+  module source only at contract and router composition; modules may not import
+  siblings or recover root context/middleware. Keep ready host capabilities at
+  the service boundary and project only owner-local context through named
+  middleware.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
   digest, uniqueness, and cross-field domain checks. Use the coherent current

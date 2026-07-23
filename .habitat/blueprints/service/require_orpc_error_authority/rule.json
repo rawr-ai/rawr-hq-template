@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_orpc_error_authority",
+  "title": "Require oRPC Error Authority",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "Escaped module-specifier or imported-export spellings in governed imports; runtime ORPCTaggedError named imports and every runtime namespace or default effect-orpc import outside an exact module contract.ts; plus runtime-bearing conventional contract or error imports from router or impl files except the exact root impl.ts declaration import { contract } from './contract' using either quote style.",
+  "why": "A module contract owns its public oRPC error constructors. Literal import boundary spellings and canonical named vendor imports keep that authority structurally visible without pretending to compare cooked identities or resolve bindings. The native service oRPC composition law separately owns the exact root contract-to-implementer lineage.",
+  "remediate": "Write import module specifiers and imported export names literally. Define and attach public tagged errors in the owning module contract.ts. Replace runtime namespace/default effect-orpc imports with canonical named imports. For conventional contract or error sources, use a whole import type declaration or a named-only import whose every specifier is inline type; root impl.ts may use only the exact runtime declaration import { contract } from './contract', with either quote style.",
+  "message": "Service imports must preserve literal boundary identity, and public oRPC errors belong to the module contract.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
+    }
+  ],
+  "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_orpc_error_authority/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_orpc_error_authority/pattern.md"
+    },
+    "patternName": "require_orpc_error_authority"
+  }
+}
