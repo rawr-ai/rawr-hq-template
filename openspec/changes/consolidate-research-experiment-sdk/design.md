@@ -42,7 +42,8 @@ than define another service abstraction.
 
 Source authority for the BUILD cut is:
 
-- Habitat blueprint: `.habitat/blueprints/service`
+- Habitat service source law: `.habitat/blueprints/service` at Template commit
+  `faa320f1da03d83432d09c06c7445b1ae9a21679`
 - current closure/behavior reference:
   `services/agent-plugin-lifecycle` at Template commit
   `3beb49360968ba7f1ebec1bfe89f572972026306`
@@ -51,57 +52,61 @@ Source authority for the BUILD cut is:
 - current resource/provider reference:
   `resources/agent-plugin-package-output`
 
-The Habitat blueprint establishes the required spine:
+The ordinary project shell requires `AGENTS.md`, package/Nx/TypeScript/test
+configuration, and public `src/{index,client,router}.ts` surfaces. Those files
+are project requirements, not part of Habitat's closed service-spine scope.
+Inside that shell, Habitat requires the generic root and module shells:
 
 ```text
-services/research-experiment/
-  AGENTS.md
-  package.json
-  project.json
-  tsconfig.json
-  tsconfig.build.json
-  tsconfig.test.json
-  vitest.config.ts
-  src/
-    index.ts
-    client.ts
-    router.ts
-    service/
-      base.ts
+services/research-experiment/src/service/
+  base.ts
+  contract.ts
+  impl.ts
+  router.ts
+  modules/
+    <module>/
       contract.ts
-      impl.ts
+      module.ts
       router.ts
-      modules/
-        cells/
-          contract.ts
-          module.ts
-          router.ts
-          model/
-            dto/
-              run-cell.ts
-              terminal.ts
-              evaluation.ts
-              observation.ts
-            policy/
-          router/
-            index.ts
-            run.router.ts
 ```
 
-The exact relationships are likewise inherited, not recreated:
+The research service selects one `cells` module within that legal shell and
+uses its allowed `model/dto` and `model/policy` directories for the run-cell,
+terminal, evaluation, observation, and pure policy authorities.
 
-- `base.ts` declares the service context and provisioned resource ports,
-  including durable cell-state persistence. Lane data/configuration/policy
-  enters through the TypeBox service boundary, not executable context hooks.
-- `contract.ts` composes module contracts with `eoc.router`.
-- `impl.ts` calls `implementEffect(contract, Layer.empty)` exactly once and
-  attaches independently decorated native middleware. It MUST NOT call
-  `.$context(...)`.
+The source law owns these direct anchors and first-hop relations:
+
+- `base.ts` is the standalone root implementer and directly exports
+  `base = implementEffect(contract, Layer.empty)`. The `Layer.empty` choice and
+  one-root-implementer invariant are research-service behavior requirements;
+  the source law proves the visible `base` anchor and native constructor. This
+  standalone root implementer MUST NOT use `.$context(...)`.
+- root and module `contract.ts` directly export `contract`; the root imports
+  module contracts only at that composition point.
+- `impl.ts` imports `base` and directly exports `service = base` or
+  `service = base.use(...)`, attaching independently decorated native
+  middleware rather than creating a second implementer.
+- module `module.ts` imports the root `service` and directly exports
+  `module = service.cells` or a native `.use(...)` continuation from it.
+- root and module `router.ts` directly export `router`; the root imports module
+  routers only at that composition point.
 - native middleware projects runtime-provisioned dependencies into the narrow
   module/leaf execution context before `.effect(...)` handlers consume them;
-  leaf handlers do not reach through a root `context.deps` bag.
-- root and module `router.ts` files compose with `service.router(...)` and
-  `module.router(...)`.
+  the source law permits native context middleware, while leaf handlers do not
+  reach through a root `context.deps` bag. Lane data/configuration/policy enters
+  through the TypeBox service boundary, not executable context hooks.
+- modules inherit the root through the `service`/`module` anchors and do not
+  import current-owner root `base`, context, or root middleware aliases;
+  middleware is a named direct native `const`, never a default export.
+
+Within that lawful shell, the research service deliberately composes the root
+contract with `eoc.router`, the root router with `service.router(...)`, and the
+single cells-module router with `module.run.effect(...)`. TypeScript and
+behavioral tests own assignability, completeness, context narrowing, and
+request isolation; Habitat does not simulate those relations.
+
+The remaining contract and package decisions are:
+
 - module `contract.ts` imports `eoc` directly, attaches private
   `ORPCTaggedError` classes, and adapts ordinary TypeBox schemas with the
   Habitat-required `standard` import from `#adapters/typebox`. That import MUST
@@ -110,9 +115,20 @@ The exact relationships are likewise inherited, not recreated:
   TypeBox `1.3.6` does not supply Standard Schema itself. If the authoritative
   restack still exposes only `schema`/`typeBoxStandardSchema`, BUILD may add only
   the missing canonical `standard` alias/export and package import mapping at
-  the existing Template authority before scaffolding the service. The bridge
-  delegates validation and translates issues; it does not decode, transform,
-  clone, freeze, normalize, or compose schemas.
+  the existing Template authority before scaffolding the service. Before any
+  research contract consumes it, the primary Template owner MUST also correct
+  and behaviorally admit the bridge. At admitted TypeBox `1.3.6`, every native
+  error surface exposes the same raw, lossy `instancePath`; the canonical
+  adapter therefore follows the official `Schema.Validator` Check/Errors
+  structure but emits message-only Standard Schema issues and omits
+  `Issue.path` for every error. It deletes URI decoding and all custom path
+  parsing/traversal. Exact paths may return only when a later admitted upstream
+  exposes escaped pointers or structured segments. Tests cover `%`, `%2F`, `/`,
+  `~`, `~0`, `~1`, nested objects, numeric object keys, and arrays, proving
+  total validation and message fidelity with path absent. The bridge delegates
+  validation and translates issues; it does not decode, transform, clone,
+  freeze, normalize, or compose schemas. It preserves `__typebox` only if the
+  existing OpenAPI projection has a proved consumer.
 - procedure implementations use effect-oRPC `.effect(...)`.
 - public service errors use the existing oRPC/effect-oRPC error authority.
 - `src/router.ts` re-exports the service router, `src/client.ts` uses the
@@ -127,16 +143,20 @@ Habitat is read-only and has no service generator. BUILD applies these packets
 manually:
 
 - `require_service_spine_topology`
-- `require_service_orpc_relationships`
+- `require_service_anchor_exports`
+- `require_service_context_boundaries`
 - `require_service_contract_authority`
+- `require_service_module_isolation`
+- `require_service_orpc_composition`
 - `require_orpc_error_authority`
 - the existing agent-router placement and shape rules
 
 The current `agent-plugin-lifecycle` service proves the exact dependency
 closure and selected behavior/resource patterns, but it is not relationship or
 structural authority: its older layout and `.$context(...)` implementation
-conflict with the closed service blueprint. The blueprint governs both
-structure and oRPC relationships.
+conflict with the submitted source law. Commit `faa320f1` governs structure and
+oRPC relationships only; it does not prove process-runtime provider
+provisioning.
 
 ## Deletion-First Repartition
 
@@ -162,10 +182,11 @@ The only manual TypeBox-adjacent behavior that MAY survive is a private,
 service-owned total check for the exact
 finite plain JSON-data identity used by durable hashing. It must reject cycles,
 accessors, symbols, non-enumerable properties, non-plain prototypes, nonfinite
-numbers, functions, and sparse arrays. TypeBox `Value.Check`/`Value.Errors`
-still owns structural validation. There is no public portability framework,
-schema traversal, custom decoder, clone/freeze subsystem, or duplicate error
-model, and no research-local Standard Schema bridge.
+numbers, functions, and sparse arrays. The admitted TypeBox `Schema.Validator`
+Check/Errors path still owns structural validation; the private guard owns only
+the additional durable-identity invariant. There is no public portability
+framework, schema traversal, custom decoder, clone/freeze subsystem, or
+duplicate error model, and no research-local Standard Schema bridge.
 
 `@rawr/research-sdk` is removed after the accepted behavior has moved and both
 lane compatibility checks pass. If BUILD discovers a genuinely
@@ -186,8 +207,8 @@ projection, and any incomplete downstream boundary.
 
 The service keeps Prepare, Execute, Observe, and Evaluate as named internal
 domain operations inside the cells module. They are private Effect functions
-and policy modules used by `run.router.ts`, not public TypeScript capability
-interfaces and not lane-callable workflow steps.
+and policy modules used by the single module `router.ts`, not public TypeScript
+capability interfaces and not lane-callable workflow steps.
 
 The service owns frozen-input preparation and deterministic/blind evaluation as
 internal domain operations. Lanes supply TypeBox data, configuration, policy,
@@ -266,7 +287,9 @@ The semantic laws are:
 - a blind or nondeterministic evaluation is published before projection and is
   adopted on re-entry;
 - unconfirmed process termination records exact residue and sandbox locator,
-  blocking same-instance re-entry until exact reconciliation;
+  blocking same-instance re-entry until the owning agent/sandbox provider
+  produces exact termination/quiescence/containment evidence and the service
+  validates that fact before reconciling the durable residue;
 - retries keep the same instance; only explicit lane authority creates a new
   replicate/replay with lineage and reason;
 - agent noncompletion, empty artifacts, compilation failure, policy violation,
@@ -377,7 +400,10 @@ Additional fixed vendor laws remain:
 The accepted Git behavior moves intact into the Git-artifact resource/provider:
 
 - history-free exact materialization;
-- exact resolved Git substrate returned to the lane and bound in `FrozenInput`;
+- exact resolved Git substrate returned to service-owned preparation, bound and
+  persisted in `FrozenInput`, then supplied by the service to later
+  capture/apply operations; the lane supplies revision/path-mapping data and may
+  retain only a digest/reference in its result;
 - parent-owned full-index binary patch capture;
 - forced inclusion of submitted files with only lane-declared exclusions;
 - neutralized repository attributes/config;
@@ -440,7 +466,7 @@ registry, release plane, package manager, or source checkout dependency.
 - oRPC: one retained model-free cell through the service;
 - Inngest: retained S09 through the service, with the seven-file seed view,
   lane-owned control overlay, `src/**`, `test/**`, and `REENTRY.md` product
-  mapping, exact Git substrate, and existing hidden verification;
+  mapping, service-bound exact Git substrate, and existing hidden verification;
 - both lanes consume the same immutable Template closure while retaining their
   own fixtures and evidence.
 

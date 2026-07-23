@@ -6,18 +6,28 @@ RAWR HQ-Template MUST own the shared research operational plane as
 `.habitat/blueprints/service` rather than define another service abstraction.
 The current `services/agent-plugin-lifecycle` is dependency-closure,
 behavior, and resource/provider evidence only where it conforms to the
-blueprint; it is not oRPC relationship authority. The closed Habitat blueprint
-governs both structure and relationships. Its root MUST use the standard
-`base.ts`, `contract.ts`, `impl.ts`, `router.ts`, and module shell.
+blueprint; it is not oRPC relationship authority. The submitted Habitat source
+law at Template commit `faa320f1da03d83432d09c06c7445b1ae9a21679`
+governs structure and relationships. Its root MUST use the standard `base.ts`,
+`contract.ts`, `impl.ts`, `router.ts`, and module shell. Root/module files MUST
+directly export their required `base`, `contract`, `service`, `module`, and
+`router` anchors. The cells module MUST use its single `router.ts` boundary
+rather than add a second router container.
 Module contracts MUST import `eoc` directly, attach private
-`ORPCTaggedError`s, and adapt TypeBox at input/output. Root composition MUST use
-`eoc.router`, `implementEffect`, and `service.router`. Procedure handlers MUST
-use the established effect-oRPC `.effect(...)` integration. `impl.ts` MUST call
-`implementEffect(contract, Layer.empty)` exactly once, MUST NOT call
-`.$context(...)`, and MUST use independently decorated native middleware to
+`ORPCTaggedError`s, and adapt TypeBox at input/output. As research-service
+composition choices inside that Habitat shell, the root contract MUST use
+`eoc.router`, the root router MUST use `service.router`, and the cells router
+MUST implement `cells.run` with effect-oRPC `.effect(...)`. `base.ts` MUST
+directly export `base = implementEffect(contract, Layer.empty)` exactly once,
+and that standalone root implementer MUST NOT call `.$context(...)`. `impl.ts`
+MUST import `base` and directly export/configure `service` from it; module
+`module.ts` MUST derive `module` from the matching `service.cells` branch.
+Independently decorated native context middleware remains legal and MUST
 project runtime-provisioned dependencies into narrow module/leaf execution
-context. Habitat has no service generator, so BUILD MUST apply the blueprint
-manually and MUST also apply the agent-router placement and shape rules.
+context. TypeScript and behavior tests, not Habitat syntax rules, MUST prove
+router assignability/completeness, context narrowing, and request isolation.
+Habitat has no service generator, so BUILD MUST apply the blueprint manually
+and MUST also apply the agent-router placement and shape rules.
 
 The service MUST own cell identity, preparation, execution, observation,
 evaluation, re-entry, and authoritative write ordering. It MUST NOT encode oRPC
@@ -74,11 +84,22 @@ reimplement it. If the authoritative restack still exports only
 `schema`/`typeBoxStandardSchema`, BUILD MUST add only the missing canonical
 `standard` alias/export and package import mapping before creating service
 contracts. Because TypeBox `1.3.6` does not expose Standard Schema directly,
-that canonical bridge delegates validation and translates issues.
+that canonical bridge delegates validation and translates issues. Before the
+research service consumes it, the primary Template owner MUST align the bridge
+with the official `Schema.Validator` Check/Errors structure. Because every
+native TypeBox `1.3.6` error surface exposes only the same raw, lossy
+`instancePath`, the bridge MUST emit message-only Standard Schema issues and
+MUST omit `Issue.path` for every error. It MUST delete URI decoding and all
+custom path parsing/traversal. Exact paths MAY return only after a later
+admitted TypeBox exposes escaped pointers or structured segments. Behavioral
+admission MUST cover `%`, `%2F`, `/`, `~`, `~0`, `~1`, nested objects, numeric
+object keys, and arrays, and MUST prove total validation and message fidelity
+with path absent. The bridge MUST preserve `__typebox` only if the existing
+OpenAPI projection has a demonstrated consumer.
 `packages/research-sdk/src/contracts/schema.ts` MUST delete outright. External
-data MUST use native `Value.Check` and `Value.Errors`; the platform MUST NOT
-retain a second generic decoder, issue model, transform, clone, freeze,
-normalization, or schema-composition layer.
+data MUST use the admitted TypeBox `Schema.Validator` Check/Errors path; the
+platform MUST NOT retain a second generic decoder, issue model, transform,
+clone, freeze, normalization, or schema-composition layer.
 
 Ordinary closed objects MUST use native `Type.Object` with
 `additionalProperties: false`. Reusable property maps MUST be merged before the
@@ -172,16 +193,19 @@ and observation subject.
 An acquired handle without a published terminal is a non-authoritative orphan.
 The service MUST durably record and settle it when observable, but MUST NOT
 adopt it as the trial subject. Replacement under the same instance is legal
-only after exact process quiescence/termination evidence and reconciliation of
-the attempt plus any residue.
+only after the owning agent/sandbox resource provider produces exact process
+quiescence/termination evidence, the service validates it, and the attempt plus
+any residue is reconciled.
 
 If bounded termination escalation cannot confirm process exit, the agent and
 sandbox resources MUST return `ProcessTerminationUnconfirmed` with the exact
 process and sandbox locator. The service MUST persist
 `UnresolvedExecutionResidue` before returning. Same-instance observation
-reacquisition and execution MUST remain blocked until exact lane-produced
-containment evidence reconciles that residue. Time, expiry, stealing,
-heartbeats, or leases MUST NOT authorize re-entry.
+reacquisition and execution MUST remain blocked until the owning provider
+produces exact containment evidence and the service validates that fact before
+reconciling the durable residue. A lane MAY retain or reference the resulting
+fact but MUST NOT mint the operational authority for re-entry. Time, expiry,
+stealing, heartbeats, or leases MUST NOT authorize re-entry.
 
 Missing or uncorrelated required evidence MAY fail the observation boundary.
 Cosmetic topology or global namespace cleanliness MUST NOT determine product
@@ -234,8 +258,12 @@ The Git provider MUST preserve the accepted canonical artifact behavior:
 history-free materialization; exact resolved Git substrate; parent-owned
 full-index binary patch capture; hostile Git config/attribute neutralization;
 fresh apply-check/apply/regeneration; product-tree equality; and exact SHA-256.
-`FrozenInput` MUST bind the materialization substrate, and capture MUST reject a
-different substrate before reading product trees.
+The provider MUST return the exact materialization substrate to service-owned
+preparation. The service MUST bind and persist it in `FrozenInput` and supply
+that exact bound substrate to capture/apply; capture MUST reject a different
+substrate before reading product trees. A lane MAY supply revision and path
+mapping data and retain a digest/reference in its result, but MUST NOT carry the
+provider envelope as execution authority.
 
 The Bun provider MUST preserve the accepted immutable package behavior:
 adapter-owned staged build, `bun pm pack --ignore-scripts`, exact tarball and
@@ -306,9 +334,10 @@ Template Habitat MUST apply the complete service blueprint and enforce
 service-to-resource and resource-to-provider direction. Behavioral tests MUST
 cover TypeBox contracts, terminal adoption, concurrent attempt admission,
 unknown writes, observation identity, durable evaluation, unresolved residue,
-resource release, artifact round-trip, Codex envelope admission, Langfuse
-score subjects, EVLog lifecycle, and package installation. Tests MUST not
-assert source strings or helper counts.
+provider-produced containment evidence with service validation, resource
+release, service-bound Git substrate before tree access, artifact round-trip,
+Codex envelope admission, Langfuse score subjects, EVLog lifecycle, and package
+installation. Tests MUST not assert source strings or helper counts.
 
 All BUILD checks MUST be model-free. They MUST use injected ports, fixture
 processes, local fixture servers, captured sessions, and in-memory telemetry.

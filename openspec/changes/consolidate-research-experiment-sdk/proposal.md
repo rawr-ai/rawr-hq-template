@@ -40,8 +40,10 @@ second framework.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
 - Persist unconfirmed process residue as a service-domain record through the
   durable cell-state resource/provider and forbid same-instance reacquisition
-  or execution until lane-supplied containment evidence is accepted and the
-  record is reconciled under service-owned rules.
+  or execution until the owning agent/sandbox provider produces exact
+  containment evidence, the service validates it, and the record is reconciled
+  under service-owned rules. Lanes may retain or reference that fact but cannot
+  mint the operational authority for re-entry.
 - Repartition the current `packages/research-sdk` implementation. Experiment
   contracts and laws move into the service; live command and Git/Bun behavior
   moves into resources/providers; package-owned runtime acquisition,
@@ -114,6 +116,13 @@ migration becomes authoritative, this change MUST re-run exact vendor admission
 against the resulting closure and replace transitional cross-major checks with
 the boundary checks appropriate to that accepted base. This lane does not
 upgrade Template root dependencies or invent the missing runtime stack.
+Commit `faa320f1da03d83432d09c06c7445b1ae9a21679` is the current submitted
+Habitat service source law, not a runtime-provisioning restack target.
+The accepted upstream MUST also contain the primary-owned canonical TypeBox
+bridge correction and behavioral admission before research service contracts
+consume that bridge. For admitted TypeBox `1.3.6`, the bridge emits
+message-only Standard Schema issues and always omits `Issue.path`; this lane
+does not copy or repair it locally.
 
 ## Capabilities
 
