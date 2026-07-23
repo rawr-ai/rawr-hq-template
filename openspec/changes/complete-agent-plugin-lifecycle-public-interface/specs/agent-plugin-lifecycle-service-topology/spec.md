@@ -44,9 +44,8 @@ ready resource capabilities, but MUST NOT delegate its operation to a parallel
 business entrypoint or acquire an ornamental `*Procedure` export name merely for
 root composition. Router files MUST consume the exact context inferred from the
 module handler and MUST NOT redeclare a local dependency bag or reconstruct root
-context. When a module needs several handler files, its closed
-`router/*.router.ts` leaves MUST compose through `router/index.ts`, then through
-the module `router.ts` boundary.
+context. Each module MUST retain one `router.ts` as its procedure and
+composition boundary; it MUST NOT introduce a second router container.
 
 #### Scenario: Procedure composition is direct
 - **WHEN** module router exports and procedure handler call sites are inspected
@@ -92,15 +91,14 @@ separately owned source-authoring command.
 
 ### Requirement: Consolidation does not realize a new runtime platform
 
-The service MUST use the repository-admitted `@rawr/hq-sdk` oRPC primitive.
-Effect MUST terminate inside filesystem/process resource adapters and expose a
-ready Promise capability to service construction. Effect-oRPC MUST NOT be added
-merely because a provider implementation uses Effect; it is eligible only if an
-Effect program genuinely crosses the procedure boundary. App/runtime
+The service MUST use the same Effect-backed contract-first oRPC construction as
+the generic Magic Migration service blueprint. TypeBox remains the public
+schema authority. Filesystem/process Effect programs remain inside their owning
+resources and expose ready capabilities to service construction. App/runtime
 composition remains owned by the dedicated architecture migration.
 
 #### Scenario: Service correction remains inside lifecycle semantics
 - **WHEN** dependency and source changes are reviewed
 - **THEN** the change contains only lifecycle semantics and required resource
   boundary corrections
-- **AND** no app/web composition or unnecessary Effect-oRPC integration appears
+- **AND** no app/web composition or second service construction appears

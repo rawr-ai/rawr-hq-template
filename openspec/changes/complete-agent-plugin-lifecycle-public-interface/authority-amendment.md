@@ -179,12 +179,11 @@ names.
   lint/typecheck work; Habitat owns live-tree policy; required CI exposes one
   non-skippable result for the candidate revision.
 
-Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`
+Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
 is the source for the generic service, API plugin, and agent-router patterns.
-Identity-only adaptations and one generic correction for composed module router
-directories must be explicit; a copied rule that fails its own current source
-is not authoritative merely because its bytes were copied. The compiled Habitat
-consumer pins Civ7 `habitat-sdk-v0.1.6`, source
+RAWR adaptations are limited to repository identity, formatting, and the local
+canonical pattern-source filename. The compiled Habitat consumer pins Civ7
+`habitat-sdk-v0.1.6`, source
 `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
 temporary Darwin arm64 lane.
 
