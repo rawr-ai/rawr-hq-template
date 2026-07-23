@@ -31,13 +31,26 @@
     "build": "tsc -p tsconfig.build.json",
     "manifest": "bun --bun oclif manifest",
     "structural": "bun ../../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-chatgpt-corpus",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck-tests": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-chatgpt-corpus",
     "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
   },
   "nx": {
     "tags": [
       "type:plugin"
-    ]
+    ],
+    "targets": {
+      "typecheck": {
+        "dependsOn": [
+          "typecheck-tests"
+        ],
+        "inputs": [
+          "production",
+          "^production",
+          "typescriptRuntime"
+        ]
+      }
+    }
   }
 }
