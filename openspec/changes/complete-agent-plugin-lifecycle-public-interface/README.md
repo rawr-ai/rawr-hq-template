@@ -89,16 +89,19 @@ standalone archives remain ineligible while surviving commands import
 filesystem plugin-discovery compatibility test that the ordinary package group
 does not need.
 
-The current Nx graph contains 22 workspace projects including `@rawr/cli`; 21
-are source-reachable. Removing only the four already-rejected controller,
-controller-authority, artifact-repository, and provider-record projects yields a
-preliminary 17-project closure after those named exclusions, not a final release
-group. `bun pm pack --dry-run`
-currently fails because `@rawr/agent-plugin-lifecycle` is an unversioned
-`workspace:*` dependency. That is an honest sequencing signal: the initiative
-will delete rejected owners, migrate the surviving Effect family, recompute the
-closure, and only then version and package its actual members. It will not make
-the current pre-deletion runtime dependency closure publishable to manufacture
+After controller and persistent lifecycle-state deletion, the Nx graph exposed
+one remaining false edge: `@rawr/cli` declared `@rawr/orpc-client` despite no
+tracked source consumer. The deletion checkpoint removes that dependency, the
+unused package, root build references, and lockfile entries together. It also
+removes duplicate direct CLI dependencies on `@rawr/dev` and `@rawr/dev-node`;
+the DevOps command plugin remains their qualified consumer. The CLI plus its
+four first-party Oclif plugin roots now close over exactly seventeen
+source-reachable projects; `@rawr/plugin-hello` remains outside as the native
+external-install fixture. Archived architecture records retain their historical
+package claims as provenance rather than live guidance. `bun pm pack --dry-run`
+still fails honestly because `@rawr/agent-plugin-lifecycle` and the other
+surviving workspace owners are not yet versioned for publication. The next
+checkpoint declares the exact fixed Nx Release group; it does not manufacture
 an early package acceptance result.
 
 The pre-landing installed-package acceptance uses local packed tarballs in one
