@@ -407,13 +407,15 @@ Bun 1.4. Template invokes the verified executable directly from Nx; no
 JavaScript check wrapper, SDK source, or worktree path remains in the gate.
 Habitat delegates pattern execution to the pinned Grit dependency, so the
 required workflow provisions Grit explicitly after its `--ignore-scripts`
-install; the repository check itself remains read-only. The router packet runs
-cold in roughly 80-95 seconds and from the local Nx cache in under 50 ms. Its Nx
-input set covers every Git-visible tree the packet inspects, so adding a new
-routerless boundary invalidates the cached success rather than bypassing the
-structural gate. Live canaries proved that a new routerless package and an
-incomplete blueprint packet both miss the prior successful cache entry and fail
-their owning rule.
+install; the repository check itself remains read-only.
+Router placement rereads the live Git-visible inventory on every required run
+and completes in under a second. The independent Grit router-shape target runs
+cold in roughly 70-95 seconds, then restores from the local Nx cache in under
+50 ms until a router, its rule packet, or its toolchain changes. Live canaries
+proved that a new routerless package and an incomplete blueprint packet both
+miss the prior successful cache entry and fail their owning rule. A separate
+ordinary-source canary reran live placement while reusing the router-shape
+result, completing the repository topology gate in under one second.
 Task 1.5 still owns the native packet-fixture gap.
 
 The RAWR-authored Oclif blueprint source is a separate positive checkpoint. It
