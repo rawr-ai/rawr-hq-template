@@ -5,8 +5,8 @@ import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands
 import {
   gitExecutableFlag,
   providerExecutableFlag,
-  providerTestDisposableRootFlag,
   providerTargetFlag,
+  providerTestDisposableRootFlag,
   releaseWorkspaceFlags,
 } from "../../../lib/agent-plugins/commands/flags";
 import { parseTestRequest } from "../../../lib/agent-plugins/commands/input";

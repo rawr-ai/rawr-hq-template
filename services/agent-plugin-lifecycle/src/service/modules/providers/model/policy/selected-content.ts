@@ -37,13 +37,17 @@ export function validateSelectedContent(content: SelectedContent): readonly Prov
   const issues: ProviderIssue[] = [];
   if (!Value.Check(SelectedContentSchema, content)) {
     return Object.freeze([
-      providerIssue("DesiredContentInvalid", "Selected content does not match its TypeBox contract."),
+      providerIssue(
+        "DesiredContentInvalid",
+        "Selected content does not match its TypeBox contract."
+      ),
     ]);
   }
   const ownedNames = new Map<string, string>();
   for (const member of content.members) {
     collectOwnedName(ownedNames, member.pluginId, member.pluginId, issues);
-    for (const alias of member.aliases) collectOwnedName(ownedNames, alias, member.pluginId, issues);
+    for (const alias of member.aliases)
+      collectOwnedName(ownedNames, alias, member.pluginId, issues);
   }
   return Object.freeze(issues);
 }

@@ -21,16 +21,16 @@ import type {
   SelectedContentMember,
 } from "../../../model/dependencies/providers";
 import { contentDigest } from "../../../shared/release";
-import { MAX_CONFIRMED_NATIVE_OPERATIONS } from "../model/dto/provider-lifecycle";
 import type {
   ConfirmedNativeOperation,
   NativeOperationAttempt,
-  ProviderMutationTargetResult,
   ProviderIssue,
+  ProviderMutationTargetResult,
   ProviderStatusTargetResult,
   ProviderTarget,
   VerificationFact,
 } from "../model/dto/provider-lifecycle";
+import { MAX_CONFIRMED_NATIVE_OPERATIONS } from "../model/dto/provider-lifecycle";
 import {
   marketplaceSourceIsRelated,
   marketplaceSourceMatches,
@@ -354,7 +354,9 @@ async function assessInventory(
     );
     if (live === undefined || !live.installed) {
       needsMutation = true;
-      issues.push(providerIssue("PluginMissing", `Plugin ${selector} is not installed.`, member.pluginId));
+      issues.push(
+        providerIssue("PluginMissing", `Plugin ${selector} is not installed.`, member.pluginId)
+      );
       members.push({
         member,
         selector,
@@ -364,7 +366,12 @@ async function assessInventory(
       });
       continue;
     }
-    pushFact(facts, "plugin-installed", selector, "Plugin is installed from the selected marketplace.");
+    pushFact(
+      facts,
+      "plugin-installed",
+      selector,
+      "Plugin is installed from the selected marketplace."
+    );
     const enabled = live.enabled;
     if (enabled === false || (target.provider === "claude" && enabled === null)) {
       needsMutation = true;
@@ -424,9 +431,7 @@ async function assessInventory(
 
   const potentialOmittedSelectors = candidateOmittedSelectors(content, inventory);
   const omittedSelectors = Object.freeze(
-    marketplaceMatches.length === 1 && marketplaceExact
-      ? potentialOmittedSelectors
-      : []
+    marketplaceMatches.length === 1 && marketplaceExact ? potentialOmittedSelectors : []
   );
   if (options.retireOmitted && omittedSelectors.length > 0) {
     needsMutation = true;
@@ -522,17 +527,12 @@ async function reconcileProviderTarget(
       try {
         liveBeforeRemoval = await session.inventory();
       } catch (error) {
-        return failedTarget(
-          assessment.target,
-          operations,
-          Object.freeze([]),
-          [
-            providerIssue(
-              "NativeObservationFailed",
-              `Marketplace could not be reobserved before removal: ${nativeFailureDetail(error)}`
-            ),
-          ]
-        );
+        return failedTarget(assessment.target, operations, Object.freeze([]), [
+          providerIssue(
+            "NativeObservationFailed",
+            `Marketplace could not be reobserved before removal: ${nativeFailureDetail(error)}`
+          ),
+        ]);
       }
       const liveMarketplace = liveBeforeRemoval.marketplaces.filter(
         (marketplace) => marketplace.identity === content.marketplace.identity
@@ -541,17 +541,12 @@ async function reconcileProviderTarget(
         liveMarketplace.length !== 1 ||
         !marketplaceSourceIsRelated(liveMarketplace[0]!, content.marketplace.source)
       ) {
-        return failedTarget(
-          assessment.target,
-          operations,
-          Object.freeze([]),
-          [
-            providerIssue(
-              "MarketplaceCollision",
-              "Marketplace ownership changed after preflight; nothing was removed."
-            ),
-          ]
-        );
+        return failedTarget(assessment.target, operations, Object.freeze([]), [
+          providerIssue(
+            "MarketplaceCollision",
+            "Marketplace ownership changed after preflight; nothing was removed."
+          ),
+        ]);
       }
       inventory = liveBeforeRemoval;
       const operation = Object.freeze({
@@ -588,17 +583,9 @@ async function reconcileProviderTarget(
       session,
       operation,
       () => session.addMarketplace(content.marketplace.source),
-      (observed) =>
-        hasOneExactMarketplace(observed, content)
+      (observed) => hasOneExactMarketplace(observed, content)
     );
-    const terminal = await mutationTerminal(
-      content,
-      assessment,
-      options,
-      operations,
-      issues,
-      step
-    );
+    const terminal = await mutationTerminal(content, assessment, options, operations, issues, step);
     if (terminal !== undefined) return terminal;
     assertCompletedMutationStep(step);
     inventory = step.inventory;
@@ -653,16 +640,10 @@ async function reconcileProviderTarget(
       live = installedPlugin(inventory, selector);
     }
     if (live?.enabled === false && session.provider === "codex") {
-      return failedAfterMutation(
-        content,
-        assessment,
-        options,
-        operations,
-        [
-          ...issues,
-          providerIssue("CapabilityMissing", "Codex did not expose plugin enablement."),
-        ]
-      );
+      return failedAfterMutation(content, assessment, options, operations, [
+        ...issues,
+        providerIssue("CapabilityMissing", "Codex did not expose plugin enablement."),
+      ]);
     }
     if (live !== undefined && session.provider === "claude" && live.enabled !== true) {
       const operation = Object.freeze({ kind: "plugin-enabled" as const, selector });
@@ -687,63 +668,44 @@ async function reconcileProviderTarget(
     }
     const files = verificationFiles(member, assessment.target.provider);
     if (files === null) {
-      return failedAfterMutation(
-        content,
-        assessment,
-        options,
-        operations,
-        [
-          ...issues,
-          providerIssue(
-            "DesiredContentInvalid",
-            `Plugin ${member.pluginId} lacks a bounded provider verification set.`,
-            member.pluginId
-          ),
-        ]
-      );
+      return failedAfterMutation(content, assessment, options, operations, [
+        ...issues,
+        providerIssue(
+          "DesiredContentInvalid",
+          `Plugin ${member.pluginId} lacks a bounded provider verification set.`,
+          member.pluginId
+        ),
+      ]);
     }
     const facts: VerificationFact[] = [];
     const verified = await verifyMemberFiles(session, selector, member.pluginId, files, facts);
     if (!verified.matches) {
-      return failedAfterMutation(
-        content,
-        assessment,
-        options,
-        operations,
-        [...issues, ...verified.issues]
-      );
+      return failedAfterMutation(content, assessment, options, operations, [
+        ...issues,
+        ...verified.issues,
+      ]);
     }
   }
 
   if (options.retireOmitted) {
     const omittedSelectors = exactManagedOmittedSelectors(content, inventory);
     if (omittedSelectors === null) {
-      return failedTarget(
-        assessment.target,
-        operations,
-        Object.freeze([]),
-        [
-          ...issues,
-          providerIssue(
-            "MarketplaceCollision",
-            "Managed plugin retirement requires one exact observed marketplace source."
-          ),
-        ]
-      );
+      return failedTarget(assessment.target, operations, Object.freeze([]), [
+        ...issues,
+        providerIssue(
+          "MarketplaceCollision",
+          "Managed plugin retirement requires one exact observed marketplace source."
+        ),
+      ]);
     }
     if (operations.length + omittedSelectors.length > MAX_OPERATIONS_PER_TARGET) {
-      return failedTarget(
-        assessment.target,
-        operations,
-        Object.freeze([]),
-        [
-          ...issues,
-          providerIssue(
-            "DesiredContentInvalid",
-            "Selected native changes exceed the per-target operation bound."
-          ),
-        ]
-      );
+      return failedTarget(assessment.target, operations, Object.freeze([]), [
+        ...issues,
+        providerIssue(
+          "DesiredContentInvalid",
+          "Selected native changes exceed the per-target operation bound."
+        ),
+      ]);
     }
     for (const selector of omittedSelectors) {
       const operation = Object.freeze({ kind: "plugin-removed" as const, selector });
@@ -772,18 +734,13 @@ async function reconcileProviderTarget(
   try {
     finalInventory = await session.inventory();
   } catch (error) {
-    return failedTarget(
-      assessment.target,
-      operations,
-      Object.freeze([]),
-      [
-        ...issues,
-        providerIssue(
-          "NativeObservationFailed",
-          `Final provider state could not be observed: ${nativeFailureDetail(error)}`
-        ),
-      ]
-    );
+    return failedTarget(assessment.target, operations, Object.freeze([]), [
+      ...issues,
+      providerIssue(
+        "NativeObservationFailed",
+        `Final provider state could not be observed: ${nativeFailureDetail(error)}`
+      ),
+    ]);
   }
   const finalAssessment = await assessInventory(
     content,
@@ -795,16 +752,11 @@ async function reconcileProviderTarget(
     false
   );
   if (finalAssessment.failed || finalAssessment.collision || finalAssessment.needsMutation) {
-    return failedTarget(
-      assessment.target,
-      operations,
-      finalAssessment.facts,
-      [
-        ...issues,
-        ...finalAssessment.issues,
-        providerIssue("VerificationFailed", "Final native provider verification did not converge."),
-      ]
-    );
+    return failedTarget(assessment.target, operations, finalAssessment.facts, [
+      ...issues,
+      ...finalAssessment.issues,
+      providerIssue("VerificationFailed", "Final native provider verification did not converge."),
+    ]);
   }
   const completed = {
     target: assessment.target,
@@ -1107,19 +1059,14 @@ function maximumPlannedOperations(
   for (const member of members) {
     if (!member.installed) operations += 1;
     else if (!member.filesMatch || marketplaceRefreshRequired) operations += 2;
-    if (
-      target.provider === "claude" &&
-      (member.enabled !== true || !member.installed)
-    ) {
+    if (target.provider === "claude" && (member.enabled !== true || !member.installed)) {
       operations += 1;
     }
   }
   return operations + omittedSelectors.length;
 }
 
-function assertCompletedMutationStep(
-  step: MutationStep
-): asserts step is MutationConfirmed {
+function assertCompletedMutationStep(step: MutationStep): asserts step is MutationConfirmed {
   if (step.kind !== "Confirmed" && step.kind !== "AlreadySatisfied") {
     throw new Error("Mutation terminal classification was not returned");
   }
@@ -1173,10 +1120,7 @@ function hasOneExactMarketplace(
   const matches = inventory.marketplaces.filter(
     (marketplace) => marketplace.identity === content.marketplace.identity
   );
-  return (
-    matches.length === 1 &&
-    marketplaceSourceMatches(matches[0]!, content.marketplace.source)
-  );
+  return matches.length === 1 && marketplaceSourceMatches(matches[0]!, content.marketplace.source);
 }
 
 function marketplaceRevisionIsUnobservable(

@@ -65,11 +65,14 @@ describe("provider status and preflight", () => {
       content,
       marketplace: "unrelated",
     });
-    const result = await runProviderSync({ ...channelRequest, targets }, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([first, second]),
-    });
+    const result = await runProviderSync(
+      { ...channelRequest, targets },
+      {
+        currentMain: createCurrentMainReader(),
+        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
+        nativeSessions: new FakeNativeSessions([first, second]),
+      }
+    );
     expect(result.classification).toBe("Blocked");
     expect(result.targets.map((target) => target.classification)).toEqual(["Blocked", "Blocked"]);
     expect(result.issues.some((issue) => issue.code === "MarketplaceCollision")).toBe(true);
@@ -107,10 +110,7 @@ describe("provider status and preflight", () => {
     );
 
     expect(reverse).toEqual(forward);
-    expect(forward.targets.map((target) => target.target.provider)).toEqual([
-      "claude",
-      "codex",
-    ]);
+    expect(forward.targets.map((target) => target.target.provider)).toEqual(["claude", "codex"]);
   });
 
   it("classifies operational preflight failure as failed without mutating another target", async () => {

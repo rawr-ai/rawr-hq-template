@@ -51,9 +51,7 @@ export function coworkV1PackageDigest(bytes: Uint8Array): PackageDigest {
   return `pkg1_${digest.slice("sha256_".length)}`;
 }
 
-function collectCoworkEntries(
-  selection: PackageReleaseSelection
-): readonly PackageArchiveEntry[] {
+function collectCoworkEntries(selection: PackageReleaseSelection): readonly PackageArchiveEntry[] {
   const releases = verifiedSelectionReleases(selection);
   assertCoworkV1ProtocolBounds(protocolEntrySizes(releases, selection.releaseSet !== undefined));
   const entries = releases.flatMap((release) =>
@@ -125,10 +123,7 @@ function* releaseProtocolEntrySizes(
   }
 }
 
-function collectReleaseEntries(
-  release: AgentPluginRelease,
-  prefix: string
-): PackageArchiveEntry[] {
+function collectReleaseEntries(release: AgentPluginRelease, prefix: string): PackageArchiveEntry[] {
   return release.artifactBody.payloadEntries.map((entry) => {
     const bytes = payloadEntryBytes(entry);
     assertPayloadEntry(entry.path, entry.mode, entry.contentDigest, entry.byteLength, bytes);

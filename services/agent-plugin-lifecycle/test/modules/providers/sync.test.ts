@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-
-import { parseGitTreeId } from "../../../src/service/shared/release";
 import { runProviderSync } from "../../../src/service/modules/providers/router/sync.router";
+import { parseGitTreeId } from "../../../src/service/shared/release";
 import {
   channelRequest,
   createCurrentMainReader,

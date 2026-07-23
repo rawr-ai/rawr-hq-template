@@ -17,6 +17,12 @@ import type {
   SelectedContentResolver,
 } from "../../../src/service/model/dependencies/providers";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
+import type {
+  ProviderStatusRequest,
+  ProviderSyncRequest,
+  ProviderTarget,
+  ProviderTestRequest,
+} from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
 import type { PluginId } from "../../../src/service/shared/release";
 import {
   contentDigest,
@@ -32,12 +38,6 @@ import {
   parseReleaseSetDigest,
   parseRepositoryIdentity,
 } from "../../../src/service/shared/release";
-import type {
-  ProviderStatusRequest,
-  ProviderSyncRequest,
-  ProviderTarget,
-  ProviderTestRequest,
-} from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
 
 const encoder = new TextEncoder();
 const COMMIT = requireParsed(parseGitCommitId("1".repeat(40)));

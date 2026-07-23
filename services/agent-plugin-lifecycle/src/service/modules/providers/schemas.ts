@@ -5,6 +5,7 @@ export {
   ProviderIdSchema,
   ProviderIssueCodeSchema,
   ProviderIssueSchema,
+  ProviderMutationTargetResultSchema,
   ProviderStatusRequestSchema,
   ProviderStatusResultSchema,
   ProviderStatusTargetResultSchema,
@@ -17,7 +18,6 @@ export {
   ProviderTestModeSchema,
   ProviderTestRequestSchema,
   ProviderTestResultSchema,
-  ProviderMutationTargetResultSchema,
   SelectedContentObservationSchema,
   VerificationFactSchema,
 } from "./model/dto/provider-lifecycle";

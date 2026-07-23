@@ -22,9 +22,7 @@ export interface SelectedContentResolver {
   resolveWorkspace(
     input: SelectedContentWorkspaceResolutionInput
   ): Promise<SelectedContentResolution>;
-  resolveChannel(
-    input: SelectedContentChannelResolutionInput
-  ): Promise<SelectedContentResolution>;
+  resolveChannel(input: SelectedContentChannelResolutionInput): Promise<SelectedContentResolution>;
 }
 
 interface NativeProviderSessionOperations {

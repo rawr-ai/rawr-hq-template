@@ -1,7 +1,4 @@
-import type {
-  ContentWorkspaceFailure,
-  GitRefObservation,
-} from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceFailure, GitRefObservation } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 import {
   createExactGitBlobPointer,

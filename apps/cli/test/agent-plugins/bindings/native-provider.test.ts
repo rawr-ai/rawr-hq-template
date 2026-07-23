@@ -39,20 +39,20 @@ describe("native provider session binding", () => {
     );
   });
 
-  it.each(["codex", "claude"] as const)(
-    "selects only the explicitly bound %s Effect resource",
-    async (providerId) => {
-      const home = `/tmp/rawr-native-binding-${providerId}`;
-      const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
-      const session = await resolver.acquire({ provider: providerId, home });
+  it.each([
+    "codex",
+    "claude",
+  ] as const)("selects only the explicitly bound %s Effect resource", async (providerId) => {
+    const home = `/tmp/rawr-native-binding-${providerId}`;
+    const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
+    const session = await resolver.acquire({ provider: providerId, home });
 
-      expect(await session.probe()).toMatchObject({ provider: providerId, home });
-      expect(provider.codexAcquire).toHaveBeenCalledTimes(providerId === "codex" ? 1 : 0);
-      expect(provider.claudeAcquire).toHaveBeenCalledTimes(providerId === "claude" ? 1 : 0);
-      const selected = providerId === "codex" ? provider.codexAcquire : provider.claudeAcquire;
-      expect(selected).toHaveBeenCalledWith({ executablePath: EXECUTABLES[providerId], home });
-    }
-  );
+    expect(await session.probe()).toMatchObject({ provider: providerId, home });
+    expect(provider.codexAcquire).toHaveBeenCalledTimes(providerId === "codex" ? 1 : 0);
+    expect(provider.claudeAcquire).toHaveBeenCalledTimes(providerId === "claude" ? 1 : 0);
+    const selected = providerId === "codex" ? provider.codexAcquire : provider.claudeAcquire;
+    expect(selected).toHaveBeenCalledWith({ executablePath: EXECUTABLES[providerId], home });
+  });
 
   it("preserves the provider-discriminated Promise surface", async () => {
     const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
@@ -80,16 +80,14 @@ describe("native provider session binding", () => {
     provider.codexAcquire.mockReturnValue(Effect.fail(failure));
     const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
 
-    await expect(resolver.acquire({ provider: "codex", home: "/tmp/codex" })).rejects.toBe(
-      failure
-    );
+    await expect(resolver.acquire({ provider: "codex", home: "/tmp/codex" })).rejects.toBe(failure);
   });
 
   it("fails closed when the selected provider executable is not bound", async () => {
     const resolver = createNodeNativeProviderSessionResolver({ codex: EXECUTABLES.codex });
-    await expect(
-      resolver.acquire({ provider: "claude", home: "/tmp/claude" })
-    ).rejects.toThrow("Native claude executable is not bound");
+    await expect(resolver.acquire({ provider: "claude", home: "/tmp/claude" })).rejects.toThrow(
+      "Native claude executable is not bound"
+    );
     expect(provider.claudeAcquire).not.toHaveBeenCalled();
   });
 });
@@ -143,16 +141,12 @@ function claudeSession(input: NativeProviderSessionInput): ClaudeNativeAgentProv
   });
 }
 
-function commonSession(
-  input: NativeProviderSessionInput,
-  providerId: "claude" | "codex"
-) {
+function commonSession(input: NativeProviderSessionInput, providerId: "claude" | "codex") {
   return {
     provider: providerId,
     executablePath: input.executablePath,
     home: input.home,
-    inventory: () =>
-      Effect.succeed({ provider: providerId, marketplaces: [], plugins: [] }),
+    inventory: () => Effect.succeed({ provider: providerId, marketplaces: [], plugins: [] }),
     readPluginFiles: (request: Readonly<{ selector: string; files: readonly unknown[] }>) =>
       Effect.succeed({ selector: request.selector, files: [] }),
     addMarketplace: () => mutation(providerId, "marketplace-add"),
@@ -162,6 +156,18 @@ function commonSession(
   };
 }
 
-function mutation(providerId: "claude" | "codex", operation: "marketplace-add" | "marketplace-remove" | "plugin-install" | "plugin-enable" | "plugin-remove") {
-  return Effect.succeed({ provider: providerId, operation, commandPhase: "command-returned" as const });
+function mutation(
+  providerId: "claude" | "codex",
+  operation:
+    | "marketplace-add"
+    | "marketplace-remove"
+    | "plugin-install"
+    | "plugin-enable"
+    | "plugin-remove"
+) {
+  return Effect.succeed({
+    provider: providerId,
+    operation,
+    commandPhase: "command-returned" as const,
+  });
 }

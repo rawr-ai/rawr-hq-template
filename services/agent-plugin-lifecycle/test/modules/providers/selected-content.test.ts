@@ -1,15 +1,15 @@
-import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
+import { describe, expect, it } from "vitest";
 
 import type { SelectedContent } from "../../../src/service/model/dependencies/providers";
 import { SelectedContentSchema } from "../../../src/service/model/dto/provider-dependencies";
-import { parseOwnershipIdentity } from "../../../src/service/shared/release";
 import {
   marketplaceSourceMatches,
   sameSelectedContent,
   validateSelectedContent,
   verificationFiles,
 } from "../../../src/service/modules/providers/model/policy/selected-content";
+import { parseOwnershipIdentity } from "../../../src/service/shared/release";
 import { member, selectedContent } from "./fixture";
 
 describe("selected provider content", () => {
@@ -123,7 +123,9 @@ describe("selected provider content", () => {
     expect(
       Value.Check(SelectedContentSchema, {
         ...selectedContent(),
-        members: [{ ...cognition, aliases: [ownershipIdentity("zulu"), ownershipIdentity("alpha")] }],
+        members: [
+          { ...cognition, aliases: [ownershipIdentity("zulu"), ownershipIdentity("alpha")] },
+        ],
       })
     ).toBe(false);
     expect(

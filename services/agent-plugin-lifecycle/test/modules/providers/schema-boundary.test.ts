@@ -1,16 +1,15 @@
-import { describe, expect, it } from "vitest";
 import { Value } from "typebox/value";
-
+import { describe, expect, it } from "vitest";
+import { runProviderStatus } from "../../../src/service/modules/providers/router/status.router";
 import {
+  ProviderMutationTargetResultSchema,
   ProviderStatusRequestSchema,
   ProviderStatusResultSchema,
-  ProviderMutationTargetResultSchema,
   ProviderSyncRequestSchema,
   ProviderTargetsSchema,
   ProviderTestRequestSchema,
   SelectedContentObservationSchema,
 } from "../../../src/service/modules/providers/schemas";
-import { runProviderStatus } from "../../../src/service/modules/providers/router/status.router";
 import {
   channelRequest,
   createCurrentMainReader,
@@ -44,9 +43,9 @@ describe("provider public schema boundary", () => {
         disposableRoot: "/",
       })
     ).toBe(false);
-    expect(Value.Check(ProviderStatusRequestSchema, { ...channelRequest, artifact: "ar1_dead" })).toBe(
-      false
-    );
+    expect(
+      Value.Check(ProviderStatusRequestSchema, { ...channelRequest, artifact: "ar1_dead" })
+    ).toBe(false);
     expect(
       Value.Check(ProviderTargetsSchema, [
         { provider: "codex", home: "/tmp/home" },

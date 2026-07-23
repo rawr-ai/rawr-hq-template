@@ -31,8 +31,7 @@ const SparsePathsSchema = Refine(
   Type.Unsafe<readonly Static<typeof SparsePathSchema>[]>(
     Type.Array(SparsePathSchema, { maxItems: 64 })
   ),
-  (paths) =>
-    paths.every((path, index) => index === 0 || paths[index - 1]! < path),
+  (paths) => paths.every((path, index) => index === 0 || paths[index - 1]! < path),
   () => "Expected distinct, canonically ordered sparse paths"
 );
 const NullablePathSchema = Type.Union([CanonicalProviderPathSchema, Type.Null()]);
@@ -219,10 +218,7 @@ export const NativeProviderMarketplaceObservationSchema = Type.Readonly(
     {
       identity: MarketplaceIdentitySchema,
       source: Type.Union([NativeProviderMarketplaceSourceObservationSchema, Type.Null()]),
-      installedRoot: Type.Union([
-        CanonicalProviderPathSchema,
-        Type.Null(),
-      ]),
+      installedRoot: Type.Union([CanonicalProviderPathSchema, Type.Null()]),
     },
     { additionalProperties: false }
   )
@@ -417,16 +413,12 @@ export type NativeProviderMarketplaceIdentityInput = Static<
 export type NativeProviderPluginSelectorInput = Static<
   typeof NativeProviderPluginSelectorInputSchema
 >;
-export type NativeProviderPluginFileRequest = Static<
-  typeof NativeProviderPluginFileRequestSchema
->;
+export type NativeProviderPluginFileRequest = Static<typeof NativeProviderPluginFileRequestSchema>;
 export type NativeProviderPluginFilesReadInput = Static<
   typeof NativeProviderPluginFilesReadInputSchema
 >;
 export type NativeProviderPluginFileRead = Static<typeof NativeProviderPluginFileReadSchema>;
-export type NativeProviderPluginFileMissing = Static<
-  typeof NativeProviderPluginFileMissingSchema
->;
+export type NativeProviderPluginFileMissing = Static<typeof NativeProviderPluginFileMissingSchema>;
 export type NativeProviderPluginFileTooLarge = Static<
   typeof NativeProviderPluginFileTooLargeSchema
 >;
@@ -444,7 +436,10 @@ function isCanonicalAbsolutePath(value: string): boolean {
     !value.includes("//") &&
     !value.includes("\\") &&
     !/[\u0000-\u001f\u007f]/u.test(value) &&
-    value.split("/").slice(1).every((part) => part !== "" && part !== "." && part !== "..")
+    value
+      .split("/")
+      .slice(1)
+      .every((part) => part !== "" && part !== "." && part !== "..")
   );
 }
 

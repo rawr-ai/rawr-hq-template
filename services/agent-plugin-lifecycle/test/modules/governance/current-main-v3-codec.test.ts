@@ -125,9 +125,7 @@ function recordFixture(): CurrentMainBodyV3 {
     schemaVersion: 3,
     channel: "current-main",
     contentAuthority: mustParse(parseContentAuthority("rawr-hq")),
-    sourceRepositoryIdentity: mustParse(
-      parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")
-    ),
+    sourceRepositoryIdentity: mustParse(parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")),
     sourceRepositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
     sourceRef: "refs/tags/agent-plugins/current-main-input",
     contentCommit: mustParse(parseGitCommitId("a".repeat(40))),
@@ -136,7 +134,9 @@ function recordFixture(): CurrentMainBodyV3 {
   };
 }
 
-function mustParse<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {
+function mustParse<T>(
+  result: { readonly ok: true; readonly value: T } | { readonly ok: false }
+): T {
   if (!result.ok) throw new Error("Invalid current-main fixture value");
   return result.value;
 }

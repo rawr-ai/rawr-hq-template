@@ -245,7 +245,9 @@ async function commitCurrentMainRecord(
   await git(input.repositoryRoot, ["commit", "-m", input.commitMessage]);
 }
 
-function mustParse<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {
+function mustParse<T>(
+  result: { readonly ok: true; readonly value: T } | { readonly ok: false }
+): T {
   if (!result.ok) throw new Error("Invalid exact-Git fixture value");
   return result.value;
 }

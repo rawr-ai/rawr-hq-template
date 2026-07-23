@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/client";
 import { ValidationError } from "@orpc/contract";
 import { createRouterClient } from "@orpc/server";
+import { schema } from "@rawr/hq-sdk";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
@@ -9,7 +10,6 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { schema } from "@rawr/hq-sdk";
 import { Effect, Layer } from "effect";
 import { eoc, implementEffect } from "effect-orpc";
 import { Type } from "typebox";
@@ -74,12 +74,14 @@ const router = impl.router({
   }),
 });
 
-function createAdmissionClient(options: {
-  analyticsEntries?: EmbeddedPlaceholderAnalyticsEntry[];
-  logEntries?: EmbeddedPlaceholderLogEntry[];
-  rejectOperation?: () => PromiseLike<never>;
-  publishOperation?: () => PromiseLike<void>;
-} = {}) {
+function createAdmissionClient(
+  options: {
+    analyticsEntries?: EmbeddedPlaceholderAnalyticsEntry[];
+    logEntries?: EmbeddedPlaceholderLogEntry[];
+    rejectOperation?: () => PromiseLike<never>;
+    publishOperation?: () => PromiseLike<void>;
+  } = {}
+) {
   return createRouterClient(router, {
     context: () => ({
       multiplier: 3,

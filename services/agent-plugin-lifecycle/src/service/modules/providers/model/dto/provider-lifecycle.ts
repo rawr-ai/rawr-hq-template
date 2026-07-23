@@ -40,7 +40,9 @@ export const ProviderTestDisposableRootSchema = CanonicalAbsoluteLocatorSchema;
 
 export const ProviderTargetsSchema = Refine(
   NonEmptyReadonlyArray(ProviderTargetSchema, { maxItems: MAX_TARGETS }),
-  (targets) => new Set(targets.map((target) => `${target.provider}\u0000${target.home}`)).size === targets.length,
+  (targets) =>
+    new Set(targets.map((target) => `${target.provider}\u0000${target.home}`)).size ===
+    targets.length,
   () => "Provider targets must be distinct"
 );
 
@@ -155,10 +157,7 @@ export const ConfirmedNativeOperationSchema = Type.Union([
 export const NativeOperationAttemptSchema = ReadonlyObject(
   Type.Object({
     operation: ConfirmedNativeOperationSchema,
-    commandPhase: Type.Union([
-      Type.Literal("started"),
-      Type.Literal("command-returned"),
-    ]),
+    commandPhase: Type.Union([Type.Literal("started"), Type.Literal("command-returned")]),
   }),
   { additionalProperties: false }
 );
@@ -189,7 +188,9 @@ const boundedNativeOperations = () =>
     maxItems: MAX_CONFIRMED_NATIVE_OPERATIONS,
   });
 
-const mutationTerminalResult = <const Classification extends string>(classification: Classification) =>
+const mutationTerminalResult = <const Classification extends string>(
+  classification: Classification
+) =>
   ReadonlyObject(
     Type.Object({
       ...targetObservationProperties,
@@ -230,7 +231,9 @@ const statusTargetResultProperties = {
   operations: EmptyReadonlyArray(ConfirmedNativeOperationSchema),
 } as const;
 
-const statusTerminalResult = <const Classification extends string>(classification: Classification) =>
+const statusTerminalResult = <const Classification extends string>(
+  classification: Classification
+) =>
   ReadonlyObject(
     Type.Object({
       ...statusTargetResultProperties,

@@ -7,10 +7,7 @@ import type {
   ProviderTargetResult,
   ProviderTestResult,
 } from "../model/dto/provider-lifecycle";
-import {
-  providerIssue,
-  selectedContentObservation,
-} from "../model/policy/selected-content";
+import { providerIssue, selectedContentObservation } from "../model/policy/selected-content";
 
 export function rejectedTargets(
   targets: readonly ProviderTarget[],
@@ -67,8 +64,7 @@ export function mutationClassification(
     (target) => target.classification === "Changed" || target.operations.length > 0
   );
   const failed = targets.some(
-    (target) =>
-      target.classification === "Failed" || target.classification === "NotAttempted"
+    (target) => target.classification === "Failed" || target.classification === "NotAttempted"
   );
   if (failed) return changed ? "Partial" : "Failed";
   if (targets.some((target) => target.classification === "Blocked")) return "Blocked";

@@ -3,7 +3,18 @@ import {
   NativeMarketplaceSourceSchema,
 } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-
+import {
+  MAX_OWNERSHIP_CLAIMS,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  MAX_RELEASE_MEMBERS,
+  type OwnershipIdentity,
+  type PayloadDigest,
+  PayloadManifestEntrySchema,
+  parseOwnershipIdentity,
+  type ReleaseDigest,
+  type ReleaseInputDigest,
+  type ReleaseSetDigest,
+} from "../../shared/release";
 import {
   CanonicalChannelSelectionSchema,
   CurrentMainSelectionLocatorSchema,
@@ -18,18 +29,6 @@ import {
   RepositoryIdentitySchema,
 } from "./releases/content-workspace";
 import { NonEmptyReadonlyArray } from "./structural";
-import {
-  type OwnershipIdentity,
-  type PayloadDigest,
-  PayloadManifestEntrySchema,
-  type ReleaseDigest,
-  type ReleaseInputDigest,
-  MAX_RELEASE_MEMBERS,
-  MAX_OWNERSHIP_CLAIMS,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  type ReleaseSetDigest,
-  parseOwnershipIdentity,
-} from "../../shared/release";
 
 const MAX_SELECTED_ISSUES = 256;
 const MAX_SELECTED_ISSUE_DETAIL = 4_096;
@@ -170,10 +169,9 @@ export const SelectedContentIssueSchema = ReadonlyObject(
 );
 
 export const SelectedContentResolutionSchema = Type.Union([
-  ReadonlyObject(
-    Type.Object({ kind: Type.Literal("Selected"), content: SelectedContentSchema }),
-    { additionalProperties: false }
-  ),
+  ReadonlyObject(Type.Object({ kind: Type.Literal("Selected"), content: SelectedContentSchema }), {
+    additionalProperties: false,
+  }),
   ReadonlyObject(
     Type.Object({
       kind: Type.Literal("Rejected"),
