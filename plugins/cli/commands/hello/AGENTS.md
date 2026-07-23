@@ -1,35 +1,40 @@
-# @rawr/plugin-hello
-
-## TOC
-- [Scope](#scope)
-- [What This Plugin Is](#what-this-plugin-is)
-- [Manifest](#manifest)
-- [Build And Test](#build-and-test)
-- [Layout](#layout)
+# Hello CLI Plugin Router
 
 ## Scope
-- Applies to `plugins/cli/commands/hello/**`.
 
-## What This Plugin Is
-- Minimal **oclif plugin** example.
-- Provides an oclif command at `src/commands/hello.ts`.
+- Applies to `plugins/cli/commands/hello/**`; inherit the
+  [plugin package router](../../../AGENTS.md).
+- This package is the minimal external Oclif extension example and owns the
+  `rawr hello` command.
 
-## Manifest
-- Declared via `package.json#oclif`:
-  - Source commands: `./src/commands`
-- Built commands live at `dist/commands/**`; source discovery maps them back to
-  `src/commands/**` in development.
-- Keep command files as default exports extending `@oclif/core` `Command`.
+## Boundaries
 
-## Build And Test
-- From repo root:
-  - `bunx nx run @rawr/plugin-hello:build`
-  - `bunx nx run @rawr/plugin-hello:test`
-- From this package:
-  - `bun run build`
-  - `bun run test`
+- Command files are default exports extending `@oclif/core` `Command`.
+- `package.json#oclif` maps `src/commands` to compiled `dist/commands`; do not
+  add a parallel command registry or custom discovery mechanism.
+- This plugin is linked or installed through native Oclif extension state. It
+  is not a core command composed into `@rawr/cli` and has no agent-plugin
+  lifecycle authority.
+- Keep the example intentionally small; reusable product behavior belongs in
+  a service or package with its own boundary.
 
-## Layout
-- `src/commands/**`: oclif commands (TypeScript source)
-- `test/**`: Vitest tests
-- `dist/**`: compiled output (checked by Nx build flows + ignored by tests)
+## Flow
+
+- Native Oclif extension discovery loads the compiled command, Oclif parses the
+  invocation, and the command writes its result through the standard command
+  runtime.
+
+## Routing
+
+- [Plugin package boundaries](../../../AGENTS.md)
+- [External-extension usage](README.md)
+- [Behavior test](test/hello.test.ts)
+
+## Validation
+
+- Run `bunx nx run @rawr/plugin-hello:lint`.
+- Run `bunx nx run @rawr/plugin-hello:typecheck`.
+- Run `bunx nx run @rawr/plugin-hello:test`.
+- Run `bunx nx run @rawr/plugin-hello:build`.
+- Run `bunx nx run @rawr/plugin-hello:manifest` when command discovery or
+  Oclif metadata changes.
