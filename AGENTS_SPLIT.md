@@ -51,11 +51,14 @@ This file is the repository authority boundary. `RAWR HQ-Template` and personal
 ## CLI Distribution Ownership
 
 - CLI contracts, Oclif package metadata, Nx Release configuration, ordinary
-  publication/install, and `rawr doctor global` are Template-owned.
+  publication, and installation are Template-owned.
 - The installed `rawr` executable resolves through the ordinary package or
   installer, never a Template or Personal checkout or private release selector.
 - Personal checks may invoke an externally installed Template-owned tool at an
   exact interface version. Personal does not vendor that tool.
+- Until the fixed Nx Release package group lands, Template development uses
+  `bun run rawr -- ...`; that source command is not a cross-repository release
+  interface.
 
 ## Repository Separation Rule (Hard)
 

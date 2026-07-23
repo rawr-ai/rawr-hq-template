@@ -4,16 +4,20 @@ Session listing/search/extraction commands for the RAWR CLI.
 
 ## Local dev
 
-- Build and select a controller release after changing this official module:
-  - `./scripts/dev/install-global-rawr.sh --json`
-- Run commands:
-  - `rawr sessions list --table`
-  - `rawr sessions resolve <id>`
-  - `rawr sessions search --query-metadata oclif`
-  - `rawr sessions extract <id> --format markdown`
+- Build and verify this official Oclif command plugin after changing it:
+  - `bunx nx run @rawr/plugin-session-tools:build`
+  - `bunx nx run @rawr/plugin-session-tools:test`
+  - `bunx nx run @rawr/plugin-session-tools:manifest`
+- Run commands through the repository-local Oclif app:
+  - `bun run rawr -- sessions list --table`
+  - `bun run rawr -- sessions resolve <id>`
+  - `bun run rawr -- sessions search --query-metadata oclif`
+  - `bun run rawr -- sessions extract <id> --format markdown`
 
-Session Tools is an immutable controller member. Do not link it into the native
-external-extension registry.
+Session Tools is a core Oclif command plugin composed by `@rawr/cli`. Do not
+install or link it through the native external-extension channel
+`rawr plugins ...`. The ordinary CLI release package is pending; do not restore
+the removed controller installer to test this module.
 
 ## Structured facet filters
 
@@ -34,9 +38,9 @@ facet-only search:
 
 Examples:
 
-- `rawr sessions search --has-tag proposed_plan --limit 50`
-- `rawr sessions search --has-directive code-comment --has-tool apply_patch --query "Updated the following files"`
-- `rawr sessions search --has-payload-type message --has-top-type assistant --query "gt move"`
+- `bun run rawr -- sessions search --has-tag proposed_plan --limit 50`
+- `bun run rawr -- sessions search --has-directive code-comment --has-tool apply_patch --query "Updated the following files"`
+- `bun run rawr -- sessions search --has-payload-type message --has-top-type assistant --query "gt move"`
 
 Facet-only search is bounded by `--candidate-limit` and returns at most
 `--limit` hits. Content search keeps `--max-matches` as the returned hit cap;

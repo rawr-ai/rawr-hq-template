@@ -7,7 +7,7 @@ description: |
 # Plugin Maintenance
 
 Maintain curated content in its explicit source workspace. Provider homes,
-caches, marketplaces, registries, exports, and installed controller state are
+caches, marketplaces, registries, exports, and installed CLI/provider state are
 outputs or separate authorities, never authoring locations.
 
 ## Core Invariants

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This repository owns the executable controller and generic lifecycle/tooling
+This repository owns the executable Oclif CLI and generic lifecycle/tooling
 authority. Personal `RAWR HQ` is a separate curated-content repository, not a
 downstream fork.
 
 ## Contribution Types
 
-- Controller contribution: official CLI contracts, controller release behavior,
+- CLI contribution: official Oclif contracts, ordinary package/release behavior,
   generic lifecycle services, provider adapters, schemas, tooling, and validators.
 - Fixture contribution: non-personal artifacts used only to validate Template behavior.
 
@@ -36,7 +36,8 @@ A plugin can be added as a Template fixture only when:
 - It has stable command/runtime contracts.
 - It includes tests and documentation.
 - It contains no personal curated content or machine-specific assumptions.
-- Its package ID has an explicit `external-fixture` row in `apps/cli/src/lib/controller/classification.ts`.
+- It remains outside `@rawr/cli#oclif.plugins` and is covered by the explicit
+  native Oclif extension acceptance target.
 
 ## API Surface Policy
 
@@ -45,6 +46,10 @@ A plugin can be added as a Template fixture only when:
 - App composition commands do not acquire lifecycle authority.
 - Command-surface changes require migration notes in `UPDATING.md`.
 - CLI publish ownership for `@rawr/cli` is template-only.
+
+The fixed Nx Release package group is pending. Until it lands, use
+`bun run rawr -- ...` for CLI development and do not restore the removed custom
+controller installer, selector, or release store.
 
 ## Quality Gates
 

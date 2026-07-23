@@ -14,7 +14,7 @@
 - Shipped hooks live in `scripts/githooks/**`.
 - `scripts/githooks/post-merge` and `scripts/githooks/post-checkout` run main-branch auto-refresh:
   - refresh dependencies when needed
-  - never build, select, relink, or rewrite the installed controller
+  - never install, update, or relink the global CLI
 - `scripts/githooks/pre-push` enforces remote safety and then runs the complete
   required repository ratchet:
   - remote must be `origin`
@@ -67,7 +67,5 @@
 ## Conventions
 - Hook output should be short and actionable (avoid noisy logs).
 - Security model reference: [[docs/system/SECURITY_MODEL]].
-- Controller release installer: `scripts/dev/install-global-rawr.sh`.
-- Existing-release selector: `scripts/dev/activate-global-rawr.sh`.
 - Remote verifier: `scripts/dev/check-remotes.sh`.
 - Main-branch dependency refresh driver: `scripts/dev/auto-refresh-main.sh`.

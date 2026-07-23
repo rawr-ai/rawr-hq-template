@@ -32,4 +32,4 @@ if ! bun install --frozen-lockfile >/dev/null 2>&1; then
   bun install >/dev/null
 fi
 
-echo "[rawr-auto-refresh] repository dependencies refreshed; selected controller unchanged"
+echo "[rawr-auto-refresh] repository dependencies refreshed; no CLI package installed"

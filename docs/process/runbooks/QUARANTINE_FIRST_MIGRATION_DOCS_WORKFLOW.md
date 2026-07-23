@@ -37,17 +37,20 @@ Before changing docs:
 1. Check Graphite and Git state.
 2. Confirm trunk and current branch.
 3. Inspect staged and unstaged changes.
-4. Use one verified installed controller release; do not invoke `apps/cli` source.
-5. If the installed `rawr sessions ...` surface is unavailable, extract transcript
+4. During the distribution transition, use the repository-owned Oclif command
+   `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor distribution.
+   Ordinary installed-package acceptance begins only after the fixed Nx Release
+   group lands.
+5. If the `bun run rawr -- sessions ...` surface is unavailable, extract transcript
    evidence directly from the session JSONL and record that tooling gap in the
-   workstream notes. Do not repair it with an Oclif official-module link.
+   workstream notes. Do not repair it with an Oclif extension link.
 
 Minimum commands:
 
 ```sh
 git status --short --branch
 gt trunk
-rawr --help
+bun run rawr -- --help
 ```
 
 ## Workflow

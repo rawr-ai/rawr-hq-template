@@ -124,9 +124,6 @@ for (const relativePath of operationalDocs) {
   for (const [label, pattern] of forbiddenOperationalText) {
     if (pattern.test(source)) findings.push(`${label} remains in ${relativePath}`);
   }
-  if (/bun\s+run\s+rawr(?:\s|$)/u.test(source)) {
-    findings.push(`source CLI operational guidance remains in ${relativePath}`);
-  }
 }
 
 for (const relativePath of independentToolingDocs) {
