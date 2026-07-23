@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a named predicate, function, or pattern declaration in a Grit code fence without a directly preceding non-empty // semantic comment",
-  "why": "Named Grit helpers encode policy relations that are otherwise easy to mistake for parser mechanics, so each declaration must preserve its semantic decision at the point of authorship.",
-  "remediate": "Add one concise non-empty // comment immediately above every named predicate, function, or pattern declaration in each Grit fence, describing the relation or decision the helper encodes.",
-  "message": "Named Grit helpers require directly preceding semantic comments.",
+  "forbids": "a named predicate, function, or pattern declaration in the canonical first line-delimited Grit fence without a directly preceding non-empty // intent comment",
+  "why": "Named Grit helpers encode policy relations that are otherwise easy to mistake for parser mechanics, so each declaration must carry an adjacent intent surface; review owns whether the prose is substantively useful.",
+  "remediate": "Add one concise non-empty // comment immediately above every named predicate, function, or pattern declaration in the canonical first Grit fence, describing the relation or decision the helper encodes.",
+  "message": "Named Grit helpers require directly preceding intent comments.",
   "pathCoverage": [
     {
       "kind": "exact-path",

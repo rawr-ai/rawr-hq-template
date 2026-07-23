@@ -27,9 +27,9 @@ Interpretation:
   `repository:check`; no hand-maintained project inventory may narrow the
   affected population.
 - `repository:check` must prove project-kind and quality-target admission,
-  repository separation, `habitat:check`, lifecycle-service structure, and the
-  CLI Oclif boundary behavior through their Nx owners. Required Oclif structure
-  laws belong to Habitat's selected policy batch.
+  repository separation, `habitat:check`, and the CLI Oclif boundary behavior
+  through their Nx owners. Required Oclif structure laws and the lifecycle
+  command-channel law belong to Habitat's selected policy batch.
 - `habitat:check` must run Habitat-owner lint, typecheck, and tests,
   repository-wide hygiene, and the selected green local policy batch.
 - The selected Habitat batch must keep empty baselines. Do not claim that all

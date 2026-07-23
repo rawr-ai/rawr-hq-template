@@ -25,9 +25,9 @@
 - Violations are sorted and reported together so the owning projects can
   repair their own metadata and targets.
 - `repository:check` composes this owner's lint, typecheck, tests,
-  `check:projects`, and `check:boundaries` with `habitat:check`, lifecycle
-  service structure, and the CLI Oclif boundary check. The required Oclif
-  structure laws belong to Habitat's selected policy batch.
+  `check:projects`, and `check:boundaries` with `habitat:check` and the CLI
+  Oclif boundary check. Required Oclif and lifecycle command-channel structure
+  laws belong to Habitat's selected policy batch.
 - The root `bun run check` runs affected `lint` and `typecheck` before entering
   this repository-owned aggregate.
 

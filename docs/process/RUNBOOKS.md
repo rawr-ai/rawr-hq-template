@@ -41,9 +41,9 @@ fallbacks.
 - The root command first runs affected Nx `lint` and `typecheck`, then invokes
   `repository:check`.
 - `repository:check` composes repository project admission and separation,
-  `habitat:check`, lifecycle-service structure, and the CLI Oclif boundary
-  check. The repository owner also runs its own lint, typecheck, and tests;
-  Habitat's selected policy batch owns the required Oclif structure laws.
+  `habitat:check`, and the CLI Oclif boundary check. The repository owner also
+  runs its own lint, typecheck, and tests; Habitat's selected policy batch owns
+  the required Oclif structure laws and lifecycle command-channel law.
 - `habitat:check` composes Habitat-owner lint, typecheck, and tests with
   `check:hygiene` and `check:policy`. The policy target runs one
   selected green local rule batch with empty baselines. Registered rules with

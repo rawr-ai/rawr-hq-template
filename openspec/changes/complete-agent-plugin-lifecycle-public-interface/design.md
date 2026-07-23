@@ -144,8 +144,8 @@ semantic comment immediately above each named helper. Both run in one selected
 green local Habitat batch behind `check:policy`, with empty baselines.
 `habitat:check` composes that policy with owner lint, typecheck, tests, and
 hygiene; `repository:check` composes Habitat with repository admission and
-separation, lifecycle-service structure, and the CLI Oclif boundary check. The
-selected Habitat batch owns the required Oclif structure laws. The seven
+separation and the CLI Oclif boundary check. The selected Habitat batch owns
+the required Oclif structure laws and lifecycle command-channel law. The seven
 generic service laws remain governed by [[tasks]] 1.5e and must not join the
 selected batch while their known live-corpus violations remain.
 
@@ -167,11 +167,12 @@ local push.
 
 Public `bun run check` first uses affected-project scheduling for cacheable lint
 and typecheck, then invokes `repository:check`. The repository owner composes
-project admission and separation, `habitat:check`, lifecycle-service structure,
-and the CLI Oclif boundary check. Habitat composes its owner checks, repository
-hygiene, and a single selected green policy batch containing the required Oclif
-structure laws. The required CI job publishes one stable status. Local hooks
-provide fast feedback; remote branch protection remains merge authority.
+project admission and separation, `habitat:check`, and the CLI Oclif boundary
+check. Habitat composes its owner checks, repository hygiene, and a single
+selected green policy batch containing the required Oclif structure laws and
+lifecycle command-channel law. The required CI job publishes one stable status.
+Local hooks provide fast feedback; remote branch protection remains merge
+authority.
 
 This hierarchy intentionally stops short of Civ's final all-project `check`
 graph. That composition becomes valid only after every applicable project owns

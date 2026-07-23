@@ -114,10 +114,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [x] 1.6b Replace the sequential repository command with one public
   `bun run check` hierarchy: affected/cached lint and typecheck followed by
   `repository:check`; repository-owned `check:projects` and `check:boundaries`
-  plus `habitat:check`, lifecycle-service structure, and the CLI Oclif boundary
-  check; and Habitat-owner lint/typecheck/tests, hygiene, and one selected green
-  local policy batch containing the required Oclif structure laws. Preserve one
-  non-skippable remote required result for the candidate revision.
+  plus `habitat:check` and the CLI Oclif boundary check; and Habitat-owner
+  lint/typecheck/tests, hygiene, and one selected green local policy batch
+  containing the required Oclif structure laws and lifecycle command-channel
+  law. Preserve one non-skippable remote required result for the candidate
+  revision.
 - [ ] 1.6c Move to Civ-style all-project `check` composition only after every
   applicable project owns a `check` target or Habitat Nx inference supplies
   one. Do not let `run-many -t check` silently omit projects during the
