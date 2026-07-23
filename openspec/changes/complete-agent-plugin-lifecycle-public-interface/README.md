@@ -690,6 +690,16 @@ serialized exact-Git owners. The complete CLI/core Nx test run passes 94 tests
 in 91 seconds, down from the pre-deletion multi-minute path. No live provider,
 repository release, Personal source, or global CLI state was touched.
 
+A later deletion closes the stale DevOps tail of that same diagnostic surface.
+`dev repo sync-upstream` no longer accepts `--inspect-after`, and the service no
+longer accepts `inspectAfter` or returns `followUpCommands`. Both planned
+commands were already invalid: `doctor global` had been deleted and external
+extension inspection belongs to native Oclif rather than `plugins list`. The
+worktree-cleanup follow-up contract remains a separate capability. Owner lint,
+typecheck, behavior, manifest generation, closed TypeBox input/result checks,
+and the public [[scripts/habitat/AGENTS#Flow|repository check hierarchy]] are
+green; no command replacement or new state owner was introduced.
+
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected required check. It enumerated package names, exact
 composition files, and the now-rejected artifact/evidence repositories. Those

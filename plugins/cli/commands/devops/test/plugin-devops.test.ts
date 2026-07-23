@@ -180,7 +180,24 @@ describe("@rawr/plugin-devops command surface", () => {
     expect(DevStackDoctor.description).toContain("Inspect");
     expect(DevStackDrain.flags).toHaveProperty("apply");
     expect(DevRepoSyncUpstream.flags).toHaveProperty("upstream-ref");
+    expect(DevRepoSyncUpstream.flags).not.toHaveProperty("inspect-after");
     expect(DevWorktreeCleanup.flags).toHaveProperty("prefix");
+  });
+
+  it("keeps the retired repo inspection flag out of Oclif help and parsing", async () => {
+    const fixture = await makeFixture();
+    const env = commandEnvironment(fixture);
+    const help = runDevops(["dev", "repo", "sync-upstream", "--help"], env);
+
+    expect(help.status).toBe(0);
+    expect(`${help.stdout}\n${help.stderr}`).not.toContain("--inspect-after");
+
+    const retiredFlag = runDevops(
+      ["dev", "repo", "sync-upstream", "--json", "--inspect-after"],
+      env
+    );
+    expect(retiredFlag.status).not.toBe(0);
+    expect(`${retiredFlag.stdout}\n${retiredFlag.stderr}`).toContain("--inspect-after");
   });
 
   it("discovers the owner-local dev topics through Oclif", async () => {

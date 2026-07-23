@@ -251,8 +251,10 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [x] 4.3 Replace controller installation, activation, selection, and rollback
   guidance with the conventional package/release/install path. The workflow and
   script deletion itself belongs to task 4.2a.
-- [x] 4.4 Delete obsolete controller-specific diagnostics. Do not replace
-  `doctor global` with another distribution authority read model.
+- [x] 4.4 Delete obsolete controller-specific diagnostics. Remove `doctor
+  global` and the DevOps `--inspect-after` input/result path that still emitted
+  it alongside the retired `plugins list` command. Do not replace either path
+  with another distribution authority read model.
 - [ ] 4.5 Remove controller requirements from active and
   canonical specifications. Do not add compatibility aliases or scan old local
   controller stores.

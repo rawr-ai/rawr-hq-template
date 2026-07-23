@@ -179,7 +179,6 @@ export const RepoSyncUpstreamInputSchema = Type.Object(
     apply: Type.Optional(Type.Boolean()),
     upstreamRef: Type.Optional(Type.String({ minLength: 1 })),
     branchPrefix: Type.Optional(Type.String({ minLength: 1 })),
-    inspectAfter: Type.Optional(Type.Boolean()),
     scratchPolicy: Type.Optional(ScratchPolicyInputSchema),
   },
   { additionalProperties: false }
@@ -203,7 +202,6 @@ export const RepoSyncUpstreamResultSchema = Type.Object(
     ),
     currentBranch: Type.Union([Type.String(), Type.Null()]),
     steps: Type.Array(DevCommandStepSchema),
-    followUpCommands: Type.Array(DevCommandStepSchema),
     preflight: DevPreflightSchema,
     execution: DevExecutionSchema,
     scratchPolicy: ScratchPolicyCheckSchema,
