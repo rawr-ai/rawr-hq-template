@@ -19,10 +19,12 @@ completeness. No root contract/router object-placement claim is made.
 ```grit
 language js(typescript)
 
+// Derives the service branch identity that must correspond to a module directory.
 function service_branch_name($value) js {
   return `^${$value.text.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}$`;
 }
 
+// Proves that a standalone base uses the named effect-orpc implementation authority.
 predicate imports_exact_implement_effect($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']effect-orpc[\"']$",
@@ -30,6 +32,7 @@ predicate imports_exact_implement_effect($body) {
   }
 }
 
+// Proves that an embedded API service uses the named native oRPC implementer.
 predicate imports_exact_implement($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']@orpc/server[\"']$",
@@ -37,6 +40,7 @@ predicate imports_exact_implement($body) {
   }
 }
 
+// Proves that a standalone root service composes from its local base authority.
 predicate imports_exact_base($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']\./base[\"']$",
@@ -44,6 +48,7 @@ predicate imports_exact_base($body) {
   }
 }
 
+// Restricts a standalone service's first owner to its base or a native base middleware chain.
 predicate is_standalone_service_initializer($value) {
   or {
     $value <: `base`,
@@ -54,12 +59,14 @@ predicate is_standalone_service_initializer($value) {
   }
 }
 
+// Requires an API service to establish its native contract and context in the first hop.
 predicate is_api_service_initializer($value) {
   $value <: contains `implement(contract).$context_method<$context_type>()` where {
     $context_method <: r"^\$context$"
   }
 }
 
+// Recognizes the current service root as the sole module-to-root composition dependency.
 predicate is_current_root_service_source($source) {
   or {
     $source <: r"^[\"']\.\./\.\./impl[\"']$",
@@ -76,6 +83,7 @@ predicate is_current_root_service_source($source) {
   }
 }
 
+// Restricts a module anchor to its corresponding service branch and native middleware chain.
 predicate is_matching_module_initializer($value, $branch_pattern) {
   or {
     $value <: `service.$branch` where {

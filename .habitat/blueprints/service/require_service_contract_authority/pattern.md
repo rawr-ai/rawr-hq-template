@@ -22,18 +22,22 @@ red installation gaps and provide no current evidence.
 ```grit
 language js(typescript)
 
+// Derives the sole static type name paired with a reusable schema authority.
 function paired_type_name($value) js {
   return `^${$value.text.replace(/Schema$/, "Type")}$`;
 }
 
+// Scopes declarative contract grammar to exact service-module contract files.
 predicate is_module_contract() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
+// Identifies contracts where effect-orpc errors may join the declared public error map.
 predicate is_effect_contract() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
+// Proves that a tagged error declaration participates in the public contract.
 predicate contract_attaches_error($name) {
   or {
     $program <: contains `$builder.errors({ $..., $code: $name, $... })`,
@@ -41,6 +45,7 @@ predicate contract_attaches_error($name) {
   }
 }
 
+// Defines the closed top-level grammar admitted at a module contract boundary.
 predicate is_allowed_contract_statement($statement) {
   or {
     $statement <: import_statement(),

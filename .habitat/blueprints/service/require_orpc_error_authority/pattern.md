@@ -35,30 +35,36 @@ Effect/native control flow, opaque returns, or dataflow semantics.
 ```grit
 language js(typescript)
 
+// Scopes error-authority enforcement to production sources inside a service.
 predicate is_governed_service_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Identifies the sole file allowed to define a module's public oRPC errors.
 predicate is_exact_module_contract() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
+// Identifies runtime composition surfaces that must not acquire contract error authority.
 predicate is_router_or_impl() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl|router|modules/[^/]+/(?:impl|router|router/[^/]+))\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Preserves the one root implementation edge that binds the exact local contract.
 predicate is_canonical_root_impl_contract_import($import, $source) {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/impl\.ts$",
   $source <: r"^[\"']\./contract[\"']$",
   $import <: `import { contract } from $source`
 }
 
+// Exempts declarations whose entire dependency is erased before runtime.
 predicate is_whole_type_only_import($import) {
   $import <: import_statement(type=type())
 }
 
+// Exempts named imports only when every imported binding is type-only.
 predicate is_named_all_inline_type_import($import) {
   $import <: `import { $... } from $source`,
   $import <: contains import_specifier() as $type_specifier where {
@@ -71,6 +77,7 @@ predicate is_named_all_inline_type_import($import) {
   }
 }
 
+// Unifies the type-only forms that may reference conventional contract and error modules.
 predicate is_permitted_conventional_type_import($import) {
   or {
     is_whole_type_only_import(import=$import),
@@ -78,6 +85,7 @@ predicate is_permitted_conventional_type_import($import) {
   }
 }
 
+// Detects acquisition of the tagged-error constructor outside its owning contract.
 predicate imports_runtime_tagged_error_authority($import) {
   $import <: contains import_specifier(name=$name) as $specifier where {
     $name <: or { `ORPCTaggedError`, `"ORPCTaggedError"` },
@@ -85,6 +93,7 @@ predicate imports_runtime_tagged_error_authority($import) {
   }
 }
 
+// Rejects vendor import forms that obscure which effect-orpc runtime capability is acquired.
 predicate imports_noncanonical_runtime_vendor_form($import) {
   or {
     $import <: `import * as $namespace from "effect-orpc"`,
@@ -107,10 +116,12 @@ predicate imports_noncanonical_runtime_vendor_form($import) {
   }
 }
 
+// Detects escaped spellings that would evade literal boundary-name comparison.
 predicate contains_escape_marker($value) {
   $value <: r".*\\.*"
 }
 
+// Rejects escaped module or export names at governed service boundaries.
 predicate imports_escaped_boundary_spelling($import, $source) {
   or {
     contains_escape_marker(value=$source),
@@ -120,6 +131,7 @@ predicate imports_escaped_boundary_spelling($import, $source) {
   }
 }
 
+// Recognizes module names whose runtime authority belongs to a contract or error boundary.
 predicate is_conventional_contract_or_error_source($source) {
   $source <: r"^[\"'][^\"']*(?:[/\.](?:contract|errors?))(?:[/\.][^\"']*)?[\"']$"
 }

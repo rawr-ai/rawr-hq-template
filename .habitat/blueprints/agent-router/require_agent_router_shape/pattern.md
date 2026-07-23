@@ -14,10 +14,12 @@ owner.
 ```grit
 language markdown
 
+// Scopes the navigation law to local AGENTS routers rather than ordinary Markdown.
 predicate is_agent_router() {
   $filename <: r"(?:^|.*/)AGENTS\.md$"
 }
 
+// Recognizes a repository-local edge that keeps authority discovery inside the AGENTS lattice.
 predicate has_agent_router_route($body) {
   $body <: contains `[$label]($destination)` where {
     $destination <: r"(?:^|/)AGENTS\.md(?:#.*)?$",

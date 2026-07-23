@@ -9,6 +9,7 @@ launcher, selector, or bootstrap layer.
 ```grit
 language js(typescript)
 
+// Defines the complete production bootstrap surface before Oclif owns command execution.
 predicate is_production_entrypoint_statement($statement) {
   or {
     $statement <: `import { execute } from "@oclif/core";`,
@@ -16,6 +17,7 @@ predicate is_production_entrypoint_statement($statement) {
   }
 }
 
+// Defines the complete development bootstrap surface before Oclif owns command execution.
 predicate is_development_entrypoint_statement($statement) {
   or {
     $statement <: `import { execute } from "@oclif/core";`,
