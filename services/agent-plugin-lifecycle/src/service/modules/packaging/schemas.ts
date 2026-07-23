@@ -1,8 +1,8 @@
-export { ArtifactRefInputSchema as ArtifactRefSchema } from "../../shared/release/index";
 export {
   PackageAgentPluginRequestSchema,
   PackageAgentPluginResultSchema,
   PackageDigestSchema,
+  PackagedReleaseIdentitySchema,
   PackageOutputPathSchema,
   PackagingFailureCodeSchema,
   PackagingFailureSchema,

@@ -19,10 +19,6 @@ export const releaseWorkspaceFlags = {
   "complete-set": Flags.boolean({ description: "Select the complete release set" }),
 } as const;
 
-export const artifactFlag = Flags.string({
-  description: "Canonical release:<rd1>:<ad1> or release-set:<rs1> handle",
-});
-
 export const providerTargetFlag = Flags.string({
   description: "Explicit provider=absolute-home target",
   multiple: true,

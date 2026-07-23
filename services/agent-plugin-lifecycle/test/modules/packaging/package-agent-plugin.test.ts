@@ -1,27 +1,15 @@
-import {
-  lstat,
-  mkdir,
-  readdir,
-  readFile,
-  rmdir,
-  unlink,
-  utimes,
-  writeFile,
-} from "node:fs/promises";
+import { lstat, readFile, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type {
-  ArtifactRepositoryAsyncPort,
-  ArtifactRepositoryIssue,
-  ArtifactTreeObservation,
-} from "@rawr/resource-agent-plugin-artifact-repository";
 import type {
   AgentPluginPackageOutputAsyncPort,
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { Value } from "typebox/value";
 import { afterEach, describe, expect, it } from "vitest";
+
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -29,23 +17,19 @@ import {
   MAX_PACKAGING_OUTPUT_PATH_LENGTH,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import { PackageAgentPluginResultSchema } from "../../../src/service/modules/packaging/schemas";
-import { createResourceArtifactStore } from "../../../src/service/repository/artifact-repository";
-import type {
-  AgentPluginRelease,
-  AgentPluginReleaseSet,
-} from "../../../src/service/shared/release";
-import { MemoryArtifactRepository } from "../../support/artifact-repository";
+import { parsePluginId } from "../../../src/service/shared/release";
+import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import {
-  createLifecycleTestClient,
-  testInvocation,
-  unavailableArtifactRepository,
-} from "../../support/client";
+  createGeneratedGitRepository,
+  createGeneratedMultiMemberGitRepository,
+  type GeneratedGitRepository,
+  GIT_EXECUTABLE,
+} from "../../support/git-repository";
 import {
   createOwnedFixtureRoot,
   disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "../../support/owned-fixture-root";
-import { packagingArtifactFixture } from "./artifact-fixture";
 
 const roots: OwnedFixtureRoot[] = [];
 
@@ -57,263 +41,204 @@ afterEach(async () => {
 });
 
 describe("package agent plugin application", () => {
-  it("reads one immutable ref and reports only deterministic package provenance", async () => {
+  it("packages exact selected Git content and repeats without rewriting output", async () => {
     const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
-    const application = createPackageAgentPluginApplication(artifacts);
+    const repository = await createGeneratedGitRepository(root, "fixture-alpha");
+    const application = await createPackageAgentPluginApplication();
     const outputPath = join(root.path, "alpha.zip");
-
-    const first = await application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath,
+    const request = packageRequest(repository, outputPath, {
+      kind: "targeted",
+      pluginId: repository.pluginId,
     });
 
+    const first = await application.package(request);
     expect(first).toMatchObject({
       kind: "OutputReplacedVerified",
       priorOutput: "Absent",
-      artifactRef: fixture.alphaSnapshot.ref,
+      repositoryIdentity: repository.policy.repositoryIdentity,
+      sourceCommit: repository.policy.sourceCommit,
+      sourceTree: repository.policy.sourceTree,
+      release: { kind: "release", pluginId: repository.pluginId },
       format: COWORK_PACKAGE_FORMAT,
       outputPath,
     });
-    expect(Object.keys(first).sort()).toEqual([
-      "artifactRef",
-      "format",
-      "kind",
-      "outputPath",
-      "packageDigest",
-      "priorOutput",
-    ]);
+    expect("artifactRef" in first).toBe(false);
     expect((await readFile(outputPath)).subarray(0, 4)).toEqual(
       Buffer.from([0x50, 0x4b, 0x03, 0x04])
     );
-    expect(artifacts.artifactRepository.readTreeCalls).toBe(1);
+    const before = await fileIdentityAndMetadata(outputPath);
 
-    const beforeNames = await readdir(root.path);
-    const second = await application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath,
-    });
-    expect(second).toMatchObject({
+    const repeated = await application.package(request);
+    expect(repeated).toMatchObject({
       kind: "ReadOnlyConverged",
       packageDigest: first.kind === "OutputReplacedVerified" ? first.packageDigest : "",
+      release: first.kind === "OutputReplacedVerified" ? first.release : {},
     });
-    expect(await readdir(root.path)).toEqual(beforeNames);
-    expect(artifacts.artifactRepository.readTreeCalls).toBe(2);
+    expect(await fileIdentityAndMetadata(outputPath)).toEqual(before);
+    expect(Value.Check(PackageAgentPluginResultSchema, repeated)).toBe(true);
   });
 
-  it("packages identical artifact bytes after source removal across source and prior-output variation", async () => {
+  it("packages the selected member or every complete-set member from exact Git content", async () => {
     const root = await fixtureRoot();
-    const sourceLocator = join(root.path, "generated-source-checkout");
-    const sourceMarker = join(sourceLocator, "source-marker.txt");
-    await mkdir(sourceLocator, { mode: 0o700 });
-    await writeFile(sourceMarker, "generated source only\n", { mode: 0o600 });
-    await unlink(sourceMarker);
-    await utimes(sourceLocator, new Date("2001-01-01T00:00:00Z"), new Date("2001-01-01T00:00:00Z"));
-    const firstSourceMtime = (await lstat(sourceLocator, { bigint: true })).mtimeNs;
-    await utimes(sourceLocator, new Date("2031-01-01T00:00:00Z"), new Date("2031-01-01T00:00:00Z"));
-    const secondSourceMtime = (await lstat(sourceLocator, { bigint: true })).mtimeNs;
-    expect(secondSourceMtime).not.toBe(firstSourceMtime);
-    await rmdir(sourceLocator);
-    await expect(lstat(sourceLocator)).rejects.toMatchObject({ code: "ENOENT" });
+    const repository = await createGeneratedMultiMemberGitRepository(root);
+    const application = await createPackageAgentPluginApplication();
+    const targetedOutput = join(root.path, "targeted.zip");
+    const firstOutput = join(root.path, "first.zip");
+    const secondOutput = join(root.path, "second.zip");
 
-    const firstOutput = join(root.path, "first.cowork.zip");
-    const secondOutput = join(root.path, "second.cowork.zip");
-    const adjacent = join(root.path, "adjacent-authority.txt");
-    await writeFile(firstOutput, "stale first output\n", { mode: 0o600 });
-    await writeFile(secondOutput, "different stale second output\n", { mode: 0o644 });
-    await writeFile(adjacent, "must remain unchanged\n", { mode: 0o600 });
-    await utimes(firstOutput, new Date("2002-02-02T00:00:00Z"), new Date("2002-02-02T00:00:00Z"));
-    await utimes(secondOutput, new Date("2032-02-02T00:00:00Z"), new Date("2032-02-02T00:00:00Z"));
-    const firstPrior = await lstat(firstOutput, { bigint: true });
-    const secondPrior = await lstat(secondOutput, { bigint: true });
-    expect(firstPrior.mtimeNs).not.toBe(secondPrior.mtimeNs);
-    expect(firstPrior.mode & 0o777n).not.toBe(secondPrior.mode & 0o777n);
-    expect(await readFile(firstOutput)).not.toEqual(await readFile(secondOutput));
-    const adjacentBefore = await fileIdentityAndMetadata(adjacent);
-
-    const fixture = packagingArtifactFixture();
-    const artifacts = await publishedRepository(
-      root.path,
-      [fixture.alphaRelease, fixture.betaRelease],
-      fixture.releaseSet
+    const targeted = await application.package(
+      packageRequest(repository, targetedOutput, {
+        kind: "targeted",
+        pluginId: repository.pluginIds[0]!,
+      })
     );
-    const application = createPackageAgentPluginApplication(artifacts);
-    const packageAt = (outputPath: string) =>
-      application.package({
-        artifactRef: fixture.setSnapshot.ref,
-        format: COWORK_PACKAGE_FORMAT,
-        outputPath,
-      });
+    const first = await application.package(
+      packageRequest(repository, firstOutput, { kind: "complete-set" })
+    );
+    const second = await application.package(
+      packageRequest(repository, secondOutput, { kind: "complete-set" })
+    );
 
-    const first = await packageAt(firstOutput);
-    const second = await packageAt(secondOutput);
-    expect(first).toMatchObject({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
-    expect(second).toMatchObject({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
-    if (first.kind !== "OutputReplacedVerified" || second.kind !== "OutputReplacedVerified") {
-      throw new Error("expected both varied prior outputs to be replaced and verified");
-    }
-    expect(second.packageDigest).toBe(first.packageDigest);
-    expect(await readFile(secondOutput)).toEqual(await readFile(firstOutput));
-    expect((await readdir(root.path)).sort()).toEqual([
-      "adjacent-authority.txt",
-      "first.cowork.zip",
-      "second.cowork.zip",
+    expect(targeted).toMatchObject({
+      kind: "OutputReplacedVerified",
+      release: { kind: "release", pluginId: repository.pluginIds[0] },
+    });
+    expect(readStoredZipEntries(await readFile(targetedOutput))).toEqual([
+      {
+        path: "skills/example/SKILL.md",
+        text: `# Generated ${repository.pluginIds[0]}\n`,
+      },
     ]);
-    expect(await readFile(adjacent, "utf8")).toBe("must remain unchanged\n");
-    expect(await fileIdentityAndMetadata(adjacent)).toEqual(adjacentBefore);
-
-    const beforeRepeat = await Promise.all(
-      [root.path, firstOutput, secondOutput, adjacent].map(fileIdentityAndMetadata)
+    expect(first).toMatchObject({
+      kind: "OutputReplacedVerified",
+      release: { kind: "complete-set" },
+    });
+    expect(second).toMatchObject({
+      kind: "OutputReplacedVerified",
+      release: first.kind === "OutputReplacedVerified" ? first.release : {},
+      packageDigest: first.kind === "OutputReplacedVerified" ? first.packageDigest : "",
+    });
+    expect(await readFile(secondOutput)).toEqual(await readFile(firstOutput));
+    expect(readStoredZipEntries(await readFile(firstOutput))).toEqual(
+      repository.pluginIds.map((pluginId) => ({
+        path: `plugins/${pluginId}/skills/example/SKILL.md`,
+        text: `# Generated ${pluginId}\n`,
+      }))
     );
-    const firstBytes = await readFile(firstOutput);
-    const secondBytes = await readFile(secondOutput);
-    const namesBeforeRepeat = (await readdir(root.path)).sort();
 
-    expect(await packageAt(firstOutput)).toMatchObject({
-      kind: "ReadOnlyConverged",
-      packageDigest: first.packageDigest,
-    });
-    expect(await packageAt(secondOutput)).toMatchObject({
-      kind: "ReadOnlyConverged",
-      packageDigest: first.packageDigest,
-    });
-    expect(artifacts.artifactRepository.readTreeCalls).toBe(12);
-    expect(
-      await Promise.all(
-        [root.path, firstOutput, secondOutput, adjacent].map(fileIdentityAndMetadata)
+    const refusedOutput = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const refusedApplication = await createPackageAgentPluginApplication(refusedOutput);
+    await expect(
+      refusedApplication.package(
+        packageRequest(repository, join(root.path, "missing.zip"), {
+          kind: "targeted",
+          pluginId: parsedPluginId("fixture-missing"),
+        })
       )
-    ).toEqual(beforeRepeat);
-    expect(await readFile(firstOutput)).toEqual(firstBytes);
-    expect(await readFile(secondOutput)).toEqual(secondBytes);
-    expect((await readdir(root.path)).sort()).toEqual(namesBeforeRepeat);
-    await expect(lstat(sourceLocator)).rejects.toMatchObject({ code: "ENOENT" });
+    ).resolves.toMatchObject({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: { code: "ReleaseConstructionFailed" },
+    });
+    expect(refusedOutput.encodeCalls).toBe(0);
+    expect(refusedOutput.publishCalls).toBe(0);
   });
 
-  it("rejects unknown request fields before reading artifacts or touching output", async () => {
+  it("revalidates exact Git content before publishing and preserves an existing output", async () => {
     const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
-    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
-    const application = createPackageAgentPluginApplication({
-      ...artifacts,
-      packageOutput: output,
+    const repository = await createGeneratedGitRepository(root);
+    const outputPath = join(root.path, "owned.zip");
+    await writeFile(outputPath, "operator-owned output\n", { mode: 0o600 });
+    const beforeBytes = await readFile(outputPath);
+    const before = await fileIdentityAndMetadata(outputPath);
+    const nodeOutput = makeNodePackageOutputAsyncPort();
+    let publishCalls = 0;
+    const output: AgentPluginPackageOutputAsyncPort = {
+      async encodeCoworkV1(request) {
+        const bytes = await nodeOutput.encodeCoworkV1(request);
+        await writeFile(repository.payloadFile, "changed after derivation\n");
+        return bytes;
+      },
+      async publish() {
+        publishCalls += 1;
+        return { kind: "ReadOnlyConverged" };
+      },
+    };
+    const application = await createPackageAgentPluginApplication(output);
+
+    const result = await application.package(
+      packageRequest(repository, outputPath, {
+        kind: "targeted",
+        pluginId: repository.pluginId,
+      })
+    );
+
+    expect(result).toMatchObject({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: { code: "SourceIneligible", phase: "source-revalidate" },
     });
+    expect(publishCalls).toBe(0);
+    expect(await readFile(outputPath)).toEqual(beforeBytes);
+    expect(await fileIdentityAndMetadata(outputPath)).toEqual(before);
+  });
+
+  it("rejects foreign request fields and oversized paths before source or output access", async () => {
+    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const application = createPackageAgentPluginApplicationWithDefaults(output);
 
     await expect(
       application.package({
-        artifactRef: fixture.alphaSnapshot.ref,
+        contentWorkspace: {},
+        mode: { kind: "complete-set" },
         format: COWORK_PACKAGE_FORMAT,
-        outputPath: join(root.path, "invalid.zip"),
-        sourceWorkspace: root.path,
+        outputPath: "/tmp/invalid.zip",
+        artifactRef: { kind: "release" },
       })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(artifacts.artifactRepository.readTreeCalls).toBe(0);
-    expect(output.calls).toBe(0);
-    expect(await readdir(root.path)).toEqual([]);
-  });
-
-  it("rejects an oversized output path before reading artifacts or touching output", async () => {
-    const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
-    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
-    const application = createPackageAgentPluginApplication({
-      ...artifacts,
-      packageOutput: output,
-    });
-
     await expect(
       application.package({
-        artifactRef: fixture.alphaSnapshot.ref,
+        contentWorkspace: {},
+        mode: { kind: "complete-set" },
         format: COWORK_PACKAGE_FORMAT,
         outputPath: `/${"p".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH)}`,
       })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(artifacts.artifactRepository.readTreeCalls).toBe(0);
-    expect(output.calls).toBe(0);
-    expect(await readdir(root.path)).toEqual([]);
+    for (const outputPath of ["relative.zip", "/", "/tmp/../escape.zip"]) {
+      await expect(
+        application.package({
+          contentWorkspace: {},
+          mode: { kind: "complete-set" },
+          format: COWORK_PACKAGE_FORMAT,
+          outputPath,
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+    expect(output.encodeCalls).toBe(0);
+    expect(output.publishCalls).toBe(0);
   });
 
-  it("maps missing and mismatched artifacts to closed pre-output failures", async () => {
+  it("reports a closed unsettled result when the output port throws after derivation", async () => {
     const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
-    const artifactRepositoryRoot = join(root.path, "artifacts-v1");
-    const missingRepository = new MemoryArtifactRepository();
-    const missing = createPackageAgentPluginApplication({
-      artifactRepository: missingRepository,
-      artifactRepositoryRoot,
-      packageOutput: output,
-    });
-    const mismatchIssues: readonly [ArtifactRepositoryIssue] = Object.freeze([
-      Object.freeze({
-        code: "ReadFailure",
-        detail: "tampered artifact fixture",
-      }),
-    ]);
-    const mismatchRepository: ArtifactRepositoryAsyncPort = Object.freeze({
-      ...unavailableArtifactRepository(),
-      readTree: async (
-        input: Parameters<ArtifactRepositoryAsyncPort["readTree"]>[0]
-      ): Promise<ArtifactTreeObservation> =>
-        Object.freeze({
-          kind: "Mismatch",
-          address: input.address,
-          issues: mismatchIssues,
-        }),
-    });
-    const mismatch = createPackageAgentPluginApplication({
-      artifactRepository: mismatchRepository,
-      artifactRepositoryRoot,
-      packageOutput: output,
-    });
-    const request = {
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "blocked.zip"),
-    };
-
-    expect(await missing.package(request)).toMatchObject({
-      kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "ArtifactMissing" },
-    });
-    expect(await mismatch.package(request)).toMatchObject({
-      kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "ArtifactMismatch" },
-    });
-    expect(output.calls).toBe(0);
-    expect(missingRepository.readTreeCalls).toBe(1);
-    expect(await readdir(root.path)).toEqual([]);
-  });
-
-  it("bounds an unclosed output-port exception and reports unsettled rather than claiming success", async () => {
-    const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
+    const repository = await createGeneratedGitRepository(root);
     const nodeOutput = makeNodePackageOutputAsyncPort();
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
-    const application = createPackageAgentPluginApplication({
-      ...artifacts,
-      packageOutput: {
-        encodeCoworkV1: nodeOutput.encodeCoworkV1,
-        async publish() {
-          throw new Error("unknown output boundary ".repeat(512));
-        },
+    const application = await createPackageAgentPluginApplication({
+      encodeCoworkV1: nodeOutput.encodeCoworkV1,
+      async publish() {
+        throw new Error("unknown output boundary ".repeat(512));
       },
     });
 
-    const result = await application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "unknown.zip"),
-    });
+    const result = await application.package(
+      packageRequest(repository, join(root.path, "unknown.zip"), {
+        kind: "targeted",
+        pluginId: repository.pluginId,
+      })
+    );
 
     expect(result).toMatchObject({
       kind: "OutputUnsettled",
       primaryFailure: { code: "OutputVerifyFailed", phase: "output-port" },
-      artifactRef: fixture.alphaSnapshot.ref,
+      repositoryIdentity: repository.policy.repositoryIdentity,
+      release: { kind: "release", pluginId: repository.pluginId },
     });
     if (result.kind !== "OutputUnsettled") throw new Error("Expected unsettled output");
     expect(result.primaryFailure.message).toHaveLength(MAX_PACKAGING_FAILURE_MESSAGE_LENGTH);
@@ -321,26 +246,64 @@ describe("package agent plugin application", () => {
     expect(Value.Check(PackageAgentPluginResultSchema, result)).toBe(true);
   });
 
-  it("bounds returned resource diagnostics before validating the public result", async () => {
+  it("maps an output-port pre-mutation refusal without publishing result identity", async () => {
     const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
+    const repository = await createGeneratedGitRepository(root);
+    const output = new CountingOutput({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: resourceFailure("OutputUnsafe", "output-admission", "destination refused"),
+      cleanupFailure: {
+        ...resourceFailure("TemporaryFailed", "cleanup-temporary", "temporary cleanup failed"),
+        operation: "cleanup",
+      },
+    });
+    const application = await createPackageAgentPluginApplication(output);
+
+    const result = await application.package(
+      packageRequest(repository, join(root.path, "refused.zip"), {
+        kind: "targeted",
+        pluginId: repository.pluginId,
+      })
+    );
+
+    expect(result).toEqual({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: {
+        code: "OutputUnsafe",
+        phase: "output-admission",
+        message: "destination refused",
+      },
+      cleanupFailure: {
+        code: "TemporaryCleanupFailed",
+        phase: "cleanup-temporary",
+        message: "temporary cleanup failed",
+      },
+    });
+    expect(output.encodeCalls).toBe(1);
+    expect(output.publishCalls).toBe(1);
+    expect("repositoryIdentity" in result).toBe(false);
+    expect("release" in result).toBe(false);
+  });
+
+  it("bounds resource diagnostics and maps cleanup truth without leaking source state", async () => {
+    const root = await fixtureRoot();
+    const repository = await createGeneratedGitRepository(root);
     const oversizedPhase = "resource-phase-".repeat(64);
     const oversizedDetail = "private resource detail ".repeat(512);
-    const application = createPackageAgentPluginApplication({
-      ...artifacts,
-      packageOutput: new CountingOutput({
+    const application = await createPackageAgentPluginApplication(
+      new CountingOutput({
         kind: "OutputUnsettled",
         primaryFailure: resourceFailure("OutputVerifyFailed", oversizedPhase, oversizedDetail),
         cleanupFailure: resourceFailure("FilesystemFailed", oversizedPhase, oversizedDetail),
-      }),
-    });
+      })
+    );
 
-    const result = await application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "bounded-resource-diagnostic.zip"),
-    });
+    const result = await application.package(
+      packageRequest(repository, join(root.path, "bounded.zip"), {
+        kind: "targeted",
+        pluginId: repository.pluginId,
+      })
+    );
 
     expect(result.kind).toBe("OutputUnsettled");
     if (result.kind !== "OutputUnsettled") throw new Error("Expected unsettled output");
@@ -351,85 +314,29 @@ describe("package agent plugin application", () => {
       expect(diagnostic.phase.endsWith("...[truncated]")).toBe(true);
       expect(diagnostic.message.endsWith("...[truncated]")).toBe(true);
     }
-    expect(Value.Check(PackageAgentPluginResultSchema, result)).toBe(true);
+    expect("artifactRef" in result).toBe(false);
   });
 
-  it.each([
-    {
-      label: "pre-mutation rejection",
-      resourceResult: {
-        kind: "RejectedBeforeOutputMutation",
-        primaryFailure: resourceFailure("OutputParentUnsafe", "output-parent"),
-        cleanupFailure: resourceFailure("TemporaryFailed", "cleanup"),
-      } satisfies PackageOutputPublicationResult,
-      expectedKind: "RejectedBeforeOutputMutation",
-      expectedPrimaryCode: "OutputParentUnsafe",
-      includesIdentity: false,
-    },
-    {
-      label: "post-commit unsettled output",
-      resourceResult: {
-        kind: "OutputUnsettled",
-        primaryFailure: resourceFailure("OutputVerifyFailed", "final-verification"),
-        cleanupFailure: resourceFailure("FilesystemFailed", "cleanup"),
-      } satisfies PackageOutputPublicationResult,
-      expectedKind: "OutputUnsettled",
-      expectedPrimaryCode: "OutputVerifyFailed",
-      includesIdentity: true,
-    },
-  ] as const)("maps $label and cleanup truth into the domain result", async ({
-    resourceResult,
-    expectedKind,
-    expectedPrimaryCode,
-    includesIdentity,
-  }) => {
+  it("maps encoder rejection before output publication", async () => {
     const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
-    const application = createPackageAgentPluginApplication({
-      ...artifacts,
-      packageOutput: new CountingOutput(resourceResult),
-    });
-
-    const result = await application.package({
-      artifactRef: fixture.alphaSnapshot.ref,
-      format: COWORK_PACKAGE_FORMAT,
-      outputPath: join(root.path, "mapped.zip"),
-    });
-
-    expect(result).toMatchObject({
-      kind: expectedKind,
-      primaryFailure: { code: expectedPrimaryCode },
-      cleanupFailure: { code: "TemporaryCleanupFailed", phase: "cleanup" },
-    });
-    expect("artifactRef" in result).toBe(includesIdentity);
-  });
-
-  it("maps encoder rejection before publication and preserves the resource detail", async () => {
-    const root = await fixtureRoot();
-    const fixture = packagingArtifactFixture();
+    const repository = await createGeneratedGitRepository(root);
     let publicationCalls = 0;
-    const artifacts = await publishedRepository(root.path, [fixture.alphaRelease]);
-    const application = createPackageAgentPluginApplication({
-      ...artifacts,
-      packageOutput: {
-        encodeCoworkV1: async () =>
-          Promise.reject(
-            resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused")
-          ),
-        publish: async () => {
-          publicationCalls += 1;
-          return { kind: "ReadOnlyConverged" };
-        },
+    const application = await createPackageAgentPluginApplication({
+      encodeCoworkV1: async () =>
+        Promise.reject(resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused")),
+      publish: async () => {
+        publicationCalls += 1;
+        return { kind: "ReadOnlyConverged" };
       },
     });
 
     await expect(
-      application.package({
-        artifactRef: fixture.alphaSnapshot.ref,
-        format: COWORK_PACKAGE_FORMAT,
-        outputPath: join(root.path, "unencoded.zip"),
-      })
+      application.package(
+        packageRequest(repository, join(root.path, "unencoded.zip"), {
+          kind: "targeted",
+          pluginId: repository.pluginId,
+        })
+      )
     ).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
       primaryFailure: {
@@ -439,12 +346,12 @@ describe("package agent plugin application", () => {
       },
     });
     expect(publicationCalls).toBe(0);
-    expect(await readdir(root.path)).toEqual([]);
   });
 });
 
 class CountingOutput implements AgentPluginPackageOutputAsyncPort {
-  calls = 0;
+  encodeCalls = 0;
+  publishCalls = 0;
   readonly #node = makeNodePackageOutputAsyncPort();
 
   constructor(private readonly result: PackageOutputPublicationResult) {}
@@ -452,13 +359,29 @@ class CountingOutput implements AgentPluginPackageOutputAsyncPort {
   encodeCoworkV1(
     request: Parameters<AgentPluginPackageOutputAsyncPort["encodeCoworkV1"]>[0]
   ): Promise<Uint8Array> {
+    this.encodeCalls += 1;
     return this.#node.encodeCoworkV1(request);
   }
 
   async publish(): Promise<PackageOutputPublicationResult> {
-    this.calls += 1;
+    this.publishCalls += 1;
     return this.result;
   }
+}
+
+function packageRequest(
+  repository: GeneratedGitRepository,
+  outputPath: string,
+  mode: Readonly<
+    { kind: "complete-set" } | { kind: "targeted"; pluginId: GeneratedGitRepository["pluginId"] }
+  >
+) {
+  return Object.freeze({
+    contentWorkspace: repository.policy,
+    mode,
+    format: COWORK_PACKAGE_FORMAT,
+    outputPath,
+  });
 }
 
 function resourceFailure(
@@ -475,61 +398,60 @@ function resourceFailure(
   });
 }
 
+function parsedPluginId(value: string): GeneratedGitRepository["pluginId"] {
+  const parsed = parsePluginId(value);
+  if (!parsed.ok) throw new Error(parsed.issues[0]?.message ?? "Invalid fixture plugin ID");
+  return parsed.value;
+}
+
+function readStoredZipEntries(
+  bytes: Uint8Array
+): readonly Readonly<{ path: string; text: string }>[] {
+  const archive = Buffer.from(bytes);
+  const entries: Array<Readonly<{ path: string; text: string }>> = [];
+  let offset = 0;
+  while (archive.readUInt32LE(offset) === 0x04034b50) {
+    const compression = archive.readUInt16LE(offset + 8);
+    const compressedSize = archive.readUInt32LE(offset + 18);
+    const nameLength = archive.readUInt16LE(offset + 26);
+    const extraLength = archive.readUInt16LE(offset + 28);
+    if (compression !== 0) throw new Error("Cowork fixture expected stored ZIP entries");
+    const nameStart = offset + 30;
+    const dataStart = nameStart + nameLength + extraLength;
+    entries.push(
+      Object.freeze({
+        path: archive.subarray(nameStart, nameStart + nameLength).toString("utf8"),
+        text: archive.subarray(dataStart, dataStart + compressedSize).toString("utf8"),
+      })
+    );
+    offset = dataStart + compressedSize;
+  }
+  return Object.freeze(entries);
+}
+
 async function fixtureRoot(): Promise<OwnedFixtureRoot> {
   const root = await createOwnedFixtureRoot();
   roots.push(root);
   return root;
 }
 
-function createPackageAgentPluginApplication(
-  options: Readonly<{
-    artifactRepository: ArtifactRepositoryAsyncPort;
-    artifactRepositoryRoot: string;
-    packageOutput?: AgentPluginPackageOutputAsyncPort;
-  }>
+async function createPackageAgentPluginApplication(
+  packageOutput: AgentPluginPackageOutputAsyncPort = makeNodePackageOutputAsyncPort()
 ) {
-  const client = createLifecycleTestClient({
-    artifactRepository: options.artifactRepository,
-    artifactRepositoryRoot: options.artifactRepositoryRoot,
-    packageOutput: options.packageOutput ?? makeNodePackageOutputAsyncPort(),
-  });
-  return Object.freeze({
-    package: (request: unknown) => client.packaging.package(request as never, testInvocation),
+  return createPackageAgentPluginApplicationWithDefaults(packageOutput, {
+    contentWorkspace: makeNodeContentWorkspacePort({
+      gitExecutable: await realpath(GIT_EXECUTABLE),
+    }),
   });
 }
 
-async function publishedRepository(
-  fixtureRoot: string,
-  releases: readonly AgentPluginRelease[],
-  releaseSet?: AgentPluginReleaseSet
-): Promise<
-  Readonly<{
-    artifactRepository: MemoryArtifactRepository;
-    artifactRepositoryRoot: string;
-  }>
-> {
-  const artifactRepository = new MemoryArtifactRepository();
-  const artifactRepositoryRoot = join(fixtureRoot, "artifacts-v1");
-  const store = createResourceArtifactStore({
-    repository: artifactRepository,
-    repositoryRoot: artifactRepositoryRoot,
-  });
-  for (const release of releases) {
-    const result = await store.publishRelease(release);
-    if (result.kind !== "Published" && result.kind !== "ReadOnlyConverged") {
-      throw new Error(`Could not seed packaging artifact: ${result.kind}`);
-    }
-  }
-  if (releaseSet !== undefined) {
-    const result = await store.publishReleaseSet(releaseSet);
-    if (result.kind !== "Published" && result.kind !== "ReadOnlyConverged") {
-      throw new Error(`Could not seed packaging release set: ${result.kind}`);
-    }
-  }
-  artifactRepository.resetObservations();
+function createPackageAgentPluginApplicationWithDefaults(
+  packageOutput: AgentPluginPackageOutputAsyncPort,
+  overrides: Parameters<typeof createLifecycleTestClient>[0] = {}
+) {
+  const client = createLifecycleTestClient({ packageOutput, ...overrides });
   return Object.freeze({
-    artifactRepository,
-    artifactRepositoryRoot,
+    package: (request: unknown) => client.packaging.package(request as never, testInvocation),
   });
 }
 

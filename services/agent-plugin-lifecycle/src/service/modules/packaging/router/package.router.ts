@@ -3,26 +3,24 @@ import type {
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
-import type { ArtifactReader } from "../../../model/dependencies/releases";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES, normalizeArtifactRef } from "../../../shared/release";
+import type { ContentWorkspaceSnapshotReader } from "../../../model/dependencies/releases";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../shared/release";
+import { constructPlan } from "../../releases/model/policy/release-plan";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
   MAX_PACKAGING_FAILURE_PHASE_LENGTH,
   type PackageAgentPluginRequest,
   type PackageAgentPluginResult,
+  type PackagedReleaseIdentity,
   type PackagingFailure,
   type PackagingFailureCode,
 } from "../model/dto/packaging-lifecycle";
-import {
-  assertSnapshotMatchesRef,
-  coworkV1PackageDigest,
-  createCoworkV1ArchiveRequest,
-} from "../model/helpers/cowork-v1";
+import { coworkV1PackageDigest, createCoworkV1ArchiveRequest } from "../model/helpers/cowork-v1";
 import { module } from "../module";
 
 interface PackagingDependencies {
-  readonly artifacts: ArtifactReader;
+  readonly source: ContentWorkspaceSnapshotReader;
   readonly packageOutput: AgentPluginPackageOutputAsyncPort;
 }
 
@@ -31,7 +29,7 @@ const UNREADABLE_EXTERNAL_DIAGNOSTIC = "External dependency failed without a rea
 
 export const packageProcedure = module.package.handler(async ({ context, input }) => {
   return packageAgentPlugin(input, {
-    artifacts: context.artifacts,
+    source: context.source,
     packageOutput: context.packageOutput,
   });
 });
@@ -40,51 +38,42 @@ async function packageAgentPlugin(
   request: PackageAgentPluginRequest,
   dependencies: PackagingDependencies
 ): Promise<PackageAgentPluginResult> {
-  const artifactRef = normalizeArtifactRef(request.artifactRef);
-  let readResult: Awaited<ReturnType<ArtifactReader["read"]>>;
+  let inspected: Awaited<ReturnType<ContentWorkspaceSnapshotReader["inspect"]>>;
   try {
-    readResult = await dependencies.artifacts.read(artifactRef);
+    inspected = await dependencies.source.inspect(request.contentWorkspace);
   } catch (error) {
     return rejected(
       createFailure(
-        "ArtifactMismatch",
-        "artifact-read",
-        `Artifact reader failed without a closed result: ${errorMessage(error)}`
+        "SourceReadFailed",
+        "source-inspect",
+        `Content source inspection failed without a closed result: ${errorMessage(error)}`
       )
     );
   }
-
-  if (readResult.kind === "Missing") {
+  if (inspected.kind === "Ineligible") {
     return rejected(
-      createFailure("ArtifactMissing", "artifact-read", "Requested immutable artifact is missing")
+      createFailure("SourceIneligible", "source-inspect", sourceIssueMessage(inspected.issues))
     );
   }
-  if (readResult.kind === "Mismatch") {
-    const issueCodes = [...readResult.issues]
-      .map((issue) => issue.code)
-      .sort()
-      .join(",");
+
+  const plan = constructPlan(inspected.snapshot, request.mode);
+  if (!plan.ok) {
     return rejected(
       createFailure(
-        "ArtifactMismatch",
-        "artifact-read",
-        `Requested immutable artifact failed verification: ${issueCodes}`
+        "ReleaseConstructionFailed",
+        "release-construct",
+        plan.issues
+          .map((issue) => issue.kind)
+          .sort()
+          .join(",")
       )
-    );
-  }
-
-  try {
-    assertSnapshotMatchesRef(readResult.snapshot, artifactRef);
-  } catch (error) {
-    return rejected(
-      createFailure("ArtifactSnapshotMismatch", "artifact-snapshot", errorMessage(error))
     );
   }
 
   let bytes: Uint8Array;
   try {
     bytes = await dependencies.packageOutput.encodeCoworkV1(
-      createCoworkV1ArchiveRequest(readResult.snapshot)
+      createCoworkV1ArchiveRequest(plan.value)
     );
   } catch (error) {
     return rejected(
@@ -96,9 +85,33 @@ async function packageAgentPlugin(
     );
   }
 
+  let revalidated: Awaited<ReturnType<ContentWorkspaceSnapshotReader["revalidate"]>>;
+  try {
+    revalidated = await dependencies.source.revalidate(
+      request.contentWorkspace,
+      inspected.snapshot.eligibilityBinding
+    );
+  } catch (error) {
+    return rejected(
+      createFailure(
+        "SourceReadFailed",
+        "source-revalidate",
+        `Content source revalidation failed without a closed result: ${errorMessage(error)}`
+      )
+    );
+  }
+  if (revalidated.kind === "Ineligible") {
+    return rejected(
+      createFailure("SourceIneligible", "source-revalidate", sourceIssueMessage(revalidated.issues))
+    );
+  }
+
   const packageDigest = coworkV1PackageDigest(bytes);
   const identity = {
-    artifactRef,
+    repositoryIdentity: inspected.snapshot.repositoryIdentity,
+    sourceCommit: inspected.snapshot.sourceCommit,
+    sourceTree: inspected.snapshot.sourceTree,
+    release: packagedReleaseIdentity(plan.value),
     format: COWORK_PACKAGE_FORMAT,
     outputPath: request.outputPath,
     packageDigest,
@@ -144,6 +157,33 @@ async function packageAgentPlugin(
         ...identity,
       };
   }
+}
+
+function packagedReleaseIdentity(
+  plan: Extract<ReturnType<typeof constructPlan>, { readonly ok: true }>["value"]
+): PackagedReleaseIdentity {
+  if (plan.releaseSet !== undefined) {
+    return Object.freeze({
+      kind: "complete-set",
+      releaseSetDigest: plan.releaseSet.releaseSetDigest,
+    });
+  }
+  const release = plan.releases[0];
+  if (release === undefined) throw new Error("Targeted release construction returned no release");
+  return Object.freeze({
+    kind: "release",
+    pluginId: release.artifactBody.releaseBody.pluginId,
+    releaseDigest: release.releaseDigest,
+  });
+}
+
+function sourceIssueMessage(
+  issues: readonly Readonly<{ readonly code: string; readonly detail: string }>[]
+): string {
+  return issues
+    .map((issue) => `${issue.code}:${issue.detail}`)
+    .sort()
+    .join(",");
 }
 
 function mapFailure(failure: PackageOutputFailure, cleanup = false): PackagingFailure {
