@@ -206,7 +206,9 @@
     "@catenarycloud/linteffect@0.0.6": "patches/@catenarycloud%2Flinteffect@0.0.6.patch"
   },
   "dependencies": {
+    "@orpc/client": "1.14.8",
     "@orpc/contract": "1.14.8",
+    "@orpc/openapi-client": "1.14.8",
     "@orpc/server": "1.14.8",
     "@rawr/core": "workspace:*",
     "@rawr/hq-app": "workspace:*",

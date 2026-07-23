@@ -12,8 +12,10 @@
       "@rawr/chatgpt-corpus": ["services/chatgpt-corpus/src/index.ts"],
       "@rawr/chatgpt-corpus/router": ["services/chatgpt-corpus/src/router.ts"],
       "@rawr/chatgpt-corpus/service/contract": ["services/chatgpt-corpus/src/service/contract.ts"],
-      "@rawr/plugin-server-api-example-todo": ["plugins/server/api/example-todo/index.ts"],
-      "@rawr/plugin-server-api-example-todo/server": ["plugins/server/api/example-todo/server.ts"]
+      "@rawr/example-todo": ["services/example-todo/src/index.ts"],
+      "@rawr/example-todo/service/contract": ["services/example-todo/src/service/contract.ts"],
+      "@rawr/hq-sdk/apis": ["packages/hq-sdk/src/apis.ts"],
+      "@rawr/runtime-context": ["packages/runtime-context/src/index.ts"]
     }
   }
 }

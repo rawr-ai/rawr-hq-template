@@ -1,4 +1,4 @@
-# Plugins (workspace packages)
+# Plugins
 
 ## TOC
 - [Scope](#scope)
@@ -19,7 +19,9 @@
   - `plugins/server/api/*` for server/API runtime adapters (`rawr.kind=api`)
   - `plugins/async/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
   - `plugins/async/schedules/*` for recurring trigger runtime adapters (`rawr.kind=schedules`)
-- Each leaf directory is a workspace package (see root `package.json#workspaces`).
+- Command and agent-plugin leaves are workspace packages. API server plugins
+  are package-less Nx projects composed from source through their public
+  `api.ts` and `client.ts` faces.
 
 ## Nx First Hop
 
@@ -37,14 +39,15 @@
   no cross-family metadata field may create a second identity.
 
 ## Plugin Ids
-- A plugin’s id is either:
-  - `package.json#name` (preferred), or
-  - the leaf directory name (fallback).
+- A command or agent plugin's id is `package.json#name`.
+- A package-less API plugin's Nx project name is its repository identity; its
+  leaf directory names the capability.
 - Package identity does not grant lifecycle authority. External Oclif extensions
   and curated agent plugins are separate closed channels.
 
 ## Manifest Conventions
-- Always include a `package.json` at the plugin root.
+- Oclif command and agent plugin packages include `package.json`. Package-less
+  API server plugins do not.
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
   - `commands`: `./dist/commands`
   - `typescript.commands`: `./src/commands`
@@ -67,9 +70,10 @@
 
 ## Flow
 
-- Source enters through the plugin package that owns its declared kind.
-- Nx builds and tests that package; Oclif composes command plugins through
-  their package manifests.
+- Source enters through the plugin project that owns its declared kind.
+- Nx checks that project; Oclif composes command plugins through package
+  manifests while app hosts compose package-less API plugins through their
+  public source faces.
 - Curated agent content reaches its lifecycle only through the qualified agent
   plugin surface; authoring never performs provider mutation.
 
