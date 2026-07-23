@@ -45,7 +45,6 @@ const TOOLS: ToolExport[] = [
     command: "agent plugins update vendors",
     description: "Author one reviewable declared vendor update",
   },
-  { command: "agent plugins build", description: "Build immutable curated release artifacts" },
   {
     command: "agent plugins test",
     description: "Test exact Git-selected content against explicit provider homes",

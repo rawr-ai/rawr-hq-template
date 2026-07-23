@@ -32,7 +32,6 @@ import { productFixture } from "../../shared/release/fixtures";
 import {
   createLifecycleTestClient,
   testInvocation,
-  unavailableArtifactRepository,
   unavailableContentWorkspace,
 } from "../../support/client";
 
@@ -113,9 +112,6 @@ describe("releases.checkRepository", () => {
     };
     const client = createLifecycleTestClient({
       contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
-      artifactRepository: unavailableArtifactRepository(() => {
-        throw new Error("staged repository check acquired artifact authority");
-      }),
     });
 
     await expect(
@@ -271,9 +267,6 @@ describe("releases.checkRepository", () => {
     };
     const client = createLifecycleTestClient({
       contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
-      artifactRepository: unavailableArtifactRepository(() => {
-        writes += 1;
-      }),
     });
 
     await expect(
@@ -302,9 +295,6 @@ describe("releases.checkRepository", () => {
           throw dependencyFailure;
         },
       },
-      artifactRepository: unavailableArtifactRepository(() => {
-        throw new Error("staged repository check acquired artifact authority");
-      }),
     });
 
     await expect(
@@ -337,9 +327,6 @@ describe("releases.checkRepository", () => {
             throw contentWorkspaceFailure(fixture.reason, `${fixture.reason} fixture`);
           },
         },
-        artifactRepository: unavailableArtifactRepository(() => {
-          throw new Error("staged repository check acquired artifact authority");
-        }),
       });
 
       await expect(
@@ -382,7 +369,6 @@ describe("releases.checkRepository", () => {
   });
 
   it("returns only the clean mismatch after final exact revalidation", async () => {
-    let artifactWrites = 0;
     const fixture = productFixture();
     const eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }> = {
       kind: "Eligible",
@@ -413,9 +399,6 @@ describe("releases.checkRepository", () => {
         },
         treeAfterFirstInspect: "c".repeat(40),
       }),
-      artifactRepository: unavailableArtifactRepository(() => {
-        artifactWrites += 1;
-      }),
     });
 
     await expect(
@@ -432,13 +415,11 @@ describe("releases.checkRepository", () => {
       issues: [{ code: "WrongTree", detail: expect.stringContaining("observed") }],
     });
     expect(cleanReads).toBe(2);
-    expect(artifactWrites).toBe(0);
   });
 
-  it("returns the clean result while staged and artifact ports remain cold", async () => {
+  it("returns the clean result while the staged port remains cold", async () => {
     let cleanReads = 0;
     let stagedReads = 0;
-    let artifactAccesses = 0;
     const fixture = productFixture();
     const eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }> = {
       kind: "Eligible",
@@ -470,9 +451,6 @@ describe("releases.checkRepository", () => {
           stagedReads += 1;
         },
       }),
-      artifactRepository: unavailableArtifactRepository(() => {
-        artifactAccesses += 1;
-      }),
     });
 
     await expect(
@@ -493,11 +471,9 @@ describe("releases.checkRepository", () => {
     });
     expect(cleanReads).toBe(2);
     expect(stagedReads).toBe(0);
-    expect(artifactAccesses).toBe(0);
   });
 
   it("reports a final staged revalidation race once without retry or write authority", async () => {
-    let writes = 0;
     let observations = 0;
     const [releaseInputObservation, materializationObservation] = validStagedObservationResults();
     const changedObservation = sourceChangedObservation(releaseInputObservation);
@@ -511,9 +487,6 @@ describe("releases.checkRepository", () => {
           return rawStagedObservation(changedObservation);
         },
       },
-      artifactRepository: unavailableArtifactRepository(() => {
-        writes += 1;
-      }),
     });
 
     await expect(
@@ -530,11 +503,9 @@ describe("releases.checkRepository", () => {
       detail: "Git HEAD, ref, repository, or index changed during staged observation",
     });
     expect(observations).toBe(3);
-    expect(writes).toBe(0);
   });
 
-  it("returns the dedicated staged result without build or release authority", async () => {
-    let writes = 0;
+  it("returns the dedicated staged result without mutation authority", async () => {
     let observations = 0;
     const observationResults = validStagedObservationResults();
     const client = createLifecycleTestClient({
@@ -547,9 +518,6 @@ describe("releases.checkRepository", () => {
           return rawStagedObservation(observation);
         },
       },
-      artifactRepository: unavailableArtifactRepository(() => {
-        writes += 1;
-      }),
     });
 
     await expect(
@@ -569,7 +537,6 @@ describe("releases.checkRepository", () => {
       stagedBinding: expect.any(String),
     });
     expect(observations).toBe(4);
-    expect(writes).toBe(0);
   });
 });
 
@@ -628,9 +595,6 @@ async function expectStagedTreeClosureRefusal(
   };
   const client = createLifecycleTestClient({
     contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
-    artifactRepository: unavailableArtifactRepository(() => {
-      writes += 1;
-    }),
   });
 
   await expect(

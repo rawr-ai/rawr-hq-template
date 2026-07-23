@@ -16,8 +16,8 @@
 4. Use explicit disposable provider homes until canonical settlement is authorized.
 
 There is no universal checkout, clean-worktree, or preflight-check requirement.
-A branch that consumes an immutable artifact, governed channel, or governance
-object does not reopen source as preparation.
+Each branch validates only the exact Git selection, governed record, package
+output, or provider home it owns.
 
 ## Operation Inputs
 
@@ -25,43 +25,43 @@ object does not reopen source as preparation.
 <branch operation="status vendors|update vendors">
 Bind exact content-workspace repository coordinates. For update, also bind only
 the selected vendor-source ids. Status inspects; update authors reviewable
-source bytes. Neither continues into check or build.
+source bytes. Neither continues into check or packaging.
 </branch>
 
-<branch operation="check|build">
+<branch operation="check">
 Bind the exact content workspace, repository identity, content authority,
 remote, ref, source commit and tree, release-input path, plugin root, and either
-one plugin or the complete-set selection. Check is nonpublishing. Build performs
-its own validation and returns immutable handles; it does not require a prior
-check invocation.
+one plugin or the complete-set selection. Check derives and returns bounded
+release facts without publishing lifecycle state.
 </branch>
 
 <branch operation="package">
-Bind one immutable artifact handle, exact package format, and explicit output
-path. Verify deterministic package bytes. Do not bind or inspect content source.
+Bind the same exact Git selection, one plugin or the complete set, the package
+format, and an explicit output path. Verify deterministic package bytes. A prior
+check result is not an ambient prerequisite.
 </branch>
 
 <branch operation="test">
-Bind immutable targeted-release handles or one immutable complete-set handle,
-an exact evaluation profile, and explicit provider homes and executables.
+Bind the exact Git selection, a targeted or complete-set selection, an exact
+evaluation profile, and explicit disposable provider homes and executables.
 Targeted testing does not create a canonical channel claim.
 </branch>
 
 <branch operation="sync|status">
-Bind the governed current-main channel locator and explicit provider homes and
-executables. Status inspects without mutation. Sync converges only the selected
-immutable complete set, including removal of omitted lifecycle-owned members;
+Bind the governed current-main record locator and explicit provider homes and
+executables. Status inspects without mutation. Sync derives and converges only
+the selected complete set, including removal of omitted lifecycle-owned members;
 repeat it and prove live managed state does not change.
 </branch>
 
 <branch operation="check --mode current-main-selection">
 Bind one explicit content workspace, expected repository identity, and Git
-executable. Resolve the fixed reviewed current-main v2 record without starting
+executable. Resolve the fixed reviewed current-main v3 record without starting
 provider convergence.
 </branch>
 
 <branch operation="check --mode current-main-record">
-Encode or validate the one reviewed current-main v2 record. Return its exact
+Encode or validate the one reviewed current-main v3 record. Return its exact
 canonical bytes without writing a content repository or acquiring Git/provider
 authority.
 </branch>
@@ -79,7 +79,7 @@ operation requires a new explicit selection and its own authority inputs.
 **Fix**: stop and select the exact `rawr agent plugins ...` operation.
 </failure>
 <failure name="authoring-chain">
-**Symptom**: source creation or review automatically starts build or convergence.
+**Symptom**: source creation or review automatically starts packaging or convergence.
 **Fix**: stop after source proof and require an explicit request for the next transition.
 </failure>
 <failure name="ambient-authority">

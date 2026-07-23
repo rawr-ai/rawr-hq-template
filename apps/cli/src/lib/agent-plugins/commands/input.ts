@@ -21,7 +21,6 @@ export type CheckRequest = InputOf<Client["releases"]["check"]>;
 export type RepositoryCheckRequest = InputOf<Client["releases"]["checkRepository"]>;
 export type ReleaseInputRecordRequest = InputOf<Client["releases"]["releaseInputRecord"]>;
 export type ReleaseInputRefreshRequest = InputOf<Client["releases"]["refreshReleaseInput"]>;
-export type BuildRequest = InputOf<Client["releases"]["build"]>;
 export type VendorStatusRequest = InputOf<Client["vendors"]["status"]>;
 export type VendorUpdateRequest = InputOf<Client["vendors"]["update"]>;
 export type PackageRequest = InputOf<Client["packaging"]["package"]>;
@@ -262,10 +261,6 @@ function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordReques
     kind: "validate-record",
     bytes: new TextEncoder().encode(recordJson),
   });
-}
-
-export function parseBuildRequest(flags: RawFlags): BuildRequest {
-  return parseReleaseWorkspaceRequest(flags);
 }
 
 export function parseVendorStatusRequest(flags: RawFlags): VendorStatusRequest {

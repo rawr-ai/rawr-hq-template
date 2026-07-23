@@ -14,7 +14,7 @@ outputs or separate authorities, never authoring locations.
 
 - Every content unit has one parent agent-plugin distribution owner.
 - Make and validate source changes before considering lifecycle operations.
-- Authoring never triggers build, package, selection, or sync
+- Authoring never triggers package, selection, or sync
   automatically.
 - Curated agent-plugin lifecycle uses `rawr agent plugins ...` only.
 - External Oclif extensions use `rawr plugins ...` only.
@@ -32,8 +32,7 @@ outputs or separate authorities, never authoring locations.
 
 When the user also requests lifecycle work, start with the read-only
 `rawr agent plugins check` against exact governed release coordinates. Later
-operations are separate choices: `rawr agent plugins build`,
-`rawr agent plugins package`,
+operations are separate choices: `rawr agent plugins package`,
 `rawr agent plugins test`, `rawr agent plugins sync`,
 `rawr agent plugins status`, `rawr agent plugins check --mode
 current-main-selection`.

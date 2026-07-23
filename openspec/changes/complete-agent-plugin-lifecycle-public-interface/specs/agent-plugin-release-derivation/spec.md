@@ -23,7 +23,7 @@ release/set artifact.
 
 ### Requirement: Noncanonical operations use an exact explicit Git selection
 
-Check, build, package, and test operations that do not use `current-main` MUST
+Check, package, and test operations that do not use `current-main` MUST
 require one explicit repository identity, absolute locator, commit, tree, and
 release-input digest. Targeted operations MUST also name a nonempty closed member
 selection. These operations MAY derive and inspect the named content but MUST NOT

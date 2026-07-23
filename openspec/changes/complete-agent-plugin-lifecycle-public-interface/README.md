@@ -196,7 +196,7 @@ rather than copying configuration blindly:
 | TypeScript fallback | `6.0.2` | Expose only the narrow `tsc6` compatibility command |
 | ESLint / parser | `9.39.2` / `8.54.0` | Keep Template's newer `10.0.3` / `8.57.1`; do not downgrade for parity |
 | TypeBox | `1.3.6` | Already aligned |
-| oRPC | `1.14.6` | Upgrade as a separate behavior-reviewed vendor change |
+| oRPC | `1.14.6` | Upgrade to current `1.14.8` in the atomic root-vendor checkpoint |
 | Effect / Platform | Current official Effect 4 line | Migrate the surviving resource/provider family after rejected owners are deleted; use exact aligned pins and remove `@effect/platform` |
 
 TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
@@ -508,9 +508,9 @@ remaining context chain was unused, so retaining it for a later bridge would
 have manufactured reachability. The agent-plugin layout now accepts only the
 plain data-root value it actually consumes.
 
-Nx now reports 46 projects and no `@rawr/controller-build` or
-`@rawr/controller-release`; the still-live
-`@rawr/resource-controller-authority` remains explicit for task 4.2b. The
+At this first checkpoint Nx reported 46 projects and no
+`@rawr/controller-build` or `@rawr/controller-release`; the controller
+authority resource was still explicit for task 4.2b. The
 post-deletion CLI suite passes all 109 remaining tests. Uncached CLI lint and
 typecheck pass in 14.3 seconds. The source/built Oclif inventory and direct
 invocation both reject
@@ -520,7 +520,7 @@ operator guidance now uses `bun run rawr -- ...` and truthfully records the
 fixed Nx Release package group as pending. No repository release, provider home,
 Personal repository, or old global installation was mutated.
 
-This checkpoint does not claim lifecycle decoupling: the service runtime client
+This first checkpoint does not claim lifecycle decoupling: the service runtime client
 still resolves controller reentry and its data root through `@rawr/core` and the
 controller-authority resource. Task 4.2b removes that live identity together
 with the persistent lifecycle roots; task 4.6 remains open until direct status
@@ -536,6 +536,31 @@ redundant child processes. Focused behavior tests pass in 9.7 seconds, and
 uncached CLI lint and typecheck pass in 14.9 seconds. Agent-plugin lifecycle
 reentry remains explicitly pending under task 4.2b rather than being hidden by
 this generic CLI correction.
+
+The bounded lifecycle-state deletion removes that remaining controller
+authority and reentry together with `rawr agent plugins build`, the persistent
+release/set repository, custom evidence publication, retention planning, and
+every associated reader, writer, context field, and test fixture. Release check
+now returns only bounded derivation facts. Packaging and native provider
+operations independently read the selected immutable Git objects and derive
+their release model in memory. The CLI supplies ordinary explicit Git and
+provider executable bindings and owns no lifecycle data root.
+
+The deletion is intentionally one reader-and-writer checkpoint: separating the
+CLI reader from the service writer would leave a reachable half-migrated state
+owner. It adds no compatibility command, retained handle, alternate root, or
+cleanup scan. Task 4.6 remains open until the integrated source/built command
+surface and read-only status path pass after the Effect-backed service migration.
+
+The resulting source checkpoint removes 8,000-plus lines and both rejected Nx
+projects. The regenerated Bun lockfile contains neither resource package. The
+source Oclif help exposes exactly check, create, package, test, sync, status,
+status vendors, and update vendors; build is absent. Uncached Nx build, lint,
+and typecheck for the service, CLI, and core pass in 17.2 seconds. The complete
+service behavior set passes 206 tests in about 75 seconds across its parallel and
+serialized exact-Git owners. The complete CLI/core Nx test run passes 94 tests
+in 91 seconds, down from the pre-deletion multi-minute path. No live provider,
+repository release, Personal source, or global CLI state was touched.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected ratchet. It enumerated package names, exact

@@ -3,7 +3,6 @@ import {
   type CreateClientOptions,
   createClient,
 } from "@rawr/agent-plugin-lifecycle/client";
-import { resolveControllerReentry } from "@rawr/core";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
@@ -13,18 +12,16 @@ import {
   type ServiceBinding,
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
-import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { makeDeferredNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
 import {
-  type ControllerProjectionBinding,
-  LifecycleAuthorityBindingError,
   type LifecycleClientFactory,
+  type LifecycleExecutableBinding,
+  LifecycleExecutableBindingError,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "../commands/binding";
-import { deriveAgentPluginControllerLayout } from "../layout";
 
 type LifecycleBoundary = CreateClientOptions;
 type LifecycleProcess = ProcessView &
@@ -60,10 +57,6 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
   "releases.refreshReleaseInput": (client) =>
     Object.freeze({
       releases: Object.freeze({ refreshReleaseInput: client.releases.refreshReleaseInput }),
-    }),
-  "releases.build": (client) =>
-    Object.freeze({
-      releases: Object.freeze({ build: client.releases.build }),
     }),
   "vendors.status": (client) =>
     Object.freeze({
@@ -103,19 +96,12 @@ export const createProductionLifecycleClient: LifecycleClientFactory = (
   operation,
   binding
 ): LifecycleOperationClient<typeof operation> => {
-  const authority = controllerAuthority();
-  const deps = createProductionLifecycleDeps({
-    binding,
-    controllerDataRoot: authority.dataRoot,
-  });
+  const deps = createProductionLifecycleDeps({ binding });
 
   const lifecycleService = bindService(createClient, {
     bindingId: `rawr-cli/agent-plugin-lifecycle/${operation}`,
     deps,
-    scope: () => ({
-      controllerIdentity: `controller:${authority.controllerDigest}`,
-      controllerDataRootIdentity: `controller-data:${authority.controllerDigest}`,
-    }),
+    scope: () => ({}),
     config: {},
   } satisfies ServiceBinding<LifecycleBoundary, LifecycleProcess, LifecycleRole>);
   const client = lifecycleService.resolve({
@@ -130,13 +116,10 @@ export const createProductionLifecycleClient: LifecycleClientFactory = (
 
 export function createProductionLifecycleDeps(
   input: Readonly<{
-    binding: ControllerProjectionBinding;
-    controllerDataRoot: string;
+    binding: LifecycleExecutableBinding;
   }>
 ): LifecycleDeps {
-  const { binding, controllerDataRoot } = input;
-  const layout = deriveAgentPluginControllerLayout({ dataRoot: controllerDataRoot });
-  const artifactRepository = makeNodeArtifactRepositoryAsyncPort();
+  const { binding } = input;
   const contentWorkspace = makeDeferredNodeContentWorkspacePort({
     acquireGitExecutable: () => requiredGitExecutable(binding),
   });
@@ -144,26 +127,11 @@ export function createProductionLifecycleDeps(
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    artifactRepository,
-    artifactRepositoryRoot: layout.artifactStoreRoot,
     contentWorkspace,
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),
     providerNativeSessions: createNodeNativeProviderSessionResolver(binding.providerExecutables),
   } satisfies LifecycleDeps);
-}
-
-function controllerAuthority(): Readonly<{
-  dataRoot: string;
-  controllerDigest: string;
-}> {
-  const reentry = resolveControllerReentry();
-  const dataRoot = reentry.env.RAWR_DATA_DIR;
-  const controllerDigest = reentry.env.RAWR_CONTROLLER_DIGEST;
-  if (dataRoot === undefined || controllerDigest === undefined) {
-    throw new LifecycleAuthorityBindingError("Verified controller data identity is unavailable");
-  }
-  return Object.freeze({ dataRoot, controllerDigest });
 }
 
 function selectLifecycleOperationClient<TOperation extends LifecycleOperation>(
@@ -173,9 +141,9 @@ function selectLifecycleOperationClient<TOperation extends LifecycleOperation>(
   return lifecycleClientSelectors[operation](client);
 }
 
-function requiredGitExecutable(binding: ControllerProjectionBinding): string {
+function requiredGitExecutable(binding: LifecycleExecutableBinding): string {
   if (binding.gitExecutable === undefined) {
-    throw new LifecycleAuthorityBindingError(
+    throw new LifecycleExecutableBindingError(
       "Agent-plugin lifecycle requires an explicit Git executable binding"
     );
   }
