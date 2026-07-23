@@ -314,6 +314,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   blueprint. Require one Effect 4 runtime copy, no active Effect 3 copy, and no
   active `@effect/platform` import, and one coherent oRPC realm. Keep TypeBox
   authoritative.
+- [x] 5.6b Correct the one canonical `@rawr/hq-sdk` TypeBox Standard Schema
+  bridge. Use TypeBox 1.3.6 `Value.Check` and `Value.Errors` directly and return
+  message-only issues because that version's raw `instancePath` cannot
+  distinguish slash-bearing object keys, nested keys, numeric object keys, or
+  array indices. Delete URI and JSON Pointer decoding rather than adding a
+  second schema adapter or traversal heuristic. Prove the public adapter returns
+  the native TypeBox message list without invented paths through its owner-local
+  Nx test target.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, lint,
   typecheck, and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
