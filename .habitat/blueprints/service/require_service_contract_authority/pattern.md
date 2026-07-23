@@ -6,7 +6,8 @@ tags: [orpc, service, contract, typebox, error-authority]
 
 A module contract is a declarative boundary, not a schema workshop. Its
 top-level grammar admits imports, private contract-attached
-`ORPCTaggedError` declarations for Effect services, and the single generic
+`ORPCTaggedError` declarations for standalone services and API-plugin embedded
+services, and the single generic
 `contract` anchor. Procedure input and output envelopes adapt TypeBox directly
 at their contract positions. Reusable domain schemas remain outside
 `contract.ts` as `NameSchema` authorities. A colocated `NameType` is required
@@ -14,8 +15,9 @@ to be `Static<typeof NameSchema>` when one is actually needed; the rule does
 not manufacture unused aliases.
 
 The service relationship packet owns ordinary anchor export syntax. Reuse
-count is owned by the import graph, Knip, JSDoc, and review; this source rule
-does not infer it from identifier spelling.
+count is owned by the import graph and review; this source rule does not infer
+it from identifier spelling. Knip and the boundary-crossing JSDoc relation are
+red installation gaps and provide no current evidence.
 
 ```grit
 language js(typescript)
@@ -28,8 +30,8 @@ predicate is_module_contract() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
-predicate is_effect_service_contract() {
-  $filename <: r".*services/[^/]+/src/service/modules/[^/]+/contract\.ts$"
+predicate is_effect_contract() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
 predicate contract_attaches_error($name) {
@@ -50,19 +52,19 @@ predicate is_allowed_contract_statement($statement) {
     $statement <: `export const contract = $value`,
     $statement <: `export { contract }`,
     and {
-      is_effect_service_contract(),
+      is_effect_contract(),
       $statement <: `class $name extends ORPCTaggedError($args) { $body }`,
       $program <: contains `import { $..., ORPCTaggedError, $... } from "effect-orpc"`,
       contract_attaches_error(name=$name)
     },
     and {
-      is_effect_service_contract(),
+      is_effect_contract(),
       $statement <: `class $name extends $tagged($args) { $body }`,
       $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
       contract_attaches_error(name=$name)
     },
     and {
-      is_effect_service_contract(),
+      is_effect_contract(),
       $statement <: `class $name extends $namespace.ORPCTaggedError($args) { $body }`,
       $program <: contains `import * as $namespace from "effect-orpc"`,
       contract_attaches_error(name=$name)
@@ -91,11 +93,11 @@ or {
     $import <: `import * as $namespace from $source`
   },
   `$builder.errors($map)` where {
-    is_effect_service_contract(),
+    is_effect_contract(),
     ! $map <: `{ $properties }`
   },
   `$builder.errors({ $..., $code: $definition, $... })` where {
-    is_effect_service_contract(),
+    is_effect_contract(),
     not {
       or {
         $program <: contains `class $definition extends ORPCTaggedError($args) { $body }`,
@@ -111,7 +113,7 @@ or {
     }
   },
   `$builder.errors({ $..., $definition, $... })` where {
-    is_effect_service_contract(),
+    is_effect_contract(),
     $definition <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
     not {
       or {
@@ -155,8 +157,8 @@ or {
     $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/contract\.ts$",
     not {
       or {
-        $body <: contains `import { $..., oc, $... } from "@orpc/contract"`,
-        $body <: contains `import { $..., oc as $builder, $... } from "@orpc/contract"`
+        $body <: contains `import { $..., eoc, $... } from "effect-orpc"`,
+        $body <: contains `import { $..., eoc as $builder, $... } from "effect-orpc"`
       }
     }
   },
@@ -263,13 +265,7 @@ const SearchSchema = build();
 export const contract = eoc.input(standard(SearchSchema));
 ```
 
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-const SearchSchema = build();
-export const contract = eoc.input(standard(SearchSchema));
-```
-
-## Ignores a declarative Effect contract
+## Ignores a declarative standalone-service contract
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/contract.ts
@@ -283,14 +279,19 @@ export const contract = eoc
   .output(standard(Type.Object({ found: Type.Boolean() })));
 ```
 
+## Ignores a declarative API-plugin embedded-service contract
+
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
+// @filename: plugins/server/api/catalog/src/service/modules/search/contract.ts
 import { standard } from "#adapters/typebox";
 import { eoc, ORPCTaggedError } from "effect-orpc";
 import { Type } from "typebox";
-class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
+class SearchUnavailable extends ORPCTaggedError("SearchUnavailable", {
+  code: "SERVICE_UNAVAILABLE",
+  status: 503,
+}) {}
 export const contract = eoc
-  .errors({ SERVICE_UNAVAILABLE: CatalogUnavailable })
-  .input(standard(Type.Object({ id: Type.String() })))
+  .errors({ SERVICE_UNAVAILABLE: SearchUnavailable })
+  .input(standard(Type.Object({ query: Type.String() })))
   .output(standard(Type.Object({ found: Type.Boolean() })));
 ```
