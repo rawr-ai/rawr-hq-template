@@ -413,6 +413,20 @@ with a more elaborate race harness.
 local-user threat model and deletes adversarial-only behavior before the root
 test aggregate is enabled.
 
+Task 1.6c5 removes that watcher race and its supporting inode-substitution
+machinery. Atomic publication still uses exclusive temporary-file creation,
+file sync, mode application, and rename. After a temporary file opens, failure
+cleanup is limited to its generated, prefix-checked, destination-contained path
+and uses `recursive: false`; removal failure remains a typed `CleanupFailed`
+result. This branch is carried by the narrow filesystem contract rather than a
+replacement-race test harness.
+The provider no longer reads file-descriptor and path identities to defend
+against a concurrent actor replacing that private temporary path. Its 11
+ordinary export, rollback, containment, symlink, nonrecursive-removal, and
+pre-open publication-failure cases now pass uncached in 1.2 seconds. The export
+capability remains owned for transfer to the dedicated destination architecture;
+this record does not claim a current production caller.
+
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
 the lifecycle command-channel law, all three Oclif app laws, and all three Oclif

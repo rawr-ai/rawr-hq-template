@@ -167,12 +167,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   boundaries; include provider production sources in each parent build input,
   and require the parent resource builds to compile and emit both provider
   entrypoints before normalizing root build scripts.
-- [ ] 1.6c5 Before a root test aggregate admits every provider suite, apply the
+- [x] 1.6c5 Before a root test aggregate admits every provider suite, apply the
   accepted local-user threat model to the export-destination test corpus. The
   current same-path temporary-substitution watcher race fails reproducibly on
   unchanged `main` source. Remove adversarial-only behavior and tests rather
-  than hardening the race harness; retain only behavior with an independent
-  export-capability consumer.
+  than hardening the race harness. Retain the export capability and its ordinary
+  accidental-safety behavior under the dedicated destination architecture's
+  declared ownership without implying a current production caller.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

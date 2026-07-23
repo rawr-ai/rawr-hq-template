@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { fstatSync } from "node:fs";
 import { lstat, rmdir } from "node:fs/promises";
 
 import { NodeServices } from "@effect/platform-node";
@@ -24,7 +23,7 @@ import { Effect, FileSystem, Option, Path, PlatformError, Semaphore } from "effe
 type ProviderRequirements = FileSystem.FileSystem | Path.Path;
 type Operation = ExportDestinationFailure["operation"];
 
-export const EXPORT_DESTINATION_TEMP_PREFIX = ".rawr-export-destination-tmp-v1-";
+const EXPORT_DESTINATION_TEMP_PREFIX = ".rawr-export-destination-tmp-v1-";
 
 type CaptureLifecycle =
   | "Captured"
@@ -46,11 +45,6 @@ interface CaptureBudget {
   bytes: number;
   readonly maxEntries: number;
   readonly maxBytes: number;
-}
-
-interface OwnedTemporaryIdentity {
-  readonly dev: bigint;
-  readonly ino: bigint;
 }
 
 interface CaptureAuthority {
@@ -1689,7 +1683,6 @@ function writeAtomic(
     }
 
     let temporaryOpened = false;
-    let temporaryIdentity: OwnedTemporaryIdentity | undefined;
     const attempted = yield* Effect.result(
       Effect.scoped(
         Effect.gen(function* () {
@@ -1697,7 +1690,6 @@ function writeAtomic(
             .open(temporary, { flag: "wx", mode: 0o600 })
             .pipe(mapPlatform(operation, temporary));
           temporaryOpened = true;
-          temporaryIdentity = yield* openedTemporaryIdentity(file.fd, temporary, operation);
           if (bytes.byteLength > 0) {
             yield* file.writeAll(bytes).pipe(mapPlatform(operation, temporary));
           }
@@ -1710,18 +1702,8 @@ function writeAtomic(
     );
     if (attempted._tag === "Success") return;
     if (!temporaryOpened) return yield* Effect.fail(attempted.failure);
-    if (temporaryIdentity === undefined) {
-      return yield* fail(
-        operation,
-        "CleanupFailed",
-        temporary,
-        `${attempted.failure.detail}; temporary cleanup refused because exact ownership identity was unavailable`
-      );
-    }
 
-    const cleanup = yield* Effect.result(
-      cleanupOwnedTemporary(fs, path, destination, temporary, temporaryIdentity)
-    );
+    const cleanup = yield* Effect.result(cleanupTemporary(fs, path, destination, temporary));
     if (cleanup._tag === "Failure") {
       return yield* fail(
         operation,
@@ -1734,20 +1716,18 @@ function writeAtomic(
   });
 }
 
-function cleanupOwnedTemporary(
+function cleanupTemporary(
   fs: FileSystem.FileSystem,
   path: Path.Path,
   destination: DestinationRoot,
-  temporary: string,
-  ownedIdentity: OwnedTemporaryIdentity
+  temporary: string
 ): Effect.Effect<void, ExportDestinationFailure> {
   return Effect.gen(function* () {
     const parent = path.dirname(temporary);
     if (
       !path.basename(temporary).startsWith(EXPORT_DESTINATION_TEMP_PREFIX) ||
       !isContained(path, destination.path, temporary) ||
-      parent === destination.path ||
-      !isContained(path, destination.path, parent)
+      (parent !== destination.path && !isContained(path, destination.path, parent))
     ) {
       return yield* fail(
         "cleanup",
@@ -1757,80 +1737,10 @@ function cleanupOwnedTemporary(
       );
     }
     yield* requireCanonicalExistingDirectory(fs, path, destination, parent, "cleanup");
-    const currentIdentity = yield* exactTemporaryIdentityIfPresent(temporary);
-    if (currentIdentity === undefined) return;
-    if (currentIdentity.dev !== ownedIdentity.dev || currentIdentity.ino !== ownedIdentity.ino) {
-      return yield* fail(
-        "cleanup",
-        "CleanupFailed",
-        temporary,
-        "Temporary cleanup refused a same-path entry with another exact filesystem identity"
-      );
-    }
     yield* fs
       .remove(temporary, { recursive: false, force: false })
       .pipe(mapPlatform("cleanup", temporary));
   });
-}
-
-function openedTemporaryIdentity(
-  descriptor: FileSystem.File.Descriptor,
-  temporary: string,
-  operation: "apply" | "restore"
-): Effect.Effect<OwnedTemporaryIdentity, ExportDestinationFailure> {
-  // Effect's portable File.Info uses numeric identity; cleanup authority retains exact bigint fd identity.
-  return Effect.try({
-    try: () => {
-      const info = fstatSync(Number(descriptor), { bigint: true });
-      if (!info.isFile() || info.isSymbolicLink())
-        throw new TypeError("Opened temporary is not a regular file");
-      return Object.freeze({ dev: info.dev, ino: info.ino });
-    },
-    catch: (error): ExportDestinationFailure =>
-      Object.freeze({
-        _tag: "ExportDestinationFailure",
-        operation,
-        reason: "FilesystemFailed",
-        path: temporary,
-        detail: error instanceof Error ? error.message : String(error),
-      }),
-  });
-}
-
-function exactTemporaryIdentityIfPresent(
-  temporary: string
-): Effect.Effect<OwnedTemporaryIdentity | undefined, ExportDestinationFailure> {
-  return Effect.tryPromise({
-    try: async () => {
-      try {
-        return await lstat(temporary, { bigint: true });
-      } catch (error) {
-        if (nativeErrorCode(error) === "ENOENT") return undefined;
-        throw error;
-      }
-    },
-    catch: (error): ExportDestinationFailure =>
-      Object.freeze({
-        _tag: "ExportDestinationFailure",
-        operation: "cleanup",
-        reason: "FilesystemFailed",
-        path: temporary,
-        detail: error instanceof Error ? error.message : String(error),
-      }),
-  }).pipe(
-    Effect.flatMap((info) => {
-      if (info === undefined) return Effect.succeed(undefined);
-      if (!info.isFile() || info.isSymbolicLink()) {
-        return fail(
-          "cleanup",
-          "CleanupFailed",
-          temporary,
-          "Temporary cleanup is bounded to one provider-owned regular file"
-        );
-      }
-      return Effect.succeed(Object.freeze({ dev: info.dev, ino: info.ino }));
-    })
-  );
 }
 
 /** Effect Platform `remove` lowers to `rm`; this narrow gap preserves rmdir's nonrecursive refusal. */
