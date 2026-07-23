@@ -15,8 +15,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { NodeContext } from "@effect/platform-node";
-import { Effect, Exit } from "effect";
-
 import type {
   ArtifactObjectAddress,
   ArtifactTreeLocation,
@@ -25,6 +23,7 @@ import {
   makeArtifactRepositoryResource,
   runNodeArtifactRepository,
 } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
+import { Effect, Exit } from "effect";
 import { codexEffectPlatformNodeProvider } from "../index";
 
 const roots: string[] = [];

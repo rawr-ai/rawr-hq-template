@@ -1,19 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import {
-  createDeploymentRuntimeHandoff,
-  createExecutionDescriptorTable,
-  createMigrationControlPlaneObservationPacket,
-  createRuntimeObservationRecorder,
-  projectRuntimeCatalogToTelemetryRecords,
-  type CompiledProcessPlan,
-  type DeploymentRuntimeHandoff,
-  type PortableRuntimePlanArtifact,
-} from "../../../src/oracle";
-import {
   CreateWorkItemPlan,
   PortableArtifact,
   SyncWorkItemStepPlan,
 } from "../../../scenarios/work-items/app-and-plan-artifacts";
+import {
+  type CompiledProcessPlan,
+  createDeploymentRuntimeHandoff,
+  createExecutionDescriptorTable,
+  createMigrationControlPlaneObservationPacket,
+  createRuntimeObservationRecorder,
+  type DeploymentRuntimeHandoff,
+  type PortableRuntimePlanArtifact,
+  projectRuntimeCatalogToTelemetryRecords,
+} from "../../../src/oracle";
 
 function assertNoLiveHandles(value: unknown): void {
   if (value === undefined || typeof value === "function" || typeof value === "symbol") {

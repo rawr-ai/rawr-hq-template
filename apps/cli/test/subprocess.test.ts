@@ -1,9 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
 import { lstatSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-
 import { bindVerifiedControllerReentryAuthority } from "@rawr/core";
+import { afterEach, describe, expect, it } from "vitest";
 import { resolveCliReentry } from "../src/lib/subprocess";
 
 const temporaryRoots: string[] = [];

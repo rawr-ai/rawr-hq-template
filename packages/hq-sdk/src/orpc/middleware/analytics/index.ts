@@ -11,11 +11,12 @@
  * They supply runtime analytics behavior through required service middleware at
  * the implementer seam.
  */
+
+import { createBaseMiddleware } from "../../baseline/middleware";
 import type { BaseMetadata } from "../../baseline/types";
+import { createNormalMiddlewareBuilder } from "../../factory/middleware";
 import type { AnalyticsClient } from "../../ports/analytics";
 import type { Logger } from "../../ports/logger";
-import { createBaseMiddleware } from "../../baseline/middleware";
-import { createNormalMiddlewareBuilder } from "../../factory/middleware";
 import { getProcedureMeta, resolveLocalAnalyticsPayload } from "./helpers";
 import {
   clearAnalyticsState,
@@ -24,10 +25,10 @@ import {
   setRequiredAnalyticsContributor,
 } from "./state";
 import {
-  requiredAnalyticsMiddlewareBrand,
   type AnalyticsPayloadArgs,
   type RequiredServiceAnalyticsMiddleware,
   type RequiredServiceAnalyticsMiddlewareInput,
+  requiredAnalyticsMiddlewareBrand,
   type ServiceAnalyticsMiddlewareInput,
 } from "./types";
 

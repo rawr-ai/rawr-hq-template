@@ -1,12 +1,12 @@
-import {
-  CONTROLLER_SELECTION_BYTES,
-  decodeControllerSelection,
-  type ControllerIssue,
-} from "@rawr/controller-release";
 import { createHash } from "node:crypto";
 import { constants, createReadStream } from "node:fs";
 import { access, lstat, readFile, realpath } from "node:fs/promises";
 import path from "node:path";
+import {
+  CONTROLLER_SELECTION_BYTES,
+  type ControllerIssue,
+  decodeControllerSelection,
+} from "@rawr/controller-release";
 
 import type { NativeRegistryProjection } from "../external-extensions/model";
 import {
@@ -20,8 +20,8 @@ import {
   controllerSelectorPath,
 } from "./layout";
 import {
-  inspectControllerRelease,
   type ControllerReleaseInspectionIssue,
+  inspectControllerRelease,
 } from "./release-inspector";
 
 type DiagnosticDomain =

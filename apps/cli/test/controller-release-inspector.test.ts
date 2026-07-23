@@ -17,12 +17,12 @@ import path from "node:path";
 
 import {
   CONTROLLER_PAYLOAD_SCHEMA_VERSION,
+  type ControllerPayloadEntryInput,
   canonicalSerializeControllerReleaseEnvelope,
   computeControllerMemberPayloadDigest,
   createControllerPayloadManifest,
   createControllerReleaseEnvelope,
   MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES,
-  type ControllerPayloadEntryInput,
 } from "@rawr/controller-release";
 import { afterEach, describe, expect, it } from "vitest";
 

@@ -1,16 +1,16 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { lstat, readFile, readdir, readlink, realpath } from "node:fs/promises";
+import { lstat, readdir, readFile, readlink, realpath } from "node:fs/promises";
 import path from "node:path";
 
 import {
-  decodeControllerReleaseEnvelope,
-  MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES,
-  verifyControllerPayload,
   type ControllerIssue,
   type ControllerObservedPayloadEntryInput,
   type ControllerReleaseEnvelope,
+  decodeControllerReleaseEnvelope,
+  MAX_CONTROLLER_RELEASE_ENVELOPE_BYTES,
   type VerifiedControllerPayloadEntry,
+  verifyControllerPayload,
 } from "@rawr/controller-release";
 
 import { CONTROLLER_ENVELOPE_PATH } from "./layout";

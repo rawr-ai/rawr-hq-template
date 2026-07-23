@@ -1,8 +1,8 @@
 import { RawrCommand } from "@rawr/core";
 
 import {
-  inspectGlobalController,
   type GlobalDoctorData,
+  inspectGlobalController,
 } from "../../lib/controller/global-diagnostics";
 import { resolveExternalExtensionRuntime } from "../../lib/external-extensions/runtime";
 

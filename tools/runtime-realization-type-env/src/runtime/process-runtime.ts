@@ -1,4 +1,4 @@
-import { Effect as VendorEffect, Exit } from "effect";
+import { Exit, Effect as VendorEffect } from "effect";
 import type { RawrEffect } from "../sdk/effect";
 import type {
   CompiledExecutableBoundary,
@@ -9,16 +9,16 @@ import type {
   ExecutionDescriptorTableEntry,
   ExecutionRegistry,
 } from "../spine/artifacts";
-import { createManagedEffectRuntimeAccess, type EffectRuntimeAccess } from "./effect-runtime";
 import {
   createRuntimeBoundaryPolicy,
   createRuntimeBoundaryPolicyRecord,
-  runtimeBoundaryPolicyRecordAttributes,
   type RuntimeBoundaryPolicy,
-  type RuntimeBoundaryPolicyResolution,
   type RuntimeBoundaryPolicyRecord,
+  type RuntimeBoundaryPolicyResolution,
+  runtimeBoundaryPolicyRecordAttributes,
 } from "./boundary-policy";
 import type { RuntimeRecordAttributes } from "./catalog";
+import { createManagedEffectRuntimeAccess, type EffectRuntimeAccess } from "./effect-runtime";
 
 function key(ref: ExecutionDescriptorRef): string {
   return ref.executionId;

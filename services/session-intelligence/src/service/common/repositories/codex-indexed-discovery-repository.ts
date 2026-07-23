@@ -1,11 +1,11 @@
-import type { SessionIndexRuntime } from "../ports/session-index-runtime";
-import type { SessionSourceRuntime } from "../ports/session-source-runtime";
 import type {
   CodexSessionFile,
   CodexSessionSource,
   DiscoveredSessionFile,
   SessionStatus,
 } from "../entities";
+import type { SessionIndexRuntime } from "../ports/session-index-runtime";
+import type { SessionSourceRuntime } from "../ports/session-source-runtime";
 import {
   deleteCodexFileIndexEntry,
   deleteCodexRootIndex,

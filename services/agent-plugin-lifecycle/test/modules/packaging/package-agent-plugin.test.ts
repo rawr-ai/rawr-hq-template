@@ -1,18 +1,27 @@
 import {
   lstat,
   mkdir,
-  readFile,
   readdir,
+  readFile,
   rmdir,
   unlink,
   utimes,
   writeFile,
 } from "node:fs/promises";
 import { join } from "node:path";
-
-import { afterEach, describe, expect, it } from "vitest";
+import type {
+  ArtifactRepositoryAsyncPort,
+  ArtifactRepositoryIssue,
+  ArtifactTreeObservation,
+} from "@rawr/resource-agent-plugin-artifact-repository";
+import type {
+  AgentPluginPackageOutputAsyncPort,
+  PackageOutputFailure,
+  PackageOutputPublicationResult,
+} from "@rawr/resource-agent-plugin-package-output";
+import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { Value } from "typebox/value";
-
+import { afterEach, describe, expect, it } from "vitest";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -25,30 +34,18 @@ import type {
   AgentPluginRelease,
   AgentPluginReleaseSet,
 } from "../../../src/service/shared/release";
-import type {
-  ArtifactRepositoryAsyncPort,
-  ArtifactRepositoryIssue,
-  ArtifactTreeObservation,
-} from "@rawr/resource-agent-plugin-artifact-repository";
-import type {
-  AgentPluginPackageOutputAsyncPort,
-  PackageOutputFailure,
-  PackageOutputPublicationResult,
-} from "@rawr/resource-agent-plugin-package-output";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-
-import { packagingArtifactFixture } from "./artifact-fixture";
 import { MemoryArtifactRepository } from "../../support/artifact-repository";
-import {
-  createOwnedFixtureRoot,
-  disposeOwnedFixtureRoot,
-  type OwnedFixtureRoot,
-} from "../../support/owned-fixture-root";
 import {
   createLifecycleTestClient,
   testInvocation,
   unavailableArtifactRepository,
 } from "../../support/client";
+import {
+  createOwnedFixtureRoot,
+  disposeOwnedFixtureRoot,
+  type OwnedFixtureRoot,
+} from "../../support/owned-fixture-root";
+import { packagingArtifactFixture } from "./artifact-fixture";
 
 const roots: OwnedFixtureRoot[] = [];
 

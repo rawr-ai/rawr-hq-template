@@ -1,14 +1,13 @@
-import { isContractProcedure } from "@orpc/contract";
 import type { AnyContractProcedure, AnyContractRouter } from "@orpc/contract";
+import { isContractProcedure } from "@orpc/contract";
 import type { ImplementerInternalWithMiddlewares } from "@orpc/server";
-
-import { createBaseAnalyticsMiddleware } from "../middleware/analytics";
-import { createBaseObservabilityMiddleware } from "../middleware/observability";
+import type { ExecutionContext } from "../context/types";
 import {
   createBareProcedureImplementer,
   createBareRouterImplementer,
 } from "../factory/implementer";
-import type { ExecutionContext } from "../context/types";
+import { createBaseAnalyticsMiddleware } from "../middleware/analytics";
+import { createBaseObservabilityMiddleware } from "../middleware/observability";
 import type { BaseDeps } from "./types";
 
 type AnyContractRouterObject = {

@@ -1,6 +1,6 @@
+import path from "node:path";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import path from "node:path";
 import type { CreateClientOptions } from "../src/client";
 import type { Service } from "../src/service/base";
 import type { DevResources } from "../src/service/common/resources";

@@ -1,10 +1,10 @@
-import type { EffectBody, RawrEffectYield } from "../effect";
-import type { InvocationBoundEffectServiceClients, ServiceUses } from "../service";
 import type {
   BoundaryTelemetry,
   EffectBoundaryContext,
   RuntimeResourceAccess,
 } from "../../spine/artifacts";
+import type { EffectBody, RawrEffectYield } from "../effect";
+import type { InvocationBoundEffectServiceClients, ServiceUses } from "../service";
 
 export interface AsyncEventContext<TData = unknown> {
   readonly data: TData;

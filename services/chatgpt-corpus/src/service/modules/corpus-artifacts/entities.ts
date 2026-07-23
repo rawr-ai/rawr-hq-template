@@ -1,4 +1,4 @@
-import { type Static, Type, type TSchema } from "typebox";
+import { type Static, type TSchema, Type } from "typebox";
 import { ARTIFACT_OUTPUT_DIRECTORIES, STATIC_ARTIFACT_FILE_REFS } from "../../../shared/layout";
 
 function literalUnion(values: readonly string[]): TSchema {

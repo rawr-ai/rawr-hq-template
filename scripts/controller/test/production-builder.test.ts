@@ -23,35 +23,35 @@ import {
   isProductionControllerResultHealthy,
   parseProductionControllerCliOptions,
 } from "../cli-build-production.ts";
+import { installStableControllerLauncher } from "../install-launcher.ts";
 import {
   CONTROLLER_ENTRY_PATH,
   CONTROLLER_RUNTIME_PATH,
   controllerLauncherPath,
   controllerSelectorPath,
 } from "../layout.ts";
-import { installStableControllerLauncher } from "../install-launcher.ts";
-import {
-  createNodeControllerSelectorStore,
-  type ControllerSelectorStore,
-} from "../selector-store.ts";
 import {
   activateProductionController,
   probeControllerCleanStart,
 } from "../production/activation.ts";
 import { finalizeWithStableSourceRevision } from "../production/builder.ts";
-import { serializeGeneratedManifest } from "../production/official-manifest.ts";
 import {
   assertProductionDependencyClosure,
   loadProductionDependencies,
 } from "../production/dependencies.ts";
 import { installGlobalControllerAlias } from "../production/global-alias.ts";
+import { serializeGeneratedManifest } from "../production/official-manifest.ts";
 import { createExactPayloadSourcePlan } from "../production/payload.ts";
-import { runCommand, type CommandRunner } from "../production/process.ts";
+import { type CommandRunner, runCommand } from "../production/process.ts";
 import {
   createRuntimePackageManifest,
   writeProductionAppManifest,
 } from "../production/runtime-package.ts";
 import { requireVerifiedOfficialControllerRelease } from "../production/verify-official.ts";
+import {
+  type ControllerSelectorStore,
+  createNodeControllerSelectorStore,
+} from "../selector-store.ts";
 import { buildSemanticFixture as buildSharedSemanticFixture } from "./support/semantic-controller-fixture.ts";
 
 const roots: string[] = [];

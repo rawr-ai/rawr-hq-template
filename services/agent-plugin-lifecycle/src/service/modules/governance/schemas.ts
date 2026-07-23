@@ -1,4 +1,4 @@
-import { ReadonlyObject, Type, type Static } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
   CurrentMainSelectionLocatorSchema,
@@ -6,8 +6,8 @@ import {
 } from "../../model/dto/current-main-selection";
 
 import {
-  CurrentMainBytesSchema,
   CurrentMainBodyV2Schema,
+  CurrentMainBytesSchema,
   CurrentMainV2CodecResultSchema,
 } from "./model/dto/current-main";
 
@@ -38,5 +38,5 @@ export const CurrentMainRecordInputSchema = Type.Union([
 export const CurrentMainRecordResultSchema = CurrentMainV2CodecResultSchema;
 export type CurrentMainRecordProcedureResult = Static<typeof CurrentMainRecordResultSchema>;
 
-export { CurrentMainSelectionResultSchema };
 export type { GitLocatorInput } from "./model/dto/boundary";
+export { CurrentMainSelectionResultSchema };

@@ -1,17 +1,17 @@
 import type { CanonicalJsonValue } from "./canonical";
-import { issue, sortReleaseIssues, type ReleaseIssue } from "./issues";
+import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
 import {
+  compareCanonicalText,
   MAX_OWNERSHIP_CLAIMS,
   OWNERSHIP_INDEX_SCHEMA_VERSION,
-  compareCanonicalText,
-  parseOwnershipIdentity,
-  parsePluginId,
   type OwnershipIdentity,
   type OwnershipIndexSchemaVersion,
   type PluginId,
+  parseOwnershipIdentity,
+  parsePluginId,
 } from "./primitives";
-import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
+import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const distributionOwnershipIndexBrand: unique symbol;
 

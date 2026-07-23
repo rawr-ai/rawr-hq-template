@@ -3,9 +3,8 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
-
-import { NativeRegistryState } from "../../src/lib/external-extensions/native-registry";
 import { nativeInstallArtifactName } from "../../src/lib/external-extensions/install-provenance";
+import { NativeRegistryState } from "../../src/lib/external-extensions/native-registry";
 import { createReservedControllerSurface } from "../../src/lib/external-extensions/reserved-surface";
 import {
   MAX_STATIC_EVIDENCE_TEXT_BYTES,

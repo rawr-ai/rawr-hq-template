@@ -1,27 +1,26 @@
 import { createHash } from "node:crypto";
 
 import { Value } from "typebox/value";
-
+import { isCanonicalId, isCanonicalRepositoryIdentity } from "../../../../model/dto/structural";
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-  type CanonicalJsonValue,
 } from "../../../../shared/release/canonical";
 import {
+  type CanonicalCurrentMainV2,
   CURRENT_MAIN_V2_PROTOCOL,
   CURRENT_MAIN_V2_SCHEMA_VERSION,
-  CurrentMainBodyV2Schema,
-  CurrentMainEnvelopeV2Schema,
-  MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES,
-  type CanonicalCurrentMainV2,
   type CurrentMainBodyV2,
+  CurrentMainBodyV2Schema,
   type CurrentMainEnvelopeV2,
+  CurrentMainEnvelopeV2Schema,
   type CurrentMainProjectionTupleV2,
   type CurrentMainV2CodecFailureCode,
   type CurrentMainV2CodecResult,
+  MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES,
 } from "../dto/current-main";
-import { isCanonicalId, isCanonicalRepositoryIdentity } from "../../../../model/dto/structural";
 
 export function encodeCurrentMainBodyV2(input: unknown): CurrentMainV2CodecResult {
   const body = normalizeBody(input);

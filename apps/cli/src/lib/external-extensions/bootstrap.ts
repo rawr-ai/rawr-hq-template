@@ -7,7 +7,7 @@ import type {
   QuarantinedExternalExtension,
   ReservedControllerSurface,
 } from "./model";
-import { NativeRegistryState, type ExternalExtensionStatePort } from "./native-registry";
+import { type ExternalExtensionStatePort, NativeRegistryState } from "./native-registry";
 import { registerExternalExtensionRuntime } from "./runtime";
 import type { ExternalExtensionCommandRuntime } from "./service";
 import { NodeStaticEvidencePort, type StaticEvidencePort } from "./static-evidence";

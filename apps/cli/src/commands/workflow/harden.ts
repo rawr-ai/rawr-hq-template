@@ -1,15 +1,14 @@
-import { RawrCommand } from "@rawr/core";
-import { Flags } from "@oclif/core";
 import path from "node:path";
+import { Flags } from "@oclif/core";
+import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import {
-  createHqOpsClient,
   createHqOpsCallOptions,
+  createHqOpsClient,
   type HqOpsJournalSnippet,
 } from "../../lib/hq-ops-client";
-import { journalId, safePreview } from "../../lib/journal-projection";
 import { recordArtifact, recordStep } from "../../lib/journal-context";
+import { journalId, safePreview } from "../../lib/journal-projection";
 import { resolveCliReentry, runStep, type StepResult } from "../../lib/subprocess";
-import { findWorkspaceRoot } from "@rawr/core";
 
 type HardenStep = StepResult & { stdoutJson?: any };
 

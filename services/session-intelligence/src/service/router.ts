@@ -1,7 +1,7 @@
+import { impl } from "./impl";
 import { router as catalog } from "./modules/catalog/router";
 import { router as search } from "./modules/search/router";
 import { router as transcripts } from "./modules/transcripts/router";
-import { impl } from "./impl";
 
 export const router = impl.router({
   catalog,

@@ -1,15 +1,15 @@
-import { ReadonlyObject, Type, type Static } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-  type CanonicalJsonValue,
 } from "./canonical";
 import { issue, type ReleaseIssue } from "./issues";
 import { type ArtifactDigest, type ReleaseDigest, type ReleaseSetDigest } from "./primitives";
-import { failure, success, type ReleaseResult } from "./result";
+import { failure, type ReleaseResult, success } from "./result";
 
 declare const releaseArtifactRefBrand: unique symbol;
 declare const completeSetArtifactRefBrand: unique symbol;

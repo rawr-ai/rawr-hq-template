@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, Type, type Static } from "typebox";
+import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 import {
   CanonicalChannelProjectionTupleSchema,

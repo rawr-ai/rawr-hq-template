@@ -1,12 +1,9 @@
-import {
-  compareCanonicalText,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  verifyCompleteReleaseSet,
-  type AgentPluginRelease,
-  type CompleteSetArtifactRef,
-  type ReleaseArtifactRef,
-} from "../../../shared/release";
+import type {
+  ArtifactStore,
+  BuildFailpoint,
+  BuildFailpointEvent,
+  ContentWorkspaceSnapshotReader,
+} from "../../../model/dependencies/releases";
 
 import type {
   ArtifactPublicationOptions,
@@ -19,21 +16,24 @@ import type {
   SourceEligibilityIssue,
 } from "../../../model/dto/releases/content-workspace";
 import {
-  artifactStoreBuildIssue,
-  releaseConstructionBuildIssue,
+  type AgentPluginRelease,
+  type CompleteSetArtifactRef,
+  compareCanonicalText,
+  createCompleteSetArtifactRef,
+  createReleaseArtifactRef,
+  type ReleaseArtifactRef,
+  verifyCompleteReleaseSet,
+} from "../../../shared/release";
+import {
   type AgentPluginBuildRequest,
+  artifactStoreBuildIssue,
   type BuildIssue,
   type BuildMode,
   type BuildResult,
+  releaseConstructionBuildIssue,
 } from "../model/dto/release-lifecycle";
-import { constructPlan, type ConstructedPlan } from "../model/policy/release-plan";
+import { type ConstructedPlan, constructPlan } from "../model/policy/release-plan";
 import { module } from "../module";
-import type {
-  ArtifactStore,
-  BuildFailpoint,
-  BuildFailpointEvent,
-  ContentWorkspaceSnapshotReader,
-} from "../../../model/dependencies/releases";
 
 interface BuildExecutionRequest extends AgentPluginBuildRequest {
   readonly failpoint?: BuildFailpoint;

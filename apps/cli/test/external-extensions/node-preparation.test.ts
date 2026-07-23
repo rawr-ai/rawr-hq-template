@@ -12,10 +12,9 @@ import { pathToFileURL } from "node:url";
 
 import { create } from "tar";
 import { afterEach, describe, expect, it } from "vitest";
-
-import { NodeExternalExtensionPreparationPort } from "../../src/lib/external-extensions/node-preparation";
 import { nativeInstallArtifactName } from "../../src/lib/external-extensions/install-provenance";
 import { sha256RegularFile } from "../../src/lib/external-extensions/native-manager-protocol";
+import { NodeExternalExtensionPreparationPort } from "../../src/lib/external-extensions/node-preparation";
 import { createReservedControllerSurface } from "../../src/lib/external-extensions/reserved-surface";
 import {
   ExternalExtensionService,

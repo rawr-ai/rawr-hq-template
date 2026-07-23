@@ -3,19 +3,23 @@ import type {
   NativeProviderResourcePort,
 } from "../../../model/dependencies/providers";
 import type { ContentAuthority } from "../../../shared/release";
-
-import { failure, issue, success } from "../model/errors/deployment-result";
-import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 import type { CanonicalNativeMutationAction } from "../model/dto/canonical-convergence";
 import type { ProviderId, ProviderTarget } from "../model/dto/provider-target";
+import { failure, issue, success } from "../model/errors/deployment-result";
+import { NativeProviderPreMutationRefusal } from "../model/errors/native-resource";
 import type { AgentProviderProjection } from "../model/policy/projection";
-import type { NativeProviderMutationAction } from "../model/repositories/provider";
-import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { CanonicalNativeRuntime } from "../model/repositories/canonical-native";
-import type { ProviderTargetMutator, ProviderTargetReader } from "../model/repositories/provider";
+import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
+import type {
+  NativeProviderMutationAction,
+  ProviderTargetMutator,
+  ProviderTargetReader,
+} from "../model/repositories/provider";
 import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
+import type { CanonicalNativeObserver } from "./canonical-native-observer";
 import { CLAUDE_ADAPTER_PROTOCOL, type ClaudeProviderAdapter } from "./claude";
 import { CODEX_ADAPTER_PROTOCOL, type CodexProviderAdapter } from "./codex";
+import type { NativeProviderAdapter, NativeProviderObserver } from "./native";
 import {
   createResourceClaudeCanonicalObserver,
   createResourceClaudeProviderAdapter,
@@ -26,8 +30,6 @@ import {
   createResourceCodexProviderAdapter,
   createResourceCodexProviderObserver,
 } from "./resource-codex";
-import type { CanonicalNativeObserver } from "./canonical-native-observer";
-import type { NativeProviderAdapter, NativeProviderObserver } from "./native";
 
 export function createResourceNativeProviderAdapterResolver(
   executables: NativeProviderExecutablePaths,

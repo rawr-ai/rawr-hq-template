@@ -1,30 +1,40 @@
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-  type CanonicalJsonValue,
 } from "./canonical";
-import { issue, sortReleaseIssues, type ReleaseIssue } from "./issues";
+import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { ownershipClaimsFor } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
 import {
+  type AgentPluginPayload,
+  type PayloadEntry,
+  type PayloadManifestEntry,
   parsePayloadManifest,
   payloadEntriesValue,
   payloadManifestValue,
   payloadValue,
   verifyAgentPluginPayload,
-  type AgentPluginPayload,
-  type PayloadEntry,
-  type PayloadManifestEntry,
 } from "./payload";
 import {
-  ARTIFACT_PROTOCOL_VERSION,
   AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
+  type AgentPluginReleaseSchemaVersion,
+  ARTIFACT_PROTOCOL_VERSION,
+  type ArtifactDigest,
+  type ArtifactProtocolVersion,
+  artifactDigest,
   BUILDER_PROTOCOL_VERSION,
+  type BuilderProtocolVersion,
+  type ContentAuthority,
+  compareCanonicalText,
+  type GitCommitId,
+  type GitTreeId,
   MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
   MAX_OWNERSHIP_CLAIMS,
-  artifactDigest,
-  compareCanonicalText,
+  type OwnershipIdentity,
+  type PayloadDigest,
+  type PluginId,
   parseArtifactDigest,
   parseContentAuthority,
   parseGitCommitId,
@@ -35,30 +45,20 @@ import {
   parseReleaseDigest,
   parseReleaseInputDigest,
   parseRepositoryIdentity,
-  releaseDigest,
-  type AgentPluginReleaseSchemaVersion,
-  type ArtifactDigest,
-  type ArtifactProtocolVersion,
-  type BuilderProtocolVersion,
-  type ContentAuthority,
-  type GitCommitId,
-  type GitTreeId,
-  type OwnershipIdentity,
-  type PayloadDigest,
-  type PluginId,
   type ReleaseDigest,
   type ReleaseInputDigest,
   type RepositoryIdentity,
+  releaseDigest,
 } from "./primitives";
 import {
-  provenanceBindingValue,
-  parseProvenanceBindings,
-  releaseInputBodyValue,
-  verifyAgentPluginReleaseInput,
   type AgentPluginReleaseInput,
   type ProvenanceBinding,
+  parseProvenanceBindings,
+  provenanceBindingValue,
+  releaseInputBodyValue,
+  verifyAgentPluginReleaseInput,
 } from "./release-input";
-import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
+import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginReleaseBrand: unique symbol;
 

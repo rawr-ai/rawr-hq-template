@@ -1,20 +1,24 @@
-import {
-  createAgentPluginPayload,
-  createAgentPluginRelease,
-  createAgentPluginReleaseInput,
-  createAgentPluginReleaseSet,
-  createCompleteSetArtifactRef,
-  createReleaseArtifactRef,
-  payloadEntryBytes,
-  type AgentPluginRelease,
-  type ArtifactRef,
-  type ContentAuthority,
-  type VerifiedArtifactSnapshotV1,
-  type VerifiedReleaseArtifactV1,
-} from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
-
-import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
+import {
+  type MechanicalEvidenceDigest,
+  type MechanicalProviderEvidence,
+  mechanicalTargetFactDigest,
+} from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
+import {
+  type CompleteTestInput,
+  type TargetedTestInput,
+} from "../../../src/service/modules/providers/model/dto/mode";
+import type { UnboundTargetOperationOutcome } from "../../../src/service/modules/providers/model/dto/outcome";
+import {
+  type ProviderTarget,
+  parseProviderTarget,
+} from "../../../src/service/modules/providers/model/dto/provider-target";
+import {
+  failure,
+  issue,
+  success,
+} from "../../../src/service/modules/providers/model/errors/deployment-result";
+import { decodeMechanicalProviderEvidence } from "../../../src/service/modules/providers/model/helpers/evidence-codec";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
@@ -22,15 +26,20 @@ import {
   type ProviderMarketplaceRegistration,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
 import {
-  parseAdapterProtocol,
-  renderCompleteProjection,
   type AgentProviderProjection,
   type ProjectionDigest,
   type ProviderArtifactAuthority,
   type ProviderCapability,
   type ProviderProjectionMember,
   type ProviderSourceIdentity,
+  parseAdapterProtocol,
+  renderCompleteProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
+import {
+  createTargetReceipt,
+  type TargetReceipt,
+  visibleFingerprint,
+} from "../../../src/service/modules/providers/model/policy/receipt";
 import {
   createProviderInventory,
   hasProjectionExposureCollision,
@@ -40,45 +49,35 @@ import {
   type ReceiptObservation,
   type TargetIdentityObservation,
 } from "../../../src/service/modules/providers/model/policy/state-machine";
-import {
-  createTargetReceipt,
-  visibleFingerprint,
-  type TargetReceipt,
-} from "../../../src/service/modules/providers/model/policy/receipt";
-import {
-  mechanicalTargetFactDigest,
-  type MechanicalEvidenceDigest,
-  type MechanicalProviderEvidence,
-} from "../../../src/service/modules/providers/model/dto/mechanical-evidence";
-import {
-  type CompleteTestInput,
-  type TargetedTestInput,
-} from "../../../src/service/modules/providers/model/dto/mode";
-import {
-  parseProviderTarget,
-  type ProviderTarget,
-} from "../../../src/service/modules/providers/model/dto/provider-target";
-import type { UnboundTargetOperationOutcome } from "../../../src/service/modules/providers/model/dto/outcome";
-import { decodeMechanicalProviderEvidence } from "../../../src/service/modules/providers/model/helpers/evidence-codec";
 import type {
   MechanicalEvidenceHandle,
   MechanicalEvidenceObservation,
 } from "../../../src/service/modules/providers/model/repositories/evidence";
 import type { NativeProviderMutationAction } from "../../../src/service/modules/providers/model/repositories/provider";
 import {
-  failure,
-  issue,
-  success,
-} from "../../../src/service/modules/providers/model/errors/deployment-result";
-import {
   bindCompleteProjectionOutcomes,
-  executeCompleteTest,
   type CompleteTestDependencies,
+  executeCompleteTest,
 } from "../../../src/service/modules/providers/router/complete-test.router";
 import {
   executeTargetedTest,
   type TargetedTestDependencies,
 } from "../../../src/service/modules/providers/router/targeted-test.router";
+import {
+  type AgentPluginRelease,
+  type ArtifactRef,
+  type ContentAuthority,
+  createAgentPluginPayload,
+  createAgentPluginRelease,
+  createAgentPluginReleaseInput,
+  createAgentPluginReleaseSet,
+  createCompleteSetArtifactRef,
+  createReleaseArtifactRef,
+  payloadEntryBytes,
+  type VerifiedArtifactSnapshotV1,
+  type VerifiedReleaseArtifactV1,
+} from "../../../src/service/shared/release";
+import { must, productFixture, releaseInputBody, SOURCE } from "../../shared/release/fixtures";
 
 function createCompleteTest(dependencies: () => CompleteTestDependencies) {
   return async (input: CompleteTestInput) => executeCompleteTest(input, dependencies());

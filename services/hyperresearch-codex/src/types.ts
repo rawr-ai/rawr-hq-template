@@ -1,8 +1,8 @@
 export type {
   HyperresearchAgentArtifactWrite,
   HyperresearchAgentJob,
-  HyperresearchAgentOutput,
   HyperresearchAgentJobStatus,
+  HyperresearchAgentOutput,
   HyperresearchCliCall,
   HyperresearchCliOperation,
   HyperresearchCliResult,

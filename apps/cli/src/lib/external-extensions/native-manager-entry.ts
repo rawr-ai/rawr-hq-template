@@ -1,7 +1,7 @@
-import { Config } from "@oclif/core";
-import { commands } from "@oclif/plugin-plugins";
 import { realpath } from "node:fs/promises";
 import path from "node:path";
+import { Config } from "@oclif/core";
+import { commands } from "@oclif/plugin-plugins";
 
 import {
   decodeNativeManagerInvocation,

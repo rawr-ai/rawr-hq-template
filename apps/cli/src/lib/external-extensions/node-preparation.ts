@@ -1,15 +1,14 @@
 import { chmod, copyFile, lstat, mkdtemp, realpath, rename, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-
+import { nativeInstallArtifactName, parseNativeInstallProvenance } from "./install-provenance";
 import type {
   CandidateInspection,
-  NativeRegistryUserEntry,
   NativeRegistryProjection,
+  NativeRegistryUserEntry,
   ReservedControllerSurface,
 } from "./model";
 import { sha256RegularFile } from "./native-manager-protocol";
-import { nativeInstallArtifactName, parseNativeInstallProvenance } from "./install-provenance";
 import type {
   ExternalExtensionPreparationPort,
   InspectedInstallArtifact,

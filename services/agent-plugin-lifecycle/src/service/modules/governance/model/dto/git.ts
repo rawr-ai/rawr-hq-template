@@ -1,16 +1,16 @@
 import type { ReleaseIssue, ReleaseResult } from "../../../../shared/release";
 
 import {
+  type CanonicalRef,
+  type GitBlobId,
+  type GitCommitId,
+  type GitTreeId,
   parseCanonicalRef,
   parseCommit,
   parseGitBlobId,
   parseRelativePath,
   parseRepository,
   parseTree,
-  type CanonicalRef,
-  type GitBlobId,
-  type GitCommitId,
-  type GitTreeId,
   type ReleaseRelativePath,
   type RepositoryIdentity,
 } from "./primitives";

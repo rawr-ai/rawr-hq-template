@@ -1,12 +1,11 @@
 import { chmod, mkdir, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-
-import { controllerCommandPackages } from "../../../../apps/cli/src/lib/controller/classification.ts";
 import type {
   ControllerArchitecture,
   ControllerDigest,
   ControllerPlatform,
 } from "@rawr/controller-release";
+import { controllerCommandPackages } from "../../../../apps/cli/src/lib/controller/classification.ts";
 import { buildControllerRelease } from "../../build-release.ts";
 import { createExactPayloadSourcePlan } from "../../production/payload.ts";
 

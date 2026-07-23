@@ -1,12 +1,12 @@
+import type { NonEmptyReadonlyArray, ProviderDeploymentIssue } from "../errors/deployment-result";
 import type { ProviderMarketplaceRegistration } from "../policy/marketplace";
 import type { AgentProviderProjection, CapabilityObservation } from "../policy/projection";
 import type {
-  NativeProviderMutationAction,
   NativeConfiguredExposureObservation,
+  NativeProviderMutationAction,
   NativeStandaloneExposureObservation,
   ProviderInventory,
 } from "../policy/state-machine";
-import type { NonEmptyReadonlyArray, ProviderDeploymentIssue } from "../errors/deployment-result";
 import type { CanonicalDesiredState } from "./canonical-desired-state";
 import type { ProviderTarget } from "./provider-target";
 

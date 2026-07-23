@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { ReadonlyObject, Type, type Static } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 export const MECHANICAL_EVIDENCE_PROTOCOL_VERSION = 1 as const;

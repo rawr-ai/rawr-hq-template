@@ -5,6 +5,7 @@
  * reusable control-plane mechanics with a tiny route and fakeable CLI backend.
  */
 import { runHyperresearchCli } from "../../common/adapters/hyperresearch-cli";
+import { writeSyntheticArtifact } from "./helpers/artifacts";
 import { validateSyntheticRunIntegrity } from "./helpers/integrity";
 import {
   nextSyntheticPendingStep,
@@ -16,7 +17,6 @@ import {
   loadSyntheticHyperresearchStep,
   syntheticHyperresearchSteps,
 } from "./helpers/steps";
-import { writeSyntheticArtifact } from "./helpers/artifacts";
 import { module } from "./module";
 
 const runSyntheticSlice = module.runSyntheticSlice.handler(async ({ context, input }) => {

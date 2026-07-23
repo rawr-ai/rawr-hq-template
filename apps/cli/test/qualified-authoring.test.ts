@@ -6,8 +6,8 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  CONTENT_WORKSPACE_PROTOCOL,
   authorCuratedAgentPlugin,
+  CONTENT_WORKSPACE_PROTOCOL,
   parseCuratedAgentPluginAuthoringRequest,
   verifyContentWorkspaceV1,
 } from "../src/lib/authoring/agent-plugin";
@@ -21,12 +21,12 @@ import {
   parseExternalExtensionAuthoringRequest,
 } from "../src/lib/authoring/cli-extension";
 import {
-  NodeQualifiedWritePort,
   completeOrderedWritePlan,
   executeAuthoringPlan,
+  NodeQualifiedWritePort,
+  type QualifiedWritePort,
   qualifiedTextWrite,
   verifiedDestinationRoot,
-  type QualifiedWritePort,
 } from "../src/lib/authoring/shared";
 
 const tempRoots: string[] = [];

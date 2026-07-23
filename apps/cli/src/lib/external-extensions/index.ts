@@ -1,5 +1,5 @@
-export * from "./command";
 export * from "./bootstrap";
+export * from "./command";
 export * from "./manifest-parser";
 export * from "./model";
 export * from "./native-mutation";

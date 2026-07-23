@@ -1,5 +1,5 @@
+import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import { createCompleteSetArtifactRef, parseReleaseSetDigest } from "../../../shared/release";
-
 import type {
   CanonicalDesiredState,
   CanonicalDesiredStateResolution,
@@ -12,7 +12,6 @@ import {
 } from "../model/errors/deployment-result";
 import { resolveCanonicalDesiredStates } from "../model/policy/canonical-desired-state";
 import type { VerifiedReleaseReader } from "../model/repositories/artifact";
-import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 
 export interface CanonicalSelectionDependencies {
   readonly currentMain: CurrentMainSelectionReader;

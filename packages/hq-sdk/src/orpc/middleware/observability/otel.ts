@@ -1,4 +1,4 @@
-import { SpanStatusCode, trace, type Span } from "@opentelemetry/api";
+import { type Span, SpanStatusCode, trace } from "@opentelemetry/api";
 
 export function getActiveSpan(): Span | undefined {
   return trace.getActiveSpan();

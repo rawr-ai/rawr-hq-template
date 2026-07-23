@@ -1,21 +1,12 @@
 import { schema } from "@rawr/hq-sdk";
-import { describe, expect, expectTypeOf, it } from "vitest";
-import { Type, type Static } from "typebox";
+import { type Static, Type } from "typebox";
 import { Value } from "typebox/value";
-
+import { describe, expect, expectTypeOf, it } from "vitest";
 import {
-  CanonicalStatusInputSchema,
-  CanonicalStatusResultSchema,
-  type CanonicalStatusProcedureResult,
-  CanonicalSyncInputSchema,
-  CanonicalSyncResultSchema,
-  type CanonicalSyncProcedureResult,
-  CompleteTestInputSchema,
-  CompleteTestResultSchema,
-  type CompleteTestProcedureResult,
-  TargetedTestInputSchema,
-  TargetedTestResultSchema,
-} from "../../../src/service/modules/providers/schemas";
+  BoundedReadonlyArray,
+  EmptyReadonlyArray,
+  NonEmptyReadonlyArray,
+} from "../../../src/service/model/dto/structural";
 import type {
   CanonicalStatusInput,
   CanonicalSyncInput,
@@ -23,10 +14,12 @@ import type {
   TargetedTestInput,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
+  CompleteSetArtifactRefSchema,
   normalizeCanonicalStatusRequest,
   normalizeCanonicalSyncRequest,
   normalizeCompleteTestRequest,
   normalizeTargetedTestRequest,
+  ReleaseArtifactRefSchema,
 } from "../../../src/service/modules/providers/model/dto/mode";
 import {
   type CanonicalStatusOutcome,
@@ -50,18 +43,22 @@ import {
   targetedTestOperationResult,
 } from "../../../src/service/modules/providers/router/procedure-result";
 import {
-  BoundedReadonlyArray,
-  EmptyReadonlyArray,
-  NonEmptyReadonlyArray,
-} from "../../../src/service/model/dto/structural";
+  CanonicalStatusInputSchema,
+  type CanonicalStatusProcedureResult,
+  CanonicalStatusResultSchema,
+  CanonicalSyncInputSchema,
+  type CanonicalSyncProcedureResult,
+  CanonicalSyncResultSchema,
+  CompleteTestInputSchema,
+  type CompleteTestProcedureResult,
+  CompleteTestResultSchema,
+  TargetedTestInputSchema,
+  TargetedTestResultSchema,
+} from "../../../src/service/modules/providers/schemas";
 import {
   CompleteSetArtifactRefInputSchema,
   ReleaseArtifactRefInputSchema,
 } from "../../../src/service/shared/release";
-import {
-  CompleteSetArtifactRefSchema,
-  ReleaseArtifactRefSchema,
-} from "../../../src/service/modules/providers/model/dto/mode";
 
 type ProviderFailureIssues = Extract<CompleteTestProcedureResult, { ok: false }>["issues"];
 type SuccessfulCanonicalSync = Extract<CanonicalSyncProcedureResult, { ok: true }>["value"];

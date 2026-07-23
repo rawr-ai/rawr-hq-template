@@ -12,8 +12,8 @@
  */
 import { createBaseMiddleware } from "../../baseline/middleware";
 import type { BaseMetadata } from "../../baseline/types";
-import type { Logger } from "../../ports/logger";
 import { createNormalMiddlewareBuilder } from "../../factory/middleware";
+import type { Logger } from "../../ports/logger";
 import { getErrorDetails } from "./errors";
 import { createObservabilityHandler } from "./handler";
 import { deriveServiceNames, prefixAttributes } from "./naming";
@@ -23,9 +23,9 @@ import {
   resolveRequiredServiceObservabilityProfile,
 } from "./profiles";
 import {
-  requiredObservabilityMiddlewareBrand,
   type RequiredServiceObservabilityMiddleware,
   type RequiredServiceObservabilityMiddlewareInput,
+  requiredObservabilityMiddlewareBrand,
   type ServiceObservabilityMiddlewareInput,
 } from "./types";
 

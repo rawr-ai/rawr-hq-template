@@ -1,4 +1,8 @@
-import { parsePluginId, type ContentAuthority, type PluginId } from "../../../shared/release";
+import type {
+  CodexNativeResourceSession,
+  NativeProviderResourcePort,
+} from "../../../model/dependencies/providers";
+import { type ContentAuthority, type PluginId, parsePluginId } from "../../../shared/release";
 import { normalizeHookEventSlug } from "../model/helpers/hook-manifest";
 import {
   marketplaceState,
@@ -10,9 +14,11 @@ import type { NativeStandaloneExposureObservation } from "../model/policy/state-
 import type { ProviderMarketplaceLocationResolver } from "../model/repositories/marketplace-location";
 import type { ProviderMarketplaceSourceReader } from "../model/repositories/state";
 import {
+  type CanonicalNativeObserver,
+  createCanonicalNativeObserver,
+} from "./canonical-native-observer";
+import {
   CODEX_ADAPTER_PROTOCOL,
-  createCodexNativeInventoryBridge,
-  createCodexProviderAdapter,
   type CodexAppServerPort,
   type CodexConfiguredPlugin,
   type CodexMarketplacePlugin,
@@ -20,21 +26,15 @@ import {
   type CodexProviderAdapter,
   type CodexSessionPort,
   type CodexVisiblePlugin,
+  createCodexNativeInventoryBridge,
+  createCodexProviderAdapter,
 } from "./codex";
-import {
-  createCanonicalNativeObserver,
-  type CanonicalNativeObserver,
-} from "./canonical-native-observer";
 import { createNativeProviderObserver, type NativeProviderObserver } from "./native";
 import {
-  NATIVE_PACKAGE_READ_LIMITS,
   inspectNativePluginPackage,
   inspectNativePluginVisibility,
+  NATIVE_PACKAGE_READ_LIMITS,
 } from "./resource-package";
-import type {
-  CodexNativeResourceSession,
-  NativeProviderResourcePort,
-} from "../../../model/dependencies/providers";
 import { NativeProvenanceAmbiguity } from "./resource-provenance";
 import {
   capabilitiesFromCommands,

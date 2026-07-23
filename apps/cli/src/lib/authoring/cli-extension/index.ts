@@ -1,11 +1,11 @@
 export { authorExternalExtension, verifyExternalExtensionDestination } from "./application";
 export {
-  parseExternalExtensionIdentity,
   type ExternalExtensionIdentity,
+  parseExternalExtensionIdentity,
 } from "./identity";
 export {
-  parseExternalExtensionAuthoringRequest,
   type ExternalExtensionAuthoringRequest,
   type ExternalExtensionRequestResult,
+  parseExternalExtensionAuthoringRequest,
 } from "./request";
 export { externalExtensionWritePlan } from "./template";

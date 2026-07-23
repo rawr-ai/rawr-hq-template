@@ -7,17 +7,9 @@ import type {
 import type { GitWorkspaceAnchor } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
 
-import { createClient, type Client, type Deps } from "../src/client";
-import {
-  createLifecycleTestClient,
-  unavailableContentWorkspace,
-  unavailableArtifactRepository,
-  unavailableProviderResources,
-} from "./support/client";
-import { MemoryArtifactRepository } from "./support/artifact-repository";
-import { productFixture } from "./shared/release/fixtures";
-import { createResourceArtifactStore } from "../src/service/repository/artifact-repository";
+import { type Client, createClient, type Deps } from "../src/client";
 import { parseProviderTarget } from "../src/service/modules/providers/model/dto/provider-target";
+import { createResourceArtifactStore } from "../src/service/repository/artifact-repository";
 import {
   parseArtifactRef,
   parseContentAuthority,
@@ -27,6 +19,14 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
 } from "../src/service/shared/release";
+import { productFixture } from "./shared/release/fixtures";
+import { MemoryArtifactRepository } from "./support/artifact-repository";
+import {
+  createLifecycleTestClient,
+  unavailableArtifactRepository,
+  unavailableContentWorkspace,
+  unavailableProviderResources,
+} from "./support/client";
 
 const invocation = {
   context: {

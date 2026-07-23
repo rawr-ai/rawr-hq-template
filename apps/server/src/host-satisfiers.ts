@@ -11,6 +11,7 @@ import {
   type ServiceBinding,
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
+
 type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
 type HostProcess = ProcessView & {
   processId: "server";

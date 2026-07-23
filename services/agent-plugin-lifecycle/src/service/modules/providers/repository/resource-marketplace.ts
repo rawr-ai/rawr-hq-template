@@ -1,17 +1,17 @@
+import type { NativeResourcePackageObservation } from "../../../model/dependencies/providers";
 import { parseContentAuthority, parsePluginId } from "../../../shared/release";
-import { canonicalBytes, equalBytes, type CanonicalValue } from "../model/helpers/canonical";
+import type { ProviderId } from "../model/dto/provider-target";
+import { type CanonicalValue, canonicalBytes, equalBytes } from "../model/helpers/canonical";
 import {
   createProviderMarketplaceRegistration,
   type ProviderMarketplaceRegistration,
 } from "../model/policy/marketplace";
 import {
-  parseProjectionDigest,
   type AdapterProtocol,
   type ProviderMemberFingerprint,
   type ProviderSourceIdentity,
+  parseProjectionDigest,
 } from "../model/policy/projection";
-import type { ProviderId } from "../model/dto/provider-target";
-import type { NativeResourcePackageObservation } from "../../../model/dependencies/providers";
 
 const MARKETPLACE_METADATA_PATH = ".rawr/marketplace.json";
 

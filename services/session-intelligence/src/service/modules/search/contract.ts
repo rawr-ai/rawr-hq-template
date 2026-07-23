@@ -1,8 +1,8 @@
 import { schema } from "@rawr/hq-sdk";
 import { type Static, Type } from "typebox";
 import { ocBase } from "../../base";
-import { INVALID_REGEX } from "../../common/errors";
 import { RoleFilterSchema, SessionSourceFilterSchema } from "../../common/entities";
+import { INVALID_REGEX } from "../../common/errors";
 import {
   DEFAULT_FACET_CANDIDATE_LIMIT,
   FacetSearchHitSchema,

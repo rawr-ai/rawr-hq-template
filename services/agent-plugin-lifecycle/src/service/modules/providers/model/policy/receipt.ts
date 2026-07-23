@@ -1,49 +1,48 @@
 import {
+  type CompleteSetArtifactRef,
+  type PluginId,
   parseArtifactRef,
   parseContentAuthority,
   parseGitCommitId,
   parsePluginId,
-  type CompleteSetArtifactRef,
-  type PluginId,
   type ReleaseArtifactRef,
 } from "../../../../shared/release";
-
+import type { EvaluationProfile, ProviderRequestDigest } from "../dto/mode";
+import { releaseRefValue, setRefValue } from "../dto/mode";
+import type { ProviderId, ProviderTargetDigest } from "../dto/provider-target";
 import {
+  type DeploymentResult,
+  failure,
+  firstIssue,
+  issue,
+  type ProviderDeploymentIssue,
+  success,
+} from "../errors/deployment-result";
+import {
+  type CanonicalValue,
   canonicalBytes,
   canonicalDigest,
   compareCanonical,
   equalBytes,
-  type CanonicalValue,
 } from "../helpers/canonical";
-import type { EvaluationProfile, ProviderRequestDigest } from "../dto/mode";
-import { releaseRefValue, setRefValue } from "../dto/mode";
-import {
-  createProviderMarketplaceRegistration,
-  marketplaceStateValue,
-  sameMarketplaceState,
-  type MarketplaceProjectionDigest,
-  type ProviderMarketplaceState,
-} from "./marketplace";
 import { boundedArray, canonicalString, exactRecord, safeInteger } from "../helpers/parse";
 import {
-  PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
+  createProviderMarketplaceRegistration,
+  type MarketplaceProjectionDigest,
+  marketplaceStateValue,
+  type ProviderMarketplaceState,
+  sameMarketplaceState,
+} from "./marketplace";
+import {
   type AdapterProtocol,
   type CapabilityProfileDigest,
+  PROVIDER_ARTIFACT_AUTHORITY_PROTOCOL,
   type ProjectionDigest,
   type ProviderArtifactAuthority,
   type ProviderMemberFingerprint,
   type ProviderSourceDigest,
   type ProviderSourceIdentity,
 } from "./projection";
-import {
-  failure,
-  firstIssue,
-  issue,
-  success,
-  type DeploymentResult,
-  type ProviderDeploymentIssue,
-} from "../errors/deployment-result";
-import type { ProviderId, ProviderTargetDigest } from "../dto/provider-target";
 
 declare const receiptDigestBrand: unique symbol;
 declare const visibleFingerprintBrand: unique symbol;

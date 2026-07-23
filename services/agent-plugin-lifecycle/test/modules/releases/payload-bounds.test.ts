@@ -1,8 +1,8 @@
-import {
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-  addReleaseSetPayloadBytes,
-} from "../../../src/service/shared/release";
 import { describe, expect, it } from "vitest";
+import {
+  addReleaseSetPayloadBytes,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+} from "../../../src/service/shared/release";
 
 describe("release-set decoded payload accounting", () => {
   it("admits the exact aggregate boundary and rejects one byte over", () => {

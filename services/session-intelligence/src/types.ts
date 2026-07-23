@@ -4,10 +4,10 @@
 import type { Client } from "./client";
 
 export type {
-  RoleFilter,
   CodexSessionFile,
   CodexSessionSource,
   DiscoveredSessionFile,
+  RoleFilter,
   SessionMessage,
   SessionSource,
   SessionSourceFilter,

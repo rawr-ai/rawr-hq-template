@@ -1,9 +1,8 @@
 import fs from "node:fs/promises";
-import { dirname } from "node:path";
-import path from "node:path";
+import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import * as publicApi from "../src";
 import { describe, expect, it } from "vitest";
+import * as publicApi from "../src";
 import { createClient } from "../src/client";
 import { router } from "../src/router";
 import { contract } from "../src/service/contract";

@@ -1,42 +1,41 @@
 import type { PluginId } from "../../../../shared/release";
-
-import { canonicalDigest, compareCanonical, type CanonicalValue } from "../helpers/canonical";
+import {
+  type CompleteTest,
+  type ProviderRequestDigest,
+  type TargetedTest,
+  targetRequestDigest,
+} from "../dto/mode";
+import type { ProviderTarget, ProviderTargetDigest } from "../dto/provider-target";
+import { issue, type ProviderDeploymentIssue } from "../errors/deployment-result";
+import { type CanonicalValue, canonicalDigest, compareCanonical } from "../helpers/canonical";
 import {
   createProviderMarketplaceRegistration,
   marketplaceObservationValue,
   marketplaceState,
-  sameMarketplaceState,
   type ProviderMarketplaceObservation,
   type ProviderMarketplaceRegistration,
+  sameMarketplaceState,
 } from "./marketplace";
-import {
-  targetRequestDigest,
-  type ProviderRequestDigest,
-  type TargetedTest,
-  type CompleteTest,
-} from "../dto/mode";
 import type {
   AgentProviderProjection,
   CapabilityEvaluation,
+  ProjectionDigest,
   ProviderArtifactAuthority,
   ProviderMemberFingerprint,
-  ProjectionDigest,
   ProviderProjectionMember,
   ProviderSourceIdentity,
 } from "./projection";
 import {
-  createTargetReceipt,
-  receiptScopeValue,
-  visibleFingerprint,
   type CompleteTestScope,
+  createTargetReceipt,
   type ManagedMemberClaim,
+  receiptScopeValue,
+  type TargetedTestScope,
   type TargetReceipt,
   type TargetReceiptScope,
-  type TargetedTestScope,
   type VerifiedMemberIdentity,
+  visibleFingerprint,
 } from "./receipt";
-import { issue, type ProviderDeploymentIssue } from "../errors/deployment-result";
-import type { ProviderTarget, ProviderTargetDigest } from "../dto/provider-target";
 
 declare const inventoryFingerprintBrand: unique symbol;
 declare const targetIdentityDigestBrand: unique symbol;

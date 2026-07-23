@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   CURRENT_MAIN_V2_PROTOCOL,
-  MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES,
+  type CurrentMainBodyV2,
   canonicalSerializeCurrentMainBodyV2,
   encodeCurrentMainBodyV2,
+  MAX_CURRENT_MAIN_V2_ENVELOPE_BYTES,
   validateCurrentMainEnvelopeV2,
-  type CurrentMainBodyV2,
 } from "../../../src/service/modules/governance/model";
 
 const encoder = new TextEncoder();

@@ -1,9 +1,9 @@
 import {
-  redactRuntimeRecordAttributes,
-  redactRuntimeRecordValue,
   type InMemoryRuntimeCatalog,
   type RuntimeRecordAttributes,
   type RuntimeRecordValue,
+  redactRuntimeRecordAttributes,
+  redactRuntimeRecordValue,
 } from "../catalog";
 
 export interface RuntimeTelemetryEventLike {

@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
+import { processLocalResourceProbe } from "../../src/vendor/effect/process-resources";
 import {
   Cause,
+  createEmptyManagedRuntime,
   Effect,
   Exit,
-  createEmptyManagedRuntime,
   effectVersionProof,
   pipe,
 } from "../../src/vendor/effect/runtime";
-import { processLocalResourceProbe } from "../../src/vendor/effect/process-resources";
 
 describe("Effect vendor-native runtime lane", () => {
   test("uses the pinned Effect 3 runtime and proves gen plus pipe spelling", async () => {

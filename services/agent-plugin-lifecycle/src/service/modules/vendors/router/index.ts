@@ -1,6 +1,4 @@
 import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
-
-import type { VendorSourceIdentity } from "../model/dto/vendor-records";
 import type {
   VendorSourceStatus,
   VendorStatusRequest,
@@ -8,6 +6,7 @@ import type {
   VendorUpdateRequest,
   VendorUpdateResult,
 } from "../model/dto/vendor-operations";
+import type { VendorSourceIdentity } from "../model/dto/vendor-records";
 import type {
   VendorDeclaredSourceObservation,
   VendorSourceChange,
@@ -18,6 +17,7 @@ import {
   createVendorAuthoringPlan,
   createVendorSourceChange,
 } from "../model/policy/vendor-authoring-plan";
+import { vendorIssue } from "../model/policy/vendor-policy-result";
 import {
   localVendorSourceIssue,
   sameVendorIdentity,
@@ -26,7 +26,6 @@ import {
 } from "../model/policy/vendor-state-validation";
 import { materializeVendorUpstream, observeVendorUpstream } from "../model/policy/vendor-upstream";
 import { observeVendorWorkspace } from "../model/policy/vendor-workspace-observation";
-import { vendorIssue } from "../model/policy/vendor-policy-result";
 import { module } from "../module";
 import { executeVendorAuthoringPlan } from "./update-transaction";
 

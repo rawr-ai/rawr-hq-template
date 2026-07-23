@@ -1,33 +1,31 @@
 import { realpath } from "node:fs/promises";
 import { join } from "node:path";
-
-import { afterEach, describe, expect, it } from "vitest";
+import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 
 import {
   createMechanicalEvidenceHandle,
   createReleaseArtifactRef,
   parseArtifactDigest,
 } from "@rawr/agent-plugin-lifecycle/release";
-import type { Deps } from "@rawr/agent-plugin-lifecycle/client";
 import type { ArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository";
 import { makeNodeArtifactRepositoryAsyncPort } from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-
+import { afterEach, describe, expect, it } from "vitest";
+import { MAX_RETENTION_ISSUE_DETAIL_LENGTH } from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/retention";
+import { createResourceArtifactReader } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
 import {
   createLifecycleTestClient,
   testInvocation,
 } from "../../../../../../services/agent-plugin-lifecycle/test/support/client";
-import { MAX_RETENTION_ISSUE_DETAIL_LENGTH } from "../../../../../../services/agent-plugin-lifecycle/src/service/modules/releases/model/dto/retention";
-import { createResourceArtifactReader } from "../../../../../../services/agent-plugin-lifecycle/src/service/repository/artifact-repository";
+import {
+  createGeneratedGitRepository,
+  GIT_EXECUTABLE,
+} from "../../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
 import type { ArtifactStoreRoot } from "../../../../src/lib/agent-plugins/layout";
 import {
-  GIT_EXECUTABLE,
-  createGeneratedGitRepository,
-} from "../../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
-import {
   createOwnedFixtureRoot,
-  removeOwnedFixtureRoot,
   type OwnedFixtureRoot,
+  removeOwnedFixtureRoot,
 } from "./owned-fixture-root";
 
 const zeroBudget = Object.freeze({

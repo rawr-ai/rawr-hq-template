@@ -12,12 +12,13 @@
  * task, and tag repositories together. These exports are module-owned generic
  * middleware names attached at module scope in `module.ts`.
  */
+
+import type { Sql } from "@rawr/hq-sdk";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
   createServiceProvider,
 } from "../../base";
-import type { Sql } from "@rawr/hq-sdk";
 import { createRepository as createTagRepository } from "../tags/repository";
 import { createRepository as createTaskRepository } from "../tasks/repository";
 import { createRepository as createAssignmentRepository } from "./repository";

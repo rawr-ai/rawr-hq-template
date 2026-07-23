@@ -1,10 +1,10 @@
 import path from "node:path";
 
 import {
-  isExternalExtensionIdentityIssue,
-  parseExternalExtensionIdentity,
   type ExternalExtensionIdentity,
   type ExternalExtensionIdentityIssue,
+  isExternalExtensionIdentityIssue,
+  parseExternalExtensionIdentity,
 } from "./identity";
 
 export type ExternalExtensionAuthoringRequest = Readonly<{

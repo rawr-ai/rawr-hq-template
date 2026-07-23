@@ -1,11 +1,11 @@
-import {
-  createClient,
-  type Client,
-  type CreateClientOptions,
-} from "@rawr/session-intelligence/client";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { bindService, type ServiceBinding, type ServiceBindingContext } from "@rawr/hq-sdk/plugins";
+import {
+  type Client,
+  type CreateClientOptions,
+  createClient,
+} from "@rawr/session-intelligence/client";
 import { createSessionIndexRuntime, defaultSessionIndexPathSync } from "./session-index-runtime";
 import { createSessionSourceRuntime } from "./session-source-runtime";
 

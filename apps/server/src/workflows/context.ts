@@ -1,9 +1,9 @@
+import type { Logger } from "@rawr/hq-sdk";
 import type {
   BoundaryMiddlewareSupportState,
   BoundaryRequestSupportContext,
   HostRuntimeSupportContext,
 } from "@rawr/runtime-context";
-import type { Logger } from "@rawr/hq-sdk";
 
 export const RAWR_MIDDLEWARE_DEDUPE_MARKERS = {
   RPC_AUTHORIZATION_DECISION: "rpc.authorization.decision",

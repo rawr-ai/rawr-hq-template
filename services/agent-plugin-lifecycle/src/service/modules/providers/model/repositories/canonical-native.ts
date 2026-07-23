@@ -4,9 +4,9 @@ import type {
   CanonicalNativeMutationAction,
   CanonicalNativeObservation,
 } from "../dto/canonical-convergence";
-import type { CapabilityObservation } from "../policy/projection";
-import type { DeploymentResult } from "../errors/deployment-result";
 import type { ProviderTarget } from "../dto/provider-target";
+import type { DeploymentResult } from "../errors/deployment-result";
+import type { CapabilityObservation } from "../policy/projection";
 import type { NativeMutationAttempt } from "./provider";
 
 /** The complete native boundary available to canonical sync and status. */

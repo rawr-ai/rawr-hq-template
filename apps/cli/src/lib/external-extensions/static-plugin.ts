@@ -1,5 +1,5 @@
-import { Command, ModuleLoader, Plugin } from "@oclif/core";
 import path from "node:path";
+import { Command, ModuleLoader, Plugin } from "@oclif/core";
 
 import type { StaticCommandManifest, StaticExternalExtension } from "./model";
 import type { ExternalExtensionStatePort } from "./native-registry";

@@ -1,24 +1,21 @@
 import { chmod, mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-
+import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
-
+import {
+  createResourceContentWorkspaceSnapshotReader,
+  type ResourceContentWorkspaceSnapshotReadPort,
+} from "../../../src/service/modules/releases/repository/content-workspace";
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   parseGitTreeId,
 } from "../../../src/service/shared/release";
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-
 import {
-  createResourceContentWorkspaceSnapshotReader,
-  type ResourceContentWorkspaceSnapshotReadPort,
-} from "../../../src/service/modules/releases/repository/content-workspace";
-import {
-  GIT_EXECUTABLE,
   commitGeneratedGitRepository,
   createGeneratedGitRepository,
+  GIT_EXECUTABLE,
   git,
   installCaseCollisionCommit,
   unsafeFixturePolicy,

@@ -7,8 +7,8 @@ import type {
   CanonicalVerificationStep,
 } from "../model/dto/canonical-convergence";
 import {
-  issue,
   type DeploymentResult,
+  issue,
   type NonEmptyReadonlyArray,
   type ProviderDeploymentIssue,
 } from "../model/errors/deployment-result";

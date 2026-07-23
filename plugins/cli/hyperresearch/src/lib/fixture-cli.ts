@@ -1,8 +1,8 @@
+import type { HyperresearchCliBackend } from "@rawr/hyperresearch-codex/resources";
 import type {
   HyperresearchCliOperation,
   HyperresearchCliResult,
 } from "@rawr/hyperresearch-codex/types";
-import type { HyperresearchCliBackend } from "@rawr/hyperresearch-codex/resources";
 
 export class FixtureHyperresearchCliBackend implements HyperresearchCliBackend {
   readonly calls: Array<{ operation: HyperresearchCliOperation; args: string[]; cwd: string }> = [];

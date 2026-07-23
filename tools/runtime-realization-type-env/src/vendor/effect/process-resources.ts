@@ -1,12 +1,12 @@
 import {
   Chunk,
   Deferred,
-  Effect as VendorEffect,
   PubSub,
   Queue,
   Ref,
   Schedule,
   Stream,
+  Effect as VendorEffect,
 } from "effect";
 
 export interface ProcessLocalResourceProbeResult {

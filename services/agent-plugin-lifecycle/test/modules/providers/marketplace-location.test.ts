@@ -18,26 +18,26 @@ import type {
   CodexNativeResourceSession,
   NativeResourceSessionInput,
 } from "../../../src/service/model/dependencies/providers";
+import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
+import { success } from "../../../src/service/modules/providers/model/errors/deployment-result";
 import { NativeProviderPreMutationRefusal } from "../../../src/service/modules/providers/model/errors/native-resource";
-import type { ProviderMarketplaceSource } from "../../../src/service/modules/providers/model/repositories/state";
+import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
 import {
   createProviderMarketplaceRegistration,
   marketplaceState,
   type ProviderMarketplaceRegistration,
 } from "../../../src/service/modules/providers/model/policy/marketplace";
 import {
-  renderCompleteProjection,
   type AgentProviderProjection,
+  renderCompleteProjection,
 } from "../../../src/service/modules/providers/model/policy/projection";
-import { canonicalBytes } from "../../../src/service/modules/providers/model/helpers/canonical";
-import { success } from "../../../src/service/modules/providers/model/errors/deployment-result";
-import { parseProviderTarget } from "../../../src/service/modules/providers/model/dto/provider-target";
-import { createResourceClaudeProviderAdapter } from "../../../src/service/modules/providers/repository/resource-claude";
-import { createResourceCodexProviderAdapter } from "../../../src/service/modules/providers/repository/resource-codex";
+import type { ProviderMarketplaceSource } from "../../../src/service/modules/providers/model/repositories/state";
 import { CLAUDE_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/claude";
 import { CODEX_ADAPTER_PROTOCOL } from "../../../src/service/modules/providers/repository/codex";
-import { NATIVE_PACKAGE_READ_LIMITS } from "../../../src/service/modules/providers/repository/resource-package";
+import { createResourceClaudeProviderAdapter } from "../../../src/service/modules/providers/repository/resource-claude";
+import { createResourceCodexProviderAdapter } from "../../../src/service/modules/providers/repository/resource-codex";
 import { createResourceMarketplaceLocationResolver } from "../../../src/service/modules/providers/repository/resource-marketplace-location";
+import { NATIVE_PACKAGE_READ_LIMITS } from "../../../src/service/modules/providers/repository/resource-package";
 import { createOwnedFixtureRoot, disposeOwnedFixtureRoot } from "../../support/owned-fixture-root";
 import { desiredStateFixture } from "./canonical-fixture";
 

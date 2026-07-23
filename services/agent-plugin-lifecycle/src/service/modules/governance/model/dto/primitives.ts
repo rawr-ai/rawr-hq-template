@@ -1,10 +1,10 @@
 import {
+  type GitCommitId,
+  type GitTreeId,
   parseGitCommitId,
   parseGitTreeId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  type GitCommitId,
-  type GitTreeId,
   type ReleaseIssue,
   type ReleaseRelativePath,
   type ReleaseResult,

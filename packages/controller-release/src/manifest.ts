@@ -1,6 +1,10 @@
-import { issue, type ControllerIssue } from "./issues";
+import { type ControllerIssue, issue } from "./issues";
 import {
   CONTROLLER_PAYLOAD_SCHEMA_VERSION,
+  type ControllerArchitecture,
+  type ControllerDigest,
+  type ControllerPayloadSchemaVersion,
+  type ControllerPlatform,
   compareCanonicalText,
   controllerDigestFromSha256,
   parseBoundedCanonicalString,
@@ -8,15 +12,11 @@ import {
   parseControllerPlatform,
   parseReleaseRelativePath,
   parseSha256Digest,
-  sha256,
-  type ControllerDigest,
-  type ControllerArchitecture,
-  type ControllerPlatform,
-  type ControllerPayloadSchemaVersion,
   type ReleaseRelativePath,
   type Sha256Digest,
+  sha256,
 } from "./primitives";
-import { asNonEmpty, failure, success, type ControllerResult } from "./result";
+import { asNonEmpty, type ControllerResult, failure, success } from "./result";
 
 declare const controllerPayloadManifestBrand: unique symbol;
 declare const controllerOfficialSetManifestBrand: unique symbol;

@@ -12,7 +12,7 @@ import type {
 } from "@rawr/resource-content-workspace";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
-
+import type { Client } from "../../../src/client";
 import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
@@ -22,14 +22,13 @@ import {
   type VendorSourceDeclaration,
   type VendorSourceIdentity,
 } from "../../../src/service/modules/vendors/model/dto/vendor-records";
-import type { Client } from "../../../src/client";
+import { vendorIssue } from "../../../src/service/modules/vendors/model/policy/vendor-policy-result";
 import {
   encodeVendorLockRecord,
   encodeVendorProvenanceRecord,
   encodeVendorSourceDeclaration,
   vendorPayloadDigest,
 } from "../../../src/service/modules/vendors/model/policy/vendor-record-codec";
-import { vendorIssue } from "../../../src/service/modules/vendors/model/policy/vendor-policy-result";
 import {
   VendorStatusResultSchema,
   VendorUpdateResultSchema,

@@ -1,4 +1,9 @@
 import {
+  type SourceEligibilityIssueCode,
+  sourceEligibilityIssue,
+} from "../../../../model/dto/releases/content-workspace";
+import {
+  type ContentAuthority,
   canonicalSerializeAgentPluginReleaseInput,
   createAgentPluginPayload,
   createAgentPluginReleaseInput,
@@ -6,16 +11,11 @@ import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
-  RELEASE_INPUT_SCHEMA_VERSION,
-  type ContentAuthority,
   type PayloadEntryInput,
   type PluginId,
+  RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseIssue,
 } from "../../../../shared/release";
-import {
-  sourceEligibilityIssue,
-  type SourceEligibilityIssueCode,
-} from "../../../../model/dto/releases/content-workspace";
 import type { ReleaseInputRefreshResult } from "../dto/release-lifecycle";
 
 export interface ReleaseInputRefreshMemberSource {

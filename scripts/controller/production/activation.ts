@@ -4,31 +4,31 @@ import { basename, dirname, join, resolve } from "node:path";
 
 import {
   activateControllerRelease,
-  inspectControllerActivation,
   type ControllerActivationResult,
+  inspectControllerActivation,
 } from "../activate.ts";
 import {
   inspectStableControllerLauncher,
   installStableControllerLauncher,
   type LauncherInstallResult,
 } from "../install-launcher.ts";
-import type { AtomicWriteObserver } from "../lib/filesystem.ts";
 import {
   CONTROLLER_ENTRY_PATH,
   CONTROLLER_RUNTIME_PATH,
   controllerReleasePath,
 } from "../layout.ts";
+import type { AtomicWriteObserver } from "../lib/filesystem.ts";
+import type { ControllerSelectorStore } from "../selector-store.ts";
 import {
   abortPreparedGlobalControllerAlias,
   commitPreparedGlobalControllerAlias,
-  inspectGlobalControllerAlias,
-  prepareGlobalControllerAlias,
   type GlobalAliasInstallResult,
   type GlobalAliasWriteObserver,
+  inspectGlobalControllerAlias,
+  prepareGlobalControllerAlias,
 } from "./global-alias.ts";
 import { type CommandRunner, runCommand, scrubbedBunEnvironment } from "./process.ts";
 import { requireVerifiedOfficialControllerRelease } from "./verify-official.ts";
-import type { ControllerSelectorStore } from "../selector-store.ts";
 
 const ACTIVATION_PROBE_PREFIX = "rawr-controller-activation-probe-";
 const AMBIENT_ENV_ASSERTION = [

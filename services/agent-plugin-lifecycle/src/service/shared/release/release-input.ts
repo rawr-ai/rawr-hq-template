@@ -1,25 +1,29 @@
-import { ReadonlyObject, Refine, Type, type Static } from "typebox";
+import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 import {
+  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-  type CanonicalJsonValue,
 } from "./canonical";
-import { issue, sortReleaseIssues, type ReleaseIssue } from "./issues";
+import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import {
   createDistributionOwnershipIndex,
+  type DistributionOwnershipIndex,
+  type OwnershipClaim,
   ownershipIndexValue,
   parseDeclaredOwnershipClaims,
   parseDistributionOwnershipIndex,
-  type DistributionOwnershipIndex,
-  type OwnershipClaim,
 } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray, parseCanonicalString } from "./parse";
 import { PayloadManifestEntrySchema, parsePayloadManifest, payloadManifestValue } from "./payload";
 import {
   BUILDER_PROTOCOL_VERSION,
+  type BuilderProtocolVersion,
+  type ContentAuthority,
+  type ContentDigest,
+  compareCanonicalText,
   MAX_CANONICAL_ID_BYTES,
   MAX_OWNERSHIP_CLAIMS,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -29,9 +33,10 @@ import {
   MAX_RELEASE_MEMBERS,
   MAX_RELEASE_RELATIVE_PATH_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
+  type OwnershipIdentity,
   PAYLOAD_PROTOCOL_VERSION,
-  RELEASE_INPUT_SCHEMA_VERSION,
-  compareCanonicalText,
+  type PayloadDigest,
+  type PluginId,
   parseContentAuthority,
   parseContentDigest,
   parseOwnershipIdentity,
@@ -39,17 +44,12 @@ import {
   parsePluginId,
   parseReleaseInputDigest,
   parseReleaseRelativePath,
-  releaseInputDigest,
-  type BuilderProtocolVersion,
-  type ContentAuthority,
-  type ContentDigest,
-  type OwnershipIdentity,
-  type PayloadDigest,
-  type PluginId,
+  RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseInputDigest,
   type ReleaseRelativePath,
+  releaseInputDigest,
 } from "./primitives";
-import { asNonEmpty, failure, success, type ReleaseResult } from "./result";
+import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginReleaseInputBrand: unique symbol;
 declare const completenessWitnessBrand: unique symbol;

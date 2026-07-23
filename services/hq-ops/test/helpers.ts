@@ -11,13 +11,13 @@ import {
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
-import type { RawrConfig } from "../src/service/modules/config/entities";
 import type { Service } from "../src/service/base";
 import type {
   ExecResult,
   HqOpsResources,
   SqliteDatabase,
 } from "../src/service/common/ports/resources";
+import type { RawrConfig } from "../src/service/modules/config/entities";
 
 type ClientOptions = {
   deps?: Partial<Service["Deps"]>;

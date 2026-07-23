@@ -1,10 +1,10 @@
+import type { ProcessExecutionRuntime } from "../runtime/process-runtime";
 import type {
   ExecutionDescriptorRef,
   ServerAdapterCallbackPayload,
   ServerRouteDescriptor,
 } from "../spine/artifacts";
-import type { ProcessExecutionRuntime } from "../runtime/process-runtime";
-import { delegateAdapterInvocation, type AdapterDelegationInput } from "./delegation";
+import { type AdapterDelegationInput, delegateAdapterInvocation } from "./delegation";
 
 export interface ServerCallbackInput extends Omit<AdapterDelegationInput, "ref"> {
   readonly ref: Extract<

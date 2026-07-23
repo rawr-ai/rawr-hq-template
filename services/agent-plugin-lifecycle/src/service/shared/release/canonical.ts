@@ -1,5 +1,5 @@
 import { issue, type ReleaseIssue } from "./issues";
-import { failure, success, type ReleaseResult } from "./result";
+import { failure, type ReleaseResult, success } from "./result";
 
 export type CanonicalJsonValue =
   | null

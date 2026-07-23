@@ -1,8 +1,7 @@
-import type { Effect } from "effect";
-import { Type, type Static } from "typebox";
-import { Value } from "typebox/value";
-
 import type { ArtifactTreeLocation } from "@rawr/resource-agent-plugin-artifact-repository";
+import type { Effect } from "effect";
+import { type Static, Type } from "typebox";
+import { Value } from "typebox/value";
 
 export const NativeAgentProviderIdSchema = Type.Union([
   Type.Literal("claude"),

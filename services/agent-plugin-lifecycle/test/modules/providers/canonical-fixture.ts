@@ -1,18 +1,18 @@
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
 import {
+  type AdapterProtocol,
+  type AgentProviderProjection,
+  parseAdapterProtocol,
+  renderCompleteProjection,
+} from "../../../src/service/modules/providers/model/policy/projection";
+import {
+  type AgentPluginRelease,
   createCompleteSetArtifactRef,
   createReleaseArtifactRef,
   payloadEntryBytes,
-  type AgentPluginRelease,
   type VerifiedArtifactSnapshotV1,
   type VerifiedReleaseArtifactV1,
 } from "../../../src/service/shared/release";
-import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
-import {
-  parseAdapterProtocol,
-  renderCompleteProjection,
-  type AdapterProtocol,
-  type AgentProviderProjection,
-} from "../../../src/service/modules/providers/model/policy/projection";
 import { productFixture } from "../../shared/release/fixtures";
 
 export type CompleteSetSnapshot = Extract<VerifiedArtifactSnapshotV1, { kind: "complete-set" }>;

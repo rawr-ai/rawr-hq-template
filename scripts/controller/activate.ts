@@ -3,21 +3,20 @@ import { lstat, realpath } from "node:fs/promises";
 import { join } from "node:path";
 
 import {
+  type ControllerIssue,
   createControllerSelection,
   planControllerSelection,
-  type ControllerIssue,
 } from "@rawr/controller-release";
-
-import { assertAbsolutePath, assertCanonicalContainedParent } from "./lib/filesystem.ts";
 import {
-  CONTROLLER_ENTRY_PATH,
   CONTROLLER_DEPENDENCY_LOCK_PATH,
+  CONTROLLER_ENTRY_PATH,
   CONTROLLER_RUNTIME_LICENSE_PATH,
   CONTROLLER_RUNTIME_PATH,
   controllerReleasePath,
   controllerSelectorPath,
 } from "./layout.ts";
-import { nodeControllerSelectorStore, type ControllerSelectorStore } from "./selector-store.ts";
+import { assertAbsolutePath, assertCanonicalContainedParent } from "./lib/filesystem.ts";
+import { type ControllerSelectorStore, nodeControllerSelectorStore } from "./selector-store.ts";
 
 export type ControllerActivationResult = Readonly<{
   kind: "activated" | "converged";

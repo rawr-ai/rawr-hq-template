@@ -1,48 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
-import type { WorkflowDispatcher } from "@rawr/sdk/spine";
 import { defineRuntimeProfile, providerSelection } from "@rawr/sdk/runtime/profiles";
 import { defineRuntimeProvider, providerFx } from "@rawr/sdk/runtime/providers";
 import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
 import { defineRuntimeSchema } from "@rawr/sdk/runtime/schema";
-import {
-  buildRuntimeTelemetryOtlpTracePayload,
-  createDeploymentRuntimeHandoff,
-  createExecutionRegistry,
-  createMigrationControlPlaneObservationPacket,
-  createContainedRuntimeResourceAccess,
-  createProcessExecutionRuntime,
-  createProviderProvisioningModules,
-  createProviderProvisioningTrace,
-  createRuntimeBoundaryPolicy,
-  createRuntimeObservationRecorder,
-  executeRuntimeBootgraph,
-  exportRuntimeTelemetryOtlpTraces,
-  mountOracleAsyncHarness,
-  mountOracleServerHarness,
-  mountRuntimeInngestAsyncBoundary,
-  mountRuntimeOrpcServerBoundary,
-  projectRuntimeCatalogToTelemetryRecords,
-  projectRuntimeEventsToTelemetryRecords,
-  providerBootResourceModuleId,
-  type ContainedRuntimeResourceDefinition,
-  type ProviderProvisionedValue,
-  type RuntimeInngestAsyncStepResponse,
-  type RuntimeOrpcServerResponse,
-  type RuntimeTelemetryEventLike,
-  type RuntimeTelemetryRecord,
-} from "../../../src/oracle";
-import {
-  compileRuntimeSpine,
-  deriveProviderDependencyGraph,
-  deriveRuntimeSpine,
-} from "../../../src/spine/simulate";
-import type {
-  AsyncStepBridgePayload,
-  RuntimeSpineCompilation,
-  ServerAdapterCallbackPayload,
-} from "../../../src/spine/artifacts";
+import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
+import type { WorkflowDispatcher } from "@rawr/sdk/spine";
 import {
   CreateWorkItemDescriptor,
   PortableArtifact,
@@ -54,6 +17,43 @@ import {
 } from "../../../scenarios/work-items/resource-provider-profile";
 import { WorkItemsServerApiPlugin } from "../../../scenarios/work-items/server-api-plugin";
 import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
+import {
+  buildRuntimeTelemetryOtlpTracePayload,
+  type ContainedRuntimeResourceDefinition,
+  createContainedRuntimeResourceAccess,
+  createDeploymentRuntimeHandoff,
+  createExecutionRegistry,
+  createMigrationControlPlaneObservationPacket,
+  createProcessExecutionRuntime,
+  createProviderProvisioningModules,
+  createProviderProvisioningTrace,
+  createRuntimeBoundaryPolicy,
+  createRuntimeObservationRecorder,
+  executeRuntimeBootgraph,
+  exportRuntimeTelemetryOtlpTraces,
+  mountOracleAsyncHarness,
+  mountOracleServerHarness,
+  mountRuntimeInngestAsyncBoundary,
+  mountRuntimeOrpcServerBoundary,
+  type ProviderProvisionedValue,
+  projectRuntimeCatalogToTelemetryRecords,
+  projectRuntimeEventsToTelemetryRecords,
+  providerBootResourceModuleId,
+  type RuntimeInngestAsyncStepResponse,
+  type RuntimeOrpcServerResponse,
+  type RuntimeTelemetryEventLike,
+  type RuntimeTelemetryRecord,
+} from "../../../src/oracle";
+import type {
+  AsyncStepBridgePayload,
+  RuntimeSpineCompilation,
+  ServerAdapterCallbackPayload,
+} from "../../../src/spine/artifacts";
+import {
+  compileRuntimeSpine,
+  deriveProviderDependencyGraph,
+  deriveRuntimeSpine,
+} from "../../../src/spine/simulate";
 
 interface OrpcEncoded<T> {
   readonly json: T;

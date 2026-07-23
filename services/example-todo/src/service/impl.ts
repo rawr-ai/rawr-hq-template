@@ -11,12 +11,13 @@
  * observability semantics are supplied here exactly once; extra providers and guards are
  * layered here after that.
  */
-import { contract } from "./contract";
+
+import { sqlProvider } from "@rawr/hq-sdk";
 import { createServiceImplementer } from "./base";
+import { contract } from "./contract";
 import { analytics } from "./middleware/analytics";
 import { observability } from "./middleware/observability";
 import { readOnlyMode } from "./middleware/read-only-mode";
-import { sqlProvider } from "@rawr/hq-sdk";
 
 /**
  * Central implementer tree derived from the root contract.

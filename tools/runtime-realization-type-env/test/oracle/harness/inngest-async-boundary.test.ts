@@ -1,17 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
-import type { WorkflowDispatcher } from "@rawr/sdk/spine";
 import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
-import {
-  createExecutionDescriptorTable,
-  createExecutionRegistry,
-  createContainedRuntimeResourceAccess,
-  createProcessExecutionRuntime,
-  mountOracleAsyncHarness,
-  mountRuntimeInngestAsyncBoundary,
-  type RuntimeInngestAsyncStepResponse,
-} from "../../../src/oracle";
-import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
+import type { WorkflowDispatcher } from "@rawr/sdk/spine";
 import {
   CreateWorkItemDescriptor,
   CreateWorkItemPlan,
@@ -21,6 +11,16 @@ import {
 } from "../../../scenarios/work-items/app-and-plan-artifacts";
 import { WorkItemsServerApiServices } from "../../../scenarios/work-items/server-api-plugin";
 import type { WorkItem } from "../../../scenarios/work-items/work-items-service";
+import { createAsyncStepBridgePayload } from "../../../src/adapters/async";
+import {
+  createContainedRuntimeResourceAccess,
+  createExecutionDescriptorTable,
+  createExecutionRegistry,
+  createProcessExecutionRuntime,
+  mountOracleAsyncHarness,
+  mountRuntimeInngestAsyncBoundary,
+  type RuntimeInngestAsyncStepResponse,
+} from "../../../src/oracle";
 
 interface InngestStepRunOp<T> {
   readonly op: "StepRun";

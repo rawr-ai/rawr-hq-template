@@ -1,4 +1,4 @@
 /**
  * @fileoverview Package router export for `@rawr/hyperresearch-codex/router`.
  */
-export { router, type Router } from "./service/router";
+export { type Router, router } from "./service/router";

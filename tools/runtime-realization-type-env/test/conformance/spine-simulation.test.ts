@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { Effect } from "@rawr/sdk/effect";
+import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
 import type { RuntimeResourceAccess, WorkflowDispatcher } from "@rawr/sdk/spine";
 import {
   createExecutionDescriptorTable,
-  createProcessExecutionRuntime,
   createExecutionRegistry,
+  createProcessExecutionRuntime,
   validateProviderClosure,
 } from "@rawr/spec-env/spine/simulate";
 import {
@@ -14,9 +15,8 @@ import {
   PortableArtifact,
 } from "../../scenarios/work-items/app-and-plan-artifacts";
 import { WorkItemsRuntimeProfile } from "../../scenarios/work-items/resource-provider-profile";
-import type { WorkItem } from "../../scenarios/work-items/work-items-service";
 import { WorkItemsServerApiServices } from "../../scenarios/work-items/server-api-plugin";
-import type { ConstructionBoundServiceClients } from "@rawr/sdk/service";
+import type { WorkItem } from "../../scenarios/work-items/work-items-service";
 
 function createClients(): {
   readonly clients: ConstructionBoundServiceClients<typeof WorkItemsServerApiServices>;

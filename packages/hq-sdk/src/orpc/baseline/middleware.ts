@@ -1,9 +1,9 @@
-import type { BaseMetadata } from "./types";
 import {
   createNormalMiddlewareBuilder,
   createServiceProviderBuilder,
   createSharedProviderBuilder,
 } from "../factory/middleware";
+import type { BaseMetadata } from "./types";
 
 const baseMiddlewareMetadata: BaseMetadata = {
   idempotent: true,

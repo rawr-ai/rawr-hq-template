@@ -2,11 +2,11 @@ import path from "node:path";
 
 import {
   isOfficialCommandIdentityIssue,
-  parseOfficialCommandName,
-  parseOfficialCommandTopic,
   type OfficialCommandIdentityIssue,
   type OfficialCommandName,
   type OfficialCommandTopic,
+  parseOfficialCommandName,
+  parseOfficialCommandTopic,
 } from "./identity";
 
 export type OfficialCommandAuthoringRequest = Readonly<{
