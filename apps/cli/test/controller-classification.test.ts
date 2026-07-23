@@ -12,7 +12,7 @@ import {
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 function workspaceCliPackageIds(): string[] {
-  const cliPluginsRoot = path.join(workspaceRoot, "plugins", "cli");
+  const cliPluginsRoot = path.join(workspaceRoot, "plugins", "cli", "commands");
   return fs
     .readdirSync(cliPluginsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())

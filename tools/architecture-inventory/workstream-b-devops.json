@@ -28,7 +28,7 @@
       ]
     },
     "@rawr/plugin-devops": {
-      "config": "plugins/cli/devops/package.json",
+      "config": "plugins/cli/commands/devops/package.json",
       "tags": [
         "type:plugin",
         "migration-slice:workstream-b-devops"

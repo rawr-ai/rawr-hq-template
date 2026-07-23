@@ -5,7 +5,7 @@ This directory is no longer the executable authority for ChatGPT corpus consolid
 The canonical implementation now lives in:
 
 - `services/chatgpt-corpus`
-- `plugins/cli/chatgpt-corpus`
+- `plugins/cli/commands/chatgpt-corpus`
 
 Use the CLI projection instead:
 

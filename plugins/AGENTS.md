@@ -11,7 +11,7 @@
 ## Scope
 - Applies to everything under `plugins/**`.
 - This repo uses **six plugin roots**:
-  - `plugins/cli/*` for CLI toolkits (`rawr.kind=toolkit`)
+  - `plugins/cli/commands/*` for host-composed Oclif command capabilities
   - `plugins/agents/*` for agent offices (`rawr.kind=agent`)
   - `plugins/web/*` for runtime/web plugins (`rawr.kind=web`)
   - `plugins/server/api/*` for server/API runtime adapters (`rawr.kind=api`)
@@ -28,8 +28,11 @@
 
 ## Plugin Roots
 - Leaf directory names must be **globally unique** across all roots.
-  - Do not create both `plugins/cli/foo` and `plugins/agents/foo`.
-- `package.json#rawr.kind` is the authoritative classification.
+  - Do not create both `plugins/cli/commands/foo` and `plugins/agents/foo`.
+- Root placement is authoritative for Oclif command-plugin classification. Do
+  not add a second metadata identity for packages under `plugins/cli/commands`.
+- Other plugin families retain their owner-specific metadata until their
+  architecture migration establishes an equivalent positive topology.
 
 ## Plugin Ids
 - A plugin’s id is either:
@@ -41,9 +44,11 @@
 ## Manifest Conventions
 - Always include a `package.json` at the plugin root.
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
-  - `commands`: built output (match whatever `tsc` emits; commonly `./dist/src/commands`)
-  - `typescript.commands`: source commands (typically `./src/commands`)
-- TypeScript convention: compile to `dist/**` (Nx build/test flows consume emitted output where applicable).
+  - `commands`: `./dist/commands`
+  - `typescript.commands`: `./src/commands`
+- Command plugins compile source-only from `src` to `dist`, generate
+  `oclif.manifest.json` with the official Oclif tool under Bun, and typecheck
+  tests separately without emitting them.
 
 ## Build, Test, Lint
 - Workspace-wide:

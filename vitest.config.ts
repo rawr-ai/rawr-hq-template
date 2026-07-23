@@ -104,27 +104,27 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("plugins/cli/hello"),
+        root: r("plugins/cli/commands/hello"),
         test: { name: "plugin-hello", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("plugins/cli/chatgpt-corpus"),
+        root: r("plugins/cli/commands/chatgpt-corpus"),
         test: { name: "plugin-chatgpt-corpus", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("plugins/cli/devops"),
+        root: r("plugins/cli/commands/devops"),
         test: { name: "plugin-devops", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("plugins/cli/hyperresearch"),
+        root: r("plugins/cli/commands/hyperresearch"),
         test: { name: "plugin-hyperresearch", environment: "node", include: [...includes] },
       },
       {
         extends: true,
-        root: r("plugins/cli/session-tools"),
+        root: r("plugins/cli/commands/session-tools"),
         test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
       },
     ],

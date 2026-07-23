@@ -8,7 +8,7 @@
 - [Layout](#layout)
 
 ## Scope
-- Applies to `plugins/cli/hello/**`.
+- Applies to `plugins/cli/commands/hello/**`.
 
 ## What This Plugin Is
 - Minimal **oclif plugin** example.
@@ -17,8 +17,8 @@
 ## Manifest
 - Declared via `package.json#oclif`:
   - Source commands: `./src/commands`
-- Note: `tsc` currently emits commands to `dist/src/commands/**` (path-preserving).
-  - If/when this plugin is loaded via oclif’s plugin loader, align `package.json#oclif.commands` with the emitted directory.
+- Built commands live at `dist/commands/**`; source discovery maps them back to
+  `src/commands/**` in development.
 - Keep command files as default exports extending `@oclif/core` `Command`.
 
 ## Build And Test

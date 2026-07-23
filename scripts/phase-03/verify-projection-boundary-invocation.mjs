@@ -7,8 +7,8 @@ const root = path.resolve(import.meta.dir, "..", "..");
 const SCANNED_ROOTS = [
   "apps/cli/src",
   "apps/server/src",
-  "plugins/cli/chatgpt-corpus/src",
-  "plugins/cli/session-tools/src",
+  "plugins/cli/commands/chatgpt-corpus/src",
+  "plugins/cli/commands/session-tools/src",
 ];
 
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);
@@ -160,7 +160,7 @@ for (const relPath of files.sort()) {
   findings.push(...findDirectServiceCreateClientCalls(relPath, source));
 
   if (
-    relPath === "plugins/cli/session-tools/src/lib/session-types.ts" &&
+    relPath === "plugins/cli/commands/session-tools/src/lib/session-types.ts" &&
     /\bexport\s+type\s+(?:Session|Resolve|Search|Metadata|Reindex|Extract)/u.test(source)
   ) {
     findings.push(

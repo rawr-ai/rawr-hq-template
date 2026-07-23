@@ -15,6 +15,19 @@ const inventoryEntrypoint = path.join(
   "command-fixture",
   "discover-command-ids.ts"
 );
+const pluginInventoryEntrypoint = path.join(
+  cliRoot,
+  "test",
+  "command-fixture",
+  "discover-plugin-command-ids.ts"
+);
+const commandPluginRoots = [
+  "chatgpt-corpus",
+  "devops",
+  "hello",
+  "hyperresearch",
+  "session-tools",
+].map((name) => path.resolve(cliRoot, "..", "..", "plugins", "cli", "commands", name));
 
 afterAll(() => {
   const canonicalRoot = realpathSync(isolatedStateRoot);
@@ -76,6 +89,24 @@ function discoverCommandIds(nodeEnv: "development" | "production"): string[] {
   return JSON.parse(result.stdout) as string[];
 }
 
+function discoverPluginCommands(
+  root: string,
+  nodeEnv: "development" | "production"
+): { commandIds: string[]; hasManifest: boolean; relativePaths: string[][] } {
+  const result = spawnSync("bun", [pluginInventoryEntrypoint, root], {
+    cwd: cliRoot,
+    encoding: "utf8",
+    env: childEnvironment(nodeEnv),
+  });
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stderr).toBe("");
+  return JSON.parse(result.stdout) as {
+    commandIds: string[];
+    hasManifest: boolean;
+    relativePaths: string[][];
+  };
+}
+
 describe("bin/run.js", () => {
   it("runs the built CLI through the ordinary Oclif entrypoint", () => {
     const result = runCli("bin/run.js", ["--version"]);
@@ -100,5 +131,18 @@ describe("bin/run.js", () => {
     expect(built.stderr).toBe("");
     expect(sourceCommandIds).toEqual(builtCommandIds);
     expect(sourceCommandIds).toContain("agent:plugins:status");
+  });
+
+  it("discovers every command plugin from source and compiled output without a manifest", () => {
+    for (const pluginRoot of commandPluginRoots) {
+      const source = discoverPluginCommands(pluginRoot, "development");
+      const built = discoverPluginCommands(pluginRoot, "production");
+
+      expect(source.hasManifest).toBe(false);
+      expect(built.hasManifest).toBe(false);
+      expect(source.commandIds).toEqual(built.commandIds);
+      expect(source.relativePaths.every(([root]) => root === "src")).toBe(true);
+      expect(built.relativePaths.every(([root]) => root === "dist")).toBe(true);
+    }
   });
 });

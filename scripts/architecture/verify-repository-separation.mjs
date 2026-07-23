@@ -23,7 +23,7 @@ const canonicalClaims = [
   ["docs/process/CROSS_REPO_WORKFLOWS.md", "Do not merge, rebase, cherry-pick, transplant"],
   ["docs/process/WORKSTREAMS.md", "RAWR HQ-Template owns the generic Workstream Plugin Pack"],
   [
-    "plugins/cli/hyperresearch/README.md",
+    "plugins/cli/commands/hyperresearch/README.md",
     "explicit versioned data or immutable-artifact interface",
   ],
   ["services/hyperresearch-codex/spec/INTEGRATION_SPEC.md", "immutable curated-content artifact"],
@@ -55,7 +55,7 @@ const independentToolingDocs = [
   "docs/process/WORKSTREAMS.md",
   "tools/workstream-plugin-pack/README.md",
   "tools/workstream-plugin-pack/notes/next-work.md",
-  "plugins/cli/hyperresearch/README.md",
+  "plugins/cli/commands/hyperresearch/README.md",
   "services/hyperresearch-codex/spec/README.md",
   "services/hyperresearch-codex/spec/INTEGRATION_SPEC.md",
   "services/hyperresearch-codex/spec/REMAINDER_PLAN.md",
