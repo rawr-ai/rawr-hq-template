@@ -13,10 +13,10 @@
 
 Each selected provider home MUST be inventoried through its native adapter on
 every status, test, and sync operation. Inventory MUST include native plugin
-identity, enablement/configuration, provider-visible skills and hooks required by
-the projection, relevant marketplace/source identity, and embedded RAWR
-provenance. Native observation MUST win over any prior evidence, cache, or test
-record. Canonical status and sync MUST NOT require a receipt or sidecar.
+identity, enablement/configuration, provider-visible selected files, and relevant
+marketplace/source identity. Native observation MUST win over any prior evidence,
+cache, or test record. Canonical status and sync MUST NOT require a receipt,
+sidecar, or lifecycle-specific provenance file inside an installed plugin.
 
 #### Scenario: Recorded and live state disagree
 - **WHEN** prior evidence or cache claims convergence but native state is missing,
@@ -32,7 +32,7 @@ record. Canonical status and sync MUST NOT require a receipt or sidecar.
 
 The deployment service MUST canonicalize explicit provider homes and produce an
 independent deterministic plan for each target. Canonical planning MUST use only
-the governance-resolved selection, verified release/projection, observed
+the governance-resolved selection, verified release model, observed
 capabilities, and live native inventory/provenance. It MUST perform no mutation
 and MUST NOT read or write receipts, sidecars, evidence, export, undo,
 hosted-governance, promotion, Oclif-extension, or app/runtime state.
@@ -43,15 +43,15 @@ hosted-governance, promotion, Oclif-extension, or app/runtime state.
   changes
 
 #### Scenario: Ambiguous native provenance blocks cleanup
-- **WHEN** an occupied identity lacks exact managed marketplace/source identity
-  and verified embedded RAWR provenance
+- **WHEN** an occupied identity is not associated by the provider with the exact
+  managed marketplace and source in the same explicit home
 - **THEN** planning preserves it and blocks the conflicting target
 
 ### Requirement: Native replacement precedes omitted-member cleanup
 
 Canonical replacement MUST retire a stale same-ID RAWR-managed member through
 the provider's native command, verify it absent, install and enable the selected
-member through native commands, and verify provider-visible projection before
+member through native commands, and verify its declared provider-visible files before
 retiring omitted managed members. Fresh catalog or list metadata MUST NOT
 substitute for the native refresh transition. Canonical apply MUST publish no
 receipt, sidecar, evidence, export record, or undo state.
@@ -69,21 +69,32 @@ receipt, sidecar, evidence, export record, or undo state.
 
 ### Requirement: Verified native provenance bounds all retirement
 
-Canonical retirement MUST affect only live native state whose exact
-marketplace/source identity and embedded RAWR provenance prove management in the
-same explicit home. Names, paths, byte similarity, another home's record,
-export state, or the channel record alone MUST NOT prove installed ownership.
-Unmanaged and ambiguous collisions MUST be preserved and block before mutation.
+Canonical retirement MUST affect only live native selectors that the provider
+associates with the exact managed marketplace and source in the same explicit
+home. The native marketplace association is the positive installed-ownership
+fact; no receipt, sidecar, or self-embedded lifecycle attestation may replace it.
+Names, paths, byte similarity, another home's record, export state, or the
+channel record alone MUST NOT prove installed ownership. Unmanaged and ambiguous
+collisions MUST be preserved and block before mutation.
+
+For a Git marketplace, the native association MUST include the exact marketplace
+identity and canonical repository URL. A provider-reported revision MUST equal
+the selected content commit. When the provider does not expose a revision, the
+same-home repository association MAY establish marketplace ownership only while
+the selected members are independently verified from their declared files before
+omitted-member retirement. An absent revision never excuses a conflicting URL,
+ambiguous marketplace observation, or selected-file mismatch.
 
 #### Scenario: Proven omitted member retires
-- **WHEN** the reviewed complete set omits a live member with exact same-home
-  managed identity and provenance
+- **WHEN** the reviewed complete set omits a live selector associated with the
+  exact same-home managed marketplace and source
 - **THEN** only that member retires after the selected set is visible
 
 #### Scenario: Unmanaged collision is preserved
 - **WHEN** a foreign marketplace, standalone skill, or native plugin occupies a
   planned identity
-- **THEN** it remains unchanged and the target is `BLOCKED_COLLISION`
+- **THEN** it remains unchanged and the target is `Blocked` with an exact
+  marketplace or plugin collision issue
 
 ### Requirement: Desired-state mode limits convergence authority
 
@@ -100,19 +111,19 @@ convergence.
 
 #### Scenario: Canonical selection is invalid
 - **WHEN** canonical deployment lacks a valid selection, verified complete set,
-  or exact provider projections
-- **THEN** every target is `BLOCKED_SELECTION` before native mutation
+  or declared provider-visible files
+- **THEN** every target is `Blocked` with a selection issue before native mutation
 
 ### Requirement: Repeated convergence is read-only
 
-A converged repeat MUST re-read its desired selection, derived projection,
+A converged repeat MUST re-read its desired selection, selected native content,
 capabilities, live native inventory, and provider-visible state. It MUST perform
 zero native mutation and MUST NOT publish or update a receipt, sidecar, evidence
 artifact, cache, export record, undo state, or projection.
 
 #### Scenario: Second canonical sync makes no changes
 - **WHEN** canonical sync repeats with unchanged desired and live state
-- **THEN** it returns `ReadOnlyConverged` after positive reads with every
+- **THEN** it returns `Converged` after positive reads with every
   lifecycle and native mutation counter at zero
 
 ### Requirement: Multi-home results preserve partial truth and isolation
@@ -145,10 +156,11 @@ claim rollback or success that live observation did not verify.
 
 ### Requirement: Status is disjoint, target-scoped, and non-mutating
 
-Canonical status MUST join the reviewed selection, derived release/projection,
+Canonical status MUST join the reviewed selection, derived release model,
 capability compatibility, and live native inventory to return exactly one
-primary classification per explicit target: `BLOCKED_SELECTION`, `CONVERGED`,
-`DRIFTED`, `BLOCKED_COLLISION`, or `INCOMPATIBLE_PROVIDER`. It MUST NOT repair
+primary classification per explicit target: `Converged`, `Drifted`, `Blocked`,
+or `Failed`. Exact bounded issues MUST distinguish selection refusal, ownership
+collision, incompatible capability, and observation failure. It MUST NOT repair
 provider, Oclif, repository, export, app, evidence, cache, or other state.
 
 #### Scenario: External Oclif state drifts
@@ -174,7 +186,7 @@ lifetime of their disposable home.
 #### Scenario: Mutable worktree differs from selected objects
 - **WHEN** worktree bytes differ from the reviewed selected commit and tree
 - **THEN** status or sync reads only the exact selected Git objects or returns
-  `BLOCKED_SELECTION`
+  `Blocked` with a selection issue
 - **AND** it never substitutes mutable worktree bytes or a retained local copy
 
 ## REMOVED Requirements
@@ -209,13 +221,13 @@ adapter.
 Canonical sync and status MUST consume one governance-resolved
 `CanonicalChannelSelection`. Provider code MUST NOT parse raw current-main bytes
 or own another channel DTO. Provider planning MUST derive and verify the complete
-release set and current provider projection from the selected Git objects before
+release set and declared provider-visible files from the selected Git objects before
 native mutation.
 
 #### Scenario: Selected content cannot be derived exactly
 - **WHEN** a selected Git object is absent or tampered, or derived release state
   does not bind the selected repository, commit, tree, and release-input digest
-- **THEN** the target is `BLOCKED_SELECTION` with zero native mutation
+- **THEN** the target is `Blocked` with a selection issue and zero native mutation
 
 ### Requirement: Persistent active visibility is an operational oracle
 

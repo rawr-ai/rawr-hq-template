@@ -34,7 +34,7 @@ The categorical correction and working vocabulary are in
                                                                        |
                                                    exact Git objects -> in-memory release model
                                                                        |
-                                                       in-memory provider projection
+                                                       selected native content
                                                                        |
                                                      native Codex / Claude commands
                                                                        |
@@ -219,9 +219,10 @@ The stable wire between reviewed Personal content and provider reconciliation is
 the exact repository identity, commit, tree, and release-input digest in the
 reviewed channel record. The content-workspace resource reads immutable Git
 objects at that selection. The service derives the closed release model,
-ownership index, and provider projection in memory. Release-set and projection
-digests may be computed as invocation-local verification values, but they are
-not recorded by Personal and never become local storage handles.
+ownership index, native marketplace source, and declared provider-visible files
+in memory. Release-set digests may be computed as invocation-local verification
+values, but they are not recorded by Personal and never become local storage
+handles. No provider projection identity is created.
 
 Status does not materialize provider package bytes. Sync first compares derived
 identity with live provider provenance. Canonical mutation passes the selected
@@ -234,8 +235,8 @@ index, or retention planner participates in the next invocation.
 Generated manifests, ordinary command results, and caches may exist when they
 have a concrete product consumer. Their classification is explicit:
 
-- a release-set or projection digest is an invocation-local derived verification
-  value, not channel authority;
+- a release-set digest is an invocation-local derived verification value, not
+  channel authority;
 - a native-provider snapshot is provider-owned installed support state;
 - a disposable local marketplace is transient test material with the same
   lifetime as its disposable home;

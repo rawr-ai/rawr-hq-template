@@ -25,7 +25,7 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - Delete the custom Oclif extension bootstrap and local command wrappers.
 - Retain one oRPC agent-plugin lifecycle service behind
   `rawr agent plugins`; simplify it to closed release membership, unique skill
-  ownership, in-memory provider projection from exact selected Git objects,
+  ownership, selected provider-visible content from exact selected Git objects,
   native inspection/reconciliation, and justified owner-local authoring/test
   capabilities.
 - Delete the persistent agent release/set repository, projection store,
@@ -69,8 +69,8 @@ and keeps the lifecycle behavior that solves the actual product problem.
   lifecycle surface.
 - `agent-plugin-channel-selection`: one Personal Git-reviewed record selects one
   closed release input without binding the installed CLI package.
-- `agent-provider-projection`: deterministic provider-native bytes derive from
-  the selected release set.
+- `agent-provider-projection`: retire the rejected renderer, projection digest,
+  and stable materialization protocol in favor of direct native reconciliation.
 - `agent-provider-deployment`: explicit Codex and Claude homes converge through
   native commands and live observation.
 - `repository-policy`: Habitat owns positive topology and Grit source

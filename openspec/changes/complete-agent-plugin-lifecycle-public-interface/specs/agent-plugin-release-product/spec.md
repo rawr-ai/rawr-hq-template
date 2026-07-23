@@ -137,7 +137,7 @@ identity.
 #### Scenario: Selected Git objects become unavailable
 - **WHEN** the explicit repository locator cannot supply the reviewed commit,
   tree, release input, or payload objects
-- **THEN** derivation returns `BLOCKED_SELECTION` before package materialization
+- **THEN** derivation returns a selection rejection before package materialization
 - **AND** it does not fall back to mutable worktree bytes or retained local copies
 
 ### Requirement: Release lifecycle activates only through qualified procedures

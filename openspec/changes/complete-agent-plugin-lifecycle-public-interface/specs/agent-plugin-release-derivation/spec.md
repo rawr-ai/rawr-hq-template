@@ -18,7 +18,7 @@ release/set artifact.
 #### Scenario: Source identity is wrong
 - **WHEN** repository identity, reachability, commit, tree, or release-input
   digest differs from the reviewed record
-- **THEN** derivation returns `BLOCKED_SELECTION` before provider materialization
+- **THEN** derivation returns a selection rejection before provider preparation
   or native calls
 
 ### Requirement: Noncanonical operations use an exact explicit Git selection
@@ -46,8 +46,8 @@ read mutable payload bytes from the worktree.
 
 The releases module MUST own and implement one ready service-level derivation
 capability that derives a closed release model, complete membership, unique
-skill/distribution ownership, canonical release-set identity, and provider
-projection inputs in memory from selected Git objects. Packaging and providers
+skill/distribution ownership, canonical release-set identity, native marketplace
+source, and declared provider-visible files in memory from selected Git objects. Packaging and providers
 MUST consume that capability rather than import a releases handler or recreate
 derivation. Digests MAY verify invocation-local deterministic values but MUST
 NOT enter channel authority, address a local store, or become lookup handles.
@@ -62,7 +62,7 @@ Failed closure MUST leave no durable lifecycle output.
 #### Scenario: Equivalent selected Git content is derived again
 - **WHEN** the same selected commit/tree/release input is evaluated by a later
   invocation
-- **THEN** the same semantic release/projection identities are derived without
+- **THEN** the same semantic release identity and declared native content are derived without
   reading or writing a local release store
 
 ### Requirement: Native marketplace sources preserve owner-correct lifetime
@@ -76,7 +76,7 @@ only when the temporary source and disposable provider home share one bounded
 lifetime. No Template-owned persistent projection root may participate.
 
 #### Scenario: Converged status and sync are read-only
-- **WHEN** live provider state already matches the derived selected projection
+- **WHEN** live provider state already matches the selected native content
 - **THEN** status and sync perform zero filesystem mutation and native mutating
   commands
 
