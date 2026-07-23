@@ -12,13 +12,6 @@
     "check": {
       "executor": "nx:noop"
     },
-    "build": {
-      "executor": "nx:run-commands",
-      "outputs": ["{workspaceRoot}/resources/agent-plugin-export-destination/dist"],
-      "options": {
-        "command": "tsc -p resources/agent-plugin-export-destination/tsconfig.build.json"
-      }
-    },
     "lint": {
       "executor": "nx:run-commands",
       "options": {

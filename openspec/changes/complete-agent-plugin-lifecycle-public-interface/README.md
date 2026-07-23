@@ -391,10 +391,27 @@ and 0.70 seconds at the shell.
 This checkpoint does not claim the remaining cleanup early. Legacy `sync` and
 `structural` targets stay reachable until native Habitat laws replace their
 contracts. Native Habitat project inference awaits a published upgraded Civ7
-artifact. Two nested provider projects still duplicate their parent build
-output ownership; root `build`, `test`, and CI script normalization follows only
-after that separate owner correction. See
+artifact. Root `build`, `test`, and CI script normalization follows in separate
+owner-correct checkpoints. See
 [[design#Required checks follow the Nx graph|the target composition boundary]].
+
+Task 1.6c4 removes the last duplicate build-output writers. The two nested
+provider projects no longer expose `build`; their parent resource packages are
+the sole owners of each `dist` tree. An uncached two-parent build completes in
+1.9 seconds and emits both provider entrypoints under the parent outputs. Each
+parent's production input explicitly includes its nested provider source, so a
+provider change invalidates the package build without creating a second build
+command or output owner. Provider lint, typecheck, test, and public check
+boundaries remain intact.
+
+The focused provider-test run also surfaced an unrelated red baseline in
+unchanged `main` source. Package output passes all 12 cases. Export destination
+passes 11 cases, while its watcher-based same-path temporary-substitution race
+fails reproducibly before reaching the intended assertion. This is not repaired
+with a more elaborate race harness.
+[[tasks#1. Positive Habitat And Nx Checks|Task 1.6c5]] applies the accepted
+local-user threat model and deletes adversarial-only behavior before the root
+test aggregate is enabled.
 
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
