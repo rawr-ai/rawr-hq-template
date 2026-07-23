@@ -15,7 +15,7 @@ language js(typescript)
 
 or {
   program() as $program where {
-    $filename <: r".*plugins/cli/[^/]+/src/commands/.*\.ts$",
+    $filename <: r".*plugins/cli/commands/[^/]+/src/commands/.*\.ts$",
     not {
       $program <: contains or {
         `export default class $name extends $base { $... }`,
@@ -24,28 +24,28 @@ or {
     }
   },
   import_statement(source=$source) where {
-    $filename <: r".*plugins/cli/[^/]+/src/.*\.ts$",
+    $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
       $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
       $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
     }
   },
   `export { $exports } from $source` where {
-    $filename <: r".*plugins/cli/[^/]+/src/.*\.ts$",
+    $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
       $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
       $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
     }
   },
   `export * from $source` where {
-    $filename <: r".*plugins/cli/[^/]+/src/.*\.ts$",
+    $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
       $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
       $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
     }
   },
   `import($source)` where {
-    $filename <: r".*plugins/cli/[^/]+/src/.*\.ts$",
+    $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
       $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
       $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
@@ -57,14 +57,14 @@ or {
 ## Matches a command without a default export
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 export class ShowCommand extends Command {}
 ```
 
 ## Matches a mechanical package import
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 import { client } from "@rawr/other/src/client";
 
 export default class ShowCommand extends Command {}
@@ -73,7 +73,7 @@ export default class ShowCommand extends Command {}
 ## Matches a cross-plugin dependency
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 import OtherCommand from "@rawr/plugin-other";
 
 export default class ShowCommand extends Command {}
@@ -82,7 +82,7 @@ export default class ShowCommand extends Command {}
 ## Ignores a command on public dependency boundaries
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 import { Command } from "@oclif/core";
 import { client } from "@rawr/other/client";
 
@@ -90,7 +90,7 @@ export default class ShowCommand extends Command {}
 ```
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 import { Command } from "@oclif/core";
 import { client } from "@rawr/other/client";
 
@@ -100,7 +100,7 @@ export default class ShowCommand extends Command {}
 ## Ignores a separately declared default command class
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 import { Command } from "@oclif/core";
 import { helper } from "../lib/helper";
 
@@ -110,7 +110,7 @@ export default ShowCommand;
 ```
 
 ```typescript
-// @filename: plugins/cli/example/src/commands/show.ts
+// @filename: plugins/cli/commands/example/src/commands/show.ts
 import { Command } from "@oclif/core";
 import { helper } from "../lib/helper";
 

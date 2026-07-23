@@ -27,7 +27,7 @@ or {
       },
       not {
         $properties <: contains pair(key=`"scripts"`, value=$scripts),
-        $scripts <: contains pair(key=`"manifest"`, value=`"oclif manifest"`)
+        $scripts <: contains pair(key=`"manifest"`, value=`"bun --bun oclif manifest"`)
       },
       not {
         $properties <: contains pair(key=`"files"`, value=$files),
@@ -66,7 +66,7 @@ or {
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
   "bin": { "rawr": "./bin/run.js" },
-  "scripts": { "manifest": "oclif manifest" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
   "oclif": {
     "bin": "rawr",
@@ -117,7 +117,7 @@ or {
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
   "bin": { "rawr": "./bin/run.js" },
-  "scripts": { "manifest": "oclif manifest" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
   "oclif": {
     "bin": "rawr",
@@ -136,7 +136,7 @@ or {
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
   "bin": { "rawr": "./bin/run.js" },
-  "scripts": { "manifest": "oclif manifest" },
+  "scripts": { "manifest": "bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
   "oclif": {
     "bin": "rawr",

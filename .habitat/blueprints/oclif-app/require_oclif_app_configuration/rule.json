@@ -13,8 +13,8 @@
   "ownerProject": "@rawr/habitat-consumer",
   "lane": "enforced",
   "forbids": "an unversioned or non-ESM CLI package, mismatched binary or command discovery, missing Oclif-provided plugin management, a missing package-owned manifest command, or an ambiguous source-to-output mapping",
-  "why": "Package configuration is the installed CLI identity. Oclif discovers the compiled command tree and extension manager, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned manifest script as a target.",
-  "remediate": "Declare the versioned ESM rawr package and binary, depend on and compose @oclif/plugin-plugins, discover dist/commands, map TypeScript rootDir src to outDir dist, publish bin/dist/oclif.manifest.json, and expose oclif manifest as the package manifest script.",
+  "why": "Package configuration is the installed CLI identity. Oclif discovers the compiled command tree and extension manager, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned Bun-executed Oclif manifest script as a target.",
+  "remediate": "Declare the versioned ESM rawr package and binary, depend on and compose @oclif/plugin-plugins, discover dist/commands, map TypeScript rootDir src to outDir dist, publish bin/dist/oclif.manifest.json, and expose bun --bun oclif manifest as the package manifest script.",
   "message": "The Oclif app package must describe one conventional installed CLI.",
   "pathCoverage": [
     {
