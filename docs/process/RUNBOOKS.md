@@ -43,9 +43,11 @@ fallbacks.
   targets. Its refusal tests run through their own Nx owner, then Nx selects
   every affected admitted target.
 - The full repository Biome check, Habitat consumer integrity tests,
-  repository-separation guard, and lifecycle service's live, non-cacheable
-  Habitat `structure-check` complete the required result. Domain behavior tests
-  remain explicit owner verification. See [[NX_AGENT_WORKFLOW]].
+  repository-separation guard, and lifecycle service's Habitat
+  `structure-check` complete the required result. Habitat targets are cacheable
+  only when their Nx inputs cover every Git-visible tree the rule inspects.
+  Domain behavior tests remain explicit owner verification. See
+  [[NX_AGENT_WORKFLOW]].
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through a
   checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
   is not vendored here.

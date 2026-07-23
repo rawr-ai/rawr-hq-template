@@ -11,10 +11,10 @@
     "structure-check": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun ../../scripts/habitat/check.mjs --owner @rawr/agent-plugin-lifecycle",
+        "command": "bun run --cwd ../.. habitat -- --owner @rawr/agent-plugin-lifecycle",
         "cwd": "services/agent-plugin-lifecycle"
       },
-      "cache": false,
+      "cache": true,
       "inputs": [
         "{projectRoot}/src/**/*",
         "{workspaceRoot}/apps/cli/src/**/*",
