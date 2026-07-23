@@ -38,7 +38,7 @@ const [negativePluginSource, negativeServiceSource, negativePackageSource, posit
     fs.readFile(positiveServicePath, "utf8"),
   ]);
 
-const requiredTags = ["type:package", "migration-slice:structural-tranche"];
+const requiredTags = ["type:fixture", "migration-slice:structural-tranche"];
 for (const tag of requiredTags) {
   if (!(project.tags ?? []).includes(tag)) {
     console.error(`eslint-fixtures structural failed: missing tag ${tag}`);
@@ -57,11 +57,7 @@ if (
   process.exit(1);
 }
 
-if (
-  !negativePluginSource.includes(
-    "../../services/hq-ops/src/service/modules/plugin-catalog/router.ts"
-  )
-) {
+if (!negativePluginSource.includes("../../services/hq-ops/src/service/modules/config/router.ts")) {
   console.error(
     "eslint-fixtures structural failed: plugin-negative fixture must keep the plugin import edge."
   );
