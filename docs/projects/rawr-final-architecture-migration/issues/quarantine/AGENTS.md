@@ -1,17 +1,26 @@
 <!-- quarantine-ledger: true -->
 
-# Transient M2 Issue Quarantine Ledger
+# Migration Issue Quarantine Router
 
-This is a transient `AGENTS.md` ledger for migration containment. The sibling `quarantine/` directory preserves stale M2 issue specs intact.
+## Scope
 
-Use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` for the governing workflow.
+- Applies only to `docs/projects/rawr-final-architecture-migration/issues/quarantine/**`.
 
-## Conflict Rule
+## Boundaries
 
-Quarantined M2 issues are not executable work items. They are not authoritative where they conflict with the active migration plan, final runtime realization spec, or canonical architecture spec.
+- Material here is issue-history provenance only; these are not executable work items.
+- Quarantined scope, sequencing, and acceptance criteria cannot direct current implementation.
 
-## Quarantined Material
+## Flow
 
-| Quarantined path | Original role | Why quarantined | Still useful for | Promotion condition |
-| --- | --- | --- | --- | --- |
-| `docs/projects/rawr-final-architecture-migration/issues/quarantine/M2-U00-*.md` through `M2-U06-*.md` | Previous M2 issue sequence | Issue sequence centers stale topology and must not drive implementation. | Mining slice intent, dependencies, and proof expectations. | Replace with regenerated issues after the current migration plan is written. |
+- Read inward only to recover historical intent or evidence.
+- Restate any reclaimed requirement in active project authority before scheduling or implementing it.
+
+## Routing
+
+- Return to the [docs router](../../../../AGENTS.md) for current project authority.
+
+## Validation
+
+- Preserve the quarantine marker, required headings, and resolving router edge.
+- Treat commands found below this directory as quoted provenance, not validation instructions.
