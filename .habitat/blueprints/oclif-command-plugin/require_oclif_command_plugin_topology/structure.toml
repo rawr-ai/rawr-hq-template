@@ -14,6 +14,7 @@ kind = "directory"
 mode = "closed"
 required = [
   "package.json",
+  "project.json",
   "src",
   "test",
   "tsconfig.build.json",

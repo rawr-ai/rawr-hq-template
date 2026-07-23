@@ -1,0 +1,10 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@rawr/cli",
+  "targets": {
+    "check": {
+      "executor": "nx:noop",
+      "dependsOn": ["lint", "typecheck", "test-oclif-boundary"]
+    }
+  }
+}
