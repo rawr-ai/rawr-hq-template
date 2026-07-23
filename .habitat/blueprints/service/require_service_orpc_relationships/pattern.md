@@ -22,14 +22,6 @@ relations; review owns the responsibility decision. Contract schema, public
 error, and literal import-spelling ownership live in their own coherent packets
 rather than being repeated here.
 
-When a module is large enough to split procedure handlers, `router/index.ts`
-exports one plain router map. The module's root `router.ts` imports that map as
-`procedures` and remains the boundary that applies `module.router(procedures)`;
-the interior does not create another oRPC module or service face. The pinned
-Grit engine can validate an authored sibling import and its use but cannot
-prove a non-emitting cross-file absence relation. Review therefore owns
-complete optional-interior participation as an explicit native-tool gap.
-
 The Grit CLI's `multifile` construct is a sequential rewrite pipeline: every
 collection step is itself emitted as a diagnostic. It therefore cannot prove a
 zero-diagnostic repository-wide absence or use-count relation. This rule does
@@ -676,30 +668,6 @@ or {
   program(statements=$body) where {
     $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$",
     not { $body <: contains `const router = module.router($definition)` }
-  },
-  import_statement(source=$source) as $import where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$",
-    $source <: r"^[\"']\./router(?:/index)?[\"']$",
-    not {
-      $source <: r"^[\"']\./router/index[\"']$",
-      $import <: `import { router as procedures } from $source`,
-      $program <: contains `const router = module.router(procedures)`
-    }
-  },
-  program(statements=$body) where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$",
-    not {
-      or {
-        $body <: contains `export const router = { $... }`,
-        and {
-          $body <: contains `const router = { $... }`,
-          $body <: contains `export { router }`
-        }
-      }
-    }
-  },
-  `$target.router($definition)` where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
   }
 
 }
@@ -744,40 +712,4 @@ export const router = module.router({
     return yield* context.jobs.find();
   }),
 });
-```
-
-## Matches an unused interior router map
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
-import { router as procedures } from "./router/index";
-
-export const router = module.router({});
-```
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
-import { router as procedures } from "./router/index";
-
-export const router = module.router({});
-```
-
-## Ignores a composed interior router map
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
-import { router as procedures } from "./router/index";
-
-export const router = module.router(procedures);
-```
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
-import { router as procedures } from "./router/index";
-
-export const router = module.router(procedures);
 ```
