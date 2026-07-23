@@ -1,6 +1,11 @@
+import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
 import { router } from "../src/router";
+import {
+  RepoSyncUpstreamInputSchema,
+  RepoSyncUpstreamResultSchema,
+} from "../src/service/common/entities";
 import { contract } from "../src/service/contract";
 import { createClientOptions, createFakeResources } from "./helpers";
 
@@ -29,6 +34,11 @@ describe("@rawr/dev service shell", () => {
     expect(Object.keys(contract.repo)).toEqual(["syncUpstream"]);
     expect(Object.keys(contract.worktree)).toEqual(["cleanup"]);
     expect(Object.keys(contract.scratchPolicy)).toEqual(["check"]);
+  });
+
+  it("keeps retired repo inspection fields outside the public schemas", () => {
+    expect(Value.Check(RepoSyncUpstreamInputSchema, {})).toBe(true);
+    expect(Value.Check(RepoSyncUpstreamInputSchema, { inspectAfter: true })).toBe(false);
   });
 });
 
@@ -140,6 +150,11 @@ describe("@rawr/dev service behavior", () => {
     expect(result.preflight.ok).toBe(false);
     expect(result.preflight.issues.some((issue) => issue.code === "UPSTREAM_REF_MISSING")).toBe(
       true
+    );
+    expect(result).not.toHaveProperty("followUpCommands");
+    expect(Value.Check(RepoSyncUpstreamResultSchema, result)).toBe(true);
+    expect(Value.Check(RepoSyncUpstreamResultSchema, { ...result, followUpCommands: [] })).toBe(
+      false
     );
     expect(calls.map((call) => call.args.join(" "))).not.toContain(
       "switch -c chore/upstream-sync-20260508123456"

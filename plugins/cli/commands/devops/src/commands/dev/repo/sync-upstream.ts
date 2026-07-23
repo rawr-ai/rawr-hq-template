@@ -17,10 +17,6 @@ export default class DevRepoSyncUpstream extends RawrCommand {
       description: "Prefix for generated sync branch",
       default: "chore/upstream-sync",
     }),
-    "inspect-after": Flags.boolean({
-      description: "Emit controller and external-extension inspection follow-up commands",
-      default: false,
-    }),
   } as const;
 
   async run() {
@@ -41,7 +37,6 @@ export default class DevRepoSyncUpstream extends RawrCommand {
         apply: Boolean(flags.apply) && !baseFlags.dryRun,
         upstreamRef: flags["upstream-ref"] ? String(flags["upstream-ref"]) : undefined,
         branchPrefix: String(flags["branch-prefix"]),
-        inspectAfter: Boolean(flags["inspect-after"]),
         scratchPolicy: await resolveNodeScratchPolicyInput({ workspaceRoot }),
       },
       { context: { invocation: { traceId: "plugin-devops.repo.sync-upstream" } } }

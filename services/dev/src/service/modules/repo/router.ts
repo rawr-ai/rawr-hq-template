@@ -48,12 +48,6 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
     planned("gt", ["sync", "--no-restack"]),
     planned("gt", ["restack", "--upstack"]),
   ];
-  const followUpCommands = input.inspectAfter
-    ? [
-        planned("rawr", ["doctor", "global", "--json"]),
-        planned("rawr", ["plugins", "list", "--json"]),
-      ]
-    : [];
   const issues = [];
 
   const gitStatus = await execText(context.resources, context.workspaceRoot, "git", [
@@ -135,15 +129,6 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
       })
     );
   }
-  if (input.inspectAfter) {
-    issues.push(
-      warning(
-        "INSPECT_AFTER_PLANNED_ONLY",
-        "Controller and external-extension diagnostics are emitted as explicit follow-up commands, not executed inside DevOps sync."
-      )
-    );
-  }
-
   const check = preflight(issues);
   if (!apply || !check.ok) {
     return {
@@ -153,7 +138,6 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
       upstreamRef,
       currentBranch: parsedStatus.branch,
       steps,
-      followUpCommands,
       preflight: check,
       execution: execution(),
       scratchPolicy,
@@ -221,7 +205,6 @@ const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
     upstreamRef,
     currentBranch: parsedStatus.branch,
     steps: appliedSteps,
-    followUpCommands,
     preflight: check,
     execution: execution(executionIssues),
     scratchPolicy,
