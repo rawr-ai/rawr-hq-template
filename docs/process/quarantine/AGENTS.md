@@ -1,17 +1,26 @@
 <!-- quarantine-ledger: true -->
 
-# Transient Process Quarantine Ledger
+# Process Quarantine Router
 
-This is a transient `AGENTS.md` ledger for migration containment. The sibling `quarantine/` directory preserves process docs that are useful provenance but not active process guidance.
+## Scope
 
-Use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` for the governing workflow.
+- Applies only to `docs/process/quarantine/**`.
 
-## Conflict Rule
+## Boundaries
 
-Quarantined process docs are not authoritative where they conflict with active process docs, the active migration plan, final runtime realization spec, or canonical architecture spec.
+- Material here is process-history provenance only; it is not active operating guidance.
+- Quarantined workflows cannot authorize repository, provider, or runtime actions.
 
-## Quarantined Material
+## Flow
 
-| Quarantined path | Original role | Why quarantined | Still useful for | Promotion condition |
-| --- | --- | --- | --- | --- |
-| `docs/process/quarantine/PLUGIN_E2E_WORKFLOW.md` | Plugin E2E process workflow | Plugin workflow guidance predates the final runtime/plugin architecture and can preserve stale command surfaces. | Mining old E2E expectations and operational steps. | Rebuild only after plugin workflows are verified against implemented target topology. |
+- Read inward only to recover historical workflow intent or evidence.
+- Verify any reusable instruction against active process documentation and restate it there before use.
+
+## Routing
+
+- Return to the [docs router](../../AGENTS.md) for current process authority.
+
+## Validation
+
+- Preserve the quarantine marker, required headings, and resolving router edge.
+- Treat commands found below this directory as quoted provenance, not validation instructions.
