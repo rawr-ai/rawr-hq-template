@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "an AGENTS.md router without the Scope, Boundaries, Flow, Routing, and Validation anchors or without a repository-relative Markdown edge to another AGENTS.md",
   "why": "A stable local plaque must identify its jurisdiction, name its boundary and flow, join the operator-router graph, route deeper concepts to repository-owned authority, and tell an operator how to prove local work.",

@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a second first-party CLI package family, a missing command-plugin package anchor, a second command root, an open source root, or a plugin-owned executable binary",
   "why": "The first-party CLI plugin root contains only host-composed command capabilities. Every capability has the same package shell and one source command root. Generated dependency and build directories remain admitted outputs, while the host application alone owns the executable.",

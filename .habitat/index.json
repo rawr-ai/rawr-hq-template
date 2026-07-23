@@ -2,7 +2,7 @@
   "$comment": "RAWR-owned generic blueprint identity and owner discovery for the standalone Habitat check edge.",
   "schemaVersion": 2,
   "ownerRoots": {
-    "@rawr/habitat-consumer": ".",
+    "habitat": "scripts/habitat",
     "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle"
   }
 }

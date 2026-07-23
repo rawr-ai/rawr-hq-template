@@ -35,22 +35,28 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 Do not mix command families. App, web, and runtime composition are not lifecycle
 fallbacks.
 
-## Required Repository Ratchet
+## Required Repository Check
 
-- Local pre-push feedback and remote CI both run `bun run ratchet:required`.
-- An Nx-owned project-graph check first proves that every non-root project has
-  exactly one `type:*` kind and every code project owns lint and typecheck
-  targets. Its refusal tests run through their own Nx owner, then Nx selects
-  every affected admitted target.
-- The full repository Biome check, Habitat consumer integrity tests,
-  repository-separation guard, and lifecycle service's Habitat
-  `structure-check` complete the required result. Habitat targets are cacheable
-  only when their Nx inputs cover every Git-visible tree the rule inspects.
-  Domain behavior tests remain explicit owner verification. See
-  [[NX_AGENT_WORKFLOW]].
+- Local pre-push feedback and remote CI both run `bun run check`.
+- The root command first runs affected Nx `lint` and `typecheck`, then invokes
+  `repository:check`.
+- `repository:check` composes repository project admission and separation,
+  `habitat:check`, lifecycle-service structure, and the CLI Oclif boundary
+  check. The repository owner also runs its own lint, typecheck, and tests;
+  Habitat's selected policy batch owns the required Oclif structure laws.
+- `habitat:check` composes Habitat-owner lint, typecheck, and tests with
+  `check:hygiene` and `check:policy`. The policy target runs one
+  selected green local rule batch with empty baselines. Registered rules with
+  known live-corpus failures are not yet part of the required batch.
+- Habitat targets are cacheable only when their Nx inputs cover every
+  Git-visible tree the rule inspects. Domain behavior tests remain explicit
+  owner verification. See [[NX_AGENT_WORKFLOW]].
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through a
   checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
   is not vendored here.
+- Civ's final all-project `check` composition remains the destination, not
+  current fact. It becomes truthful only after every applicable project owns a
+  `check` target or Habitat Nx inference supplies the missing targets.
 - The `Repository Ratchet` workflow publishes the job context
   `Required lint, typecheck, and topology` for pull requests, merge groups, and
   pushes to `main`.

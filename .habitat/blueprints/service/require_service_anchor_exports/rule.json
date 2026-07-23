@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "an existing service spine file without the direct generic const export for its role",
   "why": "A direct base, contract, service, module, or router anchor gives every service spine file one stable structural name while callers provide product qualification.",

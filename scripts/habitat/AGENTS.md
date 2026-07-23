@@ -1,8 +1,8 @@
-# Habitat Consumer Router (`@rawr/habitat-consumer`)
+# Habitat Router (`habitat`)
 
 ## Scope
 
-- Applies to the standalone Habitat release consumer in `scripts/habitat/**`.
+- Applies to the pinned Habitat tool integration in `scripts/habitat/**`.
 
 ## Boundaries
 
@@ -29,6 +29,13 @@
   the executable.
 - Nx-owned repository checks consume the verified executable; policy remains
   in the `.habitat` authority tree.
+- `habitat:check` composes this owner's lint, typecheck, and tests with
+  `check:hygiene` and `check:policy`.
+- `check:policy` acquires the selected green repository rules once, including
+  the admitted Oclif app structure laws. Rules with known live-corpus
+  violations remain outside the required batch until their owning migration
+  burns them down; direct rule selection is diagnostic, not a second required
+  surface.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
 
@@ -39,7 +46,9 @@
 
 ## Validation
 
-- `bunx nx run @rawr/habitat-consumer:lint`
-- `bunx nx run @rawr/habitat-consumer:typecheck`
-- `bunx nx run @rawr/habitat-consumer:test`
-- `bunx nx run @rawr/habitat-consumer:check:repository`
+- `bunx nx run habitat:lint`
+- `bunx nx run habitat:typecheck`
+- `bunx nx run habitat:test`
+- `bunx nx run habitat:check:hygiene`
+- `bunx nx run habitat:check:policy`
+- `bunx nx run habitat:check`

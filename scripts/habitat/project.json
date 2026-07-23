@@ -1,10 +1,10 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/habitat-consumer",
+  "name": "habitat",
   "root": "scripts/habitat",
   "sourceRoot": "scripts/habitat",
   "projectType": "application",
-  "tags": ["type:tool", "role:structural-check-consumer"],
+  "tags": ["type:tool", "role:architecture-policy"],
   "targets": {
     "lint": {
       "executor": "nx:run-commands",
@@ -31,7 +31,7 @@
         "command": "biome format --write ."
       }
     },
-    "lint:biome": {
+    "check:hygiene": {
       "executor": "nx:run-commands",
       "cache": true,
       "inputs": ["{workspaceRoot}/**/*"],
@@ -56,49 +56,40 @@
         "command": "biome lint --config-path=biome.effect.json ."
       }
     },
-    "check:packets": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/.habitat/blueprints/**/*",
-        "{workspaceRoot}/scripts/habitat/provision.mjs",
-        "{workspaceRoot}/scripts/habitat/release.json",
-        "bunToolchain"
-      ],
-      "outputs": [],
-      "options": {
-        "command": "bun run habitat -- --rule require_blueprint_packet_topology"
-      }
-    },
-    "check:agent-router-placement": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "outputs": [],
-      "options": {
-        "command": "bun run habitat -- --rule require_agent_router_placement"
-      }
-    },
-    "check:agent-router-shape": {
+    "check:policy": {
       "executor": "nx:run-commands",
       "cache": true,
       "inputs": [
         "{workspaceRoot}/**/AGENTS.md",
+        "{workspaceRoot}/apps/**/*",
+        "{workspaceRoot}/packages/**/*",
+        "{workspaceRoot}/plugins/server/api/**/*",
+        "{workspaceRoot}/plugins/async/**/*",
+        "{workspaceRoot}/plugins/cli/**/*",
+        "{workspaceRoot}/plugins/agents/**/*",
+        "{workspaceRoot}/plugins/web/**/*",
+        "{workspaceRoot}/resources/**/*",
+        "{workspaceRoot}/services/**/*",
+        "{workspaceRoot}/tools/**/*",
+        "{workspaceRoot}/scripts/habitat/**/*",
+        "{workspaceRoot}/scripts/nx/**/*",
+        "{workspaceRoot}/.habitat/blueprints/**/*",
         "{workspaceRoot}/.habitat/index.json",
-        "{workspaceRoot}/.habitat/blueprints/agent-router/require_agent_router_shape/**/*",
         "{workspaceRoot}/scripts/habitat/provision.mjs",
         "{workspaceRoot}/scripts/habitat/release.json",
         "bunToolchain"
       ],
       "outputs": [],
       "options": {
-        "command": "bun run habitat -- --rule require_agent_router_shape"
+        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_api_server_plugin_boundary --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships"
       }
     },
-    "check:repository": {
+    "check": {
       "executor": "nx:noop",
       "cache": false,
-      "dependsOn": ["check:packets", "check:agent-router-placement", "check:agent-router-shape"],
-      "outputs": []
+      "dependsOn": ["lint", "typecheck", "test", "check:hygiene", "check:policy"],
+      "outputs": [],
+      "options": {}
     }
   }
 }

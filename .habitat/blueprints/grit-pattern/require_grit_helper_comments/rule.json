@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a named predicate, function, or pattern declaration in a Grit code fence without a directly preceding non-empty // semantic comment",
   "why": "Named Grit helpers encode policy relations that are otherwise easy to mistake for parser mechanics, so each declaration must preserve its semantic decision at the point of authorship.",

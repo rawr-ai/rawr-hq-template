@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a runtime namespace import from an oRPC composition vendor, or a base, service, or module missing its imported native first ownership hop",
   "why": "A few positive syntax facts keep the first native oRPC ownership hop visible without guessing at root contract/router object forms that TypeScript already checks.",

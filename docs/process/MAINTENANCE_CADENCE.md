@@ -11,7 +11,7 @@ git status --short
 gt trunk
 ./scripts/dev/check-remotes.sh
 bun run rawr -- --version
-bun run ratchet:required
+bun run check
 rg -n "\]\(([^)#]+)\)" docs --glob '*.md'
 ```
 
@@ -23,21 +23,20 @@ Interpretation:
   This is development verification, not installed-package acceptance. The fixed
   Nx Release group and ordinary installation path remain pending, and the
   obsolete predecessor distribution is not invoked, checked, or updated.
-- The Nx project-graph admission check must prove that every non-root project
-  has exactly one `type:*` kind and every code project owns lint and typecheck
-  targets; only projects classified as content or fixtures are exempt from
-  those targets.
-- The Nx admission tests must cover accepted, missing-kind, ambiguous-kind,
-  missing-target, and invalid-graph transitions.
-- Affected lint and typecheck must cover every changed admitted project; no
-  hand-maintained project inventory may narrow the population.
-- The repository-wide Biome formatting, lint, and import-organization check and
-  the Habitat consumer integrity tests must pass through their Nx owners.
-- The repository-separation guard must pass.
-- The required Habitat gate must positively close the current curated and
-  external command-channel topology against the live candidate; it is
-  deliberately not cached. Do not claim generic service/Oclif live-tree
-  enforcement until its separately tracked bounded gate is active.
+- The root check must run affected Nx lint and typecheck before entering
+  `repository:check`; no hand-maintained project inventory may narrow the
+  affected population.
+- `repository:check` must prove project-kind and quality-target admission,
+  repository separation, `habitat:check`, lifecycle-service structure, and the
+  CLI Oclif boundary behavior through their Nx owners. Required Oclif structure
+  laws belong to Habitat's selected policy batch.
+- `habitat:check` must run Habitat-owner lint, typecheck, and tests,
+  repository-wide hygiene, and the selected green local policy batch.
+- The selected Habitat batch must keep empty baselines. Do not claim that all
+  registered Habitat rules are required while known live-corpus failures remain
+  outside the batch.
+- The eventual all-project `check` graph remains pending until every applicable
+  project owns the target or Habitat Nx inference supplies it.
 - The `rg` command is a quick markdown-link surface scan used before deeper audits.
 - Protected `main` must require the job context
   `Required lint, typecheck, and topology` published by the
@@ -60,11 +59,11 @@ checks through `bun run rawr -- ...`; do not promote them as installed settlemen
 
 When advancing the Habitat binary, accept only a Civ7-owned standalone release
 compiled with Bun 1.4. Update `scripts/habitat/release.json` with its immutable
-source provenance, platform byte size, and SHA-256, then run:
+source provenance, platform byte size, and SHA-256, then run the public required
+check:
 
 ```bash
-bun run habitat:provision
-bun run architecture:gate:agent-plugin-lifecycle
+bun run check
 ```
 
 Do not copy the Habitat SDK source tree into this repository. RAWR HQ-Template

@@ -50,4 +50,4 @@ jobs:
         uses: nrwl/nx-set-shas@v5
 
       - name: Verify required repository gates
-        run: bun run ratchet:required
+        run: bun run check

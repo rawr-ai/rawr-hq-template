@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a root module edge outside exact contract/router imports, a root module re-export, a module import or re-export containing a parent segment outside the exact service-spine exception, or a current-owner sibling-module alias edge",
   "why": "One canonical import surface makes module ownership visible without path normalization or depth arithmetic: local ./ paths stay local, root facts use the owner alias, and siblings remain closed.",
