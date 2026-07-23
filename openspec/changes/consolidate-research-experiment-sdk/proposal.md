@@ -13,6 +13,14 @@ package kinds needed to own that plane. Consolidating through those existing
 kinds removes duplicate ownership without moving research truth or creating a
 second framework.
 
+The deployment is primarily one trusted local operator running one locally
+provisioned service/runtime, with concurrent distinct cells and ordinary
+process crash, interruption, and restart. Optional Railway deployment does not
+turn the local host, repository, Git/Bun installation, configuration, package
+store, or installed dependencies into adversarial or multi-tenant subjects.
+Solver/evaluator isolation still protects benchmark validity; the platform does
+not defend against a malicious operator or ambient toolchain.
+
 ## What Changes
 
 - Add one full Habitat-law `research-experiment` service under `services/`.
@@ -30,25 +38,23 @@ second framework.
   under resource-local providers and are provisioned by the process runtime.
   The service owns experiment-domain write ordering and interpretation while
   consuming the injected persistence port; lanes do not implement persistence.
-- Keep immutable package build/verification as compatibility tooling outside
-  the running service. Correct its current hard-coded SDK root before using it
-  for the service/resource closure.
-- Attempt exact solver-terminal adoption before observation acquisition. On a
-  miss, publish one write-once terminal containing the acquired observation
-  handle and submitted artifact before verification, then publish and adopt
-  declared durable downstream outputs before projection.
+- Keep ordinary package build/verification as compatibility tooling outside
+  the running service, using ordinary Bun pack, frozen install, and consumer
+  smoke checks rather than a custom dependency or installed-state authority.
+- Attempt solver-terminal adoption before observation acquisition. On a miss,
+  begin one local per-cell record, persist the submitted artifact and terminal
+  before verification, then persist evaluation before telemetry projection.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
-- Persist unconfirmed process residue as a service-domain record through the
-  durable cell-state resource/provider and forbid same-instance reacquisition
-  or execution until the owning agent/sandbox provider produces exact
-  containment evidence, the service validates it, and the record is reconciled
-  under service-owned rules. Lanes may retain or reference that fact but cannot
-  mint the operational authority for re-entry.
+- Keep a running cell's observation and sandbox/process locator in the same
+  record. A retry inspects and settles that locator through the owning provider
+  before it may resume; unconfirmed cleanup leaves the cell incomplete rather
+  than authorizing another execution.
 - Repartition the current `packages/research-sdk` implementation. Experiment
-  contracts and laws move into the service; live command and Git/Bun behavior
-  moves into resources/providers; package-owned runtime acquisition,
-  `Context.Service`, `ManagedRuntime`, manual TypeBox decoding, custom
-  capability facades, and obsolete barrels are deleted.
+  contracts and laws move into the service; live command and Git behavior moves
+  into resources/providers; ordinary Bun package compatibility remains outside
+  the running service; package-owned runtime acquisition, `Context.Service`,
+  `ManagedRuntime`, manual TypeBox decoding, custom capability facades, and
+  obsolete barrels are deleted.
 - Retain a shared package only for a runtime-agnostic helper with a proved
   non-service consumer. The current tree has no such whole-file survivor, so
   the `@rawr/research-sdk` package identity is removed after relocation.
@@ -70,12 +76,14 @@ second framework.
 - No migration of prompts, rubrics, packets, fixtures, historical results, or
   evidence into Template.
 - No generic scheduler around Langfuse Experiments.
-- No controller, workflow engine, service-owned general CAS, evidence authority,
-  receipt graph, database, hosted service, package manager, or custom retry
-  control plane.
+- No controller, workflow engine, service-owned general CAS or database,
+  evidence authority, receipt graph, hosted control plane, package manager, or
+  custom retry control plane.
 - No bespoke procedure, router, context, schema, decoder, Effect runtime, or
   provider framework beside the existing Habitat, oRPC, TypeBox, effect-oRPC,
   resource, provider, and runtime stacks.
+- No distributed attempt protocol, receipt graph, package attestation system,
+  hostile-local Git/Bun policy, secure mode, or deferred hardening profile.
 - No oRPC-as-subject, Inngest-as-subject, or skill-efficacy semantics in the
   shared service.
 - No new shared package without a proved runtime-agnostic consumer outside the
@@ -87,8 +95,8 @@ second framework.
   implementations needed by both studies. The invalid package-shaped runtime
   is removed rather than preserved behind a new facade.
 - The oRPC and Inngest vaults retain all research ownership and consume an
-  immutable locally packed service/resource closure through explicit bindings
-  and versioned package/protocol interfaces.
+  ordinary locally packed service/resource closure through explicit bindings
+  and standard package interfaces.
 - Frozen historical/runtime bytes remain path-stable provenance and are never
   reinterpreted as current service authority.
 - The research-experiment service/resource closure neither imports nor depends
@@ -112,10 +120,9 @@ an exact accepted upstream commit that contains the full service blueprint
 realization and a legal process-runtime owner that selects/provisions resource
 providers without host or lane shadow wiring. Template's separately owned
 Effect/vendor migration is also a pre-landing restack condition: after that
-migration becomes authoritative, this change MUST re-run exact vendor admission
-against the resulting closure and replace transitional cross-major checks with
-the boundary checks appropriate to that accepted base. This lane does not
-upgrade Template root dependencies or invent the missing runtime stack.
+migration becomes authoritative, this change MUST align its direct pins with the
+accepted Template closure and pass frozen install plus behavior tests. This lane
+does not upgrade Template root dependencies or invent the missing runtime stack.
 Commit `faa320f1da03d83432d09c06c7445b1ae9a21679` is the current submitted
 Habitat service source law, not a runtime-provisioning restack target.
 The accepted upstream MUST also contain the primary-owned canonical TypeBox
@@ -130,7 +137,7 @@ does not copy or repair it locally.
 
 - `research-experiment-service`: provides one Template-owned Habitat-law
   research-experiment service and its provisioned resource/provider closure,
-  with exact durable-output adoption and locally packed lane compatibility,
+  with durable local continuation and ordinary packed lane compatibility,
   without owning study content, evidence, scheduling policy, or release
   authority.
 

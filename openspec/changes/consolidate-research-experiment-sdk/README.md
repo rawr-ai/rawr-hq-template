@@ -8,7 +8,7 @@ study content, fixtures, results, and evidence.
 
 | Epoch | Repository + HEAD | Phase | Active writer | Claimed paths / slice | Review commit | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 8 | RAWR HQ-Template accepted design `b826254d21d93538edd3f5436ccdc8dbf8500290` | DESIGN | none; shared writes held | Frozen deletion-first Habitat service/resource/provider checkpoint | Exact Inngest and architecture-steward ACCEPT at `b826254d21d93538edd3f5436ccdc8dbf8500290` / tree `256cdb6cc21be8ce7dab10457536a1f7c280d41a` | No accepted production runtime-provisioning restack target; canonical TypeBox bridge correction remains primary-owned upstream work | Receive exact reviewed upstream, restack with Graphite, re-admit closure, then enter BUILD |
+| 9 | RAWR HQ-Template coordination base `583d4edc60313165478a36c49baab936f5e144bc` | DESIGN | none; exact review requested | Docs-only local single-user deletion amendment; no source paths | Review requested for the exact docs-only child of `583d4edc60313165478a36c49baab936f5e144bc` | No accepted production runtime-provisioning restack target; canonical TypeBox bridge correction remains primary-owned upstream work | Obtain exact Inngest and architecture-steward acceptance, then hold for reviewed upstream before BUILD |
 
 ## Record
 

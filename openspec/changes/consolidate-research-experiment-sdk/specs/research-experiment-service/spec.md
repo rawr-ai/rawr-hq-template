@@ -51,12 +51,34 @@ provider selector, or package-shaped execution facade.
   changing the service for subject-specific behavior
 - **AND** it does not import or sequence concrete providers
 
+### Requirement: Local deployment law bounds correctness
+The operational plane MUST target one trusted local operator and one locally
+provisioned service/runtime. It MUST permit distinct cells to run concurrently
+subject to provider capacity and MUST tolerate ordinary interruption, crash,
+and restart. Optional Railway deployment MUST NOT introduce an adversarial
+local-host or multi-tenant threat model. Solver/evaluator separation MUST
+protect benchmark validity, while the host repository, Git/Bun installation,
+configuration, package store, and installed dependencies remain trusted
+operating inputs.
+Cell-state coordination MUST be keyed by cell and MUST NOT impose a
+process-wide duplicate guard that serializes unrelated cells; provider capacity
+MAY still bound total concurrency.
+
+#### Scenario: Ambient tools are ordinary inputs
+- **WHEN** the service runs a local or Railway-backed study
+- **THEN** it uses native Git/Bun and repository semantics
+- **AND** it does not install a hostile-local policy or supply-chain attestation
+  layer
+
 ### Requirement: Deletion-first package repartition
 The current `packages/research-sdk` implementation MUST be treated as
-transitional source material. Experiment-domain identities, stage envelopes,
-adoption, observation binding, re-entry, residue, and publication laws MUST
-move into the research-experiment service. Command, Git, Bun, and vendor
-mechanics MUST move into resource contracts and resource-local providers.
+transitional source material. Direct experiment-domain identities, terminal
+adoption, observation binding, local re-entry, and publication ordering MUST
+move into the research-experiment service. Distributed attempt fences, stage
+envelopes, predecessor/digest graphs, orphan/residue DAGs, and custom Bun
+lock/runtime graphs MUST be deleted. Command, Git, Bun, and vendor mechanics
+MUST move into resource contracts and resource-local providers or ordinary
+BUILD compatibility tooling.
 Package-owned runtime acquisition, custom capability interfaces, manual JSON
 decoding, schema-language traversal, clone/freeze machinery, public portability
 errors, adapter barrels, and package protocol identity MUST be deleted.
@@ -104,11 +126,8 @@ clone, freeze, normalization, or schema-composition layer.
 Ordinary closed objects MUST use native `Type.Object` with
 `additionalProperties: false`. Reusable property maps MUST be merged before the
 final object is closed, with compile-time and runtime key-collision rejection.
-The service MAY retain one private total guard only for the exact finite plain
-JSON-data identity required by durable hashing, because TypeBox `1.3.6` alone
-does not reject cycles, non-plain prototypes, accessors, symbols, or
-non-enumerable properties. That guard MUST NOT become a public portability
-framework or inspect TypeBox schema internals.
+The service MUST NOT add a private portable-object traversal or durable hashing
+schema beside the admitted TypeBox/oRPC data contract.
 
 Provider secrets MUST enter through environment/runtime configuration and MUST
 NOT appear in committed files, prompts, service inputs, artifacts, metadata, or
@@ -127,18 +146,19 @@ named internal domain operations used by that procedure, not public generic
 capability interfaces and not lane-callable workflow steps.
 
 `cells.run` MUST own the ordering of frozen-input validation, terminal
-adoption, attempt admission, observation acquisition, sandbox/agent execution,
-host artifact capture, terminal publication, observation settlement,
-evaluation adoption/publication, and score projection for exactly one cell.
+adoption, unique local begin, observation acquisition, sandbox/agent execution,
+host artifact capture, terminal persistence, observation settlement, evaluation
+adoption/persistence, and score projection for exactly one cell.
 Preparation and evaluation MUST be service-owned internal operations that
 consume TypeBox lane data/configuration/policy and provisioned resource ports.
 Lanes MUST NOT inject executable preparation/evaluation callbacks.
-The service MUST own the experiment-domain write ordering and interpretation
-used by that flow while consuming an injected durable cell-state resource port.
-The resource contract and its resource-local providers MUST own persistence
-mechanics. The lane MUST own cell scheduling, study data and policy,
-interpretation, aggregation, reporting, and evidence, but MUST NOT implement
-the persistence port.
+The service MUST own the experiment-domain transitions and interpretation used
+by that flow while consuming an injected durable cell-state resource port. The
+resource contract and its resource-local providers MUST own persistence
+mechanics for one per-cell `Running -> SolverTerminal -> Evaluated` record. The
+lane MUST own cell scheduling, study data and policy, interpretation,
+aggregation, reporting, and evidence, but MUST NOT implement the persistence
+port.
 
 #### Scenario: Lane requests one cell without shadow orchestration
 - **WHEN** a lane schedules an exact cell and invokes `cells.run`
@@ -147,92 +167,86 @@ the persistence port.
 - **AND** the lane does not call those providers in parallel or sequence the
   same stages itself
 
-### Requirement: Exact attempt and terminal continuation
-The service MUST attempt exact `SolverTerminal` adoption before any execution
-effect. On a miss it MUST construct an `ExecutionAttemptFence` binding the
-exact expected terminal key, lane-supplied attempt ID, and attempt digest. Under
-service-owned ordering and admission semantics, the injected durable cell-state
-resource MUST atomically persist that fence only when the same terminal key has
-no published terminal, active attempt, or unresolved residue.
+### Requirement: Local per-cell continuation preserves completed work
+The service MUST read the one per-cell record before any execution effect.
+`Evaluated` adopts the terminal and evaluation. `SolverTerminal` adopts the
+terminal and resumes only incomplete evaluation or projection. A missing record
+MUST transition uniquely to `Running` before observation, sandbox, or process
+acquisition so accidental duplicate calls cannot start the same cell twice.
 
-Only exact `Admitted` authority MAY permit observation, sandbox, or process
-acquisition. `Occupied`, `Conflict`, and `Unknown` MUST fail closed, including
-an identical occupied fence. If admission surfaces a terminal published after
-the initial read, the service MUST validate and adopt it instead of executing.
-The terminal MUST carry the exact admitted attempt identity.
+`Running` MUST bind the cell, frozen inputs, implementation revision, attempt
+ID, and any acquired observation and sandbox/process locator. A retry MUST ask
+the owning provider to inspect and settle the recorded locator. It MUST return
+already-running while the subject is live, retain the same incomplete record
+while termination or cleanup is unconfirmed, and MAY resume only after the old
+subject is absent or settled. A persistence error stops that call; the next call
+reads the current record instead of interpreting an acknowledgement protocol.
 
-`SolverTerminal` MUST be write-once and create-if-absent. Its identity MUST bind
-the exact cell and instance, frozen input, implementation revision,
-predecessors, observation handle, agent outcome, and submitted artifact.
-Identical existing values MAY be adopted; conflicting values MUST reject
-without overwrite. Commit-before-ack uncertainty MUST use exact
-read-after-unknown reconciliation.
+`SolverTerminal` MUST bind the direct cell/frozen-input/implementation identity,
+observation, agent outcome, and submitted artifact. It MUST become durable
+before deterministic or blind evaluation and MUST NOT change afterward.
+`EvaluationResult` MUST refer directly to that terminal and become durable
+before telemetry projection. Re-entry MUST adopt each completed boundary rather
+than rerun it.
 
-The exact `EvaluationResult` MUST be durably published before observation score
-projection and MUST bind the exact terminal. Re-entry MUST adopt it rather than
-repeat blind or nondeterministic evaluation.
+#### Scenario: Local duplicate or restart targets one cell
+- **WHEN** another invocation finds `Running` for the same cell
+- **THEN** it inspects the recorded locator and starts no replacement while the
+  subject is live or cleanup is unconfirmed
+- **AND** after a restart it resumes only the first incomplete boundary
 
-#### Scenario: Concurrent invocations target one terminal
-- **WHEN** two invocations seek execution authority for the same terminal
-- **THEN** at most one receives `Admitted`
-- **AND** every occupied, conflicting, or uncertain invocation performs no
-  observation, sandbox, or process effect
+#### Scenario: Distinct cells overlap
+- **WHEN** two distinct cell keys are ready and provider capacity is available
+- **THEN** their local state transitions may proceed independently
+- **AND** same-cell duplicate prevention does not serialize them
 
 #### Scenario: Verification fails after solver completion
 - **WHEN** a persisted terminal exists but deterministic or blind evaluation
   infrastructure fails
-- **THEN** the next invocation adopts the exact terminal
-- **AND** only the incomplete downstream boundary resumes
+- **THEN** the next invocation adopts the terminal
+- **AND** only evaluation and later boundaries resume
 
-### Requirement: Observation and process residue remain exact
-The observation resource MUST acquire one exact subject after attempt admission
-and before execution. The service MUST persist that handle in the terminal,
-settle the same handle, and project the persisted evaluation to the same trace
-and observation subject.
+### Requirement: Observation and process cleanup remain correlated
+The observation resource MUST acquire one trace and observation subject before
+execution. The service MUST keep that handle in the running record and terminal,
+settle the same handle, and project the persisted evaluation to that subject.
 
-An acquired handle without a published terminal is a non-authoritative orphan.
-The service MUST durably record and settle it when observable, but MUST NOT
-adopt it as the trial subject. Replacement under the same instance is legal
-only after the owning agent/sandbox resource provider produces exact process
-quiescence/termination evidence, the service validates it, and the attempt plus
-any residue is reconciled.
-
-If bounded termination escalation cannot confirm process exit, the agent and
-sandbox resources MUST return `ProcessTerminationUnconfirmed` with the exact
-process and sandbox locator. The service MUST persist
-`UnresolvedExecutionResidue` before returning. Same-instance observation
-reacquisition and execution MUST remain blocked until the owning provider
-produces exact containment evidence and the service validates that fact before
-reconciling the durable residue. A lane MAY retain or reference the resulting
-fact but MUST NOT mint the operational authority for re-entry. Time, expiry,
-stealing, heartbeats, or leases MUST NOT authorize re-entry.
+Cancellation MUST complete before sandbox release. If bounded termination
+escalation cannot confirm process exit, the owning resources MUST return
+`ProcessTerminationUnconfirmed` with the process and sandbox locator. The
+service MUST leave the cell `Running` with that locator and return an incomplete
+result. A later call MUST inspect and settle that locator before observation
+reacquisition or replacement execution.
 
 Missing or uncorrelated required evidence MAY fail the observation boundary.
 Cosmetic topology or global namespace cleanliness MUST NOT determine product
-correctness. Langfuse trial scores MUST target the experiment-item root trace
-and observation; flush or trace-summary I/O MUST NOT substitute for bounded
-readback of that exact subject.
+correctness. The service MUST record local projection success or failure.
+Remote score readback MAY run when lane policy requests it or during run-level
+reconciliation; it MUST NOT be an unconditional per-cell correctness gate and
+MUST NOT override the local terminal or evaluation.
 
 #### Scenario: Telemetry projection fails after valid evaluation
-- **WHEN** the terminal and evaluation are durable but score projection or
+- **WHEN** the terminal and evaluation are durable but projection or remote
   readback fails
-- **THEN** observation remains independently resumable
+- **THEN** the local result remains valid and telemetry remains independently
+  resumable
 - **AND** neither solver execution nor evaluation reruns
 
 #### Scenario: Termination remains unconfirmed
 - **WHEN** process exit cannot be confirmed after bounded escalation
-- **THEN** exact residue and sandbox location remain durable and visible
-- **AND** the same cell instance cannot execute again until reconciled
+- **THEN** the exact process and sandbox locator remains visible in `Running`
+- **AND** the same cell cannot execute again until the locator is settled
 
 ### Requirement: Resources and providers own live capabilities
 Template MUST declare separate resource contracts for command execution, Git
 artifacts, sandbox, agent, observation, operational events, and durable cell
 state. Concrete Bun, Git, OpenShell, Codex, Langfuse/OTel, Codex-Langfuse,
 Codex-OpenShell, EVLog, and persistence behavior MUST live only under
-resource-local providers. The durable cell-state resource MUST own the atomic
-read/create-if-absent/read-after-unknown/reconcile persistence port and its
-providers MUST own concrete external state. The service MUST own authoritative
-experiment write ordering, identity checks, adoption, and interpretation while
+resource-local providers. The durable cell-state resource MUST own the read and
+unique local begin/update mechanics for one
+`Running -> SolverTerminal -> Evaluated` record, and its providers MUST own
+concrete external state. The service MUST own authoritative experiment
+transition ordering, identity checks, adoption, and interpretation while
 consuming that port. Lanes MUST NOT implement the persistence resource.
 
 The service MUST depend on resource contracts/ports, never concrete providers.
@@ -242,83 +256,84 @@ mechanics. They MUST NOT own study policy, rubric, product correctness, cell
 scheduling, or durable-result interpretation.
 
 The Git-artifact resource MUST expose exactly materialize, capture, and apply.
-Immutable package pack/verify is BUILD compatibility tooling outside the
-running service. Git and Bun MUST retain independent admission and artifact
-epochs. Codex-OpenShell and Codex-Langfuse MAY compose only the already proved
-auth/profile or W3C carrier/projection crossings; no provider registry or
-arbitrary sibling provider imports are permitted.
+Ordinary package pack/install/smoke is BUILD compatibility tooling outside the
+running service. Codex-OpenShell and Codex-Langfuse MAY compose only the already
+proved auth/profile or W3C carrier/projection crossings; no provider registry
+or arbitrary sibling provider imports are permitted.
 
 #### Scenario: Runtime provisions a service without provider leakage
 - **WHEN** application composition selects concrete providers
 - **THEN** the runtime provisions their resource ports into the service
 - **AND** neither the service contract nor lane imports those provider modules
 
-### Requirement: Canonical submitted artifact and immutable package boundary
-The Git provider MUST preserve the accepted canonical artifact behavior:
-history-free materialization; exact resolved Git substrate; parent-owned
-full-index binary patch capture; hostile Git config/attribute neutralization;
-fresh apply-check/apply/regeneration; product-tree equality; and exact SHA-256.
-The provider MUST return the exact materialization substrate to service-owned
-preparation. The service MUST bind and persist it in `FrozenInput` and supply
-that exact bound substrate to capture/apply; capture MUST reject a different
-substrate before reading product trees. A lane MAY supply revision and path
-mapping data and retain a digest/reference in its result, but MUST NOT carry the
-provider envelope as execution authority.
+### Requirement: Canonical submitted artifact and ordinary package boundary
+The Git provider MUST use native Git behavior: history-free materialization of
+the exact commit/tree/subtree into a clean parent-owned workspace; lane-declared
+product paths and exclusions; `git add -A` under native Git ignore semantics;
+cached diff capture with `--binary --full-index --no-ext-diff --no-textconv`;
+patch SHA-256; fresh pristine apply; and reconstructed product-tree equality.
 
-The Bun provider MUST preserve the accepted immutable package behavior:
-adapter-owned staged build, `bun pm pack --ignore-scripts`, exact tarball and
-embedded manifest, admitted Bun-v1 rooted runtime graph, actual installed
-content/mode identity, immutable publication, isolated verification, and
-fail-closed rejection of unsupported or ambiguous lock forms.
+`FrozenInput` MUST persist the base commit/tree, Git version, and path mapping
+needed to repeat the operation. Capture/apply MUST reject a mismatched base,
+version, or mapping. The provider MUST NOT neutralize or reinterpret Git
+attributes, configuration, hooks, filters, package state, or installed state,
+and MUST NOT add a provider-envelope, hostile-policy, secure-mode, or
+regenerated-patch-byte authority.
 
-Cross-repository lane compatibility MUST use the accepted immutable local
-package behavior for the Template service/resource closure. The current
-operation hard-codes `@rawr/research-sdk`, an SDK-specific embedded-manifest
-path, and a closure that rejects workspace edges. BUILD MUST replace those
-invalid identity assumptions and admit one explicit immutable local
-service/resource closure as a separately reviewed closure-admission slice, not
-a rename-only edit. It MUST preserve staged build, lifecycle-script
-suppression, content/mode verification, and fail-closed lock validation while
-rejecting unsupported or ambiguous local-edge forms rather than implementing
-general workspace resolution. This change MUST NOT add an artifact aggregator,
-bundle format, registry, release plane, custom package manager, direct Template
-source import, or second composition mechanism.
+Cross-repository lane compatibility MUST use ordinary Bun package behavior:
+clean adapter-owned staging that leaves caller source and lockfiles unchanged;
+the repository's ordinary package build in staging;
+`bun pm pack --ignore-scripts`; atomic tarball publication with SHA-256 and byte
+length; clean consumer `bun install --frozen-lockfile --ignore-scripts`; lane
+import/type/model-free smoke checks; and cleanup without partial publication on
+interruption.
 
-#### Scenario: Patch contains every product change
-- **WHEN** a solver adds, deletes, renames, changes mode, or modifies binary and
-  text files
-- **THEN** a fresh verifier reconstructs exactly those submitted bytes
-- **AND** regenerated patch bytes and SHA-256 match
+Standard Bun workspace/package/lock behavior MUST be authority. BUILD MUST NOT
+port the `ce282cb0` embedded runtime manifest, custom Bun-v1 lock/placement or
+installed content/mode graphs, ambiguous-form classifiers, collision machinery,
+concurrency stress system, or special closure-admission protocol.
+`installed-package.ts`, `package-materialization.ts`, and related graph/manifest
+code are historical source-quarry evidence only. This change MUST NOT add an
+artifact aggregator, bundle format, registry, release plane, custom package
+manager, compatibility abstraction, direct Template source import, or second
+composition mechanism.
 
-#### Scenario: Installed package closure drifts
-- **WHEN** an installed dependency's content or mode, lock identity, tarball,
-  embedded manifest, or publication boundary differs
-- **THEN** compatibility fails before provider provisioning or service
-  invocation
-- **AND** no outside path is overwritten
+#### Scenario: Patch reconstructs the submitted product tree
+- **WHEN** native Git stages lane-allowed added, deleted, renamed, mode-changed,
+  binary, and text product files
+- **THEN** a fresh verifier reconstructs exactly the submitted bytes
+- **AND** the captured patch SHA-256 identifies the submitted artifact
 
-### Requirement: Exact current vendor closure
-The BUILD service MUST use the exact closure proved by Template commit
+#### Scenario: Packed service is consumed normally
+- **WHEN** BUILD packs the staged service/resource packages
+- **THEN** the tarball is published atomically with SHA-256 and byte length
+- **AND** a clean frozen consumer install passes its import, type, and model-free
+  smoke checks without changing caller source or lockfiles
+
+### Requirement: Direct vendor baseline remains reproducible
+The BUILD service MUST start from the direct versions proved by Template commit
 `3beb49360968ba7f1ebec1bfe89f572972026306`: oRPC `1.14.8`, TypeBox `1.3.6`,
-Effect `4.0.0-beta.100`, and `effect-orpc@1.0.0-effect-v4.8`. Provider
-implementations MUST use the exact admitted Bun `1.3.14`, Git `>=2.48.0`,
-OpenShell `0.0.89`, Codex CLI `0.144.6`, Langfuse `5.9.1`, OpenTelemetry
-`1.9.1`/`2.9.0`/`0.220.0`, and EVLog `2.22.3` identities. Every pin and
-transitive closure MUST be re-admitted after the mandatory pre-landing restack;
-no dependency may silently float.
+Effect `4.0.0-beta.100`, `effect-orpc@1.0.0-effect-v4.8`, Bun `1.3.14`, Git
+`>=2.48.0`, OpenShell `0.0.89`, Codex CLI `0.144.6`, Langfuse `5.9.1`,
+OpenTelemetry `1.9.1`/`2.9.0`/`0.220.0`, and EVLog `2.22.3`. The checked-in
+lockfile, frozen install, and behavior tests MUST be dependency authority.
+After the mandatory restack, BUILD MUST align direct pins with the accepted
+Template closure and rerun those checks; it MUST NOT create another transitive
+admission or attestation system.
 
 Codex effective-envelope admission MUST combine process truth with
 version-bound rollout evidence. Langfuse MUST use one full W3C parent carrier,
 reject legacy trace-seed mode, preserve one application root, project the
-supplied decoded turn set without selecting it, and read back exact score
-subjects. EVLog MUST remain diagnostic and use its public process-global API.
-OpenShell MUST consume but not start or own the selected gateway.
+supplied decoded turn set without selecting it, target the recorded score
+subject, and support policy-requested or run-level readback. EVLog MUST remain
+diagnostic and use its public process-global API. OpenShell MUST consume but not
+start or own the selected gateway.
 
-#### Scenario: Historical vendor identity is presented as current
-- **WHEN** a lane supplies a historical OpenShell, Codex, plugin, dependency
-  lock, or other mismatched identity
-- **THEN** preparation fails before resource acquisition
-- **AND** historical evidence is not reinterpreted as qualification
+#### Scenario: Direct dependency input drifts
+- **WHEN** a direct tool version or checked-in lock differs from the frozen BUILD
+  input
+- **THEN** frozen install or the owning behavior check fails
+- **AND** the service does not invent a second dependency authority
 
 ### Requirement: Lane ownership and deterministic verification
 Each investigation MUST retain its cases, inputs, prompts, treatments, profile
@@ -332,12 +347,12 @@ MUST NOT scan or relocate a vault.
 
 Template Habitat MUST apply the complete service blueprint and enforce
 service-to-resource and resource-to-provider direction. Behavioral tests MUST
-cover TypeBox contracts, terminal adoption, concurrent attempt admission,
-unknown writes, observation identity, durable evaluation, unresolved residue,
-provider-produced containment evidence with service validation, resource
-release, service-bound Git substrate before tree access, artifact round-trip,
-Codex envelope admission, Langfuse score subjects, EVLog lifecycle, and package
-installation. Tests MUST not assert source strings or helper counts.
+cover TypeBox contracts, local duplicate/restart/resume, terminal adoption,
+observation identity, durable evaluation, recorded-locator cleanup, resource
+release, Git base/version/mapping mismatch, artifact round-trip, Codex envelope
+admission, Langfuse score subjects and local projection truth, EVLog lifecycle,
+and clean package installation/smoke. Tests MUST not assert source strings or
+helper counts.
 
 All BUILD checks MUST be model-free. They MUST use injected ports, fixture
 processes, local fixture servers, captured sessions, and in-memory telemetry.
@@ -360,8 +375,8 @@ dependency on the retiring lifecycle/controller system and no direct host/lane
 provider binding.
 
 The change MUST NOT add a generic scheduler, controller, workflow engine,
-receipt graph, service-owned general CAS, database, daemon, hosted service, package
-manager, release plane, evidence authority, or provider registry.
+receipt graph, service-owned general CAS or database, daemon, hosted control
+plane, package manager, release plane, evidence authority, or provider registry.
 
 #### Scenario: Consolidation remains an ordinary Template service
 - **WHEN** a study invokes `cells.run`
