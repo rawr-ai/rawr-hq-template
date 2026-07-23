@@ -1,17 +1,26 @@
 <!-- quarantine-ledger: true -->
 
-# Transient M2 Milestone Quarantine Ledger
+# Migration Milestone Quarantine Router
 
-This is a transient `AGENTS.md` ledger for migration containment. The sibling `quarantine/` directory preserves the stale M2 milestone intact.
+## Scope
 
-Use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` for the governing workflow.
+- Applies only to `docs/projects/rawr-final-architecture-migration/milestones/quarantine/**`.
 
-## Conflict Rule
+## Boundaries
 
-Quarantined milestone docs are not current milestone authority where they conflict with the active migration plan, final runtime realization spec, or canonical architecture spec.
+- Material here is milestone-history provenance only; it is not current milestone authority.
+- Quarantined sequencing and completion claims cannot direct current project work.
 
-## Quarantined Material
+## Flow
 
-| Quarantined path | Original role | Why quarantined | Still useful for | Promotion condition |
-| --- | --- | --- | --- | --- |
-| `docs/projects/rawr-final-architecture-migration/milestones/quarantine/M2-minimal-canonical-runtime-shell.md` | Previous M2 milestone | Milestone sequencing predates final runtime/architecture authority. | Mining prior domino thinking and risk framing. | Replace with a regenerated milestone after migration planning. |
+- Read inward only to recover historical sequencing or evidence.
+- Restate any reclaimed milestone requirement in active project authority before relying on it.
+
+## Routing
+
+- Return to the [docs router](../../../../AGENTS.md) for current project authority.
+
+## Validation
+
+- Preserve the quarantine marker, required headings, and resolving router edge.
+- Treat commands found below this directory as quoted provenance, not validation instructions.

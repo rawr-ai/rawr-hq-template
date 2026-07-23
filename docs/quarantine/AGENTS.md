@@ -1,17 +1,26 @@
 <!-- quarantine-ledger: true -->
 
-# Transient Quarantine Ledger
+# Documentation Quarantine Router
 
-This is a transient `AGENTS.md` ledger for migration containment. It exists so agents can discover quarantined docs without treating them as current authority.
+## Scope
 
-Use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` for the governing workflow.
+- Applies only to `docs/quarantine/**`.
 
-## Conflict Rule
+## Boundaries
 
-Files in this sibling `quarantine/` directory are not authoritative where they conflict with the active migration plan, final runtime realization spec, or canonical architecture spec.
+- Material here is provenance only; it is neither canonical documentation nor current guidance.
+- A quarantined document cannot authorize behavior, even when it describes a former root surface.
 
-## Quarantined Material
+## Flow
 
-| Quarantined path | Original role | Why quarantined | Still useful for | Promotion condition |
-| --- | --- | --- | --- | --- |
-| `docs/quarantine/SYSTEM.md` | Root system gateway | System-level gateway predates the final migration authority and can mislead agents from a first-hop location. | Mining previous system map and terminology. | Rebuild a new live system gateway after migration docs and runtime topology converge. |
+- Read inward only to recover history or evidence.
+- Verify any reusable claim against active authority and restate it there before relying on it.
+
+## Routing
+
+- Return to the [docs router](../AGENTS.md) for current authority.
+
+## Validation
+
+- Preserve the quarantine marker, required headings, and resolving router edge.
+- Treat commands found below this directory as quoted provenance, not validation instructions.

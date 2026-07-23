@@ -1,17 +1,26 @@
 <!-- quarantine-ledger: true -->
 
-# Transient Projects Quarantine Ledger
+# Project Quarantine Router
 
-This is a transient `AGENTS.md` ledger for migration containment. The sibling `quarantine/` directory preserves project packets that are useful evidence but not active project authority.
+## Scope
 
-Use `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md` for the governing workflow.
+- Applies only to `docs/projects/quarantine/**`.
 
-## Conflict Rule
+## Boundaries
 
-Quarantined project docs are not authoritative where they conflict with active project docs, the active migration plan, final runtime realization spec, or canonical architecture spec.
+- Material here is project-history provenance only; it is not active project authority.
+- Quarantined packets cannot create work, sequencing, acceptance, or implementation obligations.
 
-## Quarantined Material
+## Flow
 
-| Quarantined path | Original role | Why quarantined | Still useful for | Promotion condition |
-| --- | --- | --- | --- | --- |
-| `docs/projects/quarantine/orpc-ingest-workflows-spec/` | ORPC ingest workflow spec packet | Project packet contains stale guidance that can be mistaken for active architecture during migration. | Mining prior ORPC/Inngest workflow reasoning and examples. | Keep quarantined unless a new active project explicitly reclaims and rewrites the material. |
+- Read inward only to recover historical decisions or evidence.
+- Restate any reclaimed fact in an active project or canonical document before relying on it.
+
+## Routing
+
+- Return to the [docs router](../../AGENTS.md) for current project authority.
+
+## Validation
+
+- Preserve the quarantine marker, required headings, and resolving router edge.
+- Treat commands found below this directory as quoted provenance, not validation instructions.
