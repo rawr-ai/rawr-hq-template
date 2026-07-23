@@ -39,17 +39,18 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   single `router.ts` or a closed composed `router/` directory behind its
   `router.ts` boundary. Prove both accepted shapes and reject mixed/open forms.
 - [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
-  Constrain entrypoint, binary, `package.json#oclif` discovery/core-plugin
-  composition, the package-owned manifest target, TypeScript source-to-output
-  mapping, command root, no plugin-to-plugin dependency, and no mechanical
-  package-directory imports. Leave general package exports to TypeScript and Nx.
-  Do not encode retired filenames as a forbidden list or model `nx release` as
-  a project target.
+  Constrain direct entrypoints, app identity/binary/dependency/command discovery,
+  TypeScript source-to-output mapping, command-plugin manifest/package roots, no
+  plugin-to-plugin dependency, and no mechanical package-directory imports.
+  Tighten app core-plugin composition in task 2.2 and generated app packaging in
+  task 3.3 only when those behaviors land. Leave general package exports to
+  TypeScript and Nx. Do not encode retired filenames as a forbidden list or
+  model `nx release` as a project target.
 - [x] 1.3a Correct command-plugin identity to
   `plugins/cli/commands/<capability>`, remove `rawr.kind` as projection
-  classification, require Bun to execute the official Oclif manifest command,
-  and prove the exact direct app entrypoints without admitting extra bootstrap
-  statements.
+  classification, require Bun to execute the official command-plugin manifest
+  command, and prove the exact direct app entrypoints without admitting extra
+  bootstrap statements.
 - [ ] 1.4 Add positive resource/provider topology only after the current corpus
   supports one generic invariant. Do not claim Magic prior art that does not
   exist.

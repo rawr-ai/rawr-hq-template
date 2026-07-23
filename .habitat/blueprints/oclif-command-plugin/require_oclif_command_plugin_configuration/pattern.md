@@ -13,62 +13,64 @@ Nx Release owns versioning and publication.
 language json
 
 or {
-  `{ $properties }` where {
+  document(value=$root) where {
     $filename <: r".*plugins/cli/commands/[^/]+/package\.json$",
+    $root <: `{ $properties }`,
     or {
       not {
-        $properties <: contains pair(key=`"name"`, value=$name),
+        $properties <: some pair(key=`"name"`, value=$name),
         $name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
       },
-      not { $properties <: contains pair(key=`"version"`, value=string()) },
-      not { $properties <: contains pair(key=`"type"`, value=`"module"`) },
-      $properties <: contains pair(key=`"bin"`, value=$bin),
+      not { $properties <: some pair(key=`"version"`, value=string()) },
+      not { $properties <: some pair(key=`"type"`, value=`"module"`) },
+      $properties <: some pair(key=`"bin"`, value=$bin),
       and {
-        $properties <: contains pair(key=`"dependencies"`, value=$plugin_dependencies),
-        $plugin_dependencies <: contains pair(key=$plugin_name, value=$plugin_version),
+        $properties <: some pair(key=`"dependencies"`, value=`{ $plugin_dependencies }`),
+        $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
         $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
       },
       and {
-        $properties <: contains pair(key=`"devDependencies"`, value=$plugin_dependencies),
-        $plugin_dependencies <: contains pair(key=$plugin_name, value=$plugin_version),
+        $properties <: some pair(key=`"devDependencies"`, value=`{ $plugin_dependencies }`),
+        $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
         $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
       },
       and {
-        $properties <: contains pair(key=`"peerDependencies"`, value=$plugin_dependencies),
-        $plugin_dependencies <: contains pair(key=$plugin_name, value=$plugin_version),
+        $properties <: some pair(key=`"peerDependencies"`, value=`{ $plugin_dependencies }`),
+        $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
         $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
       },
       and {
-        $properties <: contains pair(key=`"optionalDependencies"`, value=$plugin_dependencies),
-        $plugin_dependencies <: contains pair(key=$plugin_name, value=$plugin_version),
+        $properties <: some pair(key=`"optionalDependencies"`, value=`{ $plugin_dependencies }`),
+        $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
         $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
       },
       not {
-        $properties <: contains pair(key=`"scripts"`, value=$scripts),
-        $scripts <: contains pair(key=`"manifest"`, value=`"bun --bun oclif manifest"`)
+        $properties <: some pair(key=`"scripts"`, value=`{ $scripts }`),
+        $scripts <: some pair(key=`"manifest"`, value=`"bun --bun oclif manifest"`)
       },
       not {
-        $properties <: contains pair(key=`"dependencies"`, value=$dependencies),
-        $dependencies <: contains pair(key=`"@oclif/core"`, value=string())
+        $properties <: some pair(key=`"dependencies"`, value=`{ $dependencies }`),
+        $dependencies <: some pair(key=`"@oclif/core"`, value=string())
       },
       not {
-        $properties <: contains pair(key=`"files"`, value=$files),
+        $properties <: some pair(key=`"files"`, value=$files),
         $files <: contains `"dist"`,
         $files <: contains `"oclif.manifest.json"`
       },
       not {
-        $properties <: contains pair(key=`"oclif"`, value=$oclif),
-        $oclif <: contains pair(key=`"commands"`, value=`"./dist/commands"`),
-        $oclif <: contains pair(key=`"topicSeparator"`, value=`" "`)
+        $properties <: some pair(key=`"oclif"`, value=`{ $oclif }`),
+        $oclif <: some pair(key=`"commands"`, value=`"./dist/commands"`),
+        $oclif <: some pair(key=`"topicSeparator"`, value=`" "`)
       }
     }
   },
-  `{ $properties }` where {
+  document(value=$root) where {
     $filename <: r".*plugins/cli/commands/[^/]+/tsconfig\.json$",
+    $root <: `{ $properties }`,
     not {
-      $properties <: contains pair(key=`"compilerOptions"`, value=$compiler_options),
-      $compiler_options <: contains pair(key=`"rootDir"`, value=`"src"`),
-      $compiler_options <: contains pair(key=`"outDir"`, value=`"dist"`)
+      $properties <: some pair(key=`"compilerOptions"`, value=`{ $compiler_options }`),
+      $compiler_options <: some pair(key=`"rootDir"`, value=`"src"`),
+      $compiler_options <: some pair(key=`"outDir"`, value=`"dist"`)
     }
   }
 }

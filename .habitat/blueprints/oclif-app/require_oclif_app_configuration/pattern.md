@@ -3,60 +3,51 @@ level: error
 ---
 # Require Oclif App Configuration
 
-The installed package manifest describes one conventional Oclif application.
-The package-owned `manifest` script is an executable target inferred by Nx.
-Workspace Nx configuration owns its build ordering and cache contract, while
-top-level Nx Release configuration owns versioning and publication.
+The package describes one conventional Oclif application. This first ratchet
+locks the installed identity, binary, Oclif dependency, compiled command root,
+and TypeScript source-to-output mapping. Native extension composition and the
+generated release manifest tighten this same rule when those behaviors land.
 
 ```grit
 language json
 
 or {
-  `{ $properties }` where {
+  document(value=$root) where {
     $filename <: r".*apps/cli/package\.json$",
+    $root <: `{ $properties }`,
     or {
-      not { $properties <: contains pair(key=`"version"`, value=string()) },
-      not { $properties <: contains pair(key=`"type"`, value=`"module"`) },
+      not { $properties <: some pair(key=`"name"`, value=`"@rawr/cli"`) },
+      not { $properties <: some pair(key=`"version"`, value=string()) },
+      not { $properties <: some pair(key=`"type"`, value=`"module"`) },
       not {
-        $properties <: contains pair(key=`"dependencies"`, value=$dependencies),
-        $dependencies <: contains pair(key=`"@oclif/plugin-plugins"`, value=string())
+        $properties <: some pair(key=`"dependencies"`, value=`{ $dependencies }`),
+        $dependencies <: some pair(key=`"@oclif/plugin-plugins"`, value=string())
       },
       not {
-        $properties <: contains pair(key=`"bin"`, value=$bin),
-        $bin <: contains pair(key=`"rawr"`, value=`"./bin/run.js"`)
+        $properties <: some pair(key=`"bin"`, value=`{ $bin }`),
+        $bin <: some pair(key=`"rawr"`, value=`"./bin/run.js"`)
       },
       not {
-        $properties <: contains pair(key=`"scripts"`, value=$scripts),
-        $scripts <: contains pair(key=`"manifest"`, value=`"bun --bun oclif manifest"`)
-      },
-      not {
-        $properties <: contains pair(key=`"files"`, value=$files),
-        $files <: contains `"bin"`,
-        $files <: contains `"dist"`,
-        $files <: contains `"oclif.manifest.json"`
-      },
-      not {
-        $properties <: contains pair(key=`"oclif"`, value=$oclif),
-        $oclif <: contains pair(key=`"bin"`, value=`"rawr"`),
-        $oclif <: contains pair(key=`"dirname"`, value=`"rawr"`),
-        $oclif <: contains pair(key=`"commands"`, value=`"./dist/commands"`),
-        $oclif <: contains pair(key=`"plugins"`, value=$plugins),
-        $plugins <: contains `"@oclif/plugin-plugins"`
+        $properties <: some pair(key=`"oclif"`, value=`{ $oclif }`),
+        $oclif <: some pair(key=`"bin"`, value=`"rawr"`),
+        $oclif <: some pair(key=`"dirname"`, value=`"rawr"`),
+        $oclif <: some pair(key=`"commands"`, value=`"./dist/commands"`)
       }
     }
   },
-  `{ $properties }` where {
+  document(value=$root) where {
     $filename <: r".*apps/cli/tsconfig\.json$",
+    $root <: `{ $properties }`,
     not {
-      $properties <: contains pair(key=`"compilerOptions"`, value=$compiler_options),
-      $compiler_options <: contains pair(key=`"rootDir"`, value=`"src"`),
-      $compiler_options <: contains pair(key=`"outDir"`, value=`"dist"`)
+      $properties <: some pair(key=`"compilerOptions"`, value=`{ $compiler_options }`),
+      $compiler_options <: some pair(key=`"rootDir"`, value=`"src"`),
+      $compiler_options <: some pair(key=`"outDir"`, value=`"dist"`)
     }
   }
 }
 ```
 
-## Matches a package without the Oclif-provided extension manager
+## Matches a package without the declared Oclif extension dependency
 
 ```json
 // @filename: apps/cli/package.json
@@ -64,7 +55,7 @@ or {
   "name": "@rawr/cli",
   "version": "1.0.0",
   "type": "module",
-  "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "dependencies": { "@oclif/core": "4.11.14" },
   "bin": { "rawr": "./bin/run.js" },
   "scripts": { "manifest": "bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
@@ -77,7 +68,7 @@ or {
 }
 ```
 
-## Matches a package without an executable manifest target
+## Matches a package with the wrong application binary
 
 ```json
 // @filename: apps/cli/package.json
@@ -86,8 +77,7 @@ or {
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
-  "bin": { "rawr": "./bin/run.js" },
-  "files": ["bin", "dist", "oclif.manifest.json"],
+  "bin": { "other": "./bin/run.js" },
   "oclif": {
     "bin": "rawr",
     "dirname": "rawr",
@@ -143,6 +133,42 @@ or {
     "dirname": "rawr",
     "commands": "./dist/commands",
     "plugins": ["@oclif/plugin-plugins"]
+  }
+}
+```
+
+## Ignores the pre-activation app configuration
+
+```json
+// @filename: apps/cli/package.json
+{
+  "name": "@rawr/cli",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "bin": { "rawr": "./bin/run.js" },
+  "oclif": {
+    "bin": "rawr",
+    "dirname": "rawr",
+    "commands": "./dist/commands",
+    "plugins": ["@oclif/plugin-help"]
+  }
+}
+```
+
+```json
+// @filename: apps/cli/package.json
+{
+  "name": "@rawr/cli",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "bin": { "rawr": "./bin/run.js" },
+  "oclif": {
+    "bin": "rawr",
+    "dirname": "rawr",
+    "commands": "./dist/commands",
+    "plugins": ["@oclif/plugin-help"]
   }
 }
 ```
