@@ -184,8 +184,9 @@ is the source for the generic service, API plugin, and agent-router patterns.
 Identity-only adaptations and one generic correction for composed module router
 directories must be explicit; a copied rule that fails its own current source
 is not authoritative merely because its bytes were copied. The compiled Habitat
-consumer remains the pinned Civ7 `habitat-sdk-v0.1.1` Bun 1.4.0 artifact until a
-newer artifact is actually published.
+consumer pins Civ7 `habitat-sdk-v0.1.6`, source
+`ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
+temporary Darwin arm64 lane.
 
 ## Behavioral Boundary
 

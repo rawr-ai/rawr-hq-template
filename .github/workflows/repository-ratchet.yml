@@ -18,7 +18,7 @@ permissions:
 jobs:
   required:
     name: Required lint, typecheck, and topology
-    runs-on: ubuntu-latest
+    runs-on: macos-14
     timeout-minutes: 30
     steps:
       - name: Check out exact candidate
@@ -33,6 +33,9 @@ jobs:
 
       - name: Install locked dependencies
         run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Provision pinned Grit runtime
+        run: bun run habitat:grit:provision
 
       - name: Select pull request comparison
         if: github.event_name == 'pull_request'
