@@ -41,11 +41,7 @@ const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
 type ProviderRequirements = FileSystem.FileSystem;
 
 export interface GitEffectPlatformNodeOptions {
-  readonly gitExecutable: string;
-}
-
-export interface DeferredGitEffectPlatformNodeOptions {
-  readonly acquireGitExecutable: () => string;
+  readonly gitExecutable?: string;
 }
 
 interface ContentFileImage {
@@ -137,8 +133,9 @@ interface PrivateGitRootAllocation {
 }
 
 export function makeContentWorkspaceResource(
-  options: GitEffectPlatformNodeOptions
+  options: GitEffectPlatformNodeOptions = {}
 ): ContentWorkspaceResource<ProviderRequirements> {
+  const gitExecutable = options.gitExecutable ?? "git";
   const captureAuthorities = new Map<string, CaptureAuthority>();
   const consumedHandles = new Set<string>();
   const inspectWorkspace = Effect.fn("contentWorkspace.inspect")(function* (
@@ -147,7 +144,7 @@ export function makeContentWorkspaceResource(
     const fs = yield* FileSystem.FileSystem;
     const root = yield* requireCanonicalRoot(fs, input.locator, "inspect");
     const observedRoot = yield* gitText(
-      options.gitExecutable,
+      gitExecutable,
       root,
       ["rev-parse", "--show-toplevel"],
       "inspect"
@@ -161,14 +158,14 @@ export function makeContentWorkspaceResource(
       );
     }
     const [refName, commit, tree, objectFormat, remoteNames] = yield* Effect.all([
-      gitText(options.gitExecutable, root, ["symbolic-ref", "--quiet", "HEAD"], "inspect"),
-      gitText(options.gitExecutable, root, ["rev-parse", "--verify", "HEAD^{commit}"], "inspect"),
-      gitText(options.gitExecutable, root, ["rev-parse", "--verify", "HEAD^{tree}"], "inspect"),
-      gitObjectFormat(options.gitExecutable, root, "inspect"),
-      gitLines(options.gitExecutable, root, ["remote"], "inspect"),
+      gitText(gitExecutable, root, ["symbolic-ref", "--quiet", "HEAD"], "inspect"),
+      gitText(gitExecutable, root, ["rev-parse", "--verify", "HEAD^{commit}"], "inspect"),
+      gitText(gitExecutable, root, ["rev-parse", "--verify", "HEAD^{tree}"], "inspect"),
+      gitObjectFormat(gitExecutable, root, "inspect"),
+      gitLines(gitExecutable, root, ["remote"], "inspect"),
     ]);
     const remoteUrls = yield* Effect.forEach(remoteNames, (remote) =>
-      gitLines(options.gitExecutable, root, ["remote", "get-url", "--all", remote], "inspect")
+      gitLines(gitExecutable, root, ["remote", "get-url", "--all", remote], "inspect")
     );
     return Object.freeze({
       root,
@@ -188,11 +185,7 @@ export function makeContentWorkspaceResource(
     }>
   ) {
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(
-      fs,
-      options.gitExecutable,
-      "inspect-git-workspace"
-    );
+    const executable = gitExecutable;
     yield* checked("inspect-git-workspace", () => validateGitInspectionInput(input));
     return yield* observeGitWorkspaceAnchor(
       fs,
@@ -212,7 +205,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const operation = "inspect-git-ref" as const;
-    const executable = yield* requireCanonicalGitExecutable(fs, options.gitExecutable, operation);
+    const executable = gitExecutable;
     yield* checked(operation, () => {
       validateRefName(input.refName, operation);
       validateRemoteSelection(input.remoteSelection, operation);
@@ -253,11 +246,7 @@ export function makeContentWorkspaceResource(
     }>
   ) {
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(
-      fs,
-      options.gitExecutable,
-      "read-git-tree"
-    );
+    const executable = gitExecutable;
     const root = yield* requireExactGitRoot(fs, executable, input.root, "read-git-tree");
     yield* checked("read-git-tree", () => {
       validateObjectForFormat(input.tree, input.objectFormat, "tree", "read-git-tree");
@@ -291,11 +280,7 @@ export function makeContentWorkspaceResource(
     }>
   ) {
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(
-      fs,
-      options.gitExecutable,
-      "read-git-blob"
-    );
+    const executable = gitExecutable;
     const root = yield* requireExactGitRoot(fs, executable, input.root, "read-git-blob");
     yield* checked("read-git-blob", () => {
       validateObjectForFormat(input.blob, input.objectFormat, "blob", "read-git-blob");
@@ -316,7 +301,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const operation = "read-git-blob" as const;
-    const executable = yield* requireCanonicalGitExecutable(fs, options.gitExecutable, operation);
+    const executable = gitExecutable;
     const root = yield* requireExactGitRoot(fs, executable, input.root, operation);
     return yield* readGitBlobBatch(executable, root, input, operation);
   });
@@ -337,11 +322,7 @@ export function makeContentWorkspaceResource(
       }>
     ) {
       const fs = yield* FileSystem.FileSystem;
-      const executable = yield* requireCanonicalGitExecutable(
-        fs,
-        options.gitExecutable,
-        "capture-git-evidence"
-      );
+      const executable = gitExecutable;
       yield* checked("capture-git-evidence", () => validateGitEvidenceInput(input));
       const openingAnchor = yield* observeGitWorkspaceAnchor(
         fs,
@@ -414,7 +395,7 @@ export function makeContentWorkspaceResource(
   ) {
     const operation = "observe-git-staged-index" as const;
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(fs, options.gitExecutable, operation);
+    const executable = gitExecutable;
     yield* checked(operation, () => {
       validateRefName(input.refName, operation);
       validateRemoteSelection(input.remoteSelection, operation);
@@ -478,11 +459,7 @@ export function makeContentWorkspaceResource(
     }>
   ) {
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(
-      fs,
-      options.gitExecutable,
-      "read-git-blob-at-path"
-    );
+    const executable = gitExecutable;
     const root = yield* requireExactGitRoot(fs, executable, input.root, "read-git-blob-at-path");
     yield* checked("read-git-blob-at-path", () => {
       validateRefName(input.refName, "read-git-blob-at-path");
@@ -560,11 +537,7 @@ export function makeContentWorkspaceResource(
     input: Readonly<{ root: string; ancestorCommit: string; descendantCommit: string }>
   ) {
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(
-      fs,
-      options.gitExecutable,
-      "local-git-ancestry"
-    );
+    const executable = gitExecutable;
     const root = yield* requireExactGitRoot(fs, executable, input.root, "local-git-ancestry");
     yield* checked("local-git-ancestry", () => {
       validateObject(input.ancestorCommit, "ancestorCommit", "local-git-ancestry");
@@ -585,11 +558,7 @@ export function makeContentWorkspaceResource(
     input: Readonly<{ root: string; fromCommit: string; toCommit: string; maxBytes: number }>
   ) {
     const fs = yield* FileSystem.FileSystem;
-    const executable = yield* requireCanonicalGitExecutable(
-      fs,
-      options.gitExecutable,
-      "list-git-changed-paths"
-    );
+    const executable = gitExecutable;
     const root = yield* requireExactGitRoot(fs, executable, input.root, "list-git-changed-paths");
     yield* checked("list-git-changed-paths", () => {
       validateObject(input.fromCommit, "fromCommit", "list-git-changed-paths");
@@ -655,12 +624,12 @@ export function makeContentWorkspaceResource(
       validateRemoteInput(input.refName, input.sourcePath, input.maxEntries, "observe-remote")
     );
     return yield* withPrivateGitRepository(
-      options.gitExecutable,
+      gitExecutable,
       input.repositoryIdentity,
       input.refName,
       true,
       "observe-remote",
-      (root) => inspectFetchedTree(options.gitExecutable, root, input, "observe-remote")
+      (root) => inspectFetchedTree(gitExecutable, root, input, "observe-remote")
     );
   });
 
@@ -678,7 +647,7 @@ export function makeContentWorkspaceResource(
       validateLimit(input.maxBytes, "maxBytes", "materialize-remote");
     });
     return yield* withPrivateGitRepository(
-      options.gitExecutable,
+      gitExecutable,
       input.repositoryIdentity,
       input.refName,
       false,
@@ -686,7 +655,7 @@ export function makeContentWorkspaceResource(
       (root) =>
         Effect.gen(function* () {
           const observed = yield* inspectFetchedTree(
-            options.gitExecutable,
+            gitExecutable,
             root,
             input,
             "materialize-remote"
@@ -695,7 +664,7 @@ export function makeContentWorkspaceResource(
           const entries = yield* Effect.forEach(observed.entries, (entry) =>
             Effect.gen(function* () {
               const bytes = yield* gitBytes(
-                options.gitExecutable,
+                gitExecutable,
                 root,
                 ["cat-file", "blob", entry.blob],
                 "materialize-remote",
@@ -735,7 +704,7 @@ export function makeContentWorkspaceResource(
       validateRemoteInput(input.refName, "", 1, "ancestry");
     });
     return yield* withPrivateGitRepository(
-      options.gitExecutable,
+      gitExecutable,
       input.repositoryIdentity,
       input.refName,
       true,
@@ -743,7 +712,7 @@ export function makeContentWorkspaceResource(
       (root) =>
         Effect.gen(function* () {
           const code = yield* gitExitCode(
-            options.gitExecutable,
+            gitExecutable,
             root,
             ["merge-base", "--is-ancestor", input.ancestorCommit, input.descendantCommit],
             "ancestry"
@@ -771,7 +740,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const root = yield* requireCanonicalRoot(fs, input.root, "capture");
-    yield* requireGitWorkspaceRoot(options.gitExecutable, root, "capture");
+    yield* requireGitWorkspaceRoot(gitExecutable, root, "capture");
     const rootIdentity = yield* fs.stat(root).pipe(mapPlatform("capture", root));
     yield* checked("capture", () => {
       validateOpaque(input.readToken, "readToken", "capture");
@@ -826,7 +795,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const root = yield* requireCanonicalRoot(fs, input.root, "apply");
-    yield* requireGitWorkspaceRoot(options.gitExecutable, root, "apply");
+    yield* requireGitWorkspaceRoot(gitExecutable, root, "apply");
     yield* checked("apply", () => {
       validateOpaque(input.planDigest, "planDigest", "apply");
       validateOpaque(input.readToken, "readToken", "apply");
@@ -964,7 +933,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const root = yield* requireCanonicalRoot(fs, input.root, "restore");
-    yield* requireGitWorkspaceRoot(options.gitExecutable, root, "restore");
+    yield* requireGitWorkspaceRoot(gitExecutable, root, "restore");
     yield* checked("restore", () => {
       validateOpaque(input.planDigest, "planDigest", "restore");
       validateOpaque(input.readToken, "readToken", "restore");
@@ -1097,7 +1066,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const root = yield* requireCanonicalRoot(fs, input.root, "settle");
-    yield* requireGitWorkspaceRoot(options.gitExecutable, root, "settle");
+    yield* requireGitWorkspaceRoot(gitExecutable, root, "settle");
     yield* checked("settle", () => {
       validateOpaque(input.planDigest, "planDigest", "settle");
       validateOpaque(input.readToken, "readToken", "settle");
@@ -1145,7 +1114,7 @@ export function makeContentWorkspaceResource(
   ) {
     const fs = yield* FileSystem.FileSystem;
     const root = yield* requireCanonicalRoot(fs, input.root, "release");
-    yield* requireGitWorkspaceRoot(options.gitExecutable, root, "release");
+    yield* requireGitWorkspaceRoot(gitExecutable, root, "release");
     yield* checked("release", () => {
       validateOpaque(input.readToken, "readToken", "release");
       validateOpaque(input.captureHandle, "captureHandle", "release");
@@ -1234,7 +1203,7 @@ export function runNodeContentWorkspace<A>(
 }
 
 export function makeNodeContentWorkspacePort(
-  options: GitEffectPlatformNodeOptions
+  options: GitEffectPlatformNodeOptions = {}
 ): ContentWorkspaceNodeAsyncPort {
   const resource = makeContentWorkspaceResource(options);
   return Object.freeze({
@@ -1281,163 +1250,6 @@ export function makeNodeContentWorkspacePort(
     release: (input: Parameters<typeof resource.release>[0]) =>
       runNodeOrReject(resource.release(input)),
   });
-}
-
-/**
- * Defers the executable binding until the first content-workspace operation.
- * A successful provider is shared for the lifetime of this port; failed
- * acquisition remains retryable so a later operation attempt can bind cleanly.
- */
-export function makeDeferredNodeContentWorkspacePort(
-  options: DeferredGitEffectPlatformNodeOptions
-): ContentWorkspaceNodeAsyncPort {
-  const acquire = makeDeferredNodeContentWorkspacePortAcquirer(options);
-  return Object.freeze({
-    inspectWorkspace: (input: Parameters<ContentWorkspaceNodeAsyncPort["inspectWorkspace"]>[0]) =>
-      runDeferredNodeOperation(acquire, "inspect", input.locator, (port) =>
-        port.inspectWorkspace(input)
-      ),
-    inspectGitRef: (input: Parameters<ContentWorkspaceNodeAsyncPort["inspectGitRef"]>[0]) =>
-      runDeferredNodeOperation(acquire, "inspect-git-ref", input.locator, (port) =>
-        port.inspectGitRef(input)
-      ),
-    inspectGitWorkspace: (
-      input: Parameters<ContentWorkspaceNodeAsyncPort["inspectGitWorkspace"]>[0]
-    ) =>
-      runDeferredNodeOperation(acquire, "inspect-git-workspace", input.locator, (port) =>
-        port.inspectGitWorkspace(input)
-      ),
-    readGitTree: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitTree"]>[0]) =>
-      runDeferredNodeOperation(acquire, "read-git-tree", input.root, (port) =>
-        port.readGitTree(input)
-      ),
-    readGitBlob: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlob"]>[0]) =>
-      runDeferredNodeOperation(acquire, "read-git-blob", input.root, (port) =>
-        port.readGitBlob(input)
-      ),
-    readGitBlobs: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlobs"]>[0]) =>
-      runDeferredNodeOperation(acquire, "read-git-blob", input.root, (port) =>
-        port.readGitBlobs(input)
-      ),
-    captureGitWorkspaceEvidence: (
-      input: Parameters<ContentWorkspaceNodeAsyncPort["captureGitWorkspaceEvidence"]>[0]
-    ) =>
-      runDeferredNodeOperation(acquire, "capture-git-evidence", input.root, (port) =>
-        port.captureGitWorkspaceEvidence(input)
-      ),
-    observeGitStagedIndex: (
-      input: Parameters<ContentWorkspaceNodeAsyncPort["observeGitStagedIndex"]>[0]
-    ) =>
-      runDeferredNodeOperation(acquire, "observe-git-staged-index", input.locator, (port) =>
-        port.observeGitStagedIndex(input)
-      ),
-    readGitBlobAtPath: (input: Parameters<ContentWorkspaceNodeAsyncPort["readGitBlobAtPath"]>[0]) =>
-      runDeferredNodeOperation(acquire, "read-git-blob-at-path", input.root, (port) =>
-        port.readGitBlobAtPath(input)
-      ),
-    isLocalGitAncestor: (
-      input: Parameters<ContentWorkspaceNodeAsyncPort["isLocalGitAncestor"]>[0]
-    ) =>
-      runDeferredNodeOperation(acquire, "local-git-ancestry", input.root, (port) =>
-        port.isLocalGitAncestor(input)
-      ),
-    listGitChangedPaths: (
-      input: Parameters<ContentWorkspaceNodeAsyncPort["listGitChangedPaths"]>[0]
-    ) =>
-      runDeferredNodeOperation(acquire, "list-git-changed-paths", input.root, (port) =>
-        port.listGitChangedPaths(input)
-      ),
-    readFile: (input: Parameters<ContentWorkspaceNodeAsyncPort["readFile"]>[0]) =>
-      runDeferredNodeOperation(acquire, "read-file", input.root, (port) => port.readFile(input)),
-    readTree: (input: Parameters<ContentWorkspaceNodeAsyncPort["readTree"]>[0]) =>
-      runDeferredNodeOperation(acquire, "read-tree", input.root, (port) => port.readTree(input)),
-    observeRemote: (input: Parameters<ContentWorkspaceNodeAsyncPort["observeRemote"]>[0]) =>
-      runDeferredNodeOperation(acquire, "observe-remote", input.repositoryIdentity, (port) =>
-        port.observeRemote(input)
-      ),
-    materializeRemote: (input: Parameters<ContentWorkspaceNodeAsyncPort["materializeRemote"]>[0]) =>
-      runDeferredNodeOperation(acquire, "materialize-remote", input.repositoryIdentity, (port) =>
-        port.materializeRemote(input)
-      ),
-    isAncestor: (input: Parameters<ContentWorkspaceNodeAsyncPort["isAncestor"]>[0]) =>
-      runDeferredNodeOperation(acquire, "ancestry", input.repositoryIdentity, (port) =>
-        port.isAncestor(input)
-      ),
-    capture: (input: Parameters<ContentWorkspaceNodeAsyncPort["capture"]>[0]) =>
-      runDeferredNodeOperation(acquire, "capture", input.root, (port) => port.capture(input)),
-    apply: (input: Parameters<ContentWorkspaceNodeAsyncPort["apply"]>[0]) =>
-      runDeferredNodeOperation(acquire, "apply", input.root, (port) => port.apply(input)),
-    restore: (input: Parameters<ContentWorkspaceNodeAsyncPort["restore"]>[0]) =>
-      runDeferredNodeOperation(acquire, "restore", input.root, (port) => port.restore(input)),
-    settle: (input: Parameters<ContentWorkspaceNodeAsyncPort["settle"]>[0]) =>
-      runDeferredNodeOperation(acquire, "settle", input.root, (port) => port.settle(input)),
-    release: (input: Parameters<ContentWorkspaceNodeAsyncPort["release"]>[0]) =>
-      runDeferredNodeOperation(acquire, "release", input.root, (port) => port.release(input)),
-  });
-}
-
-type DeferredNodeContentWorkspacePortAcquisition =
-  | Readonly<{ ok: true; port: ContentWorkspaceNodeAsyncPort }>
-  | Readonly<{ ok: false; detail: string }>;
-
-function makeDeferredNodeContentWorkspacePortAcquirer(
-  options: DeferredGitEffectPlatformNodeOptions
-): () => Promise<DeferredNodeContentWorkspacePortAcquisition> {
-  let acquired: ContentWorkspaceNodeAsyncPort | undefined;
-  let pending: Promise<DeferredNodeContentWorkspacePortAcquisition> | undefined;
-
-  return () => {
-    if (acquired !== undefined) return Promise.resolve(successfulPortAcquisition(acquired));
-    if (pending !== undefined) return pending;
-
-    const attempt = Effect.runPromise(
-      Effect.try({
-        try: () => makeNodeContentWorkspacePort({ gitExecutable: options.acquireGitExecutable() }),
-        catch: errorMessage,
-      }).pipe(
-        Effect.match({
-          onFailure: failedPortAcquisition,
-          onSuccess: successfulPortAcquisition,
-        })
-      )
-    );
-    pending = attempt;
-    return attempt.then((result) => {
-      pending = undefined;
-      if (result.ok) acquired = result.port;
-      return result;
-    });
-  };
-}
-
-function runDeferredNodeOperation<A>(
-  acquire: () => Promise<DeferredNodeContentWorkspacePortAcquisition>,
-  operation: ContentWorkspaceFailure["operation"],
-  candidate: string,
-  use: (port: ContentWorkspaceNodeAsyncPort) => Promise<A>
-): Promise<A> {
-  return acquire().then((result) =>
-    result.ok
-      ? use(result.port)
-      : Promise.reject(
-          failure(
-            operation,
-            "GitFailed",
-            candidate,
-            `Git executable binding acquisition failed: ${result.detail}`
-          )
-        )
-  );
-}
-
-function successfulPortAcquisition(
-  port: ContentWorkspaceNodeAsyncPort
-): DeferredNodeContentWorkspacePortAcquisition {
-  return Object.freeze({ ok: true, port });
-}
-
-function failedPortAcquisition(detail: string): DeferredNodeContentWorkspacePortAcquisition {
-  return Object.freeze({ ok: false, detail });
 }
 
 function runNodeOrReject<A>(
@@ -2181,37 +1993,6 @@ function requireCanonicalRoot(
         "Aliased",
         candidate,
         "Workspace root must be a canonical directory"
-      );
-    }
-    return candidate;
-  });
-}
-
-function requireCanonicalGitExecutable(
-  fs: FileSystem.FileSystem,
-  candidate: string,
-  operation: ContentWorkspaceFailure["operation"]
-) {
-  return Effect.gen(function* () {
-    if (!path.isAbsolute(candidate) || path.normalize(candidate) !== candidate) {
-      return yield* fail(
-        operation,
-        "InvalidInput",
-        candidate,
-        "Git executable must be an explicit normalized absolute path"
-      );
-    }
-    const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
-    if (canonical !== candidate) {
-      return yield* fail(operation, "Aliased", candidate, "Git executable path is aliased");
-    }
-    const status = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
-    if (status.type !== "File" || (status.mode & 0o111) === 0) {
-      return yield* fail(
-        operation,
-        "UnsupportedEntry",
-        candidate,
-        "Git executable must be one executable regular file"
       );
     }
     return candidate;
@@ -3261,11 +3042,10 @@ function runGitCommand(
     try {
       child = execFile(
         executable,
-        gitProcessArgs(args, operation),
+        [...args],
         {
           cwd: root,
           encoding: null,
-          env: gitProcessEnvironment(operation),
           maxBuffer,
           windowsHide: true,
         },
@@ -3311,37 +3091,6 @@ function runGitCommand(
   });
 }
 
-function gitProcessArgs(
-  args: readonly string[],
-  operation: ContentWorkspaceFailure["operation"]
-): string[] {
-  if (!isExactLocalGitOperation(operation)) return [...args];
-  return [
-    "--no-optional-locks",
-    "-c",
-    "core.fsmonitor=false",
-    "-c",
-    "core.untrackedCache=false",
-    ...args,
-  ];
-}
-
-function gitProcessEnvironment(operation: ContentWorkspaceFailure["operation"]): NodeJS.ProcessEnv {
-  if (!isExactLocalGitOperation(operation)) return process.env;
-  return {
-    ...process.env,
-    GIT_CONFIG_GLOBAL: "/dev/null",
-    GIT_CONFIG_NOSYSTEM: "1",
-    GIT_CONFIG_SYSTEM: "/dev/null",
-    GIT_NO_LAZY_FETCH: "1",
-    GIT_NO_REPLACE_OBJECTS: "1",
-    GIT_OPTIONAL_LOCKS: "0",
-    GIT_TERMINAL_PROMPT: "0",
-    LANG: "C",
-    LC_ALL: "C",
-  };
-}
-
 function execFileFailure(
   operation: ContentWorkspaceFailure["operation"],
   root: string,
@@ -3355,20 +3104,6 @@ function execFileFailure(
     error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"
       ? `Git output exceeds ${maxBuffer} bytes`
       : errorMessage(error)
-  );
-}
-
-function isExactLocalGitOperation(operation: ContentWorkspaceFailure["operation"]): boolean {
-  return (
-    operation === "inspect-git-ref" ||
-    operation === "inspect-git-workspace" ||
-    operation === "read-git-tree" ||
-    operation === "read-git-blob" ||
-    operation === "capture-git-evidence" ||
-    operation === "observe-git-staged-index" ||
-    operation === "read-git-blob-at-path" ||
-    operation === "local-git-ancestry" ||
-    operation === "list-git-changed-paths"
   );
 }
 

@@ -1,4 +1,4 @@
-import { chmod, mkdir, realpath, symlink, writeFile } from "node:fs/promises";
+import { mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
@@ -573,29 +573,6 @@ describe("exact Git-object eligibility", () => {
       kind: "Ineligible",
     });
     expect(calls).toBe(0);
-  });
-
-  it("requires an absolute canonical non-symlink Git executable", async () => {
-    fixture = await createOwnedFixtureRoot();
-    const request = {
-      locator: fixture.path,
-      remoteSelection: { kind: "All" },
-      refName: "refs/heads/main",
-    } as const;
-    await expect(
-      makeNodeContentWorkspacePort({ gitExecutable: "git" }).inspectGitWorkspace(request)
-    ).rejects.toMatchObject({ reason: "InvalidInput" });
-    const alias = join(fixture.path, "git-alias");
-    await symlink(await realpath(GIT_EXECUTABLE), alias);
-    await expect(
-      makeNodeContentWorkspacePort({ gitExecutable: alias }).inspectGitWorkspace(request)
-    ).rejects.toMatchObject({ reason: "Aliased" });
-    const inert = join(fixture.path, "not-executable");
-    await writeFile(inert, "not executable\n");
-    await chmod(inert, 0o600);
-    await expect(
-      makeNodeContentWorkspacePort({ gitExecutable: inert }).inspectGitWorkspace(request)
-    ).rejects.toMatchObject({ reason: "UnsupportedEntry" });
   });
 
   async function generated() {

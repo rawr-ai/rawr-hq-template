@@ -3,7 +3,6 @@ import { RawrCommand } from "@rawr/core";
 
 import { LifecycleInputError } from "./input";
 import {
-  LifecycleExecutableBindingError,
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
   parseLifecycleExecutableBinding,
@@ -35,7 +34,6 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     request: LifecycleOperationRequest,
     flags: Readonly<Record<string, unknown>>,
     requirements: Readonly<{
-      git?: boolean;
       providers?: readonly ("claude" | "codex")[];
     }> = {}
   ): Promise<void> {
@@ -61,10 +59,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
         },
       });
     } catch (error) {
-      if (
-        error instanceof LifecycleInputError ||
-        error instanceof LifecycleExecutableBindingError
-      ) {
+      if (error instanceof LifecycleInputError) {
         this.rejectInput(error.message, baseFlags, error.code);
         return;
       }

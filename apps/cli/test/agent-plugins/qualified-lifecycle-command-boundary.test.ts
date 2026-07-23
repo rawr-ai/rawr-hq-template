@@ -517,13 +517,15 @@ describe("qualified lifecycle command boundary", () => {
       },
     });
 
-    for (const rejected of [
-      runRawr([...args, "--json"]),
-      runRawr([...args, "--git-executable", "/usr/bin/git", "--json"], bodyText),
-    ]) {
-      expect(rejected.status, `${rejected.stderr}\n${rejected.stdout}`).not.toBe(0);
-      expect(parseSingleJson(rejected.stdout)).toMatchObject({ ok: false });
-    }
+    const missingInput = runRawr([...args, "--json"]);
+    expect(missingInput.status, `${missingInput.stderr}\n${missingInput.stdout}`).not.toBe(0);
+    expect(parseSingleJson(missingInput.stdout)).toMatchObject({ ok: false });
+    const retiredGitBinding = runRawr(
+      [...args, "--git-executable", "/usr/bin/git", "--json"],
+      bodyText
+    );
+    expect(retiredGitBinding.status).toBe(2);
+    expect(retiredGitBinding.stderr).toContain("Nonexistent flag: --git-executable");
     const providerBinding = runRawr(
       [...args, "--provider-executable", "codex=/usr/bin/false", "--json"],
       bodyText
@@ -553,7 +555,7 @@ describe("qualified lifecycle command boundary", () => {
     });
   });
 
-  it("projects release-input refresh bytes exactly and requires only a Git binding", async () => {
+  it("projects release-input refresh bytes exactly with the operator Git command", async () => {
     const fixture = await createOwnedFixtureRoot();
     try {
       const skillRoot = path.join(fixture.path, "plugins", "agents", "alpha", "skills", "alpha");
@@ -590,8 +592,6 @@ describe("qualified lifecycle command boundary", () => {
         "plugins/agents",
         "--member",
         "alpha",
-        "--git-executable",
-        "/usr/bin/git",
       ] as const;
       const json = runRawr([...args, "--json"]);
       expect(json.status, `${json.stderr}\n${json.stdout}`).toBe(0);
@@ -790,8 +790,6 @@ describe("qualified lifecycle command boundary", () => {
       "plugins/agents",
       "--plugin",
       "alpha",
-      "--git-executable",
-      "/usr/bin/git",
     ] as const;
     const result = runRawr([...args, "--json"]);
 
@@ -809,30 +807,6 @@ describe("qualified lifecycle command boundary", () => {
     expect(human.status, human.stderr).toBe(1);
     expect(human.stdout).toBe("releases.check: IneligibleReport\n");
     expect(human.stdout).not.toBe("ok\n");
-  });
-
-  it("passes canonical executable bindings to their owning resources", async () => {
-    const fixture = await createOwnedFixtureRoot();
-    try {
-      const missingGit = path.join(fixture.path, "missing-git");
-      const binding = parseLifecycleExecutableBinding(
-        { "git-executable": missingGit },
-        { git: true }
-      );
-      const request = parseCheckOperationRequest({ ...releaseWorkspace(), plugin: "alpha" });
-      const calls: string[] = [];
-      let clientConstructions = 0;
-      await expect(
-        projectLifecycleOperation(request, binding, () => {
-          clientConstructions += 1;
-          return recordingClient(calls);
-        })
-      ).resolves.toEqual({ kind: "Recorded" });
-      expect(clientConstructions).toBe(1);
-      expect(calls).toEqual(["releases.check"]);
-    } finally {
-      await removeOwnedFixtureRoot(fixture);
-    }
   });
 });
 
@@ -1078,8 +1052,6 @@ function providerStatusCommand(
     "--repository-identity",
     "git:fixture-agent-plugins",
     ...targets.flatMap((target) => ["--target", target]),
-    "--git-executable",
-    "/usr/bin/git",
     "--provider-executable",
     `codex=${codexExecutable}`,
     ...(claudeExecutable === undefined

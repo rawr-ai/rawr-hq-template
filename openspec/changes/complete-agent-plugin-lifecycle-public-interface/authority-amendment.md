@@ -33,6 +33,14 @@ provider mutation to the providers' native commands. Local accidental
 checkout/worktree confusion does not justify a private package manager or a
 hostile-local-tamper model.
 
+The operating environment is one local operator. Production code resolves
+ordinary tools such as `git`, `codex`, and `claude` through the process
+environment and inherits the operator's configuration. Disposable homes isolate
+test state; they are not security sandboxes. This initiative does not
+authenticate local executables, neutralize local Git configuration, probe known
+tools through help output, or add a second verification protocol around a
+successful native command.
+
 ## Director Frame
 
 - **Objective:** make RAWR HQ-Template a normal Nx-built Oclif application with

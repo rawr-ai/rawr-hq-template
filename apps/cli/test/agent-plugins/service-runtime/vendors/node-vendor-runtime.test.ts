@@ -415,7 +415,6 @@ async function isolatePrivateContentWorkspaceRoots(ownerRoot: string): Promise<v
 
 function lifecycleBinding() {
   return Object.freeze({
-    gitExecutable: GIT,
     providerExecutables: Object.freeze({}),
   });
 }

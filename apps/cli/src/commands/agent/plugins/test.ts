@@ -3,7 +3,6 @@ import { RawrCommand } from "@rawr/core";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
 import {
-  gitExecutableFlag,
   providerExecutableFlag,
   providerTargetFlag,
   providerTestDisposableRootFlag,
@@ -21,7 +20,6 @@ export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
     plugin: Flags.string({ multiple: true, description: "Target one declared agent plugin" }),
     "disposable-root": providerTestDisposableRootFlag,
     target: providerTargetFlag,
-    "git-executable": gitExecutableFlag,
     "provider-executable": providerExecutableFlag,
   } as const;
 
@@ -31,7 +29,6 @@ export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
     if (input === undefined) return;
     const providers = [...new Set(input.targets.map((target) => target.provider))];
     await this.project({ operation: "providers.test", input }, flags, {
-      git: true,
       providers,
     });
   }
