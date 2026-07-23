@@ -5,6 +5,7 @@ import { createBaseImplementer } from "../baseline/implementer";
 import { createContractBuilder } from "../factory/contract";
 import { createNormalMiddlewareBuilder, createServiceProviderBuilder } from "../factory/middleware";
 import {
+  createBaseAnalyticsMiddleware,
   createRequiredServiceAnalyticsMiddleware,
   createServiceAnalyticsMiddleware,
   type RequiredServiceAnalyticsMiddleware,
@@ -12,6 +13,7 @@ import {
   type ServiceAnalyticsMiddlewareInput,
 } from "../middleware/analytics";
 import {
+  createBaseObservabilityMiddleware,
   createRequiredServiceObservabilityMiddleware,
   createServiceObservabilityMiddleware,
   type RequiredServiceObservabilityMiddleware,
@@ -119,6 +121,10 @@ export type DefinedService<
       ServiceMetadataFrom<ServiceTypesOf<TDeclaration>>
     >
   >;
+  createBaselineMiddlewares(): {
+    observability: ReturnType<typeof createBaseObservabilityMiddleware>;
+    analytics: ReturnType<typeof createBaseAnalyticsMiddleware>;
+  };
   createImplementer: {
     <const TContract extends AnyContractProcedure>(
       contract: TContract,
@@ -148,9 +154,9 @@ export type ServiceOf<TDefinedService extends { readonly __service?: AnyService 
  *
  * @remarks
  * `defineService(...)` binds metadata-aware contract authoring, metadata-aware
- * additive middleware authoring, metadata-aware provider authoring, required
- * service middleware extension builders, and context-typed implementer
- * creation.
+ * additive middleware authoring, metadata-aware provider authoring, framework
+ * baseline middleware, required service middleware extension builders, and
+ * context-typed implementer creation.
  *
  * The declarative service seam is intentionally narrow:
  * - `metadataDefaults` for static procedure metadata
@@ -245,6 +251,12 @@ export function defineService<
       return createServiceProviderBuilder<TRequiredContext, TMeta>({
         baseMetadata: options.metadataDefaults,
       });
+    },
+    createBaselineMiddlewares() {
+      return {
+        observability: createBaseObservabilityMiddleware(),
+        analytics: createBaseAnalyticsMiddleware(),
+      };
     },
     createImplementer: createServiceImplementer,
   };

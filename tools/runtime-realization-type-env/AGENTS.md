@@ -161,7 +161,7 @@ Keep vendor probes only when they protect a RAWR adaptation boundary, and label 
 - Do not add this tool to parent workspaces, root build/typecheck/test, package
   exports, or parent repo production imports.
 - Do not import production `apps/*`, `packages/*`, `services/*`, or `plugins/*` code.
-- Real `effect@3.21.3` remains a root dev dependency for this lab only.
+- Real `effect@4.0.0-beta.100` remains a root dev dependency for this lab only.
 - Canonical-looking `@rawr/sdk/*` imports remain local `tsconfig` aliases.
 
 ## Verification

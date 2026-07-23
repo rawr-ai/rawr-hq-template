@@ -1,3 +1,4 @@
+import { awaitDependencyPromise } from "../../../base";
 import type { SourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
 import type {
   CheckResult,
@@ -7,8 +8,10 @@ import type {
 import { deriveReleaseSelection } from "../model/policy/release-plan";
 import { module } from "../module";
 
-export const check = module.check.handler(async ({ context, input: request }) => {
-  const inspected = await context.source.inspect(request.contentWorkspace);
+export const check = module.check.effect(function* ({ context, input: request }) {
+  const inspected = yield* awaitDependencyPromise(() =>
+    context.source.inspect(request.contentWorkspace)
+  );
   if (inspected.kind === "Ineligible") return ineligibleReport(request.mode, inspected.issues);
   const derivation = deriveReleaseSelection(inspected.snapshot, request.mode);
   if (!derivation.ok)

@@ -15,10 +15,8 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { FileSystem } from "@effect/platform";
-import { SystemError } from "@effect/platform/Error";
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
-import { Effect } from "effect";
+import { Effect, FileSystem, PlatformError } from "effect";
 
 import type { NodeContentWorkspaceResult } from "../index";
 import {
@@ -531,10 +529,10 @@ describe("Git Effect Platform content workspace provider", () => {
           if (!injected && candidate === path.join(root, "second.txt")) {
             injected = true;
             return Effect.fail(
-              new SystemError({
+              PlatformError.systemError({
+                _tag: "Busy",
                 module: "FileSystem",
                 method: "remove",
-                reason: "Busy",
                 pathOrDescriptor: candidate,
               })
             );
@@ -751,10 +749,10 @@ describe("Git Effect Platform content workspace provider", () => {
           if (!injected && path.basename(candidate).startsWith("rawr-content-workspace-git-")) {
             injected = true;
             return Effect.fail(
-              new SystemError({
+              PlatformError.systemError({
+                _tag: "Busy",
                 module: "FileSystem",
                 method: "realPath",
-                reason: "Busy",
                 pathOrDescriptor: candidate,
               })
             );

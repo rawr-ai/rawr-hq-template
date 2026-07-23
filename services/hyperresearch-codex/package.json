@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@rawr/hq-sdk": "workspace:*",
-    "typebox": "^1.0.81"
+    "typebox": "1.3.6"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
