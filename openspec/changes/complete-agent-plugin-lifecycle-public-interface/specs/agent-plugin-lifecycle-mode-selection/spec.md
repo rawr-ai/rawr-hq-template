@@ -27,7 +27,7 @@ export destination, promotion, or CLI-install identity.
 
 Targeted test mode MUST require one explicit immutable Git selection, a
 nonempty duplicate-free member selection from that closed input, explicit
-disposable provider homes, and an evaluation profile. It MUST derive the
+disposable provider homes beneath one explicit non-root disposable root. It MUST derive the
 selected release state in memory, preserve omitted members, and return bounded
 inline verification facts without persisting a receipt, identity sidecar,
 evidence handle, artifact, or channel claim.
@@ -41,13 +41,13 @@ evidence handle, artifact, or channel claim.
 ### Requirement: Complete test mode is set-scoped but non-authorizing
 
 Complete test mode MUST require one explicit immutable Git selection, explicit
-disposable provider homes, and an evaluation profile. It MUST derive the exact
+provider homes beneath one explicit non-root disposable root. It MUST derive the exact
 closed set in memory, return bounded inline verification facts, and MUST NOT
 persist a receipt, sidecar, custom evidence artifact, release artifact,
 accepted outcome, promotion, or channel record.
 
 #### Scenario: Complete test verifies the set
-- **WHEN** every selected member and provider-visible projection verifies
+- **WHEN** every selected member and declared provider-visible file verifies
 - **THEN** the result reports exact per-target verification facts with no
   accepted, promoted, or canonical state
 
@@ -62,9 +62,9 @@ producer of `CanonicalChannelSelection`.
 #### Scenario: Canonical authority is resolved rather than overridden
 - **WHEN** canonical mode receives `current-main`, an explicit Git locator, and
   explicit homes
-- **THEN** one resolved selection supplies the exact content identity and
-  evaluation profile from which the installed Template CLI derives the complete
-  set and current provider projections
+- **THEN** one resolved selection supplies the exact content identity from which
+  the installed Template CLI derives the complete set and selected native
+  marketplace content
 
 #### Scenario: Retired authority override rejects
 - **WHEN** canonical mode also supplies a release ref, evidence object,

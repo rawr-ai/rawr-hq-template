@@ -26,7 +26,7 @@ derive values in memory.
 
 ### Requirement: One production artifact verification boundary
 **Reason**: There is no persistent artifact reader or verified snapshot handle.
-**Migration**: Surviving packaging and provider projection consume the same
+**Migration**: Surviving packaging and provider reconciliation consume the same
 in-memory derived release model through their public service boundary.
 
 ### Requirement: Atomic idempotent artifact publication
