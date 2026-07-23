@@ -5,6 +5,9 @@ const boundaryRule = [
   "error",
   {
     allow: [
+      "../../plugins/server/api/example-todo/src/api",
+      "../../../plugins/server/api/example-todo/src/api",
+      "../../../plugins/server/api/example-todo/src/client",
       "../../../rawr.hq",
       "../server/src/bootstrap",
       "../server/src/host-composition",

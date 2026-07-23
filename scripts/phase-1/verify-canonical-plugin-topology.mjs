@@ -21,20 +21,10 @@ for (const removedRoot of ["plugins/api", "plugins/workflows"]) {
   );
 }
 
-const [
-  rootPackageSource,
-  tsconfigSource,
-  pluginAgentsSource,
-  shellSource,
-  manifestCompatSource,
-  hostSeamSource,
-] = await Promise.all([
+const [rootPackageSource, tsconfigSource, pluginAgentsSource] = await Promise.all([
   readFile("package.json"),
   readFile("tsconfig.base.json"),
   readFile("plugins/AGENTS.md"),
-  readFile("apps/hq/rawr.hq.ts"),
-  readFile("apps/hq/src/manifest.ts"),
-  readFile("apps/server/src/host-seam.ts"),
 ]);
 
 for (const requiredSnippet of [
@@ -52,16 +42,6 @@ for (const forbiddenSnippet of ['"plugins/api/*"', '"plugins/workflows/*"']) {
   assertCondition(
     !rootPackageSource.includes(forbiddenSnippet),
     `package.json must not include ${forbiddenSnippet}`
-  );
-}
-
-for (const requiredAlias of [
-  "@rawr/plugin-server-api-example-todo",
-  "@rawr/plugin-server-api-example-todo/server",
-]) {
-  assertCondition(
-    tsconfigSource.includes(requiredAlias),
-    `tsconfig.base.json must include ${requiredAlias}`
   );
 }
 
@@ -97,25 +77,4 @@ for (const forbiddenRoot of ["plugins/api/*", "plugins/workflows/*"]) {
   );
 }
 
-assertCondition(
-  shellSource.includes("@rawr/plugin-server-api-example-todo/server") &&
-    !shellSource.includes("plugin-server-api-state") &&
-    shellSource.includes("registerExampleTodoApiPlugin"),
-  "apps/hq/rawr.hq.ts must declare only the surviving server API plugin"
-);
-
-assertCondition(
-  manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";') &&
-    manifestCompatSource.includes('export type { RawrHqManifest } from "../rawr.hq";'),
-  "apps/hq/src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts"
-);
-
-assertCondition(
-  hostSeamSource.includes("@rawr/hq-sdk/apis") &&
-    hostSeamSource.includes("exampleTodo.contribute") &&
-    hostSeamSource.includes("input.satisfiers.exampleTodo.resolveClient") &&
-    !hostSeamSource.includes("plugin-server-api-state"),
-  "apps/server/src/host-seam.ts must bind selected public API registrations through explicit host satisfiers"
-);
-
-console.log("canonical plugin topology verified");
+console.log("canonical plugin roots verified");

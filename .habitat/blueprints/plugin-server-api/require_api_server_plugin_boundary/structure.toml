@@ -8,6 +8,7 @@ mode = "closed"
 required = [
   "project.json",
   "src",
+  "tsconfig.json",
 ]
 allowed = [
   "AGENTS.md",
@@ -20,8 +21,8 @@ root = "plugins/server/api/!(*.*)/src"
 kind = "directory"
 mode = "closed"
 required = [
+  "api.ts",
   "client.ts",
-  "server.ts",
   "service",
 ]
 allowed = []

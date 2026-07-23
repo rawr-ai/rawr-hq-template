@@ -12,7 +12,7 @@
 - The plugin owns route metadata, the public API contract projection, request
   context requirements, and the API router contribution. Todo state and policy
   remain in `@rawr/example-todo`.
-- Derive API procedures from the public service contract. Do not copy service
+- Derive API operations from the public service contract. Do not copy service
   schemas, import service implementation paths, or introduce a second DTO
   authority.
 - The host supplies `ExampleTodoClientResolver`; this package must not
@@ -25,13 +25,14 @@
 
 - The app host binds a Todo client resolver, the plugin contributes its
   contract and router, request context supplies `repoRoot` and trace data, and
-  the selected handler invokes the corresponding public Todo procedure.
+  the selected handler invokes the corresponding public Todo operation.
 
 ## Routing
 
 - [Plugin package boundaries](../../../AGENTS.md)
-- [API contract projection](src/contract.ts)
-- [Host contribution boundary](src/server.ts)
+- [Caller-facing client](src/client.ts)
+- [API contribution boundary](src/api.ts)
+- [Embedded service contract](src/service/contract.ts)
 
 ## Validation
 

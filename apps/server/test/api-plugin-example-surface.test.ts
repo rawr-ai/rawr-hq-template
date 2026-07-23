@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { createClient } from "../../../plugins/server/api/example-todo/src/client";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
 
@@ -43,7 +44,30 @@ type OpenApiErrorPayload = {
 };
 
 describe("api plugin example surface", () => {
-  it("serves example-todo procedures for first-party /rpc callers", async () => {
+  it("exposes a caller client for the external API boundary", async () => {
+    const app = createApp();
+    const client = createClient({
+      url: "http://localhost/api/orpc",
+      headers: {
+        "x-rawr-caller-surface": "external",
+      },
+      fetch: (input, init) => app.handle(new Request(input, init)),
+    });
+
+    const created = await client.exampleTodo.tasks.create({
+      title: "Call through the public API client",
+      description: "Prove the client face and host transport together",
+    });
+    const loaded = await client.exampleTodo.tasks.get({ id: created.id });
+
+    expect(loaded).toMatchObject({
+      id: created.id,
+      workspaceId: "workspace-default",
+      title: "Call through the public API client",
+    });
+  });
+
+  it("serves example-todo operations for first-party /rpc callers", async () => {
     const app = createApp();
 
     const createResponse = await app.handle(
@@ -97,7 +121,7 @@ describe("api plugin example surface", () => {
     expect(getPayload.json?.title).toBe("Ship example-todo API cutover");
   });
 
-  it("serves example-todo procedures for external /api/orpc callers", async () => {
+  it("serves example-todo operations for external /api/orpc callers", async () => {
     const app = createApp();
 
     const createResponse = await app.handle(

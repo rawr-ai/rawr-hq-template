@@ -3,6 +3,7 @@
   "name": "plugin-server-api-example-todo",
   "root": "plugins/server/api/example-todo",
   "sourceRoot": "plugins/server/api/example-todo/src",
+  "implicitDependencies": ["@rawr/example-todo", "@rawr/hq-sdk", "@rawr/runtime-context"],
   "tags": [
     "type:plugin",
     "migration-slice:structural-tranche",
@@ -13,6 +14,14 @@
   "targets": {
     "typecheck": {
       "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/src/**/*.ts",
+        "{projectRoot}/tsconfig.json",
+        "typescriptRuntime",
+        "^production"
+      ],
+      "outputs": [],
       "options": {
         "command": "tsc -p plugins/server/api/example-todo/tsconfig.json --noEmit"
       }
@@ -31,9 +40,24 @@
     },
     "structural": {
       "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/**/*",
+        "{workspaceRoot}/.habitat/blueprints/plugin-server-api/require_api_server_plugin_boundary/**/*",
+        "{workspaceRoot}/scripts/habitat/provision.mjs",
+        "{workspaceRoot}/scripts/habitat/release.json",
+        "bunToolchain"
+      ],
+      "outputs": [],
       "options": {
-        "command": "bun scripts/phase-03/verify-plugin-server-api-example-todo-structural.mjs"
+        "command": "bun run habitat -- --rule require_api_server_plugin_boundary"
       }
+    },
+    "check": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": ["lint", "typecheck", "structural"],
+      "outputs": []
     }
   }
 }

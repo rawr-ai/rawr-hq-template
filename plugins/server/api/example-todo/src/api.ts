@@ -1,40 +1,33 @@
+/** Publishes Example Todo API operations from the sealed service contract. */
 import {
   type ApiPluginContribution,
   defineApiPlugin,
   defineApiPluginDeclaration,
 } from "@rawr/hq-sdk/apis";
-import type { ExampleTodoClientResolver } from "./context";
-import { exampleTodoApiContract } from "./contract";
-import { createExampleTodoApiRouter } from "./router";
+import type { ClientResolver } from "./service/base";
+import { contract } from "./service/contract";
+import { router } from "./service/router";
 
-export {
-  type ExampleTodoApiContext,
-  type ExampleTodoClientResolver,
-} from "./context";
-export { createExampleTodoApiRouter, type ExampleTodoApiRouter } from "./router";
-
+/** Host-owned capability required to bind the Example Todo API contribution. */
 export type ExampleTodoApiPluginBound = Readonly<{
-  resolveClient: ExampleTodoClientResolver;
+  resolveClient: ClientResolver;
 }>;
 
 const exampleTodoApiDeclaration = defineApiPluginDeclaration({
   internal: {
-    contract: exampleTodoApiContract,
+    contract,
   },
   published: {
-    contract: exampleTodoApiContract,
+    contract,
   },
 });
 
 function contributeExampleTodoApiPlugin(
   bound: ExampleTodoApiPluginBound
-): ApiPluginContribution<
-  typeof exampleTodoApiContract,
-  ReturnType<typeof createExampleTodoApiRouter>
-> {
+): ApiPluginContribution<typeof contract, ReturnType<typeof router>> {
   const internal = {
     contract: exampleTodoApiDeclaration.internal.contract,
-    router: createExampleTodoApiRouter(bound.resolveClient),
+    router: router(bound.resolveClient),
   } as const;
 
   return {
@@ -43,6 +36,7 @@ function contributeExampleTodoApiPlugin(
   };
 }
 
+/** Declares the Example Todo API plugin for later host-owned dependency binding. */
 export function registerExampleTodoApiPlugin() {
   return defineApiPlugin({
     declaration: exampleTodoApiDeclaration,
@@ -50,4 +44,7 @@ export function registerExampleTodoApiPlugin() {
   });
 }
 
+/** Registration type consumed by the application host's plugin declaration seam. */
 export type ExampleTodoApiPluginRegistration = ReturnType<typeof registerExampleTodoApiPlugin>;
+
+export { contract };
