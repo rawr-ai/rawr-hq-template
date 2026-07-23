@@ -45,7 +45,6 @@ export const HabitatReleaseManifestSchema = ReadonlyObject(
     assets: ReadonlyObject(
       Type.Object({
         "darwin-arm64": HabitatReleaseAssetSchema,
-        "linux-x64": HabitatReleaseAssetSchema,
       }),
       { additionalProperties: false }
     ),
@@ -103,7 +102,6 @@ export function parseReleaseManifest(value) {
         value.assets["darwin-arm64"],
         "assets.darwin-arm64.filename"
       ),
-      "linux-x64": normalizeReleaseAsset(value.assets["linux-x64"], "assets.linux-x64.filename"),
     }),
   });
 }
@@ -116,7 +114,7 @@ export function parseReleaseManifest(value) {
  */
 export function selectReleaseAsset(manifest, platform = process.platform, arch = process.arch) {
   const key = `${platform}-${arch}`;
-  if (key !== "darwin-arm64" && key !== "linux-x64") {
+  if (key !== "darwin-arm64") {
     throw new Error(`Habitat standalone check is unavailable for ${key}`);
   }
   return manifest.assets[key];

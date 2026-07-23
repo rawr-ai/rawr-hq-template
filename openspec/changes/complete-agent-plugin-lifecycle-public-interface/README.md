@@ -117,14 +117,16 @@ The Template Habitat consumer already pins the newest published Civ7 artifact:
 
 | Field | Value |
 | --- | --- |
-| Release | `habitat-sdk-v0.1.1` |
-| Source commit | `177d08eafcaf270daec31d76524065de99aeaff8` |
-| Bun | `1.4.0` / `a215285063c9b7b0d4b3f87bd298d4fecfd93897` |
-| Darwin arm64 SHA-256 | `6a73c416233f2190c57ff4ff9236609e6611e953c3d18b16885052b7be2737fd` |
-| Linux x64 SHA-256 | `b795af90bb08384c4c1c606121ba4306c2cc700e1bd7ca686e1301508a8a72c5` |
+| Release | `habitat-sdk-v0.1.6` |
+| Source commit | `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b` |
+| Habitat tree | `d67b402583eb17eca9f1b76c8c753ab1f448451d` |
+| Bun | `1.4.0-canary.1+5b98630ac` / `5b98630ac045622ce9ddfe0b53a2c4f3a91f26c4` |
+| Darwin arm64 SHA-256 | `e3b172c897e57c2a787df6ab2b264901cd7554a7fb9ac86afffb91eda3d6704e` |
 
-Newer Civ7 SDK source is not yet published as a compiled artifact and is not
-claimed or vendored here.
+The temporary published tool is Darwin arm64 only, so the required repository
+ratchet runs on macOS. Linux packaging belongs to the later in-repository
+Habitat npm package and binary migration; this initiative neither vendors the
+SDK source nor holds current structural work behind that later distribution.
 
 ## Core Toolchain Grounding
 
@@ -305,14 +307,14 @@ The pinned Grit engine cannot prove optional cross-file participation without
 emitting collection diagnostics, so that remains an explicit native-tool gap
 and review responsibility rather than a custom parser.
 
-The first live generic-owner probe exposed the broader policy-execution gap that
-remains in task 1.5: the published Habitat v0.1.1 consumer ran longer than four
-minutes without completing a full generic check, and a structure-only probe ran
-longer than one minute. Both probes were interrupted without repository
-mutation. Civ7 has unreleased exact-root batching and traversal reuse, but no
-new compiled artifact exists; Template does not call a worktree or vendor that
-source. The source port therefore does not claim task 1.2 or ratchet activation
-complete before executable verification is both green and bounded.
+The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
+interrupted without repository mutation. The current v0.1.6 binary contains
+Civ7's exact-root batching, traversal reuse, bounded cancellation, and cleanup.
+Habitat delegates pattern execution to the pinned Grit dependency, so the
+required workflow provisions that dependency explicitly after its
+`--ignore-scripts` install. The repository check remains read-only. Task 1.5
+still owns live policy activation and the native packet-fixture gap; Template
+neither calls a worktree nor vendors SDK source.
 
 The RAWR-authored Oclif blueprint source is a separate positive checkpoint. It
 defines one closed executable app shell, one uniform host-composed

@@ -17,8 +17,9 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   falsifiers, positive ratchet, behavioral boundary, and standard vocabulary in
   [[authority-amendment]], [[proposal]], and [[design]].
 - [x] 0.4 Record Magic Migration and Civ7 Habitat provenance. The current
-  Template artifact already matches published `habitat-sdk-v0.1.1` built with
-  Bun 1.4.0; unreleased Civ7 source changes are not imported.
+  Template artifact is published `habitat-sdk-v0.1.6`, source
+  `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, compiled with Bun 1.4. SDK source
+  is not imported.
 - [x] 0.5 Run strict OpenSpec validation, backlinks/link checks where owned,
   `git diff --check`, and standing architecture/terminology reviews. Commit this
   record as one Graphite node.
@@ -53,10 +54,10 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   prove that `rule.json` selects exactly one present runner source. Native Grit
   fixture automation and full live-tree `check:policy` activation also remain
   pending because the published standalone binary exposes no packet-fixture
-  runner and still performs an unbounded wildcard walk through installed
-  dependency trees. Do not hide these limitations behind another parser or
-  runner. Keep the compiled Bun 1.4 artifact consumer and reproducible update
-  recipe.
+  runner. Do not hide that limitation behind another parser or runner. Keep the
+  compiled Bun 1.4 artifact consumer and reproducible update recipe; the current
+  temporary release and required ratchet are Darwin arm64 until Habitat moves
+  into this repository as an npm package and proper binary.
 - [x] 1.5a Give every admitted code project an Nx lint and typecheck target.
   Keep content and fixture projects explicitly classified outside that law.
   Typecheck the Habitat consumer against `bun-types@1.3.14`; derive its release
