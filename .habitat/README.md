@@ -13,8 +13,9 @@ The current generic kinds are:
 
 - `blueprint-packet`: the closed canonical policy packet shared by every
   generic blueprint rule.
-- `service`: the reusable contract-first oRPC service spine, contract and error
-  authority, context flow, and module composition.
+- `service`: the reusable contract-first oRPC service spine, with independent
+  laws for direct anchors, native oRPC composition, context boundaries, module
+  isolation, declarative contracts, and public error authority.
 - `plugin-server-api`: the additional client/server faces around an embedded
   service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
@@ -45,12 +46,19 @@ pinned standalone binary. The published binary does not expose a native fixture
 runner for these Habitat packet sources, so the repository does not add a second
 Markdown parser or duplicate pattern inventory to simulate one.
 
-The `service`, `plugin-server-api`, `agent-router`, `plugin`, and
-`plugin-server` packets follow Magic Migration commit
-`5a974f0047f0667c2e429fdb4193a0e237b067c4`. RAWR preserves the current
+The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
+follow Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The current `service` packet stack
+follows the user-authorized working tree on Magic Migration branch
+`codex/add-native-authority-reviewer`, based at
+`5b8bc8a37cfdd3a382232261dd7ef73365713021`. That working tree replaces the
+older aggregate relationship rule with direct anchor, native oRPC composition,
+context-boundary, and module-isolation constraints. RAWR preserves those
 structure and Grit semantics while adapting only repository identity metadata
 and the canonical `pattern.md` packet filename required by the local
-`blueprint-packet` law.
+`blueprint-packet` law. The provenance reference will advance to the Magic
+checkpoint once that same working tree is committed; its absence does not
+authorize a divergent local pattern.
 
 The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
 posture to the executable app and its command plugins without claiming Magic

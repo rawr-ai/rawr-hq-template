@@ -14,7 +14,7 @@ at their contract positions. Reusable domain schemas remain outside
 to be `Static<typeof NameSchema>` when one is actually needed; the rule does
 not manufacture unused aliases.
 
-The service relationship packet owns ordinary anchor export syntax. Reuse
+The generic service anchor packet owns ordinary anchor export syntax. Reuse
 count is owned by the import graph and review; this source rule does not infer
 it from identifier spelling. Knip and the boundary-crossing JSDoc relation are
 red installation gaps and provide no current evidence.

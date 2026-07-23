@@ -180,10 +180,14 @@ names.
   non-skippable result for the candidate revision.
 
 Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
-is the source for the generic service, API plugin, and agent-router patterns.
-RAWR adaptations are limited to repository identity, formatting, and the local
-canonical pattern-source filename. The compiled Habitat consumer pins Civ7
-`habitat-sdk-v0.1.6`, source
+is the source for the API plugin and agent-router patterns. The generic service
+patterns follow the user-authorized working snapshot on branch
+`codex/add-native-authority-reviewer`, based at
+`5b8bc8a37cfdd3a382232261dd7ef73365713021`, with source manifest SHA-256
+`1b01f702c9cb1d4b11ca86251130af1d4f5fb077b15db9ceeeacb227db7d2f61`.
+RAWR adaptations are limited to `ownerProject`, `placement.niche`, the local
+canonical `pattern.md` name/path, and RAWR prose identity. The compiled Habitat
+consumer pins Civ7 `habitat-sdk-v0.1.6`, source
 `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
 temporary Darwin arm64 lane.
 

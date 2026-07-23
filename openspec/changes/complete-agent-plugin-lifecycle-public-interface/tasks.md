@@ -35,6 +35,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   including the rejected artifact repository, rather than a reusable monotonic
   constraint. Generic service and Oclif blueprints, TypeScript package
   boundaries, and the Nx project graph own those relationships.
+- [x] 1.1b Refresh the generic service blueprint from the user-authorized Magic
+  Migration working tree on branch `codex/add-native-authority-reviewer`, based
+  at `5b8bc8a37cfdd3a382232261dd7ef73365713021`. Replace the broad relationship
+  rule with the direct-anchor, native-oRPC-composition, context-boundary, and
+  module-isolation packets. Preserve the working pattern semantics and adapt
+  only repository identity and the canonical local `pattern.md` filename.
+  Advance the provenance reference when Magic commits the same working tree;
+  do not delay enforcement or author a divergent RAWR copy.
 - [x] 1.2 Adopt the current generic service topology with one `router.ts` per
   module. Keep procedure behavior on that oRPC surface and domain matter under
   the module model; do not introduce a second router container.
@@ -81,6 +89,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `typescript@6.0.3` as compiler-API authority, and expose the narrow
   `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
   make path mappings explicit. Do not run every check twice.
+- [ ] 1.5e After every selected service rule passes the live Template corpus,
+  add one cacheable Habitat `check:service` target with exact service-source,
+  service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
+  Invoke the seven service rules in one Habitat acquisition and make the
+  required repository aggregate depend on that target. Do not create seven Nx
+  targets, activate a knowingly red required check, or duplicate rule
+  discovery in a script.
 - [x] 1.6a Make current Nx task ownership and prerequisites explicit. Keep the
   root lint command outside the root Nx project so it cannot recursively invoke
   itself. Make the DevOps Oclif fixture depend on its build. Give the native

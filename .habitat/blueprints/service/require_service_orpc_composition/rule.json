@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_orpc_composition",
+  "title": "Require Native Service oRPC Composition",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a runtime namespace import from an oRPC composition vendor, or a base, service, or module missing its imported native first ownership hop",
+  "why": "A few positive syntax facts keep the first native oRPC ownership hop visible without guessing at root contract/router object forms that TypeScript already checks.",
+  "remediate": "Use exact named native vendor imports. Directly initialize standalone base from implementEffect(contract, ...), and keep the first imported-base, implement(contract).$context<...>(), or imported-service-branch hop visible inside the matching service or module initializer. Leave outer wrappers and router completeness to TypeScript and review.",
+  "message": "Service composition must preserve its small set of direct native ownership facts.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
+    }
+  ],
+  "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_orpc_composition/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_orpc_composition/pattern.md"
+    },
+    "patternName": "require_service_orpc_composition"
+  }
+}

@@ -115,19 +115,26 @@ Habitat `structure.toml` files declare closed valid topologies. Grit patterns
 declare source relationships. Nx declares project imports, task dependencies,
 inputs, outputs, and release ordering. Behavior tests remain behavior tests.
 
-The generic source follows Magic Migration commit
-`5a974f0047f0667c2e429fdb4193a0e237b067c4`:
+The API server plugin and agent-router sources follow Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The generic service source follows
+the user-authorized working tree on Magic branch
+`codex/add-native-authority-reviewer`, based at
+`5b8bc8a37cfdd3a382232261dd7ef73365713021`:
 
 - service spine and module topology;
-- service contract and oRPC relationship authority;
-- `ORPCTaggedError` placement;
+- direct generic anchors and native oRPC ownership hops;
+- context boundaries and module isolation;
+- declarative TypeBox contract authority;
+- `ORPCTaggedError` and literal import authority;
 - API server plugin boundary;
 - agent-router placement and shape.
 
-The service topology follows Magic's current single `router.ts` module
-boundary. Procedure logic remains in that oRPC router surface alongside
-module-owned `model/{dto,policy,helpers,repositories}` rather than moving into a
-second implementation container.
+Only the first five rows come from the newer service snapshot; the final two
+remain at the earlier committed provenance. The service topology follows
+Magic's current single `router.ts` module boundary. Procedure logic remains in
+that oRPC router surface alongside module-owned
+`model/{dto,policy,helpers,repositories}` rather than moving into a second
+implementation container.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”

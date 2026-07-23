@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_anchor_exports",
+  "title": "Require Generic Service Anchor Exports",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "an existing service spine file without the direct generic const export for its role",
+  "why": "A direct base, contract, service, module, or router anchor gives every service spine file one stable structural name while callers provide product qualification.",
+  "remediate": "Directly export base from base.ts, contract from contract.ts, service from root impl.ts, module from module.ts, and router from router.ts. Leave export-use and intentional-boundary decisions to Knip and the dedicated JSDoc boundary.",
+  "message": "Each service spine file must directly export its generic local anchor.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
+    }
+  ],
+  "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_anchor_exports/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_anchor_exports/pattern.md"
+    },
+    "patternName": "require_service_anchor_exports"
+  }
+}
