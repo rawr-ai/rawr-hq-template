@@ -14,8 +14,7 @@ The current generic kinds are:
 - `blueprint-packet`: the closed canonical policy packet shared by every
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, contract and error
-  authority, context flow, module composition, and optional closed router
-  interior.
+  authority, context flow, and module composition.
 - `plugin-server-api`: the additional client/server faces around an embedded
   service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
@@ -47,15 +46,11 @@ runner for these Habitat packet sources, so the repository does not add a second
 Markdown parser or duplicate pattern inventory to simulate one.
 
 The `service`, `plugin-server-api`, `agent-router`, `plugin`, and
-`plugin-server` packets originate from Magic Migration commit
-`31c4e1ac1944d88b5ae867e46603eddff36142fc`. RAWR changes only repository
-identity metadata and the settled module-router geometry: `router.ts` remains
-the module boundary, while an optional closed `router/` exports one plain map
-from `index.ts` and admits only `*.router.ts` leaves. The pinned Grit engine
-validates any authored `./router/index` import and use but cannot prove a
-non-emitting cross-file absence relation. Complete optional-interior
-participation therefore remains review evidence and an explicit tool gap until
-Habitat can express that relation.
+`plugin-server` packets follow Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`. RAWR preserves the current
+structure and Grit semantics while adapting only repository identity metadata
+and the canonical `pattern.md` packet filename required by the local
+`blueprint-packet` law.
 
 The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
 posture to the executable app and its command plugins without claiming Magic

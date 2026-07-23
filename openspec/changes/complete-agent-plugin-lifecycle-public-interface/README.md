@@ -137,16 +137,12 @@ verification. None permits another selector or release store.
 
 ## Habitat Provenance
 
-Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`
-is the committed source for generic service, API server plugin, and agent-router
-patterns. Its current `.habitat` tree is unchanged at the latest inspected
-worktree head.
-
-One generic correction is required before adoption: the older service structure
-allows only one module `router.ts`, while current Magic modules also use composed
-`router/` directories. RAWR will admit either sealed form and reject mixed/open
-forms. Magic-specific import aliases and constructor spellings are adapted to
-generic relationships rather than copied as false RAWR law.
+Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
+is the current source for generic service, API server plugin, and agent-router
+patterns. RAWR keeps their structure and Grit semantics, adapting only
+repository identity metadata and the local canonical packet filename. The
+lifecycle service follows that same Effect-backed oRPC service kind rather than
+introducing a native special case.
 
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
@@ -214,11 +210,11 @@ current Effect 4 line as `4.0.0-beta.100`; `@effect/platform-node` exposes the
 same Effect 4 beta while `@effect/platform` has no Effect 4 release. Effect 4 is
 therefore an explicit prerelease adoption, not a claim that the major is stable.
 The migration waits until controller and persistent lifecycle-state deletion so
-dead owners are not ported. It then moves the surviving filesystem/process
-resource family and CLI adapter together in one distinct Graphite node, using
-the exact current Effect 4 versions at execution. The lifecycle service remains
-native oRPC/TypeBox over ready Promise ports; no Effect-oRPC dependency is added
-without an Effect program crossing that boundary.
+dead owners are not ported. It then moves the lifecycle service, surviving
+filesystem/process resource family, and CLI adapter together in one distinct
+Graphite node, using the exact current Effect 4 versions at execution. The
+service uses the Effect-backed oRPC construction required by the generic
+service blueprint while TypeBox remains public schema authority.
 
 The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
 the narrow upstream severity compatibility patch byte-for-byte from Civ7, and
@@ -363,15 +359,12 @@ skill. It cannot authorize HF01 materialization or release.
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
 
-The generic Habitat blueprint port is a separate checkpoint. Twenty-six files
-come from Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`;
-rule identity changes are limited to the RAWR niche and
-`@rawr/habitat-consumer` owner. The one intentional source-law extension admits
-a closed optional module `router/`, requires a plain map in `router/index.ts`,
-and validates a canonical authored import/use edge through module `router.ts`.
-The pinned Grit engine cannot prove optional cross-file participation without
-emitting collection diagnostics, so that remains an explicit native-tool gap
-and review responsibility rather than a custom parser.
+The generic Habitat blueprint port is a separate checkpoint. Twenty-six logical
+files follow Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`; nineteen are byte-verbatim and the
+seven rule manifests adapt only RAWR identity, formatting, and the local
+canonical `pattern.md` source name. The service kind keeps one module
+`router.ts`, with domain matter under its owning module model.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
 interrupted without repository mutation. The current v0.1.6 binary contains
