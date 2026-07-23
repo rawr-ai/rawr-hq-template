@@ -24,17 +24,20 @@ Dynamic imports and transitive graph relations are outside this syntax law.
 ```grit
 language js(typescript)
 
+// Scopes module-boundary enforcement to production sources at the service root.
 predicate is_root_service_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
   ! $filename <: r".*/src/service/modules/.*",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Scopes module-boundary enforcement to production sources owned by one module.
 predicate is_module_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Recognizes dependencies that address a module owned by the current service.
 predicate is_current_module_source($source) {
   or {
     $source <: r"^[\"'](?:\./|(?:\.\./)+)modules/[^/]+(?:/.*)?[\"']$",
@@ -51,6 +54,7 @@ predicate is_current_module_source($source) {
   }
 }
 
+// Admits only module contracts and routers at their corresponding root composition points.
 predicate is_allowed_root_composition_import($import, $source) {
   or {
     and {
@@ -66,6 +70,7 @@ predicate is_allowed_root_composition_import($import, $source) {
   }
 }
 
+// Detects a relative edge that escapes a module's local ownership boundary.
 predicate has_parent_segment($source) {
   or {
     $source <: r"^[\"']\.\.(?:/[^\"']*)?[\"']$",
@@ -73,12 +78,14 @@ predicate has_parent_segment($source) {
   }
 }
 
+// Preserves the sole parent edge from a module anchor to its root service branch.
 predicate is_exact_module_service_import($import, $source) {
   $filename <: r".*/src/service/modules/[^/]+/module\.ts$",
   $source <: r"^[\"']\.\./\.\./impl[\"']$",
   $import <: `import { service } from $source`
 }
 
+// Detects a current-owner alias crossing from one module into a sibling module.
 predicate crosses_aliased_sibling($source) {
   or {
     and {

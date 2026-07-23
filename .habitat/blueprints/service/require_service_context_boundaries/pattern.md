@@ -20,16 +20,19 @@ narrowing and request isolation.
 ```grit
 language js(typescript)
 
+// Scopes root-context isolation to production sources owned by a service module.
 predicate is_module_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Scopes middleware construction authority to production middleware sources.
 predicate is_middleware_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:middleware|modules/[^/]+/middleware)/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Detects a module bypassing its service anchor to reach the current owner's root context.
 predicate is_current_root_context_alias($source) {
   or {
     and {
@@ -45,6 +48,7 @@ predicate is_current_root_context_alias($source) {
   }
 }
 
+// Admits vendor os as an authoritative root for native middleware construction.
 predicate imports_vendor_os($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']@orpc/server[\"']$",
@@ -52,6 +56,7 @@ predicate imports_vendor_os($body) {
   }
 }
 
+// Proves that middleware construction uses a runtime-imported service anchor.
 predicate imports_exact_anchor($body, $anchor) {
   $body <: contains import_specifier(name=$anchor) as $specifier where {
     $specifier <: not contains type(),
@@ -59,6 +64,7 @@ predicate imports_exact_anchor($body, $anchor) {
   }
 }
 
+// Relates middleware construction directly to its authorized owner or configured branch.
 predicate is_direct_middleware($value, $owner) {
   or {
     $value <: `$receiver.middleware($handler)`,
@@ -70,6 +76,7 @@ predicate is_direct_middleware($value, $owner) {
   }
 }
 
+// Admits middleware only when its construction owner has the corresponding authority import.
 predicate is_native_middleware($body, $value) {
   or {
     and {
@@ -91,6 +98,7 @@ predicate is_native_middleware($body, $value) {
   }
 }
 
+// Requires each middleware source to expose a named const backed by native construction.
 predicate exports_named_native_middleware($body) {
   or {
     $body <: contains `export const $name = $value` where {

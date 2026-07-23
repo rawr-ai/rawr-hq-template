@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_grit_helper_comments",
+  "title": "Require Grit Helper Comments",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "grit-pattern",
+    "category": "quality"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a named predicate, function, or pattern declaration in a Grit code fence without a directly preceding non-empty // semantic comment",
+  "why": "Named Grit helpers encode policy relations that are otherwise easy to mistake for parser mechanics, so each declaration must preserve its semantic decision at the point of authorship.",
+  "remediate": "Add one concise non-empty // comment immediately above every named predicate, function, or pattern declaration in each Grit fence, describing the relation or decision the helper encodes.",
+  "message": "Named Grit helpers require directly preceding semantic comments.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [".habitat/**/pattern.md"]
+    }
+  ],
+  "scanRoots": [".habitat"],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/grit-pattern/require_grit_helper_comments/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/grit-pattern/require_grit_helper_comments/pattern.md"
+    },
+    "patternName": "require_grit_helper_comments"
+  }
+}

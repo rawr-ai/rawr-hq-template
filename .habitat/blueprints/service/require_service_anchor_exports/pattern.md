@@ -15,6 +15,7 @@ whether those exports are used or authorized.
 ```grit
 language js(typescript)
 
+// Recognizes the direct generic value export that gives a service spine file its role.
 predicate exports_direct_const($statements, $anchor) {
   $statements <: some $statement where {
     $statement <: or {
@@ -24,22 +25,27 @@ predicate exports_direct_const($statements, $anchor) {
   }
 }
 
+// Assigns the base anchor obligation to the root service implementation boundary.
 predicate is_base_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/base\.ts$"
 }
 
+// Assigns the contract anchor obligation to root and module contract boundaries.
 predicate is_contract_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:contract|modules/[^/]+/contract)\.ts$"
 }
 
+// Assigns the service anchor obligation to the root implementation composition point.
 predicate is_service_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/impl\.ts$"
 }
 
+// Assigns the module anchor obligation to each module's service branch boundary.
 predicate is_module_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
 }
 
+// Assigns the router anchor obligation to root and module router composition points.
 predicate is_router_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router|modules/[^/]+/router)\.ts$"
 }
