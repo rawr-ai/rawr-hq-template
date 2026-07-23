@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_spine_topology",
+  "title": "Require Service Spine Topology",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a missing root or module anchor, a second service spine, a module-owned context or implementer, or an open-ended router interior",
+  "why": "Standalone services and API-embedded service interiors share one stable oRPC spine. Closing only its semantic anchors makes alternate authority visible without requiring models, middleware, persistence, or tests that a service does not need. A module may split procedure handlers under router only through one closed index and named router files; router.ts remains the module boundary.",
+  "remediate": "Keep base.ts, contract.ts, impl.ts, modules, and router.ts at the service root. Keep contract.ts, module.ts, and router.ts in every module. When a module needs a router directory, expose one index.ts and only named *.router.ts leaves, then compose that plain map through the module router.ts boundary. Add optional model, middleware, persistence, errors, tests, or Nx metadata only where the owning semantics require them.",
+  "message": "Every service interior must retain one generic root spine and generic module shells.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "services/*/src/service/**",
+        "plugins/server/api/*/src/service/**"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_spine_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/service/require_service_spine_topology/structure.toml"
+    }
+  }
+}

@@ -161,6 +161,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Complete on the active Template branch; pending Graphite submission |
+| Generic Habitat source port | Complete on the active Template stack; execution wiring pending |
 | Positive Habitat/Nx ratchet | Pending |
 | Native Oclif development and external extension path | Pending |
 | Conventional CLI package/release | Pending |
@@ -171,6 +172,25 @@ skill. It cannot authorize HF01 materialization or release.
 | Disposable provider acceptance | Pending |
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
+
+The generic Habitat source port is a separate checkpoint. Twenty-six files
+come from Magic Migration commit `31c4e1ac1944d88b5ae867e46603eddff36142fc`;
+rule identity changes are limited to the RAWR niche and
+`@rawr/habitat-consumer` owner. The one intentional source-law extension admits
+a closed optional module `router/`, requires a plain map in `router/index.ts`,
+and validates a canonical authored import/use edge through module `router.ts`.
+The pinned Grit engine cannot prove optional cross-file participation without
+emitting collection diagnostics, so that remains an explicit native-tool gap
+and review responsibility rather than a custom parser.
+
+The first live generic-owner probe exposed the performance problem task 1.6 is
+meant to remove: the published Habitat v0.1.1 consumer ran longer than four
+minutes without completing a full generic check, and a structure-only probe ran
+longer than one minute. Both probes were interrupted without repository
+mutation. Civ7 has unreleased exact-root batching and traversal reuse, but no
+new compiled artifact exists; Template does not call a worktree or vendor that
+source. The source port therefore does not claim task 1.2 or ratchet activation
+complete before executable verification is both green and bounded.
 
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
