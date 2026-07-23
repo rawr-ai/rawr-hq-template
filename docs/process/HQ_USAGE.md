@@ -67,22 +67,28 @@ git config core.hooksPath scripts/githooks
 
 Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
 not publish or install the CLI. `pre-push` preserves
-the remote-identity guard and runs `bun run ratchet:required`. Nx selects the
-affected projects after an Nx-owned project-graph check proves that every
-project has exactly one `type:*` kind and every code project owns lint and
-typecheck targets. The same command runs the Nx admission tests, full Biome
-check, Habitat consumer integrity tests, repository separation, and the
-lifecycle service's Habitat `structure-check`. Habitat targets are cacheable
-only when their Nx inputs cover every Git-visible tree the rule inspects; see
-[[NX_AGENT_WORKFLOW]]. Domain behavior tests remain owner-local verification
-rather than hidden merge-admission work.
+the remote-identity guard and runs `bun run check`. The root command runs
+affected Nx `lint` and `typecheck`, then invokes `repository:check`.
+`repository:check` composes project admission and repository separation,
+`habitat:check`, lifecycle-service structure, and the CLI Oclif boundary check.
+`habitat:check` composes its owner's lint, typecheck, and tests with repository
+hygiene and one selected green local Habitat policy batch; that batch owns the
+required Oclif structure laws.
+Habitat targets are cacheable only when their Nx inputs cover every Git-visible
+tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
+owner-local verification rather than hidden merge-admission work.
+
+This is a deliberate transitional hierarchy. Do not claim that every Habitat
+rule or every project-owned `check` target is active. Civ-style all-project
+composition follows only after every applicable project has a `check` target
+or Habitat Nx inference supplies it.
 
 Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
 release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its
 source provenance, platform asset, byte size, and SHA-256; this repository owns
 only the consumer and `.habitat` policy tree and does not vendor SDK sources.
 
-The `Repository Ratchet` workflow runs the same command for pull requests,
+The `Repository Ratchet` workflow runs `bun run check` for pull requests,
 merge groups, and pushes to `main`. Local hooks are useful feedback but can be
 bypassed. Protected `main` must therefore require the exact job context
 `Required lint, typecheck, and topology`; remote branch protection is the

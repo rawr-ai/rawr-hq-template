@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a missing root or module anchor, a second service spine, or a module-owned context, implementer, host, or procedures container",
   "why": "Standalone services and API-embedded service interiors share one stable oRPC spine. Closing only its semantic anchors makes alternate authority visible without requiring models, middleware, persistence, or tests that a service does not need.",

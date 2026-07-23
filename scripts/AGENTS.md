@@ -5,7 +5,7 @@
 - [Boundaries](#boundaries)
 - [Flow](#flow)
 - [Git Hooks](#git-hooks)
-- [Repository Ratchet](#repository-ratchet)
+- [Required Repository Check](#required-repository-check)
 - [Routing](#routing)
 - [Validation](#validation)
 
@@ -25,9 +25,9 @@
 ## Flow
 
 - Dependency installation configures the repository-owned Git hooks.
-- Pre-push invokes the required repository ratchet, which delegates admitted
-  work to Nx, Biome, and the provisioned Habitat SDK.
-- The repository workflow runs the same required ratchet before protected
+- Pre-push invokes `bun run check`, which delegates affected project quality
+  and repository policy to Nx.
+- The repository workflow runs the same required check before protected
   branches admit a candidate SHA.
 
 ## Git Hooks
@@ -36,30 +36,30 @@
   - refresh dependencies when needed
   - never install, update, or relink the global CLI
 - `scripts/githooks/pre-push` enforces remote safety and then runs the complete
-  required repository ratchet:
+  required repository check:
   - remote must be `origin`
   - origin must match this Template repository
-  - every non-root project must declare exactly one `type:*` kind
-  - every code project must own lint and typecheck targets unless its one kind
-    classifies it as content or a fixture
-  - the Nx admission refusal tests must pass
   - every affected admitted Nx lint and typecheck target must pass
-  - repository-wide Biome formatting, lint, and import organization must pass
-  - the Habitat consumer's manifest and provisioning tests must pass
-  - repository separation must pass
-  - the positive Habitat lifecycle topology must pass against the live tree
+  - `repository:check` must pass
 - Do not ship a Template-managed path guard for personal. The repositories own
   separate trees and process configuration; there is no sync or equivalence relation.
 - The root `prepare` script installs `core.hooksPath=scripts/githooks` after a
   dependency install. `--no-verify` remains a Git escape hatch, so local hooks
   are feedback only; remote branch protection is merge authority.
 
-## Repository Ratchet
-- `bun run ratchet:required` validates the Nx project population, runs the Nx
-  admission refusal tests, runs affected `lint` and `typecheck`, runs the full
-  repository Biome check, verifies the Habitat consumer, enforces repository
-  separation, and evaluates the lifecycle service's Habitat `structure-check`.
-  Habitat checks are cacheable only when their Nx inputs cover every
+## Required Repository Check
+- `bun run check` is the public required command. It runs affected Nx `lint`
+  and `typecheck`, then invokes `repository:check`.
+- `repository:check` composes the repository owner's lint, typecheck, tests,
+  project admission, and separation checks with `habitat:check`, the lifecycle
+  service structure check, and the CLI Oclif boundary check. The selected
+  Habitat policy batch owns the required Oclif structure laws.
+- `habitat:check` composes owner lint, typecheck, and tests with
+  `check:hygiene` and `check:policy`. `check:policy` runs one selected
+  green local Habitat batch. The selected batch has exact inputs and empty
+  baselines; it is not an assertion that every registered Habitat rule is
+  active.
+- Habitat checks are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests and complete owner
   checks remain explicit owner commands; they are not hidden inside merge
   admission.
@@ -80,6 +80,10 @@
 - The `Repository Ratchet` workflow runs for ordinary pull requests, merge
   groups, and pushes to `main`. Branch protection must require its exact job
   context, `Required lint, typecheck, and topology`.
+- The final Civ-style composition through project-owned or Habitat-inferred
+  `check` targets remains pending. Do not replace the current truthful
+  affected-quality plus repository-policy hierarchy with `run-many -t check`
+  until the full applicable project population is admitted.
 - Nx task ownership and cache behavior follow the
   [Nx agent workflow](../docs/process/NX_AGENT_WORKFLOW.md).
 
@@ -94,8 +98,8 @@
 
 - Keep hook output short and actionable.
 - Run the focused Nx target for the script owner first.
-- Run `bun run ratchet:required` before pushing changes to hooks, admission, or
-  repository ratchet behavior.
+- Run `bun run check` before pushing changes to hooks, admission, or required
+  repository-check behavior.
 - Remote verifier: `scripts/dev/check-remotes.sh`.
 - Main-branch dependency refresh driver: `scripts/dev/auto-refresh-main.sh`.
 - [Security model](../docs/system/SECURITY_MODEL.md)

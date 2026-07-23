@@ -47,8 +47,8 @@
   filesystem and provider effects stay behind their declared resources.
 - Template tooling may read Personal through explicit data interfaces, but no
   executable implementation or repository authority crosses that boundary.
-- Repository changes move through Graphite and the required repository
-  ratchet before branch protection admits them to `main`.
+- Repository changes move through Graphite and the required repository check
+  before branch protection admits them to `main`.
 
 ## Graphite Requirement
 
@@ -56,10 +56,15 @@
 - Trunk must remain `main` (`gt trunk`).
 - Follow [the Graphite branch and stack workflow](docs/process/GRAPHITE.md).
 - `bun install` configures the repository-owned hooks. Before a push, the local
-  hook runs the required repository ratchet: one Nx project kind per project,
-  affected lint and typecheck, the repository-wide Biome check, Habitat consumer
-  integrity tests, repository separation, and the live Habitat lifecycle topology
-  check.
+  hook runs `bun run check`. The root command first runs affected Nx `lint` and
+  `typecheck`, then delegates repository policy to `repository:check`.
+  `repository:check` composes project admission and repository separation,
+  `habitat:check`, lifecycle-service structure, and the CLI Oclif boundary
+  check. Oclif structure laws run inside Habitat's selected policy batch.
+- `habitat:check` composes the Habitat owner's lint, typecheck, and tests with
+  `check:hygiene` and `check:policy`. The policy target currently runs one
+  selected green local rule batch; it does not claim that every Habitat rule is
+  active.
 - The ordinary `pull_request`, `merge_group`, and `push`-to-`main` workflow
   named `Repository Ratchet` publishes the job context
   `Required lint, typecheck, and topology` for the candidate SHA. Remote branch
@@ -106,5 +111,9 @@
 - Use `bunx nx show project <project-name> --json` to confirm project truth
   before selecting checks.
 - Run the owning project's focused lint, typecheck, test, or build targets.
-- Before pushing, run `bun run ratchet:required`; remote branch protection is
-  the final merge authority.
+- Before pushing, run `bun run check`; remote branch protection is the final
+  merge authority.
+- A Civ-style all-project `check` graph remains pending until every applicable
+  project owns a `check` target or Habitat Nx inference supplies it. Until then,
+  the root affected-quality pass plus `repository:check` is the truthful
+  required composition.

@@ -29,29 +29,14 @@ predicate has_agent_router_route($body) {
   }
 }
 
-or {
-  file($name, $body) where {
-    is_agent_router(),
-    not { $body <: contains `## Scope` }
-  },
-  file($name, $body) where {
-    is_agent_router(),
-    not { $body <: contains `## Boundaries` }
-  },
-  file($name, $body) where {
-    is_agent_router(),
-    not { $body <: contains `## Flow` }
-  },
-  file($name, $body) where {
-    is_agent_router(),
-    not { $body <: contains `## Routing` }
-  },
-  file($name, $body) where {
-    is_agent_router(),
-    not { $body <: contains `## Validation` }
-  },
-  file($name, $body) where {
-    is_agent_router(),
+file($name, $body) where {
+  is_agent_router(),
+  or {
+    not { $body <: contains `## Scope` },
+    not { $body <: contains `## Boundaries` },
+    not { $body <: contains `## Flow` },
+    not { $body <: contains `## Routing` },
+    not { $body <: contains `## Validation` },
     not { has_agent_router_route(body=$body) }
   }
 }

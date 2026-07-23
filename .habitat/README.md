@@ -16,8 +16,8 @@ The current generic kinds are:
 - `service`: the reusable contract-first oRPC service spine, with independent
   laws for direct anchors, native oRPC composition, context boundaries, module
   isolation, declarative contracts, and public error authority.
-- `plugin-server-api`: the additional client/server faces around an embedded
-  service.
+- `plugin-server-api`: the additional `client.ts` and `api.ts` faces that
+  expose client bindings and API operations around an embedded service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
 - `oclif-app`: one executable Oclif package, binary/source entrypoints,
   discovery configuration, and generated command-manifest relationship.
@@ -41,10 +41,11 @@ in a second filename convention. Grit rules own source relationships.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
 
-`@rawr/habitat-consumer:check:packets` evaluates the packet topology through the
-pinned standalone binary. The published binary does not expose a native fixture
-runner for these Habitat packet sources, so the repository does not add a second
-Markdown parser or duplicate pattern inventory to simulate one.
+`habitat:check:policy` evaluates the admitted policy batch through one
+invocation of the pinned standalone binary. The published binary does not
+expose a native fixture runner for these Habitat packet sources, so the
+repository does not add a second Markdown parser or duplicate pattern inventory
+to simulate one.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit

@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a missing Oclif package anchor, a second binary entrypoint, an open binary directory, or an alternate command source root",
   "why": "One installed Oclif application has one package manifest, one rawr binary, and one command source root. Generated dependencies, build output, and the Oclif command manifest remain admitted outputs rather than executable authority.",

@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a module current-owner alias import or re-export of root base, context, or middleware; a middleware source without a named direct native const; or a middleware default export",
   "why": "Modules inherit root context through the service anchor, while a named native middleware export keeps the context projection visible without duplicating the module import-surface law.",

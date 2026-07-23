@@ -9,8 +9,9 @@ relationships:
 
 1. A `service` has one contract-first oRPC spine, module-owned domain matter,
    native context projection, and one router lineage.
-2. An API server plugin adds one public client/server pair around an embedded
-   service while its application host retains transport ownership.
+2. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
+   service. The API face exposes operations while its application host retains
+   transport ownership.
 3. Each admitted package root has one concise `AGENTS.md` operator router with
    stable orientation anchors and repository-relative routes.
 4. The executable CLI is one conventional Oclif app, and every first-party

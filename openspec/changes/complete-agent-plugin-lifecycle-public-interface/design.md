@@ -136,6 +136,19 @@ that oRPC router surface alongside module-owned
 `model/{dto,policy,helpers,repositories}` rather than moving into a second
 implementation container.
 
+The API-plugin boundary is active now rather than waiting for the wider service
+corpus migration. Its closed source faces are `client.ts`, `api.ts`, and one
+embedded service; outward documentation calls the API members operations.
+The independent Grit-helper documentation law is also active and requires a
+semantic comment immediately above each named helper. Both run in one selected
+green local Habitat batch behind `check:policy`, with empty baselines.
+`habitat:check` composes that policy with owner lint, typecheck, tests, and
+hygiene; `repository:check` composes Habitat with repository admission and
+separation, lifecycle-service structure, and the CLI Oclif boundary check. The
+selected Habitat batch owns the required Oclif structure laws. The seven
+generic service laws remain governed by [[tasks]] 1.5e and must not join the
+selected batch while their known live-corpus violations remain.
+
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
 rule is not invented without a stable common corpus.
@@ -152,11 +165,19 @@ The repository required result remains non-skippable for the candidate
 revision. Its implementation stops running every project sequentially on every
 local push.
 
-Cacheable lint and typecheck targets use Nx inputs and affected-project
-scheduling. Habitat policy runs once against the live candidate tree and is not
-cached when live filesystem state matters. The required CI job depends on both
-and publishes one stable status. Local hooks provide fast feedback; remote
-branch protection remains merge authority.
+Public `bun run check` first uses affected-project scheduling for cacheable lint
+and typecheck, then invokes `repository:check`. The repository owner composes
+project admission and separation, `habitat:check`, lifecycle-service structure,
+and the CLI Oclif boundary check. Habitat composes its owner checks, repository
+hygiene, and a single selected green policy batch containing the required Oclif
+structure laws. The required CI job publishes one stable status. Local hooks
+provide fast feedback; remote branch protection remains merge authority.
+
+This hierarchy intentionally stops short of Civ's final all-project `check`
+graph. That composition becomes valid only after every applicable project owns
+a `check` target or Habitat Nx inference supplies one. The current selected
+policy batch likewise does not activate registered rules with known
+live-corpus violations.
 
 ### One oRPC service owns curated lifecycle behavior
 
@@ -298,7 +319,7 @@ not widen this change.
 
 ## Deletion Order
 
-1. Land the corrected record and positive Habitat/Nx architecture ratchet.
+1. Land the corrected record and positive Habitat/Nx architecture checks.
 2. Restore ordinary Oclif development execution and direct external extension
    management.
 3. Inventory the current closure and select the conventional release form, but

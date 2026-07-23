@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "Escaped module-specifier or imported-export spellings in governed imports; runtime ORPCTaggedError named imports and every runtime namespace or default effect-orpc import outside an exact module contract.ts; plus runtime-bearing conventional contract or error imports from router or impl files except the exact root impl.ts declaration import { contract } from './contract' using either quote style.",
   "why": "A module contract owns its public oRPC error constructors. Literal import boundary spellings and canonical named vendor imports keep that authority structurally visible without pretending to compare cooked identities or resolve bindings. The native service oRPC composition law separately owns the exact root contract-to-implementer lineage.",

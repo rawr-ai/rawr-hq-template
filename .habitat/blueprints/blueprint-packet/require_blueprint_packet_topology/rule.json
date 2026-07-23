@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "an open blueprint packet, a missing rule or baseline, or a runner source outside the canonical pattern.md and structure.toml names",
   "why": "Every generic blueprint rule is one closed policy packet. Stable packet names let Habitat validate topology and let native Grit tests execute the exact registered source without a parallel rule inventory.",

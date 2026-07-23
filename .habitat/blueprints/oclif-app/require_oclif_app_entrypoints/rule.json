@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a production or development entrypoint that delegates through a second launcher or performs work outside direct Oclif execution",
   "why": "The executable and development paths are two direct projections of the same Oclif application. Production discovers compiled commands and development discovers TypeScript commands without another selector or bootstrap authority.",

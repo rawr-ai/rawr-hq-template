@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a command file without a default export, a dependency through another package's mechanical source or output tree, or a dependency from one command plugin to another",
   "why": "Oclif discovers command classes from one command root. The host composes command plugins, while their implementation depends on public service, resource, and library packages rather than another plugin or a mechanical package directory.",

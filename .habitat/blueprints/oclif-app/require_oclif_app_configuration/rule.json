@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "an incorrectly identified, unversioned, or non-ESM CLI package; a missing declared or composed Oclif extension manager; mismatched binary or command discovery; or an ambiguous source-to-output mapping",
   "why": "Package configuration is the installed CLI identity. This closed ratchet fixes the app identity, binary, declared and composed @oclif/plugin-plugins owner, compiled command root, and TypeScript source-to-output mapping. The same rule tightens when generated release manifests land.",

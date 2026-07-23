@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a package root without its local AGENTS.md operator router",
   "why": "Every package is an intentional ownership and consumption boundary, so its operators need a local first hop without relying on a hand-maintained inventory of today's package names.",

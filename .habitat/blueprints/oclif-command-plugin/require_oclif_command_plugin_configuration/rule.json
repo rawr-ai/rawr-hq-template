@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "an unversioned or non-ESM command plugin, a dependency on another command plugin, mismatched command discovery, a plugin-owned binary, a missing package-owned manifest command, or an ambiguous source-to-output mapping",
   "why": "Each command capability is a versioned Oclif plugin composed by the host rather than another command plugin. Oclif discovers one compiled command root, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned Bun-executed Oclif manifest script as a target.",

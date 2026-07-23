@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@rawr/habitat-consumer",
+  "ownerProject": "habitat",
   "lane": "enforced",
   "forbids": "a missing or alternate package face beside required project.json, src, and tsconfig.json, permitted AGENTS.md and test, or a missing or alternate public source face beside api.ts, client.ts, and service",
   "why": "An API server plugin adds exactly one client face and one API face around one embedded service. Keeping that package delta small preserves the reusable service law while an owner-local TypeScript project checks exact public imports and the application host remains the sole HTTP transport owner. The agent-router blueprint independently owns whether the permitted AGENTS.md plaque is required.",

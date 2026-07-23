@@ -153,6 +153,20 @@ reference will advance when Magic commits that same tree. The packet is
 imported, but it does not govern repository admission until the live service
 corpus conforms and the central Nx check is activated.
 
+The narrower API-plugin face and Grit-helper documentation laws are now active
+repository admission checks. The API kind positively requires only
+`client.ts`, `api.ts`, and one embedded `service` under `src`; the live Example
+Todo plugin conforms without root wrappers or a second package manifest. API
+surfaces name operations while oRPC implementation code retains its native
+procedure vocabulary. Every named Grit helper carries a directly preceding
+semantic comment. Both checks have empty baselines and run in the selected
+green local batch behind `habitat:check`. The public `bun run check` command
+runs affected Nx lint/typecheck, then enters `repository:check`, which composes
+Habitat with repository admission/separation, lifecycle-service structure, and
+the CLI Oclif boundary check. Required Oclif structure laws run in the selected
+Habitat batch. Registered rules with known live-corpus violations are not yet
+required. See [[tasks]] 1.5f.
+
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
@@ -173,7 +187,7 @@ and the TypeScript mapping. Task 3.3 tightens generated-manifest packaging only
 when that behavior exists. The
 configuration fixtures and both live rules pass with zero diagnostics.
 
-The Template Habitat consumer already pins the newest published Civ7 artifact:
+The Template `habitat` project pins the current published Civ7 artifact:
 
 | Field | Value |
 | --- | --- |
@@ -184,7 +198,7 @@ The Template Habitat consumer already pins the newest published Civ7 artifact:
 | Darwin arm64 SHA-256 | `e3b172c897e57c2a787df6ab2b264901cd7554a7fb9ac86afffb91eda3d6704e` |
 
 The temporary published tool is Darwin arm64 only, so the required repository
-ratchet runs on macOS. Linux packaging belongs to the later in-repository
+check runs on macOS. Linux packaging belongs to the later in-repository
 Habitat npm package and binary migration; this initiative neither vendors the
 SDK source nor holds current structural work behind that later distribution.
 
@@ -211,7 +225,7 @@ rather than copying configuration blindly:
 TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
 Biome owns fast general hygiene; ESLint remains the boundary-rule leaf; Habitat
 owns positive architecture topology and source relationships. Full-corpus
-lintEffect is intentionally not part of the required push ratchet because its
+lintEffect is intentionally not part of the required push check because its
 cold-run cost is an upstream limitation rather than repository admission logic.
 
 Official npm metadata on 2026-07-22 reports stable Effect `3.22.0` and the
@@ -257,9 +271,9 @@ contains no Effect 3 runtime, direct `@effect/platform`, or mixed oRPC version.
 
 The Biome tooling checkpoint pins Biome `2.5.3` and lintEffect `0.0.6`, carries
 the narrow upstream severity compatibility patch byte-for-byte from Civ7, and
-exposes both commands through the Habitat consumer's Nx project. A frozen Bun
+exposes both commands through the Habitat project's Nx project. A frozen Bun
 install applied the patch; the Biome lint leaf inspected 1,180 files in
-327 ms; the Habitat consumer's lint, typecheck, four tests, and bounded packet
+327 ms; the Habitat project's lint, typecheck, four tests, and bounded packet
 check passed. A focused disposable lintEffect source produced the expected
 patched diagnostic and was removed without recursive cleanup. lintEffect
 remains advisory.
@@ -293,7 +307,7 @@ migration output outside dependency metadata is the official
 configuration change. At that migration checkpoint the workspace remained at
 47 projects with 35 build, 47 lint, 44 typecheck, and 32 test owners. Project
 discovery, graph generation, sync checking, all applicable non-root affected
-lint/typecheck owners, the CLI build, and the Habitat consumer tests pass. The
+lint/typecheck owners, the CLI build, and the Habitat project tests pass. The
 root `lint` owner exposed the already
 present recursive aggregate that task 1.6 removes; it is not hidden as an Nx
 23 regression or folded into this dependency-only checkpoint. No Nx Release
@@ -313,24 +327,38 @@ so this checkpoint does not optimize that rejected mechanism. The provider
 adapter projects also declare their dependency on the shared provider contract,
 so an affected run cannot omit their behavior tests after a shared change.
 
-The required admission command now has explicit owner boundaries. A
-TypeBox-validated Nx project-graph check requires exactly one `type:*` kind on
-every non-root project, then requires lint and typecheck on every code project;
-only content and fixture projects are exempt from those targets. Five Nx-owned
-tests prove accepted, missing-kind, ambiguous-kind, missing-target, and
-invalid-graph transitions. Nx then selects the affected lint/typecheck task set.
-Biome verifies repository formatting, lint, and import organization; its cache
-key covers the complete candidate tree so formatter configuration and supported
-file classes cannot restore a stale result. Four Habitat consumer tests protect
-manifest validation and provisioning; the repository-separation guard preserves
-the independent-repository boundary; and the lifecycle Habitat rule evaluates
-the live command-channel topology without using the Nx cache. Domain behavior
-and exact-Git tests remain owner-local rather than hidden inside merge admission.
+The required command now has explicit hierarchical owner boundaries. Public
+`bun run check` runs the affected Nx lint/typecheck task set, then invokes
+`repository:check`. The repository owner composes its lint, typecheck, tests,
+project admission, and repository separation with `habitat:check`, lifecycle
+service structure, and the CLI Oclif boundary check. Habitat composes its own
+lint, typecheck, tests, and hygiene with `check:policy`; policy runs one
+selected green local rule batch that includes the admitted Oclif structure
+laws. TypeBox-validated project-graph admission still requires exactly one
+`type:*` kind on every non-root project and lint plus typecheck on every code
+project, with only content and fixture projects exempt. Domain behavior and
+exact-Git tests remain owner-local rather than hidden inside merge admission.
 
-Against the final owner topology, the first recorded complete run covered 47
+This is the truthful transitional composition, not the final Civ-style graph.
+The root cannot switch to all-project `check` scheduling until every applicable
+project owns a `check` target or Habitat Nx inference supplies the missing
+targets. Likewise, the selected Habitat batch does not imply that all registered
+rules are active.
+
+The active policy batch now contains eleven green laws: packet topology,
+AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
+all three Oclif app laws, and all three Oclif command-plugin laws. Rewriting the
+AGENTS shape query from six repository traversals to one reduced its uncached
+runtime from 71.3 seconds to 2.7 seconds; the complete eleven-rule policy target
+passes uncached in 5.2 seconds. The Example Todo public client now calls through
+the real external API boundary, and explicit Nx edges connect both app hosts to
+the package-less API project and that project to its service, SDK, and runtime
+context owners. A change to the API face therefore selects both consumers.
+
+Before this hierarchy-only recut, the first recorded complete run covered 47
 projects and restored all 93 lint/typecheck tasks in 85 ms. The Nx admission
 tests restored in 19 ms; Biome checked all 1,184 admitted files in 652 ms after
-the record changed; the Habitat consumer tests restored in 17 ms; repository
+the record changed; the Habitat project tests restored in 17 ms; repository
 separation passed; and live Habitat completed in 577 ms. Total wall time was
 4.9 seconds. The immediate unchanged repeat restored the Nx admission tests in
 15 ms, all 93 lint/typecheck tasks in 77 ms, Biome in 15 ms, and the Habitat
@@ -385,9 +413,9 @@ skill. It cannot authorize HF01 materialization or release.
 | Generic Habitat blueprint port | Six-law service source port complete; live source conformance and central activation remain pending |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete and wired through affected admission on the active Template stack |
-| Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
+| Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
-| Positive Habitat/Nx ratchet | Qualified lifecycle command topology active; generic service source conformance and central activation remain task 1.5e |
+| Required Habitat/Nx check hierarchy | Public `bun run check`, `repository:check`, `habitat:check`, hygiene, and the selected green policy batch are active; all-project `check` composition and generic service-rule inclusion remain pending |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; rejected state deletion and Effect 4 closure are complete, so package-group derivation is the next owner |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; canonical-spec retirement and aggregate absence proof remain |
@@ -501,7 +529,7 @@ and Oclif reports `@oclif/plugin-plugins` as the owner of every command. The
 app-local wrappers, bootstrap, registry reconstruction, staging, import
 sandbox, recovery path, custom doctor projection, and their tests are deleted:
 roughly 7,900 lines removed with no replacement manager. CLI extension source
-authoring remains separate and non-mutating. The required Nx ratchet now runs
+authoring remains separate and non-mutating. The required repository check runs
 the two selected Oclif Habitat rules and one isolated source/compiled ownership
 suite. It requires Oclif's canonical operations and native ownership of every
 discovered `plugins` command without freezing upstream convenience aliases. The
@@ -531,7 +559,7 @@ The stateful target is uncached and composes the cached source/built ownership
 oracle with the Hello manifest owner. Its behavior case completes in 4.6
 seconds; an uncached dependency graph including CLI/core-plugin builds and the
 fixture manifest completes in 21.5 seconds. It remains outside the fast
-repository ratchet and becomes a mandatory publication predecessor in task 3.
+repository check and becomes a mandatory publication predecessor in task 3.
 The native case has its own Vitest project, while the cacheable `cli` project
 continues to discover only the 129 deterministic behavior cases.
 
@@ -540,7 +568,7 @@ Hello behavior and manifest owners in 1.6 seconds, and uncached CLI/Hello build,
 lint, and typecheck in 12.9 seconds. A complete pre-separation CLI run passed
 all 129 deterministic cases plus the native case; project discovery now proves
 the native file is absent from the cacheable suite and present exactly once in
-the uncached acceptance project. The required repository ratchet passed with
+the uncached acceptance project. The required repository check passed with
 91 of 98 affected lint/typecheck tasks restored from Nx cache, both Oclif
 Habitat rules enforced, repository separation intact, and the source/built
 native ownership oracle restored. Strict OpenSpec, Biome, and diff hygiene are
@@ -618,7 +646,7 @@ in 91 seconds, down from the pre-deletion multi-minute path. No live provider,
 repository release, Personal source, or global CLI state was touched.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
-than carried into the corrected ratchet. It enumerated package names, exact
+than carried into the corrected required check. It enumerated package names, exact
 composition files, and the now-rejected artifact/evidence repositories. Those
 are transient implementation details, not one reusable structural axis. The
 generic service and Oclif blueprints, TypeScript package boundaries, and Nx

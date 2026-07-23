@@ -1,10 +1,10 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/nx-admission",
+  "name": "repository",
   "root": "scripts/nx",
   "sourceRoot": "scripts/nx",
   "projectType": "application",
-  "tags": ["type:tool", "role:repository-admission"],
+  "tags": ["type:tool", "role:repository-check"],
   "targets": {
     "lint": {
       "executor": "nx:run-commands",
@@ -23,6 +23,55 @@
       "options": {
         "command": "tsc -p scripts/nx/tsconfig.json --noEmit"
       }
+    },
+    "check:projects": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/**/package.json",
+        "{workspaceRoot}/**/project.json",
+        "{workspaceRoot}/scripts/nx/quality-target-admission.mjs",
+        "bunToolchain"
+      ],
+      "outputs": [],
+      "options": {
+        "command": "bun scripts/nx/quality-target-admission.mjs"
+      }
+    },
+    "check:boundaries": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "outputs": [],
+      "options": {
+        "command": "bun scripts/architecture/verify-repository-separation.mjs"
+      }
+    },
+    "check": {
+      "executor": "nx:noop",
+      "cache": false,
+      "dependsOn": [
+        "lint",
+        "typecheck",
+        "test",
+        "check:projects",
+        "check:boundaries",
+        {
+          "projects": ["habitat"],
+          "target": "check"
+        },
+        {
+          "projects": ["@rawr/agent-plugin-lifecycle"],
+          "target": "structure-check"
+        },
+        {
+          "projects": ["@rawr/cli"],
+          "target": "test-oclif-boundary"
+        }
+      ],
+      "outputs": [],
+      "options": {}
     }
   }
 }

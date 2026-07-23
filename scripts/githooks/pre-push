@@ -11,4 +11,4 @@ if [ "${REMOTE_NAME}" != "origin" ]; then
   exit 1
 fi
 
-bun run --cwd "${ROOT_DIR}" ratchet:required
+bun run --cwd "${ROOT_DIR}" check

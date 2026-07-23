@@ -14,8 +14,8 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   execution worktree, repository separation, active OpenSpec, and Graphite
   ownership.
 - [x] 0.3 Record the corrected target, authority ledger, component disposition,
-  falsifiers, positive ratchet, behavioral boundary, and standard vocabulary in
-  [[authority-amendment]], [[proposal]], and [[design]].
+  falsifiers, positive constraints, behavioral boundary, and standard
+  vocabulary in [[authority-amendment]], [[proposal]], and [[design]].
 - [x] 0.4 Record Magic Migration and Civ7 Habitat provenance. The current
   Template artifact is published `habitat-sdk-v0.1.6`, source
   `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, compiled with Bun 1.4. SDK source
@@ -24,7 +24,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `git diff --check`, and standing architecture/terminology reviews. Commit this
   record as one Graphite node.
 
-## 1. Positive Habitat And Nx Ratchet
+## 1. Positive Habitat And Nx Checks
 
 - [x] 1.1 Port the generic Magic Migration service, API server plugin, and
   agent-router blueprints from commit
@@ -62,26 +62,27 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 - [ ] 1.4 Add positive resource/provider topology only after the current corpus
   supports one generic invariant. Do not claim Magic prior art that does not
   exist.
-- [ ] 1.5 Give the Habitat consumer owner-local policy targets, pattern execution,
+- [ ] 1.5 Give the Habitat project owner-local policy targets, pattern execution,
   isolated named inputs, and a blueprint-packet topology law closing the allowed
   packet filename set. The bounded packet check is complete, but it does not yet
   prove that `rule.json` selects exactly one present runner source. Native Grit
-  fixture automation and full live-tree `check:policy` activation also remain
-  pending because the published standalone binary exposes no packet-fixture
-  runner. Do not hide that limitation behind another parser or runner. Keep the
-  compiled Bun 1.4 artifact consumer and reproducible update recipe; the current
-  temporary release and required ratchet are Darwin arm64 until Habitat moves
-  into this repository as an npm package and proper binary.
+  fixture automation and inclusion of every registered rule in live-tree policy
+  also remain pending because the published standalone binary exposes no
+  packet-fixture runner and known corpus violations remain. Do not hide that
+  limitation behind another parser or runner. Keep the compiled Bun 1.4 artifact
+  consumer and reproducible update recipe; the current temporary release and
+  required check are Darwin arm64 until Habitat moves into this repository as an
+  npm package and proper binary.
 - [x] 1.5a Give every admitted code project an Nx lint and typecheck target.
   Keep content and fixture projects explicitly classified outside that law.
-  Typecheck the Habitat consumer against `bun-types@1.3.14`; derive its release
+  Typecheck the Habitat project against `bun-types@1.3.14`; derive its release
   manifest type and validation from one closed TypeBox schema; keep its asset
   cache fixed under the repository and reject non-basename asset filenames.
 - [x] 1.5b Adopt Civ7's Biome `2.5.3` hygiene and formatting responsibilities,
   adapted to Template paths and generated outputs. Preserve ESLint as the
   separate boundary-rule leaf. Expose the Civ7 lintEffect configuration and
   patched dependency as an advisory command; do not put its cold full-corpus run
-  in the required hook or CI ratchet.
+  in the required hook or CI check.
 - [x] 1.5c Upgrade Nx and `@nx/eslint-plugin` to `23.1.0` as one exact migration.
   Preserve resolved target behavior and cache inputs; add no recursive root Nx
   target or project-name inventory.
@@ -90,12 +91,19 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
   make path mappings explicit. Do not run every check twice.
 - [ ] 1.5e After every selected service rule passes the live Template corpus,
-  add one cacheable Habitat `check:service` target with exact service-source,
+  extend the one `check:policy` batch with exact service-source,
   service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
-  Invoke the seven service rules in one Habitat acquisition and make the
-  required repository aggregate depend on that target. Do not create seven Nx
-  targets, activate a knowingly red required check, or duplicate rule
-  discovery in a script.
+  Invoke the seven service rules in the existing single Habitat acquisition.
+  Do not create a service-specific target, activate a knowingly red required
+  rule, or duplicate rule discovery in a script.
+- [x] 1.5f Activate the closed API-plugin public-face topology and the
+  Grit-helper documentation law in the selected green local batch behind
+  `habitat:check`. Rename the public server face to `api.ts`, use API-operation
+  terminology outside oRPC's technical procedure model, migrate the live
+  Example Todo plugin to `client.ts`/`api.ts` plus one embedded service spine,
+  prove the public client against the real host transport, preserve affected
+  propagation through explicit Nx edges, delete the redundant structural
+  script, and burn both rule baselines to empty.
 - [x] 1.6a Make current Nx task ownership and prerequisites explicit. Keep the
   root lint command outside the root Nx project so it cannot recursively invoke
   itself. Make the DevOps Oclif fixture depend on its build. Give the native
@@ -103,11 +111,17 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   keeping each adapter affected by shared-provider changes. Preserve serialized
   CLI file execution and verify its complete owner target with explicit stream
   output.
-- [x] 1.6b Replace the sequential repository ratchet with one positive project
-  kind per project, Nx-owned admission tests, affected/cached lint and typecheck,
-  the complete Biome check, Habitat consumer integrity tests, repository
-  separation, and one live Habitat policy check. Preserve one non-skippable
-  remote required result for the candidate revision.
+- [x] 1.6b Replace the sequential repository command with one public
+  `bun run check` hierarchy: affected/cached lint and typecheck followed by
+  `repository:check`; repository-owned `check:projects` and `check:boundaries`
+  plus `habitat:check`, lifecycle-service structure, and the CLI Oclif boundary
+  check; and Habitat-owner lint/typecheck/tests, hygiene, and one selected green
+  local policy batch containing the required Oclif structure laws. Preserve one
+  non-skippable remote required result for the candidate revision.
+- [ ] 1.6c Move to Civ-style all-project `check` composition only after every
+  applicable project owns a `check` target or Habitat Nx inference supplies
+  one. Do not let `run-many -t check` silently omit projects during the
+  transition.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable
@@ -393,7 +407,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
 
 ## 8. Closure
 
-- [ ] 8.1 Run full affected Nx checks, required repository ratchets, strict
+- [ ] 8.1 Run full affected Nx checks, the required repository check, strict
   OpenSpec, package/install smoke, lifecycle service behavior, and native
   disposable-home acceptance from landed revisions.
 - [ ] 8.2 Close every standing review with no unresolved finding that threatens
