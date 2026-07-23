@@ -13,7 +13,7 @@ import {
 } from "./test-fixture.mjs";
 
 const TEMP_PREFIX = "rawr-habitat-provision-test-";
-const roots = [];
+const roots = /** @type {string[]} */ ([]);
 
 afterEach(async () => {
   for (const root of roots.splice(0)) {
@@ -42,6 +42,26 @@ describe("Habitat standalone release consumer", () => {
   it("refuses an unsupported host", () => {
     expect(() => selectReleaseAsset(fixtureManifest(), "win32", "x64"))
       .toThrow("unavailable for win32-x64");
+  });
+
+  it("refuses fields outside the release schema", () => {
+    expect(() => parseReleaseManifest({ ...fixtureManifest(), extra: true }))
+      .toThrow("release manifest is invalid");
+  });
+
+  it("refuses an asset filename outside the release cache", () => {
+    const valid = fixtureManifest();
+    const manifest = {
+      ...valid,
+      assets: {
+        ...valid.assets,
+        "darwin-arm64": {
+          ...valid.assets["darwin-arm64"],
+          filename: "../../package.json",
+        },
+      },
+    };
+    expect(() => parseReleaseManifest(manifest)).toThrow("requires a basename");
   });
 
   it("verifies exact bytes and rejects a corrupt asset", async () => {

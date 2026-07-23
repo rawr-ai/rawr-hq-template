@@ -5,84 +5,129 @@ import { isAbsolute, join } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
+import { ReadonlyObject, Type } from "typebox";
+import { Value } from "typebox/value";
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const MANIFEST_PATH = fileURLToPath(new URL("./release.json", import.meta.url));
 
-function requireString(value, field) {
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Habitat release manifest requires ${field}`);
+const NonEmptyStringSchema = Type.String({ minLength: 1 });
+const HabitatReleaseAssetSchema = ReadonlyObject(Type.Object(
+  {
+    filename: NonEmptyStringSchema,
+    bytes: Type.Integer({ minimum: 1, maximum: Number.MAX_SAFE_INTEGER }),
+    sha256: Type.String({ pattern: "^[a-f0-9]{64}$" }),
+  },
+), { additionalProperties: false });
+
+export const HabitatReleaseManifestSchema = ReadonlyObject(Type.Object(
+  {
+    schemaVersion: Type.Literal(1),
+    owner: ReadonlyObject(Type.Object(
+      {
+        repository: NonEmptyStringSchema,
+        sourceCommit: NonEmptyStringSchema,
+        habitatTree: NonEmptyStringSchema,
+      },
+    ), { additionalProperties: false }),
+    build: ReadonlyObject(Type.Object(
+      {
+        bunVersion: NonEmptyStringSchema,
+        bunRevision: NonEmptyStringSchema,
+      },
+    ), { additionalProperties: false }),
+    release: ReadonlyObject(Type.Object(
+      { tag: NonEmptyStringSchema },
+    ), { additionalProperties: false }),
+    assets: ReadonlyObject(Type.Object(
+      {
+        "darwin-arm64": HabitatReleaseAssetSchema,
+        "linux-x64": HabitatReleaseAssetSchema,
+      },
+    ), { additionalProperties: false }),
+  },
+), { additionalProperties: false });
+
+/** @typedef {import("typebox").Static<typeof HabitatReleaseAssetSchema>} HabitatReleaseAsset */
+/** @typedef {import("typebox").Static<typeof HabitatReleaseManifestSchema>} HabitatReleaseManifest */
+/**
+ * @typedef {{
+ *   manifest?: HabitatReleaseManifest,
+ *   platform?: NodeJS.Platform,
+ *   arch?: string,
+ *   explicitBinary?: string,
+ * }} ProvisionHabitatBinaryOptions
+ */
+
+/** @param {string} filename @param {string} field */
+function requireAssetFilename(filename, field) {
+  if (
+    filename === "."
+    || filename === ".."
+    || filename.includes("/")
+    || filename.includes("\\")
+    || filename.includes("\0")
+  ) {
+    throw new Error(`Habitat release manifest requires a basename ${field}`);
   }
-  return value;
+  return filename;
 }
 
-function requireInteger(value, field) {
-  if (!Number.isSafeInteger(value) || value <= 0) {
-    throw new Error(`Habitat release manifest requires a positive integer ${field}`);
-  }
-  return value;
-}
-
-export function parseReleaseManifest(value) {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    throw new Error("Habitat release manifest must be an object");
-  }
-  const manifest = value;
-  if (manifest.schemaVersion !== 1) {
-    throw new Error("Habitat release manifest schemaVersion must be 1");
-  }
-  const owner = manifest.owner;
-  const build = manifest.build;
-  const release = manifest.release;
-  const assets = manifest.assets;
-  if (!owner || !build || !release || !assets) {
-    throw new Error("Habitat release manifest is incomplete");
-  }
-  const normalizedAssets = {};
-  for (const key of ["darwin-arm64", "linux-x64"]) {
-    const asset = assets[key];
-    if (!asset) throw new Error(`Habitat release manifest requires assets.${key}`);
-    const sha256 = requireString(asset.sha256, `assets.${key}.sha256`);
-    if (!/^[a-f0-9]{64}$/u.test(sha256)) {
-      throw new Error(`Habitat release manifest has an invalid assets.${key}.sha256`);
-    }
-    normalizedAssets[key] = Object.freeze({
-      filename: requireString(asset.filename, `assets.${key}.filename`),
-      bytes: requireInteger(asset.bytes, `assets.${key}.bytes`),
-      sha256,
-    });
-  }
+/** @param {HabitatReleaseAsset} asset @param {string} field */
+function normalizeReleaseAsset(asset, field) {
   return Object.freeze({
-    schemaVersion: 1,
-    owner: Object.freeze({
-      repository: requireString(owner.repository, "owner.repository"),
-      sourceCommit: requireString(owner.sourceCommit, "owner.sourceCommit"),
-      habitatTree: requireString(owner.habitatTree, "owner.habitatTree"),
-    }),
-    build: Object.freeze({
-      bunVersion: requireString(build.bunVersion, "build.bunVersion"),
-      bunRevision: requireString(build.bunRevision, "build.bunRevision"),
-    }),
-    release: Object.freeze({ tag: requireString(release.tag, "release.tag") }),
-    assets: Object.freeze(normalizedAssets),
+    ...asset,
+    filename: requireAssetFilename(asset.filename, field),
   });
 }
 
-export function selectReleaseAsset(manifest, platform = process.platform, arch = process.arch) {
-  const key = `${platform}-${arch}`;
-  const asset = manifest.assets[key];
-  if (!asset) {
-    throw new Error(`Habitat standalone check is unavailable for ${key}`);
+/** @param {unknown} value @returns {HabitatReleaseManifest} */
+export function parseReleaseManifest(value) {
+  if (!Value.Check(HabitatReleaseManifestSchema, value)) {
+    const [issue] = Value.Errors(HabitatReleaseManifestSchema, value);
+    const path = issue?.instancePath || "(root)";
+    throw new Error(`Habitat release manifest is invalid at ${path}`);
   }
-  return asset;
+  return Object.freeze({
+    ...value,
+    owner: Object.freeze({ ...value.owner }),
+    build: Object.freeze({ ...value.build }),
+    release: Object.freeze({ ...value.release }),
+    assets: Object.freeze({
+      "darwin-arm64": normalizeReleaseAsset(
+        value.assets["darwin-arm64"],
+        "assets.darwin-arm64.filename",
+      ),
+      "linux-x64": normalizeReleaseAsset(
+        value.assets["linux-x64"],
+        "assets.linux-x64.filename",
+      ),
+    }),
+  });
 }
 
+/**
+ * @param {HabitatReleaseManifest} manifest
+ * @param {NodeJS.Platform} [platform]
+ * @param {string} [arch]
+ * @returns {HabitatReleaseAsset}
+ */
+export function selectReleaseAsset(manifest, platform = process.platform, arch = process.arch) {
+  const key = `${platform}-${arch}`;
+  if (key !== "darwin-arm64" && key !== "linux-x64") {
+    throw new Error(`Habitat standalone check is unavailable for ${key}`);
+  }
+  return manifest.assets[key];
+}
+
+/** @param {string} filename */
 export async function sha256File(filename) {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(filename)) hash.update(chunk);
   return hash.digest("hex");
 }
 
+/** @param {string} filename @param {HabitatReleaseAsset} asset */
 export async function verifyReleaseAsset(filename, asset) {
   const observed = await stat(filename);
   if (!observed.isFile() || observed.size !== asset.bytes) {
@@ -95,10 +140,12 @@ export async function verifyReleaseAsset(filename, asset) {
   return filename;
 }
 
+/** @returns {Promise<HabitatReleaseManifest>} */
 async function readManifest() {
   return parseReleaseManifest(await Bun.file(MANIFEST_PATH).json());
 }
 
+/** @param {HabitatReleaseManifest} manifest @param {HabitatReleaseAsset} asset */
 function releaseAssetUrl(manifest, asset) {
   const repository = encodeURI(manifest.owner.repository);
   const tag = encodeURIComponent(manifest.release.tag);
@@ -106,14 +153,24 @@ function releaseAssetUrl(manifest, asset) {
   return `https://github.com/${repository}/releases/download/${tag}/${filename}`;
 }
 
+/** @param {unknown} error */
+function isMissingPath(error) {
+  return typeof error === "object"
+    && error !== null
+    && "code" in error
+    && error.code === "ENOENT";
+}
+
+/** @param {string} filename */
 async function removeTemporaryFile(filename) {
   try {
     await unlink(filename);
   } catch (error) {
-    if (!(error && typeof error === "object" && error.code === "ENOENT")) throw error;
+    if (!isMissingPath(error)) throw error;
   }
 }
 
+/** @param {string} url @param {string} destination */
 async function downloadAsset(url, destination) {
   const response = await fetch(url, { redirect: "follow" });
   if (!response.ok || response.body === null) {
@@ -125,6 +182,7 @@ async function downloadAsset(url, destination) {
   );
 }
 
+/** @param {ProvisionHabitatBinaryOptions} [options] */
 export async function provisionHabitatBinary(options = {}) {
   const manifest = options.manifest ?? await readManifest();
   const asset = selectReleaseAsset(
@@ -142,15 +200,14 @@ export async function provisionHabitatBinary(options = {}) {
     return explicitBinary;
   }
 
-  const cacheRoot = options.cacheRoot
-    ?? join(REPOSITORY_ROOT, ".habitat", "cache", "bin", asset.sha256);
+  const cacheRoot = join(REPOSITORY_ROOT, ".habitat", "cache", "bin", asset.sha256);
   const destination = join(cacheRoot, asset.filename);
   try {
     await verifyReleaseAsset(destination, asset);
     await chmod(destination, 0o755);
     return destination;
   } catch (error) {
-    if (!(error && typeof error === "object" && error.code === "ENOENT")) {
+    if (!isMissingPath(error)) {
       await removeTemporaryFile(destination);
     }
   }
@@ -165,7 +222,7 @@ export async function provisionHabitatBinary(options = {}) {
       await verifyReleaseAsset(destination, asset);
       await removeTemporaryFile(temporary);
     } catch (error) {
-      if (!(error && typeof error === "object" && error.code === "ENOENT")) {
+      if (!isMissingPath(error)) {
         await removeTemporaryFile(destination);
       }
       await rename(temporary, destination);
