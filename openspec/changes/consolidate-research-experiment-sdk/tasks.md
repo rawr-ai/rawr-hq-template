@@ -47,7 +47,9 @@
   from the single cells-module `router.ts`. Import `standard` from the
   Habitat-required `#adapters/typebox` alias backed by the canonical
   `@rawr/hq-sdk` TypeBox-to-Standard-Schema bridge only after its issue-path
-  correction/admission; do not add a research-local adapter.
+  correction/admission; do not add a research-local adapter, property-map
+  composition helper, or runtime key-collision checker. Build closed
+  service-authored `Type.Object` schemas directly and verify them behaviorally.
 - [ ] 2.3 Move direct terminal/evaluation adoption, observation correlation,
   local restart/resume, and publication ordering into service-owned DTO/policy
   modules. Delete distributed attempt fences, stage/predecessor graphs,
@@ -59,7 +61,9 @@
 - [ ] 2.5 Prove the service flow with injected resource ports: terminal
   adoption before effects, unique local begin, durable terminal before
   verification, durable evaluation before projection, exact observation
-  identity, local duplicate/restart/resume, distinct-cell overlap, and
+  identity, local duplicate/restart/resume, distinct-cell overlap,
+  deterministic pre-acquisition provider lookup, recovery across both
+  acquisition-to-locator and solver-exit-to-capture crash windows, and
   unconfirmed-locator cleanup. Preparation and evaluation consume lane TypeBox
   data/configuration/policy plus provisioned resources, never lane-injected
   executable callbacks.
@@ -69,11 +73,12 @@
 - [ ] 3.1 Move command execution behind a research-command resource contract
   and concrete host/Bun provider.
 - [ ] 3.2 Move native Git materialize/capture/apply behind a Git-artifact
-  resource/provider. Persist the base commit/tree, Git version, and path mapping
-  in `FrozenInput`; capture a full-index binary patch with SHA-256 and prove
-  fresh apply plus reconstructed product-tree equality under native Git ignore
-  semantics. Delete hostile config/attribute policy, provider envelopes, and
-  regenerated-patch authority.
+  resource/provider. Persist the base commit/tree and path mapping in
+  `FrozenInput`; preflight Git `>=2.48.0` and record the resolved version only
+  diagnostically. Capture a full-index binary patch with SHA-256 and prove fresh
+  apply plus reconstructed product-tree equality under native Git ignore
+  semantics. Delete hostile config/attribute policy, provider envelopes, exact
+  supported-version rejection, and regenerated-patch authority.
 - [ ] 3.3 Build ordinary Bun compatibility tooling outside the running service:
   clean staging, ordinary package build, `bun pm pack --ignore-scripts`, atomic
   tarball SHA/length, clean frozen consumer install, import/type/model-free
@@ -110,7 +115,7 @@
   preparation/evaluation path.
 - [ ] 5.3 Bind retained Inngest S09 through the same service, preserving its
   seven-file seed view, lane-owned control overlay, service-owned Git
-  base/version/mapping, allowed product paths, and hidden verifier.
+  base/mapping, allowed product paths, and hidden verifier.
 - [ ] 5.4 Confirm both lanes invoke the service, do not import providers, and
   retain all subject content and evidence.
 

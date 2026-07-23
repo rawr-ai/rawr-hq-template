@@ -42,13 +42,19 @@ not defend against a malicious operator or ambient toolchain.
   the running service, using ordinary Bun pack, frozen install, and consumer
   smoke checks rather than a custom dependency or installed-state authority.
 - Attempt solver-terminal adoption before observation acquisition. On a miss,
-  begin one local per-cell record, persist the submitted artifact and terminal
-  before verification, then persist evaluation before telemetry projection.
+  derive deterministic provider lookup identities from the exact cell and
+  attempt, persist them in one local per-cell `Running` record before any
+  acquisition, and require providers to create or adopt subjects under those
+  identities. Persist the submitted artifact and terminal before verification,
+  then persist evaluation before telemetry projection.
 - Separate scoreable agent outcomes from infrastructure and evaluator failures.
-- Keep a running cell's observation and sandbox/process locator in the same
-  record. A retry inspects and settles that locator through the owning provider
-  before it may resume; unconfirmed cleanup leaves the cell incomplete rather
-  than authorizing another execution.
+- Keep a running cell's provider lookup identities, observation, and
+  sandbox/process details in the same record. A retry asks the owning provider
+  whether the subject is live, exited with a recoverable workspace or outcome,
+  or absent. A live subject returns already-running; a recoverable exited
+  subject resumes artifact capture without rerunning the solver; an absent
+  subject is reconciled before execution resumes. Unconfirmed cleanup leaves
+  the cell incomplete rather than authorizing another execution.
 - Repartition the current `packages/research-sdk` implementation. Experiment
   contracts and laws move into the service; live command and Git behavior moves
   into resources/providers; ordinary Bun package compatibility remains outside

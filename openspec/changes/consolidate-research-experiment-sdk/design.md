@@ -258,12 +258,14 @@ lane schedules exact cell
      -> prepare and validate frozen input
      -> read one per-cell record
           SolverTerminal | Evaluated -> adopt completed boundaries
-          Running -> inspect the recorded sandbox/process locator
+          Running -> inspect deterministic provider lookup identities
                      live -> return already-running
-                     absent or settled -> clean up and resume
-          missing -> uniquely begin Running
-                     -> acquire and record observation
-                     -> acquire and record sandbox/process locator
+                     exited with recoverable workspace/outcome -> resume capture
+                     absent or settled -> clean up and resume execution
+          missing -> derive provider lookup identities from cell + attempt
+                     -> uniquely begin Running with those identities
+                     -> providers create or adopt observation and sandbox/process
+                     -> record concrete handles and locator details
                      -> invoke agent
                      -> parent-owned Git artifact capture
                      -> persist SolverTerminal before verification
@@ -284,10 +286,10 @@ The service domain retains these entities:
 
 - `StudyIdentity`
 - `CellKey`, including a lane-supplied instance/replicate identity
-- `FrozenInput`, including the Git base commit/tree, Git version, and lane path
-  mapping when applicable
-- `RunningCell`, including an attempt ID and any acquired observation and
-  sandbox/process locator
+- `FrozenInput`, including the Git base commit/tree and lane path mapping when
+  applicable
+- `RunningCell`, including an attempt ID, deterministic provider lookup
+  identities, and any acquired observation or concrete sandbox/process details
 - `ObservationHandle`
 - `SubmittedArtifact`
 - `SolverTerminal`
@@ -307,16 +309,22 @@ lanes supply study data and policy, not persistence implementations.
 The semantic laws are:
 
 - exact terminal adoption precedes every execution effect;
-- only a successful unique local transition to `Running` permits observation,
-  sandbox, or process acquisition;
+- only a successful unique local transition to `Running`, with deterministic
+  provider lookup identities derived from the exact cell and attempt, permits
+  observation, sandbox, or process acquisition;
 - the terminal payload is immutable once recorded; later transitions only add
   evaluation or projection state;
 - a downstream failure resumes only the incomplete boundary;
 - a blind or nondeterministic evaluation is published before projection and is
   adopted on re-entry;
-- a `Running` record retains any acquired sandbox/process locator; re-entry asks
-  the owning provider to inspect and settle it, returns already-running while it
-  is live, and starts no replacement while termination or cleanup is
+- a `Running` record retains provider lookup identities even before concrete
+  locator details are recorded; providers create or adopt subjects under those
+  identities so re-entry can recover across both ordinary crash windows;
+- provider inspection distinguishes a live subject, an exited subject with a
+  recoverable workspace or outcome, and an absent subject. A live subject
+  returns already-running; an exited recoverable subject resumes artifact
+  capture without rerunning the solver; an absent subject is reconciled before
+  execution resumes; no replacement starts while termination or cleanup is
   unconfirmed;
 - local coordination is keyed by cell; distinct cells may overlap and no
   process-wide duplicate guard serializes them;
@@ -333,7 +341,7 @@ The initial resources are:
 | --- | --- | --- |
 | durable cell state | read and unique local `Running -> SolverTerminal -> Evaluated` transitions | concrete per-cell record persistence |
 | research command | bounded structured process execution and termination evidence | Bun/host process implementation |
-| Git artifacts | materialize, capture, apply | native Git base/version/mapping and parent-owned workspaces |
+| Git artifacts | materialize, capture, apply | native Git base/mapping, supported-version preflight, and parent-owned workspaces |
 | sandbox | acquire, execute/transfer, release or retain an unconfirmed locator | OpenShell |
 | agent | invoke, cancel, decode session/rollout evidence | Codex |
 | observation | acquire root, carry context, settle, score, read back | Langfuse/OTel |
@@ -399,7 +407,7 @@ reruns those checks; it does not build a second transitive-admission system.
 | Effect | `effect@4.0.0-beta.100` |
 | effect-oRPC | `effect-orpc@1.0.0-effect-v4.8` |
 | Bun | `1.3.14` |
-| Git | resolved exact binary, admitted at `>=2.48.0` |
+| Git | admitted at `>=2.48.0`; resolved version recorded diagnostically |
 | OpenShell | `0.0.89` |
 | Codex CLI | `0.144.6` |
 | Langfuse | `@langfuse/{client,otel,tracing}@5.9.1` |
@@ -436,8 +444,11 @@ The Git-artifact provider is deliberately native and narrow:
 
 - history-free materialization of the exact commit/tree/subtree into a clean
   parent-owned workspace;
-- the Git version, base commit/tree, and lane path mapping required to repeat
-  the operation are persisted in `FrozenInput`;
+- the base commit/tree and lane path mapping required to repeat the operation
+  are persisted in `FrozenInput`;
+- the provider rejects Git below `2.48.0` and records the resolved version
+  diagnostically; an exact supported-version change does not invalidate the
+  frozen input or patch;
 - `git add -A` stages changes within the lane-declared product paths under native
   Git ignore semantics, then the cached diff uses
   `--binary --full-index --no-ext-diff --no-textconv`;
@@ -495,9 +506,13 @@ dependency.
   guarantees;
 - prove cancellation before sandbox release, interruption cleanup, retained
   unconfirmed locator, and primary/secondary failure ordering;
+- prove recovery when a process dies after provider acquisition but before
+  concrete locator update, and when a solver exits before artifact capture;
+  the latter resumes capture from the retained workspace/outcome without
+  rerunning the solver;
 - prove exact revision/subtree materialization, base/mapping mismatch, allowed
-  patch add/delete/rename/mode/binary/text behavior, empty patch, Git version
-  failure, fresh apply, and reconstructed product-tree equality;
+  patch add/delete/rename/mode/binary/text behavior, empty patch, Git
+  minimum-version failure, fresh apply, and reconstructed product-tree equality;
 - prove staged package source/lock immutability, tarball SHA/length and atomic
   publication, clean frozen consumer import/type/smoke, and interruption cleanup;
 - use local fixture servers and captured Codex/Langfuse data rather than model
@@ -510,7 +525,7 @@ dependency.
 - oRPC: one retained model-free cell through the service;
 - Inngest: retained S09 through the service, with the seven-file seed view,
   lane-owned control overlay, `src/**`, `test/**`, and `REENTRY.md` product
-  mapping, service-owned Git base/version/mapping, and existing hidden
+  mapping, service-owned Git base/mapping, and existing hidden
   verification;
 - both lanes consume the same ordinary packed Template closure while retaining
   their own fixtures and evidence.

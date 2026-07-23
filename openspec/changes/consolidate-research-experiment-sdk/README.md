@@ -8,7 +8,7 @@ study content, fixtures, results, and evidence.
 
 | Epoch | Repository + HEAD | Phase | Active writer | Claimed paths / slice | Review commit | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 9 | RAWR HQ-Template coordination base `583d4edc60313165478a36c49baab936f5e144bc` | DESIGN | none; exact review requested | Docs-only local single-user deletion amendment; no source paths | Review requested for the exact docs-only child of `583d4edc60313165478a36c49baab936f5e144bc` | No accepted production runtime-provisioning restack target; canonical TypeBox bridge correction remains primary-owned upstream work | Obtain exact Inngest and architecture-steward acceptance, then hold for reviewed upstream before BUILD |
+| 10 | RAWR HQ-Template correction base `e668e2f4d8438d64a4a40a41d3ffa3cc415ddfcd` | DESIGN | none; exact review requested | Three bounded docs-only corrections: local crash recovery, diagnostic Git version, and native TypeBox schema ownership; no source paths | Review requested for the exact docs-only child of `e668e2f4d8438d64a4a40a41d3ffa3cc415ddfcd` | No accepted production runtime-provisioning restack target; canonical TypeBox bridge correction remains primary-owned upstream work | Obtain exact Inngest and architecture-steward acceptance, then hold for reviewed upstream before BUILD |
 
 ## Record
 

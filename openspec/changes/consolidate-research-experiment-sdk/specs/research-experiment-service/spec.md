@@ -124,10 +124,11 @@ platform MUST NOT retain a second generic decoder, issue model, transform,
 clone, freeze, normalization, or schema-composition layer.
 
 Ordinary closed objects MUST use native `Type.Object` with
-`additionalProperties: false`. Reusable property maps MUST be merged before the
-final object is closed, with compile-time and runtime key-collision rejection.
-The service MUST NOT add a private portable-object traversal or durable hashing
-schema beside the admitted TypeBox/oRPC data contract.
+`additionalProperties: false`. Trusted service-authored schemas MUST construct
+the final `Type.Object` property map directly and rely on TypeScript plus
+behavioral contract tests. The service MUST NOT add a property-map composition
+helper, runtime key-collision checker, private portable-object traversal, or
+durable hashing schema beside the admitted TypeBox/oRPC data contract.
 
 Provider secrets MUST enter through environment/runtime configuration and MUST
 NOT appear in committed files, prompts, service inputs, artifacts, metadata, or
@@ -171,16 +172,25 @@ port.
 The service MUST read the one per-cell record before any execution effect.
 `Evaluated` adopts the terminal and evaluation. `SolverTerminal` adopts the
 terminal and resumes only incomplete evaluation or projection. A missing record
-MUST transition uniquely to `Running` before observation, sandbox, or process
-acquisition so accidental duplicate calls cannot start the same cell twice.
+MUST derive deterministic provider lookup identities from the exact cell and
+attempt, then transition uniquely to `Running` with those identities before
+observation, sandbox, or process acquisition so accidental duplicate calls
+cannot start the same cell twice. Providers MUST create or adopt subjects under
+those identities.
 
 `Running` MUST bind the cell, frozen inputs, implementation revision, attempt
-ID, and any acquired observation and sandbox/process locator. A retry MUST ask
-the owning provider to inspect and settle the recorded locator. It MUST return
-already-running while the subject is live, retain the same incomplete record
-while termination or cleanup is unconfirmed, and MAY resume only after the old
-subject is absent or settled. A persistence error stops that call; the next call
-reads the current record instead of interpreting an acknowledgement protocol.
+ID, deterministic provider lookup identities, and any acquired observation or
+concrete sandbox/process details. Those lookup identities MUST remain sufficient
+for inspection if the process crashes after provider acquisition but before a
+concrete handle or locator update. A retry MUST ask the owning provider to
+distinguish a live subject, an exited subject with a recoverable workspace or
+outcome, and an absent subject. It MUST return already-running while the subject
+is live. If the solver exited before artifact capture or terminal persistence,
+the service MUST resume capture from the retained workspace or outcome and MUST
+NOT rerun the solver. An absent subject MUST be reconciled before execution
+resumes. Termination or cleanup uncertainty retains the same incomplete record.
+A persistence error stops that call; the next call reads the current record
+instead of interpreting an acknowledgement protocol.
 
 `SolverTerminal` MUST bind the direct cell/frozen-input/implementation identity,
 observation, agent outcome, and submitted artifact. It MUST become durable
@@ -191,9 +201,23 @@ than rerun it.
 
 #### Scenario: Local duplicate or restart targets one cell
 - **WHEN** another invocation finds `Running` for the same cell
-- **THEN** it inspects the recorded locator and starts no replacement while the
-  subject is live or cleanup is unconfirmed
+- **THEN** it inspects the deterministic provider lookup identities and starts
+  no replacement while the subject is live or cleanup is unconfirmed
 - **AND** after a restart it resumes only the first incomplete boundary
+
+#### Scenario: Crash follows provider acquisition
+- **WHEN** a provider creates a subject and the process crashes before concrete
+  locator details are persisted
+- **THEN** the next invocation inspects or adopts that subject through the
+  deterministic lookup identity already stored in `Running`
+- **AND** it does not create a duplicate subject
+
+#### Scenario: Crash follows solver exit
+- **WHEN** the solver exits with a recoverable workspace or outcome and the
+  process crashes before artifact capture or terminal persistence
+- **THEN** the next invocation resumes artifact capture from that retained
+  subject
+- **AND** it does not rerun the solver
 
 #### Scenario: Distinct cells overlap
 - **WHEN** two distinct cell keys are ready and provider capacity is available
@@ -273,9 +297,11 @@ product paths and exclusions; `git add -A` under native Git ignore semantics;
 cached diff capture with `--binary --full-index --no-ext-diff --no-textconv`;
 patch SHA-256; fresh pristine apply; and reconstructed product-tree equality.
 
-`FrozenInput` MUST persist the base commit/tree, Git version, and path mapping
-needed to repeat the operation. Capture/apply MUST reject a mismatched base,
-version, or mapping. The provider MUST NOT neutralize or reinterpret Git
+`FrozenInput` MUST persist the base commit/tree and path mapping needed to
+repeat the operation. Capture/apply MUST reject a mismatched base or mapping.
+The provider MUST reject Git below `2.48.0` and record the resolved version
+diagnostically, but a change between supported Git versions MUST NOT invalidate
+the frozen input or patch. The provider MUST NOT neutralize or reinterpret Git
 attributes, configuration, hooks, filters, package state, or installed state,
 and MUST NOT add a provider-envelope, hostile-policy, secure-mode, or
 regenerated-patch-byte authority.
@@ -330,8 +356,8 @@ diagnostic and use its public process-global API. OpenShell MUST consume but not
 start or own the selected gateway.
 
 #### Scenario: Direct dependency input drifts
-- **WHEN** a direct tool version or checked-in lock differs from the frozen BUILD
-  input
+- **WHEN** a directly pinned tool version or checked-in lock differs from the
+  frozen BUILD input, or Git is below the supported minimum
 - **THEN** frozen install or the owning behavior check fails
 - **AND** the service does not invent a second dependency authority
 
@@ -349,10 +375,11 @@ Template Habitat MUST apply the complete service blueprint and enforce
 service-to-resource and resource-to-provider direction. Behavioral tests MUST
 cover TypeBox contracts, local duplicate/restart/resume, terminal adoption,
 observation identity, durable evaluation, recorded-locator cleanup, resource
-release, Git base/version/mapping mismatch, artifact round-trip, Codex envelope
-admission, Langfuse score subjects and local projection truth, EVLog lifecycle,
-and clean package installation/smoke. Tests MUST not assert source strings or
-helper counts.
+release, both ordinary crash windows, Git base/mapping mismatch and
+minimum-version preflight, artifact round-trip, Codex envelope admission,
+Langfuse score subjects and local projection truth, EVLog lifecycle, and clean
+package installation/smoke. Tests MUST not assert source strings or helper
+counts.
 
 All BUILD checks MUST be model-free. They MUST use injected ports, fixture
 processes, local fixture servers, captured sessions, and in-memory telemetry.
