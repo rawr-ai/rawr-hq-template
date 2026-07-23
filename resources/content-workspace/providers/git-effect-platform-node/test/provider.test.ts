@@ -789,7 +789,8 @@ describe("Git Effect Platform content workspace provider", () => {
     const root = await createRepository();
     await git(root, "remote", "add", "origin", root);
     await writeFile(path.join(root, "payload.txt"), "payload\n");
-    await git(root, "add", "payload.txt");
+    await symlink("payload.txt", path.join(root, "unrelated-link"));
+    await git(root, "add", "payload.txt", "unrelated-link");
     await git(root, "commit", "-m", "add payload");
     const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
 
@@ -815,11 +816,13 @@ describe("Git Effect Platform content workspace provider", () => {
           root,
           tree: anchor.tree,
           objectFormat: anchor.objectFormat,
+          paths: ["payload.txt"],
           maxBytes: 1024 * 1024,
         })
       )
     );
     expect(new TextDecoder().decode(treeBytes)).toContain("payload.txt");
+    expect(new TextDecoder().decode(treeBytes)).not.toContain("unrelated-link");
 
     const observed = unwrap(
       await runNodeContentWorkspace(
@@ -866,6 +869,68 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
     expect(evidence.worktreeObjectIds).toEqual([{ path: "payload.txt", objectId: observed.blob }]);
     expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+  });
+
+  test("observes an exact full ref independently of checkout and worktree bytes", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    await writeFile(path.join(root, "payload.txt"), "main payload\n");
+    await git(root, "add", "payload.txt");
+    await git(root, "commit", "-m", "add main payload");
+    const mainCommit = gitOutput(root, "rev-parse", "refs/heads/main");
+    const mainTree = gitOutput(root, "rev-parse", "refs/heads/main^{tree}");
+    await git(root, "checkout", "-b", "unrelated-worktree");
+    await writeFile(path.join(root, "side.txt"), "side branch\n");
+    await git(root, "add", "side.txt");
+    await git(root, "commit", "-m", "add side branch file");
+    await writeFile(path.join(root, "untracked.txt"), "local only\n");
+
+    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
+    const observed = unwrap(
+      await runNodeContentWorkspace(
+        resource.inspectGitRef({
+          locator: root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+        })
+      )
+    );
+
+    expect(observed).toMatchObject({
+      root,
+      refName: "refs/heads/main",
+      commit: mainCommit,
+      tree: mainTree,
+      remoteUrls: [root],
+    });
+
+    const parallel = await Promise.all(
+      Array.from({ length: 24 }, async () => {
+        const exact = unwrap(
+          await runNodeContentWorkspace(
+            resource.inspectGitRef({
+              locator: root,
+              remoteSelection: { kind: "Named", remoteName: "origin" },
+              refName: "refs/heads/main",
+            })
+          )
+        );
+        const payload = unwrap(
+          await runNodeContentWorkspace(
+            resource.readGitBlobAtPath({
+              root,
+              refName: exact.refName,
+              commit: exact.commit,
+              tree: exact.tree,
+              path: "payload.txt",
+              maxBytes: 64,
+            })
+          )
+        );
+        return [exact.commit, new TextDecoder().decode(payload.bytes)] as const;
+      })
+    );
+    expect(parallel).toEqual(Array.from({ length: 24 }, () => [mainCommit, "main payload\n"]));
   });
 
   test("hashes bounded admitted worktree bytes through one ordered native Git batch", async () => {
@@ -1519,6 +1584,7 @@ describe("Git Effect Platform content workspace provider", () => {
             root: deferredCandidate("read-git-tree"),
             tree: object,
             objectFormat: "sha1",
+            paths: ["payload.txt"],
             maxBytes: 1,
           }),
       },

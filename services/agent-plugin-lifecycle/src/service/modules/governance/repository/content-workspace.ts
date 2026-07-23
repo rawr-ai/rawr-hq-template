@@ -4,7 +4,6 @@ import { URL } from "node:url";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceGitReadAsyncPort,
-  GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
 
 import {
@@ -14,7 +13,6 @@ import {
 } from "../model/dto/git";
 import {
   type CanonicalRef,
-  type GitCommitId,
   parseCommit,
   parseRepository,
   parseTree,
@@ -22,16 +20,14 @@ import {
 import type {
   ExactGitReader,
   GitBlobReadResult,
-  GitBooleanReadResult,
   GitReadFailureCode,
   RepositoryInspection,
 } from "../model/repositories/exact-git";
 
 const MAX_GIT_BLOB_BYTES = 128 * 1024 * 1024;
-const MAX_GIT_EVIDENCE_BYTES = 64 * 1024 * 1024;
 export type ResourceExactGitReadPort = Pick<
   ContentWorkspaceGitReadAsyncPort,
-  "inspectGitWorkspace" | "captureGitWorkspaceEvidence" | "readGitBlobAtPath" | "isLocalGitAncestor"
+  "inspectGitRef" | "readGitBlobAtPath" | "isLocalGitAncestor"
 >;
 
 /** Projects exact local Git mechanics into the governance module's semantic reader. */
@@ -42,9 +38,14 @@ export function createResourceExactGitReader(
 ): ExactGitReader {
   const reader: ExactGitReader = {
     inspect: (locator, canonicalRef) => inspect(binding.contentWorkspace, locator, canonicalRef),
-    readBlob: (locator, selection) => readBlob(binding.contentWorkspace, locator, selection),
-    isAncestor: (locator, ancestor, descendant) =>
-      isAncestor(binding.contentWorkspace, locator, ancestor, descendant),
+    readFileAtRevision: (locator, selection) =>
+      readFileAtRevision(binding.contentWorkspace, locator, selection),
+    isAncestor: (locator, ancestorCommit, descendantCommit) =>
+      binding.contentWorkspace.isLocalGitAncestor({
+        root: locator.workspacePath,
+        ancestorCommit,
+        descendantCommit,
+      }),
   };
   return Object.freeze(reader);
 }
@@ -61,47 +62,29 @@ async function inspect(
     };
   }
   try {
-    const anchor = await port.inspectGitWorkspace({
+    const observed = await port.inspectGitRef({
       locator: locator.workspacePath,
       remoteSelection: { kind: "All" },
       refName: canonicalRef,
     });
     const repositoryIdentity = exactRepositoryIdentity(
-      anchor.remoteUrls,
+      observed.remoteUrls,
       locator.expectedRepositoryIdentity
     );
     if (repositoryIdentity !== locator.expectedRepositoryIdentity) {
-      return { kind: "WrongRepository", actualRepositoryIdentity: repositoryIdentity };
-    }
-    if (anchor.refName !== canonicalRef || anchor.refCommit !== anchor.commit) {
       return {
-        kind: "UnreachableRepository",
-        reason: "Workspace HEAD does not select the requested canonical ref",
+        kind: "WrongRepository",
+        actualRepositoryIdentity: repositoryIdentity,
       };
     }
-    const evidence = await port.captureGitWorkspaceEvidence({
-      root: anchor.root,
-      remoteSelection: { kind: "All" },
-      refName: canonicalRef,
-      admittedPaths: [],
-      consumedRoots: [],
-      objectFormat: anchor.objectFormat,
-      maxPaths: 1,
-      maxWorktreeFileBytes: MAX_GIT_EVIDENCE_BYTES,
-      maxWorktreeBytes: MAX_GIT_EVIDENCE_BYTES,
-      maxBytes: MAX_GIT_EVIDENCE_BYTES,
-    });
-    if (
-      !sameAnchor(anchor, evidence.openingAnchor) ||
-      !sameAnchor(evidence.openingAnchor, evidence.closingAnchor) ||
-      !equalBytes(evidence.openingStatus, evidence.closingStatus) ||
-      !equalBytes(evidence.openingTrackedFlags, evidence.closingTrackedFlags)
-    ) {
-      return { kind: "UnreachableRepository", reason: "Repository changed during inspection" };
+    if (observed.refName !== canonicalRef) {
+      return {
+        kind: "UnreachableRepository",
+        reason: "Git provider observed another canonical ref",
+      };
     }
-    if (hasDirtyStatus(evidence.closingStatus)) return { kind: "DirtyRepository" };
-    const headCommit = parseCommit(anchor.commit, "inspection.headCommit");
-    const headTree = parseTree(anchor.tree, "inspection.headTree");
+    const headCommit = parseCommit(observed.commit, "inspection.headCommit");
+    const headTree = parseTree(observed.tree, "inspection.headTree");
     if (!headCommit.ok || !headTree.ok) {
       return {
         kind: "UnreachableRepository",
@@ -116,11 +99,14 @@ async function inspect(
       headTree: headTree.value,
     };
   } catch (error) {
-    return { kind: "UnreachableRepository", reason: resourceFailureMessage(error) };
+    return {
+      kind: "UnreachableRepository",
+      reason: resourceFailureMessage(error),
+    };
   }
 }
 
-async function readBlob(
+async function readFileAtRevision(
   port: ResourceExactGitReadPort,
   locator: GitLocator,
   selection: GitBlobSelection
@@ -135,19 +121,13 @@ async function readBlob(
     );
   }
   try {
-    const anchor = await port.inspectGitWorkspace({
+    const observedRef = await port.inspectGitRef({
       locator: locator.workspacePath,
       remoteSelection: { kind: "All" },
       refName: selection.ref,
     });
-    if (anchor.refName !== selection.ref) {
-      return readFailure(
-        "UnreachableObject",
-        "Workspace HEAD does not select the requested Git ref"
-      );
-    }
     if (
-      exactRepositoryIdentity(anchor.remoteUrls, selection.repositoryIdentity) !==
+      exactRepositoryIdentity(observedRef.remoteUrls, selection.repositoryIdentity) !==
       selection.repositoryIdentity
     ) {
       return readFailure(
@@ -156,20 +136,23 @@ async function readBlob(
       );
     }
     const observed = await port.readGitBlobAtPath({
-      root: anchor.root,
+      root: observedRef.root,
       refName: selection.ref,
       commit: selection.commit,
       tree: selection.tree,
       path: selection.path,
       maxBytes: MAX_GIT_BLOB_BYTES,
     });
-    if (observed.refCommit !== anchor.refCommit) {
-      return readFailure("UnreachableObject", "Selected Git ref changed during object observation");
+    if (observed.refCommit !== selection.commit) {
+      return readFailure("WrongObject", "Selected Git ref resolves to another commit");
     }
     if (observed.commit !== selection.commit || observed.tree !== selection.tree) {
       return readFailure("WrongObject", "Git provider returned bytes for another commit or tree");
     }
-    const pointer = createExactGitBlobPointer({ ...selection, blob: observed.blob });
+    const pointer = createExactGitBlobPointer({
+      ...selection,
+      blob: observed.blob,
+    });
     if (!pointer.ok)
       return readFailure("WrongObject", "Git provider returned a noncanonical blob identity");
     if (observed.bytes.byteLength > MAX_GIT_BLOB_BYTES) {
@@ -184,29 +167,6 @@ async function readBlob(
     };
   } catch (error) {
     return readFailure(resourceFailureCode(error), resourceFailureMessage(error));
-  }
-}
-
-async function isAncestor(
-  port: ResourceExactGitReadPort,
-  locator: GitLocator,
-  ancestor: GitCommitId,
-  descendant: GitCommitId
-): Promise<GitBooleanReadResult> {
-  if (!isAbsolute(locator.workspacePath)) {
-    return booleanFailure("Git locator must be an explicit absolute workspace path");
-  }
-  try {
-    return {
-      ok: true,
-      value: await port.isLocalGitAncestor({
-        root: locator.workspacePath,
-        ancestorCommit: ancestor,
-        descendantCommit: descendant,
-      }),
-    };
-  } catch (error) {
-    return booleanFailure(resourceFailureMessage(error));
   }
 }
 
@@ -254,50 +214,6 @@ function canonicalGitRepositoryIdentity(host: string, rawPath: string): string |
   return parsed.ok ? parsed.value : undefined;
 }
 
-function hasDirtyStatus(bytes: Uint8Array): boolean {
-  return decodeNul(bytes).some(
-    (record) =>
-      record.startsWith("1 ") ||
-      record.startsWith("2 ") ||
-      record.startsWith("u ") ||
-      record.startsWith("? ")
-  );
-}
-
-function sameAnchor(left: GitWorkspaceAnchor, right: GitWorkspaceAnchor): boolean {
-  return (
-    left.root === right.root &&
-    left.rootDevice === right.rootDevice &&
-    left.rootInode === right.rootInode &&
-    left.objectFormat === right.objectFormat &&
-    left.refName === right.refName &&
-    left.commit === right.commit &&
-    left.refCommit === right.refCommit &&
-    left.tree === right.tree &&
-    left.remoteUrls.length === right.remoteUrls.length &&
-    left.remoteUrls.every((url, index) => url === right.remoteUrls[index])
-  );
-}
-
-function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  return (
-    left.byteLength === right.byteLength && left.every((value, index) => value === right[index])
-  );
-}
-
-function decodeNul(bytes: Uint8Array): readonly string[] {
-  const decoder = new TextDecoder("utf-8", { fatal: true });
-  const values: string[] = [];
-  let start = 0;
-  for (let index = 0; index < bytes.byteLength; index += 1) {
-    if (bytes[index] !== 0) continue;
-    if (index > start) values.push(decoder.decode(bytes.slice(start, index)));
-    start = index + 1;
-  }
-  if (start !== bytes.byteLength) throw new Error("Git -z output lacks a trailing NUL");
-  return Object.freeze(values);
-}
-
 function resourceFailureCode(error: unknown): GitReadFailureCode {
   if (!isContentWorkspaceFailure(error)) return "ReadFailed";
   if (error.reason === "Missing") return "MissingObject";
@@ -325,10 +241,6 @@ function isContentWorkspaceFailure(error: unknown): error is ContentWorkspaceFai
 
 function readFailure(code: GitReadFailureCode, message: string): GitBlobReadResult {
   return { ok: false, failure: { code, message } };
-}
-
-function booleanFailure(message: string): GitBooleanReadResult {
-  return { ok: false, failure: { code: "ReadFailed", message } };
 }
 
 function compareText(left: string, right: string): number {

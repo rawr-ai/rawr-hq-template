@@ -1,21 +1,12 @@
-import path from "node:path";
-import type {
-  ArtifactObjectAddress,
-  ArtifactTreeLocation,
-} from "@rawr/resource-agent-plugin-artifact-repository";
-import {
-  artifactRepositoryResource,
-  runNodeArtifactRepository,
-} from "@rawr/resource-agent-plugin-artifact-repository/providers/effect-platform-node";
 import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
-  NativeProviderCapabilityProbe,
+  NativeProviderCapabilities,
   NativeProviderSessionInput,
 } from "@rawr/resource-native-agent-provider";
 import { Effect } from "effect";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const provider = vi.hoisted(() => ({
   codexAcquire: vi.fn(),
@@ -29,27 +20,14 @@ vi.mock("@rawr/resource-native-agent-provider/providers/claude-effect-platform-n
   claudeEffectPlatformNodeProvider: Object.freeze({ acquire: provider.claudeAcquire }),
 }));
 
-import { createNodeNativeProviderResource } from "../../../src/lib/agent-plugins/bindings/providers";
-import {
-  createOwnedFixtureRoot,
-  type OwnedFixtureRoot,
-  removeOwnedFixtureRoot,
-} from "../service-runtime/releases/owned-fixture-root";
+import { createNodeNativeProviderSessionResolver } from "../../../src/lib/agent-plugins/bindings/providers";
 
 const EXECUTABLES = Object.freeze({
   codex: "/opt/rawr/bin/codex",
   claude: "/opt/rawr/bin/claude",
 });
-type ProviderId = NativeProviderCapabilityProbe["provider"];
-const PROVIDER_IDS = Object.freeze([
-  "codex",
-  "claude",
-] satisfies readonly NativeProviderCapabilityProbe["provider"][]);
-const MARKETPLACE_TREE_LIMITS = Object.freeze({ maxEntries: 4, maxBytes: 1024 });
 
-describe("native provider resource binding", () => {
-  let fixture: OwnedFixtureRoot | undefined;
-
+describe("native provider session binding", () => {
   beforeEach(() => {
     provider.codexAcquire.mockReset();
     provider.claudeAcquire.mockReset();
@@ -61,182 +39,135 @@ describe("native provider resource binding", () => {
     );
   });
 
-  afterEach(async () => {
-    if (fixture !== undefined) await removeOwnedFixtureRoot(fixture);
-    fixture = undefined;
-  });
-
-  it.each(PROVIDER_IDS)("selects only the explicit %s Effect provider", async (providerId) => {
+  it.each([
+    "codex",
+    "claude",
+  ] as const)("selects only the explicitly bound %s Effect resource", async (providerId) => {
     const home = `/tmp/rawr-native-binding-${providerId}`;
-    const resource = createNodeNativeProviderResource();
-    const session =
-      providerId === "codex"
-        ? await resource.acquireCodex({ executablePath: EXECUTABLES[providerId], home })
-        : await resource.acquireClaude({ executablePath: EXECUTABLES[providerId], home });
+    const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
+    const session = await resolver.acquire({ provider: providerId, home });
 
-    const observed = await session.probe();
-
-    expect(observed.provider).toBe(providerId);
+    expect(await session.probe()).toMatchObject({ provider: providerId, home });
     expect(provider.codexAcquire).toHaveBeenCalledTimes(providerId === "codex" ? 1 : 0);
     expect(provider.claudeAcquire).toHaveBeenCalledTimes(providerId === "claude" ? 1 : 0);
     const selected = providerId === "codex" ? provider.codexAcquire : provider.claudeAcquire;
     expect(selected).toHaveBeenCalledWith({ executablePath: EXECUTABLES[providerId], home });
   });
 
-  it("preserves the resource-owned provider failure across the Effect runtime edge", async () => {
-    const conflict: NativeAgentProviderFailure = Object.freeze({
+  it("preserves the provider-discriminated Promise surface", async () => {
+    const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
+    const codex = await resolver.acquire({ provider: "codex", home: "/tmp/codex" });
+    const claude = await resolver.acquire({ provider: "claude", home: "/tmp/claude" });
+
+    expect("enablePlugin" in codex).toBe(false);
+    expect("enablePlugin" in claude).toBe(true);
+    if (claude.provider !== "claude") throw new Error("Expected a Claude session");
+    await expect(claude.enablePlugin({ selector: "cognition@rawr-hq" })).resolves.toMatchObject({
+      provider: "claude",
+      operation: "plugin-enable",
+    });
+  });
+
+  it("preserves resource-owned failures across the Effect runtime edge", async () => {
+    const failure: NativeAgentProviderFailure = Object.freeze({
       _tag: "NativeAgentProviderFailure",
       provider: "codex",
       operation: "acquire",
-      reason: "OwnershipConflict",
-      path: "/tmp/codex/.rawr-agent-plugin-owner.json",
-      detail: "Provider ownership slot is occupied",
+      reason: "Missing",
+      commandPhase: "not-started",
+      detail: "Codex executable is missing",
     });
-    provider.codexAcquire.mockReturnValue(Effect.fail(conflict));
-    const resource = createNodeNativeProviderResource();
+    provider.codexAcquire.mockReturnValue(Effect.fail(failure));
+    const resolver = createNodeNativeProviderSessionResolver(EXECUTABLES);
 
-    const acquired = resource.acquireCodex({
-      executablePath: EXECUTABLES.codex,
-      home: "/tmp/codex",
-    });
-    await expect(acquired).rejects.toBe(conflict);
+    await expect(resolver.acquire({ provider: "codex", home: "/tmp/codex" })).rejects.toBe(failure);
   });
 
-  it("passes provider-issued marketplace locations through unchanged", async () => {
-    fixture = await createOwnedFixtureRoot();
-    const location = await publishMarketplace(fixture.path);
-    const events: string[] = [];
-    const codexAdd = vi.fn((_: ArtifactTreeLocation) => {
-      events.push("codex-add");
-      return Effect.succeed({ stdout: "", stderr: "" });
-    });
-    const codexSet = vi.fn((_: Readonly<{ identity: string; source: ArtifactTreeLocation }>) => {
-      events.push("codex-set");
-      return Effect.void;
-    });
-    const claudeAdd = vi.fn((_: ArtifactTreeLocation) => {
-      events.push("claude-add");
-      return Effect.succeed({ stdout: "", stderr: "" });
-    });
-    provider.codexAcquire.mockImplementation((input: NativeProviderSessionInput) =>
-      Effect.succeed(
-        Object.freeze({
-          ...codexSession(input),
-          addMarketplace: codexAdd,
-          setMarketplaceSource: codexSet,
-        })
-      )
+  it("fails closed when the selected provider executable is not bound", async () => {
+    const resolver = createNodeNativeProviderSessionResolver({ codex: EXECUTABLES.codex });
+    await expect(resolver.acquire({ provider: "claude", home: "/tmp/claude" })).rejects.toThrow(
+      "Native claude executable is not bound"
     );
-    provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) =>
-      Effect.succeed(
-        Object.freeze({
-          ...claudeSession(input),
-          addMarketplace: claudeAdd,
-        })
-      )
-    );
-
-    const resource = createNodeNativeProviderResource();
-    const codex = await resource.acquireCodex({
-      executablePath: EXECUTABLES.codex,
-      home: "/tmp/codex",
-    });
-    const claude = await resource.acquireClaude({
-      executablePath: EXECUTABLES.claude,
-      home: "/tmp/claude",
-    });
-    await codex.addMarketplace(location);
-    await codex.setMarketplaceSource({ identity: "rawr-hq", source: location });
-    await claude.addMarketplace(location);
-
-    expect(events).toEqual(["codex-add", "codex-set", "claude-add"]);
-    expect(codexAdd).toHaveBeenCalledWith(location);
-    expect(codexSet).toHaveBeenCalledWith({ identity: "rawr-hq", source: location });
-    expect(claudeAdd).toHaveBeenCalledWith(location);
+    expect(provider.claudeAcquire).not.toHaveBeenCalled();
   });
 });
 
-function commonSession(input: NativeProviderSessionInput, providerId: ProviderId) {
-  return {
-    provider: providerId,
+function codexSession(input: NativeProviderSessionInput): CodexNativeAgentProviderSession {
+  const capabilities: NativeProviderCapabilities = {
+    provider: "codex",
     executablePath: input.executablePath,
     home: input.home,
-    probe: () =>
-      Effect.succeed({
-        provider: providerId,
-        executablePath: input.executablePath,
-        home: input.home,
-        pluginCommands:
-          providerId === "codex"
-            ? ["add", "list", "remove"]
-            : ["disable", "enable", "install", "list", "uninstall"],
-        marketplaceCommands: ["add", "list", "remove"],
-        appServerMethods: providerId === "codex" ? ["plugin/list"] : [],
-      }),
-    listMarketplaces: () => Effect.succeed({ stdout: "", stderr: "", json: [] }),
-    addMarketplace: () => Effect.succeed({ stdout: "", stderr: "" }),
-    readMarketplace: () => Effect.succeed({ entries: [] }),
-    removeMarketplace: () => Effect.succeed({ stdout: "", stderr: "" }),
-    listPlugins: () => Effect.succeed({ stdout: "", stderr: "", json: { installed: [] } }),
-    readPlugin: () => Effect.succeed({ entries: [] }),
+    version: "1.0.0",
+    capabilities: [
+      "marketplace-list",
+      "marketplace-add",
+      "marketplace-remove",
+      "plugin-list",
+      "plugin-install",
+      "plugin-remove",
+    ],
   };
-}
-
-function codexSession(input: NativeProviderSessionInput): CodexNativeAgentProviderSession {
   return Object.freeze({
     ...commonSession(input, "codex"),
     provider: "codex",
-    addPlugin: () => Effect.succeed({ stdout: "", stderr: "" }),
-    removePlugin: () => Effect.succeed({ stdout: "", stderr: "" }),
-    inspectAppServer: () => Effect.succeed({ plugins: { marketplaces: [] }, hooks: { hooks: [] } }),
-    readConfiguration: () => Effect.succeed({ config: {} }),
-    setMarketplaceSource: () => Effect.void,
-    setPluginEnabled: () => Effect.void,
+    probe: () => Effect.succeed(capabilities),
   });
 }
 
 function claudeSession(input: NativeProviderSessionInput): ClaudeNativeAgentProviderSession {
+  const capabilities: NativeProviderCapabilities = {
+    provider: "claude",
+    executablePath: input.executablePath,
+    home: input.home,
+    version: "1.0.0",
+    capabilities: [
+      "marketplace-list",
+      "marketplace-add",
+      "marketplace-remove",
+      "marketplace-update",
+      "plugin-list",
+      "plugin-install",
+      "plugin-enable",
+      "plugin-disable",
+      "plugin-remove",
+      "plugin-update",
+    ],
+  };
   return Object.freeze({
     ...commonSession(input, "claude"),
     provider: "claude",
-    installPlugin: () => Effect.succeed({ stdout: "", stderr: "" }),
-    enablePlugin: () => Effect.succeed({ stdout: "", stderr: "" }),
-    disablePlugin: () => Effect.succeed({ stdout: "", stderr: "" }),
-    uninstallPlugin: () => Effect.succeed({ stdout: "", stderr: "" }),
-    readConfiguration: () => Effect.succeed(null),
+    probe: () => Effect.succeed(capabilities),
+    enablePlugin: () => mutation("claude", "plugin-enable"),
   });
 }
 
-async function publishMarketplace(root: string): Promise<ArtifactTreeLocation> {
-  const address: ArtifactObjectAddress = Object.freeze({
-    repositoryRoot: path.join(root, "artifacts"),
-    namespace: Object.freeze(["marketplaces"] satisfies [string]),
-    objectId: "provider-issued-location",
+function commonSession(input: NativeProviderSessionInput, providerId: "claude" | "codex") {
+  return {
+    provider: providerId,
+    executablePath: input.executablePath,
+    home: input.home,
+    inventory: () => Effect.succeed({ provider: providerId, marketplaces: [], plugins: [] }),
+    readPluginFiles: (request: Readonly<{ selector: string; files: readonly unknown[] }>) =>
+      Effect.succeed({ selector: request.selector, files: [] }),
+    addMarketplace: () => mutation(providerId, "marketplace-add"),
+    removeMarketplace: () => mutation(providerId, "marketplace-remove"),
+    installPlugin: () => mutation(providerId, "plugin-install"),
+    removePlugin: () => mutation(providerId, "plugin-remove"),
+  };
+}
+
+function mutation(
+  providerId: "claude" | "codex",
+  operation:
+    | "marketplace-add"
+    | "marketplace-remove"
+    | "plugin-install"
+    | "plugin-enable"
+    | "plugin-remove"
+) {
+  return Effect.succeed({
+    provider: providerId,
+    operation,
+    commandPhase: "command-returned" as const,
   });
-  const published = await runNodeArtifactRepository(
-    artifactRepositoryResource.publishTree({
-      address,
-      entries: Object.freeze([
-        Object.freeze({
-          path: "plugin.json",
-          mode: 0o444,
-          bytes: new TextEncoder().encode("{}\n"),
-        }),
-      ]),
-      limits: MARKETPLACE_TREE_LIMITS,
-    })
-  );
-  if (!published.ok || published.value.kind !== "Published") {
-    throw new Error("Marketplace tree fixture was not published");
-  }
-  const located = await runNodeArtifactRepository(
-    artifactRepositoryResource.locateTree({
-      address,
-      limits: MARKETPLACE_TREE_LIMITS,
-    })
-  );
-  if (!located.ok || located.value.kind !== "Present") {
-    throw new Error("Marketplace tree fixture was not admitted");
-  }
-  return located.value.location;
 }

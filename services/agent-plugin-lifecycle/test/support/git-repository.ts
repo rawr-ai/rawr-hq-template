@@ -277,26 +277,6 @@ export async function commitGeneratedGitRepository(
   return Object.freeze({ ...repository.policy, sourceCommit, sourceTree });
 }
 
-export async function installCaseCollisionCommit(
-  repository: GeneratedGitRepository
-): Promise<ContentWorkspacePolicy> {
-  const blob = await git(repository.root, [
-    "rev-parse",
-    `HEAD:${repository.policy.releaseInputPath}`,
-  ]);
-  await git(repository.root, ["update-index", "--add", "--cacheinfo", `100644,${blob},Case.txt`]);
-  await git(repository.root, ["update-index", "--add", "--cacheinfo", `100644,${blob},case.txt`]);
-  const sourceTree = must(parseGitTreeId(await git(repository.root, ["write-tree"])));
-  const parent = await git(repository.root, ["rev-parse", "HEAD"]);
-  const sourceCommit = must(
-    parseGitCommitId(
-      await git(repository.root, ["commit-tree", sourceTree, "-p", parent, "-m", "case collision"])
-    )
-  );
-  await git(repository.root, ["update-ref", "refs/heads/main", sourceCommit]);
-  return Object.freeze({ ...repository.policy, sourceCommit, sourceTree });
-}
-
 export async function git(cwd: string, args: readonly string[]): Promise<string> {
   const result = await execFileAsync(GIT_EXECUTABLE, [...args], {
     cwd,

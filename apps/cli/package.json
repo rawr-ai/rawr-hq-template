@@ -26,7 +26,6 @@
     "@rawr/plugin-session-tools": "workspace:*",
     "@rawr/resource-agent-plugin-artifact-repository": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
-    "@rawr/resource-agent-provider-records": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-controller-authority": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",

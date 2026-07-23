@@ -48,6 +48,7 @@ export function withUnavailableGitReads(
 ): ContentWorkspaceNodeAsyncPort {
   return Object.freeze({
     ...contentWorkspace,
+    inspectGitRef: async () => unavailableAsync("release Git ref inspection"),
     inspectGitWorkspace: async () => unavailableAsync("release Git workspace inspection"),
     readGitTree: async () => unavailableAsync("release Git tree read"),
     readGitBlob: async () => unavailableAsync("release Git blob read"),
@@ -79,22 +80,9 @@ export function unavailableContentWorkspace(): ContentWorkspaceNodeAsyncPort {
 
 export function unavailableProviderResources() {
   return {
-    providerRecords: {
-      readProjection: async () => unavailableAsync("provider projection record read"),
-      publishProjection: async () => unavailableAsync("provider projection record publication"),
-      readTarget: async () => unavailableAsync("provider target record read"),
-      captureTarget: async () => unavailableAsync("provider target record capture"),
-      releaseTarget: async () => unavailableAsync("provider target record release"),
-      writeTarget: async () => unavailableAsync("provider target record write"),
-      restoreTarget: async () => unavailableAsync("provider target record restore"),
-      settleTarget: async () => unavailableAsync("provider target record settlement"),
+    providerNativeSessions: {
+      acquire: async () => unavailableAsync("native provider acquisition"),
     },
-    providerNativeResource: {
-      acquireCodex: async () => unavailableAsync("Codex native provider acquisition"),
-      acquireClaude: async () => unavailableAsync("Claude native provider acquisition"),
-    },
-    providerExecutables: Object.freeze({}),
-    providerProjectionRepositoryRoot: "/tmp/rawr-agent-plugin-lifecycle-test-provider-projections",
   };
 }
 
