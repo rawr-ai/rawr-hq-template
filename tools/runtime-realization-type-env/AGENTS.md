@@ -10,6 +10,18 @@ parent repo packages, apps, services, deployment topology, or public surfaces.
 It is not parent repo SDK/runtime code and not Parent-Repo Migration
 implementation.
 
+## Boundaries
+
+- Owns the contained lab source, scenarios, fixtures, tests, guidance, and
+  evidence used to falsify runtime-realization claims.
+- Must not become a production SDK, publish parent-repository exports, import
+  production `apps/*`, `packages/*`, `services/*`, or `plugins/*` code, or
+  silently implement Parent-Repo Migration.
+- Canonical-looking `@rawr/sdk/*` imports are local TypeScript aliases. They do
+  not establish a workspace package or public runtime surface.
+- Proof strength is owned by named gates and the evidence manifest, not by a
+  document, vendor-shape probe, or constructibility test alone.
+
 ## Naming Frame
 
 Use this vocabulary consistently:
@@ -41,6 +53,17 @@ imports, test lanes, or scenario placement. The working map is:
 Use `fixtures/**` only for test mechanics: inline negative cases, expected
 failures, and fenced TODO experiments. Positive authored business examples
 belong in `scenarios/**`, not a fixture directory.
+
+## Flow
+
+- The canonical runtime specification constrains the local SDK facade, vendor
+  seams, portable spine, and runtime substrate.
+- Scenarios enter the conformance, Oracle, or future Reference Runtime lane
+  that owns the claim being tested.
+- Named gates produce observations; only those observations may change the
+  evidence manifest or diagnostic classification.
+- Any accepted production change leaves this lab through separately owned
+  Parent-Repo Migration work rather than a direct import from the lab.
 
 ## Operational Surfaces
 
@@ -127,6 +150,13 @@ Task-specific reads:
 - Reference Runtime preparation: `phases/phase-four/README.md`,
   `src/reference-runtime/README.md`, and `test/reference-runtime/README.md`.
 
+## Routing
+
+- [Repository router](../../AGENTS.md)
+- [Evidence router](evidence/AGENTS.md)
+- [Lab overview](README.md)
+- [Lab runbook](RUNBOOK.md)
+
 ## Evidence Rules
 
 - Use `proof`, `vendor-proof`, `simulation-proof`, `xfail`, `todo`, and `out-of-scope` exactly as defined in `guidance/guardrails-design.md`.
@@ -164,7 +194,7 @@ Keep vendor probes only when they protect a RAWR adaptation boundary, and label 
 - Real `effect@4.0.0-beta.100` remains a root dev dependency for this lab only.
 - Canonical-looking `@rawr/sdk/*` imports remain local `tsconfig` aliases.
 
-## Verification
+## Validation
 
 For meaningful lab changes, run the focused target first, then:
 
