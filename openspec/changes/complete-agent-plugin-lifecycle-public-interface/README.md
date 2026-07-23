@@ -139,11 +139,19 @@ verification. None permits another selector or release store.
 ## Habitat Provenance
 
 Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
-is the current source for generic service, API server plugin, and agent-router
-patterns. RAWR keeps their structure and Grit semantics, adapting only
-repository identity metadata and the local canonical packet filename. The
-lifecycle service follows that same Effect-backed oRPC service kind rather than
-introducing a native special case.
+remains the source for the API server plugin and agent-router patterns. The
+generic service law now follows the user-authorized working tree on Magic
+Migration branch `codex/add-native-authority-reviewer`, based at
+`5b8bc8a37cfdd3a382232261dd7ef73365713021`, with source manifest SHA-256
+`1b01f702c9cb1d4b11ca86251130af1d4f5fb077b15db9ceeeacb227db7d2f61`.
+That source replaces the broad service-relationship packet with independent
+direct-anchor, native-oRPC-composition, context-boundary, module-isolation,
+declarative-contract, and public-error-authority laws. RAWR keeps the working
+structure and Grit semantics, adapting only `ownerProject`, `placement.niche`,
+the local canonical `pattern.md` name/path, and RAWR prose identity. The source
+reference will advance when Magic commits that same tree. The packet is
+imported, but it does not govern repository admission until the live service
+corpus conforms and the central Nx check is activated.
 
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
@@ -373,13 +381,13 @@ skill. It cannot authorize HF01 materialization or release.
 
 | Gate | State |
 | --- | --- |
-| Corrected authority record | Complete on the active Template branch; pending Graphite submission |
-| Generic Habitat blueprint port | Complete on the active Template stack; bounded generic live-tree activation remains pending |
+| Corrected authority record | Submitted in the active Template Graphite stack; required checks and landing remain open |
+| Generic Habitat blueprint port | Six-law service source port complete; live source conformance and central activation remain pending |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx lint/typecheck target population | Complete and wired through affected admission on the active Template stack |
 | Typechecked Habitat consumer and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
-| Positive Habitat/Nx ratchet | Required lifecycle topology active; broader generic live-tree policy remains task 1.5 |
+| Positive Habitat/Nx ratchet | Qualified lifecycle command topology active; generic service source conformance and central activation remain task 1.5e |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; rejected state deletion and Effect 4 closure are complete, so package-group derivation is the next owner |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; canonical-spec retirement and aggregate absence proof remain |
@@ -391,12 +399,16 @@ skill. It cannot authorize HF01 materialization or release.
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
 
-The generic Habitat blueprint port is a separate checkpoint. Twenty-six logical
-files follow Magic Migration commit
+The initial generic Habitat blueprint port remains a separate historical
+checkpoint: twenty-six logical files follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`; nineteen are byte-verbatim and the
 seven rule manifests adapt only RAWR identity, formatting, and the local
-canonical `pattern.md` source name. The service kind keeps one module
-`router.ts`, with domain matter under its owning module model.
+canonical `pattern.md` source name. The newer service-law checkpoint follows
+the authorized working snapshot identified above and replaces one aggregate
+relationship rule with six independent source constraints. The service kind
+keeps one module `router.ts`, with domain matter under its owning module model.
+Its packet topology is green; live Template service conformance, the one
+central cached Nx target, and required-aggregate activation remain open.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
 interrupted without repository mutation. The current v0.1.6 binary adds a

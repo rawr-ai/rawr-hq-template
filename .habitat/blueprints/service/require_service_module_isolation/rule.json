@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_module_isolation",
+  "title": "Require Service Module Isolation",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/habitat-consumer",
+  "lane": "enforced",
+  "forbids": "a root module edge outside exact contract/router imports, a root module re-export, a module import or re-export containing a parent segment outside the exact service-spine exception, or a current-owner sibling-module alias edge",
+  "why": "One canonical import surface makes module ownership visible without path normalization or depth arithmetic: local ./ paths stay local, root facts use the owner alias, and siblings remain closed.",
+  "remediate": "Keep exact root contract/router imports. Inside modules, remove every parent-segment source except import { service } from \"../../impl\" in module.ts; use the current-owner alias for other root/shared facts and same-module deep imports. Move sibling collaboration behind the root service capability.",
+  "message": "Service modules must use the canonical import surface and remain closed to sibling implementation.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
+    }
+  ],
+  "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_module_isolation/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_module_isolation/pattern.md"
+    },
+    "patternName": "require_service_module_isolation"
+  }
+}

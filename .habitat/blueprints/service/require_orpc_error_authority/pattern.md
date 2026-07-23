@@ -16,7 +16,7 @@ Router and `impl.ts` files also cannot runtime-import conventional contract or
 error modules. The one exception is the exact root `src/service/impl.ts`
 using the exact runtime declaration `import { contract } from "./contract"`;
 either quote style is admitted through the captured exact source. The
-service-relationship packet proves that declaration's native implementer
+native service oRPC composition packet proves that declaration's implementer
 lineage. A whole `import type` declaration remains available in every supported
 form. The inline-type exemption applies only to a named-only import whose every
 named specifier is `type`; a runtime default or namespace clause is therefore
@@ -161,10 +161,52 @@ export const builder = EffectORPC.eoc;
 
 ## Ignores canonical named vendor imports
 
-
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
 import { eoc, type ORPCTaggedError } from "effect-orpc";
 export type Tagged = ORPCTaggedError;
 export const builder = eoc;
+```
+
+## Matches an aliased root contract import
+
+```typescript
+// @filename: plugins/server/api/catalog/src/service/impl.ts
+import { implement } from "@orpc/server";
+import { contract as rootContract } from "./contract";
+export const service = implement(rootContract).$context<Context>();
+```
+
+## Matches an escaped governed import name
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { ORPCTagged\u0045rror as Tagged } from "effect-orpc";
+export const router = {};
+```
+
+## Matches an escaped governed import source
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import type { contract } from "./contr\u0061ct";
+export const router = {};
+```
+
+## Ignores the canonical root contract import
+
+```typescript
+// @filename: plugins/server/api/catalog/src/service/impl.ts
+import { implement } from "@orpc/server";
+import { contract } from "./contract";
+export const service = implement(contract).$context<Context>();
+```
+
+## Ignores type-only conventional imports
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import type { contract } from "./contract";
+import { type CatalogError } from "./errors";
+export const router = {};
 ```
