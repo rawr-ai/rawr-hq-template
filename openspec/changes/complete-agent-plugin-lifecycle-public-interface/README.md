@@ -8,6 +8,8 @@ The user rejected the custom controller distribution and custom Oclif extension
 manager after an installed-system audit showed that they form a private CLI
 package/version manager rather than a necessary agent-plugin lifecycle boundary.
 [[authority-amendment]] is now controlling.
+[[service-domain-frame]] records the system-level service invariants, flows,
+state owners, failure boundaries, and deletion-first implementation sequence.
 
 Implementation is proceeding as independently green Graphite checkpoints.
 Provider settlement remains closed until the conventional installed CLI and
@@ -1120,6 +1122,7 @@ inert. The initiative does not acquire authority to scan or erase them.
 ## Related
 
 - Controlling correction: [[authority-amendment]].
+- Service domain frame: [[service-domain-frame]].
 - Target architecture and decisions: [[design]].
 - Change summary: [[proposal]].
 - Active execution: [[tasks]].

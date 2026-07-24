@@ -17,7 +17,9 @@ correction remains controlling at Personal commit
 Template implementation in Personal or a custom Template distribution.
 
 The categorical correction and working vocabulary are in
-[[authority-amendment]].
+[[authority-amendment]]. The implementation-level service charter, capability
+map, transition guarantees, and burn-down sequence are in
+[[service-domain-frame]].
 
 ## Architecture
 
@@ -208,17 +210,20 @@ and source-relationship authorities.
 `services/agent-plugin-lifecycle` remains one service with bounded modules. Its
 root composes contracts, ready host dependencies, implementation, and routers.
 Each module owns its contract, router procedures, and owner-local
-`model/{dto,policy,schema}`. The root model retains only ready host contracts,
+`model/{dto,policy,repositories,...}`, with TypeBox schemas colocated with their
+DTO authorities. The root model retains only ready host contracts,
 dependency-owned observations, and the minimum service-owned domain model
 consumed by multiple modules. Current-main selection is shared because governance
-exposes it and providers consume it; governance-only procedure requests and
-results remain module-owned. Domain behavior lives in procedure handlers and
-module policy, not an `internal/` implementation tree.
+and providers consume the same service-owned policy; governance-only procedure
+requests and results remain module-owned. Domain behavior lives in procedure
+handlers and module policy, not an `internal/` implementation tree.
 
-TypeBox schemas are the sole public structural schema and generated-type
-authority. Procedure handlers canonicalize ordering, compute digests, and
-enforce cross-field domain rules after structural validation. They do not
-manually recreate closed-object parsing.
+TypeBox schemas are the sole structural and generated-type authority for
+requests, results, persisted JSON, and intermodule domain collaborations.
+Opaque runtime capabilities may remain TypeScript-only. Procedure handlers
+canonicalize ordering, compute digests, and enforce cross-field domain rules
+after structural validation. They do not manually recreate closed-object
+parsing.
 
 Root context contains only ready host capabilities that are genuinely
 cross-cutting. Module middleware acquires or projects owner-specific
@@ -256,6 +261,11 @@ observations and persists no receipt, identity sidecar, or custom evidence
 artifact. Repository check, release-input generation, packaging, and vendor
 update remain only when their owner-local consumer is confirmed. No adjacent
 operation authorizes channel selection or installed state.
+
+[[service-domain-frame]] fixes the exact five-module/twelve-operation capability
+set, state owners, shared current-main and release-derivation collaborations,
+request/context flow, failure boundaries, and idempotence guarantees that the
+source correction must preserve.
 
 ### Native providers own mutation mechanics
 
@@ -391,6 +401,7 @@ authority for the replacement. No compatibility layer connects the two models.
 ## Related
 
 - Controlling frame: [[authority-amendment]].
+- Service domain frame: [[service-domain-frame]].
 - Change proposal: [[proposal]].
 - Execution sequence: [[tasks]].
 - Live record: [[README]].
