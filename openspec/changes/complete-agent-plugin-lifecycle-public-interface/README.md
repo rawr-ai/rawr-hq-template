@@ -427,6 +427,14 @@ pre-open publication-failure cases now pass uncached in 1.2 seconds. The export
 capability remains owned for transfer to the dedicated destination architecture;
 this record does not claim a current production caller.
 
+The first complete root `test` graph then exposed one native-provider contract
+assertion that had never run through the prior hand-selected root script. The
+public TypeBox schema admitted an out-of-order sparse-path list even though the
+resource contract and test already required canonical distinct ordering. Task
+1.6c6 moves that existing invariant into `NativeMarketplaceSourceSchema` and
+adds duplicate-path coverage. The owner-local contract suite passes 7/7 before
+root script normalization proceeds.
+
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
 the lifecycle command-channel law, all three Oclif app laws, and all three Oclif
