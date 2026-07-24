@@ -5,6 +5,9 @@
   "packageManager": "bun@1.3.14",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "imports": {
+    "#agent-plugin-lifecycle-service/*": "./src/service/*.ts"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",

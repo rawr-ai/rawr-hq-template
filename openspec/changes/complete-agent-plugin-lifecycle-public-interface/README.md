@@ -919,6 +919,17 @@ Markdown fixture parser or wrapper. Exact selected-runner participation, native
 pattern fixtures, and full live-tree policy activation remain open until a
 suitable standalone asset is published.
 
+The private service-alias checkpoint uses workspace-gate acquisition for both
+manifest declarations and source edges. Only an exact top-level
+`services/<owner>` or `plugins/server/api/<owner>` may declare and consume its
+matching private alias; root files, tools, scripts, foreign owners, cross-kind
+owners, and nested lookalike paths are rejected. Introduction probes placed an
+invalid declaration and source import under `tools/` and observed each rule
+fail on the exact file, then placed an owner-local service import and observed
+the source rule pass. All probes were removed. Embedded pattern examples remain
+authoring evidence because the pinned Habitat binary has no native example
+runner; this checkpoint does not call them executable fixtures.
+
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
 required jobs were blocked before runner allocation by account billing. Do not
