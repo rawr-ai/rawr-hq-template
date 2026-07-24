@@ -183,10 +183,10 @@ names.
   client boundaries.
 - **Resource:** one capability contract with provider implementations under
   `providers/`; provider mechanics do not become service policy.
-- **Repository checks:** Nx owns graph observation and schedules cached
-  lint/typecheck work; Habitat owns admitted structure, source, and graph
-  policy; required CI exposes one non-skippable result for the candidate
-  revision.
+- **Repository checks:** Nx owns graph observation and schedules one cached
+  workspace lint task plus project typecheck work; Habitat owns admitted
+  structure, source, and graph policy; required CI exposes one non-skippable
+  result for the candidate revision.
 
 Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
 is the source for the API plugin and agent-router patterns. The generic service

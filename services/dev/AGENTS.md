@@ -29,5 +29,5 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/dev:lint` and `bunx nx run @rawr/dev:typecheck`.
+- Run `bunx nx run habitat:lint` and `bunx nx run @rawr/dev:typecheck`.
 - Run `bunx nx run @rawr/dev:test` when operational behavior changes.

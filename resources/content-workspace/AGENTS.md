@@ -31,5 +31,5 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/resource-content-workspace:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/resource-content-workspace:typecheck`.

@@ -31,6 +31,6 @@
 
 ## Validation
 
-- `bunx nx run @rawr/hq-sdk:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/hq-sdk:typecheck`
 - `bunx nx run @rawr/hq-sdk:build`

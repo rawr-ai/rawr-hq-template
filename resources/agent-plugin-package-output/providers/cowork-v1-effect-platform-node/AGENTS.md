@@ -31,7 +31,7 @@
 ## Validation
 
 - Run
-  `bunx nx run provider-agent-plugin-package-output-cowork-v1-effect-platform-node:lint`
+  `bunx nx run habitat:lint`
   and
   `bunx nx run provider-agent-plugin-package-output-cowork-v1-effect-platform-node:typecheck`.
 - Run

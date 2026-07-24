@@ -10,6 +10,7 @@ required = [
   "rule.json",
 ]
 allowed = [
+  "check.mjs",
   "pattern.md",
   "structure.toml",
 ]

@@ -35,6 +35,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/plugin-hq:lint`.
+- Run `bunx nx run habitat:lint`.
 - Review changed Markdown frontmatter and repository-relative links before
   treating the content slice as complete.

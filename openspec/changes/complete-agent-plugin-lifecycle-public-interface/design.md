@@ -74,8 +74,8 @@ authority records.
 
 ### Nx owns build and release
 
-Nx projects declare build, lint, typecheck, behavior test,
-generated-manifest, and package targets. Top-level `nx.json#release`
+Nx projects declare build, typecheck, behavior test, generated-manifest, and
+package targets. One workspace target owns ordinary lint. Top-level `nx.json#release`
 configuration defines the coherent runtime project group; `nx release` owns
 versioning and changelog, and `nx release publish` owns npm publication. The
 selected release is an ordinary registry-published Oclif application backed by
@@ -145,8 +145,8 @@ embedded service; outward documentation calls the API members operations.
 The independent Grit-helper documentation law is also active and requires a
 semantic comment immediately above each named helper. Both run in one selected
 green local Habitat batch behind `check:policy`, with empty baselines.
-`habitat:check` composes that policy with owner lint, typecheck, tests, and
-hygiene. The one root Nx graph reaches repository admission and separation,
+`habitat:check` composes that policy with workspace lint, owner typecheck, and
+tests. The one root Nx scheduler graph reaches repository admission and separation,
 Habitat policy, and CLI Oclif parity through their qualified owners. The
 selected Habitat batch owns the required Oclif structure laws and lifecycle
 command-channel law. The seven generic service rules remain governed by
@@ -169,29 +169,39 @@ The repository required result remains non-skippable for the candidate
 revision. Its implementation stops running every project sequentially on every
 local push.
 
-Public `bun run check` starts one Nx graph over every admitted non-root
-project's plain public check. Shared defaults connect those checks to lint,
-typecheck, optional owner verification, Habitat policy, and dependency checks.
-Repository admission and separation, CLI Oclif parity, and the selected Habitat
-policy batch remain qualified owner work. That policy batch contains the
-required Oclif structure laws and lifecycle command-channel law. The required
-CI job publishes one stable status. Local hooks provide fast feedback; remote
-branch protection remains merge authority.
+Public `bun run check` starts one Nx scheduler graph over every admitted non-root
+project's plain public check. Shared defaults connect those checks to one
+workspace-owned `habitat:lint`, project-owned typecheck, optional owner
+verification, Habitat policy, and dependency checks.
+Repository separation, CLI Oclif parity, and Habitat project/source policy
+remain qualified owner work. The selected source-law batch contains the
+required Oclif structure laws and lifecycle command-channel law; the sibling
+Habitat graph rule owns project admission. The required CI job publishes one
+stable status. Local hooks provide fast feedback; remote branch protection
+remains merge authority.
 
-Every non-root project owns a public check, and the bounded TypeBox graph reader
-rejects a new project without one. Native Habitat project admission replaces
-that temporary reader when the upgraded compiled artifact is published. The
-current selected policy batch still does not activate registered rules with
-known live-corpus violations.
+Every non-root project owns a public check, and the Habitat-owned TypeBox graph
+rule rejects a new project without one. The rule's packet-local `check.mjs` is
+the bounded bridge to resolved Nx facts because the pinned standalone consumer
+does not expose Habitat's native Nx runner. The current selected source-law
+batch still does not activate registered rules with known live-corpus
+violations.
 
-Foundational target names are uniform across project kinds: `build`, `lint`,
-`typecheck`, `test`, and `check`. `check:test` and `check:tools` are internal
+Foundational project-local target names are uniform across project kinds:
+`build`, `typecheck`, `test`, and `check`; `lint` is workspace-owned.
+`check:test` and `check:tools` are internal
 typecheck leaves composed by the shared `typecheck` defaults; they are not
 additional public CI lifecycles. Distinct native or packaged behavior uses a
 qualified `acceptance:<capability>` target. Nx owns shared dependencies, cache
 inputs, and outputs. A package script may own the leaf command, or an explicit
 Nx target may own graph behavior, but the same command is never implemented by
 both. See [[tasks#1. Positive Habitat And Nx Checks|task 1.6c3]].
+
+Lint is the one intentional workspace-level exception to project-local command
+ownership. Root `lint` routes directly to `habitat:lint`, and every project
+check shares that one task through Nx. Biome owns ordinary source lint;
+Habitat `structure.toml` and `pattern.md` packets remain the only structural
+and source-relationship authorities.
 
 ### One oRPC service owns curated lifecycle behavior
 

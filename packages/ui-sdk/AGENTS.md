@@ -28,7 +28,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/ui-sdk:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/ui-sdk:typecheck`
 - `bunx nx run @rawr/ui-sdk:test`
 - `bunx nx run @rawr/ui-sdk:build`

@@ -27,7 +27,16 @@
   "targetDefaults": {
     "check": {
       "cache": false,
-      "dependsOn": ["lint", "typecheck", "verify", "check:policy", "^check"],
+      "dependsOn": [
+        {
+          "projects": ["habitat"],
+          "target": "lint"
+        },
+        "typecheck",
+        "verify",
+        "check:policy",
+        "^check"
+      ],
       "outputs": []
     },
     "build": {
@@ -64,10 +73,6 @@
       "dependsOn": ["^build"],
       "inputs": ["default", "^default", "typescriptRuntime"],
       "outputs": []
-    },
-    "lint": {
-      "cache": true,
-      "inputs": ["default", "^default", "{workspaceRoot}/eslint.config.mjs"]
     },
     "test": {
       "cache": true,

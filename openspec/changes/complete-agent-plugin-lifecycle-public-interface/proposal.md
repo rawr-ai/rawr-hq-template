@@ -37,9 +37,9 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - Replace lifecycle-specific source-shape scripts with positive Habitat
   blueprints for services, API plugins, agent routers, the Oclif app, and Oclif
   command plugins. Use Grit only for source relationships.
-- Route required lint, typecheck, and Habitat policy through the Nx project graph
-  so cacheable work is reused and the candidate revision still receives one
-  non-skippable required result.
+- Route one required workspace lint task, project typecheck, and Habitat policy
+  through the Nx graph so cacheable work is reused and the candidate revision
+  still receives one non-skippable required result.
 - Recut Personal RAWR HQ to curated content, provenance, declarative policy and
   evaluation inputs, and its own governed release/channel records. Remove
   Template controller pins, executable copies, and per-file runtime envelopes.

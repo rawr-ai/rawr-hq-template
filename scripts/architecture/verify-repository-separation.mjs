@@ -16,6 +16,7 @@ const forbiddenPaths = [
   "tools/workstream-plugin-pack/notes/downstream-port-notes.md",
 ];
 
+/** @type {Array<readonly [string, string]>} */
 const canonicalClaims = [
   ["AGENTS.md", "The repositories are independent"],
   ["AGENTS_SPLIT.md", "No Template-to-personal merge"],
@@ -35,6 +36,7 @@ const canonicalClaims = [
   ],
 ];
 
+/** @type {Array<readonly [string, RegExp]>} */
 const forbiddenOperationalText = [
   ["Template upstream merge", /git\s+(?:merge|rebase|cherry-pick)[^\n]*upstream/u],
   ["Template upstream fetch", /git\s+fetch\s+upstream/u],
@@ -72,6 +74,7 @@ const independentToolingDocs = [
   "services/hyperresearch-codex/spec/TESTING_PLAN.md",
 ];
 
+/** @type {Array<readonly [string, RegExp]>} */
 const forbiddenIndependentToolingText = [
   ["personal checkout target", /\/Users\/[^\n]*\/rawr-hq(?:\/|\b)/u],
   ["downstream projection option", /--target\s+(?:downstream|all)|--downstream-root/u],
@@ -162,6 +165,7 @@ if (findings.length > 0) {
 
 console.log("repository separation: structural boundary verified");
 
+/** @param {string} directory @returns {string[]} */
 function walk(directory) {
   if (!fs.existsSync(directory)) return [];
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {

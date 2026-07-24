@@ -33,7 +33,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/resource-native-agent-provider:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/resource-native-agent-provider:typecheck`.
 - Run `bunx nx run @rawr/resource-native-agent-provider:test` when contract
   behavior changes.

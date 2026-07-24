@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "id": "require_nx_project_quality_targets",
+  "title": "Require Nx Project Quality Targets",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "nx-workspace",
+    "category": "quality"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "an unclassified Nx project, an ambiguous project kind, a missing public check, a code project without typecheck, or any resolved lint owner other than habitat",
+  "why": "Nx resolves package scripts, inferred targets, and project metadata into one project graph. This rule admits every non-root project through that graph and proves that inference cannot create a second lint owner.",
+  "remediate": "Declare exactly one type:* tag and a public check target for every non-root project. Code projects also declare typecheck; content and fixture projects remain explicit exemptions. Remove every lint target except habitat:lint.",
+  "message": "Nx projects must expose their kind and foundational quality targets through one resolved graph.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "nx.json",
+        "apps/**/package.json",
+        "apps/**/project.json",
+        "packages/**/package.json",
+        "packages/**/project.json",
+        "plugins/**/package.json",
+        "plugins/**/project.json",
+        "resources/**/package.json",
+        "resources/**/project.json",
+        "scripts/**/package.json",
+        "scripts/**/project.json",
+        "services/**/package.json",
+        "services/**/project.json",
+        "tools/**/package.json",
+        "tools/**/project.json"
+      ]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/nx-workspace/require_nx_project_quality_targets/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "script",
+    "runtime": "bun",
+    "files": {
+      "script": ".habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs"
+    }
+  }
+}

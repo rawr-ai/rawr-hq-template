@@ -29,7 +29,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hyperresearch-codex:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/hyperresearch-codex:typecheck`.
 - Run `bunx nx run @rawr/hyperresearch-codex:test` when run or fixture behavior
   changes.

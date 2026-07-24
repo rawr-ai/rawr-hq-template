@@ -34,7 +34,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/plugin-hyperresearch:lint`.
+- Run `bunx nx run habitat:lint`.
 - Run `bunx nx run @rawr/plugin-hyperresearch:typecheck`.
 - Run `bunx nx run @rawr/plugin-hyperresearch:test`.
 - Run `bunx nx run @rawr/plugin-hyperresearch:manifest` when command discovery

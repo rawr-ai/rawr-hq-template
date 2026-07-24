@@ -61,8 +61,7 @@
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli",
     "acceptance:oclif": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli test/bin-run.test.ts --testNamePattern='discovers the same commands from source and compiled output'",
-    "acceptance:oclif-native-plugins": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli-native-acceptance",
-    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
+    "acceptance:oclif-native-plugins": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli-native-acceptance"
   },
   "bin": {
     "rawr": "./bin/run.js"

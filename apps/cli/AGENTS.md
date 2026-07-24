@@ -32,7 +32,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/cli:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/cli:typecheck`
 - `bunx nx run @rawr/cli:test`
 - `bunx nx run @rawr/cli:acceptance:oclif`

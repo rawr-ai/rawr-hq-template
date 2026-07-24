@@ -28,7 +28,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/web:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/web:typecheck`
 - `bunx nx run @rawr/web:test`
 - `bunx nx run @rawr/web:build`

@@ -25,18 +25,20 @@ Interpretation:
   obsolete predecessor distribution is not invoked, checked, or updated.
 - The root check must schedule every admitted non-root project's plain public
   check once; no hand-maintained project inventory may narrow that population.
-- Shared defaults must preserve lint, typecheck, optional owner verification,
-  Habitat policy, and dependency checks. Project-kind and quality-target
-  admission, repository separation, and CLI Oclif parity remain qualified owner
-  work. Required Oclif structure laws and the lifecycle command-channel law
-  belong to Habitat's selected policy batch.
-- `habitat:check` must run Habitat-owner lint, typecheck, and tests,
-  repository-wide hygiene, and the selected green local policy batch.
+- Shared defaults must preserve one workspace lint task, project-owned
+  typecheck, optional owner verification, Habitat policy, and dependency
+  checks. Project-kind and quality-target admission belong to Habitat's
+  `nx-workspace` rule; repository separation and CLI Oclif parity remain their
+  qualified owners. Required Oclif structure laws and the lifecycle
+  command-channel law belong to Habitat's selected source-law batch.
+- `habitat:check` must run workspace lint, Habitat-owner typecheck and tests,
+  and the selected green local policy batch.
 - The selected Habitat batch must keep empty baselines. Do not claim that all
   registered Habitat rules are required while known live-corpus failures remain
   outside the batch.
-- Bounded graph admission must reject every new non-root project without a
-  public check until native Habitat project admission replaces that reader.
+- Habitat's bounded graph admission must reject every new non-root project
+  without a public check. Its packet-local script is the declared bridge to the
+  Nx graph until the pinned consumer exposes Habitat's native Nx runner.
 - The `rg` command is a quick markdown-link surface scan used before deeper audits.
 - Protected `main` must require the job context
   `Required lint, typecheck, and topology` published by the

@@ -6,38 +6,15 @@
   "projectType": "application",
   "tags": ["type:tool", "role:repository-check"],
   "targets": {
-    "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bunx eslint scripts/nx --ext .mjs"
-      }
-    },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun test scripts/nx/*.test.mjs"
-      }
-    },
     "typecheck": {
       "executor": "nx:run-commands",
+      "inputs": [
+        "{workspaceRoot}/scripts/nx/tsconfig.json",
+        "{workspaceRoot}/scripts/architecture/verify-repository-separation.mjs",
+        "typescriptRuntime"
+      ],
       "options": {
         "command": "tsc -p scripts/nx/tsconfig.json --noEmit"
-      }
-    },
-    "check:projects": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/nx.json",
-        "{workspaceRoot}/package.json",
-        "{workspaceRoot}/**/package.json",
-        "{workspaceRoot}/**/project.json",
-        "{workspaceRoot}/scripts/nx/quality-target-admission.mjs",
-        "bunToolchain"
-      ],
-      "outputs": [],
-      "options": {
-        "command": "bun scripts/nx/quality-target-admission.mjs"
       }
     },
     "check:boundaries": {
@@ -50,7 +27,7 @@
     },
     "verify": {
       "executor": "nx:noop",
-      "dependsOn": ["test", "check:projects", "check:boundaries"]
+      "dependsOn": ["check:boundaries"]
     },
     "check": {
       "executor": "nx:noop"

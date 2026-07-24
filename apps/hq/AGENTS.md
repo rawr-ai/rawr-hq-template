@@ -32,7 +32,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/hq-app:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/hq-app:typecheck`
 - `bunx nx run @rawr/hq-app:test`
 - `bunx nx run @rawr/hq-app:build`

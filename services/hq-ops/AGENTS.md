@@ -29,6 +29,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hq-ops:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/hq-ops:typecheck`.
 - Run `bunx nx run @rawr/hq-ops:test` when operational behavior changes.

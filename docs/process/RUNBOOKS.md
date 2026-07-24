@@ -38,15 +38,16 @@ fallbacks.
 ## Required Repository Check
 
 - Local pre-push feedback and remote CI both run `bun run check`.
-- The root command starts one Nx `check` graph over every admitted non-root
-  project. Shared defaults connect each plain public check to lint, typecheck,
-  optional owner verification, Habitat policy, and dependency checks.
-- Repository project admission and separation, Habitat policy, and CLI Oclif
-  parity remain qualified owner work. Habitat's selected policy batch owns the
-  required Oclif structure laws and lifecycle command-channel law.
-- `habitat:check` composes Habitat-owner lint, typecheck, and tests with
-  `check:hygiene` and `check:policy`. The policy target runs one
-  selected green local rule batch with empty baselines. Registered rules with
+- The root command starts one Nx `check` scheduler graph over every admitted non-root
+  project. Shared defaults connect each plain public check to one
+  workspace-owned `habitat:lint`, project-owned typecheck, optional owner
+  verification, Habitat policy, and dependency checks.
+- Repository separation, Habitat project admission and source law, and CLI
+  Oclif parity remain qualified owner work. Habitat's selected source-law batch
+  owns the required Oclif structure laws and lifecycle command-channel law.
+- `habitat:check` composes workspace lint, Habitat-owner typecheck and tests,
+  and `check:policy`. The policy target composes one selected green source-law
+  batch with the rule-owned Nx project admission adapter. Registered rules with
   known live-corpus failures are not yet part of the required batch.
 - Habitat targets are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests remain explicit
@@ -54,11 +55,13 @@ fallbacks.
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through a
   checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
   is not vendored here.
-- Every non-root project now owns a public check, and bounded graph admission
-  rejects a new project without one. Native Habitat project admission replaces
-  that temporary graph reader after the upgraded artifact is published.
-- Foundational project targets use `build`, `lint`, `typecheck`, `test`, and
-  `check`. Separately compiled test and tool sources use internal `check:test`
+- Every non-root project now owns a public check, and the Habitat-owned graph
+  rule rejects a new project without one. Its bounded `check.mjs` is the
+  explicit standalone-consumer escape hatch until Habitat's native Nx runner
+  is available here.
+- Foundational project targets use `build`, `typecheck`, `test`, and `check`;
+  ordinary lint has one workspace owner. Separately compiled test and tool
+  sources use internal `check:test`
   and `check:tools` leaves; distinct installed or native behavior uses
   `acceptance:<capability>`. Shared Nx defaults own common dependencies and
   cache policy, and each resolved task has one command owner. See

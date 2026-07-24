@@ -69,19 +69,19 @@ Then `post-merge` and `post-checkout` may refresh repository dependencies. They 
 not publish or install the CLI. `pre-push` preserves
 the remote-identity guard and runs `bun run check`. The root command starts one
 Nx graph over every admitted non-root project's public check. Shared defaults
-connect each check to lint, typecheck, optional owner verification, Habitat
-policy, and dependency checks. Repository admission and separation, CLI Oclif
-parity, and the selected green Habitat policy batch remain qualified owner
-work. That batch owns the required Oclif structure laws and lifecycle
-command-channel law.
+connect each check to one workspace-owned `habitat:lint`, project-owned
+typecheck, optional owner verification, Habitat policy, and dependency checks.
+Repository separation, CLI Oclif parity, and Habitat project/source policy
+remain qualified owner work. The selected source-law batch owns the workspace
+scheduler law, required Oclif structure laws, and lifecycle command-channel law.
 Habitat targets are cacheable only when their Nx inputs cover every Git-visible
 tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
 owner-local verification rather than hidden merge-admission work.
 
-Every non-root project now owns a public check, and bounded graph admission
+Every non-root project now owns a public check, and Habitat's bounded graph rule
 rejects a new project without one. Do not claim that every registered Habitat
-rule is active; native Habitat project admission remains pending on the upgraded
-published artifact.
+rule is active; the graph rule uses its packet-local `check.mjs` only because
+the pinned standalone consumer does not expose the native Nx runner.
 
 Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
 release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its

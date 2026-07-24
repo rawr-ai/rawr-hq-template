@@ -30,7 +30,7 @@
 ## Validation
 
 - Run
-  `bunx nx run provider-agent-plugin-export-destination-effect-platform-node:lint`
+  `bunx nx run habitat:lint`
   and
   `bunx nx run provider-agent-plugin-export-destination-effect-platform-node:typecheck`.
 - Run
