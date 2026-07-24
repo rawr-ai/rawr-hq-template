@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_private_alias_configuration",
+  "title": "Require Service Private Alias Configuration",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a private service/API package-import alias owned by another repository component, the wrong owner kind, or a target outside the owner's service interior",
+  "why": "Private alias spelling must not conceal a cross-project edge or create a second public dependency surface.",
+  "remediate": "Use only #<owner>-service/* in services/<owner> or #<owner>-api/* in plugins/server/api/<owner>, mapped to ./src/service/* or ./src/service/*.ts.",
+  "message": "Private service/API aliases must remain owner-local import-map entries.",
+  "pathCoverage": [
+    {
+      "kind": "workspace-gate"
+    }
+  ],
+  "scanRoots": ["."],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_private_alias_configuration/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_private_alias_configuration/pattern.md"
+    },
+    "patternName": "require_service_private_alias_configuration"
+  }
+}

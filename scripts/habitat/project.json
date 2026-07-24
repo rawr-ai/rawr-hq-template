@@ -59,30 +59,10 @@
     "check:policy": {
       "executor": "nx:run-commands",
       "cache": true,
-      "inputs": [
-        "{workspaceRoot}/**/AGENTS.md",
-        "{workspaceRoot}/apps/**/*",
-        "{workspaceRoot}/packages/**/*",
-        "{workspaceRoot}/plugins/server/api/**/*",
-        "{workspaceRoot}/plugins/async/**/*",
-        "{workspaceRoot}/plugins/cli/**/*",
-        "{workspaceRoot}/plugins/agents/**/*",
-        "{workspaceRoot}/plugins/web/**/*",
-        "{workspaceRoot}/resources/**/*",
-        "{workspaceRoot}/services/**/*",
-        "{workspaceRoot}/tools/**/*",
-        "{workspaceRoot}/scripts/habitat/**/*",
-        "{workspaceRoot}/scripts/nx/**/*",
-        "{workspaceRoot}/.habitat/blueprints/**/*",
-        "{workspaceRoot}/.habitat/rawr/agent-plugin-lifecycle/**/*",
-        "{workspaceRoot}/.habitat/index.json",
-        "{workspaceRoot}/scripts/habitat/provision.mjs",
-        "{workspaceRoot}/scripts/habitat/release.json",
-        "bunToolchain"
-      ],
+      "inputs": ["{workspaceRoot}/**/*", "bunToolchain"],
       "outputs": [],
       "options": {
-        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships"
+        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_private_alias_configuration --rule require_service_private_alias_ownership"
       }
     },
     "verify": {

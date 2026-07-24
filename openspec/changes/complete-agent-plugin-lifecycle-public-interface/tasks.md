@@ -185,6 +185,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   Move the existing CLI integration out of `@rawr/test-utils` and into the CLI
   owner's standard `test` target. Keep native Oclif installation under its
   qualified acceptance target rather than hiding it in foundational `test`.
+- [x] 1.6c8 Govern `#<owner>-service/*` and `#<owner>-api/*` through Habitat.
+  Require each package import map to target its own `src/service` interior and
+  use Grit source law to reject outside-owner, foreign-owner, cross-kind, and
+  unqualified private alias edges across every source and manifest root. Do not
+  create a parallel ESLint structural rule or fixture harness; keep finite
+  positive and negative cases in the canonical pattern packet and falsify the
+  installed rule through injected policy probes at review.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

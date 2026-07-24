@@ -5,16 +5,13 @@ import { ESLint } from "eslint";
 const workspaceRoot = process.cwd();
 const fixtureRoot = path.join(workspaceRoot, "tools", "eslint-fixtures");
 const boundaryRule = "@nx/enforce-module-boundaries";
-const positiveFixtures = [
-  "positive-service-imports-package.ts",
-  "positive-service-private-alias.ts",
-];
+const positiveFixture = "positive-service-imports-package.ts";
 const negativeFixtures = [
   "negative-package-imports-service.ts",
   "negative-plugin-imports-plugin.ts",
   "negative-service-imports-app.ts",
 ];
-const fixturePaths = [...positiveFixtures, ...negativeFixtures].map((fileName) =>
+const fixturePaths = [positiveFixture, ...negativeFixtures].map((fileName) =>
   path.join(fixtureRoot, fileName)
 );
 
@@ -32,13 +29,11 @@ function formatMessages(messages) {
     .join("; ");
 }
 
-for (const fileName of positiveFixtures) {
-  const result = resultsByPath.get(path.join(fixtureRoot, fileName));
-  if (result === undefined) {
-    failures.push(`${fileName} was not linted`);
-  } else if (result.messages.length > 0) {
-    failures.push(`${fileName} must be clean (${formatMessages(result.messages)})`);
-  }
+const positiveResult = resultsByPath.get(path.join(fixtureRoot, positiveFixture));
+if (positiveResult === undefined) {
+  failures.push(`${positiveFixture} was not linted`);
+} else if (positiveResult.messages.length > 0) {
+  failures.push(`${positiveFixture} must be clean (${formatMessages(positiveResult.messages)})`);
 }
 
 for (const fileName of negativeFixtures) {
@@ -72,5 +67,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `eslint-fixtures lint verified: ${positiveFixtures.length} positive fixtures are clean and ${negativeFixtures.length} negative fixtures fail ${boundaryRule}`
+  `eslint-fixtures lint verified: ${positiveFixture} is clean and ${negativeFixtures.length} negative fixtures fail ${boundaryRule}`
 );

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_private_alias_ownership",
+  "title": "Require Service Private Alias Ownership",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a private service/API alias used outside its matching repository owner or across owner kinds",
+  "why": "A private alias is an owner-local service-interior path, never a second public dependency surface.",
+  "remediate": "Use #<owner>-service/* only below services/<owner> or #<owner>-api/* only below plugins/server/api/<owner>; cross-project callers use the dependency's public package exports.",
+  "message": "Private service/API aliases must remain inside their matching repository owner.",
+  "pathCoverage": [
+    {
+      "kind": "workspace-gate"
+    }
+  ],
+  "scanRoots": ["."],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_private_alias_ownership/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_private_alias_ownership/pattern.md"
+    },
+    "patternName": "require_service_private_alias_ownership"
+  }
+}

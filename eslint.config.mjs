@@ -5,8 +5,6 @@ const boundaryRule = [
   "error",
   {
     allow: [
-      // Habitat verifies same-owner private aliases inside service and API interiors.
-      "^#[a-z0-9-]+-(?:service|api)/",
       "../../plugins/server/api/example-todo/src/api",
       "../../../plugins/server/api/example-todo/src/api",
       "../../../plugins/server/api/example-todo/src/client",
