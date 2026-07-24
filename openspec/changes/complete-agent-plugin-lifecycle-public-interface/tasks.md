@@ -190,6 +190,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   verification, typecheck leaves, and tests so Nx owns ordering, deduplication,
   caching, and parallelism. Do not shell-chain separate graphs, add explicit
   parallel batches, or invoke Habitat outside its project-owned check edge.
+- [x] 1.6c7b Admit the deterministic lifecycle suite to the shared cacheable
+  `test` target and persist the ordinary database-backed local Nx cache in
+  required CI. Use one revision-specific save key under a
+  repository-configuration restore prefix, with an operating-system fallback;
+  do not add a remote-cache service, custom cache protocol, retry, lock, or
+  explicit scheduler parallelism.
 - [x] 1.6c8 Govern `#<owner>-service/*` and `#<owner>-api/*` through Habitat.
   Require each package import map to target its own `src/service` interior and
   use Grit source law to reject outside-owner, foreign-owner, cross-kind, and

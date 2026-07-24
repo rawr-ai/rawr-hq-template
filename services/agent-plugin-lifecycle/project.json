@@ -4,9 +4,6 @@
   "targets": {
     "check": {
       "executor": "nx:noop"
-    },
-    "test": {
-      "cache": false
     }
   }
 }
