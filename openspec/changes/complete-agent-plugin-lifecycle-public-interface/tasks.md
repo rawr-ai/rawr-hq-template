@@ -103,7 +103,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   service corpus,
   extend the one `check:policy` batch with exact service-source,
   service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
-  Invoke the one topology rule and six source rules through one owner-local
+  Invoke the one topology rule and nine source rules through one owner-local
   Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, or duplicate rule discovery in a script.
@@ -198,6 +198,23 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   inject platform capabilities through service context and explicit resource
   providers. Delete the dead HQ Ops scanner without migrating its mechanical
   helper-name blacklist or creating another JavaScript checker.
+- [x] 1.6c9 Remove structural authority from ESLint. Delete the Nx boundary
+  matrix, repository-specific restricted-import lists, and their synthetic
+  ESLint fixture project. Retire the coarse project-kind matrix rather than
+  claiming it was migrated. Keep positive topology in `structure.toml`, exact
+  source relationships in Habitat `pattern.md`, and behavioral contracts in
+  owner tests; do not recreate the removed matrix behind another lint wrapper.
+- [ ] 1.6c10 Retire hand-written structural source scanners where Habitat can
+  express the same law. Move filesystem topology to `structure.toml` and source
+  analysis or rewrites to `pattern.md`; retain an owner-local `.mjs` verifier
+  only for a demonstrated Habitat capability gap, and keep behavior in tests.
+  Begin with the active session-intelligence structural verifier rather than
+  claiming this ESLint-only checkpoint completed the broader migration.
+- [ ] 1.6c11 Admit any still-required resolved project-edge law as one separate
+  Habitat graph packet. Grit cannot join Nx-resolved dependency edges to
+  project-kind tags, so a rule-owned `.mjs` graph adapter is the allowed narrow
+  escape hatch if the positive package-kind model still requires this axis.
+  Do not restore ESLint, copy the retired matrix, or hide the decision in lint.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

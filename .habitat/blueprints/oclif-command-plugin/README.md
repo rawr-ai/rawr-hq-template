@@ -7,9 +7,10 @@ CLI family, package, and command roots, normalize installed and TypeScript
 discovery,
 require the package-owned manifest command, and reject dependencies on another
 command plugin or through mechanical package directories. TypeScript package
-exports and Nx own the remaining public dependency boundary. This kind does
-not own the product command inventory and does not give a command plugin its
-own executable binary.
+exports own public package compatibility, while Habitat owns admissible source
+relationships. Nx schedules their checks; it does not define the boundary.
+This kind does not own the product command inventory and does not give a
+command plugin its own executable binary.
 
 See [[../../AUTHORITY|the repository-local authority boundary]] and
 [[../oclif-app/README|the executable app kind]].

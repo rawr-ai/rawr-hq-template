@@ -26,7 +26,6 @@
     "dev:inngest": "bun run dev:workflows",
     "build": "nx run-many -t build",
     "lint": "nx run-many -t lint",
-    "lint:boundaries": "eslint apps services packages plugins",
     "nx:reset": "bunx nx reset",
     "nx:doctor": "bun scripts/dev/nx-doctor.mjs",
     "sync:check": "bun scripts/phase-03/verify-sync-check.mjs",
@@ -174,7 +173,6 @@
       "migration-slice:structural-tranche"
     ],
     "includedScripts": [
-      "lint:boundaries",
       "sync:check",
       "architecture:gates:permanent",
       "architecture:gate:agent-plugin-lifecycle",
@@ -214,7 +212,6 @@
     "@catenarycloud/linteffect": "0.0.6",
     "@effect/platform-node": "4.0.0-beta.100",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
-    "@nx/eslint-plugin": "23.1.0",
     "@rawr/agent-plugin-lifecycle": "workspace:*",
     "@types/node": "^22.14.0",
     "@typescript-eslint/parser": "^8.57.1",

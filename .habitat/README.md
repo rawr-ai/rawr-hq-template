@@ -29,10 +29,11 @@ The current generic kinds are:
 
 The `rawr/` tree carries owner-qualified constraints that are not generic
 package laws. Its remaining lifecycle rule closes the curated command channel
-while that implementation is simplified. Generic service, Oclif, package,
-TypeScript, and Nx contracts own reusable dependency relationships; the
-lifecycle niche does not duplicate those laws as a package-name or path
-blacklist.
+while that implementation is simplified. Generic service and Oclif packets own
+their admitted source relationships, and TypeScript package exports own public
+compatibility. The lifecycle niche does not duplicate those laws as a
+package-name or path blacklist. A future resolved project-edge constraint is a
+separate Habitat graph packet, not an ESLint rule.
 
 Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
