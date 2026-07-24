@@ -73,6 +73,16 @@ describe("packaging procedure result schema boundary", () => {
     expect(Value.Check(PackagedReleaseIdentitySchema, release)).toBe(true);
   });
 
+  it("declares the complete packaging service metadata", () => {
+    expect(contract.package["~orpc"].meta).toEqual({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "basic",
+      entity: "packaging",
+    });
+  });
+
   it("accepts only exact Git content plus one closed release selection", async () => {
     const invalid = [
       { ...request, artifactRef: release },
