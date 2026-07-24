@@ -930,6 +930,17 @@ the source rule pass. All probes were removed. Embedded pattern examples remain
 authoring evidence because the pinned Habitat binary has no native example
 runner; this checkpoint does not call them executable fixtures.
 
+The following [[tasks#1. Positive Habitat And Nx Checks|task 1.6c8a]]
+checkpoint replaces the only independent behavior worth retaining from the
+dead HQ Ops boundary scanner with one generic Habitat source law. Exact service
+contracts, schemas, and DTO declarations may not acquire `node:` or `bun:`
+modules; platform capabilities enter through service context and explicit
+resource providers. A temporary `node:fs` import in a real module contract made
+the installed rule fail on that file, and the unchanged declaration corpus
+passed after the probe was removed. The old scanner is deleted rather than
+retained as a second evaluator, and its helper-name blacklist is intentionally
+not migrated because filenames do not establish an infrastructure boundary.
+
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
 required jobs were blocked before runner allocation by account billing. Do not

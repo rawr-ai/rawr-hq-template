@@ -192,6 +192,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   create a parallel ESLint structural rule or fixture harness; keep finite
   positive and negative cases in the canonical pattern packet and falsify the
   installed rule through injected policy probes at review.
+- [x] 1.6c8a Preserve service boundary platform independence as one generic
+  Habitat source law before retiring structural ESLint authority. Reject direct
+  `node:` and `bun:` acquisition from contracts, schemas, and DTO declarations;
+  inject platform capabilities through service context and explicit resource
+  providers. Delete the dead HQ Ops scanner without migrating its mechanical
+  helper-name blacklist or creating another JavaScript checker.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

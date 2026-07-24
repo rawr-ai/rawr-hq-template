@@ -15,7 +15,8 @@ The current generic kinds are:
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
   laws for generic anchors, native oRPC composition, context boundaries,
-  module isolation, declarative TypeBox contracts, and public error authority.
+  module isolation, owner-private aliases, platform-neutral boundary
+  declarations, declarative TypeBox contracts, and public error authority.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` faces that
   expose client bindings and API operations around an embedded service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
@@ -53,8 +54,10 @@ follow Magic Migration commit
 Magic Migration commit `543e78eddd00ef6cfccfdf3ae366143b6034f012`,
 service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`.
 RAWR preserves the committed topology and six source-law algorithms. Its
-adaptations are limited to local packet ownership and the canonical
-`@rawr/hq-sdk` TypeBox Standard Schema bridge name.
+adaptations retain local packet ownership and the canonical `@rawr/hq-sdk`
+TypeBox Standard Schema bridge name. RAWR adds two owner-private alias laws and
+one platform-independence law for contracts, schemas, and DTOs; those local
+packets do not change the imported Magic service algorithms.
 
 The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
 posture to the executable app and its command plugins without claiming Magic
