@@ -4,9 +4,11 @@ import { eoc } from "effect-orpc";
 import {
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
+} from "./model/dto/current-main-record";
+import {
   CurrentMainSelectionInputSchema,
   CurrentMainSelectionResultSchema,
-} from "./schemas";
+} from "./model/dto/current-main-selection";
 
 export const contract = {
   currentMainRecord: eoc

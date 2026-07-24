@@ -4,22 +4,26 @@ import {
   parseGitTreeId,
   parseReleaseRelativePath,
 } from "../../shared/release";
-
+import { parseCanonicalRef } from "../dto/current-main-primitives";
 import {
   CURRENT_MAIN_V3_CANONICAL_REF,
   CURRENT_MAIN_V3_RECORD_PATH,
   CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
+} from "../dto/current-main-record";
+import {
   type CurrentMainSelectionFailureKind,
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-} from "../dto/current-main";
-import { parseCanonicalRef } from "../dto/current-main-primitives";
+} from "../dto/current-main-selection";
 import type {
   ExactGitReader,
   GitReadFailureCode,
   RepositoryInspection,
 } from "../repositories/current-main-exact-git";
-import { validateCurrentMainRecordV3 } from "./current-main-record";
+import {
+  decodeCurrentMainRecord,
+  describeCurrentMainRecordValidation,
+} from "./current-main-record";
 
 const COMPILED_CANONICAL_REF = requireCanonicalRef(CURRENT_MAIN_V3_CANONICAL_REF);
 const COMPILED_CURRENT_MAIN_PATH = requireRelativePath(
@@ -57,11 +61,14 @@ export async function resolveCurrentMainSelection(
     return classifyGitReadFailure(recordRead.failure.code, recordRead.failure.message);
   }
 
-  const currentMain = validateCurrentMainRecordV3(recordRead.observation.bytes);
-  if (!currentMain.ok) {
-    return refused("FORGED_RECORD", `Current-main v3 is invalid: ${currentMain.failure.message}`);
+  const currentMain = decodeCurrentMainRecord(recordRead.observation.bytes);
+  if (typeof currentMain === "string") {
+    return refused(
+      "FORGED_RECORD",
+      `Current-main v3 is invalid: ${describeCurrentMainRecordValidation(currentMain)}`
+    );
   }
-  const record = currentMain.value.record;
+  const record = currentMain;
   if (
     record.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity ||
     record.sourceRepositoryIdentity !== opening.repositoryIdentity

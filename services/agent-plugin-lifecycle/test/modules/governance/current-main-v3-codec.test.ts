@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  CURRENT_MAIN_V3_PROTOCOL,
-  type CurrentMainBodyV3,
-  MAX_CURRENT_MAIN_V3_RECORD_BYTES,
-} from "../../../src/service/model/dto/current-main";
+import { MAX_CURRENT_MAIN_V3_RECORD_BYTES } from "../../../src/service/model/dto/current-main-record";
+import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
+import { CURRENT_MAIN_V3_PROTOCOL } from "../../../src/service/modules/governance/model/dto/current-main-record";
 import {
   encodeCurrentMainBodyV3,
   validateCurrentMainRecordV3,
-} from "../../../src/service/model/policy/current-main-record";
+} from "../../../src/service/modules/governance/model/policy/current-main-record";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -122,7 +120,7 @@ describe("current-main v3 codec", () => {
   });
 });
 
-function recordFixture(): CurrentMainBodyV3 {
+function recordFixture(): CanonicalChannelSelection {
   return {
     schemaVersion: 3,
     channel: "current-main",

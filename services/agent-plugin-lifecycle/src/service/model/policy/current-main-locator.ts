@@ -3,13 +3,13 @@ import { parseRepository } from "../dto/current-main-primitives";
 import type { CurrentMainSelectionLocator } from "../dto/current-main-selection";
 import { isCanonicalAbsolutePath } from "../dto/structural";
 
-export type GitLocatorInput = CurrentMainSelectionLocator;
-
 export type GovernanceBoundaryResult<T> =
   | { readonly ok: true; readonly value: T }
   | { readonly ok: false; readonly reason: string };
 
-export function decodeGitLocator(input: GitLocatorInput): GovernanceBoundaryResult<GitLocator> {
+export function decodeGitLocator(
+  input: CurrentMainSelectionLocator
+): GovernanceBoundaryResult<GitLocator> {
   if (!isCanonicalAbsolutePath(input.workspacePath)) {
     return {
       ok: false,
