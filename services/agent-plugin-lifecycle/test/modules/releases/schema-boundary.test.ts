@@ -130,6 +130,25 @@ describe("release procedure schema boundary", () => {
     >();
   });
 
+  it("declares the complete service metadata on every release operation", () => {
+    const expectedMetadata = {
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "releases",
+    };
+
+    for (const operation of [
+      "check",
+      "releaseInputRecord",
+      "refreshReleaseInput",
+      "checkRepository",
+    ] as const) {
+      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata);
+    }
+  });
+
   it("admits only the two closed release selections", () => {
     expect(
       Value.Check(CheckInputSchema, {
