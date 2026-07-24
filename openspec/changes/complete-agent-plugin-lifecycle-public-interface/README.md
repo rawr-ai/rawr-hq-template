@@ -267,7 +267,7 @@ rather than copying configuration blindly:
 | Bun runtime | `1.3.14` | Keep; the separately pinned Habitat artifact remains a Bun 1.4 build |
 | Biome | `2.5.3` | Adopt required workspace hygiene and formatting |
 | lintEffect | `@catenarycloud/linteffect@0.0.6` | Expose as an advisory owner command, not a universal push gate |
-| Nx | `23.1.0` | Adopted as exact `nx` and `@nx/eslint-plugin` pins |
+| Nx | `23.1.0` | Adopted as the exact task-graph pin; the ESLint graph adapter is retired |
 | TypeScript compiler | native `7.0.2` | Make normal `tsc`/typecheck authority |
 | TypeScript compiler API | `6.0.3` | Keep as the `typescript` package for build-tool consumers |
 | TypeScript fallback | `6.0.2` | Expose only the narrow `tsc6` compatibility command |
@@ -277,7 +277,7 @@ rather than copying configuration blindly:
 | Effect / Platform | Current official Effect 4 line | Migrate the surviving resource/provider family after rejected owners are deleted; use exact aligned pins and remove `@effect/platform` |
 
 TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
-Biome owns fast general hygiene; ESLint remains the boundary-rule leaf; Habitat
+Biome owns fast general hygiene; ESLint remains a code-lint parser; Habitat
 owns positive architecture topology and source relationships. Full-corpus
 lintEffect is intentionally not part of the required push check because its
 cold-run cost is an upstream limitation rather than repository admission logic.
@@ -354,8 +354,11 @@ admission checkpoint now makes the complete Biome formatting, lint, and import
 organization check required, so task 1.5b is complete without putting advisory
 lintEffect in the required gate.
 
-The exact Nx migration pins `nx` and `@nx/eslint-plugin` to `23.1.0`, refreshes
-the lockfile, and applies the official required migration set. The only durable
+The original exact Nx migration pinned `nx` and `@nx/eslint-plugin` to
+`23.1.0`, refreshed the lockfile, and applied the official required migration
+set. The later Habitat ownership checkpoint removes the ESLint graph adapter
+and its synthetic fixture project rather than preserving structural authority
+in a lint configuration. The only durable
 migration output outside dependency metadata is the official
 `.claude/worktrees` ignore entry; the release-tag migration made no semantic
 configuration change. At that migration checkpoint the workspace remained at
@@ -675,8 +678,9 @@ command-plugin shell, direct production/development entrypoints, compiled
 command discovery, an explicit TypeScript source-to-output mapping, a
 package-owned `oclif manifest` command inferred by Nx, default command exports,
 no command-plugin-to-command-plugin dependency, and rejection of mechanical
-package-directory imports. TypeScript package exports and Nx own the remaining
-public dependency boundary. The packet does not encode a product command
+package-directory imports. Habitat owns admitted source and graph policy,
+TypeScript package exports own public compatibility, and Nx observes resolved
+edges while scheduling checks. The packet does not encode a product command
 inventory, retired mechanism names, or `nx release` as a project target.
 
 Four Grit patterns pass all twenty-four canonical and rejection samples. Isolated
@@ -903,10 +907,12 @@ The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected required check. It enumerated package names, exact
 composition files, and the now-rejected artifact/evidence repositories. Those
 are transient implementation details, not one reusable structural axis. The
-generic service and Oclif blueprints, TypeScript package boundaries, and Nx
-project graph now carry the applicable reusable constraints; the remaining
+generic service and Oclif blueprints carry their exact source relationships,
+TypeScript package exports carry public compatibility, and the remaining
 lifecycle niche rule is limited to the curated command channel until task 2
-replaces that topology.
+replaces that topology. The coarse ESLint project-kind matrix is retired rather
+than claimed as migrated. If a resolved project-edge axis is still required,
+task 1.6c11 admits it separately through Habitat over the Nx graph.
 
 The generic blueprint packet filename set is now closed: every current packet
 contains its rule, locked baseline, and one canonical `pattern.md` or

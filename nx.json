@@ -10,7 +10,6 @@
     ],
     "architectureGlobals": [
       "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/eslint.config.mjs",
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/.habitat/**/*",
       "{workspaceRoot}/scripts/architecture/**/*.mjs",

@@ -59,8 +59,11 @@ Rules under `.habitat/rawr/agent-plugin-lifecycle` remain qualified lifecycle
 constraints rather than generic blueprints. The remaining rule closes the
 curated command channel and will shrink with the implementation. Reusable
 service source and topology relationships belong to their generic Habitat
-blueprints. TypeScript owns public package compatibility, while Nx observes the
-resolved project graph and schedules the qualified checks.
+blueprints, while TypeScript package exports own public compatibility. The
+former coarse project-kind matrix is retired, not represented as another source
+pattern. Nx observes and schedules the graph; any still-required resolved-edge
+constraint must enter later as its own Habitat graph packet, never as ESLint
+architecture.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
 and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

@@ -40,11 +40,6 @@ const INVENTORY = {
       ],
       targets: ["sync", "structural"],
     },
-    "eslint-fixtures": {
-      config: "tools/eslint-fixtures/project.json",
-      tags: ["type:fixture", "migration-slice:structural-tranche"],
-      targets: ["sync", "structural"],
-    },
   },
 };
 

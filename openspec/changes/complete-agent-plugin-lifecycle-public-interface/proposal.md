@@ -73,8 +73,9 @@ and keeps the lifecycle behavior that solves the actual product problem.
   and stable materialization protocol in favor of direct native reconciliation.
 - `agent-provider-deployment`: explicit Codex and Claude homes converge through
   native commands and live observation.
-- `repository-policy`: Habitat owns positive topology and Grit source
-  relationships; Nx owns project/task dependency and required-check scheduling.
+- `repository-policy`: Habitat owns admitted topology, source, and graph policy;
+  TypeScript exports own public compatibility; Nx observes resolved project
+  edges and owns task/check scheduling.
 
 ## Impact
 
