@@ -533,6 +533,16 @@ topology authority. The first cold graph passed 181 tasks across 37 projects in
 and CI cache persistence are therefore a separate performance checkpoint, not
 extra scheduling machinery in this foundation node.
 
+Task 1.6c7b admits the deterministic lifecycle suite to that shared cache and
+persists Nx's task payloads and database index in required CI using the cited
+Civ7 foundation's operating-system and repository-configuration cohort. Both
+paths are required by the database-backed cache in the admitted Nx version. The
+save key also carries the Git revision so GitHub's immutable cache can advance
+after source-only changes. The uncached owner run passed 215 cases and all four
+prerequisite builds in 1 minute 35 seconds; the unchanged repeat restored all
+five tasks and completed in 76 ms. This adds no remote cache service, retry,
+lock, explicit parallel batch, or second Habitat invocation.
+
 The first clean CI graph also exposed one omission in the earlier package-less
 API-plugin conversion: the deleted plugin manifest's public
 `@rawr/example-todo` dependency had not moved to the root package that now owns
