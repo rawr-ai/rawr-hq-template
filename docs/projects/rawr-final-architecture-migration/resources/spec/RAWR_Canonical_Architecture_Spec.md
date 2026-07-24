@@ -15,14 +15,14 @@ It fixes:
 - the service-boundary and runtime-resource ownership model;
 - the public SDK posture;
 - the app composition and entrypoint model;
-- the runtime realization lifecycle;
-- the process-local runtime substrate;
+- the canonical lifecycle phase vocabulary and integration-boundary handoffs for runtime realization (definition → selection → derivation → compilation → provisioning → mounting → observation); phase mechanics, sub-sequencing, artifact shapes, and substrate internals are defined in the canonical runtime realization specification (RAWR_Effect_Runtime_Realization_System_Canonical_Spec);
+- the canonical name and ownership split of the process-local runtime substrate (RAWR plans identity, order, dependency, lifetime, and boundary policy; Effect executes scoped acquisition, release, runtime ownership, and process-local coordination); substrate internals, named coordination resources, and kernel mechanics are defined in the canonical runtime realization specification;
 - the relationship between the `agent` role and the `async` role;
 - the operational mapping on service-centric platforms;
 - the default topology and growth model;
 - the enforcement orientation.
 
-This specification is the canonical integrated plug-and-play architecture layer. Subsystem specifications attach to it at explicit integration boundaries. It defines the whole system, the vocabulary the system uses, the architectural laws that keep it coherent, and the integration points where deeper subsystem blueprints attach.
+This specification is the canonical integrated plug-and-play architecture layer. Subsystem specifications attach to it at named integration boundaries enumerated in §10.14, governed by the names-versus-mechanics carve-out in §4.3a. The runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`) is the current canonical companion document for all runtime concerns; it is authoritative on mechanics within each integration boundary this specification names. It defines the whole system, the vocabulary the system uses, the architectural laws that keep it coherent, and the integration points where deeper subsystem blueprints attach.
 
 The architecture is organized around three durable separations.
 
@@ -415,6 +415,24 @@ It does not own domain correctness, durable orchestration, service truth, or ste
 
 ## 4. Canonical laws
 
+### 4.0 Execution ownership law
+
+The canonical execution ownership split is:
+
+```text
+RAWR owns semantic/runtime boundaries.
+oRPC owns callable contract mechanics.
+Effect owns local execution mechanics.
+Inngest owns durable async.
+Native hosts own host interiors after RAWR adapter lowering.
+The SDK derives.
+The runtime realizes.
+Harnesses mount.
+Diagnostics observe.
+```
+
+This statement is the most compact, most memorable, most normative integration statement carried by this specification. Companion subsystem specifications and vendor integration authors may cite this paragraph directly when defending their boundary. Per the names-versus-mechanics carve-out (§4.3a), the arch-spec owns the canonical wording of this law as integration vocabulary; the runtime realization specification cross-references this section as the canonical source.
+
 ### 4.1 Ownership law
 
 The strongest practical rule is:
@@ -475,6 +493,10 @@ entrypoint
 ```
 
 Bootgraph, provisioning, process runtime, adapters, harnesses, and diagnostics bridge the semantic shell to running software. They are not additional top-level semantic layers.
+
+### 4.3a Names-versus-mechanics carve-out
+
+The canonical architecture specification owns the durable integration vocabulary for runtime realization: the lifecycle phase names, the canonical RAWR-vs-Effect control split, the role and surface taxonomy, and the producer/consumer handoff contract at each phase boundary. It does not own the mechanics within each phase — phase implementation, sub-sequencing, artifact type shapes, named substrate primitives, and kernel internals are owned by the canonical runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec`). When a companion subsystem specification needs to understand what a lifecycle phase does, the arch-spec provides the boundary vocabulary; the runtime spec provides the contract. A change to mechanics within a phase does not require updating the arch-spec; a change to phase names, their order, or their integration handoffs requires updating both specifications in concert.
 
 ### 4.4 Service boundary first
 
@@ -1634,7 +1656,7 @@ definition -> selection -> derivation -> compilation -> provisioning -> mounting
 | --- | --- | --- | --- |
 | Definition | Import-safe service, plugin, resource, provider, app, and profile declarations | Authors | SDK derivation |
 | Selection | App membership, runtime profile, provider selections, process roles, selected harnesses | App/entrypoint | SDK/runtime compiler |
-| Derivation | Normalized authoring graph, service binding plans, surface runtime plans, workflow dispatcher descriptors, portable plan artifacts | `@rawr/sdk` | Runtime compiler |
+| Derivation | Normalized authoring graph, portable plan artifacts, non-portable execution descriptor table, service binding plans, surface runtime plans, workflow dispatcher descriptors — artifact shapes defined in the canonical runtime realization specification, §15 | `@rawr/sdk` | Runtime compiler |
 | Compilation | Compiled process plan, provider dependency graph, compiled service/surface/harness plans | Runtime compiler | Bootgraph, process runtime, adapters |
 | Provisioning | Provisioned process, live process access, live role access, startup records | Bootgraph and provisioning kernel | Process runtime |
 | Mounting | Bound services, cache records, mounted surface runtime records, adapter-lowered payloads, started harness handles | Process runtime, adapters, harnesses | Native hosts and catalog |
@@ -1650,51 +1672,21 @@ A provider may contain Effect-native acquisition code, but it remains cold until
 
 ### 10.4 SDK derivation
 
-The SDK derives explicit artifacts from compact authoring declarations.
-
-The SDK owns:
-
-- normalized authoring graph;
-- canonical identities;
-- resource requirements;
-- normalized provider selections;
-- service binding plans;
-- surface runtime plan descriptors;
-- workflow dispatcher descriptors;
-- portable plan artifacts;
-- derivation diagnostics.
+The SDK derives structured plan artifacts and an in-process execution descriptor table from compact authoring declarations. SDK derivation is the public authoring boundary: SDK output is the sole input to the runtime compiler.
 
 The SDK does not acquire resources, execute providers, construct managed runtime roots, construct native harness payloads, mount harnesses, or define native framework semantics.
 
+The specific artifact types, their portability classification, and the producer/consumer contract for each artifact are defined in the runtime realization specification, §15.
+
 ### 10.5 Runtime compiler
 
-The runtime compiler turns a normalized authoring graph plus entrypoint selection into one `CompiledProcessPlan`.
+The runtime compiler consumes SDK-derived artifacts plus the entrypoint's selected app, profile, and harness configuration, validates coverage and dependency closure against architectural invariants, and emits one `CompiledProcessPlan` plus diagnostics.
 
-It validates:
-
-- selected roles and surfaces;
-- topology and builder agreement;
-- provider coverage;
-- provider dependency closure;
-- service dependency closure;
-- service binding DAG shape;
-- harness targets;
-- surface adapter targets.
-
-It emits:
-
-- compiled process plan;
-- provider dependency graph;
-- compiled resource plans;
-- compiled service binding plans;
-- compiled surface plans;
-- compiled workflow dispatcher plans;
-- harness plans;
-- bootgraph input;
-- topology seed;
-- runtime diagnostics.
+Compilation precedes provisioning and harness mounting. A compilation failure aborts startup before any resource is acquired.
 
 The runtime compiler does not acquire resources, bind live services, construct native functions, mount harnesses, or write final runtime catalog state.
+
+The complete validation rules, emission contract, and `CompiledProcessPlan` shape are defined in the runtime realization specification, §16.
 
 ### 10.6 Bootgraph and provisioning kernel
 
@@ -1709,18 +1701,9 @@ RAWR plans identity, order, dependency, lifetime, and boundary policy.
 Effect executes scoped acquisition, release, runtime ownership, and process-local coordination.
 ```
 
-The provisioning kernel owns:
+The provisioning kernel owns one root managed runtime per started process; process and role lifetime scopes; scoped resource acquisition and release from compiled provider plans; validated and redacted config loading; structured runtime errors; lifecycle and provider acquisition telemetry; and reverse-order deterministic disposal.
 
-- one root managed runtime per started process;
-- process scope and role child scopes;
-- resource acquisition and release from compiled provider plans;
-- config loading, validation, and redaction;
-- structured runtime errors;
-- runtime-local queues, pubsub, refs, schedules, caches, fibers, and semaphores as process-local mechanics;
-- runtime annotations, spans, lifecycle telemetry, and provider acquisition telemetry;
-- reverse-order deterministic disposal.
-
-Process-local coordination primitives do not become durable workflow ownership.
+Process-local coordination is not durable workflow ownership. The named RAWR-owned process-local coordination resources and the Effect-internal substrate primitives they wrap are defined in the runtime realization specification, §14 and §17.3.
 
 ### 10.7 Runtime-owned lifetimes
 
@@ -1803,13 +1786,27 @@ Surface adapters are the only runtime layer that translates compiled surface pla
 
 ### 10.12 Harness and native boundary
 
-Harnesses own native mounting after runtime realization and adapter lowering.
+Harnesses own native mounting after runtime realization and adapter lowering. Every harness implementation must satisfy the `HarnessDescriptor` interface defined in the runtime realization specification, §21.
 
-They consume mounted surface runtime records and adapter-lowered payloads, then return started harness handles.
+**Integration contract.** Each harness receives:
+
+- `MountedSurfaceRuntimeRecord[]` — the set of adapter-lowered surface records assembled by the process runtime from compiled surface plans and lowered native payloads;
+- `ProcessRuntimeAccess` — scoped process-level access (no raw Effect internals, no provider internals, no unredacted config);
+- `RuntimeTelemetry` — the telemetry carrier for tracing across the mounting phase.
+
+Each harness returns a `StartedHarness` that carries mount identity, topology records, and an optional `stop()` finalizer invoked by rollback and finalization in reverse mount order.
+
+**Inngest harness exception.** The Inngest harness receives a `FunctionBundle` (the async surface adapter's lowered artifact) rather than generic `MountedSurfaceRuntimeRecord` entries. `FunctionBundle` is defined in the runtime realization specification, §19.3.
+
+**Compiled surface plan boundary.** Surface adapters lower `CompiledSurfacePlan` (defined in the runtime realization specification, §16) into harness-facing native payloads. Adapters resolve executable invocation boundaries through `ExecutionRegistry` (runtime spec §9.2 and §18.3); they do not independently pair compiled execution plans with descriptors.
+
+**`traceId` integration invariant.** `EffectBoundaryContext.traceId` is required at every RAWR-owned executable invocation boundary. If the native host does not supply a trace, the adapter or process execution runtime must mint one before invoking `descriptor.run(...)`. Mechanics for the boundary context type and the trace-mint rule are defined in the runtime realization specification, §9.2.
+
+**Pre-runtime artifact reference.** `PortableRuntimePlanArtifact` (the pre-runtime planning artifact named at §15.8) is consumed at the runtime-compiler boundary upstream of harness mounting; harnesses do not consume it directly. It is named here for completeness because companion deployment specs cross-referencing harness behavior need to reach this artifact through the §15.8 platform external interfaces table.
+
+**Boundary rule.** RAWR hands harnesses runtime-realized payloads; native framework interiors own native execution semantics from that point. Harnesses must not consume raw authoring declarations, SDK graphs, or compiler plans directly. Per-harness integration contracts are specified in §13.1–§13.6 below; the complete per-harness input/output and boundary rules are defined in the runtime realization specification, §21.
 
 Harness startup records every successful mount. Startup rollback and normal finalization stop harnesses in reverse mount order before releasing role and process scopes.
-
-Native framework interiors own native execution semantics after RAWR hands them runtime-realized payloads.
 
 ### 10.13 RuntimeCatalog, diagnostics, and telemetry
 
@@ -1821,7 +1818,62 @@ Runtime diagnostics are structured findings, violations, statuses, and lifecycle
 
 Runtime telemetry carries process and provisioning context through entrypoint, SDK derivation, runtime compiler, bootgraph, provisioning, service binding, plugin projection, adapter lowering, harness ingress/egress, native execution boundaries, service middleware, async workflows, and finalization.
 
-Service semantic observability remains service-owned and oRPC-native inside the service boundary.
+Service semantic observability remains service-owned and oRPC-native inside the service boundary. The named platform-external observability interfaces (`PortableRuntimePlanArtifact`, `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`) are tabulated at §15.8.
+
+### 10.14 Companion specifications and integration-boundaries registry
+
+This registry enumerates the named integration boundaries at which subsystem (companion) specifications attach to this canonical architecture specification. It is the operational form of the §1 attachment promise.
+
+Each boundary names the architecture-spec section that establishes it, the runtime realization-specification section that owns its mechanics, which side owns naming and which owns mechanics, the named interface contract types this specification carries, and the companion specifications currently attaching there.
+
+| Boundary name | Arch-spec section | Runtime-spec section | Naming owner | Mechanics owner | Named interface contract types | Companion specs that attach |
+|---|---|---|---|---|---|---|
+| Lifecycle vocabulary | §10.2 | §24.2, §22.1 | Arch-spec: canonical phase names | Runtime-spec: phase implementation, diagnostics, telemetry correlation | Seven phase names: `definition`, `selection`, `derivation`, `compilation`, `provisioning`, `mounting`, `observation` | Runtime realization spec; TBD: deployment spec |
+| SDK derivation handoff | §10.4 | §15 | Arch-spec: artifact category names | Runtime-spec: artifact shapes, portability classification, producer/consumer contracts | `NormalizedAuthoringGraph`, `PortableRuntimePlanArtifact`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorTable` (non-portable) | Runtime realization spec |
+| Runtime compiler | §10.5 | §16 | Arch-spec: compiler role in the chain | Runtime-spec: validation list, CompiledProcessPlan shape, emission contract | `CompiledProcessPlan`, `CompiledExecutionPlan` | Runtime realization spec |
+| Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: RAWR-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
+| Runtime access | §10.8 | §18.1–§18.2 | Arch-spec: runtime access noun taxonomy | Runtime-spec: RuntimeAccess scoping, ProcessRuntimeAccess, RoleRuntimeAccess shapes | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` | Runtime realization spec; TBD: observability companion spec |
+| Service binding | §10.9 | §18.3–§18.5 | Arch-spec: cache-key exclusion rule | Runtime-spec: ServiceBindingCache mechanics, bindService contract | `ServiceBindingCache`, `ServiceBindingCacheKey`; five context lanes: `deps`, `scope`, `config`, `invocation`, `provided` | Runtime realization spec |
+| Workflow dispatcher | §10.10 | §19 | Arch-spec: dispatcher role as server-internal→async bridge | Runtime-spec: WorkflowDispatcher materialization, FunctionBundle lowering, async step-local Effect | `WorkflowDispatcher`, `FunctionBundle` | Runtime realization spec |
+| Surface adapter lowering | §10.11 | §20 | Arch-spec: adapter layer position in the chain | Runtime-spec: CompiledSurfacePlan → native payload closure contract, SurfaceAdapter interface | `CompiledSurfacePlan`, `SurfaceAdapter` | Runtime realization spec; TBD: additional vendor harness specs |
+| Harness and native boundary | §10.12 | §21 | Arch-spec: harness role taxonomy and vendor assignments | Runtime-spec: per-harness input/output contracts, HarnessDescriptor mount protocol | `HarnessDescriptor`, `StartedHarness`, per-harness: `FunctionBundle` (Inngest), oRPC route payloads (Elysia), command payloads (OCLIF) | Runtime realization spec; TBD: vendor harness companion specs (incl. OpenShell vendor contract per §13.5) |
+| Control-plane and deployment interface | §15.7, §15.8 | §15.7, §22.3 | Arch-spec: control-plane boundary rule | Runtime-spec: PortableRuntimePlanArtifact shape and consumers, RuntimeCatalog schema | `PortableRuntimePlanArtifact`, `RuntimeCatalog` | Runtime realization spec; TBD: deployment spec |
+| Diagnostics, telemetry, and observation | §10.13, §15.8 | §22 | Arch-spec: observability construct names | Runtime-spec: RuntimeDiagnostic shape, RuntimeTelemetry chain, RuntimeCatalog minimum sections | `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeCatalog` | Runtime realization spec; TBD: observability companion spec |
+
+#### 10.14.1 Attachment protocol
+
+Companion specifications attach to this architecture specification by following six rules:
+
+1. **Companion specs reference boundary names from the §10.14 registry, not internal aliases.** A companion deployment spec must call the deployment integration interface `PortableRuntimePlanArtifact` (the registry name), not `RuntimeDeploymentBlueprint` (an internal alias).
+2. **Companion specs do not redefine boundary types; they refer by name to the owning runtime-spec section.** A companion observability spec must point at runtime-spec §22.2 for the `RuntimeTelemetry` field shape; it does not redefine `RuntimeTelemetry`.
+3. **Companion specs do not duplicate mechanics covered by another spec.** A companion deployment spec should not enumerate the runtime compiler's validation list; it should cross-reference runtime-spec §16.
+4. **Companion specs declare their own reserved-detail boundaries at lock time per the runtime-spec §23.5 / L4637 model.** A companion observability spec that defers, say, "telemetry sink choice" to a future implementation slice must declare that boundary as reserved at lock time.
+5. **Companion specs do not use "fixes" language on mechanics they do not own — only on their own integration vocabulary.** A companion deployment spec may "fix" deployment placement vocabulary; it may not "fix" the runtime compiler's validation list.
+6. **Arch-spec vocabulary is the canonical naming source; companion-spec names that conflict must yield.** If a companion spec invents a name that collides with an arch-spec name, the arch-spec name wins.
+
+#### 10.14.2 Worked example: the runtime realization specification as the canonical companion
+
+The runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec`) is the current canonical companion that attaches at every row of the registry. The expected attachment shape per row:
+
+- **Lifecycle vocabulary:** runtime-spec §24.2 uses the identical seven phase names established in arch-spec §10.2, adds per-phase required output, producer, consumer, and gate — extending, not replacing, the arch-spec's phase vocabulary.
+- **SDK derivation handoff:** runtime-spec §15 specifies artifact shapes and portability classification; the arch-spec names artifact categories without enumerating shape internals.
+- **Runtime compiler:** runtime-spec §16 owns the validation list and emission contract; the arch-spec names the compiler's role in the chain.
+- **Bootgraph and provisioning kernel:** arch-spec §10.6 names the RAWR-vs-Effect control split; the arch-spec must NOT enumerate the Effect-internal primitives (queues, pubsub, refs, fibers, semaphores) — those belong in runtime-spec §17.
+- **Runtime access:** runtime-spec §18.1 carries the RuntimeAccess scoping invariant ("services do not receive broad RuntimeAccess; only their declared deps"); the arch-spec names the access noun taxonomy.
+- **Service binding:** runtime-spec §18.3–§18.5 owns ServiceBindingCache mechanics; the arch-spec carries the cache-key exclusion rule (`invocation` excluded from `ServiceBindingCacheKey`) and enumerates the five context lanes (`deps`, `scope`, `config`, `invocation`, `provided`) as integration vocabulary.
+- **Workflow dispatcher:** runtime-spec §19 owns dispatcher materialization and FunctionBundle lowering; the arch-spec names the dispatcher as the server-internal→async bridge.
+- **Surface adapter lowering:** runtime-spec §20 owns the CompiledSurfacePlan → native payload closure contract; the arch-spec §10.11 names the adapter layer position in the chain.
+- **Harness and native boundary:** arch-spec §10.12 must name `HarnessDescriptor` and `StartedHarness` as the formal interface types at the boundary; per-harness input/output is owned by runtime-spec §21.
+- **Control-plane and deployment interface:** arch-spec §15.8 names `PortableRuntimePlanArtifact` and `RuntimeCatalog` as integration interfaces; runtime-spec §15.7 + §22.3 own their shapes.
+- **Diagnostics, telemetry, and observation:** arch-spec §10.13 names `RuntimeDiagnostic` and `RuntimeTelemetry`; runtime-spec §22 owns the field shapes and chain ordering.
+
+#### 10.14.3 Phase-transition trigger conditions
+
+The seven lifecycle phases are strictly sequential. Each phase's start gate is the validated availability of the prior phase's output. Phase-transition mechanics — eager vs lazy, sync vs async handoff, what triggers compilation vs derivation — are defined in the canonical runtime realization specification, §24.
+
+#### 10.14.4 Error propagation across phase boundaries
+
+Error propagation across phase boundaries flows through `RuntimeDiagnostic` as the structured channel and rollback as the lifecycle response. A failed phase produces structured diagnostics; rollback applies to already-started components in the failed startup subset; reverse-order finalization runs on rollback. Mechanics for diagnostic emission and rollback are defined in the canonical runtime realization specification, §17 and §22.
 
 ---
 
@@ -2173,6 +2225,8 @@ services/*
 
 Elysia owns HTTP host lifecycle and request routing. It does not own public API meaning, service construction, provider selection, app membership, or runtime provisioning.
 
+**Integration contract.** The Elysia harness receives `MountedSurfaceRuntimeRecord[]` carrying adapter-lowered oRPC/Elysia route payloads, server harness configuration, and `ProcessRuntimeAccess`. It must return a `StartedHarness`. RAWR owns compiled surface plans, route payload closures, and delegation to the process execution runtime at invocation time; Elysia owns HTTP host lifecycle and request routing. The complete input/output contract is defined in the runtime realization specification, §21.1.
+
 ### 13.2 Async harness posture
 
 The async process stack is:
@@ -2187,10 +2241,14 @@ services/*
   -> bootgraph and provisioning kernel
   -> process runtime and async surface adapter
   -> FunctionBundle
-  -> Inngest harness
+  -> Inngest harness [serve-mode | connect-worker mode]
 ```
 
 Inngest owns durable async execution semantics. It does not own workflow meaning, service truth, caller-facing API semantics, app membership, provider selection, or runtime provisioning.
+
+**Integration contract.** The Inngest harness receives a `FunctionBundle` (runtime-spec §19.3) — not `MountedSurfaceRuntimeRecord` entries — along with the selected Inngest runtime resource and async harness mode. It must return a `StartedHarness`. RAWR owns async surface plan compilation, FunctionBundle derivation, and workflow dispatch semantics; Inngest owns durable async execution semantics. The complete contract and mode specifications are defined in the runtime realization specification, §21.2.
+
+**Mode.** The async harness operates in one of two modes — serve-mode (HTTP listener via `inngest/bun` or other framework adapters) or connect-worker mode (outbound persistent connection via `inngest/connect`). Mode choice changes the process's ingress topology (inbound HTTP vs outbound WebSocket) and is a harness-selection fact at process-start time. This specification declares no default mode at the architecture level; default-selection is a profile/deployment concern. Mechanics for both modes are defined in the runtime realization specification, §21.2.
 
 ### 13.3 CLI harness posture
 
@@ -2211,6 +2269,8 @@ services/*
 
 OCLIF owns command execution semantics. It does not own plugin management truth, service semantics, runtime provisioning, or app selection.
 
+**Integration contract.** The OCLIF harness receives `MountedSurfaceRuntimeRecord[]` carrying adapter-lowered command payloads and `ProcessRuntimeAccess`. It must return a `StartedHarness`. RAWR owns compiled surface plans, command payload closures, and delegation to the process execution runtime at invocation time; OCLIF owns command parsing and dispatch lifecycle. The complete input/output contract is defined in the runtime realization specification, §21.3.
+
 ### 13.4 Web harness posture
 
 The web process stack is:
@@ -2229,6 +2289,8 @@ services/* and selected API/client surfaces
 ```
 
 Web hosts own rendering, bundling, routing, and browser-native behavior inside their boundary. They do not own service truth, server API projection classification, or provider acquisition.
+
+**Integration contract.** The web harness receives `MountedSurfaceRuntimeRecord[]` carrying adapter-lowered web host payloads and `ProcessRuntimeAccess`. It must return a `StartedHarness`. RAWR owns compiled surface plans and web host payload closures; the selected web host owns rendering, bundling, routing, and browser-native behavior. The complete input/output contract is defined in the runtime realization specification, §21.4.
 
 ### 13.5 Agent harness posture
 
@@ -2249,6 +2311,10 @@ services/*, resources/*, and agent policy hooks
 
 OpenShell and agent hosts own native shell behavior inside their harness boundary. Agent governance remains a reserved boundary with locked integration hooks. Agent plugins do not move service truth or broad runtime access into agent-local semantics.
 
+**Integration contract.** The agent harness receives `MountedSurfaceRuntimeRecord[]` carrying adapter-lowered agent-channel, shell, and tool payloads and `ProcessRuntimeAccess`. It must return a `StartedHarness`. RAWR owns compiled surface plans, agent payload closures, and delegation to the process execution runtime at invocation time; the OpenShell vendor owns native shell behavior, the policy envelope, and the agent-role substrate after RAWR adapter lowering. The complete input/output contract is defined in the runtime realization specification, §21.5.
+
+**Third-party vendor contract.** OpenShell is a third-party vendor — parallel to the platform's existing treatment of Inngest, oRPC, Effect, Elysia, OCLIF, and Bun. The vendor contract requires: (a) implementation of the agent-runtime substrate behind the `HarnessDescriptor` interface defined in the runtime realization specification §21; (b) preservation of the `EffectBoundaryContext.traceId` invariant at every agent-tool invocation boundary; (c) emission of `RuntimeDiagnostic`-conforming findings for all mount and policy-decision failures; (d) respect for the reserved-boundary clause at arch-spec §10.12 and runtime-spec §21.5. The vendor contract shape is locked at this specification revision; the choice of which third-party OpenShell implementation satisfies the contract is a reserved-detail boundary, locked when an implementation slice triggers the need.
+
 ### 13.6 Desktop harness posture
 
 The desktop process stack is:
@@ -2268,11 +2334,29 @@ services/*, resources/*, and desktop host resources
 
 Desktop hosts own native desktop interiors. Menubar, window, and background surfaces are process-local projections. Durable business execution remains on `async`.
 
+**Integration contract.** The desktop harness receives `MountedSurfaceRuntimeRecord[]` carrying adapter-lowered menubar, window, and background surface payloads and `ProcessRuntimeAccess`. It must return a `StartedHarness`. RAWR owns compiled surface plans and desktop surface payload closures; the selected desktop host owns native desktop interiors. The complete input/output contract is defined in the runtime realization specification, §21.6.
+
 ### 13.7 Harness law
 
 Harnesses consume mounted surface runtimes or adapter-lowered payloads. They do not consume SDK graphs or compiler plans directly.
 
 Harness-edge wrappers may normalize host-specific invocation context, correlation propagation, or mount behavior. They must remain wrappers only.
+
+### 13.8 Companion harness attachment requirements
+
+Companion harness specifications (vendor-specific harness implementation contracts written outside this canonical architecture specification) must satisfy the following five lettered requirements:
+
+(a) Implement against named boundary types only — `HarnessDescriptor<TPayload>`, `MountedSurfaceRuntimeRecord<TPayload>`, `StartedHarness` — never against SDK derivation artifacts (`NormalizedAuthoringGraph`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`) or compiler-internal artifacts (`CompiledExecutionPlan`, `CompiledProcessPlan`).
+
+(b) The `mount(...)` method may not acquire providers, construct service bindings, or access raw Effect internals.
+
+(c) Emit `RuntimeDiagnostic`-conforming findings for all mount failures.
+
+(d) Respect `EffectBoundaryContext.traceId` as the required invocation correlation field. This requirement is non-negotiable and cannot be deferred to a native host that does not support tracing; if the native host does not supply a trace, the adapter or process execution runtime must mint one before invoking `descriptor.run(...)`.
+
+(e) Resolve executable invocation boundaries through `ExecutionRegistry`, not by independently pairing compiled execution plans with descriptors.
+
+The §10.14 registry's "Harness and native boundary" row enumerates the named interface types companion harness specifications attach to.
 
 ---
 
@@ -2567,6 +2651,21 @@ Call-local memoization is not `ServiceBindingCache`; a service-owned read-model 
 
 Runtime emits or consumes topology, health, profile, process identity, provider coverage, startup, finalization, diagnostics, telemetry, and catalog records at control-plane boundaries. Deployment and control-plane architecture own multi-process placement policy. Runtime realization emits the records that allow placement systems to reason; it does not decide placement.
 
+### 15.8 Platform external interfaces
+
+The platform exposes a small, normative set of external interfaces — pre-runtime planning, post-runtime observation, structured findings, correlation telemetry — that companion subsystem specifications and external tooling consume. They are the shared external surface area future deployment, observability, and control-plane companion specifications attach to.
+
+| Interface name | Role / purpose | Producer | Consumer class | Owning runtime-spec section | Integration constraints |
+|---|---|---|---|---|---|
+| `PortableRuntimePlanArtifact` | Pre-runtime planning artifact for deployment and control-plane inspection | SDK derivation | Runtime compiler, diagnostic tooling, topology export, and deployment/control-plane touchpoints | Runtime spec §15.7 | Portable: holds `ExecutionDescriptorRef` entries only — no live resources, no executable closures. Produced at derivation phase; consumed before or independently of process startup. |
+| `RuntimeCatalog` | Post-runtime diagnostic read model of full lifecycle topology (selected, derived, compiled, provisioned, bound, projected, executed, mounted, observed, stopped) | Runtime and diagnostics subsystem | Diagnostic readers; control-plane observation tooling | Runtime spec §22.3 | Storage backend, indexing, and retention are reserved-detail boundaries (locked when an observability companion spec triggers). Minimum record sections are normative; not a live access surface; not a source of truth. |
+| `RuntimeDiagnostic` | Structured runtime finding, violation, status, or lifecycle event; names the violated boundary or failed phase | All runtime layers (SDK, compiler, bootgraph, process runtime, adapters, harnesses) | Diagnostics pipeline; `RuntimeCatalog` aggregation; observability tooling | Runtime spec §22.1 | Emitted across all seven lifecycle phases. Diagnostics name the violated boundary or failed lifecycle phase; they explain — they do not compose. |
+| `RuntimeTelemetry` | Runtime-owned span, event, annotation, and lifecycle telemetry chain for process and provisioning correlation | Runtime and harness integrations | Observability exporters (telemetry backend); diagnostic correlation | Runtime spec §22.2 | Telemetry chain ordering is normative (entrypoint → derivation → compiler → bootgraph → provisioning → binding → adapter → harness → finalization). Telemetry backend is a reserved-detail boundary. Service semantic observability is service-owned and does not flow through this interface. |
+
+This table is a deliberate subset of the full runtime component contract summary in runtime spec §27, filtered to the externally consumed integration interfaces only. Companion specifications that need internal component shapes refer to the runtime-spec catalogue; companion specifications that attach to the platform's external surface refer to this section.
+
+`RuntimeDiagnosticContributor` is intentionally omitted from this table: it is resource-authored (services emit diagnostic contributions), not system-authored (the runtime emits `RuntimeDiagnostic` records).
+
 ---
 
 ## 16. Mechanical enforcement orientation
@@ -2675,7 +2774,7 @@ RuntimeAccess != diagnostics
 - finalizers run deterministically in reverse order;
 - each started process owns one root managed runtime;
 - process, role, invocation, and call-local remain distinct runtime lifetimes;
-- runtime-local queues, pubsub, schedules, refs, fibers, and caches are process-local mechanics.
+- RAWR-owned process-local coordination resources are defined in the runtime realization specification, §14; their underlying Effect-internal primitives are runtime substrate detail and are not enumerated in this invariant set.
 
 ### 17.7 Service binding invariants
 
@@ -2693,11 +2792,14 @@ RuntimeAccess != diagnostics
 - runtime realization follows `definition -> selection -> derivation -> compilation -> provisioning -> mounting -> observation`;
 - finalization and rollback records are observation behavior, not a new lifecycle phase;
 - live runtime access nouns are `RuntimeAccess`, `ProcessRuntimeAccess`, and `RoleRuntimeAccess`;
+- service handlers do not receive broad `RuntimeAccess`; only their declared `deps`, `scope`, `config`, per-call `invocation`, and execution-derived `provided`;
 - runtime access never exposes raw Effect internals, provider internals, or unredacted config secrets;
 - runtime compiler emits one compiled process plan for one start selection;
 - surface adapters lower compiled surface plans, not raw authoring declarations;
 - harnesses consume mounted surface records or adapter-lowered payloads;
 - `RuntimeCatalog` is a diagnostic read model, not live access and not app composition.
+- an async role process binds exactly one Inngest harness mode per started process; serve-mode and connect-worker mode are mutually exclusive within a single process.
+- all runtime mechanics, artifact shapes, named coordination resources, and substrate internals are defined in the canonical runtime realization specification (`RAWR_Effect_Runtime_Realization_System_Canonical_Spec`); this specification owns the integration vocabulary and invariant statements, not the mechanic implementations.
 
 ### 17.9 Plugin invariants
 
@@ -2735,7 +2837,7 @@ RuntimeAccess != diagnostics
 
 There is no generic shadow control-plane layer by default.
 
-The shell is not the control plane. The diagnostic/control seam lives in runtime topology, catalog, diagnostics, telemetry, and explicitly owned control-plane touchpoints.
+The shell is not the control plane. The diagnostic/control seam lives in four named platform interfaces — `PortableRuntimePlanArtifact` (pre-runtime planning), `RuntimeCatalog` (post-runtime observation read model), `RuntimeDiagnostic` (structured findings), and `RuntimeTelemetry` (correlation chain) — each specified in the runtime realization specification and tabulated in §15.8.
 
 ---
 
@@ -2772,7 +2874,7 @@ The following patterns are forbidden in the canonical architecture:
 - a broad-access shell treated as a public concierge across untrusted users;
 - shell-owned governed repo mutation in governed scopes;
 - a shell that becomes a second orchestrator or shadow control plane;
-- public raw `Layer`, `Context.Tag`, `Effect.Service`, `ManagedRuntime`, `Scope`, or `FiberRef` authoring for ordinary service, plugin, app, or entrypoint work;
+- public raw `Layer`, `Context.Tag`, `ManagedRuntime`, `Scope`, or `FiberRef` authoring for ordinary service, plugin, app, or entrypoint work;
 - re-merging `deps` and `provided`;
 - seeding `provided` at the package boundary as a general pattern;
 - introducing a generic DI-container vocabulary as public architecture;
