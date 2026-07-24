@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a runtime namespace import from an oRPC composition vendor, or a base, service, or module missing its imported native first ownership hop",
-  "why": "A few positive syntax facts keep the first native oRPC ownership hop visible without guessing at root contract/router object forms that TypeScript already checks.",
-  "remediate": "Use exact named native vendor imports. Directly initialize standalone base from implementEffect(contract, ...), and keep the first imported-base, implement(contract).$context<...>(), or imported-service-branch hop visible inside the matching service or module initializer. Leave outer wrappers and router completeness to TypeScript and review.",
+  "forbids": "a runtime namespace import from an oRPC composition vendor, a type-only binding presented as runtime authority, or a base, service, or module missing its named native first ownership hop; combined runtime and other type-only named specifiers remain valid",
+  "why": "A few positive runtime-binding facts keep the first native oRPC ownership hop visible without dictating harmless named-import formatting or allowing erased type-only imports to impersonate runtime authority.",
+  "remediate": "Use named runtime vendor bindings, optionally alongside other type-only named specifiers. Directly initialize standalone base from runtime implementEffect(contract, ...), and keep the first runtime imported-base, implement(contract).$context<...>(), or imported-service-branch hop visible inside the matching service or module initializer. Leave outer wrappers and router completeness to TypeScript and review.",
   "message": "Service composition must preserve its small set of direct native ownership facts.",
   "pathCoverage": [
     {

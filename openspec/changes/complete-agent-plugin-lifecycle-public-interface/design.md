@@ -115,16 +115,20 @@ Habitat `structure.toml` files declare closed valid topologies. Grit patterns
 declare source relationships. Nx declares project imports, task dependencies,
 inputs, outputs, and release ordering. Behavior tests remain behavior tests.
 
-The API server plugin and agent-router sources follow Magic Migration commit
-`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The generic service source follows
-Magic Migration commit `543e78eddd00ef6cfccfdf3ae366143b6034f012`,
-service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`:
+The API plugin and agent-router sources follow Magic Migration commit
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The generic service source is
+founded on Magic Migration commit
+`543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
+`2a9160183b80badacedbb6006b95829bd166470a`; its anchor, contract, and oRPC
+composition laws follow the corrections at Magic Migration commit
+`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
+`89446f8be81b1f417aa4f292034a20851c796561`:
 
 - service spine and module topology;
 - generic anchor exports and native oRPC ownership hops;
 - context boundaries and module isolation;
 - declarative TypeBox input/output schemas and module-owned oRPC errors;
-- API server plugin boundary;
+- API plugin boundary;
 - agent-router placement and shape.
 
 The first four rows come from the committed service stack; the final two remain

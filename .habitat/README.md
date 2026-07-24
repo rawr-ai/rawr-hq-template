@@ -53,12 +53,16 @@ The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`. The `service` packet stack follows
 Magic Migration commit `543e78eddd00ef6cfccfdf3ae366143b6034f012`,
-service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`.
-RAWR preserves the committed topology and six source-law algorithms. Its
-adaptations retain local packet ownership and the canonical `@rawr/hq-sdk`
-TypeBox Standard Schema bridge name. RAWR adds two owner-private alias laws and
-one platform-independence law for contracts, schemas, and DTOs; those local
-packets do not change the imported Magic service algorithms.
+service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`,
+as its foundation. Its anchor, contract, and oRPC composition laws follow the
+corrections at Magic Migration commit
+`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
+`89446f8be81b1f417aa4f292034a20851c796561`. RAWR preserves the shared topology
+and six shared source-law algorithms. Its adaptations retain local packet
+ownership and the canonical `@rawr/hq-sdk` TypeBox Standard Schema bridge name.
+RAWR adds two owner-private alias laws and one platform-independence law for
+contracts, schemas, and DTOs; those local packets do not change the imported
+Magic service algorithms.
 
 The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
 posture to the executable app and its command plugins without claiming Magic

@@ -190,13 +190,18 @@ names.
 
 Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
 is the source for the API plugin and agent-router patterns. The generic service
-patterns follow committed Magic Migration source
+packet was founded from committed Magic Migration source
 `543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
-`2a9160183b80badacedbb6006b95829bd166470a`. RAWR adaptations are limited to
-`ownerProject`, `placement.niche`, the canonical `@rawr/hq-sdk` TypeBox bridge,
-RAWR prose identity, and correction of the upstream README's stale packet count
-to the actual one-topology-plus-six-source inventory. The compiled Habitat
-consumer pins Civ7 `habitat-sdk-v0.1.6`, source
+`2a9160183b80badacedbb6006b95829bd166470a`. Its anchor, contract, and oRPC
+composition laws now follow the corrections at Magic Migration commit
+`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
+`89446f8be81b1f417aa4f292034a20851c796561`. RAWR adaptations to shared laws
+are limited to `ownerProject`, `placement.niche`, the canonical
+`@rawr/hq-sdk` TypeBox bridge, and RAWR prose identity. The RAWR packet contains
+the six shared source laws and one shared topology law, plus three
+Template-owned extensions for platform independence and private-alias
+configuration/ownership. The compiled Habitat consumer pins Civ7
+`habitat-sdk-v0.1.6`, source
 `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
 temporary Darwin arm64 lane.
 

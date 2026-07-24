@@ -52,6 +52,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   isolation, declarative TypeBox contract authority, and module-owned oRPC
   errors. Adapt only RAWR packet identity and the canonical
   `@rawr/hq-sdk` TypeBox bridge.
+- [x] 1.1d Refresh the three shared service laws corrected by Magic Migration
+  commit `32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
+  `89446f8be81b1f417aa4f292034a20851c796561`: distinguish the embedded API
+  boundary from the standalone runtime base, require runtime rather than
+  type-only oRPC ownership bindings, and admit only bounded private contract
+  support reachable from one exported contract. Preserve RAWR packet identity,
+  the `@rawr/hq-sdk` TypeBox bridge, and the three RAWR service extensions.
 - [x] 1.2 Adopt the current generic service topology with one `router.ts` per
   module. Keep procedure behavior on that oRPC surface and domain matter under
   the module model; do not introduce a second router container.

@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an existing service spine file without the direct generic const export for its role",
-  "why": "A direct base, contract, service, module, or router anchor gives every service spine file one stable structural name while callers provide product qualification.",
-  "remediate": "Directly export base from base.ts, contract from contract.ts, service from root impl.ts, module from module.ts, and router from router.ts. Leave export-use and intentional-boundary decisions to Knip and the dedicated JSDoc boundary.",
+  "forbids": "an existing service spine file without the direct generic const export for its role, while excluding the required embedded API-plugin boundary/type base.ts from the standalone runtime-base role",
+  "why": "A direct standalone runtime base, contract, service, module, or router anchor gives each implementation spine file one stable structural name while the embedded API base remains a type boundary and callers provide product qualification.",
+  "remediate": "Directly export base from standalone-service base.ts, contract from contract.ts, service from root impl.ts, module from module.ts, and router from router.ts. Keep embedded API-plugin base.ts as its required boundary/type anchor without a runtime base export; its implementation begins at impl.ts. Leave export-use and intentional-boundary decisions to Knip and the dedicated JSDoc boundary.",
   "message": "Each service spine file must directly export its generic local anchor.",
   "pathCoverage": [
     {
