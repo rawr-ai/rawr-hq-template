@@ -385,6 +385,14 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   owner-local schema and public-client update behavior, lint, typecheck, and the
   staged declarative-contract law. This checkpoint does not claim the vendors
   module shell or the complete service corpus is green.
+- [x] 5.2g Move the providers contract off the root `ocBase` feedback edge.
+  Construct provider test, status, and sync directly from Effect-oRPC `eoc`,
+  preserving basic audit for read-only status and full audit for test and sync
+  alongside their domain, audience, idempotence, and owner metadata. Keep
+  TypeBox as the request/result authority and prove owner-local provider
+  behavior, root composition, lint, typecheck, and the staged declarative-
+  contract law. This checkpoint does not claim the providers module shell or
+  the complete service corpus is green.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
   digest, uniqueness, and cross-field domain checks. Use the coherent current

@@ -211,6 +211,16 @@ cover read-only status, reviewable updates, restoration outcomes, and
 idempotent repeat. The remaining vendors shell stays open under
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and 5.7]].
 
+The provider test, status, and sync operations now derive directly from
+Effect-oRPC `eoc`. Their explicit metadata preserves the existing distinction:
+read-only status uses `basic` audit, while disposable testing and canonical
+sync use `full` audit. TypeBox remains the request/result source, and the
+provider-local behavior keeps live status observation, disposable-home tests,
+canonical convergence, omitted-member retirement, partial-failure reporting,
+and mutation-free repeat under their existing owners. Native adapters and the
+remaining providers shell stay open under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and 5.7]].
+
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
