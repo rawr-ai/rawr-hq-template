@@ -574,6 +574,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   outcome, provider consumption, TypeBox schema boundary, typecheck, workspace
   lint, and Habitat source law. Standing architecture, TypeScript/oRPC/Effect,
   testing, and structural-quality reviews report no unresolved P0/P1.
+- [x] 5.7b Close the public release implementation surface. Replace the
+  package's `./release` export with one `./input` API containing only the two
+  admitted limits and six TypeBox-backed CLI value parsers. Keep release
+  schemas, domain types, constructors, codecs, serialization, digests, payloads,
+  releases, and release sets private. Delete the overbuilt CLI product fixture;
+  author and validate integration-test release-input bytes through the real
+  `releases.releaseInputRecord` operation. Prove the closed package surface,
+  focused release and CLI behavior, source/test typecheck, workspace lint,
+  Habitat source law, and the lifecycle owner gate. Do not claim the subsequent
+  private TypeBox release-family normalization in this checkpoint.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

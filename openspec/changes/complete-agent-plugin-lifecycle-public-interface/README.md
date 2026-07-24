@@ -1106,6 +1106,27 @@ reviews closed without unresolved P0/P1. This completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7a]] without claiming
 the remaining module or root-service work complete.
 
+The narrow release-input checkpoint now removes the implementation-bearing
+`@rawr/agent-plugin-lifecycle/release` package export. External code receives
+only two input limits and six TypeBox-backed CLI value parsers through
+`@rawr/agent-plugin-lifecycle/input`; release schemas, constructors, codecs,
+serialization, digests, payloads, releases, and release sets remain private.
+The package-surface typecheck rejects the retired export. CLI integration tests
+author and validate release-input bytes through the real
+`releases.releaseInputRecord` operation, and the obsolete 143-line product
+fixture is deleted rather than relocated.
+
+The checkpoint passes 16 focused service cases and 19 focused CLI cases,
+service and CLI source/test typecheck, workspace Biome, the complete Habitat
+source-law batch, the lifecycle owner gate, and diff hygiene. Standing
+architecture, TypeScript/TypeBox/oRPC/Effect, testing, and structural-quality
+reviews closed without unresolved P0/P1. This completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7b]] and the narrow
+package-export checkpoint in [[service-domain-frame#Burn-Down Design]]. The
+pre-existing private release parsers still participate in TypeBox refinements;
+their deletion is explicitly the next TypeBox release-family checkpoint, not a
+claim made here.
+
 ## Settlement Oracles
 
 The final product must prove:

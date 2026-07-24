@@ -10,7 +10,7 @@ import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/input";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -30,7 +30,7 @@ import {
   parseLifecycleExecutableBinding,
   projectLifecycleOperation,
 } from "../../src/lib/agent-plugins/commands/projection";
-import { productFixture } from "./service-runtime/providers/product-fixture";
+import { releaseInputBodyFixture } from "./fixtures/release-input-body";
 import {
   createOwnedFixtureRoot,
   removeOwnedFixtureRoot,
@@ -476,7 +476,7 @@ describe("qualified lifecycle command boundary", () => {
   });
 
   it("authors and validates release-input records from bounded stdin without executable bindings", () => {
-    const bodyText = JSON.stringify(productFixture().releaseInput.body);
+    const bodyText = JSON.stringify(releaseInputBodyFixture());
     const args = ["agent", "plugins", "check", "--mode", "release-input-record"] as const;
     const result = runRawr([...args, "--json"], bodyText);
 

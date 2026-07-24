@@ -4,10 +4,16 @@ import * as retiredExportBindingSurface from "@rawr/agent-plugin-lifecycle/bindi
 import * as retiredBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { Config, CreateClientOptions, Deps, Scope } from "@rawr/agent-plugin-lifecycle/client";
 import { type NativeProviderSessionResolver } from "@rawr/agent-plugin-lifecycle/host";
+import {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  parsePluginId,
+} from "@rawr/agent-plugin-lifecycle/input";
 // @ts-expect-error Retired export module ports cannot remain package-reachable.
 import * as retiredExportPortSurface from "@rawr/agent-plugin-lifecycle/ports/exports";
 // @ts-expect-error Lifecycle module ports are not a public package axis.
 import * as retiredPortSurface from "@rawr/agent-plugin-lifecycle/ports/providers";
+// @ts-expect-error Release construction is private to the lifecycle service.
+import * as retiredReleaseSurface from "@rawr/agent-plugin-lifecycle/release";
 import { type Router, router } from "@rawr/agent-plugin-lifecycle/router";
 import { type Contract, contract } from "@rawr/agent-plugin-lifecycle/service/contract";
 // @ts-expect-error Contract types are exposed only through the owner-qualified contract subpath.
@@ -28,6 +34,9 @@ void retiredBindingSurface;
 void retiredPortSurface;
 void retiredExportBindingSurface;
 void retiredExportPortSurface;
+void retiredReleaseSurface;
+void MAX_RELEASE_INPUT_ENVELOPE_BYTES;
+void parsePluginId;
 
 type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof Deps ? never : true;
 const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;

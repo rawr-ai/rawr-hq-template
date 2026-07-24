@@ -1,19 +1,10 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
-import {
-  canonicalSerializeAgentPluginReleaseInput,
-  contentDigest,
-  createAgentPluginPayload,
-  createAgentPluginReleaseInput,
-  decodeAgentPluginReleaseInput,
-  parseContentAuthority,
-  parsePluginId,
-  parseReleaseRelativePath,
-} from "@rawr/agent-plugin-lifecycle/release";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
@@ -125,26 +116,48 @@ describe("node vendor lifecycle runtime", () => {
     expect(
       await readFile(path.join(content.root, "plugins/example/vendor/payload.txt"), "utf8")
     ).toBe("updated\n");
-    const release = decodeAgentPluginReleaseInput(
-      await readFile(path.join(content.root, ".rawr/release-input.json"))
+    const releaseInputBytes = await readFile(path.join(content.root, ".rawr/release-input.json"));
+    const releaseRecordClient = await createProductionLifecycleClient(
+      "releases.releaseInputRecord",
+      lifecycleBinding()
     );
-    expect(release.ok).toBe(true);
-    if (!release.ok) throw new Error("authored release input did not decode");
-    const governedPaths = [
-      "vendor/sources/example.json",
-      "vendor/provenance/example.json",
-      "vendor/locks/example.json",
-    ] as const;
-    const declaredDigests = new Map<string, string>(
-      [...(release.value.body.members[0]?.vendor ?? []), ...release.value.body.locks].map(
-        (binding) => [String(binding.id), binding.contentDigest]
-      )
+    const validatedReleaseInput = await releaseRecordClient.releases.releaseInputRecord(
+      { kind: "validate-envelope", bytes: releaseInputBytes },
+      invocation
     );
-    for (const relativePath of governedPaths) {
-      expect(declaredDigests.get(relativePath)).toBe(
-        contentDigest(await readFile(path.join(content.root, relativePath)))
-      );
-    }
+    expect(validatedReleaseInput.ok).toBe(true);
+    if (!validatedReleaseInput.ok) throw new Error("authored release input was rejected");
+    const release: unknown = JSON.parse(new TextDecoder().decode(releaseInputBytes));
+    expect(release).toMatchObject({
+      body: {
+        members: [
+          {
+            vendor: [
+              {
+                id: "vendor/provenance/example.json",
+                contentDigest: contentDigest(
+                  await readFile(path.join(content.root, "vendor/provenance/example.json"))
+                ),
+              },
+              {
+                id: "vendor/sources/example.json",
+                contentDigest: contentDigest(
+                  await readFile(path.join(content.root, "vendor/sources/example.json"))
+                ),
+              },
+            ],
+          },
+        ],
+        locks: [
+          {
+            id: "vendor/locks/example.json",
+            contentDigest: contentDigest(
+              await readFile(path.join(content.root, "vendor/locks/example.json"))
+            ),
+          },
+        ],
+      },
+    });
 
     const convergedState = await repositoryState(content.root);
     expect(await client.vendors.update(request, invocation)).toEqual({
@@ -254,74 +267,66 @@ async function createContentRepository(
     schemaVersion: lock.schemaVersion,
     sourceId: lock.sourceId,
   });
-  const pluginPayloadPath = must(parseReleaseRelativePath("skills/example/SKILL.md"));
-  const pluginPayload = must(
-    createAgentPluginPayload([
-      {
-        path: pluginPayloadPath,
-        mode: 0o644,
-        bytes: new TextEncoder().encode("# Fixture\n"),
-      },
-    ])
+  const releaseRecordClient = await createProductionLifecycleClient(
+    "releases.releaseInputRecord",
+    lifecycleBinding()
   );
-  const release = must(
-    createAgentPluginReleaseInput({
-      schemaVersion: 1,
-      contentAuthority: must(parseContentAuthority("fixture-authority")),
-      members: [
-        {
-          kind: "agent-plugin",
-          pluginId: must(parsePluginId("example")),
-          skillInventory: [{ identity: "example", manifestPath: pluginPayloadPath }],
-          payload: {
-            protocolVersion: 1,
-            manifest: pluginPayload.manifest,
-            payloadDigest: pluginPayload.payloadDigest,
+  const release = await releaseRecordClient.releases.releaseInputRecord(
+    {
+      kind: "encode-body",
+      body: {
+        schemaVersion: 1,
+        contentAuthority: "fixture-authority",
+        members: [
+          {
+            kind: "agent-plugin",
+            pluginId: "example",
+            skillInventory: [],
+            payload: {
+              protocolVersion: 1,
+              manifest: [],
+              payloadDigest: "pd1_37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+            },
+            vendor: [
+              {
+                id: "vendor/sources/example.json",
+                protocol: VENDOR_SOURCE_PROTOCOL,
+                contentDigest: contentDigest(declarationBytes),
+              },
+              {
+                id: "vendor/provenance/example.json",
+                protocol: VENDOR_PROVENANCE_PROTOCOL,
+                contentDigest: contentDigest(provenanceBytes),
+              },
+            ],
+            curation: [],
           },
-          vendor: [
-            {
-              id: "vendor/sources/example.json",
-              protocol: VENDOR_SOURCE_PROTOCOL,
-              contentDigest: contentDigest(declarationBytes),
-            },
-            {
-              id: "vendor/provenance/example.json",
-              protocol: VENDOR_PROVENANCE_PROTOCOL,
-              contentDigest: contentDigest(provenanceBytes),
-            },
-          ],
-          curation: [],
-        },
-      ],
-      ownershipClaims: [
-        { kind: "skill", identity: "example", ownerPluginId: must(parsePluginId("example")) },
-      ],
-      locks: [
-        {
-          id: "vendor/locks/example.json",
-          protocol: VENDOR_LOCK_PROTOCOL,
-          contentDigest: contentDigest(lockBytes),
-        },
-      ],
-      qualityPolicies: [],
-    })
+        ],
+        ownershipClaims: [],
+        locks: [
+          {
+            id: "vendor/locks/example.json",
+            protocol: VENDOR_LOCK_PROTOCOL,
+            contentDigest: contentDigest(lockBytes),
+          },
+        ],
+        qualityPolicies: [],
+      },
+    },
+    invocation
   );
+  if (!release.ok) throw new Error("fixture release input was rejected");
   await mkdir(path.join(root, ".rawr"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "vendor/sources"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "vendor/provenance"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "vendor/locks"), { recursive: true, mode: 0o700 });
   await mkdir(path.join(root, "plugins/example/vendor"), { recursive: true, mode: 0o700 });
-  await mkdir(path.join(root, "plugins/example/skills/example"), { recursive: true, mode: 0o700 });
-  await writeFile(
-    path.join(root, ".rawr/release-input.json"),
-    canonicalSerializeAgentPluginReleaseInput(release)
-  );
+  await writeFile(path.join(root, ".rawr/release-input.json"), release.value.bytes);
   await writeFile(path.join(root, "vendor/sources/example.json"), declarationBytes);
   await writeFile(path.join(root, "vendor/provenance/example.json"), provenanceBytes);
   await writeFile(path.join(root, "vendor/locks/example.json"), lockBytes);
   await writeFile(path.join(root, "plugins/example/vendor/SKILL.md"), "# Vendor fixture\n");
   await writeFile(path.join(root, "plugins/example/vendor/payload.txt"), "initial\n");
-  await writeFile(path.join(root, "plugins/example/skills/example/SKILL.md"), "# Fixture\n");
   await git(root, ["init", "-b", "main"]);
   await configureGit(root);
   await git(root, ["remote", "add", "origin", repositoryIdentity]);
@@ -425,6 +430,10 @@ function jsonLine(value: unknown): Uint8Array {
   return new TextEncoder().encode(`${serialized}\n`);
 }
 
+function contentDigest(bytes: Uint8Array): string {
+  return `sha256_${createHash("sha256").update(bytes).digest("hex")}`;
+}
+
 function identityValue(identity: VendorSourceIdentity) {
   return Object.freeze({
     payloadDigest: identity.payloadDigest,
@@ -433,11 +442,4 @@ function identityValue(identity: VendorSourceIdentity) {
     sourceCommit: identity.sourceCommit,
     sourceTree: identity.sourceTree,
   });
-}
-
-function must<T>(
-  result: Readonly<{ ok: true; value: T } | { ok: false; issues?: readonly unknown[] }>
-): T {
-  if (!result.ok) throw new Error(`fixture value is invalid: ${JSON.stringify(result.issues)}`);
-  return result.value;
 }
