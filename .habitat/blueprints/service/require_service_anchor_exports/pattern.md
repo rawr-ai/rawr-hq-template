@@ -5,8 +5,11 @@ tags: [orpc, service, positive, anchor]
 # Require Generic Service Anchor Exports
 
 Every existing service spine file directly exports the generic value for its
-role: `base`, `contract`, `service`, `module`, or `router`. Product
-qualification belongs at the import site.
+role: standalone services export the runtime implementer anchor `base`, every
+service interior exports `contract`, `service`, `module`, or `router`, and
+product qualification belongs at the import site. Embedded API-plugin
+`base.ts` remains the required boundary/type anchor, but it does not export a
+runtime `base`; its implementation begins at `impl.ts`.
 
 This law proves only anchor presence. Other declarations and exports are
 outside its scope; Knip and the future intentional-export/JSDoc boundary own
@@ -25,9 +28,9 @@ predicate exports_direct_const($statements, $anchor) {
   }
 }
 
-// Maps root base files to the generic base anchor.
+// Maps only standalone root base files to the generic base anchor.
 predicate is_base_anchor_file() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/base\.ts$"
+  $filename <: r".*services/[^/]+/src/service/base\.ts$"
 }
 
 // Maps root and module contracts to the generic contract anchor.
@@ -86,6 +89,14 @@ export const runtime = implementEffect(contract, Layer.empty);
 ```typescript
 // @filename: services/jobs/src/service/contract.ts
 export const jobsContract = eoc.router({});
+```
+
+## Ignores an embedded API-plugin boundary and type anchor
+
+```typescript
+// @filename: plugins/server/api/catalog/src/service/base.ts
+/** Initial request context supplied by the API host. */
+export type InitialContext = { readonly request: Request };
 ```
 
 ## Matches a missing service anchor

@@ -4,12 +4,16 @@ tags: [orpc, service, positive, composition]
 ---
 # Require Native Service oRPC Composition
 
-Standalone `base` is directly initialized by exact named
-`implementEffect(contract, ...)`. Exported standalone `service`, API-plugin
-`service`, and `module` initializers visibly contain their first native hop
-from imported `base`, exact named `implement(contract).$context<...>()`, or the
-imported service branch matching the module directory. Runtime namespaces from
-the oRPC composition vendors are rejected.
+Standalone `base` is directly initialized by the named runtime
+`implementEffect(contract, ...)` import. Exported standalone `service`,
+API-plugin `service`, and `module` initializers visibly contain their first
+native hop from a named runtime `base` import, named runtime
+`implement(contract).$context<...>()`, or the named runtime `service` branch
+matching the module directory. Those runtime specifiers may share an import
+declaration with other type-only specifiers, but the ownership binding itself
+must be a runtime import. A type-only `implementEffect`, `implement`, `base`, or
+`service` specifier cannot satisfy a runtime ownership hop. Runtime namespaces
+from the oRPC composition vendors are rejected.
 
 Any number of native `.use(...)` calls may follow the visible first hop. Grit
 does not prove that an outer wrapper preserves that owner. TypeScript and
@@ -24,35 +28,35 @@ function service_branch_name($value) js {
   return `^${$value.text.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())}$`;
 }
 
-// Requires standalone base construction to use exact Effect-oRPC authority.
+// Requires an exact named import specifier to survive at runtime.
+predicate imports_runtime_binding($import, $anchor) {
+  $import <: contains import_specifier(name=$anchor) as $specifier where {
+    $specifier <: not contains type(),
+    $specifier <: $anchor
+  }
+}
+
+// Requires standalone base construction to import named Effect-oRPC authority.
 predicate imports_exact_implement_effect($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']effect-orpc[\"']$",
-    $import <: `import { implementEffect } from $source`
+    imports_runtime_binding(import=$import, anchor=`implementEffect`)
   }
 }
 
-// Requires embedded API services to use exact oRPC server authority.
+// Requires embedded API services to import named oRPC server authority.
 predicate imports_exact_implement($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']@orpc/server[\"']$",
-    $import <: `import { implement } from $source`
+    imports_runtime_binding(import=$import, anchor=`implement`)
   }
 }
 
-// Connects standalone service initialization to its exact local base binding
-// without constraining unrelated named imports from the same module.
-predicate imports_value_binding($import, $binding) {
-  $import <: contains import_specifier(name=$binding) as $specifier where {
-    $specifier <: not contains type(),
-    $specifier <: $binding
-  }
-}
-
+// Connects standalone initialization to a named runtime base import.
 predicate imports_exact_base($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']\./base[\"']$",
-    imports_value_binding(import=$import, binding=`base`)
+    imports_runtime_binding(import=$import, anchor=`base`)
   }
 }
 
@@ -147,7 +151,7 @@ or {
     not {
       $body <: contains import_statement(source=$source) as $import where {
         is_current_root_service_source(source=$source),
-        $import <: `import { service } from $source`
+        imports_runtime_binding(import=$import, anchor=`service`)
       },
       $body <: contains or {
         `export const module = $value`,
@@ -176,6 +180,15 @@ import { contract } from "./contract";
 export const base = makeBase(contract, Layer.empty);
 ```
 
+## Matches a type-only standalone base authority
+
+```typescript
+// @filename: services/jobs/src/service/base.ts
+import { type implementEffect } from "effect-orpc";
+import { contract } from "./contract";
+export const base = implementEffect(contract, Layer.empty);
+```
+
 ## Matches a disconnected standalone base initializer
 
 ```typescript
@@ -193,15 +206,6 @@ export const base = configured;
 import { base } from "./base";
 const configured = base.use(provider);
 export const service = configured;
-```
-
-## Matches a base binding imported from the wrong source
-
-```typescript
-// @filename: services/jobs/src/service/impl.ts
-import type { Context } from "./base";
-import { base } from "./other";
-export const service = base.use<Context, Context>(middleware);
 ```
 
 ## Matches a disconnected API service
@@ -242,9 +246,7 @@ import { router as catalog } from "./modules/catalog/router";
 export const router: Router<typeof contract, Context> =
   service.router({ capabilities: { catalog } });
 // @filename: services/jobs/src/service/impl.ts
-import { base, createTelemetry, type Context } from "./base";
-const telemetry = createTelemetry();
-export const service = base.use(telemetry);
+import { base } from "./base"; export const service = base;
 // @filename: services/catalog/src/service/impl.ts
 import { base } from "./base"; export const service = base.use(one);
 // @filename: services/search/src/service/impl.ts
@@ -264,4 +266,23 @@ import { module } from "./module";
 export const router: Router = {
   find: module.find.use(one).use(two).use(three).effect(handler),
 } satisfies Router;
+```
+
+## Ignores combined runtime and type-only named imports
+
+```typescript
+// @filename: services/jobs/src/service/base.ts
+import { implementEffect, type EffectHandler } from "effect-orpc";
+import { contract } from "./contract";
+export const base = implementEffect(contract, Layer.empty);
+// @filename: services/jobs/src/service/impl.ts
+import { base, type Context, type InitialContext } from "./base";
+export const service = base.use<Context, InitialContext>(provider);
+// @filename: services/jobs/src/service/modules/job-search/module.ts
+import { service, type ServiceContext } from "#jobs-service/impl";
+export const module = service.jobSearch.use<ServiceContext>(provider);
+// @filename: plugins/server/api/catalog/src/service/impl.ts
+import { implement, type Middleware } from "@orpc/server";
+import { contract } from "./contract";
+export const service = implement(contract).$context<Context>().use(authentication);
 ```

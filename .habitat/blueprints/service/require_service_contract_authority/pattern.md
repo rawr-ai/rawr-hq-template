@@ -4,15 +4,20 @@ tags: [orpc, service, contract, typebox, error-authority]
 ---
 # Require Service Contract Authority
 
-A module contract is a declarative boundary, not a schema workshop. Its
-top-level grammar admits imports, private contract-attached
-`ORPCTaggedError` declarations for standalone services and API-plugin embedded
-services, and the single generic
-`contract` anchor. Procedure input and output envelopes adapt TypeBox directly
-at their contract positions. Reusable domain schemas remain outside
-`contract.ts` as `NameSchema` authorities. A colocated `NameType` is required
-to be `Static<typeof NameSchema>` when one is actually needed; the rule does
-not manufacture unused aliases.
+A module contract is one exported boundary. Its top-level grammar admits
+imports, private contract-attached `ORPCTaggedError` declarations, private
+`const` schema composition, private error maps, bounded shared fragments,
+private helpers, and the single exported `contract` anchor. Every private
+support declaration must be syntactically reachable from that exported
+contract directly or through one private `const` intermediary. Procedure input
+and output envelopes adapt TypeBox with `schema(...)` at their contract
+positions.
+
+Reusable domain schemas still belong outside `contract.ts` as `NameSchema`
+authorities. A colocated `NameType` is required to be
+`Static<typeof NameSchema>` when one is actually needed; the rule does not
+manufacture unused aliases. Contract-local support remains private and cannot
+become a parallel exported schema, type, envelope, error map, or helper API.
 
 The generic service anchor packet owns ordinary anchor export syntax. Reuse
 count is owned by the import graph and review; this source rule does not infer
@@ -32,58 +37,104 @@ predicate is_module_contract() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
-// Grants Effect error-definition authority only to module contracts.
-predicate is_effect_contract() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
-}
-
-// Connects each local error constructor to its public contract map.
-predicate contract_attaches_error($name) {
-  or {
-    $program <: contains `$builder.errors({ $..., $code: $name, $... })`,
-    $program <: contains `$builder.errors({ $..., $name, $... })`
+// Connects a support name used directly by the generic contract anchor.
+predicate exported_contract_uses($name) {
+  $program <: contains `export const contract = $value` where {
+    $value <: contains $name
   }
 }
 
-// Keeps contract top levels declarative while admitting attached local errors.
+// Connects private support directly or through one immutable intermediary.
+predicate contract_uses_support($name) {
+  or {
+    exported_contract_uses(name=$name),
+    and {
+      $program <: contains `const $parent = $value` where {
+        $value <: contains $name
+      },
+      exported_contract_uses(name=$parent)
+    }
+  }
+}
+
+// Recognizes a private error map used directly or through one local map spread.
+predicate error_map_reaches_errors($map) {
+  or {
+    $program <: contains `$builder.errors($map)`,
+    and {
+      $program <: contains `const $parent = { $..., ...$map, $... }`,
+      $program <: contains `$builder.errors($parent)`
+    }
+  }
+}
+
+// Recognizes a local private object-literal error map.
+predicate is_local_error_map($map) {
+  $map <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+  $program <: contains `const $map = { $properties }`
+}
+
+// Recognizes a private Effect-oRPC error constructor declared in this contract.
+predicate is_local_effect_error($name) {
+  or {
+    and {
+      $program <: contains `import { $..., ORPCTaggedError, $... } from "effect-orpc"`,
+      $program <: contains `class $name extends ORPCTaggedError($args) { $body }`
+    },
+    and {
+      $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
+      $program <: contains `class $name extends $tagged($args) { $body }`
+    },
+    and {
+      $program <: contains `import * as $namespace from "effect-orpc"`,
+      $program <: contains `class $name extends $namespace.ORPCTaggedError($args) { $body }`
+    }
+  }
+}
+
+// Connects each private Effect error constructor to a reachable errors clause.
+predicate contract_attaches_error($name) {
+  or {
+    $program <: contains `$builder.errors({ $..., $code: $name, $... })`,
+    $program <: contains `$builder.errors({ $..., $name, $... })`,
+    and {
+      $program <: contains `const $map = { $..., $code: $name, $... }`,
+      error_map_reaches_errors(map=$map)
+    },
+    and {
+      $program <: contains `const $map = { $..., $name, $... }`,
+      error_map_reaches_errors(map=$map)
+    }
+  }
+}
+
+// Keeps contract-local support private and syntactically reachable.
 predicate is_allowed_contract_statement($statement) {
   or {
     $statement <: import_statement(),
-    $statement <: `const $name = $value`,
-    $statement <: `let $name = $value`,
-    $statement <: `var $name = $value`,
-    $statement <: `function $name($args) { $body }`,
-    $statement <: `const contract = $value`,
     $statement <: `export const contract = $value`,
-    $statement <: `export { contract }`,
     and {
-      is_effect_contract(),
-      $statement <: `class $name extends ORPCTaggedError($args) { $body }`,
-      $program <: contains `import { $..., ORPCTaggedError, $... } from "effect-orpc"`,
-      contract_attaches_error(name=$name)
+      $statement <: `const $name = $value`,
+      contract_uses_support(name=$name)
     },
     and {
-      is_effect_contract(),
-      $statement <: `class $name extends $tagged($args) { $body }`,
-      $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
-      contract_attaches_error(name=$name)
+      $statement <: `function $name($args) { $body }`,
+      contract_uses_support(name=$name)
     },
     and {
-      is_effect_contract(),
-      $statement <: `class $name extends $namespace.ORPCTaggedError($args) { $body }`,
-      $program <: contains `import * as $namespace from "effect-orpc"`,
+      $statement <: `class $name extends $parent($args) { $body }`,
+      is_local_effect_error(name=$name),
       contract_attaches_error(name=$name)
     }
   }
 }
 
 or {
-  variable_declarator(name=$name) where {
+  program(statements=$statements) where {
     is_module_contract(),
-    ! $name <: `contract`
-  },
-  `function $name($args) { $body }` where {
-    is_module_contract()
+    not {
+      $statements <: some `export const contract = $value`
+    }
   },
   program(statements=$statements) where {
     is_module_contract(),
@@ -97,40 +148,46 @@ or {
     $source <: r"^[\"']typebox[\"']$",
     $import <: `import * as $namespace from $source`
   },
-  `$builder.errors($map)` where {
-    is_effect_contract(),
-    ! $map <: `{ $properties }`
-  },
-  `$builder.errors({ $..., $code: $definition, $... })` where {
-    is_effect_contract(),
+  `$builder.errors($argument)` where {
+    is_module_contract(),
     not {
       or {
-        $program <: contains `class $definition extends ORPCTaggedError($args) { $body }`,
-        and {
-          $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
-          $program <: contains `class $definition extends $tagged($args) { $body }`
-        },
-        and {
-          $program <: contains `import * as $namespace from "effect-orpc"`,
-          $program <: contains `class $definition extends $namespace.ORPCTaggedError($args) { $body }`
-        }
+        $argument <: `{ $properties }`,
+        is_local_error_map(map=$argument)
       }
     }
   },
+  `$builder.errors({ $..., $code: $definition, $... })` where {
+    is_module_contract(),
+    not { is_local_effect_error(name=$definition) }
+  },
   `$builder.errors({ $..., $definition, $... })` where {
-    is_effect_contract(),
+    is_module_contract(),
     $definition <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+    not { is_local_effect_error(name=$definition) }
+  },
+  `const $map = { $..., $code: $definition, $... }` where {
+    is_module_contract(),
+    contract_uses_support(name=$map),
+    error_map_reaches_errors(map=$map),
+    not { is_local_effect_error(name=$definition) }
+  },
+  `const $map = { $..., $definition, $... }` where {
+    is_module_contract(),
+    $definition <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+    contract_uses_support(name=$map),
+    error_map_reaches_errors(map=$map),
+    not { is_local_effect_error(name=$definition) }
+  },
+  `const $map = { $..., ...$spread, $... }` where {
+    is_module_contract(),
+    contract_uses_support(name=$map),
+    error_map_reaches_errors(map=$map),
     not {
-      or {
-        $program <: contains `class $definition extends ORPCTaggedError($args) { $body }`,
-        and {
-          $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
-          $program <: contains `class $definition extends $tagged($args) { $body }`
-        },
-        and {
-          $program <: contains `import * as $namespace from "effect-orpc"`,
-          $program <: contains `class $definition extends $namespace.ORPCTaggedError($args) { $body }`
-        }
+      and {
+        is_local_error_map(map=$spread),
+        contract_uses_support(name=$spread),
+        error_map_reaches_errors(map=$spread)
       }
     }
   },
@@ -150,16 +207,7 @@ or {
     }
   },
   program(statements=$body) where {
-    $filename <: r".*services/[^/]+/src/service/modules/[^/]+/contract\.ts$",
-    not {
-      or {
-        $body <: contains `import { $..., eoc, $... } from "effect-orpc"`,
-        $body <: contains `import { $..., eoc as $builder, $... } from "effect-orpc"`
-      }
-    }
-  },
-  program(statements=$body) where {
-    $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/contract\.ts$",
+    is_module_contract(),
     not {
       or {
         $body <: contains `import { $..., eoc, $... } from "effect-orpc"`,
@@ -262,12 +310,87 @@ or {
 }
 ```
 
-## Matches contract-local staging
+## Matches exported parallel schema and type authority
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/contract.ts
-const SearchSchema = build();
+import { schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
+import { type Static, Type } from "typebox";
+export const SearchSchema = Type.Object({ query: Type.String() });
+export type SearchType = Static<typeof SearchSchema>;
 export const contract = eoc.input(schema(SearchSchema));
+```
+
+## Matches a raw procedure schema
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract.ts
+import { eoc } from "effect-orpc";
+import { Type } from "typebox";
+export const contract = eoc.input(Type.Object({ query: Type.String() }));
+```
+
+## Matches nonlocal or dynamic error authority
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract.ts
+import { schema } from "@rawr/hq-sdk";
+import { eoc, ORPCTaggedError } from "effect-orpc";
+import { Type } from "typebox";
+import { upstreamErrors } from "./errors";
+class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
+const errors = {
+  ...upstreamErrors,
+  SERVICE_UNAVAILABLE: CatalogUnavailable,
+};
+export const contract = eoc
+  .errors(errors)
+  .input(schema(Type.Object({ id: Type.String() })))
+  .output(schema(Type.Object({ found: Type.Boolean() })));
+```
+
+## Matches a computed errors argument
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract.ts
+import { schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
+import { Type } from "typebox";
+const buildErrors = () => ({});
+export const contract = eoc
+  .errors(buildErrors())
+  .input(schema(Type.Object({ id: Type.String() })))
+  .output(schema(Type.Object({ found: Type.Boolean() })));
+```
+
+## Ignores reachable private contract composition
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract.ts
+import { schema } from "@rawr/hq-sdk";
+import { eoc, ORPCTaggedError } from "effect-orpc";
+import { Type } from "typebox";
+class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
+class CatalogBadRequest extends ORPCTaggedError("CatalogBadRequest") {}
+const accessErrors = { BAD_REQUEST: CatalogBadRequest };
+const errors = {
+  ...accessErrors,
+  SERVICE_UNAVAILABLE: CatalogUnavailable,
+};
+const batchCardinality = { minItems: 1, maxItems: 50 };
+const search = () => eoc
+  .input(schema(Type.Object({
+    queries: Type.Array(Type.String(), batchCardinality),
+  })))
+  .output(schema(Type.Object({ found: Type.Boolean() })));
+export const contract = {
+  search: search(),
+  mutate: eoc
+    .errors(errors)
+    .input(schema(Type.Object({ id: Type.String() })))
+    .output(schema(Type.Object({ updated: Type.Boolean() }))),
+};
 ```
 
 ## Ignores a declarative standalone-service contract

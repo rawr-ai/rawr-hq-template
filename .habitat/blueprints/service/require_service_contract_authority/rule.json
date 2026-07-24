@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "standalone-service and API-plugin embedded-service module-contract declarations outside imports, private attached Effect errors, and the generic contract anchor; indirect or raw procedure schemas; contract-local envelope staging or type aliases; namespace or mutable TypeBox authority; and detached or incorrectly named schema/type pairs",
-  "why": "A module contract is a declarative boundary. Direct Standard Schema adaptation and a small positive top-level grammar remove parallel schema, error, and transport-type authority.",
-  "remediate": "Inline schema(TypeBoxSchema) at each input/output position, move reusable domain schemas to their module model owner as NameSchema values, pair only an actually needed NameType as Static<typeof NameSchema>, define Effect public errors privately in the contract and attach them directly, and remove every other contract-local declaration.",
+  "forbids": "a module contract without one generic exported contract anchor or canonical TypeBox adaptation at every input/output; private support that is not bounded and reachable when present; errors that are not private local Effect-oRPC constructors when present; nonlocal or dynamic error-map authority; and any exported parallel schema, type, envelope, error-map, or helper authority",
+  "why": "A module contract is one exported authority. Bounded private support can reduce repeated syntax without turning schemas, errors, envelopes, or helpers into competing public boundaries.",
+  "remediate": "When contract-local schemas, error maps, shared fragments, or helpers are present, keep them private and syntactically reachable from the single exported contract. Apply schema(TypeBoxSchema) at every input/output. When public errors are present, define private Effect-oRPC constructors locally and attach them through inline or bounded local error maps. Remove imported, dynamic, or exported parallel authority.",
   "message": "Service module contracts must preserve one declarative schema and public-error authority.",
   "pathCoverage": [
     {
