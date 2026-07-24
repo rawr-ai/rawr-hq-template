@@ -1,15 +1,15 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
-
+import {
+  type CurrentMainBodyV3,
+  CurrentMainBodyV3Schema,
+  CurrentMainBytesSchema,
+  CurrentMainV3CodecResultSchema,
+} from "#agent-plugin-lifecycle-service/model/dto/current-main";
+import type { GitLocatorInput } from "#agent-plugin-lifecycle-service/model/policy/current-main-locator";
 import {
   CurrentMainSelectionLocatorSchema,
   CurrentMainSelectionResultSchema,
 } from "../../model/dto/current-main-selection";
-
-import {
-  CurrentMainBodyV3Schema,
-  CurrentMainBytesSchema,
-  CurrentMainV3CodecResultSchema,
-} from "./model/dto/current-main";
 
 export const GitLocatorSchema = CurrentMainSelectionLocatorSchema;
 
@@ -38,5 +38,5 @@ export const CurrentMainRecordInputSchema = Type.Union([
 export const CurrentMainRecordResultSchema = CurrentMainV3CodecResultSchema;
 export type CurrentMainRecordProcedureResult = Static<typeof CurrentMainRecordResultSchema>;
 
-export type { GitLocatorInput } from "./model/dto/boundary";
+export type { CurrentMainBodyV3, GitLocatorInput };
 export { CurrentMainSelectionResultSchema };

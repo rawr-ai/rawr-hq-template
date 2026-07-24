@@ -4,11 +4,11 @@ import {
   createExactGitBlobPointer,
   type GitBlobSelection,
   type GitLocator,
-} from "../../../src/service/modules/governance/model";
+} from "../../../src/service/model/dto/current-main-git";
 import {
   createResourceExactGitReader,
   type ResourceExactGitReadPort,
-} from "../../../src/service/modules/governance/repository/content-workspace";
+} from "../../../src/service/model/repositories/current-main-content-workspace";
 
 const encoder = new TextEncoder();
 const repositoryIdentity = "git:github.com/example/personal-rawr-hq";

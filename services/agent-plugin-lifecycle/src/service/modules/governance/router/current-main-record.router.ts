@@ -1,7 +1,7 @@
 import {
   encodeCurrentMainBodyV3,
   validateCurrentMainRecordV3,
-} from "../model/policy/current-main-record";
+} from "#agent-plugin-lifecycle-service/model/policy/current-main-record";
 import { module } from "../module";
 
 export const currentMainRecord = module.currentMainRecord.effect(function* ({ input }) {

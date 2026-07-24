@@ -193,8 +193,12 @@ both. See [[tasks#1. Positive Habitat And Nx Checks|task 1.6c3]].
 
 `services/agent-plugin-lifecycle` remains one service with bounded modules. Its
 root composes contracts, ready host dependencies, implementation, and routers.
-Each module owns its contract, router procedures, and
-`model/{dto,policy,schema}`. Domain behavior lives in procedure handlers and
+Each module owns its contract, router procedures, and owner-local
+`model/{dto,policy,schema}`. The root model retains only ready host contracts,
+dependency-owned observations, and the minimum service-owned domain model
+consumed by multiple modules. Current-main selection is shared because governance
+exposes it and providers consume it; governance-only procedure requests and
+results remain module-owned. Domain behavior lives in procedure handlers and
 module policy, not an `internal/` implementation tree.
 
 TypeBox schemas are the sole public structural schema and generated-type

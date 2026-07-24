@@ -1,7 +1,7 @@
-import type { CurrentMainSelectionLocator } from "../../../../model/dto/current-main-selection";
-import { isCanonicalAbsolutePath } from "../../../../model/dto/structural";
-import type { GitLocator } from "./git";
-import { parseRepository } from "./primitives";
+import type { GitLocator } from "../dto/current-main-git";
+import { parseRepository } from "../dto/current-main-primitives";
+import type { CurrentMainSelectionLocator } from "../dto/current-main-selection";
+import { isCanonicalAbsolutePath } from "../dto/structural";
 
 export type GitLocatorInput = CurrentMainSelectionLocator;
 

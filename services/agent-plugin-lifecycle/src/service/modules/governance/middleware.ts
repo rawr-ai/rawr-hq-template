@@ -1,5 +1,5 @@
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
-
+import { createResourceExactGitReader } from "#agent-plugin-lifecycle-service/model/repositories/current-main-content-workspace";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
@@ -7,7 +7,6 @@ import {
 } from "../../base";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { SelectedContentResolver } from "../../model/dependencies/providers";
-import { createResourceExactGitReader } from "./repository/content-workspace";
 
 export const repositories = createServiceProvider<{
   deps: {

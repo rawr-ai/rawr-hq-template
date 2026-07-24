@@ -3,18 +3,20 @@ import { schema } from "@rawr/hq-sdk";
 import { type Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
-import { contract } from "../../../src/service/modules/governance/contract";
+import {
+  type CurrentMainBodyV3,
+  CurrentMainBodyV3Schema,
+  MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH,
+  MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH,
+} from "../../../src/service/model/dto/current-main";
 import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
-  type CurrentMainBodyV3,
-  CurrentMainBodyV3Schema,
   type CurrentMainSelectionResult,
-  encodeCurrentMainBodyV3,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-  MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH,
-  MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH,
-} from "../../../src/service/modules/governance/model";
+} from "../../../src/service/model/dto/current-main-selection";
+import { encodeCurrentMainBodyV3 } from "../../../src/service/model/policy/current-main-record";
+import { contract } from "../../../src/service/modules/governance/contract";
 import {
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,

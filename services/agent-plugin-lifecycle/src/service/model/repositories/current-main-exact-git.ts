@@ -1,5 +1,14 @@
-import type { ExactGitBlobObservation, GitBlobSelection, GitLocator } from "../dto/git";
-import type { CanonicalRef, GitCommitId, GitTreeId, RepositoryIdentity } from "../dto/primitives";
+import type {
+  ExactGitBlobObservation,
+  GitBlobSelection,
+  GitLocator,
+} from "../dto/current-main-git";
+import type {
+  CanonicalRef,
+  GitCommitId,
+  GitTreeId,
+  RepositoryIdentity,
+} from "../dto/current-main-primitives";
 
 export type RepositoryInspection =
   | {

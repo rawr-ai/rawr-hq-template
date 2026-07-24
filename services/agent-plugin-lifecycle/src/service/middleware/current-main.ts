@@ -2,11 +2,11 @@ import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-works
 
 import { createServiceProvider } from "../base";
 import type { CurrentMainSelectionReader } from "../model/dependencies/current-main";
-import { decodeGitLocator } from "../modules/governance/model/dto/boundary";
-import { createResourceExactGitReader } from "../modules/governance/repository/content-workspace";
-import { resolveCurrentMainSelection } from "../modules/governance/router/current-main-selection";
+import { decodeGitLocator } from "../model/policy/current-main-locator";
+import { resolveCurrentMainSelection } from "../model/policy/current-main-selection";
+import { createResourceExactGitReader } from "../model/repositories/current-main-content-workspace";
 
-/** Derives the governance-owned current-main observation for sibling modules. */
+/** Derives the shared current-main observation consumed across service modules. */
 export const currentMain = createServiceProvider<{
   deps: {
     contentWorkspace: ContentWorkspaceNodeAsyncPort;

@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   CURRENT_MAIN_V3_PROTOCOL,
   type CurrentMainBodyV3,
-  encodeCurrentMainBodyV3,
   MAX_CURRENT_MAIN_V3_RECORD_BYTES,
+} from "../../../src/service/model/dto/current-main";
+import {
+  encodeCurrentMainBodyV3,
   validateCurrentMainRecordV3,
-} from "../../../src/service/modules/governance/model";
+} from "../../../src/service/model/policy/current-main-record";
 import {
   parseContentAuthority,
   parseGitCommitId,

@@ -1,4 +1,4 @@
-import type { ReleaseIssue, ReleaseResult } from "../../../../shared/release";
+import type { ReleaseIssue, ReleaseResult } from "../../shared/release";
 
 import {
   type CanonicalRef,
@@ -13,7 +13,7 @@ import {
   parseTree,
   type ReleaseRelativePath,
   type RepositoryIdentity,
-} from "./primitives";
+} from "./current-main-primitives";
 
 export interface GitLocator {
   readonly workspacePath: string;

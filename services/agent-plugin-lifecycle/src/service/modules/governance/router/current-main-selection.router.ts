@@ -1,7 +1,7 @@
+import { decodeGitLocator } from "#agent-plugin-lifecycle-service/model/policy/current-main-locator";
+import { resolveCurrentMainSelection } from "#agent-plugin-lifecycle-service/model/policy/current-main-selection";
 import { awaitDependencyPromise } from "../../../base";
-import { decodeGitLocator } from "../model/dto/boundary";
 import { module } from "../module";
-import { resolveCurrentMainSelection } from "./current-main-selection";
 
 export const currentMainSelection = module.currentMainSelection.effect(function* ({
   context,

@@ -5,20 +5,22 @@ import {
   CURRENT_MAIN_V3_RECORD_PATH,
   CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
   type CurrentMainBodyV3,
+} from "../../../src/service/model/dto/current-main";
+import {
   createExactGitBlobPointer,
   type ExactGitBlobObservation,
-  encodeCurrentMainBodyV3,
   type GitBlobSelection,
   type GitLocator,
-  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-  parseCanonicalRef,
-} from "../../../src/service/modules/governance/model";
+} from "../../../src/service/model/dto/current-main-git";
+import { parseCanonicalRef } from "../../../src/service/model/dto/current-main-primitives";
+import { MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH } from "../../../src/service/model/dto/current-main-selection";
+import { encodeCurrentMainBodyV3 } from "../../../src/service/model/policy/current-main-record";
+import { resolveCurrentMainSelection } from "../../../src/service/model/policy/current-main-selection";
 import type {
   ExactGitReader,
   GitReadFailure,
   RepositoryInspection,
-} from "../../../src/service/modules/governance/model/repositories/exact-git";
-import { resolveCurrentMainSelection } from "../../../src/service/modules/governance/router/current-main-selection";
+} from "../../../src/service/model/repositories/current-main-exact-git";
 import {
   type AgentPluginReleaseInput,
   canonicalSerializeAgentPluginReleaseInput,

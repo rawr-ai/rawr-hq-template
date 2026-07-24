@@ -23,11 +23,15 @@ absent.
 The lifecycle service MUST expose one root base, composed contract, implementer,
 router, typed local client, and only genuinely cross-cutting middleware. Every
 module MUST own its contract, module construction, router composition, and
-domain `model/{dto,policy,schema}`. Root `service/model` MUST contain only ready
-host dependency contracts and dependency-owned observation types. The shared
-release-derivation capability MAY expose the minimum closed release observation
-needed by packaging and providers, while operator requests, results, and issues
-remain under the releases module. The package root MUST expose only client
+owner-local `model/{dto,policy,schema}`. Root `service/model` MUST contain only
+ready host dependency contracts, dependency-owned observation types, and the
+minimum service-owned domain model consumed by multiple modules. Current-main
+selection belongs to that shared service model because governance exposes it and
+providers consume it; governance-only procedure requests and results remain in
+the governance module. The shared release-derivation capability MAY expose the
+minimum closed release observation needed by packaging and providers, while
+operator requests, results, and issues remain under the releases module. The
+package root MUST expose only client
 construction, named construction-boundary types, the router, and specifically
 required contracts. Module-local handlers, repositories, concrete providers,
 and broad DTO barrels MUST remain private.
@@ -35,7 +39,7 @@ and broad DTO barrels MUST remain private.
 #### Scenario: Structural inventory is exact
 - **WHEN** Habitat and package export inventories run
 - **THEN** the root and each module match their closed positive topology
-- **AND** module-owned release/governance requests under root model, a sixth
+- **AND** owner-local release/governance requests under root model, a sixth
 module, or a public concrete provider fails the ratchet
 
 Procedure handlers MUST be authored directly in each module's router surface and
