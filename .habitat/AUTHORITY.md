@@ -21,7 +21,7 @@ relationships:
 ## Service Source Law
 
 The generic service kind narrows construction through one topology axis and
-six independent source axes:
+nine independent source axes:
 
 1. Every service and module has one closed spine with no alternate internal,
    shared, common, procedure, or implementation container.
@@ -34,9 +34,15 @@ six independent source axes:
 5. Root composition imports only module contracts and routers; module
    implementation stays local, uses the declared service boundary, and does
    not reach into sibling modules.
-6. TypeBox schemas remain the declarative input and output authority in module
+6. Every private service or API alias maps to its owner's `src/service`
+   interior rather than creating another public package surface.
+7. Private service and API aliases remain inside their matching repository
+   owner; foreign, cross-kind, and outside-owner imports use public exports.
+8. Contracts, schemas, and DTOs stay platform-neutral; concrete Node and Bun
+   capabilities arrive through service context and explicit resource providers.
+9. TypeBox schemas remain the declarative input and output authority in module
    contracts, adapted through the one canonical RAWR bridge.
-7. Module contracts own attached public oRPC error constructors; routers use
+10. Module contracts own attached public oRPC error constructors; routers use
    injected error constructors rather than importing error authority.
 TypeScript owns inferred types and complete object compatibility. Habitat does
 not simulate module resolution or runtime behavior. Public error declarations
@@ -52,8 +58,9 @@ qualified owners and tests.
 Rules under `.habitat/rawr/agent-plugin-lifecycle` remain qualified lifecycle
 constraints rather than generic blueprints. The remaining rule closes the
 curated command channel and will shrink with the implementation. Reusable
-service and package dependency relationships belong to their generic
-blueprints, TypeScript package boundaries, and the Nx project graph.
+service source and topology relationships belong to their generic Habitat
+blueprints. TypeScript owns public package compatibility, while Nx observes the
+resolved project graph and schedules the qualified checks.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
 and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

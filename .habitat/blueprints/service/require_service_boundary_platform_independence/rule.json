@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_boundary_platform_independence",
+  "title": "Require Service Boundary Platform Independence",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a service contract, schema, or DTO declaration that directly acquires a Node or Bun platform module",
+  "why": "Domain declarations describe portable service boundaries; concrete platform acquisition belongs behind service context and resource providers.",
+  "remediate": "Keep contracts, schemas, and DTOs platform-neutral, and inject filesystem, process, storage, or runtime capabilities through the service context and an explicit resource provider.",
+  "message": "Service boundary declarations must not import concrete Node or Bun platform modules.",
+  "pathCoverage": [
+    {
+      "kind": "workspace-gate"
+    }
+  ],
+  "scanRoots": ["."],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_boundary_platform_independence/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_boundary_platform_independence/pattern.md"
+    },
+    "patternName": "require_service_boundary_platform_independence"
+  }
+}
