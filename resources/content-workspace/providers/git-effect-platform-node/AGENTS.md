@@ -29,7 +29,7 @@
 
 ## Validation
 
-- Run `bunx nx run provider-content-workspace-git-effect-platform-node:lint`
+- Run `bunx nx run habitat:lint`
   and
   `bunx nx run provider-content-workspace-git-effect-platform-node:typecheck`.
 - Run `bunx nx run provider-content-workspace-git-effect-platform-node:test`

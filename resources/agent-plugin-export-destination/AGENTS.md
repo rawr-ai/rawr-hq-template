@@ -30,5 +30,5 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/resource-agent-plugin-export-destination:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/resource-agent-plugin-export-destination:typecheck`.

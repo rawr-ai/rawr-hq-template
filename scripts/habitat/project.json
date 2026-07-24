@@ -8,14 +8,17 @@
   "targets": {
     "lint": {
       "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["{workspaceRoot}/**/*"],
+      "outputs": [],
       "options": {
-        "command": "bunx eslint scripts/habitat --ext .mjs"
+        "command": "biome ci --diagnostic-level=error ."
       }
     },
     "test": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bun test scripts/habitat/provision.test.mjs"
+        "command": "bun test scripts/habitat/*.test.mjs"
       }
     },
     "typecheck": {
@@ -29,15 +32,6 @@
       "cache": false,
       "options": {
         "command": "biome format --write ."
-      }
-    },
-    "check:hygiene": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": ["{workspaceRoot}/**/*"],
-      "outputs": [],
-      "options": {
-        "command": "biome ci --diagnostic-level=error ."
       }
     },
     "lint:effect": {
@@ -56,18 +50,38 @@
         "command": "biome lint --config-path=biome.effect.json ."
       }
     },
-    "check:policy": {
+    "check:source-law": {
       "executor": "nx:run-commands",
       "cache": true,
       "inputs": ["{workspaceRoot}/**/*", "bunToolchain"],
       "outputs": [],
       "options": {
-        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_boundary_platform_independence --rule require_service_private_alias_configuration --rule require_service_private_alias_ownership"
+        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_nx_workspace_scheduler_scripts --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_boundary_platform_independence --rule require_service_private_alias_configuration --rule require_service_private_alias_ownership"
       }
+    },
+    "check:project-admission": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/nx.json",
+        "{workspaceRoot}/package.json",
+        "{workspaceRoot}/**/package.json",
+        "{workspaceRoot}/**/project.json",
+        "{workspaceRoot}/.habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs",
+        "bunToolchain"
+      ],
+      "outputs": [],
+      "options": {
+        "command": "bun .habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs"
+      }
+    },
+    "check:policy": {
+      "executor": "nx:noop",
+      "dependsOn": ["check:source-law", "check:project-admission"]
     },
     "verify": {
       "executor": "nx:noop",
-      "dependsOn": ["test", "check:hygiene"]
+      "dependsOn": ["test"]
     },
     "check": {
       "executor": "nx:noop"

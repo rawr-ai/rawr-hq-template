@@ -29,6 +29,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/chatgpt-corpus:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/chatgpt-corpus:typecheck`.
 - Run `bunx nx run @rawr/chatgpt-corpus:test` when corpus behavior changes.

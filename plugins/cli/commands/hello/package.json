@@ -37,8 +37,7 @@
     "manifest": "bun --bun oclif manifest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
-    "test": "vitest run --project plugin-hello",
-    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
+    "test": "vitest run --project plugin-hello"
   },
   "nx": {
     "tags": [

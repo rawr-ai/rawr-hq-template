@@ -30,6 +30,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/example-todo:lint` and
+- Run `bunx nx run habitat:lint` and
   `bunx nx run @rawr/example-todo:typecheck`.
 - Run `bunx nx run @rawr/example-todo:test` when todo behavior changes.

@@ -32,8 +32,7 @@
     "sync": "bun run --cwd ../.. sync:check --project @rawr/hq-ops",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --project hq-ops",
-    "lint": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"**/*.{js,jsx,ts,tsx}\""
+    "test": "vitest run --project hq-ops"
   },
   "dependencies": {
     "@rawr/hq-sdk": "workspace:*",

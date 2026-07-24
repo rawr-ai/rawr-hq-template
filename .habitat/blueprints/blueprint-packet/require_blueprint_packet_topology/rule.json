@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an open blueprint packet, a missing rule or baseline, or a runner source outside the canonical pattern.md and structure.toml names",
-  "why": "Every generic blueprint rule is one closed policy packet. Stable packet names let Habitat validate topology and let native Grit tests execute the exact registered source without a parallel rule inventory.",
-  "remediate": "Keep rule.json and baseline.json in every blueprint packet, add only the runner source selected by the rule as pattern.md or structure.toml, and remove unrelated files from the packet.",
+  "forbids": "an open blueprint packet, a missing rule or baseline, or a runner source outside the canonical pattern.md, structure.toml, and exceptional check.mjs names",
+  "why": "Every generic blueprint rule is one closed policy packet. Stable packet names let Habitat validate topology and keep any demonstrated native capability-gap adapter beside the rule it implements.",
+  "remediate": "Keep rule.json and baseline.json in every blueprint packet, add only the selected pattern.md or structure.toml source, use check.mjs only for a documented Habitat capability gap, and remove unrelated files from the packet.",
   "message": "Blueprint packets must retain one closed canonical policy surface.",
   "pathCoverage": [
     {

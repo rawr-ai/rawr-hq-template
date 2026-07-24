@@ -12,12 +12,6 @@
     "check": {
       "executor": "nx:noop"
     },
-    "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"{projectRoot}/**/*.ts\""
-      }
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {

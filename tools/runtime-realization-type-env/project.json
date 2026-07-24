@@ -74,7 +74,10 @@
         "sync",
         "structural",
         "report",
-        "lint",
+        {
+          "projects": ["habitat"],
+          "target": "lint"
+        },
         "typecheck",
         "negative",
         "vendor-effect",
@@ -83,12 +86,6 @@
         "middle-spine",
         "simulate"
       ]
-    },
-    "lint": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "eslint --max-warnings 0 --no-error-on-unmatched-pattern \"tools/runtime-realization-type-env/**/*.{js,jsx,ts,tsx}\""
-      }
     }
   }
 }

@@ -31,7 +31,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/server:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/server:typecheck`
 - `bunx nx run @rawr/server:test`
 - `bunx nx run @rawr/server:build`

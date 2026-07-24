@@ -31,7 +31,7 @@
 ## Validation
 
 - Run
-  `bunx nx run provider-native-agent-provider-codex-effect-platform-node:lint`
+  `bunx nx run habitat:lint`
   and
   `bunx nx run provider-native-agent-provider-codex-effect-platform-node:typecheck`.
 - Run

@@ -32,7 +32,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/plugin-hello:lint`.
+- Run `bunx nx run habitat:lint`.
 - Run `bunx nx run @rawr/plugin-hello:typecheck`.
 - Run `bunx nx run @rawr/plugin-hello:test`.
 - Run `bunx nx run @rawr/plugin-hello:build`.

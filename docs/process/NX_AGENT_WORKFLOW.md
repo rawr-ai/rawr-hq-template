@@ -62,7 +62,7 @@ Do not add repo-local `.mcp.json` here.
 Project kinds share the same foundational CI vocabulary:
 
 - `build`: produce the project's ordinary build output
-- `lint`: run source hygiene and static lint rules
+- `lint`: run the one workspace-owned source hygiene and static lint task
 - `typecheck`: typecheck production source
 - `test`: run the project's behavior tests
 - `check`: compose the required project-quality prerequisites through Nx
@@ -71,6 +71,10 @@ Use `check:test` and `check:tools` only as internal typecheck leaves when a
 project has separately compiled test or tool sources. Use
 `acceptance:<capability>` only for a distinct installed, native, or boundary
 behavior. Do not create package-specific synonyms for these targets.
+
+`lint` is intentionally workspace-owned rather than repeated per project. The
+root routes directly to `habitat:lint`; project checks share that one task
+through `nx.json#targetDefaults`.
 
 Shared dependencies, cache inputs, and outputs belong in
 `nx.json#targetDefaults`. Keep an explicit project target only when it declares

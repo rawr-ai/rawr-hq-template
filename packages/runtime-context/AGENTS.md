@@ -28,7 +28,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/runtime-context:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/runtime-context:typecheck`
 - `bunx nx run @rawr/runtime-context:test`
 - `bunx nx run @rawr/runtime-context:build`

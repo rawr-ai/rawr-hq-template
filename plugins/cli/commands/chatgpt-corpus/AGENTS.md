@@ -36,7 +36,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/plugin-chatgpt-corpus:lint`.
+- Run `bunx nx run habitat:lint`.
 - Run `bunx nx run @rawr/plugin-chatgpt-corpus:typecheck`.
 - Run `bunx nx run @rawr/plugin-chatgpt-corpus:test`.
 - Run `bunx nx run @rawr/plugin-chatgpt-corpus:manifest` when command discovery

@@ -27,5 +27,5 @@
 
 ## Validation
 
-- `bunx nx run @rawr/test-utils:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/test-utils:typecheck`

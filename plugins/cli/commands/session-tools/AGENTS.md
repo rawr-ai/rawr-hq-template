@@ -35,7 +35,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/plugin-session-tools:lint`.
+- Run `bunx nx run habitat:lint`.
 - Run `bunx nx run @rawr/plugin-session-tools:typecheck`.
 - Run `bunx nx run @rawr/plugin-session-tools:test`.
 - Run `bunx nx run @rawr/plugin-session-tools:structural` when the package

@@ -48,34 +48,38 @@
 
 ## Required Repository Check
 - `bun run check` is the public required command. It invokes one
-  `nx run-many -t check` graph over every admitted non-root project.
-- Shared Nx target defaults connect every public check to lint, typecheck,
-  optional owner `verify`, Habitat `check:policy`, and dependency checks.
+  `nx run-many -t check` scheduler graph over every admitted non-root project.
+- Shared Nx target defaults connect every public check to the single
+  workspace-owned `habitat:lint`, project-owned typecheck, optional owner
+  `verify`, Habitat `check:policy`, and dependency checks.
   Individual owners add only their qualified prerequisites: CLI owns Oclif
-  source/build parity, Habitat owns structural policy, and the repository
-  project owns repository admission and separation. `check:policy` is reserved
-  for Habitat policy rather than behavioral aliases.
+  source/build parity, Habitat owns structural and project-admission policy,
+  and the repository project owns repository separation. `check:policy` is
+  reserved for Habitat policy rather than behavioral aliases.
 - `verify` is a narrow optional extension for deterministic required checks
   that do not reduce to lint, typecheck, or Habitat policy. It is owner-local,
   has no root aggregate, and grants no release or deployment authority.
-- `habitat:check` composes owner lint, typecheck, and tests with
-  `check:hygiene` and `check:policy`. `check:policy` runs one selected
-  green local Habitat batch. The selected batch has exact inputs and empty
-  baselines; it is not an assertion that every registered Habitat rule is
-  active.
+- `habitat:check` composes workspace lint, owner typecheck and tests, and
+  `check:policy`. `check:policy` composes the selected green source-law batch
+  and the rule-owned Nx project admission adapter. The registered rules have
+  exact inputs and empty baselines; this is not an assertion that every
+  registered Habitat rule is active.
 - Habitat checks are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests and complete owner
   checks remain explicit owner commands; they are not hidden inside merge
   admission.
 - Nx derives the complete target population from the project graph. The current
   bounded admission check requires exactly one `type:*` kind and a public
-  `check` on every non-root project, then requires `lint` and `typecheck` on
-  every code project. Only `type:content` and `type:fixture` are exempt from
-  those two code-quality targets; the root command maintains no project-name
-  list.
+  `check` on every non-root project, then requires `typecheck` on every code
+  project. Only `type:content` and `type:fixture` are exempt from that
+  project-local target; the root command maintains no project-name list.
 - `.habitat/**` is RAWR HQ-Template's small, positive structural authority tree.
   It constrains declared architectural kinds and relations without expanding
   into app composition or content-repository governance.
+- The root `lint` script routes directly to `habitat:lint`. That target owns
+  ordinary repository-wide source lint once. It does not encode topology or
+  source relationships; those remain native Habitat `structure.toml` and
+  `pattern.md` laws.
 - `scripts/habitat/release.json` pins the standalone Habitat asset by source
   provenance, byte size, and SHA-256. The Civ7 release owns the binary, which is
   compiled with Bun 1.4; this repository consumes it and does not vendor its SDK
@@ -87,8 +91,9 @@
   context, `Required lint, typecheck, and topology`.
 - The Civ-style project-owned `check` composition is active. Do not add a root
   Nx project target, nested scheduler, aggregate owner, or project-name batch.
-  Native Habitat project admission will replace the temporary graph reader once
-  the published consumer can acquire the complete project set generically.
+  The resolved-project constraint is a Habitat rule. Its `check.mjs` is the
+  narrow allowed adapter for the pinned standalone binary's missing native Nx
+  runner, not a second repository-policy surface.
 - Nx task ownership and cache behavior follow the
   [Nx agent workflow](../docs/process/NX_AGENT_WORKFLOW.md).
 

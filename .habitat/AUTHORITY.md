@@ -17,6 +17,9 @@ relationships:
 4. The executable CLI is one conventional Oclif app, and every first-party
    command capability is one uniform host-composed Oclif plugin on public
    package boundaries.
+5. The workspace root exposes one exact Nx scheduler surface. Repository lint
+   has one workspace owner; project checks compose it once through Nx rather
+   than re-running a project-local aggregate.
 
 ## Service Source Law
 
@@ -64,6 +67,13 @@ former coarse project-kind matrix is retired, not represented as another source
 pattern. Nx observes and schedules the graph; any still-required resolved-edge
 constraint must enter later as its own Habitat graph packet, never as ESLint
 architecture.
+
+The `nx-workspace` blueprint owns the root scheduler contract and resolved
+project-quality admission. Grit owns the scheduler source law. The pinned
+standalone consumer cannot execute Habitat's native Nx runner, so the project
+rule keeps one bounded `check.mjs` adapter beside its manifest until project
+metadata has one directly checkable owner or the consumer gains that runner.
+No equivalent policy belongs in ESLint or `scripts/**`.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
 and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

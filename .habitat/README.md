@@ -24,6 +24,9 @@ The current generic kinds are:
   discovery configuration, and generated command-manifest relationship.
 - `oclif-command-plugin`: one host-composed command package, command root,
   discovery configuration, and public dependency boundary.
+- `nx-workspace`: the exact root scheduler surface and resolved project-quality
+  admission, including one workspace lint owner and one multi-project
+  build/check/test graph.
 - `plugin` and `plugin-server`: documented parent kinds whose universal shape
   remains intentionally unconstrained.
 
@@ -32,22 +35,22 @@ package laws. Its remaining lifecycle rule closes the curated command channel
 while that implementation is simplified. Generic service and Oclif packets own
 their admitted source relationships, and TypeScript package exports own public
 compatibility. The lifecycle niche does not duplicate those laws as a
-package-name or path blacklist. A future resolved project-edge constraint is a
-separate Habitat graph packet, not an ESLint rule.
+package-name or path blacklist. Resolved project admission is a separate
+Habitat rule, not an ESLint rule.
 
 Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
 topology. Every Grit packet exposes its executable source as `pattern.md`;
 rule-specific semantics belong in the packet directory and rule metadata, not
-in a second filename convention. Grit rules own source relationships.
-Behavioral semantics stay in TypeScript tests and owner review rather than
-being approximated as source shape.
+in a second filename convention. Grit rules own source relationships. A
+`check.mjs` is the closed exception for a demonstrated native runner gap and
+must remain inside its rule packet. Behavioral semantics stay in TypeScript
+tests and owner review rather than being approximated as source shape.
 
-`habitat:check:policy` evaluates the admitted policy batch through one
-invocation of the pinned standalone binary. The published binary does not
-expose a native fixture runner for these Habitat packet sources, so the
-repository does not add a second Markdown parser or duplicate pattern inventory
-to simulate one.
+`habitat:check:policy` composes one pinned-binary source-law invocation with the
+one rule-owned Nx graph adapter. The published binary exposes neither its
+native Nx runner nor a packet-fixture runner, so the repository does not add a
+second Markdown parser or duplicate pattern inventory to simulate either one.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
@@ -64,8 +67,8 @@ RAWR adds two owner-private alias laws and one platform-independence law for
 contracts, schemas, and DTOs; those local packets do not change the imported
 Magic service algorithms.
 
-The Oclif packets are RAWR-authored. They apply the same positive, closed-kind
-posture to the executable app and its command plugins without claiming Magic
-Migration provenance.
+The Oclif and Nx workspace packets are RAWR-authored. They apply the same
+positive, closed-kind posture to the executable app, its command plugins, and
+the repository scheduler without claiming Magic Migration provenance.
 
 See [[AUTHORITY|the authority boundary]] and [[AGENTS|the repository router]].

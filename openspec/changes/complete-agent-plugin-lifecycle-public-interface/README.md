@@ -166,9 +166,10 @@ surfaces name operations while oRPC implementation code retains its native
 procedure vocabulary. Every named Grit helper carries a directly preceding
 semantic comment. Both checks have empty baselines and run in the selected
 green local batch behind `habitat:check`. The public `bun run check` command
-starts one Nx `check` graph over every admitted project. Shared target defaults
-connect each public check to lint, typecheck, owner-local verification, Habitat
-policy, and dependency checks. Habitat owns the selected topology batch, CLI
+starts one Nx `check` scheduler graph over every admitted project. Shared target defaults
+connect each public check to one workspace lint task, project typecheck,
+owner-local verification, Habitat policy, and dependency checks. Habitat owns
+the selected topology batch, CLI
 owns Oclif source/build parity, and the repository project owns only repository
 admission and separation.
 Required Oclif structure laws and the lifecycle command-channel law run in the
@@ -276,14 +277,14 @@ rather than copying configuration blindly:
 | TypeScript compiler | native `7.0.2` | Make normal `tsc`/typecheck authority |
 | TypeScript compiler API | `6.0.3` | Keep as the `typescript` package for build-tool consumers |
 | TypeScript fallback | `6.0.2` | Expose only the narrow `tsc6` compatibility command |
-| ESLint / parser | `9.39.2` / `8.54.0` | Keep Template's newer `10.0.3` / `8.57.1`; do not downgrade for parity |
+| ESLint / parser | `9.39.2` / `8.54.0` | Retire; Biome owns ordinary lint and Habitat owns structure and source relationships |
 | TypeBox | `1.3.6` | Already aligned |
 | oRPC | `1.14.6` | Upgrade to current `1.14.8` in the atomic root-vendor checkpoint |
 | Effect / Platform | Current official Effect 4 line | Migrate the surviving resource/provider family after rejected owners are deleted; use exact aligned pins and remove `@effect/platform` |
 
 TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
-Biome owns fast general hygiene; ESLint remains a code-lint parser; Habitat
-owns positive architecture topology and source relationships. Full-corpus
+Biome owns fast general hygiene; Habitat owns positive architecture topology
+and source relationships. Full-corpus
 lintEffect is intentionally not part of the required push check because its
 cold-run cost is an upstream limitation rather than repository admission logic.
 
@@ -390,25 +391,52 @@ adapter projects also declare their dependency on the shared provider contract,
 so an affected run cannot omit their behavior tests after a shared change.
 
 The required command now has explicit hierarchical owner boundaries. Public
-`bun run check` invokes one `nx run-many -t check` scheduler. Every one of the
-38 non-root projects exposes a public check, and shared target defaults connect
-those checks to lint, typecheck, optional owner verification, Habitat
-`check:policy`, and dependency checks. Habitat composes its own lint, typecheck,
-tests, hygiene, and one selected green policy batch. CLI adds Oclif source/build
-parity through its own `verify` target. The repository project no longer
-schedules either owner; it retains only its lint, typecheck, tests, project
-admission, and repository separation. TypeBox-validated project-graph admission
-still requires exactly one `type:*` kind and one public check on every non-root
-project, plus lint and typecheck on every code project, with only content and
-fixture projects exempt from those two code-quality targets. Domain behavior
-and exact-Git tests remain owner-local rather than hidden inside merge
-admission.
+`bun run check` invokes one `nx run-many -t check` scheduler. All 37 current
+non-root projects expose a public check, and shared target defaults connect
+those checks to one workspace-owned `habitat:lint`, project-owned typecheck,
+optional owner verification, Habitat `check:policy`, and dependency checks.
+Habitat composes workspace lint, its own typecheck and tests, the selected
+source-law batch, and one rule-owned Nx project admission adapter. CLI adds
+Oclif source/build parity through its own `verify` target. The repository
+project no longer schedules either owner; it retains repository separation.
+TypeBox-validated project-graph admission requires exactly one `type:*` kind
+and one public check on every non-root project, plus typecheck on every code
+project, with only content and fixture projects exempt from that project-local
+target. The resolved check dependency list must retain exactly one shared
+`habitat:lint` edge, and every code-project check must retain exactly one
+`typecheck` edge, so a project-local Nx override cannot replace the required
+foundation. Domain behavior and exact-Git tests remain owner-local rather than
+hidden inside merge admission.
+
+The resolved required task graph contains 37 public `check` tasks and exactly
+one lint task, `habitat:lint`. The root scheduler law is active in the same
+selected Habitat policy invocation as the existing repository laws.
+
+Injected failure checks reject a noncanonical root script, a wrong or missing
+shared lint owner, both string and object duplicate lint edges, a package-level
+Nx lint target, a root-owned foundational target, and empty, partial, or
+duplicate project-local check dependency overrides. The restored graph passes
+all 110 required
+tasks from an invalidated local cache in 1 minute 46 seconds; an exact unchanged
+repeat restores 68 cacheable tasks and completes in 345 ms inside Nx and 0.95
+seconds at the shell. The uncached workspace lint takes 331 ms. Fourteen
+Habitat project-admission and release-consumer behavior tests pass. The
+remaining cold-path cost is the already-declared shared service-rule
+diagnostic group, not duplicate Nx or lint scheduling.
+
+An initial diagnostic bound the pre-existing strict `lint:effect` target to
+that required edge and exposed 133 existing Effect-style findings. That is a
+separate migration corpus, not the foundational lint contract, so the required
+edge uses the green repository-wide Biome baseline and retains `lint:effect` as
+an explicit later burn-down surface.
 
 This completes the Civ-style scheduler cutover without importing Civ's
-repo-local Habitat Nx plugin. The selected Habitat batch still does not imply
-that every registered rule is active. Native Habitat project admission remains
-the next replacement for the temporary TypeBox graph reader once the published
-consumer can acquire the project set without encoding an exact path inventory.
+repo-local Habitat Nx plugin. Root `lint` now routes directly to the one
+workspace lint owner, and the selected Habitat source-law batch enforces that
+exact scheduler surface. The selected batch still does not imply that every
+registered rule is active. Project admission is now a separate Habitat packet;
+its `check.mjs` remains the explicit narrow bridge until the pinned consumer
+exposes Habitat's native Nx runner.
 
 The first [[tasks#1. Positive Habitat And Nx Checks|task 1.6c]] checkpoint now
 gives every one of the 38 non-root Nx projects an explicit `project.json` and
@@ -418,8 +446,8 @@ require the project manifest. The following 1.6c2 checkpoint switches the root
 to one project-owned scheduler graph, removes repository-owned cross-scheduling,
 and preserves each specialized check at its qualified owner. A changed-policy
 input run completes in 5.9 seconds; the immediate unchanged run takes 171 ms in
-Nx and 0.54 seconds at the shell. Native Habitat project admission remains open
-as a separate policy checkpoint.
+Nx and 0.54 seconds at the shell. Native Habitat project admission remained
+open at that checkpoint and is closed by task 1.6c11 below.
 
 Task 1.6c3 applies the target-composition law from Civ7 branch
 `codex/mapgen-final-ratchet-strategy-kind-law` at `64463d1abf` without copying
@@ -435,7 +463,9 @@ the same build cache and output policy rather than repeating it locally. Each
 resolved task has one command owner. The lifecycle service retains an
 owner-local `cache: false` override for its standard `test` target because the
 exact-Git cases exercise the live Git executable; the package script remains
-the sole command owner.
+the sole command owner. That paragraph records the 1.6c3 checkpoint; task
+1.6c7c later supersedes its project-local lint ownership with one workspace
+`habitat:lint` task.
 
 The normalized seven-project source/test typecheck graph passes fourteen tasks
 in 14.0 seconds with ten cache hits. Oclif source/build parity plus native
@@ -587,9 +617,10 @@ already ran in its own native Grit invocation, so no Nx split, retry, scheduling
 lock, or parser recovery was added. The law instead removed
 its embedded JavaScript parser and now expresses first-fence selection and the
 adjacent non-empty comment relation directly in GritQL over the Markdown AST.
-`habitat:check:policy` remains one twelve-rule repository batch that includes
-the lifecycle command-channel law, and its cache inputs include that law's
-owner tree. `repository:check` does not start a redundant owner process; the
+`habitat:check:policy` now composes one selected source-law batch, including the
+lifecycle command-channel law, with the rule-owned Nx project admission
+adapter. Its cache inputs include each rule's owner tree. `repository:check`
+does not start a redundant owner process; the
 service's required `check` path no longer starts its legacy `structural`
 Habitat invocation a second time. Every selected rule remains required through
 the hierarchy described by
@@ -644,10 +675,10 @@ skill. It cannot authorize HF01 materialization or release.
 | Corrected authority record | Submitted in the active Template Graphite stack; required checks and landing remain open |
 | Generic Habitat blueprint port | Complete committed Magic service stack imported: one topology rule plus six source laws; lifecycle conformance and owner-local Nx activation remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
-| Complete Nx lint/typecheck target population | Complete and wired through one all-project check graph on the active Template stack |
+| Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
-| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; owner-local verification and Habitat policy edges are active; native Habitat project admission and generic service-rule inclusion remain pending |
+| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, Habitat source-law policy, and Habitat-owned project admission are active; generic service-rule inclusion remains pending |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
@@ -967,19 +998,19 @@ generic service and Oclif blueprints carry their exact source relationships,
 TypeScript package exports carry public compatibility, and the remaining
 lifecycle niche rule is limited to the curated command channel until task 2
 replaces that topology. The coarse ESLint project-kind matrix is retired rather
-than claimed as migrated. If a resolved project-edge axis is still required,
-task 1.6c11 admits it separately through Habitat over the Nx graph.
+than claimed as migrated. The remaining resolved project-quality axis is
+separately admitted by Habitat over the Nx graph through task 1.6c11.
 
 The generic blueprint packet filename set is now closed: every current packet
-contains its rule, locked baseline, and one canonical `pattern.md` or
-`structure.toml` runner source. The current structure rule proves only the
-closed allowed filename set; it cannot prove that `rule.json` selects exactly
-one present runner source. The pinned Habitat binary also does not expose a
-native packet-fixture runner, and its live wildcard walk is not bounded against
-installed dependency trees, so this repository does not add a parallel
-Markdown fixture parser or wrapper. Exact selected-runner participation, native
-pattern fixtures, and full live-tree policy activation remain open until a
-suitable standalone asset is published.
+contains its rule, locked baseline, and one canonical `pattern.md`,
+`structure.toml`, or exceptional `check.mjs` runner source. The current
+structure rule proves only the closed allowed filename set; it cannot prove
+that `rule.json` selects exactly one present runner source. The pinned Habitat
+binary also does not expose a native packet-fixture runner, and its live
+wildcard walk is not bounded against installed dependency trees, so this
+repository does not add a parallel Markdown fixture parser or wrapper. Exact
+selected-runner participation, native pattern fixtures, and full live-tree
+policy activation remain open until a suitable standalone asset is published.
 
 The private service-alias checkpoint uses workspace-gate acquisition for both
 manifest declarations and source edges. Only an exact top-level

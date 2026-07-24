@@ -588,7 +588,11 @@ const project = readJson<{
   tags: string[];
   targets: Record<
     string,
-    { executor?: string; dependsOn?: string[]; options?: { command?: string } }
+    {
+      executor?: string;
+      dependsOn?: Array<string | { projects: string[]; target: string }>;
+      options?: { command?: string };
+    }
   >;
 }>("tools/runtime-realization-type-env/project.json");
 const projectTargetNames = Object.keys(project.targets);
@@ -673,10 +677,22 @@ const expectedGateTargets = projectTargetNames.filter(
 );
 const gate = project.targets.gate;
 assert(gate?.executor === "nx:noop", "gate must compose targets through Nx dependencies");
+const gateTargetDependencies = (gate.dependsOn ?? []).filter(
+  (dependency): dependency is string => typeof dependency === "string"
+);
 assertArrayEquals(
-  [...(gate.dependsOn ?? [])].sort(),
+  [...gateTargetDependencies].sort(),
   [...expectedGateTargets].sort(),
   "gate dependencies must cover every lab target exactly once"
+);
+const gateProjectDependencies = (gate.dependsOn ?? []).filter(
+  (dependency): dependency is { projects: string[]; target: string } =>
+    typeof dependency !== "string"
+);
+assert(
+  JSON.stringify(gateProjectDependencies) ===
+    JSON.stringify([{ projects: ["habitat"], target: "lint" }]),
+  "gate must depend on the one workspace lint owner"
 );
 const structuralOnlyTargets = new Set(["structural", "report"]);
 const simulationBehaviorTargets = new Set(["oracle", "simulate", "middle-spine"]);

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_nx_workspace_scheduler_scripts",
+  "title": "Require Nx Workspace Scheduler Scripts",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "nx-workspace",
+    "category": "quality"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "root-owned foundational Nx targets, noncanonical root schedulers, project-local lint owners, or any lint edge other than the one explicit habitat:lint dependency shared by every check",
+  "why": "The workspace root schedules repository work but does not implement project quality. Exact single-command scripts keep Nx as the aggregate owner, and one explicit shared dependency schedules ordinary lint exactly once without project-local ownership or fan-out.",
+  "remediate": "Remove root-owned foundational targets and project-local lint targets, restore the exact root build/check/lint/test/typecheck/CI schedulers, and make targetDefaults.check depend on exactly one explicit habitat:lint edge.",
+  "message": "Nx workspace quality must retain one scheduler-only root and one shared Habitat lint edge.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["package.json", "project.json", "nx.json"]
+    }
+  ],
+  "scanRoots": ["."],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/nx-workspace/require_nx_workspace_scheduler_scripts/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/nx-workspace/require_nx_workspace_scheduler_scripts/pattern.md"
+    },
+    "patternName": "require_nx_workspace_scheduler_scripts"
+  }
+}

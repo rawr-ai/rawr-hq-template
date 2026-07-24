@@ -8,5 +8,8 @@
     "noEmit": true,
     "types": ["bun-types", "node"]
   },
-  "include": ["*.mjs"]
+  "include": [
+    "*.mjs",
+    "../../.habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs"
+  ]
 }

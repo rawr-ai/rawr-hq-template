@@ -1,8 +1,8 @@
 # Native CLI And Bounded Reconciler Execution
 
 Each numbered section is a complete semantic container. A container lands only
-when its owner-local behavior, lint, typecheck, positive topology, and standing
-reviews pass. Do not accumulate later containers in a dirty tree. See
+when its owner-local behavior and typecheck, required workspace lint, positive
+topology, and standing reviews pass. Do not accumulate later containers in a dirty tree. See
 [[authority-amendment]], [[design]], and [[README]].
 
 ## 0. Authority Correction
@@ -203,6 +203,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   repository-configuration restore prefix, with an operating-system fallback;
   do not add a remote-cache service, custom cache protocol, retry, lock, or
   explicit scheduler parallelism.
+- [x] 1.6c7c Give ordinary source lint one workspace owner. Retire the
+  project-local ESLint targets, route root `lint` directly to `habitat:lint`,
+  make every public project check depend on that one Nx task, and admit the
+  exact root scheduler and shared lint-edge contract as a Habitat Grit law.
+  Keep topology and source relationships in `structure.toml` and `pattern.md`
+  respectively.
 - [x] 1.6c8 Govern `#<owner>-service/*` and `#<owner>-api/*` through Habitat.
   Require each package import map to target its own `src/service` interior and
   use Grit source law to reject outside-owner, foreign-owner, cross-kind, and
@@ -228,7 +234,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   only for a demonstrated Habitat capability gap, and keep behavior in tests.
   Begin with the active session-intelligence structural verifier rather than
   claiming this ESLint-only checkpoint completed the broader migration.
-- [ ] 1.6c11 Admit any still-required resolved project-edge law as one separate
+- [x] 1.6c11 Admit any still-required resolved project-edge law as one separate
   Habitat graph packet. Grit cannot join Nx-resolved dependency edges to
   project-kind tags, so a rule-owned `.mjs` graph adapter is the allowed narrow
   escape hatch if the positive package-kind model still requires this axis.
@@ -324,7 +330,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   first-party command ontology, and ordinary artifact checksums/provenance. Do
   not add a custom canonicalizer, build-twice byte-identity gate, selector, or
   retained release store.
-- [ ] 3.6 Run package-owner lint, typecheck, behavior, Habitat, and standing
+- [ ] 3.6 Run workspace lint, package-owner typecheck and behavior, Habitat, and standing
   Oclif/Nx/release reviews. Land this node after the rejected distribution,
   persistent lifecycle stores, and obsolete Effect 3 family are absent from the
   packed closure.
@@ -366,7 +372,7 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   scan old local controller stores.
 - [ ] 4.6 Prove direct source and built Oclif execution cover every retained
   command and that no tracked source imports or invokes the retired verticals.
-  Run affected lint/typecheck/build/test/Habitat plus standing deletion and
+  Run workspace lint plus affected typecheck/build/test/Habitat and standing deletion and
   architecture reviews. Land coherent controller deletion nodes without
   reopening the extension manager removed in task 2.2. Task 3.4 separately
   proves the later conventional installed package.
@@ -537,8 +543,8 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   injected command configuration, and the deferred executable-binding state
   machine. Keep an optional provider-construction seam for focused tests, and
   preserve repository locator, ref, object, bound, and opening/closing checks.
-- [ ] 5.7 Seal one module at a time with owner-local behavior, schema, lint,
-  typecheck, and Habitat checks. Compose and gate the root router only after
+- [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
+  typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural

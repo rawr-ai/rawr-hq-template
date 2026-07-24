@@ -8,5 +8,5 @@
     "noEmit": true,
     "types": ["bun-types", "node"]
   },
-  "include": ["*.mjs"]
+  "include": ["../architecture/verify-repository-separation.mjs"]
 }

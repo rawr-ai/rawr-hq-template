@@ -23,7 +23,7 @@
 
 ## Validation
 
-- `bunx nx run @rawr/bootgraph:lint`
+- `bunx nx run habitat:lint`
 - `bunx nx run @rawr/bootgraph:typecheck`
 - `bunx nx run @rawr/bootgraph:test`
 - `bunx nx run @rawr/bootgraph:build`

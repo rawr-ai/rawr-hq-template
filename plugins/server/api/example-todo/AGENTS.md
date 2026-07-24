@@ -36,7 +36,7 @@
 
 ## Validation
 
-- Run `bunx nx run plugin-server-api-example-todo:lint`.
+- Run `bunx nx run habitat:lint`.
 - Run `bunx nx run plugin-server-api-example-todo:typecheck`.
 - Run `bunx nx run plugin-server-api-example-todo:structural` when contract,
   router, exports, or host-contribution topology changes.

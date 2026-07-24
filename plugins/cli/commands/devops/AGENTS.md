@@ -34,7 +34,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/plugin-devops:lint`.
+- Run `bunx nx run habitat:lint`.
 - Run `bunx nx run @rawr/plugin-devops:typecheck`.
 - Run `bunx nx run @rawr/plugin-devops:test`.
 - Run `bunx nx run @rawr/plugin-devops:manifest` when command discovery or
