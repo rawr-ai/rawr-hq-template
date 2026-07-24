@@ -114,6 +114,20 @@ describe("vendor procedure schema boundary", () => {
     >();
   });
 
+  it("declares the complete service metadata on every vendor operation", () => {
+    const expectedMetadata = {
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "vendors",
+    };
+
+    for (const operation of ["status", "update"] as const) {
+      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata);
+    }
+  });
+
   it("keeps status read-only and update selection explicit", () => {
     expect(Value.Check(VendorStatusInputSchema, { contentWorkspace })).toBe(true);
     expect(
