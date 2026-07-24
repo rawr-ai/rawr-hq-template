@@ -548,7 +548,7 @@ assert(
   "root convenience script drifted"
 );
 
-for (const scriptName of ["build", "typecheck", "pretest:vitest", "test:vitest", "test"]) {
+for (const scriptName of ["build", "lint", "typecheck", "test", "check"]) {
   const script = rootPackage.scripts[scriptName] ?? "";
   assert(
     !script.includes("runtime-realization-type-env"),
@@ -586,7 +586,10 @@ const project = readJson<{
   name: string;
   root: string;
   tags: string[];
-  targets: Record<string, { options?: { command?: string } }>;
+  targets: Record<
+    string,
+    { executor?: string; dependsOn?: string[]; options?: { command?: string } }
+  >;
 }>("tools/runtime-realization-type-env/project.json");
 const projectTargetNames = Object.keys(project.targets);
 
@@ -663,18 +666,18 @@ for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runt
 }
 
 const gateTargets = new Set(
-  projectTargetNames.filter((target) => target !== "sync" && target !== "gate")
+  projectTargetNames.filter((target) => !["check", "sync", "gate"].includes(target))
 );
-const proofBearingTargets = projectTargetNames.filter(
-  (target) => !["sync", "structural", "report", "gate"].includes(target)
+const expectedGateTargets = projectTargetNames.filter(
+  (target) => !["check", "gate"].includes(target)
 );
-const gateCommand = project.targets.gate?.options?.command ?? "";
-for (const target of proofBearingTargets) {
-  assert(
-    gateCommand.includes(`runtime-realization-type-env:${target}`),
-    `gate target must invoke proof-bearing target ${target}`
-  );
-}
+const gate = project.targets.gate;
+assert(gate?.executor === "nx:noop", "gate must compose targets through Nx dependencies");
+assertArrayEquals(
+  [...(gate.dependsOn ?? [])].sort(),
+  [...expectedGateTargets].sort(),
+  "gate dependencies must cover every lab target exactly once"
+);
 const structuralOnlyTargets = new Set(["structural", "report"]);
 const simulationBehaviorTargets = new Set(["oracle", "simulate", "middle-spine"]);
 const vendorBehaviorTargets = new Set(["vendor-effect", "vendor-boundaries"]);

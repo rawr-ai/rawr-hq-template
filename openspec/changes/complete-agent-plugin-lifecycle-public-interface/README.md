@@ -435,6 +435,37 @@ resource contract and test already required canonical distinct ordering. Task
 adds duplicate-path coverage. The owner-local contract suite passes 7/7 before
 root script normalization proceeds.
 
+Task 1.6c7 makes each root foundational command a thin selector over the same
+named Nx target. It removes the hard-coded build and pretest project lists, the
+flattened root Vitest scheduler, unused affected aliases, and comparison-SHA
+workflow setup that the all-project required graph never consumed. The existing
+CLI integration moves out of the test-helper package and into `@rawr/cli:test`,
+so its cache inputs and dependency graph follow the behavior owner. The root
+test graph covers 30 project owners. Native Oclif installation stays under
+`@rawr/cli:acceptance:oclif-native-plugins`; it is distinct acceptance behavior,
+not an implicit part of every project test. No foundational test automatically
+starts a workspace-wide build. Existing project-graph admission
+now requires the workspace root to remain scheduler-only, so a future inferred
+root target cannot recursively enter its own `run-many` graph. The same law
+positively asserts the five exact root script mappings. The contained runtime
+lab's qualified gate now composes owner targets through `nx:noop` dependencies
+instead of starting eleven nested Nx schedulers.
+
+The normalized build graph covers 26 owners and completed in 17.5 seconds from
+a partially cold cache. Lint covered 38 owners in 2.0 seconds, and typecheck
+covered 36 owners plus seven internal compiler leaves in 2.3 seconds. The first
+uncached owner-correct test graph covered 30 owners plus six prerequisite tasks
+and passed in 1 minute 42 seconds; its CLI owner passed 83 cases, including the
+moved integration behavior. The intentionally uncached lifecycle corpus was the
+1 minute 37 second critical path. The changed-input required
+check passed 134 tasks in 6.1 seconds; the unchanged repeat restored all
+cacheable work and completed in 261 ms. The focused web test and moved CLI
+integration both pass through their Nx targets.
+The contained runtime-realization lab now records its existing public `check`
+target in its architecture inventory and treats that no-op composition face as
+admission rather than a proof-bearing lab gate. Its owner-local composed gate
+passed all eleven dependencies uncached in 7.2 seconds.
+
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
 the lifecycle command-channel law, all three Oclif app laws, and all three Oclif
@@ -478,9 +509,9 @@ repository checks passed in 15.3, 16.0, and 12.9 seconds with 17 dependencies
 instead of 18; the cached public `bun run check` completed in 7.7 seconds.
 
 The workflow remains named `Repository Ratchet`; its job publishes the context
-`Required lint, typecheck, and topology`. Full-history checkout plus
-`nrwl/nx-set-shas@v5` provides the candidate comparison for pull requests,
-merge groups, and main pushes. Live ruleset `19508824` is active on `main`,
+`Required lint, typecheck, and topology`. It checks the exact candidate and
+runs the complete project-owned `check` graph without constructing an unused
+affected comparison. Live ruleset `19508824` is active on `main`,
 strictly requires that exact job context, has no bypass actors, and reports that
 the current user can never bypass it. Local pre-push remains feedback; the
 remote result is merge authority.

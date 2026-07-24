@@ -28,6 +28,7 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@rawr/test-utils": "workspace:*",
     "@types/bun": "^1.2.10",
     "@types/node": "^22.14.0",
     "typescript": "^5.9.3"

@@ -23,8 +23,6 @@ jobs:
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -36,18 +34,6 @@ jobs:
 
       - name: Provision pinned Grit runtime
         run: bun run habitat:grit:provision
-
-      - name: Select pull request comparison
-        if: github.event_name == 'pull_request'
-        env:
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          printf 'NX_BASE=%s\n' "$PR_BASE_SHA" >> "$GITHUB_ENV"
-          printf 'NX_HEAD=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-
-      - name: Select push or merge comparison
-        if: github.event_name != 'pull_request'
-        uses: nrwl/nx-set-shas@v5
 
       - name: Verify required repository gates
         run: bun run check

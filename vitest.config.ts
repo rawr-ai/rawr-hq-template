@@ -110,11 +110,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/test-utils"),
-        test: { name: "integration", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("packages/ui-sdk"),
         test: { name: "ui-sdk", environment: "node", include: [...includes] },
       },

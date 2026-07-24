@@ -1,10 +1,19 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import { Value } from "typebox/value";
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const EXEMPT_PROJECT_KINDS = new Set(["type:content", "type:fixture"]);
+const FOUNDATIONAL_TARGETS = ["build", "check", "lint", "test", "typecheck"];
+const FOUNDATIONAL_SCRIPT_COMMANDS = {
+  build: "nx run-many -t build",
+  check: "nx run-many -t check",
+  lint: "nx run-many -t lint",
+  test: "nx run-many -t test",
+  typecheck: "nx run-many -t typecheck",
+};
 
 const ProjectNodeSchema = Type.Object(
   {
@@ -30,6 +39,29 @@ export const QualityTargetGraphSchema = Type.Object(
   { additionalProperties: true }
 );
 
+const RootPackageSchema = Type.Object(
+  { scripts: Type.Record(Type.String(), Type.String()) },
+  { additionalProperties: true }
+);
+
+/** @param {unknown} value */
+export function assertRootFoundationalScripts(value) {
+  if (!Value.Check(RootPackageSchema, value)) {
+    throw new Error("Root package.json does not expose a string-valued scripts map");
+  }
+
+  const violations = Object.entries(FOUNDATIONAL_SCRIPT_COMMANDS)
+    .filter(([name, command]) => value.scripts[name] !== command)
+    .map(
+      ([name, command]) =>
+        `${name} must be exactly ${JSON.stringify(command)}; found ${JSON.stringify(value.scripts[name])}`
+    );
+
+  if (violations.length > 0) {
+    throw new Error(`FOUNDATIONAL_SCRIPT_ADMISSION_FAILED\n${violations.join("\n")}`);
+  }
+}
+
 /** @param {unknown} value */
 export function assertQualityTargetAdmission(value) {
   if (!Value.Check(QualityTargetGraphSchema, value)) {
@@ -39,7 +71,15 @@ export function assertQualityTargetAdmission(value) {
 
   const violations = [];
   for (const [name, node] of Object.entries(value.graph.nodes)) {
-    if (node.data.root === ".") continue;
+    if (node.data.root === ".") {
+      const scheduledTargets = FOUNDATIONAL_TARGETS.filter((target) => target in node.data.targets);
+      if (scheduledTargets.length > 0) {
+        violations.push(
+          `${name} (.) is the workspace scheduler and must not own foundational targets; found ${scheduledTargets.join(", ")}`
+        );
+      }
+      continue;
+    }
 
     const projectKinds = (node.data.tags ?? []).filter((tag) => tag.startsWith("type:"));
     if (projectKinds.length !== 1) {
@@ -79,11 +119,16 @@ function readProjectGraph() {
   return JSON.parse(result.stdout);
 }
 
+function readRootPackage() {
+  return JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
+}
+
 if (import.meta.main) {
   try {
+    assertRootFoundationalScripts(readRootPackage());
     assertQualityTargetAdmission(readProjectGraph());
     console.log(
-      "quality target admission: all projects have one kind and check; all code projects own lint and typecheck"
+      "quality target admission: foundational scripts are exact; workspace root is scheduler-only; all projects have one kind and check; all code projects own lint and typecheck"
     );
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);

@@ -178,6 +178,13 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   already-declared distinct code-unit-sorted sparse-path contract. Prove both
   out-of-order and duplicate inputs fail before admitting the native-provider
   contract suite to the root test graph.
+- [x] 1.6c7 Normalize the root operational surface to one Nx scheduler for each
+  foundational target: `build`, `lint`, `typecheck`, `test`, and `check`.
+  Delete the hard-coded project lists, flattened Vitest aggregate, automatic
+  root prebuild, unused affected aliases, and stale candidate-comparison setup.
+  Move the existing CLI integration out of `@rawr/test-utils` and into the CLI
+  owner's standard `test` target. Keep native Oclif installation under its
+  qualified acceptance target rather than hiding it in foundational `test`.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

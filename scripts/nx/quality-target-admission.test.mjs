@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { assertQualityTargetAdmission } from "./quality-target-admission.mjs";
+import {
+  assertQualityTargetAdmission,
+  assertRootFoundationalScripts,
+} from "./quality-target-admission.mjs";
 
 /** @param {Record<string, ReturnType<typeof project>>} nodes */
 function graph(nodes) {
@@ -12,6 +15,37 @@ function project(root, targets, tags = []) {
 }
 
 describe("quality target admission", () => {
+  test("keeps foundational root scripts as exact one-target Nx schedulers", () => {
+    const value = {
+      scripts: {
+        build: "nx run-many -t build",
+        check: "nx run-many -t check",
+        lint: "nx run-many -t lint",
+        test: "nx run-many -t test",
+        typecheck: "nx run-many -t typecheck",
+      },
+    };
+
+    expect(() => assertRootFoundationalScripts(value)).not.toThrow();
+  });
+
+  test("refuses foundational root script filters and nested commands", () => {
+    const value = {
+      scripts: {
+        build: "nx run-many -t build --projects=@rawr/cli",
+        check: "nx run-many -t check && nx run repository:verify",
+        lint: "nx run-many -t lint",
+        test: "nx run-many -t test",
+        typecheck: "nx run-many -t typecheck",
+      },
+    };
+
+    expect(() => assertRootFoundationalScripts(value)).toThrow(
+      'build must be exactly "nx run-many -t build"; found "nx run-many -t build --projects=@rawr/cli"\n' +
+        'check must be exactly "nx run-many -t check"; found "nx run-many -t check && nx run repository:verify"'
+    );
+  });
+
   test("accepts code projects and uniquely classified exemptions", () => {
     const value = graph({
       root: project(".", {}),
@@ -23,6 +57,14 @@ describe("quality target admission", () => {
     });
 
     expect(() => assertQualityTargetAdmission(value)).not.toThrow();
+  });
+
+  test("keeps the workspace scheduler outside foundational project targets", () => {
+    const value = graph({ root: project(".", { build: {}, check: {} }) });
+
+    expect(() => assertQualityTargetAdmission(value)).toThrow(
+      "root (.) is the workspace scheduler and must not own foundational targets; found build, check"
+    );
   });
 
   test("refuses ambiguous project kinds before applying an exemption", () => {

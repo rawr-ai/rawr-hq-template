@@ -2,11 +2,10 @@ import { lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runCommand } from "@rawr/test-utils";
 import { afterAll, describe, expect, it } from "vitest";
-import { runCommand } from "../src";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const repoRoot = path.resolve(packageRoot, "../..");
 const temporaryRoot = realpathSync(os.tmpdir());
 const stateRootPrefix = "rawr-integration-";
 const isolatedStateRoot = realpathSync(mkdtempSync(path.join(temporaryRoot, stateRootPrefix)));
@@ -38,7 +37,7 @@ afterAll(() => {
 describe("rawr CLI (integration)", () => {
   it("runs the workspace Oclif application directly", async () => {
     const proc = await runCommand("bun", ["run", "rawr", "--", "--help"], {
-      cwd: repoRoot,
+      cwd: packageRoot,
       env: environment,
     });
 
@@ -50,7 +49,7 @@ describe("rawr CLI (integration)", () => {
 
   it("delegates unknown-command failure to Oclif", async () => {
     const proc = await runCommand("bun", ["run", "rawr", "--", "not-a-command"], {
-      cwd: repoRoot,
+      cwd: packageRoot,
       env: environment,
     });
 
