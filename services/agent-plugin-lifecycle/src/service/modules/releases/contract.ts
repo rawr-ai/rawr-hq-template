@@ -1,6 +1,6 @@
-import { schema } from "@rawr/hq-sdk";
+import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
 
-import { ocBase } from "../../base";
 import {
   CheckInputSchema,
   CheckResultSchema,
@@ -13,20 +13,44 @@ import {
 } from "./schemas";
 
 export const contract = {
-  check: ocBase
-    .meta({ idempotent: true, audit: "full", entity: "releases" })
+  check: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "releases",
+    })
     .input(schema(CheckInputSchema))
     .output(schema(CheckResultSchema)),
-  releaseInputRecord: ocBase
-    .meta({ idempotent: true, audit: "full", entity: "releases" })
+  releaseInputRecord: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "releases",
+    })
     .input(schema(ReleaseInputRecordInputSchema))
     .output(schema(ReleaseInputRecordResultSchema)),
-  refreshReleaseInput: ocBase
-    .meta({ idempotent: true, audit: "full", entity: "releases" })
+  refreshReleaseInput: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "releases",
+    })
     .input(schema(ReleaseInputRefreshInputSchema))
     .output(schema(ReleaseInputRefreshResultSchema)),
-  checkRepository: ocBase
-    .meta({ idempotent: true, audit: "full", entity: "releases" })
+  checkRepository: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "releases",
+    })
     .input(schema(RepositoryCheckInputSchema))
     .output(schema(RepositoryCheckResultSchema)),
 };

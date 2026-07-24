@@ -170,6 +170,19 @@ Required Oclif structure laws and the lifecycle command-channel law run in the
 selected Habitat batch. Registered rules with known live-corpus violations are
 not yet required. See [[tasks]] 1.5f.
 
+The lifecycle service-law migration begins at the release module's declarative
+boundary. Its four operations now derive directly from Effect-oRPC `eoc`
+instead of importing the root service builder, while preserving the effective
+domain, audience, idempotence, audit, and module metadata on every operation.
+The existing TypeBox request and result schemas remain the structural source.
+The release schema boundary and root telemetry behavior pass 14 focused tests;
+uncached lifecycle lint and typecheck pass; and the staged
+`require_service_contract_authority` diagnostic is green. The remaining service
+rules stay diagnostic until the admitted corpus conforms, as required by
+[[tasks#1. Positive Habitat And Nx Checks|task 1.5e]]. This checkpoint advances
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.2]] without claiming
+the releases module shell or the full service is sealed.
+
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
