@@ -1,3 +1,4 @@
+import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
 import { schema } from "@rawr/hq-sdk";
 import { type Static } from "typebox";
 import { Value } from "typebox/value";
@@ -29,6 +30,8 @@ import {
 
 describe("governance procedure schema boundary", () => {
   it("derives the public selection and result types from TypeBox", () => {
+    type ContractInputs = InferContractRouterInputs<typeof contract>;
+    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
     type SelectionSchema = Readonly<Static<typeof CanonicalChannelSelectionSchema>>;
     type ResultSchema = Readonly<Static<typeof CurrentMainSelectionResultSchema>>;
     type Equal<TLeft, TRight> =
@@ -42,10 +45,36 @@ describe("governance procedure schema boundary", () => {
 
     expectTypeOf<SelectionParity>().toEqualTypeOf<true>();
     expectTypeOf<ResultParity>().toEqualTypeOf<true>();
+    expectTypeOf<ContractInputs["currentMainRecord"]>().toEqualTypeOf<
+      Static<typeof CurrentMainRecordInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["currentMainRecord"]>().toEqualTypeOf<
+      Static<typeof CurrentMainRecordResultSchema>
+    >();
+    expectTypeOf<ContractInputs["currentMainSelection"]>().toEqualTypeOf<
+      Static<typeof CurrentMainSelectionInputSchema>
+    >();
+    expectTypeOf<ContractOutputs["currentMainSelection"]>().toEqualTypeOf<
+      Static<typeof CurrentMainSelectionResultSchema>
+    >();
   });
 
   it("exposes only the v3 record codec and current-main selector", () => {
     expect(Object.keys(contract).sort()).toEqual(["currentMainRecord", "currentMainSelection"]);
+  });
+
+  it("declares the complete service metadata on every governance operation", () => {
+    const expectedMetadata = {
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "governance",
+    };
+
+    for (const operation of ["currentMainRecord", "currentMainSelection"] as const) {
+      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata);
+    }
   });
 
   it("closes both codec actions around the direct v3 record", async () => {

@@ -1,5 +1,6 @@
-import { schema } from "@rawr/hq-sdk";
-import { ocBase } from "../../base";
+import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
+
 import {
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
@@ -8,12 +9,24 @@ import {
 } from "./schemas";
 
 export const contract = {
-  currentMainRecord: ocBase
-    .meta({ idempotent: true, entity: "governance", audit: "full" })
+  currentMainRecord: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "governance" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "governance",
+    })
     .input(schema(CurrentMainRecordInputSchema))
     .output(schema(CurrentMainRecordResultSchema)),
-  currentMainSelection: ocBase
-    .meta({ idempotent: true, entity: "governance", audit: "full" })
+  currentMainSelection: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "governance" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "governance",
+    })
     .input(schema(CurrentMainSelectionInputSchema))
     .output(schema(CurrentMainSelectionResultSchema)),
 };

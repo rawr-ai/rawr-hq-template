@@ -183,6 +183,16 @@ rules stay diagnostic until the admitted corpus conforms, as required by
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.2]] without claiming
 the releases module shell or the full service is sealed.
 
+The governance module now owns the same direct declarative boundary. Its two
+operations derive directly from Effect-oRPC `eoc` and state their complete
+domain, audience, idempotence, audit, and module metadata without importing the
+root service builder. The existing TypeBox request and result schemas remain
+the contract source. The governance schema and public-client behavior, lint,
+typecheck, and staged `require_service_contract_authority` diagnostic form the
+checkpoint gate. The remaining governance shell and service-wide laws stay
+open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and
+5.7]].
+
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
