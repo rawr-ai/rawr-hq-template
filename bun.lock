@@ -10,6 +10,7 @@
         "@orpc/openapi-client": "1.14.8",
         "@orpc/server": "1.14.8",
         "@rawr/core": "workspace:*",
+        "@rawr/example-todo": "workspace:*",
         "@rawr/hq-app": "workspace:*",
         "@rawr/hq-sdk": "workspace:*",
         "@rawr/runtime-context": "workspace:*",

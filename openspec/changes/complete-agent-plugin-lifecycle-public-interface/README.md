@@ -520,6 +520,28 @@ target in its architecture inventory and treats that no-op composition face as
 admission rather than a proof-bearing lab gate. Its owner-local composed gate
 passed all eleven dependencies uncached in 7.2 seconds.
 
+Task 1.6c7a adopts the current Civ7 foundation at
+`975d12d143bc64d6ed9f1f9189e6f03616d4da0f`: required CI is one
+`nx run-many -t build,check,test` invocation, while shared target defaults own
+build prerequisites and Nx owns ordering, deduplication, caching, and
+parallelism. Habitat remains a project-owned `check` dependency; CI does not
+start a second structural runner, and ESLint remains source hygiene rather than
+topology authority. The first cold graph passed 181 tasks across 37 projects in
+4 minutes 54 seconds. An unchanged repeat restored 139 tasks and passed in
+1 minute 45 seconds; the explicitly uncached lifecycle test target was the
+1 minute 44 second critical path. Cache admission for that deterministic suite
+and CI cache persistence are therefore a separate performance checkpoint, not
+extra scheduling machinery in this foundation node.
+
+The first clean CI graph also exposed one omission in the earlier package-less
+API-plugin conversion: the deleted plugin manifest's public
+`@rawr/example-todo` dependency had not moved to the root package that now owns
+package resolution for that source project. The root now declares the existing
+workspace package, while Nx retains the project dependency edge. No alias,
+resolver patch, source-path import, or plugin package is introduced. With the
+stale plugin-local workspace links removed, the HQ app passed 10 cases and the
+server passed 44 cases against ordinary root package resolution.
+
 The active policy batch now contains twelve green laws: packet topology,
 AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
 the lifecycle command-channel law, all three Oclif app laws, and all three Oclif

@@ -32,6 +32,7 @@
     },
     "build": {
       "cache": true,
+      "dependsOn": ["^build"],
       "inputs": ["production", "^production", "typescriptRuntime"],
       "outputs": ["{projectRoot}/dist"]
     },
@@ -49,16 +50,18 @@
     },
     "typecheck": {
       "cache": true,
-      "dependsOn": ["check:test", "check:tools"],
+      "dependsOn": ["check:test", "check:tools", "^build"],
       "inputs": ["default", "^default", "typescriptRuntime"]
     },
     "check:test": {
       "cache": true,
+      "dependsOn": ["^build"],
       "inputs": ["default", "^default", "typescriptRuntime"],
       "outputs": []
     },
     "check:tools": {
       "cache": true,
+      "dependsOn": ["^build"],
       "inputs": ["default", "^default", "typescriptRuntime"],
       "outputs": []
     },
@@ -68,8 +71,13 @@
     },
     "test": {
       "cache": true,
+      "dependsOn": ["^build"],
       "inputs": ["default", "^default", "typescriptRuntime", "{workspaceRoot}/vitest.config.ts"],
       "outputs": []
+    },
+    "verify": {
+      "cache": false,
+      "dependsOn": ["build", "^build"]
     },
     "sync": {
       "cache": false,
