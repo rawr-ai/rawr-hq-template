@@ -1,6 +1,6 @@
-import { schema } from "@rawr/hq-sdk";
+import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
 
-import { ocBase } from "../../base";
 import {
   ProviderStatusRequestSchema,
   ProviderStatusResultSchema,
@@ -11,16 +11,34 @@ import {
 } from "./schemas";
 
 export const contract = {
-  test: ocBase
-    .meta({ idempotent: true, entity: "providers", audit: "full" })
+  test: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "providers" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "providers",
+    })
     .input(schema(ProviderTestRequestSchema))
     .output(schema(ProviderTestResultSchema)),
-  status: ocBase
-    .meta({ idempotent: true, entity: "providers", audit: "basic" })
+  status: eoc
+    .$meta<ServiceMetadataOf<{ audit: "basic"; entity: "providers" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "basic",
+      entity: "providers",
+    })
     .input(schema(ProviderStatusRequestSchema))
     .output(schema(ProviderStatusResultSchema)),
-  sync: ocBase
-    .meta({ idempotent: true, entity: "providers", audit: "full" })
+  sync: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "providers" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "providers",
+    })
     .input(schema(ProviderSyncRequestSchema))
     .output(schema(ProviderSyncResultSchema)),
 };

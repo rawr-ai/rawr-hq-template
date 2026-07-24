@@ -1,13 +1,18 @@
+import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { contract } from "../../../src/service/modules/providers/contract";
 import { runProviderStatus } from "../../../src/service/modules/providers/router/status.router";
 import {
   ProviderMutationTargetResultSchema,
   ProviderStatusRequestSchema,
   ProviderStatusResultSchema,
   ProviderSyncRequestSchema,
+  ProviderSyncResultSchema,
   ProviderTargetsSchema,
   ProviderTestRequestSchema,
+  ProviderTestResultSchema,
   SelectedContentObservationSchema,
 } from "../../../src/service/modules/providers/schemas";
 import {
@@ -21,6 +26,60 @@ import {
 } from "./fixture";
 
 describe("provider public schema boundary", () => {
+  it("derives every public provider contract type from its TypeBox schema", () => {
+    type ContractInputs = InferContractRouterInputs<typeof contract>;
+    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+
+    expectTypeOf<ContractInputs["test"]>().toEqualTypeOf<
+      Static<typeof ProviderTestRequestSchema>
+    >();
+    expectTypeOf<ContractOutputs["test"]>().toEqualTypeOf<
+      Static<typeof ProviderTestResultSchema>
+    >();
+    expectTypeOf<ContractInputs["status"]>().toEqualTypeOf<
+      Static<typeof ProviderStatusRequestSchema>
+    >();
+    expectTypeOf<ContractOutputs["status"]>().toEqualTypeOf<
+      Static<typeof ProviderStatusResultSchema>
+    >();
+    expectTypeOf<ContractInputs["sync"]>().toEqualTypeOf<
+      Static<typeof ProviderSyncRequestSchema>
+    >();
+    expectTypeOf<ContractOutputs["sync"]>().toEqualTypeOf<
+      Static<typeof ProviderSyncResultSchema>
+    >();
+  });
+
+  it("declares the complete service metadata for each provider operation", () => {
+    const expectedMetadata = {
+      test: {
+        idempotent: true,
+        domain: "agent-plugin-lifecycle",
+        audience: "internal",
+        audit: "full",
+        entity: "providers",
+      },
+      status: {
+        idempotent: true,
+        domain: "agent-plugin-lifecycle",
+        audience: "internal",
+        audit: "basic",
+        entity: "providers",
+      },
+      sync: {
+        idempotent: true,
+        domain: "agent-plugin-lifecycle",
+        audience: "internal",
+        audit: "full",
+        entity: "providers",
+      },
+    } as const;
+
+    for (const operation of ["test", "status", "sync"] as const) {
+      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata[operation]);
+    }
+  });
+
   it("admits only closed requests with canonical distinct provider targets", () => {
     expect(Value.Check(ProviderStatusRequestSchema, channelRequest)).toBe(true);
     expect(Value.Check(ProviderSyncRequestSchema, channelRequest)).toBe(true);
