@@ -1,6 +1,6 @@
-import { schema } from "@rawr/hq-sdk";
+import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
 
-import { ocBase } from "../../base";
 import {
   VendorStatusInputSchema,
   VendorStatusResultSchema,
@@ -9,12 +9,24 @@ import {
 } from "./schemas";
 
 export const contract = {
-  status: ocBase
-    .meta({ idempotent: true, audit: "full", entity: "vendors" })
+  status: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "vendors" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "vendors",
+    })
     .input(schema(VendorStatusInputSchema))
     .output(schema(VendorStatusResultSchema)),
-  update: ocBase
-    .meta({ idempotent: true, audit: "full", entity: "vendors" })
+  update: eoc
+    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "vendors" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "full",
+      entity: "vendors",
+    })
     .input(schema(VendorUpdateInputSchema))
     .output(schema(VendorUpdateResultSchema)),
 };

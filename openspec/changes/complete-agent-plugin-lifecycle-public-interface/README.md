@@ -202,6 +202,15 @@ rewriting output. The packaging module shell and its remaining ownership edges
 stay open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and
 5.7]].
 
+The vendor status and update operations now derive directly from Effect-oRPC
+`eoc` with their complete `full` audit and idempotent metadata stated at the
+module boundary. The public API remains `vendors.status` and `vendors.update`;
+this checkpoint does not rename or widen the command surface. TypeBox remains
+the request/result source, and the existing public-client behavior continues to
+cover read-only status, reviewable updates, restoration outcomes, and
+idempotent repeat. The remaining vendors shell stays open under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and 5.7]].
+
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical
