@@ -9,7 +9,7 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "@rawr/agent-plugin-lifecycle/release";
+} from "@rawr/agent-plugin-lifecycle/input";
 
 import { CHECK_MODES, type CheckMode } from "./flags";
 
@@ -176,7 +176,12 @@ export function parseCheckOperationRequest(
             requireStringList(flags.member, "--member", {
               maxItems: MAX_RELEASE_MEMBERS,
               unique: true,
-            }).map((memberId) => requireReleaseValue(parsePluginId(memberId, "--member")))
+            }).map((memberId) =>
+              requireLifecycleInput(
+                parsePluginId(memberId),
+                "--member must be a canonical plugin identity"
+              )
+            )
           ),
         }),
       });
@@ -196,8 +201,9 @@ export function parseCheckOperationRequest(
               flags["content-workspace"],
               "--content-workspace"
             ),
-            expectedRepositoryIdentity: requireReleaseValue(
-              parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
+            expectedRepositoryIdentity: requireLifecycleInput(
+              parseRepositoryIdentity(flags["repository-identity"]),
+              "--repository-identity must be a canonical logical repository identity"
             ),
           }),
         }),
@@ -299,7 +305,12 @@ export function parseTestRequest(flags: RawFlags): TestRequest {
           requireStringList(pluginIds, "--plugin", {
             maxItems: MAX_RELEASE_MEMBERS,
             unique: true,
-          }).map((pluginId) => requireReleaseValue(parsePluginId(pluginId, "--plugin"))),
+          }).map((pluginId) =>
+            requireLifecycleInput(
+              parsePluginId(pluginId),
+              "--plugin must be a canonical plugin identity"
+            )
+          ),
           "--plugin"
         ),
       });
@@ -347,8 +358,14 @@ function parseReleaseWorkspaceRequest(flags: RawFlags): CheckRequest {
 function releaseContentWorkspacePolicy(flags: RawFlags): CheckRequest["contentWorkspace"] {
   return Object.freeze({
     ...stagedContentWorkspacePolicy(flags),
-    sourceCommit: requireReleaseValue(parseGitCommitId(flags["source-commit"], "--source-commit")),
-    sourceTree: requireReleaseValue(parseGitTreeId(flags["source-tree"], "--source-tree")),
+    sourceCommit: requireLifecycleInput(
+      parseGitCommitId(flags["source-commit"]),
+      "--source-commit must be an exact lowercase Git object ID"
+    ),
+    sourceTree: requireLifecycleInput(
+      parseGitTreeId(flags["source-tree"]),
+      "--source-tree must be an exact lowercase Git object ID"
+    ),
   });
 }
 
@@ -357,20 +374,24 @@ function stagedContentWorkspacePolicy(
 ): Extract<RepositoryCheckRequest, Readonly<{ kind: "staged" }>>["contentWorkspace"] {
   return Object.freeze({
     locator: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
-    repositoryIdentity: requireReleaseValue(
-      parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
+    repositoryIdentity: requireLifecycleInput(
+      parseRepositoryIdentity(flags["repository-identity"]),
+      "--repository-identity must be a canonical logical repository identity"
     ),
-    contentAuthority: requireReleaseValue(
-      parseContentAuthority(flags["content-authority"], "--content-authority")
+    contentAuthority: requireLifecycleInput(
+      parseContentAuthority(flags["content-authority"]),
+      "--content-authority must be canonical"
     ),
     remoteName: requireString(flags["remote-name"], "--remote-name"),
     remoteUrl: requireString(flags["remote-url"], "--remote-url"),
     refName: requireString(flags.ref, "--ref"),
-    releaseInputPath: requireReleaseValue(
-      parseReleaseRelativePath(flags["release-input"], "--release-input")
+    releaseInputPath: requireLifecycleInput(
+      parseReleaseRelativePath(flags["release-input"]),
+      "--release-input must be a canonical POSIX relative path"
     ),
-    pluginRoot: requireReleaseValue(
-      parseReleaseRelativePath(flags["plugin-root"], "--plugin-root")
+    pluginRoot: requireLifecycleInput(
+      parseReleaseRelativePath(flags["plugin-root"]),
+      "--plugin-root must be a canonical POSIX relative path"
     ),
   });
 }
@@ -386,8 +407,10 @@ function assertCheckDomain(flags: RawFlags, admitted: readonly CheckDomainFlag[]
 
 function targetMode(plugin: string): CheckRequest["mode"] {
   const parsed = parsePluginId(plugin);
-  if (!parsed.ok) throw new LifecycleInputError(parsed.issues[0].message);
-  return Object.freeze({ kind: "targeted", pluginId: parsed.value });
+  if (parsed === undefined) {
+    throw new LifecycleInputError("--plugin must be a canonical plugin identity");
+  }
+  return Object.freeze({ kind: "targeted", pluginId: parsed });
 }
 
 function vendorWorkspace(flags: RawFlags): VendorStatusRequest["contentWorkspace"] {
@@ -405,8 +428,9 @@ function vendorWorkspace(flags: RawFlags): VendorStatusRequest["contentWorkspace
 function contentRecordLocator(flags: RawFlags): SyncRequest["locator"] {
   return Object.freeze({
     workspacePath: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
-    expectedRepositoryIdentity: requireReleaseValue(
-      parseRepositoryIdentity(flags["repository-identity"], "--repository-identity")
+    expectedRepositoryIdentity: requireLifecycleInput(
+      parseRepositoryIdentity(flags["repository-identity"]),
+      "--repository-identity must be a canonical logical repository identity"
     ),
   });
 }
@@ -459,15 +483,9 @@ function requireNonEmpty<T>(values: readonly T[], label: string): readonly [T, .
   return Object.freeze([first, ...rest]);
 }
 
-function requireReleaseValue<T>(
-  result:
-    | Readonly<{ ok: true; value: T }>
-    | Readonly<{ ok: false; issues: readonly { message: string }[] }>
-): T {
-  if (!result.ok) {
-    throw new LifecycleInputError(result.issues[0]?.message ?? "Invalid release identity");
-  }
-  return result.value;
+function requireLifecycleInput<T>(value: T | undefined, message: string): T {
+  if (value === undefined) throw new LifecycleInputError(message);
+  return value;
 }
 
 function requireCanonicalAbsolute(

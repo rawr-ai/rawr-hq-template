@@ -1,7 +1,7 @@
-import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "@rawr/agent-plugin-lifecycle/release";
 import { describe, expect, it } from "vitest";
 
 import { readReleaseInputRecordStdin } from "../../src/commands/agent/plugins/check";
+import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "../../src/lib/agent-plugins/commands/input";
 
 describe("release-input record stdin boundary", () => {
   it("refuses terminal input before reading a chunk", async () => {

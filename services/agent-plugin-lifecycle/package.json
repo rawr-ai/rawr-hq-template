@@ -21,9 +21,9 @@
       "types": "./src/host.ts",
       "default": "./src/host.ts"
     },
-    "./release": {
-      "types": "./src/service/shared/release/index.ts",
-      "default": "./src/service/shared/release/index.ts"
+    "./input": {
+      "types": "./src/input.ts",
+      "default": "./src/input.ts"
     },
     "./service/contract": {
       "types": "./src/service/contract.ts",
