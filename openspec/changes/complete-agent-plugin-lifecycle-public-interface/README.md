@@ -193,6 +193,15 @@ checkpoint gate. The remaining governance shell and service-wide laws stay
 open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and
 5.7]].
 
+The packaging operation also derives directly from Effect-oRPC `eoc`. Its
+explicit metadata preserves the existing `basic` audit level and idempotent
+repeat contract rather than copying the release or governance audit policy.
+TypeBox remains the request and result source, while public-client behavior
+continues to prove that an identical repeated package request converges without
+rewriting output. The packaging module shell and its remaining ownership edges
+stay open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and
+5.7]].
+
 A standing architecture review found that the first Oclif command-plugin
 blueprint had incorrectly classified every `plugins/cli/*` package and required
 `rawr.kind=toolkit`, contradicting the canonical

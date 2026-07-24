@@ -1,11 +1,17 @@
-import { schema } from "@rawr/hq-sdk";
+import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
+import { eoc } from "effect-orpc";
 
-import { ocBase } from "../../base";
 import { PackageAgentPluginRequestSchema, PackageAgentPluginResultSchema } from "./schemas";
 
 export const contract = {
-  package: ocBase
-    .meta({ idempotent: true, entity: "packaging" })
+  package: eoc
+    .$meta<ServiceMetadataOf<{ audit: "basic"; entity: "packaging" }>>({
+      idempotent: true,
+      domain: "agent-plugin-lifecycle",
+      audience: "internal",
+      audit: "basic",
+      entity: "packaging",
+    })
     .input(schema(PackageAgentPluginRequestSchema))
     .output(schema(PackageAgentPluginResultSchema)),
 };
