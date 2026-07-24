@@ -23,14 +23,16 @@ absent.
 The lifecycle service MUST expose one root base, composed contract, implementer,
 router, typed local client, and only genuinely cross-cutting middleware. Every
 module MUST own its contract, module construction, router composition, and
-owner-local `model/{dto,policy,schema}`. Root `service/model` MUST contain only
+owner-local `model/{dto,policy,repositories,...}`, with TypeBox schemas
+colocated with their DTO authorities. Root `service/model` MUST contain only
 ready host dependency contracts, dependency-owned observation types, and the
 minimum service-owned domain model consumed by multiple modules. Current-main
-selection belongs to that shared service model because governance exposes it and
-providers consume it; governance-only procedure requests and results remain in
-the governance module. The shared release-derivation capability MAY expose the
-minimum closed release observation needed by packaging and providers, while
-operator requests, results, and issues remain under the releases module. The
+selection belongs to that shared service model because governance and providers
+consume the same service-owned policy; governance-only procedure requests and
+results remain in the governance module. The shared release-derivation
+capability MAY expose the minimum closed release observation needed by releases,
+packaging, and providers, while operator requests, results, and issues remain
+under the releases module. The
 package root MUST expose only client
 construction, named construction-boundary types, the router, and specifically
 required contracts. Module-local handlers, repositories, concrete providers,
@@ -64,18 +66,20 @@ multiple modules actually consume. Module middleware MUST acquire or project
 owner-specific capabilities, and each module MUST expose to procedures only the
 exact context they consume. A Personal workspace, provider home, package output,
 or governed Git ref that selects semantic authority MUST remain explicit
-validated input. Native executable and home checks MUST live at the owning
-resource boundary. No controller identity, artifact store, projection store,
-receipt, evidence store, `UndoWriter`, cwd, PATH discovery, or Personal
-executable code may enter service context.
+validated input. Provider command names MUST resolve through the ordinary
+process environment at the owning native-provider resource; provider-home
+validation MUST remain at that resource boundary. No executable identity,
+controller identity, artifact store, projection store, receipt, evidence store,
+`UndoWriter`, cwd, ambient home discovery, or Personal executable code may
+enter service context.
 
 #### Scenario: Misleading ambient state has no authority
-- **WHEN** cwd, PATH, home variables, Personal runtime-like files, and unrelated
+- **WHEN** cwd, home variables, Personal runtime-like files, and unrelated
   provider state disagree with explicit input and ready capabilities
 - **THEN** the procedure uses only validated input and its exact projected
-  module context
-- **AND** no ambient locator, global dependency bag, or executable
-  implementation is consulted
+  module context, while the owning resource resolves its ordinary local tool
+- **AND** no ambient home locator, global dependency bag, or Personal
+  executable implementation is consulted
 
 ### Requirement: CLI projects the typed service boundary only
 

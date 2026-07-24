@@ -169,11 +169,12 @@ product does not acquire a scanner merely to erase them.
 The ratchet narrows possibility by kind rather than listing forbidden legacy
 names.
 
-- **Service:** one closed service spine; module-owned `model/{dto,policy,schema}`;
-  module contracts and routers; root contract, implementation, context, and
-  router composition. Procedure handlers own domain behavior. Effect remains at
-  resource/provider boundaries unless a procedure genuinely requires an Effect
-  program.
+- **Service:** one closed service spine; module-owned
+  `model/{dto,policy,repositories,...}` with TypeBox schemas colocated with DTO
+  authorities; module contracts and routers; root contract, implementation,
+  context, and router composition. Procedure handlers own domain behavior.
+  Effect remains at resource/provider boundaries unless a procedure genuinely
+  requires an Effect program.
 - **CLI app:** one Oclif entrypoint, one binary declaration, one Oclif package
   configuration and core-plugin composition; Nx project targets own build,
   generated-manifest, and package work, while top-level Nx Release configuration

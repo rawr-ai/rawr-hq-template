@@ -379,15 +379,26 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 
 ## 5. Bounded Agent-Plugin Lifecycle Service
 
-- [ ] 5.1 Keep canonical `status` and `sync`. Keep `test` for release-maintainer
+- [x] 5.0 Extract the service charter, authority ledger, exact capability set,
+  state owners, request/context flow, transition guarantees, failures,
+  idempotence, exterior, falsifiers, and deletion-first checkpoint sequence in
+  [[service-domain-frame]]. Use that frame to re-audit completed topology
+  checkpoints and review every remaining source move before implementation
+  continues.
+- [x] 5.1 Keep canonical `status` and `sync`. Keep `test` for release-maintainer
   and CI verification in explicit disposable homes, returning bounded inline
   facts with no receipt, sidecar, or custom evidence publication. Audit
   repository check, release-input authoring, packaging, and vendor update for an
-  owner-local consumer; remove any procedure without one.
+  owner-local consumer; remove any procedure without one. The completed audit in
+  [[service-domain-frame#Operation Admission]] binds every retained operation to
+  one qualified Oclif command used by content maintainers, CI, package callers,
+  or provider operators. No operation remains solely for historical settlement
+  machinery.
 - [ ] 5.2 Bring the service onto the positive topology: root
   `base.ts`, `contract.ts`, `impl.ts`, `router.ts`; module
   `contract.ts`, `module.ts`, router composition, and
-  `model/{dto,policy,schema}`. Preserve the existing one-service/module-router
+  `model/{dto,policy,repositories,...}`, with TypeBox schemas colocated with
+  their DTO authorities. Preserve the existing one-service/module-router
   skeleton. Move owner-local release and governance requests, results, issues,
   policies, and schemas out of root `service/model/**` into their owning modules;
   remove sibling-module reach-through by keeping behavior in procedure handlers
@@ -466,9 +477,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   copies and broad model barrel; and leave no root middleware import into the
   governance module. Preserve the exact Git behavior and the remaining
   release-owned selected-content edge for its own checkpoint.
-- [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
-  source. Remove manual closed-object parsing while retaining canonical order,
-  digest, uniqueness, and cross-field domain checks. Use the coherent current
+- [ ] 5.3 Make TypeBox the sole structural schema and generated-type source for
+  requests, results, persisted JSON, and intermodule domain collaborations.
+  Remove manual closed-object parsing while retaining canonical order, digest,
+  uniqueness, and cross-field domain checks. Use the coherent current
   oRPC family pinned by task 5.6a and run the exact source, type, and behavior
   review required by the current oRPC skill; do not infer compatibility from
   version proximity or mix family versions.
@@ -543,6 +555,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   injected command configuration, and the deferred executable-binding state
   machine. Keep an optional provider-construction seam for focused tests, and
   preserve repository locator, ref, object, bound, and opening/closing checks.
+- [ ] 5.6d Use the operator's ordinary `codex` and `claude` commands at the
+  concrete native-provider boundary. Remove public `--provider-executable`
+  flags, lifecycle executable-binding DTOs and selectors, executable identity
+  validation, and help-probe admission. Keep an optional provider-construction
+  seam for focused tests, preserve explicit provider homes and native
+  capability/inventory observation, and add no ambient home discovery.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
   typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
