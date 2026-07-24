@@ -1,7 +1,7 @@
-import { impl } from "../../impl";
+import { service } from "../../impl";
 import { analytics, observability } from "./middleware";
 
-export const module = impl.vendors
+export const module = service.vendors
   .use(observability)
   .use(analytics)
   .use(async ({ context, next }) =>
