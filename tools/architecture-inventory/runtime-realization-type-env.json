@@ -8,6 +8,7 @@
         "spec-conformance"
       ],
       "targets": [
+        "check",
         "sync",
         "structural",
         "report",

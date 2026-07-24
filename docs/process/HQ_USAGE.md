@@ -12,8 +12,8 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
      before relying on quarantined telemetry proof docs
 3. Maintain shared core/template contracts.
 4. Run tests for touched areas:
-   - `bun run test` for the fast default gate.
-   - `bun run test:web` when touching the web-only lane (without the pretest build gate).
+   - `bun run test` for the complete project-owned behavior graph.
+   - `bun run test:web` for a focused web-only run.
 5. Commit scoped changes.
 6. For stack drains or cross-repository interface acceptance, follow
    [[docs/process/HQ_OPERATIONS]] and [[docs/process/CROSS_REPO_WORKFLOWS]].

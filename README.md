@@ -12,8 +12,7 @@ records. It does not inherit, mirror, or merge this repository's runtime code.
 ```bash
 bun install
 bun run test
-# Optional quick lanes (skip pretest build)
-bun run test:quick
+# Optional project-focused lane
 bun run test:web
 ```
 
