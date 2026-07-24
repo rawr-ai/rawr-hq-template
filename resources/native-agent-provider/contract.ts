@@ -28,7 +28,11 @@ const SparsePathSchema = Refine(
   () => "Expected one canonical relative POSIX path"
 );
 const SparsePathsSchema = Type.Unsafe<readonly Static<typeof SparsePathSchema>[]>(
-  Type.Array(SparsePathSchema, { maxItems: 64 })
+  Refine(
+    Type.Array(SparsePathSchema, { maxItems: 64 }),
+    isCanonicalDistinctOrder,
+    () => "Expected distinct code-unit-sorted sparse paths"
+  )
 );
 const NullablePathSchema = Type.Union([CanonicalProviderPathSchema, Type.Null()]);
 const NullablePluginVersionSchema = Type.Union([

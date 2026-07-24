@@ -77,6 +77,14 @@ describe("native agent provider contract", () => {
       Value.Check(NativeMarketplaceSourceSchema, {
         kind: "git",
         repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+        revision: "0123456789abcdef",
+        sparsePaths: [".codex-plugin", ".codex-plugin"],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(NativeMarketplaceSourceSchema, {
+        kind: "git",
+        repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
         revision: "main",
         sparsePaths: [],
         fallbackRoot: "/tmp/marketplace",
