@@ -36,4 +36,4 @@ jobs:
         run: bun run habitat:grit:provision
 
       - name: Verify required repository gates
-        run: bun run check
+        run: bun run ci

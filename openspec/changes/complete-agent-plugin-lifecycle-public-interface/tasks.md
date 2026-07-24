@@ -185,6 +185,11 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   Move the existing CLI integration out of `@rawr/test-utils` and into the CLI
   owner's standard `test` target. Keep native Oclif installation under its
   qualified acceptance target rather than hiding it in foundational `test`.
+- [x] 1.6c7a Compose required CI as one Nx invocation over `build`, `check`,
+  and `test`. Let target defaults express build prerequisites for build,
+  verification, typecheck leaves, and tests so Nx owns ordering, deduplication,
+  caching, and parallelism. Do not shell-chain separate graphs, add explicit
+  parallel batches, or invoke Habitat outside its project-owned check edge.
 - [x] 1.6c8 Govern `#<owner>-service/*` and `#<owner>-api/*` through Habitat.
   Require each package import map to target its own `src/service` interior and
   use Grit source law to reject outside-owner, foreign-owner, cross-kind, and
