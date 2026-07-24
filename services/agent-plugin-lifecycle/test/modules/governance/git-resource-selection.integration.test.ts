@@ -3,12 +3,10 @@ import { dirname, join } from "node:path";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
-import {
-  CURRENT_MAIN_V3_RECORD_PATH,
-  createExactGitBlobPointer,
-  parseRepository,
-} from "../../../src/service/modules/governance/model";
-import { createResourceExactGitReader } from "../../../src/service/modules/governance/repository/content-workspace";
+import { CURRENT_MAIN_V3_RECORD_PATH } from "../../../src/service/model/dto/current-main";
+import { createExactGitBlobPointer } from "../../../src/service/model/dto/current-main-git";
+import { parseRepository } from "../../../src/service/model/dto/current-main-primitives";
+import { createResourceExactGitReader } from "../../../src/service/model/repositories/current-main-content-workspace";
 import {
   decodeAgentPluginReleaseInput,
   parseGitCommitId,

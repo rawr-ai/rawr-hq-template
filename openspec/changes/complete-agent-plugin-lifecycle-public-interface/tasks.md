@@ -364,11 +364,15 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   `base.ts`, `contract.ts`, `impl.ts`, `router.ts`; module
   `contract.ts`, `module.ts`, router composition, and
   `model/{dto,policy,schema}`. Preserve the existing one-service/module-router
-  skeleton. Move release and governance domain DTOs, policies, and schemas out
-  of root `service/model/**` into their owning modules; remove sibling-module
-  reach-through by keeping behavior in procedure handlers and module-owned
-  policy. Root `service/model/**` may contain only genuinely cross-cutting ready
-  host capability contracts and dependency-owned observation types. Compose
+  skeleton. Move owner-local release and governance requests, results, issues,
+  policies, and schemas out of root `service/model/**` into their owning modules;
+  remove sibling-module reach-through by keeping behavior in procedure handlers
+  and module-owned policy. Root `service/model/**` may contain only genuinely
+  cross-cutting ready host capability contracts, dependency-owned observation
+  types, and the minimum service-owned domain model consumed by multiple modules.
+  Current-main selection is one such collaboration model because governance
+  exposes it and providers consume it; governance-only procedure types remain in
+  governance. Compose
   direct module handlers as plain router objects; do not create ornamental
   `*Procedure` exports or parallel operation entrypoints that move handler
   behavior outside the oRPC router surface, and do not redeclare router-local
@@ -432,6 +436,12 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   import without conflicting with formatter-coalesced named imports. Module
   isolation, owner-local context, and closed topology remain under tasks 5.2,
   5.2b, 5.4, and 5.7.
+- [x] 5.2i Promote current-main selection to the shared service model because
+  governance exposes it and providers consume it. Move the complete locator,
+  record, exact-Git, and selection closure together; delete the governance-local
+  copies and broad model barrel; and leave no root middleware import into the
+  governance module. Preserve the exact Git behavior and the remaining
+  release-owned selected-content edge for its own checkpoint.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
   digest, uniqueness, and cross-field domain checks. Use the coherent current

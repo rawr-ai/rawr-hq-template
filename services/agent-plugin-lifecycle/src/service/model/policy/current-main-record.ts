@@ -4,7 +4,7 @@ import {
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
-} from "../../../../shared/release/canonical";
+} from "../../shared/release/canonical";
 import {
   type CanonicalCurrentMainV3,
   CURRENT_MAIN_V3_PROTOCOL,

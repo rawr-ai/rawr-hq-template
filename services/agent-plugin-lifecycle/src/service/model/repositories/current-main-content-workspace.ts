@@ -10,19 +10,19 @@ import {
   createExactGitBlobPointer,
   type GitBlobSelection,
   type GitLocator,
-} from "../model/dto/git";
+} from "../dto/current-main-git";
 import {
   type CanonicalRef,
   parseCommit,
   parseRepository,
   parseTree,
-} from "../model/dto/primitives";
+} from "../dto/current-main-primitives";
 import type {
   ExactGitReader,
   GitBlobReadResult,
   GitReadFailureCode,
   RepositoryInspection,
-} from "../model/repositories/exact-git";
+} from "./current-main-exact-git";
 
 const MAX_GIT_BLOB_BYTES = 128 * 1024 * 1024;
 export type ResourceExactGitReadPort = Pick<
@@ -30,7 +30,7 @@ export type ResourceExactGitReadPort = Pick<
   "inspectGitRef" | "readGitBlobAtPath" | "isLocalGitAncestor"
 >;
 
-/** Projects exact local Git mechanics into the governance module's semantic reader. */
+/** Projects exact local Git mechanics into the shared current-main reader. */
 export function createResourceExactGitReader(
   binding: Readonly<{
     contentWorkspace: ResourceExactGitReadPort;

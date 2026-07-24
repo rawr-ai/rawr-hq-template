@@ -1,18 +1,18 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
-import { CanonicalChannelSelectionSchema } from "../../../../model/dto/current-main-selection";
+import { CanonicalChannelSelectionSchema } from "./current-main-selection";
 
 export type {
   CanonicalChannelSelection,
   CurrentMainSelectionFailureKind,
   CurrentMainSelectionResult,
-} from "../../../../model/dto/current-main-selection";
+} from "./current-main-selection";
 export {
   CanonicalChannelSelectionSchema,
   CURRENT_MAIN_V3_CHANNEL,
   CURRENT_MAIN_V3_SCHEMA_VERSION,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-} from "../../../../model/dto/current-main-selection";
+} from "./current-main-selection";
 
 export const CURRENT_MAIN_V3_PROTOCOL = "agent-plugin-current-main@v3" as const;
 export const CURRENT_MAIN_V3_CANONICAL_REF = "refs/heads/main" as const;

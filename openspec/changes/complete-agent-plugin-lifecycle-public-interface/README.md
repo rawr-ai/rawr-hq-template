@@ -630,10 +630,12 @@ local canonical `pattern.md` source name. The committed service-law checkpoint
 identified above supersedes the later relaxed working-snapshot adaptation. Its
 seven empty-baseline packets keep one flat module `router.ts`, domain matter
 under the owning module model, direct Effect-oRPC construction, and one-way
-context flow. A static lifecycle audit found four illegal root-to-private-module
-imports, three sibling-module imports, module-to-root domain leakage, and a
-public root release surface. Those are migration inputs, not accepted debt or
-baseline entries.
+context flow. The shared current-main checkpoint moved its complete
+locator, record, exact-Git, and selection closure into the shared service model,
+so the root audit now has one remaining release-owned selected-content import
+instead of four illegal root-to-private-module imports. Three sibling-module
+imports, other module-to-root domain leakage, and a public root release surface
+remain migration inputs, not accepted debt or baseline entries.
 Central activation remains governed by
 [[tasks#1. Positive Habitat And Nx Checks]] task 1.5e and cannot precede a green
 live corpus.

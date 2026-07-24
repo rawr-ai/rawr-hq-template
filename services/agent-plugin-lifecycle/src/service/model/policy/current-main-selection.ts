@@ -3,7 +3,7 @@ import {
   parseGitCommitId,
   parseGitTreeId,
   parseReleaseRelativePath,
-} from "../../../shared/release";
+} from "../../shared/release";
 
 import {
   CURRENT_MAIN_V3_CANONICAL_REF,
@@ -12,14 +12,14 @@ import {
   type CurrentMainSelectionFailureKind,
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
-} from "../model/dto/current-main";
-import { parseCanonicalRef } from "../model/dto/primitives";
-import { validateCurrentMainRecordV3 } from "../model/policy/current-main-record";
+} from "../dto/current-main";
+import { parseCanonicalRef } from "../dto/current-main-primitives";
 import type {
   ExactGitReader,
   GitReadFailureCode,
   RepositoryInspection,
-} from "../model/repositories/exact-git";
+} from "../repositories/current-main-exact-git";
+import { validateCurrentMainRecordV3 } from "./current-main-record";
 
 const COMPILED_CANONICAL_REF = requireCanonicalRef(CURRENT_MAIN_V3_CANONICAL_REF);
 const COMPILED_CURRENT_MAIN_PATH = requireRelativePath(

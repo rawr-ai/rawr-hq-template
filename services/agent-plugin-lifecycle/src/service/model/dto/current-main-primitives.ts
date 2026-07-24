@@ -9,7 +9,7 @@ import {
   type ReleaseRelativePath,
   type ReleaseResult,
   type RepositoryIdentity,
-} from "../../../../shared/release";
+} from "../../shared/release";
 
 declare const canonicalRefBrand: unique symbol;
 declare const gitBlobIdBrand: unique symbol;
