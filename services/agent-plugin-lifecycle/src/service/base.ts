@@ -2,7 +2,9 @@ import { ORPCError } from "@orpc/client";
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
-import { Effect } from "effect";
+import { Effect, Layer } from "effect";
+import { implementEffect } from "effect-orpc";
+import { contract } from "./contract";
 import type { NativeProviderSessionResolver } from "./model/dependencies/providers";
 
 export interface LifecycleClock {
@@ -34,7 +36,7 @@ export const policy = {
   events: {},
 } as const;
 
-const service = defineService<{
+const definition = defineService<{
   initialContext: InitialContext;
   invocationContext: InvocationContext;
   metadata: ProcedureMetadata;
@@ -51,18 +53,20 @@ const service = defineService<{
   },
 });
 
-export type Service = ServiceOf<typeof service>;
+export type Service = ServiceOf<typeof definition>;
+export type InitialLifecycleContext = Service["ORPCInitialContext"];
 export type ReadyLifecycleContext = Service["ExecutionContext"];
 
-export const ocBase = service.oc;
-export const createServiceMiddleware = service.createMiddleware;
-export const createServiceBaselineMiddlewares = service.createBaselineMiddlewares;
-export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
+export const base = implementEffect(contract, Layer.empty);
+export const createServiceMiddleware = definition.createMiddleware;
+export const createServiceBaselineMiddlewares = definition.createBaselineMiddlewares;
+export const createServiceObservabilityMiddleware = definition.createObservabilityMiddleware;
 export const createRequiredServiceObservabilityMiddleware =
-  service.createRequiredObservabilityMiddleware;
-export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
-export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
-export const createServiceProvider = service.createProvider;
+  definition.createRequiredObservabilityMiddleware;
+export const createServiceAnalyticsMiddleware = definition.createAnalyticsMiddleware;
+export const createRequiredServiceAnalyticsMiddleware =
+  definition.createRequiredAnalyticsMiddleware;
+export const createServiceProvider = definition.createProvider;
 
 export function awaitDependencyPromise<A>(operation: () => PromiseLike<A>) {
   return Effect.uninterruptible(

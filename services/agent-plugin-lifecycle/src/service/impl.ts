@@ -1,17 +1,19 @@
-import { Layer } from "effect";
-import { implementEffect } from "effect-orpc";
-
-import { createServiceBaselineMiddlewares, type ReadyLifecycleContext } from "./base";
-import { contract } from "./contract";
+import {
+  base,
+  createServiceBaselineMiddlewares,
+  type InitialLifecycleContext,
+  type ReadyLifecycleContext,
+} from "./base";
 import { analytics } from "./middleware/analytics";
+import { context } from "./middleware/context";
 import { currentMain } from "./middleware/current-main";
 import { observability } from "./middleware/observability";
 import { selectedContent } from "./middleware/selected-content";
 
 const baseline = createServiceBaselineMiddlewares();
 
-export const impl = implementEffect(contract, Layer.empty)
-  .$context<ReadyLifecycleContext>()
+export const service = base
+  .use<ReadyLifecycleContext, InitialLifecycleContext>(context)
   .use(baseline.observability)
   .use(baseline.analytics)
   .use(observability)

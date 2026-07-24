@@ -393,6 +393,15 @@ reviews pass. Do not accumulate later containers in a dirty tree. See
   behavior, root composition, lint, typecheck, and the staged declarative-
   contract law. This checkpoint does not claim the providers module shell or
   the complete service corpus is green.
+- [x] 5.2h Establish the native Effect-oRPC construction spine. Let `base.ts`
+  directly own `implementEffect(contract, ...)`, let `impl.ts` extend that
+  imported base as `service`, and derive every module from the matching
+  `service.<module>` branch without an alias or second construction path.
+  Preserve middleware order and verify the generic anchor and oRPC composition
+  laws. Let the generic composition law recognize the exact value-bound `base`
+  import without conflicting with formatter-coalesced named imports. Module
+  isolation, owner-local context, and closed topology remain under tasks 5.2,
+  5.2b, 5.4, and 5.7.
 - [ ] 5.3 Make TypeBox the sole public structural schema and generated-type
   source. Remove manual closed-object parsing while retaining canonical order,
   digest, uniqueness, and cross-field domain checks. Use the coherent current

@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/client";
 import { ValidationError } from "@orpc/contract";
 import { createRouterClient } from "@orpc/server";
-import { schema } from "@rawr/hq-sdk";
+import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
@@ -15,11 +15,7 @@ import { eoc, implementEffect } from "effect-orpc";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 
-import {
-  awaitDependencyPromise,
-  createServiceBaselineMiddlewares,
-  ocBase,
-} from "../../src/service/base";
+import { awaitDependencyPromise, createServiceBaselineMiddlewares } from "../../src/service/base";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const AdmissionInputSchema = Type.Object(
@@ -35,11 +31,19 @@ const PublicationOutputSchema = Type.Object(
   { additionalProperties: false }
 );
 
+const admission = eoc.$meta<ServiceMetadataOf<{ audit: "basic"; entity: "service" }>>({
+  idempotent: true,
+  domain: "agent-plugin-lifecycle",
+  audience: "internal",
+  audit: "basic",
+  entity: "service",
+});
+
 const contract = eoc.router({
-  multiply: ocBase.input(schema(AdmissionInputSchema)).output(schema(AdmissionOutputSchema)),
-  invalidOutput: ocBase.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
-  reject: ocBase.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
-  publish: ocBase.input(schema(EmptyInputSchema)).output(schema(PublicationOutputSchema)),
+  multiply: admission.input(schema(AdmissionInputSchema)).output(schema(AdmissionOutputSchema)),
+  invalidOutput: admission.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
+  reject: admission.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
+  publish: admission.input(schema(EmptyInputSchema)).output(schema(PublicationOutputSchema)),
 });
 
 interface AdmissionContext {

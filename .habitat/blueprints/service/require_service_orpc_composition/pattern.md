@@ -40,11 +40,19 @@ predicate imports_exact_implement($body) {
   }
 }
 
-// Connects standalone service initialization to its local base anchor.
+// Connects standalone service initialization to its exact local base binding
+// without constraining unrelated named imports from the same module.
+predicate imports_value_binding($import, $binding) {
+  $import <: contains import_specifier(name=$binding) as $specifier where {
+    $specifier <: not contains type(),
+    $specifier <: $binding
+  }
+}
+
 predicate imports_exact_base($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']\./base[\"']$",
-    $import <: `import { base } from $source`
+    imports_value_binding(import=$import, binding=`base`)
   }
 }
 
@@ -187,6 +195,15 @@ const configured = base.use(provider);
 export const service = configured;
 ```
 
+## Matches a base binding imported from the wrong source
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+import type { Context } from "./base";
+import { base } from "./other";
+export const service = base.use<Context, Context>(middleware);
+```
+
 ## Matches a disconnected API service
 
 ```typescript
@@ -225,7 +242,9 @@ import { router as catalog } from "./modules/catalog/router";
 export const router: Router<typeof contract, Context> =
   service.router({ capabilities: { catalog } });
 // @filename: services/jobs/src/service/impl.ts
-import { base } from "./base"; export const service = base;
+import { base, createTelemetry, type Context } from "./base";
+const telemetry = createTelemetry();
+export const service = base.use(telemetry);
 // @filename: services/catalog/src/service/impl.ts
 import { base } from "./base"; export const service = base.use(one);
 // @filename: services/search/src/service/impl.ts
