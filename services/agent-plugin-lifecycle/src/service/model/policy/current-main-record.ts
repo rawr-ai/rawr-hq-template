@@ -6,81 +6,61 @@ import {
   equalBytes,
 } from "../../shared/release/canonical";
 import {
-  type CanonicalCurrentMainV3,
-  CURRENT_MAIN_V3_PROTOCOL,
-  type CurrentMainBodyV3,
-  CurrentMainBodyV3Schema,
-  type CurrentMainV3CodecFailureCode,
-  type CurrentMainV3CodecResult,
+  type CurrentMainRecordValidationCode,
   MAX_CURRENT_MAIN_V3_RECORD_BYTES,
-} from "../dto/current-main";
+} from "../dto/current-main-record";
+import {
+  type CanonicalChannelSelection,
+  CanonicalChannelSelectionSchema,
+} from "../dto/current-main-selection";
 
-export function encodeCurrentMainBodyV3(input: unknown): CurrentMainV3CodecResult {
-  const record = normalizeRecord(input);
-  return record === undefined
-    ? failed(
-        "InvalidSchema",
-        "currentMain",
-        "Current-main record does not match its closed domain schema"
-      )
-    : encodeRecord(record);
+/** Validates and freezes the shared current-main record structure. */
+export function normalizeCurrentMainRecord(input: unknown): CanonicalChannelSelection | undefined {
+  if (!Value.Check(CanonicalChannelSelectionSchema, input)) return undefined;
+  if (input.sourceRepositoryUrl !== canonicalRepositoryUrl(input.sourceRepositoryIdentity)) {
+    return undefined;
+  }
+  return Object.freeze({ ...input });
 }
 
-export function validateCurrentMainRecordV3(bytes: unknown): CurrentMainV3CodecResult {
-  const decoded = decodeCanonicalJson(bytes, "currentMain", MAX_CURRENT_MAIN_V3_RECORD_BYTES);
-  if (!decoded.ok) {
-    const tooLarge = decoded.issues.some((entry) => entry.code === "ENVELOPE_TOO_LARGE");
-    return failed(
-      tooLarge ? "RecordTooLarge" : "InvalidSchema",
-      "currentMain",
-      tooLarge
-        ? "Current-main record exceeds 2,097,152 bytes"
-        : "Current-main record is not valid UTF-8 JSON"
-    );
-  }
-  const record = normalizeRecord(decoded.value);
-  if (record === undefined) {
-    return failed(
-      "InvalidSchema",
-      "currentMain",
-      "Current-main record does not match its closed domain schema"
-    );
-  }
-  const canonical = encodeRecord(record);
-  if (!canonical.ok) return canonical;
-  if (!(bytes instanceof Uint8Array) || !equalBytes(bytes, canonical.value.bytes)) {
-    return failed(
-      "NonCanonical",
-      "currentMain",
-      "Current-main bytes are not the unique newline-terminated canonical representation"
-    );
-  }
-  return canonical;
-}
-
-export function canonicalSerializeCurrentMainBodyV3(record: CurrentMainBodyV3): Uint8Array {
+/** Serializes one validated current-main selection into its canonical Git bytes. */
+export function canonicalSerializeCurrentMainRecord(record: CanonicalChannelSelection): Uint8Array {
   return canonicalJsonLine(currentMainRecordValue(record));
 }
 
-function encodeRecord(record: CurrentMainBodyV3): CurrentMainV3CodecResult {
-  const bytes = canonicalSerializeCurrentMainBodyV3(record);
-  if (bytes.byteLength > MAX_CURRENT_MAIN_V3_RECORD_BYTES) {
-    return failed("RecordTooLarge", "currentMain", "Current-main record exceeds 2,097,152 bytes");
+/** Decodes canonical current-main bytes for governance and shared selection policy. */
+export function decodeCurrentMainRecord(
+  bytes: Uint8Array
+): CanonicalChannelSelection | CurrentMainRecordValidationCode {
+  const decoded = decodeCanonicalJson(bytes, "currentMain", MAX_CURRENT_MAIN_V3_RECORD_BYTES);
+  if (!decoded.ok) {
+    const tooLarge = decoded.issues.some((entry) => entry.code === "ENVELOPE_TOO_LARGE");
+    return tooLarge ? "RecordTooLarge" : "InvalidSchema";
   }
-  const value: CanonicalCurrentMainV3 = Object.freeze({
-    protocol: CURRENT_MAIN_V3_PROTOCOL,
-    byteLength: bytes.byteLength,
-    bytes: new Uint8Array(bytes),
-    record,
-  });
-  return Object.freeze({ ok: true, value });
+  const record = normalizeCurrentMainRecord(decoded.value);
+  if (record === undefined) {
+    return "InvalidSchema";
+  }
+  const canonical = canonicalSerializeCurrentMainRecord(record);
+  if (canonical.byteLength > MAX_CURRENT_MAIN_V3_RECORD_BYTES) {
+    return "RecordTooLarge";
+  }
+  if (!equalBytes(bytes, canonical)) {
+    return "NonCanonical";
+  }
+  return record;
 }
 
-function normalizeRecord(input: unknown): CurrentMainBodyV3 | undefined {
-  if (!Value.Check(CurrentMainBodyV3Schema, input)) return undefined;
-  if (input.sourceRepositoryUrl !== canonicalRepositoryUrl(input.sourceRepositoryIdentity))
-    return undefined;
-  return Object.freeze({ ...input });
+/** Supplies the stable operator diagnostic for a shared validation outcome. */
+export function describeCurrentMainRecordValidation(code: CurrentMainRecordValidationCode): string {
+  switch (code) {
+    case "InvalidSchema":
+      return "Current-main record does not match its closed domain schema";
+    case "RecordTooLarge":
+      return "Current-main record exceeds 2,097,152 bytes";
+    case "NonCanonical":
+      return "Current-main bytes are not the unique newline-terminated canonical representation";
+  }
 }
 
 function canonicalRepositoryUrl(repositoryIdentity: string): string | undefined {
@@ -89,7 +69,7 @@ function canonicalRepositoryUrl(repositoryIdentity: string): string | undefined 
   return repository.includes("/") ? `https://${repository}.git` : undefined;
 }
 
-function currentMainRecordValue(record: CurrentMainBodyV3): CanonicalJsonValue {
+function currentMainRecordValue(record: CanonicalChannelSelection): CanonicalJsonValue {
   return {
     schemaVersion: record.schemaVersion,
     channel: record.channel,
@@ -101,15 +81,4 @@ function currentMainRecordValue(record: CurrentMainBodyV3): CanonicalJsonValue {
     contentTree: record.contentTree,
     releaseInputDigest: record.releaseInputDigest,
   };
-}
-
-function failed(
-  code: CurrentMainV3CodecFailureCode,
-  path: string,
-  message: string
-): Extract<CurrentMainV3CodecResult, { readonly ok: false }> {
-  return Object.freeze({
-    ok: false,
-    failure: Object.freeze({ code, path, message }),
-  });
 }

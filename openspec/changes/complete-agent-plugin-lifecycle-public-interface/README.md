@@ -1088,6 +1088,24 @@ including its declared dependencies. CLI and provider lint/typecheck, CLI
 build, Biome, and diff hygiene are green. See
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service]] task 5.6c.
 
+The first module-sealing checkpoint implements the governance boundary described
+in [[service-domain-frame#Module Capability Set]]. Governance now owns only its
+two public operation DTOs, codec policy, narrow current-main middleware, and
+flat router. Current-main selection remains a shared service collaboration
+because providers consume the same resolved selection; the module projects the
+host-provided reader instead of acquiring Git a second time. The duplicate
+repository middleware, telemetry, schema barrel, and leaf-router directory are
+deleted.
+
+The governance gate passes 32 focused behavior cases across the record codec,
+selection policy, exact-Git typed client, closed TypeBox schemas, and provider
+service spine. Service source/test typecheck, workspace Biome, the complete
+Habitat source-law batch, the lifecycle owner gate, and diff hygiene pass.
+Standing architecture, TypeScript/oRPC/Effect, testing, and structural-quality
+reviews closed without unresolved P0/P1. This completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7a]] without claiming
+the remaining module or root-service work complete.
+
 ## Settlement Oracles
 
 The final product must prove:

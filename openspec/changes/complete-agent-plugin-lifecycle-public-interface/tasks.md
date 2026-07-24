@@ -564,6 +564,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
   typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
+- [x] 5.7a Seal the governance module. Keep the current-main selection
+  collaboration in the shared service model, move governance-only request,
+  result, and codec policy into `modules/governance/model`, project the
+  host-provided current-main reader only onto the selection operation, and
+  compose both direct handlers in one flat router. Delete the module's duplicate
+  Git repository acquisition, telemetry, schema barrel, and leaf-router
+  directory. Prove the two public operation families, every selection terminal
+  outcome, provider consumption, TypeBox schema boundary, typecheck, workspace
+  lint, and Habitat source law. Standing architecture, TypeScript/oRPC/Effect,
+  testing, and structural-quality reviews report no unresolved P0/P1.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

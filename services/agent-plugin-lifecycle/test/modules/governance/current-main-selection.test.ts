@@ -1,11 +1,5 @@
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
-
-import {
-  CURRENT_MAIN_V3_RECORD_PATH,
-  CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
-  type CurrentMainBodyV3,
-} from "../../../src/service/model/dto/current-main";
 import {
   createExactGitBlobPointer,
   type ExactGitBlobObservation,
@@ -13,8 +7,15 @@ import {
   type GitLocator,
 } from "../../../src/service/model/dto/current-main-git";
 import { parseCanonicalRef } from "../../../src/service/model/dto/current-main-primitives";
-import { MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH } from "../../../src/service/model/dto/current-main-selection";
-import { encodeCurrentMainBodyV3 } from "../../../src/service/model/policy/current-main-record";
+import {
+  CURRENT_MAIN_V3_RECORD_PATH,
+  CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
+} from "../../../src/service/model/dto/current-main-record";
+import {
+  type CanonicalChannelSelection,
+  MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
+} from "../../../src/service/model/dto/current-main-selection";
+import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import { resolveCurrentMainSelection } from "../../../src/service/model/policy/current-main-selection";
 import type {
   ExactGitReader,
@@ -180,6 +181,44 @@ describe("observed-Git current-main v3 selection", () => {
     expect(fixture.git.calls.readFileAtRevision).toBe(1);
   });
 
+  it("reports a wrong observed repository through the typed client before object reads", async () => {
+    let objectReads = 0;
+    const client = createLifecycleTestClient({
+      contentWorkspace: Object.freeze({
+        ...unavailableContentWorkspace(),
+        inspectGitRef: async () => ({
+          root: "/tmp/personal-rawr-hq",
+          refName: MAIN_REF,
+          commit: HEAD_COMMIT,
+          tree: HEAD_TREE,
+          objectFormat: "sha1" as const,
+          remoteUrls: Object.freeze(["https://github.com/example/other.git"]),
+        }),
+        readGitBlobAtPath: async () => {
+          objectReads += 1;
+          throw new Error("Unexpected current-main object read");
+        },
+      }),
+    });
+
+    await expect(
+      client.governance.currentMainSelection(
+        {
+          locator: {
+            workspacePath: "/tmp/personal-rawr-hq",
+            expectedRepositoryIdentity: REPOSITORY,
+          },
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
+      kind: "WRONG_REPOSITORY",
+      reason:
+        "Expected git:github.com/example/personal-rawr-hq, observed git:github.com/example/other",
+    });
+    expect(objectReads).toBe(0);
+  });
+
   it("retains and deterministically bounds a content-workspace diagnostic", async () => {
     const suffix = "...[truncated]";
     const detail = `content-workspace unavailable: ${"x".repeat(
@@ -235,7 +274,7 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
   const contentTree = tree(options.contentTree ?? CONTENT_TREE);
   const repositoryIdentity = repository(REPOSITORY);
   const releaseInput = releaseInputFixture("selected\n");
-  const record: CurrentMainBodyV3 = {
+  const record: CanonicalChannelSelection = {
     schemaVersion: 3,
     channel: "current-main",
     contentAuthority: CONTENT_AUTHORITY,
@@ -249,22 +288,9 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
     contentTree,
     releaseInputDigest: releaseInput.releaseInputDigest,
   };
-  const encoded = encodeCurrentMainBodyV3(record);
-  if (!encoded.ok) {
-    const bytes = encoder.encode(`${JSON.stringify(record)}\n`);
-    return fixtureFromBytes(
-      record,
-      bytes,
-      releaseInput,
-      headCommit,
-      headTree,
-      contentCommit,
-      contentTree
-    );
-  }
   return fixtureFromBytes(
     record,
-    encoded.value.bytes,
+    canonicalSerializeCurrentMainRecord(record),
     releaseInput,
     headCommit,
     headTree,
@@ -274,7 +300,7 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
 }
 
 function fixtureFromBytes(
-  record: CurrentMainBodyV3,
+  record: CanonicalChannelSelection,
   recordBytes: Uint8Array,
   releaseInput: AgentPluginReleaseInput,
   headCommit: ReturnType<typeof commit>,

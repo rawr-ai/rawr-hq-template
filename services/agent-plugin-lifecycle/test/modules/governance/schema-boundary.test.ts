@@ -4,25 +4,23 @@ import { type Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
-  type CurrentMainBodyV3,
-  CurrentMainBodyV3Schema,
-  MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH,
-  MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH,
-} from "../../../src/service/model/dto/current-main";
-import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../../../src/service/model/dto/current-main-selection";
-import { encodeCurrentMainBodyV3 } from "../../../src/service/model/policy/current-main-record";
 import { contract } from "../../../src/service/modules/governance/contract";
 import {
   CurrentMainRecordInputSchema,
   CurrentMainRecordResultSchema,
+  MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH,
+  MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH,
+} from "../../../src/service/modules/governance/model/dto/current-main-record";
+import {
   CurrentMainSelectionInputSchema,
   CurrentMainSelectionResultSchema,
-} from "../../../src/service/modules/governance/schemas";
+} from "../../../src/service/modules/governance/model/dto/current-main-selection";
+import { encodeCurrentMainBodyV3 } from "../../../src/service/modules/governance/model/policy/current-main-record";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -198,7 +196,7 @@ describe("governance procedure schema boundary", () => {
   });
 });
 
-function recordFixture(): CurrentMainBodyV3 {
+function recordFixture(): CanonicalChannelSelection {
   return {
     schemaVersion: 3,
     channel: "current-main",
@@ -218,5 +216,3 @@ function mustParse<T>(
   if (!result.ok) throw new Error("Invalid current-main fixture value");
   return result.value;
 }
-
-expectTypeOf<Static<typeof CurrentMainBodyV3Schema>>().toEqualTypeOf<CurrentMainBodyV3>();

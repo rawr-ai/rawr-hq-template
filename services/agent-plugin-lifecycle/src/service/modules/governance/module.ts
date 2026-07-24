@@ -1,14 +1,4 @@
 import { service } from "../../impl";
-import { analytics, observability, repositories } from "./middleware";
 
-export const module = service.governance
-  .use(observability)
-  .use(analytics)
-  .use(repositories)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        git: context.provided.git,
-      },
-    })
-  );
+/** Governance implementer rooted in the service-owned contract branch. */
+export const module = service.governance;
