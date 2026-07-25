@@ -2,22 +2,19 @@
 level: error
 tags: [service, api, boundary, platform, resource]
 ---
-# Require Service Boundary Platform Independence
+# Require Service Platform Independence
 
-Service contracts, schemas, and DTOs describe portable domain boundaries.
-They do not acquire concrete Node or Bun platform modules. Filesystem,
-process, storage, and runtime capabilities enter through service context and
-explicit resource providers instead.
-
-This rule intentionally does not classify router, module, or repository
-implementation files. TypeScript and behavior tests own those executable
-boundaries, while this packet guards the declarations shared across them.
+Production service source describes and executes domain capabilities over
+context-provided ports. It does not acquire concrete Node or Bun platform
+modules. Filesystem, process, storage, and runtime capabilities terminate in
+explicit resources/providers and enter service construction as ready
+capabilities.
 
 ```grit
 language js(typescript)
 
 // Admits only a top-level standalone service owner, not a nested lookalike.
-predicate belongs_to_exact_standalone_service() {
+predicate require_service_boundary_platform_independence_belongs_to_exact_standalone_service() {
   $filename <: r".*services/[^/]+/src/service/.*",
   not {
     $filename <: r".*/(?:apps|packages|plugins|resources|scripts|services|tools)/.*services/[^/]+/src/service/.*"
@@ -25,67 +22,25 @@ predicate belongs_to_exact_standalone_service() {
 }
 
 // Admits only a top-level API service owner, not a nested lookalike.
-predicate belongs_to_exact_api_service() {
+predicate require_service_boundary_platform_independence_belongs_to_exact_api_service() {
   $filename <: r".*plugins/server/api/[^/]+/src/service/.*",
   not {
     $filename <: r".*/(?:apps|packages|plugins|resources|scripts|services|tools)/.*plugins/server/api/[^/]+/src/service/.*"
   }
 }
 
-// Identifies exact standalone-service contract and legacy schema declarations.
-predicate is_standalone_service_root_declaration() {
-  belongs_to_exact_standalone_service(),
-  $filename <: r".*services/[^/]+/src/service/(?:contract|schemas|model|types)\.ts$"
-}
-
-// Identifies exact API-service contract and legacy schema declarations.
-predicate is_api_service_root_declaration() {
-  belongs_to_exact_api_service(),
-  $filename <: r".*plugins/server/api/[^/]+/src/service/(?:contract|schemas|model|types)\.ts$"
-}
-
-// Identifies module contracts in standalone and embedded API services.
-predicate is_service_module_contract() {
+// Defines the complete production service surface protected by this source law.
+predicate require_service_boundary_platform_independence_is_service_source() {
   or {
-    and {
-      belongs_to_exact_standalone_service(),
-      $filename <: r".*services/[^/]+/src/service/modules/[^/]+/(?:contract|schemas|model|types)\.ts$"
-    },
-    and {
-      belongs_to_exact_api_service(),
-      $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/(?:contract|schemas|model|types)\.ts$"
-    }
-  }
-}
-
-// Identifies DTO and schema declarations owned by a service root or module.
-predicate is_service_model_declaration() {
-  or {
-    and {
-      belongs_to_exact_standalone_service(),
-      $filename <: r".*services/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|schema)/.*\.ts$"
-    },
-    and {
-      belongs_to_exact_api_service(),
-      $filename <: r".*plugins/server/api/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|schema)/.*\.ts$"
-    }
-  }
-}
-
-// Defines the complete declaration surface protected by this source law.
-predicate is_service_boundary_declaration() {
-  or {
-    is_standalone_service_root_declaration(),
-    is_api_service_root_declaration(),
-    is_service_module_contract(),
-    is_service_model_declaration()
+    require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
+    require_service_boundary_platform_independence_belongs_to_exact_api_service()
   },
   not { $filename <: r".*/(?:test|tests|__tests__)/.*" }
 }
 
-// Recognizes concrete platform module sources without enumerating capabilities.
-predicate is_concrete_platform_source($source) {
-  $source <: r"^[\"'](?:node:|bun:)[^\"']+[\"']$"
+// Recognizes concrete Node/Bun standard-library and Effect provider sources.
+predicate require_service_boundary_platform_independence_is_concrete_platform_source($source) {
+  $source <: r"^[\"'](?:(?:node:|bun:)[^\"']+|@effect/platform-(?:node(?:-shared)?|bun)(?:/[^\"']*)?)[\"']$"
 }
 
 or {
@@ -95,8 +50,8 @@ or {
   `require($source)`,
   `require.resolve($source)`
 } where {
-  is_service_boundary_declaration(),
-  is_concrete_platform_source(source=$source)
+  require_service_boundary_platform_independence_is_service_source(),
+  require_service_boundary_platform_independence_is_concrete_platform_source(source=$source)
 }
 ```
 
@@ -116,12 +71,12 @@ const sqlite = import("bun:sqlite");
 export { sqlite };
 ```
 
-## Ignores executable router implementation
+## Matches executable router acquisition
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/create.router.ts
 import { randomUUID } from "node:crypto";
-export const router = { randomUUID };
+export const create = { randomUUID };
 ```
 
 ## Ignores portable boundary dependencies

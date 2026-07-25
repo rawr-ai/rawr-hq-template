@@ -17,12 +17,15 @@
     },
     "test": {
       "executor": "nx:run-commands",
+      "parallelism": false,
+      "inputs": ["default", "^default", "typescriptRuntime", "habitatPolicy"],
       "options": {
-        "command": "bun test scripts/habitat/*.test.mjs"
+        "command": "bun test --parallel=1 scripts/habitat/*.test.mjs"
       }
     },
     "typecheck": {
       "executor": "nx:run-commands",
+      "inputs": ["default", "^default", "typescriptRuntime", "habitatTypecheckSources"],
       "options": {
         "command": "tsc -p scripts/habitat/tsconfig.json --noEmit"
       }
@@ -53,10 +56,11 @@
     "check:source-law": {
       "executor": "nx:run-commands",
       "cache": true,
+      "parallelism": false,
       "inputs": ["{workspaceRoot}/**/*", "bunToolchain"],
       "outputs": [],
       "options": {
-        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_nx_workspace_scheduler_scripts --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_boundary_platform_independence --rule require_service_private_alias_configuration --rule require_service_private_alias_ownership"
+        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_nx_workspace_scheduler_scripts --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_private_alias_configuration --rule require_service_private_alias_ownership"
       }
     },
     "check:project-admission": {

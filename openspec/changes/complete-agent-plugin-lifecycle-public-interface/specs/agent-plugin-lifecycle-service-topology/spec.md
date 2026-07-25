@@ -23,20 +23,20 @@ absent.
 The lifecycle service MUST expose one root base, composed contract, implementer,
 router, typed local client, and only genuinely cross-cutting middleware. Every
 module MUST own its contract, module construction, router composition, and
-owner-local `model/{dto,policy,repositories,...}`, with TypeBox schemas
+owner-local `model/{dto,policy,ports,...}`, with TypeBox schemas
 colocated with their DTO authorities. Root `service/model` MUST contain only
 ready host dependency contracts, dependency-owned observation types, and the
 minimum service-owned domain model consumed by multiple modules. Current-main
 selection belongs to that shared service model because governance and providers
-consume the same service-owned policy; governance-only procedure requests and
+consume the same service-owned policy; governance-only operation requests and
 results remain in the governance module. The shared release-derivation
 capability MAY expose the minimum closed release observation needed by releases,
 packaging, and providers, while operator requests, results, and issues remain
 under the releases module. The
-package root MUST expose only client
-construction, named construction-boundary types, the router, and specifically
-required contracts. Module-local handlers, repositories, concrete providers,
-and broad DTO barrels MUST remain private.
+package root MUST expose only client construction, named construction-boundary
+types, the router, and specifically required contracts. Module-local handlers,
+ports, database stores, concrete providers, and broad DTO barrels MUST remain
+private.
 
 #### Scenario: Structural inventory is exact
 - **WHEN** Habitat and package export inventories run
@@ -44,18 +44,20 @@ and broad DTO barrels MUST remain private.
 - **AND** owner-local release/governance requests under root model, a sixth
 module, or a public concrete provider fails the ratchet
 
-Procedure handlers MUST be authored directly in each module's router surface and
-composed as a plain router object. A handler MAY call module-owned pure policy or
+Operation handlers MUST be authored directly in named
+`router/*.router.ts` leaves or semantic groups and composed as a plain router
+object by module `router.ts`. A handler MAY call module-owned pure policy or
 ready resource capabilities, but MUST NOT delegate its operation to a parallel
-business entrypoint or acquire an ornamental `*Procedure` export name merely for
-root composition. Router files MUST consume the exact context inferred from the
-module handler and MUST NOT redeclare a local dependency bag or reconstruct root
-context. Each module MUST retain one `router.ts` as its procedure and
-composition boundary; it MUST NOT introduce a second router container.
+business entrypoint or acquire an ornamental `*Procedure` export name merely
+for composition. Router files MUST consume the exact context inferred from the
+module handler and MUST NOT redeclare a local dependency bag or reconstruct
+root context. Each module MUST retain one `router.ts` as its public composition
+boundary and one `router/` directory for named authored files; `router/index.ts`
+MUST NOT exist.
 
-#### Scenario: Procedure composition is direct
-- **WHEN** module router exports and procedure handler call sites are inspected
-- **THEN** the router object contains the directly authored handlers
+#### Scenario: Operation composition is direct
+- **WHEN** module router exports and operation handler call sites are inspected
+- **THEN** module `router.ts` composes the directly authored named router values
 - **AND** no parallel operation function or individually named procedure wrapper
   or router-local dependency bag impersonates the oRPC composition boundary
 
@@ -63,7 +65,7 @@ composition boundary; it MUST NOT introduce a second router container.
 
 Root construction context MUST contain only cross-cutting ready host lanes that
 multiple modules actually consume. Module middleware MUST acquire or project
-owner-specific capabilities, and each module MUST expose to procedures only the
+owner-specific capabilities, and each module MUST expose to operations only the
 exact context they consume. A Personal workspace, provider home, package output,
 or governed Git ref that selects semantic authority MUST remain explicit
 validated input. Provider command names MUST resolve through the ordinary
@@ -76,7 +78,7 @@ enter service context.
 #### Scenario: Misleading ambient state has no authority
 - **WHEN** cwd, home variables, Personal runtime-like files, and unrelated
   provider state disagree with explicit input and ready capabilities
-- **THEN** the procedure uses only validated input and its exact projected
+- **THEN** the operation uses only validated input and its exact projected
   module context, while the owning resource resolves its ordinary local tool
 - **AND** no ambient home locator, global dependency bag, or Personal
   executable implementation is consulted
@@ -84,18 +86,18 @@ enter service context.
 ### Requirement: CLI projects the typed service boundary only
 
 Every service-backed lifecycle command MUST create or receive one typed client
-and invoke exactly one procedure. Concrete Git, filesystem, package-output, and
+and invoke exactly one operation. Concrete Git, filesystem, package-output, and
 provider adapters MAY exist only in the CLI host composition boundary or their
 own resource packages. Command code MUST NOT import module handlers or
-repositories, sequence cross-module transactions, construct a second service,
-or expose export/undo compatibility. `rawr agent plugins create` remains the
-separately owned source-authoring command.
+database stores, sequence cross-module transactions, construct a second
+service, or expose export/undo compatibility. `rawr agent plugins create`
+remains the separately owned source-authoring command.
 
 #### Scenario: Command dispatch cannot bypass the service
 - **WHEN** command imports and instrumented dispatch are inspected
-- **THEN** each service-backed command reaches exactly its typed procedure
-- **AND** module-local handlers, repositories, foreign services, Oclif mutation,
-  app composition, and compatibility ports record zero direct calls
+- **THEN** each service-backed command reaches exactly its typed operation
+- **AND** module-local handlers, database stores, foreign services, Oclif
+  mutation, app composition, and compatibility ports record zero direct calls
 
 ### Requirement: Consolidation does not realize a new runtime platform
 

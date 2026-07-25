@@ -170,11 +170,13 @@ The ratchet narrows possibility by kind rather than listing forbidden legacy
 names.
 
 - **Service:** one closed service spine; module-owned
-  `model/{dto,policy,repositories,...}` with TypeBox schemas colocated with DTO
+  `model/{dto,policy,ports,...}` with TypeBox schemas colocated with DTO
   authorities; module contracts and routers; root contract, implementation,
-  context, and router composition. Procedure handlers own domain behavior.
-  Effect remains at resource/provider boundaries unless a procedure genuinely
-  requires an Effect program.
+  context, and router composition. No `db` directory is admitted until a
+  separately owned database blueprint closes its topology. Operation handlers
+  own domain behavior. Concrete acquisition and mechanics remain at
+  resource/provider boundaries; handlers may execute Effect programs without
+  acquiring those capabilities directly.
 - **CLI app:** one Oclif entrypoint, one binary declaration, one Oclif package
   configuration and core-plugin composition; Nx project targets own build,
   generated-manifest, and package work, while top-level Nx Release configuration
@@ -189,19 +191,12 @@ names.
   structure, source, and graph policy; required CI exposes one non-skippable
   result for the candidate revision.
 
-Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
-is the source for the API plugin and agent-router patterns. The generic service
-packet was founded from committed Magic Migration source
-`543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
-`2a9160183b80badacedbb6006b95829bd166470a`. Its anchor, contract, and oRPC
-composition laws now follow the corrections at Magic Migration commit
-`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
-`89446f8be81b1f417aa4f292034a20851c796561`. RAWR adaptations to shared laws
-are limited to `ownerProject`, `placement.niche`, the canonical
-`@rawr/hq-sdk` TypeBox bridge, and RAWR prose identity. The RAWR packet contains
-the six shared source laws and one shared topology law, plus three
-Template-owned extensions for platform independence and private-alias
-configuration/ownership. The compiled Habitat consumer pins Civ7
+[[README#Habitat Provenance]] is the single commit-and-tree ledger for the
+historical imports and current Magic service lineage. RAWR adaptations preserve
+those shared laws while qualifying repository identity, the canonical
+`@rawr/hq-sdk` TypeBox bridge, and one module-router composition face over named
+authored router leaves. Template-owned extensions cover platform independence
+and private-alias configuration/ownership. The compiled Habitat consumer pins Civ7
 `habitat-sdk-v0.1.6`, source
 `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
 temporary Darwin arm64 lane.

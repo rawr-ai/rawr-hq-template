@@ -24,7 +24,7 @@ repository release, or HF01 candidate was mutated by this correction.
 | Personal RAWR HQ | `main` / `a4201247795d1fa18d46ecab206515e33660a171` | Curated agent content, provenance, policy/evaluation, governed records |
 
 Active Template execution is isolated on Graphite branch
-`codex/agent-root-simplify-cli-lifecycle` in
+`codex/align-service-blueprint-authority` in
 `/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-root-simplify-cli-lifecycle`.
 The branch started clean from canonical Template `main`. The clean Personal
 primary and unrelated worktrees remain outside this initiative's write set.
@@ -144,21 +144,53 @@ verification. None permits another selector or release store.
 ## Habitat Provenance
 
 Magic Migration commit `5a974f0047f0667c2e429fdb4193a0e237b067c4`
-remains the source for the API plugin and agent-router patterns. The
-generic service packet was founded from committed Magic Migration source
-`543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
-`2a9160183b80badacedbb6006b95829bd166470a`. The anchor, contract, and oRPC
-composition laws now follow the corrections at Magic Migration commit
-`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
-`89446f8be81b1f417aa4f292034a20851c796561`. The shared packet owns one closed
-topology law plus six source laws for generic anchors, native Effect-oRPC
-composition, context flow, module isolation, declarative TypeBox contracts,
-and module-owned oRPC error authority. RAWR adds three Template-owned service
-extensions for platform independence and private-alias configuration/ownership;
-adaptations to shared laws remain limited to packet identity and the canonical
-`@rawr/hq-sdk` TypeBox bridge. The packet is imported, but it does not govern
-repository admission until the admitted service corpus conforms and the
-owner-local Nx check is activated.
+is the historical import source for the API-plugin and agent-router packets.
+The current service packet follows the later committed Magic lineage:
+
+- closed service faces:
+  `822aa36d3f951a81d94292bcbce5d8fdc38fe1f7`;
+- native oRPC middleware decorators:
+  `1c6c128f772fdfc9db6d794424bbdd171ac30600`;
+- service platform-independence direction:
+  `60434ed1cfaa8d3a9d5e77ea275df4b0d0482419`;
+- named native middleware:
+  `9a91951603cbe942708bf0d971608af8ffc3bdbd`;
+- direct model topology:
+  `b359029512d40d42dd7adb5b983d6a286ce9bbdd`;
+- normalized owner/module alias closure:
+  `1968e0b89e1cf55a8befd817bf9ec4fea82a9795`;
+- one canonical public module router:
+  `beac5efed773cd772e76649e514d646d4f4d7bf9`; and
+- current root router composition:
+  `52873620ffe0b8b6e60527cd399076fc13ab86a7`, service-blueprint tree
+  `e8f0d548fba17936bf39084607c3cf12c5c97ee0`.
+
+The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
+every module from its exact `service.<module>` branch, remove model `index.ts`
+authority, preserve direct semantic leaves, and close normalized owner-alias
+traversal. RAWR deliberately refines the single public module `router.ts` with
+named `router/*.router.ts` operation leaves or semantic groups beneath it;
+module `router.ts` only composes their plain values, and `router/index.ts` is
+structurally inadmissible. The remaining user-authorized Template extensions
+require a completed-module-router-only root, make base and optional module
+context ownership explicit, close raw handler transport lanes and
+context-assembly destinations, document router groups and module boundaries,
+preserve platform independence and exact private aliases, require `AGENTS.md`
+at every service-module boundary, exclude open database interiors until a
+closed database blueprint exists, and close junk-drawer destinations. The
+seven staged rules remain outside repository admission until the admitted
+service corpus conforms and the owner-local Nx check activates them together.
+
+Future generic support for kinds that intentionally admit multiple positive
+forms is recorded for the upstream SDK in
+[[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]]. It is not implemented or
+emulated in Template, and it does not block this single-shape service law.
+
+Magic commit `fb91606db1c63dad92d3d4945bbb21bc92f9d1c3` separately hands off
+the shared TypeBox/oRPC contract-property-description law. Template has no
+stronger equivalent. Its shared pattern and bounded standalone/API
+applications are queued as a distinct Habitat-native checkpoint so this
+topology packet does not fork or absorb the contract law.
 
 The narrower API-plugin face and Grit-helper documentation laws are now active
 repository admission checks. The API kind positively requires only
@@ -190,6 +222,19 @@ rules stay diagnostic until the admitted corpus conforms, as required by
 [[tasks#1. Positive Habitat And Nx Checks|task 1.5e]]. This checkpoint advances
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.2]] without claiming
 the releases module shell or the full service is sealed.
+
+The corrected service authority packet is now sealed as the first half of the
+categorical service-law repair. Every module has one public composition face at
+`router.ts` and named operation-authoring leaves under `router/*.router.ts`;
+`router/index.ts`, `shared`, `internal`, `dependencies`, loose `schemas.ts`,
+and model barrels are outside the positive shape. Magic Migration
+`52873620ffe0b8b6e60527cd399076fc13ab86a7` supplies the direct local
+`Router<typeof contract, never>` root relation and rule-qualified Grit helpers.
+The seven service laws remain advisory until [[tasks#5. Bounded Agent-Plugin
+Lifecycle Service|task 5.7e2]] burns the live service corpus to green and
+activates them together. Their disposable fixture suite already proves the
+combined rule catalog, so this staging checkpoint creates no alternate
+repository checker or local Habitat SDK fork.
 
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
@@ -674,8 +719,8 @@ skill. It cannot authorize HF01 materialization or release.
 
 | Gate | State |
 | --- | --- |
-| Corrected authority record | Submitted in the active Template Graphite stack; required checks and landing remain open |
-| Generic Habitat blueprint port | Complete committed Magic service stack imported: one topology rule plus six source laws; lifecycle conformance and owner-local Nx activation remain open |
+| Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
+| Generic Habitat blueprint port | Current Magic service authority is sealed locally as one topology rule plus shared source laws with RAWR's single module `router.ts` composition face, named operation-router leaves, documentation, alias, and platform extensions; lifecycle conformance and owner-local Nx activation remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
@@ -686,21 +731,23 @@ skill. It cannot authorize HF01 materialization or release.
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Persistent stores are absent; task 5.5d still owns the bounded lifetime of the disposable provider-test source |
 | Effect 4 vendor realm | Exact beta 100 Effect/Platform, stable oRPC 1.14.8, admitted Effect-oRPC v4.8, and TypeBox 1.3.6 are green as one physical realm |
-| Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, context narrowing, and procedure-use audit remain |
+| Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, context narrowing, and operation-use audit remain |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
 
 The initial generic Habitat blueprint port remains a separate historical
-checkpoint: twenty-six logical files follow Magic Migration commit
+checkpoint: twenty-six logical files followed Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`; nineteen are byte-verbatim and the
 seven historical rule manifests adapt only RAWR identity, formatting, and the
 local canonical `pattern.md` source name. The committed service-law checkpoint
-identified above supersedes the later relaxed working-snapshot adaptation. Its
-ten empty-baseline packets keep one flat module `router.ts`, domain matter
-under the owning module model, direct Effect-oRPC construction, and one-way
-context flow. The shared current-main checkpoint moved its complete
+identified above supersedes both that initial port and the later relaxed
+working-snapshot adaptation. The current packet keeps one module `router.ts`
+composition face over named `router/*.router.ts` authored leaves, puts domain
+matter in direct owner-local model leaves, derives modules from exact service
+branches, and closes alias traversal without baseline entries or compatibility
+paths. The shared current-main checkpoint moved its complete
 locator, record, exact-Git, and selection closure into the shared service model,
 so the root audit now has one remaining release-owned selected-content import
 instead of four illegal root-to-private-module imports. Three sibling-module
@@ -733,12 +780,13 @@ unchanged. Its focused live run reported eleven source files below nested
 module router directories; owner-local lint/typecheck completed through Nx in
 11.8 seconds, and the then-current six service-spine and Effect-oRPC admission
 cases passed in 2.25 seconds. Those observations remain migration evidence, not
-current authority. The committed one-topology-plus-nine-source service law
-instead requires
-`base.ts` to own direct `implementEffect(contract, ...)` construction,
-`impl.ts` to export `service` from the imported `base`, and each module to
-export its matching `service.<module>` branch. The lifecycle service does not
-yet conform, so the rules remain outside the selected policy batch until tasks
+current authority. The corrected service law instead requires `base.ts` to own
+the sole direct `implementEffect(contract, ...)` construction, `impl.ts` to
+export `service` from the imported `base`, each module to export its matching
+`service.<module>` branch with owner-local context enrichment, and the root
+router to import completed module routers only. It also forbids model
+`index.ts` barrels and normalized-looking alias traversal. The lifecycle service does not yet
+conform, so the rules remain outside the selected policy batch until tasks
 5.2b and 5.7 seal the live corpus.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
@@ -1025,16 +1073,17 @@ the source rule pass. All probes were removed. Embedded pattern examples remain
 authoring evidence because the pinned Habitat binary has no native example
 runner; this checkpoint does not call them executable fixtures.
 
-The following [[tasks#1. Positive Habitat And Nx Checks|task 1.6c8a]]
-checkpoint replaces the only independent behavior worth retaining from the
-dead HQ Ops boundary scanner with one generic Habitat source law. Exact service
-contracts, schemas, and DTO declarations may not acquire `node:` or `bun:`
-modules; platform capabilities enter through service context and explicit
-resource providers. A temporary `node:fs` import in a real module contract made
-the installed rule fail on that file, and the unchanged declaration corpus
-passed after the probe was removed. The old scanner is deleted rather than
-retained as a second evaluator, and its helper-name blacklist is intentionally
-not migrated because filenames do not establish an infrastructure boundary.
+The earlier [[tasks#1. Positive Habitat And Nx Checks|task 1.6c8a]]
+checkpoint replaced the only independent behavior worth retaining from the
+dead HQ Ops boundary scanner with one generic declaration-level Habitat source
+law. The current service-law checkpoint strengthens that rule across the full
+production service surface: concrete `node:` and `bun:` acquisition belongs in
+resources/providers, while services consume ready capabilities through context.
+The stronger rule remains advisory and outside the selected repository batch
+until task 5.7e2 removes the known live-corpus violations. The old scanner
+remains deleted rather than becoming a second evaluator, and its helper-name
+blacklist is intentionally not migrated because filenames do not establish an
+infrastructure boundary.
 
 Personal PR #182 (`9378d33b`) and child PR #183 (`852702b8`) are not valid
 settlement inputs in their controller-bound form. They remain unlanded; prior
@@ -1049,7 +1098,7 @@ repository release action waits for the conventional CLI release container.
 The selected-content packaging checkpoint is
 `8f4ea80979776319279d6c68632b0515b154010c`. Packaging no longer reads a
 persistent artifact repository or accepts an artifact handle. The typed
-procedure takes one exact Git selection, derives the targeted release or
+operation takes one exact Git selection, derives the targeted release or
 complete release set in memory, renders deterministic Cowork ZIP bytes, then
 revalidates the exact Git selection before the explicit output can change.
 TypeBox owns the canonical non-root output path and every request/result shape;
@@ -1091,16 +1140,19 @@ build, Biome, and diff hygiene are green. See
 The first module-sealing checkpoint implements the governance boundary described
 in [[service-domain-frame#Module Capability Set]]. Governance now owns only its
 two public operation DTOs, codec policy, narrow current-main middleware, and
-flat router. Current-main selection remains a shared service collaboration
-because providers consume the same resolved selection; the module projects the
-host-provided reader instead of acquiring Git a second time. The duplicate
-repository middleware, telemetry, schema barrel, and leaf-router directory are
-deleted.
+flat router. That router shape records the historical checkpoint, not final
+service-law admission: task 5.7e now requires module `router.ts` to compose
+named `router/*.router.ts` operation leaves. Current-main selection remains a
+shared service collaboration because providers consume the same resolved
+selection; the module projects the host-provided reader instead of acquiring
+Git a second time. The duplicate repository middleware, telemetry, and schema
+barrel remain deleted.
 
 The governance gate passes 32 focused behavior cases across the record codec,
 selection policy, exact-Git typed client, closed TypeBox schemas, and provider
 service spine. Service source/test typecheck, workspace Biome, the complete
-Habitat source-law batch, the lifecycle owner gate, and diff hygiene pass.
+selected Habitat source-law batch, the lifecycle owner gate, and diff hygiene
+pass.
 Standing architecture, TypeScript/oRPC/Effect, testing, and structural-quality
 reviews closed without unresolved P0/P1. This completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7a]] without claiming
@@ -1117,8 +1169,8 @@ author and validate release-input bytes through the real
 fixture is deleted rather than relocated.
 
 The checkpoint passes 16 focused service cases and 19 focused CLI cases,
-service and CLI source/test typecheck, workspace Biome, the complete Habitat
-source-law batch, the lifecycle owner gate, and diff hygiene. Standing
+service and CLI source/test typecheck, workspace Biome, the complete selected
+Habitat source-law batch, the lifecycle owner gate, and diff hygiene. Standing
 architecture, TypeScript/TypeBox/oRPC/Effect, testing, and structural-quality
 reviews closed without unresolved P0/P1. This completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7b]] and the narrow
@@ -1140,8 +1192,8 @@ consumers name the shared release owner directly.
 
 The checkpoint passes the complete 228-case lifecycle service suite, the
 owner-local public-input behavior table, 17 focused CLI boundary cases, service
-and CLI source/test typecheck, workspace Biome, the complete Habitat source-law
-batch, the lifecycle owner gate, and diff hygiene. Standing architecture,
+and CLI source/test typecheck, workspace Biome, the complete selected Habitat
+source-law batch, the lifecycle owner gate, and diff hygiene. Standing architecture,
 TypeScript/TypeBox/oRPC/Effect, testing, and structural-quality reviews found no
 unresolved P0/P1. This completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7c]] without claiming
@@ -1165,7 +1217,7 @@ TypeBox paths; exact bounded-array diagnostics remain intact.
 
 The checkpoint passes the complete 236-case lifecycle service suite, 32 focused
 ownership/release-input/release-set cases, service source/test typecheck,
-workspace Biome, the complete Habitat source-law batch, the lifecycle owner
+workspace Biome, the complete selected Habitat source-law batch, the lifecycle owner
 gate, strict OpenSpec, and diff hygiene. Standing architecture,
 TypeScript/TypeBox, testing, and structural-quality reviews found no unresolved
 P0/P1. This completes

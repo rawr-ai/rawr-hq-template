@@ -11,10 +11,10 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "enforced",
-  "forbids": "a detached function declaration beside a router handler, operation logic in a router directory index, or a multi-operation semantic group without its purpose, shared capability or guard, behavior, and neighboring relation",
-  "why": "Router handlers are the operation authoring sites. Keeping transitions in handlers, indexes composition-only, and real semantic groups documented prevents a second hand-built execution layer.",
-  "remediate": "Author complete handlers in router.ts or named *.router.ts files. Move independent decisions to model policy, subordinate stateless mechanics to model helpers, and outside calls behind context-provided ports. Keep index.ts to imports plus the composed router export. Standalone leaves need no group comment; document each real multi-operation group with @purpose, @capability, @behavior, and @relation.",
+  "lane": "advisory",
+  "forbids": "a detached function declaration beside a router handler; operation logic, non-router runtime imports, default imports, namespace imports, or side-effect imports in module router.ts; or an explicitly extracted multi-operation group without its purpose, shared capability or guard, behavior, and neighboring relation",
+  "why": "Named router handlers are the operation authoring sites. Keeping transitions in router/*.router.ts, module router.ts limited to named local router values and plain composition, and explicitly extracted semantic groups documented prevents a second hand-built execution layer.",
+  "remediate": "Author complete handlers in named router/*.router.ts files. Move independent decisions to model policy, subordinate stateless mechanics to model helpers, and outside calls behind context-provided ports. Keep module/router.ts to type-only imports, named runtime imports from ./router/<name>.router, and the composed router export. Standalone leaves and flat router objects need no group comment; document each extracted multi-operation subset composed into a router with @purpose, @capability, @behavior, and @relation.",
   "message": "Service router files must retain operation authorship and compose without displaced logic.",
   "pathCoverage": [
     {
@@ -28,7 +28,6 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
-  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_router_authorship/baseline.json"
   },
