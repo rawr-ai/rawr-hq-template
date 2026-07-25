@@ -1,10 +1,7 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import {
-  ContentAuthoritySchema,
-  PluginIdSchema,
-} from "../../../../model/dto/releases/content-workspace";
 import { BoundedReadonlyArray, NonEmptyReadonlyArray } from "../../../../model/dto/structural";
+import { ContentAuthoritySchema, PluginIdSchema } from "../../../../shared/release";
 
 const ProviderTextSchema = Type.String({
   minLength: 1,

@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 
-import { issue, type ReleaseIssue } from "./issues";
-import { parseCanonicalString, parseInteger } from "./parse";
+import { Refine, type Static, type TSchema, Type } from "typebox";
+import { Value } from "typebox/value";
+
+import { issue, type ReleaseIssue, type ReleaseIssueCode } from "./issues";
 import { failure, type ReleaseResult, success } from "./result";
 
 declare const contentAuthorityBrand: unique symbol;
@@ -18,25 +20,27 @@ declare const releaseDigestBrand: unique symbol;
 declare const artifactDigestBrand: unique symbol;
 declare const releaseSetDigestBrand: unique symbol;
 
-export type ContentAuthority = string & { readonly [contentAuthorityBrand]: "ContentAuthority" };
-export type RepositoryIdentity = string & {
+type ContentAuthorityBrand = string & { readonly [contentAuthorityBrand]: "ContentAuthority" };
+type RepositoryIdentityBrand = string & {
   readonly [repositoryIdentityBrand]: "RepositoryIdentity";
 };
-export type GitCommitId = string & { readonly [gitCommitIdBrand]: "GitCommitId" };
-export type GitTreeId = string & { readonly [gitTreeIdBrand]: "GitTreeId" };
-export type PluginId = string & { readonly [pluginIdBrand]: "PluginId" };
-export type OwnershipIdentity = string & { readonly [ownershipIdentityBrand]: "OwnershipIdentity" };
-export type ReleaseRelativePath = string & {
+type GitCommitIdBrand = string & { readonly [gitCommitIdBrand]: "GitCommitId" };
+type GitTreeIdBrand = string & { readonly [gitTreeIdBrand]: "GitTreeId" };
+type PluginIdBrand = string & { readonly [pluginIdBrand]: "PluginId" };
+type OwnershipIdentityBrand = string & {
+  readonly [ownershipIdentityBrand]: "OwnershipIdentity";
+};
+type ReleaseRelativePathBrand = string & {
   readonly [releaseRelativePathBrand]: "ReleaseRelativePath";
 };
-export type ContentDigest = string & { readonly [contentDigestBrand]: "ContentDigest" };
-export type ReleaseInputDigest = string & {
+type ContentDigestBrand = string & { readonly [contentDigestBrand]: "ContentDigest" };
+type ReleaseInputDigestBrand = string & {
   readonly [releaseInputDigestBrand]: "ReleaseInputDigest";
 };
-export type PayloadDigest = string & { readonly [payloadDigestBrand]: "PayloadDigest" };
-export type ReleaseDigest = string & { readonly [releaseDigestBrand]: "ReleaseDigest" };
-export type ArtifactDigest = string & { readonly [artifactDigestBrand]: "ArtifactDigest" };
-export type ReleaseSetDigest = string & { readonly [releaseSetDigestBrand]: "ReleaseSetDigest" };
+type PayloadDigestBrand = string & { readonly [payloadDigestBrand]: "PayloadDigest" };
+type ReleaseDigestBrand = string & { readonly [releaseDigestBrand]: "ReleaseDigest" };
+type ArtifactDigestBrand = string & { readonly [artifactDigestBrand]: "ArtifactDigest" };
+type ReleaseSetDigestBrand = string & { readonly [releaseSetDigestBrand]: "ReleaseSetDigest" };
 
 export const RELEASE_INPUT_SCHEMA_VERSION = 1 as const;
 export const PAYLOAD_PROTOCOL_VERSION = 1 as const;
@@ -65,195 +69,268 @@ export type ArtifactProtocolVersion = typeof ARTIFACT_PROTOCOL_VERSION;
 export type AgentPluginReleaseSetSchemaVersion = typeof AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION;
 export type OwnershipIndexSchemaVersion = typeof OWNERSHIP_INDEX_SCHEMA_VERSION;
 export type BuilderProtocolVersion = typeof BUILDER_PROTOCOL_VERSION;
-export type NormalizedFileMode = 0o644 | 0o755;
 
 const encoder = new TextEncoder();
-const CONTENT_AUTHORITY_PATTERN = /^[a-z0-9][a-z0-9._:-]*$/u;
-const REPOSITORY_IDENTITY_PATTERN = /^[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~/-]*$/u;
-const PLUGIN_ID_PATTERN = /^[a-z0-9][a-z0-9._-]*$/u;
-const OWNERSHIP_IDENTITY_PATTERN = /^[a-z0-9@][a-z0-9@._:/-]*$/u;
-const GIT_OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
-const CONTENT_DIGEST_PATTERN = /^sha256_[0-9a-f]{64}$/u;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
+
+/** Identifies the curated content authority that owns one release input. */
+export const ContentAuthoritySchema = Type.Unsafe<ContentAuthorityBrand>(
+  Type.String({
+    minLength: 1,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern: "^[a-z0-9][a-z0-9._:-]*$",
+  })
+);
+
+/** Identifies a logical source repository without treating a local path as identity. */
+export const RepositoryIdentitySchema = Type.Unsafe<RepositoryIdentityBrand>(
+  Type.String({
+    minLength: 3,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern:
+      "^(?!file:)[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9._~-]+)*$",
+  })
+);
+
+const GitObjectIdSchema = Type.String({
+  minLength: 40,
+  maxLength: 64,
+  pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+});
+
+/** Identifies the exact source commit admitted to release construction. */
+export const GitCommitIdSchema = Type.Unsafe<GitCommitIdBrand>(GitObjectIdSchema);
+
+/** Identifies the exact source tree admitted to release construction. */
+export const GitTreeIdSchema = Type.Unsafe<GitTreeIdBrand>(GitObjectIdSchema);
+
+/** Identifies one curated agent-plugin release member. */
+export const PluginIdSchema = Type.Unsafe<PluginIdBrand>(
+  Type.String({
+    minLength: 1,
+    maxLength: MAX_CANONICAL_ID_BYTES,
+    pattern: "^[a-z0-9][a-z0-9._-]*$",
+  })
+);
+
+/** Identifies one plugin, skill, or other declared ownership claim. */
+export const OwnershipIdentitySchema = Type.Unsafe<OwnershipIdentityBrand>(
+  Refine(
+    Type.String({
+      minLength: 1,
+      maxLength: MAX_CANONICAL_ID_BYTES,
+      pattern: "^[a-z0-9@][a-z0-9@._:/-]*$",
+    }),
+    hasSafeSegments,
+    () => "Expected a canonical ownership identity"
+  )
+);
+
+/** Identifies one canonical POSIX path inside release-owned content. */
+export const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePathBrand>(
+  Refine(
+    Type.String({ minLength: 1, maxLength: MAX_RELEASE_RELATIVE_PATH_BYTES }),
+    isCanonicalReleaseRelativePath,
+    () => "Expected a canonical POSIX release-relative path"
+  )
+);
+
+/** Identifies exact source bytes by SHA-256. */
+export const ContentDigestSchema = Type.Unsafe<ContentDigestBrand>(
+  Type.String({ pattern: "^sha256_[0-9a-f]{64}$" })
+);
+
+/** Identifies one canonical release-input envelope. */
+export const ReleaseInputDigestSchema = Type.Unsafe<ReleaseInputDigestBrand>(
+  Type.String({ pattern: "^ri1_[0-9a-f]{64}$" })
+);
+
+/** Identifies one canonical plugin payload. */
+export const PayloadDigestSchema = Type.Unsafe<PayloadDigestBrand>(
+  Type.String({ pattern: "^pd1_[0-9a-f]{64}$" })
+);
+
+/** Identifies one canonical agent-plugin release. */
+export const ReleaseDigestSchema = Type.Unsafe<ReleaseDigestBrand>(
+  Type.String({ pattern: "^rd1_[0-9a-f]{64}$" })
+);
+
+/** Identifies one canonical packaged release artifact. */
+export const ArtifactDigestSchema = Type.Unsafe<ArtifactDigestBrand>(
+  Type.String({ pattern: "^ad1_[0-9a-f]{64}$" })
+);
+
+/** Identifies one canonical complete curated release set. */
+export const ReleaseSetDigestSchema = Type.Unsafe<ReleaseSetDigestBrand>(
+  Type.String({ pattern: "^rs1_[0-9a-f]{64}$" })
+);
+
+/** Admits only the two normalized executable-bit states used in release payloads. */
+export const NormalizedFileModeSchema = Type.Union([Type.Literal(0o644), Type.Literal(0o755)]);
+
+export type ContentAuthority = Static<typeof ContentAuthoritySchema>;
+export type RepositoryIdentity = Static<typeof RepositoryIdentitySchema>;
+export type GitCommitId = Static<typeof GitCommitIdSchema>;
+export type GitTreeId = Static<typeof GitTreeIdSchema>;
+export type PluginId = Static<typeof PluginIdSchema>;
+export type OwnershipIdentity = Static<typeof OwnershipIdentitySchema>;
+export type ReleaseRelativePath = Static<typeof ReleaseRelativePathSchema>;
+export type ContentDigest = Static<typeof ContentDigestSchema>;
+export type ReleaseInputDigest = Static<typeof ReleaseInputDigestSchema>;
+export type PayloadDigest = Static<typeof PayloadDigestSchema>;
+export type ReleaseDigest = Static<typeof ReleaseDigestSchema>;
+export type ArtifactDigest = Static<typeof ArtifactDigestSchema>;
+export type ReleaseSetDigest = Static<typeof ReleaseSetDigestSchema>;
+export type NormalizedFileMode = Static<typeof NormalizedFileModeSchema>;
 
 export function parseContentAuthority(
   value: unknown,
   path = "contentAuthority"
 ): ReleaseResult<ContentAuthority, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  const parsed = parseCanonicalString(value, path, issues, {
-    code: "INVALID_CONTENT_AUTHORITY",
-    maxBytes: MAX_CANONICAL_ID_BYTES,
-    pattern: CONTENT_AUTHORITY_PATTERN,
-  });
-  return parsed === undefined
-    ? failure([issues[0] ?? issue("INVALID_CONTENT_AUTHORITY", path, "Invalid content authority")])
-    : success(parsed as ContentAuthority);
+  return parseStringSchema(
+    ContentAuthoritySchema,
+    value,
+    path,
+    "INVALID_CONTENT_AUTHORITY",
+    "Content authority must be canonical"
+  );
 }
 
 export function parseRepositoryIdentity(
   value: unknown,
   path = "repositoryIdentity"
 ): ReleaseResult<RepositoryIdentity, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  const parsed = parseCanonicalString(value, path, issues, {
-    code: "INVALID_REPOSITORY_IDENTITY",
-    maxBytes: MAX_CANONICAL_ID_BYTES,
-    pattern: REPOSITORY_IDENTITY_PATTERN,
-  });
-  if (
-    parsed !== undefined &&
-    (parsed.startsWith("file:") || hasUnsafeSegments(parsed.slice(parsed.indexOf(":") + 1)))
-  ) {
-    issues.push(
-      issue(
-        "INVALID_REPOSITORY_IDENTITY",
-        path,
-        "Repository identity must be logical and path-safe"
-      )
-    );
-  }
-  return parsed === undefined || issues.length > 0
-    ? failure([
-        issues[0] ?? issue("INVALID_REPOSITORY_IDENTITY", path, "Invalid repository identity"),
-      ])
-    : success(parsed as RepositoryIdentity);
+  return parseStringSchema(
+    RepositoryIdentitySchema,
+    value,
+    path,
+    "INVALID_REPOSITORY_IDENTITY",
+    "Repository identity must be logical and path-safe"
+  );
 }
 
 export function parseGitCommitId(
   value: unknown,
   path = "sourceCommit"
 ): ReleaseResult<GitCommitId, ReleaseIssue> {
-  return parseGitObject(value, path, (parsed) => parsed as GitCommitId);
+  return parseStringSchema(
+    GitCommitIdSchema,
+    value,
+    path,
+    "INVALID_GIT_OBJECT_ID",
+    "Invalid Git object identity"
+  );
 }
 
 export function parseGitTreeId(
   value: unknown,
   path = "sourceTree"
 ): ReleaseResult<GitTreeId, ReleaseIssue> {
-  return parseGitObject(value, path, (parsed) => parsed as GitTreeId);
+  return parseStringSchema(
+    GitTreeIdSchema,
+    value,
+    path,
+    "INVALID_GIT_OBJECT_ID",
+    "Invalid Git object identity"
+  );
 }
 
 export function parsePluginId(
   value: unknown,
   path = "pluginId"
 ): ReleaseResult<PluginId, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  const parsed = parseCanonicalString(value, path, issues, {
-    code: "INVALID_PLUGIN_ID",
-    maxBytes: MAX_CANONICAL_ID_BYTES,
-    pattern: PLUGIN_ID_PATTERN,
-  });
-  return parsed === undefined
-    ? failure([issues[0] ?? issue("INVALID_PLUGIN_ID", path, "Invalid plugin identity")])
-    : success(parsed as PluginId);
+  return parseStringSchema(
+    PluginIdSchema,
+    value,
+    path,
+    "INVALID_PLUGIN_ID",
+    "Invalid plugin identity"
+  );
 }
 
 export function parseOwnershipIdentity(
   value: unknown,
   path = "identity"
 ): ReleaseResult<OwnershipIdentity, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  const parsed = parseCanonicalString(value, path, issues, {
-    code: "INVALID_OWNERSHIP_IDENTITY",
-    maxBytes: MAX_CANONICAL_ID_BYTES,
-    pattern: OWNERSHIP_IDENTITY_PATTERN,
-  });
-  return parsed === undefined || hasUnsafeSegments(parsed)
-    ? failure([
-        issues[0] ?? issue("INVALID_OWNERSHIP_IDENTITY", path, "Invalid ownership identity"),
-      ])
-    : success(parsed as OwnershipIdentity);
+  return parseStringSchema(
+    OwnershipIdentitySchema,
+    value,
+    path,
+    "INVALID_OWNERSHIP_IDENTITY",
+    "Invalid ownership identity"
+  );
 }
 
 export function parseReleaseRelativePath(
   value: unknown,
   path = "path"
 ): ReleaseResult<ReleaseRelativePath, ReleaseIssue> {
-  if (typeof value !== "string") {
-    return failure([issue("EXPECTED_STRING", path, "Relative path must be a string")]);
-  }
-  if (
-    value.length === 0 ||
-    value.startsWith("/") ||
-    value.endsWith("/") ||
-    value.includes("\\") ||
-    value.includes(":") ||
-    CONTROL_CHARACTER_PATTERN.test(value) ||
-    value.normalize("NFC") !== value ||
-    hasUnsafeSegments(value) ||
-    encoder.encode(value).byteLength > MAX_RELEASE_RELATIVE_PATH_BYTES
-  ) {
-    return failure([
-      issue("INVALID_RELATIVE_PATH", path, "Path must be a canonical POSIX relative path"),
-    ]);
-  }
-  return success(value as ReleaseRelativePath);
+  return parseStringSchema(
+    ReleaseRelativePathSchema,
+    value,
+    path,
+    "INVALID_RELATIVE_PATH",
+    "Path must be a canonical POSIX relative path"
+  );
 }
 
 export function parseNormalizedFileMode(
   value: unknown,
   path = "mode"
 ): ReleaseResult<NormalizedFileMode, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  const parsed = parseInteger(value, path, issues);
-  if (parsed !== 0o644 && parsed !== 0o755) {
+  if (!Value.Check(NormalizedFileModeSchema, value)) {
     return failure([
-      issues[0] ??
-        issue("INVALID_MODE", path, "File mode must be normalized to 0644 or 0755", {
-          expected: "0644|0755",
-          actual: parsed === undefined ? String(value) : parsed,
-        }),
+      typeof value === "number" && Number.isSafeInteger(value)
+        ? issue("INVALID_MODE", path, "File mode must be normalized to 0644 or 0755", {
+            expected: "0644|0755",
+            actual: value,
+          })
+        : issue("EXPECTED_INTEGER", path, "Value must be a safe integer"),
     ]);
   }
-  return success(parsed);
+  return success(value);
 }
 
 export function parseContentDigest(
   value: unknown,
   path = "digest"
 ): ReleaseResult<ContentDigest, ReleaseIssue> {
-  return parseTaggedDigest(
-    value,
-    path,
-    CONTENT_DIGEST_PATTERN,
-    (parsed) => parsed as ContentDigest
-  );
+  return parseDigest(ContentDigestSchema, value, path);
 }
 
 export function parseReleaseInputDigest(
   value: unknown,
   path = "releaseInputDigest"
 ): ReleaseResult<ReleaseInputDigest, ReleaseIssue> {
-  return parseDomainDigest(value, path, "ri1_", (parsed) => parsed as ReleaseInputDigest);
+  return parseDigest(ReleaseInputDigestSchema, value, path);
 }
 
 export function parsePayloadDigest(
   value: unknown,
   path = "payloadDigest"
 ): ReleaseResult<PayloadDigest, ReleaseIssue> {
-  return parseDomainDigest(value, path, "pd1_", (parsed) => parsed as PayloadDigest);
+  return parseDigest(PayloadDigestSchema, value, path);
 }
 
 export function parseReleaseDigest(
   value: unknown,
   path = "releaseDigest"
 ): ReleaseResult<ReleaseDigest, ReleaseIssue> {
-  return parseDomainDigest(value, path, "rd1_", (parsed) => parsed as ReleaseDigest);
+  return parseDigest(ReleaseDigestSchema, value, path);
 }
 
 export function parseArtifactDigest(
   value: unknown,
   path = "artifactDigest"
 ): ReleaseResult<ArtifactDigest, ReleaseIssue> {
-  return parseDomainDigest(value, path, "ad1_", (parsed) => parsed as ArtifactDigest);
+  return parseDigest(ArtifactDigestSchema, value, path);
 }
 
 export function parseReleaseSetDigest(
   value: unknown,
   path = "releaseSetDigest"
 ): ReleaseResult<ReleaseSetDigest, ReleaseIssue> {
-  return parseDomainDigest(value, path, "rs1_", (parsed) => parsed as ReleaseSetDigest);
+  return parseDigest(ReleaseSetDigestSchema, value, path);
 }
 
 export function contentDigest(bytes: Uint8Array): ContentDigest {
@@ -291,53 +368,53 @@ export function compareCanonicalText(left: string, right: string): number {
   return leftBytes.length - rightBytes.length;
 }
 
-function parseGitObject<T extends string>(
+function parseStringSchema<T extends TSchema>(
+  schema: T,
   value: unknown,
   path: string,
-  brand: (value: string) => T
-): ReleaseResult<T, ReleaseIssue> {
-  const issues: ReleaseIssue[] = [];
-  const parsed = parseCanonicalString(value, path, issues, {
-    code: "INVALID_GIT_OBJECT_ID",
-    minBytes: 40,
-    maxBytes: 64,
-    pattern: GIT_OBJECT_PATTERN,
-  });
-  return parsed === undefined
-    ? failure([issues[0] ?? issue("INVALID_GIT_OBJECT_ID", path, "Invalid Git object identity")])
-    : success(brand(parsed));
+  invalidCode: ReleaseIssueCode,
+  invalidMessage: string
+): ReleaseResult<Static<T>, ReleaseIssue> {
+  if (Value.Check(schema, value)) return success(value);
+  return failure([
+    typeof value === "string"
+      ? issue(invalidCode, path, invalidMessage)
+      : issue("EXPECTED_STRING", path, "Value must be a string"),
+  ]);
 }
 
-function parseDomainDigest<T extends string>(
+function parseDigest<T extends TSchema>(
+  schema: T,
   value: unknown,
-  path: string,
-  prefix: "ri1_" | "pd1_" | "rd1_" | "ad1_" | "rs1_",
-  brand: (value: string) => T
-): ReleaseResult<T, ReleaseIssue> {
-  const pattern = new RegExp(`^${prefix}[0-9a-f]{64}$`, "u");
-  return parseTaggedDigest(value, path, pattern, brand);
-}
-
-function parseTaggedDigest<T extends string>(
-  value: unknown,
-  path: string,
-  pattern: RegExp,
-  brand: (value: string) => T
-): ReleaseResult<T, ReleaseIssue> {
-  if (typeof value !== "string") {
-    return failure([issue("EXPECTED_STRING", path, "Digest must be a string")]);
-  }
-  if (!pattern.test(value)) {
-    return failure([issue("INVALID_DIGEST", path, "Digest has the wrong domain or encoding")]);
-  }
-  return success(brand(value));
+  path: string
+): ReleaseResult<Static<T>, ReleaseIssue> {
+  return parseStringSchema(
+    schema,
+    value,
+    path,
+    "INVALID_DIGEST",
+    "Digest has the wrong domain or encoding"
+  );
 }
 
 function sha256Hex(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function hasUnsafeSegments(value: string): boolean {
+function hasSafeSegments(value: string): boolean {
   const segments = value.split("/");
-  return segments.some((segment) => segment.length === 0 || segment === "." || segment === "..");
+  return segments.every((segment) => segment.length > 0 && segment !== "." && segment !== "..");
+}
+
+function isCanonicalReleaseRelativePath(value: string): boolean {
+  return (
+    !value.startsWith("/") &&
+    !value.endsWith("/") &&
+    !value.includes("\\") &&
+    !value.includes(":") &&
+    !CONTROL_CHARACTER_PATTERN.test(value) &&
+    value.normalize("NFC") === value &&
+    hasSafeSegments(value) &&
+    encoder.encode(value).byteLength <= MAX_RELEASE_RELATIVE_PATH_BYTES
+  );
 }

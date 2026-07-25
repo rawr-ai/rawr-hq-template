@@ -4,17 +4,16 @@ import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
   type ContentAuthority,
+  ContentAuthoritySchema,
   type GitCommitId,
+  GitCommitIdSchema,
   type GitTreeId,
+  GitTreeIdSchema,
   type PluginId,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parsePluginId,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
   type ReleaseRelativePath,
+  ReleaseRelativePathSchema,
   type RepositoryIdentity,
+  RepositoryIdentitySchema,
 } from "../../../shared/release";
 
 export const MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH = 4_096;
@@ -30,67 +29,6 @@ export const CanonicalAbsoluteLocatorSchema = Refine(
   }),
   isCanonicalAbsoluteLocator,
   () => "Expected a canonical non-root absolute workspace locator"
-);
-
-export const RepositoryIdentitySchema = Type.Unsafe<RepositoryIdentity>(
-  Refine(
-    Type.String({
-      minLength: 3,
-      maxLength: 512,
-      pattern:
-        "^(?!file:)[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9._~-]+)*$",
-    }),
-    (value) => parseRepositoryIdentity(value).ok,
-    () => "Expected a canonical logical repository identity"
-  )
-);
-
-export const ContentAuthoritySchema = Type.Unsafe<ContentAuthority>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: 512,
-      pattern: "^[a-z0-9][a-z0-9._:-]*$",
-    }),
-    (value) => parseContentAuthority(value).ok,
-    () => "Expected a canonical content authority"
-  )
-);
-
-export const PluginIdSchema = Type.Unsafe<PluginId>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: 512,
-      pattern: "^[a-z0-9][a-z0-9._-]*$",
-    }),
-    (value) => parsePluginId(value).ok,
-    () => "Expected a canonical plugin identity"
-  )
-);
-
-export const GitCommitIdSchema = Type.Unsafe<GitCommitId>(
-  Refine(
-    Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }),
-    (value) => parseGitCommitId(value).ok,
-    () => "Expected an exact lowercase Git commit object ID"
-  )
-);
-
-export const GitTreeIdSchema = Type.Unsafe<GitTreeId>(
-  Refine(
-    Type.String({ pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" }),
-    (value) => parseGitTreeId(value).ok,
-    () => "Expected an exact lowercase Git tree object ID"
-  )
-);
-
-export const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePath>(
-  Refine(
-    Type.String({ minLength: 1, maxLength: 1_024 }),
-    (value) => parseReleaseRelativePath(value).ok,
-    () => "Expected a canonical POSIX release-relative path"
-  )
 );
 
 export const RemoteNameSchema = Type.String({

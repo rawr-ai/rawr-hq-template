@@ -1,22 +1,22 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 import {
   CanonicalAbsoluteLocatorSchema,
-  ContentAuthoritySchema,
   QualifiedHeadRefSchema,
-  ReleaseRelativePathSchema,
   RemoteNameSchema,
   RemoteUrlSchema,
-  RepositoryIdentitySchema,
   type SourceEligibilityIssue,
 } from "../../../../model/dto/releases/content-workspace";
-import type {
-  AgentPluginPayload,
-  AgentPluginReleaseInput,
-  GitCommitId,
-  GitTreeId,
-  PluginId,
-  ReleaseRelativePath,
-  RepositoryIdentity,
+import {
+  type AgentPluginPayload,
+  type AgentPluginReleaseInput,
+  ContentAuthoritySchema,
+  type GitCommitId,
+  type GitTreeId,
+  type PluginId,
+  type ReleaseRelativePath,
+  ReleaseRelativePathSchema,
+  type RepositoryIdentity,
+  RepositoryIdentitySchema,
 } from "../../../../shared/release";
 
 export const StagedContentWorkspacePolicySchema = ReadonlyObject(

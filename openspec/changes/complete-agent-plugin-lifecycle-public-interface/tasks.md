@@ -584,6 +584,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   focused release and CLI behavior, source/test typecheck, workspace lint,
   Habitat source law, and the lifecycle owner gate. Do not claim the subsequent
   private TypeBox release-family normalization in this checkpoint.
+- [x] 5.7c Seal the private primitive release-contract family under one TypeBox
+  authority. Colocate every branded scalar schema with its `Static`-derived
+  type, validate structure through `Value.Check`, retain nominal brands and the
+  repository/path semantic refinements, and delete parser-backed scalar
+  refinements, weaker identity aliases, duplicate path and digest schemas, and
+  facade re-exports that obscure the primitive owner. Preserve the public input
+  adapters and digest constructors. Prove the owner-local input behavior table,
+  existing release aggregate behavior, service and CLI typecheck, workspace
+  lint, Habitat source law, and standing reviews. Ownership, payload,
+  release-input, release, and release-set aggregate normalization remain open
+  under tasks 5.3 and 5.7.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

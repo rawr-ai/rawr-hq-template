@@ -1,14 +1,12 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-
 import {
-  CanonicalAbsoluteLocatorSchema,
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
+  ReleaseInputDigestSchema,
   RepositoryIdentitySchema,
-} from "./releases/content-workspace";
-
-const RELEASE_INPUT_DIGEST_PATTERN = "^ri1_[0-9a-f]{64}$";
+} from "../../shared/release";
+import { CanonicalAbsoluteLocatorSchema } from "./releases/content-workspace";
 
 export const CURRENT_MAIN_V3_SCHEMA_VERSION = 3 as const;
 export const CURRENT_MAIN_V3_CHANNEL = "current-main" as const;
@@ -41,7 +39,7 @@ export const CanonicalChannelSelectionSchema = ReadonlyObject(
     ),
     contentCommit: GitCommitIdSchema,
     contentTree: GitTreeIdSchema,
-    releaseInputDigest: Type.String({ pattern: RELEASE_INPUT_DIGEST_PATTERN }),
+    releaseInputDigest: ReleaseInputDigestSchema,
   }),
   { additionalProperties: false }
 );

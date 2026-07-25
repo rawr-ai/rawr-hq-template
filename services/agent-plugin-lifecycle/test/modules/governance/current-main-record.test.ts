@@ -5,6 +5,7 @@ import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
+  parseReleaseInputDigest,
   parseRepositoryIdentity,
 } from "../../../src/service/shared/release";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
@@ -54,7 +55,7 @@ function bodyFixture(): Extract<
     sourceRef: "refs/tags/agent-plugins/current-main-input",
     contentCommit: mustParse(parseGitCommitId("a".repeat(40))),
     contentTree: mustParse(parseGitTreeId("b".repeat(40))),
-    releaseInputDigest: `ri1_${"c".repeat(64)}`,
+    releaseInputDigest: mustParse(parseReleaseInputDigest(`ri1_${"c".repeat(64)}`)),
   };
 }
 

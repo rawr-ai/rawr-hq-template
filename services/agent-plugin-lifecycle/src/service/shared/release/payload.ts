@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
   type CanonicalJsonValue,
@@ -10,12 +10,13 @@ import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { collect, isExactRecord, parseBoundedArray, parseInteger } from "./parse";
 import {
   type ContentDigest,
+  ContentDigestSchema,
   compareCanonicalText,
   contentDigest,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_RELATIVE_PATH_BYTES,
   type NormalizedFileMode,
+  NormalizedFileModeSchema,
   PAYLOAD_PROTOCOL_VERSION,
   type PayloadDigest,
   type PayloadProtocolVersion,
@@ -25,29 +26,18 @@ import {
   parseReleaseRelativePath,
   payloadDigest,
   type ReleaseRelativePath,
+  ReleaseRelativePathSchema,
 } from "./primitives";
 import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginPayloadBrand: unique symbol;
 
-const PayloadManifestPathSchema = Type.Unsafe<ReleaseRelativePath>(
-  Refine(
-    Type.String({ minLength: 1, maxLength: MAX_RELEASE_RELATIVE_PATH_BYTES }),
-    (value) => parseReleaseRelativePath(value).ok,
-    () => "Expected a canonical POSIX release-relative path"
-  )
-);
-
-const PayloadManifestContentDigestSchema = Type.Unsafe<ContentDigest>(
-  Type.String({ pattern: "^sha256_[0-9a-f]{64}$" })
-);
-
 export const PayloadManifestEntrySchema = ReadonlyObject(
   Type.Object({
-    path: PayloadManifestPathSchema,
-    mode: Type.Union([Type.Literal(0o644), Type.Literal(0o755)]),
+    path: ReleaseRelativePathSchema,
+    mode: NormalizedFileModeSchema,
     byteLength: Type.Integer({ minimum: 0, maximum: MAX_PAYLOAD_BYTES_PER_MEMBER }),
-    contentDigest: PayloadManifestContentDigestSchema,
+    contentDigest: ContentDigestSchema,
   }),
   { additionalProperties: false }
 );
