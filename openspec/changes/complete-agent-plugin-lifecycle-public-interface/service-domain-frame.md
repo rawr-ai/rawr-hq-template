@@ -104,6 +104,49 @@ Each command invokes exactly one typed service operation. There is no hidden
 aggregate, alias, compatibility command, or operation whose only consumer is
 historical settlement machinery.
 
+## Structural Authority Correction
+
+The initial lifecycle consolidation copied the service blueprint packet but did
+not make its complete rule set part of the required Nx source-law gate. Later
+implementation and review therefore treated Habitat as an optional checker
+around an already-chosen source tree instead of as the constructor of the
+allowed service design space. That was a categorical implementation-direction
+error. Earlier green Habitat results did not prove the complete service law
+because the required gate omitted the topology, module-isolation, context, and
+oRPC-composition rules.
+
+The corrected use of Habitat is positive and closed:
+
+- the service package, public source face, service spine, module shell, and
+  named model layers enumerate the complete set of admitted children;
+- every layer exposes a concrete interface to its parent and owns only the
+  decisions that can be made with that layer's local context;
+- dependencies and ready capabilities enter through the service boundary and
+  are narrowed through module context before an operation handler uses them;
+- root service model matter exists only when it is genuinely used across
+  modules; module domain matter remains in the owning module;
+- TypeBox owns structural data contracts, oRPC owns operation boundaries, and
+  resources own external mechanics;
+- `shared`, `common`, parallel schema barrels, sibling-module imports, and
+  upward implementation imports have no admitted location; and
+- a missing location is a design refusal, not permission to add a new bucket or
+  weaken the blueprint.
+
+This narrowing is monotonic: adding a capability may add a named module or a
+named model category through the same hierarchy, but it cannot reopen a generic
+holding area or allow an inner layer to acquire more context than its contract
+provides. As a result, an author working inside one module needs that module's
+contract, context, model, operations, and the public interfaces it consumes,
+not the full service implementation.
+
+The latest committed Magic Migration service blueprint is the structural
+source. Template retains only explicitly independent RAWR extensions that do
+not weaken or duplicate that packet. The required Nx source-law target must
+invoke the complete service packet serially. Empty baselines remain empty; no
+path exception, legacy inventory, or owner-specific forbidden list may make an
+invalid service green. See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task
+5.7e]].
+
 ## Shared Domain Collaborations
 
 Only two domain collaborations cross module boundaries:

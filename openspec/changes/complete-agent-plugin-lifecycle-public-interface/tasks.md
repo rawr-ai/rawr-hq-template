@@ -608,6 +608,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and release/set integration, source/test typecheck, workspace lint, Habitat
   source law, and standing reviews. Payload, release-input, release, and
   release-set aggregate normalization remain open under tasks 5.3 and 5.7.
+- [ ] 5.7e Correct the categorical service-law admission failure before another
+  lifecycle contract family lands. Record why copied but inactive Habitat rules
+  did not constrain the implementation, port the latest committed Magic
+  Migration service blueprint packet without weakening its positive closed
+  topology, and require the complete service rule set through the serialized Nx
+  source-law gate. Extract the service capability, owner, context, and import
+  corpus before moving source. Burn every admitted service package and module
+  shell to the closed topology with no `shared`, `common`, sibling-module
+  implementation import, upward implementation import, baseline, or path
+  exception. For the lifecycle service, move genuinely cross-module release
+  derivation into named root model layers, keep operation-specific matter in
+  its owning module, and pass ready capabilities through service and module
+  context. Prove each semantic checkpoint with owner-local behavior and
+  typecheck, then run normalized workspace lint, the complete Habitat source
+  law, and standing architecture, oRPC/Effect-oRPC, TypeScript, testing, and
+  structural-quality reviews.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
