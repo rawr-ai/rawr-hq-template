@@ -1,43 +1,47 @@
 ---
 level: error
-tags: [orpc, service, categorical-negative, module-isolation]
+tags: [orpc, service, categorical, module]
 ---
 # Require Service Module Isolation
 
-Root service code imports module code only at its two composition points:
-`contract.ts` imports module contracts and `router.ts` imports module routers.
-Root code never re-exports module code.
+The root crosses into a module only at composition:
 
-Inside a module, static relative imports and re-exports may not contain a
-parent `..` segment, including normalized-looking forms such as `./../../...`
-or `./local/../../...`. The sole exception is the exact `module.ts` import
-`import { service } from "../../impl"`, retained for service interiors that do
-not expose a private root alias. Other root or shared facts use the
-current-owner alias.
+- `contract.ts` imports the module contract.
+- `router.ts` imports the completed module router and the module-owned
+  `provideContext` boundary.
 
-A current-owner alias may address the same module, but it may not address a
-sibling module, including the sibling's module-root barrel. Foreign-owner
-aliases remain outside this ownership relation. The context-boundary packet
-separately rejects current-owner root base, context, and middleware aliases.
-Dynamic imports and transitive graph relations are outside this syntax law.
+A module never imports the root runtime implementation. `module.ts` may import
+the root `Context` as a type because that type is the admitted service-to-module
+boundary, not executable authority. Named router files may use one parent hop
+to reach their own `module.ts` and same-module model kinds. Two or more parent
+hops escape the module and are rejected.
+
+Current-owner aliases may address service-owned model facts or the same module,
+but never a sibling module. Capabilities still arrive through context; an alias
+does not replace the funnel.
 
 ```grit
 language js(typescript)
 
-// Selects non-test root sources governed by module composition law.
+// Selects non-test source owned by the service root.
 predicate is_root_service_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
   ! $filename <: r".*/src/service/modules/.*",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
-// Selects non-test service module interiors governed by isolation.
-predicate is_service_isolation_module_source() {
+// Selects non-test source inside one service module.
+predicate is_module_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
-// Distinguishes imports into the current owner's module tree.
+// Selects only the contract, module, or compact-router file at a module root.
+predicate is_direct_module_root_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/(?:contract|module|router)\.ts$"
+}
+
+// Recognizes an import or export into the current owner's module tree.
 predicate is_current_module_source($source) {
   or {
     $source <: r"^[\"'](?:\./|(?:\.\./)+)modules/[^/]+(?:/.*)?[\"']$",
@@ -54,7 +58,7 @@ predicate is_current_module_source($source) {
   }
 }
 
-// Reserves root-to-module edges for contract and router composition.
+// Admits only the three root-to-module composition relations.
 predicate is_allowed_root_composition_import($import, $source) {
   or {
     and {
@@ -66,26 +70,40 @@ predicate is_allowed_root_composition_import($import, $source) {
       $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/router\.ts$",
       $source <: r"^[\"'](?:\./modules/[^/]+/router|#[^/]+-(?:service|api)/(?:service/)?modules/[^/]+/router)[\"']$",
       $import <: `import { router as $branch } from $source`
+    },
+    and {
+      $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/router\.ts$",
+      $source <: r"^[\"'](?:\./modules/[^/]+/module|#[^/]+-(?:service|api)/(?:service/)?modules/[^/]+/module)[\"']$",
+      $import <: `import { provideContext as $provider } from $source`
     }
   }
 }
 
-// Detects relative sources that escape through a parent segment.
+// Recognizes any relative source that begins by leaving its current directory.
 predicate has_parent_segment($source) {
+  $source <: r"^[\"'](?:\./)*\.\.(?:/[^\"']*)?[\"']$"
+}
+
+// Recognizes a relative source that leaves a nested module interior.
+predicate has_multiple_parent_segments($source) {
   or {
-    $source <: r"^[\"']\.\.(?:/[^\"']*)?[\"']$",
-    $source <: r"^[\"']\.[^\"']*/\.\.(?:/[^\"']*)?[\"']$"
+    $source <: r"^[\"'](?:\./)*\.\./(?:[^\"']*/)?\.\.(?:/[^\"']*)?[\"']$",
+    $source <: r"^[\"'](?:\./)*\.\./(?:[^\"']*/)*\.\./[^\"']*[\"']$"
   }
 }
 
-// Preserves the sole module-to-root service-spine import.
-predicate is_exact_module_service_import($import, $source) {
+// Preserves the one type-only service-to-module context declaration edge.
+predicate is_type_only_base_context_import($import, $source) {
   $filename <: r".*/src/service/modules/[^/]+/module\.ts$",
-  $source <: r"^[\"']\.\./\.\./impl[\"']$",
-  $import <: `import { service } from $source`
+  $source <: r"^[\"']\.\./\.\./base[\"']$",
+  or {
+    $import <: import_statement(type=type()),
+    $import <: `import { type Context as $name } from $source`,
+    $import <: `import { type Context } from $source`
+  }
 }
 
-// Prevents current-owner aliases from crossing between sibling modules.
+// Rejects an alias that reaches a sibling module in the same service.
 predicate crosses_aliased_sibling($source) {
   or {
     and {
@@ -103,13 +121,27 @@ predicate crosses_aliased_sibling($source) {
   }
 }
 
+// Rejects current-owner root execution anchors from every module interior.
+predicate reaches_current_root_runtime($source) {
+  or {
+    and {
+      $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-service/(?:base|impl|contract|router|context|middleware(?:/.*)?)[\"']$"($alias_owner),
+      $alias_owner <: $owner
+    },
+    and {
+      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-api/(?:service/)?(?:base|impl|contract|router|context|middleware(?:/.*)?)[\"']$"($alias_owner),
+      $alias_owner <: $owner
+    }
+  }
+}
+
 or {
   import_statement(source=$source) as $import where {
     is_root_service_source(),
     is_current_module_source(source=$source),
-    not {
-      is_allowed_root_composition_import(import=$import, source=$source)
-    }
+    not { is_allowed_root_composition_import(import=$import, source=$source) }
   },
   export_statement(source=$source) where {
     is_root_service_source(),
@@ -117,101 +149,103 @@ or {
     is_current_module_source(source=$source)
   },
   import_statement(source=$source) as $import where {
-    is_service_isolation_module_source(),
-    has_parent_segment(source=$source),
-    not {
-      is_exact_module_service_import(import=$import, source=$source)
-    }
+    is_module_source(),
+    has_multiple_parent_segments(source=$source),
+    not { is_type_only_base_context_import(import=$import, source=$source) }
   },
   export_statement(source=$source) where {
-    is_service_isolation_module_source(),
+    is_module_source(),
+    $source <: string(),
+    has_multiple_parent_segments(source=$source)
+  },
+  import_statement(source=$source) as $import where {
+    is_direct_module_root_source(),
+    has_parent_segment(source=$source),
+    not { is_type_only_base_context_import(import=$import, source=$source) }
+  },
+  export_statement(source=$source) where {
+    is_direct_module_root_source(),
     $source <: string(),
     has_parent_segment(source=$source)
   },
   import_statement(source=$source) where {
-    is_service_isolation_module_source(),
+    is_module_source(),
     crosses_aliased_sibling(source=$source)
   },
   export_statement(source=$source) where {
-    is_service_isolation_module_source(),
+    is_module_source(),
     $source <: string(),
     crosses_aliased_sibling(source=$source)
+  },
+  import_statement(source=$source) where {
+    is_module_source(),
+    reaches_current_root_runtime(source=$source)
+  },
+  export_statement(source=$source) where {
+    is_module_source(),
+    $source <: string(),
+    reaches_current_root_runtime(source=$source)
   }
 }
 ```
 
-## Matches a root import of module implementation
+## Matches a root implementation import
 
 ```typescript
-// @filename: services/jobs/src/service/model/helper.ts
-import { repository } from "../modules/catalog/model/repository";
+// @filename: services/jobs/src/service/impl.ts
+import { catalog } from "./modules/catalog/model/policy/catalog";
 ```
 
-## Matches a root re-export of module implementation
+## Matches a module runtime reach into the root
 
 ```typescript
-// @filename: plugins/server/api/catalog/src/service/impl.ts
-export type { SearchContext } from "#catalog-api/service/modules/search/module";
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { service } from "../../impl";
 ```
 
-## Matches a direct parent segment
+## Matches a sibling module alias
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
-import { catalog } from "../modules/catalog";
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { intake } from "#jobs-service/modules/intake/router";
 ```
 
-## Matches a prefixed parent segment
+## Matches a relative sibling module import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
-import type { Context } from "./../../../../context";
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { intake } from "../intake/router";
 ```
 
-## Matches a normalized-looking parent segment
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
-import type { Context } from "./local/../../../../../context";
-```
-
-## Matches a parent-segment re-export
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/model/index.ts
-export type { Context } from "../../../../context";
-```
-
-## Matches a sibling module-root alias
+## Matches an aliased root runtime import
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
-import { intake } from "#jobs-service/modules/intake";
+import { service } from "#jobs-service/impl";
 ```
 
-## Matches a sibling alias re-export
-
-```typescript
-// @filename: plugins/server/api/catalog/src/service/modules/search/model/index.ts
-export { policy } from "#catalog-api/service/modules/browse/model/policy";
-```
-
-## Ignores root composition and the exact service spine exception
+## Ignores exact root composition
 
 ```typescript
 // @filename: services/jobs/src/service/contract.ts
 import { contract as catalog } from "./modules/catalog/contract";
-// @filename: services/jobs/src/service/router.ts
-import { router as catalog } from "#jobs-service/modules/catalog/router";
-// @filename: plugins/server/api/catalog/src/service/modules/search/module.ts
-import { service } from "../../impl";
 ```
 
-## Ignores local, same-module, and foreign-owner aliases
+```typescript
+// @filename: services/jobs/src/service/router.ts
+import { provideContext as provideCatalogContext } from "./modules/catalog/module";
+import { router as catalog } from "./modules/catalog/router";
+```
+
+## Ignores the type-only service boundary and same-module parent hop
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
-import { localRule } from "./local-rule";
-import { CatalogPolicy } from "#jobs-service/modules/catalog/model/policy/catalog";
-import { IntakePolicy } from "#foreign-service/modules/intake";
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import type { Context as ServiceContext } from "../../base";
+```
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { module } from "../module";
+import { admitCatalogRead } from "../model/policy";
 ```

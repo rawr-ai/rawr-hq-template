@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a root module edge outside exact contract/router imports, a root module re-export, a module import or re-export containing a parent segment outside the exact service-spine exception, or a current-owner sibling-module alias edge",
-  "why": "One canonical import surface makes module ownership visible without path normalization or depth arithmetic: local ./ paths stay local, root facts use the owner alias, and siblings remain closed.",
-  "remediate": "Keep exact root contract/router imports. Inside modules, remove every parent-segment source except import { service } from \"../../impl\" in module.ts; use the current-owner alias for other root/shared facts and same-module deep imports. Move sibling collaboration behind the root service capability.",
+  "forbids": "a root-to-module edge outside contract and router composition, a module runtime reach into the root service, a two-level parent escape from module source, a root re-export of module implementation, or a current-owner sibling-module edge",
+  "why": "The service composes modules from above while each module remains locally understandable: module.ts receives only the service context type, named routers may reach their own module and model, and runtime capability travels through context rather than upward imports.",
+  "remediate": "Keep root imports to module contracts, completed routers, and provideContext boundaries. In module.ts, import the root Context only as a type and create the module implementer locally. Use one parent hop only within the same module, and move sibling collaboration behind a service-owned capability.",
   "message": "Service modules must use the canonical import surface and remain closed to sibling implementation.",
   "pathCoverage": [
     {
