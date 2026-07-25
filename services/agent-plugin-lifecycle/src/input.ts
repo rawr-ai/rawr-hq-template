@@ -8,8 +8,6 @@ import {
   PluginIdSchema,
   ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
-} from "./service/model/dto/releases/content-workspace";
-import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES as releaseInputEnvelopeByteLimit,
   MAX_RELEASE_MEMBERS as releaseMemberLimit,
 } from "./service/shared/release/primitives";

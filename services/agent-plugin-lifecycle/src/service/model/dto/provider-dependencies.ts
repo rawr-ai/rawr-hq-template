@@ -4,16 +4,21 @@ import {
 } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import {
+  ContentAuthoritySchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
   MAX_OWNERSHIP_CLAIMS,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_MEMBERS,
   type OwnershipIdentity,
-  type PayloadDigest,
+  OwnershipIdentitySchema,
+  PayloadDigestSchema,
   PayloadManifestEntrySchema,
-  parseOwnershipIdentity,
-  type ReleaseDigest,
-  type ReleaseInputDigest,
-  type ReleaseSetDigest,
+  PluginIdSchema,
+  ReleaseDigestSchema,
+  ReleaseInputDigestSchema,
+  ReleaseSetDigestSchema,
+  RepositoryIdentitySchema,
 } from "../../shared/release";
 import {
   CanonicalChannelSelectionSchema,
@@ -21,41 +26,13 @@ import {
 } from "./current-main-selection";
 import {
   CanonicalAbsoluteLocatorSchema,
-  ContentAuthoritySchema,
   ContentWorkspacePolicySchema,
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  PluginIdSchema,
-  RepositoryIdentitySchema,
 } from "./releases/content-workspace";
 import { NonEmptyReadonlyArray } from "./structural";
 
 const MAX_SELECTED_ISSUES = 256;
 const MAX_SELECTED_ISSUE_DETAIL = 4_096;
 
-const OwnershipIdentitySchema = Type.Unsafe<OwnershipIdentity>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: 512,
-      pattern: "^[a-z0-9@][a-z0-9@._:/-]*$",
-    }),
-    (value) => parseOwnershipIdentity(value).ok,
-    () => "Expected a canonical ownership identity"
-  )
-);
-const PayloadDigestSchema = Type.Unsafe<PayloadDigest>(
-  Type.String({ pattern: "^pd1_[0-9a-f]{64}$" })
-);
-const ReleaseDigestSchema = Type.Unsafe<ReleaseDigest>(
-  Type.String({ pattern: "^rd1_[0-9a-f]{64}$" })
-);
-export const ReleaseInputDigestSchema = Type.Unsafe<ReleaseInputDigest>(
-  Type.String({ pattern: "^ri1_[0-9a-f]{64}$" })
-);
-export const ReleaseSetDigestSchema = Type.Unsafe<ReleaseSetDigest>(
-  Type.String({ pattern: "^rs1_[0-9a-f]{64}$" })
-);
 const MarketplaceIdentitySchema = Type.String({
   minLength: 1,
   maxLength: 128,

@@ -1127,6 +1127,27 @@ pre-existing private release parsers still participate in TypeBox refinements;
 their deletion is explicitly the next TypeBox release-family checkpoint, not a
 claim made here.
 
+The first private release-family checkpoint implements the primitive contract
+boundary from [[service-domain-frame#Burn-Down Design]]. Branded repository,
+Git, plugin, ownership, path, digest, and file-mode schemas now live beside
+their `Static`-derived types in the shared release model. Public input adapters
+validate through those schemas, while the domain layer retains only nominal
+brands, path semantics, canonical byte ordering, and digest construction.
+Parser-backed scalar refinements and duplicate scalar, path, and digest schemas
+are deleted rather than retained as compatibility authorities. Unused weaker
+identity schemas and higher-level primitive re-exports are also gone, so
+consumers name the shared release owner directly.
+
+The checkpoint passes the complete 228-case lifecycle service suite, the
+owner-local public-input behavior table, 17 focused CLI boundary cases, service
+and CLI source/test typecheck, workspace Biome, the complete Habitat source-law
+batch, the lifecycle owner gate, and diff hygiene. Standing architecture,
+TypeScript/TypeBox/oRPC/Effect, testing, and structural-quality reviews found no
+unresolved P0/P1. This completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7c]] without claiming
+the ownership, payload, release-input, release, or release-set aggregates
+complete under tasks 5.3 and 5.7.
+
 ## Settlement Oracles
 
 The final product must prove:

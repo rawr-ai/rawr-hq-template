@@ -1,18 +1,22 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import {
   ContentWorkspacePolicySchema,
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  PluginIdSchema,
   QualifiedHeadRefSchema,
-  RepositoryIdentitySchema,
   SourceEligibilityIssueSchema,
 } from "../../../../model/dto/releases/content-workspace";
 import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
 import {
+  ArtifactDigestSchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
+  PluginIdSchema,
+  ReleaseDigestSchema,
+  ReleaseInputDigestSchema,
   ReleaseIssueSchema,
+  ReleaseSetDigestSchema,
+  RepositoryIdentitySchema,
 } from "../../../../shared/release";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
@@ -42,7 +46,6 @@ const Uint8ArraySchema = Refine(
   () => "Expected Uint8Array"
 );
 
-const ReleaseInputDigestSchema = Type.String({ pattern: "^ri1_[0-9a-f]{64}$" });
 const WorkspaceBindingSchema = Type.String({
   minLength: 64,
   maxLength: 64,
@@ -246,10 +249,6 @@ export const ReleaseCheckIssueSchema = Type.Union([
 const ReleaseCheckIssueListSchema = NonEmptyReadonlyArray(ReleaseCheckIssueSchema, {
   maxItems: 200_000,
 });
-
-const ReleaseDigestSchema = Type.String({ pattern: "^rd1_[0-9a-f]{64}$" });
-const ArtifactDigestSchema = Type.String({ pattern: "^ad1_[0-9a-f]{64}$" });
-const ReleaseSetDigestSchema = Type.String({ pattern: "^rs1_[0-9a-f]{64}$" });
 
 const DerivedReleaseMemberSchema = ReadonlyObject(
   Type.Object({

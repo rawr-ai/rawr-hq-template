@@ -22,7 +22,8 @@ import {
   BUILDER_PROTOCOL_VERSION,
   type BuilderProtocolVersion,
   type ContentAuthority,
-  type ContentDigest,
+  ContentAuthoritySchema,
+  ContentDigestSchema,
   compareCanonicalText,
   MAX_CANONICAL_ID_BYTES,
   MAX_OWNERSHIP_CLAIMS,
@@ -31,12 +32,14 @@ import {
   MAX_PROVENANCE_BINDINGS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  MAX_RELEASE_RELATIVE_PATH_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   type OwnershipIdentity,
+  OwnershipIdentitySchema,
   PAYLOAD_PROTOCOL_VERSION,
   type PayloadDigest,
+  PayloadDigestSchema,
   type PluginId,
+  PluginIdSchema,
   parseContentAuthority,
   parseContentDigest,
   parseOwnershipIdentity,
@@ -46,67 +49,15 @@ import {
   parseReleaseRelativePath,
   RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseInputDigest,
+  ReleaseInputDigestSchema,
   type ReleaseRelativePath,
+  ReleaseRelativePathSchema,
   releaseInputDigest,
 } from "./primitives";
 import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginReleaseInputBrand: unique symbol;
 declare const completenessWitnessBrand: unique symbol;
-
-const ContentAuthoritySchema = Type.Unsafe<ContentAuthority>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: MAX_CANONICAL_ID_BYTES,
-      pattern: "^[a-z0-9][a-z0-9._:-]*$",
-    }),
-    (value) => parseContentAuthority(value).ok,
-    () => "Expected a canonical content authority"
-  )
-);
-
-const PluginIdSchema = Type.Unsafe<PluginId>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: MAX_CANONICAL_ID_BYTES,
-      pattern: "^[a-z0-9][a-z0-9._-]*$",
-    }),
-    (value) => parsePluginId(value).ok,
-    () => "Expected a canonical plugin identity"
-  )
-);
-
-const OwnershipIdentitySchema = Type.Unsafe<OwnershipIdentity>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: MAX_CANONICAL_ID_BYTES,
-      pattern: "^[a-z0-9@][a-z0-9@._:/-]*$",
-    }),
-    (value) => parseOwnershipIdentity(value).ok,
-    () => "Expected a canonical ownership identity"
-  )
-);
-
-const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePath>(
-  Refine(
-    Type.String({ minLength: 1, maxLength: MAX_RELEASE_RELATIVE_PATH_BYTES }),
-    (value) => parseReleaseRelativePath(value).ok,
-    () => "Expected a canonical POSIX release-relative path"
-  )
-);
-
-const ContentDigestSchema = Type.Unsafe<ContentDigest>(
-  Type.String({ pattern: "^sha256_[0-9a-f]{64}$" })
-);
-const PayloadDigestSchema = Type.Unsafe<PayloadDigest>(
-  Type.String({ pattern: "^pd1_[0-9a-f]{64}$" })
-);
-const ReleaseInputDigestSchema = Type.Unsafe<ReleaseInputDigest>(
-  Type.String({ pattern: "^ri1_[0-9a-f]{64}$" })
-);
 
 const ProvenanceProtocolSchema = Refine(
   Type.String({

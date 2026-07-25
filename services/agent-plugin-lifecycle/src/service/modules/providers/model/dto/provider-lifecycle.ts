@@ -5,25 +5,25 @@ import {
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 import { CurrentMainSelectionLocatorSchema } from "../../../../model/dto/current-main-selection";
-import {
-  NativeProviderSessionTargetSchema,
-  ReleaseInputDigestSchema,
-  ReleaseSetDigestSchema,
-} from "../../../../model/dto/provider-dependencies";
+import { NativeProviderSessionTargetSchema } from "../../../../model/dto/provider-dependencies";
 import {
   CanonicalAbsoluteLocatorSchema,
   ContentWorkspacePolicySchema,
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  PluginIdSchema,
-  RepositoryIdentitySchema,
 } from "../../../../model/dto/releases/content-workspace";
 import {
   BoundedReadonlyArray,
   EmptyReadonlyArray,
   NonEmptyReadonlyArray,
 } from "../../../../model/dto/structural";
-import { MAX_RELEASE_MEMBERS } from "../../../../shared/release";
+import {
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  MAX_RELEASE_MEMBERS,
+  PluginIdSchema,
+  ReleaseInputDigestSchema,
+  ReleaseSetDigestSchema,
+  RepositoryIdentitySchema,
+} from "../../../../shared/release";
 import { hasStrictDescendantHomes } from "../policy/disposable-root";
 
 const MAX_TARGETS = 16;
