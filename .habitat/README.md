@@ -27,6 +27,9 @@ The current generic kinds are:
 - `nx-workspace`: the exact root scheduler surface and resolved project-quality
   admission, including one workspace lint owner and one multi-project
   build/check/test graph.
+- `typescript-source`: TypeScript-resolved JavaScript and TypeScript
+  owner-consumer relations that require exact project module resolution rather
+  than filename approximation.
 - `plugin` and `plugin-server`: documented parent kinds whose universal shape
   remains intentionally unconstrained.
 
@@ -51,6 +54,10 @@ tests and owner review rather than being approximated as source shape.
 one rule-owned Nx graph adapter. The published binary exposes neither its
 native Nx runner nor a packet-fixture runner, so the repository does not add a
 second Markdown parser or duplicate pattern inventory to simulate either one.
+The TypeScript source adapter is exposed separately as the cacheable
+`habitat:check:documentation` target. It remains a red manual target until the
+existing corpus is documented; activation is then one dependency edge into
+`check:policy`, not a baseline or second policy surface.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit

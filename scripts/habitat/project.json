@@ -75,6 +75,24 @@
         "command": "bun .habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs"
       }
     },
+    "check:documentation": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/.habitat/blueprints/typescript-source/require_imported_exports_have_jsdoc/**/*",
+        "{workspaceRoot}/nx.json",
+        "{projectRoot}/project.json",
+        "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
+        "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/tsconfig.json",
+        "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/package.json",
+        "typescriptRuntime",
+        "bunToolchain"
+      ],
+      "outputs": [],
+      "options": {
+        "command": "bun .habitat/blueprints/typescript-source/require_imported_exports_have_jsdoc/check.mjs"
+      }
+    },
     "check:policy": {
       "executor": "nx:noop",
       "dependsOn": ["check:source-law", "check:project-admission"]
