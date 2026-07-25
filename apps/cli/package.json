@@ -21,6 +21,7 @@
     "@rawr/plugin-devops": "workspace:*",
     "@rawr/plugin-hyperresearch": "workspace:*",
     "@rawr/plugin-session-tools": "workspace:*",
+    "@rawr/plugin-workstream": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
@@ -44,7 +45,8 @@
       "@rawr/plugin-chatgpt-corpus",
       "@rawr/plugin-devops",
       "@rawr/plugin-hyperresearch",
-      "@rawr/plugin-session-tools"
+      "@rawr/plugin-session-tools",
+      "@rawr/plugin-workstream"
     ],
     "typescript": {
       "commands": "./src/commands"
@@ -83,7 +85,8 @@
               "@rawr/plugin-devops",
               "@rawr/plugin-hello",
               "@rawr/plugin-hyperresearch",
-              "@rawr/plugin-session-tools"
+              "@rawr/plugin-session-tools",
+              "@rawr/plugin-workstream"
             ],
             "target": "build"
           }
@@ -108,7 +111,8 @@
               "@rawr/plugin-chatgpt-corpus",
               "@rawr/plugin-devops",
               "@rawr/plugin-hyperresearch",
-              "@rawr/plugin-session-tools"
+              "@rawr/plugin-session-tools",
+              "@rawr/plugin-workstream"
             ],
             "target": "build"
           }
@@ -127,7 +131,8 @@
           "acceptance:oclif",
           {
             "projects": [
-              "@rawr/plugin-hello"
+              "@rawr/plugin-hello",
+              "@rawr/plugin-workstream"
             ],
             "target": "manifest"
           }

@@ -105,6 +105,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("services/workstream-frame"),
+        test: { name: "workstream-frame", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("services/session-intelligence"),
         test: { name: "session-intelligence", environment: "node", include: [...includes] },
       },
@@ -132,6 +137,11 @@ export default defineConfig({
         extends: true,
         root: r("plugins/cli/commands/hyperresearch"),
         test: { name: "plugin-hyperresearch", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
+        root: r("plugins/cli/commands/workstream"),
+        test: { name: "plugin-workstream", environment: "node", include: [...includes] },
       },
       {
         extends: true,

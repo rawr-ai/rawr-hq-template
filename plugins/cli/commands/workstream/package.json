@@ -1,0 +1,49 @@
+{
+  "name": "@rawr/plugin-workstream",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RAWR HQ work-stream frame CLI projection",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "oclif.manifest.json",
+    "README.md",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.2.10",
+    "@rawr/hq-sdk": "workspace:*",
+    "@rawr/resource-semantic-ledger": "workspace:*",
+    "@rawr/workstream-frame": "workspace:*"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "typescript": {
+      "commands": "./src/commands"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "oclif": "4.23.27",
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "manifest": "bun --bun oclif manifest",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run --project plugin-workstream"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin"
+    ]
+  }
+}

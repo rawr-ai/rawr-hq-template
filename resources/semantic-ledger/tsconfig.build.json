@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "files": ["contract.ts", "providers/memory/index.ts", "providers/fluree-http/index.ts"]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@rawr/resource-semantic-ledger",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./contract.ts",
+      "default": "./contract.ts"
+    },
+    "./providers/memory": {
+      "types": "./providers/memory/index.ts",
+      "default": "./providers/memory/index.ts"
+    },
+    "./providers/fluree-http": {
+      "types": "./providers/fluree-http/index.ts",
+      "default": "./providers/fluree-http/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:semantic-ledger"
+    ]
+  }
+}

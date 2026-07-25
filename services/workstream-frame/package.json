@@ -1,0 +1,51 @@
+{
+  "name": "@rawr/workstream-frame",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.7",
+  "main": "./src/client.ts",
+  "types": "./src/client.ts",
+  "exports": {
+    ".": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    },
+    "./service/contract": {
+      "types": "./src/service/contract.ts",
+      "default": "./src/service/contract.ts"
+    },
+    "./service/model/schema": {
+      "types": "./src/service/model/schema/index.ts",
+      "default": "./src/service/model/schema/index.ts"
+    },
+    "./service/router": {
+      "types": "./src/service/router.ts",
+      "default": "./src/service/router.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --project workstream-frame"
+  },
+  "dependencies": {
+    "@rawr/hq-sdk": "workspace:*",
+    "@rawr/resource-semantic-ledger": "workspace:*",
+    "@orpc/contract": "^1.13.5",
+    "@orpc/server": "^1.13.5",
+    "typebox": "^1.0.81"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:service",
+      "role:servicepackage"
+    ]
+  }
+}
