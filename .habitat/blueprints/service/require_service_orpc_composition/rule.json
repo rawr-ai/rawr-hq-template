@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a runtime namespace import from an oRPC composition vendor, a type-only binding presented as runtime authority, or a base, service, or module missing its named native first ownership hop; combined runtime and other type-only named specifiers remain valid",
-  "why": "A few positive runtime-binding facts keep the first native oRPC ownership hop visible without dictating harmless named-import formatting or allowing erased type-only imports to impersonate runtime authority.",
-  "remediate": "Use named runtime vendor bindings, optionally alongside other type-only named specifiers. Directly initialize standalone base from runtime implementEffect(contract, ...), and keep the first runtime imported-base, implement(contract).$context<...>(), or imported-service-branch hop visible inside the matching service or module initializer. Leave outer wrappers and router completeness to TypeScript and review.",
-  "message": "Service composition must preserve its small set of direct native ownership facts.",
+  "forbids": "a service without distinct exact service and host-admission views, an exported service view not rooted directly on base, a module that reaches upward for its implementer instead of owning an exact native authoring view, an unprojected root branch, or a runtime namespace import from an oRPC composition vendor",
+  "why": "A base-rooted native service view preserves visible ownership while each root branch receives a module-owned projection and completed router without introducing a second composition framework.",
+  "remediate": "Create the standalone base with implementEffect(contract, ...).$context<Context>(). Derive service directly from base and native middleware, and derive boundary in impl.ts. Create each module from its own contract with an exact Context, then compose each completed module router through its service branch with a module-owned provideContext. Use named runtime vendor imports.",
+  "message": "Service composition must preserve direct native authoring views and one host-admission boundary.",
   "pathCoverage": [
     {
       "kind": "exact-path",
