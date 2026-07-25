@@ -595,6 +595,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   lint, Habitat source law, and standing reviews. Ownership, payload,
   release-input, release, and release-set aggregate normalization remain open
   under tasks 5.3 and 5.7.
+- [x] 5.7d Seal the private ownership release-contract family under one TypeBox
+  authority. Derive the full and declared claim kinds, closed claim objects,
+  bounded claim arrays, ownership-index record, and structural types from
+  TypeBox. Retain only synthesized member plugin claims, the post-synthesis
+  bound, canonical ordering and projection, defensive immutability, member
+  coverage, duplicate/conflict classification, and the shared plugin/alias
+  routing namespace in domain code. Delete manual claim/object/kind parsing,
+  the release-input-local claim schema and type guard, duplicate canonical
+  projection, and internal facade re-exports. Prove owner-local structure and
+  behavior, exact bounds without over-bound traversal, existing release-input
+  and release/set integration, source/test typecheck, workspace lint, Habitat
+  source law, and standing reviews. Payload, release-input, release, and
+  release-set aggregate normalization remain open under tasks 5.3 and 5.7.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
