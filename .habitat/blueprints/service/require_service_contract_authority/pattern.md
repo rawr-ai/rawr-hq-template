@@ -9,7 +9,7 @@ imports, private contract-attached `ORPCTaggedError` declarations, private
 `const` schema composition, private error maps, bounded shared fragments,
 private helpers, and the single exported `contract` anchor. Every private
 support declaration must be syntactically reachable from that exported
-contract directly or through one private `const` intermediary. Procedure input
+contract directly or through one private `const` intermediary. Operation input
 and output envelopes adapt TypeBox with `schema(...)` at their contract
 positions.
 
@@ -84,10 +84,6 @@ predicate is_local_effect_error($name) {
     and {
       $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
       $program <: contains `class $name extends $tagged($args) { $body }`
-    },
-    and {
-      $program <: contains `import * as $namespace from "effect-orpc"`,
-      $program <: contains `class $name extends $namespace.ORPCTaggedError($args) { $body }`
     }
   }
 }

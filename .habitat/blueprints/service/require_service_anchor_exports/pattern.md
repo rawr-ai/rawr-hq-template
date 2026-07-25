@@ -5,11 +5,15 @@ tags: [orpc, service, positive, anchor]
 # Require Generic Service Anchor Exports
 
 Every existing service spine file directly exports the generic value for its
-role: standalone services export the runtime implementer anchor `base`, every
-service interior exports `contract`, `service`, `module`, or `router`, and
-product qualification belongs at the import site. Embedded API-plugin
-`base.ts` remains the required boundary/type anchor, but it does not export a
-runtime `base`; its implementation begins at `impl.ts`.
+role: standalone services export the exact service implementer anchor `base`
+and host-admission `boundary`; every service interior exports `contract`,
+`service`, `module`, or `router`, and product qualification belongs at the
+import site. A compact module
+`router.ts` and a directory router `index.ts` each export the module's
+completed local `router`; named `*.router.ts` files export their standalone
+operation leaves or completed subrouter values under domain names. Embedded
+API-plugin `base.ts` remains the required boundary/type anchor, but it does not
+export a runtime `base`; its implementation begins at `impl.ts`.
 
 This law proves only anchor presence. Other declarations and exports are
 outside its scope; Knip and the future intentional-export/JSDoc boundary own
@@ -43,14 +47,19 @@ predicate is_service_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/impl\.ts$"
 }
 
+// Maps standalone implementations to the host-admission boundary anchor.
+predicate is_boundary_anchor_file() {
+  $filename <: r".*services/[^/]+/src/service/impl\.ts$"
+}
+
 // Maps module spines to the generic module anchor.
 predicate is_module_anchor_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
 }
 
-// Maps root and module routers to the generic router anchor.
+// Maps root, compact module, and directory-index routers to the generic anchor.
 predicate is_router_anchor_file() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router|modules/[^/]+/router)\.ts$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router|modules/[^/]+/(?:router|router/index))\.ts$"
 }
 
 or {
@@ -65,6 +74,10 @@ or {
   program(statements=$statements) where {
     is_service_anchor_file(),
     not { exports_direct_const(statements=$statements, anchor=`service`) }
+  },
+  program(statements=$statements) where {
+    is_boundary_anchor_file(),
+    not { exports_direct_const(statements=$statements, anchor=`boundary`) }
   },
   program(statements=$statements) where {
     is_module_anchor_file(),
@@ -113,6 +126,13 @@ export const configured = base.use(provider);
 export const catalog = service.catalog;
 ```
 
+## Matches a missing host-admission boundary
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+export const service = base.use(observability);
+```
+
 ## Matches a missing router anchor
 
 ```typescript
@@ -135,6 +155,7 @@ export type FrozenContract = Readonly<typeof contract>;
 
 // @filename: services/jobs/src/service/impl.ts
 export const service = base.use(provider);
+export const boundary = base.$context<InitialContext>().use(provideContext);
 export const RuntimeImplementer = createRuntimeImplementer();
 
 // @filename: services/jobs/src/service/modules/catalog/module.ts
@@ -142,6 +163,13 @@ export const module = service.catalog;
 export class CatalogModule {}
 
 // @filename: services/jobs/src/service/modules/catalog/router.ts
-export const router: Router = { find: module.find.effect(handler) };
+export const router: Router = {
+  find: module.find.effect(({ context }) => context.catalog.find()),
+};
 export const PreviewRouter = decorate(preview);
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+import { router as find } from "./find.router";
+export const router: Router = { ...find };
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+export const find = module.find.effect(({ context }) => context.catalog.find());
 ```
