@@ -25,14 +25,14 @@
  *   a limit of the substrate.
  *
  * This server accepts unrecognised request keys silently — no warning, no 400.
- * A top-level `t` is discarded, and so is `opts.reasoner`, which is not a field
- * at all (the real one is a top-level `reasoning`). Treat a 200 as evidence
- * that a request was *accepted*, never that a feature was *applied*.
+ * A top-level `t` is discarded; reasoning is a top-level `reasoning` key. Treat
+ * a 200 as evidence that a request was *accepted*, never that a feature was
+ * *applied*, and establish every capability with a differential rather than a
+ * status code.
  *
- * Everything we have verified about this substrate — the route inventory, the
- * time-travel selectors, conditional writes, search, reasoning, and the traps
- * that produced each finding — is in `./README.md`. Read it before extending
- * this adapter.
+ * `./README.md` documents the substrate this adapter is built on — the route
+ * inventory, addressing and time, conditional writes, search, reasoning, and
+ * the traps each of those carries. Read it before extending this adapter.
  *
  * @agents
  * Vendor mechanics belong here. Work-stream meaning does not.
