@@ -1148,6 +1148,31 @@ unresolved P0/P1. This completes
 the ownership, payload, release-input, release, or release-set aggregates
 complete under tasks 5.3 and 5.7.
 
+The ownership-family checkpoint implements the closed flow recorded in
+[[service-domain-frame#Ownership Family]]. TypeBox now owns the full and
+content-declared claim kinds, closed claim records, bounded arrays, ownership
+index record, and generated structural types. Domain code retains only member
+plugin-claim synthesis, the post-synthesis bound, canonical ordering and
+projection, defensive immutability, member coverage, duplicate/conflict
+classification, and the shared plugin/alias routing namespace.
+
+Manual object, claim-kind, and scalar parsing, the release-input-local schema
+and type guard, duplicate canonical projection, and internal facade exports are
+deleted. A wire record receives the trusted ownership-index brand only when
+structural, bound, and semantic validation add no issue. Structural failures use
+the documented owner-local diagnostic rather than reconstructing ambiguous
+TypeBox paths; exact bounded-array diagnostics remain intact.
+
+The checkpoint passes the complete 236-case lifecycle service suite, 32 focused
+ownership/release-input/release-set cases, service source/test typecheck,
+workspace Biome, the complete Habitat source-law batch, the lifecycle owner
+gate, strict OpenSpec, and diff hygiene. Standing architecture,
+TypeScript/TypeBox, testing, and structural-quality reviews found no unresolved
+P0/P1. This completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7d]] without claiming
+the payload, release-input, release, or release-set aggregates complete under
+tasks 5.3 and 5.7.
+
 ## Settlement Oracles
 
 The final product must prove:

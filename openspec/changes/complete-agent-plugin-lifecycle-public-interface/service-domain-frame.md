@@ -363,6 +363,55 @@ derivation checkpoint exercises releases plus packaging and provider consumers.
 No aggregate schema walker or direct call to a parallel `run*` helper counts as
 operation proof.
 
+### Ownership Family
+
+Ownership is a pure release-domain value, not a service, resource, repository,
+or state owner. Its closed flow is:
+
+```text
+curated member IDs + declared non-plugin claims
+  -> synthesize one plugin claim per member
+  -> validate member ownership and namespace uniqueness
+  -> sort kind, identity, owner
+  -> immutable distribution ownership index
+  -> canonical release-input/set projection and read-only claim selection
+```
+
+TypeBox owns the full and declared claim-kind sets, closed claim records,
+bounded claim arrays, the ownership-index record, and their generated types.
+The domain implementation owns only synthesized plugin claims, the total
+post-synthesis bound, canonical ordering, defensive immutability, member
+coverage, duplicate/conflict classification, and the shared plugin/alias
+routing namespace.
+
+The family guarantees:
+
+- release-input declarations cannot manufacture plugin claims;
+- every curated member has exactly one plugin claim whose identity equals its
+  plugin ID;
+- every claim owner is a curated member;
+- each `(kind, identity)` has one owner and appears once;
+- plugin IDs and aliases cannot make routing ambiguous, while unrelated claim
+  namespaces remain independent;
+- claim and issue ordering is independent of declaration order;
+- exact protocol bounds are admitted without traversing an over-bound
+  collection; and
+- the derived index is immutable invocation-local release data, never
+  lifecycle authority or persisted controller state.
+
+Ownership structure failures intentionally produce one owner-local
+`EXPECTED_OBJECT` diagnostic at the ownership boundary instead of
+reconstructing ambiguous TypeBox paths or retaining a second manual structural
+parser. Existing bounded-array diagnostics remain exact, and release operation
+terminal classification is unchanged.
+
+The ownership checkpoint stops rather than widening if it requires moving skill
+inventory closure out of release-input policy, changing claim kinds or
+collision semantics, adding a generic schema-error framework, changing public
+terminal outcomes, or touching payload, release, release-set, provider, oRPC,
+Effect, or resource structure. See
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7d]].
+
 ## Exterior
 
 - custom controller distribution, selector, release store, and launcher;

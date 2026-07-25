@@ -10,8 +10,10 @@ import {
 import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import {
   createDistributionOwnershipIndex,
+  type DeclaredOwnershipClaim,
+  DeclaredOwnershipClaimsSchema,
   type DistributionOwnershipIndex,
-  type OwnershipClaim,
+  ownershipClaimValue,
   ownershipIndexValue,
   parseDeclaredOwnershipClaims,
   parseDistributionOwnershipIndex,
@@ -97,20 +99,6 @@ export const SkillInventoryEntrySchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-const DeclaredOwnershipClaimSchema = ReadonlyObject(
-  Type.Object({
-    kind: Type.Union([
-      Type.Literal("skill"),
-      Type.Literal("alias"),
-      Type.Literal("provider-identity"),
-      Type.Literal("destination"),
-    ]),
-    identity: OwnershipIdentitySchema,
-    ownerPluginId: PluginIdSchema,
-  }),
-  { additionalProperties: false }
-);
-
 export const ReleaseMemberDeclarationSchema = ReadonlyObject(
   Type.Object({
     kind: Type.Literal("agent-plugin"),
@@ -137,9 +125,7 @@ export const ReleaseInputBodySchema = ReadonlyObject(
       minItems: 1,
       maxItems: MAX_RELEASE_MEMBERS,
     }),
-    ownershipClaims: ReadonlyObject(Type.Array(DeclaredOwnershipClaimSchema), {
-      maxItems: MAX_OWNERSHIP_CLAIMS,
-    }),
+    ownershipClaims: DeclaredOwnershipClaimsSchema,
     locks: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
       maxItems: MAX_PROVENANCE_BINDINGS,
     }),
@@ -483,9 +469,7 @@ function parseReleaseInputBody(
     `${path}.ownershipClaims`,
     issues
   );
-  const ownershipClaims = parsedOwnershipClaims?.every(isDeclaredOwnershipClaim)
-    ? parsedOwnershipClaims
-    : undefined;
+  const ownershipClaims = parsedOwnershipClaims;
   const locks = parseProvenanceBindings(input.locks, `${path}.locks`, issues);
   const qualityPolicies = parseProvenanceBindings(
     input.qualityPolicies,
@@ -683,7 +667,7 @@ function parseSkillInventory(
 
 function validateSkillOwnershipClosure(
   members: readonly ReleaseMemberDeclaration[],
-  ownershipClaims: readonly OwnershipClaim[],
+  ownershipClaims: readonly DeclaredOwnershipClaim[],
   path: string,
   issues: ReleaseIssue[]
 ): void {
@@ -997,20 +981,6 @@ export function provenanceBindingValue(binding: ProvenanceBinding): CanonicalJso
     protocol: binding.protocol,
     contentDigest: binding.contentDigest,
   };
-}
-
-function ownershipClaimValue(claim: OwnershipClaim): CanonicalJsonValue {
-  return {
-    kind: claim.kind,
-    identity: claim.identity,
-    ownerPluginId: claim.ownerPluginId,
-  };
-}
-
-function isDeclaredOwnershipClaim(
-  claim: OwnershipClaim
-): claim is ReleaseInputBody["ownershipClaims"][number] {
-  return claim.kind !== "plugin";
 }
 
 function compareBindings(left: ProvenanceBinding, right: ProvenanceBinding): number {

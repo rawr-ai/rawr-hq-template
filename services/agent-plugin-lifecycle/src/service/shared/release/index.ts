@@ -6,14 +6,6 @@ export {
   ReleaseIssueSchema,
 } from "./issues";
 export {
-  createDistributionOwnershipIndex,
-  type DeclaredOwnershipClaimKind,
-  type DistributionOwnershipIndex,
-  type OwnershipClaim,
-  type OwnershipClaimKind,
-  ownershipClaimsFor,
-} from "./ownership";
-export {
   type AgentPluginPayload,
   canonicalSerializeAgentPluginPayload,
   canonicalSerializePayloadEntries,
