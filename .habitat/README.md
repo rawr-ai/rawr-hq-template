@@ -15,9 +15,9 @@ The current generic kinds are:
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
   laws for generic anchors, native oRPC composition, context boundaries,
-  module isolation, owner-private aliases, platform-neutral boundary
-  declarations, declarative TypeBox contracts, and public error authority.
-- `plugin-server-api`: the additional `client.ts` and `api.ts` faces that
+  module isolation, owner-private aliases, platform-independent service
+  implementation, declarative TypeBox contracts, and public error authority.
+- `plugin-server-api`: the additional `client.ts` and `api.ts` surfaces that
   expose client bindings and API operations around an embedded service.
 - `agent-router`: local `AGENTS.md` placement and positive routing anchors.
 - `oclif-app`: one executable Oclif package, binary/source entrypoints,
@@ -55,17 +55,15 @@ second Markdown parser or duplicate pattern inventory to simulate either one.
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`. The `service` packet stack follows
-Magic Migration commit `543e78eddd00ef6cfccfdf3ae366143b6034f012`,
-service-blueprint tree `2a9160183b80badacedbb6006b95829bd166470a`,
-as its foundation. Its anchor, contract, and oRPC composition laws follow the
-corrections at Magic Migration commit
-`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
-`89446f8be81b1f417aa4f292034a20851c796561`. RAWR preserves the shared topology
-and six shared source-law algorithms. Its adaptations retain local packet
-ownership and the canonical `@rawr/hq-sdk` TypeBox Standard Schema bridge name.
-RAWR adds two owner-private alias laws and one platform-independence law for
-contracts, schemas, and DTOs; those local packets do not change the imported
-Magic service algorithms.
+Magic Migration commit `822aa36d3f951a81d94292bcbce5d8fdc38fe1f7`,
+service-blueprint tree `29ec394c81130884a31bb0b73dbc3cb36cf4a3cb`.
+That tree seeded the closed package, public surface, service spine, module
+shell, contract, and error laws. RAWR now owns explicit amendments for the
+host-to-service-to-module context funnel, native oRPC and Effect-oRPC
+composition, router-handler authorship, kind-local model indices, module
+isolation, owner-private aliases, and platform-independent service source.
+Those amendments retain the canonical `@rawr/hq-sdk` TypeBox Standard Schema
+bridge; they are not represented as unchanged Magic Migration algorithms.
 
 The Oclif and Nx workspace packets are RAWR-authored. They apply the same
 positive, closed-kind posture to the executable app, its command plugins, and

@@ -12,14 +12,14 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a missing root or module anchor, a second service spine, or a module-owned context, implementer, host, or procedures container",
-  "why": "Standalone services and API-embedded service interiors share one stable oRPC spine. Closing only its semantic anchors makes alternate authority visible without requiring models, middleware, persistence, or tests that a service does not need.",
-  "remediate": "Keep base.ts, contract.ts, impl.ts, modules, and router.ts at the service root. Keep contract.ts, module.ts, and router.ts in every module. Add optional model, middleware, persistence, errors, tests, or Nx metadata only where the owning semantics require them.",
-  "message": "Every service interior must retain one generic root spine and generic module shells.",
+  "forbids": "a standalone service outside its closed package and public client/service surface; a dotted or otherwise unadmitted service-module directory; a missing root or module anchor; shared, internal, dependencies, procedure, operation, or loose schema buckets; model matter outside named semantic families or without a kind-local index; persistence outside service db; an unindexed module router directory; or an unsealed middleware directory",
+  "why": "A service is a narrowing capability funnel. Closing each hierarchy layer gives every fact one local owner: the dotless module namespace identifies the admitted subdomain boundaries, base and module anchors own context projection, model kinds own domain meaning through curated private indices, db owns persistence, middleware files own qualified guards, and router files own operation behavior. Admitted module shells permit AGENTS.md while the agent-router blueprint selects that same module set and remains its sole documentation-placement and source-shape authority.",
+  "remediate": "Keep package.json, project.json, src, and tsconfig.json at a standalone service package root; keep client.ts beside service under src; keep base.ts, contract.ts, impl.ts, modules, and router.ts at the service interior; name each direct module directory without a dot; and keep contract.ts, module.ts, plus one router surface in every admitted module. Put model matter only under actors, dto, errors, helpers, policy, ports, prompts, or schema, with index.ts in every existing kind. Put persistent stores under service/db. Use either router.ts or router/index.ts with named *.router.ts leaves or semantic groups, never both. AGENTS.md may occupy an admitted module shell, but its requirement belongs only to the agent-router blueprint.",
+  "message": "Service packages must follow the closed capability-funnel topology through a dotless module namespace and module-owned model and router surfaces.",
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["services/*/src/service/**", "plugins/server/api/*/src/service/**"]
+      "patterns": ["services/*/**", "plugins/server/api/*/src/service/**"]
     }
   ],
   "supportFiles": {
