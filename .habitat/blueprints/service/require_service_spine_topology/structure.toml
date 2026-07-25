@@ -1,6 +1,36 @@
 schemaVersion = 1
 
 [[scopes]]
+name = "standalone-service-packages"
+root = "services/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = [
+  "package.json",
+  "project.json",
+  "src",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "test",
+  "tsconfig.build.json",
+  "tsconfig.test.json",
+  "vitest.config.ts",
+]
+
+[[scopes]]
+name = "standalone-service-public-faces"
+root = "services/!(*.*)/src"
+kind = "directory"
+mode = "closed"
+required = [
+  "client.ts",
+  "service",
+]
+allowed = []
+
+[[scopes]]
 name = "standalone-service-spines"
 root = "services/*/src/service"
 kind = "directory"
@@ -16,7 +46,6 @@ allowed = [
   "db",
   "middleware",
   "model",
-  "project.json",
   "test",
 ]
 
@@ -39,36 +68,256 @@ allowed = [
 ]
 
 [[scopes]]
+name = "standalone-service-module-namespaces"
+root = "services/!(*.*)/src/service/modules"
+kind = "directory"
+mode = "closed"
+allowed = [
+  "!(*.*)",
+]
+
+[[scopes]]
+name = "api-embedded-service-module-namespaces"
+root = "plugins/server/api/!(*.*)/src/service/modules"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "!(*.*)",
+]
+
+[[scopes]]
 name = "standalone-service-module-shells"
-root = "services/*/src/service/modules/*"
+root = "services/!(*.*)/src/service/modules/!(*.*)"
 kind = "directory"
 mode = "closed"
 required = [
   "contract.ts",
   "module.ts",
-  "router.ts",
+  "router?(.ts)",
 ]
 allowed = [
-  "errors.ts",
+  "AGENTS.md",
   "middleware",
   "model",
-  "project.json",
+  "router",
+  "router.ts",
   "test",
 ]
 
 [[scopes]]
 name = "api-embedded-service-module-shells"
-root = "plugins/server/api/*/src/service/modules/*"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)"
 kind = "directory"
 mode = "closed"
 required = [
   "contract.ts",
   "module.ts",
-  "router.ts",
+  "router?(.ts)",
 ]
 allowed = [
-  "errors.ts",
+  "AGENTS.md",
   "middleware",
   "model",
+  "router",
+  "router.ts",
   "test",
+]
+
+[[scopes]]
+name = "standalone-service-model-kinds"
+root = "services/*/src/service/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "actors",
+  "dto",
+  "errors",
+  "helpers",
+  "policy",
+  "ports",
+  "prompts",
+  "schema",
+]
+
+[[scopes]]
+name = "api-embedded-service-model-kinds"
+root = "plugins/server/api/*/src/service/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "actors",
+  "dto",
+  "errors",
+  "helpers",
+  "policy",
+  "ports",
+  "prompts",
+  "schema",
+]
+
+[[scopes]]
+name = "standalone-service-module-model-kinds"
+root = "services/!(*.*)/src/service/modules/!(*.*)/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "actors",
+  "dto",
+  "errors",
+  "helpers",
+  "policy",
+  "ports",
+  "prompts",
+  "schema",
+]
+
+[[scopes]]
+name = "api-embedded-service-module-model-kinds"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "actors",
+  "dto",
+  "errors",
+  "helpers",
+  "policy",
+  "ports",
+  "prompts",
+  "schema",
+]
+
+[[scopes]]
+name = "standalone-service-model-kind-indices"
+root = "services/*/src/service/model/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "api-embedded-service-model-kind-indices"
+root = "plugins/server/api/*/src/service/model/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "standalone-service-module-model-kind-indices"
+root = "services/!(*.*)/src/service/modules/!(*.*)/model/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "api-embedded-service-module-model-kind-indices"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "standalone-service-database-kinds"
+root = "services/*/src/service/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "generated",
+  "migrations",
+  "session.ts",
+  "stores",
+  "test",
+]
+
+[[scopes]]
+name = "standalone-service-module-router-directories"
+root = "services/!(*.*)/src/service/modules/!(*.*)/router"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+  "*.router.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "api-embedded-service-module-router-directories"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/router"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+  "*.router.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "standalone-service-middleware"
+root = "services/*/src/service/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "*.middleware.ts",
+]
+
+[[scopes]]
+name = "api-embedded-service-middleware"
+root = "plugins/server/api/*/src/service/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "*.middleware.ts",
+]
+
+[[scopes]]
+name = "standalone-service-module-middleware"
+root = "services/!(*.*)/src/service/modules/!(*.*)/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "*.middleware.ts",
+]
+
+[[scopes]]
+name = "api-embedded-service-module-middleware"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "*.middleware.ts",
 ]
