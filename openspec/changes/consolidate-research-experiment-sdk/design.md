@@ -111,9 +111,10 @@ Handlers receive TypeBox-admitted input and the exact module context only.
 Native oRPC owns contracts, routers, middleware, context, declared errors,
 transport, and clients. TypeBox owns schemas, structural validation, and
 derived TypeScript types. Effect owns typed execution, interruption, and
-resource safety. Effect-oRPC adapts native oRPC handlers to Effect; it is not a
-second router, context, schema, or runtime authority. The canonical Template
-TypeBox bridge is the only Standard Schema bridge.
+resource safety. Effect-oRPC adapts an Effect computation at a native oRPC
+procedure boundary; it is not a second router, context, schema, or runtime
+authority. The canonical Template TypeBox bridge is the only Standard Schema
+bridge.
 
 ### Public Operations
 
@@ -205,6 +206,10 @@ Choose D.
   contract/helper without importing the service or runtime values.
 - Expand `cells.inspect` only if durable truth plus runtime diagnostics cannot
   answer a named operator decision. Inspection must remain read-only.
+- Add a third public operation only when a named operator action has independent
+  domain intent, authorization, and outcome that cannot be expressed truthfully
+  as run/resume or read-only inspect. Splitting an internal stage does not
+  qualify.
 
 ## Cell Domain
 
@@ -229,10 +234,17 @@ framework.
 
 ```text
 Missing
-  -> Running(attempt, frozen input, deterministic provider lookups)
+  -> Running(
+       attempt,
+       frozen input,
+       deterministic provider lookups + non-secret recovery namespaces
+     )
   -> SolverTerminal(
-       Submitted(submitted artifact, agent/study outcome)
-       | NoSubmission(noncompletion or no-valid-submission outcome)
+       outcome =
+         Submitted(submitted artifact, agent/study outcome)
+         | NoSubmission(noncompletion or no-valid-submission outcome),
+       retained solver lookups/locators,
+       deterministic evaluator lookup + non-secret recovery namespace
      )
   -> Evaluated(evaluation)
 ```
@@ -250,14 +262,21 @@ provider does not know cell states.
 | --- | --- |
 | before `Running` persists | no provider effect is legal |
 | persistence result unknown | stop the call; the next call reads durable state before any effect |
-| after `Running`, before acquisition | create-or-adopt under the persisted deterministic lookup identities |
+| after `Running`, before acquisition | require the current non-secret provider recovery namespace to equal the persisted namespace, then create-or-adopt under the persisted deterministic lookup identity |
 | after acquisition, before concrete locator update | recover through the deterministic lookup identity and then record provider-neutral locator details |
-| provider subject is live | return an already-running refusal/result; never replace it |
+| provider subject is live | return the declared `CellRunInProgress` domain refusal; the caller may inspect or retry the same cell later, and no automatic wait, attach, poll, or replacement occurs |
 | solver exited before artifact capture | inspect and recover the retained workspace/outcome, capture the artifact, and never rerun the solver |
 | provider subject is absent | reconcile the recorded attempt; resume only when the service can prove no live/recoverable subject will be replaced |
 | preterminal cancellation or cleanup is unconfirmed | keep `Running` and the lookup/correlation references; do not claim release or start replacement work |
+| product cancellation/noncompletion is confirmed before a solver terminal | recover any valid submission; otherwise persist the study-declared `NoSubmission` outcome plus exact solver correlations; only then destructively release the solver subject |
+| process termination is confirmed but terminal classification is incomplete | retain the stopped subject/workspace as `Running`; termination alone authorizes neither destructive release nor replacement |
+| Effect interruption stops the process before terminal classification | retain the stopped subject/workspace as `Running`; re-entry classifies it, and interruption alone invents no study outcome |
+| solver terminal write is unknown | retain the solver subject and stop; never release the last recoverable outcome until the write is known durable |
 | cleanup is unconfirmed after terminal/evaluation persistence | preserve the terminal/evaluation and exact provider correlation; a later `cells.run` may inspect and retry cleanup without changing durable truth |
 | after terminal persistence | adopt the terminal; reconcile recorded postterminal cleanup before or alongside only missing evaluation/projection work |
+| evaluator completes before `Evaluated` persists | adopt its retained outcome through the terminal-bound evaluator lookup; never rerun completed evaluator work |
+| evaluator is interrupted without a completed recoverable outcome | only after confirmed termination and proof that no completed outcome existed, rerun the same evaluator attempt from the exact terminal and frozen evaluator inputs |
+| evaluator disposition is unknown or absence could hide a completed outcome | return a recoverable infrastructure failure; retain correlations and do not reevaluate |
 | after evaluation persistence | adopt the evaluation; reconcile recorded postterminal cleanup; retry only explicitly requested non-authoritative projection/readback without reevaluation |
 | telemetry projection/readback fails | preserve terminal/evaluation truth and report projection diagnostics separately |
 
@@ -269,7 +288,7 @@ fence protocol, residue graph, or distributed CAS.
 
 | Class | Examples | Authority and effect |
 | --- | --- | --- |
-| domain refusal | identity mismatch, illegal transition, terminal conflict, attempt to replace a live cell | declared oRPC error/result; no new provider effect |
+| domain refusal | identity mismatch, `RecoveryNamespaceMismatch`, illegal transition, terminal conflict, `CellRunInProgress` | declared oRPC error/result; no new provider effect |
 | recoverable infrastructure failure | provider unavailable, persistence outcome unknown, artifact capture failure, observation settlement failure, cleanup uncertainty | typed service/resource failure; durable truth remains; re-entry starts by reading it |
 | study outcome | agent noncompletion, compile/test failure, policy violation, empty/invalid submission, low score | persisted terminal/evaluation data; never infrastructure retry policy |
 | diagnostic failure | telemetry export/readback or wide-event drain failure | non-authoritative status; cannot change cell truth |
@@ -304,9 +323,13 @@ resource, or provider selects or provisions itself.
 Providers that acquire recoverable external subjects expose only the native
 create-or-adopt/inspect/reconcile operations their resource requires and return
 neutral serializable locators/correlations where the service needs recovery.
-No generic provider lifecycle facade is added. Concrete clients, secrets,
-Effect runtime handles, and vendor-specific context remain
-provider/runtime-local.
+Each such provider also exposes a stable, non-secret recovery namespace
+identity before subject acquisition. The service binds that namespace into its
+deterministic subject lookup and refuses re-entry through a different namespace
+unless both selections prove the same cross-selection recovery namespace. This
+is service-owned recovery data, not a provider envelope or app-profile bag. No
+generic provider lifecycle facade is added. Concrete clients, secrets, Effect
+runtime handles, and vendor-specific context remain provider/runtime-local.
 
 Codex, OpenShell, and observation remain separate resource authorities. The
 service sequences them. A provider dependency may express a real lower-level
@@ -405,6 +428,35 @@ green transition.
 Commit `ce282cb062f0d4bdeb80117a021aa0c766537991` remains historical
 Git/Bun behavior evidence and source quarry only.
 
+### External Consumer And Runner Disposition
+
+The consumer census found no live `@rawr/research-sdk`,
+`research-experiment`, `cells.run`, or `cells.inspect` consumer in either study
+owner. It did find one active self-contained oRPC runner and historical Inngest
+runner residue. The exact owner roots are
+`/Users/mateicanavra/Documents/.nosync/DEV/research/orpc-effect-skillset-vaults`
+and
+`/Users/mateicanavra/Documents/.nosync/DEV/research/inngest-event-driven-skillset-vaults/20260715T055207Z-inngest-event-driven-skillset`;
+table paths are relative to their named root:
+
+| Owner and exact path | Disposition |
+| --- | --- |
+| oRPC canonical vault `20260715T031815Z-orpc-effect-skillset@c3962e8`: `20260715T031815Z-orpc-effect-skillset/research/deliverables/evaluations/real-work-skill-efficacy-20260716/evaluation/**`, except the closed retained-study allowlist `evaluation/{assay/**,contract.ts,contract.test.ts,solver-context/**}` | transition the retained model-free cell to the service, re-author proved generic behavior under Template service/resources/providers, then delete the rest of the evaluator package. The deletion includes `admission.ts` and its test, `platform/**`, `run*`, `execute*`, `langfuse*`, `review*`, top-level `openshell*`, `scripts/**`, `openshell/**`, `.repos/**`, `package.json`, `bun.lock`, `tsconfig.json`, and `effect-source.lock.json`; none of its executable shell or operational tests survive as authority |
+| same oRPC canonical vault: `20260715T031815Z-orpc-effect-skillset/research/deliverables/evaluations/real-work-skill-efficacy-20260716/{*.md,admission/**,artifacts/**,corpus.json,historical-provenance.json,results/**,rubrics/**,skill-catalog.json}` plus the closed `evaluation/{assay/**,contract.ts,contract.test.ts,solver-context/**}` allowlist above | retain study-owned prompts, pure admission policy and receipts/baselines, contracts, rubrics, inputs, results, reports, and evidence; re-author any retained policy that currently imports provider/runtime code |
+| oRPC divergent worktree `worktrees/behavioral-oracle@16699a7`: `worktrees/behavioral-oracle/research/deliverables/evaluations/real-work-skill-efficacy-20260716/evaluation/{platform/**,openshell*,openshell/**,run*,execute*,langfuse*,review*,admission*,scripts/**,package.json,bun.lock,tsconfig*.json,effect-source.lock.json}` | transition or quarry any independently proved divergent behavior, then delete these shadow runtime, provider, CLI, package-shell, and operational-test copies; canonical duplication is not a preservation reason |
+| same oRPC worktree: `worktrees/behavioral-oracle/research/deliverables/evaluations/real-work-skill-efficacy-20260716/evaluation/codex-langfuse-plugin/**` | quarry proved projection behavior and deterministic tests into the proper Template provider boundary, preserve its provenance record, then delete this worktree-owned operational plugin copy |
+| same oRPC worktree: `worktrees/behavioral-oracle/research/deliverables/evaluations/real-work-skill-efficacy-20260716/{*.md,admission/**,corpus.json,fixture-preparation/**,historical-provenance.json,results/**,rubrics/**,skill-catalog.json,evaluation/{assay/**,contract.ts,contract.test.ts,solver-context/**}}` | the study owner must bind every unique prompt, corpus item, rubric, result, report, fixture-preparation input, contract, and evidence to a named immutable study-owned Git ref or retention ledger before worktree removal. This service change neither copies nor relocates that material; if the binding is absent, removal remains blocked |
+| oRPC canonical vault `20260715T031815Z-orpc-effect-skillset/research/deliverables/evaluations/bounded-cross-model-competence-20260715/**` and the eight pre-canonical sibling vaults named in `20260715T031815Z-orpc-effect-skillset/EXTERNAL-EVIDENCE-LEDGER.md` | retain immutable as historical evidence/source quarry; never execute, transition, or promote as service authority |
+| Inngest canonical vault `codex/inngest-release-authority-convergence@cd78f4c`: `research/operations/run-s12-current-epoch.ts` | delete as broken historical launcher; it imports already-deleted runner/platform modules and is not a service consumer |
+| same Inngest owner: `candidate/quality/evaluations/competence/{admission.json,catalog.json,packet.schema.json,packets/**,rubric.md,results-current.json}` and `research/evaluation-runs/**` | retain cases, manifests, rubrics, results, and evidence under the study owner; create a new typed service binding rather than migrate nonexistent active runtime wiring |
+| Inngest historical refs `main@5fa0f43` and `codex/inngest-oracle-exit-repair@251176e`: `candidate/quality/evaluations/competence/{worker.ts,study.ts,execution.ts,experiment/**,platform/**,lane/**,openshell/**,blind-review*,langfuse-*,packet-runtime.ts}` | historical source quarry only; never restore its runner, persistence, provider, review, or projection wiring |
+
+Inngest external caches
+`/Users/mateicanavra/Library/Caches/inngest-competence-evaluation` and
+`/Users/mateicanavra/Library/Caches/inngest-competence` remain governed by
+`research/handoff/inngest-evidence-retention-integrity.json`. They are not
+operational consumers. Empty or reconstructible caches are not authorities.
+
 ## Verification Strategy
 
 Tests assert product behavior, not source strings or incidental keys. Habitat
@@ -420,10 +472,15 @@ Required deterministic proofs:
   writes or new experiment-subject acquisition, using an inspect-capable runtime
   closure that does not require healthy run-only providers;
 - local duplicate, restart, adoption, distinct-cell overlap, both provider
-  lookup crash windows, solver-exit recovery, persistence-unknown read-before-
-  effect, preterminal/postterminal cleanup uncertainty, noncompletion, and
+  lookup crash windows, recovery-namespace mismatch refusal, solver-exit
+  recovery, persistence-unknown read-before-effect, preterminal/postterminal
+  cleanup uncertainty, `CellRunInProgress` retry semantics, noncompletion, and
   no-valid-submission terminals;
-- terminal-before-verification and evaluation-before-projection ordering;
+- terminal-before-destructive-solver-release/verification and
+  evaluation-before-destructive-evaluator-release/projection ordering;
+- evaluator-exit-before-persistence adoption and interrupted-without-outcome
+  rerun from the exact terminal, plus unknown/possibly-completed refusal,
+  without repeating completed evaluator work;
 - fresh solver-inaccessible evaluator reconstruction with hidden verifier and
   rubric inputs absent from the solver subject;
 - native Git revision/subtree, allowed text/binary/add/delete/rename/mode
@@ -485,8 +542,10 @@ The design is wrong if:
 - `cells.inspect` mutates state or provider subjects;
 - a recoverable solver is rerun, a live cell is replaced, or downstream failure
   erases terminal/evaluation truth;
+- a provider recovery-namespace mismatch reaches a subject effect;
 - telemetry determines correctness;
 - a composite provider, dedicated app, async projection, operation journal, or
-  package appears without its recorded falsifier;
+  package appears without its recorded falsifier, or a third operation merely
+  exposes an internal stage;
 - frozen evidence must move to use the service;
 - source begins before both canonical prerequisites exist.

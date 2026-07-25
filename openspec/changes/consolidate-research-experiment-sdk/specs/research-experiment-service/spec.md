@@ -87,6 +87,11 @@ internal service sequencing, policies, repositories, or outside capability
 calls. They MUST NOT become public stage procedures or generic capability
 interfaces.
 
+A third public operation MAY be added only after a named operator action proves
+independent domain intent, authorization, and outcome that cannot be expressed
+truthfully as run/resume or read-only inspect. Exposing an internal stage does
+not satisfy this condition.
+
 `cells.run` MUST validate one exact cell request and advance every reachable
 incomplete boundary until the cell is `Evaluated` or the call reaches the first
 typed domain refusal or recoverable infrastructure failure. It MUST return
@@ -120,14 +125,20 @@ Missing -> Running -> SolverTerminal -> Evaluated
 
 The direct identity MUST bind the study-supplied cell and instance, frozen
 input, and implementation. `Running` MUST add the attempt identifier and
-deterministic provider lookup identities. `SolverTerminal` MUST discriminate:
+deterministic provider lookup identities, each bound to its resource and the
+selected provider's stable, non-secret recovery namespace. `SolverTerminal`
+MUST discriminate:
 
 - `Submitted`, which binds the submitted artifact and agent/study outcome;
 - `NoSubmission`, which binds a noncompletion or no-valid-submission study
   outcome without inventing an artifact.
 
+Each terminal MUST also bind the evaluator's deterministic lookup identity and
+non-secret recovery namespace before evaluator acquisition and MUST retain the
+exact solver lookup/locator correlations until solver cleanup is confirmed.
 `Evaluated` MUST refer directly to either terminal variant and add only the
-evaluation. Projection/readback status is ancillary runtime/observation
+evaluation.
+Projection/readback and cleanup status are ancillary runtime/observation
 diagnostic data and MUST NOT become durable cell truth.
 
 The service MUST require a generic filesystem or database resource for physical
@@ -153,13 +164,17 @@ It MUST:
 - adopt `SolverTerminal`, reconcile any recorded postterminal cleanup, and
   perform only missing evaluation/projection work;
 - inspect and reconcile `Running`;
-- on `Missing`, persist `Running` with deterministic cell+attempt provider
-  lookup identities before observation, sandbox, process, or agent acquisition.
+- on `Missing`, persist `Running` with deterministic
+  cell+attempt+resource+recovery-namespace provider lookup identities before
+  observation, sandbox, process, or agent acquisition.
 
 The service MUST persist the `SolverTerminal` variant, and its submitted
-artifact when present, before verification. It MUST persist `Evaluated` before
-non-authoritative telemetry projection. A later failure MUST NOT erase or rerun
-either durable boundary.
+artifact when present, together with exact solver correlations before
+verification or destructive solver-subject release. It MUST persist
+`Evaluated` before destructive evaluator-subject
+release or non-authoritative telemetry projection. An unknown terminal or
+evaluation write MUST retain the corresponding recoverable subject. A later
+failure MUST NOT erase or rerun either durable boundary.
 
 Distinct cells MAY overlap. Same-cell calls MUST converge through the
 service-owned repository. The system MUST NOT add a process-wide serializer,
@@ -172,7 +187,13 @@ receipt graph, or distributed CAS.
 - **THEN** at most one call creates the durable `Running` state
 - **AND** the other call observes the existing state
 - **AND** it either adopts completed work or returns the declared
-  already-running/domain refusal
+  `CellRunInProgress` domain refusal
+- **AND** that refusal contains the durable cell/attempt identity and only
+  permitted correlations
+- **AND** that caller may inspect or retry the same cell later, while the
+  service does not wait, attach, poll, or retry automatically
+- **AND** a later retry rereads the same durable attempt: live returns the same
+  refusal, exited-recoverable resumes, and terminal or evaluated state is adopted
 - **AND** no second solver is launched.
 
 #### Scenario: Distinct cells run concurrently
@@ -185,10 +206,19 @@ receipt graph, or distributed CAS.
 ### Requirement: Provider lookup identities close ordinary crash windows
 
 Before any recoverable external subject is acquired, `Running` MUST persist
-deterministic lookup identities derived from the exact cell and attempt. Each
-provider that owns such a subject MUST expose the resource-specific
-create-or-adopt and inspection behavior needed for that subject. Other
-resources MUST NOT implement a generic subject-lifecycle protocol.
+deterministic lookup identities derived from the exact cell, attempt, resource,
+and the selected provider's stable, non-secret recovery namespace. Each
+provider that owns such a subject MUST expose that namespace before subject
+acquisition plus the resource-specific create-or-adopt and inspection behavior
+needed for that subject. Other resources MUST NOT implement a generic
+subject-lifecycle protocol.
+
+On re-entry, the service MUST compare the current namespace with the persisted
+namespace before any subject effect. A mismatch MUST return a declared domain
+refusal and leave the original subject untouched, unless both provider
+selections prove one identical cross-selection recovery namespace. The service
+MUST NOT persist secrets, raw provider config, or an app-profile/provider
+envelope.
 
 Provider inspection MUST distinguish:
 
@@ -207,6 +237,19 @@ the exact retained provider correlation to inspect and retry cleanup before or
 alongside remaining evaluation/projection work. Cleanup reconciliation MUST NOT
 rerun solver or evaluator work.
 
+No destructive solver-subject release MAY occur until `Submitted` plus its
+artifact or `NoSubmission` plus its outcome is known durable. When a
+study-declared cancellation, timeout, or noncompletion is confirmed before a
+terminal exists, the service MUST recover any valid submission; otherwise it
+MUST persist that declared `NoSubmission` outcome before release. Effect
+interruption alone MUST NOT invent a study outcome. If interruption prevents
+terminal classification, or termination/terminal publication is unconfirmed,
+the service MUST retain the stopped subject/workspace as `Running` for re-entry.
+Confirmed process termination alone MUST NOT authorize destructive release or
+replacement. Process cancellation or termination MAY precede terminal
+publication only while the provider retains the exact workspace/outcome for
+recovery.
+
 #### Scenario: Crash follows acquisition but precedes locator update
 
 - **WHEN** the process crashes after a provider creates the subject but before
@@ -214,6 +257,17 @@ rerun solver or evaluator work.
 - **THEN** the next `cells.run` uses the persisted deterministic lookup identity
   to create-or-adopt/inspect that subject
 - **AND** it does not launch an uncorrelated replacement.
+
+#### Scenario: Provider recovery namespace changes
+
+- **WHEN** re-entry is bound to a different provider account, region,
+  namespace, or other recovery scope than the persisted lookup
+- **THEN** `cells.run` returns the declared `RecoveryNamespaceMismatch` refusal
+  before a subject effect
+- **AND** it does not interpret `absent` in the new scope as permission to
+  replace the original subject
+- **AND** re-entry under the persisted namespace may recover the original
+  subject.
 
 #### Scenario: Crash follows solver exit but precedes artifact capture
 
@@ -236,6 +290,23 @@ rerun solver or evaluator work.
 - **THEN** the service persists `SolverTerminal.NoSubmission`
 - **AND** later calls do not rerun that solver
 - **AND** evaluation refers directly to that terminal variant.
+
+#### Scenario: Product noncompletion is confirmed before terminal publication
+
+- **WHEN** a study-declared cancellation, timeout, or noncompletion is confirmed
+  before a terminal is durable
+- **THEN** the service recovers and persists any valid submitted artifact
+- **AND** otherwise persists that declared `NoSubmission` outcome
+- **AND** only after that durable write may it destructively release the solver
+  subject.
+
+#### Scenario: Effect interruption precedes terminal classification
+
+- **WHEN** Effect interruption stops the solver before the service can classify
+  a terminal
+- **THEN** the stopped subject/workspace remains recoverable under `Running`
+- **AND** the next `cells.run` classifies it without rerunning the solver
+- **AND** interruption alone does not create a study outcome.
 
 #### Scenario: Cleanup is uncertain after terminal publication
 
@@ -303,7 +374,9 @@ Resources MUST define stable capability, lifetime, configuration, and
 diagnostic-safe contracts. Providers MUST own configuration validation,
 acquisition, release, vendor/native mechanics, health, and redacted diagnostics.
 Only a provider that owns a recoverable external subject MUST expose that
-resource's native create-or-adopt/inspect/reconcile behavior.
+resource's native create-or-adopt/inspect/reconcile behavior and a stable,
+non-secret recovery namespace before subject acquisition. That namespace is
+service-owned recovery input, not an app-profile/provider envelope.
 
 The service and CLI plugin MUST declare requirements/use. The HQ runtime
 profile MUST select providers and config sources. Runtime compilation MUST
@@ -376,6 +449,19 @@ Hidden verifier/rubric inputs MUST NOT enter the solver workspace, prompt,
 context, or provider subject. Solver process state MUST NOT be reused as
 evaluation authority.
 
+Before evaluator acquisition, the terminal MUST contain the deterministic
+evaluator lookup and current non-secret provider recovery namespace. A
+completed evaluator outcome MUST remain recoverable until `Evaluated` is
+durable. If the service crashes after evaluator completion, the next
+`cells.run` MUST adopt that outcome without reevaluation. If interruption is
+confirmed before any completed recoverable outcome exists, the service MAY
+reconcile that stopped/absent subject and rerun the same evaluator attempt from
+the exact terminal and frozen evaluator inputs. A live evaluator MUST return
+`CellRunInProgress`. If disposition is unknown, or absence could conceal a
+completed outcome, the service MUST return a recoverable infrastructure
+failure and MUST NOT reevaluate. Namespace mismatch, unknown evaluation write,
+or unconfirmed termination MUST fail closed without destructive release.
+
 #### Scenario: Submitted artifact is evaluated
 
 - **WHEN** a submitted terminal is durable
@@ -384,6 +470,14 @@ evaluation authority.
 - **AND** hidden verifier/rubric inputs are introduced only there
 - **AND** the solver cannot read or mutate that evaluation subject
 - **AND** the evaluation is persisted before telemetry projection.
+
+#### Scenario: Evaluator exits before evaluation persistence
+
+- **WHEN** the evaluator completes and retains a recoverable outcome before the
+  service persists `Evaluated`
+- **THEN** the next `cells.run` adopts that exact outcome
+- **AND** does not rerun the evaluator
+- **AND** persists `Evaluated` before destructive evaluator-subject release.
 
 ### Requirement: Observation is correlated but non-authoritative
 
@@ -449,6 +543,29 @@ predecessor frameworks, attempt/residue protocols, provider envelopes, Bun
 runtime/install graphs, embedded manifests, package barrels, exports, project
 shell, and package-specific Habitat rules after both study checks are green.
 
+The transition MUST also close the exact external shadow owners and preserve the
+closed study/evidence allowlists in the design ledger:
+
+- transition then delete the canonical oRPC real-work evaluator package outside
+  `evaluation/{assay/**,contract.ts,contract.test.ts,solver-context/**}`. This
+  includes its admission executor and test, platform, runner, execution,
+  Langfuse, review, OpenShell, script, package/lock/configuration shell, source
+  checkout, and operational tests;
+- transition then delete the behavioral-oracle worktree's divergent runner,
+  execution, Langfuse, review, admission, platform, OpenShell, script,
+  package/lock/configuration, and operational-test copies;
+- quarry then delete that worktree's
+  `evaluation/codex-langfuse-plugin/**` operational owner while retaining its
+  provenance;
+- do not remove the behavioral worktree until its study owner independently
+  binds every unique prompt, corpus item, contract, rubric, fixture-preparation
+  input, result, report, and evidence to a named immutable study-owned Git ref
+  or retention ledger. This change MUST NOT copy or relocate that material;
+- delete the current Inngest `research/operations/run-s12-current-epoch.ts`
+  broken launcher;
+- keep older oRPC/Inngest runners and custody-ledger caches historical,
+  operationally unreachable, and non-authoritative rather than restoring them.
+
 A cold package survivor requires a second independent non-service consumer and
 separate review. No compatibility shim may preserve `@rawr/research-sdk`.
 
@@ -457,6 +574,11 @@ separate review. No compatibility shim may preserve `@rawr/research-sdk`.
 - **WHEN** the retained oRPC cell and Inngest S09 pass through the service
 - **THEN** `@rawr/research-sdk` and superseded active consumer machinery are
   removed
+- **AND** the exact active external shadow owners named above are deleted only
+  after their unique study/evidence allowlists have an independently durable
+  study-owned binding
+- **AND** older named historical owners remain operationally unreachable and
+  non-authoritative according to their disposition
 - **AND** frozen historical evidence remains in place
 - **AND** no renamed package facade remains.
 

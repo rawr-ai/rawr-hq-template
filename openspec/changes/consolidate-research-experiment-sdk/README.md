@@ -9,7 +9,7 @@ Inngest study owners retain their cases, fixtures, results, and evidence.
 
 | Epoch | Repository + base | Phase | Active writer | Claimed slice | Review input | Blockers | Next legal transition |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 11 | RAWR HQ-Template `223835fccedcb80523b761c571130852bdb106a2` | DESIGN | none after freeze | Docs/OpenSpec only: reframe the preserved SDK lineage as one HQ-composed research-experiment service, one CLI projection, and generic resources/providers | The immutable docs-only child of `223835fc`; exact SHA is supplied in the review handoff | Complete activated Habitat service packet and production app-profile/runtime provisioning are not canonical | Obtain exact Inngest review; then hold source until both prerequisites are named and canonical |
+| 12 | RAWR HQ-Template `5f99837f5244e34be4eb58db5ec3e3bfefd7c88f` | DESIGN | none after freeze | Docs-only counterpart correction: recovery namespaces, terminal-before-release, evaluator adoption, exact external-runner disposition, operation falsifier, and Effect-oRPC direction | The immutable docs-only child of `5f99837f`; exact SHA is supplied in the review handoff | Complete activated Habitat service packet and production app-profile/runtime provisioning are not canonical | Obtain exact Inngest review; then hold source until both prerequisites are named and canonical |
 
 ## Record
 
