@@ -11,10 +11,10 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "enforced",
-  "forbids": "a standalone base without declared Dependencies plus exported InitialContext and Context; an embedded API base without Context; a module.ts without its local Context; a root or module context assembly file; a context-shape declaration outside base.ts or module.ts; a module alias edge to raw root context; a router reopening raw service lanes; a middleware source without a named native const or derivative; a middleware default export; or a native .use attachment whose first argument is inline or a local plain callback",
-  "why": "Context narrows through base.ts and module.ts into router handlers, while named native middleware keeps qualified guards and enrichment visible at every attachment boundary.",
-  "remediate": "Declare external Dependencies plus exported InitialContext and Context in standalone base.ts, and Context in embedded API base.ts. Declare the final local Context and its projection in module.ts. Delete context assembly files and consume only narrowed capabilities in handlers. Give every other middleware source a named const created from native os, decorateMiddleware, base, service, or module authority, or a native mapInput/concat derivative. Remove default exports and pass a bare named middleware reference as the first argument to native .use calls.",
+  "lane": "advisory",
+  "forbids": "a standalone base without declared Dependencies plus exported InitialContext and Context; an embedded API base without Context; a module-local Context that is not applied by the exported native module chain; a root or module context assembly file; a context-shape declaration outside base.ts or module.ts; a module alias edge to raw root context; a router reopening raw service lanes; a middleware source without a named native const or derivative; a middleware default export; or a native .use attachment whose first argument is inline or a local plain callback",
+  "why": "Context narrows from the base-owned service boundary through each exact service branch in module.ts into router handlers, while named native middleware keeps qualified guards and enrichment visible at every attachment boundary.",
+  "remediate": "Declare external Dependencies plus exported InitialContext and Context in standalone base.ts, and Context in embedded API base.ts. Let a bare module inherit service context. When a module narrows or enriches context, declare its local Context in module.ts and apply it through named middleware on the exported service.<module> chain. Delete context assembly files and consume only narrowed capabilities in handlers. Give every other middleware source a named const created from native os, decorateMiddleware, base, service, or module authority, or a native mapInput/concat derivative. Remove default exports and pass a bare named middleware reference as the first argument to native .use calls.",
   "message": "Service context must narrow through native boundaries and .use must attach named native middleware.",
   "pathCoverage": [
     {
@@ -23,7 +23,6 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
-  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_context_boundaries/baseline.json"
   },

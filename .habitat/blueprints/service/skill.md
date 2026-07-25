@@ -34,12 +34,14 @@ host
   -> handler
 ```
 
-The host begins with everything needed to run the application. `base.ts`
-declares the dependency lanes, initial context, service context, native
-service-authoring view, and host-admission projection. `impl.ts` composes
-genuine cross-cutting middleware on the exact service view and exposes the one
-outer host boundary. A module owns an exact local authoring view and narrows
-service context again in `module.ts`. The handler acts on that final context.
+The host begins with everything needed to run the application. Standalone
+`base.ts` declares the dependency lanes, initial context, service context, and
+the sole direct Effect-oRPC contract implementer. `impl.ts` derives the one
+service from that imported base plus genuine cross-cutting middleware. A
+module derives its exact `service.<module>` branch. A bare branch inherits the
+service context; a module that narrows or enriches it declares and applies that
+local context in `module.ts`. The root router composes completed module
+routers; the handler acts on the resulting module context.
 
 Each descent should reduce possible knowledge and action. An upward import
 that recovers raw context, a sibling reach, or a second context assembler
@@ -63,15 +65,16 @@ its ready implementation still enters through the service boundary.
 Module-level model matter belongs to that module's domain. Policies decide.
 DTOs and schemas describe. Errors name admitted failures. Helpers perform
 small subordinate mechanics. Ports describe outside capabilities. Prompts and
-actors retain their domain meanings. Persistent stores belong to the service
-database boundary.
+actors retain their domain meanings. Persistent stores require a separately
+owned, positively closed database boundary; they do not enter an unbounded
+`db` directory merely because a service needs persistence.
 
-Every existing model kind has one private `index.ts` module. That index curates
-explicit names from direct sibling leaves; it never star-exports, forwards
-another kind, or flattens the model. Model leaves keep their concrete
-dependency edges visible with direct imports. Contracts, modules, and routers
-may enter a model through the qualified kind index without losing the service
-or module owner in the path.
+Every model fact is a direct semantic leaf. Contracts, modules, routers, and
+other model leaves import the concrete leaf they use. A model `index.ts`
+conceals that ownership edge and creates a second aggregation surface, so the
+service structure does not admit it. A module router has one explicit
+aggregation surface instead: module `router.ts` composes named operation values
+from `router/*.router.ts`.
 
 Names such as `shared`, `internal`, and `dependencies` evade ownership rather
 than express it. They widen possibility precisely where the structure should
@@ -104,15 +107,15 @@ operation has been moved to the wrong authoring site.
 
 ## Router Scale
 
-A cohesive module authors operations in one `router.ts`. More space is not by
-itself a reason to invent a new layer. When the module has natural semantic
-subsets, a router directory may contain standalone operation leaves and
-completed subrouters. Its `index.ts` imports those completed values and
-composes one plain router object; it does not contain business transitions.
+Every module uses the same router shape. Module `router.ts` imports completed
+operation leaves or groups from `router/*.router.ts` and composes one plain
+router object. It does not contain business transitions. Each named router file
+is an authored boundary with enough room for the operation behavior it owns.
 
 A named router file may own one standalone leaf. That is not a semantic group
-and needs no group explanation. A true multi-operation subrouter should make
-its grouping judgment explicit:
+and needs no group explanation. When several operations share context, a guard,
+or one domain role, the named router file may export their completed plain
+subrouter. That real grouping judgment should be explicit:
 
 ```typescript
 /**
@@ -147,12 +150,12 @@ input selector remains an ordinary callback.
 
 Native oRPC middleware contributions merge with the current context. Returning
 a smaller object from middleware therefore does not by itself narrow the
-handler type. The service uses an exact authoring view plus a distinct outer
-host-admission boundary. Each module uses an exact local authoring view; root
-composition applies the module-owned projection and replaces its module-local
-Effect-oRPC implementer with the service implementer. The absence of reserved root lanes from the
-handler type and the final host-only initial context are part of the boundary
-proof. Native runtime objects remain additive; no wrapper pretends otherwise.
+handler type. The standalone base establishes the service context and
+implementation once. Each `module.ts` derives the matching service branch and
+owns any further projection before its router authors operations. The absence
+of reserved root lanes from the handler type and the host-only initial context
+are part of the boundary proof. Native runtime objects remain additive; no
+wrapper pretends otherwise.
 
 ## Native Authorities
 

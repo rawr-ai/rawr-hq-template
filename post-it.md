@@ -6,6 +6,25 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - One Router Face, Named Authorship
+
+A service module has one public router face: module `router.ts`. It composes
+completed values from named `router/*.router.ts` files and contains no operation
+transition itself. The named files are the oRPC authoring sites: each owns one
+operation or one meaningful group whose context, guard, or domain role holds it
+together.
+
+This is a narrowing hierarchy, not a choice between equivalent layouts. A
+`router/index.ts` would create another reachable face; an inline handler in
+module `router.ts` would collapse composition and authorship back together.
+Habitat asserts the one positive shape. Future generic blueprint variants
+belong upstream and are not a reason to recover local ambiguity.
+
+### Bag Of Keywords
+
+Module, router, leaf, group, handler, compose, context, guard, domain, face,
+variant, upstream.
+
 ## 2026-07-24 - Documentation Explains Relations
 
 JSDoc belongs at a declaration when another source file depends on its meaning.

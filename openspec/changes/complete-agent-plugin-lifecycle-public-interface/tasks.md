@@ -59,9 +59,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   type-only oRPC ownership bindings, and admit only bounded private contract
   support reachable from one exported contract. Preserve RAWR packet identity,
   the `@rawr/hq-sdk` TypeBox bridge, and the three RAWR service extensions.
-- [x] 1.2 Adopt the current generic service topology with one `router.ts` per
-  module. Keep procedure behavior on that oRPC surface and domain matter under
-  the module model; do not introduce a second router container.
+- [x] 1.2 Adopt one canonical service-module router topology. Keep module
+  `router.ts` as the plain public composition face, author operation leaves or
+  semantic groups in named `router/*.router.ts`, and do not admit
+  `router/index.ts` or a second public router form.
 - [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
   Constrain direct entrypoints, app identity/binary/dependency/command discovery,
   TypeScript source-to-output mapping, command-plugin manifest/package roots, no
@@ -110,8 +111,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   service corpus,
   extend the one `check:policy` batch with exact service-source,
   service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
-  Invoke the one topology rule and nine source rules through one owner-local
-  Habitat acquisition.
+  Invoke the one topology rule and the complete service source-rule set through
+  one owner-local Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, or duplicate rule discovery in a script.
 - [ ] 1.5g Use the pinned TypeScript compiler API to identify authored
@@ -399,24 +400,25 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and CI verification in explicit disposable homes, returning bounded inline
   facts with no receipt, sidecar, or custom evidence publication. Audit
   repository check, release-input authoring, packaging, and vendor update for an
-  owner-local consumer; remove any procedure without one. The completed audit in
+  owner-local consumer; remove any operation without one. The completed audit in
   [[service-domain-frame#Operation Admission]] binds every retained operation to
   one qualified Oclif command used by content maintainers, CI, package callers,
   or provider operators. No operation remains solely for historical settlement
   machinery.
 - [ ] 5.2 Bring the service onto the positive topology: root
   `base.ts`, `contract.ts`, `impl.ts`, `router.ts`; module
-  `contract.ts`, `module.ts`, router composition, and
-  `model/{dto,policy,repositories,...}`, with TypeBox schemas colocated with
-  their DTO authorities. Preserve the existing one-service/module-router
-  skeleton. Move owner-local release and governance requests, results, issues,
+  `contract.ts`, `module.ts`, composition-only `router.ts`, named
+  `router/*.router.ts` operation authorship, and
+  `model/{dto,policy,ports,...}`, with TypeBox schemas colocated with their DTO
+  authorities. Preserve the existing one-service/module-router skeleton. Move
+  owner-local release and governance requests, results, issues,
   policies, and schemas out of root `service/model/**` into their owning modules;
-  remove sibling-module reach-through by keeping behavior in procedure handlers
+  remove sibling-module reach-through by keeping behavior in operation handlers
   and module-owned policy. Root `service/model/**` may contain only genuinely
   cross-cutting ready host capability contracts, dependency-owned observation
   types, and the minimum service-owned domain model consumed by multiple modules.
   Current-main selection is one such collaboration model because governance
-  exposes it and providers consume it; governance-only procedure types remain in
+  exposes it and providers consume it; governance-only operation types remain in
   governance. Compose
   direct module handlers as plain router objects; do not create ornamental
   `*Procedure` exports or parallel operation entrypoints that move handler
@@ -496,10 +498,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   version proximity or mix family versions.
 - [ ] 5.4 Narrow root context to genuinely cross-cutting ready host capabilities,
   let module middleware acquire or project owner-specific capabilities, and give
-  each procedure only the exact context it consumes. Use the generic
+  each operation only the exact context it consumes. Use the generic
   Effect-backed oRPC construction from the current Magic Migration service
   blueprint; keep filesystem/process Effect programs inside their owning
-  resources and expose only ready capabilities into procedure context.
+  resources and expose only ready capabilities into operation context.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical
@@ -574,16 +576,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
   typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
-- [x] 5.7a Seal the governance module. Keep the current-main selection
-  collaboration in the shared service model, move governance-only request,
-  result, and codec policy into `modules/governance/model`, project the
-  host-provided current-main reader only onto the selection operation, and
-  compose both direct handlers in one flat router. Delete the module's duplicate
-  Git repository acquisition, telemetry, schema barrel, and leaf-router
-  directory. Prove the two public operation families, every selection terminal
-  outcome, provider consumption, TypeBox schema boundary, typecheck, workspace
-  lint, and Habitat source law. Standing architecture, TypeScript/oRPC/Effect,
-  testing, and structural-quality reviews report no unresolved P0/P1.
+- [x] 5.7a Record the historical governance checkpoint under the then-current
+  flat-router topology. Keep the current-main selection collaboration in the
+  shared service model, move governance-only request, result, and codec policy
+  into `modules/governance/model`, project the host-provided current-main reader
+  only onto the selection operation, and compose both direct handlers in one
+  flat router. Delete the module's duplicate Git repository acquisition,
+  telemetry, schema barrel, and leaf-router directory. Prove the two public
+  operation families, every selection terminal outcome, provider consumption,
+  TypeBox schema boundary, typecheck, workspace lint, and Habitat source law.
+  Standing architecture, TypeScript/oRPC/Effect, testing, and
+  structural-quality reviews report no unresolved P0/P1. Task 5.7e supersedes
+  that router disposition with the canonical module composition face and named
+  operation routers.
 - [x] 5.7b Close the public release implementation surface. Replace the
   package's `./release` export with one `./input` API containing only the two
   admitted limits and six TypeBox-backed CLI value parsers. Keep release
@@ -618,22 +623,33 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and release/set integration, source/test typecheck, workspace lint, Habitat
   source law, and standing reviews. Payload, release-input, release, and
   release-set aggregate normalization remain open under tasks 5.3 and 5.7.
-- [ ] 5.7e Correct the categorical service-law admission failure before another
-  lifecycle contract family lands. Record why copied but inactive Habitat rules
-  did not constrain the implementation, port the latest committed Magic
-  Migration service blueprint packet without weakening its positive closed
-  topology, and require the complete service rule set through the serialized Nx
-  source-law gate. Extract the service capability, owner, context, and import
-  corpus before moving source. Burn every admitted service package and module
-  shell to the closed topology with no `shared`, `common`, sibling-module
-  implementation import, upward implementation import, baseline, or path
-  exception. For the lifecycle service, move genuinely cross-module release
-  derivation into named root model layers, keep operation-specific matter in
-  its owning module, and pass ready capabilities through service and module
-  context. Prove each semantic checkpoint with owner-local behavior and
-  typecheck, then run normalized workspace lint, the complete Habitat source
-  law, and standing architecture, oRPC/Effect-oRPC, TypeScript, testing, and
-  structural-quality reviews.
+- [x] 5.7e1 Seal the corrected service blueprint authority before moving more
+  lifecycle source. Record why copied but inactive rules did not constrain the
+  implementation; port the committed Magic Migration laws without weakening
+  their positive closed topology; require one composition-only module
+  `router.ts` over named `router/*.router.ts` authoring leaves; admit no
+  `router/index.ts`; qualify every rule-private Grit helper; expand platform
+  independence to the complete production service surface; and preserve the
+  direct local `Router<typeof contract, never>` root relation from Magic
+  `52873620ffe0b8b6e60527cd399076fc13ab86a7`. Keep the topology, anchor,
+  isolation, context, composition, authorship, and platform-independence rules
+  explicitly advisory while their known live-corpus diagnostics remain. Prove
+  the packet through
+  positive and adversarial disposable fixtures, including one combined
+  multi-rule catalog run. Do not modify the Habitat SDK or disguise staging as
+  enforcement.
+- [ ] 5.7e2 Extract the service capability, owner, context, and import corpus,
+  then burn every admitted service package and module shell to the sealed
+  topology with no `shared`, `common`, sibling-module implementation import,
+  upward implementation import, baseline, or path exception. For the lifecycle
+  service, move genuinely cross-module release derivation into named root model
+  layers, keep operation-specific matter in its owning module, and pass ready
+  capabilities through service and module context. Prove each semantic
+  checkpoint with owner-local behavior and typecheck. Only after the complete
+  admitted corpus is green, change all seven staged rules to enforced, select the
+  source laws in the Habitat-owned repository gate, and run normalized
+  workspace lint plus standing architecture, oRPC/Effect-oRPC, TypeScript,
+  testing, and structural-quality reviews.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

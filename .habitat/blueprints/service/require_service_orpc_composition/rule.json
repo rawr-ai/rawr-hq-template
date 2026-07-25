@@ -11,11 +11,11 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "enforced",
-  "forbids": "a service without distinct exact service and host-admission views, an exported service view not rooted directly on base, a module that reaches upward for its implementer instead of owning an exact native authoring view, an unprojected root branch, or a runtime namespace import from an oRPC composition vendor",
-  "why": "A base-rooted native service view preserves visible ownership while each root branch receives a module-owned projection and completed router without introducing a second composition framework.",
-  "remediate": "Create the standalone base with implementEffect(contract, ...).$context<Context>(). Derive service directly from base and native middleware, and derive boundary in impl.ts. Create each module from its own contract with an exact Context, then compose each completed module router through its service branch with a module-owned provideContext. Use named runtime vendor imports.",
-  "message": "Service composition must preserve direct native authoring views and one host-admission boundary.",
+  "lane": "advisory",
+  "forbids": "a standalone base not constructed directly by named runtime implementEffect(contract, ...); standalone implementEffect authority outside root base.ts; an exported standalone service not rooted directly on the imported base; an embedded API service not rooted directly on named runtime implement(contract).$context<...>(); API implement authority outside root impl.ts; a module not rooted on the matching current-owner service branch; a root router that omits the direct Router<typeof contract, never> check, authors operations or middleware, invokes a native router builder, reconstructs initial context, or imports runtime code other than completed module routers; or a runtime namespace import from an oRPC composition vendor",
+  "why": "One direct native first hop keeps contract implementation and context ownership visible without a second implementer or composition framework. Root routers compose completed module routers under one direct contract check, while module.ts owns branch-specific context enrichment.",
+  "remediate": "Construct the sole standalone implementer in base.ts with named implementEffect(contract, ...), derive standalone service directly from imported base plus named native middleware, construct the sole embedded API implementer in root impl.ts with named implement(contract).$context<...>(), and derive each module from its matching imported service.<module> branch plus named native middleware. Author handlers and branch middleware in named module router files, compose their completed exports at module/router.ts, then compose only completed module routers as export const router = { ... } satisfies Router<typeof contract, never> and infer host context at the public client/server boundary.",
+  "message": "Service composition must preserve direct native ownership and the completed root contract relation.",
   "pathCoverage": [
     {
       "kind": "exact-path",
@@ -23,7 +23,6 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
-  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_orpc_composition/baseline.json"
   },

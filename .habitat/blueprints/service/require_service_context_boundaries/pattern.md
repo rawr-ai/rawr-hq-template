@@ -5,12 +5,14 @@ tags: [orpc, service, categorical, context, middleware]
 # Require Service Context Funnel
 
 Service context narrows in one direction. A standalone `base.ts` owns
-`Dependencies`, `InitialContext`, and execution `Context` plus the host
-admission projection. An embedded API `base.ts` owns its admitted request
-`Context`. Standalone `impl.ts` separates the exact service-authoring view from
-the host-admission boundary; API `impl.ts` begins from its admitted context.
-Each `module.ts` owns its smaller context and final module projection. Router
-handlers consume only that module context.
+`Dependencies`, `InitialContext`, execution `Context`, and the sole direct
+Effect-oRPC contract implementer. An embedded API `base.ts` owns its admitted
+request `Context`. Standalone `impl.ts` derives `service` from the imported
+base; API `impl.ts` begins from its admitted context. Each `module.ts` derives
+the matching `service.<module>` branch. A bare branch inherits service context
+without restating it. A module that narrows or enriches context declares its
+local `Context` there and applies it through named native middleware on the
+exported module chain. Router handlers consume only that resulting context.
 
 There is no second context assembly site. Root or module
 `middleware/context.ts` and `context.middleware.ts` files are invalid, as are
@@ -42,28 +44,28 @@ remove accumulated runtime keys.
 language js(typescript)
 
 // Selects non-test module interiors governed by the context funnel.
-predicate is_service_context_module_source() {
+predicate require_service_context_boundaries_is_service_context_module_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
-// Selects a standalone service base that owns host admission.
-predicate is_standalone_service_base_source() {
+// Selects a standalone service base that owns dependencies and service context.
+predicate require_service_context_boundaries_is_standalone_service_base_source() {
   $filename <: r".*services/[^/]+/src/service/base\.ts$"
 }
 
 // Selects an embedded API base that owns only its admitted request context.
-predicate is_api_service_base_source() {
+predicate require_service_context_boundaries_is_api_service_base_source() {
   $filename <: r".*plugins/server/api/[^/]+/src/service/base\.ts$"
 }
 
-// Selects each module owner that must declare its final authoring context.
-predicate is_module_context_owner_source() {
+// Selects each module owner that may narrow or enrich its inherited context.
+predicate require_service_context_boundaries_is_module_context_owner_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
 }
 
 // Reserves context-shape declarations for base.ts and module.ts.
-predicate is_non_context_owner_source() {
+predicate require_service_context_boundaries_is_non_context_owner_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*",
   ! $filename <: r".*/src/service/base\.ts$",
@@ -71,32 +73,29 @@ predicate is_non_context_owner_source() {
 }
 
 // Identifies the exact former context-assembly destinations.
-predicate is_context_assembly_source() {
+predicate require_service_context_boundaries_is_context_assembly_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:middleware|modules/[^/]+/middleware)/context(?:\.middleware)?\.ts$"
 }
 
-// Selects both compact routers and named operation-group routers.
-predicate is_module_router_authorship_source() {
-  or {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$",
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
-  }
+// Selects named operation leaves and groups where handlers are authored.
+predicate require_service_context_boundaries_is_module_router_authorship_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
 }
 
 // Identifies middleware files that must expose named native authority.
-predicate is_middleware_source() {
+predicate require_service_context_boundaries_is_middleware_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:middleware|modules/[^/]+/middleware)/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
 // Restricts attachment policy to production service interiors.
-predicate is_middleware_attachment_source() {
+predicate require_service_context_boundaries_is_middleware_attachment_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
 // Prevents deep module source from recovering raw service context through an alias.
-predicate is_current_root_context_alias($source) {
+predicate require_service_context_boundaries_is_current_root_context_alias($source) {
   or {
     and {
       $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
@@ -112,70 +111,63 @@ predicate is_current_root_context_alias($source) {
 }
 
 // Requires native middleware owners to enter through runtime named imports.
-predicate imports_runtime_binding($import, $anchor) {
+predicate require_service_context_boundaries_imports_runtime_binding($import, $anchor) {
+  not { $import <: import_statement(type=type()) },
   $import <: contains import_specifier(name=$anchor) as $specifier where {
-    $specifier <: not contains type(),
-    $specifier <: $anchor
+    not { $specifier <: r"^type\s+.*$" }
   }
 }
 
 // Recognizes the vendor root that may directly author middleware.
-predicate imports_vendor_os($body) {
-  $body <: contains import_statement(source=$source) as $import where {
+predicate require_service_context_boundaries_imports_vendor_os($body) {
+  $body <: some import_statement(source=$source) as $import where {
     $source <: r"^[\"']@orpc/server[\"']$",
-    imports_runtime_binding(import=$import, anchor=`os`)
+    require_service_context_boundaries_imports_runtime_binding(import=$import, anchor=`os`)
   }
 }
 
 // Recognizes the native decorator that turns a callback into middleware.
-predicate imports_vendor_decorator($body) {
-  $body <: contains import_statement(source=$source) as $import where {
+predicate require_service_context_boundaries_imports_vendor_decorator($body) {
+  $body <: some import_statement(source=$source) as $import where {
     $source <: r"^[\"']@orpc/server[\"']$",
-    imports_runtime_binding(import=$import, anchor=`decorateMiddleware`)
+    require_service_context_boundaries_imports_runtime_binding(import=$import, anchor=`decorateMiddleware`)
   }
 }
 
 // Recognizes a module-local native authoring anchor.
-predicate imports_module_anchor() {
-  $program <: contains import_statement(source=$source) as $import where {
+predicate require_service_context_boundaries_imports_module_anchor($body) {
+  $body <: some import_statement(source=$source) as $import where {
     $source <: r"^[\"'](?:\./|\.\./)module[\"']$",
-    imports_runtime_binding(import=$import, anchor=`module`)
+    require_service_context_boundaries_imports_runtime_binding(import=$import, anchor=`module`)
   }
 }
 
-// Recognizes the root service authoring anchor without admitting an upward module edge.
-predicate imports_service_anchor() {
-  $program <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']\./impl[\"']$",
-    imports_runtime_binding(import=$import, anchor=`service`)
+// Recognizes the root service authoring anchor at its exact root or module edge.
+predicate require_service_context_boundaries_imports_service_anchor($body) {
+  $body <: some import_statement(source=$source) as $import where {
+    $source <: r"^[\"'](?:\./impl|\.\./\.\./impl|#[^\"']+-(?:service|api)/(?:service/)?impl)[\"']$",
+    require_service_context_boundaries_imports_runtime_binding(import=$import, anchor=`service`)
   }
 }
 
 // Recognizes a direct raw service-base import.
-predicate imports_base_anchor() {
-  $program <: contains import_statement(source=$source) as $import where {
+predicate require_service_context_boundaries_imports_base_anchor($body) {
+  $body <: some import_statement(source=$source) as $import where {
     $source <: r"^[\"'](?:\./|\.\./)base[\"']$",
-    imports_runtime_binding(import=$import, anchor=`base`)
+    require_service_context_boundaries_imports_runtime_binding(import=$import, anchor=`base`)
   }
 }
 
 // Recognizes native API contract implementation authority.
-predicate imports_implement_anchor() {
-  $program <: contains import_statement(source=$source) as $import where {
+predicate require_service_context_boundaries_imports_implement_anchor($body) {
+  $body <: some import_statement(source=$source) as $import where {
     $source <: r"^[\"']@orpc/server[\"']$",
-    imports_runtime_binding(import=$import, anchor=`implement`)
-  }
-}
-
-// Recognizes a named native anchor in the current middleware source.
-predicate imports_exact_anchor($body, $anchor) {
-  $body <: contains import_statement() as $import where {
-    imports_runtime_binding(import=$import, anchor=$anchor)
+    require_service_context_boundaries_imports_runtime_binding(import=$import, anchor=`implement`)
   }
 }
 
 // Keeps middleware construction visibly rooted in its imported native owner.
-predicate is_direct_middleware($value, $owner) {
+predicate require_service_context_boundaries_is_direct_middleware($value, $owner) {
   or {
     $value <: `$receiver.middleware($handler)`,
     $value <: `$receiver.middleware<$types>($handler)`
@@ -187,15 +179,53 @@ predicate is_direct_middleware($value, $owner) {
 }
 
 // Recognizes a callback explicitly decorated as native oRPC middleware.
-predicate is_decorated_middleware($value) {
+predicate require_service_context_boundaries_is_decorated_middleware($value) {
   or {
     $value <: `decorateMiddleware($handler)`,
     $value <: `decorateMiddleware<$types>($handler)`
   }
 }
 
+// Admits middleware only when its receiver has native imported authority.
+predicate require_service_context_boundaries_is_native_middleware($body, $value) {
+  or {
+    and {
+      require_service_context_boundaries_imports_vendor_os(body=$body),
+      require_service_context_boundaries_is_direct_middleware(value=$value, owner=`os`)
+    },
+    and {
+      require_service_context_boundaries_imports_vendor_decorator(body=$body),
+      require_service_context_boundaries_is_decorated_middleware(value=$value)
+    },
+    and {
+      require_service_context_boundaries_imports_base_anchor(body=$body),
+      require_service_context_boundaries_is_direct_middleware(value=$value, owner=`base`)
+    },
+    and {
+      require_service_context_boundaries_imports_service_anchor(body=$body),
+      require_service_context_boundaries_is_direct_middleware(value=$value, owner=`service`)
+    },
+    and {
+      require_service_context_boundaries_imports_module_anchor(body=$body),
+      require_service_context_boundaries_is_direct_middleware(value=$value, owner=`module`)
+    }
+  }
+}
+
+// Connects a derived middleware receiver to a local native middleware value.
+predicate require_service_context_boundaries_has_local_native_middleware($body, $middleware) {
+  or {
+    $body <: contains `const $middleware = $native` where {
+      require_service_context_boundaries_is_native_middleware(body=$body, value=$native)
+    },
+    $body <: contains `const $middleware: $type = $native` where {
+      require_service_context_boundaries_is_native_middleware(body=$body, value=$native)
+    }
+  }
+}
+
 // Recognizes native middleware composition retained by a named derivative.
-predicate is_native_middleware_derivative($value) {
+predicate require_service_context_boundaries_is_native_middleware_derivative($body, $value) {
   or {
     $value <: `$middleware.mapInput($mapper)`,
     $value <: `$middleware.mapInput<$types>($mapper)`,
@@ -203,66 +233,44 @@ predicate is_native_middleware_derivative($value) {
     $value <: `$middleware.concat($other, $mapper)`,
     $value <: `$middleware.concat<$types>($other)`,
     $value <: `$middleware.concat<$types>($other, $mapper)`
-  }
-}
-
-// Admits middleware only when its receiver has native imported authority.
-predicate is_native_middleware($body, $value) {
-  or {
-    and {
-      imports_vendor_os(body=$body),
-      is_direct_middleware(value=$value, owner=`os`)
-    },
-    and {
-      imports_vendor_decorator(body=$body),
-      is_decorated_middleware(value=$value)
-    },
-    and {
-      imports_exact_anchor(body=$body, anchor=`base`),
-      is_direct_middleware(value=$value, owner=`base`)
-    },
-    and {
-      imports_exact_anchor(body=$body, anchor=`service`),
-      is_direct_middleware(value=$value, owner=`service`)
-    },
-    and {
-      imports_exact_anchor(body=$body, anchor=`module`),
-      is_direct_middleware(value=$value, owner=`module`)
-    }
-  }
+  },
+  require_service_context_boundaries_has_local_native_middleware(
+    body=$body,
+    middleware=$middleware
+  )
 }
 
 // Requires every middleware file to publish a named native entry.
-predicate exports_named_native_middleware($body) {
+predicate require_service_context_boundaries_exports_named_native_middleware($body) {
   or {
-    $body <: contains `export const $name = $value` where {
+    $body <: some `export const $name = $value` where {
       or {
-        is_native_middleware(body=$body, value=$value),
-        is_native_middleware_derivative(value=$value)
+        require_service_context_boundaries_is_native_middleware(body=$body, value=$value),
+        require_service_context_boundaries_is_native_middleware_derivative(body=$body, value=$value)
       }
     },
-    $body <: contains `export const $name: $type = $value` where {
+    $body <: some `export const $name: $type = $value` where {
       or {
-        is_native_middleware(body=$body, value=$value),
-        is_native_middleware_derivative(value=$value)
+        require_service_context_boundaries_is_native_middleware(body=$body, value=$value),
+        require_service_context_boundaries_is_native_middleware_derivative(body=$body, value=$value)
       }
     }
   }
 }
 
 // Marks files whose `.use` vocabulary belongs to native oRPC composition.
-predicate imports_native_orpc_authority() {
+predicate require_service_context_boundaries_imports_native_orpc_authority($body) {
   or {
-    imports_vendor_os(body=$program),
-    imports_module_anchor(),
-    imports_service_anchor(),
-    imports_base_anchor(),
-    imports_implement_anchor()
+    require_service_context_boundaries_imports_vendor_os(body=$body),
+    require_service_context_boundaries_imports_module_anchor(body=$body),
+    require_service_context_boundaries_imports_service_anchor(body=$body),
+    require_service_context_boundaries_imports_base_anchor(body=$body),
+    require_service_context_boundaries_imports_implement_anchor(body=$body)
   }
 }
 
 // Recognizes an unwrapped callback before native middleware construction.
-predicate is_direct_callback_expression($value) {
+predicate require_service_context_boundaries_is_direct_callback_expression($value) {
   or {
     $value <: arrow_function(),
     $value <: r"^\s*(?:async\s+)?function(?:\s*\*)?(?:\s+[A-Za-z_$][A-Za-z0-9_$]*)?\s*\("
@@ -270,176 +278,213 @@ predicate is_direct_callback_expression($value) {
 }
 
 // Recognizes direct callbacks behind TypeScript annotation wrappers.
-predicate is_plain_callback_expression($value) {
+predicate require_service_context_boundaries_is_plain_callback_expression($value) {
   or {
-    is_direct_callback_expression(value=$value),
+    require_service_context_boundaries_is_direct_callback_expression(value=$value),
     $value <: `$callback satisfies $type` where {
-      is_direct_callback_expression(value=$callback)
+      require_service_context_boundaries_is_direct_callback_expression(value=$callback)
     },
     $value <: `($callback) satisfies $type` where {
-      is_direct_callback_expression(value=$callback)
+      require_service_context_boundaries_is_direct_callback_expression(value=$callback)
     },
     $value <: `$callback as $type` where {
-      is_direct_callback_expression(value=$callback)
+      require_service_context_boundaries_is_direct_callback_expression(value=$callback)
     },
     $value <: `($callback) as $type` where {
-      is_direct_callback_expression(value=$callback)
+      require_service_context_boundaries_is_direct_callback_expression(value=$callback)
     }
   }
 }
 
-// Recognizes a local callback that has not entered native middleware authority.
-predicate is_local_plain_callback($middleware) {
-  or {
-    $program <: contains `const $middleware = $value` where {
-      is_plain_callback_expression(value=$value)
-    },
-    $program <: contains `const $middleware: $type = $value` where {
-      is_plain_callback_expression(value=$value)
-    },
-    $program <: contains `let $middleware = $value` where {
-      is_plain_callback_expression(value=$value)
-    },
-    $program <: contains `let $middleware: $type = $value` where {
-      is_plain_callback_expression(value=$value)
-    },
-    $program <: contains `function $middleware($args) { $body }`,
-    $program <: contains `async function $middleware($args) { $body }`
+// Finds a named middleware reference attached by the bound file body.
+predicate require_service_context_boundaries_body_attaches_middleware($body, $middleware) {
+  $body <: contains or {
+    `$receiver.use($middleware, $...)`,
+    `$receiver.use<$types>($middleware, $...)`
   }
 }
 
-// Rejects attachments that do not name middleware with native authority.
-predicate is_invalid_middleware_attachment($middleware) {
-  is_middleware_attachment_source(),
-  imports_native_orpc_authority(),
+// Matches each invalid attachment from the file body once, declaration first.
+predicate require_service_context_boundaries_body_contains_invalid_middleware_attachment($body) {
+  require_service_context_boundaries_imports_native_orpc_authority(body=$body),
   or {
-    not { $middleware <: identifier() },
-    is_local_plain_callback(middleware=$middleware)
+    $body <: contains or {
+      `$receiver.use($middleware, $...)`,
+      `$receiver.use<$types>($middleware, $...)`
+    } where {
+      not { $middleware <: identifier() }
+    },
+    $body <: contains `const $middleware = $value` where {
+      require_service_context_boundaries_is_plain_callback_expression(value=$value),
+      require_service_context_boundaries_body_attaches_middleware(body=$body, middleware=$middleware)
+    },
+    $body <: contains `const $middleware: $type = $value` where {
+      require_service_context_boundaries_is_plain_callback_expression(value=$value),
+      require_service_context_boundaries_body_attaches_middleware(body=$body, middleware=$middleware)
+    },
+    $body <: contains `let $middleware = $value` where {
+      require_service_context_boundaries_is_plain_callback_expression(value=$value),
+      require_service_context_boundaries_body_attaches_middleware(body=$body, middleware=$middleware)
+    },
+    $body <: contains `let $middleware: $type = $value` where {
+      require_service_context_boundaries_is_plain_callback_expression(value=$value),
+      require_service_context_boundaries_body_attaches_middleware(body=$body, middleware=$middleware)
+    },
+    $body <: contains `function $middleware($args) { $callback_body }` where {
+      require_service_context_boundaries_body_attaches_middleware(body=$body, middleware=$middleware)
+    },
+    $body <: contains `async function $middleware($args) { $callback_body }` where {
+      require_service_context_boundaries_body_attaches_middleware(body=$body, middleware=$middleware)
+    }
   }
 }
 
 // Requires the base owner to declare its external dependency shape.
-predicate declares_dependencies($body) {
-  $body <: contains or {
+predicate require_service_context_boundaries_declares_dependencies($body) {
+  $body <: some or {
     `type Dependencies = $value`,
     `interface Dependencies { $members }`,
+    `interface Dependencies extends $bases { $members }`,
     `export type Dependencies = $value`,
-    `export interface Dependencies { $members }`
+    `export interface Dependencies { $members }`,
+    `export interface Dependencies extends $bases { $members }`
   }
 }
 
 // Requires the host and execution context types to be visible service bounds.
-predicate exports_initial_context($body) {
-  $body <: contains or {
+predicate require_service_context_boundaries_exports_initial_context($body) {
+  $body <: some or {
     `export type InitialContext = $value`,
-    `export interface InitialContext { $members }`
+    `export interface InitialContext { $members }`,
+    `export interface InitialContext extends $bases { $members }`
   }
 }
 
 // Requires either service kind to expose its exact authoring context.
-predicate exports_execution_context($body) {
-  $body <: contains or {
+predicate require_service_context_boundaries_exports_execution_context($body) {
+  $body <: some or {
     `export type Context = $value`,
-    `export interface Context { $members }`
-  }
-}
-
-// Requires a module owner to declare its exact local context.
-predicate declares_module_context($body) {
-  $body <: contains or {
-    `type Context = $value`,
-    `interface Context { $members }`,
-    `export type Context = $value`,
-    `export interface Context { $members }`
-  }
-}
-
-or {
-  program(statements=$body) where {
-    is_context_assembly_source()
-  },
-  program(statements=$body) where {
-    is_standalone_service_base_source(),
-    not { declares_dependencies(body=$body) }
-  },
-  program(statements=$body) where {
-    is_standalone_service_base_source(),
-    not { exports_initial_context(body=$body) }
-  },
-  program(statements=$body) where {
-    or {
-      is_standalone_service_base_source(),
-      is_api_service_base_source()
-    },
-    not { exports_execution_context(body=$body) }
-  },
-  program(statements=$body) where {
-    is_module_context_owner_source(),
-    not { declares_module_context(body=$body) }
-  },
-  program(statements=$body) where {
-    is_middleware_source(),
-    not { exports_named_native_middleware(body=$body) }
-  },
-  or {
-    `export default $value`,
-    `export { $..., $value as default, $... }`,
-    `export { $..., default, $... } from $source`
-  } where {
-    is_middleware_source()
-  },
-  or {
-    `const provideContext = $value`,
-    `export const provideContext = $value`,
-    `const provideContext: $type = $value`,
-    `export const provideContext: $type = $value`
-  } where {
-    is_non_context_owner_source()
-  },
-  import_statement(source=$source) where {
-    is_service_context_module_source(),
-    is_current_root_context_alias(source=$source)
-  },
-  export_statement(source=$source) where {
-    is_service_context_module_source(),
-    $source <: string(),
-    is_current_root_context_alias(source=$source)
-  },
-  or {
-    `type Context = $value`,
-    `type InitialContext = $value`,
-    `type Dependencies = $value`,
-    `interface Context { $members }`,
-    `interface InitialContext { $members }`,
-    `interface Dependencies { $members }`,
-    `export type Context = $value`,
-    `export type InitialContext = $value`,
-    `export type Dependencies = $value`,
     `export interface Context { $members }`,
-    `export interface InitialContext { $members }`,
-    `export interface Dependencies { $members }`
+    `export interface Context extends $bases { $members }`
+  }
+}
+
+// Recognizes a module-owned local context declaration.
+predicate require_service_context_boundaries_declares_module_context($body) {
+  $body <: some or {
+    `type Context = $value`,
+    `interface Context { $members }`,
+    `interface Context extends $bases { $members }`,
+    `export type Context = $value`,
+    `export interface Context { $members }`,
+    `export interface Context extends $bases { $members }`
+  }
+}
+
+// Connects a declared local Context to the exported native module chain.
+predicate require_service_context_boundaries_applies_module_context($body) {
+  $body <: some or {
+    `export const module = $value`,
+    `export const module: $type = $value`
   } where {
-    is_non_context_owner_source()
-  },
+    $value <: contains or {
+      `$receiver.use<Context>($middleware, $...)`,
+      `$receiver.use<Context, $types>($middleware, $...)`
+    }
+  }
+}
+
+program(statements=$body) where {
   or {
-    `context.deps`,
-    `context.scope`,
-    `context.config`,
-    `context.invocation`,
-    `context.provided`,
-    `context?.deps`,
-    `context?.scope`,
-    `context?.config`,
-    `context?.invocation`,
-    `context?.provided`
-  } where {
-    is_module_router_authorship_source()
-  },
-  or {
-    `$receiver.use($middleware, $...)`,
-    `$receiver.use<$types>($middleware, $...)`
-  } where {
-    is_invalid_middleware_attachment(middleware=$middleware)
+    require_service_context_boundaries_is_context_assembly_source(),
+    and {
+      require_service_context_boundaries_is_standalone_service_base_source(),
+      not { require_service_context_boundaries_declares_dependencies(body=$body) }
+    },
+    and {
+      require_service_context_boundaries_is_standalone_service_base_source(),
+      not { require_service_context_boundaries_exports_initial_context(body=$body) }
+    },
+    and {
+      or {
+        require_service_context_boundaries_is_standalone_service_base_source(),
+        require_service_context_boundaries_is_api_service_base_source()
+      },
+      not { require_service_context_boundaries_exports_execution_context(body=$body) }
+    },
+    and {
+      require_service_context_boundaries_is_module_context_owner_source(),
+      require_service_context_boundaries_declares_module_context(body=$body),
+      not { require_service_context_boundaries_applies_module_context(body=$body) }
+    },
+    and {
+      require_service_context_boundaries_is_middleware_source(),
+      not { require_service_context_boundaries_exports_named_native_middleware(body=$body) }
+    },
+    and {
+      require_service_context_boundaries_is_middleware_source(),
+      $body <: some or {
+        `export default $value`,
+        `export { $..., $value as default, $... }`,
+        `export { $..., default, $... } from $source`
+      }
+    },
+    and {
+      require_service_context_boundaries_is_non_context_owner_source(),
+      $body <: some or {
+        `const provideContext = $value`,
+        `export const provideContext = $value`,
+        `const provideContext: $type = $value`,
+        `export const provideContext: $type = $value`
+      }
+    },
+    and {
+      require_service_context_boundaries_is_service_context_module_source(),
+      $body <: some import_statement(source=$source),
+      require_service_context_boundaries_is_current_root_context_alias(source=$source)
+    },
+    and {
+      require_service_context_boundaries_is_service_context_module_source(),
+      $body <: some export_statement(source=$source),
+      $source <: string(),
+      require_service_context_boundaries_is_current_root_context_alias(source=$source)
+    },
+    and {
+      require_service_context_boundaries_is_non_context_owner_source(),
+      $body <: some or {
+        `type Context = $value`,
+        `type InitialContext = $value`,
+        `type Dependencies = $value`,
+        `interface Context { $members }`,
+        `interface InitialContext { $members }`,
+        `interface Dependencies { $members }`,
+        `export type Context = $value`,
+        `export type InitialContext = $value`,
+        `export type Dependencies = $value`,
+        `export interface Context { $members }`,
+        `export interface InitialContext { $members }`,
+        `export interface Dependencies { $members }`
+      }
+    },
+    and {
+      require_service_context_boundaries_is_module_router_authorship_source(),
+      $body <: contains or {
+        `context.deps`,
+        `context.scope`,
+        `context.config`,
+        `context.invocation`,
+        `context.provided`,
+        `context?.deps`,
+        `context?.scope`,
+        `context?.config`,
+        `context?.invocation`,
+        `context?.provided`
+      }
+    },
+    and {
+      require_service_context_boundaries_is_middleware_attachment_source(),
+      require_service_context_boundaries_body_contains_invalid_middleware_attachment(body=$body)
+    }
   }
 }
 ```
@@ -490,16 +535,16 @@ export default requireAccess;
 ## Matches inline middleware attachment
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
+// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+import { module } from "../module";
 export const router = module.list.use(async ({ next }) => next());
 ```
 
 ## Matches a named plain callback attachment
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
+// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+import { module } from "../module";
 const requireRead = async ({ next }) => next();
 export const router = module.list.use(requireRead);
 ```
@@ -520,11 +565,11 @@ export type Context = { readonly catalog: CatalogReader };
 export const service = base;
 ```
 
-## Matches a compact router reopening raw dependencies
+## Matches an operation router reopening raw dependencies
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { module } from "../module";
 export const router = {
   find: module.find.effect(({ context }) => context.deps.catalog.find()),
 };
@@ -560,8 +605,8 @@ export const requireAccess = read.concat(authorize);
 ## Ignores a named middleware attachment and later selector callback
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
+// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+import { module } from "../module";
 export const router = module.list.use(requireRead, ({ jobId }) => jobId);
 ```
 
@@ -575,19 +620,37 @@ export type Context = { readonly catalog: CatalogReader };
 export const base = implementEffect(contract, Layer.empty);
 ```
 
-## Ignores module-owned final context and native authoring view
+## Matches an unbound module context declaration
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/module.ts
-import { implementEffect } from "effect-orpc";
-import type { Context as ServiceContext } from "../../base";
+import { service } from "../../impl";
+type Context = { readonly catalog: CatalogReader };
+export const module = service.catalog;
+```
+
+## Ignores a module inheriting service context
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { service } from "../../impl";
+export const module = service.catalog;
+```
+
+## Ignores module-owned context applied to the exact service branch
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { os } from "@orpc/server";
+import { service } from "../../impl";
+type ProviderContext = { readonly catalog: CatalogReader };
 type Context = { readonly catalog: CatalogReader };
 export const provideContext = os
-  .$context<ServiceContext>()
+  .$context<ProviderContext>()
   .middleware<Context>(({ context, next }) =>
-    next({ context: { catalog: context.provided.catalog } })
+    next({ context: { catalog: context.catalog } })
   );
-export const module = implementEffect(contract, Layer.empty).$context<Context>();
+export const module = service.catalog.use<Context, ProviderContext>(provideContext);
 ```
 
 ## Ignores a router consuming narrowed context

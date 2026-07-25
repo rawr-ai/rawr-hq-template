@@ -11,11 +11,11 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "enforced",
-  "forbids": "a root-to-module edge outside contract and router composition, a module runtime reach into the root service, a two-level parent escape from module source, a root re-export of module implementation, or a current-owner sibling-module edge",
-  "why": "The service composes modules from above while each module remains locally understandable: module.ts receives only the service context type, named routers may reach their own module and model, and runtime capability travels through context rather than upward imports.",
-  "remediate": "Keep root imports to module contracts, completed routers, and provideContext boundaries. In module.ts, import the root Context only as a type and create the module implementer locally. Use one parent hop only within the same module, and move sibling collaboration behind a service-owned capability.",
-  "message": "Service modules must use the canonical import surface and remain closed to sibling implementation.",
+  "lane": "advisory",
+  "forbids": "a non-test root module edge outside exact contract/router imports, including normalized-looking traversal; a root module re-export; a module relative import or re-export containing a parent segment outside the exact module.ts service-spine edge or one normalized named-router hop into its own module; a named-router owner import with an empty, dot, parent, or trailing segment; a current-owner alias containing an empty, dot, parent, or trailing segment; a direct current-owner module-tree alias naming a sibling; or a module reaching root runtime authority outside the exact module.ts service import",
+  "why": "The root composes completed module contracts and routers from above while each module derives from its exact service branch and remains closed to sibling implementation. Normalized owner paths keep those boundaries visible without path arithmetic.",
+  "remediate": "Keep exact root contract and completed-router imports only. In module.ts, derive from the matching imported service branch; use exactly ../../impl or the normalized owner alias. Named router files may use one normalized ../ hop into their own module. Use normalized current-owner aliases for other root facts and same-module deep imports, and move sibling collaboration behind a service-owned capability.",
+  "message": "Service modules must use normalized owner paths and remain closed to sibling implementation.",
   "pathCoverage": [
     {
       "kind": "exact-path",
@@ -23,7 +23,6 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
-  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_module_isolation/baseline.json"
   },

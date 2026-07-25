@@ -134,7 +134,7 @@ or {
 ## Matches a noncanonical runtime vendor import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
 import EffectORPC, { type ORPCTaggedError } from "effect-orpc";
 export type Tagged = ORPCTaggedError;
 export const builder = EffectORPC.eoc;
@@ -143,7 +143,7 @@ export const builder = EffectORPC.eoc;
 ## Ignores canonical named vendor imports
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
 import { eoc, type ORPCTaggedError } from "effect-orpc";
 export type Tagged = ORPCTaggedError;
 export const builder = eoc;
@@ -170,8 +170,8 @@ export const service = implement(contract).$context<Context>();
 ## Ignores type-only conventional imports
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import type { contract } from "./contract";
-import { type CatalogError } from "./errors";
-export const router = {};
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import type { contract } from "../contract";
+import { type CatalogError } from "../model/errors/catalog";
+export const find = {};
 ```

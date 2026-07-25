@@ -43,10 +43,8 @@ required = [
   "router.ts",
 ]
 allowed = [
-  "db",
   "middleware",
   "model",
-  "test",
 ]
 
 [[scopes]]
@@ -64,7 +62,6 @@ required = [
 allowed = [
   "middleware",
   "model",
-  "test",
 ]
 
 [[scopes]]
@@ -73,7 +70,7 @@ root = "services/!(*.*)/src/service/modules"
 kind = "directory"
 mode = "closed"
 allowed = [
-  "!(*.*)",
+  "[a-z]*([a-z0-9])*(-[a-z]*([a-z0-9]))",
 ]
 
 [[scopes]]
@@ -83,7 +80,7 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 allowed = [
-  "!(*.*)",
+  "[a-z]*([a-z0-9])*(-[a-z]*([a-z0-9]))",
 ]
 
 [[scopes]]
@@ -92,17 +89,15 @@ root = "services/!(*.*)/src/service/modules/!(*.*)"
 kind = "directory"
 mode = "closed"
 required = [
+  "AGENTS.md",
   "contract.ts",
   "module.ts",
-  "router?(.ts)",
-]
-allowed = [
-  "AGENTS.md",
-  "middleware",
-  "model",
   "router",
   "router.ts",
-  "test",
+]
+allowed = [
+  "middleware",
+  "model",
 ]
 
 [[scopes]]
@@ -111,21 +106,19 @@ root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)"
 kind = "directory"
 mode = "closed"
 required = [
+  "AGENTS.md",
   "contract.ts",
   "module.ts",
-  "router?(.ts)",
-]
-allowed = [
-  "AGENTS.md",
-  "middleware",
-  "model",
   "router",
   "router.ts",
-  "test",
+]
+allowed = [
+  "middleware",
+  "model",
 ]
 
 [[scopes]]
-name = "standalone-service-model-kinds"
+name = "standalone-service-root-models"
 root = "services/*/src/service/model"
 kind = "directory"
 mode = "closed"
@@ -138,11 +131,10 @@ allowed = [
   "policy",
   "ports",
   "prompts",
-  "schema",
 ]
 
 [[scopes]]
-name = "api-embedded-service-model-kinds"
+name = "api-service-root-models"
 root = "plugins/server/api/*/src/service/model"
 kind = "directory"
 mode = "closed"
@@ -155,11 +147,10 @@ allowed = [
   "policy",
   "ports",
   "prompts",
-  "schema",
 ]
 
 [[scopes]]
-name = "standalone-service-module-model-kinds"
+name = "standalone-service-module-models"
 root = "services/!(*.*)/src/service/modules/!(*.*)/model"
 kind = "directory"
 mode = "closed"
@@ -172,11 +163,10 @@ allowed = [
   "policy",
   "ports",
   "prompts",
-  "schema",
 ]
 
 [[scopes]]
-name = "api-embedded-service-module-model-kinds"
+name = "api-service-module-models"
 root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model"
 kind = "directory"
 mode = "closed"
@@ -189,74 +179,87 @@ allowed = [
   "policy",
   "ports",
   "prompts",
-  "schema",
 ]
 
 [[scopes]]
-name = "standalone-service-model-kind-indices"
-root = "services/*/src/service/model/*"
+name = "standalone-service-root-model-kinds"
+root = "services/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-required = [
-  "index.ts",
-]
 allowed = [
   "*.ts",
 ]
+forbidden = [
+  "index.ts",
+]
 
 [[scopes]]
-name = "api-embedded-service-model-kind-indices"
-root = "plugins/server/api/*/src/service/model/*"
+name = "standalone-service-module-model-kinds"
+root = "services/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-required = [
-  "index.ts",
-]
 allowed = [
   "*.ts",
 ]
+forbidden = [
+  "index.ts",
+]
 
 [[scopes]]
-name = "standalone-service-module-model-kind-indices"
-root = "services/!(*.*)/src/service/modules/!(*.*)/model/*"
+name = "api-service-root-model-kinds"
+root = "plugins/server/api/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-required = [
-  "index.ts",
-]
 allowed = [
   "*.ts",
 ]
+forbidden = [
+  "index.ts",
+]
 
 [[scopes]]
-name = "api-embedded-service-module-model-kind-indices"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model/*"
+name = "api-service-module-model-kinds"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-required = [
-  "index.ts",
-]
 allowed = [
   "*.ts",
 ]
+forbidden = [
+  "index.ts",
+]
 
 [[scopes]]
-name = "standalone-service-database-kinds"
-root = "services/*/src/service/db"
-kind = "directory"
+name = "standalone-service-root-model-leaves"
+root = "services/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+kind = "file"
 mode = "closed"
 allowEmpty = true
-allowed = [
-  "generated",
-  "migrations",
-  "session.ts",
-  "stores",
-  "test",
-]
+
+[[scopes]]
+name = "standalone-service-module-model-leaves"
+root = "services/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "api-service-root-model-leaves"
+root = "plugins/server/api/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "api-service-module-model-leaves"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-module-router-directories"
@@ -265,7 +268,6 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "index.ts",
   "*.router.ts",
 ]
 allowed = []
@@ -277,7 +279,6 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "index.ts",
   "*.router.ts",
 ]
 allowed = []

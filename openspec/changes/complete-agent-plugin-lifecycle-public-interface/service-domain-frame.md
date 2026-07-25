@@ -162,11 +162,14 @@ Only two domain collaborations cross module boundaries:
 
 These collaborations belong to the service model because multiple modules
 consume them. Each consists of TypeBox-owned domain structure plus one
-service-owned policy or repository implementation over explicit public resource
-ports. Module requests, results, issues, router handlers, and mutation policy
-remain with the owning module. A shared collaboration is not a sixth module,
-injected host-domain implementation, nested router call, persistent repository,
-root-to-child import, or permission for siblings to import one another.
+service-owned policy over explicit public resource ports. Module requests,
+results, issues, router handlers, and mutation policy remain with the owning
+module. No service `db` boundary is admitted until a dedicated database
+blueprint closes its topology; concrete acquisition and mechanics remain in
+resources and providers. A shared collaboration is not a sixth module,
+injected host-domain
+implementation, nested router call, persistent repository, root-to-child
+import, or permission for siblings to import one another.
 
 ## Target Topology
 
@@ -181,33 +184,38 @@ src/service/
   router.ts
   middleware/
   model/
-    dependencies/
     dto/
+    helpers/
     policy/
-    repositories/
+    ports/
   modules/
     <module>/
       contract.ts
       module.ts
       router.ts
+      router/
+        <operation>.router.ts
       middleware/
       model/
         dto/
+        helpers/
         policy/
-        repositories/
+        ports/
 ```
 
 Each directory below `model/` exists only when its owner has corresponding
-domain matter. A module has one flat `router.ts` composition boundary, not a
-second `router/` container. Module middleware is a directory of named
-middleware files, not a top-level `middleware.ts`; TypeBox schemas are
-colocated with their DTOs and repositories remain below the owning model. The
-service root has no `shared/` directory:
+domain matter. A module has one `router.ts` composition boundary plus named
+`router/*.router.ts` operation leaves or semantic groups. It has no
+`router/index.ts`. Module middleware is a directory of named middleware files,
+not a top-level `middleware.ts`; TypeBox schemas are colocated with their DTOs,
+and outside capabilities are declared as model ports. Concrete acquisition and
+mechanics remain in resources/providers. The service root has no `shared/`
+directory:
 genuinely cross-module release and current-main concepts live in the root model,
 while operation requests, results, issues, and policy stay in their module.
-Root `model/repositories/` may contain only adapters that implement the two
-service-owned collaborations over public resource contracts. It cannot contain
-module repositories, concrete providers, or another root-to-child bridge.
+Root model policy may coordinate only the two service-owned collaborations over
+context-provided ports. It cannot contain module behavior, concrete providers,
+or another root-to-child bridge.
 
 ## Request And Context Flow
 
@@ -379,7 +387,7 @@ in-place and deletion-first:
 
 | Current defect | Destination | Semantic checkpoint |
 | --- | --- | --- |
-| Governance routers forward into root-owned governance implementation | Governance owns its DTO, schema, policy, repository adapter, and direct handlers; only the canonical selection collaboration remains service-owned | Seal governance |
+| Governance routers forward into root-owned governance implementation | Governance owns its DTO, schema, policy, port, and direct handlers; only the canonical selection collaboration remains service-owned | Seal governance |
 | Package exports the broad release implementation | CLI consumes one narrow public input boundary; release implementation remains private | Narrow package exports |
 | Manual release parsers duplicate TypeBox | TypeBox validates structure once; canonicalization and semantic checks remain | Normalize release model by family |
 | Release derivation has competing check/package/provider paths | One service-owned release-derivation policy over the content-workspace port serves all three modules | Seal shared derivation |

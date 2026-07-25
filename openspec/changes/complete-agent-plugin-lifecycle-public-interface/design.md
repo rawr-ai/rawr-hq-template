@@ -117,14 +117,8 @@ Habitat `structure.toml` files declare closed valid topologies. Grit patterns
 declare source relationships. Nx declares project imports, task dependencies,
 inputs, outputs, and release ordering. Behavior tests remain behavior tests.
 
-The API plugin and agent-router sources follow Magic Migration commit
-`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The generic service source is
-founded on Magic Migration commit
-`543e78eddd00ef6cfccfdf3ae366143b6034f012`, service-blueprint tree
-`2a9160183b80badacedbb6006b95829bd166470a`; its anchor, contract, and oRPC
-composition laws follow the corrections at Magic Migration commit
-`32edafcbdcd84132da2e6eb8844ce9d0530ddcce`, service-blueprint tree
-`89446f8be81b1f417aa4f292034a20851c796561`:
+[[README#Habitat Provenance]] is the single commit-and-tree ledger for the
+historical imports, current Magic service lineage, and queued shared laws:
 
 - service spine and module topology;
 - generic anchor exports and native oRPC ownership hops;
@@ -133,13 +127,13 @@ composition laws follow the corrections at Magic Migration commit
 - API plugin boundary;
 - agent-router placement and shape.
 
-The first four rows come from the committed service stack; the final two remain
-at the earlier committed provenance. RAWR preserves the positive topology and
-owner relationships while adapting only packet identity and the canonical
-TypeBox bridge. The service topology follows Magic's current single `router.ts`
-module boundary. Procedure logic remains in that oRPC router surface alongside module-owned
-`model/{dto,policy,helpers,repositories}` rather than moving into a second
-implementation container.
+RAWR preserves that positive topology and its owner relationships while
+qualifying packet identity, the canonical TypeBox bridge, and one deliberate
+module-router refinement. RAWR keeps one public module `router.ts` composition
+face and requires named `router/*.router.ts` operation leaves beneath it.
+Operation logic remains in those oRPC router leaves alongside module-owned
+`model/{dto,policy,helpers,ports}` rather than moving into another
+implementation container. `router/index.ts` is not admitted.
 
 The API-plugin boundary is active now rather than waiting for the wider service
 corpus migration. Its closed source faces are `client.ts`, `api.ts`, and one
@@ -151,7 +145,7 @@ green local Habitat batch behind `check:policy`, with empty baselines.
 tests. The one root Nx scheduler graph reaches repository admission and separation,
 Habitat policy, and CLI Oclif parity through their qualified owners. The
 selected Habitat batch owns the required Oclif structure laws and lifecycle
-command-channel law. The seven generic service rules remain governed by
+command-channel law. The seven staged service rules remain governed by
 [[tasks]] 1.5e and must not join the selected batch while their known
 live-corpus violations remain.
 
@@ -208,26 +202,28 @@ and source-relationship authorities.
 ### One oRPC service owns curated lifecycle behavior
 
 `services/agent-plugin-lifecycle` remains one service with bounded modules. Its
-root composes contracts, ready host dependencies, implementation, and routers.
-Each module owns its contract, router procedures, and owner-local
-`model/{dto,policy,repositories,...}`, with TypeBox schemas colocated with their
-DTO authorities. The root model retains only ready host contracts,
+root composes contracts, ready host capabilities, implementation, and routers.
+Each module owns its contract, operation routers, and owner-local
+`model/{dto,policy,ports,...}`, with TypeBox schemas colocated with their DTO
+authorities. No service `db` boundary is admitted until a dedicated database
+blueprint closes its topology; concrete acquisition and mechanics live in
+resources and providers. The root model retains only ready host contracts,
 dependency-owned observations, and the minimum service-owned domain model
 consumed by multiple modules. Current-main selection is shared because governance
-and providers consume the same service-owned policy; governance-only procedure
-requests and results remain module-owned. Domain behavior lives in procedure
+and providers consume the same service-owned policy; governance-only operation
+requests and results remain module-owned. Domain behavior lives in operation
 handlers and module policy, not an `internal/` implementation tree.
 
 TypeBox schemas are the sole structural and generated-type authority for
 requests, results, persisted JSON, and intermodule domain collaborations.
-Opaque runtime capabilities may remain TypeScript-only. Procedure handlers
+Opaque runtime capabilities may remain TypeScript-only. Operation handlers
 canonicalize ordering, compute digests, and enforce cross-field domain rules
 after structural validation. They do not manually recreate closed-object
 parsing.
 
 Root context contains only ready host capabilities that are genuinely
 cross-cutting. Module middleware acquires or projects owner-specific
-capabilities, and each procedure receives only the exact context it consumes.
+capabilities, and each operation receives only the exact context it consumes.
 Leaf modules do not import sibling internals or concrete resource providers.
 Effect/Platform filesystem and process programs terminate inside resource
 adapters and expose ready capabilities. The service uses the same
