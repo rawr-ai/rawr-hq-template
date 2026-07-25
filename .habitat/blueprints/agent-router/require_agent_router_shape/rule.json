@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an AGENTS.md router without the Scope, Boundaries, Flow, Routing, and Validation anchors or without a repository-relative Markdown edge to another AGENTS.md",
-  "why": "A stable local plaque must identify its jurisdiction, name its boundary and flow, join the operator-router graph, route deeper concepts to repository-owned authority, and tell an operator how to prove local work.",
-  "remediate": "Add the missing structural anchor and at least one repository-relative Markdown link to the applicable parent or child AGENTS.md. Keep deep explanation and temporal state in the linked owner rather than expanding the router.",
-  "message": "Agent routers require local orientation anchors, flow, and a repository-relative edge in the AGENTS.md graph.",
+  "forbids": "an AGENTS.md router without the Purpose, Scope, Boundaries, Behavior, Concepts, Flow, Interfaces, Routing, and Validation anchors or without a syntactically non-self repository-relative Markdown route to another AGENTS.md",
+  "why": "A stable local product-context router must explain why its capability exists, identify its jurisdiction, name its behavior, concepts, boundaries, flow, and interfaces, join the AGENTS navigation lattice through a non-self relative route, route deeper concepts to repository-owned authority, and tell an operator how to prove local work. Grit proves only the route's positive Markdown syntax; static link audit and review prove resolution, repository containment, and conceptual authority.",
+  "remediate": "Add the missing structural anchor and at least one non-self relative Markdown link to the applicable parent or child AGENTS.md, then verify that the link resolves inside the repository. Keep deep explanation and temporal state in the linked owner rather than expanding the router.",
+  "message": "Agent routers require local product-context anchors and a syntactically non-self relative route in the AGENTS.md navigation lattice.",
   "pathCoverage": [
     {
       "kind": "exact-path",

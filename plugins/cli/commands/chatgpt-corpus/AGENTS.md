@@ -1,5 +1,10 @@
 # ChatGPT Corpus CLI Plugin Router
 
+## Purpose
+
+- Let operators initialize and consolidate a ChatGPT corpus workspace through
+  stable Oclif commands backed by the corpus service.
+
 ## Scope
 
 - Applies to `plugins/cli/commands/chatgpt-corpus/**`; inherit the
@@ -21,12 +26,30 @@
 - This command plugin does not own agent-plugin release, provider, or channel
   state.
 
+## Behavior
+
+- The plugin converts workspace-oriented CLI input into a bound corpus
+  operation and projects the returned corpus summary for machines or people
+  without reinterpreting it.
+
+## Concepts
+
+- A **corpus workspace** is the selected source and artifact root. A
+  **workspace-store adapter** supplies filesystem mechanics; a **CLI
+  projection** turns service results into stable paths and summaries.
+
 ## Flow
 
 - Oclif parses a workspace path, the binding supplies the workspace-store
   adapter, the corpus client performs `workspace.initialize` or
   `corpusArtifacts.materialize`, and the command projects the result for JSON
   or human output.
+
+## Interfaces
+
+- Oclif arguments and flags face the operator; the public corpus client and
+  workspace-store port face the service; JSON and human renderings are the
+  outward command result interfaces.
 
 ## Routing
 

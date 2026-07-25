@@ -1,5 +1,10 @@
 # Packages Router
 
+## Purpose
+
+- Provide reusable, host-neutral capabilities that apps, plugins, and services
+  can consume through stable package boundaries.
+
 ## Scope
 
 - Applies to `packages/**`.
@@ -17,6 +22,19 @@
 - Package-local internals are not cross-package APIs; consumers use declared
   exports.
 
+## Behavior
+
+- A package admits consumers through declared exports, keeps its dependency
+  direction toward lower-level contracts, and delegates concrete environment
+  mechanics to the resource that owns them.
+
+## Concepts
+
+- A **shared package** is reusable implementation or contract authority. A
+  **public export** is its supported consumer interface; internal paths are
+  not. **Dependency direction** prevents packages from reaching upward into
+  runtime hosts.
+
 ## Flow
 
 - Reusable capabilities enter through a package's declared public exports.
@@ -25,6 +43,12 @@
 - Concrete provider or filesystem behavior belongs behind its owning resource,
   not in a generic package fallback.
 
+## Interfaces
+
+- Package exports are the code interface, Nx project metadata is the
+  ownership and validation interface, and resource contracts are the handoff
+  for provider-specific mechanics.
+
 ## Routing
 
 - [Repository router](../AGENTS.md)
@@ -32,7 +56,6 @@
 - [Core package](core/AGENTS.md)
 - [Development node package](dev-node/AGENTS.md)
 - [HQ SDK package](hq-sdk/AGENTS.md)
-- [oRPC client package](orpc-client/AGENTS.md)
 - [Runtime context package](runtime-context/AGENTS.md)
 - [Test utilities package](test-utils/AGENTS.md)
 - [UI SDK package](ui-sdk/AGENTS.md)

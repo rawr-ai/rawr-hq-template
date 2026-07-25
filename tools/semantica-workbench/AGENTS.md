@@ -1,5 +1,10 @@
 # Semantica Workbench Router
 
+## Purpose
+
+- Provide a contained ontology-analysis workbench for reviewing semantic
+  inputs, running comparisons, and inspecting generated evidence.
+
 ## Scope
 
 - Applies to the repository-local Python workbench in
@@ -17,6 +22,18 @@
 - Generated comparisons and model output are evidence and review aids. They do
   not promote ontology facts or become RAWR architecture authority.
 
+## Behavior
+
+- The workbench applies pinned Python tooling to reviewed ontology inputs,
+  executes queries and model-assisted comparisons, and keeps every generated
+  run outside tracked authority.
+
+## Concepts
+
+- A **reviewed ontology input** is admitted source material. A **workbench
+  run** is generated analysis under `.semantica/**`; its comparisons are
+  evidence for human review, not promoted facts.
+
 ## Flow
 
 - Root setup and workbench CLI commands enter through `bin/workbench.mjs`.
@@ -25,6 +42,12 @@
   Pyright, and pytest directly through that same pinned `uv` environment.
 - The CLI reads reviewed inputs and writes generated output beneath
   `.semantica/**`.
+
+## Interfaces
+
+- `bin/workbench.mjs` is the repository command bridge; the pinned `uv`
+  environment is the execution boundary; reviewed inputs enter the Python CLI
+  and generated reports leave under ignored workbench state.
 
 ## Routing
 

@@ -1,5 +1,10 @@
 # HQ Agent Plugin Router
 
+## Purpose
+
+- Author the HQ plugin's reusable skills, specialist agents, workflows, and
+  supporting content as one curated distribution unit.
+
 ## Scope
 
 - Applies to `plugins/agents/hq/**`; inherit the
@@ -19,12 +24,30 @@
 - Do not run `scripts/publish.sh` as validation: it is an explicit external
   repository mutation helper, not a source-quality check.
 
+## Behavior
+
+- Authors evolve provider-neutral content and its internal references; a
+  separate governed lifecycle later packages, releases, and converges that
+  content into native providers.
+
+## Concepts
+
+- The **agent plugin** is the distribution identity. A **skill entrypoint**
+  triggers and routes to progressive detail; agents and workflows orchestrate
+  those authored capabilities without acquiring their own release identity.
+
 ## Flow
 
 - Authors change package-owned content, review its frontmatter, links, and
   progressive disclosure, then validate the package. Any later release or
   provider convergence begins through the separately governed agent-plugin
   lifecycle.
+
+## Interfaces
+
+- Markdown frontmatter and repository-relative references are the authoring
+  interface; the agent-plugin lifecycle is the only handoff from source
+  content to package and provider state.
 
 ## Routing
 

@@ -1,5 +1,10 @@
 # Content Workspace Git Provider Router
 
+## Purpose
+
+- Realize the content-workspace contract with bounded Git subprocess and Node
+  filesystem operations.
+
 ## Scope
 
 - Applies to
@@ -15,11 +20,29 @@
   typed failure reporting around every observation or mutation.
 - Keep Git command and filesystem details out of the parent contract.
 
+## Behavior
+
+- The provider opens a caller-selected repository identity, performs exact
+  object or workspace mechanics, rechecks identity around mutation, and
+  reports raw results.
+
+## Concepts
+
+- An **opening identity** establishes the repository state admitted to an
+  operation; a **closing identity** detects races or replacement; a **bounded
+  Git observation** returns facts without policy interpretation.
+
 ## Flow
 
 - The caller supplies a validated locator, ref, object identity, or write
   request; the provider performs bounded Git and filesystem operations and
   returns raw observations or `ContentWorkspaceFailure`.
+
+## Interfaces
+
+- Parent-contract requests delimit Git and filesystem work; Effect Platform
+  Node executes it; raw observations and `ContentWorkspaceFailure` cross back
+  to the semantic owner.
 
 ## Routing
 

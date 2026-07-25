@@ -1,5 +1,11 @@
 # Runtime Realization Type Env Agent Guide
 
+## Purpose
+
+- Provide a contained lab for building and falsifying runtime-realization
+  claims before any accepted design is migrated into production packages,
+  apps, services, or deployment topology.
+
 ## Scope
 
 This file applies to `tools/runtime-realization-type-env/**`.
@@ -21,6 +27,19 @@ implementation.
   not establish a workspace package or public runtime surface.
 - Proof strength is owned by named gates and the evidence manifest, not by a
   document, vendor-shape probe, or constructibility test alone.
+
+## Behavior
+
+- The Lab admits scenarios to explicit proof lanes, runs named gates against
+  them, records only observed proof strength, and keeps later Parent-Repo
+  Migration as a separate acceptance step.
+
+## Concepts
+
+- The **Runtime Realization Lab** is the container; the **Oracle** is its
+  falsification harness; the future **Reference Runtime** seeks
+  **Lab-Production Proof**; **Parent-Repo Migration** transfers accepted work
+  under production ownership.
 
 ## Naming Frame
 
@@ -64,6 +83,13 @@ belong in `scenarios/**`, not a fixture directory.
   evidence manifest or diagnostic classification.
 - Any accepted production change leaves this lab through separately owned
   Parent-Repo Migration work rather than a direct import from the lab.
+
+## Interfaces
+
+- Canonical runtime specifications constrain the Lab; scenarios and fixtures
+  enter named gates; the evidence manifest and diagnostic carry proof status;
+  separately owned migration work is the only handoff to parent-repository
+  production surfaces.
 
 ## Operational Surfaces
 

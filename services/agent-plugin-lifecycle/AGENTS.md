@@ -1,5 +1,10 @@
 # Agent Plugin Lifecycle Service Router
 
+## Purpose
+
+- Govern how reviewed agent-plugin content becomes a deterministic package and
+  converges with native provider state.
+
 ## Scope
 
 - Applies to `services/agent-plugin-lifecycle/**`.
@@ -11,18 +16,42 @@
 
 - Consumers cross through declared package exports; `src/service/**` remains
   owned by this package.
-- The service decides lifecycle policy from content-workspace facts and
-  delegates filesystem and native-provider mechanics through resource
-  contracts.
+- Personal's reviewed record owns desired plugin membership; exact Git objects
+  own the selected bytes; native provider inventory owns installed state.
+- The shared service model owns selection and release derivation. Capability
+  modules own their operation DTOs, handlers, results, issues, and mutation
+  policy.
+- Filesystem, clock, package-output, and native-provider mechanics remain
+  behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app
   composition, or provider-home state. Native provider inventory is the live
   installed-state authority.
 
+## Behavior
+
+- The service admits exact reviewed content, applies shared selection and
+  release-derivation policy, and dispatches package, vendor, and provider
+  operations through their owning modules.
+
+## Concepts
+
+- A **reviewed channel record** declares desired membership; exact Git objects
+  supply its selected bytes. A **release input** is the validated source set; a
+  **package** is deterministic output; native **inventory** is the independent
+  installed-state observation.
+
 ## Flow
 
-- A host supplies the content-workspace, package-output, and native-provider
-  resources; root middleware narrows context; the owning module validates and
-  executes one lifecycle capability; the public router returns its result.
+- The host supplies dependencies to the base boundary, which admits invocation
+  context and selects the service branch. That branch enters the owning
+  `module.ts` exact context, then its router, handler, and finally the relevant
+  policy or resource handoff.
+
+## Interfaces
+
+- The public oRPC contract is the caller boundary. Content workspace, lifecycle
+  clock, package output, and native provider sessions are the host-supplied
+  dependencies.
 
 ## Routing
 

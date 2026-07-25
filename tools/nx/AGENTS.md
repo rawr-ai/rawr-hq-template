@@ -1,5 +1,10 @@
 # Nx Generator Router
 
+## Purpose
+
+- Host deterministic repository-local Nx generators that synchronize declared
+  artifacts through Nx's supported tree interface.
+
 ## Scope
 
 - Applies to repository-local Nx generator registration and implementations in
@@ -16,12 +21,29 @@
 - Keep generator schemas closed and generator output deterministic. Do not add
   filesystem-discovered project inventories or package-name exceptions.
 
+## Behavior
+
+- A registered generator accepts a closed schema, derives deterministic output
+  from declared inputs, and lets Nx detect whether tracked state is stale.
+
+## Concepts
+
+- A **generator registration** makes an implementation discoverable to Nx. A
+  **sync generator** describes expected tracked output; the **Nx tree** is its
+  bounded write interface.
+
 ## Flow
 
 - `nx.json` registers a generator from this collection.
 - Nx sync invokes the generator and compares its output with the tracked file.
 - The separate inventory verifier compares tracked declarations with their
   owning project metadata.
+
+## Interfaces
+
+- `generators.json` and `nx.json` expose generators to Nx; schemas face
+  callers; the Nx tree carries generated changes; separate verifiers consume
+  the tracked output.
 
 ## Routing
 

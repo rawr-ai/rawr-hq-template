@@ -1,14 +1,24 @@
 # Plugins
 
 ## TOC
+- [Purpose](#purpose)
 - [Scope](#scope)
 - [Plugin Roots](#plugin-roots)
 - [Plugin Ids](#plugin-ids)
 - [Manifest Conventions](#manifest-conventions)
 - [Boundaries](#boundaries)
+- [Behavior](#behavior)
+- [Concepts](#concepts)
 - [Flow](#flow)
+- [Interfaces](#interfaces)
 - [Routing](#routing)
 - [Validation](#validation)
+
+## Purpose
+
+- Extend RAWR through explicitly classified command, agent, web, API,
+  workflow, and schedule capabilities without collapsing their distinct
+  composition or lifecycle models.
 
 ## Scope
 - Applies to everything under `plugins/**`.
@@ -68,6 +78,19 @@
 - App, web, and runtime composition are outside both lifecycle channels.
 - [Security model](../docs/system/SECURITY_MODEL.md)
 
+## Behavior
+
+- A plugin is admitted by its root and identity, validated as its own project,
+  and composed only by the host or lifecycle channel responsible for that
+  plugin kind.
+
+## Concepts
+
+- A **plugin kind** determines placement and composition. A **plugin id**
+  identifies one globally unique leaf. A **lifecycle channel** governs how a
+  plugin reaches executable or provider state and is not inferred from content
+  alone.
+
 ## Flow
 
 - Source enters through the plugin project that owns its declared kind.
@@ -76,6 +99,12 @@
   public source faces.
 - Curated agent content reaches its lifecycle only through the qualified agent
   plugin surface; authoring never performs provider mutation.
+
+## Interfaces
+
+- Oclif manifests expose command plugins; agent-plugin packages expose
+  authored content to the curated lifecycle; API, workflow, schedule, and web
+  plugins expose declared host contribution faces.
 
 ## Routing
 

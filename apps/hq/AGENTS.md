@@ -1,5 +1,10 @@
 # HQ Application Router (`@rawr/hq-app`)
 
+## Purpose
+
+- Declare which roles and plugins make up the HQ application and expose thin
+  process entrypoints for realizing that declaration.
+
 ## Scope
 
 - Applies to the HQ application declarations and process entrypoints in
@@ -15,6 +20,17 @@
   construction stays within that adapter and must not leak into the
   declaration surface.
 
+## Behavior
+
+- The application records membership and selects a host adapter; the host then
+  realizes the declaration with concrete runtime capabilities.
+
+## Concepts
+
+- An **HQ manifest** is the declarative membership record for application
+  roles and plugins. A **process entrypoint** selects how that manifest is
+  realized, not what its services mean.
+
 ## Flow
 
 - `createRawrHqManifest` declares the application roles and selected plugin
@@ -23,6 +39,12 @@
   host adapter.
 - The server host supplies concrete resources and materializes executable
   routes without moving that policy into the manifest.
+
+## Interfaces
+
+- The manifest is consumed through HQ SDK declarations; process entrypoints
+  hand it to the server host; realized routes and workflows are supplied back
+  by that host boundary.
 
 ## Routing
 

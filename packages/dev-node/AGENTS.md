@@ -1,5 +1,10 @@
 # Node Development Resources Router (`@rawr/dev-node`)
 
+## Purpose
+
+- Supply Node-backed mechanics for development operations while preserving the
+  host-neutral policy boundary owned by `@rawr/dev`.
+
 ## Scope
 
 - Applies to the Node resource implementation in `packages/dev-node/**`.
@@ -13,6 +18,18 @@
 - Process execution must stay argument-based, bounded by timeout, and explicit
   about working directory and environment.
 
+## Behavior
+
+- The package translates an explicit development request into bounded Node
+  filesystem, path, process, or clock effects and returns neutral observations
+  to the service that decides policy.
+
+## Concepts
+
+- A **Node resource** is a concrete satisfier of a development-service
+  contract. **Scratch-policy input** is an environment and Git observation,
+  not the decision about whether scratch work is allowed.
+
 ## Flow
 
 - A caller creates Node resources and supplies them to the package that owns
@@ -21,6 +38,12 @@
   repository Git configuration, then returns neutral input to `@rawr/dev`.
 - Tests may select the declared command fixture; ordinary execution delegates
   to the Node process adapter.
+
+## Interfaces
+
+- `@rawr/dev` resource contracts are the inbound capability interface; Node
+  results and neutral scratch observations are the outbound handoff to service
+  policy.
 
 ## Routing
 
