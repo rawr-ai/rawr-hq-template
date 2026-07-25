@@ -19,12 +19,20 @@
  * - `branch` and `merge` take a *bare family name* in `ledger`, unlike every
  *   other endpoint, which takes `name:branch`. Passing the qualified form
  *   yields `name:branch:branch` and a nameservice error.
- * - There is no route to drop a single branch. `drop` removes an entire family
- *   and every branch in it, so the port deliberately exposes no delete at all.
+ * - `POST /drop-branch` does drop a single branch, and `drop` removes an entire
+ *   family. The port exposes neither: a line that should no longer be preferred
+ *   is superseded by recording that it was. That is a choice about meaning, not
+ *   a limit of the substrate.
  *
- * This server accepts unrecognised request keys silently. Two are confirmed:
- * a top-level `t`, and `opts.reasoner`. Treat a 200 as evidence that a request
- * was *accepted*, never as evidence that a feature was *applied*.
+ * This server accepts unrecognised request keys silently — no warning, no 400.
+ * A top-level `t` is discarded, and so is `opts.reasoner`, which is not a field
+ * at all (the real one is a top-level `reasoning`). Treat a 200 as evidence
+ * that a request was *accepted*, never that a feature was *applied*.
+ *
+ * Everything we have verified about this substrate — the route inventory, the
+ * time-travel selectors, conditional writes, search, reasoning, and the traps
+ * that produced each finding — is in `./README.md`. Read it before extending
+ * this adapter.
  *
  * @agents
  * Vendor mechanics belong here. Work-stream meaning does not.

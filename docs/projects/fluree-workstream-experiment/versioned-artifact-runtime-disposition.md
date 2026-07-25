@@ -358,32 +358,127 @@ All seven were **run against the live v4.1.4 server**, not designed on paper.
 | # | Scenario | Result | What it showed |
 |---|---|---|---|
 | 1 | Append-only truth | **PASS** | A read at `t=1` saw 0 items; head at `t=9` saw 3. Nothing was mutated to make both true. |
-| 2 | Temporal reconstruction | **PARTIAL** | `@t:1` → 18 facts, `@iso:<now>` → 62, head → 62. Three addressing forms agree. `@commit:` is unresolved — see below. |
+| 2 | Temporal reconstruction | **PASS** | `@t:1` → 18 facts, `@iso:<now>` → 62, head → 62. All four selectors verified, including `@commit:` — see below. `@recorded:` turns out to be a distinct audit axis we had not been using. |
 | 3 | Derivation edges | **PASS** | 2 peel-offs, each edged to its cause; item `a` carries 6 durable transitions: admitted → cleared → peeled-off → cleared → peeled-off → cleared. |
 | 4 | SHACL at transaction time | **PASS** | A titleless item was **rejected at write** with a violation report. The frame's law is enforced by the substrate, not by the service. |
 | 5 | RDFS entailment | **PASS** | Without `reasoning`: 0 matches. With `reasoning: "rdfs"`: 1 match. An item tagged `verified` satisfies a boundary requiring `reviewed` with nobody restating it. |
-| 6 | BM25 + vector | **PARTIAL** | Inline `fulltext()` ranked the right 1 of 2 items; `cosineSimilarity` ranked both (top score 1.0). The HNSW index and BM25 graph source are **not reachable**: the `vector` cargo feature is compiled out of this image and neither index has an HTTP creation route. |
+| 6 | BM25 + vector | **PASS for what we need** | Inline `fulltext()` *is* BM25 — Snowball stemming, tf weighting, length normalisation — proven against substring matching on three differentials. Vector similarity is exact, and the planner has a compiled SIMD `FastPath:vector-topk` top-k lane we did not know existed. What is unreachable is the *graph-source* form of both, gated by wiring the vendor documents as a near-term gap. See §8.1. |
 | 7 | Branch/merge isolation | **PASS** | A candidate held an item invisibly to committed truth; preview reported `ahead=1 conflicts=0 mergeable=true`; promotion carried 1 commit. Final revisions: `dead-end=abandoned, main=committed, reshape=promoted`. |
 
-**The `@commit:` gap, stated precisely.** `GET /log` returns a commit id like
-`bagaybqab…`, and `GET /show?commit=<that id>` resolves it fine — returning the
-commit with its parents and flakes. But the same id in a `FROM
-<ledger@commit:…>` clause fails with `No commit found with prefix`, at full
-length and at every prefix length, before and after a forced `/reindex`. So the
-suffix form is real and parsed (it validates a ≥6-character prefix), the id is
-real, and the two do not meet. The identifier `@commit:` wants is something
-other than what `/log` reports. Unresolved, recorded, not guessed at.
+### 8.1 The two partials, closed
+
+Both were category (c) — we were calling it wrong — and both are now resolved.
+The full substrate reference lives with the adapter, in
+[`providers/fluree-http/README.md`](../../../resources/semantic-ledger/providers/fluree-http/README.md);
+only the load-bearing conclusions are recorded here.
+
+**`@commit:` — resolved.** The identifier `@commit:` consumes is the commit's raw
+SHA-256 **hex digest**, not the base32 CID that `/log`, `/show` and every
+transaction receipt return. They are the same 32 bytes in different encodings: a
+CID is a fixed 7-byte header (`018180c0011220` — CIDv1, `ContentKind::Commit`,
+sha2-256, length 32) followed by the digest. That header base32-encodes to the
+constant string `bagaybqabciq`, which is why every commit id in the deployment
+looks alike — **the first twelve characters are a type tag, not entropy.** Feeding
+the CID to `@commit:` matches nothing at any prefix length because the CID's
+leading characters appear nowhere in the hex keyspace. Reindexing was never
+relevant.
+
+Three ways to obtain the hex: read `f:address` from the `#txn-meta` graph;
+base32-decode the CID and drop 7 bytes; or ask `GET /show/{ledger}?commit=<CID>`,
+which returns `t` and lets a caller pin with `@t:` instead. `/show` accepts all
+four identifier forms — the only route that does, which is itself the clearest
+evidence the gap was localised to one resolver.
+
+Two things fell out that matter more than the original question. `@recorded:`
+addresses **audit time** (`f:receivedAt`, when a fact was loaded) where `@iso:`
+addresses **event time** (`f:time`, what the change is about); at one instant they
+returned 1 row and 3 rows. For a record that must answer *what did we know, when*,
+`@recorded:` is the honest axis, and we had not been using it. Separately, the `to`
+bound on a history query is **validated and then ignored** — the range is always
+`[from, head]`, which would have silently produced wrong answers had we relied on it.
+
+**BM25 and vector — resolved, with a real gate correctly identified.** Inline
+`fulltext()` is genuine BM25, not a substring match: it scores *"encrusted"* at 0.0
+for the query `rust`, hits *"programming"* for the query `programs` via the Snowball
+stem, and ranks a short one-occurrence document above a long three-occurrence one.
+Our earlier reading of "unreachable" came from a single signal we misread —
+`fulltext()` returns `null` when a property has no index and `0.0` when it is
+indexed but does not match, and we had only ever seen one of them.
+
+What is genuinely gated is the *graph-source* form of both, and the gate is now
+named: neither the server nor the CLI populates
+`ExecutionContext.bm25_search_provider` / `vector_provider`. It fires before name
+resolution — a garbage graph-source name produces a byte-identical error to a real
+one — and it fires identically in a separate CLI process. The vendor documents it:
+the deployment wiring "is not yet exposed end-to-end… Track this as a near-term
+gap." BM25 and vector share that gate, but not the same severity: BM25's engine is
+demonstrably compiled, so it is purely unexposed wiring, while HNSW additionally
+lacks the `vector` cargo feature. Fixing the wiring would unblock BM25 and not HNSW.
+
+**And the image question is settled: no upgrade helps.** 4.1.4 is the newest
+published build, `latest`/`4`/`4.1`/`4.1.4` are one digest, and across 72 tags there
+is no feature-richer variant — the only non-semver tags are 2023–24 Clojure-era
+downgrades. None of the compiled-out features can be enabled by configuration.
+
+### 8.2 What the sweep found in our own code
+
+Reading the substrate properly turned up four defects in what we shipped. None
+were visible from inside the service, because the port has no slot for the
+capability each one concerns. Recorded here; none are fixed yet.
+
+**D13 — `push` is a read-then-write, and loses updates under concurrency.**
+Measured on this server: 20 concurrent updates through a read-then-write loop lost
+**19**, every response a 200, and the observed `t` sequence ran *backwards*. The
+same workload expressed as a conditional write (`POST /update` with a `where`
+guard) applied 20 of 20. The control — the same payload with `where` misspelled —
+applied 20 of 20 as well, proving the guard is genuinely evaluated rather than
+ignored.
+
+This is latent today because nothing writes concurrently. It stops being latent
+the moment more than one agent drives a stream, which is exactly the trial we are
+building toward. **This should be settled before the trial, not discovered during
+it.**
+
+**D14 — the write receipt is read wrongly.** The provider parses
+`{ t, commit.hash }` and records `commit.hash` as a commit id. On a no-op
+transaction that field is a **fixed sentinel** —
+`bagaybqabciqohmgeikmpyhautl57jsezn64sij5oihsgjg4tjssjlgi3pbjlqvi` — identical
+across ledgers and absent from every commit log. So a no-op currently writes a
+non-existent commit id into `LedgerCommit.commit`.
+
+The sentinel is also the *correct* oracle for whether a conditional write applied.
+The obvious alternative — comparing `t` against a value read beforehand — gives a
+false positive whenever another writer commits in between, which is precisely the
+concurrent case it would be there to handle.
+
+**D15 — idempotency is available and unused.** The standard `Idempotency-Key`
+header works on this single node, scoped per ledger, and rejects a reused key
+carrying a different body with a 409. Retrying a push is currently unsafe in a way
+it does not need to be.
+
+**D16 — coherent multi-read is available, and imperfect.** `POST /multi-query`
+runs several reads against one pinned snapshot. It is better than what we do now,
+but it is not atomic: measured tear rates around 1%, and on a tear it *misreports*
+the `t` it claims to have used. An integer `asOf` pin is exact. If we adopt it, pin
+explicitly rather than trusting the envelope.
+
+**One thing the sweep confirmed we got right.** D10's reified transition nodes are
+the correct model. Native entity history is subject-scoped and reports raw triple
+deltas; it cannot express `admitted → cleared → peeled-off` as a thing with its own
+time and reason. Keeping our own transition vocabulary was the right call — though
+for a different reason than originally argued, since the reified nodes turn out to
+be natively reachable too.
 
 ### What the ladder became
 
 | # | Scenario | Status |
 |---|---|---|
 | 1 | Append-only truth | Available; re-run under D7/D10 grammar |
-| 2 | Temporal reconstruction | Available; extend to `@iso:` and `@commit:` |
+| 2 | Temporal reconstruction | **Verified available** across all four selectors. `@recorded:` is a second, distinct time axis worth adopting |
 | 3 | Derivation edges | Available; strengthened by D10 |
 | 4 | SHACL at transaction time | **Verified available** — frame law enforced by the substrate |
 | 5 | OWL/RDFS reasoning | **Verified available.** `rdfs` and `owl2rl` both entail. See D12 — this is a real model upgrade, not a demo |
-| 6 | BM25 / HNSW resonance | **Split.** Inline `fulltext()` and inline vector similarity are documented as available; the HNSW *index* is not compiled into this build. Probe both, report the split honestly |
+| 6 | BM25 / HNSW resonance | **Verified available** in the form we need — real BM25 and an exact SIMD top-k vector lane, both over plain HTTP. Only the graph-source form is gated, by wiring the vendor calls a near-term gap |
 | 7 | Branch/merge isolation | **Verified available** — and promoted from a scenario to a core capability by D11 |
 
 ### D12 — the frame's law becomes an ontology, not a list of strings
@@ -404,12 +499,66 @@ anybody restating the fact. The law stops being a list of magic strings and
 becomes a declared hierarchy the substrate reasons over — which is what the
 work-stream model always meant by "revised under law."
 
-This is adopted, with two consequences recorded honestly:
+**This is no longer a straightforward adoption, and the decision is open.**
+Investigating it properly turned up three facts that were not visible when it was
+first written, and two of them cut against the obvious implementation.
 
-1. The ledger contract gains an optional reasoning mode on reads, and the
-   memory provider must implement `subClassOf` closure to keep the contract
-   provider-neutral rather than quietly Fluree-only. That is a real cost and it
-   is the price of the port staying honest.
-2. It lands **after** D7–D11 are green, not interleaved with them. A third
-   simultaneous model change would make it impossible to attribute a regression
-   to its cause.
+**1. The cheap reasoning modes are time-travel-unsafe.** Under `rdfs` and `owl2ql`,
+the schema applied at a historical `t` is `(schema at t) ∪ (schema at HEAD)`. A
+query at `@t:1` returns entailments from axioms **asserted afterwards**.
+Deterministic, order-independent, reproduced on fresh ledgers in both query orders.
+`owl2rl` and `owl-datalog` are correct.
+
+For this record specifically, that is close to disqualifying. The whole claim of
+the frame is that a read at `t` is faithful to what was true at `t`. A law that
+reaches backwards in time is precisely the property we built on Fluree to avoid.
+
+**2. Asserting `rdfs:subClassOf` into the ledger has consequences well outside
+querying.** With a SHACL shape targeting `ws:Reviewed`, a byte-identical write that
+was accepted (200) becomes rejected (400) once `ws:Verified subClassOf ws:Reviewed`
+is asserted — with no reasoning key on either write. Data that was legal when
+written becomes retroactively non-conformant. The same assertion silently revoked
+policy-filtered reads, 1 row to 0. Widening the hierarchy widens every grant and
+every constraint attached to the parent, at once, retroactively.
+
+That makes writing the law into the ledger a one-way door with a blast radius —
+and a strange one for an append-only record, since the *record* is immutable while
+its *admissibility* is not.
+
+**3. There is a third option nobody had considered.** A per-query top-level
+`ontology` field supplies axioms for that query alone. Same entailment, arbitrary
+depth, nothing written to the ledger — therefore no SHACL admission change, no
+policy widening, no storage, and no axiom whose assertion time we would have to
+reason about. Verified with a misspelled-key control and against a live SHACL shape
+that continues to admit the write.
+
+So the real choice is not "ontology vs. list of strings". It is:
+
+| Option | Entailment | Time-travel faithful | Touches the record | Cost |
+|---|---|---|---|---|
+| **A.** Keep literal tags | none | n/a | no | zero; the law stays a list of strings |
+| **B.** Axioms in the ledger + `rdfs` | yes | **no** — future axioms leak backwards | yes, and retroactively changes SHACL and policy | one-way door |
+| **C.** Axioms in the ledger + `owl2rl` | yes | yes | yes, same retroactive coupling | higher fuel; still a one-way door |
+| **D.** Per-query `ontology` field | yes | yes — no axiom has an assertion time | **no** | the law lives in the service, not the record |
+
+D looks strongest on every axis except one, and that one may be decisive: the law
+stops being *recorded*. A future reader of the ledger could no longer reconstruct
+why an item cleared a boundary, because the entailment that let it through was
+supplied by the querying process and never written down. For a system whose premise
+is that the record answers questions on its own, that is a real loss — arguably
+the same loss D10 was fixed to prevent.
+
+There may be a fifth option that keeps both properties: record the law as ordinary
+data for provenance, but never assert it as `rdfs:subClassOf`, and feed it to the
+`ontology` field at query time. The record then explains itself without the
+substrate acting on it. This has not been tested.
+
+**Recommendation: do not adopt B.** Beyond that the decision is genuinely open and
+belongs to the user. Whichever way it goes, it lands after D7–D11 are green — a
+third simultaneous model change would make a regression impossible to attribute.
+
+The provider-neutrality cost noted originally still applies to A/B/C: the ledger
+contract would gain an optional reasoning mode, and the memory provider would need
+`subClassOf` closure to keep the port from being quietly Fluree-only. Option D
+changes that calculus, since the closure would live in the service for every
+provider alike.

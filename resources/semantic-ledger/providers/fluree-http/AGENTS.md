@@ -28,6 +28,8 @@
 - A **ledger id** is `name:branch`, so `ws:main` and `ws:feature` are two
   branches of one ledger. **Time travel** is a suffix on the ledger reference —
   `ws:main@t:1` — and a bare `t` field at query top level is silently ignored.
+- Verified substrate behaviour, and the traps that produced each finding, live
+  in [README.md](./README.md). It is the reference this adapter is built from.
 
 ## Flow
 
@@ -40,6 +42,7 @@
 
 ## Routing
 
+- [Fluree substrate reference](./README.md)
 - [Semantic ledger resource](../../AGENTS.md)
 - [Memory provider](../memory/AGENTS.md)
 
