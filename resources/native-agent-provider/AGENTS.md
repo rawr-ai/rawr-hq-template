@@ -1,5 +1,10 @@
 # Native Agent Provider Resource Router
 
+## Purpose
+
+- Provide one neutral session boundary for observing and changing native
+  Codex and Claude plugin state.
+
 ## Scope
 
 - Applies to `resources/native-agent-provider/**` until a provider-local router
@@ -18,11 +23,29 @@
 - Provider CLI syntax, protocol decoding, and home-specific mechanics stay in
   concrete providers.
 
+## Behavior
+
+- A session probes provider capabilities, reports live marketplace and plugin
+  inventory, reads selected installed content, and performs only explicitly
+  requested native mutations.
+
+## Concepts
+
+- A **native provider session** binds an executable and home. **Inventory** is
+  live installed-state truth; **marketplaces** and **plugins** are provider
+  entities, not curated release records.
+
 ## Flow
 
 - A host acquires a provider session for an explicit executable and home; the
   consumer probes or observes live state, then may request one supported native
   marketplace or plugin mutation.
+
+## Interfaces
+
+- Hosts acquire sessions from concrete providers; lifecycle services issue
+  neutral observations and mutations through the contract; canonical facts
+  and typed failures return across the same boundary.
 
 ## Routing
 

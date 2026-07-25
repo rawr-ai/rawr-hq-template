@@ -2,6 +2,11 @@
 
 # Migration Research Quarantine Router
 
+## Purpose
+
+- Preserve superseded migration research and source analysis without granting
+  its findings current evidentiary weight.
+
 ## Scope
 
 - Applies only to `docs/projects/rawr-final-architecture-migration/resources/research/quarantine/**`.
@@ -11,10 +16,26 @@
 - Material here is research provenance and evidence only; it is not product or architecture authority.
 - Quarantined observations and alternatives cannot direct current implementation.
 
+## Behavior
+
+- Historical analysis can reveal prior questions or source trails; its claims
+  become usable only after sources are revisited and findings are accepted
+  into current research.
+
+## Concepts
+
+- A **research snapshot** records an earlier evidence interpretation. A
+  **current finding** is a source-grounded claim admitted by active research.
+
 ## Flow
 
 - Read inward only to recover observations, alternatives, or evidence.
 - Verify and restate any reclaimed conclusion in active authority before relying on it.
+
+## Interfaces
+
+- Source trails are provenance inputs to renewed investigation; active
+  research notes and canonical docs are the outward authority surfaces.
 
 ## Routing
 

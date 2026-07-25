@@ -1,5 +1,10 @@
 # Development Operations Service Router
 
+## Purpose
+
+- Provide policy-aware, inspectable operations for maintaining repositories,
+  Graphite stacks, worktrees, and permitted scratch work.
+
 ## Scope
 
 - Applies to `services/dev/**`.
@@ -15,11 +20,28 @@
 - This service does not own curated agent-plugin lifecycle or provider
   installation state.
 
+## Behavior
+
+- Each operation evaluates readiness and safety constraints, returns a
+  structured plan or diagnosis, and performs mutation only when the request
+  explicitly admits it.
+
+## Concepts
+
+- A **preflight** determines whether an operation is admissible. A **stack
+  plan**, **worktree cleanup plan**, and **scratch-policy check** are
+  service-owned decisions separated from Node mechanics.
+
 ## Flow
 
 - A host binds development resources; the public router selects the stack,
   repository, worktree, or scratch-policy module; that module inspects or
   performs the requested operation and returns structured results.
+
+## Interfaces
+
+- The oRPC contract faces CLI consumers; filesystem, path, process, and clock
+  resource contracts face host implementations such as `@rawr/dev-node`.
 
 ## Routing
 

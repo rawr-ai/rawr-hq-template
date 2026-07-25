@@ -48,6 +48,7 @@ describe("hyperresearch-codex service shell", () => {
     for (const moduleName of moduleNames) {
       const entries = (await fs.readdir(path.join(moduleDir, moduleName))).sort();
       expect(entries).toEqual([
+        "AGENTS.md",
         "contract.ts",
         "helpers",
         "middleware.ts",

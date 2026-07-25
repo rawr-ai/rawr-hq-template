@@ -1,5 +1,10 @@
 # Agent Plugin Package Output Resource Router
 
+## Purpose
+
+- Separate deterministic archive encoding and output publication mechanics
+  from the lifecycle policy that chooses what should be packaged.
+
 ## Scope
 
 - Applies to `resources/agent-plugin-package-output/**` until a provider-local
@@ -17,11 +22,28 @@
 - Publication results report mechanical outcomes; they do not select releases
   or grant channel authority.
 
+## Behavior
+
+- The resource encodes caller-ordered entries or publishes caller-supplied
+  bytes, then reports a verified mechanical outcome without selecting a
+  release or channel.
+
+## Concepts
+
+- **Archive entries** are the canonical ordered packaging input. A
+  **publication outcome** distinguishes converged, rejected, and unsettled
+  mechanics from semantic release success.
+
 ## Flow
 
 - A consumer supplies canonical archive entries or output bytes; a concrete
   provider encodes or publishes them and returns a converged, verified,
   rejected, or unsettled result.
+
+## Interfaces
+
+- Semantic owners submit entries, bytes, paths, and bounds through the neutral
+  contract; providers return encoded output or typed publication results.
 
 ## Routing
 

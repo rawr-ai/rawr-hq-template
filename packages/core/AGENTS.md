@@ -1,5 +1,10 @@
 # Core Package Router (`@rawr/core`)
 
+## Purpose
+
+- Standardize CLI bootstrap, results, workspace discovery, and telemetry
+  installation across command and process entrypoints.
+
 ## Scope
 
 - Applies to the shared CLI bootstrap and telemetry primitives in
@@ -14,6 +19,18 @@
 - Workspace discovery may locate a workspace for bootstrap; it does not make a
   checkout the identity of an installed command.
 
+## Behavior
+
+- Core normalizes shared command lifecycle and process support while leaving
+  every command's domain operation and every host's composition decision with
+  its owner.
+
+## Concepts
+
+- `RawrCommand` is the common CLI lifecycle base; `RawrResult` is the neutral
+  command outcome; **workspace discovery** locates bootstrap context without
+  assigning product identity.
+
 ## Flow
 
 - CLI commands inherit `RawrCommand`, parse the shared base flags, and render a
@@ -21,6 +38,11 @@
 - Entrypoints use `findWorkspaceRoot` before binding workspace-owned services.
 - Runtime hosts import the dedicated telemetry export and install it at their
   process boundary.
+
+## Interfaces
+
+- Commands extend the CLI base and return common results; entrypoints consume
+  the workspace locator; process hosts consume the telemetry installer.
 
 ## Routing
 

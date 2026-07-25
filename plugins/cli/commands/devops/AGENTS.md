@@ -1,5 +1,10 @@
 # DevOps CLI Plugin Router
 
+## Purpose
+
+- Expose guarded repository, Graphite stack, worktree, and scratch-policy
+  operations to developers through the CLI.
+
 ## Scope
 
 - Applies to `plugins/cli/commands/devops/**`; inherit the
@@ -20,11 +25,29 @@
   pinned-path or pinned-branch constraints; do not replace them with an
   unqualified recursive deletion path.
 
+## Behavior
+
+- Commands collect explicit operator intent, request a plan from the
+  development service, and apply mutations only when the safety posture and
+  flags admit them.
+
+## Concepts
+
+- A **preflight** is the service-owned readiness decision. **Plan mode**
+  observes intended changes; **apply mode** performs admitted changes and
+  remains subordinate to dry-run and cleanup constraints.
+
 ## Flow
 
 - Oclif parses a request, locates the workspace, derives scratch policy where
   required, invokes the public Dev client in plan or apply mode, and renders
   the report with preflight-aware exit behavior.
+
+## Interfaces
+
+- Oclif flags and exit codes face operators; the public Dev client carries
+  plans and results; `@rawr/dev-node` resources are the mechanics handoff for
+  Git, Graphite, process, and filesystem effects.
 
 ## Routing
 

@@ -1,0 +1,51 @@
+# Todo Tasks Module Router
+
+## Purpose
+
+- Own creation and retrieval of the task entity at the Example Todo service
+  boundary.
+
+## Scope
+
+- Applies to task behavior in this module directory.
+
+## Boundaries
+
+- Tasks owns title normalization, task identity, persistence, and task-specific
+  failures; tag creation and task-tag relationships belong to sibling modules.
+- Database, clock, logging, and analytics mechanics enter through service
+  context rather than becoming task policy.
+
+## Behavior
+
+- The module validates and normalizes a requested title, enforces read-only
+  mode for creation, persists a new task, and resolves existing tasks by id or
+  returns the declared not-found failure.
+
+## Concepts
+
+- A **task** has a stable id, human-readable title, optional description, and
+  creation facts. **Read-only mode** blocks creation; **resource not found**
+  describes an absent requested task.
+
+## Flow
+
+- Create admits task input and returns the persisted entity. Get resolves a
+  task id through the repository and returns the entity or a typed domain
+  failure.
+
+## Interfaces
+
+- `create` and `get` form the caller-visible task contract. The task repository
+  and service support capabilities are the module's host handoffs.
+
+## Routing
+
+- [Example Todo service router](../../../../AGENTS.md)
+- [Assignment module](../assignments/AGENTS.md)
+
+## Validation
+
+- Run `bunx nx run @rawr/example-todo:typecheck`.
+- Run `bunx nx run @rawr/example-todo:test` for task create/get, invalid title,
+  read-only, schema, and not-found behavior.

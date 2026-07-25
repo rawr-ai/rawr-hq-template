@@ -1,5 +1,10 @@
 # Habitat Router (`habitat`)
 
+## Purpose
+
+- Provision the exact pinned Habitat executable and expose it to repository
+  checks without duplicating Habitat's evaluation engine or policy.
+
 ## Scope
 
 - Applies to the pinned Habitat tool integration in `scripts/habitat/**`.
@@ -20,6 +25,18 @@
   removal.
 - This project consumes a compiled release. It must not vendor the Habitat SDK
   source or become a second SDK implementation.
+
+## Behavior
+
+- The integration selects one manifest-approved platform asset, verifies every
+  local or downloaded byte, publishes it through a bounded cache transition,
+  and invokes the native CLI for owned checks.
+
+## Concepts
+
+- The **release manifest** is executable identity. A **verified cache entry**
+  is a byte-exact local copy; a **source-law batch** is the explicitly selected
+  set of active Habitat rules.
 
 ## Flow
 
@@ -46,6 +63,12 @@
   required surface.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
+
+## Interfaces
+
+- Release provenance and downloads enter through the manifest and provisioner;
+  Nx targets invoke the verified Habitat CLI; `.habitat/**` supplies policy
+  directly to that native evaluator.
 
 ## Routing
 

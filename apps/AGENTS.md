@@ -1,5 +1,10 @@
 # Apps Router
 
+## Purpose
+
+- Own the executable hosts that turn declared RAWR capabilities into CLI,
+  server, HQ-process, and browser experiences.
+
 ## Scope
 
 - Applies to `apps/**`.
@@ -25,6 +30,18 @@
   - `rawr agent plugins ...` manages curated agent-plugin lifecycle.
   - server/web app composition consumes declared outputs and owns no lifecycle state.
 
+## Behavior
+
+- An app chooses runtime composition and presentation for its surface while
+  delegating domain decisions to the package, service, or plugin that owns
+  them.
+
+## Concepts
+
+- A **host shell** supplies process or browser context around declared
+  capabilities. A **runtime surface** is one independently executable user or
+  operator entrypoint.
+
 ## Flow
 
 - Each app assembles declared packages, services, and plugins through its
@@ -33,6 +50,12 @@
   service or package.
 - Server and web hosts consume declared runtime capabilities; they do not
   become fallback lifecycle owners.
+
+## Interfaces
+
+- Apps consume public package exports, service clients, and plugin
+  contributions; their outputs are process entrypoints, HTTP surfaces, CLI
+  rendering, or browser composition.
 
 ## Routing
 

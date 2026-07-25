@@ -1,5 +1,10 @@
 # RAWR HQ-Template Router
 
+## Purpose
+
+- Orient work in the reusable Template repository and keep executable product
+  capabilities on the side of the Template/Personal boundary that owns them.
+
 ## Scope
 
 - Applies repo-wide when a deeper `AGENTS.md` is not present.
@@ -31,6 +36,23 @@
 - Use [the repository destination guide](AGENTS_SPLIT.md) first for
   Template-vs-personal destination decisions.
 
+## Behavior
+
+- Repository work starts by resolving the owning Nx project and nearest
+  product boundary, then follows that boundary's public contract rather than
+  treating directory proximity as authority.
+- Command, service, plugin, and resource changes preserve the distinct
+  operator channels and the explicit handoffs between policy and mechanics.
+
+## Concepts
+
+- **Template** is the reusable executable product; **Personal** is a separate
+  curated-content repository connected only through declared data and package
+  interfaces.
+- An **owning project** is the Nx project responsible for a capability and its
+  checks. A **command channel** is an operator-facing namespace with one
+  lifecycle owner.
+
 ## Command Surface Policy
 
 - External CLI plugin channel: `rawr plugins ...`
@@ -49,6 +71,15 @@
   executable implementation or repository authority crosses that boundary.
 - Repository changes move through Graphite and the required repository check
   before branch protection admits them to `main`.
+
+## Interfaces
+
+- Nx supplies workspace and target truth; the AGENTS lattice supplies product
+  ownership and navigation; package exports and service contracts supply
+  executable boundaries.
+- Versioned data records and ordinary package artifacts are the only admitted
+  cross-repository interfaces. Graphite and the repository check form the
+  change-admission interface.
 
 ## Graphite Requirement
 

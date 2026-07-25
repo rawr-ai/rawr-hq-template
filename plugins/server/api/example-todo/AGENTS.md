@@ -1,5 +1,10 @@
 # Example Todo API Plugin Router
 
+## Purpose
+
+- Publish the Example Todo capability as reusable HTTP and OpenAPI operations
+  without creating a second todo domain.
+
 ## Scope
 
 - Applies to `plugins/server/api/example-todo/**`; inherit the
@@ -21,11 +26,29 @@
 - Router handlers forward trace context and delegate directly to the sealed
   service client. HTTP projection must not absorb service lifecycle behavior.
 
+## Behavior
+
+- The plugin derives transport metadata from the service contract, resolves
+  the repository-scoped client supplied by the host, and forwards each request
+  with trace context.
+
+## Concepts
+
+- An **API projection** adds HTTP route identity to a domain operation. A
+  **client resolver** selects the sealed Todo client for request scope; a
+  **trace-forwarding context** preserves observability across the handoff.
+
 ## Flow
 
 - The app host binds a Todo client resolver, the plugin contributes its
   contract and router, request context supplies `repoRoot` and trace data, and
   the selected handler invokes the corresponding public Todo operation.
+
+## Interfaces
+
+- `api.ts` contributes the declared surface to the host; `client.ts` exposes
+  the caller face; the public Example Todo client remains the sole interface
+  to task behavior and state.
 
 ## Routing
 

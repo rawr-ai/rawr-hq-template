@@ -1,5 +1,10 @@
 # Docs Navigation For Agents
 
+## Purpose
+
+- Keep product, system, process, and project knowledge discoverable at the
+  authority and lifetime boundary that owns it.
+
 ## Scope
 
 Applies to `docs/**`.
@@ -13,6 +18,18 @@ Applies to `docs/**`.
   active product, system, or process guidance.
 - Documentation records system authority but does not create executable
   ownership by itself.
+
+## Behavior
+
+- Documentation enters an active authority surface, stable conclusions are
+  promoted out of temporal work, and superseded material leaves active
+  navigation without losing provenance.
+
+## Concepts
+
+- **Canonical guidance** is current reusable authority; a **project record** is
+  time-bound execution context; **archive** and **quarantine** retain history
+  without participating in current decisions.
 
 ## Canonical Entry Points
 
@@ -62,6 +79,12 @@ Use these names consistently:
   system, or process documents.
 - Superseded material moves to archive or quarantine without remaining on an
   active routing path.
+
+## Interfaces
+
+- Gateway documents hand readers to product, system, process, and project
+  owners through resolving relative links. Executable claims hand validation
+  back to the owning Nx project and its tests.
 
 ## Routing
 

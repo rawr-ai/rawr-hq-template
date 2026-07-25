@@ -1,5 +1,10 @@
 # CLI Router (`@rawr/cli`)
 
+## Purpose
+
+- Give operators a stable Oclif command surface for invoking RAWR capabilities
+  without moving domain policy into command classes.
+
 ## Scope
 
 - Applies to the Oclif application in `apps/cli/**`.
@@ -15,6 +20,20 @@
 - Development and packaged execution must discover the same package-owned
   command tree; neither may load commands from a content checkout.
 
+## Behavior
+
+- Each service-backed domain command admits and normalizes operator input,
+  invokes exactly one owning capability through an explicit binding, and
+  renders its structured result or declared failure.
+- An orchestration command may sequence named operations, but it must preserve
+  each operation's existing contract and owner rather than absorb their policy.
+
+## Concepts
+
+- The **command tree** is Oclif's discoverable operator namespace. A
+  **projection binding** connects that namespace to a package or service
+  contract without becoming a second implementation.
+
 ## Flow
 
 - `src/index.ts` or `bin/run.js` starts Oclif and discovers `src/commands/**` or
@@ -23,6 +42,12 @@
   invokes the operation, and renders the returned result.
 - Shared command construction and binding code lives under `src/lib/**`; it
   does not become a second domain implementation.
+
+## Interfaces
+
+- Oclif owns argv parsing and command discovery; package and service contracts
+  own operation semantics; resource bindings supply concrete host mechanics;
+  renderers translate returned results for the terminal.
 
 ## Routing
 

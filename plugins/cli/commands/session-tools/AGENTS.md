@@ -1,5 +1,10 @@
 # Session Tools CLI Plugin Router
 
+## Purpose
+
+- Let operators discover, search, facet, and extract local Codex and Claude
+  sessions from a bounded command surface.
+
 ## Scope
 
 - Applies to `plugins/cli/commands/session-tools/**`; inherit the
@@ -21,11 +26,29 @@
 - This is a core Oclif command plugin composed by `@rawr/cli`, not an external
   extension installed through `rawr plugins`.
 
+## Behavior
+
+- Commands bound the operator's query, realize local source and index
+  capabilities, delegate interpretation to Session Intelligence, and project
+  the typed result to stdout or an explicit file.
+
+## Concepts
+
+- A **session source** supplies provider-native records. A **session index**
+  accelerates owned query semantics. A **projection** formats or writes a
+  service result without changing its matches.
+
 ## Flow
 
 - Oclif validates the operator request, the binding realizes session-source
   and index adapters, the Session Intelligence client performs the requested
   capability, and the command renders or writes the projected result.
+
+## Interfaces
+
+- CLI flags and output targets face the operator; session-source and
+  session-index ports face local adapters; the public Session Intelligence
+  client is the domain handoff.
 
 ## Routing
 

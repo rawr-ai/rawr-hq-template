@@ -114,11 +114,21 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, or duplicate rule discovery in a script.
-- [ ] 1.5g Make TypeScript/Knip identify the declared public cross-package
-  surface, then add one Habitat source law for useful JSDoc on that surface.
-  Require purpose, ownership, and behavioral-flow context without demanding
-  ceremonial comments on local exports or implementing another reachability
-  resolver in Habitat.
+- [ ] 1.5g Use the pinned TypeScript compiler API to identify authored
+  production symbols consumed from another source file, then add one Habitat
+  source law for useful declaration-site JSDoc on that exact relation. Preserve
+  each project's TypeScript resolution authority, require purpose, ownership,
+  and behavioral-flow context, and require a descriptive `@param` for every
+  parameter when a consumed function has more than three. Do not demand
+  ceremonial comments on local-only exports, approximate identity with paths,
+  or implement another parser or source graph.
+- [x] 1.5h Require one module-local `AGENTS.md` at every standalone and
+  API-embedded service-module boundary. Make each router explain product
+  purpose, scope, boundaries, behavior, concepts, flow, interfaces, inward
+  routing, and validation without narrating source or duplicating JSDoc. Burn
+  the complete admitted router corpus to the positive shape in the same
+  checkpoint; do not add a baseline, path exception, second placement owner, or
+  JavaScript documentation scanner.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation

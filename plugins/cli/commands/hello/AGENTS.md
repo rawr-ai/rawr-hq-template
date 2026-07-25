@@ -1,5 +1,10 @@
 # Hello CLI Plugin Router
 
+## Purpose
+
+- Demonstrate the smallest valid native Oclif extension and provide the
+  `rawr hello` example command.
+
 ## Scope
 
 - Applies to `plugins/cli/commands/hello/**`; inherit the
@@ -18,11 +23,28 @@
 - Keep the example intentionally small; reusable product behavior belongs in
   a service or package with its own boundary.
 
+## Behavior
+
+- Native Oclif discovery loads the installed extension and executes one
+  ordinary command with no separate service, plugin registry, or lifecycle
+  state.
+
+## Concepts
+
+- An **external extension** is installed and discovered through native Oclif
+  state. The **hello command** is an integration example, not reusable domain
+  authority.
+
 ## Flow
 
 - Native Oclif extension discovery loads the compiled command, Oclif parses the
   invocation, and the command writes its result through the standard command
   runtime.
+
+## Interfaces
+
+- The Oclif package manifest is the discovery interface; argv is the caller
+  interface; the standard command output stream is the result interface.
 
 ## Routing
 

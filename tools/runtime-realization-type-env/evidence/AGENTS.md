@@ -1,5 +1,10 @@
 # Runtime Realization Evidence Agent Guide
 
+## Purpose
+
+- Maintain the Lab's current proof status and the evidence maps that explain
+  what each named gate has and has not established.
+
 ## Scope
 
 This file applies to `tools/runtime-realization-type-env/evidence/**`.
@@ -56,6 +61,18 @@ named gates.
 System maps and vendor maps are operational indexes. They explain why evidence
 matters and where it points, but they do not promote proof by themselves.
 
+## Behavior
+
+- Gate observations update the proof ledger and diagnostic under their owned
+  proof ceilings, while system and vendor maps index the accepted evidence
+  without independently changing status.
+
+## Concepts
+
+- The **proof manifest** is status authority; the **diagnostic** presents its
+  red/yellow/green interpretation; **system maps** and **vendor maps** locate
+  evidence and residual boundaries.
+
 ## Flow
 
 - Named lab gates produce observations against explicit scenarios and
@@ -64,6 +81,13 @@ matters and where it points, but they do not promote proof by themselves.
   system and vendor maps then index the supporting evidence.
 - Production changes leave the lab only through separately owned Parent-Repo
   Migration work.
+
+## Interfaces
+
+- Named gates supply observations; manifest and diagnostic files expose
+  authoritative status; evidence maps connect those claims to source, tests,
+  scenarios, and vendor facts; Parent-Repo Migration consumes only separately
+  accepted results.
 
 ## Routing
 

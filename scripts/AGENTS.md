@@ -1,13 +1,22 @@
 # Scripts
 
 ## TOC
+- [Purpose](#purpose)
 - [Scope](#scope)
 - [Boundaries](#boundaries)
+- [Behavior](#behavior)
+- [Concepts](#concepts)
 - [Flow](#flow)
+- [Interfaces](#interfaces)
 - [Git Hooks](#git-hooks)
 - [Required Repository Check](#required-repository-check)
 - [Routing](#routing)
 - [Validation](#validation)
+
+## Purpose
+
+- Automate deterministic repository operations and quality orchestration while
+  leaving product and structural policy with their declared owners.
 
 ## Scope
 - Applies to `scripts/**`.
@@ -22,6 +31,18 @@
 - Habitat policy belongs in `.habitat/**`; scripts may provision and invoke
   the pinned SDK but must not duplicate its evaluator.
 
+## Behavior
+
+- Scripts translate a checked repository event or explicit operator command
+  into a bounded owner command, preserve actionable failures, and avoid
+  creating alternate implementations.
+
+## Concepts
+
+- A **script owner** is the project whose target the script serves. A **local
+  feedback gate** catches problems before push; **merge authority** remains
+  the protected remote workflow.
+
 ## Flow
 
 - Dependency installation configures the repository-owned Git hooks.
@@ -29,6 +50,12 @@
   public check once through Nx.
 - The repository workflow runs the same required check before protected
   branches admit a candidate SHA.
+
+## Interfaces
+
+- Bun and Nx targets are the command interface; Git hooks and CI are event
+  interfaces; Habitat and owner-local checks return the validation outcomes
+  that scripts relay.
 
 ## Git Hooks
 - Shipped hooks live in `scripts/githooks/**`.

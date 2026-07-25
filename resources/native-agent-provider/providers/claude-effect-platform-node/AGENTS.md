@@ -1,5 +1,10 @@
 # Claude Native Agent Provider Router
 
+## Purpose
+
+- Translate the neutral native-agent-provider session into Claude's installed
+  plugin command surface.
+
 ## Scope
 
 - Applies to
@@ -16,11 +21,29 @@
 - Report canonical provider observations and typed failures through the parent
   contract.
 
+## Behavior
+
+- The provider probes a selected Claude executable and home, decodes its
+  marketplace and plugin inventory, serializes requested mutations, and
+  reports the observed native result.
+
+## Concepts
+
+- A **Claude home** scopes native state. A **capability probe** determines
+  supported commands; a **serialized mutation** prevents overlapping native
+  marketplace or plugin changes.
+
 ## Flow
 
 - The caller acquires a session for an explicit Claude executable and home;
   the provider probes or reads native inventory and delegates requested
   marketplace or plugin changes to Claude.
+
+## Interfaces
+
+- Neutral session operations enter from the parent contract; Claude argv and
+  protocol output form the provider boundary; canonical observations and typed
+  failures return to callers.
 
 ## Routing
 
