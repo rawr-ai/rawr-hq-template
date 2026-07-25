@@ -13,3 +13,21 @@ export const ledgerFlags = {
   }),
   json: Flags.boolean({ description: "Emit raw JSON instead of a rendered summary." }),
 };
+
+/**
+ * Addresses one revision of the work stream.
+ *
+ * @remarks
+ * Omitting it means the committed revision, so every command reads and writes
+ * product truth unless a candidate is named explicitly.
+ */
+export const revisionFlag = {
+  revision: Flags.string({
+    description: "Revision to address. Omit for the committed revision.",
+  }),
+};
+
+/** Records why a durable decision was made, alongside the decision itself. */
+export const noteFlag = {
+  note: Flags.string({ description: "Why. Recorded durably alongside the transition." }),
+};

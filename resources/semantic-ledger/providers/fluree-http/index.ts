@@ -13,8 +13,18 @@
  *   follow through `insert`.
  * - Time travel is a suffix on the ledger reference — `ws:main@t:1`. A bare
  *   `t` field at query top level is silently ignored, which is a quiet trap.
+ *   `@iso:`, `@recorded:`, and `@commit:` are honoured in the same position.
  * - Reads go out as SPARQL because its response envelope is self-describing;
  *   writes go in as JSON-LD because that is the natural insert shape.
+ * - `branch` and `merge` take a *bare family name* in `ledger`, unlike every
+ *   other endpoint, which takes `name:branch`. Passing the qualified form
+ *   yields `name:branch:branch` and a nameservice error.
+ * - There is no route to drop a single branch. `drop` removes an entire family
+ *   and every branch in it, so the port deliberately exposes no delete at all.
+ *
+ * This server accepts unrecognised request keys silently. Two are confirmed:
+ * a top-level `t`, and `opts.reasoner`. Treat a 200 as evidence that a request
+ * was *accepted*, never as evidence that a feature was *applied*.
  *
  * @agents
  * Vendor mechanics belong here. Work-stream meaning does not.
@@ -25,6 +35,8 @@ import {
   type GraphProperty,
   type LedgerCommit,
   type LedgerHead,
+  type LedgerMergePreview,
+  type LedgerMergeReceipt,
   type SemanticLedgerFailure,
   type SemanticLedgerPort,
   semanticLedgerFailure,
@@ -47,6 +59,22 @@ interface LedgerListEntry {
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000;
+
+/** Split a `name:branch` reference into its two parts. */
+function splitRef(
+  operation: SemanticLedgerFailure["operation"],
+  ledger: string
+): { family: string; branch: string } {
+  const separator = ledger.indexOf(":");
+  if (separator <= 0 || separator === ledger.length - 1) {
+    throw semanticLedgerFailure(
+      operation,
+      "InvalidInput",
+      `Expected a 'name:branch' reference, received '${ledger}'`
+    );
+  }
+  return { family: ledger.slice(0, separator), branch: ledger.slice(separator + 1) };
+}
 
 function renderTerm(value: Term): string {
   switch (value.kind) {
@@ -250,6 +278,118 @@ export function createFlureeHttpSemanticLedgerPort(options: FlureeHttpOptions): 
         }
         return binding;
       });
+    },
+
+    async fork({ from, to }): Promise<LedgerHead> {
+      const source = splitRef("fork", from);
+      const target = splitRef("fork", to);
+      if (source.family !== target.family) {
+        throw semanticLedgerFailure(
+          "fork",
+          "InvalidInput",
+          `A line may only fork within its own family: '${from}' -> '${to}'`
+        );
+      }
+
+      const { status, body } = await request("fork", "/v1/fluree/branch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // `ledger` here is the bare family name; the branch suffix is rejected.
+        body: JSON.stringify({
+          ledger: source.family,
+          branch: target.branch,
+          source: source.branch,
+        }),
+      });
+      rejectOnError("fork", status, body);
+
+      const created = parseJson<{ t?: number }>("fork", body);
+      return { ledger: to, t: created.t ?? 0 };
+    },
+
+    async merge({ from, into }): Promise<LedgerMergeReceipt> {
+      const source = splitRef("merge", from);
+      const target = splitRef("merge", into);
+      if (source.family !== target.family) {
+        throw semanticLedgerFailure(
+          "merge",
+          "InvalidInput",
+          `A line may only merge within its own family: '${from}' -> '${into}'`
+        );
+      }
+
+      const { status, body } = await request("merge", "/v1/fluree/merge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ledger: source.family,
+          source: source.branch,
+          target: target.branch,
+        }),
+      });
+      rejectOnError("merge", status, body);
+
+      const receipt = parseJson<{
+        new_head_t?: number;
+        commits_copied?: number;
+        conflict_count?: number;
+        fast_forward?: boolean;
+      }>("merge", body);
+
+      return {
+        ledger: into,
+        t: receipt.new_head_t ?? 0,
+        copied: receipt.commits_copied ?? 0,
+        conflicts: receipt.conflict_count ?? 0,
+        fastForward: receipt.fast_forward ?? false,
+      };
+    },
+
+    async previewMerge({ from, into }): Promise<LedgerMergePreview> {
+      const source = splitRef("previewMerge", from);
+      const target = splitRef("previewMerge", into);
+
+      const query = new URLSearchParams({ source: source.branch, target: target.branch });
+      const { status, body } = await request(
+        "previewMerge",
+        `/v1/fluree/merge-preview/${encodeURIComponent(source.family)}?${query.toString()}`,
+        { method: "GET" }
+      );
+      rejectOnError("previewMerge", status, body);
+
+      const preview = parseJson<{
+        ahead?: { count?: number };
+        behind?: { count?: number };
+        conflicts?: { count?: number };
+        fast_forward?: boolean;
+        mergeable?: boolean;
+      }>("previewMerge", body);
+
+      return {
+        from,
+        into,
+        ahead: preview.ahead?.count ?? 0,
+        behind: preview.behind?.count ?? 0,
+        conflicts: preview.conflicts?.count ?? 0,
+        fastForward: preview.fast_forward ?? false,
+        mergeable: preview.mergeable ?? false,
+      };
+    },
+
+    async lines({ family }): Promise<readonly LedgerHead[]> {
+      // `GET /branch/{family}` is preferred over the ledger list because it
+      // reports each line's source, which the ledger list omits.
+      const { status, body } = await request(
+        "lines",
+        `/v1/fluree/branch/${encodeURIComponent(family)}`,
+        { method: "GET" }
+      );
+      rejectOnError("lines", status, body);
+
+      const branches = parseJson<{ branch?: string; t?: number }[]>("lines", body);
+      return branches.flatMap((entry) =>
+        entry.branch === undefined ? [] : [{ ledger: `${family}:${entry.branch}`, t: entry.t ?? 0 }]
+      );
     },
   };
 }

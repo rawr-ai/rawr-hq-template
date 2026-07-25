@@ -2,27 +2,35 @@
  * @fileoverview Streams-module boundary contract.
  *
  * @remarks
- * Five operations, each small:
+ * Seven operations, each small:
  * - `open` declares the frame's shape.
  * - `admit` puts work into the frame.
  * - `push` is the iterator.
  * - `resolve` closes a feedback loop.
+ * - `close` seals the stream against further work.
  * - `inspect` reads durable truth, optionally as it stood at an earlier `t`.
+ * - `trace` reads how one item came to be where it is.
  *
- * `inspect.at` is the whole temporal claim of this experiment: the same call at
- * two positions returns two different worlds.
+ * Every operation takes an optional `revision`. Omitting it means the committed
+ * revision, so the default path is always product truth.
+ *
+ * `inspect.at` is the temporal claim of this experiment: the same call at two
+ * positions returns two different worlds. `trace` is its companion — the path
+ * between those worlds is itself durable, not reconstructed by inference.
  *
  * @agents
  * Extend capability by updating this contract first, then implementing handlers
- * in `router.ts`. Keep this file free of execution logic.
+ * in `router/`. Keep this file free of execution logic.
  */
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { AdvanceSchema } from "../../model/dto/advance";
-import { BoundarySchema } from "../../model/dto/boundary";
+import { BoundaryInputSchema } from "../../model/dto/boundary";
 import { ItemSchema } from "../../model/dto/item";
+import { SettlementSchema } from "../../model/dto/settlement";
 import { StreamSchema } from "../../model/dto/stream";
+import { TraceEventSchema } from "../../model/dto/trace";
 import {
   ITEM_ALREADY_EXISTS,
   ITEM_NOT_DERIVED,
@@ -30,6 +38,7 @@ import {
   LEDGER_UNAVAILABLE,
   READ_ONLY_MODE,
   STREAM_ALREADY_EXISTS,
+  STREAM_CLOSED,
   STREAM_NOT_FOUND,
 } from "../../model/errors/boundary-errors";
 
@@ -45,6 +54,21 @@ const ItemId = Type.String({
   description: "Caller-facing item identifier, unique within the stream.",
 });
 
+const Revision = Type.Optional(
+  Type.String({
+    minLength: 1,
+    maxLength: 120,
+    description: "Revision to address. Omit for the committed revision.",
+  })
+);
+
+const Note = Type.Optional(
+  Type.String({
+    maxLength: 2000,
+    description: "Why this was done. Recorded durably alongside the transition.",
+  })
+);
+
 /** Caller-visible boundary for every stream procedure in this module. */
 export const contract = {
   open: ocBase
@@ -54,7 +78,8 @@ export const contract = {
         Type.Object(
           {
             streamId: StreamId,
-            boundaries: Type.Array(BoundarySchema, {
+            revision: Revision,
+            boundaries: Type.Array(BoundaryInputSchema, {
               minItems: 1,
               maxItems: 32,
               description: "The frame's shape, in the order work must clear it.",
@@ -74,6 +99,7 @@ export const contract = {
         Type.Object(
           {
             streamId: StreamId,
+            revision: Revision,
             itemId: ItemId,
             title: Type.String({ minLength: 1, maxLength: 500 }),
             tags: Type.Optional(
@@ -88,14 +114,20 @@ export const contract = {
       )
     )
     .output(schema(ItemSchema))
-    .errors({ READ_ONLY_MODE, STREAM_NOT_FOUND, ITEM_ALREADY_EXISTS, LEDGER_UNAVAILABLE }),
+    .errors({
+      READ_ONLY_MODE,
+      STREAM_NOT_FOUND,
+      STREAM_CLOSED,
+      ITEM_ALREADY_EXISTS,
+      LEDGER_UNAVAILABLE,
+    }),
 
   push: ocBase
     .meta({ idempotent: false, entity: "stream" })
     .input(
       schema(
         Type.Object(
-          { streamId: StreamId },
+          { streamId: StreamId, revision: Revision },
           {
             additionalProperties: false,
             description: "Advance every item as far as the frame allows.",
@@ -110,22 +142,20 @@ export const contract = {
             streamId: StreamId,
             t: Type.Number({ description: "Ledger position after the push." }),
             advances: Type.Array(AdvanceSchema),
-            atEquilibrium: Type.Boolean({
-              description: "True when no item moved and no new item was peeled off.",
-            }),
+            settlement: SettlementSchema,
           },
           { additionalProperties: false, description: "What one turn of the iterator did." }
         )
       )
     )
-    .errors({ READ_ONLY_MODE, STREAM_NOT_FOUND, LEDGER_UNAVAILABLE }),
+    .errors({ READ_ONLY_MODE, STREAM_NOT_FOUND, STREAM_CLOSED, LEDGER_UNAVAILABLE }),
 
   resolve: ocBase
     .meta({ idempotent: false, entity: "item" })
     .input(
       schema(
         Type.Object(
-          { streamId: StreamId, itemId: ItemId },
+          { streamId: StreamId, revision: Revision, itemId: ItemId, note: Note },
           {
             additionalProperties: false,
             description: "Resolve a derived item, granting its tag to its parent.",
@@ -137,10 +167,27 @@ export const contract = {
     .errors({
       READ_ONLY_MODE,
       STREAM_NOT_FOUND,
+      STREAM_CLOSED,
       ITEM_NOT_FOUND,
       ITEM_NOT_DERIVED,
       LEDGER_UNAVAILABLE,
     }),
+
+  close: ocBase
+    .meta({ idempotent: false, entity: "stream" })
+    .input(
+      schema(
+        Type.Object(
+          { streamId: StreamId, revision: Revision, note: Note },
+          {
+            additionalProperties: false,
+            description: "Seal the stream. Reads keep working; writes stop.",
+          }
+        )
+      )
+    )
+    .output(schema(StreamSchema))
+    .errors({ READ_ONLY_MODE, STREAM_NOT_FOUND, STREAM_CLOSED, LEDGER_UNAVAILABLE }),
 
   inspect: ocBase
     .meta({ idempotent: true, entity: "stream" })
@@ -149,6 +196,7 @@ export const contract = {
         Type.Object(
           {
             streamId: StreamId,
+            revision: Revision,
             at: Type.Optional(
               Type.Number({
                 minimum: 0,
@@ -173,4 +221,38 @@ export const contract = {
       )
     )
     .errors({ STREAM_NOT_FOUND, LEDGER_UNAVAILABLE }),
+
+  trace: ocBase
+    .meta({ idempotent: true, entity: "item" })
+    .input(
+      schema(
+        Type.Object(
+          {
+            streamId: StreamId,
+            revision: Revision,
+            itemId: ItemId,
+            at: Type.Optional(
+              Type.Number({ minimum: 0, description: "Trace as it stood at this position." })
+            ),
+          },
+          { additionalProperties: false, description: "Read one item's whole trajectory." }
+        )
+      )
+    )
+    .output(
+      schema(
+        Type.Object(
+          {
+            streamId: StreamId,
+            itemId: ItemId,
+            events: Type.Array(TraceEventSchema, {
+              description: "Every recorded transition, oldest first.",
+            }),
+            observedAt: Type.Number({ description: "Position this trace was reconstructed at." }),
+          },
+          { additionalProperties: false, description: "How one item came to be where it is." }
+        )
+      )
+    )
+    .errors({ STREAM_NOT_FOUND, ITEM_NOT_FOUND, LEDGER_UNAVAILABLE }),
 };

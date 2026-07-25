@@ -2,8 +2,21 @@
  * @fileoverview `rawr workstream push` — run the iterator once.
  */
 import { Args, Command } from "@oclif/core";
-import { ledgerFlags } from "../../lib/flags";
+import { ledgerFlags, revisionFlag } from "../../lib/flags";
 import { createWorkstreamClient, invocation } from "../../lib/workstream-client";
+
+/**
+ * Settlement rendered as the instruction it implies.
+ *
+ * @remarks
+ * A caller driving the loop asks one question after every turn — do I keep
+ * going — so the summary answers that rather than restating the enum.
+ */
+const SETTLEMENT_ADVICE = {
+  advancing: "advancing — push again",
+  converged: "converged — every item cleared every boundary",
+  stalled: "stalled — nothing will move until a peel-off is resolved",
+} as const;
 
 export default class WorkstreamPush extends Command {
   static description =
@@ -13,7 +26,7 @@ export default class WorkstreamPush extends Command {
     stream: Args.string({ required: true, description: "Stream identifier." }),
   };
 
-  static flags = { ...ledgerFlags };
+  static flags = { ...ledgerFlags, ...revisionFlag };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(WorkstreamPush);
@@ -23,7 +36,7 @@ export default class WorkstreamPush extends Command {
     });
 
     const result = await client.streams.push(
-      { streamId: args.stream },
+      { streamId: args.stream, revision: flags.revision },
       invocation(`cli-push-${args.stream}`)
     );
 
@@ -36,6 +49,6 @@ export default class WorkstreamPush extends Command {
           : "";
       this.log(`  ${advance.itemId}: ${advance.outcome} (cleared ${advance.clearedTo})${detail}`);
     }
-    if (result.atEquilibrium) this.log("  equilibrium — nothing moved");
+    this.log(`  ${SETTLEMENT_ADVICE[result.settlement]}`);
   }
 }

@@ -2,8 +2,15 @@
  * @fileoverview Item schema — work moving through the frame.
  *
  * @remarks
- * `position` is derived by counting durable `cleared` facts rather than stored
- * as a mutable cursor, which is what keeps a temporal read faithful.
+ * `position` is derived, never stored: it is the index of the first boundary
+ * this item has *not* cleared, computed by walking the current frame against
+ * the item's durable clearance facts.
+ *
+ * That definition is deliberate. Counting clearances gives the same answer only
+ * while the frame never changes shape. Deriving position from the frame means
+ * an item that gains a new boundary ahead of it correctly moves back to face
+ * it — work is measured against the law as the law now stands, which is the
+ * behaviour the model exists to have.
  */
 import { type Static, Type } from "typebox";
 
@@ -15,9 +22,12 @@ export const ItemSchema = Type.Object(
     tags: Type.Array(Type.String(), {
       description: "Tags the item carries. Boundaries are cleared by tag.",
     }),
+    cleared: Type.Array(Type.String(), {
+      description: "Durable identities of every boundary this item has cleared.",
+    }),
     position: Type.Number({
       minimum: 0,
-      description: "Count of boundaries this item has cleared. Never decreases.",
+      description: "Index of the first boundary not yet cleared. Derived from the frame.",
     }),
     derivedFrom: Type.Union([Type.String(), Type.Null()], {
       description: "Item this one was peeled off from, or null if admitted directly.",

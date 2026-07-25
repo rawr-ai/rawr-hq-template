@@ -12,9 +12,14 @@
  * to its cause and re-enters the same frame as input. Resolving that derived
  * item grants the tag its parent was missing, and the next push carries the
  * parent through. That is the feedback loop, and it is the point of the model.
+ *
+ * The loop always terminates. Tags are only added and clearances only appended,
+ * so `Σ (boundaries − position)` over all items strictly decreases on every
+ * productive push and never rises. That monotonicity is also why the frame
+ * needs no oscillation detection: it cannot revisit a state it has left.
  */
-
 import type { AdvanceView } from "../../../model/dto/advance";
+import type { Settlement } from "../../../model/dto/settlement";
 import { derivedItemId } from "../../../model/helpers/derived-identity";
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
@@ -24,17 +29,26 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
   if (context.config.readOnly) {
     throw errors.READ_ONLY_MODE({ data: { path: "streams.push" } });
   }
+  const store = context.storeFor(input.revision);
 
   return await withLedger(
     async () => {
-      if (!(await context.store.streamExists(input.streamId))) {
+      if (!(await store.streamExists(input.streamId))) {
         throw errors.STREAM_NOT_FOUND({
           message: `Stream '${input.streamId}' not found`,
           data: { streamId: input.streamId },
         });
       }
 
-      const { boundaries, items } = await context.store.readStream(input.streamId);
+      const stream = await store.readStream(input.streamId);
+      if (stream.closedAt !== null) {
+        throw errors.STREAM_CLOSED({
+          message: `Stream '${input.streamId}' was closed at ${stream.closedAt}`,
+          data: { streamId: input.streamId, closedAt: stream.closedAt },
+        });
+      }
+
+      const { boundaries, items } = stream;
       const advances: AdvanceView[] = [];
       let moved = false;
 
@@ -62,11 +76,19 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
         }
 
         const tags = new Set(item.tags);
+        const cleared = new Set(item.cleared);
         let position = item.position;
-        while (position < boundaries.length && tags.has(boundaries[position]!.requires)) {
-          await context.store.recordCleared(input.streamId, item.id, position);
+
+        while (position < boundaries.length) {
+          const boundary = boundaries[position];
+          if (!boundary || !tags.has(boundary.requires)) break;
+          // Clearance names the boundary, never its index, so this fact stays
+          // true about the same gate even if the frame is later reshaped.
+          if (!cleared.has(boundary.key)) {
+            await store.recordCleared(input.streamId, item.id, boundary.key, context.clock.now());
+            moved = true;
+          }
           position += 1;
-          moved = true;
         }
 
         if (position >= boundaries.length) {
@@ -81,7 +103,7 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
           continue;
         }
 
-        const requires = boundaries[position]!.requires;
+        const requires = boundaries[position]?.requires ?? "";
         const childId = derivedItemId(item.id, requires);
         const existing = items.find((candidate) => candidate.id === childId);
 
@@ -100,7 +122,7 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
         }
 
         if (!existing) {
-          await context.store.createDerived(
+          await store.createDerived(
             input.streamId,
             childId,
             item.id,
@@ -121,12 +143,15 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
         });
       }
 
-      return {
-        streamId: input.streamId,
-        t: await context.store.head(),
-        advances,
-        atEquilibrium: !moved,
-      };
+      // Settlement separates "done" from "stuck". Both are quiet; only one
+      // means stop. An agent driving the iterator reads exactly this field.
+      const settlement: Settlement = moved
+        ? "advancing"
+        : advances.every((advance) => advance.outcome === "completed")
+          ? "converged"
+          : "stalled";
+
+      return { streamId: input.streamId, t: await store.head(), advances, settlement };
     },
     (data) => {
       throw errors.LEDGER_UNAVAILABLE({ data });

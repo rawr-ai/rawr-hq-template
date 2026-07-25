@@ -2,7 +2,7 @@
  * @fileoverview `rawr workstream resolve` — close one feedback loop.
  */
 import { Args, Command } from "@oclif/core";
-import { ledgerFlags } from "../../lib/flags";
+import { ledgerFlags, noteFlag, revisionFlag } from "../../lib/flags";
 import { createWorkstreamClient, invocation } from "../../lib/workstream-client";
 
 export default class WorkstreamResolve extends Command {
@@ -13,7 +13,7 @@ export default class WorkstreamResolve extends Command {
     item: Args.string({ required: true, description: "Derived item identifier." }),
   };
 
-  static flags = { ...ledgerFlags };
+  static flags = { ...ledgerFlags, ...revisionFlag, ...noteFlag };
 
   async run(): Promise<void> {
     const { args, flags } = await this.parse(WorkstreamResolve);
@@ -23,7 +23,7 @@ export default class WorkstreamResolve extends Command {
     });
 
     const item = await client.streams.resolve(
-      { streamId: args.stream, itemId: args.item },
+      { streamId: args.stream, itemId: args.item, revision: flags.revision, note: flags.note },
       invocation(`cli-resolve-${args.item}`)
     );
 

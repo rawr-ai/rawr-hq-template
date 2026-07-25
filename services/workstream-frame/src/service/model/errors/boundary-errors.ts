@@ -79,6 +79,28 @@ const ReadOnlyModeData = schema(
   )
 );
 
+const StreamClosedData = schema(
+  Type.Object(
+    {
+      streamId: Type.Optional(Type.String({ minLength: 1, description: "Stream that is sealed." })),
+      closedAt: Type.Optional(Type.String({ description: "When the stream was sealed." })),
+    },
+    { additionalProperties: false, description: "Context for STREAM_CLOSED." }
+  )
+);
+
+const RevisionData = schema(
+  Type.Object(
+    {
+      revision: Type.Optional(Type.String({ minLength: 1, description: "Revision named." })),
+      committed: Type.Optional(
+        Type.String({ description: "Name of the committed revision, for contrast." })
+      ),
+    },
+    { additionalProperties: false, description: "Context for revision errors." }
+  )
+);
+
 const LedgerUnavailableData = schema(
   Type.Object(
     {
@@ -130,6 +152,48 @@ export const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
   status: 409,
   message: "Write operations are blocked while read-only mode is enabled",
   data: ReadOnlyModeData,
+} as const;
+
+/**
+ * Refuses work against a stream that has been sealed.
+ *
+ * @remarks
+ * This *is* an error, unlike a boundary refusing an item. A blocked item is the
+ * frame working; writing to a closed stream is a caller mistake about what the
+ * stream still is.
+ */
+export const STREAM_CLOSED: ErrorMapItem<typeof StreamClosedData> = {
+  status: 409,
+  message: "Stream is closed and accepts no further work",
+  data: StreamClosedData,
+} as const;
+
+/** Refuses an operation naming a revision that does not exist. */
+export const REVISION_NOT_FOUND: ErrorMapItem<typeof RevisionData> = {
+  status: 404,
+  message: "Revision not found",
+  data: RevisionData,
+} as const;
+
+/** Refuses forking a revision whose name is already taken. */
+export const REVISION_ALREADY_EXISTS: ErrorMapItem<typeof RevisionData> = {
+  status: 409,
+  message: "Revision already exists",
+  data: RevisionData,
+} as const;
+
+/**
+ * Refuses promoting or abandoning the committed revision.
+ *
+ * @remarks
+ * The committed revision is what candidates are promoted *into*. Folding it
+ * into itself, or setting it aside, are both category errors rather than
+ * operations with a sensible meaning.
+ */
+export const REVISION_NOT_CANDIDATE: ErrorMapItem<typeof RevisionData> = {
+  status: 409,
+  message: "Only a candidate revision can be promoted or abandoned",
+  data: RevisionData,
 } as const;
 
 /** Reports that the ledger substrate could not serve the request, with redacted provider context. */

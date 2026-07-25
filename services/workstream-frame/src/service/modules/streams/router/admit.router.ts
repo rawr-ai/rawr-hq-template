@@ -4,28 +4,37 @@
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
 
-/** Admits one item with its opening tags. */
+/** Admits one item, carrying whatever tags it already has. */
 export const admit = module.admit.handler(async ({ context, input, errors }) => {
   if (context.config.readOnly) {
     throw errors.READ_ONLY_MODE({ data: { path: "streams.admit" } });
   }
+  const store = context.storeFor(input.revision);
 
   return await withLedger(
     async () => {
-      if (!(await context.store.streamExists(input.streamId))) {
+      if (!(await store.streamExists(input.streamId))) {
         throw errors.STREAM_NOT_FOUND({
           message: `Stream '${input.streamId}' not found`,
           data: { streamId: input.streamId },
         });
       }
-      if (await context.store.itemExists(input.streamId, input.itemId)) {
+
+      const stream = await store.readStream(input.streamId);
+      if (stream.closedAt !== null) {
+        throw errors.STREAM_CLOSED({
+          message: `Stream '${input.streamId}' was closed at ${stream.closedAt}`,
+          data: { streamId: input.streamId, closedAt: stream.closedAt },
+        });
+      }
+      if (stream.items.some((candidate) => candidate.id === input.itemId)) {
         throw errors.ITEM_ALREADY_EXISTS({
-          message: `Item '${input.itemId}' already exists`,
+          message: `Item '${input.itemId}' already exists in '${input.streamId}'`,
           data: { streamId: input.streamId, itemId: input.itemId },
         });
       }
 
-      await context.store.admitItem(
+      await store.admitItem(
         input.streamId,
         input.itemId,
         input.title,
@@ -33,19 +42,14 @@ export const admit = module.admit.handler(async ({ context, input, errors }) => 
         context.clock.now()
       );
 
-      const admitted = (await context.store.listItems(input.streamId)).find(
-        (item) => item.id === input.itemId
+      const admitted = (await store.readStream(input.streamId)).items.find(
+        (candidate) => candidate.id === input.itemId
       );
-      // The write was accepted but the ledger did not serve it back. That is a
-      // substrate problem, not a caller mistake, so it is not an ITEM_NOT_FOUND.
       if (!admitted) {
+        // The write was accepted but is not readable back. That is a substrate
+        // problem rather than a caller mistake, so it is not ITEM_NOT_FOUND.
         throw errors.LEDGER_UNAVAILABLE({
-          message: `Item '${input.itemId}' was written but could not be read back`,
-          data: {
-            operation: "select",
-            reason: "BackendFailed",
-            detail: `write to '${input.streamId}' was not observable at head`,
-          },
+          data: { operation: "admitItem", reason: "BackendFailed", detail: "Item not readable" },
         });
       }
       return admitted;

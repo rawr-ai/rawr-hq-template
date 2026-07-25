@@ -57,7 +57,7 @@ type InvocationContext = {
 /** Static procedure metadata authored by the service. */
 type ProcedureMetadata = {
   audit?: "none" | "basic" | "full";
-  entity?: "service" | "stream" | "item";
+  entity?: "service" | "stream" | "item" | "revision";
 };
 
 /**

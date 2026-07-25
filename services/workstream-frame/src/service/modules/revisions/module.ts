@@ -1,19 +1,17 @@
 /**
- * @fileoverview Streams module runtime composition.
+ * @fileoverview Revisions module runtime composition.
  *
  * @remarks
  * Composition only: start from the package implementer, attach module
- * middleware, and narrow the context handlers actually see. Handlers receive a
- * per-revision store factory, `clock`, and `config` — not the raw dependency
- * bag, and never a ledger reference they assembled themselves.
+ * middleware, and narrow the context handlers actually see.
  */
 import { impl } from "../../impl";
 import { analytics } from "./middleware/analytics.middleware";
 import { observability } from "./middleware/observability.middleware";
 import { repository } from "./middleware/repository.middleware";
 
-/** Composed module surface every stream procedure handler builds on. */
-export const module = impl.streams
+/** Composed module surface every revision procedure handler builds on. */
+export const module = impl.revisions
   .use(observability)
   .use(analytics)
   .use(repository)
@@ -22,8 +20,11 @@ export const module = impl.streams
       context: {
         clock: context.deps.clock,
         config: context.config,
+        ledger: context.provided.ledger,
+        committedStore: context.provided.committedStore,
+        family: context.provided.family,
         committedRevision: context.provided.committedRevision,
-        storeFor: context.provided.storeFor,
+        refFor: context.provided.refFor,
       },
     })
   );

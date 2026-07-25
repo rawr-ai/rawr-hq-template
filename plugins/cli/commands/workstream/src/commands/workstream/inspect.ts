@@ -2,7 +2,7 @@
  * @fileoverview `rawr workstream inspect` — read durable truth, optionally past.
  */
 import { Args, Command, Flags } from "@oclif/core";
-import { ledgerFlags } from "../../lib/flags";
+import { ledgerFlags, revisionFlag } from "../../lib/flags";
 import { createWorkstreamClient, invocation } from "../../lib/workstream-client";
 
 export default class WorkstreamInspect extends Command {
@@ -15,6 +15,7 @@ export default class WorkstreamInspect extends Command {
 
   static flags = {
     ...ledgerFlags,
+    ...revisionFlag,
     at: Flags.integer({
       description: "Ledger position to reconstruct. Omit to read head.",
     }),
@@ -28,7 +29,11 @@ export default class WorkstreamInspect extends Command {
     });
 
     const observed = await client.streams.inspect(
-      { streamId: args.stream, ...(flags.at === undefined ? {} : { at: flags.at }) },
+      {
+        streamId: args.stream,
+        revision: flags.revision,
+        ...(flags.at === undefined ? {} : { at: flags.at }),
+      },
       invocation(`cli-inspect-${args.stream}`)
     );
 

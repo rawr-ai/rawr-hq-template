@@ -9,19 +9,26 @@ export const resolve = module.resolve.handler(async ({ context, input, errors })
   if (context.config.readOnly) {
     throw errors.READ_ONLY_MODE({ data: { path: "streams.resolve" } });
   }
+  const store = context.storeFor(input.revision);
 
   return await withLedger(
     async () => {
-      if (!(await context.store.streamExists(input.streamId))) {
+      if (!(await store.streamExists(input.streamId))) {
         throw errors.STREAM_NOT_FOUND({
           message: `Stream '${input.streamId}' not found`,
           data: { streamId: input.streamId },
         });
       }
 
-      const item = (await context.store.listItems(input.streamId)).find(
-        (candidate) => candidate.id === input.itemId
-      );
+      const stream = await store.readStream(input.streamId);
+      if (stream.closedAt !== null) {
+        throw errors.STREAM_CLOSED({
+          message: `Stream '${input.streamId}' was closed at ${stream.closedAt}`,
+          data: { streamId: input.streamId, closedAt: stream.closedAt },
+        });
+      }
+
+      const item = stream.items.find((candidate) => candidate.id === input.itemId);
       if (!item) {
         throw errors.ITEM_NOT_FOUND({
           message: `Item '${input.itemId}' not found`,
@@ -37,10 +44,17 @@ export const resolve = module.resolve.handler(async ({ context, input, errors })
       // Resolving twice is a no-op rather than a failure.
       if (item.resolved) return item;
 
-      await context.store.resolveDerived(input.streamId, item.id, item.derivedFrom, item.grants);
+      await store.resolveDerived(
+        input.streamId,
+        item.id,
+        item.derivedFrom,
+        item.grants,
+        context.clock.now(),
+        input.note
+      );
 
-      const refreshed = await context.store.listItems(input.streamId);
-      return refreshed.find((candidate) => candidate.id === input.itemId) ?? item;
+      const refreshed = await store.readStream(input.streamId);
+      return refreshed.items.find((candidate) => candidate.id === input.itemId) ?? item;
     },
     (data) => {
       throw errors.LEDGER_UNAVAILABLE({ data });

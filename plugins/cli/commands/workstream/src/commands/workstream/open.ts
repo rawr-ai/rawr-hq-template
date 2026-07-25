@@ -2,7 +2,7 @@
  * @fileoverview `rawr workstream open` — declare a frame's shape.
  */
 import { Args, Command, Flags } from "@oclif/core";
-import { ledgerFlags } from "../../lib/flags";
+import { ledgerFlags, revisionFlag } from "../../lib/flags";
 import { createWorkstreamClient, invocation } from "../../lib/workstream-client";
 
 export default class WorkstreamOpen extends Command {
@@ -14,6 +14,7 @@ export default class WorkstreamOpen extends Command {
 
   static flags = {
     ...ledgerFlags,
+    ...revisionFlag,
     boundary: Flags.string({
       multiple: true,
       required: true,
@@ -31,6 +32,7 @@ export default class WorkstreamOpen extends Command {
     const stream = await client.streams.open(
       {
         streamId: args.stream,
+        revision: flags.revision,
         boundaries: flags.boundary.map((requires: string) => ({ requires })),
       },
       invocation(`cli-open-${args.stream}`)

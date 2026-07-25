@@ -12,9 +12,14 @@
  * port in the same style as `ContentWorkspaceNodeAsyncPort`, because that is
  * the shape services in this repository actually consume.
  *
- * Two properties are load-bearing and every provider must honour them:
+ * Four properties are load-bearing and every provider must honour them:
  * 1. Writes are append-only and produce a monotonically increasing `t`.
  * 2. A read at `t = N` observes exactly the facts written at or before `N`.
+ * 3. A forked line begins with the source's facts and diverges independently;
+ *    neither line observes the other's writes until they are merged.
+ * 4. There is no delete. Nothing in this port removes a fact or a line — a line
+ *    that should no longer be preferred is superseded by recording that it was,
+ *    which is a semantic owner's decision and not a mechanic here.
  *
  * @agents
  * Do not add work-stream vocabulary to this file. If a term only makes sense
@@ -102,6 +107,47 @@ export interface LedgerCommit {
   readonly commit: string;
 }
 
+/**
+ * Outcome of folding one line of facts into another.
+ *
+ * @remarks
+ * `fastForward` is false when the target accepted writes after the fork point,
+ * which is the only condition under which `conflicts` can be non-zero. A
+ * provider reports conflicts; it never resolves them.
+ */
+export interface LedgerMergeReceipt {
+  /** Line the facts were folded into. */
+  readonly ledger: string;
+  /** Target position after the merge. */
+  readonly t: number;
+  /** Facts carried across. Zero means the target already contained them. */
+  readonly copied: number;
+  /** Subjects written on both lines since the fork point. */
+  readonly conflicts: number;
+  /** True when the target had not advanced since the fork point. */
+  readonly fastForward: boolean;
+}
+
+/**
+ * What a merge would do, without doing it.
+ *
+ * @remarks
+ * This exists so a semantic owner can gate promotion on the outcome instead of
+ * discovering it afterwards. `mergeable` is the provider's opinion, not a
+ * guarantee: the lines may diverge further between the preview and the merge.
+ */
+export interface LedgerMergePreview {
+  readonly from: string;
+  readonly into: string;
+  /** Commits on the source that the target does not have. */
+  readonly ahead: number;
+  /** Commits on the target that the source does not have. */
+  readonly behind: number;
+  readonly conflicts: number;
+  readonly fastForward: boolean;
+  readonly mergeable: boolean;
+}
+
 export type SemanticLedgerFailureReason =
   | "InvalidInput"
   | "LedgerMissing"
@@ -119,7 +165,15 @@ export type SemanticLedgerFailureReason =
  */
 export interface SemanticLedgerFailure {
   readonly _tag: "SemanticLedgerFailure";
-  readonly operation: "ensureLedger" | "head" | "transact" | "select";
+  readonly operation:
+    | "ensureLedger"
+    | "head"
+    | "transact"
+    | "select"
+    | "fork"
+    | "merge"
+    | "previewMerge"
+    | "lines";
   readonly reason: SemanticLedgerFailureReason;
   readonly detail: string;
 }
@@ -173,4 +227,28 @@ export interface SemanticLedgerPort {
   readonly select: (
     input: Readonly<{ ledger: string; at?: number; query: SelectQuery }>
   ) => Promise<readonly Binding[]>;
+
+  /**
+   * Start a new line of facts from an existing one.
+   *
+   * @remarks
+   * The new line begins carrying every fact the source held at the fork point.
+   * Writes to either line are invisible to the other until they are merged.
+   */
+  readonly fork: (input: Readonly<{ from: string; to: string }>) => Promise<LedgerHead>;
+
+  /** Fold one line's facts into another. Reports conflicts; never resolves them. */
+  readonly merge: (input: Readonly<{ from: string; into: string }>) => Promise<LedgerMergeReceipt>;
+
+  /** Report what a merge would do, changing nothing. */
+  readonly previewMerge: (
+    input: Readonly<{ from: string; into: string }>
+  ) => Promise<LedgerMergePreview>;
+
+  /**
+   * List every known line in one family.
+   *
+   * @param input.family - The name before the `:`, shared by all its lines.
+   */
+  readonly lines: (input: Readonly<{ family: string }>) => Promise<readonly LedgerHead[]>;
 }
