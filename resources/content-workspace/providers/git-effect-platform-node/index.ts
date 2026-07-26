@@ -20,18 +20,23 @@ import type {
   GitRemoteSelection,
   GitStagedBlobObservation,
   GitStagedIndexBinding,
+  GitStagedIndexEntry,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
   GitWorktreeObjectId,
   MaterializedContentTreeEntry,
 } from "@rawr/resource-content-workspace";
-import { ContentTreeEntrySchema } from "@rawr/resource-content-workspace";
+import {
+  ContentTreeEntrySchema,
+  GitStagedIndexEntrySchema,
+} from "@rawr/resource-content-workspace";
 import { Effect, Equal, FileSystem, Option, PlatformError } from "effect";
 import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const contentTreeEntryValidator = Schema.Compile(ContentTreeEntrySchema);
+const gitStagedIndexEntryValidator = Schema.Compile(GitStagedIndexEntrySchema);
 const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
@@ -408,14 +413,10 @@ export function makeContentWorkspaceResource(
       validateCanonicalPathSet(input.materializedRoots, operation);
     });
     const opening = yield* observeGitStagedIndexBinding(fs, executable, input, operation);
-    const objectIds = yield* checked(operation, () =>
-      stagedRegularBlobObjectIds(
-        opening.indexEntries,
-        opening.anchor.objectFormat,
-        input.maxEntries,
-        input.materializedPaths,
-        input.materializedRoots
-      )
+    const objectIds = stagedRegularBlobObjectIds(
+      opening.entries,
+      input.materializedPaths,
+      input.materializedRoots
     );
     const materialized = yield* readGitBlobBatch(
       executable,
@@ -1775,6 +1776,7 @@ function observeGitStagedIndexBinding(
     locator: string;
     remoteSelection: GitRemoteSelection;
     refName: string;
+    maxEntries: number;
     maxIndexBytes: number;
   }>,
   operation: "observe-git-staged-index"
@@ -1787,14 +1789,20 @@ function observeGitStagedIndexBinding(
       input,
       operation
     );
-    const indexEntries = yield* gitBytes(
+    const output = yield* gitBytes(
       executable,
       anchor.root,
       ["ls-files", "--stage", "-z"],
       operation,
       input.maxIndexBytes
     );
-    return Object.freeze({ anchor, indexEntries }) satisfies GitStagedIndexBinding;
+    const entries = yield* parseGitStagedIndexOutput(
+      output,
+      anchor.objectFormat,
+      input.maxEntries,
+      anchor.root
+    );
+    return Object.freeze({ anchor, entries }) satisfies GitStagedIndexBinding;
   });
 }
 
@@ -1805,13 +1813,14 @@ function observeClosingGitStagedIndexBinding(
     locator: string;
     remoteSelection: GitRemoteSelection;
     refName: string;
+    maxEntries: number;
     maxIndexBytes: number;
   }>,
   operation: "observe-git-staged-index"
 ) {
   return Effect.gen(function* () {
     const root = yield* requireExactGitRoot(fs, executable, input.locator, operation);
-    const indexEntries = yield* gitBytes(
+    const output = yield* gitBytes(
       executable,
       root,
       ["ls-files", "--stage", "-z"],
@@ -1819,43 +1828,29 @@ function observeClosingGitStagedIndexBinding(
       input.maxIndexBytes
     );
     const anchor = yield* observeGitWorkspaceAnchor(fs, executable, root, input, operation);
-    return Object.freeze({ anchor, indexEntries }) satisfies GitStagedIndexBinding;
+    const entries = yield* parseGitStagedIndexOutput(
+      output,
+      anchor.objectFormat,
+      input.maxEntries,
+      root
+    );
+    return Object.freeze({ anchor, entries }) satisfies GitStagedIndexBinding;
   });
 }
 
 function stagedRegularBlobObjectIds(
-  bytes: Uint8Array,
-  objectFormat: GitObjectFormat,
-  maxEntries: number,
+  entries: readonly GitStagedIndexEntry[],
   materializedPaths: readonly string[],
   materializedRoots: readonly string[]
 ): readonly string[] {
   const objectIds = new Set<string>();
-  let entries = 0;
-  for (const raw of decoder.decode(bytes).split("\0")) {
-    if (raw.length === 0) continue;
-    entries += 1;
-    if (entries > maxEntries)
-      throw invalidInput("observe-git-staged-index", undefined, "Git index exceeds maxEntries");
-    const match = /^([0-7]{6}) ([0-9a-f]+) ([0-3])\t([^\0]+)$/u.exec(raw);
-    if (
-      match === null ||
-      match[1] === undefined ||
-      match[2] === undefined ||
-      match[4] === undefined
-    ) {
-      throw invalidInput(
-        "observe-git-staged-index",
-        undefined,
-        "Git index contains a malformed entry"
-      );
-    }
-    validateObjectForFormat(match[2], objectFormat, "index blob", "observe-git-staged-index");
-    const stagedPath = match[4];
+  for (const entry of entries) {
     const selected =
-      materializedPaths.includes(stagedPath) ||
-      materializedRoots.some((root) => stagedPath === root || stagedPath.startsWith(`${root}/`));
-    if (selected && (match[1] === "100644" || match[1] === "100755")) objectIds.add(match[2]);
+      materializedPaths.includes(entry.path) ||
+      materializedRoots.some((root) => entry.path === root || entry.path.startsWith(`${root}/`));
+    if (selected && entry.stage === 0 && (entry.mode === "100644" || entry.mode === "100755")) {
+      objectIds.add(entry.objectId);
+    }
   }
   return Object.freeze([...objectIds].sort(compareText));
 }
@@ -2525,6 +2520,137 @@ function decodeGitBlobBatchHeader(
       expectedBlob,
       "Git blob batch returned a non-UTF-8 object header"
     );
+  }
+}
+
+function parseGitStagedIndexOutput(
+  output: Uint8Array,
+  objectFormat: GitObjectFormat,
+  maxEntries: number,
+  root: string
+): Effect.Effect<readonly GitStagedIndexEntry[], ContentWorkspaceFailure> {
+  return Effect.gen(function* () {
+    if (output.byteLength === 0) return Object.freeze([]);
+    if (output[output.byteLength - 1] !== 0) {
+      return yield* fail(
+        "observe-git-staged-index",
+        "GitFailed",
+        root,
+        "Git index output is truncated before its terminal NUL"
+      );
+    }
+
+    const entries: GitStagedIndexEntry[] = [];
+    const identities = new Set<string>();
+    let recordStart = 0;
+    for (let index = 0; index < output.byteLength; index += 1) {
+      if (output[index] !== 0) continue;
+      if (entries.length >= maxEntries) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "LimitExceeded",
+          root,
+          "Git index output exceeds maxEntries"
+        );
+      }
+      if (index === recordStart) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "GitFailed",
+          root,
+          "Git index output contains an empty record"
+        );
+      }
+
+      const record = yield* Effect.try({
+        try: () => decoder.decode(output.subarray(recordStart, index)),
+        catch: () =>
+          failure(
+            "observe-git-staged-index",
+            "GitFailed",
+            root,
+            "Git index output contains invalid UTF-8"
+          ),
+      });
+      recordStart = index + 1;
+
+      const separator = record.indexOf("\t");
+      if (separator <= 0) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "GitFailed",
+          root,
+          "Git index output contains a malformed record"
+        );
+      }
+      const header = record.slice(0, separator);
+      const entryPath = record.slice(separator + 1);
+      const headerMatch = /^([0-7]{6}) ([0-9A-Za-z]+) ([0-3])$/u.exec(header);
+      const mode = headerMatch?.[1];
+      const objectId = headerMatch?.[2];
+      const rawStage = headerMatch?.[3];
+      if (mode === undefined || objectId === undefined || rawStage === undefined) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "GitFailed",
+          root,
+          "Git index output contains a malformed record header"
+        );
+      }
+      const objectLength = objectFormat === "sha1" ? 40 : 64;
+      if (objectId.length !== objectLength || !/^[0-9a-f]+$/u.test(objectId)) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "GitFailed",
+          entryPath,
+          "Git index output contains an object ID for a different or malformed object format"
+        );
+      }
+
+      const entry = Object.freeze({
+        path: entryPath,
+        mode,
+        objectId,
+        stage: gitIndexStage(rawStage),
+      });
+      if (!gitStagedIndexEntryValidator.Check(entry)) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "UnsupportedEntry",
+          entryPath,
+          "Git index path is outside the staged-entry contract"
+        );
+      }
+      const identity = `${entry.path}\0${entry.stage}`;
+      if (identities.has(identity)) {
+        return yield* fail(
+          "observe-git-staged-index",
+          "GitFailed",
+          entry.path,
+          "Git index output contains a duplicate path and stage"
+        );
+      }
+      identities.add(identity);
+      entries.push(entry);
+    }
+
+    entries.sort((left, right) => compareText(left.path, right.path) || left.stage - right.stage);
+    return Object.freeze(entries);
+  });
+}
+
+function gitIndexStage(value: string): GitStagedIndexEntry["stage"] {
+  switch (value) {
+    case "0":
+      return 0;
+    case "1":
+      return 1;
+    case "2":
+      return 2;
+    case "3":
+      return 3;
+    default:
+      throw new Error(`Unexpected Git index stage: ${value}`);
   }
 }
 

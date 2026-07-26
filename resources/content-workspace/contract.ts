@@ -3,11 +3,11 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 export type GitObjectFormat = "sha1" | "sha256";
 
-const ContentTreePathSchema = Refine(
+const ContentRelativePathSchema = Refine(
   Type.String({
     minLength: 1,
     maxLength: 4_096,
-    description: "Canonical provider-neutral repository-relative path for one regular file",
+    description: "Canonical provider-neutral repository-relative path",
   }),
   (value) =>
     !value.startsWith("/") &&
@@ -15,14 +15,14 @@ const ContentTreePathSchema = Refine(
     !value.includes("\\") &&
     !/[\u0000-\u001f\u007f]/u.test(value) &&
     value.split("/").every((segment) => segment !== "" && segment !== "." && segment !== ".."),
-  () => "Expected a canonical repository-relative regular-file path"
+  () => "Expected a canonical repository-relative path"
 );
 
-const ContentTreeBlobSchema = Type.String({
+const GitObjectIdSchema = Type.String({
   minLength: 40,
   maxLength: 64,
   pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
-  description: "Lowercase SHA-1 or SHA-256 Git blob identifier",
+  description: "Lowercase SHA-1 or SHA-256 Git object identifier",
 });
 
 /** Portable Git modes admitted for regular content-workspace files. */
@@ -33,9 +33,9 @@ export const ContentFileModeSchema = Type.Union([Type.Literal("100644"), Type.Li
 /** Structural schema for one provider-neutral regular Git tree fact. */
 export const ContentTreeEntrySchema = ReadonlyObject(
   Type.Object({
-    path: ContentTreePathSchema,
+    path: ContentRelativePathSchema,
     mode: ContentFileModeSchema,
-    blob: ContentTreeBlobSchema,
+    blob: GitObjectIdSchema,
   }),
   { additionalProperties: false }
 );
@@ -45,6 +45,38 @@ export type ContentFileMode = Static<typeof ContentFileModeSchema>;
 
 /** Provider-neutral regular Git tree fact derived from the resource-owned schema authority. */
 export type ContentTreeEntry = Static<typeof ContentTreeEntrySchema>;
+
+/** Six-octal-digit mode reported by Git for one staged index entry. */
+export const GitStagedIndexModeSchema = Type.String({
+  pattern: "^[0-7]{6}$",
+  description: "Six-octal-digit Git index mode",
+});
+
+/** Conflict stage reported by Git for one staged index entry. */
+export const GitStagedIndexStageSchema = Type.Union(
+  [Type.Literal(0), Type.Literal(1), Type.Literal(2), Type.Literal(3)],
+  { description: "Git index stage where zero is resolved and one through three are conflicts" }
+);
+
+/** Structural schema for one provider-neutral staged Git index fact. */
+export const GitStagedIndexEntrySchema = ReadonlyObject(
+  Type.Object({
+    path: ContentRelativePathSchema,
+    mode: GitStagedIndexModeSchema,
+    objectId: GitObjectIdSchema,
+    stage: GitStagedIndexStageSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** Provider-neutral Git index mode derived from the resource schema authority. */
+export type GitStagedIndexMode = Static<typeof GitStagedIndexModeSchema>;
+
+/** Provider-neutral Git index stage derived from the resource schema authority. */
+export type GitStagedIndexStage = Static<typeof GitStagedIndexStageSchema>;
+
+/** Provider-neutral staged Git index fact derived from the resource schema authority. */
+export type GitStagedIndexEntry = Static<typeof GitStagedIndexEntrySchema>;
 
 export type GitRemoteSelection =
   | Readonly<{ kind: "All" }>
@@ -95,10 +127,15 @@ export interface GitWorkspaceEvidence {
   readonly closingTrackedFlags: Uint8Array;
 }
 
-/** One exact raw Git index binding. Semantic owners classify its contents. */
+/**
+ * One exact typed Git index binding.
+ *
+ * Entries are unique by path and stage, ordered by path and then numeric
+ * stage, and retain provider-neutral facts for semantic owners to classify.
+ */
 export interface GitStagedIndexBinding {
   readonly anchor: GitWorkspaceAnchor;
-  readonly indexEntries: Uint8Array;
+  readonly entries: readonly GitStagedIndexEntry[];
 }
 
 /** Bytes for one regular blob named by the opening Git index binding. */
@@ -297,8 +334,11 @@ export interface ContentWorkspaceResource<R = never> {
       refName: string;
       materializedPaths: readonly string[];
       materializedRoots: readonly string[];
+      /** Maximum staged facts allocated and returned by each index observation. */
       maxEntries: number;
+      /** Maximum native stdout bytes accepted from each staged index read. */
       maxIndexBytes: number;
+      /** Maximum aggregate bytes accepted for the selected regular blobs. */
       maxBlobBytes: number;
     }>
   ) => Effect.Effect<GitStagedIndexObservation, ContentWorkspaceFailure, R>;

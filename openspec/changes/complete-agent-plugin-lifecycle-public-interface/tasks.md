@@ -583,6 +583,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   collision policy in lifecycle consumers. Delete both lifecycle raw-tree
   parsers without adding another DTO, resource, facade, or compatibility
   reader.
+- [x] 5.4g Move native staged-index serialization behind the existing
+  content-workspace provider. Derive one provider-neutral staged-entry schema
+  and type from TypeBox; return frozen mode, object ID, stage, and path facts
+  with independent entry and native-output bounds. Let Releases consume the
+  narrowed ready resource directly in its router handlers, translate typed
+  failures there, and retain stage, mode, release-path, collision, anchor,
+  membership, payload, and binding meaning in pure module policy. Delete the
+  staged observation DTO mirror, reader factory, and port without adding raw
+  byte compatibility, another resource, adapter, or digest authority. Keep
+  `captureGitWorkspaceEvidence.indexEntries` unchanged.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

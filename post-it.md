@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Staged Index Facts Cross Once
+
+The Git provider owns staged-index framing, decoding, bounds, object ID width,
+generic paths, path-stage duplicates, and ordering. Its resource contract
+returns frozen mode, object ID, stage, and path facts. Conflict stages and
+nonregular modes remain facts because only Releases can decide that they mean a
+dirty or invalid release source.
+
+Releases middleware passes the ready resource reference downward without
+building a reader or result mirror. Router handlers invoke it and translate its
+typed failures. Pure policy brands release paths, detects portable collisions,
+classifies nonregular modes before conflict stages, verifies opening and closing
+facts, and derives the staged binding from the complete typed entry set. Raw
+index bytes never cross this public staged boundary.
+
+See [[resources/content-workspace/AGENTS|the content-workspace resource]],
+[[services/agent-plugin-lifecycle/src/service/modules/releases/AGENTS|the Releases module]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Resource, provider, runtime, context, module, router, policy, fact, authority,
+closure, stage, mode, entry, bound, decode, classify, direct, typed, frozen.
+
 ## 2026-07-26 - Providers Decode Native Protocols
 
 A resource returns provider-neutral facts, not a provider's serialization.
