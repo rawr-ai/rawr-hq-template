@@ -710,6 +710,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   detached operation runners, non-operation router buckets, exact handler
   context, and the legacy release family open for later owner-local
   checkpoints.
+- [x] 5.7e2f Normalize Packaging's module shell and operation authorship.
+  Delete its loose duplicate telemetry middleware while retaining the
+  service-owned required observability and analytics; declare the module
+  `Context` and its ready source/output enrichment directly in `module.ts`;
+  compose one authored package subrouter through module `router.ts`; and move
+  pure release-identity, failure-classification, prior-output observation, and
+  bounded-diagnostic decisions into module policy. Replace Packaging's upward
+  relative imports with its current owner alias without relocating the legacy
+  release family.
+  Preserve the inline inspect, derive, encode, revalidate, publish, and settle
+  transition, exact TypeBox request/results, Cowork bytes, failure text,
+  output identity, and idempotent repeat. Native oRPC context remains additive;
+  keep exact handler context, root context assembly, and the legacy release
+  family open.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

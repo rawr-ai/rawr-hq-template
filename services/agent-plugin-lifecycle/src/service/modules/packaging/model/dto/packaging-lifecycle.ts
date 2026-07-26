@@ -1,8 +1,7 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-
-import { ContentWorkspacePolicySchema } from "../../../../model/dto/releases/content-workspace";
-import { isCanonicalAbsolutePath } from "../../../../model/dto/structural";
+import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import { isCanonicalAbsolutePath } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
@@ -10,17 +9,23 @@ import {
   ReleaseDigestSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
-} from "../../../../shared/release";
+} from "#agent-plugin-lifecycle-service/shared/release/index";
 
+/** Identifies the only package format accepted and emitted by this module. */
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;
+/** Bounds the caller-selected destination path carried through package results. */
 export const MAX_PACKAGING_OUTPUT_PATH_LENGTH = 4_096;
+/** Bounds resource phase labels before they cross the Packaging result boundary. */
 export const MAX_PACKAGING_FAILURE_PHASE_LENGTH = 256;
+/** Bounds external diagnostics before they cross the Packaging result boundary. */
 export const MAX_PACKAGING_FAILURE_MESSAGE_LENGTH = 4_096;
 
+/** Validates the content-derived identity of rendered Cowork package bytes. */
 export const PackageDigestSchema = Type.TemplateLiteral("pkg1_${string}", {
   pattern: "^pkg1_[0-9a-f]{64}$",
 });
 
+/** Enumerates Packaging-owned failure classifications without leaking resource error tags. */
 export const PackagingFailureCodeSchema = Type.Union([
   Type.Literal("InvalidRequest"),
   Type.Literal("SourceIneligible"),
@@ -40,6 +45,7 @@ export const PackagingFailureCodeSchema = Type.Union([
   Type.Literal("FailpointFailed"),
 ]);
 
+/** Defines one bounded failure returned by a Packaging settlement outcome. */
 export const PackagingFailureSchema = ReadonlyObject(
   Type.Object({
     code: PackagingFailureCodeSchema,
@@ -49,6 +55,7 @@ export const PackagingFailureSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Admits a canonical non-root absolute destination for explicit package publication. */
 export const PackageOutputPathSchema = Refine(
   Type.String({
     minLength: 2,
@@ -60,6 +67,7 @@ export const PackageOutputPathSchema = Refine(
   () => "Expected a canonical non-root absolute package output path"
 );
 
+/** Defines the complete caller input for deterministic package construction and publication. */
 export const PackageAgentPluginRequestSchema = ReadonlyObject(
   Type.Object({
     contentWorkspace: ContentWorkspacePolicySchema,
@@ -70,6 +78,7 @@ export const PackageAgentPluginRequestSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Identifies whether a package contains one release or a complete release set. */
 export const PackagedReleaseIdentitySchema = Type.Union([
   ReadonlyObject(
     Type.Object({
@@ -98,6 +107,7 @@ const packageResultIdentityProperties = {
   packageDigest: PackageDigestSchema,
 } as const;
 
+/** Defines the four closed outcomes observable after a package operation. */
 export const PackageAgentPluginResultSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
@@ -133,9 +143,15 @@ export const PackageAgentPluginResultSchema = Type.Union([
   ),
 ]);
 
+/** Content-derived identity of the rendered package bytes. */
 export type PackageDigest = Static<typeof PackageDigestSchema>;
+/** Packaging-owned classification for a public operation failure. */
 export type PackagingFailureCode = Static<typeof PackagingFailureCodeSchema>;
+/** Bounded public failure returned inside a package settlement outcome. */
 export type PackagingFailure = Static<typeof PackagingFailureSchema>;
+/** Release or complete-set identity carried by a rendered package. */
 export type PackagedReleaseIdentity = Static<typeof PackagedReleaseIdentitySchema>;
+/** TypeBox-derived request accepted by the package operation. */
 export type PackageAgentPluginRequest = Static<typeof PackageAgentPluginRequestSchema>;
+/** TypeBox-derived closed result returned by the package operation. */
 export type PackageAgentPluginResult = Static<typeof PackageAgentPluginResultSchema>;
