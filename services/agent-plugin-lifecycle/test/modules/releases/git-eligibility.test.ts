@@ -2,10 +2,11 @@ import { mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
+import { createCleanContentWorkspaceReader } from "../../../src/service/model/policy/clean-content-workspace";
 import {
-  createResourceContentWorkspaceSnapshotReader,
+  type CleanContentWorkspaceReader,
   type ResourceContentWorkspaceSnapshotReadPort,
-} from "../../../src/service/modules/releases/repository/content-workspace";
+} from "../../../src/service/model/ports/clean-content-workspace";
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -24,10 +25,6 @@ import {
   disposeOwnedFixtureRoot,
   type OwnedFixtureRoot,
 } from "../../support/owned-fixture-root";
-
-type ContentWorkspaceSnapshotReader = ReturnType<
-  typeof createResourceContentWorkspaceSnapshotReader
->;
 
 describe("exact Git-object eligibility", () => {
   let fixture: OwnedFixtureRoot | undefined;
@@ -79,7 +76,7 @@ describe("exact Git-object eligibility", () => {
     });
 
     await expect(
-      createResourceContentWorkspaceSnapshotReader({
+      createCleanContentWorkspaceReader({
         contentWorkspace: unrelatedChurn,
       }).inspect(repository.policy)
     ).resolves.toMatchObject({ kind: "Eligible" });
@@ -96,7 +93,7 @@ describe("exact Git-object eligibility", () => {
       },
     });
     await expect(
-      createResourceContentWorkspaceSnapshotReader({
+      createCleanContentWorkspaceReader({
         contentWorkspace: consumedChurn,
       }).inspect(repository.policy)
     ).resolves.toEqual({
@@ -155,7 +152,7 @@ describe("exact Git-object eligibility", () => {
       },
     });
 
-    const inspected = await createResourceContentWorkspaceSnapshotReader({
+    const inspected = await createCleanContentWorkspaceReader({
       contentWorkspace,
     }).inspect(repository.policy);
 
@@ -227,7 +224,7 @@ describe("exact Git-object eligibility", () => {
     });
 
     await expect(
-      createResourceContentWorkspaceSnapshotReader({ contentWorkspace }).inspect(policy)
+      createCleanContentWorkspaceReader({ contentWorkspace }).inspect(policy)
     ).resolves.toEqual({
       kind: "Ineligible",
       issues: [
@@ -294,7 +291,7 @@ describe("exact Git-object eligibility", () => {
     });
 
     await expect(
-      createResourceContentWorkspaceSnapshotReader({ contentWorkspace }).inspect(policy)
+      createCleanContentWorkspaceReader({ contentWorkspace }).inspect(policy)
     ).resolves.toEqual({
       kind: "Ineligible",
       issues: [
@@ -329,7 +326,7 @@ describe("exact Git-object eligibility", () => {
     });
 
     await expect(
-      createResourceContentWorkspaceSnapshotReader({
+      createCleanContentWorkspaceReader({
         contentWorkspace: inconsistentPort,
       }).inspect(repository.policy)
     ).resolves.toMatchObject({
@@ -356,7 +353,7 @@ describe("exact Git-object eligibility", () => {
       },
     });
 
-    const inspected = await createResourceContentWorkspaceSnapshotReader({
+    const inspected = await createCleanContentWorkspaceReader({
       contentWorkspace: racingPort,
     }).inspect(repository.policy);
 
@@ -384,7 +381,7 @@ describe("exact Git-object eligibility", () => {
       },
     });
 
-    const inspected = await createResourceContentWorkspaceSnapshotReader({
+    const inspected = await createCleanContentWorkspaceReader({
       contentWorkspace: racingPort,
     }).inspect(repository.policy);
 
@@ -416,7 +413,7 @@ describe("exact Git-object eligibility", () => {
       },
     });
 
-    const inspected = await createResourceContentWorkspaceSnapshotReader({
+    const inspected = await createCleanContentWorkspaceReader({
       contentWorkspace: racingPort,
     }).inspect(repository.policy);
 
@@ -501,7 +498,7 @@ describe("exact Git-object eligibility", () => {
       },
     });
     await expect(
-      createResourceContentWorkspaceSnapshotReader({ contentWorkspace: collisionPort }).inspect(
+      createCleanContentWorkspaceReader({ contentWorkspace: collisionPort }).inspect(
         collision.policy
       )
     ).resolves.toMatchObject({
@@ -556,7 +553,7 @@ describe("exact Git-object eligibility", () => {
 
   it("rejects option-like/cast policy values before invoking Git", async () => {
     let calls = 0;
-    const reader = createResourceContentWorkspaceSnapshotReader({
+    const reader = createCleanContentWorkspaceReader({
       contentWorkspace: unreachableGitReadPort(() => {
         calls += 1;
       }),
@@ -580,8 +577,8 @@ describe("exact Git-object eligibility", () => {
     return await createGeneratedGitRepository(fixture);
   }
 
-  async function realReader(): Promise<ContentWorkspaceSnapshotReader> {
-    return createResourceContentWorkspaceSnapshotReader({
+  async function realReader(): Promise<CleanContentWorkspaceReader> {
+    return createCleanContentWorkspaceReader({
       contentWorkspace: await realPort(),
     });
   }

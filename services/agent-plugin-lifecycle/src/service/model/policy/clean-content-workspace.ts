@@ -1,18 +1,20 @@
 import { createHash } from "node:crypto";
 import type {
   ContentWorkspaceFailure,
-  ContentWorkspaceGitReadAsyncPort,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
-  ContentWorkspaceSnapshotReader,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
-} from "../../../model/dependencies/releases";
-import { sourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import type {
+  CleanContentWorkspaceReader,
+  ResourceContentWorkspaceSnapshotReadPort,
+} from "#agent-plugin-lifecycle-service/model/ports/clean-content-workspace";
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
@@ -30,8 +32,8 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
   type ReleaseRelativePath,
-} from "../../../shared/release";
-import { validateDeclaredPluginTree } from "../model/policy/declared-plugin-tree";
+} from "../../shared/release";
+import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
@@ -44,15 +46,6 @@ const MAX_ADMITTED_WORKTREE_FILE_BYTES = Math.max(
 );
 const MAX_ADMITTED_WORKTREE_BYTES =
   MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES;
-
-export type ResourceContentWorkspaceSnapshotReadPort = Pick<
-  ContentWorkspaceGitReadAsyncPort,
-  | "inspectGitWorkspace"
-  | "readGitTree"
-  | "readGitBlob"
-  | "readGitBlobs"
-  | "captureGitWorkspaceEvidence"
->;
 
 interface TreeEntry {
   readonly mode: number;
@@ -71,12 +64,16 @@ interface WorkspaceEvidence {
   readonly index: Uint8Array;
 }
 
-export function createResourceContentWorkspaceSnapshotReader(
+/**
+ * Adapts the content-workspace resource into the service-owned clean-content
+ * reader shared by release eligibility, packaging, and local provider tests.
+ */
+export function createCleanContentWorkspaceReader(
   binding: Readonly<{
     contentWorkspace: ResourceContentWorkspaceSnapshotReadPort;
   }>
-): ContentWorkspaceSnapshotReader {
-  const reader: ContentWorkspaceSnapshotReader = {
+): CleanContentWorkspaceReader {
+  const reader: CleanContentWorkspaceReader = {
     async inspect(policy) {
       return await inspectWorkspace(binding.contentWorkspace, policy);
     },

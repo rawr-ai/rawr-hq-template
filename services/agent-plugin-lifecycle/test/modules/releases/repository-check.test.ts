@@ -7,10 +7,8 @@ import type {
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
-import type {
-  ContentWorkspaceInspection,
-  StagedIndexObservationResult,
-} from "../../../src/service/model/dependencies/releases";
+import type { StagedIndexObservationResult } from "../../../src/service/model/dependencies/releases";
+import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/releases/content-workspace";
 import {
   addStagedObservationByteLimits,
   classifyStagedObservationFailure,

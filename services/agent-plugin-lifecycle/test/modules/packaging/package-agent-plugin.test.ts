@@ -18,7 +18,11 @@ import {
   PackageAgentPluginResultSchema,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import { parsePluginId } from "../../../src/service/shared/release";
-import { createLifecycleTestClient, testInvocation } from "../../support/client";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+  unavailableContentWorkspace,
+} from "../../support/client";
 import {
   createGeneratedGitRepository,
   createGeneratedMultiMemberGitRepository,
@@ -147,6 +151,48 @@ describe("package agent plugin application", () => {
     expect(refusedOutput.publishCalls).toBe(0);
   });
 
+  it("closes clean-source inspection failure before rendering or publishing", async () => {
+    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const contentWorkspace = {
+      ...unavailableContentWorkspace(),
+      async inspectGitWorkspace() {
+        throw new Error("clean source unavailable");
+      },
+    };
+    const application = createPackageAgentPluginApplicationWithDefaults(output, {
+      contentWorkspace,
+    });
+
+    const result = await application.package({
+      contentWorkspace: {
+        locator: "/tmp/content-workspace",
+        repositoryIdentity: "git:personal/rawr-hq",
+        contentAuthority: "personal-rawr-hq",
+        remoteName: "origin",
+        remoteUrl: "https://github.com/rawr-ai/rawr-hq.git",
+        refName: "refs/heads/main",
+        sourceCommit: "a".repeat(40),
+        sourceTree: "b".repeat(40),
+        releaseInputPath: ".rawr/release-input.json",
+        pluginRoot: "plugins/agents",
+      },
+      mode: { kind: "complete-set" },
+      format: COWORK_PACKAGE_FORMAT,
+      outputPath: "/tmp/content-workspace.zip",
+    });
+
+    expect(result).toEqual({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: {
+        code: "SourceIneligible",
+        phase: "source-inspect",
+        message: "GitFailure:clean source unavailable",
+      },
+    });
+    expect(output.encodeCalls).toBe(0);
+    expect(output.publishCalls).toBe(0);
+  });
+
   it("revalidates exact Git content before publishing and preserves an existing output", async () => {
     const root = await fixtureRoot();
     const repository = await createGeneratedGitRepository(root);
@@ -176,9 +222,13 @@ describe("package agent plugin application", () => {
       })
     );
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "SourceIneligible", phase: "source-revalidate" },
+      primaryFailure: {
+        code: "SourceIneligible",
+        phase: "source-revalidate",
+        message: "DirtyTrackedWorktree:tracked worktree differs from index",
+      },
     });
     expect(publishCalls).toBe(0);
     expect(await readFile(outputPath)).toEqual(beforeBytes);

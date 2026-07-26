@@ -1,4 +1,5 @@
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
+import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
@@ -6,7 +7,6 @@ import {
 } from "../../base";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { SelectedContentResolver } from "../../model/dependencies/providers";
-import { createResourceContentWorkspaceSnapshotReader } from "./repository/content-workspace";
 import { createResourceStagedContentWorkspaceObservationReader } from "./repository/staged-content-workspace";
 
 export const repositories = createServiceProvider<{
@@ -18,11 +18,11 @@ export const repositories = createServiceProvider<{
     selectedContent: SelectedContentResolver;
   };
 }>().middleware<{
-  releaseSource: ReturnType<typeof createResourceContentWorkspaceSnapshotReader>;
+  releaseSource: ReturnType<typeof createCleanContentWorkspaceReader>;
   stagedReleaseSource: ReturnType<typeof createResourceStagedContentWorkspaceObservationReader>;
 }>(async ({ context, next }) =>
   next({
-    releaseSource: createResourceContentWorkspaceSnapshotReader({
+    releaseSource: createCleanContentWorkspaceReader({
       contentWorkspace: context.deps.contentWorkspace,
     }),
     stagedReleaseSource: createResourceStagedContentWorkspaceObservationReader({
