@@ -598,6 +598,37 @@ state changes in this checkpoint. The Git provider suite passes 31 tests with
 lifecycle suite passes 267 tests. Resource, provider, and lifecycle typechecks,
 Habitat lint, strict OpenSpec, touched-file formatting, and diff hygiene pass.
 
+The direct current-main checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4i]]. Governance and
+Providers now receive the ready content-workspace resource through their
+module middleware and sequence the exact Git observations inside their
+Effect-oRPC procedure handlers. One successful selection preserves the
+existing ordered four ref inspections, two bounded blob reads, and one ancestry
+observation. Shared current-main policy is now pure: it parses, canonicalizes,
+classifies typed resource facts, bounds public diagnostics, and decides the
+final result without executing an Effect.
+
+The root current-main middleware, current-main reader interface, resource
+reader, and exact-Git repository facade are deleted together with their
+facade-specific tests. Expected content-workspace failures retain their public
+classification, while defects and interruption remain outside domain results
+and scoped resource finalizers still run. Provider sync obtains a second
+complete current-main selection before native mutation. Status and sync author
+their orchestration directly in the typed Effect-oRPC handlers; no exported
+runner or caller-assembled dependency bag remains. No replacement reader,
+repository, helper, port, resource, compatibility path, provider mutation,
+Personal mutation, or live settlement is introduced.
+
+The exact ordered resource boundary passes 50 focused Governance and Provider
+tests. Public clients prove refusal reaches neither selected-content nor native
+state, and that two complete seven-call selections finish before the first
+native mutation. The boundary also covers containing-commit and ancestry
+refusals, digest and authority mismatch, canonical-main races, typed resource
+failure mapping, exact-blob identity, interruption, defects, finalizers, and
+pre-mutation revalidation. The complete lifecycle owner passes all 269 tests.
+Uncached source/test typecheck, Habitat lint, strict OpenSpec validation, and
+diff hygiene pass.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

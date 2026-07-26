@@ -1,21 +1,15 @@
-import { Cause, Effect, Exit } from "effect";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { runProviderStatus as providerStatusEffect } from "../../../src/service/modules/providers/router/status.router";
-import { runProviderSync as providerSyncEffect } from "../../../src/service/modules/providers/router/sync.router";
+import { testInvocation } from "../../support/client";
 import {
   channelRequest,
-  createCurrentMainReader,
+  createProviderLifecycleClient,
   FakeNativeProviders,
-  FakeSelectedContentResolver,
   fakeNativeSession,
   selectedContent,
+  wrongRepositoryChannelRequest,
 } from "./fixture";
-
-const runProviderStatus = (...args: Parameters<typeof providerStatusEffect>) =>
-  Effect.runPromise(providerStatusEffect(...args));
-const runProviderSync = (...args: Parameters<typeof providerSyncEffect>) =>
-  Effect.runPromise(providerSyncEffect(...args));
 
 describe("provider status and preflight", () => {
   it("reports drift without invoking a native mutation", async () => {
@@ -25,15 +19,31 @@ describe("provider status and preflight", () => {
       content,
       marketplace: "absent",
     });
-    const result = await runProviderStatus(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.status(channelRequest, testInvocation);
     expect(result.classification).toBe("Drifted");
     expect(result.targets[0]?.classification).toBe("Drifted");
     expect(result.targets[0]?.operations).toEqual([]);
     expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it("refuses a wrong current-main repository before resolving selected content or observing native state", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
+
+    const result = await client.providers.status(wrongRepositoryChannelRequest, testInvocation);
+
+    expect(result.classification).toBe("Blocked");
+    expect(resourceCalls).toEqual(["inspect:refs/heads/main"]);
+    expect(session.calls).toEqual([]);
   });
 
   it("requests one bounded native file batch per selected member", async () => {
@@ -43,11 +53,8 @@ describe("provider status and preflight", () => {
       content,
       installed: ["cognition"],
     });
-    const result = await runProviderStatus(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.status(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Converged");
     expect(session.calls.filter((call) => call.startsWith("read-batch:"))).toHaveLength(1);
@@ -71,14 +78,11 @@ describe("provider status and preflight", () => {
       content,
       marketplace: "unrelated",
     });
-    const result = await runProviderSync(
-      { ...channelRequest, targets },
-      {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders([first, second]),
-      }
+    const { client } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([first, second])
     );
+    const result = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
     expect(result.classification).toBe("Blocked");
     expect(result.targets.map((target) => target.classification)).toEqual(["Blocked", "Blocked"]);
     expect(result.issues.some((issue) => issue.code === "MarketplaceCollision")).toBe(true);
@@ -98,21 +102,21 @@ describe("provider status and preflight", () => {
     const reverseSessions = targets.map((target) =>
       fakeNativeSession({ target, content, installed: ["cognition"] })
     );
-    const forward = await runProviderStatus(
+    const forwardClient = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders(forwardSessions)
+    ).client;
+    const reverseClient = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders(reverseSessions)
+    ).client;
+    const forward = await forwardClient.providers.status(
       { ...channelRequest, targets },
-      {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders(forwardSessions),
-      }
+      testInvocation
     );
-    const reverse = await runProviderStatus(
+    const reverse = await reverseClient.providers.status(
       { ...channelRequest, targets: [targets[1], targets[0]] },
-      {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders(reverseSessions),
-      }
+      testInvocation
     );
 
     expect(reverse).toEqual(forward);
@@ -128,14 +132,11 @@ describe("provider status and preflight", () => {
     const codex = fakeNativeSession({ target: targets[0], content });
     const claude = fakeNativeSession({ target: targets[1], content });
     codex.inventoryFailureCount = 1;
-    const result = await runProviderSync(
-      { ...channelRequest, targets },
-      {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders([codex, claude]),
-      }
+    const { client } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([codex, claude])
     );
+    const result = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
 
     expect(result.classification).toBe("Failed");
     expect(result.targets.map((target) => target.classification)).toEqual([
@@ -160,15 +161,11 @@ describe("provider status and preflight", () => {
     });
     const claude = fakeNativeSession({ target: targets[1], content });
     codex.setPluginEnabled("cognition", false);
-
-    const result = await runProviderSync(
-      { ...channelRequest, targets },
-      {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders([codex, claude]),
-      }
+    const { client } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([codex, claude])
     );
+    const result = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
 
     expect(result.classification).toBe("Failed");
     expect(result.targets.map((target) => target.classification)).toEqual([
@@ -198,22 +195,15 @@ describe("provider status and preflight", () => {
         ),
     });
     const controller = new AbortController();
-    const operation = Effect.runPromiseExit(
-      providerSyncEffect(channelRequest, {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders([session]),
-      }),
-      { signal: controller.signal }
-    );
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const operation = client.providers.sync(channelRequest, {
+      ...testInvocation,
+      signal: controller.signal,
+    });
 
     await started.promise;
     controller.abort();
-    const exit = await operation;
-
-    expect(Exit.isFailure(exit)).toBe(true);
-    if (!Exit.isFailure(exit)) throw new Error("Expected Provider operation interruption");
-    expect(exit.cause.reasons.some(Cause.isInterruptReason)).toBe(true);
+    await expect(operation).rejects.toBeDefined();
     expect(finalized).toBe(true);
     expect(session.mutationCalls()).toEqual([]);
   });
@@ -226,18 +216,11 @@ describe("provider status and preflight", () => {
       content,
       probeOverride: () => Effect.die(defect),
     });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    const exit = await Effect.runPromiseExit(
-      providerStatusEffect(channelRequest, {
-        currentMain: createCurrentMainReader(),
-        selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-        nativeProviders: new FakeNativeProviders([session]),
-      })
+    await expect(client.providers.status(channelRequest, testInvocation)).rejects.toThrow(
+      "Internal Server Error"
     );
-
-    expect(Exit.isFailure(exit)).toBe(true);
-    if (!Exit.isFailure(exit)) throw new Error("Expected Provider operation defect");
-    expect(exit.cause.reasons.find(Cause.isDieReason)?.defect).toBe(defect);
     expect(session.mutationCalls()).toEqual([]);
   });
 });

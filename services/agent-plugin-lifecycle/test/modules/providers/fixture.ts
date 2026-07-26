@@ -1,4 +1,9 @@
 import type {
+  ContentTreeEntry,
+  ContentWorkspaceFailure,
+  ContentWorkspaceResource,
+} from "@rawr/resource-content-workspace";
+import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
@@ -12,8 +17,14 @@ import type {
 } from "@rawr/resource-native-agent-provider";
 import { Effect } from "effect";
 
-import type { CurrentMainSelectionReader } from "../../../src/service/model/dependencies/current-main";
+import type { Client } from "../../../src/client";
+import {
+  CURRENT_MAIN_V3_CANONICAL_REF,
+  CURRENT_MAIN_V3_RECORD_PATH,
+  CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
+} from "../../../src/service/model/dto/current-main-record";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
+import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import type {
   ProviderStatusRequest,
   ProviderSyncRequest,
@@ -25,34 +36,44 @@ import type {
   SelectedContentResolution,
 } from "../../../src/service/modules/providers/model/dto/selected-content";
 import type { SelectedContentResolver } from "../../../src/service/modules/providers/model/ports/selected-content";
-import type { PluginId } from "../../../src/service/shared/release";
+import type { AgentPluginPayload, PluginId } from "../../../src/service/shared/release";
 import {
+  canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
+  createAgentPluginPayload,
+  createAgentPluginRelease,
+  createAgentPluginReleaseInput,
+  createAgentPluginReleaseSet,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parseOwnershipIdentity,
-  parsePayloadDigest,
   parsePluginId,
   parseReleaseDigest,
-  parseReleaseInputDigest,
   parseReleaseRelativePath,
-  parseReleaseSetDigest,
   parseRepositoryIdentity,
 } from "../../../src/service/shared/release";
+import {
+  createLifecycleTestClient,
+  testInvocation,
+  unavailableContentWorkspace,
+} from "../../support/client";
 
 const encoder = new TextEncoder();
 const COMMIT = requireParsed(parseGitCommitId("1".repeat(40)));
 const TREE = requireParsed(parseGitTreeId("2".repeat(40)));
-const REPOSITORY_IDENTITY = requireParsed(parseRepositoryIdentity("github:rawr-ai/rawr-hq"));
+const HEAD_COMMIT = requireParsed(parseGitCommitId("5".repeat(40)));
+const HEAD_TREE = requireParsed(parseGitTreeId("6".repeat(40)));
+const REPOSITORY_IDENTITY = requireParsed(
+  parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")
+);
 const CONTENT_AUTHORITY = requireParsed(parseContentAuthority("rawr-hq"));
 const RELEASE_INPUT_PATH = requireParsed(parseReleaseRelativePath("release-input.json"));
 const PLUGIN_ROOT = requireParsed(parseReleaseRelativePath("plugins/agents"));
-const RELEASE_INPUT_DIGEST = requireParsed(parseReleaseInputDigest(`ri1_${"3".repeat(64)}`));
-const RELEASE_SET_DIGEST = requireParsed(parseReleaseSetDigest(`rs1_${"4".repeat(64)}`));
 const REPOSITORY_URL = "https://github.com/rawr-ai/rawr-hq.git";
 const SOURCE_REF = "refs/tags/agent-plugins-v1";
 const NATIVE_SOURCE_REVISION = COMMIT;
+const workspaceFixtures = new WeakMap<SelectedContent, ProviderWorkspaceFixture>();
 
 export const channelRequest: ProviderSyncRequest & ProviderStatusRequest = {
   channel: "current-main",
@@ -61,6 +82,16 @@ export const channelRequest: ProviderSyncRequest & ProviderStatusRequest = {
     expectedRepositoryIdentity: REPOSITORY_IDENTITY,
   },
   targets: [{ provider: "codex", home: "/tmp/codex-home" }],
+};
+
+export const wrongRepositoryChannelRequest: ProviderSyncRequest & ProviderStatusRequest = {
+  ...channelRequest,
+  locator: {
+    ...channelRequest.locator,
+    expectedRepositoryIdentity: requireParsed(
+      parseRepositoryIdentity("git:github.com/example/other")
+    ),
+  },
 };
 
 export const testRequest: ProviderTestRequest = {
@@ -87,22 +118,11 @@ export function selectedContent(
     kind: "git",
     repositoryUrl: REPOSITORY_URL,
     revision: NATIVE_SOURCE_REVISION,
-    sparsePaths: [".claude-plugin", ".codex-plugin", "plugins/agents"],
+    sparsePaths: [".agents/plugins", ".claude-plugin", "plugins/agents"],
   },
   selectionKind: SelectedContent["selectionKind"] = "complete-set"
 ): SelectedContent {
-  const common = Object.freeze({
-    contentAuthority: CONTENT_AUTHORITY,
-    repositoryIdentity: REPOSITORY_IDENTITY,
-    sourceCommit: COMMIT,
-    sourceTree: TREE,
-    releaseInputDigest: RELEASE_INPUT_DIGEST,
-    marketplace: Object.freeze({ identity: "rawr-hq", source }),
-    members: Object.freeze(pluginIds.map((pluginId) => member(pluginId))),
-  });
-  return selectionKind === "targeted"
-    ? Object.freeze({ ...common, selectionKind, releaseSetDigest: null })
-    : Object.freeze({ ...common, selectionKind, releaseSetDigest: RELEASE_SET_DIGEST });
+  return buildSelectedContent(pluginIds, {}, source, selectionKind);
 }
 
 export function selectedContentWithAliases(
@@ -112,17 +132,120 @@ export function selectedContentWithAliases(
     kind: "git",
     repositoryUrl: REPOSITORY_URL,
     revision: NATIVE_SOURCE_REVISION,
-    sparsePaths: [".claude-plugin", ".codex-plugin", "plugins/agents"],
+    sparsePaths: [".agents/plugins", ".claude-plugin", "plugins/agents"],
   },
   selectionKind: SelectedContent["selectionKind"] = "complete-set"
 ): SelectedContent {
-  const selected = selectedContent(pluginIds, source, selectionKind);
-  return Object.freeze({
-    ...selected,
+  return buildSelectedContent(pluginIds, aliasesByPlugin, source, selectionKind);
+}
+
+function buildSelectedContent(
+  pluginNames: readonly string[],
+  aliasesByPlugin: Readonly<Record<string, readonly string[]>>,
+  source: NativeMarketplaceSource,
+  selectionKind: SelectedContent["selectionKind"]
+): SelectedContent {
+  const members = pluginNames.map((pluginName) =>
+    member(pluginName, aliasesByPlugin[pluginName] ?? [])
+  );
+  const payloads = members.map((entry) => {
+    const payload = requireParsed(
+      createAgentPluginPayload(
+        entry.manifest.map((manifestEntry) => ({
+          path: manifestEntry.path,
+          mode: manifestEntry.mode,
+          bytes: expectedBytes(entry.pluginId, manifestEntry.path),
+        }))
+      )
+    );
+    return Object.freeze({ pluginId: entry.pluginId, payload });
+  });
+  const releaseInput = requireParsed(
+    createAgentPluginReleaseInput({
+      schemaVersion: 1,
+      contentAuthority: CONTENT_AUTHORITY,
+      members: payloads.map(({ pluginId, payload }) => ({
+        kind: "agent-plugin",
+        pluginId,
+        skillInventory: [
+          {
+            identity: `${pluginId}-skill`,
+            manifestPath: requireParsed(parseReleaseRelativePath(`skills/${pluginId}/SKILL.md`)),
+          },
+        ],
+        payload: {
+          protocolVersion: payload.protocolVersion,
+          manifest: payload.manifest,
+          payloadDigest: payload.payloadDigest,
+        },
+        vendor: [],
+        curation: [],
+      })),
+      ownershipClaims: [
+        ...payloads.map(({ pluginId }) => ({
+          kind: "skill" as const,
+          identity: `${pluginId}-skill`,
+          ownerPluginId: pluginId,
+        })),
+        ...members.flatMap((entry) =>
+          entry.aliases.map((identity) => ({
+            kind: "alias" as const,
+            identity,
+            ownerPluginId: entry.pluginId,
+          }))
+        ),
+      ],
+      locks: [],
+      qualityPolicies: [],
+    })
+  );
+  const releases = payloads.map(({ pluginId, payload }) =>
+    requireParsed(
+      createAgentPluginRelease({
+        releaseInput,
+        pluginId,
+        source: {
+          sourceRepository: REPOSITORY_IDENTITY,
+          sourceCommit: COMMIT,
+          sourceTree: TREE,
+        },
+        payload,
+      })
+    )
+  );
+  const releaseSet = requireParsed(createAgentPluginReleaseSet({ releaseInput, releases }));
+  const common = Object.freeze({
+    contentAuthority: CONTENT_AUTHORITY,
+    repositoryIdentity: REPOSITORY_IDENTITY,
+    sourceCommit: COMMIT,
+    sourceTree: TREE,
+    releaseInputDigest: releaseInput.releaseInputDigest,
+    marketplace: Object.freeze({ identity: CONTENT_AUTHORITY, source }),
     members: Object.freeze(
-      pluginIds.map((pluginId) => member(pluginId, aliasesByPlugin[pluginId] ?? []))
+      releases.map((release) =>
+        Object.freeze({
+          pluginId: release.artifactBody.releaseBody.pluginId,
+          aliases: release.artifactBody.releaseBody.aliases,
+          payloadDigest: release.artifactBody.releaseBody.payloadDigest,
+          releaseDigest: release.releaseDigest,
+          manifest: release.artifactBody.releaseBody.payloadManifest,
+        })
+      )
     ),
   });
+  const content: SelectedContent =
+    selectionKind === "targeted"
+      ? Object.freeze({ ...common, selectionKind, releaseSetDigest: null })
+      : Object.freeze({
+          ...common,
+          selectionKind,
+          releaseSetDigest: releaseSet.releaseSetDigest,
+        });
+  workspaceFixtures.set(
+    content,
+    createProviderWorkspaceFixture(content, releaseInput, payloads, members)
+  );
+  return content;
 }
 
 export function member(pluginName: string, aliases: readonly string[] = []) {
@@ -131,12 +254,22 @@ export function member(pluginName: string, aliases: readonly string[] = []) {
   const claudeManifest = encoder.encode(`{"name":"${pluginId}","provider":"claude"}\n`);
   const skill = encoder.encode(`# ${pluginId}\n`);
   const reference = encoder.encode(`Reference for ${pluginId}\n`);
+  const payload = requireParsed(
+    createAgentPluginPayload([
+      { path: ".claude-plugin/plugin.json", mode: 0o644, bytes: claudeManifest },
+      { path: ".codex-plugin/plugin.json", mode: 0o644, bytes: codexManifest },
+      { path: `skills/${pluginId}/SKILL.md`, mode: 0o644, bytes: skill },
+      {
+        path: `skills/${pluginId}/references/guide.md`,
+        mode: 0o644,
+        bytes: reference,
+      },
+    ])
+  );
   return Object.freeze({
     pluginId,
     aliases: Object.freeze(aliases.map(requireOwnershipIdentity)),
-    payloadDigest: requireParsed(
-      parsePayloadDigest(`pd1_${(pluginName === "cognition" ? "a" : "c").repeat(64)}`)
-    ),
+    payloadDigest: payload.payloadDigest,
     releaseDigest: requireParsed(
       parseReleaseDigest(`rd1_${(pluginName === "cognition" ? "b" : "d").repeat(64)}`)
     ),
@@ -149,9 +282,10 @@ export function member(pluginName: string, aliases: readonly string[] = []) {
   });
 }
 
-export function createCurrentMainReader(
+export function createCurrentMainSelection(
   override?: CurrentMainSelectionResult
-): CurrentMainSelectionReader {
+): CurrentMainSelectionResult {
+  const content = override === undefined ? selectedContent() : undefined;
   const result: CurrentMainSelectionResult =
     override ??
     ({
@@ -165,10 +299,210 @@ export function createCurrentMainReader(
         sourceRef: SOURCE_REF,
         contentCommit: COMMIT,
         contentTree: TREE,
-        releaseInputDigest: RELEASE_INPUT_DIGEST,
+        releaseInputDigest: content!.releaseInputDigest,
       },
     } satisfies CurrentMainSelectionResult);
-  return Object.freeze({ resolve: () => Effect.succeed(result) });
+  return Object.freeze(result);
+}
+
+export interface ProviderLifecycleClientFixture {
+  readonly client: Client;
+  readonly resourceCalls: string[];
+}
+
+export function createProviderLifecycleClient(
+  content: SelectedContent,
+  nativeProviders: NativeAgentProviderResources,
+  options: Readonly<{ failSecondCurrentMainOpening?: boolean }> = {}
+): ProviderLifecycleClientFixture {
+  const fixture = workspaceFixtures.get(content);
+  if (fixture === undefined) {
+    throw new Error("Provider content was not created by the owner-local fixture");
+  }
+  const resourceCalls: string[] = [];
+  const contentWorkspace = providerContentWorkspace(fixture, resourceCalls, options);
+  return {
+    client: createLifecycleTestClient({ contentWorkspace, nativeProviders }),
+    resourceCalls,
+  };
+}
+
+interface ProviderWorkspaceFixture {
+  readonly recordBytes: Uint8Array;
+  readonly releaseInputBytes: Uint8Array;
+  readonly treeEntries: readonly ContentTreeEntry[];
+  readonly bytesByBlob: ReadonlyMap<string, Uint8Array>;
+}
+
+function createProviderWorkspaceFixture(
+  content: SelectedContent,
+  releaseInput: Parameters<typeof canonicalSerializeAgentPluginReleaseInput>[0],
+  payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[],
+  members: readonly ReturnType<typeof member>[]
+): ProviderWorkspaceFixture {
+  const bytesByPath = new Map<string, Uint8Array>();
+  const releaseInputBytes = canonicalSerializeAgentPluginReleaseInput(releaseInput);
+  bytesByPath.set(CURRENT_MAIN_V3_RELEASE_INPUT_PATH, releaseInputBytes);
+  bytesByPath.set(
+    ".agents/plugins/marketplace.json",
+    encoder.encode(
+      `${JSON.stringify(
+        {
+          name: CONTENT_AUTHORITY,
+          plugins: members.map(({ pluginId }) => ({
+            name: pluginId,
+            source: { source: "local", path: `./plugins/agents/${pluginId}` },
+            policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+            category: "agent",
+          })),
+        },
+        null,
+        2
+      )}\n`
+    )
+  );
+  bytesByPath.set(
+    ".claude-plugin/marketplace.json",
+    encoder.encode(
+      `${JSON.stringify(
+        {
+          $schema: "https://anthropic.com/claude-code/marketplace.schema.json",
+          name: CONTENT_AUTHORITY,
+          owner: { name: "RAWR HQ" },
+          plugins: members.map(({ pluginId }) => ({
+            name: pluginId,
+            source: `./plugins/agents/${pluginId}`,
+            description: `${pluginId} agent plugin`,
+          })),
+        },
+        null,
+        2
+      )}\n`
+    )
+  );
+  for (const { pluginId, payload } of payloads) {
+    for (const entry of payload.manifest) {
+      bytesByPath.set(
+        `plugins/agents/${pluginId}/${entry.path}`,
+        expectedBytes(pluginId, entry.path)
+      );
+    }
+  }
+  const bytesByBlob = new Map<string, Uint8Array>();
+  const treeEntries = [...bytesByPath.entries()]
+    .sort(([left], [right]) => compareText(left, right))
+    .map(([path, bytes], index) => {
+      const blob = (index + 10).toString(16).padStart(40, "0");
+      bytesByBlob.set(blob, bytes);
+      return Object.freeze({ path, mode: "100644" as const, blob });
+    });
+  const selection = createCurrentMainSelection({
+    kind: "CURRENT_ELIGIBLE",
+    selection: {
+      schemaVersion: 3,
+      channel: "current-main",
+      contentAuthority: content.contentAuthority,
+      sourceRepositoryIdentity: content.repositoryIdentity,
+      sourceRepositoryUrl: REPOSITORY_URL,
+      sourceRef: SOURCE_REF,
+      contentCommit: content.sourceCommit,
+      contentTree: content.sourceTree,
+      releaseInputDigest: content.releaseInputDigest,
+    },
+  });
+  if (selection.kind !== "CURRENT_ELIGIBLE") throw new Error("Invalid current-main fixture");
+  return Object.freeze({
+    recordBytes: canonicalSerializeCurrentMainRecord(selection.selection),
+    releaseInputBytes,
+    treeEntries: Object.freeze(treeEntries),
+    bytesByBlob,
+  });
+}
+
+function providerContentWorkspace(
+  fixture: ProviderWorkspaceFixture,
+  calls: string[],
+  options: Readonly<{ failSecondCurrentMainOpening?: boolean }>
+): ContentWorkspaceResource<never> {
+  let mainInspections = 0;
+  return Object.freeze({
+    ...unavailableContentWorkspace(),
+    inspectGitRef: (input: Parameters<ContentWorkspaceResource<never>["inspectGitRef"]>[0]) =>
+      Effect.suspend(() => {
+        calls.push(`inspect:${input.refName}`);
+        if (input.refName === CURRENT_MAIN_V3_CANONICAL_REF) {
+          mainInspections += 1;
+          if (options.failSecondCurrentMainOpening === true && mainInspections === 4) {
+            return Effect.fail(
+              contentWorkspaceFailure(
+                "inspect-git-ref",
+                "GitFailed",
+                "Second current-main selection is unavailable"
+              )
+            );
+          }
+        }
+        const isContent = input.refName === SOURCE_REF;
+        return Effect.succeed({
+          root: channelRequest.locator.workspacePath,
+          refName: input.refName,
+          commit: isContent ? COMMIT : HEAD_COMMIT,
+          tree: isContent ? TREE : HEAD_TREE,
+          objectFormat: "sha1" as const,
+          remoteUrls: Object.freeze([REPOSITORY_URL]),
+        });
+      }),
+    readGitBlobAtPath: (
+      input: Parameters<ContentWorkspaceResource<never>["readGitBlobAtPath"]>[0]
+    ) =>
+      Effect.sync(() => {
+        calls.push(`read-at:${input.path}`);
+        const record = input.path === CURRENT_MAIN_V3_RECORD_PATH;
+        return {
+          refCommit: record ? HEAD_COMMIT : COMMIT,
+          commit: record ? HEAD_COMMIT : COMMIT,
+          tree: record ? HEAD_TREE : TREE,
+          blob: record ? "7".repeat(40) : "8".repeat(40),
+          bytes: record ? fixture.recordBytes : fixture.releaseInputBytes,
+        };
+      }),
+    isLocalGitAncestor: () =>
+      Effect.sync(() => {
+        calls.push("ancestry");
+        return true;
+      }),
+    readGitTree: () =>
+      Effect.sync(() => {
+        calls.push("read-tree");
+        return fixture.treeEntries;
+      }),
+    readGitBlob: ({ blob }: Parameters<ContentWorkspaceResource<never>["readGitBlob"]>[0]) =>
+      Effect.sync(() => {
+        calls.push(`read-blob:${blob}`);
+        const bytes = fixture.bytesByBlob.get(blob);
+        if (bytes === undefined) throw new Error(`Missing provider fixture blob ${blob}`);
+        return bytes;
+      }),
+    readGitBlobs: ({ blobs }: Parameters<ContentWorkspaceResource<never>["readGitBlobs"]>[0]) =>
+      Effect.sync(() => {
+        calls.push("read-blobs");
+        return Object.freeze(
+          blobs.map((blob) => {
+            const bytes = fixture.bytesByBlob.get(blob);
+            if (bytes === undefined) throw new Error(`Missing provider fixture blob ${blob}`);
+            return Object.freeze({ blob, bytes });
+          })
+        );
+      }),
+  });
+}
+
+function contentWorkspaceFailure(
+  operation: ContentWorkspaceFailure["operation"],
+  reason: ContentWorkspaceFailure["reason"],
+  detail: string
+): ContentWorkspaceFailure {
+  return { _tag: "ContentWorkspaceFailure", operation, reason, detail };
 }
 
 export class FakeSelectedContentResolver implements SelectedContentResolver {

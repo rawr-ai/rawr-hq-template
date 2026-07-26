@@ -1,10 +1,8 @@
 import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { Effect } from "effect";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { contract } from "../../../src/service/modules/providers/contract";
-import { runProviderStatus as providerStatusEffect } from "../../../src/service/modules/providers/router/status.router";
 import {
   ProviderMutationTargetResultSchema,
   ProviderStatusRequestSchema,
@@ -16,18 +14,15 @@ import {
   ProviderTestResultSchema,
   SelectedContentObservationSchema,
 } from "../../../src/service/modules/providers/schemas";
+import { testInvocation } from "../../support/client";
 import {
   channelRequest,
-  createCurrentMainReader,
+  createProviderLifecycleClient,
   FakeNativeProviders,
-  FakeSelectedContentResolver,
   fakeNativeSession,
   selectedContent,
   testRequest,
 } from "./fixture";
-
-const runProviderStatus = (...args: Parameters<typeof providerStatusEffect>) =>
-  Effect.runPromise(providerStatusEffect(...args));
 
 describe("provider public schema boundary", () => {
   it("derives every public provider contract type from its TypeBox schema", () => {
@@ -125,11 +120,8 @@ describe("provider public schema boundary", () => {
       content,
       installed: ["cognition"],
     });
-    const result = await runProviderStatus(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.status(channelRequest, testInvocation);
     expect(Value.Check(ProviderStatusResultSchema, result)).toBe(true);
     expect(Value.Check(ProviderStatusResultSchema, { ...result, plan: [] })).toBe(false);
     expect(
