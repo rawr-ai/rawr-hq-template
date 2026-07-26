@@ -1,21 +1,68 @@
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { runProviderSync as providerSyncEffect } from "../../../src/service/modules/providers/router/sync.router";
-import { parseGitTreeId } from "../../../src/service/shared/release";
+import {
+  CURRENT_MAIN_V3_CANONICAL_REF,
+  CURRENT_MAIN_V3_RECORD_PATH,
+  CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
+} from "../../../src/service/model/dto/current-main-record";
+import { testInvocation } from "../../support/client";
 import {
   channelRequest,
-  createCurrentMainReader,
+  createProviderLifecycleClient,
   FakeNativeProviders,
-  FakeSelectedContentResolver,
   fakeNativeSession,
   selectedContent,
   selectedContentWithAliases,
+  wrongRepositoryChannelRequest,
 } from "./fixture";
 
-const runProviderSync = (...args: Parameters<typeof providerSyncEffect>) =>
-  Effect.runPromise(providerSyncEffect(...args));
-
 describe("provider sync", () => {
+  it("refuses a wrong current-main repository before resolving selected content or observing native state", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
+
+    const result = await client.providers.sync(wrongRepositoryChannelRequest, testInvocation);
+
+    expect(result.classification).toBe("Blocked");
+    expect(resourceCalls).toEqual(["inspect:refs/heads/main"]);
+    expect(session.calls).toEqual([]);
+  });
+
+  it("completes two exact current-main selections before the first native mutation", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
+    if (session.provider !== "codex") throw new Error("Expected a Codex session fixture");
+    const originalAddMarketplace = session.addMarketplace.bind(session);
+    let selectionsAtFirstMutation = -1;
+    session.addMarketplace = (source) =>
+      Effect.suspend(() => {
+        selectionsAtFirstMutation = countCompleteCurrentMainSelections(resourceCalls);
+        return originalAddMarketplace(source);
+      });
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Changed");
+    expect(selectionsAtFirstMutation).toBe(2);
+    expect(countCompleteCurrentMainSelections(resourceCalls)).toBe(2);
+  });
+
   it("refreshes an exact Codex marketplace with an unobservable revision before installing a missing selected member", async () => {
     const content = selectedContent();
     const session = fakeNativeSession({
@@ -23,13 +70,9 @@ describe("provider sync", () => {
       content,
       marketplace: "exact",
     });
-    const dependencies = {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    };
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    const result = await runProviderSync(channelRequest, dependencies);
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations.map((operation) => operation.kind)).toEqual([
@@ -40,7 +83,7 @@ describe("provider sync", () => {
     expect(session.hasPlugin("cognition")).toBe(true);
 
     const mutationCount = session.mutationCalls().length;
-    const repeat = await runProviderSync(channelRequest, dependencies);
+    const repeat = await client.providers.sync(channelRequest, testInvocation);
     expect(repeat.classification).toBe("Converged");
     expect(session.mutationCalls()).toHaveLength(mutationCount);
   });
@@ -58,13 +101,9 @@ describe("provider sync", () => {
       "skills/cognition/references/guide.md",
       new TextEncoder().encode("stale reference\n")
     );
-    const dependencies = {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    };
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    const result = await runProviderSync(channelRequest, dependencies);
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations.map((operation) => operation.kind)).toEqual([
@@ -82,7 +121,7 @@ describe("provider sync", () => {
     ).toBe(true);
 
     const mutationCount = session.mutationCalls().length;
-    const repeat = await runProviderSync(channelRequest, dependencies);
+    const repeat = await client.providers.sync(channelRequest, testInvocation);
     expect(repeat.classification).toBe("Converged");
     expect(session.mutationCalls()).toHaveLength(mutationCount);
   });
@@ -100,13 +139,9 @@ describe("provider sync", () => {
       "skills/cognition/references/guide.md",
       new TextEncoder().encode("x".repeat(1_024))
     );
-    const dependencies = {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    };
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    const result = await runProviderSync(channelRequest, dependencies);
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations.map((operation) => operation.kind)).toEqual([
@@ -116,7 +151,7 @@ describe("provider sync", () => {
       "plugin-installed",
     ]);
     const mutationCount = session.mutationCalls().length;
-    const repeat = await runProviderSync(channelRequest, dependencies);
+    const repeat = await client.providers.sync(channelRequest, testInvocation);
     expect(repeat.classification).toBe("Converged");
     expect(session.mutationCalls()).toHaveLength(mutationCount);
   });
@@ -127,20 +162,16 @@ describe("provider sync", () => {
     const session = fakeNativeSession({ target, content, installed: ["cognition"] });
     session.setPluginEnabled("cognition", null);
     const request = { ...channelRequest, targets: [target] as const };
-    const dependencies = {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    };
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    const result = await runProviderSync(request, dependencies);
+    const result = await client.providers.sync(request, testInvocation);
 
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations).toEqual([
       { kind: "plugin-enabled", selector: "cognition@rawr-hq" },
     ]);
     const mutationCount = session.mutationCalls().length;
-    const repeat = await runProviderSync(request, dependencies);
+    const repeat = await client.providers.sync(request, testInvocation);
     expect(repeat.classification).toBe("Converged");
     expect(session.mutationCalls()).toHaveLength(mutationCount);
   });
@@ -153,12 +184,8 @@ describe("provider sync", () => {
       installed: ["cognition"],
       omitted: ["cog"],
     });
-
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations).toContainEqual({
@@ -177,13 +204,9 @@ describe("provider sync", () => {
       omitted: ["docs"],
     });
     session.setPluginInstalled("docs", false);
-    const dependencies = {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    };
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    const result = await runProviderSync(channelRequest, dependencies);
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations).toContainEqual({
@@ -192,7 +215,7 @@ describe("provider sync", () => {
     });
     expect(session.hasPluginObservation("docs")).toBe(false);
     const mutationCount = session.mutationCalls().length;
-    const repeat = await runProviderSync(channelRequest, dependencies);
+    const repeat = await client.providers.sync(channelRequest, testInvocation);
     expect(repeat.classification).toBe("Converged");
     expect(session.mutationCalls()).toHaveLength(mutationCount);
   });
@@ -207,11 +230,8 @@ describe("provider sync", () => {
       staleFiles: ["cognition"],
       omitted: ["docs"],
     });
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations.map((operation) => operation.kind)).toEqual([
       "marketplace-removed",
@@ -240,11 +260,8 @@ describe("provider sync", () => {
       omitted: ["docs"],
     });
     session.installBadFiles = true;
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
     expect(result.classification).toBe("Partial");
     expect(result.targets[0]?.classification).toBe("Failed");
     expect(result.targets[0]?.operations.map((operation) => operation.kind)).toEqual([
@@ -271,13 +288,11 @@ describe("provider sync", () => {
       staleFiles: ["cognition"],
     });
     second.installFailure = "after";
-    const resolver = new FakeSelectedContentResolver({ channel: [content] });
-    const dependencies = {
-      currentMain: createCurrentMainReader(),
-      selectedContent: resolver,
-      nativeProviders: new FakeNativeProviders([first, second]),
-    };
-    const firstResult = await runProviderSync({ ...channelRequest, targets }, dependencies);
+    const { client } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([first, second])
+    );
+    const firstResult = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
     expect(firstResult.classification).toBe("Uncertain");
     expect(firstResult.targets.map((target) => target.target.provider)).toEqual([
       "claude",
@@ -307,13 +322,13 @@ describe("provider sync", () => {
     expect(firstResult.targets[1]?.classification).toBe("NotAttempted");
 
     const mutationCount = first.mutationCalls().length + second.mutationCalls().length;
-    const retry = await runProviderSync({ ...channelRequest, targets }, dependencies);
+    const retry = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
     expect(retry.classification).toBe("Changed");
     expect(retry.targets.map((target) => target.classification)).toEqual(["Changed", "Changed"]);
     expect(first.mutationCalls().length + second.mutationCalls().length).toBe(mutationCount + 4);
 
     const repeatCount = first.mutationCalls().length + second.mutationCalls().length;
-    const repeat = await runProviderSync({ ...channelRequest, targets }, dependencies);
+    const repeat = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
     expect(repeat.classification).toBe("Converged");
     expect(first.mutationCalls().length + second.mutationCalls().length).toBe(repeatCount);
   });
@@ -328,11 +343,8 @@ describe("provider sync", () => {
       omitted: ["docs"],
     });
     session.marketplaceRemoveFailure = "after";
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
     expect(result.classification).toBe("Uncertain");
     expect(result.targets[0]).toMatchObject({
       classification: "Uncertain",
@@ -354,11 +366,8 @@ describe("provider sync", () => {
       installed: ["cognition"],
       omitted: ["docs"],
     });
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Changed");
     const calls = session.mutationCalls();
@@ -376,11 +385,8 @@ describe("provider sync", () => {
       marketplace: "ambiguous",
       omitted: ["docs"],
     });
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Blocked");
     expect(result.issues.some((issue) => issue.code === "MarketplaceCollision")).toBe(true);
@@ -395,12 +401,8 @@ describe("provider sync", () => {
       content,
     });
     session.setForeignPlugin("cognition", "other", false);
-
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Blocked");
     expect(result.issues.some((issue) => issue.code === "PluginCollision")).toBe(true);
@@ -415,11 +417,8 @@ describe("provider sync", () => {
       installed: ["cognition"],
     });
     session.setPluginEnabled("cognition", false);
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeProviders: new FakeNativeProviders([session]),
-    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Failed");
     expect(result.issues.some((issue) => issue.code === "CapabilityMissing")).toBe(true);
@@ -427,22 +426,40 @@ describe("provider sync", () => {
     expect(session.mutationCalls()).toEqual([]);
   });
 
-  it("blocks without mutation when exact content changes during pre-mutation revalidation", async () => {
-    const firstContent = selectedContent();
-    const changedTree = parseGitTreeId("9".repeat(40));
-    if (!changedTree.ok) throw new Error("Invalid changed-tree fixture");
-    const changedContent = Object.freeze({ ...firstContent, sourceTree: changedTree.value });
+  it("blocks without mutation when the second current-main selection fails", async () => {
+    const content = selectedContent();
     const session = fakeNativeSession({
       target: channelRequest.targets[0],
-      content: firstContent,
+      content,
     });
-    const result = await runProviderSync(channelRequest, {
-      currentMain: createCurrentMainReader(),
-      selectedContent: new FakeSelectedContentResolver({ channel: [firstContent, changedContent] }),
-      nativeProviders: new FakeNativeProviders([session]),
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      failSecondCurrentMainOpening: true,
     });
+    const result = await client.providers.sync(channelRequest, testInvocation);
     expect(result.classification).toBe("Blocked");
     expect(result.issues.some((issue) => issue.code === "SourceChanged")).toBe(true);
     expect(session.mutationCalls()).toEqual([]);
   });
 });
+
+const CURRENT_MAIN_SELECTION_CALLS = [
+  `inspect:${CURRENT_MAIN_V3_CANONICAL_REF}`,
+  `inspect:${CURRENT_MAIN_V3_CANONICAL_REF}`,
+  `read-at:${CURRENT_MAIN_V3_RECORD_PATH}`,
+  "ancestry",
+  "inspect:refs/tags/agent-plugins-v1",
+  `read-at:${CURRENT_MAIN_V3_RELEASE_INPUT_PATH}`,
+  `inspect:${CURRENT_MAIN_V3_CANONICAL_REF}`,
+] as const;
+
+function countCompleteCurrentMainSelections(calls: readonly string[]): number {
+  let count = 0;
+  for (let index = 0; index <= calls.length - CURRENT_MAIN_SELECTION_CALLS.length; index += 1) {
+    if (
+      CURRENT_MAIN_SELECTION_CALLS.every((expected, offset) => calls[index + offset] === expected)
+    ) {
+      count += 1;
+    }
+  }
+  return count;
+}

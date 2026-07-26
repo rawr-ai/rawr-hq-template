@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
+import type { CurrentMainSelectionResult } from "../../../model/dto/current-main-selection";
 import type {
   ProviderIssue,
   ProviderStatusRequest,
@@ -18,17 +18,16 @@ export type ProviderSelectionResolution =
 
 export function resolveChannelSelection(
   request: ProviderChannelRequest,
-  currentMain: CurrentMainSelectionReader,
+  currentMain: CurrentMainSelectionResult,
   selectedContent: SelectedContentResolver
 ): Effect.Effect<ProviderSelectionResolution> {
   return Effect.gen(function* () {
-    const selected = yield* currentMain.resolve(request.locator);
-    if (selected.kind !== "CURRENT_ELIGIBLE") {
-      return rejected(`${selected.kind}: ${selected.reason}`);
+    if (currentMain.kind !== "CURRENT_ELIGIBLE") {
+      return rejected(`${currentMain.kind}: ${currentMain.reason}`);
     }
     const resolved = yield* selectedContent.resolveChannel({
       locator: request.locator,
-      selection: selected.selection,
+      selection: currentMain.selection,
     });
     return validateResolution(resolved);
   });

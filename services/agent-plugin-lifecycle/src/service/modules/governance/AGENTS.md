@@ -16,9 +16,9 @@
 - The service model owns shared selection representation and policy. This
   module owns its operation DTOs, handlers, results, issues, and operation
   policy.
-- Exact-content mechanics enter the selection operation through module
-  middleware projected from service context rather than direct filesystem or
-  Git access.
+- Exact-content mechanics enter through the module-projected content-workspace
+  resource. The selection handler sequences that resource directly rather than
+  receiving a reader or repository facade.
 
 ## Behavior
 
@@ -36,15 +36,14 @@
 ## Flow
 
 - A caller submits record bytes, a record body, or a locator; the handler
-  applies the shared record policy or projected current-main reader; the typed
+  applies shared pure policy to typed content-workspace observations; the typed
   result returns through the service contract.
 
 ## Interfaces
 
 - `currentMainRecord` and `currentMainSelection` are the operation boundaries.
-  Selection middleware contributes the current-main reader without becoming an
-  ownership boundary. Native oRPC context remains additive, so exact handler
-  context stays open at the service root.
+  Module middleware contributes only the ready content-workspace resource;
+  the selection handler owns observation order and policy application.
 
 ## Routing
 

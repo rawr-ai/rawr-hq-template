@@ -603,6 +603,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   precedence, diagnostics, and binding in clean-source policy. Preserve raw
   porcelain status and ordinary index evidence for their separately sequenced
   boundaries; add no raw flag compatibility field, facade, or resource.
+- [x] 5.4i Delete the shared current-main middleware, reader, repository, and
+  exact-Git facade. Project the existing content-workspace resource through
+  Governance and Providers module middleware, sequence all four ref
+  observations, two exact blob reads, and one ancestry observation in the
+  consuming procedure handlers, and retain only pure parsing and
+  classification policy in the shared service model. Preserve public TypeBox
+  contracts, refusal mapping, bounded diagnostics, source revalidation,
+  interruption, defects, and finalizers without adding a replacement reader,
+  repository, helper, port, resource, or compatibility path.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical
