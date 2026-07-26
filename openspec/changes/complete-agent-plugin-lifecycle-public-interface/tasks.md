@@ -562,6 +562,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Packaging handler, keep typed failure classification in pure module policy,
   and preserve the publication uninterruptibility boundary, closed public
   results, exact diagnostics, and cancellation outside that boundary.
+- [x] 5.4e Delete the native-provider Promise/runtime mirror and service host
+  surface. Let the provider-neutral resource contract expose one
+  closed Codex-and-Claude catalog of ready Effect resources; let each concrete
+  Node provider bind its configured executable separately from the acquired
+  provider home and supply `NodeServices.layer` only behind acquisition.
+  The CLI app selects the catalog once, the Providers module narrows that same
+  catalog, and its operations compose the native Effects directly. Preserve
+  target order, bounded probe/inventory concurrency, typed provider-failure
+  mapping, defect and interruption propagation, live mutation uncertainty, and
+  exact absent-executable diagnostics. Delete the Promise helper, synthetic
+  admission consumer, duplicate service dependency DTOs, and package `./host`
+  export without adding another runner or adapter.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

@@ -58,7 +58,7 @@
 ## Interfaces
 
 - The public oRPC contract is the caller boundary. Content workspace, versioned
-  content, lifecycle clock, package output, and native provider sessions are
+  content, lifecycle clock, package output, and ready native provider resources are
   the host-supplied dependencies.
 
 ## Routing
@@ -66,7 +66,7 @@
 - [Repository router](../../AGENTS.md)
 - [Public service contract](src/service/contract.ts)
 - [Service dependency boundary](src/service/base.ts)
-- [Native-provider host types](src/host.ts)
+- [Native-provider resource contract](../../resources/native-agent-provider/contract.ts)
 
 ## Validation
 

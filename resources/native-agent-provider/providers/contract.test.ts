@@ -10,6 +10,7 @@ import {
   NativeAgentProviderFailureSchema,
   NativeMarketplaceSourceSchema,
   NativeProviderCapabilitiesSchema,
+  NativeProviderExecutablePathSchema,
   NativeProviderInventorySchema,
   NativeProviderMarketplaceIdentityInputSchema,
   NativeProviderPluginFilesReadInputSchema,
@@ -103,15 +104,14 @@ describe("native agent provider contract", () => {
   it("owns session coordinates and provider capability discrimination in TypeBox", () => {
     expect(
       Value.Check(NativeProviderSessionInputSchema, {
-        executablePath: "/opt/rawr/bin/codex",
         home: "/tmp/codex-home",
       })
     ).toBe(true);
     for (const input of [
-      { executablePath: "codex", home: "/tmp/codex-home" },
-      { executablePath: "/opt/rawr/bin/codex", home: "." },
-      { executablePath: "/opt/rawr/bin/codex", home: "/" },
-      { executablePath: "/opt/rawr/../bin/codex", home: "/tmp/codex-home" },
+      { executablePath: "/opt/rawr/bin/codex", home: "/tmp/codex-home" },
+      { home: "." },
+      { home: "/" },
+      { home: "/opt/rawr/../bin/codex" },
     ]) {
       expect(Value.Check(NativeProviderSessionInputSchema, input)).toBe(false);
     }
@@ -134,6 +134,18 @@ describe("native agent provider contract", () => {
         capabilities: ["marketplace-list", "plugin-list"],
       })
     ).toBe(false);
+  });
+
+  it("admits only canonical non-root absolute provider executable paths", () => {
+    expect(Value.Check(NativeProviderExecutablePathSchema, "/opt/rawr/bin/codex")).toBe(true);
+    for (const executablePath of [
+      "codex",
+      "/",
+      "/opt/rawr/../rawr/bin/codex",
+      "/opt/rawr/bin/./codex",
+    ]) {
+      expect(Value.Check(NativeProviderExecutablePathSchema, executablePath)).toBe(false);
+    }
   });
 
   it("keeps normalized inventory free of raw provider JSON", () => {

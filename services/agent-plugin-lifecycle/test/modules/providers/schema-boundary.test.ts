@@ -19,9 +19,9 @@ import {
 import {
   channelRequest,
   createCurrentMainReader,
-  FakeNativeSession,
-  FakeNativeSessions,
+  FakeNativeProviders,
   FakeSelectedContentResolver,
+  fakeNativeSession,
   selectedContent,
   testRequest,
 } from "./fixture";
@@ -120,7 +120,7 @@ describe("provider public schema boundary", () => {
 
   it("validates a complete finite public status result from the handler", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       installed: ["cognition"],
@@ -128,7 +128,7 @@ describe("provider public schema boundary", () => {
     const result = await runProviderStatus(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
     expect(Value.Check(ProviderStatusResultSchema, result)).toBe(true);
     expect(Value.Check(ProviderStatusResultSchema, { ...result, plan: [] })).toBe(false);

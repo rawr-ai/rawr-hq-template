@@ -15,7 +15,7 @@ import {
 import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { makeNodeVersionedContentResource } from "@rawr/resource-versioned-content/providers/git-effect-platform-node";
-import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
+import { createNodeNativeAgentProviderResources } from "../bindings/providers";
 import {
   type LifecycleClientFactory,
   type LifecycleExecutableBinding,
@@ -127,7 +127,7 @@ export function createProductionLifecycleDeps(
     contentWorkspace: makeNodeContentWorkspaceResource(),
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodeAgentPluginPackageOutputResource(),
-    providerNativeSessions: createNodeNativeProviderSessionResolver(binding.providerExecutables),
+    nativeProviders: createNodeNativeAgentProviderResources(binding.providerExecutables),
     versionedContent: makeNodeVersionedContentResource(),
   } satisfies LifecycleDeps);
 }

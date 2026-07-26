@@ -48,12 +48,22 @@ describe("agent plugin lifecycle oRPC service spine", () => {
             } satisfies ContentWorkspaceFailure);
           }),
       },
-      providerNativeSessions: {
-        acquire: async () => {
-          nativeCalls += 1;
-          throw new Error("Unexpected native provider acquisition");
-        },
-      },
+      nativeProviders: Object.freeze({
+        codex: Object.freeze({
+          acquire: () =>
+            Effect.sync(() => {
+              nativeCalls += 1;
+              throw new Error("Unexpected native provider acquisition");
+            }),
+        }),
+        claude: Object.freeze({
+          acquire: () =>
+            Effect.sync(() => {
+              nativeCalls += 1;
+              throw new Error("Unexpected native provider acquisition");
+            }),
+        }),
+      }),
     });
     const releaseInputPath = parseReleaseRelativePath(
       ".rawr/release-input.json",

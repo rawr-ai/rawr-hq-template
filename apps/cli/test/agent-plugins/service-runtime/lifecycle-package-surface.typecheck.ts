@@ -3,7 +3,8 @@ import * as retiredExportBindingSurface from "@rawr/agent-plugin-lifecycle/bindi
 // @ts-expect-error Lifecycle host bindings are not a public package axis.
 import * as retiredBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/providers";
 import type { Config, CreateClientOptions, Deps, Scope } from "@rawr/agent-plugin-lifecycle/client";
-import { type NativeProviderSessionResolver } from "@rawr/agent-plugin-lifecycle/host";
+// @ts-expect-error Lifecycle host bindings are not a public package axis.
+import * as retiredHostSurface from "@rawr/agent-plugin-lifecycle/host";
 import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   parsePluginId,
@@ -18,6 +19,7 @@ import { type Router, router } from "@rawr/agent-plugin-lifecycle/router";
 import { type Contract, contract } from "@rawr/agent-plugin-lifecycle/service/contract";
 // @ts-expect-error Contract types are exposed only through the owner-qualified contract subpath.
 import * as retiredTypesSurface from "@rawr/agent-plugin-lifecycle/types";
+import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 
 const lifecycleContract: Contract = contract;
 void lifecycleContract;
@@ -32,6 +34,7 @@ void lifecycleBoundary;
 void lifecycleScope;
 void retiredBindingSurface;
 void retiredPortSurface;
+void retiredHostSurface;
 void retiredExportBindingSurface;
 void retiredExportPortSurface;
 void retiredReleaseSurface;
@@ -52,11 +55,10 @@ type CallerSemanticArtifactDepsAreAbsent =
 const callerSemanticArtifactDepsAreAbsent: CallerSemanticArtifactDepsAreAbsent = true;
 void callerSemanticArtifactDepsAreAbsent;
 
-type NativeSessionHostPortIsExact =
-  Deps["providerNativeSessions"] extends NativeProviderSessionResolver
-    ? NativeProviderSessionResolver extends Deps["providerNativeSessions"]
-      ? true
-      : never
-    : never;
-const nativeSessionHostPortIsExact: NativeSessionHostPortIsExact = true;
-void nativeSessionHostPortIsExact;
+type NativeProviderResourcesAreExact = Deps["nativeProviders"] extends NativeAgentProviderResources
+  ? NativeAgentProviderResources extends Deps["nativeProviders"]
+    ? true
+    : never
+  : never;
+const nativeProviderResourcesAreExact: NativeProviderResourcesAreExact = true;
+void nativeProviderResourcesAreExact;

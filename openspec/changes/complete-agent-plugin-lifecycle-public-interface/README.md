@@ -490,6 +490,31 @@ Habitat tests plus 17 selected source laws, workspace Biome, strict OpenSpec,
 and diff hygiene pass. This checkpoint changes no provider home, Personal
 repository, Oclif command surface, or live lifecycle state.
 
+The native-provider checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4e]]. The neutral
+contract now exposes one closed Codex-and-Claude catalog of discriminated
+Effect resources. Each concrete Node provider binds its configured executable
+outside the per-session `{ home }` input and supplies `NodeServices.layer` only
+behind acquisition. The CLI app selects that catalog once; the service base and
+Providers middleware pass and narrow the same value, and provider status, test,
+and sync compose its Effects directly. The service host export, Promise
+resolver DTOs, Promise-to-Effect helper, and synthetic admission consumer are
+deleted.
+
+Target order and bounded probe/inventory concurrency remain explicit. Typed
+native failures retain the existing closed provider results, while defects and
+interruption propagate through the Effect runtime. Live mutation uncertainty
+and exact missing-executable diagnostics are unchanged. The ready-resource
+tests cover cold selection, cancellation/finalization, typed failures, and one
+real child interruption that returns only after its termination event is
+recorded and its PID and process group are no longer addressable. The resource
+contract passes 8 tests, the Codex and Claude providers pass 13 tests, the
+complete lifecycle service passes 247 tests, and the CLI passes 84 tests.
+Resource, provider, lifecycle, and CLI typechecks, `habitat:check` with 31
+Habitat tests plus 17 selected source laws, workspace Biome, strict OpenSpec,
+and diff hygiene pass. This checkpoint changes no provider home, Personal
+repository, Oclif command surface, or live lifecycle state.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the
@@ -616,11 +641,14 @@ error, and provider semantics, so it is not imported into this checkpoint.
 Published bridge `v4.8` is byte-identical to the skill-frozen `v4.7` source,
 tests, and distribution; only its Effect peer floor moves from beta 83 to beta
 98, which directly admits the selected beta 100 runtime. The focused admission
-fixture proves TypeBox input and output validation, local dependency-cause
-preservation, exactly one baseline error emission, and settle-before-return
-cancellation for Promise-backed dependency mutations. This is an exact
-E3-compatible admission, not a claim that `v4.8` is the frozen profile or that a
-local cause crosses a wire boundary.
+fixture originally included Promise-backed failure and cancellation probes as
+migration evidence. Those probes retired with the duplicate Promise resource
+mirrors. The surviving fixture proves only TypeBox input and output validation
+around a native Effect handler. Current typed-failure, defect, interruption,
+and finalization evidence belongs to the ready resource checkpoints under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.4a, 5.4d, and
+5.4e]]. This is an exact E3-compatible admission, not a claim that `v4.8` is the
+frozen profile or that a local cause crosses a wire boundary.
 
 The surviving filesystem and process providers now use Effect 4 Node services,
 filesystem, path, child-process, semaphore, result, and finalization APIs.

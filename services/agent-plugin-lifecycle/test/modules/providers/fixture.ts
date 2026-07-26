@@ -1,5 +1,8 @@
 import type {
+  ClaudeNativeAgentProviderSession,
+  CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
+  NativeAgentProviderResources,
   NativeMarketplaceSource,
   NativeProviderCapabilities,
   NativeProviderInventory,
@@ -10,10 +13,6 @@ import type {
 import { Effect } from "effect";
 
 import type { CurrentMainSelectionReader } from "../../../src/service/model/dependencies/current-main";
-import type {
-  NativeProviderSession,
-  NativeProviderSessionResolver,
-} from "../../../src/service/model/dependencies/providers";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
 import type {
   ProviderStatusRequest,
@@ -210,8 +209,19 @@ export class FakeSelectedContentResolver implements SelectedContentResolver {
   }
 }
 
-export class FakeNativeSession {
-  readonly provider: ProviderTarget["provider"];
+interface FakeNativeSessionInput {
+  readonly target: ProviderTarget;
+  readonly content: SelectedContent;
+  readonly marketplace?: "exact" | "stale" | "unrelated" | "ambiguous" | "absent";
+  readonly installed?: readonly string[];
+  readonly disabled?: readonly string[];
+  readonly omitted?: readonly string[];
+  readonly staleFiles?: readonly string[];
+  readonly probeOverride?: () => Effect.Effect<NativeProviderCapabilities>;
+}
+
+class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
+  readonly provider: Provider;
   readonly executablePath: string;
   readonly home: string;
   readonly calls: string[] = [];
@@ -220,25 +230,20 @@ export class FakeNativeSession {
   installFailure: "before" | "after" | null = null;
   marketplaceRemoveFailure: "before" | "after" | null = null;
   installBadFiles = false;
-  private inventoryValue: NativeProviderInventory;
+  protected inventoryValue: NativeProviderInventory;
   private readonly content: SelectedContent;
   private readonly files = new Map<string, Uint8Array>();
+  private readonly probeOverride?: () => Effect.Effect<NativeProviderCapabilities>;
 
-  constructor(
-    input: Readonly<{
-      target: ProviderTarget;
-      content: SelectedContent;
-      marketplace?: "exact" | "stale" | "unrelated" | "ambiguous" | "absent";
-      installed?: readonly string[];
-      disabled?: readonly string[];
-      omitted?: readonly string[];
-      staleFiles?: readonly string[];
-    }>
-  ) {
-    this.provider = input.target.provider;
+  constructor(provider: Provider, input: FakeNativeSessionInput) {
+    if (input.target.provider !== provider) {
+      throw new Error(`Fake ${provider} session received a ${input.target.provider} target`);
+    }
+    this.provider = provider;
     this.home = input.target.home;
     this.executablePath = `/opt/${this.provider}`;
     this.content = input.content;
+    this.probeOverride = input.probeOverride;
     const marketplaces =
       input.marketplace === "absent"
         ? []
@@ -260,180 +265,193 @@ export class FakeNativeSession {
     }
   }
 
-  async probe(): Promise<NativeProviderCapabilities> {
-    return this.provider === "codex"
-      ? {
-          provider: "codex",
-          executablePath: this.executablePath,
-          home: this.home,
-          version: "fixture-1",
-          capabilities: [
-            "marketplace-list",
-            "marketplace-add",
-            "marketplace-remove",
-            "plugin-list",
-            "plugin-install",
-            "plugin-remove",
-          ],
-        }
-      : {
-          provider: "claude",
-          executablePath: this.executablePath,
-          home: this.home,
-          version: "fixture-1",
-          capabilities: [
-            "marketplace-list",
-            "marketplace-add",
-            "marketplace-remove",
-            "marketplace-update",
-            "plugin-list",
-            "plugin-install",
-            "plugin-enable",
-            "plugin-disable",
-            "plugin-remove",
-            "plugin-update",
-          ],
-        };
-  }
-
-  async inventory(): Promise<NativeProviderInventory> {
-    this.calls.push("inventory");
-    if (this.inventoryFailureCount > 0) {
-      this.inventoryFailureCount -= 1;
-      throw failure(this.provider, "inventory", "started", "fixture inventory failure");
-    }
-    return this.inventoryValue;
-  }
-
-  async readPluginFiles(
-    input: NativeProviderPluginFilesReadInput
-  ): Promise<NativeProviderPluginFiles> {
-    this.fileReadRequests.push(input);
-    this.calls.push(
-      `read-batch:${input.selector}:${input.files.map((file) => file.relativePath).join(",")}`
+  probe(): Effect.Effect<NativeProviderCapabilities> {
+    if (this.probeOverride !== undefined) return this.probeOverride();
+    return Effect.succeed(
+      this.provider === "codex"
+        ? {
+            provider: "codex",
+            executablePath: this.executablePath,
+            home: this.home,
+            version: "fixture-1",
+            capabilities: [
+              "marketplace-list",
+              "marketplace-add",
+              "marketplace-remove",
+              "plugin-list",
+              "plugin-install",
+              "plugin-remove",
+            ],
+          }
+        : {
+            provider: "claude",
+            executablePath: this.executablePath,
+            home: this.home,
+            version: "fixture-1",
+            capabilities: [
+              "marketplace-list",
+              "marketplace-add",
+              "marketplace-remove",
+              "marketplace-update",
+              "plugin-list",
+              "plugin-install",
+              "plugin-enable",
+              "plugin-disable",
+              "plugin-remove",
+              "plugin-update",
+            ],
+          }
     );
-    return Object.freeze({
-      selector: input.selector,
-      files: Object.freeze(
-        input.files.map((file) => {
-          const bytes = this.files.get(`${input.selector}\u0000${file.relativePath}`);
-          return bytes === undefined
-            ? Object.freeze({ kind: "Missing", relativePath: file.relativePath })
-            : bytes.byteLength > file.maxBytes
-              ? Object.freeze({ kind: "TooLarge", relativePath: file.relativePath })
-              : Object.freeze({
-                  kind: "Read",
-                  relativePath: file.relativePath,
-                  byteLength: bytes.byteLength,
-                  contentBase64: Buffer.from(bytes).toString("base64"),
-                });
-        })
-      ),
+  }
+
+  inventory(): Effect.Effect<NativeProviderInventory, NativeAgentProviderFailure> {
+    return Effect.suspend(() => {
+      this.calls.push("inventory");
+      if (this.inventoryFailureCount > 0) {
+        this.inventoryFailureCount -= 1;
+        return Effect.fail(
+          failure(this.provider, "inventory", "started", "fixture inventory failure")
+        );
+      }
+      return Effect.succeed(this.inventoryValue);
     });
   }
 
-  async addMarketplace(source: NativeMarketplaceSource) {
-    this.calls.push("mutate:marketplace-add");
-    this.inventoryValue = {
-      ...this.inventoryValue,
-      marketplaces: [
-        {
-          identity: this.content.marketplace.identity,
-          source:
-            source.kind === "git"
-              ? {
-                  kind: "git" as const,
-                  repositoryUrl: source.repositoryUrl,
-                  revision: this.provider === "codex" ? null : source.revision,
-                }
-              : { kind: "local" as const, root: source.root },
-          installedRoot: `/tmp/${this.provider}-home/marketplaces/${this.content.marketplace.identity}`,
-        },
-      ],
-    };
-    return {
-      provider: this.provider,
-      operation: "marketplace-add" as const,
-      commandPhase: "command-returned" as const,
-    };
-  }
-
-  async removeMarketplace() {
-    this.calls.push("mutate:marketplace-remove");
-    if (this.marketplaceRemoveFailure === "before") {
-      throw failure(this.provider, "marketplace-remove", "not-started", "fixture removal refusal");
-    }
-    this.inventoryValue = { ...this.inventoryValue, marketplaces: [] };
-    if (this.marketplaceRemoveFailure === "after") {
-      this.marketplaceRemoveFailure = null;
-      this.inventoryFailureCount = 1;
-      throw failure(
-        this.provider,
-        "marketplace-remove",
-        "command-returned",
-        "fixture removal uncertainty"
+  readPluginFiles(
+    input: NativeProviderPluginFilesReadInput
+  ): Effect.Effect<NativeProviderPluginFiles> {
+    return Effect.sync(() => {
+      this.fileReadRequests.push(input);
+      this.calls.push(
+        `read-batch:${input.selector}:${input.files.map((file) => file.relativePath).join(",")}`
       );
-    }
-    return {
-      provider: this.provider,
-      operation: "marketplace-remove" as const,
-      commandPhase: "command-returned" as const,
-    };
+      return Object.freeze({
+        selector: input.selector,
+        files: Object.freeze(
+          input.files.map((file) => {
+            const bytes = this.files.get(`${input.selector}\u0000${file.relativePath}`);
+            return bytes === undefined
+              ? Object.freeze({ kind: "Missing", relativePath: file.relativePath })
+              : bytes.byteLength > file.maxBytes
+                ? Object.freeze({ kind: "TooLarge", relativePath: file.relativePath })
+                : Object.freeze({
+                    kind: "Read",
+                    relativePath: file.relativePath,
+                    byteLength: bytes.byteLength,
+                    contentBase64: Buffer.from(bytes).toString("base64"),
+                  });
+          })
+        ),
+      });
+    });
   }
 
-  async installPlugin(input: Readonly<{ selector: string }>) {
-    this.calls.push(`mutate:plugin-install:${input.selector}`);
-    if (this.installFailure === "before") {
-      throw failure(this.provider, "plugin-install", "not-started", "fixture install refusal");
-    }
-    const name = input.selector.slice(0, input.selector.indexOf("@"));
-    const selected = this.content.members.find((entry) => entry.pluginId === name);
-    if (selected === undefined) throw new Error(`Unknown fixture plugin ${name}`);
-    this.upsertPlugin(plugin(name, this.provider, this.provider === "codex"));
-    this.writeSelectedFiles(selected, this.installBadFiles);
-    if (this.installFailure === "after") {
-      this.installFailure = null;
-      this.inventoryFailureCount = 1;
-      throw failure(
-        this.provider,
-        "plugin-install",
-        "command-returned",
-        "fixture install uncertainty"
-      );
-    }
-    return {
-      provider: this.provider,
-      operation: "plugin-install" as const,
-      commandPhase: "command-returned" as const,
-    };
+  addMarketplace(source: NativeMarketplaceSource) {
+    return Effect.sync(() => {
+      this.calls.push("mutate:marketplace-add");
+      this.inventoryValue = {
+        ...this.inventoryValue,
+        marketplaces: [
+          {
+            identity: this.content.marketplace.identity,
+            source:
+              source.kind === "git"
+                ? {
+                    kind: "git" as const,
+                    repositoryUrl: source.repositoryUrl,
+                    revision: this.provider === "codex" ? null : source.revision,
+                  }
+                : { kind: "local" as const, root: source.root },
+            installedRoot: `/tmp/${this.provider}-home/marketplaces/${this.content.marketplace.identity}`,
+          },
+        ],
+      };
+      return {
+        provider: this.provider,
+        operation: "marketplace-add" as const,
+        commandPhase: "command-returned" as const,
+      };
+    });
   }
 
-  async removePlugin(input: Readonly<{ selector: string }>) {
-    this.calls.push(`mutate:plugin-remove:${input.selector}`);
-    this.inventoryValue = {
-      ...this.inventoryValue,
-      plugins: this.inventoryValue.plugins.filter((entry) => entry.selector !== input.selector),
-    };
-    for (const key of [...this.files.keys()]) {
-      if (key.startsWith(`${input.selector}\u0000`)) this.files.delete(key);
-    }
-    return {
-      provider: this.provider,
-      operation: "plugin-remove" as const,
-      commandPhase: "command-returned" as const,
-    };
+  removeMarketplace() {
+    return Effect.suspend(() => {
+      this.calls.push("mutate:marketplace-remove");
+      if (this.marketplaceRemoveFailure === "before") {
+        return Effect.fail(
+          failure(this.provider, "marketplace-remove", "not-started", "fixture removal refusal")
+        );
+      }
+      this.inventoryValue = { ...this.inventoryValue, marketplaces: [] };
+      if (this.marketplaceRemoveFailure === "after") {
+        this.marketplaceRemoveFailure = null;
+        this.inventoryFailureCount = 1;
+        return Effect.fail(
+          failure(
+            this.provider,
+            "marketplace-remove",
+            "command-returned",
+            "fixture removal uncertainty"
+          )
+        );
+      }
+      return Effect.succeed({
+        provider: this.provider,
+        operation: "marketplace-remove" as const,
+        commandPhase: "command-returned" as const,
+      });
+    });
   }
 
-  async enablePlugin(input: Readonly<{ selector: string }>) {
-    this.calls.push(`mutate:plugin-enable:${input.selector}`);
-    const live = this.inventoryValue.plugins.find((entry) => entry.selector === input.selector);
-    if (live === undefined) throw new Error("Cannot enable an absent fixture plugin");
-    this.upsertPlugin({ ...live, enabled: true });
-    return {
-      provider: this.provider,
-      operation: "plugin-enable" as const,
-      commandPhase: "command-returned" as const,
-    };
+  installPlugin(input: Readonly<{ selector: string }>) {
+    return Effect.suspend(() => {
+      this.calls.push(`mutate:plugin-install:${input.selector}`);
+      if (this.installFailure === "before") {
+        return Effect.fail(
+          failure(this.provider, "plugin-install", "not-started", "fixture install refusal")
+        );
+      }
+      const name = input.selector.slice(0, input.selector.indexOf("@"));
+      const selected = this.content.members.find((entry) => entry.pluginId === name);
+      if (selected === undefined) return Effect.die(new Error(`Unknown fixture plugin ${name}`));
+      this.upsertPlugin(plugin(name, this.provider, this.provider === "codex"));
+      this.writeSelectedFiles(selected, this.installBadFiles);
+      if (this.installFailure === "after") {
+        this.installFailure = null;
+        this.inventoryFailureCount = 1;
+        return Effect.fail(
+          failure(
+            this.provider,
+            "plugin-install",
+            "command-returned",
+            "fixture install uncertainty"
+          )
+        );
+      }
+      return Effect.succeed({
+        provider: this.provider,
+        operation: "plugin-install" as const,
+        commandPhase: "command-returned" as const,
+      });
+    });
+  }
+
+  removePlugin(input: Readonly<{ selector: string }>) {
+    return Effect.sync(() => {
+      this.calls.push(`mutate:plugin-remove:${input.selector}`);
+      this.inventoryValue = {
+        ...this.inventoryValue,
+        plugins: this.inventoryValue.plugins.filter((entry) => entry.selector !== input.selector),
+      };
+      for (const key of [...this.files.keys()]) {
+        if (key.startsWith(`${input.selector}\u0000`)) this.files.delete(key);
+      }
+      return {
+        provider: this.provider,
+        operation: "plugin-remove" as const,
+        commandPhase: "command-returned" as const,
+      };
+    });
   }
 
   mutationCalls(): readonly string[] {
@@ -478,7 +496,7 @@ export class FakeNativeSession {
     this.files.set(`${name}@rawr-hq\u0000${relativePath}`, bytes);
   }
 
-  private upsertPlugin(next: NativeProviderPluginObservation): void {
+  protected upsertPlugin(next: NativeProviderPluginObservation): void {
     this.inventoryValue = {
       ...this.inventoryValue,
       plugins: [
@@ -499,20 +517,93 @@ export class FakeNativeSession {
   }
 }
 
+class FakeCodexNativeSession
+  extends FakeNativeSessionBase<"codex">
+  implements CodexNativeAgentProviderSession
+{
+  constructor(input: FakeNativeSessionInput) {
+    super("codex", input);
+  }
+}
+
+class FakeClaudeNativeSession
+  extends FakeNativeSessionBase<"claude">
+  implements ClaudeNativeAgentProviderSession
+{
+  constructor(input: FakeNativeSessionInput) {
+    super("claude", input);
+  }
+
+  enablePlugin(input: Readonly<{ selector: string }>) {
+    return Effect.suspend(() => {
+      this.calls.push(`mutate:plugin-enable:${input.selector}`);
+      const live = this.inventoryValue.plugins.find((entry) => entry.selector === input.selector);
+      if (live === undefined) {
+        return Effect.die(new Error("Cannot enable an absent fixture plugin"));
+      }
+      this.upsertPlugin({ ...live, enabled: true });
+      return Effect.succeed({
+        provider: this.provider,
+        operation: "plugin-enable" as const,
+        commandPhase: "command-returned" as const,
+      });
+    });
+  }
+}
+
+type FakeNativeSession = FakeCodexNativeSession | FakeClaudeNativeSession;
+
+/** Selects a provider-discriminated fake whose method surface matches the native contract. */
+export function fakeNativeSession(input: FakeNativeSessionInput): FakeNativeSession {
+  switch (input.target.provider) {
+    case "codex":
+      return new FakeCodexNativeSession(input);
+    case "claude":
+      return new FakeClaudeNativeSession(input);
+  }
+}
+
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-export class FakeNativeSessions implements NativeProviderSessionResolver {
-  constructor(private readonly sessions: readonly FakeNativeSession[]) {}
+export class FakeNativeProviders implements NativeAgentProviderResources {
+  readonly codex;
+  readonly claude;
 
-  async acquire(target: ProviderTarget): Promise<NativeProviderSession> {
-    const session = this.sessions.find(
-      (candidate) => candidate.provider === target.provider && candidate.home === target.home
-    );
-    if (session === undefined) throw new Error("Fixture target is absent");
-    return session;
+  constructor(sessions: readonly FakeNativeSession[]) {
+    const codexSessions: FakeCodexNativeSession[] = [];
+    const claudeSessions: FakeClaudeNativeSession[] = [];
+    for (const session of sessions) {
+      switch (session.provider) {
+        case "codex":
+          codexSessions.push(session);
+          break;
+        case "claude":
+          claudeSessions.push(session);
+          break;
+      }
+    }
+    this.codex = Object.freeze({
+      acquire: ({ home }: Readonly<{ home: string }>) =>
+        acquireFakeSession("codex", codexSessions, home),
+    });
+    this.claude = Object.freeze({
+      acquire: ({ home }: Readonly<{ home: string }>) =>
+        acquireFakeSession("claude", claudeSessions, home),
+    });
   }
+}
+
+function acquireFakeSession<Session extends Readonly<{ home: string }>>(
+  provider: ProviderTarget["provider"],
+  sessions: readonly Session[],
+  home: string
+): Effect.Effect<Session, NativeAgentProviderFailure> {
+  const session = sessions.find((candidate) => candidate.home === home);
+  return session === undefined
+    ? Effect.fail(failure(provider, "acquire", "not-started", "Fixture target is absent"))
+    : Effect.succeed(session);
 }
 
 function marketplace(

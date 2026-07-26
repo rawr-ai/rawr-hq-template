@@ -1,5 +1,5 @@
 import path from "node:path";
-
+import { NodeServices } from "@effect/platform-node";
 import type {
   CodexNativeAgentProviderSession,
   NativeAgentProviderFailure,
@@ -82,132 +82,155 @@ const CodexPluginListSchema = Type.Object(
 type CodexMarketplaceList = Static<typeof CodexMarketplaceListSchema>;
 type CodexPluginList = Static<typeof CodexPluginListSchema>;
 
-export const codexEffectPlatformNodeProvider: NativeAgentProviderResource<
-  CodexNativeAgentProviderSession,
-  EffectPlatformNodeRequirements
-> = Object.freeze({
-  acquire: (input: NativeProviderSessionInput) =>
-    acquireEffectPlatformNodeProvider("codex", input).pipe(
-      Effect.map((kernel): CodexNativeAgentProviderSession => {
-        const probe: CodexNativeAgentProviderSession["probe"] = () =>
-          kernel.serialized(
-            "probe",
-            Effect.gen(function* () {
-              const version = yield* kernel.run("probe", ["--version"]);
-              const pluginHelp = yield* kernel.run("probe", ["plugin", "--help"]);
-              const marketplaceHelp = yield* kernel.run("probe", [
-                "plugin",
-                "marketplace",
-                "--help",
-              ]);
-              return Object.freeze({
-                provider: "codex",
-                executablePath: kernel.executablePath,
-                home: kernel.home,
-                version: yield* requireVersion(version.stdout),
-                capabilities: observedCapabilities(pluginHelp.stdout, marketplaceHelp.stdout),
-              }) satisfies NativeProviderCapabilities;
-            })
-          );
+/** Fixes the exact Codex executable used by every session from this resource. */
+export interface CodexEffectPlatformNodeProviderOptions {
+  readonly executablePath: string;
+}
 
-        const readInventory = () => codexInventory(kernel);
-        const inventory: CodexNativeAgentProviderSession["inventory"] = () =>
-          kernel.serialized("inventory", readInventory());
-
-        return Object.freeze({
-          provider: "codex",
-          executablePath: kernel.executablePath,
-          home: kernel.home,
-          probe,
-          inventory,
-          readPluginFiles: (request) =>
+/**
+ * Constructs the platform-requiring Codex provider without choosing a runtime.
+ */
+export function makeCodexEffectPlatformNodeProvider(
+  options: CodexEffectPlatformNodeProviderOptions
+): NativeAgentProviderResource<CodexNativeAgentProviderSession, EffectPlatformNodeRequirements> {
+  return Object.freeze({
+    acquire: (input: NativeProviderSessionInput) =>
+      acquireEffectPlatformNodeProvider("codex", options.executablePath, input).pipe(
+        Effect.map((kernel): CodexNativeAgentProviderSession => {
+          const probe: CodexNativeAgentProviderSession["probe"] = () =>
             kernel.serialized(
-              "plugin-files-read",
-              requirePluginFilesReadInput("codex", "plugin-files-read", request).pipe(
-                Effect.flatMap((validated) =>
-                  readInventory().pipe(
-                    Effect.flatMap((live) =>
-                      selectPluginRoot(kernel, live.plugins, validated.selector).pipe(
-                        Effect.flatMap((root) =>
-                          Effect.forEach(
-                            validated.files,
-                            (file) =>
-                              kernel.readPluginEntry("plugin-files-read", root, file).pipe(
-                                Effect.catchIf(
-                                  (error) =>
-                                    error.reason === "Missing" || error.reason === "LimitExceeded",
-                                  (error) => {
-                                    const missing: NativeProviderPluginFileObservation =
-                                      Object.freeze({
-                                        kind: error.reason === "Missing" ? "Missing" : "TooLarge",
-                                        relativePath: file.relativePath,
-                                      });
-                                    return Effect.succeed(missing);
-                                  }
-                                )
-                              ),
-                            { concurrency: 1 }
-                          ).pipe(
-                            Effect.map((files) => {
-                              const observed: NativeProviderPluginFiles = Object.freeze({
-                                selector: validated.selector,
-                                files: Object.freeze(files),
-                              });
-                              return observed;
-                            })
+              "probe",
+              Effect.gen(function* () {
+                const version = yield* kernel.run("probe", ["--version"]);
+                const pluginHelp = yield* kernel.run("probe", ["plugin", "--help"]);
+                const marketplaceHelp = yield* kernel.run("probe", [
+                  "plugin",
+                  "marketplace",
+                  "--help",
+                ]);
+                return Object.freeze({
+                  provider: "codex",
+                  executablePath: kernel.executablePath,
+                  home: kernel.home,
+                  version: yield* requireVersion(version.stdout),
+                  capabilities: observedCapabilities(pluginHelp.stdout, marketplaceHelp.stdout),
+                }) satisfies NativeProviderCapabilities;
+              })
+            );
+
+          const readInventory = () => codexInventory(kernel);
+          const inventory: CodexNativeAgentProviderSession["inventory"] = () =>
+            kernel.serialized("inventory", readInventory());
+
+          return Object.freeze({
+            provider: "codex",
+            executablePath: kernel.executablePath,
+            home: kernel.home,
+            probe,
+            inventory,
+            readPluginFiles: (request) =>
+              kernel.serialized(
+                "plugin-files-read",
+                requirePluginFilesReadInput("codex", "plugin-files-read", request).pipe(
+                  Effect.flatMap((validated) =>
+                    readInventory().pipe(
+                      Effect.flatMap((live) =>
+                        selectPluginRoot(kernel, live.plugins, validated.selector).pipe(
+                          Effect.flatMap((root) =>
+                            Effect.forEach(
+                              validated.files,
+                              (file) =>
+                                kernel.readPluginEntry("plugin-files-read", root, file).pipe(
+                                  Effect.catchIf(
+                                    (error) =>
+                                      error.reason === "Missing" ||
+                                      error.reason === "LimitExceeded",
+                                    (error) => {
+                                      const missing: NativeProviderPluginFileObservation =
+                                        Object.freeze({
+                                          kind: error.reason === "Missing" ? "Missing" : "TooLarge",
+                                          relativePath: file.relativePath,
+                                        });
+                                      return Effect.succeed(missing);
+                                    }
+                                  )
+                                ),
+                              { concurrency: 1 }
+                            ).pipe(
+                              Effect.map((files) => {
+                                const observed: NativeProviderPluginFiles = Object.freeze({
+                                  selector: validated.selector,
+                                  files: Object.freeze(files),
+                                });
+                                return observed;
+                              })
+                            )
                           )
                         )
                       )
                     )
                   )
                 )
-              )
-            ),
-          addMarketplace: (source) =>
-            kernel.serialized(
-              "marketplace-add",
-              requireMarketplaceSource("codex", "marketplace-add", source).pipe(
-                Effect.flatMap((validated) => codexMarketplaceAddArgs(kernel, validated)),
-                Effect.flatMap((args) => kernel.mutation("marketplace-add", args))
-              )
-            ),
-          removeMarketplace: (request) =>
-            kernel.serialized(
-              "marketplace-remove",
-              requireMarketplaceIdentityInput("codex", "marketplace-remove", request).pipe(
-                Effect.flatMap((identity) =>
-                  kernel.mutation("marketplace-remove", [
-                    "plugin",
-                    "marketplace",
-                    "remove",
-                    identity,
-                    "--json",
-                  ])
+              ),
+            addMarketplace: (source) =>
+              kernel.serialized(
+                "marketplace-add",
+                requireMarketplaceSource("codex", "marketplace-add", source).pipe(
+                  Effect.flatMap((validated) => codexMarketplaceAddArgs(kernel, validated)),
+                  Effect.flatMap((args) => kernel.mutation("marketplace-add", args))
                 )
-              )
-            ),
-          installPlugin: (request) =>
-            kernel.serialized(
-              "plugin-install",
-              requirePluginSelectorInput("codex", "plugin-install", request).pipe(
-                Effect.flatMap((selector) =>
-                  kernel.mutation("plugin-install", ["plugin", "add", selector, "--json"])
+              ),
+            removeMarketplace: (request) =>
+              kernel.serialized(
+                "marketplace-remove",
+                requireMarketplaceIdentityInput("codex", "marketplace-remove", request).pipe(
+                  Effect.flatMap((identity) =>
+                    kernel.mutation("marketplace-remove", [
+                      "plugin",
+                      "marketplace",
+                      "remove",
+                      identity,
+                      "--json",
+                    ])
+                  )
                 )
-              )
-            ),
-          removePlugin: (request) =>
-            kernel.serialized(
-              "plugin-remove",
-              requirePluginSelectorInput("codex", "plugin-remove", request).pipe(
-                Effect.flatMap((selector) =>
-                  kernel.mutation("plugin-remove", ["plugin", "remove", selector, "--json"])
+              ),
+            installPlugin: (request) =>
+              kernel.serialized(
+                "plugin-install",
+                requirePluginSelectorInput("codex", "plugin-install", request).pipe(
+                  Effect.flatMap((selector) =>
+                    kernel.mutation("plugin-install", ["plugin", "add", selector, "--json"])
+                  )
                 )
-              )
-            ),
-        });
-      })
-    ),
-});
+              ),
+            removePlugin: (request) =>
+              kernel.serialized(
+                "plugin-remove",
+                requirePluginSelectorInput("codex", "plugin-remove", request).pipe(
+                  Effect.flatMap((selector) =>
+                    kernel.mutation("plugin-remove", ["plugin", "remove", selector, "--json"])
+                  )
+                )
+              ),
+          });
+        })
+      ),
+  });
+}
+
+/**
+ * Constructs a ready Codex resource whose Node platform is supplied only while
+ * acquiring a session.
+ */
+export function makeNodeCodexNativeAgentProviderResource(
+  options: CodexEffectPlatformNodeProviderOptions
+): NativeAgentProviderResource<CodexNativeAgentProviderSession, never> {
+  const provider = makeCodexEffectPlatformNodeProvider(options);
+  return Object.freeze({
+    acquire: (input) => provider.acquire(input).pipe(Effect.provide(NodeServices.layer)),
+  });
+}
 
 function codexInventory(
   kernel: EffectPlatformNodeProviderKernel

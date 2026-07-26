@@ -1,15 +1,12 @@
 import {
   MAX_NATIVE_PROVIDER_PLUGINS,
   NativeAgentProviderIdSchema,
+  NativeProviderHomeSchema,
 } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 import { CurrentMainSelectionLocatorSchema } from "../../../../model/dto/current-main-selection";
-import { NativeProviderSessionTargetSchema } from "../../../../model/dto/provider-dependencies";
-import {
-  CanonicalAbsoluteLocatorSchema,
-  ContentWorkspacePolicySchema,
-} from "../../../../model/dto/releases/content-workspace";
+import { ContentWorkspacePolicySchema } from "../../../../model/dto/releases/content-workspace";
 import {
   BoundedReadonlyArray,
   EmptyReadonlyArray,
@@ -34,9 +31,15 @@ const MAX_FACTS = 4_096;
 const MAX_DETAIL_LENGTH = 4_096;
 
 export const ProviderIdSchema = NativeAgentProviderIdSchema;
-export const ProviderHomeSchema = CanonicalAbsoluteLocatorSchema;
-export const ProviderTargetSchema = NativeProviderSessionTargetSchema;
-export const ProviderTestDisposableRootSchema = CanonicalAbsoluteLocatorSchema;
+export const ProviderHomeSchema = NativeProviderHomeSchema;
+export const ProviderTargetSchema = ReadonlyObject(
+  Type.Object({
+    provider: NativeAgentProviderIdSchema,
+    home: NativeProviderHomeSchema,
+  }),
+  { additionalProperties: false }
+);
+export const ProviderTestDisposableRootSchema = NativeProviderHomeSchema;
 
 export const ProviderTargetsSchema = Refine(
   NonEmptyReadonlyArray(ProviderTargetSchema, { maxItems: MAX_TARGETS }),

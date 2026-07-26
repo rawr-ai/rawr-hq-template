@@ -17,10 +17,6 @@
       "types": "./src/client.ts",
       "default": "./src/client.ts"
     },
-    "./host": {
-      "types": "./src/host.ts",
-      "default": "./src/host.ts"
-    },
     "./input": {
       "types": "./src/input.ts",
       "default": "./src/input.ts"
