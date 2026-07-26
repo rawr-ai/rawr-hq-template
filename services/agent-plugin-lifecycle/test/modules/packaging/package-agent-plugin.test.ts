@@ -6,7 +6,9 @@ import type {
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -165,9 +167,13 @@ describe("package agent plugin application", () => {
     const output = new CountingOutput({ kind: "ReadOnlyConverged" });
     const contentWorkspace = {
       ...unavailableContentWorkspace(),
-      async inspectGitWorkspace() {
-        throw new Error("clean source unavailable");
-      },
+      inspectGitWorkspace: () =>
+        Effect.fail({
+          _tag: "ContentWorkspaceFailure",
+          operation: "inspect-git-workspace",
+          reason: "GitFailed",
+          detail: "clean source unavailable",
+        } satisfies ContentWorkspaceFailure),
     };
     const application = createPackageAgentPluginApplicationWithDefaults(output, {
       contentWorkspace,
@@ -508,7 +514,7 @@ async function createPackageAgentPluginApplication(
   packageOutput: AgentPluginPackageOutputAsyncPort = makeNodePackageOutputAsyncPort()
 ) {
   return createPackageAgentPluginApplicationWithDefaults(packageOutput, {
-    contentWorkspace: makeNodeContentWorkspacePort({
+    contentWorkspace: makeNodeContentWorkspaceResource({
       gitExecutable: await realpath(GIT_EXECUTABLE),
     }),
   });

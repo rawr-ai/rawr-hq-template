@@ -3,8 +3,9 @@ import { URL } from "node:url";
 
 import type {
   ContentWorkspaceFailure,
-  ContentWorkspaceGitReadAsyncPort,
+  ContentWorkspaceResource,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 
 import {
   createExactGitBlobPointer,
@@ -26,7 +27,7 @@ import type {
 
 const MAX_GIT_BLOB_BYTES = 128 * 1024 * 1024;
 export type ResourceExactGitReadPort = Pick<
-  ContentWorkspaceGitReadAsyncPort,
+  ContentWorkspaceResource<never>,
   "inspectGitRef" | "readGitBlobAtPath" | "isLocalGitAncestor"
 >;
 
@@ -50,19 +51,19 @@ export function createResourceExactGitReader(
   return Object.freeze(reader);
 }
 
-async function inspect(
+function inspect(
   port: ResourceExactGitReadPort,
   locator: GitLocator,
   canonicalRef: CanonicalRef
-): Promise<RepositoryInspection> {
+): Effect.Effect<RepositoryInspection> {
   if (!isAbsolute(locator.workspacePath)) {
-    return {
+    return Effect.succeed({
       kind: "UnreachableRepository",
       reason: "Git locator must be an explicit absolute workspace path",
-    };
+    });
   }
-  try {
-    const observed = await port.inspectGitRef({
+  return Effect.gen(function* () {
+    const observed = yield* port.inspectGitRef({
       locator: locator.workspacePath,
       remoteSelection: { kind: "All" },
       refName: canonicalRef,
@@ -75,13 +76,13 @@ async function inspect(
       return {
         kind: "WrongRepository",
         actualRepositoryIdentity: repositoryIdentity,
-      };
+      } satisfies RepositoryInspection;
     }
     if (observed.refName !== canonicalRef) {
       return {
         kind: "UnreachableRepository",
         reason: "Git provider observed another canonical ref",
-      };
+      } satisfies RepositoryInspection;
     }
     const headCommit = parseCommit(observed.commit, "inspection.headCommit");
     const headTree = parseTree(observed.tree, "inspection.headTree");
@@ -89,7 +90,7 @@ async function inspect(
       return {
         kind: "UnreachableRepository",
         reason: "Git provider returned noncanonical object identities",
-      };
+      } satisfies RepositoryInspection;
     }
     return {
       kind: "Ready",
@@ -97,31 +98,37 @@ async function inspect(
       canonicalRef,
       headCommit: headCommit.value,
       headTree: headTree.value,
-    };
-  } catch (error) {
-    return {
-      kind: "UnreachableRepository",
-      reason: resourceFailureMessage(error),
-    };
-  }
+    } satisfies RepositoryInspection;
+  }).pipe(
+    Effect.catch((error) =>
+      Effect.succeed({
+        kind: "UnreachableRepository",
+        reason: resourceFailureMessage(error),
+      } satisfies RepositoryInspection)
+    )
+  );
 }
 
-async function readFileAtRevision(
+function readFileAtRevision(
   port: ResourceExactGitReadPort,
   locator: GitLocator,
   selection: GitBlobSelection
-): Promise<GitBlobReadResult> {
+): Effect.Effect<GitBlobReadResult> {
   if (!isAbsolute(locator.workspacePath)) {
-    return readFailure("ReadFailed", "Git locator must be an explicit absolute workspace path");
-  }
-  if (selection.repositoryIdentity !== locator.expectedRepositoryIdentity) {
-    return readFailure(
-      "WrongObject",
-      "Git object selection does not belong to the explicit repository locator"
+    return Effect.succeed(
+      readFailure("ReadFailed", "Git locator must be an explicit absolute workspace path")
     );
   }
-  try {
-    const observedRef = await port.inspectGitRef({
+  if (selection.repositoryIdentity !== locator.expectedRepositoryIdentity) {
+    return Effect.succeed(
+      readFailure(
+        "WrongObject",
+        "Git object selection does not belong to the explicit repository locator"
+      )
+    );
+  }
+  return Effect.gen(function* () {
+    const observedRef = yield* port.inspectGitRef({
       locator: locator.workspacePath,
       remoteSelection: { kind: "All" },
       refName: selection.ref,
@@ -135,7 +142,7 @@ async function readFileAtRevision(
         "Git object selection belongs to another repository identity"
       );
     }
-    const observed = await port.readGitBlobAtPath({
+    const observed = yield* port.readGitBlobAtPath({
       root: observedRef.root,
       refName: selection.ref,
       commit: selection.commit,
@@ -164,10 +171,12 @@ async function readFileAtRevision(
         pointer: pointer.value,
         bytes: new Uint8Array(observed.bytes),
       }),
-    };
-  } catch (error) {
-    return readFailure(resourceFailureCode(error), resourceFailureMessage(error));
-  }
+    } satisfies GitBlobReadResult;
+  }).pipe(
+    Effect.catch((error) =>
+      Effect.succeed(readFailure(resourceFailureCode(error), resourceFailureMessage(error)))
+    )
+  );
 }
 
 function exactRepositoryIdentity(remoteUrls: readonly string[], expected: string): string {
@@ -214,29 +223,15 @@ function canonicalGitRepositoryIdentity(host: string, rawPath: string): string |
   return parsed.ok ? parsed.value : undefined;
 }
 
-function resourceFailureCode(error: unknown): GitReadFailureCode {
-  if (!isContentWorkspaceFailure(error)) return "ReadFailed";
+function resourceFailureCode(error: ContentWorkspaceFailure): GitReadFailureCode {
   if (error.reason === "Missing") return "MissingObject";
   if (error.reason === "LimitExceeded") return "ObjectTooLarge";
   if (error.reason === "IdentityChanged") return "WrongObject";
   return "ReadFailed";
 }
 
-function resourceFailureMessage(error: unknown): string {
-  return isContentWorkspaceFailure(error)
-    ? error.detail
-    : error instanceof Error
-      ? error.message
-      : String(error);
-}
-
-function isContentWorkspaceFailure(error: unknown): error is ContentWorkspaceFailure {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "_tag" in error &&
-    error._tag === "ContentWorkspaceFailure"
-  );
+function resourceFailureMessage(error: ContentWorkspaceFailure): string {
+  return error.detail;
 }
 
 function readFailure(code: GitReadFailureCode, message: string): GitBlobReadResult {

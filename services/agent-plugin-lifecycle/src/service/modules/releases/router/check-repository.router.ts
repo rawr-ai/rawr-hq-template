@@ -1,4 +1,4 @@
-import { awaitDependencyPromise } from "../../../base";
+import { Effect } from "effect";
 import type { SourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
 import {
   normalizeReleaseSourceChangedDetail,
@@ -24,8 +24,9 @@ export const checkRepository = module.checkRepository.effect(function* ({
 }) {
   switch (request.kind) {
     case "staged": {
-      const inspected = yield* awaitDependencyPromise(() =>
-        inspectStagedRepository(context.stagedSource, request.contentWorkspace)
+      const inspected = yield* inspectStagedRepository(
+        context.stagedSource,
+        request.contentWorkspace
       );
       if (inspected.kind === "SourceChanged") return stagedSourceChanged(inspected.detail);
       if (inspected.kind === "StagedContentWorkspaceIneligible") {
@@ -35,8 +36,9 @@ export const checkRepository = module.checkRepository.effect(function* ({
           issues: inspected.issues,
         };
       }
-      const revalidated = yield* awaitDependencyPromise(() =>
-        inspectStagedRepository(context.stagedSource, request.contentWorkspace)
+      const revalidated = yield* inspectStagedRepository(
+        context.stagedSource,
+        request.contentWorkspace
       );
       if (
         revalidated.kind !== "StagedContentWorkspaceEligible" ||
@@ -58,9 +60,7 @@ export const checkRepository = module.checkRepository.effect(function* ({
       };
     }
     case "clean": {
-      const inspected = yield* awaitDependencyPromise(() =>
-        context.source.inspect(request.contentWorkspace)
-      );
+      const inspected = yield* context.source.inspect(request.contentWorkspace);
       if (inspected.kind === "Ineligible") {
         return {
           kind: "RepositoryIneligible" as const,
@@ -68,8 +68,9 @@ export const checkRepository = module.checkRepository.effect(function* ({
           issues: inspected.issues,
         };
       }
-      const revalidated = yield* awaitDependencyPromise(() =>
-        context.source.revalidate(request.contentWorkspace, inspected.snapshot.eligibilityBinding)
+      const revalidated = yield* context.source.revalidate(
+        request.contentWorkspace,
+        inspected.snapshot.eligibilityBinding
       );
       if (revalidated.kind === "Ineligible") {
         return {
@@ -92,21 +93,26 @@ export const checkRepository = module.checkRepository.effect(function* ({
   }
 });
 
-async function inspectStagedRepository(
+function inspectStagedRepository(
   source: StagedContentWorkspaceObservationReader,
   policy: StagedContentWorkspacePolicy
-): Promise<StagedContentWorkspaceInspection> {
+): Effect.Effect<StagedContentWorkspaceInspection> {
   const policyIssue = validateStagedContentWorkspacePolicy(policy);
-  if (policyIssue !== undefined) return stagedIneligible(policyIssue);
+  if (policyIssue !== undefined) return Effect.succeed(stagedIneligible(policyIssue));
 
-  const releaseInputObservation = await source.observe(releaseInputObservationRequest(policy));
-  const releaseInput = classifyStagedReleaseInputObservation(policy, releaseInputObservation);
-  if (releaseInput.kind !== "ReadyForMaterialization") return releaseInput;
-
-  const materialization = await source.observe(
-    materializationObservationRequest(policy, releaseInput.memberRoots)
+  return source.observe(releaseInputObservationRequest(policy)).pipe(
+    Effect.flatMap((releaseInputObservation) => {
+      const releaseInput = classifyStagedReleaseInputObservation(policy, releaseInputObservation);
+      if (releaseInput.kind !== "ReadyForMaterialization") return Effect.succeed(releaseInput);
+      return source
+        .observe(materializationObservationRequest(policy, releaseInput.memberRoots))
+        .pipe(
+          Effect.map((materialization) =>
+            classifyStagedMaterializationObservation(policy, releaseInput, materialization)
+          )
+        );
+    })
   );
-  return classifyStagedMaterializationObservation(policy, releaseInput, materialization);
 }
 
 function stagedIneligible(

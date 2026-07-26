@@ -13,7 +13,7 @@ import {
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
 import {
   type LifecycleClientFactory,
@@ -119,12 +119,11 @@ export function createProductionLifecycleDeps(
   }>
 ): LifecycleDeps {
   const { binding } = input;
-  const contentWorkspace = makeNodeContentWorkspacePort();
 
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    contentWorkspace,
+    contentWorkspace: makeNodeContentWorkspaceResource(),
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),
     providerNativeSessions: createNodeNativeProviderSessionResolver(binding.providerExecutables),

@@ -2,14 +2,15 @@ import { createHash } from "node:crypto";
 
 import type {
   ContentTreeEntry,
-  ContentWorkspaceAsyncPort,
   ContentWorkspaceFailure,
   ContentWorkspaceIdentity,
+  ContentWorkspaceResource,
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
   MaterializedRemoteContentTree,
   RemoteContentTree,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../../../src/client";
@@ -43,7 +44,7 @@ import {
 import {
   createLifecycleTestClient,
   testInvocation,
-  withUnavailableGitReads,
+  unavailableContentWorkspace,
 } from "../../support/client";
 
 const encoder = new TextEncoder();
@@ -236,6 +237,51 @@ describe("vendor lifecycle applications", () => {
     expect(harness.counters.settle).toBe(1);
   });
 
+  it("defers interruption during partial apply through restoration and settlement", async () => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    harness.failApplyAfterFirstWrite = true;
+    harness.pauseAfterPartialApply = true;
+    const client = createLifecycleTestClient({
+      contentWorkspace: harness.contentWorkspace,
+      clock: harness.clock,
+    });
+    const controller = new AbortController();
+    const update = client.vendors.update(
+      { contentWorkspace, sourceIds: [sourceId] },
+      { ...testInvocation, signal: controller.signal }
+    );
+    const completed = update.then(
+      (value) => ({ kind: "Success" as const, value }),
+      (error: unknown) => ({ kind: "Failure" as const, error })
+    );
+
+    await harness.partialApplyPaused.promise;
+    controller.abort(new Error("Vendor update cancelled"));
+    const beforeResume = await Promise.race([
+      completed.then(() => "settled" as const),
+      Promise.resolve("pending" as const),
+    ]);
+
+    try {
+      expect(beforeResume).toBe("pending");
+      expect(harness.counters.restore).toBe(0);
+      expect(harness.counters.settle).toBe(0);
+    } finally {
+      harness.continuePartialApply.resolve();
+    }
+
+    const completion = await completed;
+    expect(completion).toMatchObject({
+      kind: "Failure",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+    });
+    expect(harness.counters.restore).toBe(1);
+    expect(harness.counters.settle).toBe(1);
+    expect(harness.destinationText()).toBe("current payload\n");
+    expect(harness.hasOpenCapture()).toBe(false);
+  });
+
   it("reports unresolved restoration and releases its hidden recovery authority", async () => {
     const harness = new VendorHarness();
     harness.setRemote("next payload\n", "7");
@@ -391,15 +437,18 @@ class VendorHarness {
     settle: 0,
     release: 0,
   };
-  readonly contentWorkspace: ContentWorkspaceAsyncPort;
+  readonly contentWorkspace: ContentWorkspaceResource<never>;
   lastPlanDigest = "";
   lastWrites: readonly ContentWorkspaceWrite[] = [];
   releasedDisposition: "NoMutation" | "UnsettledRecovery" | undefined;
   driftAfterCapture = false;
   corruptMaterializedBytes = false;
   failApplyAfterFirstWrite = false;
+  pauseAfterPartialApply = false;
   failRestore = false;
   corruptAfterApply = false;
+  readonly partialApplyPaused = Promise.withResolvers<void>();
+  readonly continuePartialApply = Promise.withResolvers<void>();
 
   private readonly identity: ContentWorkspaceIdentity = Object.freeze({
     root: contentWorkspace.locator,
@@ -457,124 +506,154 @@ class VendorHarness {
     this.trees.set(destinationPath, admittedEntries);
     this.remote = remoteTree(admitted.sourceCommit, admitted.sourceTree, admittedEntries);
 
-    const contentWorkspacePort: ContentWorkspaceAsyncPort = {
-      inspectWorkspace: async () => {
-        this.counters.inspectWorkspace += 1;
-        return this.identity;
-      },
-      readFile: async ({ path }) => {
-        this.counters.readFile += 1;
-        const file = this.files.get(path);
-        if (file === undefined) throw resourceFailure("read-file", "Missing", path);
-        return new Uint8Array(file.bytes);
-      },
-      readTree: async ({ path }) => {
-        this.counters.readTree += 1;
-        const tree = this.trees.get(path);
-        if (tree === undefined) throw resourceFailure("read-tree", "Missing", path);
-        return tree.map(({ path: entryPath, mode, blob }) =>
-          Object.freeze({ path: entryPath, mode, blob })
-        );
-      },
-      observeRemote: async () => {
-        this.counters.observeRemote += 1;
-        const failure = this.upstreamFailures.get("observe");
-        if (failure !== undefined) throw failure;
-        return remoteMetadata(this.remote);
-      },
-      materializeRemote: async () => {
-        this.counters.materializeRemote += 1;
-        const failure = this.upstreamFailures.get("materialize");
-        if (failure !== undefined) throw failure;
-        if (!this.corruptMaterializedBytes) return cloneRemote(this.remote);
-        return Object.freeze({
-          ...this.remote,
-          entries: this.remote.entries.map((entry) =>
-            Object.freeze({
-              ...entry,
-              bytes: encoder.encode("wrong bytes\n"),
-            })
-          ),
-        });
-      },
-      isAncestor: async () => {
-        this.counters.isAncestor += 1;
-        const failure = this.upstreamFailures.get("ancestry");
-        if (failure !== undefined) throw failure;
-        return true;
-      },
-      capture: async ({ readToken, paths }) => {
-        this.counters.capture += 1;
-        this.captureImages = new Map(paths.map((path) => [path, this.snapshot(path)]));
-        this.captureLifecycle = "Captured";
-        if (this.driftAfterCapture) this.corruptFile(declarationPath);
-        return Object.freeze({ handle: "capture-1", readToken, paths: Object.freeze([...paths]) });
-      },
-      apply: async ({ planDigest, readToken, writes }) => {
-        this.counters.apply += 1;
-        this.lastPlanDigest = planDigest;
-        this.lastWrites = cloneWrites(writes);
-        if (this.failApplyAfterFirstWrite) {
-          this.applyWrite(writes[0]);
-          this.captureLifecycle = "Partial";
-          throw resourceFailure("apply", "FilesystemFailed", writes[0]?.path);
-        }
-        for (const write of writes) this.applyWrite(write);
-        this.captureLifecycle = "Applied";
-        if (this.corruptAfterApply) this.corruptFile(provenancePath);
-        return Object.freeze({
-          planDigest,
-          readToken,
-          outcome: "Applied",
-          changedPaths: Object.freeze(writes.map((write) => write.path)),
-        });
-      },
-      restore: async ({ planDigest, readToken }) => {
-        this.counters.restore += 1;
-        if (this.failRestore) {
-          this.captureLifecycle = "Partial";
-          throw resourceFailure("restore", "FilesystemFailed");
-        }
-        for (const [path, image] of this.captureImages) this.restore(path, image);
-        this.captureLifecycle = "Restored";
-        return Object.freeze({
-          planDigest,
-          readToken,
-          outcome: "Restored",
-          changedPaths: Object.freeze([...this.captureImages.keys()]),
-        });
-      },
-      settle: async ({ planDigest, readToken, captureHandle }) => {
-        this.counters.settle += 1;
-        this.captureLifecycle = undefined;
-        return Object.freeze({
-          planDigest,
-          readToken,
-          outcome: "Settled",
-          handle: captureHandle,
-        });
-      },
-      release: async ({ readToken, captureHandle, disposition }) => {
-        this.counters.release += 1;
-        const noMutation =
-          this.captureLifecycle === "Captured" || this.captureLifecycle === "Converged";
-        const unsettled = this.captureLifecycle === "Partial";
-        if (
-          (disposition === "NoMutation" && !noMutation) ||
-          (disposition === "UnsettledRecovery" && !unsettled)
-        ) {
-          throw resourceFailure("release", "HandleState");
-        }
-        this.releasedDisposition = disposition;
-        this.captureLifecycle = undefined;
-        return Object.freeze({
-          readToken,
-          outcome: disposition === "NoMutation" ? "ReleasedUnmutated" : "ReleasedUnsettled",
-          handle: captureHandle,
-        });
-      },
+    const harness = this;
+    const contentWorkspaceResource: ContentWorkspaceResource<never> = {
+      ...unavailableContentWorkspace(),
+      inspectWorkspace: () =>
+        Effect.sync(() => {
+          harness.counters.inspectWorkspace += 1;
+          return harness.identity;
+        }),
+      readFile: ({ path }) =>
+        Effect.gen(function* () {
+          harness.counters.readFile += 1;
+          const file = harness.files.get(path);
+          if (file === undefined) {
+            return yield* Effect.fail(resourceFailure("read-file", "Missing", path));
+          }
+          return new Uint8Array(file.bytes);
+        }),
+      readTree: ({ path }) =>
+        Effect.gen(function* () {
+          harness.counters.readTree += 1;
+          const tree = harness.trees.get(path);
+          if (tree === undefined) {
+            return yield* Effect.fail(resourceFailure("read-tree", "Missing", path));
+          }
+          return tree.map(({ path: entryPath, mode, blob }) =>
+            Object.freeze({ path: entryPath, mode, blob })
+          );
+        }),
+      observeRemote: () =>
+        Effect.gen(function* () {
+          harness.counters.observeRemote += 1;
+          const failure = harness.upstreamFailures.get("observe");
+          if (failure !== undefined) return yield* Effect.fail(failure);
+          return remoteMetadata(harness.remote);
+        }),
+      materializeRemote: () =>
+        Effect.gen(function* () {
+          harness.counters.materializeRemote += 1;
+          const failure = harness.upstreamFailures.get("materialize");
+          if (failure !== undefined) return yield* Effect.fail(failure);
+          if (!harness.corruptMaterializedBytes) return cloneRemote(harness.remote);
+          return Object.freeze({
+            ...harness.remote,
+            entries: harness.remote.entries.map((entry) =>
+              Object.freeze({
+                ...entry,
+                bytes: encoder.encode("wrong bytes\n"),
+              })
+            ),
+          });
+        }),
+      isAncestor: () =>
+        Effect.gen(function* () {
+          harness.counters.isAncestor += 1;
+          const failure = harness.upstreamFailures.get("ancestry");
+          if (failure !== undefined) return yield* Effect.fail(failure);
+          return true;
+        }),
+      capture: ({ readToken, paths }) =>
+        Effect.sync(() => {
+          harness.counters.capture += 1;
+          harness.captureImages = new Map(paths.map((path) => [path, harness.snapshot(path)]));
+          harness.captureLifecycle = "Captured";
+          if (harness.driftAfterCapture) harness.corruptFile(declarationPath);
+          return Object.freeze({
+            handle: "capture-1",
+            readToken,
+            paths: Object.freeze([...paths]),
+          });
+        }),
+      apply: ({ planDigest, readToken, writes }) =>
+        Effect.gen(function* () {
+          harness.counters.apply += 1;
+          harness.lastPlanDigest = planDigest;
+          harness.lastWrites = cloneWrites(writes);
+          if (harness.failApplyAfterFirstWrite) {
+            harness.applyWrite(writes[0]);
+            harness.captureLifecycle = "Partial";
+            if (harness.pauseAfterPartialApply) {
+              harness.partialApplyPaused.resolve();
+              yield* Effect.promise(() => harness.continuePartialApply.promise);
+            }
+            return yield* Effect.fail(
+              resourceFailure("apply", "FilesystemFailed", writes[0]?.path)
+            );
+          }
+          for (const write of writes) harness.applyWrite(write);
+          harness.captureLifecycle = "Applied";
+          if (harness.corruptAfterApply) harness.corruptFile(provenancePath);
+          return Object.freeze({
+            planDigest,
+            readToken,
+            outcome: "Applied" as const,
+            changedPaths: Object.freeze(writes.map((write) => write.path)),
+          });
+        }),
+      restore: ({ planDigest, readToken }) =>
+        Effect.gen(function* () {
+          harness.counters.restore += 1;
+          if (harness.failRestore) {
+            harness.captureLifecycle = "Partial";
+            return yield* Effect.fail(resourceFailure("restore", "FilesystemFailed"));
+          }
+          for (const [path, image] of harness.captureImages) harness.restore(path, image);
+          harness.captureLifecycle = "Restored";
+          return Object.freeze({
+            planDigest,
+            readToken,
+            outcome: "Restored" as const,
+            changedPaths: Object.freeze([...harness.captureImages.keys()]),
+          });
+        }),
+      settle: ({ planDigest, readToken, captureHandle }) =>
+        Effect.sync(() => {
+          harness.counters.settle += 1;
+          harness.captureLifecycle = undefined;
+          return Object.freeze({
+            planDigest,
+            readToken,
+            outcome: "Settled" as const,
+            handle: captureHandle,
+          });
+        }),
+      release: ({ readToken, captureHandle, disposition }) =>
+        Effect.gen(function* () {
+          harness.counters.release += 1;
+          const noMutation =
+            harness.captureLifecycle === "Captured" || harness.captureLifecycle === "Converged";
+          const unsettled = harness.captureLifecycle === "Partial";
+          if (
+            (disposition === "NoMutation" && !noMutation) ||
+            (disposition === "UnsettledRecovery" && !unsettled)
+          ) {
+            return yield* Effect.fail(resourceFailure("release", "HandleState"));
+          }
+          harness.releasedDisposition = disposition;
+          harness.captureLifecycle = undefined;
+          return Object.freeze({
+            readToken,
+            outcome:
+              disposition === "NoMutation"
+                ? ("ReleasedUnmutated" as const)
+                : ("ReleasedUnsettled" as const),
+            handle: captureHandle,
+          });
+        }),
     };
-    this.contentWorkspace = Object.freeze(contentWorkspacePort);
+    this.contentWorkspace = Object.freeze(contentWorkspaceResource);
   }
 
   setRemote(text: string, seed: string): void {
@@ -613,6 +692,15 @@ class VendorHarness {
     this.counters.restore = 0;
     this.counters.settle = 0;
     this.counters.release = 0;
+  }
+
+  destinationText(): string {
+    const entry = this.trees.get(destinationPath)?.[0];
+    return entry === undefined ? "" : decoder.decode(entry.bytes);
+  }
+
+  hasOpenCapture(): boolean {
+    return this.captureLifecycle !== undefined;
   }
 
   private snapshot(path: string): PathImage {
@@ -836,7 +924,7 @@ function must<T, E>(result: ReleaseResult<T, E>): T {
 
 function createVendorStatus(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
-    contentWorkspace: withUnavailableGitReads(runtime.contentWorkspace),
+    contentWorkspace: runtime.contentWorkspace,
     clock: runtime.clock,
   });
   return (request: VendorStatusRequest) => client.vendors.status(request, testInvocation);
@@ -844,7 +932,7 @@ function createVendorStatus(runtime: VendorHarness) {
 
 function createVendorUpdate(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
-    contentWorkspace: withUnavailableGitReads(runtime.contentWorkspace),
+    contentWorkspace: runtime.contentWorkspace,
     clock: runtime.clock,
   });
   return (request: VendorUpdateRequest) => client.vendors.update(request, testInvocation);

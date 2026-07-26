@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type { NativeProviderSessionResolver } from "../../../model/dependencies/providers";
@@ -20,51 +21,55 @@ export interface ProviderStatusDependencies {
 }
 
 export const status = module.status.effect(function* ({ context, input }) {
-  return yield* awaitDependencyPromise(() => runProviderStatus(input, context));
+  return yield* runProviderStatus(input, context);
 });
 
-export async function runProviderStatus(
+export function runProviderStatus(
   request: ProviderStatusRequest,
   dependencies: ProviderStatusDependencies
-): Promise<ProviderStatusResult> {
-  const canonicalRequest = Object.freeze({
-    ...request,
-    targets: canonicalProviderTargets(request.targets),
-  });
-  const selected = await resolveChannelSelection(
-    canonicalRequest,
-    dependencies.currentMain,
-    dependencies.selectedContent
-  );
-  if (selected.kind === "Rejected") {
+) {
+  return Effect.gen(function* () {
+    const canonicalRequest = Object.freeze({
+      ...request,
+      targets: canonicalProviderTargets(request.targets),
+    });
+    const selected = yield* resolveChannelSelection(
+      canonicalRequest,
+      dependencies.currentMain,
+      dependencies.selectedContent
+    );
+    if (selected.kind === "Rejected") {
+      return {
+        operation: "status",
+        classification: "Blocked",
+        selection: null,
+        targets: rejectedStatusTargets(canonicalRequest.targets, selected.issues),
+        issues: selected.issues,
+      } satisfies ProviderStatusResult;
+    }
+    const assessments = yield* awaitDependencyPromise(() =>
+      inspectProviderTargets(
+        selected.content,
+        canonicalRequest.targets,
+        dependencies.nativeSessions,
+        { retireOmitted: true },
+        false
+      )
+    );
+    const targets = Object.freeze(assessments.map(statusTargetResult));
+    const classification = targets.some((target) => target.classification === "Blocked")
+      ? "Blocked"
+      : targets.some((target) => target.classification === "Failed")
+        ? "Failed"
+        : targets.some((target) => target.classification === "Drifted")
+          ? "Drifted"
+          : "Converged";
     return {
       operation: "status",
-      classification: "Blocked",
-      selection: null,
-      targets: rejectedStatusTargets(canonicalRequest.targets, selected.issues),
-      issues: selected.issues,
-    };
-  }
-  const assessments = await inspectProviderTargets(
-    selected.content,
-    canonicalRequest.targets,
-    dependencies.nativeSessions,
-    { retireOmitted: true },
-    false
-  );
-  const targets = Object.freeze(assessments.map(statusTargetResult));
-  const classification = targets.some((target) => target.classification === "Blocked")
-    ? "Blocked"
-    : targets.some((target) => target.classification === "Failed")
-      ? "Failed"
-      : targets.some((target) => target.classification === "Drifted")
-        ? "Drifted"
-        : "Converged";
-  return {
-    operation: "status",
-    classification,
-    selection: selectionObservation(selected.content),
-    targets,
-    issues: collectTargetIssues(targets),
-  };
+      classification,
+      selection: selectionObservation(selected.content),
+      targets,
+      issues: collectTargetIssues(targets),
+    } satisfies ProviderStatusResult;
+  });
 }

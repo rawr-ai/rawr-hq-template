@@ -3,13 +3,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { NodeServices } from "@effect/platform-node";
+import { NodeFileSystem } from "@effect/platform-node";
 import type {
   ContentFileMode,
   ContentTreeEntry,
   ContentWorkspaceCapture,
   ContentWorkspaceFailure,
-  ContentWorkspaceNodeAsyncPort,
   ContentWorkspaceReleaseReceipt,
   ContentWorkspaceResource,
   ContentWorkspaceSettleReceipt,
@@ -1184,80 +1183,68 @@ export function makeContentWorkspaceResource(
   });
 }
 
-export type NodeContentWorkspaceResult<A> =
-  | Readonly<{ ok: true; value: A }>
-  | Readonly<{ ok: false; failure: ContentWorkspaceFailure }>;
-
-export function runNodeContentWorkspace<A>(
-  operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
-): Promise<NodeContentWorkspaceResult<A>> {
-  return Effect.runPromise(
-    operation.pipe(
-      Effect.map((value): NodeContentWorkspaceResult<A> => successfulNodeResult(value)),
-      Effect.catch((failure) =>
-        Effect.succeed<NodeContentWorkspaceResult<A>>(failedNodeResult(failure))
-      ),
-      Effect.provide(NodeServices.layer)
-    )
-  );
-}
-
-export function makeNodeContentWorkspacePort(
+/**
+ * Realizes the Git content-workspace provider as a ready Effect resource.
+ *
+ * Node platform services remain provider-owned and are supplied lazily to each
+ * operation, so callers retain Effect cancellation and typed failure behavior
+ * without reconstructing effects from promises.
+ */
+export function makeNodeContentWorkspaceResource(
   options: GitEffectPlatformNodeOptions = {}
-): ContentWorkspaceNodeAsyncPort {
+): ContentWorkspaceResource<never> {
   const resource = makeContentWorkspaceResource(options);
   return Object.freeze({
     inspectWorkspace: (input: Parameters<typeof resource.inspectWorkspace>[0]) =>
-      runNodeOrReject(resource.inspectWorkspace(input)),
+      provideNodeFileSystem(resource.inspectWorkspace(input)),
     inspectGitRef: (input: Parameters<typeof resource.inspectGitRef>[0]) =>
-      runNodeOrReject(resource.inspectGitRef(input)),
+      provideNodeFileSystem(resource.inspectGitRef(input)),
     inspectGitWorkspace: (input: Parameters<typeof resource.inspectGitWorkspace>[0]) =>
-      runNodeOrReject(resource.inspectGitWorkspace(input)),
+      provideNodeFileSystem(resource.inspectGitWorkspace(input)),
     readGitTree: (input: Parameters<typeof resource.readGitTree>[0]) =>
-      runNodeOrReject(resource.readGitTree(input)),
+      provideNodeFileSystem(resource.readGitTree(input)),
     readGitBlob: (input: Parameters<typeof resource.readGitBlob>[0]) =>
-      runNodeOrReject(resource.readGitBlob(input)),
+      provideNodeFileSystem(resource.readGitBlob(input)),
     readGitBlobs: (input: Parameters<typeof resource.readGitBlobs>[0]) =>
-      runNodeOrReject(resource.readGitBlobs(input)),
+      provideNodeFileSystem(resource.readGitBlobs(input)),
     captureGitWorkspaceEvidence: (
       input: Parameters<typeof resource.captureGitWorkspaceEvidence>[0]
-    ) => runNodeOrReject(resource.captureGitWorkspaceEvidence(input)),
+    ) => provideNodeFileSystem(resource.captureGitWorkspaceEvidence(input)),
     observeGitStagedIndex: (input: Parameters<typeof resource.observeGitStagedIndex>[0]) =>
-      runNodeOrReject(resource.observeGitStagedIndex(input)),
+      provideNodeFileSystem(resource.observeGitStagedIndex(input)),
     readGitBlobAtPath: (input: Parameters<typeof resource.readGitBlobAtPath>[0]) =>
-      runNodeOrReject(resource.readGitBlobAtPath(input)),
+      provideNodeFileSystem(resource.readGitBlobAtPath(input)),
     isLocalGitAncestor: (input: Parameters<typeof resource.isLocalGitAncestor>[0]) =>
-      runNodeOrReject(resource.isLocalGitAncestor(input)),
+      provideNodeFileSystem(resource.isLocalGitAncestor(input)),
     listGitChangedPaths: (input: Parameters<typeof resource.listGitChangedPaths>[0]) =>
-      runNodeOrReject(resource.listGitChangedPaths(input)),
+      provideNodeFileSystem(resource.listGitChangedPaths(input)),
     readFile: (input: Parameters<typeof resource.readFile>[0]) =>
-      runNodeOrReject(resource.readFile(input)),
+      provideNodeFileSystem(resource.readFile(input)),
     readTree: (input: Parameters<typeof resource.readTree>[0]) =>
-      runNodeOrReject(resource.readTree(input)),
+      provideNodeFileSystem(resource.readTree(input)),
     observeRemote: (input: Parameters<typeof resource.observeRemote>[0]) =>
-      runNodeOrReject(resource.observeRemote(input)),
+      provideNodeFileSystem(resource.observeRemote(input)),
     materializeRemote: (input: Parameters<typeof resource.materializeRemote>[0]) =>
-      runNodeOrReject(resource.materializeRemote(input)),
+      provideNodeFileSystem(resource.materializeRemote(input)),
     isAncestor: (input: Parameters<typeof resource.isAncestor>[0]) =>
-      runNodeOrReject(resource.isAncestor(input)),
+      provideNodeFileSystem(resource.isAncestor(input)),
     capture: (input: Parameters<typeof resource.capture>[0]) =>
-      runNodeOrReject(resource.capture(input)),
-    apply: (input: Parameters<typeof resource.apply>[0]) => runNodeOrReject(resource.apply(input)),
+      provideNodeFileSystem(resource.capture(input)),
+    apply: (input: Parameters<typeof resource.apply>[0]) =>
+      provideNodeFileSystem(resource.apply(input)),
     restore: (input: Parameters<typeof resource.restore>[0]) =>
-      runNodeOrReject(resource.restore(input)),
+      provideNodeFileSystem(resource.restore(input)),
     settle: (input: Parameters<typeof resource.settle>[0]) =>
-      runNodeOrReject(resource.settle(input)),
+      provideNodeFileSystem(resource.settle(input)),
     release: (input: Parameters<typeof resource.release>[0]) =>
-      runNodeOrReject(resource.release(input)),
+      provideNodeFileSystem(resource.release(input)),
   });
 }
 
-function runNodeOrReject<A>(
+function provideNodeFileSystem<A>(
   operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
-): Promise<A> {
-  return runNodeContentWorkspace(operation).then((result) =>
-    result.ok ? result.value : Promise.reject(result.failure)
-  );
+): Effect.Effect<A, ContentWorkspaceFailure> {
+  return operation.pipe(Effect.provide(NodeFileSystem.layer));
 }
 
 function inspectFetchedTree(
@@ -3141,14 +3128,6 @@ function fileMode(mode: ContentFileMode): number {
 function parseContentFileMode(input: string): ContentFileMode {
   if (input === "100644" || input === "100755") return input;
   throw new Error(`Unsupported content file mode: ${input}`);
-}
-
-function successfulNodeResult<A>(value: A): NodeContentWorkspaceResult<A> {
-  return Object.freeze({ ok: true, value });
-}
-
-function failedNodeResult<A>(failure: ContentWorkspaceFailure): NodeContentWorkspaceResult<A> {
-  return Object.freeze({ ok: false, failure });
 }
 
 function receipt(

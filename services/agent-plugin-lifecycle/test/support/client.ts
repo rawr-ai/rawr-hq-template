@@ -1,9 +1,7 @@
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import type {
-  ContentWorkspaceAsyncPort,
-  ContentWorkspaceNodeAsyncPort,
-} from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 
 import { type Client, createClient, type Deps } from "../../src/client";
 
@@ -37,38 +35,29 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
   });
 }
 
-export function withUnavailableGitReads(
-  contentWorkspace: ContentWorkspaceAsyncPort
-): ContentWorkspaceNodeAsyncPort {
+export function unavailableContentWorkspace(): ContentWorkspaceResource<never> {
   return Object.freeze({
-    ...contentWorkspace,
-    inspectGitRef: async () => unavailableAsync("release Git ref inspection"),
-    inspectGitWorkspace: async () => unavailableAsync("release Git workspace inspection"),
-    readGitTree: async () => unavailableAsync("release Git tree read"),
-    readGitBlob: async () => unavailableAsync("release Git blob read"),
-    readGitBlobs: async () => unavailableAsync("release Git blob batch read"),
-    captureGitWorkspaceEvidence: async () =>
-      unavailableAsync("release Git workspace evidence capture"),
-    observeGitStagedIndex: async () => unavailableAsync("staged release index observation"),
-    readGitBlobAtPath: async () => unavailableAsync("release Git path read"),
-    isLocalGitAncestor: async () => unavailableAsync("release Git ancestry"),
-    listGitChangedPaths: async () => unavailableAsync("release Git changed paths"),
-  });
-}
-
-export function unavailableContentWorkspace(): ContentWorkspaceNodeAsyncPort {
-  return withUnavailableGitReads({
-    inspectWorkspace: async () => unavailableAsync("vendor workspace inspection"),
-    readFile: async () => unavailableAsync("vendor workspace file read"),
-    readTree: async () => unavailableAsync("vendor workspace tree read"),
-    observeRemote: async () => unavailableAsync("vendor remote observation"),
-    materializeRemote: async () => unavailableAsync("vendor remote materialization"),
-    isAncestor: async () => unavailableAsync("vendor remote ancestry"),
-    capture: async () => unavailableAsync("vendor preimage capture"),
-    apply: async () => unavailableAsync("vendor authoring"),
-    restore: async () => unavailableAsync("vendor restoration"),
-    settle: async () => unavailableAsync("vendor settlement"),
-    release: async () => unavailableAsync("vendor capture release"),
+    inspectGitRef: () => unavailableEffect("release Git ref inspection"),
+    inspectGitWorkspace: () => unavailableEffect("release Git workspace inspection"),
+    readGitTree: () => unavailableEffect("release Git tree read"),
+    readGitBlob: () => unavailableEffect("release Git blob read"),
+    readGitBlobs: () => unavailableEffect("release Git blob batch read"),
+    captureGitWorkspaceEvidence: () => unavailableEffect("release Git workspace evidence capture"),
+    observeGitStagedIndex: () => unavailableEffect("staged release index observation"),
+    readGitBlobAtPath: () => unavailableEffect("release Git path read"),
+    isLocalGitAncestor: () => unavailableEffect("release Git ancestry"),
+    listGitChangedPaths: () => unavailableEffect("release Git changed paths"),
+    inspectWorkspace: () => unavailableEffect("vendor workspace inspection"),
+    readFile: () => unavailableEffect("vendor workspace file read"),
+    readTree: () => unavailableEffect("vendor workspace tree read"),
+    observeRemote: () => unavailableEffect("vendor remote observation"),
+    materializeRemote: () => unavailableEffect("vendor remote materialization"),
+    isAncestor: () => unavailableEffect("vendor remote ancestry"),
+    capture: () => unavailableEffect("vendor preimage capture"),
+    apply: () => unavailableEffect("vendor authoring"),
+    restore: () => unavailableEffect("vendor restoration"),
+    settle: () => unavailableEffect("vendor settlement"),
+    release: () => unavailableEffect("vendor capture release"),
   });
 }
 
@@ -82,6 +71,10 @@ export function unavailableProviderResources() {
 
 function unavailable(label: string): never {
   throw new Error(`Unexpected ${label} access in lifecycle service test`);
+}
+
+function unavailableEffect(label: string): Effect.Effect<never> {
+  return Effect.die(new Error(`Unexpected ${label} access in lifecycle service test`));
 }
 
 async function unavailableAsync(label: string): Promise<never> {

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type { NativeProviderSessionResolver } from "../../../model/dependencies/providers";
@@ -30,101 +31,109 @@ export interface ProviderSyncDependencies {
 }
 
 export const sync = module.sync.effect(function* ({ context, input }) {
-  return yield* awaitDependencyPromise(() => runProviderSync(input, context));
+  return yield* runProviderSync(input, context);
 });
 
-export async function runProviderSync(
+export function runProviderSync(
   request: ProviderSyncRequest,
   dependencies: ProviderSyncDependencies
-): Promise<ProviderSyncResult> {
-  const canonicalRequest = Object.freeze({
-    ...request,
-    targets: canonicalProviderTargets(request.targets),
-  });
-  const selected = await resolveChannelSelection(
-    canonicalRequest,
-    dependencies.currentMain,
-    dependencies.selectedContent
-  );
-  if (selected.kind === "Rejected") {
-    return blockedResult(canonicalRequest, selected.issues);
-  }
-  const initial = await inspectProviderTargets(
-    selected.content,
-    canonicalRequest.targets,
-    dependencies.nativeSessions,
-    { retireOmitted: true },
-    true
-  );
-  if (hasBlockingAssessment(initial)) {
-    const targets = blockedTargetResults(initial);
-    return {
-      operation: "sync",
-      classification: mutationClassification(targets),
-      selection: selectionObservation(selected.content),
-      targets,
-      issues: collectTargetIssues(targets),
-    };
-  }
-  if (allTargetsConverged(initial)) {
-    const targets = Object.freeze(initial.map(convergedMutationTargetResult));
-    return {
-      operation: "sync",
-      classification: "Converged",
-      selection: selectionObservation(selected.content),
-      targets,
-      issues: collectTargetIssues(targets),
-    };
-  }
+) {
+  return Effect.gen(function* () {
+    const canonicalRequest = Object.freeze({
+      ...request,
+      targets: canonicalProviderTargets(request.targets),
+    });
+    const selected = yield* resolveChannelSelection(
+      canonicalRequest,
+      dependencies.currentMain,
+      dependencies.selectedContent
+    );
+    if (selected.kind === "Rejected") {
+      return blockedResult(canonicalRequest, selected.issues);
+    }
+    const initial = yield* awaitDependencyPromise(() =>
+      inspectProviderTargets(
+        selected.content,
+        canonicalRequest.targets,
+        dependencies.nativeSessions,
+        { retireOmitted: true },
+        true
+      )
+    );
+    if (hasBlockingAssessment(initial)) {
+      const targets = blockedTargetResults(initial);
+      return {
+        operation: "sync",
+        classification: mutationClassification(targets),
+        selection: selectionObservation(selected.content),
+        targets,
+        issues: collectTargetIssues(targets),
+      } satisfies ProviderSyncResult;
+    }
+    if (allTargetsConverged(initial)) {
+      const targets = Object.freeze(initial.map(convergedMutationTargetResult));
+      return {
+        operation: "sync",
+        classification: "Converged",
+        selection: selectionObservation(selected.content),
+        targets,
+        issues: collectTargetIssues(targets),
+      } satisfies ProviderSyncResult;
+    }
 
-  const revalidated = await resolveChannelSelection(
-    canonicalRequest,
-    dependencies.currentMain,
-    dependencies.selectedContent
-  );
-  if (
-    revalidated.kind === "Rejected" ||
-    !sameSelectedContent(selected.content, revalidated.content)
-  ) {
-    const targets = sourceChangedTargets(canonicalRequest.targets);
-    return {
-      operation: "sync",
-      classification: "Blocked",
-      selection: selectionObservation(selected.content),
-      targets,
-      issues: collectTargetIssues(targets),
-    };
-  }
+    const revalidated = yield* resolveChannelSelection(
+      canonicalRequest,
+      dependencies.currentMain,
+      dependencies.selectedContent
+    );
+    if (
+      revalidated.kind === "Rejected" ||
+      !sameSelectedContent(selected.content, revalidated.content)
+    ) {
+      const targets = sourceChangedTargets(canonicalRequest.targets);
+      return {
+        operation: "sync",
+        classification: "Blocked",
+        selection: selectionObservation(selected.content),
+        targets,
+        issues: collectTargetIssues(targets),
+      } satisfies ProviderSyncResult;
+    }
 
-  const finalPreflight = await inspectProviderTargets(
-    revalidated.content,
-    canonicalRequest.targets,
-    dependencies.nativeSessions,
-    { retireOmitted: true },
-    true
-  );
-  if (hasBlockingAssessment(finalPreflight)) {
-    const targets = blockedTargetResults(finalPreflight);
+    const finalPreflight = yield* awaitDependencyPromise(() =>
+      inspectProviderTargets(
+        revalidated.content,
+        canonicalRequest.targets,
+        dependencies.nativeSessions,
+        { retireOmitted: true },
+        true
+      )
+    );
+    if (hasBlockingAssessment(finalPreflight)) {
+      const targets = blockedTargetResults(finalPreflight);
+      return {
+        operation: "sync",
+        classification: mutationClassification(targets),
+        selection: selectionObservation(revalidated.content),
+        targets,
+        issues: collectTargetIssues(targets),
+      } satisfies ProviderSyncResult;
+    }
+    const targets = allTargetsConverged(finalPreflight)
+      ? Object.freeze(finalPreflight.map(convergedMutationTargetResult))
+      : yield* awaitDependencyPromise(() =>
+          reconcileProviderTargets(revalidated.content, finalPreflight, {
+            retireOmitted: true,
+          })
+        );
     return {
       operation: "sync",
       classification: mutationClassification(targets),
       selection: selectionObservation(revalidated.content),
       targets,
       issues: collectTargetIssues(targets),
-    };
-  }
-  const targets = allTargetsConverged(finalPreflight)
-    ? Object.freeze(finalPreflight.map(convergedMutationTargetResult))
-    : await reconcileProviderTargets(revalidated.content, finalPreflight, {
-        retireOmitted: true,
-      });
-  return {
-    operation: "sync",
-    classification: mutationClassification(targets),
-    selection: selectionObservation(revalidated.content),
-    targets,
-    issues: collectTargetIssues(targets),
-  };
+    } satisfies ProviderSyncResult;
+  });
 }
 
 function blockedResult(

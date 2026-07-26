@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import type {
   ContentWorkspaceFailure,
-  ContentWorkspaceNodeAsyncPort,
+  ContentWorkspaceResource,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/releases/content-workspace";
 import type { StagedIndexObservationResult } from "../../../src/service/modules/releases/model/dto/staged-content-workspace";
@@ -91,27 +92,28 @@ describe("releases.checkRepository", () => {
     const indexLimits: number[] = [];
     const blobLimits: number[] = [];
     let fullMaterializations = 0;
-    const rawPort: Pick<ContentWorkspaceNodeAsyncPort, "observeGitStagedIndex"> = {
-      observeGitStagedIndex: async (input) => {
-        selections.push({ paths: input.materializedPaths, roots: input.materializedRoots });
-        entryLimits.push(input.maxEntries);
-        indexLimits.push(input.maxIndexBytes);
-        blobLimits.push(input.maxBlobBytes);
-        const selected = stagedEntries.filter(
-          (entry) =>
-            input.materializedPaths.includes(entry.path) ||
-            input.materializedRoots.some(
-              (root) => entry.path === root || entry.path.startsWith(`${root}/`)
-            )
-        );
-        if (input.materializedRoots.length > 0) fullMaterializations += 1;
-        const observed = fullMaterializations === 2 ? [...selected].reverse() : selected;
-        return {
-          opening: { anchor: stagedAnchor(), indexEntries },
-          blobs: observed.map((entry) => ({ objectId: entry.objectId, bytes: entry.bytes })),
-          closing: { anchor: stagedAnchor(), indexEntries },
-        };
-      },
+    const rawPort: Pick<ContentWorkspaceResource<never>, "observeGitStagedIndex"> = {
+      observeGitStagedIndex: (input) =>
+        Effect.sync(() => {
+          selections.push({ paths: input.materializedPaths, roots: input.materializedRoots });
+          entryLimits.push(input.maxEntries);
+          indexLimits.push(input.maxIndexBytes);
+          blobLimits.push(input.maxBlobBytes);
+          const selected = stagedEntries.filter(
+            (entry) =>
+              input.materializedPaths.includes(entry.path) ||
+              input.materializedRoots.some(
+                (root) => entry.path === root || entry.path.startsWith(`${root}/`)
+              )
+          );
+          if (input.materializedRoots.length > 0) fullMaterializations += 1;
+          const observed = fullMaterializations === 2 ? [...selected].reverse() : selected;
+          return {
+            opening: { anchor: stagedAnchor(), indexEntries },
+            blobs: observed.map((entry) => ({ objectId: entry.objectId, bytes: entry.bytes })),
+            closing: { anchor: stagedAnchor(), indexEntries },
+          };
+        }),
     };
     const client = createLifecycleTestClient({
       contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
@@ -255,30 +257,36 @@ describe("releases.checkRepository", () => {
       closing: { anchor: opening, indexEntries: bytes("malformed-new-index\0") },
     };
     const rawPort = {
-      observeGitStagedIndex: async () => {
-        observations += 1;
-        return rawObservation;
-      },
-      capture: async () => {
-        writes += 1;
-        throw new Error("staged validation acquired capture authority");
-      },
-      apply: async () => {
-        writes += 1;
-        throw new Error("staged validation acquired write authority");
-      },
-      restore: async () => {
-        writes += 1;
-        throw new Error("staged validation acquired restore authority");
-      },
-      settle: async () => {
-        writes += 1;
-        throw new Error("staged validation acquired settlement authority");
-      },
-      release: async () => {
-        writes += 1;
-        throw new Error("staged validation acquired release authority");
-      },
+      observeGitStagedIndex: () =>
+        Effect.sync(() => {
+          observations += 1;
+          return rawObservation;
+        }),
+      capture: () =>
+        Effect.sync(() => {
+          writes += 1;
+          throw new Error("staged validation acquired capture authority");
+        }),
+      apply: () =>
+        Effect.sync(() => {
+          writes += 1;
+          throw new Error("staged validation acquired write authority");
+        }),
+      restore: () =>
+        Effect.sync(() => {
+          writes += 1;
+          throw new Error("staged validation acquired restore authority");
+        }),
+      settle: () =>
+        Effect.sync(() => {
+          writes += 1;
+          throw new Error("staged validation acquired settlement authority");
+        }),
+      release: () =>
+        Effect.sync(() => {
+          writes += 1;
+          throw new Error("staged validation acquired release authority");
+        }),
     };
     const client = createLifecycleTestClient({
       contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
@@ -307,10 +315,11 @@ describe("releases.checkRepository", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => {
-          observations += 1;
-          return rawStagedObservation(anchorChangedObservation(releaseInputObservation));
-        },
+        observeGitStagedIndex: () =>
+          Effect.sync(() => {
+            observations += 1;
+            return rawStagedObservation(anchorChangedObservation(releaseInputObservation));
+          }),
       },
     });
 
@@ -330,14 +339,12 @@ describe("releases.checkRepository", () => {
     expect(observations).toBe(1);
   });
 
-  it("maps dependency errors with ambient codes to the closed GitFailure result", async () => {
-    const dependencyFailure = Object.assign(new Error("staged index read failed"), { code: "EIO" });
+  it("maps a typed resource failure to the closed GitFailure result", async () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => {
-          throw dependencyFailure;
-        },
+        observeGitStagedIndex: () =>
+          Effect.fail(contentWorkspaceFailure("GitFailed", "staged index read failed")),
       },
     });
 
@@ -367,9 +374,8 @@ describe("releases.checkRepository", () => {
       const client = createLifecycleTestClient({
         contentWorkspace: {
           ...unavailableContentWorkspace(),
-          observeGitStagedIndex: async () => {
-            throw contentWorkspaceFailure(fixture.reason, `${fixture.reason} fixture`);
-          },
+          observeGitStagedIndex: () =>
+            Effect.fail(contentWorkspaceFailure(fixture.reason, `${fixture.reason} fixture`)),
         },
       });
 
@@ -524,12 +530,13 @@ describe("releases.checkRepository", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => {
-          observations += 1;
-          if (observations === 1) return rawStagedObservation(releaseInputObservation);
-          if (observations === 2) return rawStagedObservation(materializationObservation);
-          return rawStagedObservation(changedObservation);
-        },
+        observeGitStagedIndex: () =>
+          Effect.sync(() => {
+            observations += 1;
+            if (observations === 1) return rawStagedObservation(releaseInputObservation);
+            if (observations === 2) return rawStagedObservation(materializationObservation);
+            return rawStagedObservation(changedObservation);
+          }),
       },
     });
 
@@ -555,12 +562,13 @@ describe("releases.checkRepository", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => {
-          const observation = observationResults[observations % observationResults.length];
-          observations += 1;
-          if (observation === undefined) throw new Error("Missing staged observation fixture");
-          return rawStagedObservation(observation);
-        },
+        observeGitStagedIndex: () =>
+          Effect.sync(() => {
+            const observation = observationResults[observations % observationResults.length];
+            observations += 1;
+            if (observation === undefined) throw new Error("Missing staged observation fixture");
+            return rawStagedObservation(observation);
+          }),
       },
     });
 
@@ -608,34 +616,40 @@ async function expectStagedTreeClosureRefusal(
   let observations = 0;
   let writes = 0;
   const rawPort = {
-    observeGitStagedIndex: async (): Promise<GitStagedIndexObservation> => {
-      observations += 1;
-      return Object.freeze({
-        opening: binding,
-        blobs: Object.freeze([{ objectId: releaseInput.objectId, bytes: releaseInput.bytes }]),
-        closing: binding,
-      });
-    },
-    capture: async () => {
-      writes += 1;
-      throw new Error("staged tree closure acquired capture authority");
-    },
-    apply: async () => {
-      writes += 1;
-      throw new Error("staged tree closure acquired write authority");
-    },
-    restore: async () => {
-      writes += 1;
-      throw new Error("staged tree closure acquired restore authority");
-    },
-    settle: async () => {
-      writes += 1;
-      throw new Error("staged tree closure acquired settlement authority");
-    },
-    release: async () => {
-      writes += 1;
-      throw new Error("staged tree closure acquired release authority");
-    },
+    observeGitStagedIndex: (): Effect.Effect<GitStagedIndexObservation> =>
+      Effect.sync(() => {
+        observations += 1;
+        return Object.freeze({
+          opening: binding,
+          blobs: Object.freeze([{ objectId: releaseInput.objectId, bytes: releaseInput.bytes }]),
+          closing: binding,
+        });
+      }),
+    capture: () =>
+      Effect.sync(() => {
+        writes += 1;
+        throw new Error("staged tree closure acquired capture authority");
+      }),
+    apply: () =>
+      Effect.sync(() => {
+        writes += 1;
+        throw new Error("staged tree closure acquired write authority");
+      }),
+    restore: () =>
+      Effect.sync(() => {
+        writes += 1;
+        throw new Error("staged tree closure acquired restore authority");
+      }),
+    settle: () =>
+      Effect.sync(() => {
+        writes += 1;
+        throw new Error("staged tree closure acquired settlement authority");
+      }),
+    release: () =>
+      Effect.sync(() => {
+        writes += 1;
+        throw new Error("staged tree closure acquired release authority");
+      }),
   };
   const client = createLifecycleTestClient({
     contentWorkspace: { ...unavailableContentWorkspace(), ...rawPort },
@@ -758,7 +772,7 @@ function anchorChangedObservation(
 }
 
 function contentWorkspaceFailure(
-  reason: "Aliased" | "InvalidInput" | "LimitExceeded",
+  reason: ContentWorkspaceFailure["reason"],
   detail: string
 ): ContentWorkspaceFailure {
   return Object.freeze({
@@ -815,7 +829,7 @@ function cleanContentWorkspace(
     onStagedObserve?: () => void;
     treeAfterFirstInspect?: string;
   }> = {}
-): ContentWorkspaceNodeAsyncPort {
+): ContentWorkspaceResource<never> {
   const blobs = new Map<string, Uint8Array>();
   const entries: Array<
     Readonly<{
@@ -856,51 +870,53 @@ function cleanContentWorkspace(
   );
   let inspections = 0;
 
-  const contentWorkspace: ContentWorkspaceNodeAsyncPort = {
+  const contentWorkspace: ContentWorkspaceResource<never> = {
     ...unavailableContentWorkspace(),
-    async inspectGitWorkspace() {
-      inspections += 1;
-      options.onInspect?.();
-      return inspections > 1 && options.treeAfterFirstInspect !== undefined
-        ? Object.freeze({ ...stagedAnchor(), tree: options.treeAfterFirstInspect })
-        : stagedAnchor();
-    },
-    async readGitTree() {
-      return treeBytes;
-    },
-    async readGitBlob(input) {
-      const value = blobs.get(input.blob);
-      if (value === undefined) throw new Error(`Missing clean Git blob ${input.blob}`);
-      return new Uint8Array(value);
-    },
-    async readGitBlobs(input) {
-      return input.blobs.map((blob) => {
-        const value = blobs.get(blob);
-        if (value === undefined) throw new Error(`Missing clean Git blob ${blob}`);
-        return Object.freeze({ blob, bytes: new Uint8Array(value) });
-      });
-    },
-    async captureGitWorkspaceEvidence(input): Promise<GitWorkspaceEvidence> {
-      const trackedFlags = bytes(input.admittedPaths.map((path) => `H ${path}\0`).join(""));
-      const worktreeObjectIds = input.admittedPaths.map((path) => {
-        const entry = byPath.get(path);
-        if (entry === undefined) throw new Error(`Missing admitted clean path ${path}`);
-        return Object.freeze({ path, objectId: entry.objectId });
-      });
-      return Object.freeze({
-        openingAnchor: stagedAnchor(),
-        openingStatus: new Uint8Array(),
-        openingTrackedFlags: trackedFlags,
-        worktreeObjectIds: Object.freeze(worktreeObjectIds),
-        indexEntries: treeBytes,
-        closingAnchor: stagedAnchor(),
-        closingStatus: new Uint8Array(),
-        closingTrackedFlags: trackedFlags,
-      });
-    },
-    async observeGitStagedIndex() {
+    inspectGitWorkspace: () =>
+      Effect.sync(() => {
+        inspections += 1;
+        options.onInspect?.();
+        return inspections > 1 && options.treeAfterFirstInspect !== undefined
+          ? Object.freeze({ ...stagedAnchor(), tree: options.treeAfterFirstInspect })
+          : stagedAnchor();
+      }),
+    readGitTree: () => Effect.succeed(treeBytes),
+    readGitBlob: (input) =>
+      Effect.sync(() => {
+        const value = blobs.get(input.blob);
+        if (value === undefined) throw new Error(`Missing clean Git blob ${input.blob}`);
+        return new Uint8Array(value);
+      }),
+    readGitBlobs: (input) =>
+      Effect.sync(() =>
+        input.blobs.map((blob) => {
+          const value = blobs.get(blob);
+          if (value === undefined) throw new Error(`Missing clean Git blob ${blob}`);
+          return Object.freeze({ blob, bytes: new Uint8Array(value) });
+        })
+      ),
+    captureGitWorkspaceEvidence: (input): Effect.Effect<GitWorkspaceEvidence> =>
+      Effect.sync(() => {
+        const trackedFlags = bytes(input.admittedPaths.map((path) => `H ${path}\0`).join(""));
+        const worktreeObjectIds = input.admittedPaths.map((path) => {
+          const entry = byPath.get(path);
+          if (entry === undefined) throw new Error(`Missing admitted clean path ${path}`);
+          return Object.freeze({ path, objectId: entry.objectId });
+        });
+        return Object.freeze({
+          openingAnchor: stagedAnchor(),
+          openingStatus: new Uint8Array(),
+          openingTrackedFlags: trackedFlags,
+          worktreeObjectIds: Object.freeze(worktreeObjectIds),
+          indexEntries: treeBytes,
+          closingAnchor: stagedAnchor(),
+          closingStatus: new Uint8Array(),
+          closingTrackedFlags: trackedFlags,
+        });
+      }),
+    observeGitStagedIndex: () => {
       options.onStagedObserve?.();
-      return unavailableAsync("staged observation");
+      return Effect.die(new Error("Unexpected staged observation"));
     },
   };
   return Object.freeze(contentWorkspace);
@@ -930,8 +946,4 @@ function parsed<T>(result: { readonly ok: true; readonly value: T } | { readonly
 
 function bytes(value: string): Uint8Array {
   return new TextEncoder().encode(value);
-}
-
-async function unavailableAsync(label: string): Promise<never> {
-  throw new Error(`Unexpected ${label}`);
 }

@@ -6,6 +6,8 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import { router } from "../src/service/router";
@@ -35,10 +37,16 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        inspectGitWorkspace: async () => {
-          selectionCalls += 1;
-          throw new Error("Fixture content workspace is intentionally unavailable");
-        },
+        inspectGitWorkspace: () =>
+          Effect.suspend(() => {
+            selectionCalls += 1;
+            return Effect.fail({
+              _tag: "ContentWorkspaceFailure",
+              operation: "inspect-git-workspace",
+              reason: "GitFailed",
+              detail: "Fixture content workspace is intentionally unavailable",
+            } satisfies ContentWorkspaceFailure);
+          }),
       },
       providerNativeSessions: {
         acquire: async () => {

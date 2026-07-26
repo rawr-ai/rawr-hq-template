@@ -2,7 +2,7 @@ import { ORPCError } from "@orpc/client";
 import { os } from "@orpc/server";
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
-import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
 import { Effect, Layer } from "effect";
 import { implementEffect } from "effect-orpc";
 import { contract } from "./contract";
@@ -14,7 +14,7 @@ export interface LifecycleClock {
 
 type InitialContext = {
   deps: {
-    contentWorkspace: ContentWorkspaceNodeAsyncPort;
+    contentWorkspace: ContentWorkspaceResource<never>;
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
     providerNativeSessions: NativeProviderSessionResolver;

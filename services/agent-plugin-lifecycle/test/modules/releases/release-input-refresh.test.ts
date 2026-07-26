@@ -4,6 +4,7 @@ import type {
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -50,10 +51,11 @@ describe("releases.refreshReleaseInput", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async (input) => {
-          selections.push({ paths: input.materializedPaths, roots: input.materializedRoots });
-          return currentObservation;
-        },
+        observeGitStagedIndex: (input) =>
+          Effect.sync(() => {
+            selections.push({ paths: input.materializedPaths, roots: input.materializedRoots });
+            return currentObservation;
+          }),
       },
     });
 
@@ -241,11 +243,12 @@ describe("releases.refreshReleaseInput", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async (input) => {
-          materializedObjectIds.push(...observation.blobs.map((blob) => blob.objectId));
-          expect(input.materializedRoots).toEqual(["plugins/agents/cognition"]);
-          return observation;
-        },
+        observeGitStagedIndex: (input) =>
+          Effect.sync(() => {
+            materializedObjectIds.push(...observation.blobs.map((blob) => blob.objectId));
+            expect(input.materializedRoots).toEqual(["plugins/agents/cognition"]);
+            return observation;
+          }),
       },
     });
 
@@ -271,7 +274,7 @@ describe("releases.refreshReleaseInput", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => changed,
+        observeGitStagedIndex: () => Effect.succeed(changed),
       },
     });
 
@@ -297,11 +300,12 @@ describe("releases.refreshReleaseInput", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => {
-          observationStarted();
-          await resume;
-          return observation;
-        },
+        observeGitStagedIndex: () =>
+          Effect.promise(async () => {
+            observationStarted();
+            await resume;
+            return observation;
+          }),
       },
     });
     const baseline = refreshRequest(["cognition"]);
@@ -340,7 +344,7 @@ describe("releases.refreshReleaseInput", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => stagedObservation(entries),
+        observeGitStagedIndex: () => Effect.succeed(stagedObservation(entries)),
       },
     });
 
@@ -372,10 +376,11 @@ describe("releases.refreshReleaseInput", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: {
         ...unavailableContentWorkspace(),
-        observeGitStagedIndex: async () => {
-          observations += 1;
-          return stagedObservation(oneMemberEntries("cognition"));
-        },
+        observeGitStagedIndex: () =>
+          Effect.sync(() => {
+            observations += 1;
+            return stagedObservation(oneMemberEntries("cognition"));
+          }),
       },
     });
     const request = refreshRequest(["cognition"]);
@@ -425,7 +430,7 @@ async function refreshWith(entries: readonly StagedEntry[], ids: readonly string
   const client = createLifecycleTestClient({
     contentWorkspace: {
       ...unavailableContentWorkspace(),
-      observeGitStagedIndex: async () => stagedObservation(entries),
+      observeGitStagedIndex: () => Effect.succeed(stagedObservation(entries)),
     },
   });
   return client.releases.refreshReleaseInput(refreshRequest(ids), testInvocation);

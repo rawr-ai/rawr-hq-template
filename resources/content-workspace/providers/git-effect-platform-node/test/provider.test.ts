@@ -15,10 +15,28 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { NodeFileSystem } from "@effect/platform-node";
+import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { Effect, FileSystem, PlatformError } from "effect";
+import { makeContentWorkspaceResource, makeNodeContentWorkspaceResource } from "../index";
 
-import type { NodeContentWorkspaceResult } from "../index";
-import { makeContentWorkspaceResource, runNodeContentWorkspace } from "../index";
+type NodeContentWorkspaceResult<A> =
+  | Readonly<{ ok: true; value: A }>
+  | Readonly<{ ok: false; failure: ContentWorkspaceFailure }>;
+
+function runNodeContentWorkspace<A>(
+  operation: Effect.Effect<A, ContentWorkspaceFailure, FileSystem.FileSystem>
+): Promise<NodeContentWorkspaceResult<A>> {
+  return Effect.runPromise(
+    operation.pipe(
+      Effect.map((value): NodeContentWorkspaceResult<A> => ({ ok: true, value })),
+      Effect.catch((failure) =>
+        Effect.succeed<NodeContentWorkspaceResult<A>>({ ok: false, failure })
+      ),
+      Effect.provide(NodeFileSystem.layer)
+    )
+  );
+}
 
 const gitExecutable = requireExecutable("git");
 const FIXTURE_PREFIX = "rawr-content-workspace-test-";
@@ -43,20 +61,18 @@ describe("Git Effect Platform content workspace provider", () => {
     await git(root, "add", ".");
     await git(root, "commit", "-m", "add payload");
 
-    const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
-    const identity = unwrap(
-      await runNodeContentWorkspace(resource.inspectWorkspace({ locator: root }))
-    );
-    const entries = unwrap(
-      await runNodeContentWorkspace(
-        resource.readTree({
-          root,
-          path: "payload",
-          objectFormat: identity.objectFormat,
-          maxEntries: 10,
-          maxBytes: 1024,
-        })
-      )
+    const resource = makeNodeContentWorkspaceResource({
+      gitExecutable: await realpath(gitExecutable),
+    });
+    const identity = await Effect.runPromise(resource.inspectWorkspace({ locator: root }));
+    const entries = await Effect.runPromise(
+      resource.readTree({
+        root,
+        path: "payload",
+        objectFormat: identity.objectFormat,
+        maxEntries: 10,
+        maxBytes: 1024,
+      })
     );
 
     expect(identity.root).toBe(root);
@@ -1373,23 +1389,24 @@ describe("Git Effect Platform content workspace provider", () => {
 
   test("reports an unavailable Git command as a typed provider failure", async () => {
     const root = await createRepository();
-    const result = await runNodeContentWorkspace(
-      makeContentWorkspaceResource({
-        gitExecutable: "rawr-git-command-not-found",
-      }).inspectGitWorkspace({
-        locator: root,
-        remoteSelection: { kind: "All" },
-        refName: "refs/heads/main",
-      })
+    const result = await Effect.runPromise(
+      Effect.result(
+        makeNodeContentWorkspaceResource({
+          gitExecutable: "rawr-git-command-not-found",
+        }).inspectGitWorkspace({
+          locator: root,
+          remoteSelection: { kind: "All" },
+          refName: "refs/heads/main",
+        })
+      )
     );
 
-    expect(result).toMatchObject({
-      ok: false,
-      failure: {
-        operation: "inspect-git-workspace",
-        reason: "GitFailed",
-        path: root,
-      },
+    expect(result._tag).toBe("Failure");
+    if (result._tag !== "Failure") throw new Error("Expected unavailable Git to fail");
+    expect(result.failure).toMatchObject({
+      operation: "inspect-git-workspace",
+      reason: "GitFailed",
+      path: root,
     });
   });
 

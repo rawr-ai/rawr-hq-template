@@ -4,6 +4,7 @@ import type {
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
@@ -74,32 +75,36 @@ export function createCleanContentWorkspaceReader(
   }>
 ): CleanContentWorkspaceReader {
   const reader: CleanContentWorkspaceReader = {
-    async inspect(policy) {
-      return await inspectWorkspace(binding.contentWorkspace, policy);
-    },
-    async revalidate(policy, eligibilityBinding) {
-      const inspected = await inspectWorkspace(binding.contentWorkspace, policy);
-      if (inspected.kind === "Ineligible") return inspected;
-      if (inspected.snapshot.eligibilityBinding !== eligibilityBinding) {
-        return ineligible(
-          "SourceChanged",
-          "repository, ref, index, worktree, or object bindings changed"
-        );
-      }
-      return inspected;
-    },
+    inspect: (policy) => inspectWorkspace(binding.contentWorkspace, policy),
+    revalidate: (policy, eligibilityBinding) =>
+      Effect.gen(function* () {
+        const inspected = yield* inspectWorkspace(binding.contentWorkspace, policy);
+        if (inspected.kind === "Ineligible") return inspected;
+        if (inspected.snapshot.eligibilityBinding !== eligibilityBinding) {
+          return ineligible(
+            "SourceChanged",
+            "repository, ref, index, worktree, or object bindings changed"
+          );
+        }
+        return inspected;
+      }),
   };
   return Object.freeze(reader);
 }
 
-async function inspectWorkspace(
+function inspectWorkspace(
   contentWorkspace: ResourceContentWorkspaceSnapshotReadPort,
   policy: ContentWorkspacePolicy
-): Promise<ContentWorkspaceInspection> {
-  try {
+): Effect.Effect<ContentWorkspaceInspection> {
+  return Effect.gen(function* () {
     const policyIssue = validatePolicy(policy);
-    if (policyIssue !== undefined) return { kind: "Ineligible", issues: [policyIssue] };
-    const anchor = await contentWorkspace.inspectGitWorkspace({
+    if (policyIssue !== undefined) {
+      return {
+        kind: "Ineligible",
+        issues: [policyIssue],
+      } satisfies ContentWorkspaceInspection;
+    }
+    const anchor = yield* contentWorkspace.inspectGitWorkspace({
       locator: policy.locator,
       remoteSelection: { kind: "Named", remoteName: policy.remoteName },
       refName: policy.refName,
@@ -136,14 +141,17 @@ async function inspectWorkspace(
       return ineligible("WrongTree", `expected ${policy.sourceTree}, observed ${tree}`);
     }
 
-    const entriesResult = await contentWorkspace.readGitTree({
+    const entriesResult = yield* contentWorkspace.readGitTree({
       root: anchor.root,
       tree,
       objectFormat,
       paths: [policy.releaseInputPath, policy.pluginRoot],
       maxBytes: MAX_TREE_BYTES,
     });
-    const treeEntries = parseTree(entriesResult, objectIdPattern);
+    const treeEntries = yield* Effect.try({
+      try: () => parseTree(entriesResult, objectIdPattern),
+      catch: asError,
+    });
     const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
     const releaseInputEntry = entryByPath.get(policy.releaseInputPath);
     if (releaseInputEntry === undefined) {
@@ -152,7 +160,7 @@ async function inspectWorkspace(
         `missing tracked release input ${policy.releaseInputPath}`
       );
     }
-    const releaseInputBytes = await readGitBlobObject(
+    const releaseInputBytes = yield* readGitBlobObject(
       contentWorkspace,
       anchor.root,
       releaseInputEntry,
@@ -180,7 +188,10 @@ async function inspectWorkspace(
       declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
     });
     if (declaredPluginIssue !== undefined) {
-      return { kind: "Ineligible", issues: [declaredPluginIssue] };
+      return {
+        kind: "Ineligible",
+        issues: [declaredPluginIssue],
+      } satisfies ContentWorkspaceInspection;
     }
     const aggregatePayloadIssue = preflightAggregatePayloadBytes(releaseInput);
     if (aggregatePayloadIssue !== undefined)
@@ -242,7 +253,7 @@ async function inspectWorkspace(
     }
 
     const blobEntries = [...uniqueBlobEntries.values()];
-    const blobObservations = await contentWorkspace.readGitBlobs({
+    const blobObservations = yield* contentWorkspace.readGitBlobs({
       root: anchor.root,
       blobs: blobEntries.map((entry) => entry.objectId),
       objectFormat,
@@ -297,24 +308,27 @@ async function inspectWorkspace(
 
     const admittedPaths = [...admitted].sort(compareCanonicalText);
     const consumedPathspecs = [...consumedRoots].sort(compareCanonicalText);
-    const evidence = await captureWorkspaceEvidence(
+    const evidence = yield* captureWorkspaceEvidence(
       contentWorkspace,
       anchor.root,
       policy,
       admittedPaths,
       consumedPathspecs
     );
-    const evidenceIssue = validateWorkspaceEvidence(
-      evidence,
-      policy,
-      objectFormat,
-      entryByPath,
-      admittedPaths
-    );
-    if (evidenceIssue !== undefined) return { kind: "Ineligible", issues: [evidenceIssue] };
+    const evidenceIssue = yield* Effect.try({
+      try: () =>
+        validateWorkspaceEvidence(evidence, policy, objectFormat, entryByPath, admittedPaths),
+      catch: asError,
+    });
+    if (evidenceIssue !== undefined) {
+      return {
+        kind: "Ineligible",
+        issues: [evidenceIssue],
+      } satisfies ContentWorkspaceInspection;
+    }
 
     // A second matching capture closes the bounded status/flag eligibility observation.
-    const closingEvidence = await captureWorkspaceEvidence(
+    const closingEvidence = yield* captureWorkspaceEvidence(
       contentWorkspace,
       anchor.root,
       policy,
@@ -360,71 +374,77 @@ async function inspectWorkspace(
         objectBindings,
         eligibilityBinding,
       }),
-    };
-  } catch (error) {
-    if (isEligibilityError(error)) return ineligible(error.eligibilityCode, error.message);
-    if (isContentWorkspaceFailure(error)) {
-      if (
-        error.operation === "inspect-git-workspace" &&
-        (error.reason === "Aliased" || error.reason === "InvalidInput")
-      ) {
-        return ineligible("AliasedLocator", error.detail);
-      }
-      return ineligible("GitFailure", error.detail);
-    }
-    return ineligible("GitFailure", error instanceof Error ? error.message : String(error));
-  }
+    } satisfies ContentWorkspaceInspection;
+  }).pipe(Effect.catch((error) => Effect.succeed(inspectWorkspaceFailure(error))));
 }
 
-async function captureWorkspaceEvidence(
+function captureWorkspaceEvidence(
   contentWorkspace: ResourceContentWorkspaceSnapshotReadPort,
   root: string,
   policy: ContentWorkspacePolicy,
   admittedPaths: readonly ReleaseRelativePath[],
   consumedPathspecs: readonly ReleaseRelativePath[]
-): Promise<WorkspaceEvidence> {
-  const evidence = await contentWorkspace.captureGitWorkspaceEvidence({
-    root,
-    remoteSelection: { kind: "Named", remoteName: policy.remoteName },
-    refName: policy.refName,
-    admittedPaths,
-    consumedRoots: consumedPathspecs,
-    objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
-    maxPaths: MAX_TREE_ENTRIES,
-    maxWorktreeFileBytes: MAX_ADMITTED_WORKTREE_FILE_BYTES,
-    maxWorktreeBytes: MAX_ADMITTED_WORKTREE_BYTES,
-    maxBytes: MAX_INDEX_BYTES,
-  });
-  const openingStatus = classifyWorkspaceStatus(evidence.openingStatus, consumedPathspecs);
-  const closingStatus = classifyWorkspaceStatus(evidence.closingStatus, consumedPathspecs);
-  if (!sameRepositoryAnchor(evidence.openingAnchor, evidence.closingAnchor)) {
-    throw eligibilityError("SourceChanged", "repository anchor changed during its closing capture");
-  }
-  if (!equalBytes(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
-    throw eligibilityError(
-      "SourceChanged",
-      "admitted path flags changed during the repository evidence capture"
-    );
-  }
-  if (!sameWorkspaceStatus(openingStatus, closingStatus)) {
-    throw eligibilityError(
-      "SourceChanged",
-      "tracked or consumed-path status changed during the repository evidence capture"
-    );
-  }
-  return Object.freeze({
-    anchor: evidence.closingAnchor,
-    trackedStatus: closingStatus.tracked,
-    trackedFlags: evidence.closingTrackedFlags,
-    worktreeObjectIds: evidence.worktreeObjectIds.map((entry) =>
-      Object.freeze({
-        path: requireReleasePath(entry.path),
-        objectId: entry.objectId,
-      })
-    ),
-    untracked: closingStatus.untracked,
-    ignored: closingStatus.ignored,
-    index: evidence.indexEntries,
+): Effect.Effect<WorkspaceEvidence, ContentWorkspaceFailure | Error> {
+  return Effect.gen(function* () {
+    const evidence = yield* contentWorkspace.captureGitWorkspaceEvidence({
+      root,
+      remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+      refName: policy.refName,
+      admittedPaths,
+      consumedRoots: consumedPathspecs,
+      objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
+      maxPaths: MAX_TREE_ENTRIES,
+      maxWorktreeFileBytes: MAX_ADMITTED_WORKTREE_FILE_BYTES,
+      maxWorktreeBytes: MAX_ADMITTED_WORKTREE_BYTES,
+      maxBytes: MAX_INDEX_BYTES,
+    });
+    const openingStatus = yield* Effect.try({
+      try: () => classifyWorkspaceStatus(evidence.openingStatus, consumedPathspecs),
+      catch: asError,
+    });
+    const closingStatus = yield* Effect.try({
+      try: () => classifyWorkspaceStatus(evidence.closingStatus, consumedPathspecs),
+      catch: asError,
+    });
+    if (!sameRepositoryAnchor(evidence.openingAnchor, evidence.closingAnchor)) {
+      return yield* Effect.fail(
+        eligibilityError("SourceChanged", "repository anchor changed during its closing capture")
+      );
+    }
+    if (!equalBytes(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
+      return yield* Effect.fail(
+        eligibilityError(
+          "SourceChanged",
+          "admitted path flags changed during the repository evidence capture"
+        )
+      );
+    }
+    if (!sameWorkspaceStatus(openingStatus, closingStatus)) {
+      return yield* Effect.fail(
+        eligibilityError(
+          "SourceChanged",
+          "tracked or consumed-path status changed during the repository evidence capture"
+        )
+      );
+    }
+    return yield* Effect.try({
+      try: () =>
+        Object.freeze({
+          anchor: evidence.closingAnchor,
+          trackedStatus: closingStatus.tracked,
+          trackedFlags: evidence.closingTrackedFlags,
+          worktreeObjectIds: evidence.worktreeObjectIds.map((entry) =>
+            Object.freeze({
+              path: requireReleasePath(entry.path),
+              objectId: entry.objectId,
+            })
+          ),
+          untracked: closingStatus.untracked,
+          ignored: closingStatus.ignored,
+          index: evidence.indexEntries,
+        }),
+      catch: asError,
+    });
   });
 }
 
@@ -593,25 +613,29 @@ function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
   return difference === 0;
 }
 
-async function readGitBlobObject(
+function readGitBlobObject(
   contentWorkspace: ResourceContentWorkspaceSnapshotReadPort,
   cwd: string,
   entry: Readonly<{ objectId: string; path: string }>,
   objectFormat: "sha1" | "sha256",
   objectIdPattern: RegExp,
   maximumBytes: number
-): Promise<Uint8Array> {
-  if (!objectIdPattern.test(entry.objectId))
-    throw new Error(`invalid blob object id for ${entry.path}`);
-  const bytes = await contentWorkspace.readGitBlob({
-    root: cwd,
-    blob: entry.objectId,
-    objectFormat,
-    maxBytes: maximumBytes,
+): Effect.Effect<Uint8Array, ContentWorkspaceFailure | Error> {
+  return Effect.gen(function* () {
+    if (!objectIdPattern.test(entry.objectId)) {
+      return yield* Effect.fail(new Error(`invalid blob object id for ${entry.path}`));
+    }
+    const bytes = yield* contentWorkspace.readGitBlob({
+      root: cwd,
+      blob: entry.objectId,
+      objectFormat,
+      maxBytes: maximumBytes,
+    });
+    if (bytes.byteLength > maximumBytes) {
+      return yield* Effect.fail(new Error(`blob for ${entry.path} exceeds ${maximumBytes} bytes`));
+    }
+    return bytes;
   });
-  if (bytes.byteLength > maximumBytes)
-    throw new Error(`blob for ${entry.path} exceeds ${maximumBytes} bytes`);
-  return bytes;
 }
 
 function parseTree(bytes: Uint8Array, objectIdPattern: RegExp): readonly TreeEntry[] {
@@ -732,6 +756,20 @@ function ineligible(code: SourceEligibilityIssueCode, detail: string): ContentWo
   return { kind: "Ineligible", issues: [sourceEligibilityIssue(code, detail)] };
 }
 
+function inspectWorkspaceFailure(error: unknown): ContentWorkspaceInspection {
+  if (isEligibilityError(error)) return ineligible(error.eligibilityCode, error.message);
+  if (isContentWorkspaceFailure(error)) {
+    if (
+      error.operation === "inspect-git-workspace" &&
+      (error.reason === "Aliased" || error.reason === "InvalidInput")
+    ) {
+      return ineligible("AliasedLocator", error.detail);
+    }
+    return ineligible("GitFailure", error.detail);
+  }
+  return ineligible("GitFailure", error instanceof Error ? error.message : String(error));
+}
+
 function validatePolicy(policy: ContentWorkspacePolicy): SourceEligibilityIssue | undefined {
   const repositoryIdentity = parseRepositoryIdentity(
     policy.repositoryIdentity,
@@ -788,6 +826,10 @@ function validatePolicy(policy: ContentWorkspacePolicy): SourceEligibilityIssue 
 
 function sourceIssue(code: SourceEligibilityIssueCode, detail: string): SourceEligibilityIssue {
   return sourceEligibilityIssue(code, detail);
+}
+
+function asError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
 }
 
 function eligibilityError(

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type {
   ProviderIssue,
@@ -5,7 +6,7 @@ import type {
   ProviderSyncRequest,
   ProviderTestRequest,
 } from "../model/dto/provider-lifecycle";
-import type { SelectedContent } from "../model/dto/selected-content";
+import type { SelectedContent, SelectedContentResolution } from "../model/dto/selected-content";
 import { providerIssue, validateSelectedContent } from "../model/policy/selected-content";
 import type { SelectedContentResolver } from "../model/ports/selected-content";
 
@@ -15,51 +16,38 @@ export type ProviderSelectionResolution =
   | Readonly<{ kind: "Selected"; content: SelectedContent }>
   | Readonly<{ kind: "Rejected"; issues: readonly ProviderIssue[] }>;
 
-export async function resolveChannelSelection(
+export function resolveChannelSelection(
   request: ProviderChannelRequest,
   currentMain: CurrentMainSelectionReader,
   selectedContent: SelectedContentResolver
-): Promise<ProviderSelectionResolution> {
-  let selected;
-  try {
-    selected = await currentMain.resolve(request.locator);
-  } catch (error) {
-    return rejected(`Current-main selection failed: ${errorDetail(error)}`);
-  }
-  if (selected.kind !== "CURRENT_ELIGIBLE") {
-    return rejected(`${selected.kind}: ${selected.reason}`);
-  }
-  let resolved;
-  try {
-    resolved = await selectedContent.resolveChannel({
+): Effect.Effect<ProviderSelectionResolution> {
+  return Effect.gen(function* () {
+    const selected = yield* currentMain.resolve(request.locator);
+    if (selected.kind !== "CURRENT_ELIGIBLE") {
+      return rejected(`${selected.kind}: ${selected.reason}`);
+    }
+    const resolved = yield* selectedContent.resolveChannel({
       locator: request.locator,
       selection: selected.selection,
     });
-  } catch (error) {
-    return rejected(`Selected-content resolution failed: ${errorDetail(error)}`);
-  }
-  return validateResolution(resolved);
+    return validateResolution(resolved);
+  });
 }
 
-export async function resolveTestSelection(
+export function resolveTestSelection(
   request: ProviderTestRequest,
   selectedContent: SelectedContentResolver
-): Promise<ProviderSelectionResolution> {
-  let resolved;
-  try {
-    resolved = await selectedContent.resolveWorkspace({
+): Effect.Effect<ProviderSelectionResolution> {
+  return Effect.gen(function* () {
+    const resolved = yield* selectedContent.resolveWorkspace({
       contentWorkspace: request.contentWorkspace,
       mode: request.mode,
     });
-  } catch (error) {
-    return rejected(`Selected-content resolution failed: ${errorDetail(error)}`);
-  }
-  return validateResolution(resolved);
+    return validateResolution(resolved);
+  });
 }
 
-function validateResolution(
-  resolved: Awaited<ReturnType<SelectedContentResolver["resolveChannel"]>>
-): ProviderSelectionResolution {
+function validateResolution(resolved: SelectedContentResolution): ProviderSelectionResolution {
   if (resolved.kind === "Rejected") {
     return {
       kind: "Rejected",
@@ -81,10 +69,4 @@ function rejected(detail: string): ProviderSelectionResolution {
     kind: "Rejected",
     issues: [providerIssue("SelectionRejected", detail)],
   };
-}
-
-function errorDetail(error: unknown): string {
-  return error instanceof Error && error.message.length > 0
-    ? error.message
-    : "Dependency failed without a readable diagnostic.";
 }

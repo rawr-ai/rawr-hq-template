@@ -1,5 +1,6 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { runProviderSync } from "../../../src/service/modules/providers/router/sync.router";
+import { runProviderSync as providerSyncEffect } from "../../../src/service/modules/providers/router/sync.router";
 import { parseGitTreeId } from "../../../src/service/shared/release";
 import {
   channelRequest,
@@ -10,6 +11,9 @@ import {
   selectedContent,
   selectedContentWithAliases,
 } from "./fixture";
+
+const runProviderSync = (...args: Parameters<typeof providerSyncEffect>) =>
+  Effect.runPromise(providerSyncEffect(...args));
 
 describe("provider sync", () => {
   it("refreshes an exact Codex marketplace with an unobservable revision before installing a missing selected member", async () => {

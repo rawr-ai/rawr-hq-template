@@ -1,7 +1,8 @@
 import { mkdir, symlink, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
@@ -49,29 +50,34 @@ describe("selected release content", () => {
     await symlink("missing-target", join(fixture.root, "unrelated-link"));
     const scopedSelection = await commitAndRetag(fixture, "add unrelated committed tree");
     await writeFile(join(fixture.root, "unrelated.txt"), "dirty but unrelated\n");
-    const delegate = makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE });
+    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
     const treeSelections: string[][] = [];
     const resolver = createSelectedContentResolver({
       contentWorkspace: {
         ...delegate,
-        inspectGitWorkspace: async () => {
-          throw new Error("Channel resolution must not inspect checkout state");
-        },
-        async readGitTree(input) {
-          treeSelections.push([...input.paths]);
-          return await delegate.readGitTree(input);
-        },
+        inspectGitWorkspace: () =>
+          Effect.die(new Error("Channel resolution must not inspect checkout state")),
+        readGitTree: (input) =>
+          Effect.tap(delegate.readGitTree(input), () =>
+            Effect.sync(() => {
+              treeSelections.push([...input.paths]);
+            })
+          ),
       },
     });
 
-    const first = await resolver.resolveChannel({
-      locator: fixture.locator,
-      selection: scopedSelection,
-    });
-    const second = await resolver.resolveChannel({
-      locator: fixture.locator,
-      selection: scopedSelection,
-    });
+    const first = await Effect.runPromise(
+      resolver.resolveChannel({
+        locator: fixture.locator,
+        selection: scopedSelection,
+      })
+    );
+    const second = await Effect.runPromise(
+      resolver.resolveChannel({
+        locator: fixture.locator,
+        selection: scopedSelection,
+      })
+    );
 
     expect(first).toEqual(second);
     expect(treeSelections).toEqual([
@@ -102,27 +108,52 @@ describe("selected release content", () => {
     await git(fixture.root, ["add", "later.txt"]);
     await git(fixture.root, ["commit", "-m", "later"]);
     const laterCommit = await git(fixture.root, ["rev-parse", "HEAD"]);
-    const delegate = makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE });
+    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
     let moved = false;
     const resolver = createSelectedContentResolver({
       contentWorkspace: {
         ...delegate,
-        async readGitBlobs(input) {
-          const result = await delegate.readGitBlobs(input);
-          if (!moved) {
-            moved = true;
-            await git(fixture.root, ["tag", "--force", "agent-plugins-v1", laterCommit]);
-          }
-          return result;
-        },
+        readGitBlobs: (input) =>
+          Effect.gen(function* () {
+            const result = yield* delegate.readGitBlobs(input);
+            if (!moved) {
+              moved = true;
+              yield* Effect.promise(() =>
+                git(fixture.root, ["tag", "--force", "agent-plugins-v1", laterCommit])
+              );
+            }
+            return result;
+          }),
       },
     });
 
     await expect(
-      resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
+      Effect.runPromise(
+        resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
+      )
     ).resolves.toMatchObject({
       kind: "Rejected",
       issues: [{ code: "SelectionMismatch" }],
+    });
+  });
+
+  it("returns a closed source-read failure for invalid UTF-8 Git tree output", async () => {
+    const fixture = await createRepository(await root(), ["cognition"]);
+    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
+    const resolver = createSelectedContentResolver({
+      contentWorkspace: {
+        ...delegate,
+        readGitTree: () => Effect.succeed(Uint8Array.of(0xff, 0)),
+      },
+    });
+
+    await expect(
+      Effect.runPromise(
+        resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
+      )
+    ).resolves.toMatchObject({
+      kind: "Rejected",
+      issues: [{ code: "SourceReadFailed", detail: expect.stringContaining("invalid UTF-8") }],
     });
   });
 
@@ -132,7 +163,9 @@ describe("selected release content", () => {
     const extraSelection = await commitAndRetag(extra, "add undeclared payload");
     const resolver = realResolver();
     await expect(
-      resolver.resolveChannel({ locator: extra.locator, selection: extraSelection })
+      Effect.runPromise(
+        resolver.resolveChannel({ locator: extra.locator, selection: extraSelection })
+      )
     ).resolves.toMatchObject({
       kind: "Rejected",
       issues: [{ code: "SourceIneligible", detail: expect.stringContaining("undeclared") }],
@@ -142,7 +175,9 @@ describe("selected release content", () => {
     await unlink(join(extra.root, "plugins/agents/cognition/extra.txt"));
     const missingSelection = await commitAndRetag(extra, "remove native marketplace manifest");
     await expect(
-      resolver.resolveChannel({ locator: extra.locator, selection: missingSelection })
+      Effect.runPromise(
+        resolver.resolveChannel({ locator: extra.locator, selection: missingSelection })
+      )
     ).resolves.toMatchObject({
       kind: "Rejected",
       issues: [
@@ -161,7 +196,9 @@ describe("selected release content", () => {
     await writeNativeMarketplaces(fixture.root, ["cognition"]);
     const missingMember = await commitAndRetag(fixture, "remove marketplace member");
     await expect(
-      resolver.resolveChannel({ locator: fixture.locator, selection: missingMember })
+      Effect.runPromise(
+        resolver.resolveChannel({ locator: fixture.locator, selection: missingMember })
+      )
     ).resolves.toMatchObject({
       kind: "Rejected",
       issues: [{ code: "SourceIneligible", detail: expect.stringContaining("plugin set") }],
@@ -173,7 +210,9 @@ describe("selected release content", () => {
     });
     const wrongSource = await commitAndRetag(fixture, "change marketplace source");
     await expect(
-      resolver.resolveChannel({ locator: fixture.locator, selection: wrongSource })
+      Effect.runPromise(
+        resolver.resolveChannel({ locator: fixture.locator, selection: wrongSource })
+      )
     ).resolves.toMatchObject({
       kind: "Rejected",
       issues: [{ code: "SourceIneligible", detail: expect.stringContaining("source") }],
@@ -183,7 +222,7 @@ describe("selected release content", () => {
     await writeFile(join(fixture.root, ".claude-plugin/marketplace.json"), "{not-json}\n");
     const malformed = await commitAndRetag(fixture, "malform marketplace JSON");
     await expect(
-      resolver.resolveChannel({ locator: fixture.locator, selection: malformed })
+      Effect.runPromise(resolver.resolveChannel({ locator: fixture.locator, selection: malformed }))
     ).resolves.toMatchObject({
       kind: "Rejected",
       issues: [{ code: "SourceIneligible", detail: expect.stringContaining("UTF-8 JSON") }],
@@ -198,8 +237,8 @@ describe("selected release content", () => {
       mode: { kind: "targeted", pluginIds: [requirePluginId("docs")] },
     };
 
-    const first = await resolver.resolveWorkspace(input);
-    const second = await resolver.resolveWorkspace(input);
+    const first = await Effect.runPromise(resolver.resolveWorkspace(input));
+    const second = await Effect.runPromise(resolver.resolveWorkspace(input));
 
     expect(first).toEqual(second);
     expect(first).toMatchObject({
@@ -354,7 +393,7 @@ function selection(
 
 function realResolver(): SelectedContentResolver {
   return createSelectedContentResolver({
-    contentWorkspace: makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE }),
+    contentWorkspace: makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE }),
   });
 }
 

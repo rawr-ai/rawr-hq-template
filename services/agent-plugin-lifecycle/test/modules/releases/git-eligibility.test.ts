@@ -1,6 +1,7 @@
 import { mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { createCleanContentWorkspaceReader } from "../../../src/service/model/policy/clean-content-workspace";
 import {
@@ -37,7 +38,7 @@ describe("exact Git-object eligibility", () => {
   it("reads a clean generated repository from Git objects and revalidates the exact binding", async () => {
     const repository = await generated();
     const reader = await realReader();
-    const inspected = await reader.inspect(repository.policy);
+    const inspected = await Effect.runPromise(reader.inspect(repository.policy));
     expect(inspected.kind).toBe("Eligible");
     if (inspected.kind !== "Eligible") return;
     expect(inspected.snapshot.payloads).toHaveLength(1);
@@ -47,7 +48,7 @@ describe("exact Git-object eligibility", () => {
       `plugins/agent/${repository.pluginId}/skills/example/SKILL.md`,
     ]);
     await expect(
-      reader.revalidate(repository.policy, inspected.snapshot.eligibilityBinding)
+      Effect.runPromise(reader.revalidate(repository.policy, inspected.snapshot.eligibilityBinding))
     ).resolves.toMatchObject({
       kind: "Eligible",
     });
@@ -58,44 +59,48 @@ describe("exact Git-object eligibility", () => {
     const delegate = await realPort();
     let evidenceCaptures = 0;
     const unrelatedChurn = overrideGitReadPort(delegate, {
-      async captureGitWorkspaceEvidence(input) {
-        const evidence = await delegate.captureGitWorkspaceEvidence(input);
-        evidenceCaptures += 1;
-        return Object.freeze({
-          ...evidence,
-          openingStatus: appendStatusRecords(
-            evidence.openingStatus,
-            `? scratch/open-${evidenceCaptures}.txt`
-          ),
-          closingStatus: appendStatusRecords(
-            evidence.closingStatus,
-            `! .cache/close-${evidenceCaptures}.json`
-          ),
-        });
-      },
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.map(delegate.captureGitWorkspaceEvidence(input), (evidence) => {
+          evidenceCaptures += 1;
+          return Object.freeze({
+            ...evidence,
+            openingStatus: appendStatusRecords(
+              evidence.openingStatus,
+              `? scratch/open-${evidenceCaptures}.txt`
+            ),
+            closingStatus: appendStatusRecords(
+              evidence.closingStatus,
+              `! .cache/close-${evidenceCaptures}.json`
+            ),
+          });
+        }),
     });
 
     await expect(
-      createCleanContentWorkspaceReader({
-        contentWorkspace: unrelatedChurn,
-      }).inspect(repository.policy)
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({
+          contentWorkspace: unrelatedChurn,
+        }).inspect(repository.policy)
+      )
     ).resolves.toMatchObject({ kind: "Eligible" });
     expect(evidenceCaptures).toBe(2);
 
     const consumedPath = `plugins/agent/${repository.pluginId}/extra.txt`;
     const consumedChurn = overrideGitReadPort(delegate, {
-      async captureGitWorkspaceEvidence(input) {
-        const evidence = await delegate.captureGitWorkspaceEvidence(input);
-        return Object.freeze({
-          ...evidence,
-          closingStatus: appendStatusRecords(evidence.closingStatus, `? ${consumedPath}`),
-        });
-      },
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.map(delegate.captureGitWorkspaceEvidence(input), (evidence) =>
+          Object.freeze({
+            ...evidence,
+            closingStatus: appendStatusRecords(evidence.closingStatus, `? ${consumedPath}`),
+          })
+        ),
     });
     await expect(
-      createCleanContentWorkspaceReader({
-        contentWorkspace: consumedChurn,
-      }).inspect(repository.policy)
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({
+          contentWorkspace: consumedChurn,
+        }).inspect(repository.policy)
+      )
     ).resolves.toEqual({
       kind: "Ineligible",
       issues: [
@@ -122,39 +127,51 @@ describe("exact Git-object eligibility", () => {
     const worktreeFileLimits: number[] = [];
     const worktreeTotalLimits: number[] = [];
     const contentWorkspace = overrideGitReadPort(delegate, {
-      async inspectGitWorkspace(input) {
-        observed.push("inspectGitWorkspace");
-        return await delegate.inspectGitWorkspace(input);
-      },
-      async readGitTree(input) {
-        observed.push("readGitTree");
-        return await delegate.readGitTree(input);
-      },
-      async readGitBlob(input) {
-        observed.push("readGitBlob");
-        blobReadLimits.push(input.maxBytes);
-        return await delegate.readGitBlob(input);
-      },
-      async readGitBlobs(input) {
-        observed.push("readGitBlobs");
-        blobBatchLimits.push({
-          maxBlobs: input.maxBlobs,
-          maxBlobBytes: input.maxBlobBytes,
-          maxTotalBytes: input.maxTotalBytes,
-        });
-        return await delegate.readGitBlobs(input);
-      },
-      async captureGitWorkspaceEvidence(input) {
-        observed.push("captureGitWorkspaceEvidence");
-        worktreeFileLimits.push(input.maxWorktreeFileBytes);
-        worktreeTotalLimits.push(input.maxWorktreeBytes);
-        return await delegate.captureGitWorkspaceEvidence(input);
-      },
+      inspectGitWorkspace: (input) =>
+        Effect.tap(delegate.inspectGitWorkspace(input), () =>
+          Effect.sync(() => {
+            observed.push("inspectGitWorkspace");
+          })
+        ),
+      readGitTree: (input) =>
+        Effect.tap(delegate.readGitTree(input), () =>
+          Effect.sync(() => {
+            observed.push("readGitTree");
+          })
+        ),
+      readGitBlob: (input) =>
+        Effect.tap(delegate.readGitBlob(input), () =>
+          Effect.sync(() => {
+            observed.push("readGitBlob");
+            blobReadLimits.push(input.maxBytes);
+          })
+        ),
+      readGitBlobs: (input) =>
+        Effect.tap(delegate.readGitBlobs(input), () =>
+          Effect.sync(() => {
+            observed.push("readGitBlobs");
+            blobBatchLimits.push({
+              maxBlobs: input.maxBlobs,
+              maxBlobBytes: input.maxBlobBytes,
+              maxTotalBytes: input.maxTotalBytes,
+            });
+          })
+        ),
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.tap(delegate.captureGitWorkspaceEvidence(input), () =>
+          Effect.sync(() => {
+            observed.push("captureGitWorkspaceEvidence");
+            worktreeFileLimits.push(input.maxWorktreeFileBytes);
+            worktreeTotalLimits.push(input.maxWorktreeBytes);
+          })
+        ),
     });
 
-    const inspected = await createCleanContentWorkspaceReader({
-      contentWorkspace,
-    }).inspect(repository.policy);
+    const inspected = await Effect.runPromise(
+      createCleanContentWorkspaceReader({
+        contentWorkspace,
+      }).inspect(repository.policy)
+    );
 
     expect(inspected.kind).toBe("Eligible");
     expect(new Set(observed)).toEqual(
@@ -209,22 +226,28 @@ describe("exact Git-object eligibility", () => {
     let blobBatchReads = 0;
     let evidenceCaptures = 0;
     const contentWorkspace = overrideGitReadPort(delegate, {
-      async readGitBlob(input) {
-        blobReads += 1;
-        return await delegate.readGitBlob(input);
-      },
-      async readGitBlobs(input) {
-        blobBatchReads += 1;
-        return await delegate.readGitBlobs(input);
-      },
-      async captureGitWorkspaceEvidence(input) {
-        evidenceCaptures += 1;
-        return await delegate.captureGitWorkspaceEvidence(input);
-      },
+      readGitBlob: (input) =>
+        Effect.tap(delegate.readGitBlob(input), () =>
+          Effect.sync(() => {
+            blobReads += 1;
+          })
+        ),
+      readGitBlobs: (input) =>
+        Effect.tap(delegate.readGitBlobs(input), () =>
+          Effect.sync(() => {
+            blobBatchReads += 1;
+          })
+        ),
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.tap(delegate.captureGitWorkspaceEvidence(input), () =>
+          Effect.sync(() => {
+            evidenceCaptures += 1;
+          })
+        ),
     });
 
     await expect(
-      createCleanContentWorkspaceReader({ contentWorkspace }).inspect(policy)
+      Effect.runPromise(createCleanContentWorkspaceReader({ contentWorkspace }).inspect(policy))
     ).resolves.toEqual({
       kind: "Ineligible",
       issues: [
@@ -276,22 +299,28 @@ describe("exact Git-object eligibility", () => {
     let blobBatchReads = 0;
     let evidenceCaptures = 0;
     const contentWorkspace = overrideGitReadPort(delegate, {
-      async readGitBlob(input) {
-        blobReads += 1;
-        return await delegate.readGitBlob(input);
-      },
-      async readGitBlobs(input) {
-        blobBatchReads += 1;
-        return await delegate.readGitBlobs(input);
-      },
-      async captureGitWorkspaceEvidence(input) {
-        evidenceCaptures += 1;
-        return await delegate.captureGitWorkspaceEvidence(input);
-      },
+      readGitBlob: (input) =>
+        Effect.tap(delegate.readGitBlob(input), () =>
+          Effect.sync(() => {
+            blobReads += 1;
+          })
+        ),
+      readGitBlobs: (input) =>
+        Effect.tap(delegate.readGitBlobs(input), () =>
+          Effect.sync(() => {
+            blobBatchReads += 1;
+          })
+        ),
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.tap(delegate.captureGitWorkspaceEvidence(input), () =>
+          Effect.sync(() => {
+            evidenceCaptures += 1;
+          })
+        ),
     });
 
     await expect(
-      createCleanContentWorkspaceReader({ contentWorkspace }).inspect(policy)
+      Effect.runPromise(createCleanContentWorkspaceReader({ contentWorkspace }).inspect(policy))
     ).resolves.toEqual({
       kind: "Ineligible",
       issues: [
@@ -311,24 +340,26 @@ describe("exact Git-object eligibility", () => {
     const delegate = await realPort();
     let injected = false;
     const inconsistentPort = overrideGitReadPort(delegate, {
-      async captureGitWorkspaceEvidence(input) {
-        const evidence = await delegate.captureGitWorkspaceEvidence(input);
-        if (injected) return evidence;
-        injected = true;
-        return Object.freeze({
-          ...evidence,
-          closingAnchor: Object.freeze({
-            ...evidence.closingAnchor,
-            tree: mutateObjectId(evidence.closingAnchor.tree),
-          }),
-        });
-      },
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.map(delegate.captureGitWorkspaceEvidence(input), (evidence) => {
+          if (injected) return evidence;
+          injected = true;
+          return Object.freeze({
+            ...evidence,
+            closingAnchor: Object.freeze({
+              ...evidence.closingAnchor,
+              tree: mutateObjectId(evidence.closingAnchor.tree),
+            }),
+          });
+        }),
     });
 
     await expect(
-      createCleanContentWorkspaceReader({
-        contentWorkspace: inconsistentPort,
-      }).inspect(repository.policy)
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({
+          contentWorkspace: inconsistentPort,
+        }).inspect(repository.policy)
+      )
     ).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "SourceChanged" }],
@@ -342,20 +373,25 @@ describe("exact Git-object eligibility", () => {
     let evidenceCaptures = 0;
     let mutated = false;
     const racingPort = overrideGitReadPort(delegate, {
-      async captureGitWorkspaceEvidence(input) {
-        const result = await delegate.captureGitWorkspaceEvidence(input);
-        evidenceCaptures += 1;
-        if (evidenceCaptures === 1) {
-          mutated = true;
-          await writeFile(repository.payloadFile, "mutated after final repository anchor\n");
-        }
-        return result;
-      },
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.gen(function* () {
+          const result = yield* delegate.captureGitWorkspaceEvidence(input);
+          evidenceCaptures += 1;
+          if (evidenceCaptures === 1) {
+            mutated = true;
+            yield* Effect.promise(() =>
+              writeFile(repository.payloadFile, "mutated after final repository anchor\n")
+            );
+          }
+          return result;
+        }),
     });
 
-    const inspected = await createCleanContentWorkspaceReader({
-      contentWorkspace: racingPort,
-    }).inspect(repository.policy);
+    const inspected = await Effect.runPromise(
+      createCleanContentWorkspaceReader({
+        contentWorkspace: racingPort,
+      }).inspect(repository.policy)
+    );
 
     expect(mutated).toBe(true);
     expect(inspected).toMatchObject({
@@ -370,20 +406,23 @@ describe("exact Git-object eligibility", () => {
     let evidenceCaptures = 0;
     let switched = false;
     const racingPort = overrideGitReadPort(delegate, {
-      async captureGitWorkspaceEvidence(input) {
-        const result = await delegate.captureGitWorkspaceEvidence(input);
-        evidenceCaptures += 1;
-        if (evidenceCaptures === 1) {
-          switched = true;
-          await git(repository.root, ["checkout", "-b", "raced-branch"]);
-        }
-        return result;
-      },
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.gen(function* () {
+          const result = yield* delegate.captureGitWorkspaceEvidence(input);
+          evidenceCaptures += 1;
+          if (evidenceCaptures === 1) {
+            switched = true;
+            yield* Effect.promise(() => git(repository.root, ["checkout", "-b", "raced-branch"]));
+          }
+          return result;
+        }),
     });
 
-    const inspected = await createCleanContentWorkspaceReader({
-      contentWorkspace: racingPort,
-    }).inspect(repository.policy);
+    const inspected = await Effect.runPromise(
+      createCleanContentWorkspaceReader({
+        contentWorkspace: racingPort,
+      }).inspect(repository.policy)
+    );
 
     expect(switched).toBe(true);
     expect(inspected).toMatchObject({
@@ -402,20 +441,25 @@ describe("exact Git-object eligibility", () => {
     let evidenceCaptures = 0;
     let changed = false;
     const racingPort = overrideGitReadPort(delegate, {
-      async captureGitWorkspaceEvidence(input) {
-        const result = await delegate.captureGitWorkspaceEvidence(input);
-        evidenceCaptures += 1;
-        if (evidenceCaptures === 1) {
-          changed = true;
-          await git(repository.root, ["update-index", `--${flag}`, relativePayload]);
-        }
-        return result;
-      },
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.gen(function* () {
+          const result = yield* delegate.captureGitWorkspaceEvidence(input);
+          evidenceCaptures += 1;
+          if (evidenceCaptures === 1) {
+            changed = true;
+            yield* Effect.promise(() =>
+              git(repository.root, ["update-index", `--${flag}`, relativePayload])
+            );
+          }
+          return result;
+        }),
     });
 
-    const inspected = await createCleanContentWorkspaceReader({
-      contentWorkspace: racingPort,
-    }).inspect(repository.policy);
+    const inspected = await Effect.runPromise(
+      createCleanContentWorkspaceReader({
+        contentWorkspace: racingPort,
+      }).inspect(repository.policy)
+    );
 
     expect(changed).toBe(true);
     expect(inspected).toMatchObject({
@@ -429,7 +473,7 @@ describe("exact Git-object eligibility", () => {
 
     const tracked = await generated();
     await writeFile(tracked.payloadFile, "changed\n");
-    await expect(reader.inspect(tracked.policy)).resolves.toMatchObject({
+    await expect(Effect.runPromise(reader.inspect(tracked.policy))).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "DirtyTrackedWorktree" }],
     });
@@ -439,7 +483,7 @@ describe("exact Git-object eligibility", () => {
     const staged = await generated();
     await writeFile(staged.payloadFile, "changed\n");
     await git(staged.root, ["add", staged.payloadFile]);
-    await expect(reader.inspect(staged.policy)).resolves.toMatchObject({
+    await expect(Effect.runPromise(reader.inspect(staged.policy))).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "DirtyIndex" }],
     });
@@ -451,7 +495,7 @@ describe("exact Git-object eligibility", () => {
       join(untracked.root, "plugins", "agent", untracked.pluginId, "extra.txt"),
       "extra\n"
     );
-    await expect(reader.inspect(untracked.policy)).resolves.toMatchObject({
+    await expect(Effect.runPromise(reader.inspect(untracked.policy))).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "UntrackedConsumedPath" }],
     });
@@ -460,7 +504,7 @@ describe("exact Git-object eligibility", () => {
     fixture = undefined;
     const ignored = await generated();
     await writeFile(ignored.ignoredFile, "ignored\n");
-    await expect(reader.inspect(ignored.policy)).resolves.toMatchObject({
+    await expect(Effect.runPromise(reader.inspect(ignored.policy))).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "IgnoredConsumedPath" }],
     });
@@ -469,12 +513,12 @@ describe("exact Git-object eligibility", () => {
   it("rejects a changed binding and a case-colliding Git tree", async () => {
     const repository = await generated();
     const reader = await realReader();
-    const inspected = await reader.inspect(repository.policy);
+    const inspected = await Effect.runPromise(reader.inspect(repository.policy));
     expect(inspected.kind).toBe("Eligible");
     if (inspected.kind !== "Eligible") return;
     await writeFile(repository.payloadFile, "changed after snapshot\n");
     await expect(
-      reader.revalidate(repository.policy, inspected.snapshot.eligibilityBinding)
+      Effect.runPromise(reader.revalidate(repository.policy, inspected.snapshot.eligibilityBinding))
     ).resolves.toMatchObject({
       kind: "Ineligible",
     });
@@ -489,17 +533,19 @@ describe("exact Git-object eligibility", () => {
       `100644 blob ${payloadBlob}\tplugins/agent/${collision.pluginId}/skills/example/skill.md\0`
     );
     const collisionPort = overrideGitReadPort(delegate, {
-      async readGitTree(input) {
-        const original = await delegate.readGitTree(input);
-        const combined = new Uint8Array(original.byteLength + collidingRecord.byteLength);
-        combined.set(original);
-        combined.set(collidingRecord, original.byteLength);
-        return combined;
-      },
+      readGitTree: (input) =>
+        Effect.map(delegate.readGitTree(input), (original) => {
+          const combined = new Uint8Array(original.byteLength + collidingRecord.byteLength);
+          combined.set(original);
+          combined.set(collidingRecord, original.byteLength);
+          return combined;
+        }),
     });
     await expect(
-      createCleanContentWorkspaceReader({ contentWorkspace: collisionPort }).inspect(
-        collision.policy
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({ contentWorkspace: collisionPort }).inspect(
+          collision.policy
+        )
       )
     ).resolves.toMatchObject({
       kind: "Ineligible",
@@ -511,21 +557,23 @@ describe("exact Git-object eligibility", () => {
     const repository = await generated();
     const reader = await realReader();
     await expect(
-      reader.inspect({
-        ...repository.policy,
-        remoteUrl: "https://example.invalid/different.git",
-      })
+      Effect.runPromise(
+        reader.inspect({
+          ...repository.policy,
+          remoteUrl: "https://example.invalid/different.git",
+        })
+      )
     ).resolves.toMatchObject({ kind: "Ineligible", issues: [{ code: "WrongRepository" }] });
 
     const wrongTree = must(parseGitTreeId(mutateObjectId(repository.policy.sourceTree)));
     await expect(
-      reader.inspect({ ...repository.policy, sourceTree: wrongTree })
+      Effect.runPromise(reader.inspect({ ...repository.policy, sourceTree: wrongTree }))
     ).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "WrongTree" }],
     });
     await expect(
-      reader.inspect({ ...repository.policy, refName: "refs/heads/different" })
+      Effect.runPromise(reader.inspect({ ...repository.policy, refName: "refs/heads/different" }))
     ).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "WrongRef" }],
@@ -533,7 +581,9 @@ describe("exact Git-object eligibility", () => {
 
     const alias = join(fixture!.path, "repository-alias");
     await symlink(repository.root, alias);
-    await expect(reader.inspect({ ...repository.policy, locator: alias })).resolves.toMatchObject({
+    await expect(
+      Effect.runPromise(reader.inspect({ ...repository.policy, locator: alias }))
+    ).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "AliasedLocator" }],
     });
@@ -545,7 +595,7 @@ describe("exact Git-object eligibility", () => {
     await git(repository.root, ["update-index", "--assume-unchanged", relativePayload]);
     await writeFile(repository.payloadFile, "hidden modification\n");
     const reader = await realReader();
-    await expect(reader.inspect(repository.policy)).resolves.toMatchObject({
+    await expect(Effect.runPromise(reader.inspect(repository.policy))).resolves.toMatchObject({
       kind: "Ineligible",
       issues: [{ code: "DirtyIndex" }],
     });
@@ -559,13 +609,15 @@ describe("exact Git-object eligibility", () => {
       }),
     });
     await expect(
-      reader.inspect(unsafeFixturePolicy({ remoteName: "--origin" }))
+      Effect.runPromise(reader.inspect(unsafeFixturePolicy({ remoteName: "--origin" })))
     ).resolves.toMatchObject({ kind: "Ineligible" });
-    await expect(reader.inspect(unsafeFixturePolicy({ refName: "--help" }))).resolves.toMatchObject(
-      { kind: "Ineligible" }
-    );
     await expect(
-      reader.inspect(unsafeFixturePolicy({ releaseInputPath: "../release.json" }))
+      Effect.runPromise(reader.inspect(unsafeFixturePolicy({ refName: "--help" })))
+    ).resolves.toMatchObject({ kind: "Ineligible" });
+    await expect(
+      Effect.runPromise(
+        reader.inspect(unsafeFixturePolicy({ releaseInputPath: "../release.json" }))
+      )
     ).resolves.toMatchObject({
       kind: "Ineligible",
     });
@@ -584,7 +636,7 @@ describe("exact Git-object eligibility", () => {
   }
 
   async function realPort(): Promise<ResourceContentWorkspaceSnapshotReadPort> {
-    return makeNodeContentWorkspacePort({ gitExecutable: await realpath(GIT_EXECUTABLE) });
+    return makeNodeContentWorkspaceResource({ gitExecutable: await realpath(GIT_EXECUTABLE) });
   }
 });
 
@@ -596,10 +648,11 @@ function overrideGitReadPort(
 }
 
 function unreachableGitReadPort(onCall: () => void): ResourceContentWorkspaceSnapshotReadPort {
-  const unreachable = async (): Promise<never> => {
-    onCall();
-    throw new Error("Git resource must remain unreachable");
-  };
+  const unreachable = () =>
+    Effect.sync(() => {
+      onCall();
+      throw new Error("Git resource must remain unreachable");
+    });
   return Object.freeze({
     inspectGitWorkspace: unreachable,
     readGitTree: unreachable,

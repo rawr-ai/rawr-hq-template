@@ -1,4 +1,5 @@
-import type { ContentWorkspaceGitReadAsyncPort } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { Effect } from "effect";
 
 import type {
   StagedIndexObservationRequest,
@@ -10,7 +11,7 @@ import type {
  * operation admitted through the service context.
  */
 export type ResourceContentWorkspaceStagedObservationPort = Pick<
-  ContentWorkspaceGitReadAsyncPort,
+  ContentWorkspaceResource<never>,
   "observeGitStagedIndex"
 >;
 
@@ -19,5 +20,5 @@ export type ResourceContentWorkspaceStagedObservationPort = Pick<
  * observations while the module retains eligibility-policy ownership.
  */
 export interface StagedContentWorkspaceObservationReader {
-  observe(request: StagedIndexObservationRequest): Promise<StagedIndexObservationResult>;
+  observe(request: StagedIndexObservationRequest): Effect.Effect<StagedIndexObservationResult>;
 }

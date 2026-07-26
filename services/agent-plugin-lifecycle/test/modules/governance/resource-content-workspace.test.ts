@@ -1,4 +1,5 @@
 import type { ContentWorkspaceFailure, GitRefObservation } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
   createExactGitBlobPointer,
@@ -56,51 +57,58 @@ describe("resource-backed exact Git governance reader", () => {
     const bytes = encoder.encode("release input\n");
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        readGitBlobAtPath: async () => ({
-          refCommit: commit,
-          commit,
-          tree,
-          blob,
-          bytes,
-        }),
+        readGitBlobAtPath: () =>
+          Effect.succeed({
+            refCommit: commit,
+            commit,
+            tree,
+            blob,
+            bytes,
+          }),
       }),
     });
 
-    await expect(reader.inspect(locator, pointer.ref)).resolves.toEqual({
+    await expect(Effect.runPromise(reader.inspect(locator, pointer.ref))).resolves.toEqual({
       kind: "Ready",
       repositoryIdentity: pointer.repositoryIdentity,
       canonicalRef: pointer.ref,
       headCommit: pointer.commit,
       headTree: pointer.tree,
     });
-    await expect(reader.readFileAtRevision(locator, selection)).resolves.toEqual({
-      ok: true,
-      observation: { pointer, bytes },
-    });
-    await expect(reader.isAncestor(locator, pointer.commit, pointer.commit)).resolves.toBe(true);
+    await expect(Effect.runPromise(reader.readFileAtRevision(locator, selection))).resolves.toEqual(
+      {
+        ok: true,
+        observation: { pointer, bytes },
+      }
+    );
+    await expect(
+      Effect.runPromise(reader.isAncestor(locator, pointer.commit, pointer.commit))
+    ).resolves.toBe(true);
   });
 
   it("maps exact-ref inspection and missing-object failures semantically", async () => {
     const inspectionReader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        inspectGitRef: async () => {
-          throw failure("inspect-git-ref", "GitFailed", "selected ref is unavailable");
-        },
+        inspectGitRef: () =>
+          Effect.fail(failure("inspect-git-ref", "GitFailed", "selected ref is unavailable")),
       }),
     });
     const readReader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        readGitBlobAtPath: async () => {
-          throw failure("read-git-blob-at-path", "Missing", "selected blob is absent");
-        },
+        readGitBlobAtPath: () =>
+          Effect.fail(failure("read-git-blob-at-path", "Missing", "selected blob is absent")),
       }),
     });
 
-    await expect(inspectionReader.inspect(locator, pointer.ref)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(inspectionReader.inspect(locator, pointer.ref))
+    ).resolves.toEqual({
       kind: "UnreachableRepository",
       reason: "selected ref is unavailable",
     });
-    await expect(readReader.readFileAtRevision(locator, selection)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(readReader.readFileAtRevision(locator, selection))
+    ).resolves.toEqual({
       ok: false,
       failure: { code: "MissingObject", message: "selected blob is absent" },
     });
@@ -112,24 +120,27 @@ describe("resource-backed exact Git governance reader", () => {
   ] as const)("refuses bytes returned for another %s under the same ref observation", async (_identity, drift) => {
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        readGitBlobAtPath: async () => ({
-          refCommit: commit,
-          commit,
-          tree,
-          blob,
-          bytes: encoder.encode("wrong identity\n"),
-          ...drift,
-        }),
+        readGitBlobAtPath: () =>
+          Effect.succeed({
+            refCommit: commit,
+            commit,
+            tree,
+            blob,
+            bytes: encoder.encode("wrong identity\n"),
+            ...drift,
+          }),
       }),
     });
 
-    await expect(reader.readFileAtRevision(locator, selection)).resolves.toEqual({
-      ok: false,
-      failure: {
-        code: "WrongObject",
-        message: "Git provider returned bytes for another commit or tree",
-      },
-    });
+    await expect(Effect.runPromise(reader.readFileAtRevision(locator, selection))).resolves.toEqual(
+      {
+        ok: false,
+        failure: {
+          code: "WrongObject",
+          message: "Git provider returned bytes for another commit or tree",
+        },
+      }
+    );
   });
 
   it("refuses a selection for another locator identity before consulting the resource", async () => {
@@ -142,20 +153,23 @@ describe("resource-backed exact Git governance reader", () => {
     if (!anotherPointerResult.ok) throw new Error("Invalid alternate repository fixture");
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        inspectGitRef: async () => {
-          calls += 1;
-          return refObservation;
-        },
+        inspectGitRef: () =>
+          Effect.sync(() => {
+            calls += 1;
+            return refObservation;
+          }),
       }),
     });
 
     await expect(
-      reader.readFileAtRevision(
-        {
-          ...locator,
-          expectedRepositoryIdentity: anotherPointerResult.value.repositoryIdentity,
-        },
-        selection
+      Effect.runPromise(
+        reader.readFileAtRevision(
+          {
+            ...locator,
+            expectedRepositoryIdentity: anotherPointerResult.value.repositoryIdentity,
+          },
+          selection
+        )
       )
     ).resolves.toEqual({
       ok: false,
@@ -170,23 +184,26 @@ describe("resource-backed exact Git governance reader", () => {
   it("refuses bytes when the selected ref resolves to another commit", async () => {
     const reader = createResourceExactGitReader({
       contentWorkspace: stubPort({
-        readGitBlobAtPath: async () => ({
-          refCommit: "f".repeat(40),
-          commit,
-          tree,
-          blob,
-          bytes: encoder.encode("raced ref\n"),
-        }),
+        readGitBlobAtPath: () =>
+          Effect.succeed({
+            refCommit: "f".repeat(40),
+            commit,
+            tree,
+            blob,
+            bytes: encoder.encode("raced ref\n"),
+          }),
       }),
     });
 
-    await expect(reader.readFileAtRevision(locator, selection)).resolves.toEqual({
-      ok: false,
-      failure: {
-        code: "WrongObject",
-        message: "Selected Git ref resolves to another commit",
-      },
-    });
+    await expect(Effect.runPromise(reader.readFileAtRevision(locator, selection))).resolves.toEqual(
+      {
+        ok: false,
+        failure: {
+          code: "WrongObject",
+          message: "Selected Git ref resolves to another commit",
+        },
+      }
+    );
   });
 
   it("refuses relative locators", async () => {
@@ -195,7 +212,7 @@ describe("resource-backed exact Git governance reader", () => {
     });
     const relative = { ...locator, workspacePath: "relative/repository" };
 
-    await expect(reader.inspect(relative, pointer.ref)).resolves.toMatchObject({
+    await expect(Effect.runPromise(reader.inspect(relative, pointer.ref))).resolves.toMatchObject({
       kind: "UnreachableRepository",
     });
   });
@@ -203,15 +220,16 @@ describe("resource-backed exact Git governance reader", () => {
 
 function stubPort(overrides: Partial<ResourceExactGitReadPort> = {}): ResourceExactGitReadPort {
   return Object.freeze({
-    inspectGitRef: async () => refObservation,
-    readGitBlobAtPath: async () => ({
-      refCommit: commit,
-      commit,
-      tree,
-      blob,
-      bytes: new Uint8Array(),
-    }),
-    isLocalGitAncestor: async () => true,
+    inspectGitRef: () => Effect.succeed(refObservation),
+    readGitBlobAtPath: () =>
+      Effect.succeed({
+        refCommit: commit,
+        commit,
+        tree,
+        blob,
+        bytes: new Uint8Array(),
+      }),
+    isLocalGitAncestor: () => Effect.succeed(true),
     ...overrides,
   });
 }

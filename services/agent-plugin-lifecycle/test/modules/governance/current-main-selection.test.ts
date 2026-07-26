@@ -1,4 +1,5 @@
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
   createExactGitBlobPointer,
@@ -56,7 +57,9 @@ describe("observed-Git current-main v3 selection", () => {
   it("returns the exact reviewed record after resolving its content ref and release input", async () => {
     const fixture = selectionFixture();
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "CURRENT_ELIGIBLE",
       selection: fixture.record,
     });
@@ -81,7 +84,9 @@ describe("observed-Git current-main v3 selection", () => {
       )
     );
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toMatchObject({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toMatchObject({
       kind: "FORGED_RECORD",
       reason: expect.stringContaining("v3 is invalid"),
     });
@@ -91,7 +96,9 @@ describe("observed-Git current-main v3 selection", () => {
   it("rejects a record that selects its containing commit before reading content", async () => {
     const fixture = selectionFixture({ contentCommit: HEAD_COMMIT });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "FORGED_RECORD",
       reason: "Current-main cannot select its containing record commit",
     });
@@ -105,7 +112,9 @@ describe("observed-Git current-main v3 selection", () => {
       message: "Selected Git ref resolves to another commit",
     });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "FORGED_RECORD",
       reason: "Selected Git ref resolves to another commit",
     });
@@ -115,7 +124,9 @@ describe("observed-Git current-main v3 selection", () => {
     const fixture = selectionFixture();
     fixture.git.ancestor = false;
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "STALE_RECORD",
       reason: "Selected content commit is not reachable from canonical main",
     });
@@ -129,7 +140,9 @@ describe("observed-Git current-main v3 selection", () => {
       message: "Commit tree differs",
     });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "FORGED_RECORD",
       reason: "Commit tree differs",
     });
@@ -142,7 +155,9 @@ describe("observed-Git current-main v3 selection", () => {
       canonicalSerializeAgentPluginReleaseInput(releaseInputFixture("different\n"))
     );
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "FORGED_RECORD",
       reason: "Selected release-input digest differs from current-main",
     });
@@ -153,7 +168,9 @@ describe("observed-Git current-main v3 selection", () => {
       sourceRepositoryUrl: "https://github.com/example/other.git",
     });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toMatchObject({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toMatchObject({
       kind: "FORGED_RECORD",
       reason: expect.stringContaining("v3 is invalid"),
     });
@@ -163,7 +180,9 @@ describe("observed-Git current-main v3 selection", () => {
     const fixture = selectionFixture();
     fixture.git.inspections = [ready(HEAD_COMMIT, HEAD_TREE), ready(oid("e"), oid("f"))];
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toEqual({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toEqual({
       kind: "UNREACHABLE_REPOSITORY",
       reason: "Canonical main changed during current-main selection",
     });
@@ -175,7 +194,9 @@ describe("observed-Git current-main v3 selection", () => {
       sourceRepositoryUrl: "https://github.com/example/other.git",
     });
 
-    await expect(resolveCurrentMainSelection(fixture.git, fixture.locator)).resolves.toMatchObject({
+    await expect(
+      Effect.runPromise(resolveCurrentMainSelection(fixture.git, fixture.locator))
+    ).resolves.toMatchObject({
       kind: "WRONG_REPOSITORY",
     });
     expect(fixture.git.calls.readFileAtRevision).toBe(1);
@@ -186,18 +207,20 @@ describe("observed-Git current-main v3 selection", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: Object.freeze({
         ...unavailableContentWorkspace(),
-        inspectGitRef: async () => ({
-          root: "/tmp/personal-rawr-hq",
-          refName: MAIN_REF,
-          commit: HEAD_COMMIT,
-          tree: HEAD_TREE,
-          objectFormat: "sha1" as const,
-          remoteUrls: Object.freeze(["https://github.com/example/other.git"]),
-        }),
-        readGitBlobAtPath: async () => {
-          objectReads += 1;
-          throw new Error("Unexpected current-main object read");
-        },
+        inspectGitRef: () =>
+          Effect.succeed({
+            root: "/tmp/personal-rawr-hq",
+            refName: MAIN_REF,
+            commit: HEAD_COMMIT,
+            tree: HEAD_TREE,
+            objectFormat: "sha1" as const,
+            remoteUrls: Object.freeze(["https://github.com/example/other.git"]),
+          }),
+        readGitBlobAtPath: () =>
+          Effect.sync(() => {
+            objectReads += 1;
+            throw new Error("Unexpected current-main object read");
+          }),
       }),
     });
 
@@ -234,9 +257,7 @@ describe("observed-Git current-main v3 selection", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: Object.freeze({
         ...unavailableContentWorkspace(),
-        inspectGitRef: async () => {
-          throw failure;
-        },
+        inspectGitRef: () => Effect.fail(failure),
       }),
     });
 
@@ -355,34 +376,37 @@ class SelectionGitReader implements ExactGitReader {
     this.failures.set(selectionKey(selection), failure);
   }
 
-  inspect: ExactGitReader["inspect"] = async () => {
-    this.calls.inspect += 1;
-    return (
-      this.inspections[Math.min(this.calls.inspect - 1, this.inspections.length - 1)] ?? {
-        kind: "UnreachableRepository",
-        reason: "missing inspection fixture",
-      }
-    );
-  };
-
-  readFileAtRevision: ExactGitReader["readFileAtRevision"] = async (_locator, selection) => {
-    this.calls.readFileAtRevision += 1;
-    this.reads.push(selection);
-    const failure = this.failures.get(selectionKey(selection));
-    if (failure !== undefined) return { ok: false, failure };
-    const observation = this.objects.get(selectionKey(selection));
-    return observation === undefined
-      ? {
-          ok: false,
-          failure: { code: "MissingObject", message: "missing fixture object" },
+  inspect: ExactGitReader["inspect"] = () =>
+    Effect.sync(() => {
+      this.calls.inspect += 1;
+      return (
+        this.inspections[Math.min(this.calls.inspect - 1, this.inspections.length - 1)] ?? {
+          kind: "UnreachableRepository",
+          reason: "missing inspection fixture",
         }
-      : { ok: true, observation };
-  };
+      );
+    });
 
-  isAncestor: ExactGitReader["isAncestor"] = async () => {
-    this.calls.isAncestor += 1;
-    return this.ancestor;
-  };
+  readFileAtRevision: ExactGitReader["readFileAtRevision"] = (_locator, selection) =>
+    Effect.sync(() => {
+      this.calls.readFileAtRevision += 1;
+      this.reads.push(selection);
+      const failure = this.failures.get(selectionKey(selection));
+      if (failure !== undefined) return { ok: false, failure };
+      const observation = this.objects.get(selectionKey(selection));
+      return observation === undefined
+        ? {
+            ok: false,
+            failure: { code: "MissingObject", message: "missing fixture object" },
+          }
+        : { ok: true, observation };
+    });
+
+  isAncestor: ExactGitReader["isAncestor"] = () =>
+    Effect.sync(() => {
+      this.calls.isAncestor += 1;
+      return this.ancestor;
+    });
 }
 
 function releaseInputFixture(payloadText: string): AgentPluginReleaseInput {

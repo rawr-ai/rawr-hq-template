@@ -25,10 +25,7 @@ export const router = {
   package: module.package.effect(({ context, input: request }) =>
     Effect.gen(function* () {
       const inspectedAttempt = yield* Effect.result(
-        Effect.tryPromise({
-          try: () => context.source.inspect(request.contentWorkspace),
-          catch: (cause) => cause,
-        })
+        context.source.inspect(request.contentWorkspace)
       );
       if (inspectedAttempt._tag === "Failure") {
         return rejectedPackagingResult(
@@ -82,14 +79,7 @@ export const router = {
       const bytes = encodedAttempt.success;
 
       const revalidatedAttempt = yield* Effect.result(
-        Effect.tryPromise({
-          try: () =>
-            context.source.revalidate(
-              request.contentWorkspace,
-              inspected.snapshot.eligibilityBinding
-            ),
-          catch: (cause) => cause,
-        })
+        context.source.revalidate(request.contentWorkspace, inspected.snapshot.eligibilityBinding)
       );
       if (revalidatedAttempt._tag === "Failure") {
         return rejectedPackagingResult(

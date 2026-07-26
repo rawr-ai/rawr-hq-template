@@ -1,7 +1,8 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { runProviderStatus } from "../../../src/service/modules/providers/router/status.router";
-import { runProviderSync } from "../../../src/service/modules/providers/router/sync.router";
+import { runProviderStatus as providerStatusEffect } from "../../../src/service/modules/providers/router/status.router";
+import { runProviderSync as providerSyncEffect } from "../../../src/service/modules/providers/router/sync.router";
 import {
   channelRequest,
   createCurrentMainReader,
@@ -10,6 +11,11 @@ import {
   FakeSelectedContentResolver,
   selectedContent,
 } from "./fixture";
+
+const runProviderStatus = (...args: Parameters<typeof providerStatusEffect>) =>
+  Effect.runPromise(providerStatusEffect(...args));
+const runProviderSync = (...args: Parameters<typeof providerSyncEffect>) =>
+  Effect.runPromise(providerSyncEffect(...args));
 
 describe("provider status and preflight", () => {
   it("reports drift without invoking a native mutation", async () => {
