@@ -71,64 +71,6 @@ export const ContentWorkspacePolicySchema = ReadonlyObject(
 
 export type ContentWorkspacePolicy = Static<typeof ContentWorkspacePolicySchema>;
 
-export type StagedGitObjectFormat = "sha1" | "sha256";
-
-export interface StagedWorkspaceAnchorObservation {
-  readonly root: string;
-  readonly rootDevice: string;
-  readonly rootInode: string;
-  readonly refName: string;
-  readonly commit: string;
-  readonly refCommit: string;
-  readonly tree: string;
-  readonly objectFormat: StagedGitObjectFormat;
-  readonly remoteUrls: readonly string[];
-}
-
-export interface StagedIndexBindingObservation {
-  readonly anchor: StagedWorkspaceAnchorObservation;
-  readonly indexEntries: Uint8Array;
-}
-
-export interface StagedBlobObservation {
-  readonly objectId: string;
-  readonly bytes: Uint8Array;
-}
-
-export interface StagedIndexObservation {
-  readonly opening: StagedIndexBindingObservation;
-  readonly blobs: readonly StagedBlobObservation[];
-  readonly closing: StagedIndexBindingObservation;
-}
-
-export interface StagedIndexObservationRequest {
-  readonly locator: string;
-  readonly remoteName: string;
-  readonly refName: string;
-  readonly materializedPaths: readonly string[];
-  readonly materializedRoots: readonly string[];
-  readonly maxEntries: number;
-  readonly maxIndexBytes: number;
-  readonly maxBlobBytes: number;
-}
-
-export type StagedObservationFailureReason =
-  | "Aliased"
-  | "InvalidInput"
-  | "LimitExceeded"
-  | "Unavailable";
-
-export type StagedIndexObservationResult =
-  | Readonly<{
-      kind: "Observed";
-      observation: StagedIndexObservation;
-    }>
-  | Readonly<{
-      kind: "Failed";
-      reason: StagedObservationFailureReason;
-      detail: string;
-    }>;
-
 export interface ContentWorkspaceSnapshot {
   readonly repositoryIdentity: RepositoryIdentity;
   readonly sourceCommit: GitCommitId;

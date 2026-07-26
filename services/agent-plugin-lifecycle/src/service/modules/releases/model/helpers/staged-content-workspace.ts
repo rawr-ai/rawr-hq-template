@@ -1,28 +1,29 @@
 import type {
   ContentWorkspaceFailure,
-  ContentWorkspaceGitReadAsyncPort,
   GitStagedIndexBinding,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
 
 import type {
-  StagedContentWorkspaceObservationReader,
   StagedIndexBindingObservation,
   StagedIndexObservation,
   StagedIndexObservationRequest,
   StagedIndexObservationResult,
   StagedWorkspaceAnchorObservation,
-} from "../../../model/dependencies/releases";
+} from "#agent-plugin-lifecycle-service/modules/releases/model/dto/staged-content-workspace";
+import type {
+  ResourceContentWorkspaceStagedObservationPort,
+  StagedContentWorkspaceObservationReader,
+} from "#agent-plugin-lifecycle-service/modules/releases/model/ports/staged-content-workspace";
 
-export type ResourceContentWorkspaceStagedReadPort = Pick<
-  ContentWorkspaceGitReadAsyncPort,
-  "observeGitStagedIndex"
->;
-
-export function createResourceStagedContentWorkspaceObservationReader(
+/**
+ * Adapts the content-workspace resource into the Releases-owned staged
+ * observation boundary used by eligibility and release-input refresh.
+ */
+export function createStagedContentWorkspaceObservationReader(
   binding: Readonly<{
-    contentWorkspace: ResourceContentWorkspaceStagedReadPort;
+    contentWorkspace: ResourceContentWorkspaceStagedObservationPort;
   }>
 ): StagedContentWorkspaceObservationReader {
   return Object.freeze({

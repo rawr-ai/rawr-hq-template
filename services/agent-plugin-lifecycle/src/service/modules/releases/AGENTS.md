@@ -20,8 +20,10 @@
   module owns staged eligibility, refresh policy, operation DTOs, handlers,
   results, and issues; it does not publish packages, update vendor content, or
   mutate native provider state.
-- Clean and staged repository mechanics remain behind distinct exact-context
-  workspace handoffs; those handoffs are not source authorities.
+- The module also owns staged observation DTOs, its ready observation port,
+  resource normalization, and opening/closing binding policy. Clean and staged
+  repository mechanics remain behind distinct workspace handoffs; those
+  handoffs are not source authorities.
 
 ## Behavior
 

@@ -7,7 +7,7 @@ import {
 } from "../../base";
 import type { CurrentMainSelectionReader } from "../../model/dependencies/current-main";
 import type { SelectedContentResolver } from "../../model/dependencies/providers";
-import { createResourceStagedContentWorkspaceObservationReader } from "./repository/staged-content-workspace";
+import { createStagedContentWorkspaceObservationReader } from "./model/helpers/staged-content-workspace";
 
 export const repositories = createServiceProvider<{
   deps: {
@@ -19,13 +19,13 @@ export const repositories = createServiceProvider<{
   };
 }>().middleware<{
   releaseSource: ReturnType<typeof createCleanContentWorkspaceReader>;
-  stagedReleaseSource: ReturnType<typeof createResourceStagedContentWorkspaceObservationReader>;
+  stagedReleaseSource: ReturnType<typeof createStagedContentWorkspaceObservationReader>;
 }>(async ({ context, next }) =>
   next({
     releaseSource: createCleanContentWorkspaceReader({
       contentWorkspace: context.deps.contentWorkspace,
     }),
-    stagedReleaseSource: createResourceStagedContentWorkspaceObservationReader({
+    stagedReleaseSource: createStagedContentWorkspaceObservationReader({
       contentWorkspace: context.deps.contentWorkspace,
     }),
   })

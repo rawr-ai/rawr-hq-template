@@ -1,15 +1,28 @@
 import { createHash } from "node:crypto";
-import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
-  type StagedIndexBindingObservation,
-  type StagedIndexObservation,
-  type StagedIndexObservationRequest,
-  type StagedIndexObservationResult,
-  type StagedObservationFailureReason,
   sourceEligibilityIssue,
-} from "../../../../model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
+import {
+  normalizeReleaseSourceChangedDetail,
+  type ReleaseInputRefreshRequest,
+  type ReleaseInputRefreshResult,
+} from "#agent-plugin-lifecycle-service/modules/releases/model/dto/release-lifecycle";
+import type {
+  StagedContentWorkspaceInspection,
+  StagedContentWorkspacePolicy,
+  StagedIndexBindingObservation,
+  StagedIndexObservation,
+  StagedIndexObservationRequest,
+  StagedIndexObservationResult,
+  StagedObservationFailureReason,
+} from "#agent-plugin-lifecycle-service/modules/releases/model/dto/staged-content-workspace";
+import {
+  authorReleaseInputRefresh,
+  releaseInputRefreshIneligible,
+} from "#agent-plugin-lifecycle-service/modules/releases/model/policy/release-input-refresh";
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
@@ -27,17 +40,7 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
   type ReleaseRelativePath,
-} from "../../../../shared/release";
-import {
-  normalizeReleaseSourceChangedDetail,
-  type ReleaseInputRefreshRequest,
-  type ReleaseInputRefreshResult,
-} from "../dto/release-lifecycle";
-import type {
-  StagedContentWorkspaceInspection,
-  StagedContentWorkspacePolicy,
-} from "../dto/staged-content-workspace";
-import { authorReleaseInputRefresh, releaseInputRefreshIneligible } from "./release-input-refresh";
+} from "#agent-plugin-lifecycle-service/shared/release/index";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 
