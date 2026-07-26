@@ -37,8 +37,9 @@ export interface CoworkV1ProtocolEntrySize {
 /**
  * Projects one verified release selection into the deterministic Cowork v1 encoder request.
  *
- * This helper owns archive mechanics while the operation handler owns when
- * encoding occurs relative to source inspection and revalidation.
+ * Packaging policy owns the deterministic request projection and protocol
+ * bounds. The package-output resource owns byte encoding, while the operation
+ * handler owns when encoding occurs relative to inspection and revalidation.
  */
 export function createCoworkV1ArchiveRequest(
   selection: DerivedReleaseSelection

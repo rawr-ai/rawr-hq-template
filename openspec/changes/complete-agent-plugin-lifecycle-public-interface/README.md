@@ -489,6 +489,16 @@ tests pass. The full native module-isolation scan remains advisory and reports
 the already-owned service-topology migration corpus rather than allowing it
 through a baseline.
 
+The Packaging policy checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2i]]. Cowork v1
+entry projection, protocol bounds, and digest derivation now live in
+`modules/packaging/model/policy`; the file no longer occupies a generic helper
+destination. The package-output resource still owns byte encoding and
+publication, and the operation handler still owns sequencing. No public
+contract, package bytes, digest, resource call, or provider state changes. The
+focused Cowork suite passes all 7 cases, lifecycle source and test typechecks
+pass, strict OpenSpec validation passes, and diff hygiene is clean.
+
 The package-output checkpoint completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4d]]. The neutral
 contract now exposes only its Effect resource. The Cowork Effect Platform Node
@@ -1527,8 +1537,9 @@ operation takes one exact Git selection, derives the targeted release or
 complete release set in memory, renders deterministic Cowork ZIP bytes, then
 revalidates the exact Git selection before the explicit output can change.
 TypeBox owns the canonical non-root output path and every request/result shape;
-the Cowork helper accepts only releases plus an optional release set and carries
-no retired handle through its internal API.
+the Cowork projection policy accepts only releases plus an optional release
+set, while the package-output resource owns byte encoding. Neither boundary
+carries a retired handle.
 
 The focused lifecycle run passed 38 cases, including 20 packaging-owner cases
 that observe targeted and complete-set ZIP membership and bytes, unknown-member

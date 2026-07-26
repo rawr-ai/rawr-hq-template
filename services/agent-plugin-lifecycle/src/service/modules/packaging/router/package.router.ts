@@ -2,7 +2,7 @@ import { Effect } from "effect";
 
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
 import { COWORK_PACKAGE_FORMAT } from "../model/dto/packaging-lifecycle";
-import { coworkV1PackageDigest, createCoworkV1ArchiveRequest } from "../model/helpers/cowork-v1";
+import { coworkV1PackageDigest, createCoworkV1ArchiveRequest } from "../model/policy/cowork-v1";
 import { priorOutputObservationLimit } from "../model/policy/package-output";
 import {
   createPackagingFailure,
