@@ -1,0 +1,22 @@
+{
+  "name": "provider-semantic-ledger-memory",
+  "projectType": "library",
+  "sourceRoot": "resources/semantic-ledger/providers/memory",
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:semantic-ledger",
+    "provider:memory"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    }
+  }
+}

@@ -54,6 +54,7 @@
         "@rawr/plugin-devops": "workspace:*",
         "@rawr/plugin-hyperresearch": "workspace:*",
         "@rawr/plugin-session-tools": "workspace:*",
+        "@rawr/plugin-workstream": "workspace:*",
         "@rawr/resource-agent-plugin-package-output": "workspace:*",
         "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
@@ -272,6 +273,21 @@
         "typescript": "^5.9.3",
       },
     },
+    "plugins/cli/commands/workstream": {
+      "name": "@rawr/plugin-workstream",
+      "version": "0.1.0",
+      "dependencies": {
+        "@oclif/core": "^4.2.10",
+        "@rawr/hq-sdk": "workspace:*",
+        "@rawr/resource-semantic-ledger": "workspace:*",
+        "@rawr/workstream-frame": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "^22.14.0",
+        "oclif": "4.23.27",
+        "typescript": "^5.9.3",
+      },
+    },
     "resources/agent-plugin-export-destination": {
       "name": "@rawr/resource-agent-plugin-export-destination",
       "dependencies": {
@@ -312,6 +328,12 @@
         "effect": "4.0.0-beta.100",
         "typebox": "1.3.6",
       },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
+    "resources/semantic-ledger": {
+      "name": "@rawr/resource-semantic-ledger",
       "devDependencies": {
         "typescript": "^5.9.3",
       },
@@ -427,6 +449,19 @@
         "@types/node": "^22.14.0",
         "typescript": "^5.9.3",
         "vitest": "^4.0.18",
+      },
+    },
+    "services/workstream-frame": {
+      "name": "@rawr/workstream-frame",
+      "dependencies": {
+        "@orpc/contract": "^1.13.5",
+        "@orpc/server": "^1.13.5",
+        "@rawr/hq-sdk": "workspace:*",
+        "@rawr/resource-semantic-ledger": "workspace:*",
+        "typebox": "^1.0.81",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
       },
     },
   },
@@ -1040,6 +1075,8 @@
 
     "@rawr/plugin-session-tools": ["@rawr/plugin-session-tools@workspace:plugins/cli/commands/session-tools"],
 
+    "@rawr/plugin-workstream": ["@rawr/plugin-workstream@workspace:plugins/cli/commands/workstream"],
+
     "@rawr/resource-agent-plugin-export-destination": ["@rawr/resource-agent-plugin-export-destination@workspace:resources/agent-plugin-export-destination"],
 
     "@rawr/resource-agent-plugin-package-output": ["@rawr/resource-agent-plugin-package-output@workspace:resources/agent-plugin-package-output"],
@@ -1047,6 +1084,8 @@
     "@rawr/resource-content-workspace": ["@rawr/resource-content-workspace@workspace:resources/content-workspace"],
 
     "@rawr/resource-native-agent-provider": ["@rawr/resource-native-agent-provider@workspace:resources/native-agent-provider"],
+
+    "@rawr/resource-semantic-ledger": ["@rawr/resource-semantic-ledger@workspace:resources/semantic-ledger"],
 
     "@rawr/runtime-context": ["@rawr/runtime-context@workspace:packages/runtime-context"],
 
@@ -1059,6 +1098,8 @@
     "@rawr/ui-sdk": ["@rawr/ui-sdk@workspace:packages/ui-sdk"],
 
     "@rawr/web": ["@rawr/web@workspace:apps/web"],
+
+    "@rawr/workstream-frame": ["@rawr/workstream-frame@workspace:services/workstream-frame"],
 
     "@reactflow/background": ["@reactflow/background@11.3.14", "", { "dependencies": { "@reactflow/core": "11.11.4", "classcat": "^5.0.3", "zustand": "^4.4.1" }, "peerDependencies": { "react": ">=17", "react-dom": ">=17" } }, "sha512-Gewd7blEVT5Lh6jqrvOgd4G6Qk17eGKQfsDXgyRSqM+CTwDqRldG2LsWN4sNeno6sbqVIC2fZ+rAUBFA9ZEUDA=="],
 

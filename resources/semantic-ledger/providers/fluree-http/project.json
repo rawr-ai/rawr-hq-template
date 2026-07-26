@@ -1,0 +1,22 @@
+{
+  "name": "provider-semantic-ledger-fluree-http",
+  "projectType": "library",
+  "sourceRoot": "resources/semantic-ledger/providers/fluree-http",
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:semantic-ledger",
+    "provider:fluree-http"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    }
+  }
+}
