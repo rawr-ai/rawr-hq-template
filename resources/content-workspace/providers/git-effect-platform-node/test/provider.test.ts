@@ -5,7 +5,6 @@ import {
   lstat,
   mkdir,
   mkdtemp,
-  readdir,
   readFile,
   realpath,
   rename,
@@ -171,42 +170,6 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(restored.changedPaths).toEqual(["record.txt", "tree"]);
     expect(await readFile(path.join(root, "record.txt"), "utf8")).toBe("before\n");
     expect(await Bun.file(path.join(root, "tree")).exists()).toBe(false);
-  });
-
-  test("observes and materializes a private remote ref without leaking semantic policy", async () => {
-    const root = await createRepository();
-    await mkdir(path.join(root, "payload"));
-    await writeFile(path.join(root, "payload", "value.txt"), "remote value\n");
-    await git(root, "add", ".");
-    await git(root, "commit", "-m", "remote payload");
-    const resource = makeContentWorkspaceResource({ gitExecutable });
-
-    const observed = unwrap(
-      await runNodeContentWorkspace(
-        resource.observeRemote({
-          repositoryIdentity: root,
-          refName: "refs/heads/main",
-          sourcePath: "payload",
-          maxEntries: 10,
-        })
-      )
-    );
-    const materialized = unwrap(
-      await runNodeContentWorkspace(
-        resource.materializeRemote({
-          repositoryIdentity: root,
-          refName: "refs/heads/main",
-          sourcePath: "payload",
-          maxEntries: 10,
-          maxBytes: 1024,
-        })
-      )
-    );
-
-    expect(materialized.commit).toBe(observed.commit);
-    expect(materialized.tree).toBe(observed.tree);
-    expect(materialized.entries.map((entry) => entry.path)).toEqual(["value.txt"]);
-    expect(new TextDecoder().decode(materialized.entries[0]?.bytes)).toBe("remote value\n");
   });
 
   test("rejects non-canonical roots and paths as typed input failures", async () => {
@@ -576,7 +539,7 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(await readFile(path.join(root, "second.txt"), "utf8")).toBe("second-before\n");
   });
 
-  test("enforces capture and Git materialization byte limits", async () => {
+  test("enforces capture byte limits", async () => {
     const root = await createRepository();
     await mkdir(path.join(root, "payload"));
     await writeFile(path.join(root, "payload", "large.txt"), "0123456789");
@@ -595,18 +558,6 @@ describe("Git Effect Platform content workspace provider", () => {
     );
     expect(captured.ok).toBe(false);
     if (!captured.ok) expect(captured.failure.reason).toBe("LimitExceeded");
-
-    const materialized = await runNodeContentWorkspace(
-      resource.materializeRemote({
-        repositoryIdentity: root,
-        refName: "refs/heads/main",
-        sourcePath: "payload",
-        maxEntries: 10,
-        maxBytes: 4,
-      })
-    );
-    expect(materialized.ok).toBe(false);
-    if (!materialized.ok) expect(materialized.failure.reason).toBe("LimitExceeded");
   });
 
   test("retains capture entry and byte budgets across concurrent expansion", async () => {
@@ -684,26 +635,9 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(await readFile(path.join(root, "record.txt"), "utf8")).toBe("expanded");
   });
 
-  test("cleans private Git state after fetch failure and releases no-mutation captures", async () => {
+  test("releases no-mutation captures", async () => {
     const root = await createRepository();
     const resource = makeContentWorkspaceResource({ gitExecutable });
-    const temp = await realpath(tmpdir());
-    const before = (await readdir(temp))
-      .filter((name) => name.startsWith("rawr-content-workspace-git-"))
-      .sort();
-    const fetched = await runNodeContentWorkspace(
-      resource.observeRemote({
-        repositoryIdentity: path.join(root, "missing.git"),
-        refName: "refs/heads/main",
-        sourcePath: "",
-        maxEntries: 1,
-      })
-    );
-    expect(fetched.ok).toBe(false);
-    const after = (await readdir(temp))
-      .filter((name) => name.startsWith("rawr-content-workspace-git-"))
-      .sort();
-    expect(after).toEqual(before);
 
     const capture = unwrap(
       await runNodeContentWorkspace(
@@ -738,56 +672,6 @@ describe("Git Effect Platform content workspace provider", () => {
     );
     expect(reused.ok).toBe(false);
     if (!reused.ok) expect(reused.failure.reason).toBe("HandleConsumed");
-  });
-
-  test("cleans private Git state when post-allocation identity acquisition fails", async () => {
-    const root = await createRepository();
-    const resource = makeContentWorkspaceResource({ gitExecutable });
-    const temp = await realpath(tmpdir());
-    const before = (await readdir(temp))
-      .filter((name) => name.startsWith("rawr-content-workspace-git-"))
-      .sort();
-    let injected = false;
-    const postAllocationFailure = Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const faulting: FileSystem.FileSystem = {
-        ...fs,
-        realPath: (candidate) => {
-          if (!injected && path.basename(candidate).startsWith("rawr-content-workspace-git-")) {
-            injected = true;
-            return Effect.fail(
-              PlatformError.systemError({
-                _tag: "Busy",
-                module: "FileSystem",
-                method: "realPath",
-                pathOrDescriptor: candidate,
-              })
-            );
-          }
-          return fs.realPath(candidate);
-        },
-      };
-      return yield* resource
-        .observeRemote({
-          repositoryIdentity: root,
-          refName: "refs/heads/main",
-          sourcePath: "",
-          maxEntries: 1,
-        })
-        .pipe(Effect.provideService(FileSystem.FileSystem, faulting));
-    });
-
-    const result = await runNodeContentWorkspace(postAllocationFailure);
-    expect(injected).toBe(true);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.failure.operation).toBe("observe-remote");
-      expect(result.failure.reason).toBe("FilesystemFailed");
-    }
-    const after = (await readdir(temp))
-      .filter((name) => name.startsWith("rawr-content-workspace-git-"))
-      .sort();
-    expect(after).toEqual(before);
   });
 
   test("exposes only bounded exact local Git observations for semantic adapters", async () => {
@@ -1333,7 +1217,7 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(unwrap(result)).toMatchObject({ root, refName: "refs/heads/main" });
   });
 
-  test("inherits operator Git configuration for local and remote operations", async () => {
+  test("inherits operator Git configuration for local operations", async () => {
     const root = await createRepository();
     const wrapper = path.join(root, "git-wrapper");
     const log = path.join(root, "git-wrapper.log");
@@ -1365,16 +1249,6 @@ describe("Git Effect Platform content workspace provider", () => {
           })
         )
       );
-      unwrap(
-        await runNodeContentWorkspace(
-          resource.observeRemote({
-            repositoryIdentity: root,
-            refName: "refs/heads/main",
-            sourcePath: "",
-            maxEntries: 10,
-          })
-        )
-      );
     } finally {
       restoreEnvironment("GIT_CONFIG_GLOBAL", previousGlobal);
       restoreEnvironment("GIT_CONFIG_NOSYSTEM", previousNoSystem);
@@ -1383,8 +1257,6 @@ describe("Git Effect Platform content workspace provider", () => {
     const records = (await readFile(log, "utf8")).trim().split("\n");
     expect(records.every((record) => record.startsWith(`${inheritedConfig}|0|`))).toBe(true);
     expect(records.some((record) => record.includes("|rev-parse"))).toBe(true);
-    expect(records.some((record) => record.includes("|init"))).toBe(true);
-    expect(records.some((record) => record.includes("|fetch"))).toBe(true);
   });
 
   test("reports an unavailable Git command as a typed provider failure", async () => {

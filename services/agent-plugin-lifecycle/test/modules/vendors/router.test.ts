@@ -1,15 +1,19 @@
 import { createHash } from "node:crypto";
 
 import type {
-  ContentTreeEntry,
   ContentWorkspaceFailure,
   ContentWorkspaceIdentity,
   ContentWorkspaceResource,
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
+} from "@rawr/resource-content-workspace";
+import type {
   MaterializedRemoteContentTree,
   RemoteContentTree,
-} from "@rawr/resource-content-workspace";
+  VersionedContentFailure,
+  VersionedContentResource,
+  VersionedContentTreeEntry,
+} from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
@@ -245,6 +249,7 @@ describe("vendor lifecycle applications", () => {
     const client = createLifecycleTestClient({
       contentWorkspace: harness.contentWorkspace,
       clock: harness.clock,
+      versionedContent: harness.versionedContent,
     });
     const controller = new AbortController();
     const update = client.vendors.update(
@@ -438,6 +443,7 @@ class VendorHarness {
     release: 0,
   };
   readonly contentWorkspace: ContentWorkspaceResource<never>;
+  readonly versionedContent: VersionedContentResource<never>;
   lastPlanDigest = "";
   lastWrites: readonly ContentWorkspaceWrite[] = [];
   releasedDisposition: "NoMutation" | "UnsettledRecovery" | undefined;
@@ -460,7 +466,7 @@ class VendorHarness {
   });
   private readonly files = new Map<string, FileImage>();
   private readonly trees = new Map<string, readonly MaterializedContentTreeEntry[]>();
-  private readonly upstreamFailures = new Map<UpstreamFailureStage, ContentWorkspaceFailure>();
+  private readonly upstreamFailures = new Map<UpstreamFailureStage, VersionedContentFailure>();
   private remote: MaterializedRemoteContentTree;
   private captureImages = new Map<string, PathImage>();
   private captureLifecycle: CaptureLifecycle | undefined;
@@ -533,36 +539,6 @@ class VendorHarness {
           return tree.map(({ path: entryPath, mode, blob }) =>
             Object.freeze({ path: entryPath, mode, blob })
           );
-        }),
-      observeRemote: () =>
-        Effect.gen(function* () {
-          harness.counters.observeRemote += 1;
-          const failure = harness.upstreamFailures.get("observe");
-          if (failure !== undefined) return yield* Effect.fail(failure);
-          return remoteMetadata(harness.remote);
-        }),
-      materializeRemote: () =>
-        Effect.gen(function* () {
-          harness.counters.materializeRemote += 1;
-          const failure = harness.upstreamFailures.get("materialize");
-          if (failure !== undefined) return yield* Effect.fail(failure);
-          if (!harness.corruptMaterializedBytes) return cloneRemote(harness.remote);
-          return Object.freeze({
-            ...harness.remote,
-            entries: harness.remote.entries.map((entry) =>
-              Object.freeze({
-                ...entry,
-                bytes: encoder.encode("wrong bytes\n"),
-              })
-            ),
-          });
-        }),
-      isAncestor: () =>
-        Effect.gen(function* () {
-          harness.counters.isAncestor += 1;
-          const failure = harness.upstreamFailures.get("ancestry");
-          if (failure !== undefined) return yield* Effect.fail(failure);
-          return true;
         }),
       capture: ({ readToken, paths }) =>
         Effect.sync(() => {
@@ -654,6 +630,38 @@ class VendorHarness {
         }),
     };
     this.contentWorkspace = Object.freeze(contentWorkspaceResource);
+    this.versionedContent = Object.freeze({
+      observeRemote: () =>
+        Effect.gen(function* () {
+          harness.counters.observeRemote += 1;
+          const failure = harness.upstreamFailures.get("observe");
+          if (failure !== undefined) return yield* Effect.fail(failure);
+          return remoteMetadata(harness.remote);
+        }),
+      materializeRemote: () =>
+        Effect.gen(function* () {
+          harness.counters.materializeRemote += 1;
+          const failure = harness.upstreamFailures.get("materialize");
+          if (failure !== undefined) return yield* Effect.fail(failure);
+          if (!harness.corruptMaterializedBytes) return cloneRemote(harness.remote);
+          return Object.freeze({
+            ...harness.remote,
+            entries: harness.remote.entries.map((entry) =>
+              Object.freeze({
+                ...entry,
+                bytes: encoder.encode("wrong bytes\n"),
+              })
+            ),
+          });
+        }),
+      isAncestor: () =>
+        Effect.gen(function* () {
+          harness.counters.isAncestor += 1;
+          const failure = harness.upstreamFailures.get("ancestry");
+          if (failure !== undefined) return yield* Effect.fail(failure);
+          return true;
+        }),
+    } satisfies VersionedContentResource<never>);
   }
 
   setRemote(text: string, seed: string): void {
@@ -672,7 +680,10 @@ class VendorHarness {
         : stage === "materialize"
           ? "materialize-remote"
           : "ancestry";
-    this.upstreamFailures.set(stage, resourceFailure(operation, "GitFailed", undefined, detail));
+    this.upstreamFailures.set(
+      stage,
+      versionedContentFailure(operation, "CommandFailed", undefined, detail)
+    );
   }
 
   corruptFile(path: string): void {
@@ -807,7 +818,10 @@ function expectCanonicalBindingRewrites(writes: readonly ContentWorkspaceWrite[]
   expect(decoder.decode(declarationBytes).endsWith("\n")).toBe(true);
 }
 
-function sourceIdentity(seed: string, entries: readonly ContentTreeEntry[]): VendorSourceIdentity {
+function sourceIdentity(
+  seed: string,
+  entries: readonly VersionedContentTreeEntry[]
+): VendorSourceIdentity {
   return Object.freeze({
     repositoryIdentity: "git:vendor-upstream",
     refName: "refs/heads/main",
@@ -916,6 +930,21 @@ function resourceFailure(
   });
 }
 
+function versionedContentFailure(
+  operation: VersionedContentFailure["operation"],
+  reason: VersionedContentFailure["reason"],
+  path?: string,
+  detail = `${operation} failed: ${reason}`
+): VersionedContentFailure {
+  return Object.freeze({
+    _tag: "VersionedContentFailure",
+    operation,
+    reason,
+    ...(path === undefined ? {} : { path }),
+    detail,
+  });
+}
+
 function must<T, E>(result: ReleaseResult<T, E>): T {
   if (!result.ok)
     throw new Error(`Expected release fixture success: ${JSON.stringify(result.issues)}`);
@@ -926,6 +955,7 @@ function createVendorStatus(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
     contentWorkspace: runtime.contentWorkspace,
     clock: runtime.clock,
+    versionedContent: runtime.versionedContent,
   });
   return (request: VendorStatusRequest) => client.vendors.status(request, testInvocation);
 }
@@ -934,6 +964,7 @@ function createVendorUpdate(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
     contentWorkspace: runtime.contentWorkspace,
     clock: runtime.clock,
+    versionedContent: runtime.versionedContent,
   });
   return (request: VendorUpdateRequest) => client.vendors.update(request, testInvocation);
 }

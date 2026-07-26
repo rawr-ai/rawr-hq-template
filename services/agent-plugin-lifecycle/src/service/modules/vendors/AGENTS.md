@@ -15,7 +15,8 @@
   authority; upstream repositories are observations, not automatic inputs.
 - The module does not select releases, package outputs, or converge native
   provider state.
-- Git and filesystem transitions remain behind the content-workspace resource.
+- Remote versioned-content observation remains behind its read-only resource;
+  local Git and filesystem transitions remain behind content-workspace.
 
 ## Behavior
 
@@ -38,8 +39,8 @@
 ## Interfaces
 
 - `status` and `update` are the caller operations. Content-workspace
-  observation, upstream materialization, clock, capture, and write mechanics
-  enter through module context.
+  observation and mutation, remote versioned-content observation and
+  materialization, and the clock enter through module context.
 
 ## Routing
 

@@ -1,8 +1,9 @@
 import type {
-  ContentWorkspaceResource,
   MaterializedRemoteContentTree,
   RemoteContentTree,
-} from "@rawr/resource-content-workspace";
+  VersionedContentFailure,
+  VersionedContentResource,
+} from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
 
 import {
@@ -15,9 +16,9 @@ import type {
   VendorUpstreamObservation,
 } from "../dto/vendor-workspace";
 import {
-  cloneMaterializedEntries,
   materializedPayloadIssue,
   sameTreeEntries,
+  toContentWorkspaceEntries,
   validGitObjectForFormat,
   vendorPayloadLayoutIssue,
 } from "./vendor-payload-policy";
@@ -36,7 +37,7 @@ type VendorObservationClock = Readonly<{
 }>;
 
 export function observeVendorUpstream(
-  port: ContentWorkspaceResource<never>,
+  port: VersionedContentResource<never>,
   source: VendorDeclaredSourceObservation
 ): Effect.Effect<VendorPolicyResult<VendorUpstreamObservation>> {
   return Effect.gen(function* () {
@@ -47,7 +48,7 @@ export function observeVendorUpstream(
     }
     const remoteAttempt = yield* Effect.result(port.observeRemote(remoteQuery(source)));
     if (remoteAttempt._tag === "Failure") {
-      return resourceFailure("observe-remote", remoteAttempt.failure, source.declaration.sourceId);
+      return resourceFailure(remoteAttempt.failure, source.declaration.sourceId);
     }
     const remote: RemoteContentTree = remoteAttempt.success;
     const invalid = remoteIssue(source, remote);
@@ -72,7 +73,7 @@ export function observeVendorUpstream(
         })
       );
       if (ancestryAttempt._tag === "Failure") {
-        return resourceFailure("ancestry", ancestryAttempt.failure, source.declaration.sourceId);
+        return resourceFailure(ancestryAttempt.failure, source.declaration.sourceId);
       }
       ancestry = ancestryAttempt.success ? "fast-forward" : "diverged";
     }
@@ -87,7 +88,7 @@ export function observeVendorUpstream(
 }
 
 export function materializeVendorUpstream(
-  port: ContentWorkspaceResource<never>,
+  port: VersionedContentResource<never>,
   clock: VendorObservationClock,
   source: VendorDeclaredSourceObservation,
   observed: VendorUpstreamObservation
@@ -100,11 +101,7 @@ export function materializeVendorUpstream(
       })
     );
     if (materializedAttempt._tag === "Failure") {
-      return resourceFailure(
-        "materialize-remote",
-        materializedAttempt.failure,
-        source.declaration.sourceId
-      );
+      return resourceFailure(materializedAttempt.failure, source.declaration.sourceId);
     }
     const materialized: MaterializedRemoteContentTree = materializedAttempt.success;
     if (
@@ -165,7 +162,7 @@ export function materializeVendorUpstream(
     return policySuccess(
       Object.freeze({
         identity: observed.identity,
-        entries: cloneMaterializedEntries(materialized.entries),
+        entries: toContentWorkspaceEntries(materialized.entries),
         observedAt: now.toISOString(),
       })
     );
@@ -213,13 +210,12 @@ function remoteIssue(source: VendorDeclaredSourceObservation, remote: RemoteCont
 }
 
 function resourceFailure(
-  operation: "observe-remote" | "ancestry" | "materialize-remote",
-  error: unknown,
+  error: VersionedContentFailure,
   sourceId: string
 ): VendorPolicyResult<never> {
   const code =
     resourceFailureReason(error) === "CleanupFailed" ? "CleanupFailed" : "RuntimeFailure";
-  return policyFailure(vendorIssue(code, resourceFailureDetail(operation, error), sourceId));
+  return policyFailure(vendorIssue(code, resourceFailureDetail(error), sourceId));
 }
 
 function freezeRemote(remote: RemoteContentTree): RemoteContentTree {

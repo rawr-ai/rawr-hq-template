@@ -2,38 +2,44 @@ import type {
   ContentWorkspaceFailure,
   ContentWorkspaceFailureReason,
 } from "@rawr/resource-content-workspace";
+import type {
+  VersionedContentFailure,
+  VersionedContentFailureReason,
+} from "@rawr/resource-versioned-content";
 
 import type { VendorUpdateIssue } from "../dto/vendor-operations";
 
 const MAX_PUBLIC_ISSUE_DETAIL_LENGTH = 4_096;
 const DEFAULT_PUBLIC_ISSUE_DETAIL = "Vendor lifecycle operation failed.";
 
-const operationLabels: Readonly<Record<ContentWorkspaceFailure["operation"], string>> =
-  Object.freeze({
-    inspect: "Content workspace inspection",
-    "inspect-git-ref": "Read-only exact Git ref inspection",
-    "inspect-git-workspace": "Read-only Git workspace inspection",
-    "read-git-tree": "Read-only Git tree observation",
-    "read-git-blob": "Read-only Git blob observation",
-    "capture-git-evidence": "Read-only Git workspace evidence capture",
-    "observe-git-staged-index": "Read-only staged Git index observation",
-    "read-git-blob-at-path": "Read-only exact Git object observation",
-    "local-git-ancestry": "Read-only local Git ancestry verification",
-    "list-git-changed-paths": "Read-only Git changed-path observation",
-    "read-file": "Content file observation",
-    "read-tree": "Content tree observation",
-    "observe-remote": "Remote content observation",
-    "materialize-remote": "Remote content materialization",
-    ancestry: "Remote ancestry verification",
-    capture: "Repository preimage capture",
-    apply: "Repository authoring",
-    restore: "Repository restoration",
-    settle: "Repository settlement",
-    release: "Capture authority release",
-    cleanup: "Content workspace cleanup",
-  });
+type ResourceFailure = ContentWorkspaceFailure | VersionedContentFailure;
+type ResourceFailureReason = ContentWorkspaceFailureReason | VersionedContentFailureReason;
 
-const reasonClauses: Readonly<Record<ContentWorkspaceFailureReason, string>> = Object.freeze({
+const operationLabels: Readonly<Record<ResourceFailure["operation"], string>> = Object.freeze({
+  inspect: "Content workspace inspection",
+  "inspect-git-ref": "Read-only exact Git ref inspection",
+  "inspect-git-workspace": "Read-only Git workspace inspection",
+  "read-git-tree": "Read-only Git tree observation",
+  "read-git-blob": "Read-only Git blob observation",
+  "capture-git-evidence": "Read-only Git workspace evidence capture",
+  "observe-git-staged-index": "Read-only staged Git index observation",
+  "read-git-blob-at-path": "Read-only exact Git object observation",
+  "local-git-ancestry": "Read-only local Git ancestry verification",
+  "list-git-changed-paths": "Read-only Git changed-path observation",
+  "read-file": "Content file observation",
+  "read-tree": "Content tree observation",
+  "observe-remote": "Remote content observation",
+  "materialize-remote": "Remote content materialization",
+  ancestry: "Remote ancestry verification",
+  capture: "Repository preimage capture",
+  apply: "Repository authoring",
+  restore: "Repository restoration",
+  settle: "Repository settlement",
+  release: "Capture authority release",
+  cleanup: "Resource cleanup",
+});
+
+const reasonClauses: Readonly<Record<ResourceFailureReason, string>> = Object.freeze({
   InvalidInput: "the provider rejected the bounded input",
   Missing: "required content is missing",
   Aliased: "an aliased path was rejected",
@@ -41,6 +47,7 @@ const reasonClauses: Readonly<Record<ContentWorkspaceFailureReason, string>> = O
   LimitExceeded: "the bounded resource limit was exceeded",
   IdentityChanged: "the observed content identity changed",
   GitFailed: "the Git operation failed",
+  CommandFailed: "the Git operation failed",
   FilesystemFailed: "the filesystem operation failed",
   CleanupFailed: "provider cleanup failed",
   InvalidHandle: "the capture authority is invalid",
@@ -78,28 +85,12 @@ export function vendorIssue(
     : Object.freeze({ code, detail: publicDetail, sourceId });
 }
 
-export function resourceFailureReason(error: unknown): ContentWorkspaceFailureReason | undefined {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "_tag" in error &&
-    error._tag === "ContentWorkspaceFailure" &&
-    "reason" in error &&
-    isContentWorkspaceFailureReason(error.reason)
-  ) {
-    return error.reason;
-  }
-  return undefined;
+export function resourceFailureReason(error: ResourceFailure): ResourceFailureReason {
+  return error.reason;
 }
 
-export function resourceFailureDetail(
-  operation: ContentWorkspaceFailure["operation"],
-  error: unknown
-): string {
-  const reason = resourceFailureReason(error);
-  const clause =
-    reason === undefined ? "the provider returned an untyped failure" : reasonClauses[reason];
-  return `${operationLabels[operation]} failed because ${clause}.`;
+export function resourceFailureDetail(error: ResourceFailure): string {
+  return `${operationLabels[error.operation]} failed because ${reasonClauses[error.reason]}.`;
 }
 
 function normalizePublicDetail(detail: string): string {
@@ -107,27 +98,4 @@ function normalizePublicDetail(detail: string): string {
   if (normalized.length === 0) return DEFAULT_PUBLIC_ISSUE_DETAIL;
   if (normalized.length <= MAX_PUBLIC_ISSUE_DETAIL_LENGTH) return normalized;
   return `${normalized.slice(0, MAX_PUBLIC_ISSUE_DETAIL_LENGTH - 3)}...`;
-}
-
-function isContentWorkspaceFailureReason(value: unknown): value is ContentWorkspaceFailureReason {
-  switch (value) {
-    case "InvalidInput":
-    case "Missing":
-    case "Aliased":
-    case "UnsupportedEntry":
-    case "LimitExceeded":
-    case "IdentityChanged":
-    case "GitFailed":
-    case "FilesystemFailed":
-    case "CleanupFailed":
-    case "InvalidHandle":
-    case "HandleConsumed":
-    case "HandleState":
-    case "WrongRoot":
-    case "WrongToken":
-    case "WrongPlan":
-      return true;
-    default:
-      return false;
-  }
 }

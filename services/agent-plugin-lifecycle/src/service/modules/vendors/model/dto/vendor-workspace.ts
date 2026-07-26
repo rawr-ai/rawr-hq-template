@@ -3,8 +3,8 @@ import type {
   ContentWorkspaceIdentity,
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
-  RemoteContentTree,
 } from "@rawr/resource-content-workspace";
+import type { RemoteContentTree } from "@rawr/resource-versioned-content";
 
 import type { AgentPluginReleaseInput } from "../../../../shared/release";
 import type { VendorContentWorkspaceRef } from "./vendor-operations";

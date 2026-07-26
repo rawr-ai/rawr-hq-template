@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 
+import type { MaterializedContentTreeEntry } from "@rawr/resource-content-workspace";
 import type {
-  ContentTreeEntry,
-  GitObjectFormat,
-  MaterializedContentTreeEntry,
-} from "@rawr/resource-content-workspace";
+  MaterializedVersionedContentTreeEntry,
+  VersionedContentObjectFormat,
+  VersionedContentTreeEntry,
+} from "@rawr/resource-versioned-content";
 
 import { GIT_OBJECT_ID_PATTERN, NORMALIZED_RELATIVE_PATH_PATTERN } from "../dto/vendor-records";
 
@@ -13,8 +14,8 @@ const normalizedRelativePath = new RegExp(NORMALIZED_RELATIVE_PATH_PATTERN, "u")
 const encoder = new TextEncoder();
 
 export function vendorPayloadLayoutIssue(
-  entries: readonly ContentTreeEntry[],
-  objectFormat: GitObjectFormat
+  entries: readonly VersionedContentTreeEntry[],
+  objectFormat: VersionedContentObjectFormat
 ): string | undefined {
   if (entries.length === 0) return "The vendor payload is empty.";
   const paths = new Set<string>();
@@ -38,9 +39,9 @@ export function vendorPayloadLayoutIssue(
 }
 
 export function materializedPayloadIssue(
-  expected: readonly ContentTreeEntry[],
-  actual: readonly MaterializedContentTreeEntry[],
-  objectFormat: GitObjectFormat
+  expected: readonly VersionedContentTreeEntry[],
+  actual: readonly MaterializedVersionedContentTreeEntry[],
+  objectFormat: VersionedContentObjectFormat
 ): string | undefined {
   if (expected.length !== actual.length)
     return "Materialized payload entry count changed after observation.";
@@ -63,8 +64,8 @@ export function materializedPayloadIssue(
 }
 
 export function sameTreeEntries(
-  left: readonly ContentTreeEntry[],
-  right: readonly ContentTreeEntry[]
+  left: readonly VersionedContentTreeEntry[],
+  right: readonly VersionedContentTreeEntry[]
 ): boolean {
   return (
     left.length === right.length &&
@@ -80,8 +81,8 @@ export function sameTreeEntries(
   );
 }
 
-export function cloneMaterializedEntries(
-  entries: readonly MaterializedContentTreeEntry[]
+export function toContentWorkspaceEntries(
+  entries: readonly MaterializedVersionedContentTreeEntry[]
 ): readonly MaterializedContentTreeEntry[] {
   return Object.freeze(
     entries.map((entry) =>
@@ -95,18 +96,21 @@ export function cloneMaterializedEntries(
   );
 }
 
-export function validGitObjectForFormat(value: string, objectFormat: GitObjectFormat): boolean {
+export function validGitObjectForFormat(
+  value: string,
+  objectFormat: VersionedContentObjectFormat
+): boolean {
   return gitObjectId.test(value) && value.length === objectIdLength(objectFormat);
 }
 
-function gitBlobId(bytes: Uint8Array, objectFormat: GitObjectFormat): string {
+function gitBlobId(bytes: Uint8Array, objectFormat: VersionedContentObjectFormat): string {
   const hash = createHash(objectFormat);
   hash.update(encoder.encode(`blob ${bytes.byteLength}\0`));
   hash.update(bytes);
   return hash.digest("hex");
 }
 
-function objectIdLength(objectFormat: GitObjectFormat): number {
+function objectIdLength(objectFormat: VersionedContentObjectFormat): number {
   return objectFormat === "sha1" ? 40 : 64;
 }
 

@@ -22,9 +22,9 @@
 
 ## Behavior
 
-- The provider opens a caller-selected repository identity, performs exact
-  object or workspace mechanics, rechecks identity around mutation, and
-  reports raw results.
+- The provider opens a caller-selected local workspace, performs exact object
+  or workspace mechanics, rechecks identity around mutation, and reports raw
+  results.
 
 ## Concepts
 

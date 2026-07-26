@@ -22,6 +22,7 @@ const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
   "clock",
   "packageOutput",
   "providerNativeSessions",
+  "versionedContent",
 ]);
 const OPERATION_CASES = Object.freeze([
   { operation: "releases.check", owner: "releases", procedure: "check" },
@@ -104,7 +105,7 @@ describe("production lifecycle service context", () => {
       encodeCoworkV1: expect.any(Function),
       publish: expect.any(Function),
     });
-    expect(Object.values(deps)).toHaveLength(6);
+    expect(Object.values(deps)).toHaveLength(7);
     expect(await directoryNames(root.path)).toEqual(before);
   });
 

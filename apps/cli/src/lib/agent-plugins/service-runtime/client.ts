@@ -14,6 +14,7 @@ import {
 } from "@rawr/hq-sdk/plugins";
 import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeVersionedContentResource } from "@rawr/resource-versioned-content/providers/git-effect-platform-node";
 import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
 import {
   type LifecycleClientFactory,
@@ -127,6 +128,7 @@ export function createProductionLifecycleDeps(
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodePackageOutputAsyncPort(),
     providerNativeSessions: createNodeNativeProviderSessionResolver(binding.providerExecutables),
+    versionedContent: makeNodeVersionedContentResource(),
   } satisfies LifecycleDeps);
 }
 

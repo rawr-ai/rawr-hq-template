@@ -1,0 +1,35 @@
+{
+  "name": "@rawr/resource-versioned-content",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./contract.ts",
+      "default": "./contract.ts"
+    },
+    "./providers/git-effect-platform-node": {
+      "types": "./providers/git-effect-platform-node/index.ts",
+      "default": "./providers/git-effect-platform-node/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test test/contract.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0-beta.100",
+    "effect": "4.0.0-beta.100",
+    "typebox": "1.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:versioned-content"
+    ]
+  }
+}

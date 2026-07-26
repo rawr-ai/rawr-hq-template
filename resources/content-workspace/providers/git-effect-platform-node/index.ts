@@ -1,6 +1,5 @@
 import { type ExecFileException, execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { NodeFileSystem } from "@effect/platform-node";
@@ -26,13 +25,10 @@ import type {
   GitWorkspaceEvidence,
   GitWorktreeObjectId,
   MaterializedContentTreeEntry,
-  MaterializedRemoteContentTree,
-  RemoteContentTree,
 } from "@rawr/resource-content-workspace";
-import { Effect, Equal, Exit, FileSystem, Option, PlatformError } from "effect";
+import { Effect, Equal, FileSystem, Option, PlatformError } from "effect";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
-const PRIVATE_GIT_PREFIX = "rawr-content-workspace-git-";
 const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
@@ -120,15 +116,6 @@ function makeCaptureBudget(
   limits: Readonly<{ maxEntries: number; maxBytes: number }>
 ): CaptureBudget {
   return { entries: 0, bytes: 0, maxEntries: limits.maxEntries, maxBytes: limits.maxBytes };
-}
-
-interface PrivateGitRootAllocation {
-  readonly root: string;
-  readonly parent: string;
-  identity?: Readonly<{
-    dev: number;
-    ino: import("effect").Option.Option<number>;
-  }>;
 }
 
 export function makeContentWorkspaceResource(
@@ -611,123 +598,6 @@ export function makeContentWorkspaceResource(
     );
   });
 
-  const observeRemote = Effect.fn("contentWorkspace.observeRemote")(function* (
-    input: Readonly<{
-      repositoryIdentity: string;
-      refName: string;
-      sourcePath: string;
-      maxEntries: number;
-    }>
-  ) {
-    yield* checked("observe-remote", () =>
-      validateRemoteInput(input.refName, input.sourcePath, input.maxEntries, "observe-remote")
-    );
-    return yield* withPrivateGitRepository(
-      gitExecutable,
-      input.repositoryIdentity,
-      input.refName,
-      true,
-      "observe-remote",
-      (root) => inspectFetchedTree(gitExecutable, root, input, "observe-remote")
-    );
-  });
-
-  const materializeRemote = Effect.fn("contentWorkspace.materializeRemote")(function* (
-    input: Readonly<{
-      repositoryIdentity: string;
-      refName: string;
-      sourcePath: string;
-      maxEntries: number;
-      maxBytes: number;
-    }>
-  ) {
-    yield* checked("materialize-remote", () => {
-      validateRemoteInput(input.refName, input.sourcePath, input.maxEntries, "materialize-remote");
-      validateLimit(input.maxBytes, "maxBytes", "materialize-remote");
-    });
-    return yield* withPrivateGitRepository(
-      gitExecutable,
-      input.repositoryIdentity,
-      input.refName,
-      false,
-      "materialize-remote",
-      (root) =>
-        Effect.gen(function* () {
-          const observed = yield* inspectFetchedTree(
-            gitExecutable,
-            root,
-            input,
-            "materialize-remote"
-          );
-          let total = 0;
-          const entries = yield* Effect.forEach(observed.entries, (entry) =>
-            Effect.gen(function* () {
-              const bytes = yield* gitBytes(
-                gitExecutable,
-                root,
-                ["cat-file", "blob", entry.blob],
-                "materialize-remote",
-                input.maxBytes - total
-              );
-              total += bytes.byteLength;
-              if (total > input.maxBytes) {
-                return yield* fail(
-                  "materialize-remote",
-                  "LimitExceeded",
-                  entry.path,
-                  "Remote content exceeds maxBytes"
-                );
-              }
-              return Object.freeze({ ...entry, bytes });
-            })
-          );
-          return Object.freeze({
-            ...observed,
-            entries: Object.freeze(entries),
-          }) satisfies MaterializedRemoteContentTree;
-        })
-    );
-  });
-
-  const isAncestor = Effect.fn("contentWorkspace.isAncestor")(function* (
-    input: Readonly<{
-      repositoryIdentity: string;
-      refName: string;
-      ancestorCommit: string;
-      descendantCommit: string;
-    }>
-  ) {
-    yield* checked("ancestry", () => {
-      validateObject(input.ancestorCommit, "ancestorCommit", "ancestry");
-      validateObject(input.descendantCommit, "descendantCommit", "ancestry");
-      validateRemoteInput(input.refName, "", 1, "ancestry");
-    });
-    return yield* withPrivateGitRepository(
-      gitExecutable,
-      input.repositoryIdentity,
-      input.refName,
-      true,
-      "ancestry",
-      (root) =>
-        Effect.gen(function* () {
-          const code = yield* gitExitCode(
-            gitExecutable,
-            root,
-            ["merge-base", "--is-ancestor", input.ancestorCommit, input.descendantCommit],
-            "ancestry"
-          );
-          if (code === 0) return true;
-          if (code === 1) return false;
-          return yield* fail(
-            "ancestry",
-            "GitFailed",
-            undefined,
-            `Git ancestry query exited ${code}`
-          );
-        })
-    );
-  });
-
   const capture = Effect.fn("contentWorkspace.capture")(function* (
     input: Readonly<{
       root: string;
@@ -1172,9 +1042,6 @@ export function makeContentWorkspaceResource(
     listGitChangedPaths,
     readFile,
     readTree,
-    observeRemote,
-    materializeRemote,
-    isAncestor,
     capture,
     apply,
     restore,
@@ -1222,12 +1089,6 @@ export function makeNodeContentWorkspaceResource(
       provideNodeFileSystem(resource.readFile(input)),
     readTree: (input: Parameters<typeof resource.readTree>[0]) =>
       provideNodeFileSystem(resource.readTree(input)),
-    observeRemote: (input: Parameters<typeof resource.observeRemote>[0]) =>
-      provideNodeFileSystem(resource.observeRemote(input)),
-    materializeRemote: (input: Parameters<typeof resource.materializeRemote>[0]) =>
-      provideNodeFileSystem(resource.materializeRemote(input)),
-    isAncestor: (input: Parameters<typeof resource.isAncestor>[0]) =>
-      provideNodeFileSystem(resource.isAncestor(input)),
     capture: (input: Parameters<typeof resource.capture>[0]) =>
       provideNodeFileSystem(resource.capture(input)),
     apply: (input: Parameters<typeof resource.apply>[0]) =>
@@ -1245,158 +1106,6 @@ function provideNodeFileSystem<A>(
   operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
 ): Effect.Effect<A, ContentWorkspaceFailure> {
   return operation.pipe(Effect.provide(NodeFileSystem.layer));
-}
-
-function inspectFetchedTree(
-  gitExecutable: string,
-  root: string,
-  input: Readonly<{
-    repositoryIdentity: string;
-    refName: string;
-    sourcePath: string;
-    maxEntries: number;
-  }>,
-  operation: "observe-remote" | "materialize-remote"
-): Effect.Effect<RemoteContentTree, ContentWorkspaceFailure> {
-  return Effect.gen(function* () {
-    const commit = yield* gitText(
-      gitExecutable,
-      root,
-      ["rev-parse", "--verify", "refs/rawr/content^{commit}"],
-      operation
-    );
-    const treeSpec =
-      input.sourcePath === ""
-        ? "refs/rawr/content^{tree}"
-        : `refs/rawr/content:${input.sourcePath}`;
-    const tree = yield* gitText(
-      gitExecutable,
-      root,
-      ["rev-parse", "--verify", treeSpec],
-      operation
-    );
-    const objectFormat = yield* gitObjectFormat(gitExecutable, root, operation);
-    const entries = yield* parseGitTree(
-      yield* gitBytes(
-        gitExecutable,
-        root,
-        ["ls-tree", "-r", "-z", "--full-tree", tree],
-        operation,
-        maxTreeListingBytes(input.maxEntries)
-      ),
-      input.maxEntries,
-      operation
-    );
-    return Object.freeze({
-      repositoryIdentity: input.repositoryIdentity,
-      refName: input.refName,
-      sourcePath: input.sourcePath,
-      commit,
-      tree,
-      objectFormat,
-      entries,
-    });
-  });
-}
-
-function withPrivateGitRepository<A>(
-  gitExecutable: string,
-  repositoryIdentity: string,
-  refName: string,
-  metadataOnly: boolean,
-  operation: "observe-remote" | "materialize-remote" | "ancestry",
-  use: (root: string) => Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
-): Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements> {
-  return Effect.uninterruptibleMask((restore) =>
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const parent = yield* fs.realPath(tmpdir()).pipe(mapPlatform(operation, tmpdir()));
-      const root = yield* fs
-        .makeTempDirectory({ directory: parent, prefix: PRIVATE_GIT_PREFIX })
-        .pipe(mapPlatform(operation, parent));
-      const allocation: PrivateGitRootAllocation = { root, parent };
-      const outcome = yield* Effect.exit(
-        restore(
-          Effect.gen(function* () {
-            const canonicalRoot = yield* fs.realPath(root).pipe(mapPlatform(operation, root));
-            const identity = yield* fs.stat(root).pipe(mapPlatform(operation, root));
-            allocation.identity = Object.freeze({ dev: identity.dev, ino: identity.ino });
-            if (
-              canonicalRoot !== root ||
-              path.dirname(root) !== parent ||
-              !path.basename(root).startsWith(PRIVATE_GIT_PREFIX) ||
-              identity.type !== "Directory"
-            ) {
-              return yield* fail(
-                operation,
-                "Aliased",
-                root,
-                "Private Git directory was not created at its exact owned path"
-              );
-            }
-            yield* gitText(gitExecutable, root, ["init", "--bare", "."], operation);
-            yield* gitText(
-              gitExecutable,
-              root,
-              ["remote", "add", "content", repositoryIdentity],
-              operation
-            );
-            yield* gitText(
-              gitExecutable,
-              root,
-              [
-                "fetch",
-                "--quiet",
-                "--no-tags",
-                ...(metadataOnly ? ["--filter=blob:none"] : []),
-                "content",
-                `+${refName}:refs/rawr/content`,
-              ],
-              operation
-            );
-            return yield* use(root);
-          })
-        )
-      );
-      const cleanup = yield* Effect.result(removeOwnedPrivateGitRoot(fs, allocation));
-      if (cleanup._tag === "Failure") return yield* Effect.fail(cleanup.failure);
-      return yield* Exit.match(outcome, {
-        onFailure: (cause) => Effect.failCause(cause),
-        onSuccess: (value) => Effect.succeed(value),
-      });
-    })
-  );
-}
-
-function removeOwnedPrivateGitRoot(fs: FileSystem.FileSystem, owned: PrivateGitRootAllocation) {
-  return Effect.gen(function* () {
-    const canonicalParent = yield* fs
-      .realPath(owned.parent)
-      .pipe(mapPlatform("cleanup", owned.parent));
-    const canonicalRoot = yield* fs.realPath(owned.root).pipe(mapPlatform("cleanup", owned.root));
-    const current = yield* fs.stat(owned.root).pipe(mapPlatform("cleanup", owned.root));
-    if (
-      canonicalParent !== owned.parent ||
-      canonicalRoot !== owned.root ||
-      path.dirname(owned.root) !== owned.parent ||
-      !path.basename(owned.root).startsWith(PRIVATE_GIT_PREFIX) ||
-      current.type !== "Directory" ||
-      (owned.identity !== undefined && current.dev !== owned.identity.dev) ||
-      (owned.identity !== undefined && !Equal.equals(current.ino, owned.identity.ino))
-    ) {
-      return yield* fail(
-        "cleanup",
-        "CleanupFailed",
-        owned.root,
-        "Refusing cleanup of an unowned or substituted private Git root"
-      );
-    }
-    yield* fs
-      .remove(owned.root, { recursive: true, force: false })
-      .pipe(
-        Effect.mapError((cause) => platformFailure("cleanup", owned.root, cause, "CleanupFailed"))
-      );
-  });
 }
 
 function readLocalTree(
@@ -2598,19 +2307,6 @@ function validateRelativePath(
   throw invalidInput(operation, relative, "Path must be a canonical repository-relative path");
 }
 
-function validateRemoteInput(
-  refName: string,
-  sourcePath: string,
-  maxEntries: number,
-  operation: "observe-remote" | "materialize-remote" | "ancestry"
-): void {
-  if (!REF_PATTERN.test(refName) || refName.includes("..") || refName.endsWith(".")) {
-    throw invalidInput(operation, refName, "Remote ref must be a canonical full ref name");
-  }
-  validateRelativePath(sourcePath, true, operation);
-  validateLimit(maxEntries, "maxEntries", operation);
-}
-
 function validateGitInspectionInput(
   input: Readonly<{
     remoteSelection: GitRemoteSelection;
@@ -2907,38 +2603,6 @@ function validateObjectForFormat(
   }
 }
 
-function parseGitTree(
-  bytes: Uint8Array,
-  maxEntries: number,
-  operation: "observe-remote" | "materialize-remote"
-) {
-  return Effect.try({
-    try: () => {
-      const entries: ContentTreeEntry[] = [];
-      for (const raw of decoder.decode(bytes).split("\0")) {
-        if (raw.length === 0) continue;
-        const match = /^(100644|100755) blob ([0-9a-f]{40}|[0-9a-f]{64})\t([^\0]+)$/u.exec(raw);
-        if (
-          match === null ||
-          match[1] === undefined ||
-          match[2] === undefined ||
-          match[3] === undefined
-        ) {
-          throw new Error("Git tree contains a non-regular or malformed entry");
-        }
-        validateRelativePath(match[3], false, operation);
-        entries.push(
-          Object.freeze({ mode: parseContentFileMode(match[1]), blob: match[2], path: match[3] })
-        );
-        if (entries.length > maxEntries) throw new Error("Git tree exceeds maxEntries");
-      }
-      entries.sort((left, right) => compareText(left.path, right.path));
-      return Object.freeze(entries);
-    },
-    catch: (cause) => failure(operation, "UnsupportedEntry", undefined, errorMessage(cause)),
-  });
-}
-
 function gitObjectFormat(
   executable: string,
   root: string,
@@ -2994,10 +2658,6 @@ function gitBytes(
         : fail(operation, "GitFailed", root, gitFailureDetail(args, result.stderr))
     )
   );
-}
-
-function maxTreeListingBytes(maxEntries: number): number {
-  return Math.min(Number.MAX_SAFE_INTEGER, maxEntries * 4_200);
 }
 
 function gitExitCode(

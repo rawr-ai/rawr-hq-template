@@ -12,6 +12,7 @@ export const capabilities = createMiddleware().middleware(({ context, next }) =>
     context: {
       contentWorkspace: context.deps.contentWorkspace,
       clock: context.deps.clock,
+      versionedContent: context.deps.versionedContent,
     },
   })
 );

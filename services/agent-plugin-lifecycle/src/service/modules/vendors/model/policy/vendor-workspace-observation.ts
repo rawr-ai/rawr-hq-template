@@ -59,7 +59,7 @@ export function observeVendorWorkspace(
     );
     if (identityAttempt._tag === "Failure") {
       return policyFailure(
-        vendorIssue("RuntimeFailure", resourceFailureDetail("inspect", identityAttempt.failure))
+        vendorIssue("RuntimeFailure", resourceFailureDetail(identityAttempt.failure))
       );
     }
     const identity: ContentWorkspaceIdentity = identityAttempt.success;
@@ -78,7 +78,7 @@ export function observeVendorWorkspace(
       return policyFailure(
         vendorIssue(
           resourceFailureReason(error) === "Missing" ? "PayloadMismatch" : "RuntimeFailure",
-          `Canonical release input could not be read. ${resourceFailureDetail("read-file", error)}`
+          `Canonical release input could not be read. ${resourceFailureDetail(error)}`
         )
       );
     }
@@ -265,13 +265,13 @@ function observeDestination(
         reason === "InvalidInput"
       ) {
         return policySuccess(
-          Object.freeze({ kind: "Invalid", detail: resourceFailureDetail("read-tree", error) })
+          Object.freeze({ kind: "Invalid", detail: resourceFailureDetail(error) })
         );
       }
       return policyFailure(
         vendorIssue(
           "RuntimeFailure",
-          `Vendor destination could not be read. ${resourceFailureDetail("read-tree", error)}`
+          `Vendor destination could not be read. ${resourceFailureDetail(error)}`
         )
       );
     }
@@ -306,7 +306,7 @@ function readRecord<T>(
       return policyFailure(
         vendorIssue(
           resourceFailureReason(error) === "Missing" ? "PayloadMismatch" : "RuntimeFailure",
-          `Vendor ${label} record could not be read at ${path}. ${resourceFailureDetail("read-file", error)}`
+          `Vendor ${label} record could not be read at ${path}. ${resourceFailureDetail(error)}`
         )
       );
     }

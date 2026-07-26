@@ -26,8 +26,8 @@
 - The Releases module owns staged-index observation DTOs, its ready observation
   port, resource normalization, and staged eligibility policy. Resource
   provenance does not promote transition-specific meaning into the root model.
-- Filesystem, clock, package-output, and native-provider mechanics remain
-  behind host-supplied dependencies.
+- Content-workspace, versioned-content, clock, package-output, and
+  native-provider mechanics remain behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app
   composition, or provider-home state. Native provider inventory is the live
   installed-state authority.
@@ -57,9 +57,9 @@
 
 ## Interfaces
 
-- The public oRPC contract is the caller boundary. Content workspace, lifecycle
-  clock, package output, and native provider sessions are the host-supplied
-  dependencies.
+- The public oRPC contract is the caller boundary. Content workspace, versioned
+  content, lifecycle clock, package output, and native provider sessions are
+  the host-supplied dependencies.
 
 ## Routing
 

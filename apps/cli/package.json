@@ -24,6 +24,7 @@
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
+    "@rawr/resource-versioned-content": "workspace:*",
     "effect": "4.0.0-beta.100",
     "zod": "^3.24.3"
   },
