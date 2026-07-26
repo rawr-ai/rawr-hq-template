@@ -33,13 +33,17 @@ thirteen independent source axes:
    exports the generic anchor for its role.
 3. Standalone base, service, boundary, and module construction use direct
    native oRPC and Effect-oRPC authoring views.
-4. Context narrows from host admission in `base.ts`, through service policy in
-   `impl.ts`, to the exact module projection in `module.ts`.
-5. Qualified middleware is one named native value and attaches through a
-   native middleware operator rather than an inline or callback substitute.
-6. Root composition imports only module contracts, completed routers, and
-   module context projections; modules do not reach upward or sideways for
-   implementation.
+4. `base.ts` seeds complete host context once and may expose one separate native
+   middleware author when host projection is needed. Module capability
+   contributions remain additive and inferred; owner-local resource cuts remove
+   raw lanes instead of hiding them behind a shadow context type.
+5. Qualified middleware is one documented named native value authored from the
+   base factory and attached through a native middleware operator rather than
+   an inline callback or explicit context type argument.
+6. Root composition imports only module contracts and completed routers. A
+   module reaches root only through its exact `module.ts`-to-`impl.ts` branch
+   edge and named-middleware-to-base-factory edge; it does not reach upward or
+   sideways for other implementation.
 7. Module router handlers remain operation authoring sites; a router index
    only composes completed operation leaves and semantic groups.
 8. Every model kind has one private index of explicit direct-sibling exports;

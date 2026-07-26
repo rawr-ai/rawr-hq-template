@@ -1,5 +1,6 @@
 import { createRequiredServiceAnalyticsMiddleware } from "../base";
 
+/** Adds lifecycle invocation fields to the SDK-owned analytics baseline. */
 export const analytics = createRequiredServiceAnalyticsMiddleware({
   payload: ({ context }) => ({
     analytics_trace_id: context.invocation.traceId,

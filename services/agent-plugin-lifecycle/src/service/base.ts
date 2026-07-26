@@ -1,4 +1,5 @@
 import { ORPCError } from "@orpc/client";
+import { os } from "@orpc/server";
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
@@ -55,18 +56,48 @@ const definition = defineService<{
 
 export type Service = ServiceOf<typeof definition>;
 export type InitialLifecycleContext = Service["ORPCInitialContext"];
-export type ReadyLifecycleContext = Service["ExecutionContext"];
 
-export const base = implementEffect(contract, Layer.empty);
-export const createServiceMiddleware = definition.createMiddleware;
+/**
+ * Effect-aware implementer rooted in the service's declared initial context.
+ *
+ * @remarks
+ * This is the service's sole Effect-oRPC implementation lineage. Downstream
+ * service and module implementers only attach completed middleware values.
+ */
+export const base = implementEffect(contract, Layer.empty).$context<InitialLifecycleContext>();
+
+const middleware = os.$context<InitialLifecycleContext>();
+
+/**
+ * Returns the one native middleware authoring surface seeded with the complete
+ * lifecycle service context.
+ *
+ * @remarks
+ * This surface can author middleware but cannot expose the contract implementer,
+ * router composition, or Effect execution authority carried by `base`.
+ */
+export function createMiddleware() {
+  return middleware;
+}
+
+/** SDK-owned baseline builder, separate from native context middleware authorship. */
 export const createServiceBaselineMiddlewares = definition.createBaselineMiddlewares;
-export const createServiceObservabilityMiddleware = definition.createObservabilityMiddleware;
+
+const baseline = createServiceBaselineMiddlewares();
+
+/** SDK-owned observability baseline attached once at the service boundary. */
+export const baselineObservability = baseline.observability;
+
+/** SDK-owned analytics baseline attached once at the service boundary. */
+export const baselineAnalytics = baseline.analytics;
+
+/** SDK-owned required observability extension builder, not a context factory. */
 export const createRequiredServiceObservabilityMiddleware =
   definition.createRequiredObservabilityMiddleware;
-export const createServiceAnalyticsMiddleware = definition.createAnalyticsMiddleware;
+
+/** SDK-owned required analytics extension builder, not a context factory. */
 export const createRequiredServiceAnalyticsMiddleware =
   definition.createRequiredAnalyticsMiddleware;
-export const createServiceProvider = definition.createProvider;
 
 export function awaitDependencyPromise<A>(operation: () => PromiseLike<A>) {
   return Effect.uninterruptible(

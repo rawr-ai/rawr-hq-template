@@ -121,8 +121,9 @@ The corrected use of Habitat is positive and closed:
   named model layers enumerate the complete set of admitted children;
 - every layer exposes a concrete interface to its parent and owns only the
   decisions that can be made with that layer's local context;
-- dependencies and ready capabilities enter through the service boundary and
-  are narrowed through module context before an operation handler uses them;
+- dependencies and ready capabilities seed the service boundary; one elected
+  base-owned native middleware author creates each named module capability
+  contribution before the matching module branch uses it;
 - root service model matter exists only when it is genuinely used across
   modules; module domain matter remains in the owning module;
 - TypeBox owns structural data contracts, oRPC owns operation boundaries, and
@@ -132,11 +133,14 @@ The corrected use of Habitat is positive and closed:
 - a missing location is a design refusal, not permission to add a new bucket or
   weaken the blueprint.
 
-This narrowing is monotonic: adding a capability may add a named module or a
-named model category through the same hierarchy, but it cannot reopen a generic
-holding area or allow an inner layer to acquire more context than its contract
-provides. As a result, an author working inside one module needs that module's
-contract, context, model, operations, and the public interfaces it consumes,
+Native oRPC context composition is additive. A `.use<Context>` type argument or
+source-spelling blacklist cannot make it subtractive. Owner-local resource and
+handler cuts remove broad dependency lanes while named middleware makes the
+remaining capability flow visible. Adding a capability may add a named module,
+middleware, or model category through the same hierarchy, but it cannot reopen a generic
+holding area or let an inner layer acquire runtime authority directly. As a
+result, an author working inside one module needs that module's contract,
+capability surface, model, operations, and the public interfaces it consumes,
 not the full service implementation.
 
 The latest committed Magic Migration service blueprint is the structural
@@ -230,9 +234,9 @@ or another root-to-child bridge.
 Oclif command
   -> one typed lifecycle client operation
   -> ready host resource capabilities
-  -> root context validation and cross-cutting telemetry
+  -> root context seed and cross-cutting telemetry
   -> one module branch
-  -> owner middleware projects only that module's capabilities
+  -> owner middleware contributes that module's named capabilities
   -> oRPC applies the operation's TypeBox input boundary
   -> direct handler applies canonicalization and domain policy
   -> resource port performs external mechanics
@@ -242,11 +246,13 @@ Oclif command
 ```
 
 The root imports module source only in `contract.ts` and `router.ts`. Each
-module's `module.ts` is the sole exception allowed to import `service` from
-`../../impl`; it enters through the matching root branch. Other module source
-imports only local files, explicit owner-local service-model exports, or public
-resource contracts. Modules never import siblings, root middleware, root
-`base.ts`, or concrete resource providers.
+module's `module.ts` is the sole file allowed to import `service` from
+`../../impl`; it enters through the matching root branch. A documented named
+`middleware/*.middleware.ts` leaf is the sole additional root edge: it imports
+only `createMiddleware` from `../../../base` to author the module's capability
+contribution. Other module source imports only local files, explicit
+owner-local service-model exports, or public resource contracts. Modules never
+import siblings, root middleware, the raw base, or concrete resource providers.
 
 TypeBox schemas own request, result, persisted JSON, and intermodule
 collaboration structure and generate their TypeScript types. Opaque runtime
@@ -398,10 +404,10 @@ in-place and deletion-first:
 | Package exports the broad release implementation | CLI consumes one narrow public input boundary; release implementation remains private | Narrow package exports |
 | Manual release parsers duplicate TypeBox | TypeBox validates structure once; canonicalization and semantic checks remain | Normalize release model by family |
 | Release derivation has competing check/package paths | One service-owned release-derivation policy over the content-workspace port serves Releases and Packaging | Seal shared derivation |
-| Root selected-content middleware imports release implementation | Providers owns selected-content DTOs, policy, narrowed read port, and resolution helper and constructs the resolver in its module boundary | Delete reversed root edge |
-| Modules import root `base.ts` and siblings | Direct module anchor, owner-local middleware, service-model alias, and public resource ports only | Seal each module |
+| Root selected-content middleware imports release implementation | Providers owns selected-content DTOs, policy, narrowed read port, and resolution helper and constructs the resolver in its named capability middleware | Delete reversed root edge |
+| Modules import root `base.ts` and siblings | `module.ts` uses only the matching `impl` branch; one named middleware leaf uses only the base `createMiddleware` factory; all other edges stay owner-local or public | Seal each module |
 | Module operations delegate to parallel business entrypoints | Direct oRPC handlers own sequencing and call only pure policy or ready capabilities | Seal each router |
-| Root requires owner-specific capabilities for every operation | Host binds ready capabilities; module middleware exposes only the exact handler context | Narrow context |
+| Root requires owner-specific capabilities for every operation | Host seeds ready resources; named module middleware contributes owner capabilities; operation cuts delete broad dependency access instead of masking additive native context | Seal context authoring |
 | CLI requests carry provider executable identities | Native-provider resources resolve ordinary `codex` and `claude` tools from the process environment; tests inject providers at construction | Remove executable binding |
 | Provider tests encode provider-wide target preflight | Only invalid provider selection blocks every target; target-specific preflight and results remain independent | Restore target isolation |
 | Duplicate module telemetry adds no module fact | One cross-cutting service signal path; module telemetry exists only for a real owner-specific field | Compose root |
@@ -494,10 +500,11 @@ classification without an explicit product decision.
 
 The service slice is complete when all five modules satisfy the admitted
 Habitat service law, TypeBox is the sole structural authority, each operation
-uses only its exact projected context, the twelve qualified behaviors remain
-green through the typed client, disposable test material shares one bounded
-lifetime, and the root composes the sealed module contracts and routers without
-reversed or sibling dependencies.
+authors only against its named capability surface after broad dependency lanes
+are removed at their resource and handler owners, the twelve qualified
+behaviors remain green through the typed client, disposable test material
+shares one bounded lifetime, and the root composes the sealed module contracts
+and routers without reversed or sibling dependencies.
 
 ## Related
 

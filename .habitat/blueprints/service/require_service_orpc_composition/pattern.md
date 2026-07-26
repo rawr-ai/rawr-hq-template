@@ -5,7 +5,8 @@ tags: [orpc, service, positive, composition]
 # Require Native Service oRPC Composition
 
 Standalone `base` is directly initialized by the named runtime
-`implementEffect(contract, ...)` import. Exported standalone `service`,
+`implementEffect(contract, ...)` import, optionally followed by its native
+`.$context<...>()` seed. Exported standalone `service`,
 API-plugin `service`, and `module` initializers visibly contain their first
 native hop from a named runtime `base` import, named runtime
 `implement(contract).$context<...>()`, or the named runtime `service` branch
@@ -95,6 +96,16 @@ predicate require_service_orpc_composition_imports_exact_base($body) {
   $body <: contains import_statement(source=$source) as $import where {
     $source <: r"^[\"']\./base[\"']$",
     require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`base`)
+  }
+}
+
+// Keeps standalone base construction on the direct Effect-oRPC context root.
+predicate require_service_orpc_composition_is_standalone_base_initializer($value) {
+  or {
+    $value <: `implementEffect(contract, $runtime)`,
+    $value <: `implementEffect(contract, $runtime).$context_method<$context>()` where {
+      $context_method <: r"^\$context$"
+    }
   }
 }
 
@@ -270,8 +281,10 @@ program(statements=$body) where {
       not {
         require_service_orpc_composition_imports_exact_implement_effect(body=$body),
         $body <: contains or {
-          `export const base = implementEffect(contract, $...)`,
-          `export const base: $type = implementEffect(contract, $...)`
+          `export const base = $value`,
+          `export const base: $type = $value`
+        } where {
+          require_service_orpc_composition_is_standalone_base_initializer(value=$value)
         }
       }
     },
@@ -523,19 +536,19 @@ import { module } from "../module";
 export const find = module.find.use(one).use(two).effect(handler);
 ```
 
-## Ignores combined runtime and type-only named imports
+## Ignores context-seeded standalone base and combined named imports
 
 ```typescript
 // @filename: services/jobs/src/service/base.ts
 import { implementEffect, type EffectHandler } from "effect-orpc";
 import { contract } from "./contract";
-export const base = implementEffect(contract, Layer.empty);
+export const base = implementEffect(contract, Layer.empty).$context<InitialContext>();
 // @filename: services/jobs/src/service/impl.ts
-import { base, type Context, type InitialContext } from "./base";
-export const service = base.use<Context, InitialContext>(provideContext);
+import { base, type InitialContext } from "./base";
+export const service = base.use(provideContext);
 // @filename: services/jobs/src/service/modules/job-search/module.ts
-import { service, type ServiceContext } from "#jobs-service/impl";
-export const module = service.jobSearch.use<ServiceContext>(provideContext);
+import { service } from "#jobs-service/impl";
+export const module = service.jobSearch.use(provideContext);
 // @filename: plugins/server/api/catalog/src/service/impl.ts
 import { implement, type Middleware } from "@orpc/server";
 import { contract } from "./contract";

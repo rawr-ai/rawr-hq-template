@@ -268,19 +268,18 @@ release-family placement remained explicitly open at that checkpoint.
 
 The next burn-down checkpoint promotes clean-content observation into one
 service-owned port and policy used by release eligibility, packaging, and
-local provider tests. Packaging now projects that ready capability through a
-named module-owned capability middleware instead of importing a
-releases-module implementation. Native oRPC context merging remains additive,
-so this checkpoint does not claim an exact packaging authoring view; removal
-of the inherited root lanes stays with root context assembly. The old clean
-reader and declared-tree policy paths disappear with no alias or compatibility
-reader; provider selection, eligibility-binding bytes, Cowork output, and
-settlement behavior remain unchanged. Seven focused behavior suites pass 62
-tests, including exact initial-inspection and revalidation failures with zero
-output publication; the complete service suite passes 238 tests across 32
-files. Root context assembly, staged observation, provider derivation, legacy
-release-family placement, `node:crypto`, and the remaining service corpus stay
-explicitly open.
+local provider tests. Packaging now contributes that ready capability through
+a named module-owned middleware authored from the base factory instead of
+importing a releases-module implementation. Native oRPC context merging remains
+additive; later owner-local resource and handler cuts remove raw inherited lanes
+rather than pretending `.use<Context>` is subtractive. The old clean reader and
+declared-tree policy paths disappear with no alias or compatibility reader; provider
+selection, eligibility-binding bytes, Cowork output, and settlement behavior
+remain unchanged. Seven focused behavior suites pass 62 tests, including exact
+initial-inspection and revalidation failures with zero output publication; the
+complete service suite passes 238 tests across 32 files. Root context assembly,
+staged observation, provider derivation, legacy release-family placement,
+`node:crypto`, and the remaining service corpus stay explicitly open.
 
 The following owner-local checkpoint moves staged-index observation fully into
 Releases. Its opening and closing DTOs, ready reader port, resource adapter, and
@@ -298,15 +297,15 @@ The next owner-local checkpoint moves provider-selected content fully into
 Providers. Its TypeBox DTOs, narrowed content-workspace read port, native
 marketplace validation, and exact-Git resolution helper now live beside the
 status, test, and sync operations that alone consume them. Providers constructs
-the resolver from the host capability in `module.ts`; the root selected-content
-middleware, root dependency re-exports, Releases repository adapter, and
-Releases native marketplace leaves disappear without aliases. Releases no
-longer declares unused current-main or selected-content prerequisites. Exact
-selection results, marketplace refusal, provider modes, root current-main,
-oRPC/Effect semantics, and provider mutation remain unchanged. Root context
-assembly, exact handler context, provider operation authorship, and the legacy
-release family remain open under [[tasks#5. Bounded Agent-Plugin Lifecycle
-Service|task 5.7e2]].
+the resolver from the host capability in its named capability middleware; the
+root selected-content middleware, root dependency re-exports, Releases
+repository adapter, and Releases native marketplace leaves disappear without
+aliases. Releases no longer declares unused current-main or selected-content
+prerequisites. Exact selection results, marketplace refusal, provider modes,
+root current-main, oRPC/Effect semantics, and provider mutation remain
+unchanged. Root context assembly, broad dependency-lane removal, provider
+operation authorship, and the legacy release family remain open under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2]].
 
 The focused Provider and service-spine run passed 45 cases, and the complete
 lifecycle service passed 239 cases. Lifecycle source/test typecheck, workspace
@@ -325,9 +324,9 @@ and `sync` leaves as one plain object, while the inadmissible
 `router/index.ts` path disappears without an alias. Root routing, inferred
 client branches, operation behavior, context, and native mutation remain
 unchanged. The loose Provider schema barrel, middleware shape, detached
-operation runners, non-operation router buckets, and exact handler context
-remain open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task
-5.7e2]] rather than being misreported as sealed.
+operation runners, non-operation router buckets, and broad dependency-lane
+authoring remain open under [[tasks#5. Bounded Agent-Plugin Lifecycle
+Service|task 5.7e2]] rather than being misreported as sealed.
 
 The focused service-spine suite passes all 3 cases, and the complete lifecycle
 service passes all 239 cases. Uncached source/test typecheck, workspace Biome
@@ -352,13 +351,14 @@ public face. The loose module telemetry file disappears because it repeated
 the service-owned trace fields without adding a Packaging capability or
 policy; required service analytics and observability remain.
 
-Packaging now names its module `Context` and ready capability enrichment in
-`module.ts`, but native oRPC context still merges additively. This checkpoint
-therefore does not claim an exact handler view or close root context assembly.
-It also replaces Packaging's upward relative imports with its current owner
-alias without moving the legacy release family. Exact TypeBox request and
-result shapes, Cowork bytes, package identity, failure text, output settlement,
-and idempotent repeat remain the behavioral gate under
+Packaging now authors its ready capability enrichment in one named middleware
+from the base factory and attaches it in `module.ts` through inferred
+`.use(capabilities)` composition. Native oRPC context still merges additively,
+so this checkpoint does not claim an exact handler view or close root context
+assembly. It also replaces Packaging's other upward relative imports with its
+current owner alias without moving the legacy release family. Exact TypeBox
+request and result shapes, Cowork bytes, package identity, failure text, output
+settlement, and idempotent repeat remain the behavioral gate under
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2f]].
 The 21-case focused boundary passed in 37.4 seconds, the complete lifecycle
 owner passed all 242 cases in 1 minute 34 seconds, and uncached source/test
@@ -386,11 +386,24 @@ lifecycle owner passes all 242 cases in 1 minute 40 seconds, and uncached
 lifecycle source/test typecheck passes in 17.5 seconds. The selected advisory
 Habitat topology, router-authorship, and module-isolation laws report no
 Governance finding while retaining unrelated admitted-corpus diagnostics.
-Workspace Biome also passes. Root context assembly, exact handler context,
-shared release-family placement, and the remaining module shells stay open under
-[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2]]. Standing
+Workspace Biome also passes. Root context assembly, broad dependency-lane
+authoring, shared release-family placement, and the remaining module shells
+stay open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2]].
+Standing
 architecture, oRPC, testing, TypeScript, and structural-quality reviews accept
 the corrected checkpoint with no unresolved P0/P1/P2 finding.
+
+The middleware-provenance checkpoint preserves the contextual native
+`implementEffect` root and exposes one separate complete base-owned native
+author through `createMiddleware`. Packaging, Providers, Releases, and Vendors
+author their documented capability middleware from that factory, and each
+matching module branch attaches its named middleware through inferred
+`.use(...)` composition. SDK-owned baseline observability and analytics
+builders remain distinct extension points. Because native context merging is
+additive, the checkpoint introduces no `.use<Context>` narrowing claim,
+adapter, witness, or shadow context. Habitat proves factory provenance and
+named attachment only. The Promise adapter, detached Provider runners, and
+broad resource lanes remain open for their owner-local cuts.
 
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
@@ -888,7 +901,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Persistent stores are absent; task 5.5d still owns the bounded lifetime of the disposable provider-test source |
 | Effect 4 vendor realm | Exact beta 100 Effect/Platform, stable oRPC 1.14.8, admitted Effect-oRPC v4.8, and TypeBox 1.3.6 are green as one physical realm |
-| Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, context narrowing, and operation-use audit remain |
+| Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, the context-authoring funnel, and operation-use audit remain |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
 | Approved-home settlement and read-only repeat | Pending |

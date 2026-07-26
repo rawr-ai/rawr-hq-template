@@ -15,8 +15,11 @@ parent `..` segment, including normalized-looking forms such as
 `./../../...` or `./local/../../...`. The exact `module.ts` import of the
 runtime `service` binding from root `impl` is the sole service-spine exception,
 whether it uses `../../impl` or the normalized current-owner alias. Type-only
-companions may share that import. A named `router/*.router.ts` may use one
-normalized `../` hop into its own module because named router leaves are the
+companions may share that import. A module's named `middleware/*.middleware.ts`
+may import exactly the context-seeded `createMiddleware` factory from
+`../../../base`; this is the sole module-middleware-to-base edge and may not
+carry other root runtime authority. A named `router/*.router.ts` may use one normalized
+`../` hop into its own module because named router leaves are the
 Template-admitted authored surfaces. Empty, dot, parent, and trailing segments
 make that hop non-normalized. Other root or cross-module facts use the
 current-owner alias.
@@ -150,6 +153,23 @@ predicate require_service_module_isolation_is_exact_module_service_import($impor
   }
 }
 
+// Preserves the one base-authoring edge for standalone module middleware.
+predicate require_service_module_isolation_is_exact_module_base_import($import, $source) {
+  $filename <: r".*/services/[^/]+/src/service/modules/[^/]+/middleware/[^/]+\.middleware\.ts$",
+  $source <: r"^[\"']\.\./\.\./\.\./base[\"']$",
+  not { $import <: import_statement(type=type()) },
+  require_service_module_isolation_is_named_only_import(import=$import, source=$source),
+  $import <: contains import_specifier(name=`createMiddleware`) as $runtime_specifier where {
+    not { $runtime_specifier <: r"^type\s+.*$" }
+  },
+  not {
+    $import <: contains import_specifier(name=$other_name) as $other_specifier where {
+      not { $other_specifier <: r"^type\s+.*$" },
+      not { $other_name <: `createMiddleware` }
+    }
+  }
+}
+
 // Rejects executable service-root anchors from every module interior.
 predicate require_service_module_isolation_reaches_current_root_runtime($source) {
   or {
@@ -247,6 +267,9 @@ or {
     },
     not {
       require_service_module_isolation_is_exact_named_router_owner_import(source=$source)
+    },
+    not {
+      require_service_module_isolation_is_exact_module_base_import(import=$import, source=$source)
     }
   },
   export_statement(source=$source) where {
@@ -388,6 +411,8 @@ import {
 import { service, type ServiceContext } from "../../impl";
 // @filename: services/jobs/src/service/modules/catalog/module.ts
 import { service, type ServiceContext } from "#jobs-service/impl";
+// @filename: services/jobs/src/service/modules/catalog/middleware/capabilities.middleware.ts
+import { createMiddleware } from "../../../base";
 ```
 
 ## Ignores local, same-module, and normalized owner imports

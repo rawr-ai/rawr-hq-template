@@ -1,18 +1,11 @@
 import { service } from "../../impl";
-import { analytics, observability } from "./middleware";
-import { createSelectedContentResolver } from "./model/helpers/selected-content-resolution";
+import { capabilities } from "./middleware/capabilities.middleware";
 
-export const module = service.providers
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) => {
-    return next({
-      context: {
-        currentMain: context.provided.currentMain,
-        selectedContent: createSelectedContentResolver({
-          contentWorkspace: context.deps.contentWorkspace,
-        }),
-        nativeSessions: context.deps.providerNativeSessions,
-      },
-    });
-  });
+/**
+ * Providers implementer composed from base-authored capability middleware.
+ *
+ * @remarks
+ * TypeScript infers the additive capability contribution from the completed
+ * middleware value; this attachment does not claim to remove inherited lanes.
+ */
+export const module = service.providers.use(capabilities);

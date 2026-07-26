@@ -1,20 +1,11 @@
-import {
-  base,
-  createServiceBaselineMiddlewares,
-  type InitialLifecycleContext,
-  type ReadyLifecycleContext,
-} from "./base";
-import { analytics } from "./middleware/analytics";
-import { context } from "./middleware/context";
-import { currentMain } from "./middleware/current-main";
-import { observability } from "./middleware/observability";
-
-const baseline = createServiceBaselineMiddlewares();
+import { base, baselineAnalytics, baselineObservability } from "./base";
+import { analytics } from "./middleware/analytics.middleware";
+import { currentMain } from "./middleware/current-main.middleware";
+import { observability } from "./middleware/observability.middleware";
 
 export const service = base
-  .use<ReadyLifecycleContext, InitialLifecycleContext>(context)
-  .use(baseline.observability)
-  .use(baseline.analytics)
+  .use(baselineObservability)
+  .use(baselineAnalytics)
   .use(observability)
   .use(analytics)
   .use(currentMain);

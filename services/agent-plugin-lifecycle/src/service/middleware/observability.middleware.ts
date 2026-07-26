@@ -1,5 +1,6 @@
 import { createRequiredServiceObservabilityMiddleware } from "../base";
 
+/** Adds lifecycle invocation fields to the SDK-owned observability baseline. */
 export const observability = createRequiredServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({
     invocation_trace_id: context.invocation.traceId,

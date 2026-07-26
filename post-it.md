@@ -6,6 +6,70 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Resources Remove Broad Context
+
+The contract implementer and the middleware author are distinct native roles.
+`base.ts` seeds the same complete initial context into both, but only the
+implementer owns contract branches and router composition. The optional
+`createMiddleware` factory returns the private native author, so module
+middleware receives context provenance without acquiring another implementer.
+
+Native context remains additive. A spelling blacklist cannot make it
+subtractive and should not impersonate closure. The real narrowing move is to
+classify outside-system mechanics as resource contracts, realize them through
+providers, bind ready values at the host, and project owner-qualified
+capabilities into module operations. Domain policy remains with the module;
+resource mechanics leave it.
+
+This supersedes the previous entry's claim that a reserved-lane source rule
+alone closes handler context. The current checkpoint proves middleware
+provenance and named attachment only. Promise mirrors, generic Effect
+adaptation, detached runners, and broad resource assemblies remain visible
+red work.
+
+### Bag Of Keywords
+
+Resource, provider, service, module, context, author, implementer, operation,
+policy, host, bind, project, narrow, delete.
+
+## 2026-07-26 - Context Exactness Is An Authoring Law
+
+Native oRPC `.use(...)` composition adds middleware contributions to inherited
+context; an explicit type argument cannot make that runtime or handler type
+subtractive. The service therefore seeds its complete host context once,
+authors named capability middleware from the base factory, and attaches those
+completed values through inferred composition.
+
+The exact module boundary is a source-authoring law. Handlers may use their
+named capabilities but may not reopen `deps`, `scope`, `config`, `invocation`,
+or `provided`. A wrapper, witness, adapter, or shadow `Context` type would only
+hide the additive model, not narrow it. This supersedes the older ledger
+wording that left an exact type-level authoring view open.
+
+### Bag Of Keywords
+
+Context, additive, infer, capability, middleware, source law, reserved lane,
+factory, provenance, handler, exact, truthful.
+
+## 2026-07-25 - One Base, Downward Context
+
+The configured oRPC base establishes initial context before any middleware,
+module, or handler exists. Reusable middleware is authored once from that base
+or its qualified contract branch, then passed downward as a completed value.
+The service implementer attaches it; a module composes it; a handler consumes
+the resulting context.
+
+A derived service or module branch must not become a second middleware
+factory and then feed its output back into itself. That reverses the funnel,
+duplicates context authority, and makes assembly circular. Base construction
+owns provenance; middleware owns one transition; module composition owns
+placement.
+
+### Bag Of Keywords
+
+Base, context, middleware, factory, service, module, handler, funnel,
+provenance, transition, compose, downward.
+
 ## 2026-07-25 - Policy Supports Authorship
 
 An operation handler owns the transition: it consumes context, sequences

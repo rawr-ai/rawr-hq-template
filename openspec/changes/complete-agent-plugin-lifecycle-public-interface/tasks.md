@@ -443,10 +443,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   service law: `base.ts` directly owns `implementEffect(contract, ...)`,
   `impl.ts` directly exports `service` from imported `base`, and each module
   directly exports its matching `service.<module>` branch. Root code may import
-  module source only at contract and router composition; modules may not import
-  siblings or recover root context/middleware. Keep ready host capabilities at
-  the service boundary and project only owner-local context through named
-  middleware.
+  module source only at contract and router composition. A module's
+  `module.ts` may import only the matching branch from `../../impl`; one
+  documented named module-middleware leaf may import only `createMiddleware`
+  from `../../../base` to author its capability contribution. Modules may not
+  import siblings, root middleware, the raw base, or any other root runtime
+  authority. Keep ready host capabilities at the service boundary and
+  contribute owner-local capabilities through named middleware.
 - [x] 5.2c Move the releases contract off the root `ocBase` feedback edge.
   Construct all four release operations directly from Effect-oRPC `eoc`, carry
   their existing domain, audience, idempotence, audit, and owner metadata
@@ -505,12 +508,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   oRPC family pinned by task 5.6a and run the exact source, type, and behavior
   review required by the current oRPC skill; do not infer compatibility from
   version proximity or mix family versions.
-- [ ] 5.4 Narrow root context to genuinely cross-cutting ready host capabilities,
-  let module middleware acquire or project owner-specific capabilities, and give
-  each operation only the exact context it consumes. Use the generic
-  Effect-backed oRPC construction from the current Magic Migration service
-  blueprint; keep filesystem/process Effect programs inside their owning
-  resources and expose only ready capabilities into operation context.
+- [ ] 5.4 Seed the native Effect-oRPC root once with the complete ready host
+  dependency context and expose one separate base-owned native middleware
+  author when host projection is needed.
+  Let documented module middleware contribute owner-specific capabilities and
+  attach it to the matching branch through inferred `.use(middleware)`
+  composition. Native oRPC context merging is additive: do not claim that
+  `.use<Context>` removes inherited lanes or introduce shadow context types,
+  adapters, or witnesses. Remove broad operation dependency access through
+  owner-local resource ports and direct handler authorship; do not replace it
+  with a source-spelling blacklist. Keep filesystem/process Effect programs
+  inside their owning resources and expose only ready capabilities into
+  operation context.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical
@@ -672,11 +681,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   await owner-correct placement.
 - [x] 5.7e2b Promote the stateless clean-content reader and declared-tree
   eligibility policy into named root service model leaves. Pass the ready
-  reader into packaging through one named module-owned capability middleware
-  and remove every releases-to-packaging implementation import, old reader
-  path, and compatibility alias in the same checkpoint. Record that native
-  oRPC context merging remains additive and leave exact packaging authoring
-  context with the root-context checkpoint. Preserve eligibility bindings,
+  reader into packaging through one named base-factory-authored,
+  module-owned capability middleware and remove every releases-to-packaging
+  implementation import, old reader path, and compatibility alias in the same
+  checkpoint. Record that native oRPC context merging remains additive and
+  leave broad dependency-lane removal with the root-context and owner-local
+  resource checkpoints. Preserve eligibility bindings,
   selected-content behavior, exact packaging failures, Cowork bytes, output
   settlement, and provider selection. Keep root context assembly, staged
   observation, provider derivation, legacy release-family placement, and the
@@ -692,14 +702,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [x] 5.7e2d Localize selected-content ownership under Providers. Move its
   TypeBox DTOs, resolver and narrowed content-workspace port, native marketplace
   DTO and policy, and exact-Git resolution helper into direct provider model
-  leaves. Construct the resolver in `modules/providers/module.ts`; delete the
-  root selected-content middleware, root dependency re-exports, release-owned
-  repository adapter, and release-owned native marketplace leaves without
-  aliases. Remove Releases' unused current-main and selected-content
+  leaves. Construct the resolver in Providers' named capability middleware;
+  delete the root selected-content middleware, root dependency re-exports,
+  release-owned repository adapter, and release-owned native marketplace leaves
+  without aliases. Remove Releases' unused current-main and selected-content
   prerequisites while preserving its ready clean and staged readers. Preserve
   exact selection, native manifests, status/test/sync behavior, public provider
   modes, root current-main ownership, oRPC/Effect semantics, and native
-  provider mutation. Keep root context assembly, exact handler context,
+  provider mutation. Keep root context assembly, broad dependency-lane removal,
   provider operation authorship, and the legacy release family open.
 - [x] 5.7e2e Give Providers its one canonical public router composition face.
   Move the exact `test`, `status`, and `sync` composition from the inadmissible
@@ -707,23 +717,24 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   leaves below `router/`, and delete the directory index without an alias.
   Preserve root composition, inferred client branches, provider behavior, and
   native mutation. Keep the loose schema barrel, module middleware shape,
-  detached operation runners, non-operation router buckets, exact handler
-  context, and the legacy release family open for later owner-local
+  detached operation runners, non-operation router buckets, broad dependency
+  removal, and the legacy release family open for later owner-local
   checkpoints.
 - [x] 5.7e2f Normalize Packaging's module shell and operation authorship.
   Delete its loose duplicate telemetry middleware while retaining the
-  service-owned required observability and analytics; declare the module
-  `Context` and its ready source/output enrichment directly in `module.ts`;
+  service-owned required observability and analytics; author its ready
+  source/output enrichment through one documented named capability middleware
+  from the base factory and attach it with inferred `.use(capabilities)`;
   compose one authored package subrouter through module `router.ts`; and move
   pure release-identity, failure-classification, prior-output observation, and
-  bounded-diagnostic decisions into module policy. Replace Packaging's upward
-  relative imports with its current owner alias without relocating the legacy
-  release family.
+  bounded-diagnostic decisions into module policy. Replace Packaging's other
+  upward relative imports with its current owner alias without relocating the
+  legacy release family.
   Preserve the inline inspect, derive, encode, revalidate, publish, and settle
   transition, exact TypeBox request/results, Cowork bytes, failure text,
   output identity, and idempotent repeat. Native oRPC context remains additive;
-  keep exact handler context, root context assembly, and the legacy release
-  family open.
+  keep broad dependency-lane removal, root context assembly, and the legacy
+  release family open.
 - [x] 5.7e2g Normalize Governance's canonical router authorship face. Move the
   current-main record and exact-Git selection transitions into their named
   `router/*.router.ts` authoring leaves through native Effect-returning
