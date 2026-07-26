@@ -826,7 +826,9 @@ describe("Git Effect Platform content workspace provider", () => {
     );
     expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
     expect(evidence.worktreeObjectIds).toEqual([{ path: "payload.txt", objectId: observed.blob }]);
-    expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+    expect(evidence.closingTrackedFlags).toEqual([
+      { path: "payload.txt", status: "Cached", assumeUnchanged: false },
+    ]);
   });
 
   test("observes Git status without refreshing stale index stat data", async () => {
@@ -884,7 +886,9 @@ describe("Git Effect Platform content workspace provider", () => {
       { path: "payload.txt", objectId: gitOutput(root, "rev-parse", "HEAD:payload.txt") },
     ]);
     expect(new TextDecoder().decode(evidence.openingStatus)).toContain("? local-only.txt\0");
-    expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+    expect(evidence.closingTrackedFlags).toEqual([
+      { path: "payload.txt", status: "Cached", assumeUnchanged: false },
+    ]);
     expect(new TextDecoder().decode(evidence.indexEntries)).toContain("\tpayload.txt\0");
 
     const indexBytesAfter = await readFile(indexPath);
@@ -923,6 +927,228 @@ describe("Git Effect Platform content workspace provider", () => {
     );
     expect(ordinaryStatus.exitCode).toBe(0);
     expect(await readFile(indexPath)).not.toEqual(indexBytesAfter);
+  });
+
+  test("decodes real Git tracked-path state into frozen provider-neutral facts", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    await writeFile(path.join(root, "assumed.txt"), "assumed\n");
+    await writeFile(path.join(root, "cached.txt"), "cached\n");
+    await writeFile(path.join(root, "sparse.txt"), "sparse\n");
+    await git(root, "add", "assumed.txt", "cached.txt", "sparse.txt");
+    await git(root, "commit", "-m", "add tracked flag fixtures");
+    await git(root, "update-index", "--assume-unchanged", "assumed.txt");
+    await git(root, "update-index", "--skip-worktree", "sparse.txt");
+    await git(root, "update-index", "--assume-unchanged", "sparse.txt");
+
+    const evidence = unwrap(
+      await runNodeContentWorkspace(
+        makeContentWorkspaceResource({
+          gitExecutable: await realpath(gitExecutable),
+        }).captureGitWorkspaceEvidence({
+          root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+          admittedPaths: ["sparse.txt", "cached.txt", "assumed.txt"],
+          consumedRoots: ["assumed.txt", "cached.txt", "sparse.txt"],
+          objectFormat: "sha1",
+          maxPaths: 3,
+          maxWorktreeFileBytes: 1024,
+          maxWorktreeBytes: 3 * 1024,
+          maxBytes: 1024,
+        })
+      )
+    );
+
+    expect(evidence.openingTrackedFlags).toEqual([
+      { path: "assumed.txt", status: "Cached", assumeUnchanged: true },
+      { path: "cached.txt", status: "Cached", assumeUnchanged: false },
+      { path: "sparse.txt", status: "SkipWorktree", assumeUnchanged: true },
+    ]);
+    expect(evidence.closingTrackedFlags).toEqual(evidence.openingTrackedFlags);
+    expect(Object.isFrozen(evidence.openingTrackedFlags)).toBe(true);
+    expect(evidence.openingTrackedFlags.every(Object.isFrozen)).toBe(true);
+  });
+
+  test("preserves all three real unmerged index stages as repeated facts", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    await writeFile(path.join(root, "conflict.txt"), "base\n");
+    await git(root, "add", "conflict.txt");
+    await git(root, "commit", "-m", "add conflict fixture");
+    await git(root, "checkout", "-b", "side");
+    await writeFile(path.join(root, "conflict.txt"), "side\n");
+    await git(root, "commit", "-am", "change on side");
+    await git(root, "checkout", "main");
+    await writeFile(path.join(root, "conflict.txt"), "main\n");
+    await git(root, "commit", "-am", "change on main");
+    const merge = Bun.spawnSync([gitExecutable, "merge", "side"], {
+      cwd: root,
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+    expect(merge.exitCode).toBe(1);
+
+    const evidence = unwrap(
+      await runNodeContentWorkspace(
+        makeContentWorkspaceResource({
+          gitExecutable: await realpath(gitExecutable),
+        }).captureGitWorkspaceEvidence({
+          root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+          admittedPaths: ["conflict.txt"],
+          consumedRoots: ["conflict.txt"],
+          objectFormat: "sha1",
+          maxPaths: 1,
+          maxWorktreeFileBytes: 1024,
+          maxWorktreeBytes: 1024,
+          maxBytes: 1024,
+        })
+      )
+    );
+
+    expect(evidence.openingTrackedFlags).toEqual([
+      { path: "conflict.txt", status: "Unmerged", assumeUnchanged: false },
+      { path: "conflict.txt", status: "Unmerged", assumeUnchanged: false },
+      { path: "conflict.txt", status: "Unmerged", assumeUnchanged: false },
+    ]);
+    expect(evidence.closingTrackedFlags).toEqual(evidence.openingTrackedFlags);
+    expect(evidence.openingTrackedFlags.every(Object.isFrozen)).toBe(true);
+  });
+
+  test("decodes and bounds exact native tracked-path protocol facts", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    const admittedPaths = ["alpha.txt", "beta.txt", "payload.txt"];
+    for (const admittedPath of admittedPaths) {
+      await writeFile(path.join(root, admittedPath), `${admittedPath}\n`);
+    }
+    await git(root, "add", ...admittedPaths);
+    await git(root, "commit", "-m", "add tracked protocol fixtures");
+
+    const outputPath = path.join(root, "tracked-flags-output.bin");
+    const wrapper = path.join(root, "git-tracked-flags-wrapper");
+    await writeFile(
+      wrapper,
+      [
+        "#!/bin/sh",
+        'case " $* " in',
+        '  *" status "*) exit 0 ;;',
+        `  *" ls-files -v -z "*) cat ${JSON.stringify(outputPath)}; exit 0 ;;`,
+        '  *" ls-files --stage -z "*) exit 0 ;;',
+        "esac",
+        `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+        "",
+      ].join("\n")
+    );
+    await chmod(wrapper, 0o755);
+    const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+    const capture = (maxBytes = 1024) =>
+      runNodeContentWorkspace(
+        resource.captureGitWorkspaceEvidence({
+          root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+          admittedPaths,
+          consumedRoots: admittedPaths,
+          objectFormat: "sha1",
+          maxPaths: admittedPaths.length,
+          maxWorktreeFileBytes: 1024,
+          maxWorktreeBytes: admittedPaths.length * 1024,
+          maxBytes,
+        })
+      );
+
+    await writeFile(
+      outputPath,
+      bytes(
+        ["M payload.txt", "s beta.txt", "M payload.txt", "H alpha.txt", "M payload.txt"]
+          .map((record) => `${record}\0`)
+          .join("")
+      )
+    );
+    const decoded = unwrap(await capture());
+    expect(decoded.openingTrackedFlags).toEqual([
+      { path: "alpha.txt", status: "Cached", assumeUnchanged: false },
+      { path: "beta.txt", status: "SkipWorktree", assumeUnchanged: true },
+      { path: "payload.txt", status: "Unmerged", assumeUnchanged: false },
+      { path: "payload.txt", status: "Unmerged", assumeUnchanged: false },
+      { path: "payload.txt", status: "Unmerged", assumeUnchanged: false },
+    ]);
+
+    const malformedCases: readonly Readonly<{
+      name: string;
+      output: Uint8Array;
+      reason: ContentWorkspaceFailure["reason"];
+    }>[] = [
+      { name: "truncated terminal NUL", output: bytes("H payload.txt"), reason: "GitFailed" },
+      {
+        name: "invalid UTF-8",
+        output: new Uint8Array([0xff, 0]),
+        reason: "GitFailed",
+      },
+      { name: "unknown native tag", output: bytes("X payload.txt\0"), reason: "GitFailed" },
+      { name: "removed-only tag", output: bytes("R payload.txt\0"), reason: "GitFailed" },
+      { name: "modified-only tag", output: bytes("C payload.txt\0"), reason: "GitFailed" },
+      { name: "killed-only tag", output: bytes("K payload.txt\0"), reason: "GitFailed" },
+      { name: "other-only tag", output: bytes("? payload.txt\0"), reason: "GitFailed" },
+      {
+        name: "lowercase unmerged tag",
+        output: bytes("m payload.txt\0"),
+        reason: "GitFailed",
+      },
+      { name: "malformed framing", output: bytes("H\tpayload.txt\0"), reason: "GitFailed" },
+      {
+        name: "noncanonical path",
+        output: bytes("H ../payload.txt\0"),
+        reason: "UnsupportedEntry",
+      },
+      {
+        name: "path outside selection",
+        output: bytes("H outside.txt\0"),
+        reason: "UnsupportedEntry",
+      },
+      {
+        name: "repeated cached stage-zero path",
+        output: bytes("H payload.txt\0H payload.txt\0"),
+        reason: "GitFailed",
+      },
+      {
+        name: "repeated skip-worktree stage-zero path",
+        output: bytes("S payload.txt\0S payload.txt\0"),
+        reason: "GitFailed",
+      },
+      {
+        name: "mixed cached and skip-worktree stage-zero path",
+        output: bytes("H payload.txt\0S payload.txt\0"),
+        reason: "GitFailed",
+      },
+      {
+        name: "mixed cached and unmerged path",
+        output: bytes("H payload.txt\0M payload.txt\0"),
+        reason: "GitFailed",
+      },
+      {
+        name: "fourth unmerged stage",
+        output: bytes("M payload.txt\0".repeat(4)),
+        reason: "GitFailed",
+      },
+    ];
+
+    for (const fixture of malformedCases) {
+      await writeFile(outputPath, fixture.output);
+      expect(await capture(), fixture.name).toMatchObject({
+        ok: false,
+        failure: { operation: "capture-git-evidence", reason: fixture.reason },
+      });
+    }
+
+    await writeFile(outputPath, bytes("H payload.txt\0"));
+    expect(await capture(1)).toMatchObject({
+      ok: false,
+      failure: { operation: "capture-git-evidence", reason: "LimitExceeded" },
+    });
   });
 
   test("admits SHA-256 tree facts and returns code-unit ordered entries", async () => {

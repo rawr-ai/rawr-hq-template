@@ -1,6 +1,10 @@
-import { mkdir, realpath, symlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ContentTreeEntry, ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import type {
+  ContentTreeEntry,
+  ContentWorkspaceFailure,
+  GitTrackedPathFlag,
+} from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
@@ -10,10 +14,14 @@ import {
   type ResourceContentWorkspaceSnapshotReadPort,
 } from "../../../src/service/model/ports/clean-content-workspace";
 import {
+  canonicalSerializeAgentPluginReleaseInput,
+  createAgentPluginPayload,
+  createAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   parseGitTreeId,
+  parseReleaseRelativePath,
 } from "../../../src/service/shared/release";
 import {
   commitGeneratedGitRepository,
@@ -53,6 +61,103 @@ describe("exact Git-object eligibility", () => {
     ).resolves.toMatchObject({
       kind: "Eligible",
     });
+  });
+
+  it("admits exact tracked membership when Git and release Unicode orders differ", async () => {
+    const repository = await generated();
+    const primaryPath = must(parseReleaseRelativePath("skills/example/SKILL.md"));
+    const astralPath = must(parseReleaseRelativePath("skills/example/\u{10000}.txt"));
+    const privateUsePath = must(parseReleaseRelativePath("skills/example/\uE000.txt"));
+    const astralBytes = new TextEncoder().encode("astral\n");
+    const privateUseBytes = new TextEncoder().encode("private use\n");
+    const payload = must(
+      createAgentPluginPayload([
+        { path: primaryPath, mode: 0o644, bytes: await readFile(repository.payloadFile) },
+        { path: astralPath, mode: 0o644, bytes: astralBytes },
+        { path: privateUsePath, mode: 0o644, bytes: privateUseBytes },
+      ])
+    );
+    const releaseInput = must(
+      createAgentPluginReleaseInput({
+        schemaVersion: 1,
+        contentAuthority: repository.policy.contentAuthority,
+        members: [
+          {
+            kind: "agent-plugin",
+            pluginId: repository.pluginId,
+            skillInventory: [{ identity: "example", manifestPath: primaryPath }],
+            payload: {
+              protocolVersion: 1,
+              manifest: payload.manifest,
+              payloadDigest: payload.payloadDigest,
+            },
+            vendor: [],
+            curation: [],
+          },
+        ],
+        ownershipClaims: [
+          { kind: "skill", identity: "example", ownerPluginId: repository.pluginId },
+        ],
+        locks: [],
+        qualityPolicies: [],
+      })
+    );
+    await writeFile(
+      join(
+        repository.root,
+        ...repository.policy.pluginRoot.split("/"),
+        repository.pluginId,
+        astralPath
+      ),
+      astralBytes
+    );
+    await writeFile(
+      join(
+        repository.root,
+        ...repository.policy.pluginRoot.split("/"),
+        repository.pluginId,
+        privateUsePath
+      ),
+      privateUseBytes
+    );
+    await writeFile(
+      repository.releaseInputFile,
+      canonicalSerializeAgentPluginReleaseInput(releaseInput)
+    );
+    const policy = await commitGeneratedGitRepository(repository, "add Unicode ordering fixture");
+    const delegate = await realPort();
+    let requestedPaths: readonly string[] | undefined;
+    let observedPaths: readonly string[] | undefined;
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.map(delegate.captureGitWorkspaceEvidence(input), (evidence) => {
+          requestedPaths ??= Object.freeze([...input.admittedPaths]);
+          observedPaths ??= Object.freeze(evidence.openingTrackedFlags.map((fact) => fact.path));
+          return evidence;
+        }),
+    });
+
+    await expect(
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({
+          contentWorkspace,
+        }).inspect(policy)
+      )
+    ).resolves.toMatchObject({ kind: "Eligible" });
+
+    const memberRoot = `${repository.policy.pluginRoot}/${repository.pluginId}`;
+    expect(requestedPaths).toEqual([
+      repository.policy.releaseInputPath,
+      `${memberRoot}/${primaryPath}`,
+      `${memberRoot}/${privateUsePath}`,
+      `${memberRoot}/${astralPath}`,
+    ]);
+    expect(observedPaths).toEqual([
+      repository.policy.releaseInputPath,
+      `${memberRoot}/${primaryPath}`,
+      `${memberRoot}/${astralPath}`,
+      `${memberRoot}/${privateUsePath}`,
+    ]);
   });
 
   it("ignores unrelated status churn while retaining consumed-root change evidence", async () => {
@@ -472,6 +577,109 @@ describe("exact Git-object eligibility", () => {
     });
   });
 
+  it.each([
+    {
+      name: "assume-unchanged",
+      mutate: (facts: readonly GitTrackedPathFlag[]) =>
+        replaceTrackedFlag(facts, 0, { assumeUnchanged: true }),
+    },
+    {
+      name: "skip-worktree",
+      mutate: (facts: readonly GitTrackedPathFlag[]) =>
+        replaceTrackedFlag(facts, 0, { status: "SkipWorktree" }),
+    },
+    {
+      name: "unmerged",
+      mutate: (facts: readonly GitTrackedPathFlag[]) =>
+        replaceTrackedFlag(facts, 0, { status: "Unmerged" }),
+    },
+    {
+      name: "missing admitted path",
+      mutate: (facts: readonly GitTrackedPathFlag[]) => Object.freeze(facts.slice(1)),
+    },
+    {
+      name: "extra admitted path",
+      mutate: (facts: readonly GitTrackedPathFlag[]) => {
+        const first = firstTrackedFlag(facts);
+        return Object.freeze([...facts, Object.freeze({ ...first })]);
+      },
+    },
+    {
+      name: "repeated admitted path",
+      mutate: (facts: readonly GitTrackedPathFlag[]) => {
+        const first = firstTrackedFlag(facts);
+        return Object.freeze([first, first, ...facts.slice(2)]);
+      },
+    },
+    {
+      name: "wrong admitted membership",
+      mutate: (facts: readonly GitTrackedPathFlag[]) =>
+        replaceTrackedFlag(facts, 0, { path: "outside-selection.txt" }),
+    },
+  ])("rejects typed tracked-path facts with $name state", async ({ mutate }) => {
+    const repository = await generated();
+    const delegate = await realPort();
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.map(delegate.captureGitWorkspaceEvidence(input), (evidence) => {
+          const trackedFlags = mutate(evidence.openingTrackedFlags);
+          return Object.freeze({
+            ...evidence,
+            openingTrackedFlags: trackedFlags,
+            closingTrackedFlags: trackedFlags,
+          });
+        }),
+    });
+
+    await expect(
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({
+          contentWorkspace,
+        }).inspect(repository.policy)
+      )
+    ).resolves.toEqual({
+      kind: "Ineligible",
+      issues: [
+        {
+          code: "DirtyIndex",
+          detail: "admitted paths carry noncanonical index flags",
+        },
+      ],
+    });
+  });
+
+  it("rejects tracked-path facts that change inside one resource observation", async () => {
+    const repository = await generated();
+    const delegate = await realPort();
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      captureGitWorkspaceEvidence: (input) =>
+        Effect.map(delegate.captureGitWorkspaceEvidence(input), (evidence) =>
+          Object.freeze({
+            ...evidence,
+            closingTrackedFlags: replaceTrackedFlag(evidence.closingTrackedFlags, 0, {
+              assumeUnchanged: true,
+            }),
+          })
+        ),
+    });
+
+    await expect(
+      Effect.runPromise(
+        createCleanContentWorkspaceReader({
+          contentWorkspace,
+        }).inspect(repository.policy)
+      )
+    ).resolves.toEqual({
+      kind: "Ineligible",
+      issues: [
+        {
+          code: "SourceChanged",
+          detail: "admitted path flags changed during the repository evidence capture",
+        },
+      ],
+    });
+  });
+
   it("distinguishes tracked, staged, untracked-consumed, and ignored-consumed state", async () => {
     const reader = await realReader();
 
@@ -698,6 +906,24 @@ function overrideGitReadPort(
   overrides: Partial<ResourceContentWorkspaceSnapshotReadPort>
 ): ResourceContentWorkspaceSnapshotReadPort {
   return Object.freeze({ ...delegate, ...overrides });
+}
+
+function replaceTrackedFlag(
+  facts: readonly GitTrackedPathFlag[],
+  index: number,
+  replacement: Partial<GitTrackedPathFlag>
+): readonly GitTrackedPathFlag[] {
+  return Object.freeze(
+    facts.map((fact, currentIndex) =>
+      currentIndex === index ? Object.freeze({ ...fact, ...replacement }) : fact
+    )
+  );
+}
+
+function firstTrackedFlag(facts: readonly GitTrackedPathFlag[]): GitTrackedPathFlag {
+  const first = facts[0];
+  if (first === undefined) throw new Error("Expected tracked-path fixture facts");
+  return first;
 }
 
 function unreachableGitReadPort(onCall: () => void): ResourceContentWorkspaceSnapshotReadPort {

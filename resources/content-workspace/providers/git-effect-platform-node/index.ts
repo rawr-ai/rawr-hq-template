@@ -22,6 +22,8 @@ import type {
   GitStagedIndexBinding,
   GitStagedIndexEntry,
   GitStagedIndexObservation,
+  GitTrackedPathFlag,
+  GitTrackedPathStatus,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
   GitWorktreeObjectId,
@@ -30,6 +32,7 @@ import type {
 import {
   ContentTreeEntrySchema,
   GitStagedIndexEntrySchema,
+  GitTrackedPathFlagSchema,
 } from "@rawr/resource-content-workspace";
 import { Effect, Equal, FileSystem, Option, PlatformError } from "effect";
 import Schema from "typebox/schema";
@@ -37,6 +40,7 @@ import Schema from "typebox/schema";
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const contentTreeEntryValidator = Schema.Compile(ContentTreeEntrySchema);
 const gitStagedIndexEntryValidator = Schema.Compile(GitStagedIndexEntrySchema);
+const gitTrackedPathFlagValidator = Schema.Compile(GitTrackedPathFlagSchema);
 const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
@@ -2080,16 +2084,18 @@ function readGitTrackedFlags(
   root: string,
   admittedPaths: readonly string[],
   maxBytes: number
-) {
-  return admittedPaths.length === 0
-    ? Effect.succeed(new Uint8Array())
-    : gitBytes(
-        executable,
-        root,
-        ["--literal-pathspecs", "ls-files", "-v", "-z", "--", ...admittedPaths],
-        "capture-git-evidence",
-        maxBytes
-      );
+): Effect.Effect<readonly GitTrackedPathFlag[], ContentWorkspaceFailure> {
+  return Effect.gen(function* () {
+    if (admittedPaths.length === 0) return Object.freeze([]);
+    const output = yield* gitBytes(
+      executable,
+      root,
+      ["--literal-pathspecs", "ls-files", "-v", "-z", "--", ...admittedPaths],
+      "capture-git-evidence",
+      maxBytes
+    );
+    return yield* parseGitTrackedPathFlags(output, admittedPaths, root);
+  });
 }
 
 function requireGitObjectType(
@@ -2521,6 +2527,138 @@ function decodeGitBlobBatchHeader(
       expectedBlob,
       "Git blob batch returned a non-UTF-8 object header"
     );
+  }
+}
+
+function parseGitTrackedPathFlags(
+  output: Uint8Array,
+  admittedPaths: readonly string[],
+  root: string
+): Effect.Effect<readonly GitTrackedPathFlag[], ContentWorkspaceFailure> {
+  return Effect.gen(function* () {
+    if (output.byteLength === 0) return Object.freeze([]);
+    if (output[output.byteLength - 1] !== 0) {
+      return yield* fail(
+        "capture-git-evidence",
+        "GitFailed",
+        root,
+        "Git tracked-path output is truncated before its terminal NUL"
+      );
+    }
+
+    const admitted = new Set(admittedPaths);
+    const facts: GitTrackedPathFlag[] = [];
+    const factsByPath = new Map<
+      string,
+      Readonly<{ status: GitTrackedPathStatus; count: number }>
+    >();
+    let recordStart = 0;
+    for (let index = 0; index < output.byteLength; index += 1) {
+      if (output[index] !== 0) continue;
+      if (index === recordStart) {
+        return yield* fail(
+          "capture-git-evidence",
+          "GitFailed",
+          root,
+          "Git tracked-path output contains an empty record"
+        );
+      }
+
+      const record = yield* Effect.try({
+        try: () => decoder.decode(output.subarray(recordStart, index)),
+        catch: () =>
+          failure(
+            "capture-git-evidence",
+            "GitFailed",
+            root,
+            "Git tracked-path output contains invalid UTF-8"
+          ),
+      });
+      recordStart = index + 1;
+
+      const tag = record[0];
+      if (tag === undefined || record[1] !== " " || record.length < 3 || !/^[HSMhs]$/u.test(tag)) {
+        return yield* fail(
+          "capture-git-evidence",
+          "GitFailed",
+          root,
+          "Git tracked-path output contains a malformed record"
+        );
+      }
+      const entryPath = record.slice(2);
+      const status = gitTrackedPathStatus(tag);
+      if (status === undefined) {
+        return yield* fail(
+          "capture-git-evidence",
+          "GitFailed",
+          root,
+          "Git tracked-path output contains an unsupported status tag"
+        );
+      }
+      const fact = Object.freeze({
+        path: entryPath,
+        status,
+        assumeUnchanged: tag === "h" || tag === "s",
+      });
+      if (!gitTrackedPathFlagValidator.Check(fact)) {
+        return yield* fail(
+          "capture-git-evidence",
+          "UnsupportedEntry",
+          entryPath,
+          "Git tracked path is outside the tracked-path contract"
+        );
+      }
+      if (!admitted.has(fact.path)) {
+        return yield* fail(
+          "capture-git-evidence",
+          "UnsupportedEntry",
+          fact.path,
+          "Git returned a tracked path outside the admitted selection"
+        );
+      }
+
+      const prior = factsByPath.get(fact.path);
+      if (
+        prior !== undefined &&
+        (prior.status !== "Unmerged" || fact.status !== "Unmerged" || prior.count >= 3)
+      ) {
+        return yield* fail(
+          "capture-git-evidence",
+          "GitFailed",
+          fact.path,
+          "Git tracked-path output contains an impossible index-state combination"
+        );
+      }
+      factsByPath.set(
+        fact.path,
+        Object.freeze({
+          status: fact.status,
+          count: (prior?.count ?? 0) + 1,
+        })
+      );
+      facts.push(fact);
+    }
+
+    facts.sort(
+      (left, right) =>
+        compareText(left.path, right.path) ||
+        compareText(left.status, right.status) ||
+        Number(left.assumeUnchanged) - Number(right.assumeUnchanged)
+    );
+    return Object.freeze(facts);
+  });
+}
+
+function gitTrackedPathStatus(tag: string): GitTrackedPathStatus | undefined {
+  switch (tag.toUpperCase()) {
+    case "H":
+      return "Cached";
+    case "S":
+      return "SkipWorktree";
+    case "M":
+      return "Unmerged";
+    default:
+      return undefined;
   }
 }
 

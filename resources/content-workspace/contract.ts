@@ -78,6 +78,30 @@ export type GitStagedIndexStage = Static<typeof GitStagedIndexStageSchema>;
 /** Provider-neutral staged Git index fact derived from the resource schema authority. */
 export type GitStagedIndexEntry = Static<typeof GitStagedIndexEntrySchema>;
 
+/** Native Git classification retained for one tracked path without exposing its tag encoding. */
+export const GitTrackedPathStatusSchema = Type.Union(
+  [Type.Literal("Cached"), Type.Literal("SkipWorktree"), Type.Literal("Unmerged")],
+  { description: "Provider-neutral status reported by Git for one tracked path" }
+);
+
+/** Structural schema for one provider-neutral tracked-path flag fact. */
+export const GitTrackedPathFlagSchema = ReadonlyObject(
+  Type.Object({
+    path: ContentRelativePathSchema,
+    status: GitTrackedPathStatusSchema,
+    assumeUnchanged: Type.Boolean({
+      description: "Whether Git marks this tracked path assume-unchanged",
+    }),
+  }),
+  { additionalProperties: false }
+);
+
+/** Provider-neutral tracked-path status derived from the resource schema authority. */
+export type GitTrackedPathStatus = Static<typeof GitTrackedPathStatusSchema>;
+
+/** Provider-neutral tracked-path flag fact derived from the resource schema authority. */
+export type GitTrackedPathFlag = Static<typeof GitTrackedPathFlagSchema>;
+
 export type GitRemoteSelection =
   | Readonly<{ kind: "All" }>
   | Readonly<{ kind: "Named"; remoteName: string }>;
@@ -119,12 +143,19 @@ export interface GitBlobObservation {
 export interface GitWorkspaceEvidence {
   readonly openingAnchor: GitWorkspaceAnchor;
   readonly openingStatus: Uint8Array;
-  readonly openingTrackedFlags: Uint8Array;
+  /**
+   * Tracked-path facts in deterministic path, status, and flag order.
+   *
+   * Cached and skip-worktree paths occur once; an unmerged path may repeat up
+   * to three times to preserve its native index-stage cardinality.
+   */
+  readonly openingTrackedFlags: readonly GitTrackedPathFlag[];
   readonly worktreeObjectIds: readonly GitWorktreeObjectId[];
   readonly indexEntries: Uint8Array;
   readonly closingAnchor: GitWorkspaceAnchor;
   readonly closingStatus: Uint8Array;
-  readonly closingTrackedFlags: Uint8Array;
+  /** Closing observation with the same ordering and cardinality contract as the opening facts. */
+  readonly closingTrackedFlags: readonly GitTrackedPathFlag[];
 }
 
 /**
