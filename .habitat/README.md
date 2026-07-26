@@ -17,6 +17,10 @@ The current generic kinds are:
   laws for generic anchors, native oRPC composition, context boundaries,
   module isolation, owner-private aliases, platform-independent service
   implementation, declarative TypeBox contracts, and public error authority.
+- `resource`: one closed RAWR workspace package around a provider-neutral
+  capability contract and its provider family.
+- `provider`: one closed typed realization nested beneath its parent resource,
+  with a single public implementation index.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` surfaces that
   expose client bindings and API operations around an embedded service.
 - `agent-router`: the positive source shape and routing anchors inside each
@@ -77,6 +81,11 @@ composition, router-handler authorship, kind-local model indices, module
 isolation, owner-private aliases, and platform-independent service source.
 Those amendments retain the canonical `@rawr/hq-sdk` TypeBox Standard Schema
 bridge; they are not represented as unchanged Magic Migration algorithms.
+
+The `resource` and `provider` boundary packets derive from Magic Migration
+commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed
+contract/realization split and adds its existing workspace package manifest and
+build TypeScript faces to the resource shell.
 
 The Oclif and Nx workspace packets are RAWR-authored. They apply the same
 positive, closed-kind posture to the executable app, its command plugins, and

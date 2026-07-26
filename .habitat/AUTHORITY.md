@@ -9,16 +9,20 @@ relationships:
 
 1. A `service` has one contract-first oRPC spine, module-owned domain matter,
    native context projection, and one router lineage.
-2. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
+2. A `resource` has one closed provider-neutral capability contract and
+   provider family. Each nested `provider` has one typed public realization
+   face. The application selects providers and lifetimes; runtime acquisition
+   scopes, releases, and binds ready resources into service context.
+3. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
    service. The API surface exposes operations while its application host retains
    transport ownership.
-3. The repository requires one concise `AGENTS.md` operator router at each
+4. The repository requires one concise `AGENTS.md` operator router at each
    admitted package and service-module boundary; the generic document kind
    defines its stable orientation anchors and repository-relative routes.
-4. The executable CLI is one conventional Oclif app, and every first-party
+5. The executable CLI is one conventional Oclif app, and every first-party
    command capability is one uniform host-composed Oclif plugin on public
    package boundaries.
-5. The workspace root exposes one exact Nx scheduler surface. Repository lint
+6. The workspace root exposes one exact Nx scheduler surface. Repository lint
    has one workspace owner; project checks compose it once through Nx rather
    than re-running a project-local aggregate.
 
@@ -69,6 +73,13 @@ They do not encode product inventories, retired names, historical migration
 state, or one lifecycle service's current file list. Behavior, caller
 compatibility, package admission, and provider effects remain with their
 qualified owners and tests.
+
+The `resource` blueprint closes RAWR's package face around a provider-neutral
+contract, package and project metadata, build and source TypeScript boundaries,
+and the provider family. The `provider` blueprint closes each nested concrete
+realization around one typed public index while admitting vendor-specific
+TypeScript decomposition. Provider lifecycle mechanics remain inside that
+realization; the application retains selection while runtime owns scope.
 
 Rules under `.habitat/rawr` remain qualified repository or lifecycle
 constraints rather than generic blueprints. The repository niche owns the
