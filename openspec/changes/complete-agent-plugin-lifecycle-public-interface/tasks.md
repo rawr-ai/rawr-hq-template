@@ -724,6 +724,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   output identity, and idempotent repeat. Native oRPC context remains additive;
   keep exact handler context, root context assembly, and the legacy release
   family open.
+- [x] 5.7e2g Normalize Governance's canonical router authorship face. Move the
+  current-main record and exact-Git selection transitions into their named
+  `router/*.router.ts` authoring leaves through native Effect-returning
+  handlers, make module `router.ts` the sole plain composition face, and
+  normalize the one same-owner DTO import. Preserve the existing middleware,
+  context, TypeBox contracts, record bytes, selection outcomes, public client
+  shape, and provider collaboration. Do not pull root context assembly, shared
+  current-main ownership, or another module into this checkpoint.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -370,6 +370,28 @@ with no P0/P1/P2 finding. The public repository check then admitted all 37
 projects and 110 scheduled tasks in 54.6 seconds, including Oclif manifest
 parity and all 15 enforced Habitat laws.
 
+The next owner-local checkpoint gives Governance the same one-face authorship
+shape without reopening its already sealed behavior. The current-main record
+and exact-Git selection transitions move into named router leaves through the
+service's admitted native Effect-returning handler form; module `router.ts` now
+only composes those completed values. The one same-owner DTO edge uses the
+service-private owner alias rather than upward path arithmetic. Current-main
+middleware, context, shared selection ownership, TypeBox request and result
+schemas, record bytes, selection outcomes, inferred client branches, and
+Provider collaboration remain unchanged under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2g]].
+
+The 28-case focused Governance and service-spine boundary passes, the complete
+lifecycle owner passes all 242 cases in 1 minute 40 seconds, and uncached
+lifecycle source/test typecheck passes in 17.5 seconds. The selected advisory
+Habitat topology, router-authorship, and module-isolation laws report no
+Governance finding while retaining unrelated admitted-corpus diagnostics.
+Workspace Biome also passes. Root context assembly, exact handler context,
+shared release-family placement, and the remaining module shells stay open under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2]]. Standing
+architecture, oRPC, testing, TypeScript, and structural-quality reviews accept
+the corrected checkpoint with no unresolved P0/P1/P2 finding.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the
