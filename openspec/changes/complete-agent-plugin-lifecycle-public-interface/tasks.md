@@ -689,6 +689,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   refusal, normalized failures, operation authorship, and current context
   behavior. Keep selected-content placement, root context assembly, provider
   derivation, and the legacy release family open.
+- [x] 5.7e2d Localize selected-content ownership under Providers. Move its
+  TypeBox DTOs, resolver and narrowed content-workspace port, native marketplace
+  DTO and policy, and exact-Git resolution helper into direct provider model
+  leaves. Construct the resolver in `modules/providers/module.ts`; delete the
+  root selected-content middleware, root dependency re-exports, release-owned
+  repository adapter, and release-owned native marketplace leaves without
+  aliases. Remove Releases' unused current-main and selected-content
+  prerequisites while preserving its ready clean and staged readers. Preserve
+  exact selection, native manifests, status/test/sync behavior, public provider
+  modes, root current-main ownership, oRPC/Effect semantics, and native
+  provider mutation. Keep root context assembly, exact handler context,
+  provider operation authorship, and the legacy release family open.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -12,18 +12,7 @@ import type {
 import type {
   NativeProviderSessionObservation,
   NativeProviderSessionTarget,
-  SelectedContentChannelResolutionInput,
-  SelectedContentResolution,
-  SelectedContentWorkspaceResolutionInput,
 } from "../dto/provider-dependencies";
-
-/** Exact Git and release construction stay behind this owner boundary. */
-export interface SelectedContentResolver {
-  resolveWorkspace(
-    input: SelectedContentWorkspaceResolutionInput
-  ): Promise<SelectedContentResolution>;
-  resolveChannel(input: SelectedContentChannelResolutionInput): Promise<SelectedContentResolution>;
-}
 
 interface NativeProviderSessionOperations {
   probe(): Promise<NativeProviderCapabilities>;
@@ -67,13 +56,4 @@ export type {
 export type {
   NativeProviderSessionObservation,
   NativeProviderSessionTarget,
-  SelectedContent,
-  SelectedContentChannelResolutionInput,
-  SelectedContentFile,
-  SelectedContentIssue,
-  SelectedContentIssueCode,
-  SelectedContentMember,
-  SelectedContentResolution,
-  SelectedContentTestMode,
-  SelectedContentWorkspaceResolutionInput,
 } from "../dto/provider-dependencies";

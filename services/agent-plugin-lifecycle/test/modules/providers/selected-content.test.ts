@@ -1,8 +1,10 @@
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 
-import type { SelectedContent } from "../../../src/service/model/dependencies/providers";
-import { SelectedContentSchema } from "../../../src/service/model/dto/provider-dependencies";
+import {
+  type SelectedContent,
+  SelectedContentSchema,
+} from "../../../src/service/modules/providers/model/dto/selected-content";
 import {
   marketplaceSourceMatches,
   sameSelectedContent,

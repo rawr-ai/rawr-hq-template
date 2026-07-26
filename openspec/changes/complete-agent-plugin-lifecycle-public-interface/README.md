@@ -294,6 +294,31 @@ implementation. Selected-content placement, root context assembly, provider
 derivation, and the legacy release family remain open under [[tasks#5. Bounded
 Agent-Plugin Lifecycle Service|task 5.7e2]].
 
+The next owner-local checkpoint moves provider-selected content fully into
+Providers. Its TypeBox DTOs, narrowed content-workspace read port, native
+marketplace validation, and exact-Git resolution helper now live beside the
+status, test, and sync operations that alone consume them. Providers constructs
+the resolver from the host capability in `module.ts`; the root selected-content
+middleware, root dependency re-exports, Releases repository adapter, and
+Releases native marketplace leaves disappear without aliases. Releases no
+longer declares unused current-main or selected-content prerequisites. Exact
+selection results, marketplace refusal, provider modes, root current-main,
+oRPC/Effect semantics, and provider mutation remain unchanged. Root context
+assembly, exact handler context, provider operation authorship, and the legacy
+release family remain open under [[tasks#5. Bounded Agent-Plugin Lifecycle
+Service|task 5.7e2]].
+
+The focused Provider and service-spine run passed 45 cases, and the complete
+lifecycle service passed 239 cases. Lifecycle source/test typecheck, workspace
+lint, strict OpenSpec validation, and diff hygiene passed. The focused advisory
+Habitat service-law audit reports no isolation finding in the moved model
+leaves; its existing context, topology, and legacy-corpus findings remain open
+rather than baselined. Standing architecture, oRPC/Effect-oRPC/TypeScript, and
+testing/structural-quality reviews report no unresolved P0/P1 finding. The
+single repository admission graph then passed 110 tasks across 37 projects in
+one minute and seven seconds, including all 15 enforced Habitat rules with no
+failing or advisory result.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the
@@ -806,10 +831,11 @@ working-snapshot adaptation. The current packet keeps one module `router.ts`
 composition face over named `router/*.router.ts` authored leaves, puts domain
 matter in direct owner-local model leaves, derives modules from exact service
 branches, and closes alias traversal without baseline entries or compatibility
-paths. The shared current-main checkpoint moved its complete
-locator, record, exact-Git, and selection closure into the shared service model,
-so the root audit now has one remaining release-owned selected-content import
-instead of four illegal root-to-private-module imports. Three sibling-module
+paths. The shared current-main checkpoint moved its complete locator, record,
+exact-Git, and selection closure into the shared service model. The later
+provider ownership checkpoint removes the remaining release-owned
+selected-content import and root middleware edge without creating a third
+shared collaboration. Three sibling-module
 imports, other module-to-root domain leakage, and a public root release surface
 remain migration inputs, not accepted debt or baseline entries.
 Central activation remains governed by

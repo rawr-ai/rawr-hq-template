@@ -1,19 +1,19 @@
-import type {
-  ContentWorkspaceNodeAsyncPort,
-  GitRefObservation,
-} from "@rawr/resource-content-workspace";
+import type { GitRefObservation } from "@rawr/resource-content-workspace";
+import type { ContentWorkspacePolicy } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import type { CleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/ports/clean-content-workspace";
-
 import type {
   SelectedContent,
   SelectedContentIssueCode,
   SelectedContentResolution,
-  SelectedContentResolver,
   SelectedContentTestMode,
-} from "../../../model/dependencies/providers";
-import type { ContentWorkspacePolicy } from "../../../model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
+import { validateNativeMarketplaces } from "#agent-plugin-lifecycle-service/modules/providers/model/policy/native-marketplace";
+import type {
+  SelectedContentReadPort,
+  SelectedContentResolver,
+} from "#agent-plugin-lifecycle-service/modules/providers/model/ports/selected-content";
 import {
   type AgentPluginPayload,
   type AgentPluginRelease,
@@ -29,8 +29,7 @@ import {
   type PluginId,
   parseReleaseRelativePath,
   type ReleaseRelativePath,
-} from "../../../shared/release";
-import { validateNativeMarketplaces } from "../model/policy/native-marketplace";
+} from "#agent-plugin-lifecycle-service/shared/release/index";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
@@ -55,17 +54,6 @@ const NATIVE_MARKETPLACE_SPARSE_PATHS = Object.freeze([
 const MAX_TREE_ENTRIES = 200_000;
 const MAX_TREE_BYTES = 100 * 1024 * 1024;
 const MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES = 2 * 1024 * 1024;
-
-export type ResourceSelectedContentReadPort = Pick<
-  ContentWorkspaceNodeAsyncPort,
-  | "inspectGitRef"
-  | "inspectGitWorkspace"
-  | "readGitTree"
-  | "readGitBlob"
-  | "readGitBlobs"
-  | "captureGitWorkspaceEvidence"
-  | "readFile"
->;
 
 interface TreeEntry {
   readonly mode: 0o644 | 0o755;
@@ -94,9 +82,12 @@ class SelectedContentFailure extends Error {
   }
 }
 
-/** Reads selected content directly from exact Git objects or one explicit local workspace. */
-export function createResourceSelectedContentResolver(
-  binding: Readonly<{ contentWorkspace: ResourceSelectedContentReadPort }>
+/**
+ * Creates the provider module's invocation-local selected-content resolver over the narrowed
+ * host content-workspace capability.
+ */
+export function createSelectedContentResolver(
+  binding: Readonly<{ contentWorkspace: SelectedContentReadPort }>
 ): SelectedContentResolver {
   const workspaceReader = createCleanContentWorkspaceReader({
     contentWorkspace: binding.contentWorkspace,
@@ -129,7 +120,7 @@ export function createResourceSelectedContentResolver(
 }
 
 async function resolveChannel(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   input: Parameters<SelectedContentResolver["resolveChannel"]>[0]
 ): Promise<SelectedContentResolution> {
   const { locator, selection } = input;
@@ -218,7 +209,7 @@ async function resolveChannel(
 }
 
 async function resolveWorkspace(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   workspaceReader: CleanContentWorkspaceReader,
   policy: ContentWorkspacePolicy,
   mode: SelectedContentTestMode
@@ -369,7 +360,7 @@ function constructSelection(input: ConstructSelectionInput): SelectedContentReso
 }
 
 async function readDeclaredPayloads(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation,
   treeEntries: readonly TreeEntry[],
   releaseInput: AgentPluginReleaseInput
@@ -480,7 +471,7 @@ async function readDeclaredPayloads(
 }
 
 async function readTreeEntries(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation
 ): Promise<readonly TreeEntry[]> {
   const bytes = await contentWorkspace.readGitTree({
@@ -536,7 +527,7 @@ async function readTreeEntries(
 }
 
 async function requireNativeMarketplaceManifests(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation,
   entryByPath: ReadonlyMap<ReleaseRelativePath, TreeEntry>
 ): Promise<ReadonlyMap<ReleaseRelativePath, Uint8Array>> {
@@ -585,7 +576,7 @@ function requireValidNativeMarketplaces(
 }
 
 async function requireMatchingWorkspaceManifests(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   root: string,
   expected: ReadonlyMap<ReleaseRelativePath, Uint8Array>
 ): Promise<void> {
@@ -605,7 +596,7 @@ async function requireMatchingWorkspaceManifests(
 }
 
 async function readBlob(
-  contentWorkspace: ResourceSelectedContentReadPort,
+  contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation,
   entry: TreeEntry,
   maximumBytes: number

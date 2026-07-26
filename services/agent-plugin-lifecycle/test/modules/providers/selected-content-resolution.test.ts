@@ -4,10 +4,10 @@ import { dirname, join } from "node:path";
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { SelectedContentResolver } from "../../../src/service/model/dependencies/providers";
 import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
 import type { ContentWorkspacePolicy } from "../../../src/service/model/dto/releases/content-workspace";
-import { createResourceSelectedContentResolver } from "../../../src/service/modules/releases/repository/selected-content";
+import { createSelectedContentResolver } from "../../../src/service/modules/providers/model/helpers/selected-content-resolution";
+import type { SelectedContentResolver } from "../../../src/service/modules/providers/model/ports/selected-content";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   createAgentPluginPayload,
@@ -51,7 +51,7 @@ describe("selected release content", () => {
     await writeFile(join(fixture.root, "unrelated.txt"), "dirty but unrelated\n");
     const delegate = makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE });
     const treeSelections: string[][] = [];
-    const resolver = createResourceSelectedContentResolver({
+    const resolver = createSelectedContentResolver({
       contentWorkspace: {
         ...delegate,
         inspectGitWorkspace: async () => {
@@ -104,7 +104,7 @@ describe("selected release content", () => {
     const laterCommit = await git(fixture.root, ["rev-parse", "HEAD"]);
     const delegate = makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE });
     let moved = false;
-    const resolver = createResourceSelectedContentResolver({
+    const resolver = createSelectedContentResolver({
       contentWorkspace: {
         ...delegate,
         async readGitBlobs(input) {
@@ -353,7 +353,7 @@ function selection(
 }
 
 function realResolver(): SelectedContentResolver {
-  return createResourceSelectedContentResolver({
+  return createSelectedContentResolver({
     contentWorkspace: makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE }),
   });
 }

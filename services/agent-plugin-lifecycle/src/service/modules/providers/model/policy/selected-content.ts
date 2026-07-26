@@ -4,19 +4,18 @@ import type {
 } from "@rawr/resource-native-agent-provider";
 import { MAX_NATIVE_PROVIDER_PLUGIN_FILES } from "@rawr/resource-native-agent-provider";
 import { Value } from "typebox/value";
-
-import type {
-  SelectedContent,
-  SelectedContentFile,
-  SelectedContentMember,
-} from "../../../../model/dependencies/providers";
-import { SelectedContentSchema } from "../../../../model/dto/provider-dependencies";
 import type {
   ProviderId,
   ProviderIssue,
   ProviderIssueCode,
   SelectedContentObservation,
-} from "../dto/provider-lifecycle";
+} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/provider-lifecycle";
+import type {
+  SelectedContent,
+  SelectedContentFile,
+  SelectedContentMember,
+} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
+import { SelectedContentSchema } from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
 
 export const MAX_PROVIDER_VERIFICATION_FILES = MAX_NATIVE_PROVIDER_PLUGIN_FILES;
 

@@ -1,10 +1,8 @@
 import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
-import type {
-  NativeProviderSessionResolver,
-  SelectedContentResolver,
-} from "../../../model/dependencies/providers";
+import type { NativeProviderSessionResolver } from "../../../model/dependencies/providers";
 import type { ProviderStatusRequest, ProviderStatusResult } from "../model/dto/provider-lifecycle";
+import type { SelectedContentResolver } from "../model/ports/selected-content";
 import { module } from "../module";
 import { inspectProviderTargets, statusTargetResult } from "./reconcile.router";
 import {

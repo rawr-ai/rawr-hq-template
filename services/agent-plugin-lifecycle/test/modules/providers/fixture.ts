@@ -12,9 +12,6 @@ import type { CurrentMainSelectionReader } from "../../../src/service/model/depe
 import type {
   NativeProviderSession,
   NativeProviderSessionResolver,
-  SelectedContent,
-  SelectedContentResolution,
-  SelectedContentResolver,
 } from "../../../src/service/model/dependencies/providers";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
 import type {
@@ -23,6 +20,11 @@ import type {
   ProviderTarget,
   ProviderTestRequest,
 } from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
+import type {
+  SelectedContent,
+  SelectedContentResolution,
+} from "../../../src/service/modules/providers/model/dto/selected-content";
+import type { SelectedContentResolver } from "../../../src/service/modules/providers/model/ports/selected-content";
 import type { PluginId } from "../../../src/service/shared/release";
 import {
   contentDigest,

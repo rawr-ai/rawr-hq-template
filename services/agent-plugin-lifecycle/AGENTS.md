@@ -18,10 +18,11 @@
   owned by this package.
 - Personal's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes; native provider inventory owns installed state.
-- The shared service model owns clean-content eligibility, declared-tree
-  validation, selection, and release derivation because those meanings span
-  multiple capability modules. Modules own their operation DTOs, handlers,
-  results, issues, and operation-specific mutation policy.
+- The shared service model owns current-main selection, clean-content
+  eligibility, declared-tree validation, and release derivation only where
+  those meanings span capability modules. Providers owns selected-content
+  structure, native marketplace validation, resolution, and its narrowed
+  content-workspace read port because no other module consumes that meaning.
 - The Releases module owns staged-index observation DTOs, its ready observation
   port, resource normalization, and staged eligibility policy. Resource
   provenance does not promote transition-specific meaning into the root model.
@@ -33,9 +34,10 @@
 
 ## Behavior
 
-- The service admits exact reviewed content, applies shared selection and
+- The service admits exact reviewed content, applies cross-module
   release-derivation policy, and dispatches package, vendor, and provider
-  operations through their owning modules.
+  operations through their owning modules. Providers derives its invocation-
+  local desired content before native observation or mutation.
 
 ## Concepts
 
