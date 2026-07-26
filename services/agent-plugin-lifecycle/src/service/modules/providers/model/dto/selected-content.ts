@@ -5,7 +5,6 @@ import {
   CanonicalChannelSelectionSchema,
   CurrentMainSelectionLocatorSchema,
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
-import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ContentAuthoritySchema,
@@ -121,20 +120,6 @@ export const SelectedContentSchema = Refine(
     "Selected members must be canonically ordered, ownership-bounded, and pin the selected Git commit"
 );
 
-/** Selects either a bounded plugin subset or the complete reviewed content set for testing. */
-export const SelectedContentTestModeSchema = Type.Union([
-  ReadonlyObject(
-    Type.Object({
-      kind: Type.Literal("targeted"),
-      pluginIds: NonEmptyReadonlyArray(PluginIdSchema, { maxItems: MAX_RELEASE_MEMBERS }),
-    }),
-    { additionalProperties: false }
-  ),
-  ReadonlyObject(Type.Object({ kind: Type.Literal("complete-set") }), {
-    additionalProperties: false,
-  }),
-]);
-
 /** Classifies provider-selection failures without leaking resource implementation details. */
 export const SelectedContentIssueCodeSchema = Type.Union([
   Type.Literal("SourceIneligible"),
@@ -168,15 +153,6 @@ export const SelectedContentResolutionSchema = Type.Union([
   ),
 ]);
 
-/** Binds disposable provider testing to one explicit clean content workspace and test mode. */
-export const SelectedContentWorkspaceResolutionInputSchema = ReadonlyObject(
-  Type.Object({
-    contentWorkspace: ContentWorkspacePolicySchema,
-    mode: SelectedContentTestModeSchema,
-  }),
-  { additionalProperties: false }
-);
-
 /** Binds provider status or sync to one governed selection and its current-main locator. */
 export const SelectedContentChannelResolutionInputSchema = ReadonlyObject(
   Type.Object({
@@ -195,9 +171,6 @@ export type SelectedContentMember = Static<typeof SelectedContentMemberSchema>;
 /** Invocation-local desired content used only by provider status, test, and sync. */
 export type SelectedContent = Static<typeof SelectedContentSchema>;
 
-/** Provider test selection of either named members or the complete reviewed set. */
-export type SelectedContentTestMode = Static<typeof SelectedContentTestModeSchema>;
-
 /** Stable classification for a provider-selected-content resolution failure. */
 export type SelectedContentIssueCode = Static<typeof SelectedContentIssueCodeSchema>;
 
@@ -206,11 +179,6 @@ export type SelectedContentIssue = Static<typeof SelectedContentIssueSchema>;
 
 /** Selected provider content or the exact reasons selection was refused. */
 export type SelectedContentResolution = Static<typeof SelectedContentResolutionSchema>;
-
-/** Input used to derive provider-selected content from one clean local workspace. */
-export type SelectedContentWorkspaceResolutionInput = Static<
-  typeof SelectedContentWorkspaceResolutionInputSchema
->;
 
 /** Input used to derive provider-selected content from one governed current-main selection. */
 export type SelectedContentChannelResolutionInput = Static<

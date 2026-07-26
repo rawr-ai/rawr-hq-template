@@ -176,12 +176,13 @@ injected host-domain
 implementation, nested router call, persistent repository, root-to-child
 import, or permission for siblings to import one another.
 
-Provider-selected content is not a third shared collaboration. Status, test,
-and sync alone consume its exact Git payload, native marketplace, and
-selection-result meanings, so Providers owns the DTOs, policy, narrowed read
-port, and invocation-local resolver. The raw content-workspace capability
-continues to enter through service context without promoting provider meaning
-to the root.
+Provider-selected content is not a third shared collaboration. Providers alone
+consumes its exact Git payload, native marketplace, and selection-result
+meanings, so it owns the DTOs, policy, and construction. Status and sync retain
+one channel-only resolver over their narrowed read port. Disposable test
+sequences the ready content-workspace resource directly in its handler and
+passes only typed facts into pure policy. The raw capability continues to enter
+through service context without promoting provider meaning to the root.
 
 ## Target Topology
 
@@ -411,6 +412,7 @@ in-place and deletion-first:
 | Root requires owner-specific capabilities for every operation | Host seeds ready resources; named module middleware contributes owner capabilities; operation cuts delete broad dependency access instead of masking additive native context | Seal context authoring |
 | CLI requests carry provider executable identities | Native-provider resources resolve ordinary `codex` and `claude` tools from the process environment; tests inject providers at construction | Remove executable binding |
 | Provider tests encode provider-wide target preflight | Only invalid provider selection blocks every target; target-specific preflight and results remain independent | Restore target isolation |
+| Provider test delegates local source selection to a runner and workspace resolver | Its oRPC handler authors source selection over ready context; pure policy alone is extracted. Native reconciliation remains a separately open operation-authorship cut. | Seal disposable source selection |
 | Duplicate module telemetry adds no module fact | One cross-cutting service signal path; module telemetry exists only for a real owner-specific field | Compose root |
 | Disposable test uses mutable workspace marketplace | Invocation-owned exact-Git marketplace below disposable root | Complete disposable lifetime |
 | Service law is diagnostic only | Closed Habitat topology and source laws admit the complete service | Activate service law |

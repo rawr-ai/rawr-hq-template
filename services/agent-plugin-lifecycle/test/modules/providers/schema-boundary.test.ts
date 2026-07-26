@@ -144,6 +144,21 @@ describe("provider public schema boundary", () => {
     expect(result).not.toHaveProperty("evidence");
   });
 
+  it("validates the disposable-test result and rejects surplus public fields", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: testRequest.targets[0],
+      content,
+      installed: ["cognition"],
+    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.test(testRequest, testInvocation);
+
+    expect(Value.Check(ProviderTestResultSchema, result)).toBe(true);
+    expect(Value.Check(ProviderTestResultSchema, { ...result, unexpected: true })).toBe(false);
+  });
+
   it("admits only mutation classifications with possible operation histories", () => {
     const operation = { kind: "plugin-installed", selector: "cognition@rawr-hq" } as const;
     const base = {

@@ -1,23 +1,179 @@
-import type {
-  NativeMarketplaceSource,
-  NativeProviderMarketplaceObservation,
-} from "@rawr/resource-native-agent-provider";
-import { MAX_NATIVE_PROVIDER_PLUGIN_FILES } from "@rawr/resource-native-agent-provider";
+import type { NativeMarketplaceSource } from "@rawr/resource-native-agent-provider";
 import { Value } from "typebox/value";
+import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import type {
-  ProviderId,
+  DerivedReleaseSelection,
+  ReleaseDerivationFailure,
+} from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import type {
   ProviderIssue,
   ProviderIssueCode,
   SelectedContentObservation,
 } from "../dto/provider-lifecycle";
 import type {
   SelectedContent,
-  SelectedContentFile,
+  SelectedContentIssueCode,
   SelectedContentMember,
+  SelectedContentResolution,
 } from "../dto/selected-content";
 import { SelectedContentSchema } from "../dto/selected-content";
 
-export const MAX_PROVIDER_VERIFICATION_FILES = MAX_NATIVE_PROVIDER_PLUGIN_FILES;
+type ProviderSelectionResolution =
+  | Readonly<{ kind: "Selected"; content: SelectedContent }>
+  | Readonly<{ kind: "Rejected"; issues: readonly ProviderIssue[] }>;
+
+interface SelectedContentConstructionInput {
+  readonly derivation: DerivedReleaseSelection;
+  readonly selectionKind: SelectedContent["selectionKind"];
+  readonly marketplace: SelectedContent["marketplace"];
+}
+
+/**
+ * Projects service-owned release derivation into Provider-selected content.
+ *
+ * @remarks
+ * Release membership, payload binding, and release-set construction are
+ * complete before this policy runs. This module adds only provider marketplace
+ * identity and the member facts needed for native observation.
+ */
+export function constructSelectedContent(
+  input: SelectedContentConstructionInput
+): SelectedContentResolution {
+  const firstRelease = input.derivation.releases[0];
+  if (firstRelease === undefined) {
+    return selectedContentRejected(
+      "ReleaseConstructionFailed",
+      "Release derivation did not produce a selected member."
+    );
+  }
+  const releaseSet = input.derivation.releaseSet;
+  if (input.selectionKind === "targeted" && releaseSet !== undefined) {
+    return selectedContentRejected(
+      "ReleaseConstructionFailed",
+      "Release derivation does not match the Provider selection kind."
+    );
+  }
+  const members = input.derivation.releases.map((release) => {
+    const body = release.artifactBody.releaseBody;
+    return Object.freeze({
+      pluginId: body.pluginId,
+      aliases: [...body.aliases],
+      payloadDigest: body.payloadDigest,
+      releaseDigest: release.releaseDigest,
+      manifest: body.payloadManifest.map((entry) => Object.freeze({ ...entry })),
+    });
+  });
+  const releaseBody = firstRelease.artifactBody.releaseBody;
+  const common = Object.freeze({
+    contentAuthority: releaseBody.contentAuthority,
+    repositoryIdentity: releaseBody.sourceRepository,
+    sourceCommit: releaseBody.sourceCommit,
+    sourceTree: releaseBody.sourceTree,
+    releaseInputDigest: releaseBody.releaseInputDigest,
+    marketplace: input.marketplace,
+    members,
+  });
+  if (input.selectionKind === "targeted") {
+    return Object.freeze({
+      kind: "Selected",
+      content: Object.freeze({
+        ...common,
+        selectionKind: "targeted",
+        releaseSetDigest: null,
+      }),
+    });
+  }
+  if (releaseSet === undefined) {
+    return selectedContentRejected(
+      "ReleaseConstructionFailed",
+      "Release derivation does not match the Provider selection kind."
+    );
+  }
+  return Object.freeze({
+    kind: "Selected",
+    content: Object.freeze({
+      ...common,
+      selectionKind: "complete-set",
+      releaseSetDigest: releaseSet.releaseSetDigest,
+    }),
+  });
+}
+
+/** Maps neutral service derivation failures into Provider selection vocabulary. */
+export function selectedContentFromReleaseDerivationFailure(
+  failure: ReleaseDerivationFailure
+): Extract<SelectedContentResolution, { kind: "Rejected" }> {
+  switch (failure.reason) {
+    case "InvalidSelection":
+      return selectedContentRejected(
+        "SelectionMismatch",
+        "Selected plugin identities are empty or duplicated."
+      );
+    case "UndeclaredMember":
+      return selectedContentRejected(
+        "SelectionMismatch",
+        `Selected plugin ${failure.pluginId} is not declared.`
+      );
+    case "MissingPayload":
+      return selectedContentRejected(
+        "SourceIneligible",
+        `Verified payload is absent for ${failure.pluginId}.`
+      );
+    case "InvalidRelease":
+      return selectedContentRejected(
+        "ReleaseConstructionFailed",
+        `Release construction failed for ${failure.pluginId}: ${failure.issueCodes.join(",")}.`
+      );
+    case "InvalidReleaseSet":
+      return selectedContentRejected(
+        "ReleaseConstructionFailed",
+        `Complete release-set construction failed: ${failure.issueCodes.join(",")}.`
+      );
+  }
+}
+
+/** Maps concrete clean-source refusals into Provider selection vocabulary. */
+export function selectedContentFromSourceIssues(
+  issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]]
+): Extract<SelectedContentResolution, { kind: "Rejected" }> {
+  return selectedContentRejected(
+    "SourceIneligible",
+    issues.map((issue) => `${issue.code}: ${issue.detail}`).join("; ")
+  );
+}
+
+/** Closes selected-content resolution into the public Provider issue vocabulary. */
+export function providerSelectionResolution(
+  resolved: SelectedContentResolution
+): ProviderSelectionResolution {
+  if (resolved.kind === "Rejected") {
+    return {
+      kind: "Rejected",
+      issues: Object.freeze(
+        resolved.issues.map((issue) =>
+          providerIssue("SelectionRejected", `${issue.code}: ${issue.detail}`)
+        )
+      ),
+    };
+  }
+  const issues = validateSelectedContent(resolved.content);
+  return issues.length === 0
+    ? { kind: "Selected", content: resolved.content }
+    : { kind: "Rejected", issues: Object.freeze(issues.slice(0, 256)) };
+}
+
+/** Constructs one bounded selected-content refusal. */
+export function selectedContentRejected(
+  code: SelectedContentIssueCode,
+  detail: string
+): Extract<SelectedContentResolution, { kind: "Rejected" }> {
+  const issue = Object.freeze({ code, detail: boundedDetail(detail) });
+  const issues: [typeof issue, ...(typeof issue)[]] = [issue];
+  return Object.freeze({
+    kind: "Rejected",
+    issues: Object.freeze(issues),
+  });
+}
 
 export function providerIssue(
   code: ProviderIssueCode,
@@ -82,49 +238,6 @@ export function sameSelectedContent(left: SelectedContent, right: SelectedConten
     sameMarketplaceSource(left.marketplace.source, right.marketplace.source) &&
     left.marketplace.identity === right.marketplace.identity &&
     sameMembers(left.members, right.members)
-  );
-}
-
-export function providerPluginSelector(member: SelectedContentMember, identity: string): string {
-  return `${member.pluginId}@${identity}`;
-}
-
-export function marketplaceSourceMatches(
-  observed: NativeProviderMarketplaceObservation,
-  desired: NativeMarketplaceSource
-): boolean {
-  const source = observed.source;
-  if (source === null || source.kind !== desired.kind) return false;
-  if (source.kind === "local" && desired.kind === "local") return source.root === desired.root;
-  if (source.kind !== "git" || desired.kind !== "git") return false;
-  return (
-    source.repositoryUrl === desired.repositoryUrl &&
-    (source.revision === null || source.revision === desired.revision)
-  );
-}
-
-export function marketplaceSourceIsRelated(
-  observed: NativeProviderMarketplaceObservation,
-  desired: NativeMarketplaceSource
-): boolean {
-  const source = observed.source;
-  if (source === null || source.kind !== desired.kind) return false;
-  if (source.kind === "git" && desired.kind === "git") {
-    return source.repositoryUrl === desired.repositoryUrl;
-  }
-  return source.kind === "local" && desired.kind === "local" && source.root === desired.root;
-}
-
-export function verificationFiles(
-  member: SelectedContentMember,
-  provider: ProviderId
-): readonly SelectedContentFile[] | null {
-  const manifestPath =
-    provider === "codex" ? ".codex-plugin/plugin.json" : ".claude-plugin/plugin.json";
-  if (!member.manifest.some((file) => file.path === manifestPath)) return null;
-  if (member.manifest.length > MAX_PROVIDER_VERIFICATION_FILES) return null;
-  return Object.freeze(
-    [...member.manifest].sort((left, right) => compareText(left.path, right.path))
   );
 }
 
@@ -199,8 +312,4 @@ function sameTextArray(left: readonly string[], right: readonly string[]): boole
 function boundedDetail(detail: string): string {
   if (detail.length <= 4_096) return detail;
   return `${detail.slice(0, 4_080)}...[truncated]`;
-}
-
-function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
 }

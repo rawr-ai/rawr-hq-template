@@ -1,47 +1,38 @@
 import type { ContentWorkspaceFailure, GitRefObservation } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
-import type { ContentWorkspacePolicy } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
-import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
+import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { parseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/current-main-primitives";
+import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
-import type { CleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/ports/clean-content-workspace";
+import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
 import {
-  type AgentPluginPayload,
-  type AgentPluginRelease,
-  type AgentPluginReleaseInput,
   compareCanonicalText,
   createAgentPluginPayload,
-  createAgentPluginRelease,
-  createAgentPluginReleaseSet,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
-  type PluginId,
-  parseReleaseRelativePath,
-  type ReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
-import type {
-  SelectedContent,
-  SelectedContentIssueCode,
-  SelectedContentResolution,
-  SelectedContentTestMode,
-} from "../dto/selected-content";
-import { validateNativeMarketplaces } from "../policy/native-marketplace";
+import type { SelectedContentIssueCode, SelectedContentResolution } from "../dto/selected-content";
+import {
+  constructSelectedContent,
+  selectedContentFromReleaseDerivationFailure,
+  selectedContentRejected,
+} from "../policy/selected-content";
+import {
+  MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
+  NATIVE_MARKETPLACE_MANIFESTS,
+  SELECTED_CONTENT_PLUGIN_ROOT,
+  SELECTED_CONTENT_RELEASE_INPUT_PATH,
+  validateSelectedNativeMarketplaces,
+} from "../policy/source-interface";
 import type { SelectedContentReadPort, SelectedContentResolver } from "../ports/selected-content";
 
-const RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
-const PLUGIN_ROOT = requireReleasePath("plugins/agents");
-const CODEX_MARKETPLACE_MANIFEST = requireReleasePath(".agents/plugins/marketplace.json");
-const CLAUDE_MARKETPLACE_MANIFEST = requireReleasePath(".claude-plugin/marketplace.json");
-const NATIVE_MARKETPLACE_MANIFESTS = Object.freeze([
-  CODEX_MARKETPLACE_MANIFEST,
-  CLAUDE_MARKETPLACE_MANIFEST,
-]);
 const SELECTED_CONTENT_INTERFACE_PATHS = Object.freeze([
-  RELEASE_INPUT_PATH,
+  SELECTED_CONTENT_RELEASE_INPUT_PATH,
   requireReleasePath(".agents/plugins"),
   requireReleasePath(".claude-plugin"),
-  PLUGIN_ROOT,
+  SELECTED_CONTENT_PLUGIN_ROOT,
 ]);
 const NATIVE_MARKETPLACE_SPARSE_PATHS = Object.freeze([
   ".agents/plugins",
@@ -50,23 +41,16 @@ const NATIVE_MARKETPLACE_SPARSE_PATHS = Object.freeze([
 ]);
 const MAX_TREE_ENTRIES = 200_000;
 const MAX_TREE_BYTES = 100 * 1024 * 1024;
-const MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES = 2 * 1024 * 1024;
+
+type AgentPluginReleaseInput = ReleaseDerivationSource["releaseInput"];
+type AgentPluginPayload = ReleaseDerivationSource["payloads"][number]["payload"];
+type PluginId = ReleaseDerivationSource["payloads"][number]["pluginId"];
+type ReleaseRelativePath = ContentWorkspaceSnapshot["objectBindings"][number]["path"];
 
 interface TreeEntry {
   readonly mode: 0o644 | 0o755;
   readonly objectId: string;
   readonly path: ReleaseRelativePath;
-}
-
-interface ConstructSelectionInput {
-  readonly contentAuthority: SelectedContent["contentAuthority"];
-  readonly repositoryIdentity: SelectedContent["repositoryIdentity"];
-  readonly sourceCommit: SelectedContent["sourceCommit"];
-  readonly sourceTree: SelectedContent["sourceTree"];
-  readonly releaseInput: AgentPluginReleaseInput;
-  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
-  readonly mode: SelectedContentTestMode;
-  readonly marketplace: SelectedContent["marketplace"];
 }
 
 class SelectedContentFailure extends Error {
@@ -82,27 +66,20 @@ class SelectedContentFailure extends Error {
 type SelectedContentReadFailure = ContentWorkspaceFailure | SelectedContentFailure;
 
 /**
- * Creates the provider module's invocation-local selected-content resolver over the narrowed
- * host content-workspace capability.
+ * Creates the Provider channel resolver used only by status and sync.
+ *
+ * @remarks
+ * Disposable test selection is authored directly in its operation handler and
+ * does not enter this transitional channel boundary.
  */
 export function createSelectedContentResolver(
   binding: Readonly<{ contentWorkspace: SelectedContentReadPort }>
 ): SelectedContentResolver {
-  const workspaceReader = createCleanContentWorkspaceReader({
-    contentWorkspace: binding.contentWorkspace,
-  });
   return Object.freeze({
     resolveChannel: (input: Parameters<SelectedContentResolver["resolveChannel"]>[0]) =>
       resolveChannel(binding.contentWorkspace, input).pipe(
         Effect.catch((error) => Effect.succeed(rejectedFrom(error)))
       ),
-    resolveWorkspace: (input: Parameters<SelectedContentResolver["resolveWorkspace"]>[0]) =>
-      resolveWorkspace(
-        binding.contentWorkspace,
-        workspaceReader,
-        input.contentWorkspace,
-        input.mode
-      ).pipe(Effect.catch((error) => Effect.succeed(rejectedFrom(error)))),
   });
 }
 
@@ -113,7 +90,7 @@ function resolveChannel(
   return Effect.gen(function* () {
     const { locator, selection } = input;
     if (locator.expectedRepositoryIdentity !== selection.sourceRepositoryIdentity) {
-      return rejected(
+      return selectedContentRejected(
         "SelectionMismatch",
         "Current-main selection belongs to another repository identity."
       );
@@ -127,12 +104,12 @@ function resolveChannel(
     if (anchorIssue !== undefined) return yield* Effect.fail(anchorIssue);
     const treeEntries = yield* readTreeEntries(contentWorkspace, opening);
     const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
-    const releaseInputEntry = entryByPath.get(RELEASE_INPUT_PATH);
+    const releaseInputEntry = entryByPath.get(SELECTED_CONTENT_RELEASE_INPUT_PATH);
     if (releaseInputEntry === undefined) {
       return yield* Effect.fail(
         new SelectedContentFailure(
           "SourceIneligible",
-          `Selected tree is missing ${RELEASE_INPUT_PATH}.`
+          `Selected tree is missing ${SELECTED_CONTENT_RELEASE_INPUT_PATH}.`
         )
       );
     }
@@ -173,22 +150,30 @@ function resolveChannel(
       opening,
       entryByPath
     );
-    const marketplaceIssue = validNativeMarketplacesIssue(releaseInput, manifestBytes);
-    if (marketplaceIssue !== undefined) return yield* Effect.fail(marketplaceIssue);
+    const marketplaceIssue = validateSelectedNativeMarketplaces(releaseInput, manifestBytes);
+    if (marketplaceIssue !== undefined) return marketplaceIssue;
     const payloads = yield* readDeclaredPayloads(
       contentWorkspace,
       opening,
       treeEntries,
       releaseInput
     );
-    const constructed = constructSelection({
-      contentAuthority: selection.contentAuthority,
-      repositoryIdentity: selection.sourceRepositoryIdentity,
-      sourceCommit: selection.contentCommit,
-      sourceTree: selection.contentTree,
-      releaseInput,
-      payloads,
-      mode: { kind: "complete-set" },
+    const derivation = deriveReleaseSelection(
+      {
+        repositoryIdentity: selection.sourceRepositoryIdentity,
+        sourceCommit: selection.contentCommit,
+        sourceTree: selection.contentTree,
+        releaseInput,
+        payloads,
+      },
+      { kind: "complete-set" }
+    );
+    if (!derivation.ok) {
+      return selectedContentFromReleaseDerivationFailure(derivation.failure);
+    }
+    const constructed = constructSelectedContent({
+      derivation: derivation.value,
+      selectionKind: "complete-set",
       marketplace: Object.freeze({
         identity: selection.contentAuthority,
         source: Object.freeze({
@@ -206,170 +191,13 @@ function resolveChannel(
       refName: selection.sourceRef,
     });
     if (!sameRefObservation(opening, closing)) {
-      return rejected("SelectionMismatch", "Selected Git tag changed while its content was read.");
+      return selectedContentRejected(
+        "SelectionMismatch",
+        "Selected Git tag changed while its content was read."
+      );
     }
     return constructed;
   });
-}
-
-function resolveWorkspace(
-  contentWorkspace: SelectedContentReadPort,
-  workspaceReader: CleanContentWorkspaceReader,
-  policy: ContentWorkspacePolicy,
-  mode: SelectedContentTestMode
-): Effect.Effect<SelectedContentResolution, SelectedContentReadFailure> {
-  return Effect.gen(function* () {
-    if (policy.releaseInputPath !== RELEASE_INPUT_PATH || policy.pluginRoot !== PLUGIN_ROOT) {
-      return rejected(
-        "SourceIneligible",
-        `Local provider content must use ${RELEASE_INPUT_PATH} and ${PLUGIN_ROOT}.`
-      );
-    }
-    const inspected = yield* workspaceReader.inspect(policy);
-    if (inspected.kind === "Ineligible") {
-      return rejected(
-        "SourceIneligible",
-        inspected.issues.map((issue) => `${issue.code}: ${issue.detail}`).join("; ")
-      );
-    }
-    const treeObservation: GitRefObservation = Object.freeze({
-      root: policy.locator,
-      refName: policy.refName,
-      commit: policy.sourceCommit,
-      tree: policy.sourceTree,
-      objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
-      remoteUrls: Object.freeze([policy.remoteUrl]),
-    });
-    const treeEntries = yield* readTreeEntries(contentWorkspace, treeObservation);
-    const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
-    const manifestBytes = yield* requireNativeMarketplaceManifests(
-      contentWorkspace,
-      treeObservation,
-      entryByPath
-    );
-    const marketplaceIssue = validNativeMarketplacesIssue(
-      inspected.snapshot.releaseInput,
-      manifestBytes
-    );
-    if (marketplaceIssue !== undefined) return yield* Effect.fail(marketplaceIssue);
-    yield* requireMatchingWorkspaceManifests(contentWorkspace, policy.locator, manifestBytes);
-    const constructed = constructSelection({
-      contentAuthority: policy.contentAuthority,
-      repositoryIdentity: inspected.snapshot.repositoryIdentity,
-      sourceCommit: inspected.snapshot.sourceCommit,
-      sourceTree: inspected.snapshot.sourceTree,
-      releaseInput: inspected.snapshot.releaseInput,
-      payloads: inspected.snapshot.payloads,
-      mode,
-      marketplace: Object.freeze({
-        identity: policy.contentAuthority,
-        source: Object.freeze({ kind: "local", root: policy.locator }),
-      }),
-    });
-    if (constructed.kind === "Rejected") return constructed;
-    const closing = yield* workspaceReader.revalidate(
-      policy,
-      inspected.snapshot.eligibilityBinding
-    );
-    if (closing.kind !== "Eligible") {
-      return rejected("SelectionMismatch", "Local content changed before provider testing.");
-    }
-    yield* requireMatchingWorkspaceManifests(contentWorkspace, policy.locator, manifestBytes);
-    return constructed;
-  });
-}
-
-function constructSelection(input: ConstructSelectionInput): SelectedContentResolution {
-  const requested =
-    input.mode.kind === "targeted"
-      ? [...input.mode.pluginIds].sort(compareCanonicalText)
-      : input.releaseInput.body.members.map((member) => member.pluginId);
-  if (requested.length === 0 || new Set(requested).size !== requested.length) {
-    return rejected("SelectionMismatch", "Selected plugin identities are empty or duplicated.");
-  }
-  const declared = new Set(input.releaseInput.body.members.map((member) => member.pluginId));
-  const absent = requested.find((pluginId) => !declared.has(pluginId));
-  if (absent !== undefined) {
-    return rejected("SelectionMismatch", `Selected plugin ${absent} is not declared.`);
-  }
-  const payloadByPlugin = new Map(input.payloads.map((entry) => [entry.pluginId, entry.payload]));
-  const releases: AgentPluginRelease[] = [];
-  for (const pluginId of requested) {
-    const payload = payloadByPlugin.get(pluginId);
-    if (payload === undefined) {
-      return rejected("SourceIneligible", `Verified payload is absent for ${pluginId}.`);
-    }
-    const created = createAgentPluginRelease({
-      releaseInput: input.releaseInput,
-      pluginId,
-      source: {
-        sourceRepository: input.repositoryIdentity,
-        sourceCommit: input.sourceCommit,
-        sourceTree: input.sourceTree,
-      },
-      payload,
-    });
-    if (!created.ok) {
-      return rejected(
-        "ReleaseConstructionFailed",
-        `Release construction failed for ${pluginId}: ${created.issues
-          .map((issue) => issue.code)
-          .join(",")}.`
-      );
-    }
-    releases.push(created.value);
-  }
-  releases.sort((left, right) =>
-    compareCanonicalText(
-      left.artifactBody.releaseBody.pluginId,
-      right.artifactBody.releaseBody.pluginId
-    )
-  );
-  const members = releases.map((release) => {
-    const body = release.artifactBody.releaseBody;
-    return Object.freeze({
-      pluginId: body.pluginId,
-      aliases: [...body.aliases],
-      payloadDigest: body.payloadDigest,
-      releaseDigest: release.releaseDigest,
-      manifest: body.payloadManifest.map((entry) => Object.freeze({ ...entry })),
-    });
-  });
-  const common = Object.freeze({
-    contentAuthority: input.contentAuthority,
-    repositoryIdentity: input.repositoryIdentity,
-    sourceCommit: input.sourceCommit,
-    sourceTree: input.sourceTree,
-    releaseInputDigest: input.releaseInput.releaseInputDigest,
-    marketplace: input.marketplace,
-    members,
-  });
-  if (input.mode.kind === "targeted") {
-    const content: SelectedContent = Object.freeze({
-      ...common,
-      selectionKind: "targeted",
-      releaseSetDigest: null,
-    });
-    return Object.freeze({ kind: "Selected", content });
-  }
-  const releaseSet = createAgentPluginReleaseSet({
-    releaseInput: input.releaseInput,
-    releases,
-  });
-  if (!releaseSet.ok) {
-    return rejected(
-      "ReleaseConstructionFailed",
-      `Complete release-set construction failed: ${releaseSet.issues
-        .map((issue) => issue.code)
-        .join(",")}.`
-    );
-  }
-  const content: SelectedContent = Object.freeze({
-    ...common,
-    selectionKind: "complete-set",
-    releaseSetDigest: releaseSet.value.releaseSetDigest,
-  });
-  return Object.freeze({ kind: "Selected", content });
 }
 
 function readDeclaredPayloads(
@@ -383,7 +211,7 @@ function readDeclaredPayloads(
 > {
   return Effect.gen(function* () {
     const declaredTreeIssue = validateDeclaredPluginTree({
-      pluginRoot: PLUGIN_ROOT,
+      pluginRoot: SELECTED_CONTENT_PLUGIN_ROOT,
       paths: treeEntries.map((entry) => entry.path),
       declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
     });
@@ -412,7 +240,7 @@ function readDeclaredPayloads(
           )
         );
       }
-      const memberRoot = requireReleasePath(`${PLUGIN_ROOT}/${member.pluginId}`);
+      const memberRoot = requireReleasePath(`${SELECTED_CONTENT_PLUGIN_ROOT}/${member.pluginId}`);
       const entries: Array<Readonly<{ relativePath: ReleaseRelativePath; entry: TreeEntry }>> = [];
       for (const manifestEntry of member.payload.manifest) {
         const repositoryPath = requireReleasePath(`${memberRoot}/${manifestEntry.path}`);
@@ -528,7 +356,7 @@ function readTreeEntries(
     const exactPaths = new Set<string>();
     const portablePaths = new Set<string>();
     for (const observed of observedEntries) {
-      const parsedPath = parseReleaseRelativePath(observed.path, "selectedContent.tree.path");
+      const parsedPath = parseRelativePath(observed.path, "selectedContent.tree.path");
       if (!parsedPath.ok) {
         return yield* Effect.fail(
           new SelectedContentFailure(
@@ -602,49 +430,6 @@ function requireNativeMarketplaceManifests(
       manifestBytes.set(path, bytes);
     }
     return manifestBytes;
-  });
-}
-
-function validNativeMarketplacesIssue(
-  releaseInput: AgentPluginReleaseInput,
-  manifests: ReadonlyMap<ReleaseRelativePath, Uint8Array>
-): SelectedContentFailure | undefined {
-  const codexBytes = manifests.get(CODEX_MARKETPLACE_MANIFEST);
-  const claudeBytes = manifests.get(CLAUDE_MARKETPLACE_MANIFEST);
-  if (codexBytes === undefined || claudeBytes === undefined) {
-    return new SelectedContentFailure(
-      "SourceIneligible",
-      "Selected content does not contain both native marketplace manifests."
-    );
-  }
-  const validated = validateNativeMarketplaces({ releaseInput, codexBytes, claudeBytes });
-  if (!validated.ok) {
-    return new SelectedContentFailure("SourceIneligible", validated.detail);
-  }
-  return undefined;
-}
-
-function requireMatchingWorkspaceManifests(
-  contentWorkspace: SelectedContentReadPort,
-  root: string,
-  expected: ReadonlyMap<ReleaseRelativePath, Uint8Array>
-): Effect.Effect<void, SelectedContentReadFailure> {
-  return Effect.gen(function* () {
-    for (const [path, expectedBytes] of expected) {
-      const actual = yield* contentWorkspace.readFile({
-        root,
-        path,
-        maxBytes: MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
-      });
-      if (!equalBytes(actual, expectedBytes)) {
-        return yield* Effect.fail(
-          new SelectedContentFailure(
-            "SourceIneligible",
-            `Local native marketplace manifest differs from Git: ${path}.`
-          )
-        );
-      }
-    }
   });
 }
 
@@ -735,39 +520,16 @@ function samePayloadManifest(
 }
 
 function requireReleasePath(value: string): ReleaseRelativePath {
-  const parsed = parseReleaseRelativePath(value, "selectedContent.path");
+  const parsed = parseRelativePath(value, "selectedContent.path");
   if (!parsed.ok) throw new Error(`Compiled selected-content path is invalid: ${value}`);
   return parsed.value;
-}
-
-function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  if (left.byteLength !== right.byteLength) return false;
-  let difference = 0;
-  for (let index = 0; index < left.byteLength; index += 1) {
-    difference |= left[index]! ^ right[index]!;
-  }
-  return difference === 0;
-}
-
-function rejected(
-  code: SelectedContentIssueCode,
-  detail: string
-): Extract<SelectedContentResolution, { kind: "Rejected" }> {
-  const issue = Object.freeze({ code, detail: boundedDetail(detail) });
-  const issues: [typeof issue, ...(typeof issue)[]] = [issue];
-  return Object.freeze({
-    kind: "Rejected",
-    issues: Object.freeze(issues),
-  });
 }
 
 function rejectedFrom(
   error: SelectedContentReadFailure
 ): Extract<SelectedContentResolution, { kind: "Rejected" }> {
-  if (error instanceof SelectedContentFailure) return rejected(error.code, error.message);
-  return rejected("SourceReadFailed", error.detail);
-}
-
-function boundedDetail(detail: string): string {
-  return detail.length <= 4_096 ? detail : `${detail.slice(0, 4_080)}...[truncated]`;
+  if (error instanceof SelectedContentFailure) {
+    return selectedContentRejected(error.code, error.message);
+  }
+  return selectedContentRejected("SourceReadFailed", error.detail);
 }

@@ -21,8 +21,11 @@
 - The shared service model owns pure current-main selection, clean-content
   classification, declared-tree validation, and release derivation only where
   those meanings span capability modules. Providers owns selected-content
-  structure, native marketplace validation, resolution, and its narrowed
-  content-workspace read port because no other module consumes that meaning.
+  structure, source-interface classification, native marketplace validation,
+  selected-content projection, and native-state policy because no other module
+  consumes those meanings. Its channel resolver and narrowed read port serve
+  status and sync only; disposable test handlers directly sequence the ready
+  content-workspace resource.
 - The Releases module owns clean and staged eligibility operations and directly
   consumes one ready content-workspace resource. Its handlers own observation
   order and final revalidation; pure shared policy classifies the resulting Git
@@ -42,8 +45,10 @@
 
 - The service admits exact reviewed content, applies cross-module
   release-derivation policy, and dispatches package, vendor, and provider
-  operations through their owning modules. Providers derives its invocation-
-  local desired content before native observation or mutation.
+  operations through their owning modules. Provider test derives its
+  invocation-local selection in the operation handler before native
+  observation or mutation; status and sync derive governed channel content
+  through the remaining channel resolver.
 
 ## Concepts
 

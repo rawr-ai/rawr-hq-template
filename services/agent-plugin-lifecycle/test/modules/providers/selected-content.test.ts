@@ -7,9 +7,11 @@ import {
 } from "../../../src/service/modules/providers/model/dto/selected-content";
 import {
   marketplaceSourceMatches,
+  verificationFiles,
+} from "../../../src/service/modules/providers/model/policy/native-state";
+import {
   sameSelectedContent,
   validateSelectedContent,
-  verificationFiles,
 } from "../../../src/service/modules/providers/model/policy/selected-content";
 import { parseOwnershipIdentity } from "../../../src/service/shared/release";
 import { member, selectedContent } from "./fixture";

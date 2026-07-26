@@ -4,14 +4,14 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
-  type ReleaseSelection,
-  ReleaseSelectionSchema,
-} from "../../../src/service/model/dto/release-derivation";
-import {
   MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
   SourceEligibilityIssueSchema,
   sourceEligibilityIssue,
-} from "../../../src/service/model/dto/releases/content-workspace";
+} from "../../../src/service/model/dto/content-workspace";
+import {
+  type ReleaseSelection,
+  ReleaseSelectionSchema,
+} from "../../../src/service/model/dto/release-derivation";
 import { contract } from "../../../src/service/modules/releases/contract";
 import {
   type AgentPluginCheckRequest,

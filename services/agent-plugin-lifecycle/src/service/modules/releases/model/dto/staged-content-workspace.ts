@@ -5,7 +5,7 @@ import {
   RemoteNameSchema,
   RemoteUrlSchema,
   type SourceEligibilityIssue,
-} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
