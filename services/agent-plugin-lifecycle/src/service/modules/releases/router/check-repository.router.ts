@@ -1,5 +1,26 @@
 import { Effect } from "effect";
-import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import {
+  type SourceEligibilityIssue,
+  sourceEligibilityIssue,
+} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import {
+  classifyCleanContentWorkspaceAnchor,
+  classifyCleanContentWorkspaceTree,
+  classifyCleanPayloads,
+  classifyCleanReleaseInput,
+  classifyCleanWorkspaceEvidence,
+  classifyClosingCleanWorkspaceEvidence,
+  finishCleanContentWorkspaceInspection,
+  MAX_CLEAN_CONTENT_INDEX_BYTES,
+  MAX_CLEAN_CONTENT_TREE_BYTES,
+  MAX_CLEAN_CONTENT_TREE_ENTRIES,
+  MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+  MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+  MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
+  MAX_CLEAN_RELEASE_INPUT_BYTES,
+  MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+  validateCleanContentWorkspacePolicy,
+} from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import {
   normalizeReleaseSourceChangedDetail,
   type RepositoryCheckResult,
@@ -27,7 +48,7 @@ export const checkRepository = module.checkRepository.effect(function* ({
           if (policyIssue !== undefined) return stagedIneligible(policyIssue);
 
           const releaseInputAttempt = yield* Effect.result(
-            context.stagedContentWorkspace.observeGitStagedIndex(
+            context.contentWorkspace.observeGitStagedIndex(
               releaseInputObservationRequest(request.contentWorkspace)
             )
           );
@@ -41,7 +62,7 @@ export const checkRepository = module.checkRepository.effect(function* ({
           if (releaseInput.kind !== "ReadyForMaterialization") return releaseInput;
 
           const materializationAttempt = yield* Effect.result(
-            context.stagedContentWorkspace.observeGitStagedIndex(
+            context.contentWorkspace.observeGitStagedIndex(
               materializationObservationRequest(request.contentWorkspace, releaseInput.memberRoots)
             )
           );
@@ -84,7 +105,114 @@ export const checkRepository = module.checkRepository.effect(function* ({
       };
     }
     case "clean": {
-      const inspected = yield* context.source.inspect(request.contentWorkspace);
+      const policy = request.contentWorkspace;
+      const inspectCleanRepository = () =>
+        Effect.gen(function* () {
+          const policyIssue = validateCleanContentWorkspacePolicy(policy);
+          if (policyIssue !== undefined) {
+            return {
+              kind: "Ineligible" as const,
+              issues: [policyIssue] as const,
+            };
+          }
+
+          const anchorAttempt = yield* Effect.result(
+            context.contentWorkspace.inspectGitWorkspace({
+              locator: policy.locator,
+              remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+              refName: policy.refName,
+            })
+          );
+          const anchor = classifyCleanContentWorkspaceAnchor(policy, anchorAttempt);
+          if (!anchor.ok) return anchor.result;
+
+          const treeAttempt = yield* Effect.result(
+            context.contentWorkspace.readGitTree({
+              root: anchor.value.anchor.root,
+              tree: anchor.value.anchor.tree,
+              objectFormat: anchor.value.anchor.objectFormat,
+              paths: [policy.releaseInputPath, policy.pluginRoot],
+              maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+              maxBytes: MAX_CLEAN_CONTENT_TREE_BYTES,
+            })
+          );
+          const tree = classifyCleanContentWorkspaceTree(policy, anchor.value, treeAttempt);
+          if (!tree.ok) return tree.result;
+
+          const releaseInputAttempt = yield* Effect.result(
+            context.contentWorkspace.readGitBlob({
+              root: tree.value.anchor.root,
+              blob: tree.value.releaseInputEntry.objectId,
+              objectFormat: tree.value.anchor.objectFormat,
+              maxBytes: MAX_CLEAN_RELEASE_INPUT_BYTES,
+            })
+          );
+          const releaseInput = classifyCleanReleaseInput(policy, tree.value, releaseInputAttempt);
+          if (!releaseInput.ok) return releaseInput.result;
+
+          const payloadAttempt = yield* Effect.result(
+            context.contentWorkspace.readGitBlobs({
+              root: releaseInput.value.anchor.root,
+              blobs: releaseInput.value.blobEntries.map((entry) => entry.objectId),
+              objectFormat: releaseInput.value.anchor.objectFormat,
+              maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+              maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
+              maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+            })
+          );
+          const payloads = classifyCleanPayloads(releaseInput.value, payloadAttempt);
+          if (!payloads.ok) return payloads.result;
+
+          const openingEvidenceAttempt = yield* Effect.result(
+            context.contentWorkspace.captureGitWorkspaceEvidence({
+              root: payloads.value.anchor.root,
+              remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+              refName: policy.refName,
+              admittedPaths: payloads.value.admittedPaths,
+              consumedRoots: payloads.value.consumedRoots,
+              objectFormat: payloads.value.anchor.objectFormat,
+              maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+              maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+              maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+              maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
+            })
+          );
+          const openingEvidence = classifyCleanWorkspaceEvidence(
+            policy,
+            payloads.value,
+            openingEvidenceAttempt
+          );
+          if (!openingEvidence.ok) return openingEvidence.result;
+
+          const closingEvidenceAttempt = yield* Effect.result(
+            context.contentWorkspace.captureGitWorkspaceEvidence({
+              root: payloads.value.anchor.root,
+              remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+              refName: policy.refName,
+              admittedPaths: payloads.value.admittedPaths,
+              consumedRoots: payloads.value.consumedRoots,
+              objectFormat: payloads.value.anchor.objectFormat,
+              maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+              maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+              maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+              maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
+            })
+          );
+          const closingEvidence = classifyClosingCleanWorkspaceEvidence(
+            payloads.value,
+            closingEvidenceAttempt
+          );
+          if (!closingEvidence.ok) return closingEvidence.result;
+
+          return finishCleanContentWorkspaceInspection(
+            policy,
+            payloads.value,
+            openingEvidence.value,
+            closingEvidence.value
+          );
+        });
+
+      const inspected = yield* inspectCleanRepository();
       if (inspected.kind === "Ineligible") {
         return {
           kind: "RepositoryIneligible" as const,
@@ -92,15 +220,24 @@ export const checkRepository = module.checkRepository.effect(function* ({
           issues: inspected.issues,
         };
       }
-      const revalidated = yield* context.source.revalidate(
-        request.contentWorkspace,
-        inspected.snapshot.eligibilityBinding
-      );
+      const revalidated = yield* inspectCleanRepository();
       if (revalidated.kind === "Ineligible") {
         return {
           kind: "RepositoryIneligible" as const,
           mode: "clean" as const,
           issues: revalidated.issues,
+        };
+      }
+      if (revalidated.snapshot.eligibilityBinding !== inspected.snapshot.eligibilityBinding) {
+        return {
+          kind: "RepositoryIneligible" as const,
+          mode: "clean" as const,
+          issues: [
+            sourceEligibilityIssue(
+              "SourceChanged",
+              "repository, ref, index, worktree, or object bindings changed"
+            ),
+          ],
         };
       }
       return {

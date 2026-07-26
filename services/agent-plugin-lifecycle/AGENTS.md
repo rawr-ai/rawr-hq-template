@@ -18,15 +18,15 @@
   owned by this package.
 - Personal's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes; native provider inventory owns installed state.
-- The shared service model owns current-main selection, clean-content
-  eligibility, declared-tree validation, and release derivation only where
+- The shared service model owns pure current-main selection, clean-content
+  classification, declared-tree validation, and release derivation only where
   those meanings span capability modules. Providers owns selected-content
   structure, native marketplace validation, resolution, and its narrowed
   content-workspace read port because no other module consumes that meaning.
-- The Releases module owns staged eligibility policy and directly consumes the
-  narrowed ready content-workspace resource. Native index protocol belongs to
-  the provider; resource provenance does not promote transition-specific
-  meaning into the root model.
+- The Releases module owns clean and staged eligibility operations and directly
+  consumes one ready content-workspace resource. Its handlers own observation
+  order and final revalidation; pure shared policy classifies the resulting Git
+  facts. Native Git protocol remains in the resource provider.
 - Content-workspace, versioned-content, clock, package-output, and
   native-provider mechanics remain behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app
@@ -50,10 +50,11 @@
 ## Flow
 
 - The host supplies ready capabilities to the context-seeded base boundary.
-  The base exposes one separate native middleware author; each documented named module
-  middleware contributes its owner capabilities, and `module.ts` attaches that
-  middleware through inferred `.use(middleware)` composition. Native context
-  remains additive; owner-local resource and handler cuts remove broad
+  The base exposes one separate native middleware author; each documented named
+  module middleware contributes its owner capabilities, and `module.ts`
+  attaches that middleware through inferred `.use(middleware)` composition.
+  Operation handlers sequence ready resources and pass only typed facts into
+  pure policy. Native context remains additive; owner-local cuts remove broad
   dependency access rather than hiding it behind a shadow `Context` type.
 
 ## Interfaces

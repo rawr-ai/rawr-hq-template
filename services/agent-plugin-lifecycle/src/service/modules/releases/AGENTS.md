@@ -20,16 +20,19 @@
   module owns staged eligibility, refresh policy, operation DTOs, handlers,
   results, and issues; it does not publish packages, update vendor content, or
   mutate native provider state.
-- The module directly consumes a narrowed ready staged-index resource reference
-  and owns opening/closing binding policy. Native Git decoding remains in the
-  resource provider; no module DTO, reader, or adapter mirrors that boundary.
+- The module receives one ready content-workspace resource through its named
+  middleware. Operation handlers directly sequence clean and staged
+  observations, while the service model classifies only the cross-module clean
+  facts. Native Git decoding remains in the resource provider; no module DTO,
+  reader, or adapter mirrors that boundary.
 
 ## Behavior
 
 - The module handles validation and serialization operations for release-input
-  records, consumes service-owned clean eligibility and release derivation,
-  applies its staged and refresh policies, and rejects repository observations
-  that change before final revalidation.
+  records, authors resource sequencing in its oRPC operations, consumes pure
+  clean classification and release derivation, applies staged and refresh
+  policy, and rejects repository observations that change before final
+  revalidation.
 
 ## Concepts
 
@@ -48,8 +51,9 @@
 ## Interfaces
 
 - `check`, `releaseInputRecord`, `refreshReleaseInput`, and `checkRepository`
-  form the caller surface. Clean policy and the narrowed staged resource
-  reference supply exact Git facts without acquiring domain authority.
+  form the caller surface. One ready content-workspace resource supplies Git
+  facts; service and module policy classify those facts without acquiring
+  resource authority.
 
 ## Routing
 

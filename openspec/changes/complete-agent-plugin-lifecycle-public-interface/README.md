@@ -499,6 +499,31 @@ contract, package bytes, digest, resource call, or provider state changes. The
 focused Cowork suite passes all 7 cases, lifecycle source and test typechecks
 pass, strict OpenSpec validation passes, and diff hygiene is clean.
 
+The Releases resource-authorship checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2j]]. One named
+module middleware now projects the ready content-workspace resource without
+constructing clean or staged adapters. The `check`, clean `checkRepository`,
+staged `checkRepository`, and `refreshReleaseInput` operations directly author
+their resource calls and preserve the exact observation bounds and final
+revalidation order.
+
+The direct Releases boundary now consumes only typed classification,
+preparation, and finalization decisions over resource facts, while the
+explicitly transitional reader still composes them for the open Packaging and
+Providers migrations. Releases no longer consumes that reader. A second concrete
+clean refusal retains precedence, while two internally eligible captures with
+different bindings return the existing `SourceChanged` eligibility issue.
+Typed failures remain closed domain results, and defects, interruption, and
+resource finalizers remain native Effect behavior. No public contract,
+release identity, resource implementation, provider state, or Personal
+content changes.
+
+The focused Releases suite passes all 78 cases, including exact six-call clean
+sequences, concrete-refusal precedence, binding-only source change, typed
+failure mapping, defects, cancellation, and finalization. Lifecycle source and
+test typechecks and strict OpenSpec validation pass. The complete lifecycle
+suite passes all 272 cases across 31 files.
+
 The package-output checkpoint completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4d]]. The neutral
 contract now exposes only its Effect resource. The Cowork Effect Platform Node

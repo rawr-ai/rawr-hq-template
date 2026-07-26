@@ -16,7 +16,7 @@ export const refreshReleaseInput = module.refreshReleaseInput.effect(function* (
   const plan = planReleaseInputRefreshObservation(request);
   if (plan.kind !== "Ready") return plan;
   const observation = yield* Effect.result(
-    context.stagedContentWorkspace.observeGitStagedIndex(plan.observationRequest)
+    context.contentWorkspace.observeGitStagedIndex(plan.observationRequest)
   );
   return observation._tag === "Failure"
     ? classifyReleaseInputRefreshObservationFailure(observation.failure)
