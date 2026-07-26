@@ -226,6 +226,38 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
     return new Map(pairs.map((pair) => [pair.subject, pair.value]));
   }
 
+  /**
+   * Ask whether one named subject is a node of one kind.
+   *
+   * @remarks
+   * The subject is named in the pattern rather than searched for among its
+   * siblings, so the read costs what it answers. Asking whether one thing is
+   * there must not cost what everything else has written: a query that binds
+   * only the kind returns every stream in the line to decide a question about
+   * one, which shows up as a read that slows as unrelated work accumulates
+   * rather than as a read that is wrong.
+   *
+   * `P.kind` witnesses existence here for the same reason {@link absent} uses
+   * it — a subject this store creates carries its kind in the transaction that
+   * creates it. At most one such fact can be observed, so comparing it
+   * discriminates the kind rather than scanning for the subject.
+   */
+  async function declaresKind(
+    subject: string,
+    kind: string,
+    at: number | undefined
+  ): Promise<boolean> {
+    const rows = await ledger.select({
+      ledger: ledgerRef,
+      at,
+      query: {
+        select: ["k"],
+        where: [{ subject: term.iri(subject), predicate: term.iri(P.kind), object: term.var("k") }],
+      },
+    });
+    return rows.some((row) => row.k === kind);
+  }
+
   return {
     async ensureLedger(): Promise<void> {
       await ledger.ensureLedger({ ledger: ledgerRef });
@@ -236,17 +268,7 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
     },
 
     async streamExists(streamId: string, at?: number): Promise<boolean> {
-      const rows = await ledger.select({
-        ledger: ledgerRef,
-        at,
-        query: {
-          select: ["s"],
-          where: [
-            { subject: term.var("s"), predicate: term.iri(P.kind), object: term.literal("Stream") },
-          ],
-        },
-      });
-      return rows.some((row) => row.s === streamIri(streamId));
+      return await declaresKind(streamIri(streamId), "Stream", at);
     },
 
     /**
@@ -346,23 +368,13 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
       return { applied: receipt.applied, t: receipt.t };
     },
 
+    /**
+     * @remarks
+     * The stream is already named inside the item's subject IRI, so binding it
+     * separately would restate what the subject says rather than narrow it.
+     */
     async itemExists(streamId: string, itemId: string, at?: number): Promise<boolean> {
-      const rows = await ledger.select({
-        ledger: ledgerRef,
-        at,
-        query: {
-          select: ["s"],
-          where: [
-            { subject: term.var("s"), predicate: term.iri(P.kind), object: term.literal("Item") },
-            {
-              subject: term.var("s"),
-              predicate: term.iri(P.ofStream),
-              object: term.iri(streamIri(streamId)),
-            },
-          ],
-        },
-      });
-      return rows.some((row) => row.s === itemIri(streamId, itemId));
+      return await declaresKind(itemIri(streamId, itemId), "Item", at);
     },
 
     /**
