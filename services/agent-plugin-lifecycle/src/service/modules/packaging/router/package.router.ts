@@ -1,17 +1,13 @@
-import type {
-  AgentPluginPackageOutputAsyncPort,
-  PackageOutputFailure,
-  PackageOutputPublicationResult,
-} from "@rawr/resource-agent-plugin-package-output";
-import { awaitDependencyPromise } from "../../../base";
-import type { ContentWorkspaceSnapshotReader } from "../../../model/dependencies/releases";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../shared/release";
-import { deriveReleaseSelection } from "../../releases/model/policy/release-plan";
+import type { PackageOutputFailure } from "@rawr/resource-agent-plugin-package-output";
+import { Effect } from "effect";
+
+import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
   MAX_PACKAGING_FAILURE_PHASE_LENGTH,
-  type PackageAgentPluginRequest,
   type PackageAgentPluginResult,
   type PackagedReleaseIdentity,
   type PackagingFailure,
@@ -20,39 +16,32 @@ import {
 import { coworkV1PackageDigest, createCoworkV1ArchiveRequest } from "../model/helpers/cowork-v1";
 import { module } from "../module";
 
-interface PackagingDependencies {
-  readonly source: ContentWorkspaceSnapshotReader;
-  readonly packageOutput: AgentPluginPackageOutputAsyncPort;
-}
-
 const TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX = "...[truncated]";
 const UNREADABLE_EXTERNAL_DIAGNOSTIC = "External dependency failed without a readable diagnostic";
 
-export const packageProcedure = module.package.effect(function* ({ context, input }) {
-  return yield* awaitDependencyPromise(() =>
-    packageAgentPlugin(input, {
-      source: context.source,
-      packageOutput: context.packageOutput,
+/**
+ * Renders and publishes one deterministic package from an exact release
+ * selection while preserving the module's closed settlement result.
+ */
+export const packageAgentPlugin = module.package.effect(function* ({ context, input: request }) {
+  const inspectedAttempt = yield* Effect.result(
+    Effect.tryPromise({
+      try: () => context.source.inspect(request.contentWorkspace),
+      catch: (cause) => cause,
     })
   );
-});
-
-async function packageAgentPlugin(
-  request: PackageAgentPluginRequest,
-  dependencies: PackagingDependencies
-): Promise<PackageAgentPluginResult> {
-  let inspected: Awaited<ReturnType<ContentWorkspaceSnapshotReader["inspect"]>>;
-  try {
-    inspected = await dependencies.source.inspect(request.contentWorkspace);
-  } catch (error) {
+  if (inspectedAttempt._tag === "Failure") {
     return rejected(
       createFailure(
         "SourceReadFailed",
         "source-inspect",
-        `Content source inspection failed without a closed result: ${errorMessage(error)}`
+        `Content source inspection failed without a closed result: ${errorMessage(
+          inspectedAttempt.failure
+        )}`
       )
     );
   }
+  const inspected = inspectedAttempt.success;
   if (inspected.kind === "Ineligible") {
     return rejected(
       createFailure("SourceIneligible", "source-inspect", sourceIssueMessage(inspected.issues))
@@ -62,47 +51,47 @@ async function packageAgentPlugin(
   const derivation = deriveReleaseSelection(inspected.snapshot, request.mode);
   if (!derivation.ok) {
     return rejected(
-      createFailure(
-        "ReleaseConstructionFailed",
-        "release-construct",
-        derivation.issues
-          .map((issue) => issue.kind)
-          .sort()
-          .join(",")
-      )
+      createFailure("ReleaseConstructionFailed", "release-construct", "ReleaseConstruction")
     );
   }
 
-  let bytes: Uint8Array;
-  try {
-    bytes = await dependencies.packageOutput.encodeCoworkV1(
-      createCoworkV1ArchiveRequest(derivation.value)
-    );
-  } catch (error) {
+  const encodedAttempt = yield* Effect.result(
+    Effect.tryPromise({
+      try: () =>
+        context.packageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(derivation.value)),
+      catch: (cause) => cause,
+    })
+  );
+  if (encodedAttempt._tag === "Failure") {
     return rejected(
       createFailure(
         "PackageRenderFailed",
         "package-render",
-        `Cowork v1 rendering failed: ${errorDetail(error)}`
+        `Cowork v1 rendering failed: ${errorDetail(encodedAttempt.failure)}`
       )
     );
   }
+  const bytes = encodedAttempt.success;
 
-  let revalidated: Awaited<ReturnType<ContentWorkspaceSnapshotReader["revalidate"]>>;
-  try {
-    revalidated = await dependencies.source.revalidate(
-      request.contentWorkspace,
-      inspected.snapshot.eligibilityBinding
-    );
-  } catch (error) {
+  const revalidatedAttempt = yield* Effect.result(
+    Effect.tryPromise({
+      try: () =>
+        context.source.revalidate(request.contentWorkspace, inspected.snapshot.eligibilityBinding),
+      catch: (cause) => cause,
+    })
+  );
+  if (revalidatedAttempt._tag === "Failure") {
     return rejected(
       createFailure(
         "SourceReadFailed",
         "source-revalidate",
-        `Content source revalidation failed without a closed result: ${errorMessage(error)}`
+        `Content source revalidation failed without a closed result: ${errorMessage(
+          revalidatedAttempt.failure
+        )}`
       )
     );
   }
+  const revalidated = revalidatedAttempt.success;
   if (revalidated.kind === "Ineligible") {
     return rejected(
       createFailure("SourceIneligible", "source-revalidate", sourceIssueMessage(revalidated.issues))
@@ -119,24 +108,31 @@ async function packageAgentPlugin(
     outputPath: request.outputPath,
     packageDigest,
   } as const;
-  let output: PackageOutputPublicationResult;
-  try {
-    output = await dependencies.packageOutput.publish({
-      outputPath: request.outputPath,
-      bytes: new Uint8Array(bytes),
-      maxPriorOutputBytes: Math.max(bytes.byteLength, MAX_RELEASE_SET_PAYLOAD_BYTES),
-    });
-  } catch (error) {
+  const outputAttempt = yield* Effect.result(
+    Effect.uninterruptible(
+      Effect.tryPromise({
+        try: () =>
+          context.packageOutput.publish({
+            outputPath: request.outputPath,
+            bytes: new Uint8Array(bytes),
+            maxPriorOutputBytes: Math.max(bytes.byteLength, MAX_RELEASE_SET_PAYLOAD_BYTES),
+          }),
+        catch: (cause) => cause,
+      })
+    )
+  );
+  if (outputAttempt._tag === "Failure") {
     return {
       kind: "OutputUnsettled",
       primaryFailure: createFailure(
         "OutputVerifyFailed",
         "output-port",
-        `Atomic output port failed without a closed result: ${errorDetail(error)}`
+        `Atomic output port failed without a closed result: ${errorDetail(outputAttempt.failure)}`
       ),
       ...identity,
     };
   }
+  const output = outputAttempt.success;
   switch (output.kind) {
     case "RejectedBeforeOutputMutation":
       return {
@@ -160,11 +156,9 @@ async function packageAgentPlugin(
         ...identity,
       };
   }
-}
+});
 
-function packagedReleaseIdentity(
-  plan: Extract<ReturnType<typeof deriveReleaseSelection>, { readonly ok: true }>["value"]
-): PackagedReleaseIdentity {
+function packagedReleaseIdentity(plan: DerivedReleaseSelection): PackagedReleaseIdentity {
   if (plan.releaseSet !== undefined) {
     return Object.freeze({
       kind: "complete-set",

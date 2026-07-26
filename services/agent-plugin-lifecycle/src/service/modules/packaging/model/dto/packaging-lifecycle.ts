@@ -1,4 +1,5 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 
 import { ContentWorkspacePolicySchema } from "../../../../model/dto/releases/content-workspace";
 import { isCanonicalAbsolutePath } from "../../../../model/dto/structural";
@@ -10,7 +11,6 @@ import {
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
 } from "../../../../shared/release";
-import { ReleaseSelectionSchema } from "../../../releases/model/dto/release-lifecycle";
 
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;
 export const MAX_PACKAGING_OUTPUT_PATH_LENGTH = 4_096;

@@ -4,6 +4,10 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
+  type ReleaseSelection,
+  ReleaseSelectionSchema,
+} from "../../../src/service/model/dto/release-derivation";
+import {
   MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
   SourceEligibilityIssueSchema,
   sourceEligibilityIssue,
@@ -11,34 +15,30 @@ import {
 import { contract } from "../../../src/service/modules/releases/contract";
 import {
   type AgentPluginCheckRequest,
+  CheckInputSchema,
   type CheckResult,
+  CheckResultSchema,
   MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH,
   MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH,
   normalizeReleaseSourceChangedDetail,
   type ReleaseCheckIssue,
-  type ReleaseDerivationIdentity,
-  type ReleaseInputRecordRequest,
-  type ReleaseInputRecordResult,
-  type ReleaseInputRefreshRequest,
-  type ReleaseInputRefreshResult,
-  type ReleaseSelection,
-  type RepositoryCheckRequest,
-  type RepositoryCheckResult,
-  releaseConstructionIssue,
-} from "../../../src/service/modules/releases/model/dto/release-lifecycle";
-import {
-  CheckInputSchema,
-  CheckResultSchema,
   ReleaseCheckIssueSchema,
+  type ReleaseDerivationIdentity,
   ReleaseDerivationIdentitySchema,
   ReleaseInputRecordInputSchema,
+  type ReleaseInputRecordRequest,
+  type ReleaseInputRecordResult,
   ReleaseInputRecordResultSchema,
   ReleaseInputRefreshInputSchema,
+  type ReleaseInputRefreshRequest,
+  type ReleaseInputRefreshResult,
   ReleaseInputRefreshResultSchema,
-  ReleaseSelectionSchema,
   RepositoryCheckInputSchema,
+  type RepositoryCheckRequest,
+  type RepositoryCheckResult,
   RepositoryCheckResultSchema,
-} from "../../../src/service/modules/releases/schemas";
+  releaseConstructionIssue,
+} from "../../../src/service/modules/releases/model/dto/release-lifecycle";
 import {
   type ReleaseInputBody,
   ReleaseInputBodySchema,

@@ -10,8 +10,9 @@ import {
   ReleaseInputRefreshResultSchema,
   RepositoryCheckInputSchema,
   RepositoryCheckResultSchema,
-} from "./schemas";
+} from "./model/dto/release-lifecycle";
 
+/** Declares the TypeBox-backed release eligibility and release-input operation boundary. */
 export const contract = {
   check: eoc
     .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({

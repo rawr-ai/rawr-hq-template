@@ -1,6 +1,7 @@
 import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { parsePluginId } from "../../../src/service/shared/release";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import {
   createGeneratedMultiMemberGitRepository,
@@ -60,6 +61,36 @@ describe("release check", () => {
         members: repository.pluginIds.map((pluginId) => ({ pluginId })),
       },
       eligibilityBinding: expect.stringMatching(/^[0-9a-f]{64}$/u),
+    });
+  });
+
+  it("maps an undeclared targeted selection into the releases module failure vocabulary", async () => {
+    root = await createOwnedFixtureRoot();
+    const repository = await createGeneratedMultiMemberGitRepository(root);
+    const client = createLifecycleTestClient({
+      contentWorkspace: makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE }),
+    });
+    const pluginId = parsePluginId("fixture-missing");
+    if (!pluginId.ok) throw new Error("Test plugin ID must be valid");
+    const mode = { kind: "targeted" as const, pluginId: pluginId.value };
+
+    await expect(
+      client.releases.check(
+        {
+          contentWorkspace: repository.policy,
+          mode,
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
+      kind: "IneligibleReport",
+      mode,
+      issues: [
+        {
+          kind: "ReleaseConstruction",
+          detail: "selected plugin is not declared by the release input",
+        },
+      ],
     });
   });
 });

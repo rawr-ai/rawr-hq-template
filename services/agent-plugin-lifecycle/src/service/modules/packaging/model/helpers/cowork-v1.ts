@@ -2,9 +2,9 @@ import type {
   CoworkV1ArchiveEncodingRequest,
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
+import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
   type AgentPluginRelease,
-  type AgentPluginReleaseSet,
   contentDigest,
   parseReleaseRelativePath,
   payloadEntryBytes,
@@ -29,13 +29,8 @@ export interface CoworkV1ProtocolEntrySize {
   readonly byteLength: number;
 }
 
-export interface PackageReleaseSelection {
-  readonly releases: readonly AgentPluginRelease[];
-  readonly releaseSet?: AgentPluginReleaseSet;
-}
-
 export function createCoworkV1ArchiveRequest(
-  selection: PackageReleaseSelection
+  selection: DerivedReleaseSelection
 ): CoworkV1ArchiveEncodingRequest {
   return Object.freeze({
     entries: collectCoworkEntries(selection),
@@ -51,7 +46,7 @@ export function coworkV1PackageDigest(bytes: Uint8Array): PackageDigest {
   return `pkg1_${digest.slice("sha256_".length)}`;
 }
 
-function collectCoworkEntries(selection: PackageReleaseSelection): readonly PackageArchiveEntry[] {
+function collectCoworkEntries(selection: DerivedReleaseSelection): readonly PackageArchiveEntry[] {
   const releases = verifiedSelectionReleases(selection);
   assertCoworkV1ProtocolBounds(protocolEntrySizes(releases, selection.releaseSet !== undefined));
   const entries = releases.flatMap((release) =>
@@ -136,7 +131,7 @@ function collectReleaseEntries(release: AgentPluginRelease, prefix: string): Pac
 }
 
 function verifiedSelectionReleases(
-  selection: PackageReleaseSelection
+  selection: DerivedReleaseSelection
 ): readonly AgentPluginRelease[] {
   if (selection.releaseSet === undefined && selection.releases.length !== 1) {
     throw new Error("Targeted packaging requires exactly one release");

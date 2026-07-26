@@ -659,6 +659,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   source laws in the Habitat-owned repository gate, and run normalized
   workspace lint plus standing architecture, oRPC/Effect-oRPC, TypeScript,
   testing, and structural-quality reviews.
+- [x] 5.7e2a Promote only the release derivation shared by release eligibility
+  and packaging into the root service model. Keep the TypeBox selection and
+  inert constructed release artifacts neutral; map release-check identity,
+  issues, and package failures in their owning handlers. Delete the sibling
+  derivation import, duplicate package selection type, loose schema barrels,
+  router indexes, detached package runner, and generic dependency-to-Effect
+  adaptation from the touched operations. Preserve exact check results,
+  package failure text, archive bytes, package digests, output settlement, and
+  provider selection. Do not claim the packaging context or full service is
+  sealed while its remaining source reader and the legacy release family still
+  await owner-correct placement.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
