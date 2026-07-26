@@ -36,6 +36,14 @@
   **The condition that reverses this is a provider that must live out of
   process** — a remote ledger, or one owned by another team. At that point the
   port becomes a boundary, and contract-first oRPC is the shape it should take.
+- A remote *substrate* does not meet that condition, and the Fluree provider is
+  the case worth stating: the server it talks to is elsewhere, the provider is
+  not. It is constructed by the application and handed to the service as a value,
+  so the call from service to port crosses nothing. The wire it owns is behind
+  the port, which is the definition of a vendor mechanic. The boundary that does
+  need a contract is the frame service's own caller surface, and that one is
+  already contract-first oRPC — one layer above this port, where a caller
+  actually arrives.
 
 ## Behavior
 
