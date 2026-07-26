@@ -539,6 +539,36 @@ cases. Resource, provider, and lifecycle typechecks, strict OpenSpec, touched
 file formatting, and diff hygiene pass. This checkpoint changes no provider
 home, Personal repository, Oclif command surface, or live lifecycle state.
 
+The typed staged-index checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4g]]. The
+content-workspace contract now derives one closed staged-entry structure from
+TypeBox and returns frozen mode, object ID, stage, and path facts. The Git
+Effect Platform Node provider owns terminal-NUL framing, fatal UTF-8 decoding,
+object ID width for the repository format, generic path admission, exact
+path-and-stage duplicate refusal, entry and byte bounds, and path-then-stage
+ordering. Conflict stages and nonregular modes cross as facts; only regular
+selected entries contribute blob materialization.
+
+Releases middleware passes the same ready resource through one narrowed
+reference. `checkRepository` and `refreshReleaseInput` invoke it inside their
+Effect-oRPC handlers and translate its typed failures there. Pure module policy
+classifies a nonregular mode as `InvalidTree` before a conflict stage as
+`DirtyIndex`, and retains release path branding, case/NFC collision refusal
+among distinct paths, membership and payload exactness, opening/closing
+identity, and deterministic staged-binding construction from the complete
+typed entry set. The mirrored staged anchor, binding, blob, observation,
+request, result, reader factory, and port are deleted. Raw index bytes remain
+only in the separately owned ordinary workspace evidence observation.
+
+No provider home, Personal repository, Oclif command surface, or live
+lifecycle state changes in this checkpoint. The Git provider suite passes 27
+tests with 126 assertions; the focused Releases suites pass 31 tests, and the
+complete lifecycle suite passes 258 tests. Resource, provider, and lifecycle
+typechecks, Habitat source law and formatting, strict OpenSpec, and diff hygiene
+pass. The repository-wide imported-export documentation target remains red on
+its pre-existing corpus and its Nx input glob is invalid; neither condition is
+changed or bypassed here.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

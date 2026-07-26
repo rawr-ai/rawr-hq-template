@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 
 import type {
+  ContentWorkspaceFailure,
+  GitStagedIndexEntry,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
@@ -268,7 +270,14 @@ describe("releases.refreshReleaseInput", () => {
       ...observation,
       closing: {
         ...observation.closing,
-        indexEntries: encoder.encode("100644 " + "f".repeat(40) + " 0\tchanged\0"),
+        entries: Object.freeze([
+          Object.freeze({
+            path: "changed",
+            mode: "100644",
+            objectId: "f".repeat(40),
+            stage: 0,
+          }),
+        ]),
       },
     };
     const client = createLifecycleTestClient({
@@ -285,6 +294,69 @@ describe("releases.refreshReleaseInput", () => {
       mode: "staged",
       detail: "Git HEAD, ref, repository, or index changed during staged observation",
     });
+  });
+
+  it("maps typed staged resource failures into the public refresh vocabulary", async () => {
+    const cases: readonly Readonly<{
+      reason: ContentWorkspaceFailure["reason"];
+      code: string;
+    }>[] = [
+      { reason: "Aliased", code: "AliasedLocator" },
+      { reason: "InvalidInput", code: "InvalidTree" },
+      { reason: "UnsupportedEntry", code: "InvalidTree" },
+      { reason: "LimitExceeded", code: "PayloadMismatch" },
+      { reason: "GitFailed", code: "GitFailure" },
+    ];
+
+    for (const fixture of cases) {
+      const detail = `${fixture.reason} refresh fixture`;
+      const client = createLifecycleTestClient({
+        contentWorkspace: {
+          ...unavailableContentWorkspace(),
+          observeGitStagedIndex: () => Effect.fail(contentWorkspaceFailure(fixture.reason, detail)),
+        },
+      });
+
+      await expect(
+        client.releases.refreshReleaseInput(refreshRequest(["cognition"]), testInvocation)
+      ).resolves.toEqual({
+        kind: "RepositoryIneligible",
+        mode: "staged",
+        issues: [{ code: fixture.code, detail }],
+      });
+    }
+  });
+
+  it("propagates staged resource defects and interruption through refreshReleaseInput", async () => {
+    const defect = new Error("staged refresh defect");
+    const defectiveClient = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: () => Effect.die(defect),
+      },
+    });
+
+    await expect(
+      defectiveClient.releases.refreshReleaseInput(refreshRequest(["cognition"]), testInvocation)
+    ).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      cause: defect,
+    });
+
+    const interruptedClient = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: () => Effect.never,
+      },
+    });
+    const controller = new AbortController();
+    const interrupted = interruptedClient.releases.refreshReleaseInput(
+      refreshRequest(["cognition"]),
+      { ...testInvocation, signal: controller.signal }
+    );
+    controller.abort(new Error("staged refresh cancelled"));
+
+    await expect(interrupted).rejects.toBeDefined();
   });
 
   it("owns one request snapshot across deferred Git observation", async () => {
@@ -495,15 +567,17 @@ function stagedEntry(path: string, contents: Uint8Array, mode: 0o644 | 0o755 = 0
 
 function stagedObservation(entries: readonly StagedEntry[]): GitStagedIndexObservation {
   const sorted = [...entries].sort((left, right) => codeUnitCompare(left.path, right.path));
-  const indexEntries = encoder.encode(
-    sorted
-      .map(
-        (entry) =>
-          `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-      )
-      .join("")
+  const indexFacts: readonly GitStagedIndexEntry[] = Object.freeze(
+    sorted.map((entry) =>
+      Object.freeze({
+        path: entry.path,
+        mode: entry.mode === 0o755 ? "100755" : "100644",
+        objectId: entry.objectId,
+        stage: 0,
+      })
+    )
   );
-  const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
+  const binding = Object.freeze({ anchor: stagedAnchor(), entries: indexFacts });
   const blobs = new Map<string, Readonly<{ objectId: string; bytes: Uint8Array }>>();
   for (const entry of sorted.filter(
     (candidate) =>
@@ -532,6 +606,18 @@ function stagedAnchor(): GitWorkspaceAnchor {
     tree: "b".repeat(40),
     objectFormat: "sha1",
     remoteUrls: Object.freeze([remoteUrl]),
+  });
+}
+
+function contentWorkspaceFailure(
+  reason: ContentWorkspaceFailure["reason"],
+  detail: string
+): ContentWorkspaceFailure {
+  return Object.freeze({
+    _tag: "ContentWorkspaceFailure",
+    operation: "observe-git-staged-index",
+    reason,
+    detail,
   });
 }
 

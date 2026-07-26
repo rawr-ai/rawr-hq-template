@@ -23,9 +23,10 @@
   those meanings span capability modules. Providers owns selected-content
   structure, native marketplace validation, resolution, and its narrowed
   content-workspace read port because no other module consumes that meaning.
-- The Releases module owns staged-index observation DTOs, its ready observation
-  port, resource normalization, and staged eligibility policy. Resource
-  provenance does not promote transition-specific meaning into the root model.
+- The Releases module owns staged eligibility policy and directly consumes the
+  narrowed ready content-workspace resource. Native index protocol belongs to
+  the provider; resource provenance does not promote transition-specific
+  meaning into the root model.
 - Content-workspace, versioned-content, clock, package-output, and
   native-provider mechanics remain behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app

@@ -14,8 +14,9 @@
 
 ## Boundaries
 
-- The contract exposes raw repository, blob, index, and filesystem facts plus
-  typed regular-file tree entries.
+- The contract exposes raw repository, blob, ordinary workspace evidence, and
+  filesystem facts plus typed regular-file tree entries and typed staged-index
+  facts.
   Eligibility, release policy, provenance meaning, and content interpretation
   belong to the consuming service.
 - A repository path is a locator, not executable identity or code-sharing
@@ -29,8 +30,8 @@
 
 - The resource observes caller-selected refs, trees, blobs, indexes, and paths
   or performs a specifically requested workspace transition while preserving
-  bounds and identity. Tree observations return closed regular-entry facts;
-  providers own native tree protocol decoding.
+  bounds and identity. Tree and staged-index observations return closed typed
+  facts; providers own their native Git protocol decoding.
 
 ## Concepts
 
@@ -47,7 +48,7 @@
 ## Interfaces
 
 - Semantic owners provide locators, object identities, admitted paths, and
-  bounds through the contract; providers return exact observations,
+  bounds through the contract; providers return exact typed observations,
   transition receipts, or typed failures.
 
 ## Routing

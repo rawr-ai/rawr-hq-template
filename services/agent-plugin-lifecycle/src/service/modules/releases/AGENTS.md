@@ -20,10 +20,9 @@
   module owns staged eligibility, refresh policy, operation DTOs, handlers,
   results, and issues; it does not publish packages, update vendor content, or
   mutate native provider state.
-- The module also owns staged observation DTOs, its ready observation port,
-  resource normalization, and opening/closing binding policy. Clean and staged
-  repository mechanics remain behind distinct workspace handoffs; those
-  handoffs are not source authorities.
+- The module directly consumes a narrowed ready staged-index resource reference
+  and owns opening/closing binding policy. Native Git decoding remains in the
+  resource provider; no module DTO, reader, or adapter mirrors that boundary.
 
 ## Behavior
 
@@ -41,15 +40,16 @@
 
 ## Flow
 
-- A caller selects clean or staged evaluation; the handler obtains the required
-  exact-context observation, applies shared derivation and module operation
-  policy, revalidates identity, and returns eligibility or structured issues.
+- A caller selects clean or staged evaluation; the handler invokes the ready
+  workspace resource, translates its typed failures, applies shared derivation
+  and module policy, revalidates identity, and returns eligibility or
+  structured issues.
 
 ## Interfaces
 
 - `check`, `releaseInputRecord`, `refreshReleaseInput`, and `checkRepository`
-  form the caller surface. Clean and staged content-workspace handoffs supply
-  exact Git observations without owning them.
+  form the caller surface. Clean policy and the narrowed staged resource
+  reference supply exact Git facts without acquiring domain authority.
 
 ## Routing
 

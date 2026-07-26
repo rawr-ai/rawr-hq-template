@@ -1324,6 +1324,7 @@ describe("Git Effect Platform content workspace provider", () => {
     await writeFile(path.join(root, "release.json"), "release\n");
     await writeFile(path.join(root, "plugins", "one", "payload.txt"), "payload\n");
     await writeFile(path.join(root, "unrelated.bin"), "x".repeat(8 * 1024));
+    await symlink("release.json", path.join(root, "unrelated-link"));
     await git(root, "add", ".");
     await writeFile(path.join(root, "plugins", "one", "payload.txt"), "worktree-after-add\n");
 
@@ -1345,6 +1346,21 @@ describe("Git Effect Platform content workspace provider", () => {
     );
 
     expect(observation.opening).toEqual(observation.closing);
+    expect(observation.opening.entries.map(({ path: entryPath }) => entryPath)).toEqual([
+      ".gitkeep",
+      "plugins/one/payload.txt",
+      "release.json",
+      "unrelated-link",
+      "unrelated.bin",
+    ]);
+    expect(observation.opening.entries).toContainEqual({
+      path: "unrelated-link",
+      mode: "120000",
+      objectId: expect.stringMatching(/^[0-9a-f]{40}$/u),
+      stage: 0,
+    });
+    expect(Object.isFrozen(observation.opening.entries)).toBe(true);
+    expect(observation.opening.entries.every((entry) => Object.isFrozen(entry))).toBe(true);
     expect(observation.blobs.map((blob) => new TextDecoder().decode(blob.bytes)).sort()).toEqual([
       "payload\n",
       "release\n",
@@ -1352,6 +1368,160 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(await readFile(path.join(root, "plugins", "one", "payload.txt"), "utf8")).toBe(
       "worktree-after-add\n"
     );
+  });
+
+  test("admits ordered SHA-256 conflict and nonregular staged facts without materializing them", async () => {
+    const root = await createRepository("sha256");
+    await git(root, "remote", "add", "origin", root);
+    const objectId = "a".repeat(64);
+    const wrapper = path.join(root, "git-staged-sha256-wrapper");
+    await writeFile(
+      wrapper,
+      [
+        "#!/bin/sh",
+        'if [ "$1" = "ls-files" ]; then',
+        `  printf '160000 ${objectId} 0\\tzeta\\0'; printf '100644 ${objectId} 2\\tconflict.txt\\0'; printf '100644 ${objectId} 1\\tconflict.txt\\0'`,
+        "  exit 0",
+        "fi",
+        `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+        "",
+      ].join("\n")
+    );
+    await chmod(wrapper, 0o755);
+
+    const observation = unwrap(
+      await runNodeContentWorkspace(
+        makeContentWorkspaceResource({ gitExecutable: wrapper }).observeGitStagedIndex({
+          locator: root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+          materializedPaths: [],
+          materializedRoots: [],
+          maxEntries: 3,
+          maxIndexBytes: 1024,
+          maxBlobBytes: 1,
+        })
+      )
+    );
+
+    expect(observation.opening.entries).toEqual([
+      { path: "conflict.txt", mode: "100644", objectId, stage: 1 },
+      { path: "conflict.txt", mode: "100644", objectId, stage: 2 },
+      { path: "zeta", mode: "160000", objectId, stage: 0 },
+    ]);
+    expect(observation.opening).toEqual(observation.closing);
+    expect(observation.blobs).toEqual([]);
+  });
+
+  test("rejects malformed staged Git records at the public resource boundary", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    const objectId = "a".repeat(40);
+    const cases = [
+      {
+        name: "truncated",
+        output: `printf '100644 ${objectId} 0\\tpayload.txt'`,
+        reason: "GitFailed",
+        detail: "terminal NUL",
+        maxEntries: 10,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "malformed",
+        output: "printf 'malformed\\0'",
+        reason: "GitFailed",
+        detail: "malformed",
+        maxEntries: 10,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "invalid-utf8",
+        output: "printf '\\377\\0'",
+        reason: "GitFailed",
+        detail: "invalid UTF-8",
+        maxEntries: 10,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "wrong-object-format",
+        output: `printf '100644 ${"a".repeat(64)} 0\\tpayload.txt\\0'`,
+        reason: "GitFailed",
+        detail: "object format",
+        maxEntries: 10,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "invalid-path",
+        output: `printf '100644 ${objectId} 0\\t../escape\\0'`,
+        reason: "UnsupportedEntry",
+        detail: "staged-entry contract",
+        maxEntries: 10,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "duplicate-path-stage",
+        output: `printf '100644 ${objectId} 0\\tpayload.txt\\0'; printf '100755 ${objectId} 0\\tpayload.txt\\0'`,
+        reason: "GitFailed",
+        detail: "duplicate path and stage",
+        maxEntries: 10,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "entry-bound",
+        output: `printf '100644 ${objectId} 0\\tone\\0'; printf '100644 ${objectId} 0\\ttwo\\0'`,
+        reason: "LimitExceeded",
+        detail: "maxEntries",
+        maxEntries: 1,
+        maxIndexBytes: 1024,
+      },
+      {
+        name: "byte-bound",
+        output: `printf '100644 ${objectId} 0\\tpayload.txt\\0'`,
+        reason: "LimitExceeded",
+        detail: "exceeds",
+        maxEntries: 10,
+        maxIndexBytes: 1,
+      },
+    ];
+
+    for (const fixture of cases) {
+      const wrapper = path.join(root, `git-staged-${fixture.name}-wrapper`);
+      await writeFile(
+        wrapper,
+        [
+          "#!/bin/sh",
+          'if [ "$1" = "ls-files" ]; then',
+          `  ${fixture.output}`,
+          "  exit 0",
+          "fi",
+          `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+          "",
+        ].join("\n")
+      );
+      await chmod(wrapper, 0o755);
+
+      const result = await runNodeContentWorkspace(
+        makeContentWorkspaceResource({ gitExecutable: wrapper }).observeGitStagedIndex({
+          locator: root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+          materializedPaths: [],
+          materializedRoots: [],
+          maxEntries: fixture.maxEntries,
+          maxIndexBytes: fixture.maxIndexBytes,
+          maxBlobBytes: 1,
+        })
+      );
+
+      expect(result).toMatchObject({
+        ok: false,
+        failure: {
+          operation: "observe-git-staged-index",
+          reason: fixture.reason,
+          detail: expect.stringContaining(fixture.detail),
+        },
+      });
+    }
   });
 
   test("binds local ancestry and changed paths to exact commits", async () => {

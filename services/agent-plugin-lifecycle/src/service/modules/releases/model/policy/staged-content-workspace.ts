@@ -1,4 +1,12 @@
 import { createHash } from "node:crypto";
+import type {
+  ContentWorkspaceFailure,
+  ContentWorkspaceResource,
+  GitStagedIndexBinding,
+  GitStagedIndexEntry,
+  GitStagedIndexObservation,
+  GitWorkspaceAnchor,
+} from "@rawr/resource-content-workspace";
 import {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
@@ -13,11 +21,6 @@ import {
 import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
-  StagedIndexBindingObservation,
-  StagedIndexObservation,
-  StagedIndexObservationRequest,
-  StagedIndexObservationResult,
-  StagedObservationFailureReason,
 } from "#agent-plugin-lifecycle-service/modules/releases/model/dto/staged-content-workspace";
 import {
   authorReleaseInputRefresh,
@@ -41,8 +44,6 @@ import {
   parseRepositoryIdentity,
   type ReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
-
-const decoder = new TextDecoder("utf-8", { fatal: true });
 
 export const MAX_STAGED_INDEX_ENTRIES = 200_000;
 export const MAX_STAGED_INDEX_BYTES = 100 * 1024 * 1024;
@@ -69,10 +70,14 @@ interface StagedMemberRoot {
   readonly root: ReleaseRelativePath;
 }
 
+type ObserveStagedIndexInput = Parameters<
+  ContentWorkspaceResource<never>["observeGitStagedIndex"]
+>[0];
+
 export type StagedReleaseInputClassification =
   | Readonly<{
       kind: "ReadyForMaterialization";
-      opening: StagedIndexBindingObservation;
+      opening: GitStagedIndexBinding;
       releaseInput: AgentPluginReleaseInput;
       memberRoots: readonly StagedMemberRoot[];
     }>
@@ -122,10 +127,10 @@ export function validateStagedContentWorkspacePolicy(
 
 export function releaseInputObservationRequest(
   policy: StagedContentWorkspacePolicy
-): StagedIndexObservationRequest {
+): ObserveStagedIndexInput {
   return Object.freeze({
     locator: policy.locator,
-    remoteName: policy.remoteName,
+    remoteSelection: Object.freeze({ kind: "Named", remoteName: policy.remoteName }),
     refName: policy.refName,
     materializedPaths: Object.freeze([policy.releaseInputPath]),
     materializedRoots: Object.freeze([]),
@@ -138,10 +143,10 @@ export function releaseInputObservationRequest(
 export function materializationObservationRequest(
   policy: StagedContentWorkspacePolicy,
   memberRoots: readonly StagedMemberRoot[]
-): StagedIndexObservationRequest {
+): ObserveStagedIndexInput {
   return Object.freeze({
     locator: policy.locator,
-    remoteName: policy.remoteName,
+    remoteSelection: Object.freeze({ kind: "Named", remoteName: policy.remoteName }),
     refName: policy.refName,
     materializedPaths: Object.freeze([policy.releaseInputPath]),
     materializedRoots: Object.freeze(
@@ -156,7 +161,7 @@ export function materializationObservationRequest(
 export type ReleaseInputRefreshObservationPlan =
   | Readonly<{
       kind: "Ready";
-      observationRequest: StagedIndexObservationRequest;
+      observationRequest: ObserveStagedIndexInput;
       memberRoots: readonly StagedMemberRoot[];
     }>
   | Extract<ReleaseInputRefreshResult, { kind: "RepositoryIneligible" }>;
@@ -172,7 +177,10 @@ export function planReleaseInputRefreshObservation(
     kind: "Ready",
     observationRequest: Object.freeze({
       locator: request.contentWorkspace.locator,
-      remoteName: request.contentWorkspace.remoteName,
+      remoteSelection: Object.freeze({
+        kind: "Named",
+        remoteName: request.contentWorkspace.remoteName,
+      }),
       refName: request.contentWorkspace.refName,
       materializedPaths: Object.freeze([request.contentWorkspace.releaseInputPath]),
       materializedRoots: Object.freeze(
@@ -189,14 +197,8 @@ export function planReleaseInputRefreshObservation(
 export function classifyReleaseInputRefreshObservation(
   request: ReleaseInputRefreshRequest,
   memberRoots: readonly StagedMemberRoot[],
-  result: StagedIndexObservationResult
+  observation: GitStagedIndexObservation
 ): ReleaseInputRefreshResult {
-  if (result.kind === "Failed") {
-    return refreshInspectionFailure(
-      classifyStagedObservationFailure(result.reason, result.detail, "payloads")
-    );
-  }
-  const observation = result.observation;
   if (!sameStagedIndexBinding(observation.opening, observation.closing)) {
     return refreshSourceChanged(
       "Git HEAD, ref, repository, or index changed during staged observation"
@@ -223,10 +225,7 @@ export function classifyReleaseInputRefreshObservation(
       return releaseInputRefreshIneligible(anchorIssue.code, anchorIssue.detail);
     }
 
-    const entries = parseStagedIndex(
-      observation.opening.indexEntries,
-      observation.opening.anchor.objectFormat
-    );
+    const entries = classifyStagedIndexEntries(observation.opening.entries);
     const pluginTreeIssue = validateDeclaredPluginTree({
       pluginRoot: policy.pluginRoot,
       paths: entries.map((entry) => entry.path),
@@ -294,11 +293,8 @@ export function classifyReleaseInputRefreshObservation(
 
 export function classifyStagedReleaseInputObservation(
   policy: StagedContentWorkspacePolicy,
-  result: StagedIndexObservationResult
+  observation: GitStagedIndexObservation
 ): StagedReleaseInputClassification {
-  if (result.kind === "Failed")
-    return classifyStagedObservationFailure(result.reason, result.detail, "release-input");
-  const observation = result.observation;
   if (!sameStagedIndexBinding(observation.opening, observation.closing)) {
     return sourceChanged("Git HEAD, ref, repository, or index changed during staged observation");
   }
@@ -306,10 +302,7 @@ export function classifyStagedReleaseInputObservation(
   try {
     const anchorIssue = validateAnchor(observation.opening.anchor, policy);
     if (anchorIssue !== undefined) return stagedIneligible(anchorIssue.code, anchorIssue.detail);
-    const openingEntries = parseStagedIndex(
-      observation.opening.indexEntries,
-      observation.opening.anchor.objectFormat
-    );
+    const openingEntries = classifyStagedIndexEntries(observation.opening.entries);
     const openingBlobByObjectId = stagedBlobMap(
       observation,
       openingEntries,
@@ -384,11 +377,8 @@ export function classifyStagedMaterializationObservation(
     StagedReleaseInputClassification,
     { kind: "ReadyForMaterialization" }
   >,
-  result: StagedIndexObservationResult
+  observation: GitStagedIndexObservation
 ): StagedContentWorkspaceInspection {
-  if (result.kind === "Failed")
-    return classifyStagedObservationFailure(result.reason, result.detail, "payloads");
-  const observation = result.observation;
   if (
     !sameStagedIndexBinding(observation.opening, observation.closing) ||
     !sameStagedIndexBinding(releaseInputClassification.opening, observation.opening)
@@ -399,7 +389,7 @@ export function classifyStagedMaterializationObservation(
 
   try {
     const anchor = observation.opening.anchor;
-    const entries = parseStagedIndex(observation.opening.indexEntries, anchor.objectFormat);
+    const entries = classifyStagedIndexEntries(observation.opening.entries);
     const materializedRoots = releaseInputClassification.memberRoots.map((entry) => entry.root);
     const blobByObjectId = stagedBlobMap(
       observation,
@@ -481,7 +471,7 @@ export function classifyStagedMaterializationObservation(
       refName: policy.refName,
       headCommit: commit,
       headTree: tree,
-      index: hashBytes(observation.opening.indexEntries),
+      entries: observation.opening.entries,
       objectBindings,
       blobs: [...observation.blobs]
         .sort((left, right) => compareCanonicalText(left.objectId, right.objectId))
@@ -507,27 +497,34 @@ export function classifyStagedMaterializationObservation(
 }
 
 export function classifyStagedObservationFailure(
-  reason: StagedObservationFailureReason,
-  detail: string,
+  failure: ContentWorkspaceFailure,
   phase: "release-input" | "payloads"
 ): Exclude<StagedContentWorkspaceInspection, { kind: "StagedContentWorkspaceEligible" }> {
-  switch (reason) {
+  switch (failure.reason) {
     case "Aliased":
-      return stagedIneligible("AliasedLocator", detail);
+      return stagedIneligible("AliasedLocator", failure.detail);
     case "InvalidInput":
-      return stagedIneligible("InvalidTree", detail);
+    case "UnsupportedEntry":
+      return stagedIneligible("InvalidTree", failure.detail);
     case "LimitExceeded":
       return stagedIneligible(
         phase === "release-input" ? "ReleaseInputMismatch" : "PayloadMismatch",
-        detail
+        failure.detail
       );
-    case "Unavailable":
-      return stagedIneligible("GitFailure", detail);
+    default:
+      return stagedIneligible("GitFailure", failure.detail);
   }
 }
 
+/** Maps a staged resource failure into the refresh operation's public domain result. */
+export function classifyReleaseInputRefreshObservationFailure(
+  failure: ContentWorkspaceFailure
+): ReleaseInputRefreshResult {
+  return refreshInspectionFailure(classifyStagedObservationFailure(failure, "payloads"));
+}
+
 function validateAnchor(
-  anchor: StagedIndexBindingObservation["anchor"],
+  anchor: GitWorkspaceAnchor,
   policy: StagedContentWorkspacePolicy
 ): SourceEligibilityIssue | undefined {
   if (anchor.refName !== policy.refName) {
@@ -548,53 +545,38 @@ function validateAnchor(
   return undefined;
 }
 
-function parseStagedIndex(
-  bytes: Uint8Array,
-  objectFormat: "sha1" | "sha256"
+function classifyStagedIndexEntries(
+  facts: readonly GitStagedIndexEntry[]
 ): readonly StagedTreeEntry[] {
-  const records = splitNul(bytes);
-  if (records.length > MAX_STAGED_INDEX_ENTRIES) {
-    throw stagedError("InvalidTree", "Git index exceeds the staged entry bound");
-  }
   const entries: StagedTreeEntry[] = [];
-  const exactPaths = new Set<string>();
-  const portablePaths = new Set<string>();
-  const objectPattern = objectFormat === "sha1" ? /^[0-9a-f]{40}$/u : /^[0-9a-f]{64}$/u;
-  for (const record of records) {
-    const match = /^(100644|100755) ([0-9a-f]+) ([0-3])\t(.+)$/u.exec(record);
-    if (
-      match === null ||
-      match[1] === undefined ||
-      match[2] === undefined ||
-      match[3] === undefined
-    ) {
-      throw stagedError("InvalidTree", "Git index contains a non-regular or malformed entry");
+  const portablePaths = new Map<string, ReleaseRelativePath>();
+  for (const fact of facts) {
+    if (fact.mode !== "100644" && fact.mode !== "100755") {
+      throw stagedError("InvalidTree", "Git index contains a non-regular entry");
     }
-    if (match[3] !== "0") throw stagedError("DirtyIndex", "Git index contains an unmerged entry");
-    if (!objectPattern.test(match[2])) {
-      throw stagedError("InvalidTree", "Git index object identity has the wrong format");
-    }
-    const pathResult = parseReleaseRelativePath(match[4], "stagedIndex.path");
+    if (fact.stage !== 0) throw stagedError("DirtyIndex", "Git index contains an unmerged entry");
+    const pathResult = parseReleaseRelativePath(fact.path, "stagedIndex.path");
     if (!pathResult.ok) throw stagedError("InvalidTree", "Git index contains a noncanonical path");
     const portablePath = pathResult.value.normalize("NFC").toLowerCase();
-    if (exactPaths.has(pathResult.value) || portablePaths.has(portablePath)) {
+    const existingPath = portablePaths.get(portablePath);
+    if (existingPath !== undefined && existingPath !== pathResult.value) {
       throw stagedError("InvalidTree", `Git index contains a colliding path: ${pathResult.value}`);
     }
-    exactPaths.add(pathResult.value);
-    portablePaths.add(portablePath);
+    portablePaths.set(portablePath, pathResult.value);
     entries.push(
       Object.freeze({
-        mode: match[1] === "100755" ? 0o755 : 0o644,
-        objectId: match[2],
+        mode: fact.mode === "100755" ? 0o755 : 0o644,
+        objectId: fact.objectId,
         path: pathResult.value,
       })
     );
   }
+  entries.sort((left, right) => compareCanonicalText(left.path, right.path));
   return Object.freeze(entries);
 }
 
 function stagedBlobMap(
-  observation: StagedIndexObservation,
+  observation: GitStagedIndexObservation,
   entries: readonly StagedTreeEntry[],
   materializedPaths: readonly string[],
   materializedRoots: readonly string[]
@@ -634,16 +616,15 @@ function requireStagedBlob(
 }
 
 function sameStagedIndexBinding(
-  left: StagedIndexBindingObservation,
-  right: StagedIndexBindingObservation
+  left: GitStagedIndexBinding,
+  right: GitStagedIndexBinding
 ): boolean {
-  return sameAnchor(left.anchor, right.anchor) && equalBytes(left.indexEntries, right.indexEntries);
+  return (
+    sameAnchor(left.anchor, right.anchor) && sameStagedIndexEntries(left.entries, right.entries)
+  );
 }
 
-function sameAnchor(
-  left: StagedIndexBindingObservation["anchor"],
-  right: StagedIndexBindingObservation["anchor"]
-): boolean {
+function sameAnchor(left: GitWorkspaceAnchor, right: GitWorkspaceAnchor): boolean {
   return (
     left.root === right.root &&
     left.rootDevice === right.rootDevice &&
@@ -658,29 +639,23 @@ function sameAnchor(
   );
 }
 
-function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  if (left.byteLength !== right.byteLength) return false;
-  let difference = 0;
-  for (let index = 0; index < left.byteLength; index += 1) {
-    const leftByte = left[index];
-    const rightByte = right[index];
-    if (leftByte === undefined || rightByte === undefined) return false;
-    difference |= leftByte ^ rightByte;
-  }
-  return difference === 0;
-}
-
-function splitNul(bytes: Uint8Array): readonly string[] {
-  if (bytes.byteLength === 0) return [];
-  let decoded: string;
-  try {
-    decoded = decoder.decode(bytes);
-  } catch {
-    throw stagedError("InvalidTree", "Git index output is not valid UTF-8");
-  }
-  if (!decoded.endsWith("\0"))
-    throw stagedError("InvalidTree", "Git index output lacks a trailing NUL");
-  return decoded.slice(0, -1).split("\0");
+function sameStagedIndexEntries(
+  left: readonly GitStagedIndexEntry[],
+  right: readonly GitStagedIndexEntry[]
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((entry, index) => {
+      const other = right[index];
+      return (
+        other !== undefined &&
+        entry.path === other.path &&
+        entry.mode === other.mode &&
+        entry.objectId === other.objectId &&
+        entry.stage === other.stage
+      );
+    })
+  );
 }
 
 function sameManifest(
@@ -768,7 +743,7 @@ function classificationFailure(
   if (isStagedClassificationError(error)) {
     return stagedIneligible(error.classificationCode, error.message);
   }
-  return stagedIneligible("GitFailure", error instanceof Error ? error.message : String(error));
+  throw error;
 }
 
 function refreshInspectionFailure(

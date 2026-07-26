@@ -21,13 +21,16 @@
 - Decode Git tree serialization here and return only provider-neutral regular
   entry facts; release path branding, portable collision policy, and content
   meaning remain with lifecycle consumers.
+- Decode staged-index serialization here and return provider-neutral mode,
+  object ID, stage, and path facts. Preserve conflict and nonregular entries
+  for the consuming domain to classify.
 - Keep Git command and filesystem details out of the parent contract.
 
 ## Behavior
 
 - The provider opens a caller-selected local workspace, performs exact object
   or workspace mechanics, rechecks identity around mutation, and reports raw
-  results or bounded typed regular-tree facts.
+  results or bounded typed tree and staged-index facts.
 
 ## Concepts
 

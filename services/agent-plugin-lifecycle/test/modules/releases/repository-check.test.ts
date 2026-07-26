@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
+  GitStagedIndexEntry,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
@@ -9,7 +10,6 @@ import type {
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/releases/content-workspace";
-import type { StagedIndexObservationResult } from "../../../src/service/modules/releases/model/dto/staged-content-workspace";
 import {
   addStagedObservationByteLimits,
   classifyStagedObservationFailure,
@@ -79,14 +79,7 @@ describe("releases.checkRepository", () => {
       ),
       stagedEntry("unrelated/large.bin", "6".repeat(40), 0o644, bytes("x".repeat(1024))),
     ].sort((left, right) => left.path.localeCompare(right.path));
-    const indexEntries = bytes(
-      stagedEntries
-        .map(
-          (entry) =>
-            `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-        )
-        .join("")
-    );
+    const entries = stagedIndexEntries(stagedEntries);
     const selections: Array<Readonly<{ paths: readonly string[]; roots: readonly string[] }>> = [];
     const entryLimits: number[] = [];
     const indexLimits: number[] = [];
@@ -109,9 +102,9 @@ describe("releases.checkRepository", () => {
           if (input.materializedRoots.length > 0) fullMaterializations += 1;
           const observed = fullMaterializations === 2 ? [...selected].reverse() : selected;
           return {
-            opening: { anchor: stagedAnchor(), indexEntries },
+            opening: { anchor: stagedAnchor(), entries },
             blobs: observed.map((entry) => ({ objectId: entry.objectId, bytes: entry.bytes })),
-            closing: { anchor: stagedAnchor(), indexEntries },
+            closing: { anchor: stagedAnchor(), entries },
           };
         }),
     };
@@ -252,9 +245,19 @@ describe("releases.checkRepository", () => {
     let writes = 0;
     const opening = stagedAnchor();
     const rawObservation: GitStagedIndexObservation = {
-      opening: { anchor: opening, indexEntries: bytes("100644 " + "c".repeat(40) + " 0\tbad\0") },
+      opening: {
+        anchor: opening,
+        entries: [
+          Object.freeze({ path: "bad", mode: "100644", objectId: "c".repeat(40), stage: 0 }),
+        ],
+      },
       blobs: [],
-      closing: { anchor: opening, indexEntries: bytes("malformed-new-index\0") },
+      closing: {
+        anchor: opening,
+        entries: [
+          Object.freeze({ path: "changed", mode: "100644", objectId: "d".repeat(40), stage: 0 }),
+        ],
+      },
     };
     const rawPort = {
       observeGitStagedIndex: () =>
@@ -318,7 +321,7 @@ describe("releases.checkRepository", () => {
         observeGitStagedIndex: () =>
           Effect.sync(() => {
             observations += 1;
-            return rawStagedObservation(anchorChangedObservation(releaseInputObservation));
+            return anchorChangedObservation(releaseInputObservation);
           }),
       },
     });
@@ -367,6 +370,7 @@ describe("releases.checkRepository", () => {
     const cases = [
       { reason: "Aliased", code: "AliasedLocator" },
       { reason: "InvalidInput", code: "InvalidTree" },
+      { reason: "UnsupportedEntry", code: "InvalidTree" },
       { reason: "LimitExceeded", code: "ReleaseInputMismatch" },
     ] as const;
 
@@ -395,10 +399,124 @@ describe("releases.checkRepository", () => {
     }
 
     expect(
-      classifyStagedObservationFailure("LimitExceeded", "payload overflow", "payloads")
+      classifyStagedObservationFailure(
+        contentWorkspaceFailure("LimitExceeded", "payload overflow"),
+        "payloads"
+      )
     ).toEqual({
       kind: "StagedContentWorkspaceIneligible",
       issues: [{ code: "PayloadMismatch", detail: "payload overflow" }],
+    });
+  });
+
+  it.each([
+    {
+      name: "an unmerged conflict stage",
+      code: "DirtyIndex",
+      entries: (baseline: readonly GitStagedIndexEntry[]): readonly GitStagedIndexEntry[] =>
+        baseline.map<GitStagedIndexEntry>((entry, index) =>
+          index === 0 ? Object.freeze({ ...entry, stage: 1 }) : entry
+        ),
+    },
+    {
+      name: "a nonregular staged mode",
+      code: "InvalidTree",
+      entries: (baseline: readonly GitStagedIndexEntry[]): readonly GitStagedIndexEntry[] =>
+        baseline.map<GitStagedIndexEntry>((entry, index) =>
+          index === 0 ? Object.freeze({ ...entry, mode: "160000" }) : entry
+        ),
+    },
+    {
+      name: "a nonregular unmerged entry",
+      code: "InvalidTree",
+      entries: (baseline: readonly GitStagedIndexEntry[]): readonly GitStagedIndexEntry[] =>
+        baseline.map<GitStagedIndexEntry>((entry, index) =>
+          index === 0 ? Object.freeze({ ...entry, mode: "160000", stage: 2 }) : entry
+        ),
+    },
+    {
+      name: "a case-folded path collision",
+      code: "InvalidTree",
+      entries: (baseline: readonly GitStagedIndexEntry[]): readonly GitStagedIndexEntry[] =>
+        Object.freeze([
+          ...baseline,
+          Object.freeze({
+            path: firstStagedIndexEntry(baseline).path.toUpperCase(),
+            mode: "100644",
+            objectId: "e".repeat(40),
+            stage: 0,
+          }) satisfies GitStagedIndexEntry,
+        ]),
+    },
+    {
+      name: "an NFC-equivalent path collision",
+      code: "InvalidTree",
+      entries: (baseline: readonly GitStagedIndexEntry[]): readonly GitStagedIndexEntry[] =>
+        Object.freeze([
+          ...baseline,
+          Object.freeze({
+            path: "plugins/agent/alpha/café.txt",
+            mode: "100644",
+            objectId: "e".repeat(40),
+            stage: 0,
+          }) satisfies GitStagedIndexEntry,
+          Object.freeze({
+            path: "plugins/agent/alpha/cafe\u0301.txt",
+            mode: "100644",
+            objectId: "f".repeat(40),
+            stage: 0,
+          }) satisfies GitStagedIndexEntry,
+        ]),
+    },
+  ])("keeps $name as Releases-owned eligibility policy", async ({ code, entries }) => {
+    const [baseline] = validStagedObservationResults();
+    const observation = withStagedEntries(baseline, entries(baseline.opening.entries));
+    const client = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: () => Effect.succeed(observation),
+      },
+    });
+
+    await expect(
+      client.releases.checkRepository(
+        { kind: "staged", contentWorkspace: stagedPolicy() },
+        testInvocation
+      )
+    ).resolves.toMatchObject({
+      kind: "RepositoryIneligible",
+      mode: "staged",
+      issues: [{ code }],
+    });
+  });
+
+  it("reports a staged release-input deletion as an absent required source", async () => {
+    const [baseline] = validStagedObservationResults();
+    const observation = withStagedEntries(
+      Object.freeze({ ...baseline, blobs: Object.freeze([]) }),
+      baseline.opening.entries.filter((entry) => entry.path !== releaseInputPath)
+    );
+    const client = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: () => Effect.succeed(observation),
+      },
+    });
+
+    await expect(
+      client.releases.checkRepository(
+        { kind: "staged", contentWorkspace: stagedPolicy() },
+        testInvocation
+      )
+    ).resolves.toEqual({
+      kind: "RepositoryIneligible",
+      mode: "staged",
+      issues: [
+        {
+          code: "MissingReleaseInput",
+          detail: `missing staged release input ${releaseInputPath}`,
+        },
+      ],
     });
   });
 
@@ -533,9 +651,9 @@ describe("releases.checkRepository", () => {
         observeGitStagedIndex: () =>
           Effect.sync(() => {
             observations += 1;
-            if (observations === 1) return rawStagedObservation(releaseInputObservation);
-            if (observations === 2) return rawStagedObservation(materializationObservation);
-            return rawStagedObservation(changedObservation);
+            if (observations === 1) return releaseInputObservation;
+            if (observations === 2) return materializationObservation;
+            return changedObservation;
           }),
       },
     });
@@ -567,7 +685,7 @@ describe("releases.checkRepository", () => {
             const observation = observationResults[observations % observationResults.length];
             observations += 1;
             if (observation === undefined) throw new Error("Missing staged observation fixture");
-            return rawStagedObservation(observation);
+            return observation;
           }),
       },
     });
@@ -604,15 +722,10 @@ async function expectStagedTreeClosureRefusal(
     canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)
   );
   const stagedEntries = [...treeEntries, releaseInput];
-  const indexEntries = bytes(
-    stagedEntries
-      .map(
-        (entry) =>
-          `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-      )
-      .join("")
-  );
-  const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
+  const binding = Object.freeze({
+    anchor: stagedAnchor(),
+    entries: stagedIndexEntries(stagedEntries),
+  });
   let observations = 0;
   let writes = 0;
   const rawPort = {
@@ -673,8 +786,8 @@ async function expectStagedTreeClosureRefusal(
 }
 
 function validStagedObservationResults(): readonly [
-  StagedIndexObservationResult,
-  StagedIndexObservationResult,
+  GitStagedIndexObservation,
+  GitStagedIndexObservation,
 ] {
   const fixture = productFixture();
   const entries = [
@@ -704,71 +817,76 @@ function validStagedObservationResults(): readonly [
     ),
     stagedEntry("plugins/agent/beta/skills/beta/SKILL.md", "5".repeat(40), 0o644, bytes("beta\n")),
   ].sort((left, right) => left.path.localeCompare(right.path));
-  const indexEntries = bytes(
-    entries
-      .map(
-        (entry) =>
-          `${entry.mode === 0o755 ? "100755" : "100644"} ${entry.objectId} 0\t${entry.path}\0`
-      )
-      .join("")
-  );
-  const binding = Object.freeze({ anchor: stagedAnchor(), indexEntries });
-  const observe = (selected: readonly (typeof entries)[number][]): StagedIndexObservationResult =>
+  const binding = Object.freeze({
+    anchor: stagedAnchor(),
+    entries: stagedIndexEntries(entries),
+  });
+  const observe = (selected: readonly (typeof entries)[number][]): GitStagedIndexObservation =>
     Object.freeze({
-      kind: "Observed",
-      observation: Object.freeze({
-        opening: binding,
-        blobs: Object.freeze(
-          selected.map((entry) =>
-            Object.freeze({
-              objectId: entry.objectId,
-              bytes: entry.bytes,
-            })
-          )
-        ),
-        closing: binding,
-      }),
+      opening: binding,
+      blobs: Object.freeze(
+        selected.map((entry) =>
+          Object.freeze({
+            objectId: entry.objectId,
+            bytes: entry.bytes,
+          })
+        )
+      ),
+      closing: binding,
     });
   const releaseInputEntry = entries.find((entry) => entry.path === releaseInputPath);
   if (releaseInputEntry === undefined) throw new Error("Missing staged release-input fixture");
   return Object.freeze([observe([releaseInputEntry]), observe(entries)]);
 }
 
-function sourceChangedObservation(
-  result: StagedIndexObservationResult
-): StagedIndexObservationResult {
-  if (result.kind !== "Observed") throw new Error("Expected observed staged fixture");
+function sourceChangedObservation(result: GitStagedIndexObservation): GitStagedIndexObservation {
   return Object.freeze({
-    kind: "Observed",
-    observation: Object.freeze({
-      opening: result.observation.opening,
-      blobs: result.observation.blobs,
-      closing: Object.freeze({
-        anchor: result.observation.closing.anchor,
-        indexEntries: bytes("changed staged index\0"),
-      }),
+    opening: result.opening,
+    blobs: result.blobs,
+    closing: Object.freeze({
+      anchor: result.closing.anchor,
+      entries: Object.freeze([
+        Object.freeze({
+          path: "changed",
+          mode: "100644",
+          objectId: "f".repeat(40),
+          stage: 0,
+        }),
+      ]),
     }),
   });
 }
 
-function anchorChangedObservation(
-  result: StagedIndexObservationResult
-): StagedIndexObservationResult {
-  if (result.kind !== "Observed") throw new Error("Expected observed staged fixture");
+function anchorChangedObservation(result: GitStagedIndexObservation): GitStagedIndexObservation {
   return Object.freeze({
-    kind: "Observed",
-    observation: Object.freeze({
-      opening: result.observation.opening,
-      blobs: result.observation.blobs,
-      closing: Object.freeze({
-        anchor: Object.freeze({
-          ...result.observation.closing.anchor,
-          tree: "c".repeat(40),
-        }),
-        indexEntries: result.observation.closing.indexEntries,
+    opening: result.opening,
+    blobs: result.blobs,
+    closing: Object.freeze({
+      anchor: Object.freeze({
+        ...result.closing.anchor,
+        tree: "c".repeat(40),
       }),
+      entries: result.closing.entries,
     }),
   });
+}
+
+function withStagedEntries(
+  observation: GitStagedIndexObservation,
+  entries: readonly GitStagedIndexEntry[]
+): GitStagedIndexObservation {
+  const binding = Object.freeze({ anchor: observation.opening.anchor, entries });
+  return Object.freeze({
+    opening: binding,
+    blobs: observation.blobs,
+    closing: binding,
+  });
+}
+
+function firstStagedIndexEntry(entries: readonly GitStagedIndexEntry[]): GitStagedIndexEntry {
+  const first = entries[0];
+  if (first === undefined) throw new Error("Expected a nonempty staged-index fixture");
+  return first;
 }
 
 function contentWorkspaceFailure(
@@ -820,6 +938,21 @@ function stagedAnchor(): GitWorkspaceAnchor {
 
 function stagedEntry(path: string, objectId: string, mode: 0o644 | 0o755, entryBytes: Uint8Array) {
   return Object.freeze({ path, objectId, mode, bytes: entryBytes });
+}
+
+function stagedIndexEntries(
+  entries: readonly ReturnType<typeof stagedEntry>[]
+): readonly GitStagedIndexEntry[] {
+  return Object.freeze(
+    entries.map((entry) =>
+      Object.freeze({
+        path: entry.path,
+        mode: entry.mode === 0o755 ? "100755" : "100644",
+        objectId: entry.objectId,
+        stage: 0,
+      })
+    )
+  );
 }
 
 function cleanContentWorkspace(
@@ -929,16 +1062,6 @@ function cleanContentWorkspace(
     },
   };
   return Object.freeze(contentWorkspace);
-}
-
-function rawStagedObservation(result: StagedIndexObservationResult): GitStagedIndexObservation {
-  if (result.kind !== "Observed")
-    throw new Error(`Expected observed staged result, received ${result.kind}`);
-  return Object.freeze({
-    opening: result.observation.opening,
-    blobs: result.observation.blobs,
-    closing: result.observation.closing,
-  });
 }
 
 function gitBlobId(value: Uint8Array): string {
