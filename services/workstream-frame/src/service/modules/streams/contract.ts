@@ -19,6 +19,10 @@
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
+import { AdvanceSchema } from "../../model/dto/advance";
+import { BoundarySchema } from "../../model/dto/boundary";
+import { ItemSchema } from "../../model/dto/item";
+import { StreamSchema } from "../../model/dto/stream";
 import {
   ITEM_ALREADY_EXISTS,
   ITEM_NOT_DERIVED,
@@ -27,8 +31,7 @@ import {
   READ_ONLY_MODE,
   STREAM_ALREADY_EXISTS,
   STREAM_NOT_FOUND,
-} from "../../model/errors";
-import { AdvanceSchema, BoundarySchema, ItemSchema, StreamSchema } from "../../model/schema";
+} from "../../model/errors/boundary-errors";
 
 const StreamId = Type.String({
   minLength: 1,

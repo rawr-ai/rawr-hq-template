@@ -22,7 +22,9 @@
  * errors from the values returned here.
  */
 import { type SemanticLedgerPort, term } from "@rawr/resource-semantic-ledger";
-import type { BoundarySpec, ItemView, StreamView } from "../../model/schema";
+import type { BoundarySpec } from "../../model/dto/boundary";
+import type { ItemView } from "../../model/dto/item";
+import type { StreamView } from "../../model/dto/stream";
 
 const NS = "https://rawr.dev/ns/workstream#";
 

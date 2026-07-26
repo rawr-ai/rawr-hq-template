@@ -14,8 +14,9 @@
  * parent through. That is the feedback loop, and it is the point of the model.
  */
 
-import { derivedItemId, withLedger } from "../../../model/helpers";
-import type { AdvanceView } from "../../../model/schema";
+import type { AdvanceView } from "../../../model/dto/advance";
+import { derivedItemId } from "../../../model/helpers/derived-identity";
+import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
 
 /** Advances every item as far as the frame allows, peeling off what does not fit. */

@@ -1,7 +1,7 @@
 /**
  * @fileoverview `streams.resolve` — close one feedback loop.
  */
-import { withLedger } from "../../../model/helpers";
+import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
 
 /** Marks a derived item resolved and grants its tag to the parent it blocked. */

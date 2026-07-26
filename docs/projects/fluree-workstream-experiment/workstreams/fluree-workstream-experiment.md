@@ -376,6 +376,87 @@ earned its place as a verification surface, not just a convenience. Second, the
 model's own vocabulary named the bug precisely: work that cannot clear a boundary
 peels off, and I had let peel-offs re-enter as though they were ordinary work.
 
+### F6 — Correction: the "10 pre-existing structure failures" were a tooling artifact (`verified`)
+
+I reported earlier that the 16-rule source-law gate showed 10 failures on clean
+`main` and that my work held that baseline. The comparison was sound; the
+**interpretation was wrong**, and it is worth correcting plainly.
+
+Those 10 rules were not finding violations. The pinned Grit engine was not
+provisioned in the worktree, so every Grit-runner rule could not execute, and
+the harness counts non-execution as failure. With Grit provisioned, all 16 rules
+now report `PASS — 16 rules, 0 failing`, including rules the blueprint port never
+touched (`require_grit_helper_comments`, `require_service_private_alias_ownership`,
+the oclif set). Nothing about those rules changed; only provisioning did.
+
+The lesson generalises past this repo: **a red gate and an unrunnable gate look
+identical from the outside.** I compared two numbers and treated their equality
+as evidence of correctness, when both numbers were measuring the absence of a
+binary. Comparing against a baseline is only honest if the baseline is known to
+have actually run.
+
+### F7 — Ported the unstaged blueprint law and finished its two loose ends (`verified`)
+
+The `wt-agent-root-simplify-cli-lifecycle` worktree held an uncommitted rewrite
+of the service blueprint law. Its producing Codex session did not finish: the
+turn ended with `task_complete`, `last_agent_message: null`, after ~11.2 hours,
+three upstream 503s, and a rate-limit bucket at 100% with `has_credits: false`.
+Six PRs (#532–#537) *did* land inside that turn; only the final slice — the
+service blueprint rewrite — never got staged.
+
+The design itself was complete and runnable (its own 7-case suite passes, the new
+`check.mjs` exits 0 under both `bun` and `node`). Two mechanical loose ends were
+left, both invisible to `git status`:
+
+1. **A ghost packet directory.** The three files of `require_service_model_kind_indices`
+   were deleted but the directory was not removed. Git does not track directories,
+   so `git status` looked finished while `require_blueprint_packet_topology` — a
+   rule that *is* in the CI gate — failed with two `[missing-required-child]`
+   diagnostics against a packet that no longer exists. `git apply` of the diff
+   removed the directory as a side effect, so this did not reach my branch.
+2. **Three unformatted files** (`check.mjs`, `service-blueprint.test.mjs`, and
+   `nx.json` — the third only visible when running `biome` repo-wide rather than
+   on the two new files). This one matters more than it looks: `nx.json`
+   `targetDefaults.check` depends on `habitat:lint`, so a formatting failure
+   blocks the `check` target of *every* project. Fixed with `biome format`.
+
+### F8 — Conforming to the new law, and where I deliberately stopped (`verified`)
+
+The ported law makes three changes that hit this package, all confirmed by
+running the rule rather than by reading the diff:
+
+- `schema` is no longer an admitted model kind. Admitted set is exactly
+  `actors|dto|errors|helpers|policy|ports|prompts`. `model/schema/` moved to
+  `model/dto/`.
+- Model-kind `index.ts` **inverts from required to forbidden**. The curated
+  barrel I built to satisfy the old `require_service_model_kind_indices` rule is
+  now structurally illegal. All three barrels deleted; every importer
+  deep-imports its exact leaf, and the package exports each DTO leaf directly.
+- Standalone module shells may now own `db/`, and `db` interiors are
+  unconstrained. Not used here — the root `db/stores/` placement was already
+  legal.
+
+After those edits `require_service_spine_topology` reports **zero diagnostics**
+for `workstream-frame`.
+
+**Where I stopped, on purpose.** Four service rules are defined but wired into no
+CI gate: `require_service_anchor_exports`, `require_service_context_boundaries`,
+`require_service_module_isolation`, `require_service_orpc_composition`. Against
+those, this package has 2 / 11 / 18 / 4 diagnostics out of corpus totals of
+14 / 66 / 330 / 43.
+
+I did not fix them, and that is a decision rather than an omission. Those rules
+describe an Effect-oRPC composition — `implementEffect`, a single `base.ts`
+implementer site, modules importing runtime service from `../../impl`. **No
+service in this repository is written that way**; all seven use `defineService`
+from `@rawr/hq-sdk`. Conforming unilaterally would mean rewriting this service
+against a composition the SDK path it actually runs on does not support —
+trading a working service for a green rule. The packet's own openspec README
+states it "remains outside repository admission until the admitted service
+corpus conforms and the owner-local Nx check is activated." That is a declared
+migration state, and the right move is to migrate with the corpus, not ahead of
+it.
+
 ## Outcome Record
 
 Objective outcome: `achieved`.
@@ -429,7 +510,11 @@ Verification:
 | style | `biome ci --diagnostic-level=error` on all three packages | clean |
 | JSDoc law | `require_imported_exports_have_jsdoc/check.mjs` | 0 findings in my packages (repo total 1479 → 1463) |
 | Nx admission | `require_nx_project_quality_targets/check.mjs` | pass |
-| structure | 16-rule source-law set | 10 failing — **identical to the clean-`main` baseline**, measured by stashing this work and re-running. No regression introduced. |
+| structure | 16-rule source-law set | `PASS — 16 rules, 0 failing`. Supersedes the earlier "10 failing" reading, which was an unprovisioned-Grit artifact — see F6. |
+| service spine | `require_service_spine_topology` under the ported law | zero diagnostics for `workstream-frame` |
+| ported suite | `bun test scripts/habitat/*.test.mjs` | 28 passed (includes the ported 7-case service-blueprint suite) |
+| router surface | ported `require_service_router_surface/check.mjs` | exit 0 |
+| style (repo-wide) | `biome ci --diagnostic-level=error .` | 1103 files, clean |
 | end-to-end | live `rawr workstream open/admit/push/resolve/inspect` against Fluree | full loop to completion, plus `--at 2` reconstruction |
 
 ## Deferred Inventory

@@ -1,7 +1,7 @@
 /**
  * @fileoverview `streams.admit` — put one item into the frame.
  */
-import { withLedger } from "../../../model/helpers";
+import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
 
 /** Admits one item with its opening tags. */

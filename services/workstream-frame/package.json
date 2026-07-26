@@ -18,9 +18,21 @@
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
     },
-    "./service/model/schema": {
-      "types": "./src/service/model/schema/index.ts",
-      "default": "./src/service/model/schema/index.ts"
+    "./service/model/dto/advance": {
+      "types": "./src/service/model/dto/advance.ts",
+      "default": "./src/service/model/dto/advance.ts"
+    },
+    "./service/model/dto/boundary": {
+      "types": "./src/service/model/dto/boundary.ts",
+      "default": "./src/service/model/dto/boundary.ts"
+    },
+    "./service/model/dto/item": {
+      "types": "./src/service/model/dto/item.ts",
+      "default": "./src/service/model/dto/item.ts"
+    },
+    "./service/model/dto/stream": {
+      "types": "./src/service/model/dto/stream.ts",
+      "default": "./src/service/model/dto/stream.ts"
     },
     "./service/router": {
       "types": "./src/service/router.ts",

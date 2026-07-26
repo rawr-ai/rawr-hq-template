@@ -1,7 +1,7 @@
 /**
  * @fileoverview `streams.open` — declare a frame's shape.
  */
-import { withLedger } from "../../../model/helpers";
+import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
 
 /** Creates the stream and its ordered boundaries. */

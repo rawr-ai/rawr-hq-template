@@ -1,7 +1,7 @@
 /**
  * @fileoverview `streams.inspect` — read durable truth, optionally in the past.
  */
-import { withLedger } from "../../../model/helpers";
+import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
 
 /**
