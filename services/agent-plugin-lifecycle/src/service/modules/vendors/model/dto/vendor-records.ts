@@ -7,7 +7,6 @@ export const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1" as const;
 export const GIT_OBJECT_ID_PATTERN = "^(?:[0-9a-f]{40}|[0-9a-f]{64})$";
 export const SHA256_DIGEST_PATTERN = "^sha256_[0-9a-f]{64}$";
 export const SOURCE_ID_PATTERN = "^[a-z0-9](?:[a-z0-9-]{0,126}[a-z0-9])?$";
-export const PLUGIN_ID_PATTERN = "^[a-z0-9][a-z0-9._-]{0,127}$";
 export const REPOSITORY_IDENTITY_PATTERN = "^[A-Za-z0-9][A-Za-z0-9._:@/+\\-]{0,511}$";
 export const CONTENT_AUTHORITY_PATTERN = "^[a-z0-9][a-z0-9._-]{0,127}$";
 export const QUALIFIED_HEAD_REF_PATTERN =
@@ -52,11 +51,6 @@ export const SourceIdSchema = Type.String({
 });
 export const GitObjectIdSchema = Type.String({ pattern: GIT_OBJECT_ID_PATTERN });
 export const Sha256DigestSchema = Type.String({ pattern: SHA256_DIGEST_PATTERN });
-export const PluginIdSchema = Type.String({
-  minLength: 1,
-  maxLength: 128,
-  pattern: PLUGIN_ID_PATTERN,
-});
 export const PositiveCurationRevisionSchema = Type.Integer({
   minimum: 1,
   maximum: Number.MAX_SAFE_INTEGER,

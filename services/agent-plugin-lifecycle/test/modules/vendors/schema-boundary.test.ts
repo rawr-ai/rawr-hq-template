@@ -16,17 +16,19 @@ import type {
 } from "../../../src/service/modules/vendors/model/dto/vendor-operations";
 import {
   VendorContentWorkspaceRefSchema,
-  VendorLockRecordSchema,
-  VendorProvenanceRecordSchema,
-  VendorRecordBindingSchema,
-  VendorSourceDeclarationSchema,
   VendorSourceStatusSchema,
   VendorStatusInputSchema,
   VendorStatusResultSchema,
   VendorUpdateInputSchema,
   VendorUpdateIssueSchema,
   VendorUpdateResultSchema,
-} from "../../../src/service/modules/vendors/schemas";
+} from "../../../src/service/modules/vendors/model/dto/vendor-operations";
+import {
+  VendorLockRecordSchema,
+  VendorProvenanceRecordSchema,
+  VendorRecordBindingSchema,
+  VendorSourceDeclarationSchema,
+} from "../../../src/service/modules/vendors/model/dto/vendor-records";
 
 type VendorStatusIssues = Extract<VendorStatusResult, { kind: "Rejected" }>["issues"];
 type VendorUpdateIssues = Extract<VendorUpdateResult, { kind: "Rejected" }>["issues"];
