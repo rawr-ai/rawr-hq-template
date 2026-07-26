@@ -12,7 +12,7 @@
  * port in the same style as `ContentWorkspaceNodeAsyncPort`, because that is
  * the shape services in this repository actually consume.
  *
- * Four properties are load-bearing and every provider must honour them:
+ * Six properties are load-bearing and every provider must honour them:
  * 1. Writes are append-only and produce a monotonically increasing `t`.
  * 2. A read at `t = N` observes exactly the facts written at or before `N`.
  * 3. A forked line begins with the source's facts and diverges independently;
@@ -20,6 +20,13 @@
  * 4. There is no delete. Nothing in this port removes a fact or a line — a line
  *    that should no longer be preferred is superseded by recording that it was,
  *    which is a semantic owner's decision and not a mechanic here.
+ * 5. A write carries a precondition the substrate evaluates atomically with it.
+ *    A precondition may require that facts are present and that subjects are
+ *    absent; it never removes anything, so property 4 stands.
+ * 6. A write reports a determinate outcome. It applied, or it was refused and
+ *    nothing was written. A provider that cannot tell the two apart cannot
+ *    satisfy this contract, and a position is not the discriminator: another
+ *    writer advances it whether or not this write applied.
  *
  * @agents
  * Do not add work-stream vocabulary to this file. If a term only makes sense
@@ -99,13 +106,83 @@ export interface LedgerHead {
   readonly t: number;
 }
 
-/** Receipt for one accepted write. */
-export interface LedgerCommit {
+/**
+ * A subject that must carry no fact under the named predicate.
+ *
+ * @remarks
+ * This is a precondition's negative half. It asserts absence; it never removes
+ * anything. Every store able to answer "does this key exist" can honour it,
+ * which is why absence is spelled directly rather than as an optional join
+ * followed by a test on an unbound variable — that shape is expressible only
+ * over a graph.
+ */
+export interface GuardAbsence {
+  /** Subject whose absence is asserted. */
+  readonly subject: string;
+  /** Predicate that witnesses the subject's existence. */
+  readonly predicate: string;
+}
+
+/**
+ * The precondition a proposal carries.
+ *
+ * @remarks
+ * `unconditional` is spelled out rather than implied by omission, so a write
+ * that depends on nothing is visible in the source text of whoever wrote it.
+ */
+export type WriteGuard =
+  | Readonly<{ kind: "unconditional" }>
+  | Readonly<{
+      /** Patterns that must all match. Shared variable names join across them. */
+      kind: "conditional";
+      requires: readonly TriplePattern[];
+      /** Subjects that must carry no fact under the named predicate. */
+      absent: readonly GuardAbsence[];
+    }>;
+
+/** Why a proposal wrote nothing. */
+export type WriteRefusal =
+  /** The precondition did not hold when the substrate evaluated it. */
+  | "GuardUnmatched"
+  /** The identity already carries a different proposal. Nothing was written. */
+  | "AlreadyProposed";
+
+/** Receipt for a proposal the substrate applied. */
+export interface LedgerApplied {
+  readonly applied: true;
   readonly ledger: string;
+  /** Position the facts became observable at. */
   readonly t: number;
-  /** Provider-owned opaque commit identity. Empty when the provider has none. */
+  /** Provider-owned opaque identity of the commit that carried them. */
   readonly commit: string;
 }
+
+/**
+ * Receipt for a proposal the substrate refused.
+ *
+ * @remarks
+ * There is deliberately no `commit` here. A refusal has no commit to name, and
+ * a substrate that returns a placeholder in that position must discard it
+ * rather than pass it on: a value that is not a commit identity must never
+ * occupy one.
+ */
+export interface LedgerRefused {
+  readonly applied: false;
+  readonly ledger: string;
+  /**
+   * The line's position when the precondition was evaluated.
+   *
+   * @remarks
+   * This is not a position this proposal produced. Comparing it against a
+   * position read earlier reports another writer's commit as this proposal's
+   * success, which is precisely the mistake `applied` exists to prevent.
+   */
+  readonly t: number;
+  readonly reason: WriteRefusal;
+}
+
+/** The determinate outcome of one proposal. */
+export type LedgerReceipt = LedgerApplied | LedgerRefused;
 
 /**
  * Outcome of folding one line of facts into another.
@@ -168,7 +245,7 @@ export interface SemanticLedgerFailure {
   readonly operation:
     | "ensureLedger"
     | "head"
-    | "transact"
+    | "propose"
     | "select"
     | "fork"
     | "merge"
@@ -215,10 +292,32 @@ export interface SemanticLedgerPort {
   /** Read the current write position. */
   readonly head: (input: Readonly<{ ledger: string }>) => Promise<LedgerHead>;
 
-  /** Append facts. Returns the position they became visible at. */
-  readonly transact: (
-    input: Readonly<{ ledger: string; nodes: readonly GraphNode[] }>
-  ) => Promise<LedgerCommit>;
+  /**
+   * Offer facts under a precondition and an identity.
+   *
+   * @remarks
+   * The substrate evaluates `guard` atomically with the write. When it does not
+   * hold, nothing is written and the receipt says so — that is an answer, not a
+   * failure, and the caller's response is to read what is true rather than to
+   * offer again. Every precondition here asserts that facts are present or that
+   * subjects are absent, and since nothing is ever retracted, a refusal states
+   * something that will not stop being the case.
+   *
+   * `identity` is honoured per ledger and closes exactly one window: a response
+   * that never arrived. Offering the same identity again with the same facts
+   * yields the first offer's outcome instead of a second write. It does not make
+   * a stale decision safe — that is the precondition's work.
+   *
+   * @param input.identity - Stable across resends of one offer. At most 128 bytes.
+   */
+  readonly propose: (
+    input: Readonly<{
+      ledger: string;
+      identity: string;
+      guard: WriteGuard;
+      nodes: readonly GraphNode[];
+    }>
+  ) => Promise<LedgerReceipt>;
 
   /**
    * Read facts. When `at` is supplied, observe the ledger exactly as it stood

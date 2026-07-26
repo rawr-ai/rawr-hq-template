@@ -6,6 +6,13 @@
  * atomic: either the committed line advances or it does not. Conflicts are
  * reported rather than resolved here — deciding what a collision *means* is a
  * work-stream judgement, not a merge algorithm's.
+ *
+ * The facts are folded before the decision is recorded, and that order is the
+ * safe one. Interrupted between the two, the candidate still reads as
+ * undecided: `list` reports it, and promoting again fast-forwards nothing and
+ * records. Recording first would leave a decision standing for facts the
+ * ledger cannot show, which is the one failure an append-only store exists to
+ * prevent.
  */
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
@@ -39,12 +46,23 @@ export const promote = module.promote.handler(async ({ context, input, errors })
 
       // The disposition is committed truth: what the work stream decided about
       // a candidate belongs on the committed line, not on the candidate.
-      await context.committedStore.recordRevisionStatus(
+      const recorded = await context.committedStore.recordRevisionStatus(
         input.revision,
         "promoted",
         context.clock.now(),
         input.note
       );
+      if (!recorded.applied) {
+        const statuses = await context.committedStore.readRevisionStatuses();
+        if (statuses.get(input.revision) === "abandoned") {
+          throw errors.REVISION_NOT_CANDIDATE({
+            message: `Revision '${input.revision}' was abandoned; its facts were folded in but that disposition stands`,
+            data: { revision: input.revision, committed: context.committedRevision },
+          });
+        }
+        // Another promoter reached the same decision. Two callers agreeing is
+        // convergence, so this one is answered rather than refused.
+      }
 
       return {
         revision: input.revision,

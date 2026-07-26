@@ -1,5 +1,11 @@
 /**
  * @fileoverview `streams.resolve` — close one feedback loop.
+ *
+ * @remarks
+ * A derived item resolves once, and the tag its parent was owed rides the same
+ * proposal, so the parent is granted it exactly once however many callers
+ * answer at the same moment. Whether the answer was already given is the
+ * substrate's to decide; this handler only reports which of the two happened.
  */
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
@@ -41,10 +47,7 @@ export const resolve = module.resolve.handler(async ({ context, input, errors })
           data: { itemId: input.itemId },
         });
       }
-      // Resolving twice is a no-op rather than a failure.
-      if (item.resolved) return item;
-
-      await store.resolveDerived(
+      const proposed = await store.resolveDerived(
         input.streamId,
         item.id,
         item.derivedFrom,
@@ -54,6 +57,21 @@ export const resolve = module.resolve.handler(async ({ context, input, errors })
       );
 
       const refreshed = await store.readStream(input.streamId);
+      if (!proposed.applied) {
+        if (refreshed.closedAt !== null) {
+          throw errors.STREAM_CLOSED({
+            message: `Stream '${input.streamId}' was closed at ${refreshed.closedAt}`,
+            data: { streamId: input.streamId, closedAt: refreshed.closedAt },
+          });
+        }
+        // Resolving twice is a no-op rather than a failure.
+        const again = refreshed.items.find((candidate) => candidate.id === input.itemId);
+        if (again?.resolved) return again;
+        throw errors.ITEM_NOT_FOUND({
+          message: `Item '${input.itemId}' not found`,
+          data: { streamId: input.streamId, itemId: input.itemId },
+        });
+      }
       return refreshed.items.find((candidate) => candidate.id === input.itemId) ?? item;
     },
     (data) => {

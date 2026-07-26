@@ -20,15 +20,30 @@
  * - **Position is derived, never stored.** It is the first boundary the item has
  *   not cleared, computed against the frame as it now stands.
  *
+ * Every write is a proposal rather than an instruction. It carries the facts
+ * that must hold for the transition to be legitimate and the facts that must
+ * still be absent for it to be new, and the substrate evaluates both in the
+ * same step that writes. A transition is therefore recorded only when what
+ * justifies it holds, and the substrate decides that — not whoever read the
+ * stream a moment earlier. Each proposal also carries an identity, so an offer
+ * that reaches the substrate twice is applied once.
+ *
  * The query surface is conjunctive-only. That is a constraint of this
  * repository's ledger contract, kept small so a non-Fluree provider can satisfy
  * it honestly — not a limitation of any one substrate.
  *
  * @agents
  * Keep boundary concerns out of this file. Handlers decide caller-actionable
- * errors from the values returned here.
+ * errors from the values returned here, including which refusal a caller sees.
  */
-import { type SemanticLedgerPort, term } from "@rawr/resource-semantic-ledger";
+import { createHash } from "node:crypto";
+import {
+  type GroundTerm,
+  type GuardAbsence,
+  type SemanticLedgerPort,
+  type TriplePattern,
+  term,
+} from "@rawr/resource-semantic-ledger";
 import type { BoundaryInput, BoundarySpec } from "../../model/dto/boundary";
 import type { ItemView } from "../../model/dto/item";
 import type { StreamView } from "../../model/dto/stream";
@@ -55,23 +70,104 @@ const P = {
   revision: `${NS}revision`,
 } as const;
 
-const streamIri = (streamId: string): string => `${NS}stream/${encodeURIComponent(streamId)}`;
+/**
+ * Every subject lives directly in the vocabulary's own namespace, and that is a
+ * substrate constraint rather than a matter of taste.
+ *
+ * @remarks
+ * A triple store interns the portion of an IRI before its final separator and
+ * refers to it thereafter by a small integer. Path-shaped subjects therefore
+ * mint namespaces as data arrives — `…/item/<item>/cleared/<boundary>` mints one
+ * per item — so the table grows with how much work has passed through the frame
+ * rather than with how many kinds of thing the frame knows about. A precondition
+ * that names a subject whose namespace has never been written then refers to a
+ * code with nothing behind it.
+ *
+ * Composing the parts into one local name keeps every subject inside `NS`, which
+ * is interned by the first write because the predicates share it. The count is
+ * fixed at one and no guard can name a namespace that does not yet exist.
+ *
+ * The composition is unambiguous because `encodeURIComponent` escapes the comma,
+ * so a separator can never occur inside a part.
+ */
+const streamIri = (streamId: string): string => `${NS}stream,${encodeURIComponent(streamId)}`;
 const boundaryIri = (streamId: string, key: string): string =>
-  `${streamIri(streamId)}/boundary/${key}`;
+  `${NS}boundary,${encodeURIComponent(streamId)},${key}`;
 const itemIri = (streamId: string, itemId: string): string =>
-  `${streamIri(streamId)}/item/${encodeURIComponent(itemId)}`;
+  `${NS}item,${encodeURIComponent(streamId)},${encodeURIComponent(itemId)}`;
 const clearanceIri = (streamId: string, itemId: string, boundaryKey: string): string =>
-  `${itemIri(streamId, itemId)}/cleared/${boundaryKey}`;
+  `${NS}cleared,${encodeURIComponent(streamId)},${encodeURIComponent(itemId)},${boundaryKey}`;
 const resolutionIri = (streamId: string, itemId: string): string =>
-  `${itemIri(streamId, itemId)}/resolution`;
-const closureIri = (streamId: string): string => `${streamIri(streamId)}/closure`;
-const revisionIri = (revision: string): string => `${NS}revision/${encodeURIComponent(revision)}`;
+  `${NS}resolution,${encodeURIComponent(streamId)},${encodeURIComponent(itemId)}`;
+const closureIri = (streamId: string): string => `${NS}closure,${encodeURIComponent(streamId)}`;
+const revisionIri = (revision: string): string => `${NS}revision,${encodeURIComponent(revision)}`;
 
-/** Recover the caller-facing id from a subject IRI. */
-const localId = (iri: string): string => decodeURIComponent(iri.slice(iri.lastIndexOf("/") + 1));
+/**
+ * Recover the caller-facing id from a subject IRI.
+ *
+ * @remarks
+ * The id is the last composed part, and it is recoverable without knowing which
+ * kind of subject it came from because every part before it was escaped.
+ */
+const localId = (iri: string): string => decodeURIComponent(iri.slice(iri.lastIndexOf(",") + 1));
 
 /** Stable boundary identity assigned when a frame is shaped. */
 const boundaryKeyFor = (index: number): string => `b${index}`;
+
+/**
+ * Assert a subject carries no fact, witnessed by the kind every node declares.
+ *
+ * @remarks
+ * `P.kind` is a sound witness because every subject this store creates carries
+ * it in the transaction that creates it: a subject either has a kind or does
+ * not exist. The one node written onto an already-existing subject — the tag
+ * granted to a parent when its child resolves — is never asserted absent. A new
+ * node kind either preserves that invariant or names a different witness.
+ */
+const absent = (subject: string): GuardAbsence => ({ subject, predicate: P.kind });
+
+/** Assert a subject is a node of one kind. */
+const isKind = (subject: string, kind: string): TriplePattern => ({
+  subject: term.iri(subject),
+  predicate: term.iri(P.kind),
+  object: term.literal(kind),
+});
+
+/** Assert a subject carries one exact fact. */
+const holds = (subject: string, predicate: string, object: GroundTerm): TriplePattern => ({
+  subject: term.iri(subject),
+  predicate: term.iri(predicate),
+  object,
+});
+
+/**
+ * Stable identity for one proposal, digested to stay inside the ledger's
+ * 128-byte cap.
+ *
+ * @remarks
+ * Stream and item ids are caller-supplied and long enough that the readable
+ * form does not fit. The parts are the audit trail; the digest is what travels.
+ * Parts are length-prefixed rather than joined by a separator, because an id may
+ * contain any character and two distinct transitions must never digest to one
+ * identity — that would answer the second with the first's outcome.
+ */
+const proposalId = (parts: readonly string[]): string => {
+  const digest = createHash("sha256");
+  for (const part of parts) digest.update(`${part.length}:${part}`);
+  return `ws1:${digest.digest("hex").slice(0, 32)}`;
+};
+
+/**
+ * What one guarded proposal did.
+ *
+ * @remarks
+ * `applied` is the substrate's answer rather than a restatement of intent:
+ * false means the precondition did not hold and nothing was written. `t` is the
+ * position the facts became observable at when it applied, and the line's
+ * position when the precondition was evaluated when it did not — a reading of
+ * the line either way, never proof that this proposal moved it.
+ */
+export type Proposal = Readonly<{ applied: boolean; t: number }>;
 
 /**
  * Build the ledger-backed store that translates work-stream vocabulary into
@@ -153,14 +249,22 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
       return rows.some((row) => row.s === streamIri(streamId));
     },
 
-    /** Write the stream node and one node per boundary, in one transaction. */
+    /**
+     * Write the stream node and one node per boundary, in one transaction.
+     *
+     * @remarks
+     * The frame rides the stream's own precondition, so a stream cannot come
+     * into being twice and its boundaries cannot come from two shapings.
+     */
     async createStream(
       streamId: string,
       boundaries: readonly BoundaryInput[],
       createdAt: string
-    ): Promise<number> {
-      const receipt = await ledger.transact({
+    ): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["open", ledgerRef, streamId]),
+        guard: { kind: "conditional", requires: [], absent: [absent(streamIri(streamId))] },
         nodes: [
           {
             id: streamIri(streamId),
@@ -182,7 +286,7 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           })),
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
     async listBoundaries(streamId: string, at?: number): Promise<BoundarySpec[]> {
@@ -204,15 +308,28 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
         .map((boundary) => ({ key: boundary.key, requires: boundary.requires }));
     },
 
+    /**
+     * Put one item into an open stream.
+     *
+     * @remarks
+     * Admission holds only into a stream that exists and has not been sealed,
+     * and only for an id the stream does not already carry.
+     */
     async admitItem(
       streamId: string,
       itemId: string,
       title: string,
       tags: readonly string[],
       createdAt: string
-    ): Promise<number> {
-      const receipt = await ledger.transact({
+    ): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["admit", ledgerRef, streamId, itemId]),
+        guard: {
+          kind: "conditional",
+          requires: [isKind(streamIri(streamId), "Stream")],
+          absent: [absent(closureIri(streamId)), absent(itemIri(streamId, itemId))],
+        },
         nodes: [
           {
             id: itemIri(streamId, itemId),
@@ -226,7 +343,7 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           },
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
     async itemExists(streamId: string, itemId: string, at?: number): Promise<boolean> {
@@ -252,18 +369,36 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
      * Record that one item cleared one boundary.
      *
      * @remarks
-     * The subject IRI is derived from item and boundary, so re-clearing the
-     * same boundary rewrites an identical node instead of accumulating
-     * duplicates. That is what keeps `push` idempotent.
+     * The precondition is the admission decision itself: the boundary must
+     * still demand this tag and the item must carry it. The judgement is made
+     * where the facts are, so a clearance can never rest on a frame or a tag
+     * set that has since moved on. The subject IRI is derived from item and
+     * boundary, and asserting it absent is what keeps `push` idempotent —
+     * clearing twice is refused rather than recorded twice.
+     *
+     * @param requires - Tag the boundary demands, and the item must hold.
      */
     async recordCleared(
       streamId: string,
       itemId: string,
       boundaryKey: string,
+      requires: string,
       at: string
-    ): Promise<number> {
-      const receipt = await ledger.transact({
+    ): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["clear", ledgerRef, streamId, itemId, boundaryKey]),
+        guard: {
+          kind: "conditional",
+          requires: [
+            holds(boundaryIri(streamId, boundaryKey), P.requires, term.literal(requires)),
+            holds(itemIri(streamId, itemId), P.tag, term.literal(requires)),
+          ],
+          absent: [
+            absent(closureIri(streamId)),
+            absent(clearanceIri(streamId, itemId, boundaryKey)),
+          ],
+        },
         nodes: [
           {
             id: clearanceIri(streamId, itemId, boundaryKey),
@@ -277,10 +412,17 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           },
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
-    /** The peel-off: a new item linked to its cause, carrying the tag it owes. */
+    /**
+     * The peel-off: a new item linked to its cause, carrying the tag it owes.
+     *
+     * @remarks
+     * A child is peeled off exactly once. When the precondition refuses, the
+     * child already exists — someone else peeled it off, and the parent is
+     * waiting on it rather than blocked from producing it.
+     */
     async createDerived(
       streamId: string,
       childId: string,
@@ -288,9 +430,15 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
       grants: string,
       title: string,
       createdAt: string
-    ): Promise<number> {
-      const receipt = await ledger.transact({
+    ): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["derive", ledgerRef, streamId, childId]),
+        guard: {
+          kind: "conditional",
+          requires: [isKind(itemIri(streamId, parentId), "Item")],
+          absent: [absent(closureIri(streamId)), absent(itemIri(streamId, childId))],
+        },
         nodes: [
           {
             id: itemIri(streamId, childId),
@@ -305,10 +453,18 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           },
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
-    /** Close the loop: record the resolution and grant its tag to the parent. */
+    /**
+     * Close the loop: record the resolution and grant its tag to the parent.
+     *
+     * @remarks
+     * The precondition names the lineage and the debt the child was created
+     * with, so the tag the parent receives can never be read from one item and
+     * granted on behalf of another. The grant rides the resolution's
+     * precondition, so the parent is tagged exactly once.
+     */
     async resolveDerived(
       streamId: string,
       childId: string,
@@ -316,9 +472,18 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
       grants: string,
       at: string,
       note: string | undefined
-    ): Promise<number> {
-      const receipt = await ledger.transact({
+    ): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["resolve", ledgerRef, streamId, childId]),
+        guard: {
+          kind: "conditional",
+          requires: [
+            holds(itemIri(streamId, childId), P.derivedFrom, term.iri(itemIri(streamId, parentId))),
+            holds(itemIri(streamId, childId), P.grants, term.literal(grants)),
+          ],
+          absent: [absent(closureIri(streamId)), absent(resolutionIri(streamId, childId))],
+        },
         nodes: [
           {
             id: resolutionIri(streamId, childId),
@@ -336,13 +501,25 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           },
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
-    /** Seal the stream against further work. Reads keep working forever. */
-    async closeStream(streamId: string, at: string, note: string | undefined): Promise<number> {
-      const receipt = await ledger.transact({
+    /**
+     * Seal the stream against further work. Reads keep working forever.
+     *
+     * @remarks
+     * One closure subject carries one sealing time, because a second close is
+     * refused rather than layered onto the first.
+     */
+    async closeStream(streamId: string, at: string, note: string | undefined): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["close", ledgerRef, streamId]),
+        guard: {
+          kind: "conditional",
+          requires: [isKind(streamIri(streamId), "Stream")],
+          absent: [absent(closureIri(streamId))],
+        },
         nodes: [
           {
             id: closureIri(streamId),
@@ -355,7 +532,7 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           },
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
     /** Read the closure fact, if the stream has been sealed. */
@@ -549,15 +726,24 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
       return events.sort((left, right) => left.at.localeCompare(right.at));
     },
 
-    /** Record what was decided about a candidate revision. */
+    /**
+     * Record what was decided about a candidate revision.
+     *
+     * @remarks
+     * Promotion and abandonment compete for one subject, so a revision carries
+     * exactly one disposition and the second decision is refused rather than
+     * layered onto the first.
+     */
     async recordRevisionStatus(
       revision: string,
       status: "promoted" | "abandoned",
       at: string,
       note: string | undefined
-    ): Promise<number> {
-      const receipt = await ledger.transact({
+    ): Promise<Proposal> {
+      const receipt = await ledger.propose({
         ledger: ledgerRef,
+        identity: proposalId(["revision", ledgerRef, revision, status]),
+        guard: { kind: "conditional", requires: [], absent: [absent(revisionIri(revision))] },
         nodes: [
           {
             id: revisionIri(revision),
@@ -571,7 +757,7 @@ export function createStreamStore(ledger: SemanticLedgerPort, ledgerRef: string)
           },
         ],
       });
-      return receipt.t;
+      return { applied: receipt.applied, t: receipt.t };
     },
 
     /** Read every recorded revision disposition from this line. */

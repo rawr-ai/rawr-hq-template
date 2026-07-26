@@ -10,12 +10,24 @@
  * - Ledger identity is `name:branch`. `ws:main` and `ws:feature` are two
  *   branches of one ledger and are addressed as separate ledger ids.
  * - `POST /v1/fluree/create` accepts *only* `{ ledger }`. Initial data must
- *   follow through `insert`.
+ *   follow through a proposal.
  * - Time travel is a suffix on the ledger reference — `ws:main@t:1`. A bare
  *   `t` field at query top level is silently ignored, which is a quiet trap.
  *   `@iso:`, `@recorded:`, and `@commit:` are honoured in the same position.
- * - Reads go out as SPARQL because its response envelope is self-describing;
- *   writes go in as JSON-LD because that is the natural insert shape.
+ * - Reads and writes both go out as SPARQL, so one term renderer escapes every
+ *   value that reaches the server. A proposal is `INSERT … WHERE …`, its
+ *   precondition being the `WHERE` clause the substrate evaluates atomically
+ *   with the insert; a `WHERE` holding only `FILTER NOT EXISTS` groups yields
+ *   one solution, so insert-if-absent needs no positive pattern.
+ * - A proposal's identity travels as `Idempotency-Key`, under which the server
+ *   replays a stored response byte-for-byte. That is what makes resending a
+ *   lost offer safe, and it is also why an identity answers for one attempt
+ *   rather than for one intent: a refusal is replayed too, never re-evaluated.
+ * - Both outcomes return 200. `commit.hash` against the identity every
+ *   flake-less transaction reports is the only sound discriminator — `t` is the
+ *   ledger's head at processing time and advances whenever anyone commits, and
+ *   `tx-id` digests the request body, so it is identical across ledgers and
+ *   across distinct commits.
  * - `branch` and `merge` take a *bare family name* in `ledger`, unlike every
  *   other endpoint, which takes `name:branch`. Passing the qualified form
  *   yields `name:branch:branch` and a nameservice error.
@@ -37,18 +49,23 @@
  * @agents
  * Vendor mechanics belong here. Work-stream meaning does not.
  */
+import { createHash } from "node:crypto";
 import {
   type Binding,
   type GraphNode,
   type GraphProperty,
-  type LedgerCommit,
+  type GuardAbsence,
   type LedgerHead,
   type LedgerMergePreview,
   type LedgerMergeReceipt,
+  type LedgerReceipt,
   type SemanticLedgerFailure,
   type SemanticLedgerPort,
   semanticLedgerFailure,
   type Term,
+  type TriplePattern,
+  term,
+  type WriteGuard,
 } from "@rawr/resource-semantic-ledger";
 
 export interface FlureeHttpOptions {
@@ -66,7 +83,84 @@ interface LedgerListEntry {
   readonly t: number;
 }
 
+/** One send: either the server answered it, or the answer was lost. */
+type Attempt =
+  | Readonly<{ outcome: "answered"; status: number; body: string }>
+  | Readonly<{ outcome: "unanswered"; detail: string }>;
+
+/** What the server recorded for one identity on one ledger. */
+interface SubmissionRecord {
+  readonly state?: string;
+  readonly commit_id?: string;
+  readonly t?: number;
+  readonly detail?: { readonly flake_count?: number };
+}
+
 const DEFAULT_TIMEOUT_MS = 30_000;
+
+/**
+ * Longest identity the server carries in an `Idempotency-Key`.
+ *
+ * @remarks
+ * The cap is in bytes rather than characters because that is how the server
+ * measures it, and a character is not a byte.
+ */
+const IDENTITY_LIMIT_BYTES = 128;
+
+/** Measures an identity against a cap that is stated in bytes. */
+const utf8 = new TextEncoder();
+
+/** How long an offer already in flight is waited on, and how often. */
+const IN_FLIGHT_POLLS = 3;
+const IN_FLIGHT_POLL_MS = 200;
+
+/** RFC 4648 base32, lowercase and unpadded — what the multibase prefix `b` names. */
+const BASE32_ALPHABET = "abcdefghijklmnopqrstuvwxyz234567";
+
+function base32(bytes: Uint8Array): string {
+  let encoded = "";
+  let buffer = 0;
+  let bits = 0;
+  for (const byte of bytes) {
+    buffer = (buffer << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      bits -= 5;
+      encoded += BASE32_ALPHABET.charAt((buffer >> bits) & 0b11111);
+    }
+  }
+  return bits === 0 ? encoded : encoded + BASE32_ALPHABET.charAt((buffer << (5 - bits)) & 0b11111);
+}
+
+/**
+ * The commit identity every transaction that produced no flakes reports.
+ *
+ * @remarks
+ * It is `CIDv1(ContentKind::Commit, sha256(""))`: the seven-byte header
+ * `018180c0011220` — CID version 1, the commit multicodec, and a 32-byte
+ * sha2-256 multihash — followed by the digest of the empty byte string.
+ * Deriving it from those parts and checking the result against what the server
+ * returns means a substrate whose content tag moves fails here, loudly, instead
+ * of every write afterwards reporting itself as applied.
+ */
+function deriveEmptyCommitId(): string {
+  const header = [0x01, 0x81, 0x80, 0xc0, 0x01, 0x12, 0x20];
+  const digest = createHash("sha256").update(new Uint8Array()).digest();
+  const derived = `b${base32(Uint8Array.from([...header, ...digest]))}`;
+  if (derived !== "bagaybqabciqohmgeikmpyhautl57jsezn64sij5oihsgjg4tjssjlgi3pbjlqvi") {
+    throw new Error(
+      `Fluree's flake-less commit identity derives to '${derived}', which is not the identity this server reports`
+    );
+  }
+  return derived;
+}
+
+const EMPTY_COMMIT_ID = deriveEmptyCommitId();
+
+const delay = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 /** Split a `name:branch` reference into its two parts. */
 function splitRef(
@@ -95,22 +189,132 @@ function renderTerm(value: Term): string {
   }
 }
 
-/** Group properties by predicate so repeated predicates become JSON-LD arrays. */
-function toJsonLdNode(node: GraphNode): Record<string, unknown> {
-  const grouped = new Map<string, unknown[]>();
-  for (const property of node.properties) {
-    const value =
-      property.object.kind === "iri" ? { "@id": property.object.value } : property.object.value;
-    const bucket = grouped.get(property.predicate);
-    if (bucket) bucket.push(value);
-    else grouped.set(property.predicate, [value]);
-  }
+/** One triple, as a SPARQL statement. */
+function renderPattern(pattern: TriplePattern): string {
+  return `${renderTerm(pattern.subject)} ${renderTerm(pattern.predicate)} ${renderTerm(pattern.object)} .`;
+}
 
-  const jsonLd: Record<string, unknown> = { "@id": node.id };
-  for (const [predicate, values] of grouped) {
-    jsonLd[predicate] = values.length === 1 ? values[0] : values;
+/** Lay out the body of one SPARQL block. */
+function indent(lines: readonly string[]): string {
+  return lines.map((line) => `  ${line}`).join("\n");
+}
+
+/**
+ * Render one `FILTER NOT EXISTS` group per asserted absence.
+ *
+ * @remarks
+ * A group's witness variable stands for *some* fact under the named predicate
+ * and must bind nothing outside its own group. Were it a name the required
+ * patterns join on, the group would test whether that one value is absent
+ * rather than whether the predicate is, so the names are drawn from outside the
+ * set those patterns use.
+ */
+function renderAbsences(
+  absent: readonly GuardAbsence[],
+  requires: readonly TriplePattern[]
+): readonly string[] {
+  const joined = new Set(
+    requires
+      .flatMap((pattern) => [pattern.subject, pattern.predicate, pattern.object])
+      .flatMap((position) => (position.kind === "var" ? [position.name] : []))
+  );
+
+  let witness = 0;
+  return absent.map((absence) => {
+    while (joined.has(`a${witness}`)) witness += 1;
+    const subject = renderTerm(term.iri(absence.subject));
+    const predicate = renderTerm(term.iri(absence.predicate));
+    const name = `a${witness}`;
+    witness += 1;
+    return `FILTER NOT EXISTS { ${subject} ${predicate} ?${name} }`;
+  });
+}
+
+/**
+ * Render a proposal as one SPARQL update.
+ *
+ * @remarks
+ * The insert template is non-empty and fully ground and carries no delete,
+ * which is what makes the flake-less commit identity mean exactly that the
+ * precondition matched nothing: every other way to commit no flakes needs an
+ * empty or self-cancelling delete, an empty insert, or an unbound variable in
+ * the template, and none of those is expressible here.
+ */
+function renderUpdate(guard: WriteGuard, nodes: readonly GraphNode[]): string {
+  const inserted = indent(
+    nodes.flatMap((node) =>
+      node.properties.map((property) =>
+        renderPattern({
+          subject: term.iri(node.id),
+          predicate: term.iri(property.predicate),
+          object: property.object,
+        })
+      )
+    )
+  );
+
+  switch (guard.kind) {
+    case "unconditional":
+      return `INSERT DATA {\n${inserted}\n}`;
+    case "conditional": {
+      const clause = indent([
+        ...guard.requires.map((pattern) => renderPattern(pattern)),
+        ...renderAbsences(guard.absent, guard.requires),
+      ]);
+      return `INSERT {\n${inserted}\n}\nWHERE {\n${clause}\n}`;
+    }
   }
-  return jsonLd;
+}
+
+/**
+ * Read what one identity did from the record the server keeps for it.
+ *
+ * @remarks
+ * `state` reports whether the substrate processed the offer, never whether it
+ * applied — a refused offer is `committed` too. `detail.flake_count` is what
+ * separates them, and it agrees with the commit identity on every case.
+ */
+function submissionReceipt(
+  ledger: string,
+  record: SubmissionRecord,
+  detail: string
+): LedgerReceipt {
+  switch (record.state) {
+    case "committed": {
+      const flakes = record.detail?.flake_count;
+      if (typeof record.t !== "number" || typeof flakes !== "number") {
+        throw semanticLedgerFailure(
+          "propose",
+          "BackendFailed",
+          `${detail}; the record carried no position or flake count`
+        );
+      }
+      if (flakes === 0) return { applied: false, ledger, t: record.t, reason: "GuardUnmatched" };
+      if (record.commit_id === undefined) {
+        throw semanticLedgerFailure(
+          "propose",
+          "BackendFailed",
+          `${detail}; an applied record carried no commit identity`
+        );
+      }
+      return { applied: true, ledger, t: record.t, commit: record.commit_id };
+    }
+    case "unknown":
+      // The identity was never executed, so the offer may be made again.
+      throw semanticLedgerFailure(
+        "propose",
+        "TransportFailed",
+        `${detail}; the offer never reached the substrate`
+      );
+    case "failed":
+      throw semanticLedgerFailure("propose", "BackendFailed", `${detail}; the offer failed`);
+    default:
+      throw semanticLedgerFailure(
+        "propose",
+        "BackendFailed",
+        `${detail}; the record reports an unrecognised state '${String(record.state)}'`
+      );
+  }
 }
 
 /**
@@ -123,25 +327,41 @@ export function createFlureeHttpSemanticLedgerPort(options: FlureeHttpOptions): 
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const doFetch = options.fetch ?? globalThis.fetch;
 
+  /**
+   * Send one request, reporting a lost answer rather than raising it.
+   *
+   * @remarks
+   * A request whose answer never arrived may have been executed, so the two
+   * cases are distinct outcomes rather than one success and one failure. Only a
+   * caller that can establish which of the two happened is entitled to decide
+   * what a lost answer means.
+   */
+  async function attempt(path: string, init: RequestInit): Promise<Attempt> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await doFetch(`${baseUrl}${path}`, { ...init, signal: controller.signal });
+      return { outcome: "answered", status: response.status, body: await response.text() };
+    } catch (cause) {
+      return {
+        outcome: "unanswered",
+        detail: `${path}: ${cause instanceof Error ? cause.message : String(cause)}`,
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function request(
     operation: SemanticLedgerFailure["operation"],
     path: string,
     init: RequestInit
   ): Promise<{ status: number; body: string }> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const response = await doFetch(`${baseUrl}${path}`, { ...init, signal: controller.signal });
-      return { status: response.status, body: await response.text() };
-    } catch (cause) {
-      throw semanticLedgerFailure(
-        operation,
-        "TransportFailed",
-        `${path}: ${cause instanceof Error ? cause.message : String(cause)}`
-      );
-    } finally {
-      clearTimeout(timer);
+    const sent = await attempt(path, init);
+    if (sent.outcome === "unanswered") {
+      throw semanticLedgerFailure(operation, "TransportFailed", sent.detail);
     }
+    return { status: sent.status, body: sent.body };
   }
 
   function parseJson<T>(operation: SemanticLedgerFailure["operation"], body: string): T {
@@ -198,6 +418,38 @@ export function createFlureeHttpSemanticLedgerPort(options: FlureeHttpOptions): 
     return entry ? { ledger, t: entry.t } : null;
   }
 
+  /**
+   * Ask the server what an identity did, once its own answer is unrecoverable.
+   *
+   * @remarks
+   * This is the out-of-band record, and it exists so a lost answer is resolved
+   * by asking rather than by guessing or by offering again. An offer still being
+   * processed is waited on for a fixed span; past that the outcome is genuinely
+   * not yet determinate, and saying so is more honest than waiting longer.
+   */
+  async function recoverProposal(
+    ledger: string,
+    identity: string,
+    detail: string
+  ): Promise<LedgerReceipt> {
+    const path = `/v1/fluree/submissions/${encodeURIComponent(identity)}/${encodeURIComponent(ledger)}`;
+
+    for (let poll = 0; poll <= IN_FLIGHT_POLLS; poll += 1) {
+      if (poll > 0) await delay(IN_FLIGHT_POLL_MS);
+      const { status, body } = await request("propose", path, { method: "GET" });
+      rejectOnError("propose", status, body);
+
+      const record = parseJson<SubmissionRecord>("propose", body);
+      if (record.state !== "in_flight") return submissionReceipt(ledger, record, detail);
+    }
+
+    throw semanticLedgerFailure(
+      "propose",
+      "TransportFailed",
+      `${detail}; the offer was still in flight`
+    );
+  }
+
   return {
     async ensureLedger({ ledger }): Promise<LedgerHead> {
       if (!ledger.trim()) {
@@ -232,39 +484,80 @@ export function createFlureeHttpSemanticLedgerPort(options: FlureeHttpOptions): 
       return found;
     },
 
-    async transact({ ledger, nodes }): Promise<LedgerCommit> {
+    async propose({ ledger, identity, guard, nodes }): Promise<LedgerReceipt> {
+      // Both caps are the server's, and stating them here means a violation is
+      // named for what it is rather than arriving as a 400 about a request.
+      if (utf8.encode(identity).length > IDENTITY_LIMIT_BYTES) {
+        throw semanticLedgerFailure(
+          "propose",
+          "InvalidInput",
+          `Identity exceeds ${IDENTITY_LIMIT_BYTES} bytes`
+        );
+      }
       if (nodes.length === 0) {
-        throw semanticLedgerFailure("transact", "InvalidInput", "At least one node is required");
+        throw semanticLedgerFailure("propose", "InvalidInput", "At least one node is required");
       }
 
-      const { status, body } = await request(
-        "transact",
-        `/v1/fluree/insert?ledger=${encodeURIComponent(ledger)}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ "@graph": nodes.map(toJsonLdNode) }),
+      const path = `/v1/fluree/update?ledger=${encodeURIComponent(ledger)}`;
+      const init: RequestInit = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/sparql-update",
+          "Idempotency-Key": identity,
+        },
+        body: renderUpdate(guard, nodes),
+      };
+
+      // A replay under one identity is byte-identical to the original, so an
+      // offer whose answer was lost is simply sent again. When the second send
+      // is lost too, the record the identity leaves behind settles it.
+      let sent = await attempt(path, init);
+      if (sent.outcome === "unanswered") sent = await attempt(path, init);
+      if (sent.outcome === "unanswered")
+        return await recoverProposal(ledger, identity, sent.detail);
+
+      // The identity is spoken for by a different offer, so this one wrote
+      // nothing. The position reported is the line's, not this offer's.
+      if (
+        sent.status === 409 &&
+        /err:db\/CommitConflict|idempotency key collision/iu.test(sent.body)
+      ) {
+        const at = await findHead("propose", ledger);
+        if (!at) {
+          throw semanticLedgerFailure("propose", "LedgerMissing", `Ledger not found: ${ledger}`);
         }
-      );
-      rejectOnError("transact", status, body);
-
-      const receipt = parseJson<{ t?: number; commit?: { hash?: string } }>("transact", body);
-      if (typeof receipt.t !== "number") {
-        throw semanticLedgerFailure("transact", "BackendFailed", "Write receipt carried no `t`");
+        return { applied: false, ledger, t: at.t, reason: "AlreadyProposed" };
       }
-      return { ledger, t: receipt.t, commit: receipt.commit?.hash ?? "" };
+      rejectOnError("propose", sent.status, sent.body);
+
+      const receipt = parseJson<{ t?: number; commit?: { hash?: string } }>("propose", sent.body);
+      if (typeof receipt.t !== "number") {
+        throw semanticLedgerFailure("propose", "BackendFailed", "Write receipt carried no `t`");
+      }
+
+      const hash = receipt.commit?.hash ?? "";
+      if (hash === "") {
+        // Only ledger creation reports no commit identity at all, so a write
+        // that does leaves its outcome undetermined rather than refused.
+        throw semanticLedgerFailure(
+          "propose",
+          "BackendFailed",
+          "Write receipt carried no commit identity"
+        );
+      }
+
+      // The flake-less commit identity is a sentinel and not a commit, so it is
+      // read here and discarded; a refusal has nowhere to carry it.
+      return hash === EMPTY_COMMIT_ID
+        ? { applied: false, ledger, t: receipt.t, reason: "GuardUnmatched" }
+        : { applied: true, ledger, t: receipt.t, commit: hash };
     },
 
     async select({ ledger, at, query }): Promise<readonly Binding[]> {
       // `@t:` on the ledger reference is the honored time-travel form.
       const source = at === undefined ? ledger : `${ledger}@t:${at}`;
       const projection = query.select.map((name) => `?${name}`).join(" ");
-      const patterns = query.where
-        .map(
-          (pattern) =>
-            `  ${renderTerm(pattern.subject)} ${renderTerm(pattern.predicate)} ${renderTerm(pattern.object)} .`
-        )
-        .join("\n");
+      const patterns = indent(query.where.map((pattern) => renderPattern(pattern)));
       const sparql = `SELECT ${projection}\nFROM <${source}>\nWHERE {\n${patterns}\n}`;
 
       const { status, body } = await request("select", "/v1/fluree/query", {

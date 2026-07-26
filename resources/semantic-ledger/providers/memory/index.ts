@@ -8,22 +8,38 @@
  * wrapper shaped around one vendor.
  *
  * It stores facts in an append-only log stamped with the position at which they
- * became visible, which is the minimum needed to honour temporal reads.
+ * became visible, which is the minimum needed to honour temporal reads. A
+ * precondition is evaluated against the facts visible at head in the same call
+ * that appends, and each line remembers the outcome it gave every identity, so
+ * an offer sent twice is answered once.
  */
 import {
   type Binding,
   type GraphNode,
   type GroundTerm,
-  type LedgerCommit,
   type LedgerHead,
   type LedgerMergePreview,
   type LedgerMergeReceipt,
+  type LedgerReceipt,
   type SelectQuery,
   type SemanticLedgerPort,
   semanticLedgerFailure,
   type Term,
   type TriplePattern,
+  type WriteGuard,
 } from "@rawr/resource-semantic-ledger";
+
+/**
+ * Longest identity an offer may carry.
+ *
+ * @remarks
+ * The cap is in bytes rather than characters because it bounds what a substrate
+ * carries an identity in, and a character is not a byte.
+ */
+const IDENTITY_LIMIT_BYTES = 128;
+
+/** Measures an identity against a cap that is stated in bytes. */
+const utf8 = new TextEncoder();
 
 /** One stored fact. `t` is the position at which it became observable. */
 interface Fact {
@@ -33,9 +49,17 @@ interface Fact {
   readonly t: number;
 }
 
+/** The outcome one identity was given, kept beside the content it was given for. */
+interface AnsweredOffer {
+  readonly digest: string;
+  readonly receipt: LedgerReceipt;
+}
+
 interface LedgerState {
   t: number;
   readonly facts: Fact[];
+  /** Outcome already given to each identity offered on this line. */
+  readonly offers: Map<string, AnsweredOffer>;
   /** Position in this line's history at which it diverged from its source. */
   readonly forkedAt?: number;
 }
@@ -68,6 +92,89 @@ function matchFact(
   next = matchTerm(pattern.predicate, fact.predicate, next);
   if (!next) return null;
   return matchTerm(pattern.object, fact.object.value, next);
+}
+
+/**
+ * Solve a conjunction of patterns against a set of facts.
+ *
+ * @remarks
+ * Solutions are carried as a frontier of partial bindings: each pattern extends
+ * every binding that survives it, so a variable name shared between patterns
+ * joins them. An empty conjunction has one solution, the empty binding, which is
+ * what makes a precondition asserting only absence something that can hold.
+ */
+function solve(
+  patterns: readonly TriplePattern[],
+  visible: readonly Fact[]
+): readonly Record<string, string>[] {
+  let frontier: Record<string, string>[] = [{}];
+  for (const pattern of patterns) {
+    const next: Record<string, string>[] = [];
+    for (const bindings of frontier) {
+      for (const fact of visible) {
+        const matched = matchFact(pattern, fact, bindings);
+        if (matched) next.push(matched);
+      }
+    }
+    frontier = next;
+    if (frontier.length === 0) break;
+  }
+  return frontier;
+}
+
+/**
+ * Decide whether a precondition holds over the facts a proposal is offered
+ * against.
+ *
+ * @remarks
+ * A solution satisfies the precondition when no subject it asserts absent
+ * carries a fact under the named predicate. Those assertions bind nothing —
+ * their witnesses are existential and local — so every solution answers them
+ * alike, and the precondition holds exactly when one solution exists and no
+ * asserted absence is contradicted.
+ */
+function guardHolds(guard: WriteGuard, visible: readonly Fact[]): boolean {
+  switch (guard.kind) {
+    case "unconditional":
+      return true;
+    case "conditional":
+      return (
+        solve(guard.requires, visible).length > 0 &&
+        guard.absent.every(
+          (absence) =>
+            !visible.some(
+              (fact) => fact.subject === absence.subject && fact.predicate === absence.predicate
+            )
+        )
+      );
+  }
+}
+
+/** A plain object, whose key order can be normalised. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Render what a proposal offers as a string that ignores property order.
+ *
+ * @remarks
+ * Two offers carry the same content when they assert the same facts under the
+ * same precondition, whatever order their author happened to build the objects
+ * in, so key order must not reach the comparison. Sequence is left alone: a
+ * resend reproduces its own sequence, so normalising it would only widen what
+ * counts as one offer.
+ */
+function contentDigest(guard: WriteGuard, nodes: readonly GraphNode[]): string {
+  return JSON.stringify({ guard, nodes }, (_key: string, value: unknown) =>
+    isRecord(value)
+      ? Object.fromEntries(
+          Object.keys(value)
+            .sort()
+            .map((key) => [key, value[key]])
+        )
+      : value
+  );
 }
 
 /**
@@ -112,7 +219,7 @@ export function createMemorySemanticLedgerPort(
 
   const require = (
     ledger: string,
-    operation: "head" | "transact" | "select" | "fork" | "merge"
+    operation: "head" | "propose" | "select" | "fork" | "merge"
   ): LedgerState => {
     const state = ledgers.get(ledger);
     if (!state) {
@@ -128,7 +235,7 @@ export function createMemorySemanticLedgerPort(
       }
       const existing = ledgers.get(ledger);
       if (existing) return { ledger, t: existing.t };
-      ledgers.set(ledger, { t: 0, facts: [] });
+      ledgers.set(ledger, { t: 0, facts: [], offers: new Map() });
       return { ledger, t: 0 };
     },
 
@@ -136,10 +243,41 @@ export function createMemorySemanticLedgerPort(
       return { ledger, t: require(ledger, "head").t };
     },
 
-    async transact({ ledger, nodes }): Promise<LedgerCommit> {
-      const state = require(ledger, "transact");
+    async propose({ ledger, identity, guard, nodes }): Promise<LedgerReceipt> {
+      const state = require(ledger, "propose");
+      if (utf8.encode(identity).length > IDENTITY_LIMIT_BYTES) {
+        throw semanticLedgerFailure(
+          "propose",
+          "InvalidInput",
+          `Identity exceeds ${IDENTITY_LIMIT_BYTES} bytes`
+        );
+      }
       if (nodes.length === 0) {
-        throw semanticLedgerFailure("transact", "InvalidInput", "At least one node is required");
+        throw semanticLedgerFailure("propose", "InvalidInput", "At least one node is required");
+      }
+
+      const digest = contentDigest(guard, nodes);
+      const answered = state.offers.get(identity);
+      if (answered) {
+        // An identity answers for one offer, and a refusal is an answer: the
+        // precondition is not evaluated again, so an offer resent after its
+        // justification became true replays the refusal instead of applying.
+        // Different content under a taken identity is a different offer, and it
+        // is refused rather than given the first one's outcome.
+        if (answered.digest === digest) return answered.receipt;
+        return { applied: false, ledger, t: state.t, reason: "AlreadyProposed" };
+      }
+
+      // Every fact in the log is at or before head, so head's view is the log.
+      if (!guardHolds(guard, state.facts)) {
+        const refused: LedgerReceipt = {
+          applied: false,
+          ledger,
+          t: state.t,
+          reason: "GuardUnmatched",
+        };
+        state.offers.set(identity, { digest, receipt: refused });
+        return refused;
       }
 
       const t = state.t + 1;
@@ -157,8 +295,9 @@ export function createMemorySemanticLedgerPort(
 
       // Deterministic stand-in for a real commit identity: the provider owns
       // the value's shape, callers only ever treat it as opaque.
-      const commit = `memory:${ledger}:${t}`;
-      return { ledger, t, commit };
+      const applied: LedgerReceipt = { applied: true, ledger, t, commit: `memory:${ledger}:${t}` };
+      state.offers.set(identity, { digest, receipt: applied });
+      return applied;
     },
 
     async select({ ledger, at, query }): Promise<readonly Binding[]> {
@@ -174,24 +313,9 @@ export function createMemorySemanticLedgerPort(
       const ceiling = at ?? state.t;
       const visible = state.facts.filter((fact) => fact.t <= ceiling);
 
-      // Conjunctive join: carry a frontier of partial bindings through every
-      // pattern in turn.
-      let frontier: Record<string, string>[] = [{}];
-      for (const pattern of query.where) {
-        const next: Record<string, string>[] = [];
-        for (const bindings of frontier) {
-          for (const fact of visible) {
-            const matched = matchFact(pattern, fact, bindings);
-            if (matched) next.push(matched);
-          }
-        }
-        frontier = next;
-        if (frontier.length === 0) break;
-      }
-
       const seen = new Set<string>();
       const rows: Binding[] = [];
-      for (const bindings of frontier) {
+      for (const bindings of solve(query.where, visible)) {
         const row: Record<string, string> = {};
         for (const name of query.select) {
           const value = bindings[name];
@@ -211,8 +335,14 @@ export function createMemorySemanticLedgerPort(
         throw semanticLedgerFailure("fork", "InvalidInput", `Line already exists: ${to}`);
       }
       // The new line starts holding every fact the source held, at the same
-      // position, and diverges from there.
-      ledgers.set(to, { t: source.t, facts: [...source.facts], forkedAt: source.t });
+      // position, and diverges from there. It answers for no offer, because an
+      // identity is scoped to the line it was offered on.
+      ledgers.set(to, {
+        t: source.t,
+        facts: [...source.facts],
+        offers: new Map(),
+        forkedAt: source.t,
+      });
       return { ledger: to, t: source.t };
     },
 

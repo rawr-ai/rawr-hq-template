@@ -17,6 +17,12 @@
  * so `Σ (boundaries − position)` over all items strictly decreases on every
  * productive push and never rises. That monotonicity is also why the frame
  * needs no oscillation detection: it cannot revisit a state it has left.
+ *
+ * Movement is read off what the substrate did, never off what this turn meant
+ * to do. That is what ties `settlement: "advancing"` to a rank that actually
+ * decreased: a clearance another writer had already recorded moves the item but
+ * not this turn, and reporting it as movement would tell an agent driving the
+ * iterator that work is progressing when it is not.
  */
 import type { AdvanceView } from "../../../model/dto/advance";
 import type { Settlement } from "../../../model/dto/settlement";
@@ -85,8 +91,14 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
           // Clearance names the boundary, never its index, so this fact stays
           // true about the same gate even if the frame is later reshaped.
           if (!cleared.has(boundary.key)) {
-            await store.recordCleared(input.streamId, item.id, boundary.key, context.clock.now());
-            moved = true;
+            const proposed = await store.recordCleared(
+              input.streamId,
+              item.id,
+              boundary.key,
+              boundary.requires,
+              context.clock.now()
+            );
+            if (proposed.applied) moved = true;
           }
           position += 1;
         }
@@ -122,7 +134,7 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
         }
 
         if (!existing) {
-          await store.createDerived(
+          const proposed = await store.createDerived(
             input.streamId,
             childId,
             item.id,
@@ -130,7 +142,21 @@ export const push = module.push.handler(async ({ context, input, errors }) => {
             `Supply '${requires}' for ${item.title}`,
             context.clock.now()
           );
-          moved = true;
+          if (proposed.applied) {
+            moved = true;
+          } else {
+            // The peel-off is already outstanding, so the parent is waiting on
+            // an answer rather than blocked from asking for one.
+            advances.push({
+              itemId: item.id,
+              clearedTo: position,
+              outcome: "waiting",
+              blockedAt: position,
+              requires,
+              derivedItemId: childId,
+            });
+            continue;
+          }
         }
 
         advances.push({
