@@ -2,7 +2,6 @@ import { Buffer } from "node:buffer";
 
 import { NodeServices } from "@effect/platform-node";
 import type {
-  AgentPluginPackageOutputAsyncPort,
   AgentPluginPackageOutputResource,
   CoworkV1ArchiveEncodingRequest,
   PackageOutputFailure,
@@ -79,33 +78,28 @@ export function makeAgentPluginPackageOutputResource(
   };
 }
 
-export type NodePackageOutputResult<A> =
-  | Readonly<{ ok: true; value: A }>
-  | Readonly<{ ok: false; failure: PackageOutputFailure }>;
-
-export function runNodePackageOutput<A>(
-  operation: Effect.Effect<A, PackageOutputFailure, ProviderRequirements>
-): Promise<NodePackageOutputResult<A>> {
-  return Effect.runPromise(
-    operation.pipe(
-      Effect.match({
-        onFailure: (failure): NodePackageOutputResult<A> => Object.freeze({ ok: false, failure }),
-        onSuccess: (value): NodePackageOutputResult<A> => Object.freeze({ ok: true, value }),
-      }),
-      Effect.provide(NodeServices.layer)
-    )
-  );
+/**
+ * Realizes the Cowork package-output provider as a ready Node resource.
+ *
+ * Node platform services remain provider-owned and are attached to each
+ * returned operation, preserving Effect failure and cancellation semantics.
+ */
+export function makeNodeAgentPluginPackageOutputResource(
+  options: CoworkV1EffectPlatformNodeOptions = {}
+): AgentPluginPackageOutputResource<never> {
+  const resource = makeAgentPluginPackageOutputResource(options);
+  return Object.freeze({
+    encodeCoworkV1: (input: CoworkV1ArchiveEncodingRequest) =>
+      provideNodeServices(resource.encodeCoworkV1(input)),
+    publish: (input: PackageOutputPublicationRequest) =>
+      provideNodeServices(resource.publish(input)),
+  });
 }
 
-export function makeNodePackageOutputAsyncPort(
-  options: CoworkV1EffectPlatformNodeOptions = {}
-): AgentPluginPackageOutputAsyncPort {
-  const resource = makeAgentPluginPackageOutputResource(options);
-  return {
-    encodeCoworkV1: (input) =>
-      runNodePackageOutput(resource.encodeCoworkV1(input)).then(unwrapNodeResult),
-    publish: (input) => runNodePackageOutput(resource.publish(input)).then(unwrapNodeResult),
-  };
+function provideNodeServices<A>(
+  operation: Effect.Effect<A, PackageOutputFailure, ProviderRequirements>
+): Effect.Effect<A, PackageOutputFailure> {
+  return operation.pipe(Effect.provide(NodeServices.layer));
 }
 
 function encodeCoworkV1(
@@ -956,11 +950,6 @@ function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
   return (
     left.byteLength === right.byteLength && left.every((value, index) => value === right[index])
   );
-}
-
-function unwrapNodeResult<A>(result: NodePackageOutputResult<A>): A {
-  if (result.ok) return result.value;
-  throw new Error(`${result.failure.phase}: ${result.failure.detail}`);
 }
 
 function errorMessage(error: unknown): string {

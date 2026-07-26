@@ -464,6 +464,32 @@ behavior-first testing reviews report no unresolved P0/P1/P2 finding. This
 checkpoint changes no provider home, Personal repository, Oclif surface, or
 live lifecycle state.
 
+The package-output checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4d]]. The neutral
+contract now exposes only its Effect resource. The Cowork Effect Platform Node
+provider attaches Node platform services to each returned operation and gives
+one ready `AgentPluginPackageOutputResource<never>` to the selecting CLI runtime.
+Packaging consumes that Effect capability directly through service and module
+context; the Promise port, detached runner, result envelope, unwrapping
+exception, and both production Promise-to-Effect reconstructions are deleted.
+
+Typed resource failures remain in Effect's failure channel and pure Packaging
+policy maps them into the same closed public results and bounded diagnostics.
+Output publication remains uninterruptible only at the existing Packaging
+transition boundary; the ready provider otherwise preserves caller
+cancellation. No service-local adapter, helper, Layer, alternate runtime, or
+second resource form replaces the deleted bridge.
+
+The provider suite passes 14 cases with 44 assertions, including typed failure
+and cancellation through the ready Node resource. The focused Packaging suite
+passes 27 cases, including delayed cancellation across the handler's
+uninterruptible publication boundary, and the complete lifecycle suite passes
+247 cases.
+Resource, provider, lifecycle, and CLI typechecks, `habitat:check` with 31
+Habitat tests plus 17 selected source laws, workspace Biome, strict OpenSpec,
+and diff hygiene pass. This checkpoint changes no provider home, Personal
+repository, Oclif command surface, or live lifecycle state.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

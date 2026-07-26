@@ -1,5 +1,6 @@
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { AgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
@@ -21,10 +22,7 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     contentWorkspace: unavailableContentWorkspace(),
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
-    packageOutput: {
-      encodeCoworkV1: async () => unavailableAsync("cowork archive encode"),
-      publish: async () => unavailableAsync("package output"),
-    },
+    packageOutput: unavailablePackageOutput(),
     versionedContent: unavailableVersionedContent(),
     ...unavailableProviderResources(),
     ...overrides,
@@ -57,6 +55,14 @@ export function unavailableContentWorkspace(): ContentWorkspaceResource<never> {
     restore: () => unavailableEffect("vendor restoration"),
     settle: () => unavailableEffect("vendor settlement"),
     release: () => unavailableEffect("vendor capture release"),
+  });
+}
+
+/** Supplies a fail-fast package-output resource to tests outside Packaging. */
+export function unavailablePackageOutput(): AgentPluginPackageOutputResource<never> {
+  return Object.freeze({
+    encodeCoworkV1: () => unavailableEffect("cowork archive encode"),
+    publish: () => unavailableEffect("package output"),
   });
 }
 

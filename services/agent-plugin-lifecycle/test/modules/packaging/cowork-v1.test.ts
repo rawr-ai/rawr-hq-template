@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   assertCoworkV1ProtocolBounds,
@@ -24,7 +25,7 @@ interface ZipEntryView {
 }
 
 const roots: OwnedFixtureRoot[] = [];
-const nodePackageOutput = makeNodePackageOutputAsyncPort();
+const nodePackageOutput = makeNodeAgentPluginPackageOutputResource();
 
 afterEach(async () => {
   while (roots.length > 0) {
@@ -156,7 +157,9 @@ describe("cowork-v1", () => {
 async function renderCoworkV1(
   plan: Parameters<typeof createCoworkV1ArchiveRequest>[0]
 ): Promise<Readonly<{ bytes: Uint8Array; packageDigest: string }>> {
-  const bytes = await nodePackageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(plan));
+  const bytes = await Effect.runPromise(
+    nodePackageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(plan))
+  );
   return Object.freeze({ bytes, packageDigest: coworkV1PackageDigest(bytes) });
 }
 

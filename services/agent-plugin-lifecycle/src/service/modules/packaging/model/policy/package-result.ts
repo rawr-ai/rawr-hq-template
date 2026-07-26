@@ -69,6 +69,28 @@ export function mapPackageOutputFailure(
 }
 
 /**
+ * Maps a typed archive-encoding failure into Packaging's stable render refusal.
+ */
+export function packageRenderFailure(failure: PackageOutputFailure): PackagingFailure {
+  return createPackagingFailure(
+    "PackageRenderFailed",
+    "package-render",
+    `Cowork v1 rendering failed: ${failure.phase}: ${failure.detail}`
+  );
+}
+
+/**
+ * Maps an escaped typed publication failure into Packaging's unsettled result.
+ */
+export function unsettledPackageOutputFailure(failure: PackageOutputFailure): PackagingFailure {
+  return createPackagingFailure(
+    "OutputVerifyFailed",
+    "output-port",
+    `Atomic output port failed without a closed result: ${failure.phase}: ${failure.detail}`
+  );
+}
+
+/**
  * Constructs a pre-mutation refusal without fabricating a package identity.
  */
 export function rejectedPackagingResult(
@@ -98,22 +120,6 @@ export function createPackagingFailure(
 export function externalErrorMessage(error: unknown): string {
   try {
     return diagnosticString(error instanceof Error ? error.message : error);
-  } catch {
-    return UNREADABLE_EXTERNAL_DIAGNOSTIC;
-  }
-}
-
-/**
- * Renders an unknown output failure while preferring a resource-provided detail field.
- */
-export function externalErrorDetail(error: unknown): string {
-  try {
-    if (error instanceof Error) return diagnosticString(error.message);
-    if (typeof error === "object" && error !== null && "detail" in error) {
-      const detail = error.detail;
-      if (typeof detail === "string") return detail;
-    }
-    return diagnosticString(error);
   } catch {
     return UNREADABLE_EXTERNAL_DIAGNOSTIC;
   }

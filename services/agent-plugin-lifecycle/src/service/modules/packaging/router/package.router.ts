@@ -6,18 +6,19 @@ import { coworkV1PackageDigest, createCoworkV1ArchiveRequest } from "../model/he
 import { priorOutputObservationLimit } from "../model/policy/package-output";
 import {
   createPackagingFailure,
-  externalErrorDetail,
   externalErrorMessage,
   mapPackageOutputFailure,
   packagedReleaseIdentity,
+  packageRenderFailure,
   rejectedPackagingResult,
   sourceIssueMessage,
+  unsettledPackageOutputFailure,
 } from "../model/policy/package-result";
 import { module } from "../module";
 
 /**
  * @purpose Render and publish one deterministic package from exact reviewed content.
- * @capability Consume the module-provided clean source and package-output ports.
+ * @capability Consume the module-provided clean source and package-output resources.
  * @behavior Inspect, derive, encode, revalidate, publish, and classify one closed result.
  * @relation Keep Packaging's transition inside its authored router rather than model policy.
  */
@@ -61,20 +62,10 @@ export const router = {
       }
 
       const encodedAttempt = yield* Effect.result(
-        Effect.tryPromise({
-          try: () =>
-            context.packageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(derivation.value)),
-          catch: (cause) => cause,
-        })
+        context.packageOutput.encodeCoworkV1(createCoworkV1ArchiveRequest(derivation.value))
       );
       if (encodedAttempt._tag === "Failure") {
-        return rejectedPackagingResult(
-          createPackagingFailure(
-            "PackageRenderFailed",
-            "package-render",
-            `Cowork v1 rendering failed: ${externalErrorDetail(encodedAttempt.failure)}`
-          )
-        );
+        return rejectedPackagingResult(packageRenderFailure(encodedAttempt.failure));
       }
       const bytes = encodedAttempt.success;
 
@@ -115,27 +106,17 @@ export const router = {
       } as const;
       const outputAttempt = yield* Effect.result(
         Effect.uninterruptible(
-          Effect.tryPromise({
-            try: () =>
-              context.packageOutput.publish({
-                outputPath: request.outputPath,
-                bytes: new Uint8Array(bytes),
-                maxPriorOutputBytes: priorOutputObservationLimit(bytes.byteLength),
-              }),
-            catch: (cause) => cause,
+          context.packageOutput.publish({
+            outputPath: request.outputPath,
+            bytes: new Uint8Array(bytes),
+            maxPriorOutputBytes: priorOutputObservationLimit(bytes.byteLength),
           })
         )
       );
       if (outputAttempt._tag === "Failure") {
         return {
           kind: "OutputUnsettled",
-          primaryFailure: createPackagingFailure(
-            "OutputVerifyFailed",
-            "output-port",
-            `Atomic output port failed without a closed result: ${externalErrorDetail(
-              outputAttempt.failure
-            )}`
-          ),
+          primaryFailure: unsettledPackageOutputFailure(outputAttempt.failure),
           ...identity,
         };
       }

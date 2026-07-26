@@ -1,11 +1,11 @@
 import { lstat, readFile, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type {
-  AgentPluginPackageOutputAsyncPort,
+  AgentPluginPackageOutputResource,
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
@@ -216,17 +216,20 @@ describe("package agent plugin application", () => {
     await writeFile(outputPath, "operator-owned output\n", { mode: 0o600 });
     const beforeBytes = await readFile(outputPath);
     const before = await fileIdentityAndMetadata(outputPath);
-    const nodeOutput = makeNodePackageOutputAsyncPort();
+    const nodeOutput = makeNodeAgentPluginPackageOutputResource();
     let publishCalls = 0;
-    const output: AgentPluginPackageOutputAsyncPort = {
-      async encodeCoworkV1(request) {
-        const bytes = await nodeOutput.encodeCoworkV1(request);
-        await writeFile(repository.payloadFile, "changed after derivation\n");
-        return bytes;
-      },
-      async publish() {
+    const output: AgentPluginPackageOutputResource<never> = {
+      encodeCoworkV1: (request) =>
+        Effect.gen(function* () {
+          const bytes = yield* nodeOutput.encodeCoworkV1(request);
+          yield* Effect.promise(() =>
+            writeFile(repository.payloadFile, "changed after derivation\n")
+          );
+          return bytes;
+        }),
+      publish: () => {
         publishCalls += 1;
-        return { kind: "ReadOnlyConverged" };
+        return Effect.succeed({ kind: "ReadOnlyConverged" });
       },
     };
     const application = await createPackageAgentPluginApplication(output);
@@ -286,15 +289,20 @@ describe("package agent plugin application", () => {
     expect(output.publishCalls).toBe(0);
   });
 
-  it("reports a closed unsettled result when the output port throws after derivation", async () => {
+  it("reports a closed unsettled result when the output resource fails after derivation", async () => {
     const root = await fixtureRoot();
     const repository = await createGeneratedGitRepository(root);
-    const nodeOutput = makeNodePackageOutputAsyncPort();
+    const nodeOutput = makeNodeAgentPluginPackageOutputResource();
     const application = await createPackageAgentPluginApplication({
       encodeCoworkV1: nodeOutput.encodeCoworkV1,
-      async publish() {
-        throw new Error("unknown output boundary ".repeat(512));
-      },
+      publish: () =>
+        Effect.fail(
+          resourceFailure(
+            "OutputVerifyFailed",
+            "output-resource",
+            "unknown output boundary ".repeat(512)
+          )
+        ),
     });
 
     const result = await application.package(
@@ -312,8 +320,80 @@ describe("package agent plugin application", () => {
     });
     if (result.kind !== "OutputUnsettled") throw new Error("Expected unsettled output");
     expect(result.primaryFailure.message).toHaveLength(MAX_PACKAGING_FAILURE_MESSAGE_LENGTH);
+    expect(
+      result.primaryFailure.message.startsWith(
+        "Atomic output port failed without a closed result: output-resource: unknown output boundary"
+      )
+    ).toBe(true);
     expect(result.primaryFailure.message.endsWith("...[truncated]")).toBe(true);
     expect(Value.Check(PackageAgentPluginResultSchema, result)).toBe(true);
+  });
+
+  it("settles uninterruptible publication before observing request cancellation", async () => {
+    const root = await fixtureRoot();
+    const repository = await createGeneratedGitRepository(root);
+    const outputPath = join(root.path, "cancelled.zip");
+    const publicationAdmitted = Promise.withResolvers<void>();
+    const releasePublication = Promise.withResolvers<void>();
+    const order: string[] = [];
+    let publicationSettled = false;
+    const nodeOutput = makeNodeAgentPluginPackageOutputResource();
+    const client = createLifecycleTestClient({
+      contentWorkspace: makeNodeContentWorkspaceResource({
+        gitExecutable: await realpath(GIT_EXECUTABLE),
+      }),
+      packageOutput: {
+        encodeCoworkV1: nodeOutput.encodeCoworkV1,
+        publish: () =>
+          Effect.promise(async () => {
+            publicationAdmitted.resolve();
+            await releasePublication.promise;
+            publicationSettled = true;
+            order.push("publication");
+            return { kind: "OutputReplacedVerified", priorOutput: "Absent" };
+          }),
+      },
+    });
+    const controller = new AbortController();
+    const publication = client.packaging.package(
+      packageRequest(repository, outputPath, {
+        kind: "targeted",
+        pluginId: repository.pluginId,
+      }),
+      { ...testInvocation, signal: controller.signal }
+    );
+    const observed = publication
+      .then(
+        (value) => ({ kind: "success" as const, value }),
+        (error: unknown) => ({ kind: "failure" as const, error })
+      )
+      .then((result) => {
+        order.push("caller");
+        return result;
+      });
+
+    await publicationAdmitted.promise;
+    controller.abort(new Error("Packaging request cancelled"));
+    const stateBeforeSettlement = await Promise.race([
+      observed.then(() => "settled" as const),
+      new Promise<"pending">((resolve) => setTimeout(() => resolve("pending"), 20)),
+    ]);
+
+    try {
+      expect(stateBeforeSettlement).toBe("pending");
+      expect(publicationSettled).toBe(false);
+      expect(order).toEqual([]);
+    } finally {
+      releasePublication.resolve();
+    }
+
+    const terminal = await observed;
+    expect(publicationSettled).toBe(true);
+    expect(order).toEqual(["publication", "caller"]);
+    expect(terminal).toMatchObject({
+      kind: "failure",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+    });
   });
 
   it("maps an output-port pre-mutation refusal without publishing result identity", async () => {
@@ -393,11 +473,11 @@ describe("package agent plugin application", () => {
     const repository = await createGeneratedGitRepository(root);
     let publicationCalls = 0;
     const application = await createPackageAgentPluginApplication({
-      encodeCoworkV1: async () =>
-        Promise.reject(resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused")),
-      publish: async () => {
+      encodeCoworkV1: () =>
+        Effect.fail(resourceFailure("ArchiveEncodingFailed", "archive-codec", "codec refused")),
+      publish: () => {
         publicationCalls += 1;
-        return { kind: "ReadOnlyConverged" };
+        return Effect.succeed({ kind: "ReadOnlyConverged" });
       },
     });
 
@@ -413,34 +493,34 @@ describe("package agent plugin application", () => {
       primaryFailure: {
         code: "PackageRenderFailed",
         phase: "package-render",
-        message: expect.stringContaining("codec refused"),
+        message: "Cowork v1 rendering failed: archive-codec: codec refused",
       },
     });
     expect(publicationCalls).toBe(0);
   });
 });
 
-class CountingOutput implements AgentPluginPackageOutputAsyncPort {
+class CountingOutput implements AgentPluginPackageOutputResource<never> {
   encodeCalls = 0;
   publishCalls = 0;
   readonly priorOutputObservationLimits: number[] = [];
-  readonly #node = makeNodePackageOutputAsyncPort();
+  readonly #node = makeNodeAgentPluginPackageOutputResource();
 
   constructor(private readonly result: PackageOutputPublicationResult) {}
 
   encodeCoworkV1(
-    request: Parameters<AgentPluginPackageOutputAsyncPort["encodeCoworkV1"]>[0]
-  ): Promise<Uint8Array> {
+    request: Parameters<AgentPluginPackageOutputResource["encodeCoworkV1"]>[0]
+  ): Effect.Effect<Uint8Array, PackageOutputFailure> {
     this.encodeCalls += 1;
     return this.#node.encodeCoworkV1(request);
   }
 
-  async publish(
-    request: Parameters<AgentPluginPackageOutputAsyncPort["publish"]>[0]
-  ): Promise<PackageOutputPublicationResult> {
+  publish(
+    request: Parameters<AgentPluginPackageOutputResource["publish"]>[0]
+  ): Effect.Effect<PackageOutputPublicationResult, PackageOutputFailure> {
     this.publishCalls += 1;
     this.priorOutputObservationLimits.push(request.maxPriorOutputBytes);
-    return this.result;
+    return Effect.succeed(this.result);
   }
 }
 
@@ -511,7 +591,7 @@ async function fixtureRoot(): Promise<OwnedFixtureRoot> {
 }
 
 async function createPackageAgentPluginApplication(
-  packageOutput: AgentPluginPackageOutputAsyncPort = makeNodePackageOutputAsyncPort()
+  packageOutput: AgentPluginPackageOutputResource<never> = makeNodeAgentPluginPackageOutputResource()
 ) {
   return createPackageAgentPluginApplicationWithDefaults(packageOutput, {
     contentWorkspace: makeNodeContentWorkspaceResource({
@@ -521,7 +601,7 @@ async function createPackageAgentPluginApplication(
 }
 
 function createPackageAgentPluginApplicationWithDefaults(
-  packageOutput: AgentPluginPackageOutputAsyncPort,
+  packageOutput: AgentPluginPackageOutputResource<never>,
   overrides: Parameters<typeof createLifecycleTestClient>[0] = {}
 ) {
   const client = createLifecycleTestClient({ packageOutput, ...overrides });

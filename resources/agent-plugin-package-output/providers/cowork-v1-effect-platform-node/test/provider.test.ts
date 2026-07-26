@@ -23,8 +23,8 @@ import type {
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import {
   makeAgentPluginPackageOutputResource,
+  makeNodeAgentPluginPackageOutputResource,
   type PackageOutputProviderFailpoints,
-  runNodePackageOutput,
 } from "../index";
 
 const encoder = new TextEncoder();
@@ -48,14 +48,14 @@ afterEach(async () => {
 
 describe("Cowork v1 Effect Platform package-output provider", () => {
   test("encodes already-ordered entries to deterministic Cowork v1 bytes", async () => {
-    const resource = makeAgentPluginPackageOutputResource();
+    const resource = makeNodeAgentPluginPackageOutputResource();
     const request = archiveRequest();
     const originalTimezone = process.env.TZ;
     try {
       process.env.TZ = "Pacific/Honolulu";
-      const first = unwrap(await runNodePackageOutput(resource.encodeCoworkV1(request)));
+      const first = await Effect.runPromise(resource.encodeCoworkV1(request));
       process.env.TZ = "Asia/Tokyo";
-      const second = unwrap(await runNodePackageOutput(resource.encodeCoworkV1(request)));
+      const second = await Effect.runPromise(resource.encodeCoworkV1(request));
 
       expect(second).toEqual(first);
       expect(inspectZip(first)).toEqual({
@@ -71,34 +71,90 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     }
   });
 
+  test("preserves typed provider failures through the ready Node resource", async () => {
+    const resource = makeNodeAgentPluginPackageOutputResource();
+    const attempted = await Effect.runPromise(
+      Effect.result(
+        resource.encodeCoworkV1({
+          ...archiveRequest(),
+          fixedTimestamp: "not-a-timestamp",
+        })
+      )
+    );
+
+    expect(attempted).toMatchObject({
+      _tag: "Failure",
+      failure: {
+        _tag: "PackageOutputFailure",
+        operation: "encode-archive",
+        reason: "ArchiveEncodingFailed",
+        phase: "archive-codec",
+      },
+    });
+  });
+
+  test("preserves caller cancellation through the ready Node resource", async () => {
+    const fixture = await createFixture();
+    const outputPath = path.join(fixture.root, "cancelled.zip");
+    let admit: (() => void) | undefined;
+    let release: (() => void) | undefined;
+    const admitted = new Promise<void>((resolve) => {
+      admit = resolve;
+    });
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const resource = makeNodeAgentPluginPackageOutputResource({
+      failpoints: {
+        async hit(point) {
+          if (point !== "AfterOutputObserved") return;
+          admit?.();
+          await held;
+        },
+      },
+    });
+    const controller = new AbortController();
+    const operation = Effect.runPromise(
+      resource.publish({
+        outputPath,
+        bytes: encoder.encode("cancelled\n"),
+        maxPriorOutputBytes: 1024,
+      }),
+      { signal: controller.signal }
+    );
+
+    await admitted;
+    controller.abort();
+    release?.();
+
+    await expect(operation).rejects.toThrow();
+    expect(await Bun.file(outputPath).exists()).toBe(false);
+  });
+
   test("publishes once and repeats without changing bytes or file identity", async () => {
     const fixture = await createFixture();
     const outputPath = path.join(fixture.root, "alpha.zip");
     const bytes = encoder.encode("deterministic package\n");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const first = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const first = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
     expect(first).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
     expect(await readFile(outputPath)).toEqual(Buffer.from(bytes));
     const before = await lstat(outputPath);
     const namesBefore = await readdir(fixture.root);
 
-    const second = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const second = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
     const after = await lstat(outputPath);
     expect(second).toEqual({ kind: "ReadOnlyConverged" });
@@ -118,14 +174,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const bytes = encoder.encode("replacement\n");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const result = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const result = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
 
     expect(result).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
@@ -141,14 +195,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     await writeFile(outputPath, bytes, { mode: 0o600 });
     const resource = makeAgentPluginPackageOutputResource();
 
-    const result = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const result = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
 
     expect(result).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Replaced" });
@@ -180,7 +232,7 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       },
     });
 
-    const first = runNodePackageOutput(
+    const first = runPackageOutput(
       resource.publish({
         outputPath,
         bytes: encoder.encode("first\n"),
@@ -188,7 +240,7 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       })
     );
     await firstAdmitted;
-    const second = runNodePackageOutput(
+    const second = runPackageOutput(
       resource.publish({
         outputPath,
         bytes: encoder.encode("second\n"),
@@ -199,7 +251,7 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     expect(observed).toBe(1);
     releaseFirst?.();
 
-    expect((await Promise.all([first, second])).map(unwrap)).toEqual([
+    expect(await Promise.all([first, second])).toEqual([
       { kind: "OutputReplacedVerified", priorOutput: "Replaced" },
       { kind: "OutputReplacedVerified", priorOutput: "Replaced" },
     ]);
@@ -216,14 +268,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const outputPath = path.join(alias, "escaped.zip");
     const resource = makeAgentPluginPackageOutputResource();
 
-    const result = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes: encoder.encode("package\n"),
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const result = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes: encoder.encode("package\n"),
+        maxPriorOutputBytes: 1024,
+      })
     );
 
     expect(result).toMatchObject({
@@ -241,14 +291,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     });
     const resource = makeAgentPluginPackageOutputResource({ failpoints });
 
-    const result = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes: encoder.encode("package\n"),
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const result = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes: encoder.encode("package\n"),
+        maxPriorOutputBytes: 1024,
+      })
     );
 
     expect(result).toMatchObject({
@@ -280,10 +328,10 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     const second = makeAgentPluginPackageOutputResource({ failpoints });
 
     const results = await Promise.all([
-      runNodePackageOutput(first.publish({ outputPath, bytes, maxPriorOutputBytes: 1024 })),
-      runNodePackageOutput(second.publish({ outputPath, bytes, maxPriorOutputBytes: 1024 })),
+      runPackageOutput(first.publish({ outputPath, bytes, maxPriorOutputBytes: 1024 })),
+      runPackageOutput(second.publish({ outputPath, bytes, maxPriorOutputBytes: 1024 })),
     ]);
-    const outcomes = results.map((result) => unwrap(result).kind).sort();
+    const outcomes = results.map((result) => result.kind).sort();
 
     expect(outcomes).toEqual(["OutputReplacedVerified", "RejectedBeforeOutputMutation"]);
     expect(await readFile(outputPath)).toEqual(Buffer.from(bytes));
@@ -302,14 +350,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       },
     });
 
-    const result = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const result = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
 
     expect(result).toMatchObject({
@@ -341,14 +387,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
       },
     });
 
-    const result = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const result = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
 
     expect(result).toMatchObject({
@@ -364,24 +408,20 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
 
     await unlink(replacement);
     await unlink(preserved);
-    const retry = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const retry = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
     expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
-    const repeated = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const repeated = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
     expect(repeated).toEqual({ kind: "ReadOnlyConverged" });
   });
@@ -424,14 +464,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     });
     expect(privateEntries(await readdir(fixture.root))).toEqual([]);
 
-    const retry = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const retry = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
     expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
   });
@@ -480,14 +518,12 @@ describe("Cowork v1 Effect Platform package-output provider", () => {
     if (orphan === undefined) throw new Error("Expected an explicitly unsettled private temporary");
     await unlink(path.join(fixture.root, orphan));
 
-    const retry = unwrap(
-      await runNodePackageOutput(
-        resource.publish({
-          outputPath,
-          bytes,
-          maxPriorOutputBytes: 1024,
-        })
-      )
+    const retry = await runPackageOutput(
+      resource.publish({
+        outputPath,
+        bytes,
+        maxPriorOutputBytes: 1024,
+      })
     );
     expect(retry).toEqual({ kind: "OutputReplacedVerified", priorOutput: "Absent" });
   });
@@ -559,9 +595,10 @@ function privateEntries(names: readonly string[]): readonly string[] {
   return names.filter((name) => name.startsWith(PRIVATE_TEMPORARY_PREFIX));
 }
 
-function unwrap<A>(result: Awaited<ReturnType<typeof runNodePackageOutput<A>>>): A {
-  if (result.ok) return result.value;
-  throw new Error(`${result.failure.phase}: ${result.failure.detail}`);
+function runPackageOutput<A>(
+  operation: Effect.Effect<A, PackageOutputFailure, FileSystem.FileSystem | Path.Path>
+): Promise<A> {
+  return Effect.runPromise(operation.pipe(Effect.provide(NodeServices.layer)));
 }
 
 interface ZipEntryView {
