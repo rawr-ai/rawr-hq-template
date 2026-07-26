@@ -6,6 +6,22 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - Composition Has One Face
+
+A module exposes one router face to its service root. Named router leaves
+author operations or cohesive operation groups; module `router.ts` only
+composes those completed values into the public branch object. A directory
+index creates a second reachable face and obscures which layer owns
+composition.
+
+Moving the face does not repair the behavior behind it. Detached runners,
+misplaced helpers, loose schema barrels, and broad context remain visible until
+their own owner-local checkpoints delete them.
+
+### Bag Of Keywords
+
+Module, router, face, leaf, compose, operation, owner, public, delete, exact.
+
 ## 2026-07-25 - Selection Follows Consumer
 
 An invocation-local model belongs to the module whose operations consume and

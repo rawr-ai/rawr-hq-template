@@ -701,6 +701,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   modes, root current-main ownership, oRPC/Effect semantics, and native
   provider mutation. Keep root context assembly, exact handler context,
   provider operation authorship, and the legacy release family open.
+- [x] 5.7e2e Give Providers its one canonical public router composition face.
+  Move the exact `test`, `status`, and `sync` composition from the inadmissible
+  `router/index.ts` path to module `router.ts`, retain the named operation
+  leaves below `router/`, and delete the directory index without an alias.
+  Preserve root composition, inferred client branches, provider behavior, and
+  native mutation. Keep the loose schema barrel, module middleware shape,
+  detached operation runners, non-operation router buckets, exact handler
+  context, and the legacy release family open for later owner-local
+  checkpoints.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

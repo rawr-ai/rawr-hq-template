@@ -319,6 +319,27 @@ single repository admission graph then passed 110 tasks across 37 projects in
 one minute and seven seconds, including all 15 enforced Habitat rules with no
 failing or advisory result.
 
+The next semantic checkpoint gives Providers its one canonical public router
+composition face. Module `router.ts` now composes the existing `test`, `status`,
+and `sync` leaves as one plain object, while the inadmissible
+`router/index.ts` path disappears without an alias. Root routing, inferred
+client branches, operation behavior, context, and native mutation remain
+unchanged. The loose Provider schema barrel, middleware shape, detached
+operation runners, non-operation router buckets, and exact handler context
+remain open under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task
+5.7e2]] rather than being misreported as sealed.
+
+The focused service-spine suite passes all 3 cases, and the complete lifecycle
+service passes all 239 cases. Uncached source/test typecheck, workspace Biome
+lint, strict OpenSpec validation, and diff hygiene pass. Advisory Habitat
+topology no longer reports a missing Provider `router.ts` or the removed
+`router/index.ts`; router-authorship reports no finding for the new composition
+face while retaining the declared leaf debt. Exact TypeScript comparison
+confirms the Provider router, root router, oRPC client, service boundary,
+public client, and host context types remain unchanged. Standing architecture,
+oRPC/Effect-oRPC/TypeScript, testing, and structural-quality reviews report no
+P0/P1/P2 finding.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the
