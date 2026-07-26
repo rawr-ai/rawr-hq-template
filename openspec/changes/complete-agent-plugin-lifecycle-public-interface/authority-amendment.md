@@ -152,7 +152,8 @@ authorize another selector or version store.
 | `apps/cli/bin/run.js` and `apps/cli/src/index.ts` | Restore to ordinary Oclif entrypoints |
 | `services/agent-plugin-lifecycle` | Keep one service; simplify to bounded desired-set validation, native reconciliation, and justified adjacent capabilities |
 | `resources/native-agent-provider` | Keep as thin native Codex/Claude process adapters |
-| `resources/content-workspace` | Keep only explicit Git read and repository validation |
+| `resources/content-workspace` | Keep explicit local Git and workspace observation or mutation mechanics |
+| `resources/versioned-content` | Keep bounded remote observation, materialization, and ancestry mechanics |
 | Persistent agent artifact repository, projection store, and retention planner | Delete; canonical operations derive from selected immutable Git objects and use native Git marketplace distribution |
 | Provider target receipts and identity sidecars | Delete; disposable tests return inline per-target observations |
 | Custom mechanical-evidence store | Delete; ordinary CI may retain the command result as an external artifact |

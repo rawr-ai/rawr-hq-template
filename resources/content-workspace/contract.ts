@@ -92,20 +92,6 @@ export interface MaterializedContentTreeEntry extends ContentTreeEntry {
   readonly bytes: Uint8Array;
 }
 
-export interface RemoteContentTree {
-  readonly repositoryIdentity: string;
-  readonly refName: string;
-  readonly sourcePath: string;
-  readonly commit: string;
-  readonly tree: string;
-  readonly objectFormat: GitObjectFormat;
-  readonly entries: readonly ContentTreeEntry[];
-}
-
-export interface MaterializedRemoteContentTree extends Omit<RemoteContentTree, "entries"> {
-  readonly entries: readonly MaterializedContentTreeEntry[];
-}
-
 export interface ContentWorkspaceCapture {
   /** Provider-owned opaque capability; callers cannot construct restore authority. */
   readonly handle: string;
@@ -182,9 +168,6 @@ export interface ContentWorkspaceFailure {
     | "list-git-changed-paths"
     | "read-file"
     | "read-tree"
-    | "observe-remote"
-    | "materialize-remote"
-    | "ancestry"
     | "capture"
     | "apply"
     | "restore"
@@ -325,34 +308,6 @@ export interface ContentWorkspaceResource<R = never> {
       maxBytes: number;
     }>
   ) => Effect.Effect<readonly ContentTreeEntry[], ContentWorkspaceFailure, R>;
-
-  readonly observeRemote: (
-    input: Readonly<{
-      repositoryIdentity: string;
-      refName: string;
-      sourcePath: string;
-      maxEntries: number;
-    }>
-  ) => Effect.Effect<RemoteContentTree, ContentWorkspaceFailure, R>;
-
-  readonly materializeRemote: (
-    input: Readonly<{
-      repositoryIdentity: string;
-      refName: string;
-      sourcePath: string;
-      maxEntries: number;
-      maxBytes: number;
-    }>
-  ) => Effect.Effect<MaterializedRemoteContentTree, ContentWorkspaceFailure, R>;
-
-  readonly isAncestor: (
-    input: Readonly<{
-      repositoryIdentity: string;
-      refName: string;
-      ancestorCommit: string;
-      descendantCommit: string;
-    }>
-  ) => Effect.Effect<boolean, ContentWorkspaceFailure, R>;
 
   readonly capture: (
     input: Readonly<{

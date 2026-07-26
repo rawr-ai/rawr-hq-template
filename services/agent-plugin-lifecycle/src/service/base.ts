@@ -3,6 +3,7 @@ import { os } from "@orpc/server";
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { AgentPluginPackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import { Effect, Layer } from "effect";
 import { implementEffect } from "effect-orpc";
 import { contract } from "./contract";
@@ -18,6 +19,7 @@ type InitialContext = {
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputAsyncPort;
     providerNativeSessions: NativeProviderSessionResolver;
+    versionedContent: VersionedContentResource<never>;
   };
   scope: {};
   config: {};

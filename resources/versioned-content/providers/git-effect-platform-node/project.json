@@ -1,0 +1,29 @@
+{
+  "name": "provider-versioned-content-git-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/versioned-content/providers/git-effect-platform-node",
+  "implicitDependencies": ["@rawr/resource-versioned-content"],
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:versioned-content",
+    "provider:git-effect-platform-node"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

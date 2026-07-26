@@ -537,6 +537,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   public results, and native operation behavior. This checkpoint does not
   close task 5.4 while other resource-shaped assemblies and broad context lanes
   remain.
+- [x] 5.4b Extract remote versioned-content observation, materialization, and
+  ancestry from the content-workspace resource into one provider-neutral
+  `@rawr/resource-versioned-content` contract and one Git Effect Platform Node
+  provider. Let the CLI app select both ready resources, pass them through the
+  service base, and narrow them into Vendors without retaining remote
+  operations, types, or implementation in content-workspace. Preserve ordinary
+  operator Git resolution, existing bounds, typed failure behavior, cleanup,
+  and public Vendor outcomes. Add no generic Git owner, provider session,
+  persistent clone/cache, hostile-configuration hardening, or product policy
+  to the resource.
+- [ ] 5.4c Move Vendor resource effects and clock access out of model policy
+  and into the owning status/update router handlers. Keep remote query
+  construction, fact validation, payload comparison, and transition
+  classification pure; let module middleware project the exact ready resource
+  capabilities. Delete the effectful policy facade rather than adding an
+  adapter or helper.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

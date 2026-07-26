@@ -1,6 +1,7 @@
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
 
 import { type Client, createClient, type Deps } from "../../src/client";
@@ -24,6 +25,7 @@ export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client
       encodeCoworkV1: async () => unavailableAsync("cowork archive encode"),
       publish: async () => unavailableAsync("package output"),
     },
+    versionedContent: unavailableVersionedContent(),
     ...unavailableProviderResources(),
     ...overrides,
   };
@@ -50,14 +52,20 @@ export function unavailableContentWorkspace(): ContentWorkspaceResource<never> {
     inspectWorkspace: () => unavailableEffect("vendor workspace inspection"),
     readFile: () => unavailableEffect("vendor workspace file read"),
     readTree: () => unavailableEffect("vendor workspace tree read"),
-    observeRemote: () => unavailableEffect("vendor remote observation"),
-    materializeRemote: () => unavailableEffect("vendor remote materialization"),
-    isAncestor: () => unavailableEffect("vendor remote ancestry"),
     capture: () => unavailableEffect("vendor preimage capture"),
     apply: () => unavailableEffect("vendor authoring"),
     restore: () => unavailableEffect("vendor restoration"),
     settle: () => unavailableEffect("vendor settlement"),
     release: () => unavailableEffect("vendor capture release"),
+  });
+}
+
+/** Supplies a fail-fast versioned-content resource to tests that do not exercise Vendors. */
+export function unavailableVersionedContent(): VersionedContentResource<never> {
+  return Object.freeze({
+    observeRemote: () => unavailableEffect("vendor remote observation"),
+    materializeRemote: () => unavailableEffect("vendor remote materialization"),
+    isAncestor: () => unavailableEffect("vendor remote ancestry"),
   });
 }
 

@@ -1,4 +1,5 @@
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
 import type {
   VendorSourceStatus,
@@ -70,7 +71,7 @@ const status = module.status.effect(function* ({ context, input: request }) {
       });
       continue;
     }
-    const assessment = yield* assessSource(context.contentWorkspace, source);
+    const assessment = yield* assessSource(context.versionedContent, source);
     statuses.push(assessment.status);
   }
   return { kind: "VendorStatus" as const, sources: statuses };
@@ -85,7 +86,7 @@ const update = module.update.effect(function* ({ context, input: request }) {
   const candidates: PreparedCandidate[] = [];
   const assessmentIssues: VendorUpdateIssue[] = [];
   for (const source of selected.sources) {
-    const assessment = yield* assessSource(context.contentWorkspace, source);
+    const assessment = yield* assessSource(context.versionedContent, source);
     if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
     if (assessment.candidate !== undefined)
       candidates.push({ source, upstream: assessment.candidate });
@@ -99,7 +100,7 @@ const update = module.update.effect(function* ({ context, input: request }) {
   const preparationIssues: VendorUpdateIssue[] = [];
   for (const candidate of candidates) {
     const materialized = yield* materializeVendorUpstream(
-      context.contentWorkspace,
+      context.versionedContent,
       context.clock,
       candidate.source,
       candidate.upstream
@@ -185,11 +186,11 @@ function selectSources(
 }
 
 function assessSource(
-  contentWorkspace: ContentWorkspaceResource<never>,
+  versionedContent: VersionedContentResource<never>,
   source: VendorDeclaredSourceObservation
 ): Effect.Effect<SourceAssessment> {
   return Effect.gen(function* () {
-    const observed = yield* observeVendorUpstream(contentWorkspace, source);
+    const observed = yield* observeVendorUpstream(versionedContent, source);
     if (!observed.ok) {
       const failure = observed.issues[0];
       return {

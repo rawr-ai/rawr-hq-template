@@ -42,7 +42,7 @@ export function executeVendorAuthoringPlan(
       );
       if (captureAttempt._tag === "Failure") {
         return rejected(request.sourceIds, [
-          vendorIssue("AuthoringFailed", resourceFailureDetail("capture", captureAttempt.failure)),
+          vendorIssue("AuthoringFailed", resourceFailureDetail(captureAttempt.failure)),
         ]);
       }
       const capture: ContentWorkspaceCapture = captureAttempt.success;
@@ -84,7 +84,7 @@ export function executeVendorAuthoringPlan(
       if (appliedAttempt._tag === "Failure") {
         const primary = vendorIssue(
           "AuthoringFailed",
-          resourceFailureDetail("apply", appliedAttempt.failure)
+          resourceFailureDetail(appliedAttempt.failure)
         );
         const released = yield* releaseCapture(
           contentWorkspace,
@@ -198,7 +198,7 @@ function restoreAfterFailure(
     if (restoredAttempt._tag === "Failure") {
       const restoration = vendorIssue(
         "RestorationFailed",
-        resourceFailureDetail("restore", restoredAttempt.failure)
+        resourceFailureDetail(restoredAttempt.failure)
       );
       const cleanup = yield* releaseCapture(
         contentWorkspace,
@@ -272,7 +272,7 @@ function releaseCapture(
           "Captured authoring may have mutated repository state."
         );
       }
-      return vendorIssue("CleanupFailed", resourceFailureDetail("release", error));
+      return vendorIssue("CleanupFailed", resourceFailureDetail(error));
     }
     const receipt = receiptAttempt.success;
     const expectedOutcome =
@@ -303,7 +303,7 @@ function settleCapture(
       })
     );
     if (receiptAttempt._tag === "Failure") {
-      return vendorIssue("CleanupFailed", resourceFailureDetail("settle", receiptAttempt.failure));
+      return vendorIssue("CleanupFailed", resourceFailureDetail(receiptAttempt.failure));
     }
     const receipt = receiptAttempt.success;
     return receipt.handle === captureHandle &&

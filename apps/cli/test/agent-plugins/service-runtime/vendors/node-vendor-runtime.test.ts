@@ -16,7 +16,7 @@ import {
 
 const execFileAsync = promisify(execFile);
 const GIT = "/usr/bin/git";
-const TEMP_PREFIX = "rawr-content-workspace-git-";
+const TEMP_PREFIX = "rawr-versioned-content-git-";
 const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1";
 const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1";
 const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1";

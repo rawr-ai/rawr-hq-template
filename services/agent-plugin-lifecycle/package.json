@@ -47,6 +47,7 @@
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
+    "@rawr/resource-versioned-content": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@orpc/client": "1.14.8",
     "@orpc/contract": "1.14.8",

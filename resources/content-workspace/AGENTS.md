@@ -9,7 +9,7 @@
 
 - Applies to `resources/content-workspace/**` until a provider-local router
   narrows the scope.
-- This resource owns provider-neutral contracts for exact Git and content
+- This resource owns provider-neutral contracts for exact local Git and content
   workspace observation plus bounded workspace mutation mechanics.
 
 ## Boundaries
@@ -19,6 +19,8 @@
   belong to the consuming service.
 - A repository path is a locator, not executable identity or code-sharing
   authority.
+- Remote repository acquisition, materialization, and ancestry belong to the
+  versioned-content resource.
 - Git subprocess and filesystem implementation details stay in concrete
   providers.
 

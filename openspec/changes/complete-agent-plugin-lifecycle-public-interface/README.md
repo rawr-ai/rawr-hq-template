@@ -1444,6 +1444,34 @@ structural prerequisite for extracting remote versioned-content mechanics. It
 does not claim that loose cross-provider implementation files in the existing
 native-provider family are normalized.
 
+The versioned-content checkpoint starts from Template `845d96df` and completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4b]]. Remote tree
+observation, materialization, and ancestry now belong to one
+`@rawr/resource-versioned-content` contract and one Git Effect Platform Node
+provider. Content-workspace retains only local repository observation and
+mutation. The CLI app selects both ready resources, service base receives them,
+and Vendors narrows them through module middleware. Explicit Nx relations make
+provider changes affect the selecting CLI and contract changes affect the
+resource, provider, lifecycle service, and CLI.
+
+TypeBox compiled validators own the closed request, result, and failure
+structures, including canonical ref and path refinements. Effect owns
+filesystem, path, child-process, interruption, and scoped cleanup mechanics.
+The provider inherits ordinary local Git configuration and adds no generic Git
+framework, session, cache, persistent clone, or product policy. Its guarded
+temporary-root finalizer proves cleanup after post-allocation validation
+failure and proves interrupted child processes settle before cleanup.
+
+The checkpoint passes the complete 244-case lifecycle suite across 32 files,
+the 20-assertion resource contract suite, the 33-assertion provider suite, the
+19-case focused Vendor suite, resource/provider/service/CLI typechecks, strict
+OpenSpec validation, workspace Biome, and `habitat:check` with 31 Habitat tests
+plus 17 selected source laws and zero findings. Standing Habitat architecture,
+native/Effect, TypeScript/TypeBox, and behavior-first testing reviews closed
+without unresolved P0/P1/P2. Vendor router authorship remains open under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4c]]; this checkpoint
+does not claim that effectful Vendor policy has been retired.
+
 ## Settlement Oracles
 
 The final product must prove:

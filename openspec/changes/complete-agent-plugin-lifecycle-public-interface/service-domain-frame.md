@@ -58,6 +58,7 @@ shared lifecycle store.
 | Selected content bytes | Exact Personal Git commit and tree objects | Read through the content-workspace port |
 | Release and complete-set model | Invocation-local derivation | Validate completeness and unique ownership |
 | Vendor source state | Explicit Personal content workspace | Inspect or author reviewable changes |
+| Vendor upstream facts | Caller-declared repository identity and ref | Observe through the versioned-content resource |
 | Package state | Explicit caller-selected output file | Render, revalidate, publish, verify |
 | Codex installed state | Live native Codex inventory in one explicit home | Inspect, plan, invoke native commands, verify |
 | Claude installed state | Live native Claude inventory in one explicit home | Inspect, plan, invoke native commands, verify |

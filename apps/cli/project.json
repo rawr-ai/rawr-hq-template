@@ -1,6 +1,7 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "@rawr/cli",
+  "implicitDependencies": ["provider-versioned-content-git-effect-platform-node"],
   "targets": {
     "verify": {
       "executor": "nx:noop",
