@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { CurrentMainSelectionResult } from "../../../model/dto/current-main-selection";
+import type { CurrentMainSelectionResult } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import type {
   ProviderIssue,
   ProviderStatusRequest,

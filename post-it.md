@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Import Spelling Reveals Ownership
+
+Within one service module, a normalized relative import says that both leaves
+belong to the same sealed domain owner. Module code uses the service-private
+alias only for genuinely service-wide `service/model/**` meaning. Sibling
+module implementation, root runtime, and unowned shared paths do not become
+valid merely because an alias can spell them.
+
+Root contract and router composition use exact relative module edges.
+Cross-package capabilities use package exports. Nx resolves both same-project
+spellings to the same project, so this is a colocality and ownership law rather
+than graph optimization.
+
+See [[.habitat/blueprints/service/skill|the service frame]],
+[[.habitat/AUTHORITY|Habitat authority]], and
+[[services/agent-plugin-lifecycle/AGENTS|the lifecycle service router]].
+
+### Bag Of Keywords
+
+Owner, module, model, relative, alias, boundary, graph, closure.
+
 ## 2026-07-26 - Staged Index Facts Cross Once
 
 The Git provider owns staged-index framing, decoding, bounds, object ID width,

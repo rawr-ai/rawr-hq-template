@@ -9,13 +9,13 @@ import type {
   ProviderIssue,
   ProviderIssueCode,
   SelectedContentObservation,
-} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/provider-lifecycle";
+} from "../dto/provider-lifecycle";
 import type {
   SelectedContent,
   SelectedContentFile,
   SelectedContentMember,
-} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
-import { SelectedContentSchema } from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
+} from "../dto/selected-content";
+import { SelectedContentSchema } from "../dto/selected-content";
 
 export const MAX_PROVIDER_VERIFICATION_FILES = MAX_NATIVE_PROVIDER_PLUGIN_FILES;
 

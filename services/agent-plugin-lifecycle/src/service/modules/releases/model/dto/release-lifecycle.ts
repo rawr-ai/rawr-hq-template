@@ -4,8 +4,8 @@ import {
   ContentWorkspacePolicySchema,
   QualifiedHeadRefSchema,
   SourceEligibilityIssueSchema,
-} from "../../../../model/dto/releases/content-workspace";
-import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
+} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ArtifactDigestSchema,
   GitCommitIdSchema,

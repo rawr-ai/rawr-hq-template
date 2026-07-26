@@ -44,18 +44,21 @@ thirteen independent source axes:
 5. Qualified middleware is one documented named native value authored from the
    base factory and attached through a native middleware operator rather than
    an inline callback or explicit context type argument.
-6. Root composition imports only module contracts and completed routers. A
-   module reaches root only through its exact `module.ts`-to-`impl.ts` branch
-   edge and named-middleware-to-base-factory edge; it does not reach upward or
-   sideways for other implementation.
+6. Root composition uses exact relative imports of module contracts and
+   completed routers. A module reaches root only through its exact
+   `module.ts`-to-`impl.ts` branch edge and
+   named-middleware-to-base-factory edge; it does not reach upward or sideways
+   for other implementation.
 7. Module router handlers remain operation authoring sites; a router index
    only composes completed operation leaves and semantic groups.
 8. Every model kind has one private index of explicit direct-sibling exports;
    model leaves keep concrete same-owner dependencies visible.
 9. Every private service or API alias maps to its owner's `src/service`
    interior rather than creating another public package surface.
-10. Private service and API aliases remain inside their matching repository
-   owner; foreign, cross-kind, and outside-owner imports use public exports.
+10. Module-local imports use normalized relative paths. Module code reserves
+    its owner-private alias for `service/model/**`; same-module, sibling,
+    runtime, and legacy shared aliases are inadmissible. Foreign, cross-kind,
+    and outside-owner imports use public exports.
 11. Service source remains independent of concrete Node, Bun, and provider
    implementations; outside capabilities arrive through context and resource
    contracts, while execution frameworks remain outside model source.

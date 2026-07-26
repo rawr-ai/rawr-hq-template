@@ -5,13 +5,13 @@ import {
 } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
-import { CurrentMainSelectionLocatorSchema } from "../../../../model/dto/current-main-selection";
-import { ContentWorkspacePolicySchema } from "../../../../model/dto/releases/content-workspace";
+import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import {
   BoundedReadonlyArray,
   EmptyReadonlyArray,
   NonEmptyReadonlyArray,
-} from "../../../../model/dto/structural";
+} from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,

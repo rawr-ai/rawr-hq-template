@@ -14,19 +14,6 @@ import {
 } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
-  normalizeReleaseSourceChangedDetail,
-  type ReleaseInputRefreshRequest,
-  type ReleaseInputRefreshResult,
-} from "#agent-plugin-lifecycle-service/modules/releases/model/dto/release-lifecycle";
-import type {
-  StagedContentWorkspaceInspection,
-  StagedContentWorkspacePolicy,
-} from "#agent-plugin-lifecycle-service/modules/releases/model/dto/staged-content-workspace";
-import {
-  authorReleaseInputRefresh,
-  releaseInputRefreshIneligible,
-} from "#agent-plugin-lifecycle-service/modules/releases/model/policy/release-input-refresh";
-import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
   addReleaseSetPayloadBytes,
@@ -44,6 +31,16 @@ import {
   parseRepositoryIdentity,
   type ReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
+import {
+  normalizeReleaseSourceChangedDetail,
+  type ReleaseInputRefreshRequest,
+  type ReleaseInputRefreshResult,
+} from "../dto/release-lifecycle";
+import type {
+  StagedContentWorkspaceInspection,
+  StagedContentWorkspacePolicy,
+} from "../dto/staged-content-workspace";
+import { authorReleaseInputRefresh, releaseInputRefreshIneligible } from "./release-input-refresh";
 
 export const MAX_STAGED_INDEX_ENTRIES = 200_000;
 export const MAX_STAGED_INDEX_BYTES = 100 * 1024 * 1024;

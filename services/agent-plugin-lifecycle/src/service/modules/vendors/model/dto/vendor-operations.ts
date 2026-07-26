@@ -1,6 +1,6 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
+import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   CanonicalAbsolutePathSchema,
   ContentAuthoritySchema,

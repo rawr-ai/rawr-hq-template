@@ -49,6 +49,13 @@ runtime context remains additive; an upward import that recovers raw context, a
 sibling reach, or a second middleware factory still widens the authored
 capability surface and therefore changes the architecture.
 
+Import spelling should reveal that descent. Inside one module, relative paths
+make colocality visible. The service-private alias names only genuinely
+service-wide `service/model/**` meaning; it does not disguise a same-module,
+sibling, runtime, or unowned shared edge. Cross-package capabilities arrive
+through public package exports. These spellings do not optimize the Nx graph;
+they make ownership legible inside the project Nx already recognizes.
+
 ## Layers
 
 The root owns what is true for the whole service. A module owns what is true

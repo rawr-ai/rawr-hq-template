@@ -10,24 +10,29 @@ routers. Root code never imports module context providers and never re-exports
 module code. The oRPC composition law and TypeScript contract compatibility own
 module branch naming; this boundary does not duplicate that type relation.
 
-Inside a module, static relative imports and re-exports may not contain a
-parent `..` segment, including normalized-looking forms such as
-`./../../...` or `./local/../../...`. The exact `module.ts` import of the
-runtime `service` binding from root `impl` is the sole service-spine exception,
-whether it uses `../../impl` or the normalized current-owner alias. Type-only
-companions may share that import. A module's named `middleware/*.middleware.ts`
-may import exactly the context-seeded `createMiddleware` factory from
-`../../../base`; this is the sole module-middleware-to-base edge and may not
-carry other root runtime authority. A named `router/*.router.ts` may use one normalized
-`../` hop into its own module because named router leaves are the
-Template-admitted authored surfaces. Empty, dot, parent, and trailing segments
-make that hop non-normalized. Other root or cross-module facts use the
-current-owner alias.
+Inside a module, static imports and re-exports whose normalized targets remain
+inside that module use normalized relative paths. Current-owner aliases do not
+hide same-module locality and may not reach sibling modules, root runtime, or
+the legacy `shared` tree. A module may use its service-private alias only for
+`service/model/**`, where the target is service-wide inert meaning rather than
+module implementation.
+
+The exact `module.ts` import of the runtime `service` binding from
+`../../impl` is the sole service-spine exception. Type-only companions may
+share that import. A module's named `middleware/*.middleware.ts` may import
+exactly the context-seeded `createMiddleware` factory from `../../../base`;
+this is the sole module-middleware-to-base edge and may not carry other root
+runtime authority. The closed module topology makes relative containment
+decidable: module-root files stay local, router and middleware leaves may hop
+once into their module, and direct model leaves may hop twice without escaping
+their module. Service root contract and router composition use exact relative
+module imports.
 
 In governed non-test service source, every current-owner alias must use a
 normalized path: empty, `.` and `..` path segments are rejected anywhere after
-the owner prefix. A current-owner alias that directly enters the module tree
-must also name the current module, so it cannot address a sibling.
+the owner prefix. A module does not use its current-owner alias to enter the
+module tree, even when that alias names the current module; a relative path
+must expose that colocality.
 Foreign-owner aliases remain outside this ownership relation. The
 context-boundary packet separately rejects current-owner root base, context,
 and middleware aliases. Test source, dynamic imports, and transitive graph
@@ -60,7 +65,7 @@ predicate require_service_module_isolation_is_governed_source() {
 // Distinguishes imports into the current owner's module tree.
 predicate require_service_module_isolation_is_current_module_source($source) {
   or {
-    $source <: r"^[\"']\./(?:[^/\"']+/)*modules/[^\"']+[\"']$",
+    $source <: r"^[\"'](?:\./|(?:\.\./)+)(?:[^/\"']+/)*modules/[^\"']+[\"']$",
     and {
       $filename <: r".*services/([^/]+)/src/service/.*\.ts$"($owner),
       $source <: r"^[\"']#([^/]+)-service/(?:[^/\"']+/)*modules/[^\"']+[\"']$"($alias_owner),
@@ -79,12 +84,12 @@ predicate require_service_module_isolation_is_named_only_import($import, $source
   $import <: `import { $... } from $source`
 }
 
-// Reserves root-to-module edges for contract and router composition.
+// Reserves root-to-module edges for exact relative contract and router composition.
 predicate require_service_module_isolation_is_allowed_root_composition_import($import, $source) {
   or {
     and {
       $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/contract\.ts$",
-      $source <: r"^[\"'](?:\./modules|#[^/]+-(?:service|api)/(?:service/)?modules)/[^/\"']+/contract[\"']$",
+      $source <: r"^[\"']\./modules/[^/\"']+/contract[\"']$",
       require_service_module_isolation_is_named_only_import(import=$import, source=$source),
       $import <: contains import_specifier(name=`contract`) as $contract_specifier where {
         not { $contract_specifier <: r"^type\s+.*$" }
@@ -99,7 +104,7 @@ predicate require_service_module_isolation_is_allowed_root_composition_import($i
     },
     and {
       $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/router\.ts$",
-      $source <: r"^[\"'](?:\./modules|#[^/]+-(?:service|api)/(?:service/)?modules)/[^/\"']+/router[\"']$",
+      $source <: r"^[\"']\./modules/[^/\"']+/router[\"']$",
       require_service_module_isolation_is_named_only_import(import=$import, source=$source),
       $import <: contains import_specifier(name=`router`) as $router_specifier where {
         not { $router_specifier <: r"^type\s+.*$" }
@@ -114,26 +119,55 @@ predicate require_service_module_isolation_is_allowed_root_composition_import($i
   }
 }
 
-// Detects relative sources that escape through a parent segment.
+// Rejects relative spelling that obscures the normalized owner target.
+predicate require_service_module_isolation_violates_relative_normalization($source) {
+  or {
+    $source <: r"^[\"'](?:\.|\.\.|\./|\.\./)[\"']$",
+    $source <: r"^[\"'][^\"']*//[^\"']*[\"']$",
+    $source <: r"^[\"'][^\"']*/[\"']$",
+    $source <: r"^[\"'][^\"']*/\.(?:/[^\"']*)?[\"']$"
+  }
+}
+
+// Detects any source containing a parent segment.
 predicate require_service_module_isolation_has_parent_segment($source) {
   $source <: r"^[\"'](?:[^/\"']+/)*\.\.(?:/[^\"']*)?[\"']$"
 }
 
-// Recognizes the root implementation source owned by the current module's service.
-predicate require_service_module_isolation_is_current_root_impl_source($source) {
+// Recognizes one normalized leading parent hop with no later traversal.
+predicate require_service_module_isolation_is_one_parent_source($source) {
+  $source <: r"^[\"']\.\./[^\"']*[^/\"'][\"']$",
+  ! $source <: r"^[\"']\.\./\.\./",
+  ! $source <: r"^[\"']\.\./(?:[^/\"']+/)*(?:\.|\.\.)(?:/[^\"']*)?[\"']$"
+}
+
+// Recognizes two normalized leading parent hops with no later traversal.
+predicate require_service_module_isolation_is_two_parent_source($source) {
+  $source <: r"^[\"']\.\./\.\./[^\"']*[^/\"'][\"']$",
+  ! $source <: r"^[\"']\.\./\.\./\.\./",
+  ! $source <: r"^[\"']\.\./\.\./(?:[^/\"']+/)*(?:\.|\.\.)(?:/[^\"']*)?[\"']$"
+}
+
+// Uses the closed module shell to prove that parent hops remain inside their owner.
+predicate require_service_module_isolation_is_contained_parent_source($source) {
   or {
-    $source <: r"^[\"']\.\./\.\./impl[\"']$",
     and {
-      $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/module\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-service/impl[\"']$"($alias_owner),
-      $alias_owner <: $owner
+      $filename <: r".*/src/service/modules/[^/]+/(?:middleware|router)/[^/]+\.ts$",
+      require_service_module_isolation_is_one_parent_source(source=$source)
     },
     and {
-      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/module\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-api/(?:service/)?impl[\"']$"($alias_owner),
-      $alias_owner <: $owner
+      $filename <: r".*/src/service/modules/[^/]+/model/[^/]+/[^/]+\.ts$",
+      or {
+        require_service_module_isolation_is_one_parent_source(source=$source),
+        require_service_module_isolation_is_two_parent_source(source=$source)
+      }
     }
   }
+}
+
+// Recognizes the root implementation source owned by the current module's service.
+predicate require_service_module_isolation_is_current_root_impl_source($source) {
+  $source <: r"^[\"']\.\./\.\./impl[\"']$"
 }
 
 // Preserves the sole module-to-root service-spine import.
@@ -153,9 +187,9 @@ predicate require_service_module_isolation_is_exact_module_service_import($impor
   }
 }
 
-// Preserves the one base-authoring edge for standalone module middleware.
+// Preserves the one base-authoring edge for standalone and API-plugin module middleware.
 predicate require_service_module_isolation_is_exact_module_base_import($import, $source) {
-  $filename <: r".*/services/[^/]+/src/service/modules/[^/]+/middleware/[^/]+\.middleware\.ts$",
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/middleware/[^/]+\.middleware\.ts$",
   $source <: r"^[\"']\.\./\.\./\.\./base[\"']$",
   not { $import <: import_statement(type=type()) },
   require_service_module_isolation_is_named_only_import(import=$import, source=$source),
@@ -170,29 +204,50 @@ predicate require_service_module_isolation_is_exact_module_base_import($import, 
   }
 }
 
-// Rejects executable service-root anchors from every module interior.
-predicate require_service_module_isolation_reaches_current_root_runtime($source) {
+// Recognizes every private alias owned by the current service or API package.
+predicate require_service_module_isolation_is_current_owner_alias($source) {
   or {
     and {
       $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-service/(?:impl|contract|router)[\"']$"($alias_owner),
+      $source <: r"^[\"']#([^/]+)-service(?:/[^\"']*)?[\"']$"($alias_owner),
       $alias_owner <: $owner
     },
     and {
       $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-api/(?:service/)?(?:impl|contract|router)[\"']$"($alias_owner),
+      $source <: r"^[\"']#([^/]+)-api(?:/[^\"']*)?[\"']$"($alias_owner),
       $alias_owner <: $owner
     }
   }
 }
 
-// Preserves one normalized hop from an authored named router into its own module.
-predicate require_service_module_isolation_is_exact_named_router_owner_import($source) {
+// Reserves the owner alias for service-wide inert model meaning.
+predicate require_service_module_isolation_is_current_owner_service_model_alias($source) {
+  or {
+    and {
+      $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-service/model/[^\"']+[\"']$"($alias_owner),
+      $alias_owner <: $owner
+    },
+    and {
+      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-api/model/[^\"']+[\"']$"($alias_owner),
+      $alias_owner <: $owner
+    }
+  }
+}
+
+// Rejects every current-owner alias from a module unless it names service/model.
+predicate require_service_module_isolation_violates_module_owner_alias($source) {
+  require_service_module_isolation_is_current_owner_alias(source=$source),
+  not {
+    require_service_module_isolation_is_current_owner_service_model_alias(source=$source)
+  }
+}
+
+// Keeps named operation leaves below, rather than importing, their module composition face.
+predicate require_service_module_isolation_reaches_module_router_composition($source) {
   $filename <: r".*/src/service/modules/[^/]+/router/[^/]+\.router\.ts$",
-  $source <: r"^[\"']\.\./[^\"']*[^/\"'][\"']$",
-  ! $source <: r"^[\"'][^\"']*//[^\"']*[\"']$",
-  ! $source <: r"^[\"']\.\./(?:[^/\"']+/)*(?:\.|\.\.)(?:/[^\"']*)?[\"']$",
-  ! $source <: r"^[\"']\.\./router(?:\.ts)?[\"']$"
+  $source <: r"^[\"']\.\./router(?:\.ts)?[\"']$"
 }
 
 // Detects non-normalized empty, dot, parent, and trailing alias segments.
@@ -222,30 +277,6 @@ predicate require_service_module_isolation_violates_current_owner_alias_normaliz
   }
 }
 
-// Enforces the normalized current-module path that keeps current-owner aliases inside their owning module.
-predicate require_service_module_isolation_violates_current_owner_module_path($source) {
-  or {
-    and {
-      $filename <: r".*services/([^/]+)/src/service/modules/([^/]+)/.*\.ts$"($owner, $module_name),
-      $source <: r"^[\"']#([^/]+)-service/modules/[^\"']*[\"']$"($alias_owner),
-      $alias_owner <: $owner,
-      not {
-        $source <: r"^[\"']#[^/]+-service/modules/([^/\"']+)(?:/[^/\"']+)*[\"']$"($target_module),
-        $target_module <: $module_name
-      }
-    },
-    and {
-      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/([^/]+)/.*\.ts$"($owner, $module_name),
-      $source <: r"^[\"']#([^/]+)-api/(?:service/)?modules/[^\"']*[\"']$"($alias_owner),
-      $alias_owner <: $owner,
-      not {
-        $source <: r"^[\"']#[^/]+-api/(?:service/)?modules/([^/\"']+)(?:/[^/\"']+)*[\"']$"($target_module),
-        $target_module <: $module_name
-      }
-    }
-  }
-}
-
 or {
   import_statement(source=$source) as $import where {
     require_service_module_isolation_is_root_service_source(),
@@ -259,17 +290,26 @@ or {
     $source <: string(),
     require_service_module_isolation_is_current_module_source(source=$source)
   },
+  import_statement(source=$source) where {
+    require_service_module_isolation_is_service_isolation_module_source(),
+    require_service_module_isolation_violates_relative_normalization(source=$source)
+  },
+  export_statement(source=$source) where {
+    require_service_module_isolation_is_service_isolation_module_source(),
+    $source <: string(),
+    require_service_module_isolation_violates_relative_normalization(source=$source)
+  },
   import_statement(source=$source) as $import where {
     require_service_module_isolation_is_service_isolation_module_source(),
     require_service_module_isolation_has_parent_segment(source=$source),
     not {
       require_service_module_isolation_is_exact_module_service_import(import=$import, source=$source)
-    },
-    not {
-      require_service_module_isolation_is_exact_named_router_owner_import(source=$source)
     },
     not {
       require_service_module_isolation_is_exact_module_base_import(import=$import, source=$source)
+    },
+    not {
+      require_service_module_isolation_is_contained_parent_source(source=$source)
     }
   },
   export_statement(source=$source) where {
@@ -277,8 +317,17 @@ or {
     $source <: string(),
     require_service_module_isolation_has_parent_segment(source=$source),
     not {
-      require_service_module_isolation_is_exact_named_router_owner_import(source=$source)
+      require_service_module_isolation_is_contained_parent_source(source=$source)
     }
+  },
+  import_statement(source=$source) where {
+    require_service_module_isolation_is_service_isolation_module_source(),
+    require_service_module_isolation_reaches_module_router_composition(source=$source)
+  },
+  export_statement(source=$source) where {
+    require_service_module_isolation_is_service_isolation_module_source(),
+    $source <: string(),
+    require_service_module_isolation_reaches_module_router_composition(source=$source)
   },
   import_statement(source=$source) where {
     require_service_module_isolation_is_governed_source(),
@@ -291,24 +340,12 @@ or {
   },
   import_statement(source=$source) where {
     require_service_module_isolation_is_service_isolation_module_source(),
-    require_service_module_isolation_violates_current_owner_module_path(source=$source)
+    require_service_module_isolation_violates_module_owner_alias(source=$source)
   },
   export_statement(source=$source) where {
     require_service_module_isolation_is_service_isolation_module_source(),
     $source <: string(),
-    require_service_module_isolation_violates_current_owner_module_path(source=$source)
-  },
-  import_statement(source=$source) as $import where {
-    require_service_module_isolation_is_service_isolation_module_source(),
-    require_service_module_isolation_reaches_current_root_runtime(source=$source),
-    not {
-      require_service_module_isolation_is_exact_module_service_import(import=$import, source=$source)
-    }
-  },
-  export_statement(source=$source) where {
-    require_service_module_isolation_is_service_isolation_module_source(),
-    $source <: string(),
-    require_service_module_isolation_reaches_current_root_runtime(source=$source)
+    require_service_module_isolation_violates_module_owner_alias(source=$source)
   }
 }
 ```
@@ -317,7 +354,7 @@ or {
 
 ```typescript
 // @filename: services/jobs/src/service/model/helpers/catalog.ts
-import { repository } from "../modules/catalog/model/ports/catalog-repository";
+import { repository } from "../../modules/catalog/model/ports/catalog-repository";
 ```
 
 ## Matches a root re-export of module implementation
@@ -327,11 +364,11 @@ import { repository } from "../modules/catalog/model/ports/catalog-repository";
 export type { SearchContext } from "#catalog-api/service/modules/search/module";
 ```
 
-## Matches a direct parent segment
+## Matches a relative path that leaves its module
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
-import { catalog } from "../modules/catalog";
+import { dependency } from "../../../model/ports/dependency";
 ```
 
 ## Matches a normalized-looking parent segment
@@ -348,11 +385,18 @@ import type { Context } from "./local/../../../../../context";
 import { intake } from "#jobs-service/modules/intake";
 ```
 
-## Matches a current-module alias that traverses into a sibling
+## Matches a same-module alias that hides colocality
 
 ```typescript
-// @filename: services/collect/src/service/modules/jobs/model/dto/job.dto.ts
-import { status } from "#collect-service/modules/jobs/model/dto/../../../runs/model/dto/run.dto";
+// @filename: services/collect/src/service/modules/jobs/model/policy/job.ts
+import { status } from "#collect-service/modules/jobs/model/dto/job";
+```
+
+## Matches a legacy shared alias from a module
+
+```typescript
+// @filename: services/collect/src/service/modules/jobs/model/policy/job.ts
+import { status } from "#collect-service/shared/status";
 ```
 
 ## Matches a current-owner service alias that traverses into the module tree
@@ -397,34 +441,30 @@ import { service } from "#jobs-service/impl";
 export { router } from "#catalog-api/service/router";
 ```
 
-## Ignores root composition and the exact service-spine exception
+## Ignores exact relative root composition and service-spine edges
 
 ```typescript
 // @filename: services/jobs/src/service/contract.ts
 import { contract as catalog } from "./modules/catalog/contract";
 // @filename: services/jobs/src/service/router.ts
-import {
-  router as catalog,
-  type CatalogRouter,
-} from "#jobs-service/modules/catalog/router";
+import { router as catalog, type CatalogRouter } from "./modules/catalog/router";
 // @filename: plugins/server/api/catalog/src/service/modules/search/module.ts
 import { service, type ServiceContext } from "../../impl";
-// @filename: services/jobs/src/service/modules/catalog/module.ts
-import { service, type ServiceContext } from "#jobs-service/impl";
 // @filename: services/jobs/src/service/modules/catalog/middleware/capabilities.middleware.ts
 import { createMiddleware } from "../../../base";
 ```
 
-## Ignores local, same-module, and normalized owner imports
+## Ignores normalized relative module imports and service-model aliases
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/model/policy/access.ts
 import { localRule } from "./local-rule";
-import { CatalogPolicy } from "#jobs-service/modules/catalog/model/policy/catalog";
+import { CatalogPolicy } from "../dto/catalog";
 import { Clock } from "#jobs-service/model/ports/clock";
 // @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
 import { module } from "../module";
 import { admitCatalogRead } from "../model/policy/catalog-read";
 // @filename: plugins/server/api/catalog/src/service/modules/search/model/policy/access.ts
-import { SearchPolicy } from "#catalog-api/service/modules/search/model/policy/search";
+import { SearchPolicy } from "../dto/search";
+import { Clock } from "#catalog-api/model/ports/clock";
 ```

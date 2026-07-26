@@ -645,6 +645,8 @@ describe("service blueprint authority", () => {
       {
         "services/jobs/src/service/router.ts":
           'import { router as catalog } from "./local/../../modules/catalog/router";',
+        "services/jobs/src/service/model/helpers/catalog.ts":
+          'import { catalog } from "../../modules/catalog/model/policy/catalog";',
         "services/default-root/src/service/contract.ts":
           'import extra, { contract as catalog } from "./modules/catalog/contract";',
         "services/default-root/src/service/router.ts":
@@ -661,6 +663,10 @@ describe("service blueprint authority", () => {
           'import { contract as orderItems } from "./modules/order-items/contract";',
         "services/valid-kebab-root/src/service/router.ts":
           'import { router as orderItems } from "./modules/order-items/router";',
+        "services/alias-root/src/service/contract.ts":
+          'import { contract as catalog } from "#alias-root-service/modules/catalog/contract";',
+        "services/alias-root/src/service/router.ts":
+          'import { router as catalog } from "#alias-root-service/modules/catalog/router";',
       },
       [rule]
     );
@@ -670,8 +676,11 @@ describe("service blueprint authority", () => {
     const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
     for (const path of [
       "services/jobs/src/service/router.ts",
+      "services/jobs/src/service/model/helpers/catalog.ts",
       "services/default-root/src/service/contract.ts",
       "services/default-root/src/service/router.ts",
+      "services/alias-root/src/service/contract.ts",
+      "services/alias-root/src/service/router.ts",
     ]) {
       expect(paths).toContain(path);
     }
@@ -703,11 +712,19 @@ describe("service blueprint authority", () => {
           'import { value } from "../model/";',
         "services/jobs/src/service/modules/catalog/router/valid.router.ts":
           'import { value } from "../model/policy/value";',
+        "services/jobs/src/service/modules/catalog/model/policy/valid-relative.ts":
+          'import { value } from "../dto/value";',
+        "services/jobs/src/service/modules/catalog/model/policy/service-model-relative.ts":
+          'import { Clock } from "../../../model/ports/clock";',
+        "services/jobs/src/service/modules/catalog/model/policy/service-model-alias.ts":
+          'import { Clock } from "#jobs-service/model/ports/clock";',
         "services/jobs/src/service/modules/catalog/router/cycle.router.ts":
           'import { router } from "../router";',
         "services/jobs/src/service/modules/catalog/router/reexport.router.ts":
           'export { router } from "../router";',
         "services/jobs/src/service/modules/catalog/middleware/capabilities.middleware.ts":
+          'import { createMiddleware } from "../../../base";',
+        "plugins/server/api/catalog/src/service/modules/search/middleware/capabilities.middleware.ts":
           'import { createMiddleware } from "../../../base";',
         "services/jobs/src/service/modules/catalog/middleware/raw-base.middleware.ts":
           'import { base } from "../../../base";',
@@ -729,12 +746,22 @@ describe("service blueprint authority", () => {
       "services/jobs/src/service/modules/catalog/router/reexport.router.ts",
       "services/jobs/src/service/modules/catalog/middleware/raw-base.middleware.ts",
       "services/default-module/src/service/modules/catalog/module.ts",
+      "services/jobs/src/service/modules/catalog/model/policy/service-model-relative.ts",
     ]) {
       expect(paths).toContain(path);
     }
     expect(paths).not.toContain("services/jobs/src/service/modules/catalog/router/valid.router.ts");
     expect(paths).not.toContain(
+      "services/jobs/src/service/modules/catalog/model/policy/valid-relative.ts"
+    );
+    expect(paths).not.toContain(
+      "services/jobs/src/service/modules/catalog/model/policy/service-model-alias.ts"
+    );
+    expect(paths).not.toContain(
       "services/jobs/src/service/modules/catalog/middleware/capabilities.middleware.ts"
+    );
+    expect(paths).not.toContain(
+      "plugins/server/api/catalog/src/service/modules/search/middleware/capabilities.middleware.ts"
     );
     expect(paths).not.toContain("services/jobs/src/service/modules/catalog/module.ts");
   });
@@ -753,6 +780,12 @@ describe("service blueprint authority", () => {
           'import { service } from "#jobs-service/impl";',
         "services/jobs/src/service/modules/catalog/model/policy/trailing.ts":
           'import { value } from "#jobs-service/modules/catalog/model/policy/";',
+        "services/jobs/src/service/modules/catalog/model/policy/local-alias.ts":
+          'import { value } from "#jobs-service/modules/catalog/model/dto/value";',
+        "services/jobs/src/service/modules/catalog/model/policy/shared.ts":
+          'import { value } from "#jobs-service/shared/value";',
+        "plugins/server/api/catalog/src/service/modules/search/model/policy/service-model.ts":
+          'import { Clock } from "#catalog-api/model/ports/clock";',
         "services/jobs/src/service/modules/catalog/module-alias.ts":
           'import { service, type ServiceContext } from "#jobs-service/impl";',
         "services/alias/src/service/modules/catalog/module.ts":
@@ -770,11 +803,16 @@ describe("service blueprint authority", () => {
       "services/jobs/src/service/modules/catalog/model/policy/sibling.ts",
       "services/jobs/src/service/modules/catalog/model/policy/root-runtime.ts",
       "services/jobs/src/service/modules/catalog/model/policy/trailing.ts",
+      "services/jobs/src/service/modules/catalog/model/policy/local-alias.ts",
+      "services/jobs/src/service/modules/catalog/model/policy/shared.ts",
       "services/jobs/src/service/modules/catalog/module-alias.ts",
+      "services/alias/src/service/modules/catalog/module.ts",
     ]) {
       expect(paths).toContain(path);
     }
-    expect(paths).not.toContain("services/alias/src/service/modules/catalog/module.ts");
+    expect(paths).not.toContain(
+      "plugins/server/api/catalog/src/service/modules/search/model/policy/service-model.ts"
+    );
   });
 
   it("keeps context ownership and middleware provenance inside the funnel", async () => {

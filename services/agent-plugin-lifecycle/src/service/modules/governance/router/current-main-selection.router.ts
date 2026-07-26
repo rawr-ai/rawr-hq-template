@@ -1,6 +1,6 @@
 import { Effect } from "effect";
 
-import { decodeGitLocator } from "../../../model/policy/current-main-locator";
+import { decodeGitLocator } from "#agent-plugin-lifecycle-service/model/policy/current-main-locator";
 import {
   CURRENT_MAIN_SELECTION_REF,
   classifyCurrentMainAncestry,
@@ -13,7 +13,7 @@ import {
   currentMainReleaseInputSelection,
   finishCurrentMainSelection,
   MAX_CURRENT_MAIN_GIT_BLOB_BYTES,
-} from "../../../model/policy/current-main-selection";
+} from "#agent-plugin-lifecycle-service/model/policy/current-main-selection";
 import { module } from "../module";
 
 /**

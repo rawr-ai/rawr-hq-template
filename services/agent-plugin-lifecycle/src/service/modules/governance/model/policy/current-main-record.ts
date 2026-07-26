@@ -13,7 +13,7 @@ import {
   type CanonicalCurrentMainV3,
   CURRENT_MAIN_V3_PROTOCOL,
   type CurrentMainRecordResult,
-} from "#agent-plugin-lifecycle-service/modules/governance/model/dto/current-main-record";
+} from "../dto/current-main-record";
 
 /** Encodes one structurally and semantically valid current-main selection. */
 export function encodeCurrentMainBodyV3(input: unknown): CurrentMainRecordResult {

@@ -835,6 +835,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   context, TypeBox contracts, record bytes, selection outcomes, public client
   shape, and provider collaboration. Do not pull root context assembly, shared
   current-main ownership, or another module into this checkpoint.
+- [x] 5.7e2h Make service import spelling reveal ownership. Use normalized
+  relative paths for every same-module lifecycle import, reserve the
+  service-private alias inside modules for `service/model/**`, and keep root
+  contract/router composition on exact relative paths. Encode the generic law
+  in the Habitat-native module-isolation packet and its fixtures. Do not move
+  or bless the legacy `service/shared` tree, narrow the package import map,
+  change the Nx project graph, or alter lifecycle behavior.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -5,7 +5,7 @@ import type {
   SelectedContentChannelResolutionInput,
   SelectedContentResolution,
   SelectedContentWorkspaceResolutionInput,
-} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
+} from "../dto/selected-content";
 
 /**
  * Narrows the host content-workspace capability to the exact Git and local reads required to

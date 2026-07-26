@@ -8,7 +8,7 @@ import {
   type PackagedReleaseIdentity,
   type PackagingFailure,
   type PackagingFailureCode,
-} from "#agent-plugin-lifecycle-service/modules/packaging/model/dto/packaging-lifecycle";
+} from "../dto/packaging-lifecycle";
 
 const TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX = "...[truncated]";
 const UNREADABLE_EXTERNAL_DIAGNOSTIC = "External dependency failed without a readable diagnostic";
