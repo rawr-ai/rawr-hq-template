@@ -593,6 +593,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   staged observation DTO mirror, reader factory, and port without adding raw
   byte compatibility, another resource, adapter, or digest authority. Keep
   `captureGitWorkspaceEvidence.indexEntries` unchanged.
+- [x] 5.4h Move native tracked-path flag serialization behind the existing
+  content-workspace provider. Derive one provider-neutral tracked-path schema
+  and type from TypeBox; return frozen path, Git status, and assume-unchanged
+  facts with a native-output byte bound and structural per-path cardinality.
+  Keep native tag framing, UTF-8, generic path admission, selected-path
+  containment, and deterministic ordering in the provider. Keep exact
+  order-independent admitted membership, eligibility meaning, transition
+  precedence, diagnostics, and binding in clean-source policy. Preserve raw
+  porcelain status and ordinary index evidence for their separately sequenced
+  boundaries; add no raw flag compatibility field, facade, or resource.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

@@ -4,6 +4,7 @@ import type {
   ContentWorkspaceResource,
   GitStagedIndexEntry,
   GitStagedIndexObservation,
+  GitTrackedPathFlag,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
@@ -1039,7 +1040,16 @@ function cleanContentWorkspace(
       ),
     captureGitWorkspaceEvidence: (input): Effect.Effect<GitWorkspaceEvidence> =>
       Effect.sync(() => {
-        const trackedFlags = bytes(input.admittedPaths.map((path) => `H ${path}\0`).join(""));
+        const trackedFlags = Object.freeze(
+          input.admittedPaths.map(
+            (path): GitTrackedPathFlag =>
+              Object.freeze({
+                path,
+                status: "Cached",
+                assumeUnchanged: false,
+              })
+          )
+        );
         const worktreeObjectIds = input.admittedPaths.map((path) => {
           const entry = byPath.get(path);
           if (entry === undefined) throw new Error(`Missing admitted clean path ${path}`);

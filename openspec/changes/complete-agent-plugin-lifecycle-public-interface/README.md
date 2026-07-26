@@ -569,6 +569,35 @@ pass. The repository-wide imported-export documentation target remains red on
 its pre-existing corpus and its Nx input glob is invalid; neither condition is
 changed or bypassed here.
 
+The typed tracked-path checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4h]]. The
+content-workspace contract now derives one closed tracked-path flag structure
+from TypeBox and returns frozen path, cached/skip-worktree/unmerged status, and
+assume-unchanged facts. The Git Effect Platform Node provider owns terminal-NUL
+framing, fatal UTF-8 decoding, native tag interpretation, generic path
+admission, selected-path containment, and deterministic code-unit ordering. A
+cached or skip-worktree path has exactly one stage-zero fact; an unmerged path
+has one to three repeated facts. Impossible tags or path-state combinations
+fail at the native protocol boundary. `maxBytes` bounds native output; the
+selected-path set and per-path native cardinality structurally cap allocated
+facts without a second counter. `maxPaths` caps only the caller's selected-path
+input.
+
+Clean-source policy alone decides whether the complete fact set exactly names
+the admitted paths with ordinary cached state independent of provider order,
+classifies every noncanonical state as `DirtyIndex`, preserves existing
+transition precedence and diagnostic text, compares opening and closing fact
+sets, and includes the typed facts in the eligibility binding. Raw tracked-flag
+decoding and equality are deleted without changing the separately sequenced
+porcelain-status or ordinary-index byte observations. No compatibility field,
+facade, helper framework, or new resource replaces them.
+
+No provider home, Personal repository, Oclif command surface, or live lifecycle
+state changes in this checkpoint. The Git provider suite passes 31 tests with
+162 assertions; the focused Releases suites pass 47 tests, and the complete
+lifecycle suite passes 267 tests. Resource, provider, and lifecycle typechecks,
+Habitat lint, strict OpenSpec, touched-file formatting, and diff hygiene pass.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

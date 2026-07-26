@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
+  GitTrackedPathFlag,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
@@ -59,7 +60,7 @@ interface TreeEntry {
 interface WorkspaceEvidence {
   readonly anchor: GitWorkspaceAnchor;
   readonly trackedStatus: Uint8Array;
-  readonly trackedFlags: Uint8Array;
+  readonly trackedFlags: readonly GitTrackedPathFlag[];
   readonly worktreeObjectIds: readonly Readonly<{ path: ReleaseRelativePath; objectId: string }>[];
   readonly untracked: Uint8Array;
   readonly ignored: Uint8Array;
@@ -361,7 +362,7 @@ function inspectWorkspace(
       trackedStatus: hashBytes(closingEvidence.trackedStatus),
       untracked: hashBytes(closingEvidence.untracked),
       ignored: hashBytes(closingEvidence.ignored),
-      trackedFlags: hashBytes(closingEvidence.trackedFlags),
+      trackedFlags: closingEvidence.trackedFlags,
       worktreeObjectIds: closingEvidence.worktreeObjectIds,
     });
     return {
@@ -412,7 +413,7 @@ function captureWorkspaceEvidence(
         eligibilityError("SourceChanged", "repository anchor changed during its closing capture")
       );
     }
-    if (!equalBytes(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
+    if (!sameTrackedPathFlags(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
       return yield* Effect.fail(
         eligibilityError(
           "SourceChanged",
@@ -542,10 +543,12 @@ function validateWorkspaceEvidence(
   if (dirty === "index") return sourceIssue("DirtyIndex", "Git index differs from HEAD");
   if (dirty === "worktree")
     return sourceIssue("DirtyTrackedWorktree", "tracked worktree differs from index");
-  const flagRecords = decodeNulList(evidence.trackedFlags);
+  const trackedPaths = new Set(evidence.trackedFlags.map((fact) => fact.path));
   if (
-    flagRecords.length !== admittedPaths.length ||
-    flagRecords.some((record) => !record.startsWith("H "))
+    evidence.trackedFlags.length !== admittedPaths.length ||
+    trackedPaths.size !== evidence.trackedFlags.length ||
+    evidence.trackedFlags.some((fact) => fact.status !== "Cached" || fact.assumeUnchanged) ||
+    admittedPaths.some((path) => !trackedPaths.has(path))
   ) {
     return sourceIssue("DirtyIndex", "admitted paths carry noncanonical index flags");
   }
@@ -570,7 +573,7 @@ function sameWorkspaceEvidence(left: WorkspaceEvidence, right: WorkspaceEvidence
   return (
     sameRepositoryAnchor(left.anchor, right.anchor) &&
     equalBytes(left.trackedStatus, right.trackedStatus) &&
-    equalBytes(left.trackedFlags, right.trackedFlags) &&
+    sameTrackedPathFlags(left.trackedFlags, right.trackedFlags) &&
     sameWorktreeObjectIds(left.worktreeObjectIds, right.worktreeObjectIds) &&
     equalBytes(left.untracked, right.untracked) &&
     equalBytes(left.ignored, right.ignored) &&
@@ -602,6 +605,24 @@ function sameWorktreeObjectIds(
     left.every((entry, index) => {
       const other = right[index];
       return other !== undefined && entry.path === other.path && entry.objectId === other.objectId;
+    })
+  );
+}
+
+function sameTrackedPathFlags(
+  left: readonly GitTrackedPathFlag[],
+  right: readonly GitTrackedPathFlag[]
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((fact, index) => {
+      const other = right[index];
+      return (
+        other !== undefined &&
+        fact.path === other.path &&
+        fact.status === other.status &&
+        fact.assumeUnchanged === other.assumeUnchanged
+      );
     })
   );
 }
