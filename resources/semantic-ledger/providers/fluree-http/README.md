@@ -227,7 +227,7 @@ top-level `t` in the query body is discarded.
 
 | Selector | Argument | Axis |
 |---|---|---|
-| `@t:<N>` | integer only; `@t:latest` returns 400 | transaction number |
+| `@t:<N>` | integer in a `from`; `latest` only where noted below | transaction number |
 | `@iso:<ts>` | ISO-8601 | **event** time (`f:time`) — what the change is about |
 | `@recorded:<ts>` | ISO-8601 | **audit** time (`f:receivedAt`) — when it was loaded |
 | `@commit:<hex>` | lowercase hex, anchored prefix, 6–64 chars | one exact commit |
@@ -275,11 +275,33 @@ candidates** rather than choosing one. Collisions are real at 6 characters — o
 ### History ranges
 
 `POST /query` with `from` and `to` performs a history query. **`to` is validated and
-then ignored**: the range is always `[from, head]`. Bounding a history query requires
-filtering the returned `@t` values.
+then ignored**: the range is always `[from, head]`. `from ws:main@t:1` with
+`to ws:main@t:2` returns rows at `t=3` on a ledger whose head is 3, so bounding a
+history query requires filtering the returned `@t` values.
+
+Ignored is not unread. `to` is parsed, type-checked and fed into the read-after-write
+gate before the bound is discarded, which is visible in what its two failure modes
+are: `to ws:main@t:99` on a ledger at `t=3` returns
+`408 err:db/ReadAfterWriteTimeout`, and **`@t:latest` is accepted in `to` while a
+`from` rejects it** with `400 Invalid integer for @t: 'latest'`. A SPARQL
+`FROM <ws:main@t:latest>` accepts it too and resolves to head, distinguishably from
+ignoring it: `@t:1` restricts, and `@t:bogus` errors. **A selector is valid per
+position rather than in general**, because the positions run different parsers.
 
 `query/datasets.md` describes `commit_id`, `iso` and `sha` keys inside the `from`
 object. Only `t` and `at` are honoured; the other three are discarded.
+
+**A history projection's row count is not a commit's flake count.** A redundant
+re-assert appears as one flake in `/show` and as a retraction/assertion pair at the
+same `t` in the history projection. Counting flakes means reading `/log`'s
+`flake_count`, `/show`'s `flakes`, or `/submissions`' `detail.flake_count`.
+
+### The past is readable and not writable
+
+A time-travelled reference is a read address. `POST /update?ledger=ws:main@t:1`
+returns 500; the same body against `ws:main` applies. History is reconstructed by
+reading at a position, never by writing at one, so a correction is a new commit at
+head rather than an edit to an old one.
 
 ### Read-after-write
 
@@ -295,77 +317,278 @@ until a `t` is visible; waiting on a `t` that never arrives returns 408
 `/insert` does not create ledgers — writing to an uncreated ledger returns
 `500 Ledger not found`. `POST /create` first.
 
-### Conditional writes are the concurrency-safe path
+A ledger is named in any of four places — `?ledger=`, the path tail, a body `ledger`
+field, or the `Fluree-Ledger` header. Named in none of them, the request is a
+`400 err:api/MissingLedger`. Only that one header spelling is read: `X-Fluree-Ledger`,
+`Ledger` and `Fluree-Ledger-Id` all leave the alias missing and produce the same 400
+as sending no header at all.
 
-`POST /update` accepts `where` / `delete` / `insert` and applies them atomically. When
-the guard does not match, the transaction is a no-op and nothing is written.
+### A write carries its precondition
 
-```bash
-curl -sX POST "$B/update?ledger=ws:main" -H 'Content-Type: application/json' -d '{
- "@context":{"ws":"https://rawr.dev/ns/workstream#"},
- "where":  {"@id":"ws:item/a1","ws:status":"admitted"},
- "delete": {"@id":"ws:item/a1","ws:status":"admitted"},
- "insert": {"@id":"ws:item/a1","ws:status":"cleared"}}'
+`POST /update` accepts a guard and a change and applies them in one atomic step. The
+guard is evaluated against the ledger and the change is instantiated only from what it
+matched, so there is no window between deciding and writing. When the guard matches
+nothing, the transaction is a no-op and nothing is written.
+
+Two request bodies reach the same evaluator. **JSON-LD** takes `where` / `delete` /
+`insert` as body fields; at least one of `insert` or `delete` is required and `where`
+alone is a 400. `"delete": []` is accepted and becomes a no-op, while `"insert": []`
+and `"insert": {}` are 400s. `@context` is optional when every term is an absolute
+IRI; with prefixed terms and no `@context` the request is a 400 naming the unresolved
+prefix. Unresolved prefixes are loud, unrecognised top-level keys are silent.
+
+**SPARQL UPDATE** (`Content-Type: application/sparql-update`) expresses the same
+guard as standard syntax:
+
+```sparql
+INSERT { <ground triples> }
+WHERE  { <patterns that must match>
+         FILTER NOT EXISTS { <subject> <predicate> ?a0 } }
 ```
 
-Twenty concurrent guarded increments all apply, producing `t=2…21` and a final count
-of 20. The same workload as read-then-write loses 19 of 20, returns 200 for every
-lost write, and yields a `t` sequence that runs backwards. The guard is genuinely
-evaluated rather than pattern-matched away: the identical payload with `where`
-misspelled applies all 20.
-
-**Any write that depends on state it has read must express that dependency as a
-`where` guard.** Reading and then writing is safe only where exactly one writer
-exists, and fails silently rather than loudly when that stops being true.
-
-Related idioms:
+**A `WHERE` containing only `FILTER NOT EXISTS` groups yields one solution and
+applies**, so insert-if-absent needs no positive pattern to hang the negation off. The
+JSON-LD body has no `FILTER NOT EXISTS` spelling and expresses absence as an optional
+join followed by a test on the unbound variable:
 
 ```jsonc
+// insert-if-absent, JSON-LD — the optional + not-bound idiom is required
+"where": [["optional",{"@id":"ws:item/x","ws:kind":"?existing"}],
+          ["filter","(not (bound ?existing))"]],
+"insert": {"@id":"ws:item/x","ws:kind":"Item"}
+
 // atomic increment — no read round trip
 "where": [{"@id":"ex:counter","ex:count":"?old"}, ["bind","?new","(+ ?old 1)"]],
 "delete": {"@id":"ex:counter","ex:count":"?old"},
 "insert": {"@id":"ex:counter","ex:count":"?new"}
-
-// insert-if-absent — the optional + not-bound idiom is required
-"where": [["optional",{"@id":"ws:item/x","ws:kind":"?existing"}],
-          ["filter","(not (bound ?existing))"]],
-"insert": {"@id":"ws:item/x","ws:kind":"Item"}
 ```
 
 A bare required pattern that matches nothing inserts nothing at all, even for an
 all-literal INSERT template.
 
-### Determining whether a conditional write applied
+**This adapter sends SPARQL UPDATE**, for two differences between the surfaces rather
+than a preference between them.
 
-Both outcomes return 200 with a well-formed receipt. Two candidate signals exist and
+First, a damaged guard is a different kind of event on each. `WHERE` misspelled is a
+parse error and a 400; the JSON-LD `where` key misspelled is just an unrecognised
+top-level key, so it is discarded silently and the change applies **unconditionally**
+with a 200 — the failure mode §1 opens with, arriving at the one place where a
+precondition was the point. A guard is worth building only on the surface where losing
+it is loud.
+
+Second, **a JSON-LD body has no boundary between a value and a variable.** In a
+`where` or `insert`, a string beginning with `?` is read as a variable rather than as
+the value it looks like, and values are caller-supplied — a tag, a title. Against an
+item carrying `ws:tag "clean"`:
+
+| Guard requires | Surface | Result |
+|---|---|---|
+| `ws:tag "?evil"` | JSON-LD | **applies** — the string binds as a variable and matches `"clean"` |
+| `ws:tag "nope"` | JSON-LD | refused, sentinel — the control that shows an absent literal does refuse |
+| `ws:tag "?evil"` | SPARQL UPDATE | refused, sentinel — quoting makes it a literal, and no item carries it |
+
+The first row is a precondition satisfied by a value chosen by whoever supplied the
+tag. SPARQL is already the read path, so one term renderer escapes every value that
+reaches the server and a literal lands in literal position on both paths.
+
+### A guard spans subjects, and stops at its own line
+
+One `INSERT` template may name several subjects; **they commit together or not at
+all.** This is the shape a decision about more than one thing needs — a resolution and
+the tag it grants its parent are one fact about the world, not two that might disagree:
+
+```sparql
+INSERT { ws:child_resolution ws:kind "Resolution" ; ws:ofItem ws:child .
+         ws:parent ws:tag "reviewed" . }
+WHERE  { ws:child ws:derivedFrom ?p ; ws:grants ?g .
+         FILTER NOT EXISTS { ws:child_resolution ws:kind ?a0 } }
+```
+
+The first send applies both triples; the second is refused, so the parent never
+accumulates a duplicate grant.
+
+**Guards respect branch isolation.** The identical insert-if-absent applies on
+`family:main` and applies again, independently, on `family:try`, because neither
+branch's write is visible to the other — and it is refused on whichever line already
+carries the fact. A precondition is therefore scoped to the line it is addressed to,
+and a candidate branch needs no special handling to be guarded.
+
+### Subject IRIs are interned, and a guard can only name what has been written
+
+The portion of an IRI before its final separator is interned as a **namespace** and
+referred to thereafter by a small integer. Path-shaped subjects therefore mint
+namespaces as data arrives: writing a clearance as
+`…#stream/s1/item/<item>/cleared/<boundary>` mints one namespace per item, so the
+table grows with how much work has passed through a ledger rather than with how many
+kinds of thing it holds.
+
+That growth is not merely untidy. A guard that names a subject whose namespace has
+never been written refers to a code with nothing behind it, and the transaction fails:
+
+```
+400 err:system/InternalError
+Transaction error: Query error: Internal error:
+resolve_subject_iri: no namespace prefix for code=17
+```
+
+The failure needs an accumulated table to appear — the same guard shapes succeed in
+isolation — and it does not arise on `/insert`, which resolves no preconditions. It is
+reached by a guarded write whose `FILTER NOT EXISTS` names a subject in a namespace no
+commit has established, which is exactly what an insert-if-absent guard does when the
+thing it is checking for has never yet existed anywhere in that ledger.
+
+> **Compose subject identity into one local name rather than into a path.** With every
+> subject in the vocabulary's own namespace — `ws:cleared,s1,a,b0` rather than
+> `ws:stream/s1/item/a/cleared/b0` — the count is fixed at one, that one is interned by
+> the first write because the predicates share it, and no precondition can name a
+> namespace that does not yet exist. Escape the parts so a separator cannot occur
+> inside one.
+
+### Exactly one, and what unguarded actually does
+
+Twenty concurrent writers claiming one single-valued fact on one subject, three runs
+of each form:
+
+| Form | Reported applied | Reported refused | Durably recorded |
+|---|---|---|---|
+| `INSERT … WHERE { FILTER NOT EXISTS … }` | 1 | 19 | one value |
+| `INSERT DATA { … }` | 20 | 0 | **all twenty values on one subject** |
+
+The unguarded failure here is not lost writes. Every writer is told it succeeded, and
+RDF's multi-valued properties absorb the collision into a set rather than surfacing
+it, so the subject ends up carrying twenty mutually contradictory answers to a
+single-valued question. **The guard is what makes a single-valued claim
+single-valued.**
+
+Which idiom is sent decides whether contention excludes or serialises. Twenty
+concurrent guarded *increments* all apply, producing `t=2…21` and a final count of 20,
+because each one's guard rematches against the value its predecessor left. Twenty
+insert-if-absent claims exclude, because the first application is what falsifies every
+other guard. The same workload as read-then-write loses 19 of 20, returns 200 for
+every lost write, and yields a `t` sequence that runs backwards.
+
+**Any write that depends on state it has read must express that dependency as a
+guard.** Reading and then writing is safe only where exactly one writer exists, and
+fails silently rather than loudly when that stops being true.
+
+### Determining whether a write applied
+
+Both outcomes return 200 with a well-formed receipt. Three candidate signals exist and
 only one is sound:
 
-- **`commit.hash` against the no-op sentinel** — exact. Every no-op returns
-  `commit.hash` = `bagaybqabciqohmgeikmpyhautl57jsezn64sij5oihsgjg4tjssjlgi3pbjlqvi`,
-  identical across ledgers and no-op shapes, and present in no commit log. It is a
-  sentinel, not a commit id, and must never be stored as one.
-- **`receipt.t` against a previously read `t`** — unsound. A concurrent writer
-  committing in between produces a false "applied". It fails in exactly the
+- **`commit.hash` against the flake-less sentinel** — exact. Every transaction that
+  commits no flakes returns `commit.hash` =
+  `bagaybqabciqohmgeikmpyhautl57jsezn64sij5oihsgjg4tjssjlgi3pbjlqvi`, identical across
+  ledgers and across no-op shapes, and present in no commit log.
+- **`receipt.t` against a previously read `t`** — unsound. `t` in a refused receipt is
+  the ledger's head at processing time, so it advances whenever anyone commits. Under
+  twenty concurrent claimants every writer receives the same `t`, and no predicate over
+  it separates the one winner from the nineteen losers. It fails in exactly the
   concurrent case that motivates checking.
+- **`tx-id`** — not an outcome at all. It is a digest of the request body: one body
+  sent twice returns one `tx-id` whether it applied or was refused, and the same body
+  sent to two ledgers returns that same `tx-id` for two distinct commits. It identifies
+  an intent, never a transaction and never a commit.
 
-`create` is a third shape: `t=0`, `hash=""`.
+**The sentinel is derivable rather than magic.** It is
+`CIDv1(ContentKind::Commit, sha256(""))`: the 7-byte header `018180c0011220` of §4
+followed by `e3b0c442…b855`, the SHA-256 of the empty byte string. `/show` returns 404
+for it. Deriving it from those parts and checking the result against what the server
+returns means a build whose content tag moves fails loudly, instead of every write
+afterwards reporting itself as applied.
+
+The sentinel means *this transaction committed no flakes*, which is broader than *the
+guard matched nothing*. An unmatched guard, an empty `delete`, an `insert` template
+referencing an unbound variable, and a `delete` and `insert` of the same triple all
+produce it. An `insert` of an already-present triple with no matching `delete` still
+commits an assert flake and so does not.
+
+> **For a guarded write whose `insert` template is non-empty and fully ground and which
+> carries no `delete`, the sentinel means exactly that the guard matched nothing.**
+> Every other zero-flake shape needs an empty or self-cancelling delete, an empty
+> insert, or an unbound variable in the template. This adapter emits none of the three,
+> which is what makes its applied-check exact rather than approximate.
+
+Three receipt shapes exist in total: an applied write returns head+1 and a real commit
+id; a refused write returns head unchanged and the sentinel; `POST /create` returns
+`t=0` and `hash: ""`. An empty hash from `/update` therefore belongs to no outcome and
+is a fault rather than a refusal.
+
+Retraction is where the equivalence breaks, in both directions. A `delete` template
+instantiated from a *matching* guard emits a retraction flake **even when the triple
+never existed**, advancing `t` and recording a phantom retraction; the documentation's
+"retracting a non-existent triple is a no-op" holds for the SPARQL `DELETE … WHERE`
+form, where an unmatched `WHERE` never instantiates the template. And `delete X` plus
+`insert X` in one transaction nets to zero flakes and returns the sentinel *while the
+guard matched*, which reads as a refusal that never happened.
 
 ### Idempotency
 
-The standard **`Idempotency-Key`** header is honoured on a single node, scoped per
-ledger:
+The standard **`Idempotency-Key`** header is honoured on `/insert`, `/upsert`,
+`/update` (both JSON and `application/sparql-update`) and `/revert`; not on `/create`
+or `/query`. The header name is case-insensitive. `Fluree-Idempotency-Key`,
+`X-Idempotency-Key` and a body `opts.idempotencyKey` are not recognised, and a request
+carrying only those is an unkeyed request.
+
+Keys are capped at **128 bytes**, measured in bytes rather than characters, and
+enforced: a 129-byte key is a 400 naming both figures. Spaces, UUIDs and non-ASCII are
+accepted. Keys are scoped per ledger — one key on two ledgers produces two independent
+records.
+
+**A replay is byte-identical to the original**: same status, same headers including the
+`idempotency-key` echo, same body. The echo appears on the first execution too, so it
+is not a replay marker, and a caller cannot tell from the response whether its request
+executed or was deduplicated. For state correctness that is the right behaviour. A
+reused key with a *different* body returns `409 err:db/CommitConflict` — *"idempotency
+key collision: key already used for a different transaction"* — and writes nothing. It
+reports key reuse, not a data conflict.
+
+**A key caches the outcome, refusals included.** This is the property that decides how
+a key may be derived, and it is not the one the name suggests:
 
 ```
-3× increment, same key       -> t=2, t=2, t=2 | counter = 1
-3× increment, different keys -> t=2, t=3, t=4 | counter = 3
-same key, different body     -> 409 err:db/CommitConflict, second body not applied
-same key, different ledger   -> executes
+key K, guard requires a fact that is absent   -> refused, sentinel, t=0
+assert that fact, unkeyed                     -> applied, t=1
+replay key K, byte-identical body             -> cached refusal, sentinel, t=0
+same body, fresh key                          -> applied, t=2
 ```
 
-`Fluree-Idempotency-Key` and `opts.idempotencyKey` are not recognised. Together with
-guarded writes this makes a retry safe: the guard prevents a stale write from
-applying, and the key prevents a successful write from applying twice when the
-response is lost.
+The guard is never re-evaluated on the replay, and the receipt reports the position the
+line stood at when the key was first executed rather than where it stands now.
+**A key therefore identifies one attempt, not one intent.** It may be reused only to
+retry a request whose response was never seen — a timeout, a dropped connection. Any
+definite response, applied or refused, ends that key's life, and a proposal made again
+after re-reading carries a fresh key.
+
+Deriving a key from the content of the intended write is the natural-looking choice and
+is wrong: two attempts at one intent are the same content, so the key converts a
+transient refusal into a permanent one and stalls the caller with a 200.
+
+**`GET /submissions/{key}/{ledger}` is the out-of-band record**, and it is how a lost
+response is resolved by asking rather than by guessing or by sending again:
+
+```json
+{"state":"committed","idempotency_key":"K","kind":"transact",
+ "commit_id":"bagaybqabciq…","t":2,
+ "detail":{"operation":"transaction","flake_count":1}}
+```
+
+`state` is **not** the applied-check — a refused write is `"committed"` too, carrying
+the sentinel as its `commit_id`. `detail.flake_count` is: `0` for a no-op and greater
+for an applied write, agreeing with the sentinel on every case. `{"state":"unknown"}`
+means the key was never executed, so the request is safe to send. The state values are
+`in_flight`, `committed` and `failed`; the route accepts both the family and the
+branch-qualified ledger forms.
+
+The recognition window is **at least eight minutes, in memory, and does not survive a
+restart.** No single-node TTL is documented or configurable, and the one-hour figure in
+the operations documentation describes the Raft replicated state machine's cache, which
+a single-node deployment does not run. Retry windows stay well inside minutes, and a
+key is not relied on after a process bounce.
+
+Together with guarded writes this makes a retry safe without making it a decision: the
+guard prevents a stale write from applying, and the key prevents a write whose response
+was lost from applying twice.
 
 `/upsert` deduplicates an identical re-insert; `/insert` commits each one.
 
@@ -630,13 +853,26 @@ without writing.
 | 404 from the PATCH oracle | not registered here, not necessarily absent from the build |
 | `@commit:` with a CID | never matches; it consumes the hex digest |
 | Commit CID leading characters | a type tag, shared by every commit |
-| History `to` | validated then ignored; range is `[from, head]` |
+| History `to` | validated then ignored; range is `[from, head]`, though a `to` past head still 408s |
 | `from{sha:}` / `{iso:}` / `{commit_id:}` | documented, not honoured |
-| `@t:latest` | 400 |
+| `@t:latest` | rejected in a `from`, accepted in a `to`; valid per position, not in general |
+| History row count as a flake count | a re-assert is one flake and two projection rows |
+| `POST /update` on `ledger@t:N` | 500; the past is readable and not writable |
 | `/info.t` | lags read-after-write; use the receipt or `/log[0].t` |
 | Read-then-write | loses concurrent updates silently, with `t` regression |
-| `receipt.t` as an applied-check | false positives under concurrency |
+| A misspelled JSON-LD `where` key | discarded silently; the change applies unconditionally with 200 |
+| A ground literal beginning with `?` in a JSON-LD `where` or `insert` | read as a variable, not as a value |
+| Path-shaped subject IRIs | mint a namespace per subject; the table grows with the data |
+| A guard naming a subject whose namespace no commit has written | `resolve_subject_iri: no namespace prefix for code=N` once the table has grown |
+| `"insert": []` or `"insert": {}` | 400, while `"delete": []` is accepted as a no-op |
+| `receipt.t` as an applied-check | false positives under concurrency; every racer receives one `t` |
+| `tx-id` as a receipt id | a body digest; identical across ledgers and across distinct commits |
 | No-op `commit.hash` | a sentinel, not a commit id |
+| `delete X` + `insert X` in one transaction | nets to zero and returns the sentinel although the guard matched |
+| `delete` of a never-existing triple under a matching guard | advances `t` and writes a phantom retraction flake |
+| An idempotency key derived from the write's content | caches a refusal, making a transient one permanent |
+| `submissions.state` as the applied-check | a refusal is `"committed"` too; read `detail.flake_count` |
+| An idempotency key after a restart | not recognised; the store is in memory |
 | `Fluree-Idempotency-Key` | not recognised; the header is `Idempotency-Key` |
 | `/multi-query` | tears ~1% and misreports `t` when it does; pin with `asOf` |
 | JSON-LD full-text config | writes an inert configuration |
@@ -657,6 +893,11 @@ without writing.
   the nameservice record. BM25 becomes reachable if this is wired.
 - **HNSW / ANN.** Requires both that wiring and the `vector` cargo feature; `usearch`
   is not linked in this image.
+- **Single-node idempotency window.** No TTL is documented, no environment variable or
+  flag exposes one, and the documented one-hour figure belongs to the Raft cache that a
+  single-node deployment does not run. The lower bound is the eight minutes measured;
+  the upper bound is unestablished, so a key's recognition is relied on for a retry and
+  not for a reconciliation.
 - **Scalar-path configuration.** The single-view query path discards ledger
   configuration that the dataset path honours; the mechanism is not documented.
 - **Head-schema union scope.** Established for `rdfs:subClassOf`; whether

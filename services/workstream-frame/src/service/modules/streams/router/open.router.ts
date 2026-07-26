@@ -1,5 +1,12 @@
 /**
  * @fileoverview `streams.open` — declare a frame's shape.
+ *
+ * @remarks
+ * The stream node and every boundary node are offered as one proposal, so a
+ * frame either comes into being whole or not at all. Two declarations of one
+ * stream can therefore never overlay two shapes on the same subjects, which
+ * would leave the gate order at the mercy of whichever row a provider returns
+ * first.
  */
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
@@ -14,14 +21,20 @@ export const open = module.open.handler(async ({ context, input, errors }) => {
   return await withLedger(
     async () => {
       await store.ensureLedger();
-      if (await store.streamExists(input.streamId)) {
+      const proposed = await store.createStream(
+        input.streamId,
+        input.boundaries,
+        context.clock.now()
+      );
+      // The proposal asserts the stream absent and nothing else, so a refusal
+      // has exactly one meaning.
+      if (!proposed.applied) {
         throw errors.STREAM_ALREADY_EXISTS({
           message: `Stream '${input.streamId}' already exists`,
           data: { streamId: input.streamId },
         });
       }
 
-      await store.createStream(input.streamId, input.boundaries, context.clock.now());
       return await store.readStream(input.streamId);
     },
     (data) => {

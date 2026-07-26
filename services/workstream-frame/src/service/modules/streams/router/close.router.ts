@@ -10,6 +10,10 @@
  * Closing refuses writes and nothing else. Every read, including every temporal
  * read, keeps working forever — which is the point of sealing rather than
  * deleting.
+ *
+ * A stream closes at one time for one reason. Two sealings offered at once
+ * would otherwise leave two closure facts standing on one subject and neither
+ * of them true, so the second is refused and told so.
  */
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
@@ -23,22 +27,21 @@ export const close = module.close.handler(async ({ context, input, errors }) => 
 
   return await withLedger(
     async () => {
-      if (!(await store.streamExists(input.streamId))) {
+      const proposed = await store.closeStream(input.streamId, context.clock.now(), input.note);
+      if (!proposed.applied) {
+        const stream = await store.readStream(input.streamId);
+        if (stream.closedAt !== null) {
+          throw errors.STREAM_CLOSED({
+            message: `Stream '${input.streamId}' was already closed at ${stream.closedAt}`,
+            data: { streamId: input.streamId, closedAt: stream.closedAt },
+          });
+        }
         throw errors.STREAM_NOT_FOUND({
           message: `Stream '${input.streamId}' not found`,
           data: { streamId: input.streamId },
         });
       }
 
-      const stream = await store.readStream(input.streamId);
-      if (stream.closedAt !== null) {
-        throw errors.STREAM_CLOSED({
-          message: `Stream '${input.streamId}' was already closed at ${stream.closedAt}`,
-          data: { streamId: input.streamId, closedAt: stream.closedAt },
-        });
-      }
-
-      await store.closeStream(input.streamId, context.clock.now(), input.note);
       return await store.readStream(input.streamId);
     },
     (data) => {

@@ -7,6 +7,10 @@
  * promoted is *superseded*, and superseding is something you record, not
  * something you erase. The line stays readable, and why it was set aside stays
  * answerable.
+ *
+ * A candidate is decided once. Abandonment and promotion compete for the same
+ * subject, so whichever is recorded first is the disposition, and the other is
+ * told which one stands rather than laying a second answer beside it.
  */
 import { withLedger } from "../../../model/helpers/ledger-failure";
 import { module } from "../module";
@@ -34,12 +38,19 @@ export const abandon = module.abandon.handler(async ({ context, input, errors })
         });
       }
 
-      await context.committedStore.recordRevisionStatus(
+      const recorded = await context.committedStore.recordRevisionStatus(
         input.revision,
         "abandoned",
         context.clock.now(),
         input.note
       );
+      if (!recorded.applied) {
+        const statuses = await context.committedStore.readRevisionStatuses();
+        throw errors.REVISION_NOT_CANDIDATE({
+          message: `Revision '${input.revision}' is already ${statuses.get(input.revision) ?? "decided"}`,
+          data: { revision: input.revision, committed: context.committedRevision },
+        });
+      }
 
       return {
         revision: input.revision,
