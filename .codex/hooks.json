@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$(git rev-parse --show-toplevel)/tools/workstream-plugin-pack/hooks/workstream_startup.ts\"",
+            "timeout": 5,
+            "statusMessage": "Loading workstream startup context"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"$(git rev-parse --show-toplevel)/tools/workstream-plugin-pack/hooks/workstream_closure_guard.ts\"",
+            "timeout": 10,
+            "statusMessage": "Checking workstream mechanical guardrails"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'repo=\"$(git rev-parse --show-toplevel 2>/dev/null)\" && cd \"$repo\" 2>/dev/null || { printf \"%s\\n\" \"RAWR quality hook must run inside the repo worktree.\" >&2; exit 2; }; out=$({ bun run lint && bunx nx run habitat:check:source-law; } 2>&1); status=$?; if [ \"$status\" -eq 0 ]; then exit 0; fi; printf \"%s\\n\" \"$out\" >&2; exit 2'",
+            "timeout": 180,
+            "statusMessage": "Running RAWR lint and Habitat source law"
+          }
+        ]
+      }
+    ]
+  }
+}

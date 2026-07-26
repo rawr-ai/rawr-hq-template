@@ -14,11 +14,6 @@ import { fileURLToPath } from "node:url";
 
 const PACK_ROOT = ["tools", "workstream-plugin-pack"];
 const SKILLS = ["workstream-runner", "workstream-review-loops"] as const;
-const HOOK_FILES = [
-  "workstream_common.ts",
-  "workstream_startup.ts",
-  "workstream_closure_guard.ts",
-] as const;
 const AGENTS = [
   {
     name: "workstream-opening-steward",
@@ -153,11 +148,6 @@ You are the project-scoped Codex installation for this provider-neutral role bri
   ].join("\n");
 }
 
-function localHooksJson(): string {
-  const source = read(join(repoRoot(), ...PACK_ROOT, "hooks", "hooks.json"));
-  return source.replaceAll("tools/workstream-plugin-pack/hooks/", ".codex/hooks/");
-}
-
 function parseArgs(argv: string[]): { dryRun: boolean } {
   for (const arg of argv) {
     if (arg !== "--dry-run") throw new Error(`unsupported argument: ${arg}`);
@@ -169,8 +159,6 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
   const allowedTargets = new Set([
     ...SKILLS.map((skill) => resolve(root, ".agents", "skills", skill)),
     ...AGENTS.map((agent) => resolve(root, ".codex", "agents", `${agent.name}.toml`)),
-    ...HOOK_FILES.map((hookFile) => resolve(root, ".codex", "hooks", hookFile)),
-    resolve(root, ".codex", "hooks.json"),
   ]);
 
   for (const skill of SKILLS) {
@@ -193,24 +181,6 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
       dryRun
     );
   }
-
-  for (const hookFile of HOOK_FILES) {
-    copyTree(
-      root,
-      join(packRoot, "hooks", hookFile),
-      join(root, ".codex", "hooks", hookFile),
-      allowedTargets,
-      dryRun
-    );
-  }
-
-  writeOwnedFile(
-    root,
-    join(root, ".codex", "hooks.json"),
-    localHooksJson(),
-    allowedTargets,
-    dryRun
-  );
 }
 
 const { dryRun } = parseArgs(process.argv.slice(2));

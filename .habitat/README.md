@@ -19,7 +19,8 @@ The current generic kinds are:
   implementation, declarative TypeBox contracts, and public error authority.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` surfaces that
   expose client bindings and API operations around an embedded service.
-- `agent-router`: local `AGENTS.md` placement and positive routing anchors.
+- `agent-router`: the positive source shape and routing anchors inside each
+  local `AGENTS.md`.
 - `oclif-app`: one executable Oclif package, binary/source entrypoints,
   discovery configuration, and generated command-manifest relationship.
 - `oclif-command-plugin`: one host-composed command package, command root,
@@ -34,10 +35,12 @@ The current generic kinds are:
   remains intentionally unconstrained.
 
 The `rawr/` tree carries owner-qualified constraints that are not generic
-package laws. Its remaining lifecycle rule closes the curated command channel
-while that implementation is simplified. Generic service and Oclif packets own
-their admitted source relationships, and TypeScript package exports own public
-compatibility. The lifecycle niche does not duplicate those laws as a
+package laws. Its repository niche owns the cross-kind `AGENTS.md` placement
+relation without acquiring the topology of the heterogeneous package and
+module roots it inspects. Its remaining lifecycle rule closes the curated
+command channel while that implementation is simplified. Generic service and
+Oclif packets own their admitted source relationships, and TypeScript package
+exports own public compatibility. Neither niche duplicates those laws as a
 package-name or path blacklist. Resolved project admission is a separate
 Habitat rule, not an ESLint rule.
 
@@ -64,6 +67,9 @@ follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`. The `service` packet stack follows
 Magic Migration commit `822aa36d3f951a81d94292bcbce5d8fdc38fe1f7`,
 service-blueprint tree `29ec394c81130884a31bb0b73dbc3cb36cf4a3cb`.
+The imported agent-router placement relation retains that provenance but now
+lives under `rawr/repository`: it relates repository-owned roots and is not a
+constructible document-kind topology.
 That tree seeded the closed package, public surface, service spine, module
 shell, contract, and error laws. RAWR now owns explicit amendments for the
 host-to-service-to-module context funnel, native oRPC and Effect-oRPC

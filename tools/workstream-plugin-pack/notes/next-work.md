@@ -6,9 +6,10 @@ The pack is contained locally and reviewable as one unit. Generic workstream
 skills, assets, steward briefs, hook scripts, and hook config live under
 `tools/workstream-plugin-pack/` as Template-owned tooling.
 
-Live `.agents/.codex` activation files are intentionally absent. Use
+Generated workstream skill and agent activations are intentionally absent. Use
 `scripts/install-local-codex-pack.ts` only when local activation/testing is
-needed.
+needed. Repository hook composition and standing Habitat roles remain
+checked-in authority and are not installer outputs.
 
 The installer projects only into the current Template checkout. It has no
 personal-repository or cross-repository projection mode.
@@ -27,7 +28,9 @@ not own the generic workstream lifecycle or record model.
   achieved, or not achieved.
 - Unsupported or unavailable hook events are documented as portability caveats.
   Hooks do not parse workstream Markdown.
-- Local projection is ready to test through `scripts/install-local-codex-pack.ts`.
+- Local skill/agent projection is ready to test through
+  `scripts/install-local-codex-pack.ts`; hook composition runs canonical pack
+  sources directly.
 
 ## Deferred
 
@@ -42,6 +45,6 @@ not own the generic workstream lifecycle or record model.
   closure, and handoff loops.
 - Runtime-lab docs remain complementary overlays.
 - `scripts/install-local-codex-pack.ts --dry-run` shows only the expected
-  Template-local projections.
+  Template-local workstream skill and agent projections.
 - Hook smoke checks, pack hook JSON parse, runtime structural guard, and
   `git diff --check` pass.

@@ -15,10 +15,11 @@
 - Owns reusable workstream skills, role briefs, record and packet assets, and
   the bounded hooks that support those materials.
 - The installer is a Template-local projection helper. It may write only its
-  closed `.agents/**` and `.codex/**` allowlist and must continue to reject
-  aliases and destinations outside this checkout.
-- Generated local activation files are not source assets and must not be
-  checked in.
+  closed workstream-skill and workstream-agent allowlist and must continue to
+  reject aliases and destinations outside this checkout.
+- Generated workstream activation files are not source assets and must not be
+  checked in. The repository-owned `.codex/hooks.json` composes these canonical
+  hook sources directly and is outside installer ownership.
 - This pack is not an Nx project, a curated-content plugin, a program
   authority, or the owner of Runtime Realization Lab evidence and gates.
 
@@ -37,8 +38,9 @@
 ## Flow
 
 - Authors maintain provider-neutral source assets and hooks in this pack.
-- The local installer can preview or project those sources into this
-  checkout's activation homes.
+- The local installer can preview or project workstream skills and agent briefs
+  into this checkout's activation homes. Repository hook composition invokes
+  the pack's hook sources without another copy.
 - Runtime-specific workstream rules specialize the generic pack through
   explicit overlays rather than changing its primitive.
 
