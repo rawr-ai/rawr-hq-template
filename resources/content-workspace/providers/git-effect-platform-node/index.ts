@@ -26,9 +26,12 @@ import type {
   GitWorktreeObjectId,
   MaterializedContentTreeEntry,
 } from "@rawr/resource-content-workspace";
+import { ContentTreeEntrySchema } from "@rawr/resource-content-workspace";
 import { Effect, Equal, FileSystem, Option, PlatformError } from "effect";
+import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
+const contentTreeEntryValidator = Schema.Compile(ContentTreeEntrySchema);
 const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
@@ -228,6 +231,7 @@ export function makeContentWorkspaceResource(
       tree: string;
       objectFormat: GitObjectFormat;
       paths: readonly string[];
+      maxEntries: number;
       maxBytes: number;
     }>
   ) {
@@ -237,10 +241,11 @@ export function makeContentWorkspaceResource(
     yield* checked("read-git-tree", () => {
       validateObjectForFormat(input.tree, input.objectFormat, "tree", "read-git-tree");
       validateGitTreePaths(input.paths);
+      validateLimit(input.maxEntries, "maxEntries", "read-git-tree");
       validateLimit(input.maxBytes, "maxBytes", "read-git-tree");
     });
     yield* requireGitObjectType(executable, root, input.tree, "tree", "read-git-tree");
-    return yield* gitBytes(
+    const output = yield* gitBytes(
       executable,
       root,
       [
@@ -255,6 +260,7 @@ export function makeContentWorkspaceResource(
       "read-git-tree",
       input.maxBytes
     );
+    return yield* parseGitTreeOutput(output, input.objectFormat, input.maxEntries, root);
   });
 
   const readGitBlob = Effect.fn("contentWorkspace.readGitBlob")(function* (
@@ -2520,6 +2526,119 @@ function decodeGitBlobBatchHeader(
       "Git blob batch returned a non-UTF-8 object header"
     );
   }
+}
+
+function parseGitTreeOutput(
+  output: Uint8Array,
+  objectFormat: GitObjectFormat,
+  maxEntries: number,
+  root: string
+): Effect.Effect<readonly ContentTreeEntry[], ContentWorkspaceFailure> {
+  return Effect.gen(function* () {
+    if (output.byteLength === 0) return Object.freeze([]);
+    if (output[output.byteLength - 1] !== 0) {
+      return yield* fail(
+        "read-git-tree",
+        "GitFailed",
+        root,
+        "Git tree output is truncated before its terminal NUL"
+      );
+    }
+
+    const entries: ContentTreeEntry[] = [];
+    const paths = new Set<string>();
+    let recordStart = 0;
+    for (let index = 0; index < output.byteLength; index += 1) {
+      if (output[index] !== 0) continue;
+      if (entries.length >= maxEntries) {
+        return yield* fail(
+          "read-git-tree",
+          "LimitExceeded",
+          root,
+          "Git tree output exceeds maxEntries"
+        );
+      }
+      if (index === recordStart) {
+        return yield* fail(
+          "read-git-tree",
+          "GitFailed",
+          root,
+          "Git tree output contains an empty record"
+        );
+      }
+
+      const record = yield* Effect.try({
+        try: () => decoder.decode(output.subarray(recordStart, index)),
+        catch: () =>
+          failure("read-git-tree", "GitFailed", root, "Git tree output contains invalid UTF-8"),
+      });
+      recordStart = index + 1;
+
+      const separator = record.indexOf("\t");
+      if (separator <= 0) {
+        return yield* fail(
+          "read-git-tree",
+          "GitFailed",
+          root,
+          "Git tree output contains a malformed record"
+        );
+      }
+      const header = record.slice(0, separator);
+      const entryPath = record.slice(separator + 1);
+      const headerMatch = /^([0-7]{6}) ([a-z][a-z0-9-]*) ([0-9A-Za-z]+)$/u.exec(header);
+      const mode = headerMatch?.[1];
+      const objectType = headerMatch?.[2];
+      const blob = headerMatch?.[3];
+      if (mode === undefined || objectType === undefined || blob === undefined) {
+        return yield* fail(
+          "read-git-tree",
+          "GitFailed",
+          root,
+          "Git tree output contains a malformed record header"
+        );
+      }
+      if ((mode !== "100644" && mode !== "100755") || objectType !== "blob") {
+        return yield* fail(
+          "read-git-tree",
+          "UnsupportedEntry",
+          entryPath,
+          "Git tree contains a non-regular entry"
+        );
+      }
+      const objectLength = objectFormat === "sha1" ? 40 : 64;
+      if (blob.length !== objectLength || !/^[0-9a-f]+$/u.test(blob)) {
+        return yield* fail(
+          "read-git-tree",
+          "GitFailed",
+          entryPath,
+          "Git tree output contains an object ID for a different or malformed object format"
+        );
+      }
+
+      const entry = Object.freeze({ path: entryPath, mode, blob });
+      if (!contentTreeEntryValidator.Check(entry)) {
+        return yield* fail(
+          "read-git-tree",
+          "UnsupportedEntry",
+          entryPath,
+          "Git tree path is outside the regular-entry contract"
+        );
+      }
+      if (paths.has(entry.path)) {
+        return yield* fail(
+          "read-git-tree",
+          "GitFailed",
+          entry.path,
+          "Git tree output contains a duplicate path"
+        );
+      }
+      paths.add(entry.path);
+      entries.push(entry);
+    }
+
+    entries.sort((left, right) => compareText(left.path, right.path));
+    return Object.freeze(entries);
+  });
 }
 
 function validateRemoteSelection(

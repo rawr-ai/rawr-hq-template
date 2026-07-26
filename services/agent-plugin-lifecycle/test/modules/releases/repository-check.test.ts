@@ -860,6 +860,15 @@ function cleanContentWorkspace(
   }
   entries.sort((left, right) => left.path.localeCompare(right.path));
   const byPath = new Map(entries.map((entry) => [entry.path, entry]));
+  const treeEntries = Object.freeze(
+    entries.map((entry) =>
+      Object.freeze({
+        path: entry.path,
+        mode: entry.mode === 0o755 ? "100755" : "100644",
+        blob: entry.objectId,
+      })
+    )
+  );
   const treeBytes = bytes(
     entries
       .map(
@@ -880,7 +889,7 @@ function cleanContentWorkspace(
           ? Object.freeze({ ...stagedAnchor(), tree: options.treeAfterFirstInspect })
           : stagedAnchor();
       }),
-    readGitTree: () => Effect.succeed(treeBytes),
+    readGitTree: () => Effect.succeed(treeEntries),
     readGitBlob: (input) =>
       Effect.sync(() => {
         const value = blobs.get(input.blob);

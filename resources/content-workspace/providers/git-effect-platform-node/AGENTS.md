@@ -18,13 +18,16 @@
   release eligibility, content ownership, or lifecycle policy.
 - Preserve caller-supplied bounds, opening and closing identity checks, and
   typed failure reporting around every observation or mutation.
+- Decode Git tree serialization here and return only provider-neutral regular
+  entry facts; release path branding, portable collision policy, and content
+  meaning remain with lifecycle consumers.
 - Keep Git command and filesystem details out of the parent contract.
 
 ## Behavior
 
 - The provider opens a caller-selected local workspace, performs exact object
   or workspace mechanics, rechecks identity around mutation, and reports raw
-  results.
+  results or bounded typed regular-tree facts.
 
 ## Concepts
 

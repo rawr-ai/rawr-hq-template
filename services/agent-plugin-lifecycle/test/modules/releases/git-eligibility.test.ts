@@ -1,5 +1,6 @@
 import { mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { ContentTreeEntry, ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
@@ -116,6 +117,7 @@ describe("exact Git-object eligibility", () => {
     const repository = await generated();
     const delegate = await realPort();
     const observed: string[] = [];
+    const treeEntryLimits: number[] = [];
     const blobReadLimits: number[] = [];
     const blobBatchLimits: Array<
       Readonly<{
@@ -137,6 +139,7 @@ describe("exact Git-object eligibility", () => {
         Effect.tap(delegate.readGitTree(input), () =>
           Effect.sync(() => {
             observed.push("readGitTree");
+            treeEntryLimits.push(input.maxEntries);
           })
         ),
       readGitBlob: (input) =>
@@ -184,6 +187,7 @@ describe("exact Git-object eligibility", () => {
       ])
     );
     expect(blobReadLimits).toEqual([MAX_RELEASE_INPUT_ENVELOPE_BYTES]);
+    expect(treeEntryLimits).toEqual([200_000]);
     expect(blobBatchLimits).toEqual([
       {
         maxBlobs: 200_000,
@@ -510,7 +514,7 @@ describe("exact Git-object eligibility", () => {
     });
   });
 
-  it("rejects a changed binding and a case-colliding Git tree", async () => {
+  it("rejects a changed binding", async () => {
     const repository = await generated();
     const reader = await realReader();
     const inspected = await Effect.runPromise(reader.inspect(repository.policy));
@@ -522,34 +526,83 @@ describe("exact Git-object eligibility", () => {
     ).resolves.toMatchObject({
       kind: "Ineligible",
     });
+  });
 
-    await disposeOwnedFixtureRoot(fixture!);
-    fixture = undefined;
-    const collision = await generated();
+  it("retains canonical release-path policy at the typed resource boundary", async () => {
+    const repository = await generated();
     const delegate = await realPort();
-    const payloadPath = `plugins/agent/${collision.pluginId}/skills/example/SKILL.md`;
-    const payloadBlob = await git(collision.root, ["rev-parse", `HEAD:${payloadPath}`]);
-    const collidingRecord = new TextEncoder().encode(
-      `100644 blob ${payloadBlob}\tplugins/agent/${collision.pluginId}/skills/example/skill.md\0`
-    );
-    const collisionPort = overrideGitReadPort(delegate, {
-      readGitTree: (input) =>
-        Effect.map(delegate.readGitTree(input), (original) => {
-          const combined = new Uint8Array(original.byteLength + collidingRecord.byteLength);
-          combined.set(original);
-          combined.set(collidingRecord, original.byteLength);
-          return combined;
+    const payloadPath = `plugins/agent/${repository.pluginId}/skills/example/SKILL.md`;
+    const payloadBlob = await git(repository.root, ["rev-parse", `HEAD:${payloadPath}`]);
+    const cases: readonly Readonly<{
+      entry: ContentTreeEntry;
+      detail: string;
+    }>[] = [
+      {
+        entry: Object.freeze({ path: payloadPath, mode: "100644", blob: payloadBlob }),
+        detail: "duplicate path",
+      },
+      {
+        entry: Object.freeze({
+          path: `plugins/agent/${repository.pluginId}/skills/example/skill.md`,
+          mode: "100644",
+          blob: payloadBlob,
         }),
+        detail: "collision",
+      },
+      {
+        entry: Object.freeze({
+          path: `plugins/agent/${repository.pluginId}/skills/cafe\u0301/SKILL.md`,
+          mode: "100644",
+          blob: payloadBlob,
+        }),
+        detail: "noncanonical release path",
+      },
+    ];
+
+    for (const fixtureCase of cases) {
+      const contentWorkspace = overrideGitReadPort(delegate, {
+        readGitTree: (input) =>
+          Effect.map(delegate.readGitTree(input), (original) =>
+            Object.freeze([...original, fixtureCase.entry])
+          ),
+      });
+      await expect(
+        Effect.runPromise(
+          createCleanContentWorkspaceReader({ contentWorkspace }).inspect(repository.policy)
+        )
+      ).resolves.toMatchObject({
+        kind: "Ineligible",
+        issues: [{ code: "InvalidTree", detail: expect.stringContaining(fixtureCase.detail) }],
+      });
+    }
+  });
+
+  it("classifies an unsupported typed Git tree fact as an invalid release tree", async () => {
+    const repository = await generated();
+    const delegate = await realPort();
+    const failure: ContentWorkspaceFailure = Object.freeze({
+      _tag: "ContentWorkspaceFailure",
+      operation: "read-git-tree",
+      reason: "UnsupportedEntry",
+      path: "plugins/agent/link",
+      detail: "Git tree contains a non-regular entry",
     });
+    const contentWorkspace = overrideGitReadPort(delegate, {
+      readGitTree: () => Effect.fail(failure),
+    });
+
     await expect(
       Effect.runPromise(
-        createCleanContentWorkspaceReader({ contentWorkspace: collisionPort }).inspect(
-          collision.policy
-        )
+        createCleanContentWorkspaceReader({ contentWorkspace }).inspect(repository.policy)
       )
-    ).resolves.toMatchObject({
+    ).resolves.toEqual({
       kind: "Ineligible",
-      issues: [{ code: "InvalidTree", detail: expect.stringContaining("collision") }],
+      issues: [
+        {
+          code: "InvalidTree",
+          detail: "Git tree contains a non-regular entry",
+        },
+      ],
     });
   });
 

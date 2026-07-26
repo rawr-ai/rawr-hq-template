@@ -678,8 +678,9 @@ describe("Git Effect Platform content workspace provider", () => {
     const root = await createRepository();
     await git(root, "remote", "add", "origin", root);
     await writeFile(path.join(root, "payload.txt"), "payload\n");
+    await writeFile(path.join(root, "second.txt"), "second\n");
     await symlink("payload.txt", path.join(root, "unrelated-link"));
-    await git(root, "add", "payload.txt", "unrelated-link");
+    await git(root, "add", "payload.txt", "second.txt", "unrelated-link");
     await git(root, "commit", "-m", "add payload");
     const resource = makeContentWorkspaceResource({ gitExecutable: await realpath(gitExecutable) });
 
@@ -699,19 +700,86 @@ describe("Git Effect Platform content workspace provider", () => {
       remoteUrls: [root],
     });
 
-    const treeBytes = unwrap(
+    const treeEntries = unwrap(
       await runNodeContentWorkspace(
         resource.readGitTree({
           root,
           tree: anchor.tree,
           objectFormat: anchor.objectFormat,
           paths: ["payload.txt"],
+          maxEntries: 10,
           maxBytes: 1024 * 1024,
         })
       )
     );
-    expect(new TextDecoder().decode(treeBytes)).toContain("payload.txt");
-    expect(new TextDecoder().decode(treeBytes)).not.toContain("unrelated-link");
+    expect(treeEntries).toEqual([
+      {
+        path: "payload.txt",
+        mode: "100644",
+        blob: testGitBlobId(bytes("payload\n"), anchor.objectFormat),
+      },
+    ]);
+    expect(Object.isFrozen(treeEntries)).toBe(true);
+    expect(Object.isFrozen(treeEntries[0])).toBe(true);
+    expect(
+      unwrap(
+        await runNodeContentWorkspace(
+          resource.readGitTree({
+            root,
+            tree: anchor.tree,
+            objectFormat: anchor.objectFormat,
+            paths: ["missing.txt"],
+            maxEntries: 10,
+            maxBytes: 1024 * 1024,
+          })
+        )
+      )
+    ).toEqual([]);
+
+    const boundedTree = await runNodeContentWorkspace(
+      resource.readGitTree({
+        root,
+        tree: anchor.tree,
+        objectFormat: anchor.objectFormat,
+        paths: ["payload.txt", "second.txt"],
+        maxEntries: 1,
+        maxBytes: 1024 * 1024,
+      })
+    );
+    expect(boundedTree).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-tree", reason: "LimitExceeded" },
+    });
+
+    const byteBoundedTree = await runNodeContentWorkspace(
+      resource.readGitTree({
+        root,
+        tree: anchor.tree,
+        objectFormat: anchor.objectFormat,
+        paths: ["payload.txt"],
+        maxEntries: 10,
+        maxBytes: 1,
+      })
+    );
+    expect(byteBoundedTree).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-tree", reason: "LimitExceeded" },
+    });
+
+    const unsupportedTree = await runNodeContentWorkspace(
+      resource.readGitTree({
+        root,
+        tree: anchor.tree,
+        objectFormat: anchor.objectFormat,
+        paths: ["unrelated-link"],
+        maxEntries: 10,
+        maxBytes: 1024 * 1024,
+      })
+    );
+    expect(unsupportedTree).toMatchObject({
+      ok: false,
+      failure: { operation: "read-git-tree", reason: "UnsupportedEntry" },
+    });
 
     const observed = unwrap(
       await runNodeContentWorkspace(
@@ -758,6 +826,51 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
     expect(evidence.worktreeObjectIds).toEqual([{ path: "payload.txt", objectId: observed.blob }]);
     expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+  });
+
+  test("admits SHA-256 tree facts and returns code-unit ordered entries", async () => {
+    const root = await createRepository("sha256");
+    await writeFile(path.join(root, "Alpha.txt"), "alpha\n");
+    await writeFile(path.join(root, "zeta.txt"), "zeta\n");
+    await git(root, "add", "Alpha.txt", "zeta.txt");
+    await git(root, "commit", "-m", "add SHA-256 ordering fixtures");
+    const tree = gitOutput(root, "rev-parse", "HEAD^{tree}");
+    const alphaBlob = gitOutput(root, "rev-parse", "HEAD:Alpha.txt");
+    const zetaBlob = gitOutput(root, "rev-parse", "HEAD:zeta.txt");
+    const wrapper = path.join(root, "git-sha256-tree-wrapper");
+    const realGit = await realpath(gitExecutable);
+    await writeFile(
+      wrapper,
+      [
+        "#!/bin/sh",
+        'if [ "$1" = "ls-tree" ]; then',
+        `  printf '%s\\t%s\\0%s\\t%s\\0' ${JSON.stringify(
+          `100644 blob ${zetaBlob}`
+        )} zeta.txt ${JSON.stringify(`100644 blob ${alphaBlob}`)} Alpha.txt`,
+        "  exit 0",
+        "fi",
+        `exec ${JSON.stringify(realGit)} "$@"`,
+        "",
+      ].join("\n")
+    );
+    await chmod(wrapper, 0o755);
+
+    const entries = unwrap(
+      await runNodeContentWorkspace(
+        makeContentWorkspaceResource({ gitExecutable: wrapper }).readGitTree({
+          root,
+          tree,
+          objectFormat: "sha256",
+          paths: ["Alpha.txt", "zeta.txt"],
+          maxEntries: 10,
+          maxBytes: 1024,
+        })
+      )
+    );
+
+    expect(entries.map((entry) => entry.path)).toEqual(["Alpha.txt", "zeta.txt"]);
+    expect(entries.map((entry) => entry.blob)).toEqual([alphaBlob, zetaBlob]);
+    expect(entries.every((entry) => entry.blob.length === 64)).toBe(true);
   });
 
   test("observes an exact full ref independently of checkout and worktree bytes", async () => {
@@ -820,6 +933,91 @@ describe("Git Effect Platform content workspace provider", () => {
       })
     );
     expect(parallel).toEqual(Array.from({ length: 24 }, () => [mainCommit, "main payload\n"]));
+  });
+
+  test("rejects invalid native Git tree records at the public resource boundary", async () => {
+    const root = await createRepository();
+    await writeFile(path.join(root, "payload.txt"), "payload\n");
+    await git(root, "add", "payload.txt");
+    await git(root, "commit", "-m", "add tree protocol fixture");
+    const tree = gitOutput(root, "rev-parse", "HEAD^{tree}");
+    const objectId = "0".repeat(40);
+    const cases = [
+      {
+        name: "truncated",
+        output: `printf '100644 blob ${objectId}\\tpayload.txt'`,
+        detail: "terminal NUL",
+        reason: "GitFailed",
+      },
+      {
+        name: "malformed",
+        output: "printf 'malformed\\0'",
+        detail: "malformed",
+        reason: "GitFailed",
+      },
+      {
+        name: "invalid-utf8",
+        output: "printf '\\377\\0'",
+        detail: "invalid UTF-8",
+        reason: "GitFailed",
+      },
+      {
+        name: "wrong-object-format",
+        output: `printf '100644 blob ${"0".repeat(64)}\\tpayload.txt\\0'`,
+        detail: "object format",
+        reason: "GitFailed",
+      },
+      {
+        name: "duplicate-path",
+        output: `printf '%s\\t%s\\0%s\\t%s\\0' ${JSON.stringify(
+          `100644 blob ${objectId}`
+        )} payload.txt ${JSON.stringify(`100644 blob ${objectId}`)} payload.txt`,
+        detail: "duplicate path",
+        reason: "GitFailed",
+      },
+      {
+        name: "gitlink",
+        output: `printf '160000 commit ${objectId}\\tnested-repository\\0'`,
+        detail: "non-regular entry",
+        reason: "UnsupportedEntry",
+      },
+    ] as const;
+
+    for (const fixture of cases) {
+      const wrapper = path.join(root, `git-tree-${fixture.name}-wrapper`);
+      await writeFile(
+        wrapper,
+        [
+          "#!/bin/sh",
+          'if [ "$1" = "ls-tree" ]; then',
+          `  ${fixture.output}`,
+          "  exit 0",
+          "fi",
+          `exec ${JSON.stringify(await realpath(gitExecutable))} "$@"`,
+          "",
+        ].join("\n")
+      );
+      await chmod(wrapper, 0o755);
+      const resource = makeContentWorkspaceResource({ gitExecutable: wrapper });
+      const result = await runNodeContentWorkspace(
+        resource.readGitTree({
+          root,
+          tree,
+          objectFormat: "sha1",
+          paths: ["payload.txt"],
+          maxEntries: 10,
+          maxBytes: 1024,
+        })
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        failure: {
+          operation: "read-git-tree",
+          reason: fixture.reason,
+          detail: expect.stringContaining(fixture.detail),
+        },
+      });
+    }
   });
 
   test("hashes bounded admitted worktree bytes through one ordered native Git batch", async () => {
@@ -1308,9 +1506,9 @@ describe("Git Effect Platform content workspace provider", () => {
   });
 });
 
-async function createRepository(): Promise<string> {
+async function createRepository(objectFormat: "sha1" | "sha256" = "sha1"): Promise<string> {
   const root = await createFixtureDirectory();
-  await initializeRepository(root);
+  await initializeRepository(root, objectFormat);
   return root;
 }
 
@@ -1322,8 +1520,11 @@ async function createFixtureDirectory(): Promise<string> {
   return root;
 }
 
-async function initializeRepository(root: string): Promise<void> {
-  await git(root, "init", "--initial-branch=main");
+async function initializeRepository(
+  root: string,
+  objectFormat: "sha1" | "sha256" = "sha1"
+): Promise<void> {
+  await git(root, "init", `--object-format=${objectFormat}`, "--initial-branch=main");
   await git(root, "config", "user.email", "test@rawr.local");
   await git(root, "config", "user.name", "RAWR Test");
   await Bun.write(path.join(root, ".gitkeep"), "");

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type {
+  ContentTreeEntry,
   ContentWorkspaceFailure,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
@@ -146,10 +147,11 @@ function inspectWorkspace(
       tree,
       objectFormat,
       paths: [policy.releaseInputPath, policy.pluginRoot],
+      maxEntries: MAX_TREE_ENTRIES,
       maxBytes: MAX_TREE_BYTES,
     });
     const treeEntries = yield* Effect.try({
-      try: () => parseTree(entriesResult, objectIdPattern),
+      try: () => interpretTreeEntries(entriesResult),
       catch: asError,
     });
     const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
@@ -165,7 +167,6 @@ function inspectWorkspace(
       anchor.root,
       releaseInputEntry,
       objectFormat,
-      objectIdPattern,
       MAX_RELEASE_INPUT_ENVELOPE_BYTES
     );
     const releaseInputResult = decodeAgentPluginReleaseInput(releaseInputBytes);
@@ -618,13 +619,9 @@ function readGitBlobObject(
   cwd: string,
   entry: Readonly<{ objectId: string; path: string }>,
   objectFormat: "sha1" | "sha256",
-  objectIdPattern: RegExp,
   maximumBytes: number
 ): Effect.Effect<Uint8Array, ContentWorkspaceFailure | Error> {
   return Effect.gen(function* () {
-    if (!objectIdPattern.test(entry.objectId)) {
-      return yield* Effect.fail(new Error(`invalid blob object id for ${entry.path}`));
-    }
     const bytes = yield* contentWorkspace.readGitBlob({
       root: cwd,
       blob: entry.objectId,
@@ -638,22 +635,17 @@ function readGitBlobObject(
   });
 }
 
-function parseTree(bytes: Uint8Array, objectIdPattern: RegExp): readonly TreeEntry[] {
-  const records = splitNul(bytes);
-  if (records.length > MAX_TREE_ENTRIES)
-    throw new Error(`Git tree exceeds ${MAX_TREE_ENTRIES} entries`);
-  const entries: TreeEntry[] = [];
+function interpretTreeEntries(entries: readonly ContentTreeEntry[]): readonly TreeEntry[] {
+  const interpreted: TreeEntry[] = [];
   const exactPaths = new Set<string>();
   const portablePaths = new Set<string>();
-  for (const recordBytes of records) {
-    const record = decoder.decode(recordBytes);
-    const match = /^(100644|100755) blob ([0-9a-f]+)\t(.+)$/u.exec(record);
-    if (match === null || !objectIdPattern.test(match[2]!)) {
-      throw eligibilityError("InvalidTree", "Git tree contains a non-regular or malformed entry");
-    }
-    const path = parseReleaseRelativePath(match[3], "gitTree.path");
+  for (const entry of entries) {
+    const path = parseReleaseRelativePath(entry.path, "gitTree.path");
     if (!path.ok)
-      throw eligibilityError("InvalidTree", `Git tree contains a noncanonical path: ${match[3]}`);
+      throw eligibilityError(
+        "InvalidTree",
+        `Git tree contains a noncanonical release path: ${entry.path}`
+      );
     if (exactPaths.has(path.value)) {
       throw eligibilityError("InvalidTree", `Git tree contains a duplicate path: ${path.value}`);
     }
@@ -666,16 +658,16 @@ function parseTree(bytes: Uint8Array, objectIdPattern: RegExp): readonly TreeEnt
     }
     exactPaths.add(path.value);
     portablePaths.add(portablePath);
-    entries.push(
+    interpreted.push(
       Object.freeze({
-        mode: match[1] === "100755" ? 0o755 : 0o644,
+        mode: entry.mode === "100755" ? 0o755 : 0o644,
         type: "blob",
-        objectId: match[2]!,
+        objectId: entry.blob,
         path: path.value,
       })
     );
   }
-  return Object.freeze(entries);
+  return Object.freeze(interpreted);
 }
 
 function classifyTrackedStatus(bytes: Uint8Array): "clean" | "index" | "worktree" {
@@ -759,6 +751,9 @@ function ineligible(code: SourceEligibilityIssueCode, detail: string): ContentWo
 function inspectWorkspaceFailure(error: unknown): ContentWorkspaceInspection {
   if (isEligibilityError(error)) return ineligible(error.eligibilityCode, error.message);
   if (isContentWorkspaceFailure(error)) {
+    if (error.operation === "read-git-tree" && error.reason === "UnsupportedEntry") {
+      return ineligible("InvalidTree", error.detail);
+    }
     if (
       error.operation === "inspect-git-workspace" &&
       (error.reason === "Aliased" || error.reason === "InvalidInput")

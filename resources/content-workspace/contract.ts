@@ -1,7 +1,50 @@
 import type { Effect } from "effect";
+import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 export type GitObjectFormat = "sha1" | "sha256";
-export type ContentFileMode = "100644" | "100755";
+
+const ContentTreePathSchema = Refine(
+  Type.String({
+    minLength: 1,
+    maxLength: 4_096,
+    description: "Canonical provider-neutral repository-relative path for one regular file",
+  }),
+  (value) =>
+    !value.startsWith("/") &&
+    !value.endsWith("/") &&
+    !value.includes("\\") &&
+    !/[\u0000-\u001f\u007f]/u.test(value) &&
+    value.split("/").every((segment) => segment !== "" && segment !== "." && segment !== ".."),
+  () => "Expected a canonical repository-relative regular-file path"
+);
+
+const ContentTreeBlobSchema = Type.String({
+  minLength: 40,
+  maxLength: 64,
+  pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",
+  description: "Lowercase SHA-1 or SHA-256 Git blob identifier",
+});
+
+/** Portable Git modes admitted for regular content-workspace files. */
+export const ContentFileModeSchema = Type.Union([Type.Literal("100644"), Type.Literal("100755")], {
+  description: "Portable Git mode for one regular content-workspace file",
+});
+
+/** Structural schema for one provider-neutral regular Git tree fact. */
+export const ContentTreeEntrySchema = ReadonlyObject(
+  Type.Object({
+    path: ContentTreePathSchema,
+    mode: ContentFileModeSchema,
+    blob: ContentTreeBlobSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** Provider-neutral regular-file mode derived from the content-workspace schema authority. */
+export type ContentFileMode = Static<typeof ContentFileModeSchema>;
+
+/** Provider-neutral regular Git tree fact derived from the resource-owned schema authority. */
+export type ContentTreeEntry = Static<typeof ContentTreeEntrySchema>;
 
 export type GitRemoteSelection =
   | Readonly<{ kind: "All" }>
@@ -80,12 +123,6 @@ export interface GitBlobAtPathObservation {
   readonly tree: string;
   readonly blob: string;
   readonly bytes: Uint8Array;
-}
-
-export interface ContentTreeEntry {
-  readonly path: string;
-  readonly mode: ContentFileMode;
-  readonly blob: string;
 }
 
 export interface MaterializedContentTreeEntry extends ContentTreeEntry {
@@ -208,9 +245,12 @@ export interface ContentWorkspaceResource<R = never> {
       tree: string;
       objectFormat: GitObjectFormat;
       paths: readonly string[];
+      /** Maximum regular entries allocated and returned by the provider. */
+      maxEntries: number;
+      /** Maximum native stdout bytes accepted from the Git tree observation. */
       maxBytes: number;
     }>
-  ) => Effect.Effect<Uint8Array, ContentWorkspaceFailure, R>;
+  ) => Effect.Effect<readonly ContentTreeEntry[], ContentWorkspaceFailure, R>;
 
   readonly readGitBlob: (
     input: Readonly<{
