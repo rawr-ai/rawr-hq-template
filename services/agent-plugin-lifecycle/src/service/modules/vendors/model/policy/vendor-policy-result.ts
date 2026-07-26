@@ -58,14 +58,17 @@ const reasonClauses: Readonly<Record<ResourceFailureReason, string>> = Object.fr
   WrongPlan: "the capture authority does not match the authoring plan",
 });
 
+/** Carries either one admitted Vendor policy value or a non-empty public issue set. */
 export type VendorPolicyResult<T> =
   | Readonly<{ ok: true; value: T }>
   | Readonly<{ ok: false; issues: readonly [VendorUpdateIssue, ...VendorUpdateIssue[]] }>;
 
+/** Constructs the successful branch shared by pure Vendor policy decisions. */
 export function policySuccess<T>(value: T): VendorPolicyResult<T> {
   return Object.freeze({ ok: true, value });
 }
 
+/** Constructs a failed Vendor policy result while preserving non-empty issue ownership. */
 export function policyFailure(
   first: VendorUpdateIssue,
   ...rest: readonly VendorUpdateIssue[]
@@ -74,6 +77,23 @@ export function policyFailure(
   return Object.freeze({ ok: false, issues: Object.freeze(issues) });
 }
 
+/**
+ * Converts a mutable issue collection into its non-empty immutable form, or
+ * returns `null` when the owning operation has no failure to report.
+ */
+export function nonEmptyVendorIssues(
+  issues: readonly VendorUpdateIssue[]
+): readonly [VendorUpdateIssue, ...VendorUpdateIssue[]] | null {
+  const first = issues[0];
+  if (first === undefined) return null;
+  const nonEmpty: readonly [VendorUpdateIssue, ...VendorUpdateIssue[]] = [
+    first,
+    ...issues.slice(1),
+  ];
+  return Object.freeze(nonEmpty);
+}
+
+/** Creates one bounded caller-visible Vendor issue from domain or resource facts. */
 export function vendorIssue(
   code: VendorUpdateIssue["code"],
   detail: string,
@@ -85,10 +105,15 @@ export function vendorIssue(
     : Object.freeze({ code, detail: publicDetail, sourceId });
 }
 
+/** Returns the stable provider-neutral reason carried by a supported resource failure. */
 export function resourceFailureReason(error: ResourceFailure): ResourceFailureReason {
   return error.reason;
 }
 
+/**
+ * Maps a resource failure to bounded operational language without exposing
+ * provider paths, commands, exceptions, or other private diagnostics.
+ */
 export function resourceFailureDetail(error: ResourceFailure): string {
   return `${operationLabels[error.operation]} failed because ${reasonClauses[error.reason]}.`;
 }

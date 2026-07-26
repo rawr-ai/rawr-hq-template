@@ -20,11 +20,13 @@ import {
 
 const MAX_VENDOR_RECORD_BYTES = 1024 * 1024;
 
+/** Classifies why Vendor record bytes cannot enter canonical domain state. */
 export interface VendorRecordDecodeFailure {
   readonly kind: "Invalid" | "NonCanonical";
   readonly detail: string;
 }
 
+/** Returns a canonical Vendor record with exact bytes and identity, or one bounded failure. */
 export type VendorRecordDecodeResult<T> =
   | Readonly<{
       ok: true;
@@ -34,12 +36,14 @@ export type VendorRecordDecodeResult<T> =
     }>
   | Readonly<{ ok: false; failure: VendorRecordDecodeFailure }>;
 
+/** Minimal ordered entry facts bound into the Vendor payload digest. */
 export interface VendorPayloadDigestEntry {
   readonly path: string;
   readonly mode: "100644" | "100755";
   readonly blob: string;
 }
 
+/** Decodes and verifies the unique canonical Vendor source-declaration record. */
 export function decodeVendorSourceDeclaration(
   bytes: unknown
 ): VendorRecordDecodeResult<VendorSourceDeclaration> {
@@ -52,6 +56,7 @@ export function decodeVendorSourceDeclaration(
   );
 }
 
+/** Decodes and verifies the unique canonical Vendor provenance record. */
 export function decodeVendorProvenanceRecord(
   bytes: unknown
 ): VendorRecordDecodeResult<VendorProvenanceRecord> {
@@ -64,6 +69,7 @@ export function decodeVendorProvenanceRecord(
   );
 }
 
+/** Decodes and verifies the unique canonical Vendor lock record. */
 export function decodeVendorLockRecord(bytes: unknown): VendorRecordDecodeResult<VendorLockRecord> {
   return decodeRecord(
     bytes,
@@ -74,6 +80,7 @@ export function decodeVendorLockRecord(bytes: unknown): VendorRecordDecodeResult
   );
 }
 
+/** Encodes one Vendor source declaration as its digest-stable canonical JSON line. */
 export function encodeVendorSourceDeclaration(value: VendorSourceDeclaration): Uint8Array {
   return canonicalJsonLine({
     curationRevision: value.curationRevision,
@@ -90,6 +97,7 @@ export function encodeVendorSourceDeclaration(value: VendorSourceDeclaration): U
   });
 }
 
+/** Encodes one Vendor provenance record as its digest-stable canonical JSON line. */
 export function encodeVendorProvenanceRecord(value: VendorProvenanceRecord): Uint8Array {
   return canonicalJsonLine({
     admitted: identityValue(value.admitted),
@@ -104,6 +112,7 @@ export function encodeVendorProvenanceRecord(value: VendorProvenanceRecord): Uin
   });
 }
 
+/** Encodes one Vendor lock as its digest-stable canonical JSON line. */
 export function encodeVendorLockRecord(value: VendorLockRecord): Uint8Array {
   return canonicalJsonLine({
     admitted: identityValue(value.admitted),
@@ -112,6 +121,10 @@ export function encodeVendorLockRecord(value: VendorLockRecord): Uint8Array {
   });
 }
 
+/**
+ * Derives the stable payload identity shared by remote observation, local
+ * destination verification, provenance, and authoring policy.
+ */
 export function vendorPayloadDigest(entries: readonly VendorPayloadDigestEntry[]): string {
   return contentDigest(
     canonicalJsonLine(

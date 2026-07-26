@@ -547,7 +547,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and public Vendor outcomes. Add no generic Git owner, provider session,
   persistent clone/cache, hostile-configuration hardening, or product policy
   to the resource.
-- [ ] 5.4c Move Vendor resource effects and clock access out of model policy
+- [x] 5.4c Move Vendor resource effects and clock access out of model policy
   and into the owning status/update router handlers. Keep remote query
   construction, fact validation, payload comparison, and transition
   classification pure; let module middleware project the exact ready resource

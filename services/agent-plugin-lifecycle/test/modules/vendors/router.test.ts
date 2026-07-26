@@ -33,6 +33,7 @@ import {
 } from "../../../src/service/modules/vendors/model/dto/vendor-records";
 import { vendorIssue } from "../../../src/service/modules/vendors/model/policy/vendor-policy-result";
 import {
+  decodeVendorProvenanceRecord,
   encodeVendorLockRecord,
   encodeVendorProvenanceRecord,
   encodeVendorSourceDeclaration,
@@ -121,6 +122,43 @@ describe("vendor lifecycle applications", () => {
     });
     expect(held.counters.observeRemote).toBe(0);
     expect(held.counters.materializeRemote).toBe(0);
+
+    const heldUpdate = await createVendorUpdate(held)({
+      contentWorkspace,
+      sourceIds: [sourceId],
+    });
+    expect(heldUpdate).toMatchObject({
+      kind: "Rejected",
+      issues: [{ code: "HeldSource", sourceId }],
+    });
+    expect(held.counters.observeRemote).toBe(0);
+    expect(held.counters.materializeRemote).toBe(0);
+    expect(held.counters.capture).toBe(0);
+    expect(held.counters.apply).toBe(0);
+  });
+
+  it("rejects non-fast-forward ancestry in status and update without mutation", async () => {
+    const harness = new VendorHarness();
+    harness.setRemote("diverged payload\n", "7");
+    harness.setAncestry(false);
+
+    const status = await createVendorStatus(harness)({ contentWorkspace });
+    const update = await createVendorUpdate(harness)({
+      contentWorkspace,
+      sourceIds: [sourceId],
+    });
+
+    expect(status).toMatchObject({
+      kind: "VendorStatus",
+      sources: [{ sourceId, classification: "Diverged" }],
+    });
+    expect(update).toMatchObject({
+      kind: "Rejected",
+      issues: [{ code: "NonFastForward", sourceId }],
+    });
+    expect(harness.counters.materializeRemote).toBe(0);
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
   });
 
   it("classifies local destination drift without consulting upstream", async () => {
@@ -193,6 +231,26 @@ describe("vendor lifecycle applications", () => {
 
     expect(left.lastPlanDigest).toBe(right.lastPlanDigest);
     expect(changed.lastPlanDigest).not.toBe(left.lastPlanDigest);
+  });
+
+  it("records the authored provenance timestamp from the supplied clock", async () => {
+    const suppliedObservedAt = "2027-03-04T05:06:07.890Z";
+    const harness = new VendorHarness({ observedAt: suppliedObservedAt });
+    harness.setRemote("next payload\n", "7");
+
+    await createVendorUpdate(harness)({ contentWorkspace, sourceIds: [sourceId] });
+
+    const provenanceWrite = harness.lastWrites.find(
+      (write) => write.kind === "ReplaceFile" && write.path === provenancePath
+    );
+    expect(provenanceWrite?.kind).toBe("ReplaceFile");
+    if (provenanceWrite?.kind !== "ReplaceFile") {
+      throw new Error("Expected authored provenance bytes");
+    }
+    const decoded = decodeVendorProvenanceRecord(provenanceWrite.bytes);
+    expect(decoded.ok).toBe(true);
+    if (!decoded.ok) throw new Error(decoded.failure.detail);
+    expect(decoded.value.observedAt).toBe(suppliedObservedAt);
   });
 
   it("releases an unmutated capture when post-capture semantic truth drifts", async () => {
@@ -412,6 +470,7 @@ describe("vendor lifecycle applications", () => {
 
 interface HarnessOptions {
   readonly policy?: "tracked" | "held";
+  readonly observedAt?: string;
 }
 
 interface FileImage {
@@ -428,7 +487,7 @@ type CaptureLifecycle = "Captured" | "Partial" | "Applied" | "Converged" | "Rest
 type UpstreamFailureStage = "observe" | "materialize" | "ancestry";
 
 class VendorHarness {
-  readonly clock = Object.freeze({ now: () => new Date(observedAt) });
+  readonly clock: Readonly<{ now: () => Date }>;
   readonly counters = {
     inspectWorkspace: 0,
     readFile: 0,
@@ -470,8 +529,10 @@ class VendorHarness {
   private remote: MaterializedRemoteContentTree;
   private captureImages = new Map<string, PathImage>();
   private captureLifecycle: CaptureLifecycle | undefined;
+  private ancestor = true;
 
   constructor(options: HarnessOptions = {}) {
+    this.clock = Object.freeze({ now: () => new Date(options.observedAt ?? observedAt) });
     const admittedEntries = materializedEntries("current payload\n");
     const admitted = sourceIdentity("1", admittedEntries);
     const declaration: VendorSourceDeclaration = Object.freeze({
@@ -659,7 +720,7 @@ class VendorHarness {
           harness.counters.isAncestor += 1;
           const failure = harness.upstreamFailures.get("ancestry");
           if (failure !== undefined) return yield* Effect.fail(failure);
-          return true;
+          return harness.ancestor;
         }),
     } satisfies VersionedContentResource<never>);
   }
@@ -671,6 +732,10 @@ class VendorHarness {
 
   setDestination(text: string): void {
     this.trees.set(destinationPath, materializedEntries(text));
+  }
+
+  setAncestry(isAncestor: boolean): void {
+    this.ancestor = isAncestor;
   }
 
   failUpstream(stage: UpstreamFailureStage, detail: string): void {
