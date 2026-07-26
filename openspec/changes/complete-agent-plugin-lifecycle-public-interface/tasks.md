@@ -574,6 +574,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   exact absent-executable diagnostics. Delete the Promise helper, synthetic
   admission consumer, duplicate service dependency DTOs, and package `./host`
   export without adding another runner or adapter.
+- [x] 5.4f Move native Git tree serialization behind the existing
+  content-workspace provider. Derive the provider-neutral regular-entry
+  contract from TypeBox, give `readGitTree` distinct entry-allocation and
+  native-output bounds, and return one frozen typed entry set. Keep Git
+  framing, UTF-8, object-format, mode/type, duplicate, ordering, and generic
+  path validation in the Git provider; keep release path branding and portable
+  collision policy in lifecycle consumers. Delete both lifecycle raw-tree
+  parsers without adding another DTO, resource, facade, or compatibility
+  reader.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

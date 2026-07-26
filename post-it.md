@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Providers Decode Native Protocols
+
+A resource returns provider-neutral facts, not a provider's serialization.
+Git owns `ls-tree` framing, object-format checks, and native output bounds, so
+the Git provider decodes those bytes once, refuses exact duplicate wire paths,
+and returns a closed typed entry set. The content-workspace contract names only
+regular entry facts and their allocation bound.
+
+Lifecycle consumers brand paths and apply release meaning after the resource
+handoff. They defensively reject substituted duplicate facts and own canonical
+release paths plus portable case and normalization collision policy. No raw
+byte compatibility reader, generic Git facade, or second tree DTO crosses the
+funnel.
+
+See [[resources/content-workspace/AGENTS|the content-workspace resource]],
+[[resources/content-workspace/providers/git-effect-platform-node/AGENTS|the Git provider]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Provider, resource, protocol, fact, schema, path, entry, bound, decode,
+validate, freeze, return, brand, classify, consume, direct, typed, closed,
+narrow.
+
 ## 2026-07-26 - Resources Name External Capabilities
 
 An external capability is not policy merely because one module currently calls

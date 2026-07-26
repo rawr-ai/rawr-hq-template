@@ -515,6 +515,30 @@ Habitat tests plus 17 selected source laws, workspace Biome, strict OpenSpec,
 and diff hygiene pass. This checkpoint changes no provider home, Personal
 repository, Oclif command surface, or live lifecycle state.
 
+The typed Git-tree checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4f]]. The
+content-workspace contract now derives its regular-file modes and tree entries
+from TypeBox and exposes one bounded typed result. `maxEntries` limits returned
+entry allocation while `maxBytes` independently limits native Git stdout. The
+Git Effect Platform Node provider owns `ls-tree` framing, fatal UTF-8 decoding,
+mode/type and object-format checks, generic path admission, exact duplicate
+refusal, and code-unit ordering before freezing the result.
+
+Lifecycle no longer decodes Git tree bytes or revalidates provider-owned object
+identifiers. Clean-source and selected-content consumers brand repository paths,
+translate modes into payload modes, defensively reject substituted duplicate
+facts, and own canonical release paths plus portable case/normalization
+collision policy. Unsupported non-regular tree entries become domain
+ineligibility; malformed Git protocol remains a source-read failure with its
+resource detail intact. No raw-byte compatibility result, parallel DTO, generic
+Git facade, or new resource replaces the deleted parsers.
+
+The content-workspace provider suite passes 25 cases. The three focused
+lifecycle files pass 39 cases and the complete lifecycle suite passes 250
+cases. Resource, provider, and lifecycle typechecks, strict OpenSpec, touched
+file formatting, and diff hygiene pass. This checkpoint changes no provider
+home, Personal repository, Oclif command surface, or live lifecycle state.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

@@ -14,7 +14,8 @@
 
 ## Boundaries
 
-- The contract exposes raw repository, tree, blob, index, and filesystem facts.
+- The contract exposes raw repository, blob, index, and filesystem facts plus
+  typed regular-file tree entries.
   Eligibility, release policy, provenance meaning, and content interpretation
   belong to the consuming service.
 - A repository path is a locator, not executable identity or code-sharing
@@ -28,7 +29,8 @@
 
 - The resource observes caller-selected refs, trees, blobs, indexes, and paths
   or performs a specifically requested workspace transition while preserving
-  bounds and identity.
+  bounds and identity. Tree observations return closed regular-entry facts;
+  providers own native tree protocol decoding.
 
 ## Concepts
 

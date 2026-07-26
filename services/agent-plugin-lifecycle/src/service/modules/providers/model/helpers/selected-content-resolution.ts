@@ -32,7 +32,6 @@ import {
   type ReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
 
-const decoder = new TextDecoder("utf-8", { fatal: true });
 const RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
 const PLUGIN_ROOT = requireReleasePath("plugins/agents");
 const CODEX_MARKETPLACE_MANIFEST = requireReleasePath(".agents/plugins/marketplace.json");
@@ -518,53 +517,26 @@ function readTreeEntries(
   observation: GitRefObservation
 ): Effect.Effect<readonly TreeEntry[], SelectedContentReadFailure> {
   return Effect.gen(function* () {
-    const bytes = yield* contentWorkspace.readGitTree({
-      root: observation.root,
-      tree: observation.tree,
-      objectFormat: observation.objectFormat,
-      paths: SELECTED_CONTENT_INTERFACE_PATHS,
-      maxBytes: MAX_TREE_BYTES,
-    });
-    const objectIdPattern =
-      observation.objectFormat === "sha1" ? /^[0-9a-f]{40}$/u : /^[0-9a-f]{64}$/u;
-    const records = splitNul(bytes);
-    if (records === undefined) {
-      return yield* Effect.fail(
-        new SelectedContentFailure("SourceReadFailed", "Git tree output is truncated.")
-      );
-    }
-    if (records.length > MAX_TREE_ENTRIES) {
-      return yield* Effect.fail(
-        new SelectedContentFailure("SourceIneligible", "Selected Git tree is too large.")
-      );
-    }
+    const observedEntries = yield* contentWorkspace
+      .readGitTree({
+        root: observation.root,
+        tree: observation.tree,
+        objectFormat: observation.objectFormat,
+        paths: SELECTED_CONTENT_INTERFACE_PATHS,
+        maxEntries: MAX_TREE_ENTRIES,
+        maxBytes: MAX_TREE_BYTES,
+      })
+      .pipe(Effect.mapError(classifySelectedTreeReadFailure));
     const entries: TreeEntry[] = [];
     const exactPaths = new Set<string>();
     const portablePaths = new Set<string>();
-    for (const recordBytes of records) {
-      const record = yield* Effect.try({
-        try: () => decoder.decode(recordBytes),
-        catch: () =>
-          new SelectedContentFailure(
-            "SourceReadFailed",
-            "Selected Git tree contains invalid UTF-8."
-          ),
-      });
-      const match = /^(100644|100755) blob ([0-9a-f]+)\t(.+)$/u.exec(record);
-      if (match === null || !objectIdPattern.test(match[2]!)) {
-        return yield* Effect.fail(
-          new SelectedContentFailure(
-            "SourceIneligible",
-            "Selected Git tree contains a non-regular or malformed entry."
-          )
-        );
-      }
-      const parsedPath = parseReleaseRelativePath(match[3], "selectedContent.tree.path");
+    for (const observed of observedEntries) {
+      const parsedPath = parseReleaseRelativePath(observed.path, "selectedContent.tree.path");
       if (!parsedPath.ok) {
         return yield* Effect.fail(
           new SelectedContentFailure(
             "SourceIneligible",
-            `Selected Git tree contains a noncanonical path: ${match[3]}.`
+            `Selected Git tree contains a noncanonical release path: ${observed.path}.`
           )
         );
       }
@@ -581,14 +553,22 @@ function readTreeEntries(
       portablePaths.add(portablePath);
       entries.push(
         Object.freeze({
-          mode: match[1] === "100755" ? 0o755 : 0o644,
-          objectId: match[2]!,
+          mode: observed.mode === "100755" ? 0o755 : 0o644,
+          objectId: observed.blob,
           path: parsedPath.value,
         })
       );
     }
     return Object.freeze(entries);
   });
+}
+
+function classifySelectedTreeReadFailure(failure: ContentWorkspaceFailure): SelectedContentFailure {
+  const code =
+    failure.reason === "UnsupportedEntry" || failure.reason === "LimitExceeded"
+      ? "SourceIneligible"
+      : "SourceReadFailed";
+  return new SelectedContentFailure(code, failure.detail);
 }
 
 function requireNativeMarketplaceManifests(
@@ -763,18 +743,6 @@ function requireReleasePath(value: string): ReleaseRelativePath {
   return parsed.value;
 }
 
-function splitNul(bytes: Uint8Array): readonly Uint8Array[] | undefined {
-  const records: Uint8Array[] = [];
-  let start = 0;
-  for (let index = 0; index < bytes.byteLength; index += 1) {
-    if (bytes[index] !== 0) continue;
-    if (index > start) records.push(bytes.slice(start, index));
-    start = index + 1;
-  }
-  if (start !== bytes.byteLength) return undefined;
-  return records;
-}
-
 function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
   if (left.byteLength !== right.byteLength) return false;
   let difference = 0;
@@ -799,14 +767,8 @@ function rejected(
 function rejectedFrom(
   error: SelectedContentReadFailure
 ): Extract<SelectedContentResolution, { kind: "Rejected" }> {
-  return error instanceof SelectedContentFailure
-    ? rejected(error.code, error.message)
-    : rejected(
-        "SourceReadFailed",
-        error instanceof Error && error.message.length > 0
-          ? error.message
-          : "Selected content could not be read."
-      );
+  if (error instanceof SelectedContentFailure) return rejected(error.code, error.message);
+  return rejected("SourceReadFailed", error.detail);
 }
 
 function boundedDetail(detail: string): string {

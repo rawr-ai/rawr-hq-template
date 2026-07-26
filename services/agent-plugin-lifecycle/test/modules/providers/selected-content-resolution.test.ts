@@ -1,6 +1,7 @@
 import { mkdir, symlink, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
+import type { ContentTreeEntry, ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
@@ -52,6 +53,7 @@ describe("selected release content", () => {
     await writeFile(join(fixture.root, "unrelated.txt"), "dirty but unrelated\n");
     const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
     const treeSelections: string[][] = [];
+    const treeEntryLimits: number[] = [];
     const resolver = createSelectedContentResolver({
       contentWorkspace: {
         ...delegate,
@@ -61,6 +63,7 @@ describe("selected release content", () => {
           Effect.tap(delegate.readGitTree(input), () =>
             Effect.sync(() => {
               treeSelections.push([...input.paths]);
+              treeEntryLimits.push(input.maxEntries);
             })
           ),
       },
@@ -84,6 +87,7 @@ describe("selected release content", () => {
       [".rawr/release-input.json", ".agents/plugins", ".claude-plugin", "plugins/agents"],
       [".rawr/release-input.json", ".agents/plugins", ".claude-plugin", "plugins/agents"],
     ]);
+    expect(treeEntryLimits).toEqual([200_000, 200_000]);
     expect(first).toMatchObject({
       kind: "Selected",
       content: {
@@ -137,24 +141,110 @@ describe("selected release content", () => {
     });
   });
 
-  it("returns a closed source-read failure for invalid UTF-8 Git tree output", async () => {
+  it("preserves typed Git tree failure details and lifecycle classifications", async () => {
     const fixture = await createRepository(await root(), ["cognition"]);
     const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
-    const resolver = createSelectedContentResolver({
-      contentWorkspace: {
-        ...delegate,
-        readGitTree: () => Effect.succeed(Uint8Array.of(0xff, 0)),
+    const cases = [
+      {
+        reason: "GitFailed",
+        detail: "Git tree output contains invalid UTF-8",
+        code: "SourceReadFailed",
       },
-    });
+      {
+        reason: "UnsupportedEntry",
+        detail: "Git tree contains a non-regular entry",
+        code: "SourceIneligible",
+      },
+      {
+        reason: "LimitExceeded",
+        detail: "Git tree output exceeds maxEntries",
+        code: "SourceIneligible",
+      },
+    ] as const;
 
-    await expect(
-      Effect.runPromise(
-        resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
-      )
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [{ code: "SourceReadFailed", detail: expect.stringContaining("invalid UTF-8") }],
-    });
+    for (const expected of cases) {
+      const failure: ContentWorkspaceFailure = Object.freeze({
+        _tag: "ContentWorkspaceFailure",
+        operation: "read-git-tree",
+        reason: expected.reason,
+        detail: expected.detail,
+      });
+      const resolver = createSelectedContentResolver({
+        contentWorkspace: {
+          ...delegate,
+          readGitTree: () => Effect.fail(failure),
+        },
+      });
+      await expect(
+        Effect.runPromise(
+          resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
+        )
+      ).resolves.toMatchObject({
+        kind: "Rejected",
+        issues: [{ code: expected.code, detail: expected.detail }],
+      });
+    }
+  });
+
+  it("retains canonical release-path policy at the typed resource boundary", async () => {
+    const fixture = await createRepository(await root(), ["cognition"]);
+    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
+    const releaseInputPath = ".rawr/release-input.json";
+    const releaseInputBlob = await git(fixture.root, ["rev-parse", `HEAD:${releaseInputPath}`]);
+    const cases: readonly Readonly<{
+      entry: ContentTreeEntry;
+      detail: string;
+    }>[] = [
+      {
+        entry: Object.freeze({
+          path: releaseInputPath,
+          mode: "100644",
+          blob: releaseInputBlob,
+        }),
+        detail: "path collision",
+      },
+      {
+        entry: Object.freeze({
+          path: ".RAWR/release-input.json",
+          mode: "100644",
+          blob: releaseInputBlob,
+        }),
+        detail: "path collision",
+      },
+      {
+        entry: Object.freeze({
+          path: "plugins/agents/cognition/skills/cafe\u0301/SKILL.md",
+          mode: "100644",
+          blob: releaseInputBlob,
+        }),
+        detail: "noncanonical release path",
+      },
+    ];
+
+    for (const fixtureCase of cases) {
+      const resolver = createSelectedContentResolver({
+        contentWorkspace: {
+          ...delegate,
+          readGitTree: (input) =>
+            Effect.map(delegate.readGitTree(input), (original) =>
+              Object.freeze([...original, fixtureCase.entry])
+            ),
+        },
+      });
+      await expect(
+        Effect.runPromise(
+          resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
+        )
+      ).resolves.toMatchObject({
+        kind: "Rejected",
+        issues: [
+          {
+            code: "SourceIneligible",
+            detail: expect.stringContaining(fixtureCase.detail),
+          },
+        ],
+      });
+    }
   });
 
   it("rejects undeclared payload files and missing native marketplace manifests", async () => {
