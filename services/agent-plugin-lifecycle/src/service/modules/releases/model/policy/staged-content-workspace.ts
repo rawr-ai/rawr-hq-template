@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
@@ -36,7 +37,6 @@ import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
 } from "../dto/staged-content-workspace";
-import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 import { authorReleaseInputRefresh, releaseInputRefreshIneligible } from "./release-input-refresh";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });

@@ -670,6 +670,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   provider selection. Do not claim the packaging context or full service is
   sealed while its remaining source reader and the legacy release family still
   await owner-correct placement.
+- [x] 5.7e2b Promote the stateless clean-content reader and declared-tree
+  eligibility policy into named root service model leaves. Pass the ready
+  reader into packaging through one named module-owned capability middleware
+  and remove every releases-to-packaging implementation import, old reader
+  path, and compatibility alias in the same checkpoint. Record that native
+  oRPC context merging remains additive and leave exact packaging authoring
+  context with the root-context checkpoint. Preserve eligibility bindings,
+  selected-content behavior, exact packaging failures, Cowork bytes, output
+  settlement, and provider selection. Keep root context assembly, staged
+  observation, provider derivation, legacy release-family placement, and the
+  remaining platform boundary open for later owner-local checkpoints.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

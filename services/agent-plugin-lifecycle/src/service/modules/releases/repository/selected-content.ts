@@ -2,6 +2,9 @@ import type {
   ContentWorkspaceNodeAsyncPort,
   GitRefObservation,
 } from "@rawr/resource-content-workspace";
+import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
+import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
+import type { CleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/ports/clean-content-workspace";
 
 import type {
   SelectedContent,
@@ -27,9 +30,7 @@ import {
   parseReleaseRelativePath,
   type ReleaseRelativePath,
 } from "../../../shared/release";
-import { validateDeclaredPluginTree } from "../model/policy/declared-plugin-tree";
 import { validateNativeMarketplaces } from "../model/policy/native-marketplace";
-import { createResourceContentWorkspaceSnapshotReader } from "./content-workspace";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
@@ -97,7 +98,7 @@ class SelectedContentFailure extends Error {
 export function createResourceSelectedContentResolver(
   binding: Readonly<{ contentWorkspace: ResourceSelectedContentReadPort }>
 ): SelectedContentResolver {
-  const workspaceReader = createResourceContentWorkspaceSnapshotReader({
+  const workspaceReader = createCleanContentWorkspaceReader({
     contentWorkspace: binding.contentWorkspace,
   });
   return Object.freeze({
@@ -218,7 +219,7 @@ async function resolveChannel(
 
 async function resolveWorkspace(
   contentWorkspace: ResourceSelectedContentReadPort,
-  workspaceReader: ReturnType<typeof createResourceContentWorkspaceSnapshotReader>,
+  workspaceReader: CleanContentWorkspaceReader,
   policy: ContentWorkspacePolicy,
   mode: SelectedContentTestMode
 ): Promise<SelectedContentResolution> {

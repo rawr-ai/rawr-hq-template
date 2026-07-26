@@ -6,6 +6,43 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - Capability Provision Is Not Context Narrowing
+
+Native oRPC middleware merges contributed capabilities into its inherited
+context. A smaller contribution therefore does not remove wider host or service
+lanes from the handler type. Name such middleware for the capability it
+provides and record it as enrichment until the base and module boundary prove
+an exact authoring view.
+
+This distinction keeps progress truthful. Removing a sibling implementation
+edge and supplying a ready capability is valuable, but it does not close the
+context funnel by itself. Exact narrowing belongs to the coherent root-context
+checkpoint where reserved lanes can become unavailable to module handlers.
+
+### Bag Of Keywords
+
+Context, capability, middleware, merge, enrich, narrow, handler, boundary,
+truth, exact.
+
+## 2026-07-25 - Capabilities Cross Context
+
+A capability used by several modules belongs at the service boundary only
+when its meaning survives every consumer. Its port names what callers may ask;
+its policy interprets those facts for the service domain. The host supplies the
+outside resource once, and each module projects only the ready capability its
+handlers need.
+
+Passing that capability downward is not permission for modules to import one
+another. A sibling implementation edge turns one module into an accidental
+service root and hides the real handoff. Promote the shared meaning, keep each
+operation in its router handler, and leave unrelated context repair for its own
+checkpoint.
+
+### Bag Of Keywords
+
+Capability, context, port, policy, resource, service, module, handler,
+projection, promote, narrow, sibling.
+
 ## 2026-07-25 - Shared Policy Stays Neutral
 
 Service-level policy may be consumed by several modules without owning any

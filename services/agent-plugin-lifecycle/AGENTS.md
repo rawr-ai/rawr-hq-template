@@ -18,9 +18,10 @@
   owned by this package.
 - Personal's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes; native provider inventory owns installed state.
-- The shared service model owns selection and release derivation. Capability
-  modules own their operation DTOs, handlers, results, issues, and mutation
-  policy.
+- The shared service model owns clean-content eligibility, declared-tree
+  validation, selection, and release derivation because those meanings span
+  multiple capability modules. Modules own their operation DTOs, handlers,
+  results, issues, and operation-specific mutation policy.
 - Filesystem, clock, package-output, and native-provider mechanics remain
   behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app
@@ -43,9 +44,10 @@
 ## Flow
 
 - The host supplies dependencies to the base boundary, which admits invocation
-  context and selects the service branch. That branch enters the owning
-  `module.ts` exact context, then its router, handler, and finally the relevant
-  policy or resource handoff.
+  context and selects the service branch. Each `module.ts` provides the ready
+  capabilities its router consumes. Exact module authoring views remain a
+  service-context migration requirement until broader root lanes are absent
+  from handler types.
 
 ## Interfaces
 

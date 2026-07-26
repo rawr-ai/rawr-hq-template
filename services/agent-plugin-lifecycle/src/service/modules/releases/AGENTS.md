@@ -15,18 +15,20 @@
 - Personal's reviewed record owns desired membership and exact Git objects own
   selected bytes. The service model owns shared selection and release
   derivation.
-- This module owns its operation DTOs, handlers, results, issues, and
-  eligibility or refresh policy; it does not publish packages, update vendor
-  content, or mutate native provider state.
+- The service model owns clean-content eligibility and declared-tree policy
+  because packaging and provider testing consume the same meanings. This
+  module owns staged eligibility, refresh policy, operation DTOs, handlers,
+  results, and issues; it does not publish packages, update vendor content, or
+  mutate native provider state.
 - Clean and staged repository mechanics remain behind distinct exact-context
   workspace handoffs; those handoffs are not source authorities.
 
 ## Behavior
 
 - The module handles validation and serialization operations for release-input
-  records, applies shared release derivation to eligible clean content,
-  refreshes staged inputs, and rejects repository observations that change
-  before final revalidation.
+  records, consumes service-owned clean eligibility and release derivation,
+  applies its staged and refresh policies, and rejects repository observations
+  that change before final revalidation.
 
 ## Concepts
 

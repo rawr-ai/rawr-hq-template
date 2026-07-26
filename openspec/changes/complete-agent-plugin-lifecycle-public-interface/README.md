@@ -256,15 +256,31 @@ burn-down checkpoint promotes the release selection and in-memory derivation
 used by release eligibility and packaging into neutral root model leaves.
 Release identity, issues, packaging failure, and settlement remain
 module-owned projections authored in their oRPC handlers. The checkpoint
-deletes the releases-to-packaging implementation edge, duplicate package
+deletes the releases-to-packaging derivation edge, duplicate package
 selection type, loose release and packaging schema barrels, router indexes,
 detached package runner, and generic dependency-Promise adapter from the two
 touched operations. Native Effect adapts each external call, with
 uninterruptibility limited to output publication after mutation may begin.
 Five focused behavior suites pass 34 tests without changing check JSON,
 packaging failure text, Cowork bytes, package digests, or output settlement.
-Provider derivation, the remaining packaging source-reader edge, and the
-legacy release-family placement remain explicitly open.
+Provider derivation, the packaging source-reader edge, and the legacy
+release-family placement remained explicitly open at that checkpoint.
+
+The next burn-down checkpoint promotes clean-content observation into one
+service-owned port and policy used by release eligibility, packaging, and
+local provider tests. Packaging now projects that ready capability through a
+named module-owned capability middleware instead of importing a
+releases-module implementation. Native oRPC context merging remains additive,
+so this checkpoint does not claim an exact packaging authoring view; removal
+of the inherited root lanes stays with root context assembly. The old clean
+reader and declared-tree policy paths disappear with no alias or compatibility
+reader; provider selection, eligibility-binding bytes, Cowork output, and
+settlement behavior remain unchanged. Seven focused behavior suites pass 62
+tests, including exact initial-inspection and revalidation failures with zero
+output publication; the complete service suite passes 238 tests across 32
+files. Root context assembly, staged observation, provider derivation, legacy
+release-family placement, `node:crypto`, and the remaining service corpus stay
+explicitly open.
 
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete

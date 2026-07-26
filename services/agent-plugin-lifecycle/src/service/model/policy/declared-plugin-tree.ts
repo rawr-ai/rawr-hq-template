@@ -1,14 +1,18 @@
 import {
   type SourceEligibilityIssue,
   sourceEligibilityIssue,
-} from "../../../../model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import {
   compareCanonicalText,
   type PluginId,
   parsePluginId,
   type ReleaseRelativePath,
-} from "../../../../shared/release";
+} from "../../shared/release";
 
+/**
+ * Rejects undeclared or noncanonical direct children beneath the declared
+ * plugin root before any module constructs releases from that source tree.
+ */
 export function validateDeclaredPluginTree(
   input: Readonly<{
     pluginRoot: ReleaseRelativePath;
