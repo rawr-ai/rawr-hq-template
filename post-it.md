@@ -6,6 +6,24 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - Shared Policy Stays Neutral
+
+Service-level policy may be consumed by several modules without owning any
+module's public result. It returns inert domain facts or neutral failure detail.
+Each operation handler maps those facts into the request, result, issue, and
+settlement vocabulary owned by its module.
+
+Moving a module issue or response shape upward would not share policy; it would
+spread one module's semantics across the service. Leaving genuinely common
+derivation inside one module would create the opposite error: a sideways
+implementation dependency. The root model holds only the meaning that survives
+both consumers.
+
+### Bag Of Keywords
+
+Policy, fact, detail, module, handler, result, issue, neutral, map, root,
+sideways.
+
 ## 2026-07-25 - One Router Face, Named Authorship
 
 A service module has one public router face: module `router.ts`. It composes

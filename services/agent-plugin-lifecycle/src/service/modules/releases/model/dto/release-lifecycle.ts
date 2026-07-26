@@ -1,4 +1,5 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
   ContentWorkspacePolicySchema,
   QualifiedHeadRefSchema,
@@ -20,15 +21,6 @@ import {
 } from "../../../../shared/release";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
-export const ReleaseSelectionSchema = Type.Union([
-  ReadonlyObject(Type.Object({ kind: Type.Literal("targeted"), pluginId: PluginIdSchema }), {
-    additionalProperties: false,
-  }),
-  ReadonlyObject(Type.Object({ kind: Type.Literal("complete-set") }), {
-    additionalProperties: false,
-  }),
-]);
-
 export const CheckInputSchema = ReadonlyObject(
   Type.Object({
     contentWorkspace: ContentWorkspacePolicySchema,
@@ -37,7 +29,6 @@ export const CheckInputSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-export type ReleaseSelection = Static<typeof ReleaseSelectionSchema>;
 export type AgentPluginCheckRequest = Static<typeof CheckInputSchema>;
 
 const Uint8ArraySchema = Refine(

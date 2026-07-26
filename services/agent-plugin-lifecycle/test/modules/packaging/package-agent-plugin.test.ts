@@ -15,8 +15,8 @@ import {
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
   MAX_PACKAGING_FAILURE_PHASE_LENGTH,
   MAX_PACKAGING_OUTPUT_PATH_LENGTH,
+  PackageAgentPluginResultSchema,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
-import { PackageAgentPluginResultSchema } from "../../../src/service/modules/packaging/schemas";
 import { parsePluginId } from "../../../src/service/shared/release";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import {
@@ -137,7 +137,11 @@ describe("package agent plugin application", () => {
       )
     ).resolves.toMatchObject({
       kind: "RejectedBeforeOutputMutation",
-      primaryFailure: { code: "ReleaseConstructionFailed" },
+      primaryFailure: {
+        code: "ReleaseConstructionFailed",
+        phase: "release-construct",
+        message: "ReleaseConstruction",
+      },
     });
     expect(refusedOutput.encodeCalls).toBe(0);
     expect(refusedOutput.publishCalls).toBe(0);

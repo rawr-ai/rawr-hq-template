@@ -10,13 +10,11 @@ import {
   MAX_PACKAGING_FAILURE_PHASE_LENGTH,
   MAX_PACKAGING_OUTPUT_PATH_LENGTH,
   type PackageAgentPluginRequest,
-  type PackageAgentPluginResult,
-} from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
-import {
   PackageAgentPluginRequestSchema,
+  type PackageAgentPluginResult,
   PackageAgentPluginResultSchema,
   PackagedReleaseIdentitySchema,
-} from "../../../src/service/modules/packaging/schemas";
+} from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content",

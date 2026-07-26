@@ -251,6 +251,21 @@ activates them together. Their disposable fixture suite already proves the
 combined rule catalog, so this staging checkpoint creates no alternate
 repository checker or local Habitat SDK fork.
 
+The first [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2]]
+burn-down checkpoint promotes the release selection and in-memory derivation
+used by release eligibility and packaging into neutral root model leaves.
+Release identity, issues, packaging failure, and settlement remain
+module-owned projections authored in their oRPC handlers. The checkpoint
+deletes the releases-to-packaging implementation edge, duplicate package
+selection type, loose release and packaging schema barrels, router indexes,
+detached package runner, and generic dependency-Promise adapter from the two
+touched operations. Native Effect adapts each external call, with
+uninterruptibility limited to output publication after mutation may begin.
+Five focused behavior suites pass 34 tests without changing check JSON,
+packaging failure text, Cowork bytes, package digests, or output settlement.
+Provider derivation, the remaining packaging source-reader edge, and the
+legacy release-family placement remain explicitly open.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the
