@@ -6,8 +6,9 @@ import {
   VendorStatusResultSchema,
   VendorUpdateInputSchema,
   VendorUpdateResultSchema,
-} from "./schemas";
+} from "./model/dto/vendor-operations";
 
+/** Declares the TypeBox-backed Vendor observation and authoring boundaries. */
 export const contract = {
   status: eoc
     .$meta<ServiceMetadataOf<{ audit: "full"; entity: "vendors" }>>({

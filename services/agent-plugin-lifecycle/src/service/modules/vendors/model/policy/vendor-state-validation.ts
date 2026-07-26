@@ -1,6 +1,8 @@
 import { Value } from "typebox/value";
 
 import { equalBytes } from "../../../../shared/release/canonical";
+import type { VendorStatusRequest, VendorUpdateIssue } from "../dto/vendor-operations";
+import type { VendorSourceIdentity } from "../dto/vendor-records";
 import {
   CANONICAL_ABSOLUTE_PATH_PATTERN,
   CONTENT_AUTHORITY_PATTERN,
@@ -14,9 +16,7 @@ import {
   VendorProvenanceRecordSchema,
   VendorRecordBindingSchema,
   VendorSourceDeclarationSchema,
-} from "../../schemas";
-import type { VendorStatusRequest, VendorUpdateIssue } from "../dto/vendor-operations";
-import type { VendorSourceIdentity } from "../dto/vendor-records";
+} from "../dto/vendor-records";
 import type {
   VendorAuthoringPlan,
   VendorDeclaredSourceObservation,

@@ -14,6 +14,10 @@ import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../../../src/client";
 import {
+  VendorStatusResultSchema,
+  VendorUpdateResultSchema,
+} from "../../../src/service/modules/vendors/model/dto/vendor-operations";
+import {
   VENDOR_LOCK_PROTOCOL,
   VENDOR_PROVENANCE_PROTOCOL,
   VENDOR_SOURCE_PROTOCOL,
@@ -29,10 +33,6 @@ import {
   encodeVendorSourceDeclaration,
   vendorPayloadDigest,
 } from "../../../src/service/modules/vendors/model/policy/vendor-record-codec";
-import {
-  VendorStatusResultSchema,
-  VendorUpdateResultSchema,
-} from "../../../src/service/modules/vendors/schemas";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
