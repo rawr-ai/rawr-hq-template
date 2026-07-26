@@ -1,16 +1,16 @@
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 import {
-  type ClaudeAgentPluginMarketplace,
-  ClaudeAgentPluginMarketplaceSchema,
-  type CodexAgentPluginMarketplace,
-  CodexAgentPluginMarketplaceSchema,
-} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/native-marketplace";
-import {
   type AgentPluginReleaseInput,
   compareCanonicalText,
   type PluginId,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
+import {
+  type ClaudeAgentPluginMarketplace,
+  ClaudeAgentPluginMarketplaceSchema,
+  type CodexAgentPluginMarketplace,
+  CodexAgentPluginMarketplaceSchema,
+} from "../dto/native-marketplace";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 

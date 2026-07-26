@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { SourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
+import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import {
   normalizeReleaseSourceChangedDetail,
   type RepositoryCheckResult,

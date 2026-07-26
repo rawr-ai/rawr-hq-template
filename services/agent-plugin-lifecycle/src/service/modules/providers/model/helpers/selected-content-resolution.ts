@@ -4,17 +4,6 @@ import type { ContentWorkspacePolicy } from "#agent-plugin-lifecycle-service/mod
 import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import type { CleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/ports/clean-content-workspace";
-import type {
-  SelectedContent,
-  SelectedContentIssueCode,
-  SelectedContentResolution,
-  SelectedContentTestMode,
-} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/selected-content";
-import { validateNativeMarketplaces } from "#agent-plugin-lifecycle-service/modules/providers/model/policy/native-marketplace";
-import type {
-  SelectedContentReadPort,
-  SelectedContentResolver,
-} from "#agent-plugin-lifecycle-service/modules/providers/model/ports/selected-content";
 import {
   type AgentPluginPayload,
   type AgentPluginRelease,
@@ -31,6 +20,14 @@ import {
   parseReleaseRelativePath,
   type ReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
+import type {
+  SelectedContent,
+  SelectedContentIssueCode,
+  SelectedContentResolution,
+  SelectedContentTestMode,
+} from "../dto/selected-content";
+import { validateNativeMarketplaces } from "../policy/native-marketplace";
+import type { SelectedContentReadPort, SelectedContentResolver } from "../ports/selected-content";
 
 const RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
 const PLUGIN_ROOT = requireReleasePath("plugins/agents");

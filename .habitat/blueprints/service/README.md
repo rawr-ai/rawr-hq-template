@@ -19,8 +19,9 @@ Every module has `router.ts` as its completed public composition face and
 `router/index.ts` is not admitted. Router-authorship keeps module `router.ts`
 composition-only and documents real semantic groups. The remaining independent
 packets own positive generic-anchor presence, the direct native base and exact
-service-branch module hop, the context funnel, normalized owner aliases, and
-module isolation.
+service-branch module hop, the context funnel, and module isolation. Module-local
+imports use normalized relative paths; the service-private alias is reserved
+inside modules for genuinely service-wide `service/model/**` meaning.
 Embedded API-plugin `base.ts` remains its required boundary and type anchor but
 does not export the standalone runtime `base`; its implementer begins at
 `impl.ts`. Named runtime oRPC imports may share a declaration with type-only
@@ -39,9 +40,11 @@ declarations are present. Private schema composition, local error maps,
 fragments, and helpers remain valid only while they are syntactically reachable
 from the one contract anchor; imported or dynamic error-map authority and
 exported parallel schema, type, envelope, or helper authority remain invalid.
-RAWR-owned amendments keep private import aliases owner-local and service
+RAWR-owned amendments keep private import aliases owner-local, keep module
+colocality visible through relative imports, and keep service
 implementation independent of concrete platform and provider code. Root
-`router.ts` imports completed module routers only and directly checks the plain
+`router.ts` imports completed module routers through exact relative paths only
+and directly checks the plain
 object against `Router<typeof contract, never>`. Each `module.ts` derives its
 matching `service.<module>` branch. A bare branch inherits service context;
 module capability middleware is authored from the one complete-context native

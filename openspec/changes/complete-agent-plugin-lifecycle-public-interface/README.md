@@ -464,6 +464,31 @@ behavior-first testing reviews report no unresolved P0/P1/P2 finding. This
 checkpoint changes no provider home, Personal repository, Oclif surface, or
 live lifecycle state.
 
+The import-law checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2h]]. Every
+same-module lifecycle edge now uses a normalized relative path, while upward
+module edges into genuinely service-wide `service/model/**` meaning use the
+one service-private owner alias. Root contract and router composition remain
+exact relative module edges, and cross-package capabilities remain package
+exports. Nx still sees one lifecycle project; the spelling exposes colocality
+and ownership rather than changing the project graph.
+
+The generic Habitat module-isolation packet now detects the same relation for
+standalone services and API-plugin service interiors. Same-module, sibling,
+root-runtime, and legacy shared owner aliases are inadmissible from modules;
+the exact `module.ts`-to-`impl.ts` and middleware-to-base edges remain the only
+root runtime exceptions. The packet stays advisory with the other staged
+service laws until the repository-wide red corpus is removed. This checkpoint
+does not move or legitimize the still-red `service/shared` family, narrow the
+lifecycle package import map, or alter any resource, operation, public
+contract, provider state, or Personal content.
+
+The Habitat service-blueprint fixture passes 10 cases with 151 assertions,
+lifecycle source and test typechecks pass, and all 269 lifecycle behavior
+tests pass. The full native module-isolation scan remains advisory and reports
+the already-owned service-topology migration corpus rather than allowing it
+through a baseline.
+
 The package-output checkpoint completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4d]]. The neutral
 contract now exposes only its Effect resource. The Cowork Effect Platform Node

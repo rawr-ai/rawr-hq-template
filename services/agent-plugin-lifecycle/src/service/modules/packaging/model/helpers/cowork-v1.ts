@@ -3,7 +3,6 @@ import type {
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import type { PackageDigest } from "#agent-plugin-lifecycle-service/modules/packaging/model/dto/packaging-lifecycle";
 import {
   type AgentPluginRelease,
   contentDigest,
@@ -11,6 +10,7 @@ import {
   payloadEntryBytes,
   verifyCompleteReleaseSet,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
+import type { PackageDigest } from "../dto/packaging-lifecycle";
 
 /** Stable archive comment that identifies RAWR's Cowork v1 package profile. */
 export const COWORK_V1_ARCHIVE_COMMENT = "rawr-agent-plugin-cowork-v1";
