@@ -105,6 +105,16 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("resources/semantic-ledger"),
+        test: {
+          name: "semantic-ledger",
+          environment: "node",
+          include: [...includes],
+          testTimeout: 60_000,
+        },
+      },
+      {
+        extends: true,
         root: r("services/workstream-frame"),
         test: { name: "workstream-frame", environment: "node", include: [...includes] },
       },
