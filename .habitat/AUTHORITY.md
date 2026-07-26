@@ -12,8 +12,9 @@ relationships:
 2. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
    service. The API surface exposes operations while its application host retains
    transport ownership.
-3. Each admitted package root has one concise `AGENTS.md` operator router with
-   stable orientation anchors and repository-relative routes.
+3. The repository requires one concise `AGENTS.md` operator router at each
+   admitted package and service-module boundary; the generic document kind
+   defines its stable orientation anchors and repository-relative routes.
 4. The executable CLI is one conventional Oclif app, and every first-party
    command capability is one uniform host-composed Oclif plugin on public
    package boundaries.
@@ -65,15 +66,17 @@ state, or one lifecycle service's current file list. Behavior, caller
 compatibility, package admission, and provider effects remain with their
 qualified owners and tests.
 
-Rules under `.habitat/rawr/agent-plugin-lifecycle` remain qualified lifecycle
-constraints rather than generic blueprints. The remaining rule closes the
-curated command channel and will shrink with the implementation. Reusable
-service source and topology relationships belong to their generic Habitat
-blueprints, while TypeScript package exports own public compatibility. The
-former coarse project-kind matrix is retired, not represented as another source
-pattern. Nx observes and schedules the graph; any still-required resolved-edge
-constraint must enter later as its own Habitat graph packet, never as ESLint
-architecture.
+Rules under `.habitat/rawr` remain qualified repository or lifecycle
+constraints rather than generic blueprints. The repository niche owns the
+cross-kind `AGENTS.md` placement relation while leaving each inspected root's
+topology with its package blueprint. The lifecycle niche's remaining rule
+closes the curated command channel and will shrink with the implementation.
+Reusable service source and topology relationships belong to their generic
+Habitat blueprints, while TypeScript package exports own public compatibility.
+The former coarse project-kind matrix is retired, not represented as another
+source pattern. Nx observes and schedules the graph; any still-required
+resolved-edge constraint must enter later as its own Habitat graph packet,
+never as ESLint architecture.
 
 The `nx-workspace` blueprint owns the root scheduler contract and resolved
 project-quality admission. Grit owns the scheduler source law. The pinned

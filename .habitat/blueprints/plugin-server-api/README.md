@@ -9,4 +9,6 @@ structural relations; any unadmitted dependency relationship remains a Habitat
 source-law gap rather than an Nx policy concern. The package remains
 package-less: its required `tsconfig.json` owns TypeScript resolution without
 creating a package identity. The closed shell permits a local `AGENTS.md`; the
-`agent-router` blueprint alone owns its placement and source shape.
+`agent-router` blueprint owns its source shape, while the `rawr/repository`
+niche owns the cross-kind placement relation without acquiring plugin
+topology.

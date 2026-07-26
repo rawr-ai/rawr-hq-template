@@ -27,9 +27,10 @@ does not export the standalone runtime `base`; its implementer begins at
 specifiers.
 
 Closed module shells require `AGENTS.md` at the ownership boundary. The
-`agent-router` blueprint owns the document's positive source shape and the
-remaining repository placements; it does not create a second service-module
-placement owner.
+`agent-router` blueprint owns the document's positive source shape. The
+`rawr/repository` niche audits the cross-kind placement lattice without
+acquiring service-module topology or creating another constructible package
+shape.
 
 Contract and error packets own the single exported contract, Standard Schema
 adaptation at every operation input/output, bounded private support

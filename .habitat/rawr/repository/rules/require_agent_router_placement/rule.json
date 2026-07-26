@@ -1,10 +1,10 @@
 {
   "schemaVersion": 2,
   "id": "require_agent_router_placement",
-  "title": "Require Agent Router Placement",
+  "title": "Require Repository Agent Router Placement",
   "placement": {
-    "niche": "rawr",
-    "blueprint": "agent-router",
+    "niche": "rawr/repository",
+    "blueprint": "_self",
     "category": "structure"
   },
   "operation": {
@@ -42,13 +42,13 @@
     }
   ],
   "supportFiles": {
-    "baseline": ".habitat/blueprints/agent-router/require_agent_router_placement/baseline.json"
+    "baseline": ".habitat/rawr/repository/rules/require_agent_router_placement/baseline.json"
   },
   "runner": {
     "name": "habitat",
     "mode": "structure",
     "files": {
-      "structure": ".habitat/blueprints/agent-router/require_agent_router_placement/structure.toml"
+      "structure": ".habitat/rawr/repository/rules/require_agent_router_placement/structure.toml"
     }
   }
 }

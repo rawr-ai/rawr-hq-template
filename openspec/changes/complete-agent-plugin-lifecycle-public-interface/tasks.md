@@ -128,8 +128,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   purpose, scope, boundaries, behavior, concepts, flow, interfaces, inward
   routing, and validation without narrating source or duplicating JSDoc. Burn
   the complete admitted router corpus to the positive shape in the same
-  checkpoint; do not add a baseline, path exception, second placement owner, or
-  JavaScript documentation scanner.
+  checkpoint. Keep document source shape in the generic agent-router blueprint
+  and the heterogeneous placement relation under `rawr/repository`, with no
+  baseline entries, path exception, JavaScript documentation scanner, or claim
+  over an inspected package kind's topology.
+- [x] 1.5i Install the RAWR-adapted Habitat Designer and Habitat Engineer as
+  standing Codex roles. Make checked-in `.codex/hooks.json` the single
+  repository hook-composition owner: retain the canonical workstream startup
+  and closure guards by direct source reference, add Stop-time workspace lint
+  plus the selected Habitat source laws as fast feedback, and remove hook
+  config/source projection from the workstream installer. Keep full lint,
+  typecheck, behavior, and Habitat admission in pre-push and protected CI.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation

@@ -17,9 +17,12 @@ personal-repository target. A personal content repository may consume a future
 versioned tool or artifact interface, but a checkout path, copied tree, or Git
 relationship is never that interface.
 
-Repo-local Codex skill, agent, hook, and hook-config activation files are
-generated local tool outputs. They must not be checked in as placeholders or
-redefine generic workstream mechanics.
+Repo-local workstream skill and workstream-agent projections are generated
+local tool outputs. They must not be checked in as placeholders or redefine
+generic workstream mechanics. Template owns one checked-in
+`.codex/hooks.json` composition boundary and its standing Habitat roles. That
+hook config invokes the pack's canonical hook sources directly; the workstream
+installer must not rewrite it or create a second hook-source projection.
 
 Runtime Realization Lab material under `tools/runtime-realization-type-env/`
 may specialize workstreams with lab-specific authority order, proof/evidence

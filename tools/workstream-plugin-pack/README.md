@@ -30,16 +30,20 @@ to use or test Workstream material in Codex.
   destinations without changing them.
 - Pack skills copy to `.agents/skills/`.
 - Pack agent briefs generate `.codex/agents/*.toml`.
-- Pack hook scripts/config copy to `.codex/hooks/` and `.codex/hooks.json`.
+- Pack hook scripts remain canonical under this tool. The repository-owned
+  `.codex/hooks.json` invokes them directly alongside repository quality
+  feedback; the installer does not copy or rewrite either surface.
 
 Hook event availability is provider/runtime-specific. This pack currently
 activates only `SessionStart` and `Stop`; unavailable events such as
 `PreCompact` are portability notes, not guard failures.
 
-Do not keep checked-in placeholder activation files for skills, agents, hooks,
-or hook config. When local testing is needed, run the installer from this
-checkout. It rejects destinations outside its closed Template-local allowlist,
-including aliases, before any recursive removal.
+Do not keep checked-in placeholder projections for workstream skills or
+workstream agents. The checked-in hook composition and standing Habitat roles
+are repository authority, not generated pack output. When local testing is
+needed, run the installer from this checkout. It rejects destinations outside
+its closed Template-local allowlist, including aliases, before any recursive
+removal.
 
 ## Repository Boundary
 

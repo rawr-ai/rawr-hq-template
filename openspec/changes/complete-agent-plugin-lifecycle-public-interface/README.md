@@ -180,6 +180,21 @@ at every service-module boundary, exclude open database interiors until a
 closed database blueprint exists, and close junk-drawer destinations. The
 seven staged rules remain outside repository admission until the admitted
 service corpus conforms and the owner-local Nx check activates them together.
+The generic agent-router packet retains the imported document source law. Its
+cross-kind placement relation is reclassified under `rawr/repository` because
+it inspects package and module roots without defining their topology; the rule
+ID, matched corpus, empty baseline, and enforced behavior are unchanged.
+Magic Migration worktree revision
+`c45affc77b48e9851b26f51f3ef4920e173a9e96` also supplies the standing
+Habitat Designer, Habitat Engineer, and Codex hook form. Template keeps the two
+role contracts while replacing Collect-specific language with RAWR product
+authority and the positive-closure invariant. Checked-in `.codex/hooks.json`
+is now the single hook-composition owner: it invokes the canonical workstream
+startup and closure sources directly and adds Stop-time workspace lint plus
+the selected Habitat source laws. The workstream installer projects only its
+skills and agent briefs; it no longer rewrites hook config or copies hook
+sources. Pre-push `bun run check` and protected `bun run ci` remain the
+non-skippable repository admission owners.
 
 Future generic support for kinds that intentionally admit multiple positive
 forms is recorded for the upstream SDK in
@@ -634,10 +649,11 @@ resolver patch, source-path import, or plugin package is introduced. With the
 stale plugin-local workspace links removed, the HQ app passed 10 cases and the
 server passed 44 cases against ordinary root package resolution.
 
-The active policy batch now contains twelve green laws: packet topology,
-AGENTS placement and shape, Grit helper documentation, the API-plugin boundary,
-the lifecycle command-channel law, all three Oclif app laws, and all three Oclif
-command-plugin laws. Rewriting the AGENTS shape query from six repository
+The active policy batch now contains twelve green laws: packet topology, the
+repository AGENTS placement relation, agent-router shape, Grit helper
+documentation, the API-plugin boundary, the lifecycle command-channel law, all
+three Oclif app laws, and all three Oclif command-plugin laws. Rewriting the
+AGENTS shape query from six repository
 traversals to one reduced its uncached runtime from 71.3 seconds to 2.7 seconds;
 the complete policy target passes uncached in 5.2 seconds. The Example Todo
 public client now calls through the real external API boundary, and explicit Nx
@@ -799,8 +815,10 @@ JavaScript check wrapper, SDK source, or worktree path remains in the gate.
 Habitat delegates pattern execution to the pinned Grit dependency, so the
 required workflow provisions Grit explicitly after its `--ignore-scripts`
 install; the repository check itself remains read-only.
-Router placement rereads the live Git-visible inventory on every required run
-and completes in under a second. The independent Grit router-shape target runs
+Repository-owned router placement under `rawr/repository` rereads the live
+Git-visible inventory on every required run and completes in under a second.
+The generic agent-router blueprint owns only document source shape. The
+independent Grit router-shape target runs
 cold in roughly 70-95 seconds, then restores from the local Nx cache in under
 50 ms until a router, its rule packet, or its toolchain changes. Live canaries
 proved that a new routerless package and an incomplete blueprint packet both
