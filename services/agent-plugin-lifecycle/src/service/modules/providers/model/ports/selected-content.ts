@@ -1,4 +1,5 @@
-import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { Effect } from "effect";
 
 import type {
   SelectedContentChannelResolutionInput,
@@ -11,7 +12,7 @@ import type {
  * derive provider-selected content.
  */
 export type SelectedContentReadPort = Pick<
-  ContentWorkspaceNodeAsyncPort,
+  ContentWorkspaceResource<never>,
   | "inspectGitRef"
   | "inspectGitWorkspace"
   | "readGitTree"
@@ -28,6 +29,8 @@ export type SelectedContentReadPort = Pick<
 export interface SelectedContentResolver {
   resolveWorkspace(
     input: SelectedContentWorkspaceResolutionInput
-  ): Promise<SelectedContentResolution>;
-  resolveChannel(input: SelectedContentChannelResolutionInput): Promise<SelectedContentResolution>;
+  ): Effect.Effect<SelectedContentResolution>;
+  resolveChannel(
+    input: SelectedContentChannelResolutionInput
+  ): Effect.Effect<SelectedContentResolution>;
 }

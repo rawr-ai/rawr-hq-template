@@ -1,7 +1,8 @@
 import type {
-  ContentWorkspaceAsyncPort,
   ContentWorkspaceCapture,
+  ContentWorkspaceResource,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 
 import type {
   VendorUpdateIssue,
@@ -21,199 +22,259 @@ const opaqueHandle = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,511}$/u;
 const MAX_CAPTURE_ENTRIES = 200_000;
 const MAX_CAPTURE_BYTES = 512 * 1024 * 1024;
 
-export async function executeVendorAuthoringPlan(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+export function executeVendorAuthoringPlan(
+  contentWorkspace: ContentWorkspaceResource<never>,
   request: VendorUpdateRequest,
   plan: VendorAuthoringPlan
-): Promise<VendorUpdateResult> {
-  let capture: ContentWorkspaceCapture;
-  try {
-    capture = await contentWorkspace.capture({
-      root: plan.contentWorkspace.locator,
-      readToken: plan.readToken,
-      paths: plan.changedPaths,
-      maxEntries: MAX_CAPTURE_ENTRIES,
-      maxBytes: MAX_CAPTURE_BYTES,
-    });
-  } catch (error) {
-    return rejected(request.sourceIds, [
-      vendorIssue("AuthoringFailed", resourceFailureDetail("capture", error)),
-    ]);
-  }
-  if (!validCapture(capture, plan)) {
-    const cleanup = await releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
-    const issues = [
-      vendorIssue("AuthoringFailed", "Content workspace returned an invalid capture receipt."),
-    ];
-    if (cleanup !== undefined) issues.push(cleanup);
-    return rejected(request.sourceIds, requireIssues(issues));
-  }
-
-  const revalidated = await observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
-  const revalidationIssue = revalidated.ok
-    ? vendorWorkspaceIssue(request, revalidated.value)
-    : revalidated.issues[0];
-  if (
-    !revalidated.ok ||
-    revalidationIssue !== undefined ||
-    revalidated.value.readToken !== plan.readToken
-  ) {
-    const primary = vendorIssue(
-      "LocalDrift",
-      "Vendor repository changed after preimage capture and before authoring."
-    );
-    const cleanup = await releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
-    return rejected(request.sourceIds, cleanup === undefined ? [primary] : [primary, cleanup]);
-  }
-
-  let applied;
-  try {
-    applied = await contentWorkspace.apply({
-      root: plan.contentWorkspace.locator,
-      planDigest: plan.planDigest,
-      readToken: plan.readToken,
-      captureHandle: capture.handle,
-      writes: plan.writes,
-    });
-  } catch (error) {
-    const primary = vendorIssue("AuthoringFailed", resourceFailureDetail("apply", error));
-    const released = await releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
-    if (released === undefined) return rejected(request.sourceIds, [primary]);
-    return restoreAfterFailure(contentWorkspace, plan, capture.handle, request.sourceIds, primary);
-  }
-  if (!validApplyReceipt(applied, plan)) {
-    return restoreAfterFailure(
-      contentWorkspace,
-      plan,
-      capture.handle,
-      request.sourceIds,
-      vendorIssue("AuthoringFailed", "Content workspace returned an invalid apply receipt.")
-    );
-  }
-
-  const verified = await observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
-  const verificationIssue = verified.ok
-    ? vendorWorkspaceIssue(request, verified.value)
-    : verified.issues[0];
-  if (
-    !verified.ok ||
-    verificationIssue !== undefined ||
-    !vendorPlanIsApplied(verified.value, plan)
-  ) {
-    const detail =
-      verificationIssue?.detail ??
-      "Repository observation does not match the exact service-owned vendor plan.";
-    const primary = vendorIssue("AuthoringFailed", detail);
-    if (applied.outcome === "Converged") {
-      const cleanup = await releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
-      return rejected(request.sourceIds, cleanup === undefined ? [primary] : [primary, cleanup]);
-    }
-    return restoreAfterFailure(contentWorkspace, plan, capture.handle, request.sourceIds, primary);
-  }
-
-  const settlement = await settleCapture(contentWorkspace, plan, capture.handle);
-  if (settlement !== undefined) {
-    if (applied.outcome === "Converged") {
-      const cleanup = await releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
-      return rejected(
-        request.sourceIds,
-        cleanup === undefined ? [settlement] : [settlement, cleanup]
+): Effect.Effect<VendorUpdateResult> {
+  // Capture, mutation, verification, and release/settlement form one transaction:
+  // cancellation cannot strand the provider-owned recovery capability between those phases.
+  return Effect.uninterruptible(
+    Effect.gen(function* () {
+      const captureAttempt = yield* Effect.result(
+        contentWorkspace.capture({
+          root: plan.contentWorkspace.locator,
+          readToken: plan.readToken,
+          paths: plan.changedPaths,
+          maxEntries: MAX_CAPTURE_ENTRIES,
+          maxBytes: MAX_CAPTURE_BYTES,
+        })
       );
-    }
-    return restoreAfterFailure(
-      contentWorkspace,
-      plan,
-      capture.handle,
-      request.sourceIds,
-      settlement
-    );
-  }
-  return applied.outcome === "Converged"
-    ? { kind: "ReadOnlyConverged", sourceIds: request.sourceIds }
-    : {
-        kind: "AuthoredReviewableChanges",
-        sourceIds: request.sourceIds,
-        changedPaths: plan.changedPaths,
-      };
+      if (captureAttempt._tag === "Failure") {
+        return rejected(request.sourceIds, [
+          vendorIssue("AuthoringFailed", resourceFailureDetail("capture", captureAttempt.failure)),
+        ]);
+      }
+      const capture: ContentWorkspaceCapture = captureAttempt.success;
+      if (!validCapture(capture, plan)) {
+        const cleanup = yield* releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
+        const issues = [
+          vendorIssue("AuthoringFailed", "Content workspace returned an invalid capture receipt."),
+        ];
+        if (cleanup !== undefined) issues.push(cleanup);
+        return rejected(request.sourceIds, requireIssues(issues));
+      }
+
+      const revalidated = yield* observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
+      const revalidationIssue = revalidated.ok
+        ? vendorWorkspaceIssue(request, revalidated.value)
+        : revalidated.issues[0];
+      if (
+        !revalidated.ok ||
+        revalidationIssue !== undefined ||
+        revalidated.value.readToken !== plan.readToken
+      ) {
+        const primary = vendorIssue(
+          "LocalDrift",
+          "Vendor repository changed after preimage capture and before authoring."
+        );
+        const cleanup = yield* releaseCapture(contentWorkspace, plan, capture.handle, "NoMutation");
+        return rejected(request.sourceIds, cleanup === undefined ? [primary] : [primary, cleanup]);
+      }
+
+      const appliedAttempt = yield* Effect.result(
+        contentWorkspace.apply({
+          root: plan.contentWorkspace.locator,
+          planDigest: plan.planDigest,
+          readToken: plan.readToken,
+          captureHandle: capture.handle,
+          writes: plan.writes,
+        })
+      );
+      if (appliedAttempt._tag === "Failure") {
+        const primary = vendorIssue(
+          "AuthoringFailed",
+          resourceFailureDetail("apply", appliedAttempt.failure)
+        );
+        const released = yield* releaseCapture(
+          contentWorkspace,
+          plan,
+          capture.handle,
+          "NoMutation"
+        );
+        if (released === undefined) return rejected(request.sourceIds, [primary]);
+        return yield* restoreAfterFailure(
+          contentWorkspace,
+          plan,
+          capture.handle,
+          request.sourceIds,
+          primary
+        );
+      }
+      const applied = appliedAttempt.success;
+      if (!validApplyReceipt(applied, plan)) {
+        return yield* restoreAfterFailure(
+          contentWorkspace,
+          plan,
+          capture.handle,
+          request.sourceIds,
+          vendorIssue("AuthoringFailed", "Content workspace returned an invalid apply receipt.")
+        );
+      }
+
+      const verified = yield* observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
+      const verificationIssue = verified.ok
+        ? vendorWorkspaceIssue(request, verified.value)
+        : verified.issues[0];
+      if (
+        !verified.ok ||
+        verificationIssue !== undefined ||
+        !vendorPlanIsApplied(verified.value, plan)
+      ) {
+        const detail =
+          verificationIssue?.detail ??
+          "Repository observation does not match the exact service-owned vendor plan.";
+        const primary = vendorIssue("AuthoringFailed", detail);
+        if (applied.outcome === "Converged") {
+          const cleanup = yield* releaseCapture(
+            contentWorkspace,
+            plan,
+            capture.handle,
+            "NoMutation"
+          );
+          return rejected(
+            request.sourceIds,
+            cleanup === undefined ? [primary] : [primary, cleanup]
+          );
+        }
+        return yield* restoreAfterFailure(
+          contentWorkspace,
+          plan,
+          capture.handle,
+          request.sourceIds,
+          primary
+        );
+      }
+
+      const settlement = yield* settleCapture(contentWorkspace, plan, capture.handle);
+      if (settlement !== undefined) {
+        if (applied.outcome === "Converged") {
+          const cleanup = yield* releaseCapture(
+            contentWorkspace,
+            plan,
+            capture.handle,
+            "NoMutation"
+          );
+          return rejected(
+            request.sourceIds,
+            cleanup === undefined ? [settlement] : [settlement, cleanup]
+          );
+        }
+        return yield* restoreAfterFailure(
+          contentWorkspace,
+          plan,
+          capture.handle,
+          request.sourceIds,
+          settlement
+        );
+      }
+      return applied.outcome === "Converged"
+        ? { kind: "ReadOnlyConverged", sourceIds: request.sourceIds }
+        : {
+            kind: "AuthoredReviewableChanges",
+            sourceIds: request.sourceIds,
+            changedPaths: plan.changedPaths,
+          };
+    })
+  );
 }
 
-async function restoreAfterFailure(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+function restoreAfterFailure(
+  contentWorkspace: ContentWorkspaceResource<never>,
   plan: VendorAuthoringPlan,
   captureHandle: string,
   sourceIds: readonly string[],
   primary: VendorUpdateIssue
-): Promise<VendorUpdateResult> {
-  let restored;
-  try {
-    restored = await contentWorkspace.restore({
-      root: plan.contentWorkspace.locator,
-      planDigest: plan.planDigest,
-      readToken: plan.readToken,
-      captureHandle,
-    });
-  } catch (error) {
-    const restoration = vendorIssue("RestorationFailed", resourceFailureDetail("restore", error));
-    const cleanup = await releaseCapture(
-      contentWorkspace,
-      plan,
-      captureHandle,
-      "UnsettledRecovery"
+): Effect.Effect<VendorUpdateResult> {
+  return Effect.gen(function* () {
+    const restoredAttempt = yield* Effect.result(
+      contentWorkspace.restore({
+        root: plan.contentWorkspace.locator,
+        planDigest: plan.planDigest,
+        readToken: plan.readToken,
+        captureHandle,
+      })
     );
-    return {
-      kind: "RestorationFailed",
-      sourceIds,
-      unsettledPaths: plan.changedPaths,
-      issues: cleanup === undefined ? [primary, restoration] : [primary, restoration, cleanup],
-    };
-  }
-  if (!validRestoreReceipt(restored, plan)) {
-    const restoration = vendorIssue(
-      "RestorationFailed",
-      "Content workspace returned an invalid restoration receipt."
-    );
-    const cleanup = await releaseCapture(
-      contentWorkspace,
-      plan,
-      captureHandle,
-      "UnsettledRecovery"
-    );
-    return {
-      kind: "RestorationFailed",
-      sourceIds,
-      unsettledPaths: plan.changedPaths,
-      issues: cleanup === undefined ? [primary, restoration] : [primary, restoration, cleanup],
-    };
-  }
-  const settlement = await settleCapture(contentWorkspace, plan, captureHandle);
-  return settlement === undefined
-    ? {
-        kind: "FailedRestored",
+    if (restoredAttempt._tag === "Failure") {
+      const restoration = vendorIssue(
+        "RestorationFailed",
+        resourceFailureDetail("restore", restoredAttempt.failure)
+      );
+      const cleanup = yield* releaseCapture(
+        contentWorkspace,
+        plan,
+        captureHandle,
+        "UnsettledRecovery"
+      );
+      return {
+        kind: "RestorationFailed",
         sourceIds,
-        restoredPaths: [...restored.changedPaths].sort(compareText),
-        issues: [primary],
-      }
-    : {
-        kind: "FailedRestored",
-        sourceIds,
-        restoredPaths: [...restored.changedPaths].sort(compareText),
-        issues: [primary, settlement],
+        unsettledPaths: plan.changedPaths,
+        issues: cleanup === undefined ? [primary, restoration] : [primary, restoration, cleanup],
       };
+    }
+    const restored = restoredAttempt.success;
+    if (!validRestoreReceipt(restored, plan)) {
+      const restoration = vendorIssue(
+        "RestorationFailed",
+        "Content workspace returned an invalid restoration receipt."
+      );
+      const cleanup = yield* releaseCapture(
+        contentWorkspace,
+        plan,
+        captureHandle,
+        "UnsettledRecovery"
+      );
+      return {
+        kind: "RestorationFailed",
+        sourceIds,
+        unsettledPaths: plan.changedPaths,
+        issues: cleanup === undefined ? [primary, restoration] : [primary, restoration, cleanup],
+      };
+    }
+    const settlement = yield* settleCapture(contentWorkspace, plan, captureHandle);
+    return settlement === undefined
+      ? {
+          kind: "FailedRestored",
+          sourceIds,
+          restoredPaths: [...restored.changedPaths].sort(compareText),
+          issues: [primary],
+        }
+      : {
+          kind: "FailedRestored",
+          sourceIds,
+          restoredPaths: [...restored.changedPaths].sort(compareText),
+          issues: [primary, settlement],
+        };
+  });
 }
 
-async function releaseCapture(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+function releaseCapture(
+  contentWorkspace: ContentWorkspaceResource<never>,
   plan: VendorAuthoringPlan,
   captureHandle: string,
   disposition: "NoMutation" | "UnsettledRecovery"
-): Promise<VendorUpdateIssue | undefined> {
-  try {
-    const receipt = await contentWorkspace.release({
-      root: plan.contentWorkspace.locator,
-      readToken: plan.readToken,
-      captureHandle,
-      disposition,
-    });
+): Effect.Effect<VendorUpdateIssue | undefined> {
+  return Effect.gen(function* () {
+    const receiptAttempt = yield* Effect.result(
+      contentWorkspace.release({
+        root: plan.contentWorkspace.locator,
+        readToken: plan.readToken,
+        captureHandle,
+        disposition,
+      })
+    );
+    if (receiptAttempt._tag === "Failure") {
+      const error = receiptAttempt.failure;
+      if (disposition === "NoMutation" && resourceFailureReason(error) === "HandleState") {
+        return vendorIssue(
+          "RestorationFailed",
+          "Captured authoring may have mutated repository state."
+        );
+      }
+      return vendorIssue("CleanupFailed", resourceFailureDetail("release", error));
+    }
+    const receipt = receiptAttempt.success;
     const expectedOutcome =
       disposition === "NoMutation" ? "ReleasedUnmutated" : "ReleasedUnsettled";
     return receipt.handle === captureHandle &&
@@ -224,38 +285,34 @@ async function releaseCapture(
           "CleanupFailed",
           "Content workspace returned an invalid capture-release receipt."
         );
-  } catch (error) {
-    if (disposition === "NoMutation" && resourceFailureReason(error) === "HandleState") {
-      return vendorIssue(
-        "RestorationFailed",
-        "Captured authoring may have mutated repository state."
-      );
-    }
-    return vendorIssue("CleanupFailed", resourceFailureDetail("release", error));
-  }
+  });
 }
 
-async function settleCapture(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+function settleCapture(
+  contentWorkspace: ContentWorkspaceResource<never>,
   plan: VendorAuthoringPlan,
   captureHandle: string
-): Promise<VendorUpdateIssue | undefined> {
-  try {
-    const receipt = await contentWorkspace.settle({
-      root: plan.contentWorkspace.locator,
-      planDigest: plan.planDigest,
-      readToken: plan.readToken,
-      captureHandle,
-    });
+): Effect.Effect<VendorUpdateIssue | undefined> {
+  return Effect.gen(function* () {
+    const receiptAttempt = yield* Effect.result(
+      contentWorkspace.settle({
+        root: plan.contentWorkspace.locator,
+        planDigest: plan.planDigest,
+        readToken: plan.readToken,
+        captureHandle,
+      })
+    );
+    if (receiptAttempt._tag === "Failure") {
+      return vendorIssue("CleanupFailed", resourceFailureDetail("settle", receiptAttempt.failure));
+    }
+    const receipt = receiptAttempt.success;
     return receipt.handle === captureHandle &&
       receipt.planDigest === plan.planDigest &&
       receipt.readToken === plan.readToken &&
       receipt.outcome === "Settled"
       ? undefined
       : vendorIssue("CleanupFailed", "Content workspace returned an invalid settlement receipt.");
-  } catch (error) {
-    return vendorIssue("CleanupFailed", resourceFailureDetail("settle", error));
-  }
+  });
 }
 
 function validCapture(capture: ContentWorkspaceCapture, plan: VendorAuthoringPlan): boolean {

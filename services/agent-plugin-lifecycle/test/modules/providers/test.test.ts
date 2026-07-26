@@ -1,6 +1,7 @@
+import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
-import { runProviderTest } from "../../../src/service/modules/providers/router/test.router";
+import { runProviderTest as providerTestEffect } from "../../../src/service/modules/providers/router/test.router";
 import {
   FakeNativeSession,
   FakeNativeSessions,
@@ -9,6 +10,9 @@ import {
   selectedContentWithAliases,
   testRequest,
 } from "./fixture";
+
+const runProviderTest = (...args: Parameters<typeof providerTestEffect>) =>
+  Effect.runPromise(providerTestEffect(...args));
 
 describe("provider disposable-home test", () => {
   it("preserves omitted managed members in targeted mode", async () => {

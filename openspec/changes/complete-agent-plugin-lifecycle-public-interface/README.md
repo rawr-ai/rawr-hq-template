@@ -405,6 +405,34 @@ adapter, witness, or shadow context. Habitat proves factory provenance and
 named attachment only. The Promise adapter, detached Provider runners, and
 broad resource lanes remain open for their owner-local cuts.
 
+The content-workspace checkpoint removes its duplicate Promise port and
+detached production runner. The concrete Git/Effect Platform provider now
+binds only its exact filesystem layer and exposes one ready
+`ContentWorkspaceResource<never>`. The CLI host selects that provider and
+passes the same lazy Effect operations through service context; clean, staged,
+selected-content, current-main, release, packaging, provider, and Vendor
+consumers no longer adapt or execute a second resource form. Typed resource
+failure and cancellation remain native. The Vendor capture, mutation,
+verification, restoration, and settlement transition retains its existing
+uninterruptible boundary, while read-only current-main selection stays
+cancellable. Exact Git bounds, closed public results, package bytes, provider
+behavior, and Vendor reviewable-change behavior remain the proof boundary
+under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4a]].
+
+This cut changes no native provider state, content repository, Oclif surface,
+or resource ownership. Resource-shaped Vendor observation and authoring
+assemblies that still sit in module policy remain explicitly open for the next
+owner-local deletion; this checkpoint does not promote them into another
+service abstraction.
+
+The content-workspace provider passes all 25 mechanics tests and the complete
+lifecycle owner passes all 244 behavior tests. Resource, provider, lifecycle,
+and CLI typechecks pass through the affected Nx graph; Oclif source/compiled
+command parity, the locked lifecycle command topology, the selected service
+Habitat laws, strict OpenSpec validation, Biome, and diff hygiene also pass.
+Standing architecture, oRPC/Effect-oRPC, TypeScript, Effect, testing, and
+structural-quality reviews report no unresolved P0/P1/P2 finding.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

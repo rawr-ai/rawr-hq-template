@@ -1,8 +1,9 @@
 import type {
-  ContentWorkspaceAsyncPort,
+  ContentWorkspaceResource,
   MaterializedRemoteContentTree,
   RemoteContentTree,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -34,129 +35,141 @@ type VendorObservationClock = Readonly<{
   now: () => Date;
 }>;
 
-export async function observeVendorUpstream(
-  port: ContentWorkspaceAsyncPort,
+export function observeVendorUpstream(
+  port: ContentWorkspaceResource<never>,
   source: VendorDeclaredSourceObservation
-): Promise<VendorPolicyResult<VendorUpstreamObservation>> {
-  if (source.lock === null) {
-    return policyFailure(
-      vendorIssue("PayloadMismatch", "Vendor lock is unavailable.", source.declaration.sourceId)
-    );
-  }
-  let remote: RemoteContentTree;
-  try {
-    remote = await port.observeRemote(remoteQuery(source));
-  } catch (error) {
-    return resourceFailure("observe-remote", error, source.declaration.sourceId);
-  }
-  const invalid = remoteIssue(source, remote);
-  if (invalid !== undefined) return policyFailure(invalid);
-  const identity = Object.freeze({
-    repositoryIdentity: remote.repositoryIdentity,
-    refName: remote.refName,
-    sourceCommit: remote.commit,
-    sourceTree: remote.tree,
-    payloadDigest: vendorPayloadDigest(remote.entries),
-  });
-  let ancestry: VendorUpstreamObservation["ancestry"];
-  if (identity.sourceCommit === source.lock.admitted.sourceCommit) {
-    ancestry = "same";
-  } else {
-    try {
-      ancestry = (await port.isAncestor({
-        repositoryIdentity: source.declaration.repositoryIdentity,
-        refName: source.declaration.refName,
-        ancestorCommit: source.lock.admitted.sourceCommit,
-        descendantCommit: identity.sourceCommit,
-      }))
-        ? "fast-forward"
-        : "diverged";
-    } catch (error) {
-      return resourceFailure("ancestry", error, source.declaration.sourceId);
+): Effect.Effect<VendorPolicyResult<VendorUpstreamObservation>> {
+  return Effect.gen(function* () {
+    if (source.lock === null) {
+      return policyFailure(
+        vendorIssue("PayloadMismatch", "Vendor lock is unavailable.", source.declaration.sourceId)
+      );
     }
-  }
-  return policySuccess(
-    Object.freeze({
-      remote: freezeRemote(remote),
-      identity,
-      ancestry,
-    })
-  );
+    const remoteAttempt = yield* Effect.result(port.observeRemote(remoteQuery(source)));
+    if (remoteAttempt._tag === "Failure") {
+      return resourceFailure("observe-remote", remoteAttempt.failure, source.declaration.sourceId);
+    }
+    const remote: RemoteContentTree = remoteAttempt.success;
+    const invalid = remoteIssue(source, remote);
+    if (invalid !== undefined) return policyFailure(invalid);
+    const identity = Object.freeze({
+      repositoryIdentity: remote.repositoryIdentity,
+      refName: remote.refName,
+      sourceCommit: remote.commit,
+      sourceTree: remote.tree,
+      payloadDigest: vendorPayloadDigest(remote.entries),
+    });
+    let ancestry: VendorUpstreamObservation["ancestry"];
+    if (identity.sourceCommit === source.lock.admitted.sourceCommit) {
+      ancestry = "same";
+    } else {
+      const ancestryAttempt = yield* Effect.result(
+        port.isAncestor({
+          repositoryIdentity: source.declaration.repositoryIdentity,
+          refName: source.declaration.refName,
+          ancestorCommit: source.lock.admitted.sourceCommit,
+          descendantCommit: identity.sourceCommit,
+        })
+      );
+      if (ancestryAttempt._tag === "Failure") {
+        return resourceFailure("ancestry", ancestryAttempt.failure, source.declaration.sourceId);
+      }
+      ancestry = ancestryAttempt.success ? "fast-forward" : "diverged";
+    }
+    return policySuccess(
+      Object.freeze({
+        remote: freezeRemote(remote),
+        identity,
+        ancestry,
+      })
+    );
+  });
 }
 
-export async function materializeVendorUpstream(
-  port: ContentWorkspaceAsyncPort,
+export function materializeVendorUpstream(
+  port: ContentWorkspaceResource<never>,
   clock: VendorObservationClock,
   source: VendorDeclaredSourceObservation,
   observed: VendorUpstreamObservation
-): Promise<VendorPolicyResult<VendorPreparedPayload>> {
-  let materialized: MaterializedRemoteContentTree;
-  try {
-    materialized = await port.materializeRemote({
-      ...remoteQuery(source),
-      maxBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
-    });
-  } catch (error) {
-    return resourceFailure("materialize-remote", error, source.declaration.sourceId);
-  }
-  if (
-    materialized.repositoryIdentity !== observed.remote.repositoryIdentity ||
-    materialized.refName !== observed.remote.refName ||
-    materialized.sourcePath !== observed.remote.sourcePath ||
-    materialized.commit !== observed.remote.commit ||
-    materialized.tree !== observed.remote.tree ||
-    materialized.objectFormat !== observed.remote.objectFormat ||
-    !sameTreeEntries(observed.remote.entries, materialized.entries)
-  ) {
-    return policyFailure(
-      vendorIssue(
-        "NonFastForward",
-        "Upstream identity changed after update classification.",
+): Effect.Effect<VendorPolicyResult<VendorPreparedPayload>> {
+  return Effect.gen(function* () {
+    const materializedAttempt = yield* Effect.result(
+      port.materializeRemote({
+        ...remoteQuery(source),
+        maxBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
+      })
+    );
+    if (materializedAttempt._tag === "Failure") {
+      return resourceFailure(
+        "materialize-remote",
+        materializedAttempt.failure,
         source.declaration.sourceId
-      )
+      );
+    }
+    const materialized: MaterializedRemoteContentTree = materializedAttempt.success;
+    if (
+      materialized.repositoryIdentity !== observed.remote.repositoryIdentity ||
+      materialized.refName !== observed.remote.refName ||
+      materialized.sourcePath !== observed.remote.sourcePath ||
+      materialized.commit !== observed.remote.commit ||
+      materialized.tree !== observed.remote.tree ||
+      materialized.objectFormat !== observed.remote.objectFormat ||
+      !sameTreeEntries(observed.remote.entries, materialized.entries)
+    ) {
+      return policyFailure(
+        vendorIssue(
+          "NonFastForward",
+          "Upstream identity changed after update classification.",
+          source.declaration.sourceId
+        )
+      );
+    }
+    const payloadIssue = materializedPayloadIssue(
+      observed.remote.entries,
+      materialized.entries,
+      observed.remote.objectFormat
     );
-  }
-  const payloadIssue = materializedPayloadIssue(
-    observed.remote.entries,
-    materialized.entries,
-    observed.remote.objectFormat
-  );
-  if (
-    payloadIssue !== undefined ||
-    vendorPayloadDigest(materialized.entries) !== observed.identity.payloadDigest
-  ) {
-    return policyFailure(
-      vendorIssue(
-        "PayloadMismatch",
-        payloadIssue ?? "Materialized payload digest differs from the classified upstream tree.",
-        source.declaration.sourceId
-      )
+    if (
+      payloadIssue !== undefined ||
+      vendorPayloadDigest(materialized.entries) !== observed.identity.payloadDigest
+    ) {
+      return policyFailure(
+        vendorIssue(
+          "PayloadMismatch",
+          payloadIssue ?? "Materialized payload digest differs from the classified upstream tree.",
+          source.declaration.sourceId
+        )
+      );
+    }
+    let now: Date;
+    try {
+      now = clock.now();
+    } catch {
+      return policyFailure(
+        vendorIssue(
+          "RuntimeFailure",
+          "Vendor observation clock failed.",
+          source.declaration.sourceId
+        )
+      );
+    }
+    if (!(now instanceof Date) || !Number.isFinite(now.getTime())) {
+      return policyFailure(
+        vendorIssue(
+          "RuntimeFailure",
+          "Vendor observation clock returned an invalid instant.",
+          source.declaration.sourceId
+        )
+      );
+    }
+    return policySuccess(
+      Object.freeze({
+        identity: observed.identity,
+        entries: cloneMaterializedEntries(materialized.entries),
+        observedAt: now.toISOString(),
+      })
     );
-  }
-  let now: Date;
-  try {
-    now = clock.now();
-  } catch {
-    return policyFailure(
-      vendorIssue("RuntimeFailure", "Vendor observation clock failed.", source.declaration.sourceId)
-    );
-  }
-  if (!(now instanceof Date) || !Number.isFinite(now.getTime())) {
-    return policyFailure(
-      vendorIssue(
-        "RuntimeFailure",
-        "Vendor observation clock returned an invalid instant.",
-        source.declaration.sourceId
-      )
-    );
-  }
-  return policySuccess(
-    Object.freeze({
-      identity: observed.identity,
-      entries: cloneMaterializedEntries(materialized.entries),
-      observedAt: now.toISOString(),
-    })
-  );
+  });
 }
 
 function remoteQuery(source: VendorDeclaredSourceObservation) {

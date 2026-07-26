@@ -1,3 +1,4 @@
+import type { Effect } from "effect";
 import type {
   CurrentMainSelectionLocator,
   CurrentMainSelectionResult,
@@ -5,5 +6,5 @@ import type {
 
 /** Reads one governance-verified current-main observation. */
 export interface CurrentMainSelectionReader {
-  resolve(locator: CurrentMainSelectionLocator): Promise<CurrentMainSelectionResult>;
+  resolve(locator: CurrentMainSelectionLocator): Effect.Effect<CurrentMainSelectionResult>;
 }

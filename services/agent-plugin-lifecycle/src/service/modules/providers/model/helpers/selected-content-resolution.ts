@@ -1,4 +1,5 @@
-import type { GitRefObservation } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceFailure, GitRefObservation } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import type { ContentWorkspacePolicy } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
@@ -82,6 +83,8 @@ class SelectedContentFailure extends Error {
   }
 }
 
+type SelectedContentReadFailure = ContentWorkspaceFailure | SelectedContentFailure;
+
 /**
  * Creates the provider module's invocation-local selected-content resolver over the narrowed
  * host content-workspace capability.
@@ -93,177 +96,191 @@ export function createSelectedContentResolver(
     contentWorkspace: binding.contentWorkspace,
   });
   return Object.freeze({
-    resolveChannel: async (
-      input: Parameters<SelectedContentResolver["resolveChannel"]>[0]
-    ): Promise<SelectedContentResolution> => {
-      try {
-        return await resolveChannel(binding.contentWorkspace, input);
-      } catch (error) {
-        return rejectedFrom(error);
-      }
-    },
-    resolveWorkspace: async (
-      input: Parameters<SelectedContentResolver["resolveWorkspace"]>[0]
-    ): Promise<SelectedContentResolution> => {
-      try {
-        return await resolveWorkspace(
-          binding.contentWorkspace,
-          workspaceReader,
-          input.contentWorkspace,
-          input.mode
-        );
-      } catch (error) {
-        return rejectedFrom(error);
-      }
-    },
+    resolveChannel: (input: Parameters<SelectedContentResolver["resolveChannel"]>[0]) =>
+      resolveChannel(binding.contentWorkspace, input).pipe(
+        Effect.catch((error) => Effect.succeed(rejectedFrom(error)))
+      ),
+    resolveWorkspace: (input: Parameters<SelectedContentResolver["resolveWorkspace"]>[0]) =>
+      resolveWorkspace(
+        binding.contentWorkspace,
+        workspaceReader,
+        input.contentWorkspace,
+        input.mode
+      ).pipe(Effect.catch((error) => Effect.succeed(rejectedFrom(error)))),
   });
 }
 
-async function resolveChannel(
+function resolveChannel(
   contentWorkspace: SelectedContentReadPort,
   input: Parameters<SelectedContentResolver["resolveChannel"]>[0]
-): Promise<SelectedContentResolution> {
-  const { locator, selection } = input;
-  if (locator.expectedRepositoryIdentity !== selection.sourceRepositoryIdentity) {
-    return rejected(
-      "SelectionMismatch",
-      "Current-main selection belongs to another repository identity."
+): Effect.Effect<SelectedContentResolution, SelectedContentReadFailure> {
+  return Effect.gen(function* () {
+    const { locator, selection } = input;
+    if (locator.expectedRepositoryIdentity !== selection.sourceRepositoryIdentity) {
+      return rejected(
+        "SelectionMismatch",
+        "Current-main selection belongs to another repository identity."
+      );
+    }
+    const opening = yield* contentWorkspace.inspectGitRef({
+      locator: locator.workspacePath,
+      remoteSelection: { kind: "All" },
+      refName: selection.sourceRef,
+    });
+    const anchorIssue = channelAnchorIssue(opening, selection);
+    if (anchorIssue !== undefined) return yield* Effect.fail(anchorIssue);
+    const treeEntries = yield* readTreeEntries(contentWorkspace, opening);
+    const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
+    const releaseInputEntry = entryByPath.get(RELEASE_INPUT_PATH);
+    if (releaseInputEntry === undefined) {
+      return yield* Effect.fail(
+        new SelectedContentFailure(
+          "SourceIneligible",
+          `Selected tree is missing ${RELEASE_INPUT_PATH}.`
+        )
+      );
+    }
+    const releaseInputBytes = yield* readBlob(
+      contentWorkspace,
+      opening,
+      releaseInputEntry,
+      MAX_RELEASE_INPUT_ENVELOPE_BYTES
     );
-  }
-  const opening = await contentWorkspace.inspectGitRef({
-    locator: locator.workspacePath,
-    remoteSelection: { kind: "All" },
-    refName: selection.sourceRef,
-  });
-  requireChannelAnchor(opening, selection);
-  const treeEntries = await readTreeEntries(contentWorkspace, opening);
-  const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
-  const releaseInputEntry = entryByPath.get(RELEASE_INPUT_PATH);
-  if (releaseInputEntry === undefined) {
-    throw new SelectedContentFailure(
-      "SourceIneligible",
-      `Selected tree is missing ${RELEASE_INPUT_PATH}.`
+    const decoded = decodeAgentPluginReleaseInput(releaseInputBytes);
+    if (!decoded.ok) {
+      return yield* Effect.fail(
+        new SelectedContentFailure(
+          "SourceIneligible",
+          `Selected release input is invalid: ${decoded.issues.map((issue) => issue.code).join(",")}.`
+        )
+      );
+    }
+    const releaseInput = decoded.value;
+    if (releaseInput.releaseInputDigest !== selection.releaseInputDigest) {
+      return yield* Effect.fail(
+        new SelectedContentFailure(
+          "SelectionMismatch",
+          "Selected release-input digest differs from current-main."
+        )
+      );
+    }
+    if (releaseInput.body.contentAuthority !== selection.contentAuthority) {
+      return yield* Effect.fail(
+        new SelectedContentFailure(
+          "SelectionMismatch",
+          "Selected release input declares another content authority."
+        )
+      );
+    }
+    const manifestBytes = yield* requireNativeMarketplaceManifests(
+      contentWorkspace,
+      opening,
+      entryByPath
     );
-  }
-  const releaseInputBytes = await readBlob(
-    contentWorkspace,
-    opening,
-    releaseInputEntry,
-    MAX_RELEASE_INPUT_ENVELOPE_BYTES
-  );
-  const decoded = decodeAgentPluginReleaseInput(releaseInputBytes);
-  if (!decoded.ok) {
-    throw new SelectedContentFailure(
-      "SourceIneligible",
-      `Selected release input is invalid: ${decoded.issues.map((issue) => issue.code).join(",")}.`
+    const marketplaceIssue = validNativeMarketplacesIssue(releaseInput, manifestBytes);
+    if (marketplaceIssue !== undefined) return yield* Effect.fail(marketplaceIssue);
+    const payloads = yield* readDeclaredPayloads(
+      contentWorkspace,
+      opening,
+      treeEntries,
+      releaseInput
     );
-  }
-  const releaseInput = decoded.value;
-  if (releaseInput.releaseInputDigest !== selection.releaseInputDigest) {
-    throw new SelectedContentFailure(
-      "SelectionMismatch",
-      "Selected release-input digest differs from current-main."
-    );
-  }
-  if (releaseInput.body.contentAuthority !== selection.contentAuthority) {
-    throw new SelectedContentFailure(
-      "SelectionMismatch",
-      "Selected release input declares another content authority."
-    );
-  }
-  const manifestBytes = await requireNativeMarketplaceManifests(
-    contentWorkspace,
-    opening,
-    entryByPath
-  );
-  requireValidNativeMarketplaces(releaseInput, manifestBytes);
-  const payloads = await readDeclaredPayloads(contentWorkspace, opening, treeEntries, releaseInput);
-  const constructed = constructSelection({
-    contentAuthority: selection.contentAuthority,
-    repositoryIdentity: selection.sourceRepositoryIdentity,
-    sourceCommit: selection.contentCommit,
-    sourceTree: selection.contentTree,
-    releaseInput,
-    payloads,
-    mode: { kind: "complete-set" },
-    marketplace: Object.freeze({
-      identity: selection.contentAuthority,
-      source: Object.freeze({
-        kind: "git",
-        repositoryUrl: selection.sourceRepositoryUrl,
-        revision: selection.contentCommit,
-        sparsePaths: [...NATIVE_MARKETPLACE_SPARSE_PATHS],
+    const constructed = constructSelection({
+      contentAuthority: selection.contentAuthority,
+      repositoryIdentity: selection.sourceRepositoryIdentity,
+      sourceCommit: selection.contentCommit,
+      sourceTree: selection.contentTree,
+      releaseInput,
+      payloads,
+      mode: { kind: "complete-set" },
+      marketplace: Object.freeze({
+        identity: selection.contentAuthority,
+        source: Object.freeze({
+          kind: "git",
+          repositoryUrl: selection.sourceRepositoryUrl,
+          revision: selection.contentCommit,
+          sparsePaths: [...NATIVE_MARKETPLACE_SPARSE_PATHS],
+        }),
       }),
-    }),
+    });
+    if (constructed.kind === "Rejected") return constructed;
+    const closing = yield* contentWorkspace.inspectGitRef({
+      locator: locator.workspacePath,
+      remoteSelection: { kind: "All" },
+      refName: selection.sourceRef,
+    });
+    if (!sameRefObservation(opening, closing)) {
+      return rejected("SelectionMismatch", "Selected Git tag changed while its content was read.");
+    }
+    return constructed;
   });
-  if (constructed.kind === "Rejected") return constructed;
-  const closing = await contentWorkspace.inspectGitRef({
-    locator: locator.workspacePath,
-    remoteSelection: { kind: "All" },
-    refName: selection.sourceRef,
-  });
-  if (!sameRefObservation(opening, closing)) {
-    return rejected("SelectionMismatch", "Selected Git tag changed while its content was read.");
-  }
-  return constructed;
 }
 
-async function resolveWorkspace(
+function resolveWorkspace(
   contentWorkspace: SelectedContentReadPort,
   workspaceReader: CleanContentWorkspaceReader,
   policy: ContentWorkspacePolicy,
   mode: SelectedContentTestMode
-): Promise<SelectedContentResolution> {
-  if (policy.releaseInputPath !== RELEASE_INPUT_PATH || policy.pluginRoot !== PLUGIN_ROOT) {
-    return rejected(
-      "SourceIneligible",
-      `Local provider content must use ${RELEASE_INPUT_PATH} and ${PLUGIN_ROOT}.`
+): Effect.Effect<SelectedContentResolution, SelectedContentReadFailure> {
+  return Effect.gen(function* () {
+    if (policy.releaseInputPath !== RELEASE_INPUT_PATH || policy.pluginRoot !== PLUGIN_ROOT) {
+      return rejected(
+        "SourceIneligible",
+        `Local provider content must use ${RELEASE_INPUT_PATH} and ${PLUGIN_ROOT}.`
+      );
+    }
+    const inspected = yield* workspaceReader.inspect(policy);
+    if (inspected.kind === "Ineligible") {
+      return rejected(
+        "SourceIneligible",
+        inspected.issues.map((issue) => `${issue.code}: ${issue.detail}`).join("; ")
+      );
+    }
+    const treeObservation: GitRefObservation = Object.freeze({
+      root: policy.locator,
+      refName: policy.refName,
+      commit: policy.sourceCommit,
+      tree: policy.sourceTree,
+      objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
+      remoteUrls: Object.freeze([policy.remoteUrl]),
+    });
+    const treeEntries = yield* readTreeEntries(contentWorkspace, treeObservation);
+    const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
+    const manifestBytes = yield* requireNativeMarketplaceManifests(
+      contentWorkspace,
+      treeObservation,
+      entryByPath
     );
-  }
-  const inspected = await workspaceReader.inspect(policy);
-  if (inspected.kind === "Ineligible") {
-    return rejected(
-      "SourceIneligible",
-      inspected.issues.map((issue) => `${issue.code}: ${issue.detail}`).join("; ")
+    const marketplaceIssue = validNativeMarketplacesIssue(
+      inspected.snapshot.releaseInput,
+      manifestBytes
     );
-  }
-  const treeObservation: GitRefObservation = Object.freeze({
-    root: policy.locator,
-    refName: policy.refName,
-    commit: policy.sourceCommit,
-    tree: policy.sourceTree,
-    objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
-    remoteUrls: Object.freeze([policy.remoteUrl]),
+    if (marketplaceIssue !== undefined) return yield* Effect.fail(marketplaceIssue);
+    yield* requireMatchingWorkspaceManifests(contentWorkspace, policy.locator, manifestBytes);
+    const constructed = constructSelection({
+      contentAuthority: policy.contentAuthority,
+      repositoryIdentity: inspected.snapshot.repositoryIdentity,
+      sourceCommit: inspected.snapshot.sourceCommit,
+      sourceTree: inspected.snapshot.sourceTree,
+      releaseInput: inspected.snapshot.releaseInput,
+      payloads: inspected.snapshot.payloads,
+      mode,
+      marketplace: Object.freeze({
+        identity: policy.contentAuthority,
+        source: Object.freeze({ kind: "local", root: policy.locator }),
+      }),
+    });
+    if (constructed.kind === "Rejected") return constructed;
+    const closing = yield* workspaceReader.revalidate(
+      policy,
+      inspected.snapshot.eligibilityBinding
+    );
+    if (closing.kind !== "Eligible") {
+      return rejected("SelectionMismatch", "Local content changed before provider testing.");
+    }
+    yield* requireMatchingWorkspaceManifests(contentWorkspace, policy.locator, manifestBytes);
+    return constructed;
   });
-  const treeEntries = await readTreeEntries(contentWorkspace, treeObservation);
-  const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
-  const manifestBytes = await requireNativeMarketplaceManifests(
-    contentWorkspace,
-    treeObservation,
-    entryByPath
-  );
-  requireValidNativeMarketplaces(inspected.snapshot.releaseInput, manifestBytes);
-  await requireMatchingWorkspaceManifests(contentWorkspace, policy.locator, manifestBytes);
-  const constructed = constructSelection({
-    contentAuthority: policy.contentAuthority,
-    repositoryIdentity: inspected.snapshot.repositoryIdentity,
-    sourceCommit: inspected.snapshot.sourceCommit,
-    sourceTree: inspected.snapshot.sourceTree,
-    releaseInput: inspected.snapshot.releaseInput,
-    payloads: inspected.snapshot.payloads,
-    mode,
-    marketplace: Object.freeze({
-      identity: policy.contentAuthority,
-      source: Object.freeze({ kind: "local", root: policy.locator }),
-    }),
-  });
-  if (constructed.kind === "Rejected") return constructed;
-  const closing = await workspaceReader.revalidate(policy, inspected.snapshot.eligibilityBinding);
-  if (closing.kind !== "Eligible") {
-    return rejected("SelectionMismatch", "Local content changed before provider testing.");
-  }
-  await requireMatchingWorkspaceManifests(contentWorkspace, policy.locator, manifestBytes);
-  return constructed;
 }
 
 function constructSelection(input: ConstructSelectionInput): SelectedContentResolution {
@@ -359,283 +376,344 @@ function constructSelection(input: ConstructSelectionInput): SelectedContentReso
   return Object.freeze({ kind: "Selected", content });
 }
 
-async function readDeclaredPayloads(
+function readDeclaredPayloads(
   contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation,
   treeEntries: readonly TreeEntry[],
   releaseInput: AgentPluginReleaseInput
-): Promise<readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[]> {
-  const declaredTreeIssue = validateDeclaredPluginTree({
-    pluginRoot: PLUGIN_ROOT,
-    paths: treeEntries.map((entry) => entry.path),
-    declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
-  });
-  if (declaredTreeIssue !== undefined) {
-    throw new SelectedContentFailure(
-      "SourceIneligible",
-      `${declaredTreeIssue.code}: ${declaredTreeIssue.detail}`
-    );
-  }
-  const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
-  const declaredMembers: Array<
-    Readonly<{
-      pluginId: PluginId;
-      entries: readonly Readonly<{ relativePath: ReleaseRelativePath; entry: TreeEntry }>[];
-    }>
-  > = [];
-  const uniqueBlobs = new Set<string>();
-  for (const member of releaseInput.body.members) {
-    if (member.payload.manifest.length === 0) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Declared payload is empty for ${member.pluginId}.`
+): Effect.Effect<
+  readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[],
+  SelectedContentReadFailure
+> {
+  return Effect.gen(function* () {
+    const declaredTreeIssue = validateDeclaredPluginTree({
+      pluginRoot: PLUGIN_ROOT,
+      paths: treeEntries.map((entry) => entry.path),
+      declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
+    });
+    if (declaredTreeIssue !== undefined) {
+      return yield* Effect.fail(
+        new SelectedContentFailure(
+          "SourceIneligible",
+          `${declaredTreeIssue.code}: ${declaredTreeIssue.detail}`
+        )
       );
     }
-    const memberRoot = requireReleasePath(`${PLUGIN_ROOT}/${member.pluginId}`);
-    const entries = member.payload.manifest.map((manifestEntry) => {
-      const repositoryPath = requireReleasePath(`${memberRoot}/${manifestEntry.path}`);
-      const entry = entryByPath.get(repositoryPath);
-      if (entry === undefined) {
-        throw new SelectedContentFailure(
-          "SourceIneligible",
-          `Selected tree is missing ${repositoryPath}.`
+    const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
+    const declaredMembers: Array<
+      Readonly<{
+        pluginId: PluginId;
+        entries: readonly Readonly<{ relativePath: ReleaseRelativePath; entry: TreeEntry }>[];
+      }>
+    > = [];
+    const uniqueBlobs = new Set<string>();
+    for (const member of releaseInput.body.members) {
+      if (member.payload.manifest.length === 0) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Declared payload is empty for ${member.pluginId}.`
+          )
         );
       }
-      uniqueBlobs.add(entry.objectId);
-      return Object.freeze({ relativePath: manifestEntry.path, entry });
-    });
-    const expectedPaths = new Set(entries.map(({ entry }) => entry.path));
-    const undeclared = treeEntries.find(
-      (entry) => entry.path.startsWith(`${memberRoot}/`) && !expectedPaths.has(entry.path)
-    );
-    if (undeclared !== undefined) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Declared payload root contains an undeclared file: ${undeclared.path}.`
+      const memberRoot = requireReleasePath(`${PLUGIN_ROOT}/${member.pluginId}`);
+      const entries: Array<Readonly<{ relativePath: ReleaseRelativePath; entry: TreeEntry }>> = [];
+      for (const manifestEntry of member.payload.manifest) {
+        const repositoryPath = requireReleasePath(`${memberRoot}/${manifestEntry.path}`);
+        const entry = entryByPath.get(repositoryPath);
+        if (entry === undefined) {
+          return yield* Effect.fail(
+            new SelectedContentFailure(
+              "SourceIneligible",
+              `Selected tree is missing ${repositoryPath}.`
+            )
+          );
+        }
+        uniqueBlobs.add(entry.objectId);
+        entries.push(Object.freeze({ relativePath: manifestEntry.path, entry }));
+      }
+      const expectedPaths = new Set(entries.map(({ entry }) => entry.path));
+      const undeclared = treeEntries.find(
+        (entry) => entry.path.startsWith(`${memberRoot}/`) && !expectedPaths.has(entry.path)
+      );
+      if (undeclared !== undefined) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Declared payload root contains an undeclared file: ${undeclared.path}.`
+          )
+        );
+      }
+      declaredMembers.push(
+        Object.freeze({ pluginId: member.pluginId, entries: Object.freeze(entries) })
       );
     }
-    declaredMembers.push(
-      Object.freeze({ pluginId: member.pluginId, entries: Object.freeze(entries) })
-    );
-  }
-  const blobs = [...uniqueBlobs].sort(compareCanonicalText);
-  const observations = await contentWorkspace.readGitBlobs({
-    root: observation.root,
-    blobs,
-    objectFormat: observation.objectFormat,
-    maxBlobs: MAX_TREE_ENTRIES,
-    maxBlobBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
-    maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
-  });
-  const bytesByBlob = new Map(observations.map((item) => [item.blob, item.bytes]));
-  if (bytesByBlob.size !== blobs.length) {
-    throw new SelectedContentFailure(
-      "SourceReadFailed",
-      "Git batch omitted or duplicated a declared payload blob."
-    );
-  }
-  const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
-  for (const member of declaredMembers) {
-    const created = createAgentPluginPayload(
-      member.entries.map(({ relativePath, entry }) => {
+    const blobs = [...uniqueBlobs].sort(compareCanonicalText);
+    const observations = yield* contentWorkspace.readGitBlobs({
+      root: observation.root,
+      blobs,
+      objectFormat: observation.objectFormat,
+      maxBlobs: MAX_TREE_ENTRIES,
+      maxBlobBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
+      maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
+    });
+    const bytesByBlob = new Map(observations.map((item) => [item.blob, item.bytes]));
+    if (bytesByBlob.size !== blobs.length) {
+      return yield* Effect.fail(
+        new SelectedContentFailure(
+          "SourceReadFailed",
+          "Git batch omitted or duplicated a declared payload blob."
+        )
+      );
+    }
+    const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
+    for (const member of declaredMembers) {
+      const payloadEntries: Array<{
+        path: ReleaseRelativePath;
+        mode: TreeEntry["mode"];
+        bytes: Uint8Array;
+      }> = [];
+      for (const { relativePath, entry } of member.entries) {
         const bytes = bytesByBlob.get(entry.objectId);
         if (bytes === undefined) {
-          throw new SelectedContentFailure("SourceReadFailed", `Git batch omitted ${entry.path}.`);
+          return yield* Effect.fail(
+            new SelectedContentFailure("SourceReadFailed", `Git batch omitted ${entry.path}.`)
+          );
         }
-        return { path: relativePath, mode: entry.mode, bytes };
-      })
-    );
-    if (!created.ok) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Payload construction failed for ${member.pluginId}: ${created.issues
-          .map((issue) => issue.code)
-          .join(",")}.`
-      );
+        payloadEntries.push({ path: relativePath, mode: entry.mode, bytes });
+      }
+      const created = createAgentPluginPayload(payloadEntries);
+      if (!created.ok) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Payload construction failed for ${member.pluginId}: ${created.issues
+              .map((issue) => issue.code)
+              .join(",")}.`
+          )
+        );
+      }
+      const declaration = releaseInput.body.members.find(
+        (candidate) => candidate.pluginId === member.pluginId
+      )!;
+      if (
+        created.value.payloadDigest !== declaration.payload.payloadDigest ||
+        !samePayloadManifest(created.value.manifest, declaration.payload.manifest)
+      ) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Selected payload differs from its declaration for ${member.pluginId}.`
+          )
+        );
+      }
+      payloads.push(Object.freeze({ pluginId: member.pluginId, payload: created.value }));
     }
-    const declaration = releaseInput.body.members.find(
-      (candidate) => candidate.pluginId === member.pluginId
-    )!;
-    if (
-      created.value.payloadDigest !== declaration.payload.payloadDigest ||
-      !samePayloadManifest(created.value.manifest, declaration.payload.manifest)
-    ) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Selected payload differs from its declaration for ${member.pluginId}.`
-      );
-    }
-    payloads.push(Object.freeze({ pluginId: member.pluginId, payload: created.value }));
-  }
-  return Object.freeze(payloads);
+    return Object.freeze(payloads);
+  });
 }
 
-async function readTreeEntries(
+function readTreeEntries(
   contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation
-): Promise<readonly TreeEntry[]> {
-  const bytes = await contentWorkspace.readGitTree({
-    root: observation.root,
-    tree: observation.tree,
-    objectFormat: observation.objectFormat,
-    paths: SELECTED_CONTENT_INTERFACE_PATHS,
-    maxBytes: MAX_TREE_BYTES,
+): Effect.Effect<readonly TreeEntry[], SelectedContentReadFailure> {
+  return Effect.gen(function* () {
+    const bytes = yield* contentWorkspace.readGitTree({
+      root: observation.root,
+      tree: observation.tree,
+      objectFormat: observation.objectFormat,
+      paths: SELECTED_CONTENT_INTERFACE_PATHS,
+      maxBytes: MAX_TREE_BYTES,
+    });
+    const objectIdPattern =
+      observation.objectFormat === "sha1" ? /^[0-9a-f]{40}$/u : /^[0-9a-f]{64}$/u;
+    const records = splitNul(bytes);
+    if (records === undefined) {
+      return yield* Effect.fail(
+        new SelectedContentFailure("SourceReadFailed", "Git tree output is truncated.")
+      );
+    }
+    if (records.length > MAX_TREE_ENTRIES) {
+      return yield* Effect.fail(
+        new SelectedContentFailure("SourceIneligible", "Selected Git tree is too large.")
+      );
+    }
+    const entries: TreeEntry[] = [];
+    const exactPaths = new Set<string>();
+    const portablePaths = new Set<string>();
+    for (const recordBytes of records) {
+      const record = yield* Effect.try({
+        try: () => decoder.decode(recordBytes),
+        catch: () =>
+          new SelectedContentFailure(
+            "SourceReadFailed",
+            "Selected Git tree contains invalid UTF-8."
+          ),
+      });
+      const match = /^(100644|100755) blob ([0-9a-f]+)\t(.+)$/u.exec(record);
+      if (match === null || !objectIdPattern.test(match[2]!)) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            "Selected Git tree contains a non-regular or malformed entry."
+          )
+        );
+      }
+      const parsedPath = parseReleaseRelativePath(match[3], "selectedContent.tree.path");
+      if (!parsedPath.ok) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Selected Git tree contains a noncanonical path: ${match[3]}.`
+          )
+        );
+      }
+      const portablePath = parsedPath.value.normalize("NFC").toLowerCase();
+      if (exactPaths.has(parsedPath.value) || portablePaths.has(portablePath)) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Selected Git tree contains a path collision: ${parsedPath.value}.`
+          )
+        );
+      }
+      exactPaths.add(parsedPath.value);
+      portablePaths.add(portablePath);
+      entries.push(
+        Object.freeze({
+          mode: match[1] === "100755" ? 0o755 : 0o644,
+          objectId: match[2]!,
+          path: parsedPath.value,
+        })
+      );
+    }
+    return Object.freeze(entries);
   });
-  const objectIdPattern =
-    observation.objectFormat === "sha1" ? /^[0-9a-f]{40}$/u : /^[0-9a-f]{64}$/u;
-  const records = splitNul(bytes);
-  if (records.length > MAX_TREE_ENTRIES) {
-    throw new SelectedContentFailure("SourceIneligible", "Selected Git tree is too large.");
-  }
-  const entries: TreeEntry[] = [];
-  const exactPaths = new Set<string>();
-  const portablePaths = new Set<string>();
-  for (const recordBytes of records) {
-    const record = decoder.decode(recordBytes);
-    const match = /^(100644|100755) blob ([0-9a-f]+)\t(.+)$/u.exec(record);
-    if (match === null || !objectIdPattern.test(match[2]!)) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        "Selected Git tree contains a non-regular or malformed entry."
-      );
-    }
-    const parsedPath = parseReleaseRelativePath(match[3], "selectedContent.tree.path");
-    if (!parsedPath.ok) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Selected Git tree contains a noncanonical path: ${match[3]}.`
-      );
-    }
-    const portablePath = parsedPath.value.normalize("NFC").toLowerCase();
-    if (exactPaths.has(parsedPath.value) || portablePaths.has(portablePath)) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Selected Git tree contains a path collision: ${parsedPath.value}.`
-      );
-    }
-    exactPaths.add(parsedPath.value);
-    portablePaths.add(portablePath);
-    entries.push(
-      Object.freeze({
-        mode: match[1] === "100755" ? 0o755 : 0o644,
-        objectId: match[2]!,
-        path: parsedPath.value,
-      })
-    );
-  }
-  return Object.freeze(entries);
 }
 
-async function requireNativeMarketplaceManifests(
+function requireNativeMarketplaceManifests(
   contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation,
   entryByPath: ReadonlyMap<ReleaseRelativePath, TreeEntry>
-): Promise<ReadonlyMap<ReleaseRelativePath, Uint8Array>> {
-  const manifestBytes = new Map<ReleaseRelativePath, Uint8Array>();
-  for (const path of NATIVE_MARKETPLACE_MANIFESTS) {
-    const entry = entryByPath.get(path);
-    if (entry === undefined) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Selected tree is missing native marketplace manifest ${path}.`
+): Effect.Effect<ReadonlyMap<ReleaseRelativePath, Uint8Array>, SelectedContentReadFailure> {
+  return Effect.gen(function* () {
+    const manifestBytes = new Map<ReleaseRelativePath, Uint8Array>();
+    for (const path of NATIVE_MARKETPLACE_MANIFESTS) {
+      const entry = entryByPath.get(path);
+      if (entry === undefined) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Selected tree is missing native marketplace manifest ${path}.`
+          )
+        );
+      }
+      const bytes = yield* readBlob(
+        contentWorkspace,
+        observation,
+        entry,
+        MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES
       );
+      if (bytes.byteLength === 0) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Native marketplace manifest ${path} is empty.`
+          )
+        );
+      }
+      manifestBytes.set(path, bytes);
     }
-    const bytes = await readBlob(
-      contentWorkspace,
-      observation,
-      entry,
-      MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES
-    );
-    if (bytes.byteLength === 0) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Native marketplace manifest ${path} is empty.`
-      );
-    }
-    manifestBytes.set(path, bytes);
-  }
-  return manifestBytes;
+    return manifestBytes;
+  });
 }
 
-function requireValidNativeMarketplaces(
+function validNativeMarketplacesIssue(
   releaseInput: AgentPluginReleaseInput,
   manifests: ReadonlyMap<ReleaseRelativePath, Uint8Array>
-): void {
+): SelectedContentFailure | undefined {
   const codexBytes = manifests.get(CODEX_MARKETPLACE_MANIFEST);
   const claudeBytes = manifests.get(CLAUDE_MARKETPLACE_MANIFEST);
   if (codexBytes === undefined || claudeBytes === undefined) {
-    throw new SelectedContentFailure(
+    return new SelectedContentFailure(
       "SourceIneligible",
       "Selected content does not contain both native marketplace manifests."
     );
   }
   const validated = validateNativeMarketplaces({ releaseInput, codexBytes, claudeBytes });
   if (!validated.ok) {
-    throw new SelectedContentFailure("SourceIneligible", validated.detail);
+    return new SelectedContentFailure("SourceIneligible", validated.detail);
   }
+  return undefined;
 }
 
-async function requireMatchingWorkspaceManifests(
+function requireMatchingWorkspaceManifests(
   contentWorkspace: SelectedContentReadPort,
   root: string,
   expected: ReadonlyMap<ReleaseRelativePath, Uint8Array>
-): Promise<void> {
-  for (const [path, expectedBytes] of expected) {
-    const actual = await contentWorkspace.readFile({
-      root,
-      path,
-      maxBytes: MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
-    });
-    if (!equalBytes(actual, expectedBytes)) {
-      throw new SelectedContentFailure(
-        "SourceIneligible",
-        `Local native marketplace manifest differs from Git: ${path}.`
-      );
+): Effect.Effect<void, SelectedContentReadFailure> {
+  return Effect.gen(function* () {
+    for (const [path, expectedBytes] of expected) {
+      const actual = yield* contentWorkspace.readFile({
+        root,
+        path,
+        maxBytes: MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
+      });
+      if (!equalBytes(actual, expectedBytes)) {
+        return yield* Effect.fail(
+          new SelectedContentFailure(
+            "SourceIneligible",
+            `Local native marketplace manifest differs from Git: ${path}.`
+          )
+        );
+      }
     }
-  }
+  });
 }
 
-async function readBlob(
+function readBlob(
   contentWorkspace: SelectedContentReadPort,
   observation: GitRefObservation,
   entry: TreeEntry,
   maximumBytes: number
-): Promise<Uint8Array> {
-  const bytes = await contentWorkspace.readGitBlob({
-    root: observation.root,
-    blob: entry.objectId,
-    objectFormat: observation.objectFormat,
-    maxBytes: maximumBytes,
+): Effect.Effect<Uint8Array, SelectedContentReadFailure> {
+  return Effect.gen(function* () {
+    const bytes = yield* contentWorkspace.readGitBlob({
+      root: observation.root,
+      blob: entry.objectId,
+      objectFormat: observation.objectFormat,
+      maxBytes: maximumBytes,
+    });
+    if (bytes.byteLength > maximumBytes) {
+      return yield* Effect.fail(
+        new SelectedContentFailure("SourceReadFailed", `Git blob exceeds its bound: ${entry.path}.`)
+      );
+    }
+    return bytes;
   });
-  if (bytes.byteLength > maximumBytes) {
-    throw new SelectedContentFailure(
-      "SourceReadFailed",
-      `Git blob exceeds its bound: ${entry.path}.`
-    );
-  }
-  return bytes;
 }
 
-function requireChannelAnchor(
+function channelAnchorIssue(
   observation: GitRefObservation,
   selection: Parameters<SelectedContentResolver["resolveChannel"]>[0]["selection"]
-): void {
+): SelectedContentFailure | undefined {
   if (
     observation.refName !== selection.sourceRef ||
     observation.commit !== selection.contentCommit ||
     observation.tree !== selection.contentTree
   ) {
-    throw new SelectedContentFailure(
+    return new SelectedContentFailure(
       "SelectionMismatch",
       "Selected Git tag does not resolve to the reviewed commit and tree."
     );
   }
   if (!observation.remoteUrls.includes(selection.sourceRepositoryUrl)) {
-    throw new SelectedContentFailure(
+    return new SelectedContentFailure(
       "SelectionMismatch",
       "Selected Git workspace does not expose the reviewed repository URL."
     );
   }
+  return undefined;
 }
 
 function sameRefObservation(left: GitRefObservation, right: GitRefObservation): boolean {
@@ -685,7 +763,7 @@ function requireReleasePath(value: string): ReleaseRelativePath {
   return parsed.value;
 }
 
-function splitNul(bytes: Uint8Array): readonly Uint8Array[] {
+function splitNul(bytes: Uint8Array): readonly Uint8Array[] | undefined {
   const records: Uint8Array[] = [];
   let start = 0;
   for (let index = 0; index < bytes.byteLength; index += 1) {
@@ -693,9 +771,7 @@ function splitNul(bytes: Uint8Array): readonly Uint8Array[] {
     if (index > start) records.push(bytes.slice(start, index));
     start = index + 1;
   }
-  if (start !== bytes.byteLength) {
-    throw new SelectedContentFailure("SourceReadFailed", "Git tree output is truncated.");
-  }
+  if (start !== bytes.byteLength) return undefined;
   return records;
 }
 
@@ -720,7 +796,9 @@ function rejected(
   });
 }
 
-function rejectedFrom(error: unknown): Extract<SelectedContentResolution, { kind: "Rejected" }> {
+function rejectedFrom(
+  error: SelectedContentReadFailure
+): Extract<SelectedContentResolution, { kind: "Rejected" }> {
   return error instanceof SelectedContentFailure
     ? rejected(error.code, error.message)
     : rejected(

@@ -1,6 +1,3 @@
-import { ORPCError } from "@orpc/client";
-import { Effect } from "effect";
-
 import type {
   DerivedReleaseSelection,
   ReleaseSelection,
@@ -17,10 +14,7 @@ import { module } from "../module";
 
 /** Checks whether one exact content snapshot can produce the requested release selection. */
 export const check = module.check.effect(function* ({ context, input: request }) {
-  const inspected = yield* Effect.tryPromise({
-    try: () => context.source.inspect(request.contentWorkspace),
-    catch: (cause) => new ORPCError("INTERNAL_SERVER_ERROR", { cause }),
-  });
+  const inspected = yield* context.source.inspect(request.contentWorkspace);
   if (inspected.kind === "Ineligible") return ineligibleReport(request.mode, inspected.issues);
   const derivation = deriveReleaseSelection(inspected.snapshot, request.mode);
   if (!derivation.ok) {

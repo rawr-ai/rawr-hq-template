@@ -520,6 +520,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   with a source-spelling blacklist. Keep filesystem/process Effect programs
   inside their owning resources and expose only ready capabilities into
   operation context.
+- [x] 5.4a Delete the content-workspace Promise mirror and detached production
+  runner. Let the concrete Git/Effect Platform provider bind its exact
+  filesystem layer once and expose one ready
+  `ContentWorkspaceResource<never>`; let the CLI host select that provider and
+  pass the same lazy Effect capability into service context. Migrate clean,
+  staged, selected-content, current-main, release, packaging, provider, and
+  Vendor consumers together so no dual port remains. Preserve typed resource
+  failures, cancellation, Vendor transaction settlement, exact Git bounds,
+  public results, and native operation behavior. This checkpoint does not
+  close task 5.4 while other resource-shaped assemblies and broad context lanes
+  remain.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

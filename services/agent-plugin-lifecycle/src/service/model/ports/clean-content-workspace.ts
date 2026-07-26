@@ -1,4 +1,5 @@
-import type { ContentWorkspaceGitReadAsyncPort } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { Effect } from "effect";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
@@ -9,7 +10,7 @@ import type {
  * to establish and revalidate one clean release source.
  */
 export type ResourceContentWorkspaceSnapshotReadPort = Pick<
-  ContentWorkspaceGitReadAsyncPort,
+  ContentWorkspaceResource<never>,
   | "inspectGitWorkspace"
   | "readGitTree"
   | "readGitBlob"
@@ -22,9 +23,9 @@ export type ResourceContentWorkspaceSnapshotReadPort = Pick<
  * observation boundary while the service retains ownership of source policy.
  */
 export interface CleanContentWorkspaceReader {
-  inspect(policy: ContentWorkspacePolicy): Promise<ContentWorkspaceInspection>;
+  inspect(policy: ContentWorkspacePolicy): Effect.Effect<ContentWorkspaceInspection>;
   revalidate(
     policy: ContentWorkspacePolicy,
     eligibilityBinding: string
-  ): Promise<ContentWorkspaceInspection>;
+  ): Effect.Effect<ContentWorkspaceInspection>;
 }

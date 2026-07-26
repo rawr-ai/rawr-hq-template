@@ -1,4 +1,4 @@
-import type { ContentWorkspaceNodeAsyncPort } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 
 import { createMiddleware } from "../base";
 import type { CurrentMainSelectionReader } from "../model/dependencies/current-main";
@@ -12,11 +12,13 @@ export const currentMain = createMiddleware().middleware(async ({ context, next 
     contentWorkspace: context.deps.contentWorkspace,
   });
   const reader: CurrentMainSelectionReader = Object.freeze({
-    async resolve(input: Parameters<CurrentMainSelectionReader["resolve"]>[0]) {
+    resolve(input: Parameters<CurrentMainSelectionReader["resolve"]>[0]) {
       const locator = decodeGitLocator(input);
       return locator.ok
         ? resolveCurrentMainSelection(git, locator.value)
-        : Object.freeze({ kind: "WRONG_REPOSITORY" as const, reason: locator.reason });
+        : Effect.succeed(
+            Object.freeze({ kind: "WRONG_REPOSITORY" as const, reason: locator.reason })
+          );
     },
   });
 

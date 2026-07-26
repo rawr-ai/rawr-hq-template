@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Resources Stay Effectful
+
+A provider realizes one neutral resource contract. The host selects that
+provider, receives the ready Effect capability, and passes it into the service
+context. Modules may narrow that capability through middleware, while router
+handlers sequence its operations and policy interprets the resulting facts.
+
+A Promise mirror, detached runner, or service-local adaptation duplicates the
+resource boundary and erases failure and interruption semantics. Delete the
+mirror instead: bind runtime requirements once in the provider, keep typed
+failure and cancellation native, and let every consumer use the same lazy
+Effect operations. Vendor orchestration still hidden in policy is the next
+visible red boundary; this checkpoint does not bless it.
+
+See [[resources/content-workspace/AGENTS|the content-workspace boundary]] and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the
+active lifecycle record]].
+
+### Bag Of Keywords
+
+Provider, resource, Effect, host, context, module, router, policy, fact,
+failure, interrupt, flow, delete.
+
 ## 2026-07-26 - Resources Remove Broad Context
 
 The contract implementer and the middleware author are distinct native roles.

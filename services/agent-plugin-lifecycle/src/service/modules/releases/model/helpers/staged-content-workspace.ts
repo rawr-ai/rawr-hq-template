@@ -4,6 +4,7 @@ import type {
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 
 import type {
   StagedIndexBindingObservation,
@@ -27,9 +28,9 @@ export function createStagedContentWorkspaceObservationReader(
   }>
 ): StagedContentWorkspaceObservationReader {
   return Object.freeze({
-    async observe(request: StagedIndexObservationRequest) {
-      try {
-        const observation = await binding.contentWorkspace.observeGitStagedIndex({
+    observe(request: StagedIndexObservationRequest) {
+      return binding.contentWorkspace
+        .observeGitStagedIndex({
           locator: request.locator,
           remoteSelection: { kind: "Named", remoteName: request.remoteName },
           refName: request.refName,
@@ -38,11 +39,11 @@ export function createStagedContentWorkspaceObservationReader(
           maxEntries: request.maxEntries,
           maxIndexBytes: request.maxIndexBytes,
           maxBlobBytes: request.maxBlobBytes,
-        });
-        return observed(observation);
-      } catch (error) {
-        return failed(error);
-      }
+        })
+        .pipe(
+          Effect.map(observed),
+          Effect.catch((error) => Effect.succeed(failed(error)))
+        );
     },
   });
 }

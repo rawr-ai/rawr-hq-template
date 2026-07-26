@@ -1,9 +1,10 @@
 import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
+import { Effect } from "effect";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { contract } from "../../../src/service/modules/providers/contract";
-import { runProviderStatus } from "../../../src/service/modules/providers/router/status.router";
+import { runProviderStatus as providerStatusEffect } from "../../../src/service/modules/providers/router/status.router";
 import {
   ProviderMutationTargetResultSchema,
   ProviderStatusRequestSchema,
@@ -24,6 +25,9 @@ import {
   selectedContent,
   testRequest,
 } from "./fixture";
+
+const runProviderStatus = (...args: Parameters<typeof providerStatusEffect>) =>
+  Effect.runPromise(providerStatusEffect(...args));
 
 describe("provider public schema boundary", () => {
   it("derives every public provider contract type from its TypeBox schema", () => {

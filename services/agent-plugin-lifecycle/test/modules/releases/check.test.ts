@@ -1,4 +1,4 @@
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { parsePluginId } from "../../../src/service/shared/release";
@@ -25,7 +25,7 @@ describe("release check", () => {
     root = await createOwnedFixtureRoot();
     const repository = await createGeneratedMultiMemberGitRepository(root);
     const client = createLifecycleTestClient({
-      contentWorkspace: makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE }),
+      contentWorkspace: makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE }),
     });
 
     const targetedRequest = {
@@ -68,7 +68,7 @@ describe("release check", () => {
     root = await createOwnedFixtureRoot();
     const repository = await createGeneratedMultiMemberGitRepository(root);
     const client = createLifecycleTestClient({
-      contentWorkspace: makeNodeContentWorkspacePort({ gitExecutable: GIT_EXECUTABLE }),
+      contentWorkspace: makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE }),
     });
     const pluginId = parsePluginId("fixture-missing");
     if (!pluginId.ok) throw new Error("Test plugin ID must be valid");

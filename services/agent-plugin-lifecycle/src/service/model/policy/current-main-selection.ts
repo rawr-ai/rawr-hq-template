@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import {
   decodeAgentPluginReleaseInput,
   parseGitCommitId,
@@ -36,103 +37,112 @@ const COMPILED_RELEASE_INPUT_PATH = requireRelativePath(
 );
 const TRUNCATED_SELECTION_REASON_SUFFIX = "...[truncated]";
 
-export async function resolveCurrentMainSelection(
+export function resolveCurrentMainSelection(
   git: ExactGitReader,
   locator: Parameters<ExactGitReader["inspect"]>[0]
-): Promise<CurrentMainSelectionResult> {
-  const opening = await git.inspect(locator, COMPILED_CANONICAL_REF);
-  const openingFailure = classifyInspection(opening, locator.expectedRepositoryIdentity);
-  if (openingFailure !== undefined) return openingFailure;
-  if (opening.kind !== "Ready") {
-    return refused(
-      "UNREACHABLE_REPOSITORY",
-      "Canonical Git inspection produced no readable main state"
-    );
-  }
+): Effect.Effect<CurrentMainSelectionResult> {
+  return Effect.gen(function* () {
+    const opening = yield* git.inspect(locator, COMPILED_CANONICAL_REF);
+    const openingFailure = classifyInspection(opening, locator.expectedRepositoryIdentity);
+    if (openingFailure !== undefined) return openingFailure;
+    if (opening.kind !== "Ready") {
+      return refused(
+        "UNREACHABLE_REPOSITORY",
+        "Canonical Git inspection produced no readable main state"
+      );
+    }
 
-  const recordRead = await git.readFileAtRevision(locator, {
-    repositoryIdentity: opening.repositoryIdentity,
-    ref: opening.canonicalRef,
-    commit: opening.headCommit,
-    tree: opening.headTree,
-    path: COMPILED_CURRENT_MAIN_PATH,
+    const recordRead = yield* git.readFileAtRevision(locator, {
+      repositoryIdentity: opening.repositoryIdentity,
+      ref: opening.canonicalRef,
+      commit: opening.headCommit,
+      tree: opening.headTree,
+      path: COMPILED_CURRENT_MAIN_PATH,
+    });
+    if (!recordRead.ok) {
+      return classifyGitReadFailure(recordRead.failure.code, recordRead.failure.message);
+    }
+
+    const currentMain = decodeCurrentMainRecord(recordRead.observation.bytes);
+    if (typeof currentMain === "string") {
+      return refused(
+        "FORGED_RECORD",
+        `Current-main v3 is invalid: ${describeCurrentMainRecordValidation(currentMain)}`
+      );
+    }
+    const record = currentMain;
+    if (
+      record.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity ||
+      record.sourceRepositoryIdentity !== opening.repositoryIdentity
+    ) {
+      return refused(
+        "WRONG_REPOSITORY",
+        "Current-main selects a repository other than the explicit locator"
+      );
+    }
+
+    const sourceRef = parseCanonicalRef(record.sourceRef, "currentMain.sourceRef");
+    const contentCommit = parseGitCommitId(record.contentCommit, "currentMain.contentCommit");
+    const contentTree = parseGitTreeId(record.contentTree, "currentMain.contentTree");
+    if (!sourceRef.ok || !contentCommit.ok || !contentTree.ok) {
+      return refused("FORGED_RECORD", "Current-main contains an invalid content revision");
+    }
+    if (contentCommit.value === opening.headCommit) {
+      return refused("FORGED_RECORD", "Current-main cannot select its containing record commit");
+    }
+    const landedOnMainAttempt = yield* Effect.result(
+      git.isAncestor(locator, contentCommit.value, opening.headCommit)
+    );
+    if (landedOnMainAttempt._tag === "Failure") {
+      return refused(
+        "UNREACHABLE_REPOSITORY",
+        "Could not verify selected content ancestry against canonical main"
+      );
+    }
+    const landedOnMain = landedOnMainAttempt.success;
+    if (!landedOnMain) {
+      return refused(
+        "STALE_RECORD",
+        "Selected content commit is not reachable from canonical main"
+      );
+    }
+
+    const releaseInputRead = yield* git.readFileAtRevision(locator, {
+      repositoryIdentity: opening.repositoryIdentity,
+      ref: sourceRef.value,
+      commit: contentCommit.value,
+      tree: contentTree.value,
+      path: COMPILED_RELEASE_INPUT_PATH,
+    });
+    if (!releaseInputRead.ok) {
+      return classifyGitReadFailure(
+        releaseInputRead.failure.code,
+        releaseInputRead.failure.message
+      );
+    }
+    const releaseInput = decodeAgentPluginReleaseInput(releaseInputRead.observation.bytes);
+    if (!releaseInput.ok) {
+      return refused("FORGED_RECORD", "Selected release input is invalid or noncanonical");
+    }
+    if (releaseInput.value.releaseInputDigest !== record.releaseInputDigest) {
+      return refused("FORGED_RECORD", "Selected release-input digest differs from current-main");
+    }
+    if (releaseInput.value.body.contentAuthority !== record.contentAuthority) {
+      return refused("FORGED_RECORD", "Selected release input declares another content authority");
+    }
+
+    const closing = yield* git.inspect(locator, COMPILED_CANONICAL_REF);
+    const closingFailure = classifyInspection(closing, locator.expectedRepositoryIdentity);
+    if (closingFailure !== undefined) return closingFailure;
+    if (closing.kind !== "Ready" || !sameInspection(opening, closing)) {
+      return refused(
+        "UNREACHABLE_REPOSITORY",
+        "Canonical main changed during current-main selection"
+      );
+    }
+
+    return Object.freeze({ kind: "CURRENT_ELIGIBLE", selection: record });
   });
-  if (!recordRead.ok) {
-    return classifyGitReadFailure(recordRead.failure.code, recordRead.failure.message);
-  }
-
-  const currentMain = decodeCurrentMainRecord(recordRead.observation.bytes);
-  if (typeof currentMain === "string") {
-    return refused(
-      "FORGED_RECORD",
-      `Current-main v3 is invalid: ${describeCurrentMainRecordValidation(currentMain)}`
-    );
-  }
-  const record = currentMain;
-  if (
-    record.sourceRepositoryIdentity !== locator.expectedRepositoryIdentity ||
-    record.sourceRepositoryIdentity !== opening.repositoryIdentity
-  ) {
-    return refused(
-      "WRONG_REPOSITORY",
-      "Current-main selects a repository other than the explicit locator"
-    );
-  }
-
-  const sourceRef = parseCanonicalRef(record.sourceRef, "currentMain.sourceRef");
-  const contentCommit = parseGitCommitId(record.contentCommit, "currentMain.contentCommit");
-  const contentTree = parseGitTreeId(record.contentTree, "currentMain.contentTree");
-  if (!sourceRef.ok || !contentCommit.ok || !contentTree.ok) {
-    return refused("FORGED_RECORD", "Current-main contains an invalid content revision");
-  }
-  if (contentCommit.value === opening.headCommit) {
-    return refused("FORGED_RECORD", "Current-main cannot select its containing record commit");
-  }
-  let landedOnMain: boolean;
-  try {
-    landedOnMain = await git.isAncestor(locator, contentCommit.value, opening.headCommit);
-  } catch {
-    return refused(
-      "UNREACHABLE_REPOSITORY",
-      "Could not verify selected content ancestry against canonical main"
-    );
-  }
-  if (!landedOnMain) {
-    return refused("STALE_RECORD", "Selected content commit is not reachable from canonical main");
-  }
-
-  const releaseInputRead = await git.readFileAtRevision(locator, {
-    repositoryIdentity: opening.repositoryIdentity,
-    ref: sourceRef.value,
-    commit: contentCommit.value,
-    tree: contentTree.value,
-    path: COMPILED_RELEASE_INPUT_PATH,
-  });
-  if (!releaseInputRead.ok) {
-    return classifyGitReadFailure(releaseInputRead.failure.code, releaseInputRead.failure.message);
-  }
-  const releaseInput = decodeAgentPluginReleaseInput(releaseInputRead.observation.bytes);
-  if (!releaseInput.ok) {
-    return refused("FORGED_RECORD", "Selected release input is invalid or noncanonical");
-  }
-  if (releaseInput.value.releaseInputDigest !== record.releaseInputDigest) {
-    return refused("FORGED_RECORD", "Selected release-input digest differs from current-main");
-  }
-  if (releaseInput.value.body.contentAuthority !== record.contentAuthority) {
-    return refused("FORGED_RECORD", "Selected release input declares another content authority");
-  }
-
-  const closing = await git.inspect(locator, COMPILED_CANONICAL_REF);
-  const closingFailure = classifyInspection(closing, locator.expectedRepositoryIdentity);
-  if (closingFailure !== undefined) return closingFailure;
-  if (closing.kind !== "Ready" || !sameInspection(opening, closing)) {
-    return refused(
-      "UNREACHABLE_REPOSITORY",
-      "Canonical main changed during current-main selection"
-    );
-  }
-
-  return Object.freeze({ kind: "CURRENT_ELIGIBLE", selection: record });
 }
 
 function classifyInspection(

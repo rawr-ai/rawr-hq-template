@@ -1,4 +1,3 @@
-import { awaitDependencyPromise } from "../../../base";
 import type { ReleaseInputRefreshRequest } from "../model/dto/release-lifecycle";
 import {
   classifyReleaseInputRefreshObservation,
@@ -13,9 +12,7 @@ export const refreshReleaseInput = module.refreshReleaseInput.effect(function* (
   const request = snapshotRefreshRequest(input);
   const plan = planReleaseInputRefreshObservation(request);
   if (plan.kind !== "Ready") return plan;
-  const observation = yield* awaitDependencyPromise(() =>
-    context.stagedSource.observe(plan.observationRequest)
-  );
+  const observation = yield* context.stagedSource.observe(plan.observationRequest);
   return classifyReleaseInputRefreshObservation(request, plan.memberRoots, observation);
 });
 

@@ -1,6 +1,7 @@
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { makeNodeContentWorkspacePort } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import { createExactGitBlobPointer } from "../../../src/service/model/dto/current-main-git";
 import { parseRepository } from "../../../src/service/model/dto/current-main-primitives";
@@ -57,12 +58,12 @@ describe("governance exact-Git resource selection", () => {
       expectedRepositoryIdentity: repositoryIdentity.value,
     });
     const reader = createResourceExactGitReader({
-      contentWorkspace: makeNodeContentWorkspacePort({
+      contentWorkspace: makeNodeContentWorkspaceResource({
         gitExecutable: await realpath(GIT_EXECUTABLE),
       }),
     });
 
-    await expect(reader.inspect(locator, pointer.value.ref)).resolves.toEqual({
+    await expect(Effect.runPromise(reader.inspect(locator, pointer.value.ref))).resolves.toEqual({
       kind: "Ready",
       repositoryIdentity: repositoryIdentity.value,
       canonicalRef: pointer.value.ref,
@@ -70,13 +71,15 @@ describe("governance exact-Git resource selection", () => {
       headTree: pointer.value.tree,
     });
     await expect(
-      reader.readFileAtRevision(locator, {
-        repositoryIdentity: pointer.value.repositoryIdentity,
-        ref: pointer.value.ref,
-        commit: pointer.value.commit,
-        tree: pointer.value.tree,
-        path: pointer.value.path,
-      })
+      Effect.runPromise(
+        reader.readFileAtRevision(locator, {
+          repositoryIdentity: pointer.value.repositoryIdentity,
+          ref: pointer.value.ref,
+          commit: pointer.value.commit,
+          tree: pointer.value.tree,
+          path: pointer.value.path,
+        })
+      )
     ).resolves.toEqual({
       ok: true,
       observation: {
@@ -97,7 +100,7 @@ describe("governance exact-Git resource selection", () => {
     await git(repository.root, ["checkout", "-b", "unrelated-worktree"]);
     await writeFile(join(repository.root, "untracked-local-note.txt"), "not lifecycle input\n");
     const client = createLifecycleTestClient({
-      contentWorkspace: makeNodeContentWorkspacePort({
+      contentWorkspace: makeNodeContentWorkspaceResource({
         gitExecutable: await realpath(GIT_EXECUTABLE),
       }),
     });
@@ -140,7 +143,7 @@ describe("governance exact-Git resource selection", () => {
     });
     await git(repository.root, ["update-ref", SOURCE_REF, "HEAD"]);
     const client = createLifecycleTestClient({
-      contentWorkspace: makeNodeContentWorkspacePort({
+      contentWorkspace: makeNodeContentWorkspaceResource({
         gitExecutable: await realpath(GIT_EXECUTABLE),
       }),
     });
@@ -180,7 +183,7 @@ describe("governance exact-Git resource selection", () => {
       commitMessage: "record old-path-only source selection",
     });
     const client = createLifecycleTestClient({
-      contentWorkspace: makeNodeContentWorkspacePort({
+      contentWorkspace: makeNodeContentWorkspaceResource({
         gitExecutable: await realpath(GIT_EXECUTABLE),
       }),
     });

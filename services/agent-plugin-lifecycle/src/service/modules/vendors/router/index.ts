@@ -1,5 +1,5 @@
-import type { ContentWorkspaceAsyncPort } from "@rawr/resource-content-workspace";
-import { awaitDependencyPromise } from "../../../base";
+import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import { Effect } from "effect";
 import type {
   VendorSourceStatus,
   VendorStatusRequest,
@@ -50,9 +50,7 @@ interface PreparedCandidate {
 }
 
 const status = module.status.effect(function* ({ context, input: request }) {
-  const workspace = yield* awaitDependencyPromise(() =>
-    observeWorkspace(context.contentWorkspace, request)
-  );
+  const workspace = yield* observeWorkspace(context.contentWorkspace, request);
   if ("issues" in workspace) return { kind: "Rejected" as const, issues: workspace.issues };
 
   const statuses: VendorSourceStatus[] = [];
@@ -72,18 +70,14 @@ const status = module.status.effect(function* ({ context, input: request }) {
       });
       continue;
     }
-    const assessment = yield* awaitDependencyPromise(() =>
-      assessSource(context.contentWorkspace, source)
-    );
+    const assessment = yield* assessSource(context.contentWorkspace, source);
     statuses.push(assessment.status);
   }
   return { kind: "VendorStatus" as const, sources: statuses };
 });
 
 const update = module.update.effect(function* ({ context, input: request }) {
-  const workspace = yield* awaitDependencyPromise(() =>
-    observeWorkspace(context.contentWorkspace, request)
-  );
+  const workspace = yield* observeWorkspace(context.contentWorkspace, request);
   if ("issues" in workspace) return rejected(request.sourceIds, workspace.issues);
   const selected = selectSources(request, workspace.observation);
   if ("issues" in selected) return rejected(request.sourceIds, selected.issues);
@@ -91,9 +85,7 @@ const update = module.update.effect(function* ({ context, input: request }) {
   const candidates: PreparedCandidate[] = [];
   const assessmentIssues: VendorUpdateIssue[] = [];
   for (const source of selected.sources) {
-    const assessment = yield* awaitDependencyPromise(() =>
-      assessSource(context.contentWorkspace, source)
-    );
+    const assessment = yield* assessSource(context.contentWorkspace, source);
     if (assessment.issue !== undefined) assessmentIssues.push(assessment.issue);
     if (assessment.candidate !== undefined)
       candidates.push({ source, upstream: assessment.candidate });
@@ -106,13 +98,11 @@ const update = module.update.effect(function* ({ context, input: request }) {
   const changes: VendorSourceChange[] = [];
   const preparationIssues: VendorUpdateIssue[] = [];
   for (const candidate of candidates) {
-    const materialized = yield* awaitDependencyPromise(() =>
-      materializeVendorUpstream(
-        context.contentWorkspace,
-        context.clock,
-        candidate.source,
-        candidate.upstream
-      )
+    const materialized = yield* materializeVendorUpstream(
+      context.contentWorkspace,
+      context.clock,
+      candidate.source,
+      candidate.upstream
     );
     if (!materialized.ok) {
       preparationIssues.push(...materialized.issues);
@@ -131,21 +121,21 @@ const update = module.update.effect(function* ({ context, input: request }) {
     changes
   );
   if (!planned.ok) return rejected(request.sourceIds, planned.issues);
-  return yield* awaitDependencyPromise(() =>
-    executeVendorAuthoringPlan(context.contentWorkspace, request, planned.value)
-  );
+  return yield* executeVendorAuthoringPlan(context.contentWorkspace, request, planned.value);
 });
 
 export const router = Object.freeze({ status, update });
 
-async function observeWorkspace(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+function observeWorkspace(
+  contentWorkspace: ContentWorkspaceResource<never>,
   request: VendorStatusRequest
-): Promise<ObservedWorkspace | WorkspaceFailure> {
-  const observed = await observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
-  if (!observed.ok) return { issues: observed.issues };
-  const issue = vendorWorkspaceIssue(request, observed.value);
-  return issue === undefined ? { observation: observed.value } : { issues: [issue] };
+): Effect.Effect<ObservedWorkspace | WorkspaceFailure> {
+  return Effect.gen(function* () {
+    const observed = yield* observeVendorWorkspace(contentWorkspace, request.contentWorkspace);
+    if (!observed.ok) return { issues: observed.issues };
+    const issue = vendorWorkspaceIssue(request, observed.value);
+    return issue === undefined ? { observation: observed.value } : { issues: [issue] };
+  });
 }
 
 function selectSources(
@@ -194,64 +184,66 @@ function selectSources(
   return failure === null ? { sources: selected } : { issues: failure };
 }
 
-async function assessSource(
-  contentWorkspace: ContentWorkspaceAsyncPort,
+function assessSource(
+  contentWorkspace: ContentWorkspaceResource<never>,
   source: VendorDeclaredSourceObservation
-): Promise<SourceAssessment> {
-  const observed = await observeVendorUpstream(contentWorkspace, source);
-  if (!observed.ok) {
-    const failure = observed.issues[0];
-    return {
-      status: statusFromIssue(source, failure, statusClassification(failure)),
-      issue: failure,
-    };
-  }
-  const admitted = admittedIdentity(source);
-  const upstream = observed.value;
-  if (upstream.ancestry === "diverged") {
-    const failure = vendorIssue(
-      "NonFastForward",
-      "The admitted commit is not an ancestor of the observed upstream commit.",
-      source.declaration.sourceId
-    );
-    return {
-      status: statusFromIssue(source, failure, "Diverged", upstream.identity),
-      issue: failure,
-    };
-  }
-  if (sameVendorIdentity(admitted, upstream.identity) && upstream.ancestry === "same") {
+): Effect.Effect<SourceAssessment> {
+  return Effect.gen(function* () {
+    const observed = yield* observeVendorUpstream(contentWorkspace, source);
+    if (!observed.ok) {
+      const failure = observed.issues[0];
+      return {
+        status: statusFromIssue(source, failure, statusClassification(failure)),
+        issue: failure,
+      };
+    }
+    const admitted = admittedIdentity(source);
+    const upstream = observed.value;
+    if (upstream.ancestry === "diverged") {
+      const failure = vendorIssue(
+        "NonFastForward",
+        "The admitted commit is not an ancestor of the observed upstream commit.",
+        source.declaration.sourceId
+      );
+      return {
+        status: statusFromIssue(source, failure, "Diverged", upstream.identity),
+        issue: failure,
+      };
+    }
+    if (sameVendorIdentity(admitted, upstream.identity) && upstream.ancestry === "same") {
+      return {
+        status: {
+          sourceId: source.declaration.sourceId,
+          classification: "Current",
+          admitted,
+          observed: upstream.identity,
+        },
+      };
+    }
+    if (
+      upstream.ancestry !== "fast-forward" ||
+      upstream.identity.sourceCommit === admitted.sourceCommit
+    ) {
+      const failure = vendorIssue(
+        "PayloadMismatch",
+        "Upstream identity changed without a valid fast-forward commit transition.",
+        source.declaration.sourceId
+      );
+      return {
+        status: statusFromIssue(source, failure, "Diverged", upstream.identity),
+        issue: failure,
+      };
+    }
     return {
       status: {
         sourceId: source.declaration.sourceId,
-        classification: "Current",
+        classification: "UpdateAvailable",
         admitted,
         observed: upstream.identity,
       },
+      candidate: upstream,
     };
-  }
-  if (
-    upstream.ancestry !== "fast-forward" ||
-    upstream.identity.sourceCommit === admitted.sourceCommit
-  ) {
-    const failure = vendorIssue(
-      "PayloadMismatch",
-      "Upstream identity changed without a valid fast-forward commit transition.",
-      source.declaration.sourceId
-    );
-    return {
-      status: statusFromIssue(source, failure, "Diverged", upstream.identity),
-      issue: failure,
-    };
-  }
-  return {
-    status: {
-      sourceId: source.declaration.sourceId,
-      classification: "UpdateAvailable",
-      admitted,
-      observed: upstream.identity,
-    },
-    candidate: upstream,
-  };
+  });
 }
 
 function statusFromIssue(

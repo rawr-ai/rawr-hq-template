@@ -7,6 +7,7 @@ import type {
   NativeProviderPluginFilesReadInput,
   NativeProviderPluginObservation,
 } from "@rawr/resource-native-agent-provider";
+import { Effect } from "effect";
 
 import type { CurrentMainSelectionReader } from "../../../src/service/model/dependencies/current-main";
 import type {
@@ -168,7 +169,7 @@ export function createCurrentMainReader(
         releaseInputDigest: RELEASE_INPUT_DIGEST,
       },
     } satisfies CurrentMainSelectionResult);
-  return Object.freeze({ resolve: async () => result });
+  return Object.freeze({ resolve: () => Effect.succeed(result) });
 }
 
 export class FakeSelectedContentResolver implements SelectedContentResolver {
@@ -187,14 +188,18 @@ export class FakeSelectedContentResolver implements SelectedContentResolver {
     this.workspaceResults = [...(input.workspace ?? input.channel ?? [])];
   }
 
-  async resolveChannel(): Promise<SelectedContentResolution> {
-    const content = this.next(this.channelResults, this.channelCalls);
-    return { kind: "Selected", content };
+  resolveChannel(): Effect.Effect<SelectedContentResolution> {
+    return Effect.sync(() => {
+      const content = this.next(this.channelResults, this.channelCalls);
+      return { kind: "Selected", content };
+    });
   }
 
-  async resolveWorkspace(): Promise<SelectedContentResolution> {
-    const content = this.next(this.workspaceResults, this.workspaceCalls);
-    return { kind: "Selected", content };
+  resolveWorkspace(): Effect.Effect<SelectedContentResolution> {
+    return Effect.sync(() => {
+      const content = this.next(this.workspaceResults, this.workspaceCalls);
+      return { kind: "Selected", content };
+    });
   }
 
   private next(queue: SelectedContent[], calls: SelectedContent[]): SelectedContent {

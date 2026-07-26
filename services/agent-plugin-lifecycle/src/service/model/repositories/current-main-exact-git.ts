@@ -1,3 +1,5 @@
+import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import type { Effect } from "effect";
 import type {
   ExactGitBlobObservation,
   GitBlobSelection,
@@ -44,14 +46,14 @@ export interface ExactGitReader {
   readonly inspect: (
     locator: GitLocator,
     canonicalRef: CanonicalRef
-  ) => Promise<RepositoryInspection>;
+  ) => Effect.Effect<RepositoryInspection>;
   readonly readFileAtRevision: (
     locator: GitLocator,
     selection: GitBlobSelection
-  ) => Promise<GitBlobReadResult>;
+  ) => Effect.Effect<GitBlobReadResult>;
   readonly isAncestor: (
     locator: GitLocator,
     ancestorCommit: GitCommitId,
     descendantCommit: GitCommitId
-  ) => Promise<boolean>;
+  ) => Effect.Effect<boolean, ContentWorkspaceFailure>;
 }
