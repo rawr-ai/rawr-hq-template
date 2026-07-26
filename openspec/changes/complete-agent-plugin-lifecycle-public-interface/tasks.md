@@ -853,6 +853,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   by Packaging and Providers. Preserve exact bounds, observation order,
   failure precedence, cancellation, public results, and final revalidation; do
   not create another resource, runner, dependency bag, or compatibility path.
+- [x] 5.7e2k Project ready content-workspace and package-output resources into
+  Packaging through separate named middleware contributions. Author both
+  complete six-call source observations, derivation, encoding, concrete second
+  refusal precedence, binding comparison, publication, and settlement directly
+  in the package operation. Delete Packaging's reader consumption and its
+  unreachable `SourceReadFailed` public code without adding a runner, adapter,
+  dependency bag, or alternate resource. Preserve exact bounds, Cowork bytes,
+  digest and output identity, idempotent repeat, typed source refusals, native
+  defects/interruption/finalizers, and publication-only uninterruptibility.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

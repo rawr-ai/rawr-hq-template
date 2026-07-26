@@ -1,11 +1,12 @@
 import { service } from "../../impl";
-import { capabilities } from "./middleware/capabilities.middleware";
+import { contentWorkspace } from "./middleware/content-workspace.middleware";
+import { packageOutput } from "./middleware/package-output.middleware";
 
 /**
  * Packaging implementer composed from base-authored capability middleware.
  *
  * @remarks
  * TypeScript infers the additive capability contribution from the completed
- * middleware value; this attachment does not claim to remove inherited lanes.
+ * middleware values; these attachments do not claim to remove inherited lanes.
  */
-export const module = service.packaging.use(capabilities);
+export const module = service.packaging.use(contentWorkspace).use(packageOutput);

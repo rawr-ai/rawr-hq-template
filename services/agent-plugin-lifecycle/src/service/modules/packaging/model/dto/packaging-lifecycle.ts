@@ -29,7 +29,6 @@ export const PackageDigestSchema = Type.TemplateLiteral("pkg1_${string}", {
 export const PackagingFailureCodeSchema = Type.Union([
   Type.Literal("InvalidRequest"),
   Type.Literal("SourceIneligible"),
-  Type.Literal("SourceReadFailed"),
   Type.Literal("ReleaseConstructionFailed"),
   Type.Literal("PackageRenderFailed"),
   Type.Literal("OutputParentUnsafe"),

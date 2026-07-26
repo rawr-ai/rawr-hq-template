@@ -130,13 +130,13 @@ interface CleanEvidenceReadFacts extends CleanPayloadReadFacts {
 }
 
 /**
- * Adapts the content-workspace resource into the service-owned clean-content
- * reader shared by release eligibility, packaging, and local provider tests.
+ * Adapts the content-workspace resource into the transitional clean-content
+ * reader still consumed by local provider tests.
  *
  * @remarks
- * Releases now executes the same resource sequence directly in its operation
- * handlers. This adapter remains only for Packaging and Providers until their
- * owner-local migrations remove the transitional reader contract.
+ * Releases and Packaging now execute the same resource sequence directly in
+ * their operation handlers. This adapter remains only for Providers until its
+ * owner-local migration removes the transitional reader contract.
  */
 export function createCleanContentWorkspaceReader(
   binding: Readonly<{

@@ -27,6 +27,11 @@
   consumes one ready content-workspace resource. Its handlers own observation
   order and final revalidation; pure shared policy classifies the resulting Git
   facts. Native Git protocol remains in the resource provider.
+- The Packaging module directly consumes ready content-workspace and
+  package-output resources through separate named middleware contributions.
+  Its package handler owns source observation, derivation, encoding,
+  revalidation, publication, and settlement order; pure policy classifies
+  typed facts and public results.
 - Content-workspace, versioned-content, clock, package-output, and
   native-provider mechanics remain behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app
@@ -51,7 +56,7 @@
 
 - The host supplies ready capabilities to the context-seeded base boundary.
   The base exposes one separate native middleware author; each documented named
-  module middleware contributes its owner capabilities, and `module.ts`
+  module middleware contributes one owner capability, and `module.ts`
   attaches that middleware through inferred `.use(middleware)` composition.
   Operation handlers sequence ready resources and pass only typed facts into
   pure policy. Native context remains additive; owner-local cuts remove broad
