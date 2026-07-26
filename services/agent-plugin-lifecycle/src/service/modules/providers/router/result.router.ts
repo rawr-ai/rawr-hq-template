@@ -1,4 +1,3 @@
-import type { SelectedContent } from "../../../model/dependencies/providers";
 import type {
   ProviderIssue,
   ProviderMutationTargetResult,
@@ -7,6 +6,7 @@ import type {
   ProviderTargetResult,
   ProviderTestResult,
 } from "../model/dto/provider-lifecycle";
+import type { SelectedContent } from "../model/dto/selected-content";
 import { providerIssue, selectedContentObservation } from "../model/policy/selected-content";
 
 export function rejectedTargets(

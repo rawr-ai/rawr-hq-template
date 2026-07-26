@@ -1,15 +1,13 @@
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
 import type {
-  SelectedContent,
-  SelectedContentResolver,
-} from "../../../model/dependencies/providers";
-import type {
   ProviderIssue,
   ProviderStatusRequest,
   ProviderSyncRequest,
   ProviderTestRequest,
 } from "../model/dto/provider-lifecycle";
+import type { SelectedContent } from "../model/dto/selected-content";
 import { providerIssue, validateSelectedContent } from "../model/policy/selected-content";
+import type { SelectedContentResolver } from "../model/ports/selected-content";
 
 export type ProviderChannelRequest = ProviderStatusRequest | ProviderSyncRequest;
 

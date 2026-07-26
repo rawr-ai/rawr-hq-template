@@ -1,20 +1,20 @@
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
-
-import {
-  type AgentPluginReleaseInput,
-  compareCanonicalText,
-  type PluginId,
-} from "../../../../shared/release";
 import {
   type ClaudeAgentPluginMarketplace,
   ClaudeAgentPluginMarketplaceSchema,
   type CodexAgentPluginMarketplace,
   CodexAgentPluginMarketplaceSchema,
-} from "../dto/native-marketplace";
+} from "#agent-plugin-lifecycle-service/modules/providers/model/dto/native-marketplace";
+import {
+  type AgentPluginReleaseInput,
+  compareCanonicalText,
+  type PluginId,
+} from "#agent-plugin-lifecycle-service/shared/release/index";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 
+/** Result of comparing both native marketplace documents with reviewed release membership. */
 export type NativeMarketplaceValidation =
   | Readonly<{ ok: true }>
   | Readonly<{ ok: false; detail: string }>;

@@ -14,7 +14,9 @@
 
 - Personal's reviewed record owns desired membership, exact Git objects own the
   selected bytes, and native inventory owns installed state.
-- The service model owns shared selection. This module owns the provider
+- The service model owns the current-main and release meanings that genuinely
+  cross modules. This module owns selected-content DTOs, native marketplace
+  policy, its narrowed content-workspace read port, resolution, provider
   operation DTOs, handlers, results, issues, and admitted mutation policy.
 - Native-provider sessions supply observation and mutation mechanics; they are
   not a competing authority.
@@ -23,9 +25,10 @@
 
 ## Behavior
 
-- The module canonicalizes targets, applies the shared selection, revalidates
-  exact Git content, inspects native inventory, classifies drift or blockers,
-  and optionally reconciles each target before returning an aggregate result.
+- The module resolves and canonicalizes its invocation-local desired content,
+  revalidates exact Git content, inspects native inventory, classifies drift
+  or blockers, and optionally reconciles each target before returning an
+  aggregate result.
 
 ## Concepts
 
@@ -36,15 +39,17 @@
 
 ## Flow
 
-- Status, test, or sync receives the shared selection, preflights target
-  sessions, and either reports observations or performs module-admitted
-  mutations after exact-source revalidation.
+- Status, test, or sync resolves desired content from the ready host
+  content-workspace capability, preflights target sessions, and either reports
+  observations or performs module-admitted mutations after exact-source
+  revalidation.
 
 ## Interfaces
 
 - The `status`, `test`, and `sync` operations are caller boundaries.
-  Selected-content reading and native sessions are exact-context mechanics
-  handoffs, not authorities.
+  Selected-content resolution consumes current-main or an explicit workspace;
+  the narrowed content-workspace port and native sessions are mechanics
+  handoffs, not competing authorities.
 
 ## Routing
 

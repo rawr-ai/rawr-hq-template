@@ -13,8 +13,8 @@
 ## Boundaries
 
 - Personal's reviewed record owns desired membership and exact Git objects own
-  selected bytes. The service model owns shared selection and release
-  derivation.
+  selected bytes. The service model owns release derivation shared with
+  Packaging; Providers owns its provider-specific selected-content resolution.
 - The service model owns clean-content eligibility and declared-tree policy
   because packaging and provider testing consume the same meanings. This
   module owns staged eligibility, refresh policy, operation DTOs, handlers,

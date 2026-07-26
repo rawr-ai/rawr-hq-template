@@ -1,7 +1,13 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import { BoundedReadonlyArray, NonEmptyReadonlyArray } from "../../../../model/dto/structural";
-import { ContentAuthoritySchema, PluginIdSchema } from "../../../../shared/release";
+import {
+  BoundedReadonlyArray,
+  NonEmptyReadonlyArray,
+} from "#agent-plugin-lifecycle-service/model/dto/structural";
+import {
+  ContentAuthoritySchema,
+  PluginIdSchema,
+} from "#agent-plugin-lifecycle-service/shared/release/index";
 
 const ProviderTextSchema = Type.String({
   minLength: 1,
@@ -9,13 +15,14 @@ const ProviderTextSchema = Type.String({
   pattern: "^[^\\u0000-\\u001f\\u007f]+$",
 });
 
-/** Local plugin paths are resolved from the marketplace repository root. */
+/** Constrains provider marketplace entries to one plugin below the selected content root. */
 export const NativeAgentPluginSourcePathSchema = Type.String({
   minLength: "./plugins/agents/a".length,
   maxLength: 1_024,
   pattern: "^\\./plugins/agents/[a-z0-9][a-z0-9._-]*$",
 });
 
+/** Describes the local source object required by Codex marketplace entries. */
 export const CodexAgentPluginSourceSchema = ReadonlyObject(
   Type.Object({
     source: Type.Literal("local"),
@@ -32,6 +39,7 @@ const CodexPluginPolicySchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Describes one Codex-visible plugin entry without assigning install authority to the manifest. */
 export const CodexAgentPluginMarketplaceEntrySchema = ReadonlyObject(
   Type.Object({
     name: PluginIdSchema,
@@ -42,6 +50,7 @@ export const CodexAgentPluginMarketplaceEntrySchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Defines the closed Codex marketplace projection that selected content must supply. */
 export const CodexAgentPluginMarketplaceSchema = ReadonlyObject(
   Type.Object({
     name: ContentAuthoritySchema,
@@ -68,6 +77,7 @@ const ClaudeMarketplaceMetadataSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Describes one Claude-visible plugin entry rooted in the selected content tree. */
 export const ClaudeAgentPluginMarketplaceEntrySchema = ReadonlyObject(
   Type.Object(
     {
@@ -80,6 +90,7 @@ export const ClaudeAgentPluginMarketplaceEntrySchema = ReadonlyObject(
   )
 );
 
+/** Defines the closed Claude marketplace projection that selected content must supply. */
 export const ClaudeAgentPluginMarketplaceSchema = ReadonlyObject(
   Type.Object({
     $schema: Type.Optional(
@@ -100,5 +111,8 @@ export const ClaudeAgentPluginMarketplaceSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Provider-owned shape of a validated Codex marketplace document. */
 export type CodexAgentPluginMarketplace = Static<typeof CodexAgentPluginMarketplaceSchema>;
+
+/** Provider-owned shape of a validated Claude marketplace document. */
 export type ClaudeAgentPluginMarketplace = Static<typeof ClaudeAgentPluginMarketplaceSchema>;

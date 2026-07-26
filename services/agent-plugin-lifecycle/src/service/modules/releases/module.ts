@@ -1,15 +1,20 @@
+import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { service } from "../../impl";
-import { analytics, observability, repositories } from "./middleware";
+import { analytics, observability } from "./middleware";
+import { createStagedContentWorkspaceObservationReader } from "./model/helpers/staged-content-workspace";
 
 export const module = service.releases
   .use(observability)
   .use(analytics)
-  .use(repositories)
   .use(async ({ context, next }) =>
     next({
       context: {
-        source: context.provided.releaseSource,
-        stagedSource: context.provided.stagedReleaseSource,
+        source: createCleanContentWorkspaceReader({
+          contentWorkspace: context.deps.contentWorkspace,
+        }),
+        stagedSource: createStagedContentWorkspaceObservationReader({
+          contentWorkspace: context.deps.contentWorkspace,
+        }),
       },
     })
   );

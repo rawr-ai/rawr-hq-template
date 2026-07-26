@@ -1,5 +1,6 @@
 import { service } from "../../impl";
 import { analytics, observability } from "./middleware";
+import { createSelectedContentResolver } from "./model/helpers/selected-content-resolution";
 
 export const module = service.providers
   .use(observability)
@@ -8,7 +9,9 @@ export const module = service.providers
     return next({
       context: {
         currentMain: context.provided.currentMain,
-        selectedContent: context.provided.selectedContent,
+        selectedContent: createSelectedContentResolver({
+          contentWorkspace: context.deps.contentWorkspace,
+        }),
         nativeSessions: context.deps.providerNativeSessions,
       },
     });

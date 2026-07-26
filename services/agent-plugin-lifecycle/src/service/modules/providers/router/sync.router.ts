@@ -1,11 +1,9 @@
 import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
-import type {
-  NativeProviderSessionResolver,
-  SelectedContentResolver,
-} from "../../../model/dependencies/providers";
+import type { NativeProviderSessionResolver } from "../../../model/dependencies/providers";
 import type { ProviderSyncRequest, ProviderSyncResult } from "../model/dto/provider-lifecycle";
 import { sameSelectedContent } from "../model/policy/selected-content";
+import type { SelectedContentResolver } from "../model/ports/selected-content";
 import { module } from "../module";
 import {
   allTargetsConverged,

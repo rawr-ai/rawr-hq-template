@@ -6,6 +6,23 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - Selection Follows Consumer
+
+An invocation-local model belongs to the module whose operations consume and
+interpret it. Provider selected content exists only so status, test, and sync
+can compare reviewed Git bytes with native inventory. Its DTOs, port,
+marketplace policy, and resolution helper therefore narrow inside Providers.
+
+Current-main and release derivation remain at the service root only for their
+actual cross-module consumers. Passing the raw content-workspace capability
+downward does not make provider selection shared, and moving the resolver out
+of root middleware does not change Git or native-provider authority.
+
+### Bag Of Keywords
+
+Owner, provider, selection, context, resource, port, policy, helper, schema,
+behavior, exact, delete, narrow.
+
 ## 2026-07-25 - Observation Follows Transition
 
 An observation belongs to the transition whose policy interprets it, not to the

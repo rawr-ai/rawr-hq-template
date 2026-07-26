@@ -157,8 +157,8 @@ Only two domain collaborations cross module boundaries:
    model function.
 2. **Release derivation** reads exact selected Git objects and returns one
    closed, immutable, invocation-local release observation for a targeted member
-   or the complete set. Release, packaging, and provider operations call the
-   same service-owned model function.
+   or the complete set. Release and packaging operations call the same
+   service-owned model function.
 
 These collaborations belong to the service model because multiple modules
 consume them. Each consists of TypeBox-owned domain structure plus one
@@ -170,6 +170,13 @@ resources and providers. A shared collaboration is not a sixth module,
 injected host-domain
 implementation, nested router call, persistent repository, root-to-child
 import, or permission for siblings to import one another.
+
+Provider-selected content is not a third shared collaboration. Status, test,
+and sync alone consume its exact Git payload, native marketplace, and
+selection-result meanings, so Providers owns the DTOs, policy, narrowed read
+port, and invocation-local resolver. The raw content-workspace capability
+continues to enter through service context without promoting provider meaning
+to the root.
 
 ## Target Topology
 
@@ -274,7 +281,7 @@ state mutation.
 
 ```text
 status preflight for every target
-  -> perform zero mutation everywhere when the shared selection is invalid
+  -> perform zero mutation everywhere when the provider selection is invalid
   -> classify target-specific preflight independently
   -> process targets in canonical order
   -> replace stale selected members through native remove/install/enable
@@ -348,7 +355,7 @@ release content.
 - Source or external-state changes detected before commitment refuse or
   reclassify rather than silently switching inputs.
 - Native provider observation wins over caches, prior results, or caller belief.
-- Invalid shared selection blocks every target; target-specific capability,
+- Invalid provider selection blocks every target; target-specific capability,
   collision, or observation results remain independent.
 - Same-ID provider replacement completes and verifies the native refresh
   transition before omitted-member cleanup begins.
@@ -390,13 +397,13 @@ in-place and deletion-first:
 | Governance routers forward into root-owned governance implementation | Governance owns its DTO, schema, policy, port, and direct handlers; only the canonical selection collaboration remains service-owned | Seal governance |
 | Package exports the broad release implementation | CLI consumes one narrow public input boundary; release implementation remains private | Narrow package exports |
 | Manual release parsers duplicate TypeBox | TypeBox validates structure once; canonicalization and semantic checks remain | Normalize release model by family |
-| Release derivation has competing check/package/provider paths | One service-owned release-derivation policy over the content-workspace port serves all three modules | Seal shared derivation |
-| Root selected-content middleware imports release implementation | Each consuming handler calls the shared service-model policy with its projected content-workspace capability | Delete reversed root edge |
+| Release derivation has competing check/package paths | One service-owned release-derivation policy over the content-workspace port serves Releases and Packaging | Seal shared derivation |
+| Root selected-content middleware imports release implementation | Providers owns selected-content DTOs, policy, narrowed read port, and resolution helper and constructs the resolver in its module boundary | Delete reversed root edge |
 | Modules import root `base.ts` and siblings | Direct module anchor, owner-local middleware, service-model alias, and public resource ports only | Seal each module |
 | Module operations delegate to parallel business entrypoints | Direct oRPC handlers own sequencing and call only pure policy or ready capabilities | Seal each router |
 | Root requires owner-specific capabilities for every operation | Host binds ready capabilities; module middleware exposes only the exact handler context | Narrow context |
 | CLI requests carry provider executable identities | Native-provider resources resolve ordinary `codex` and `claude` tools from the process environment; tests inject providers at construction | Remove executable binding |
-| Provider tests encode provider-wide target preflight | Only invalid shared selection blocks every target; target-specific preflight and results remain independent | Restore target isolation |
+| Provider tests encode provider-wide target preflight | Only invalid provider selection blocks every target; target-specific preflight and results remain independent | Restore target isolation |
 | Duplicate module telemetry adds no module fact | One cross-cutting service signal path; module telemetry exists only for a real owner-specific field | Compose root |
 | Disposable test uses mutable workspace marketplace | Invocation-owned exact-Git marketplace below disposable root | Complete disposable lifetime |
 | Service law is diagnostic only | Closed Habitat topology and source laws admit the complete service | Activate service law |
@@ -410,7 +417,7 @@ relevant Habitat checks before it lands.
 Behavioral verification crosses the typed client and module router boundary.
 Habitat alone verifies topology and source relationships. A shared current-main
 checkpoint exercises governance plus provider selection; a shared release-
-derivation checkpoint exercises releases plus packaging and provider consumers.
+derivation checkpoint exercises Releases plus Packaging.
 No aggregate schema walker or direct call to a parallel `run*` helper counts as
 operation proof.
 

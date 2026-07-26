@@ -17,8 +17,6 @@ import { Value } from "typebox/value";
 import type {
   NativeProviderSession,
   NativeProviderSessionResolver,
-  SelectedContent,
-  SelectedContentMember,
 } from "../../../model/dependencies/providers";
 import { contentDigest } from "../../../shared/release";
 import type {
@@ -31,6 +29,7 @@ import type {
   VerificationFact,
 } from "../model/dto/provider-lifecycle";
 import { MAX_CONFIRMED_NATIVE_OPERATIONS } from "../model/dto/provider-lifecycle";
+import type { SelectedContent, SelectedContentMember } from "../model/dto/selected-content";
 import {
   marketplaceSourceIsRelated,
   marketplaceSourceMatches,

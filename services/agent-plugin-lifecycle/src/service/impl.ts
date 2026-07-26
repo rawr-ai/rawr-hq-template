@@ -8,7 +8,6 @@ import { analytics } from "./middleware/analytics";
 import { context } from "./middleware/context";
 import { currentMain } from "./middleware/current-main";
 import { observability } from "./middleware/observability";
-import { selectedContent } from "./middleware/selected-content";
 
 const baseline = createServiceBaselineMiddlewares();
 
@@ -18,5 +17,4 @@ export const service = base
   .use(baseline.analytics)
   .use(observability)
   .use(analytics)
-  .use(currentMain)
-  .use(selectedContent);
+  .use(currentMain);
