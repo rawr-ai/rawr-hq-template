@@ -10,6 +10,7 @@ import {
   rename,
   rm,
   symlink,
+  utimes,
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -826,6 +827,102 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
     expect(evidence.worktreeObjectIds).toEqual([{ path: "payload.txt", objectId: observed.blob }]);
     expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+  });
+
+  test("observes Git status without refreshing stale index stat data", async () => {
+    const root = await createRepository();
+    await git(root, "remote", "add", "origin", root);
+    const payloadPath = path.join(root, "payload.txt");
+    await writeFile(payloadPath, "payload\n");
+    await git(root, "add", "payload.txt");
+    await git(root, "commit", "-m", "add payload");
+    await writeFile(path.join(root, "local-only.txt"), "untracked\n");
+
+    const freshPayloadInfo = await lstat(payloadPath);
+    const staleTimestamp = new Date("2001-01-01T00:00:00.000Z");
+    await utimes(payloadPath, staleTimestamp, staleTimestamp);
+    const stalePayloadInfo = await lstat(payloadPath);
+    expect(stalePayloadInfo.mtimeMs).not.toBe(freshPayloadInfo.mtimeMs);
+
+    const indexPath = path.join(root, ".git", "index");
+    const indexBytesBefore = await readFile(indexPath);
+    const indexInfoBefore = await lstat(indexPath);
+    const indexIdentityAndWriteMetadataBefore = {
+      dev: indexInfoBefore.dev,
+      ino: indexInfoBefore.ino,
+      mode: indexInfoBefore.mode,
+      nlink: indexInfoBefore.nlink,
+      uid: indexInfoBefore.uid,
+      gid: indexInfoBefore.gid,
+      size: indexInfoBefore.size,
+      mtimeMs: indexInfoBefore.mtimeMs,
+      ctimeMs: indexInfoBefore.ctimeMs,
+      birthtimeMs: indexInfoBefore.birthtimeMs,
+    };
+
+    const evidence = unwrap(
+      await runNodeContentWorkspace(
+        makeContentWorkspaceResource({
+          gitExecutable: await realpath(gitExecutable),
+        }).captureGitWorkspaceEvidence({
+          root,
+          remoteSelection: { kind: "Named", remoteName: "origin" },
+          refName: "refs/heads/main",
+          admittedPaths: ["payload.txt"],
+          consumedRoots: ["payload.txt"],
+          objectFormat: "sha1",
+          maxPaths: 10,
+          maxWorktreeFileBytes: 1024,
+          maxWorktreeBytes: 1024,
+          maxBytes: 1024 * 1024,
+        })
+      )
+    );
+
+    expect(evidence.openingAnchor).toEqual(evidence.closingAnchor);
+    expect(evidence.worktreeObjectIds).toEqual([
+      { path: "payload.txt", objectId: gitOutput(root, "rev-parse", "HEAD:payload.txt") },
+    ]);
+    expect(new TextDecoder().decode(evidence.openingStatus)).toContain("? local-only.txt\0");
+    expect(new TextDecoder().decode(evidence.closingTrackedFlags)).toContain("H payload.txt");
+    expect(new TextDecoder().decode(evidence.indexEntries)).toContain("\tpayload.txt\0");
+
+    const indexBytesAfter = await readFile(indexPath);
+    const indexInfoAfter = await lstat(indexPath);
+    expect(indexBytesAfter).toEqual(indexBytesBefore);
+    expect({
+      dev: indexInfoAfter.dev,
+      ino: indexInfoAfter.ino,
+      mode: indexInfoAfter.mode,
+      nlink: indexInfoAfter.nlink,
+      uid: indexInfoAfter.uid,
+      gid: indexInfoAfter.gid,
+      size: indexInfoAfter.size,
+      mtimeMs: indexInfoAfter.mtimeMs,
+      ctimeMs: indexInfoAfter.ctimeMs,
+      birthtimeMs: indexInfoAfter.birthtimeMs,
+    }).toEqual(indexIdentityAndWriteMetadataBefore);
+
+    const ordinaryStatus = Bun.spawnSync(
+      [
+        gitExecutable,
+        "status",
+        "--porcelain=v2",
+        "--branch",
+        "-z",
+        "--untracked-files=all",
+        "--ignored=matching",
+        "--ignore-submodules=none",
+      ],
+      {
+        cwd: root,
+        env: { ...process.env, GIT_OPTIONAL_LOCKS: "1" },
+        stdout: "pipe",
+        stderr: "pipe",
+      }
+    );
+    expect(ordinaryStatus.exitCode).toBe(0);
+    expect(await readFile(indexPath)).not.toEqual(indexBytesAfter);
   });
 
   test("admits SHA-256 tree facts and returns code-unit ordered entries", async () => {

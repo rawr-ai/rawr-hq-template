@@ -2061,6 +2061,7 @@ function readGitStatus(executable: string, root: string, maxBytes: number) {
     executable,
     root,
     [
+      "--no-optional-locks",
       "status",
       "--porcelain=v2",
       "--branch",
