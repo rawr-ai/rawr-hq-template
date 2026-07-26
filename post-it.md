@@ -6,6 +6,25 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - Policy Supports Authorship
+
+An operation handler owns the transition: it consumes context, sequences
+effects, and returns the operation result. Pure decisions that classify a
+resource outcome, project a domain identity, or bound a public diagnostic
+belong in the module model. They support the handler without reconstructing
+its execution environment.
+
+Module context is declared and enriched in `module.ts`. Repeating service
+telemetry at that layer is not context specialization when it contributes the
+same fields and no module policy. Delete the duplicate, keep the required
+service lifecycle, and leave exact context narrowing open until the runtime
+boundary can prove it.
+
+### Bag Of Keywords
+
+Operation, handler, transition, context, policy, result, failure, telemetry,
+owner, narrow, delete, exact.
+
 ## 2026-07-25 - Composition Has One Face
 
 A module exposes one router face to its service root. Named router leaves

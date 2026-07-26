@@ -17,6 +17,7 @@ import {
   MAX_PACKAGING_OUTPUT_PATH_LENGTH,
   PackageAgentPluginResultSchema,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
+import { priorOutputObservationLimit } from "../../../src/service/modules/packaging/model/policy/package-output";
 import { parsePluginId } from "../../../src/service/shared/release";
 import {
   createLifecycleTestClient,
@@ -36,6 +37,7 @@ import {
 } from "../../support/owned-fixture-root";
 
 const roots: OwnedFixtureRoot[] = [];
+const PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES = 64 * 1024 * 1024;
 
 afterEach(async () => {
   while (roots.length > 0) {
@@ -45,6 +47,14 @@ afterEach(async () => {
 });
 
 describe("package agent plugin application", () => {
+  it.each([
+    [PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES - 1, PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES],
+    [PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES, PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES],
+    [PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES + 1, PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES + 1],
+  ])("observes prior output up to the rendered package or the module floor (%i -> %i)", (renderedByteLength, expectedLimit) => {
+    expect(priorOutputObservationLimit(renderedByteLength)).toBe(expectedLimit);
+  });
+
   it("packages exact selected Git content and repeats without rewriting output", async () => {
     const root = await fixtureRoot();
     const repository = await createGeneratedGitRepository(root, "fixture-alpha");
@@ -335,6 +345,7 @@ describe("package agent plugin application", () => {
     });
     expect(output.encodeCalls).toBe(1);
     expect(output.publishCalls).toBe(1);
+    expect(output.priorOutputObservationLimits).toEqual([PRIOR_OUTPUT_OBSERVATION_FLOOR_BYTES]);
     expect("repositoryIdentity" in result).toBe(false);
     expect("release" in result).toBe(false);
   });
@@ -406,6 +417,7 @@ describe("package agent plugin application", () => {
 class CountingOutput implements AgentPluginPackageOutputAsyncPort {
   encodeCalls = 0;
   publishCalls = 0;
+  readonly priorOutputObservationLimits: number[] = [];
   readonly #node = makeNodePackageOutputAsyncPort();
 
   constructor(private readonly result: PackageOutputPublicationResult) {}
@@ -417,8 +429,11 @@ class CountingOutput implements AgentPluginPackageOutputAsyncPort {
     return this.#node.encodeCoworkV1(request);
   }
 
-  async publish(): Promise<PackageOutputPublicationResult> {
+  async publish(
+    request: Parameters<AgentPluginPackageOutputAsyncPort["publish"]>[0]
+  ): Promise<PackageOutputPublicationResult> {
     this.publishCalls += 1;
+    this.priorOutputObservationLimits.push(request.maxPriorOutputBytes);
     return this.result;
   }
 }

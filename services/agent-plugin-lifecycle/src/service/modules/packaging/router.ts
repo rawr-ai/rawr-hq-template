@@ -1,6 +1,6 @@
-import { packageAgentPlugin } from "./router/package.router";
+import { router as packageOperations } from "./router/package.router";
 
-/** Composes the completed packaging operation leaf for the service root router. */
+/** Composes Packaging's authored operations into its single public module face. */
 export const router = {
-  package: packageAgentPlugin,
+  ...packageOperations,
 };

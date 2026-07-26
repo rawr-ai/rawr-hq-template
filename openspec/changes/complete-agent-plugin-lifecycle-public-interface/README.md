@@ -340,6 +340,36 @@ public client, and host context types remain unchanged. Standing architecture,
 oRPC/Effect-oRPC/TypeScript, testing, and structural-quality reviews report no
 P0/P1/P2 finding.
 
+The following owner-local checkpoint normalizes Packaging without moving its
+transition out of the oRPC authoring boundary. The package handler still owns
+inspect, derive, encode, revalidate, publish, and settlement order; a direct
+module policy leaf now owns only release-identity projection, resource-failure
+classification, the prior-output observation bound, and bounded public
+diagnostics. The observation bound retains its exact value without borrowing
+release-set payload authority. The named operation router exports one plain
+package subrouter, and module `router.ts` composes that value through its single
+public face. The loose module telemetry file disappears because it repeated
+the service-owned trace fields without adding a Packaging capability or
+policy; required service analytics and observability remain.
+
+Packaging now names its module `Context` and ready capability enrichment in
+`module.ts`, but native oRPC context still merges additively. This checkpoint
+therefore does not claim an exact handler view or close root context assembly.
+It also replaces Packaging's upward relative imports with its current owner
+alias without moving the legacy release family. Exact TypeBox request and
+result shapes, Cowork bytes, package identity, failure text, output settlement,
+and idempotent repeat remain the behavioral gate under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2f]].
+The 21-case focused boundary passed in 37.4 seconds, the complete lifecycle
+owner passed all 242 cases in 1 minute 34 seconds, and uncached source/test
+typecheck passed in 16.8 seconds. The selected Habitat topology, context,
+module-isolation, and router-authorship laws report no Packaging finding;
+Biome, strict OpenSpec validation, and diff hygiene pass. Standing
+architecture, testing, and TypeScript/structural reviews accept the checkpoint
+with no P0/P1/P2 finding. The public repository check then admitted all 37
+projects and 110 scheduled tasks in 54.6 seconds, including Oclif manifest
+parity and all 15 enforced Habitat laws.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

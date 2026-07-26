@@ -3,32 +3,43 @@ import type {
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import type { PackageDigest } from "#agent-plugin-lifecycle-service/modules/packaging/model/dto/packaging-lifecycle";
 import {
   type AgentPluginRelease,
   contentDigest,
   parseReleaseRelativePath,
   payloadEntryBytes,
   verifyCompleteReleaseSet,
-} from "../../../../shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/index";
 
-import type { PackageDigest } from "../dto/packaging-lifecycle";
-
+/** Stable archive comment that identifies RAWR's Cowork v1 package profile. */
 export const COWORK_V1_ARCHIVE_COMMENT = "rawr-agent-plugin-cowork-v1";
+/** Fixed archive timestamp that removes wall-clock variation from rendered bytes. */
 export const COWORK_V1_FIXED_TIMESTAMP = "2000-01-01T00:00:00.000";
 const CLASSIC_ZIP_ENTRY_FIXED_BYTES = 76n;
 const CLASSIC_ZIP_END_FIXED_BYTES = 22n;
 const encoder = new TextEncoder();
 
 // Cowork v1 is deliberately a fully buffered classic ZIP, so its protocol caps bound peak memory.
+/** Maximum entry count admitted by the classic ZIP package profile. */
 export const COWORK_V1_MAX_ENTRY_COUNT = 65_534;
+/** Maximum decoded plugin payload admitted before Cowork archive rendering. */
 export const COWORK_V1_MAX_PAYLOAD_BYTES = 64 * 1024 * 1024;
+/** Maximum projected fully buffered archive size admitted by the Cowork profile. */
 export const COWORK_V1_MAX_PROJECTED_ARCHIVE_BYTES = 128 * 1024 * 1024;
 
+/** Minimal entry facts needed to prove Cowork v1 protocol bounds before allocation. */
 export interface CoworkV1ProtocolEntrySize {
   readonly path: string;
   readonly byteLength: number;
 }
 
+/**
+ * Projects one verified release selection into the deterministic Cowork v1 encoder request.
+ *
+ * This helper owns archive mechanics while the operation handler owns when
+ * encoding occurs relative to source inspection and revalidation.
+ */
 export function createCoworkV1ArchiveRequest(
   selection: DerivedReleaseSelection
 ): CoworkV1ArchiveEncodingRequest {
@@ -41,6 +52,7 @@ export function createCoworkV1ArchiveRequest(
   });
 }
 
+/** Derives the package identity from the exact rendered archive bytes. */
 export function coworkV1PackageDigest(bytes: Uint8Array): PackageDigest {
   const digest = contentDigest(bytes);
   return `pkg1_${digest.slice("sha256_".length)}`;
@@ -66,6 +78,7 @@ function collectCoworkEntries(selection: DerivedReleaseSelection): readonly Pack
   return Object.freeze(entries);
 }
 
+/** Refuses an entry sequence whose count, payload, or projected archive exceeds Cowork v1. */
 export function assertCoworkV1ProtocolBounds(entries: Iterable<CoworkV1ProtocolEntrySize>): void {
   let entryCount = 0n;
   let payloadBytes = 0n;
