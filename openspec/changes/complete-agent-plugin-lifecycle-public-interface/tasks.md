@@ -553,6 +553,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   classification pure; let module middleware project the exact ready resource
   capabilities. Delete the effectful policy facade rather than adding an
   adapter or helper.
+- [x] 5.4d Delete the package-output Promise mirror and detached Node runner.
+  Let the Cowork Effect Platform provider attach `NodeServices.layer` to each
+  returned operation behind one ready `AgentPluginPackageOutputResource<never>`;
+  let the CLI host select that resource and pass it through service and
+  Packaging context.
+  Author archive encoding and output publication as direct Effects in the
+  Packaging handler, keep typed failure classification in pure module policy,
+  and preserve the publication uninterruptibility boundary, closed public
+  results, exact diagnostics, and cancellation outside that boundary.
 - [ ] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical

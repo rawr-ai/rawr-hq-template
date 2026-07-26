@@ -88,13 +88,3 @@ export interface AgentPluginPackageOutputResource<R = never> {
     input: PackageOutputPublicationRequest
   ) => Effect.Effect<PackageOutputPublicationResult, PackageOutputFailure, R>;
 }
-
-/** Promise projection for callers that bind the provider runtime at their edge. */
-export interface AgentPluginPackageOutputAsyncPort {
-  readonly encodeCoworkV1: (
-    input: Parameters<AgentPluginPackageOutputResource["encodeCoworkV1"]>[0]
-  ) => Promise<Uint8Array>;
-  readonly publish: (
-    input: Parameters<AgentPluginPackageOutputResource["publish"]>[0]
-  ) => Promise<PackageOutputPublicationResult>;
-}

@@ -12,7 +12,7 @@ import {
   type ServiceBinding,
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
-import { makeNodePackageOutputAsyncPort } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { makeNodeVersionedContentResource } from "@rawr/resource-versioned-content/providers/git-effect-platform-node";
 import { createNodeNativeProviderSessionResolver } from "../bindings/providers";
@@ -126,7 +126,7 @@ export function createProductionLifecycleDeps(
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     contentWorkspace: makeNodeContentWorkspaceResource(),
     clock: Object.freeze({ now: () => new Date() }),
-    packageOutput: makeNodePackageOutputAsyncPort(),
+    packageOutput: makeNodeAgentPluginPackageOutputResource(),
     providerNativeSessions: createNodeNativeProviderSessionResolver(binding.providerExecutables),
     versionedContent: makeNodeVersionedContentResource(),
   } satisfies LifecycleDeps);
