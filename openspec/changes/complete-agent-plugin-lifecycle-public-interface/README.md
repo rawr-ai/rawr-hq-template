@@ -432,6 +432,38 @@ Habitat laws, strict OpenSpec validation, Biome, and diff hygiene also pass.
 Standing architecture, oRPC/Effect-oRPC, TypeScript, Effect, testing, and
 structural-quality reviews report no unresolved P0/P1/P2 finding.
 
+The Vendor authorship checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4c]]. Vendor
+`status` and `update` now sequence the ready content-workspace,
+versioned-content, and clock capabilities directly inside their Effect-oRPC
+handlers. Query construction, record decoding, fact validation, payload
+comparison, receipt validation, and transition classification remain pure
+module policy. The effectful policy facades, detached update transaction, and
+`router/index.ts` second face are deleted; module `router.ts` only composes the
+named source-lifecycle router.
+
+The shared opening observation remains visibly authored in both operations.
+It combines Vendor record and release semantics with two existing resources,
+so it is neither a provider-neutral resource nor context-projection
+middleware. The installed effect-oRPC input-mapped middleware path accepts
+native oRPC middleware only; moving this Effect work there would recreate a
+Promise/runtime bridge and would not satisfy update's required post-capture
+and post-apply observations. No Vendor observation resource, adapter, runner,
+or Layer replaces the deleted facades. The categorical `service/shared`
+release-family violation remains the whole-service red corpus owned by
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2]] rather than
+being duplicated or partially relocated in this checkpoint.
+
+The focused Vendor suite passes 35 cases, including held-source refusal,
+non-fast-forward classification, service-clock provenance, recovery,
+cancellation, and repeated convergence. The complete lifecycle suite passes
+246 cases; lifecycle source and test typechecks, the full Habitat suite,
+owner-scoped router-authorship and imported-export documentation laws, Biome,
+and diff hygiene pass. Architecture, oRPC/Effect-oRPC, TypeScript, and
+behavior-first testing reviews report no unresolved P0/P1/P2 finding. This
+checkpoint changes no provider home, Personal repository, Oclif surface, or
+live lifecycle state.
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the
