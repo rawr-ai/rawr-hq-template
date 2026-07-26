@@ -17,7 +17,10 @@ import { NodeServices } from "@effect/platform-node";
 import { Cause, Effect, Exit, Fiber } from "effect";
 import { TestClock } from "effect/testing";
 
-import { codexEffectPlatformNodeProvider } from "../index";
+import {
+  makeCodexEffectPlatformNodeProvider,
+  makeNodeCodexNativeAgentProviderResource,
+} from "../index";
 
 const roots: string[] = [];
 
@@ -210,10 +213,9 @@ describe("codex-effect-platform-node", () => {
     const timeoutFixture = await makeFixture();
     const timedOut = await Effect.runPromise(
       Effect.gen(function* () {
-        const session = yield* codexEffectPlatformNodeProvider.acquire({
+        const session = yield* makeCodexEffectPlatformNodeProvider({
           executablePath: timeoutFixture.executablePath,
-          home: timeoutFixture.home,
-        });
+        }).acquire({ home: timeoutFixture.home });
         const fiber = yield* session
           .installPlugin({ selector: "hang@rawr-hq" })
           .pipe(Effect.forkChild({ startImmediately: true }));
@@ -230,10 +232,9 @@ describe("codex-effect-platform-node", () => {
     const forceKillFixture = await makeFixture();
     const forceKilled = await Effect.runPromise(
       Effect.gen(function* () {
-        const session = yield* codexEffectPlatformNodeProvider.acquire({
+        const session = yield* makeCodexEffectPlatformNodeProvider({
           executablePath: forceKillFixture.executablePath,
-          home: forceKillFixture.home,
-        });
+        }).acquire({ home: forceKillFixture.home });
         const fiber = yield* session
           .installPlugin({ selector: "ignore-term@rawr-hq" })
           .pipe(Effect.forkChild({ startImmediately: true }));
@@ -252,12 +253,39 @@ describe("codex-effect-platform-node", () => {
     expect(forceKillEvents).not.toContain("end:plugin add ignore-term@rawr-hq --json");
   });
 
+  it("returns from interruption only after the native child and process group are gone", async () => {
+    const fixture = await makeFixture();
+    const session = await acquire(fixture);
+    const controller = new AbortController();
+    const operation = Effect.runPromiseExit(session.installPlugin({ selector: "cancel@rawr-hq" }), {
+      signal: controller.signal,
+    });
+
+    await Effect.runPromise(
+      waitForEvent(fixture.home, "ready:cancel\n").pipe(Effect.provide(NodeServices.layer))
+    );
+    controller.abort();
+    const exit = await operation;
+
+    expect(Exit.isFailure(exit)).toBe(true);
+    if (!Exit.isFailure(exit)) throw new Error("Expected native command interruption");
+    expect(exit.cause.reasons.some(Cause.isInterruptReason)).toBe(true);
+    const events = await lines(path.join(fixture.home, "events.log"));
+    expect(events).toContain("received:cancel");
+    const pidEntry = events.find((event) => event.startsWith("pid:cancel:"));
+    const pid = Number(pidEntry?.slice("pid:cancel:".length));
+    expect(Number.isSafeInteger(pid) && pid > 0).toBe(true);
+    if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error("Expected recorded child PID");
+    expect(processIsReachable(pid)).toBe(false);
+    expect(processGroupIsReachable(pid)).toBe(false);
+  });
+
   it("refuses the filesystem root as a provider home before native execution", async () => {
     const fixture = await makeFixture();
     const rootHome = path.parse(fixture.home).root;
     const refused = await Effect.runPromiseExit(
-      codexEffectPlatformNodeProvider
-        .acquire({ executablePath: fixture.executablePath, home: rootHome })
+      makeCodexEffectPlatformNodeProvider({ executablePath: fixture.executablePath })
+        .acquire({ home: rootHome })
         .pipe(Effect.provide(NodeServices.layer))
     );
     expect(failure(refused)).toMatchObject({
@@ -398,9 +426,9 @@ async function makeFixture(): Promise<
 
 async function acquire(fixture: Readonly<{ executablePath: string; home: string }>) {
   return Effect.runPromise(
-    codexEffectPlatformNodeProvider
-      .acquire({ executablePath: fixture.executablePath, home: fixture.home })
-      .pipe(Effect.provide(NodeServices.layer))
+    makeNodeCodexNativeAgentProviderResource({
+      executablePath: fixture.executablePath,
+    }).acquire({ home: fixture.home })
   );
 }
 
@@ -459,6 +487,28 @@ function waitForEvent(home: string, expected: string): Effect.Effect<void> {
   });
 }
 
+function processIsReachable(pid: number): boolean {
+  return signalTargetIsReachable(pid);
+}
+
+function processGroupIsReachable(pid: number): boolean {
+  return signalTargetIsReachable(-pid);
+}
+
+function signalTargetIsReachable(target: number): boolean {
+  try {
+    process.kill(target, 0);
+    return true;
+  } catch (cause) {
+    if (isErrnoException(cause) && cause.code === "ESRCH") return false;
+    throw cause;
+  }
+}
+
+function isErrnoException(cause: unknown): cause is NodeJS.ErrnoException {
+  return typeof cause === "object" && cause !== null && "code" in cause;
+}
+
 function fakeCodexScript(): string {
   return `#!/bin/sh
 set -eu
@@ -476,6 +526,11 @@ case "$*" in
     if [ -f "$HOME/codex-plugins.json" ]; then cat "$HOME/codex-plugins.json"; else printf '%s\\n' '{"installed":[],"available":[]}'; fi ;;
   "plugin add fail@rawr-hq --json") printf '%s\\n' 'failed' >&2; exit 9 ;;
   "plugin add hang@rawr-hq --json") sleep 999 ;;
+  "plugin add cancel@rawr-hq --json")
+    trap 'printf "%s\\n" "received:cancel" >> "$HOME/events.log"; exit 0' TERM
+    printf "pid:cancel:%s\\n" "$$" >> "$HOME/events.log"
+    printf "%s\\n" "ready:cancel" >> "$HOME/events.log"
+    while :; do sleep 1; done ;;
   "plugin add ignore-term@rawr-hq --json")
     trap 'printf "%s\\n" "received:SIGTERM" >> "$HOME/events.log"' TERM
     printf "%s\\n" "ready:ignore-term" >> "$HOME/events.log"

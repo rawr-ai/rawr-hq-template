@@ -3,10 +3,9 @@ import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { NodeServices } from "@effect/platform-node";
 import { Cause, Effect, Exit } from "effect";
 
-import { claudeEffectPlatformNodeProvider } from "../index";
+import { makeNodeClaudeNativeAgentProviderResource } from "../index";
 
 const roots: string[] = [];
 
@@ -289,9 +288,9 @@ async function makeFixture(): Promise<
 
 async function acquire(fixture: Readonly<{ executablePath: string; home: string }>) {
   return Effect.runPromise(
-    claudeEffectPlatformNodeProvider
-      .acquire({ executablePath: fixture.executablePath, home: fixture.home })
-      .pipe(Effect.provide(NodeServices.layer))
+    makeNodeClaudeNativeAgentProviderResource({
+      executablePath: fixture.executablePath,
+    }).acquire({ home: fixture.home })
   );
 }
 

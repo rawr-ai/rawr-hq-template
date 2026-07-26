@@ -15,7 +15,7 @@ import { eoc, implementEffect } from "effect-orpc";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 
-import { awaitDependencyPromise, createServiceBaselineMiddlewares } from "../../src/service/base";
+import { createServiceBaselineMiddlewares } from "../../src/service/base";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const AdmissionInputSchema = Type.Object(
@@ -24,10 +24,6 @@ const AdmissionInputSchema = Type.Object(
 );
 const AdmissionOutputSchema = Type.Object(
   { product: Type.Integer() },
-  { additionalProperties: false }
-);
-const PublicationOutputSchema = Type.Object(
-  { published: Type.Boolean() },
   { additionalProperties: false }
 );
 
@@ -42,14 +38,10 @@ const admission = eoc.$meta<ServiceMetadataOf<{ audit: "basic"; entity: "service
 const contract = eoc.router({
   multiply: admission.input(schema(AdmissionInputSchema)).output(schema(AdmissionOutputSchema)),
   invalidOutput: admission.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
-  reject: admission.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
-  publish: admission.input(schema(EmptyInputSchema)).output(schema(PublicationOutputSchema)),
 });
 
 interface AdmissionContext {
   readonly multiplier: number;
-  readonly rejectOperation: () => PromiseLike<never>;
-  readonly publishOperation: () => PromiseLike<void>;
   readonly deps: {
     readonly analytics: ReturnType<typeof createEmbeddedPlaceholderAnalyticsAdapter>;
     readonly logger: ReturnType<typeof createEmbeddedPlaceholderLoggerAdapter>;
@@ -69,30 +61,17 @@ const router = impl.router({
   invalidOutput: impl.invalidOutput.effect(function* () {
     return yield* Effect.succeed({ product: Number.NaN });
   }),
-  reject: impl.reject.effect(function* ({ context }) {
-    return yield* awaitDependencyPromise(context.rejectOperation);
-  }),
-  publish: impl.publish.effect(function* ({ context }) {
-    yield* awaitDependencyPromise(context.publishOperation);
-    return { published: true };
-  }),
 });
 
 function createAdmissionClient(
   options: {
     analyticsEntries?: EmbeddedPlaceholderAnalyticsEntry[];
     logEntries?: EmbeddedPlaceholderLogEntry[];
-    rejectOperation?: () => PromiseLike<never>;
-    publishOperation?: () => PromiseLike<void>;
   } = {}
 ) {
   return createRouterClient(router, {
     context: () => ({
       multiplier: 3,
-      rejectOperation:
-        options.rejectOperation ??
-        (() => Promise.reject(new Error("Unexpected admission rejection procedure call"))),
-      publishOperation: options.publishOperation ?? (() => Promise.resolve()),
       deps: {
         analytics: createEmbeddedPlaceholderAnalyticsAdapter({
           sink: options.analyticsEntries,
@@ -124,80 +103,5 @@ describe("effect-orpc Effect 4 admission", () => {
       message: "Output validation failed",
     });
     expect(invalidOutputError.cause).toBeInstanceOf(ValidationError);
-  });
-
-  it("preserves a local dependency cause and emits one baseline error record", async () => {
-    const dependencyCause = new Error("Admission dependency failed");
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
-    const client = createAdmissionClient({
-      analyticsEntries,
-      logEntries,
-      rejectOperation: () => Promise.reject(dependencyCause),
-    });
-
-    const error = await client.reject({}).then(
-      () => undefined,
-      (cause: unknown) => cause
-    );
-
-    expect(error).toBeInstanceOf(ORPCError);
-    if (!(error instanceof ORPCError)) {
-      throw new Error("Expected the local Effect bridge to return an ORPCError");
-    }
-    expect(error).toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
-    expect(error.cause).toBe(dependencyCause);
-    expect(
-      analyticsEntries.filter(
-        (entry) =>
-          entry.event === "orpc.procedure" &&
-          entry.payload.path === "reject" &&
-          entry.payload.outcome === "error"
-      )
-    ).toHaveLength(1);
-    expect(
-      logEntries.filter(
-        (entry) =>
-          entry.event === "orpc.procedure" &&
-          entry.level === "error" &&
-          entry.payload.path === "reject" &&
-          entry.payload.outcome === "error"
-      )
-    ).toHaveLength(1);
-  });
-
-  it("settles an uncancellable dependency mutation before observing request cancellation", async () => {
-    const started = Promise.withResolvers<void>();
-    const finish = Promise.withResolvers<void>();
-    let mutationSettled = false;
-    const client = createAdmissionClient({
-      publishOperation: async () => {
-        started.resolve();
-        await finish.promise;
-        mutationSettled = true;
-      },
-    });
-    const controller = new AbortController();
-    const publication = client.publish({}, { signal: controller.signal });
-
-    await started.promise;
-    controller.abort(new Error("Admission request cancelled"));
-    const stateBeforeSettlement = await Promise.race([
-      publication.then(
-        () => "settled" as const,
-        () => "settled" as const
-      ),
-      new Promise<"pending">((resolve) => setTimeout(() => resolve("pending"), 20)),
-    ]);
-
-    try {
-      expect(stateBeforeSettlement).toBe("pending");
-      expect(mutationSettled).toBe(false);
-    } finally {
-      finish.resolve();
-      await publication.catch(() => undefined);
-    }
-    await expect(publication).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
-    expect(mutationSettled).toBe(true);
   });
 });

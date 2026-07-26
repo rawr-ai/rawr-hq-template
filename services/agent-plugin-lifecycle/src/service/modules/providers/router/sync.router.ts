@@ -1,7 +1,6 @@
+import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 import { Effect } from "effect";
-import { awaitDependencyPromise } from "../../../base";
 import type { CurrentMainSelectionReader } from "../../../model/dependencies/current-main";
-import type { NativeProviderSessionResolver } from "../../../model/dependencies/providers";
 import type { ProviderSyncRequest, ProviderSyncResult } from "../model/dto/provider-lifecycle";
 import { sameSelectedContent } from "../model/policy/selected-content";
 import type { SelectedContentResolver } from "../model/ports/selected-content";
@@ -24,16 +23,18 @@ import {
 } from "./result.router";
 import { resolveChannelSelection } from "./selection.router";
 
+/** Ready capability set consumed by the Provider synchronization operation. */
 export interface ProviderSyncDependencies {
   readonly currentMain: CurrentMainSelectionReader;
   readonly selectedContent: SelectedContentResolver;
-  readonly nativeSessions: NativeProviderSessionResolver;
+  readonly nativeProviders: NativeAgentProviderResources;
 }
 
 export const sync = module.sync.effect(function* ({ context, input }) {
   return yield* runProviderSync(input, context);
 });
 
+/** Authors the Provider synchronization flow over interruptible native Effects. */
 export function runProviderSync(
   request: ProviderSyncRequest,
   dependencies: ProviderSyncDependencies
@@ -51,14 +52,12 @@ export function runProviderSync(
     if (selected.kind === "Rejected") {
       return blockedResult(canonicalRequest, selected.issues);
     }
-    const initial = yield* awaitDependencyPromise(() =>
-      inspectProviderTargets(
-        selected.content,
-        canonicalRequest.targets,
-        dependencies.nativeSessions,
-        { retireOmitted: true },
-        true
-      )
+    const initial = yield* inspectProviderTargets(
+      selected.content,
+      canonicalRequest.targets,
+      dependencies.nativeProviders,
+      { retireOmitted: true },
+      true
     );
     if (hasBlockingAssessment(initial)) {
       const targets = blockedTargetResults(initial);
@@ -100,14 +99,12 @@ export function runProviderSync(
       } satisfies ProviderSyncResult;
     }
 
-    const finalPreflight = yield* awaitDependencyPromise(() =>
-      inspectProviderTargets(
-        revalidated.content,
-        canonicalRequest.targets,
-        dependencies.nativeSessions,
-        { retireOmitted: true },
-        true
-      )
+    const finalPreflight = yield* inspectProviderTargets(
+      revalidated.content,
+      canonicalRequest.targets,
+      dependencies.nativeProviders,
+      { retireOmitted: true },
+      true
     );
     if (hasBlockingAssessment(finalPreflight)) {
       const targets = blockedTargetResults(finalPreflight);
@@ -121,11 +118,9 @@ export function runProviderSync(
     }
     const targets = allTargetsConverged(finalPreflight)
       ? Object.freeze(finalPreflight.map(convergedMutationTargetResult))
-      : yield* awaitDependencyPromise(() =>
-          reconcileProviderTargets(revalidated.content, finalPreflight, {
-            retireOmitted: true,
-          })
-        );
+      : yield* reconcileProviderTargets(revalidated.content, finalPreflight, {
+          retireOmitted: true,
+        });
     return {
       operation: "sync",
       classification: mutationClassification(targets),

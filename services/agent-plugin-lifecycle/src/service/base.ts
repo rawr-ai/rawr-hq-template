@@ -1,13 +1,12 @@
-import { ORPCError } from "@orpc/client";
 import { os } from "@orpc/server";
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { AgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
-import { Effect, Layer } from "effect";
+import { Layer } from "effect";
 import { implementEffect } from "effect-orpc";
 import { contract } from "./contract";
-import type { NativeProviderSessionResolver } from "./model/dependencies/providers";
 
 export interface LifecycleClock {
   readonly now: () => Date;
@@ -18,7 +17,7 @@ type InitialContext = {
     contentWorkspace: ContentWorkspaceResource<never>;
     clock: LifecycleClock;
     packageOutput: AgentPluginPackageOutputResource<never>;
-    providerNativeSessions: NativeProviderSessionResolver;
+    nativeProviders: NativeAgentProviderResources;
     versionedContent: VersionedContentResource<never>;
   };
   scope: {};
@@ -100,12 +99,3 @@ export const createRequiredServiceObservabilityMiddleware =
 /** SDK-owned required analytics extension builder, not a context factory. */
 export const createRequiredServiceAnalyticsMiddleware =
   definition.createRequiredAnalyticsMiddleware;
-
-export function awaitDependencyPromise<A>(operation: () => PromiseLike<A>) {
-  return Effect.uninterruptible(
-    Effect.tryPromise({
-      try: operation,
-      catch: (cause) => new ORPCError("INTERNAL_SERVER_ERROR", { cause }),
-    })
-  );
-}

@@ -1,3 +1,4 @@
+import { NodeServices } from "@effect/platform-node";
 import type {
   ClaudeNativeAgentProviderSession,
   NativeAgentProviderFailure,
@@ -62,142 +63,165 @@ const ClaudePluginListSchema = Type.Array(
 type ClaudeMarketplaceList = Static<typeof ClaudeMarketplaceListSchema>;
 type ClaudePluginList = Static<typeof ClaudePluginListSchema>;
 
-export const claudeEffectPlatformNodeProvider: NativeAgentProviderResource<
-  ClaudeNativeAgentProviderSession,
-  EffectPlatformNodeRequirements
-> = Object.freeze({
-  acquire: (input: NativeProviderSessionInput) =>
-    acquireEffectPlatformNodeProvider("claude", input).pipe(
-      Effect.map((kernel): ClaudeNativeAgentProviderSession => {
-        const probe: ClaudeNativeAgentProviderSession["probe"] = () =>
-          kernel.serialized(
-            "probe",
-            Effect.gen(function* () {
-              const version = yield* kernel.run("probe", ["--version"]);
-              const pluginHelp = yield* kernel.run("probe", ["plugin", "--help"]);
-              const marketplaceHelp = yield* kernel.run("probe", [
-                "plugin",
-                "marketplace",
-                "--help",
-              ]);
-              return Object.freeze({
-                provider: "claude",
-                executablePath: kernel.executablePath,
-                home: kernel.home,
-                version: yield* requireVersion(version.stdout),
-                capabilities: observedCapabilities(pluginHelp.stdout, marketplaceHelp.stdout),
-              }) satisfies NativeProviderCapabilities;
-            })
-          );
+/** Fixes the exact Claude executable used by every session from this resource. */
+export interface ClaudeEffectPlatformNodeProviderOptions {
+  readonly executablePath: string;
+}
 
-        const readInventory = () => claudeInventory(kernel);
-        const inventory: ClaudeNativeAgentProviderSession["inventory"] = () =>
-          kernel.serialized("inventory", readInventory());
-
-        return Object.freeze({
-          provider: "claude",
-          executablePath: kernel.executablePath,
-          home: kernel.home,
-          probe,
-          inventory,
-          readPluginFiles: (request) =>
+/**
+ * Constructs the platform-requiring Claude provider without choosing a runtime.
+ */
+export function makeClaudeEffectPlatformNodeProvider(
+  options: ClaudeEffectPlatformNodeProviderOptions
+): NativeAgentProviderResource<ClaudeNativeAgentProviderSession, EffectPlatformNodeRequirements> {
+  return Object.freeze({
+    acquire: (input: NativeProviderSessionInput) =>
+      acquireEffectPlatformNodeProvider("claude", options.executablePath, input).pipe(
+        Effect.map((kernel): ClaudeNativeAgentProviderSession => {
+          const probe: ClaudeNativeAgentProviderSession["probe"] = () =>
             kernel.serialized(
-              "plugin-files-read",
-              requirePluginFilesReadInput("claude", "plugin-files-read", request).pipe(
-                Effect.flatMap((validated) =>
-                  readInventory().pipe(
-                    Effect.flatMap((live) =>
-                      selectPluginRoot(live.plugins, validated.selector).pipe(
-                        Effect.flatMap((root) =>
-                          Effect.forEach(
-                            validated.files,
-                            (file) =>
-                              kernel.readPluginEntry("plugin-files-read", root, file).pipe(
-                                Effect.catchIf(
-                                  (error) =>
-                                    error.reason === "Missing" || error.reason === "LimitExceeded",
-                                  (error) => {
-                                    const missing: NativeProviderPluginFileObservation =
-                                      Object.freeze({
-                                        kind: error.reason === "Missing" ? "Missing" : "TooLarge",
-                                        relativePath: file.relativePath,
-                                      });
-                                    return Effect.succeed(missing);
-                                  }
-                                )
-                              ),
-                            { concurrency: 1 }
-                          ).pipe(
-                            Effect.map((files) => {
-                              const observed: NativeProviderPluginFiles = Object.freeze({
-                                selector: validated.selector,
-                                files: Object.freeze(files),
-                              });
-                              return observed;
-                            })
+              "probe",
+              Effect.gen(function* () {
+                const version = yield* kernel.run("probe", ["--version"]);
+                const pluginHelp = yield* kernel.run("probe", ["plugin", "--help"]);
+                const marketplaceHelp = yield* kernel.run("probe", [
+                  "plugin",
+                  "marketplace",
+                  "--help",
+                ]);
+                return Object.freeze({
+                  provider: "claude",
+                  executablePath: kernel.executablePath,
+                  home: kernel.home,
+                  version: yield* requireVersion(version.stdout),
+                  capabilities: observedCapabilities(pluginHelp.stdout, marketplaceHelp.stdout),
+                }) satisfies NativeProviderCapabilities;
+              })
+            );
+
+          const readInventory = () => claudeInventory(kernel);
+          const inventory: ClaudeNativeAgentProviderSession["inventory"] = () =>
+            kernel.serialized("inventory", readInventory());
+
+          return Object.freeze({
+            provider: "claude",
+            executablePath: kernel.executablePath,
+            home: kernel.home,
+            probe,
+            inventory,
+            readPluginFiles: (request) =>
+              kernel.serialized(
+                "plugin-files-read",
+                requirePluginFilesReadInput("claude", "plugin-files-read", request).pipe(
+                  Effect.flatMap((validated) =>
+                    readInventory().pipe(
+                      Effect.flatMap((live) =>
+                        selectPluginRoot(live.plugins, validated.selector).pipe(
+                          Effect.flatMap((root) =>
+                            Effect.forEach(
+                              validated.files,
+                              (file) =>
+                                kernel.readPluginEntry("plugin-files-read", root, file).pipe(
+                                  Effect.catchIf(
+                                    (error) =>
+                                      error.reason === "Missing" ||
+                                      error.reason === "LimitExceeded",
+                                    (error) => {
+                                      const missing: NativeProviderPluginFileObservation =
+                                        Object.freeze({
+                                          kind: error.reason === "Missing" ? "Missing" : "TooLarge",
+                                          relativePath: file.relativePath,
+                                        });
+                                      return Effect.succeed(missing);
+                                    }
+                                  )
+                                ),
+                              { concurrency: 1 }
+                            ).pipe(
+                              Effect.map((files) => {
+                                const observed: NativeProviderPluginFiles = Object.freeze({
+                                  selector: validated.selector,
+                                  files: Object.freeze(files),
+                                });
+                                return observed;
+                              })
+                            )
                           )
                         )
                       )
                     )
                   )
                 )
-              )
-            ),
-          addMarketplace: (source) =>
-            kernel.serialized(
-              "marketplace-add",
-              requireMarketplaceSource("claude", "marketplace-add", source).pipe(
-                Effect.flatMap((validated) => claudeMarketplaceAddArgs(kernel, validated)),
-                Effect.flatMap((args) => kernel.mutation("marketplace-add", args))
-              )
-            ),
-          removeMarketplace: (request) =>
-            kernel.serialized(
-              "marketplace-remove",
-              requireMarketplaceIdentityInput("claude", "marketplace-remove", request).pipe(
-                Effect.flatMap((identity) =>
-                  kernel.mutation("marketplace-remove", [
-                    "plugin",
-                    "marketplace",
-                    "remove",
-                    identity,
-                    "--scope",
-                    "user",
-                  ])
+              ),
+            addMarketplace: (source) =>
+              kernel.serialized(
+                "marketplace-add",
+                requireMarketplaceSource("claude", "marketplace-add", source).pipe(
+                  Effect.flatMap((validated) => claudeMarketplaceAddArgs(kernel, validated)),
+                  Effect.flatMap((args) => kernel.mutation("marketplace-add", args))
                 )
-              )
-            ),
-          installPlugin: (request) =>
-            kernel.serialized(
-              "plugin-install",
-              requirePluginSelectorInput("claude", "plugin-install", request).pipe(
-                Effect.flatMap((selector) =>
-                  pluginMutation(kernel, "plugin-install", "install", selector)
+              ),
+            removeMarketplace: (request) =>
+              kernel.serialized(
+                "marketplace-remove",
+                requireMarketplaceIdentityInput("claude", "marketplace-remove", request).pipe(
+                  Effect.flatMap((identity) =>
+                    kernel.mutation("marketplace-remove", [
+                      "plugin",
+                      "marketplace",
+                      "remove",
+                      identity,
+                      "--scope",
+                      "user",
+                    ])
+                  )
                 )
-              )
-            ),
-          enablePlugin: (request) =>
-            kernel.serialized(
-              "plugin-enable",
-              requirePluginSelectorInput("claude", "plugin-enable", request).pipe(
-                Effect.flatMap((selector) =>
-                  pluginMutation(kernel, "plugin-enable", "enable", selector)
+              ),
+            installPlugin: (request) =>
+              kernel.serialized(
+                "plugin-install",
+                requirePluginSelectorInput("claude", "plugin-install", request).pipe(
+                  Effect.flatMap((selector) =>
+                    pluginMutation(kernel, "plugin-install", "install", selector)
+                  )
                 )
-              )
-            ),
-          removePlugin: (request) =>
-            kernel.serialized(
-              "plugin-remove",
-              requirePluginSelectorInput("claude", "plugin-remove", request).pipe(
-                Effect.flatMap((selector) =>
-                  pluginMutation(kernel, "plugin-remove", "uninstall", selector)
+              ),
+            enablePlugin: (request) =>
+              kernel.serialized(
+                "plugin-enable",
+                requirePluginSelectorInput("claude", "plugin-enable", request).pipe(
+                  Effect.flatMap((selector) =>
+                    pluginMutation(kernel, "plugin-enable", "enable", selector)
+                  )
                 )
-              )
-            ),
-        });
-      })
-    ),
-});
+              ),
+            removePlugin: (request) =>
+              kernel.serialized(
+                "plugin-remove",
+                requirePluginSelectorInput("claude", "plugin-remove", request).pipe(
+                  Effect.flatMap((selector) =>
+                    pluginMutation(kernel, "plugin-remove", "uninstall", selector)
+                  )
+                )
+              ),
+          });
+        })
+      ),
+  });
+}
+
+/**
+ * Constructs a ready Claude resource whose Node platform is supplied only while
+ * acquiring a session.
+ */
+export function makeNodeClaudeNativeAgentProviderResource(
+  options: ClaudeEffectPlatformNodeProviderOptions
+): NativeAgentProviderResource<ClaudeNativeAgentProviderSession, never> {
+  const provider = makeClaudeEffectPlatformNodeProvider(options);
+  return Object.freeze({
+    acquire: (input) => provider.acquire(input).pipe(Effect.provide(NodeServices.layer)),
+  });
+}
 
 function claudeInventory(
   kernel: EffectPlatformNodeProviderKernel

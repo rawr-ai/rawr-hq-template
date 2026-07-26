@@ -3,9 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import { runProviderTest as providerTestEffect } from "../../../src/service/modules/providers/router/test.router";
 import {
-  FakeNativeSession,
-  FakeNativeSessions,
+  FakeNativeProviders,
   FakeSelectedContentResolver,
+  fakeNativeSession,
   selectedContent,
   selectedContentWithAliases,
   testRequest,
@@ -25,7 +25,7 @@ describe("provider disposable-home test", () => {
       "targeted"
     );
     const target = testRequest.targets[0];
-    const session = new FakeNativeSession({ target, content, omitted: ["docs"] });
+    const session = fakeNativeSession({ target, content, omitted: ["docs"] });
     const result = await runProviderTest(
       {
         ...testRequest,
@@ -33,7 +33,7 @@ describe("provider disposable-home test", () => {
       },
       {
         selectedContent: new FakeSelectedContentResolver({ workspace: [content] }),
-        nativeSessions: new FakeNativeSessions([session]),
+        nativeProviders: new FakeNativeProviders([session]),
       }
     );
     expect(result.classification).toBe("Changed");
@@ -48,12 +48,12 @@ describe("provider disposable-home test", () => {
       root: testRequest.contentWorkspace.locator,
     });
     const target = testRequest.targets[0];
-    const session = new FakeNativeSession({ target, content, omitted: ["docs"] });
+    const session = fakeNativeSession({ target, content, omitted: ["docs"] });
     const result = await runProviderTest(
       { ...testRequest, mode: { kind: "complete-set" } },
       {
         selectedContent: new FakeSelectedContentResolver({ workspace: [content] }),
-        nativeSessions: new FakeNativeSessions([session]),
+        nativeProviders: new FakeNativeProviders([session]),
       }
     );
 
@@ -70,7 +70,7 @@ describe("provider disposable-home test", () => {
       { kind: "local", root: testRequest.contentWorkspace.locator }
     );
     const target = testRequest.targets[0];
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target,
       content,
       installed: ["cognition"],
@@ -81,7 +81,7 @@ describe("provider disposable-home test", () => {
       { ...testRequest, mode: { kind: "complete-set" } },
       {
         selectedContent: new FakeSelectedContentResolver({ workspace: [content] }),
-        nativeSessions: new FakeNativeSessions([session]),
+        nativeProviders: new FakeNativeProviders([session]),
       }
     );
 

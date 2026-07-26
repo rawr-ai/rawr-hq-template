@@ -8,7 +8,7 @@ export const capabilities = createMiddleware().middleware(({ context, next }) =>
       selectedContent: createSelectedContentResolver({
         contentWorkspace: context.deps.contentWorkspace,
       }),
-      nativeSessions: context.deps.providerNativeSessions,
+      nativeProviders: context.deps.nativeProviders,
     },
   })
 );

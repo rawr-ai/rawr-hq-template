@@ -3,9 +3,18 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 const BoundedTextSchema = Type.String({ minLength: 1, maxLength: 4_096 });
-const ProviderPathSchema = Type.String({ minLength: 1, maxLength: 16_384 });
+const ProviderDiagnosticPathSchema = Type.String({
+  minLength: 1,
+  maxLength: 16_384,
+  description:
+    "Bounded path text observed or rejected by one native provider operation; it need not be canonical.",
+});
 const CanonicalProviderPathSchema = Refine(
-  ProviderPathSchema,
+  Type.String({
+    minLength: 1,
+    maxLength: 16_384,
+    description: "Canonical non-root absolute path accepted by a native provider operation.",
+  }),
   isCanonicalAbsolutePath,
   () => "Expected a canonical non-root absolute path"
 );
@@ -46,10 +55,13 @@ export const CanonicalGitRepositoryUrlSchema = Refine(
   () => "Expected a canonical HTTPS Git repository URL"
 );
 
-export const NativeAgentProviderIdSchema = Type.Union([
-  Type.Literal("claude"),
-  Type.Literal("codex"),
-]);
+/** Identifies one native agent provider supported by the closed resource catalog. */
+export const NativeAgentProviderIdSchema = Type.Union(
+  [Type.Literal("claude"), Type.Literal("codex")],
+  {
+    description: "Identity of one supported native agent provider.",
+  }
+);
 
 export const NativeAgentProviderOperationSchema = Type.Union([
   Type.Literal("acquire"),
@@ -90,18 +102,24 @@ export const NativeAgentProviderFailureSchema = Type.Readonly(
       operation: NativeAgentProviderOperationSchema,
       reason: NativeAgentProviderFailureReasonSchema,
       commandPhase: NativeProviderCommandPhaseSchema,
-      path: Type.Optional(ProviderPathSchema),
+      path: Type.Optional(ProviderDiagnosticPathSchema),
       detail: BoundedTextSchema,
     },
     { additionalProperties: false }
   )
 );
 
+/** Validates the executable fixed when constructing one concrete provider. */
+export const NativeProviderExecutablePathSchema = CanonicalProviderPathSchema;
+
+/** Validates the explicit provider home supplied for one acquired native session. */
+export const NativeProviderHomeSchema = CanonicalProviderPathSchema;
+
+/** Admits the operation input for a provider whose executable is fixed at construction. */
 export const NativeProviderSessionInputSchema = Type.Readonly(
   Type.Object(
     {
-      executablePath: CanonicalProviderPathSchema,
-      home: CanonicalProviderPathSchema,
+      home: NativeProviderHomeSchema,
     },
     { additionalProperties: false }
   )
@@ -502,10 +520,31 @@ export type ClaudeNativeAgentProviderSession = NativeAgentProviderSessionBase &
     ) => Effect.Effect<NativeProviderMutationResult, NativeAgentProviderFailure>;
   }>;
 
+/** Provider-discriminated session returned by the closed native resource catalog. */
+export type NativeAgentProviderSession =
+  | CodexNativeAgentProviderSession
+  | ClaudeNativeAgentProviderSession;
+
+/**
+ * Acquires a provider-specific session while preserving the provider's required
+ * runtime environment in the Effect requirement channel.
+ */
 export type NativeAgentProviderResource<Session, R = never> = Readonly<{
   acquire: (
     input: NativeProviderSessionInput
   ) => Effect.Effect<Session, NativeAgentProviderFailure, R>;
+}>;
+
+/**
+ * Closed app-supplied catalog of ready native provider resources.
+ *
+ * @remarks
+ * Both providers remain structurally present. A missing executable binding is
+ * represented by that provider's typed failing resource, never by a partial map.
+ */
+export type NativeAgentProviderResources = Readonly<{
+  codex: NativeAgentProviderResource<CodexNativeAgentProviderSession, never>;
+  claude: NativeAgentProviderResource<ClaudeNativeAgentProviderSession, never>;
 }>;
 
 function isCanonicalRelativePath(value: string): boolean {

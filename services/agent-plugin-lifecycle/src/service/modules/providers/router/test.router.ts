@@ -1,6 +1,5 @@
+import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 import { Effect } from "effect";
-import { awaitDependencyPromise } from "../../../base";
-import type { NativeProviderSessionResolver } from "../../../model/dependencies/providers";
 import type { ProviderTestRequest, ProviderTestResult } from "../model/dto/provider-lifecycle";
 import { sameSelectedContent } from "../model/policy/selected-content";
 import type { SelectedContentResolver } from "../model/ports/selected-content";
@@ -23,15 +22,17 @@ import {
 } from "./result.router";
 import { resolveTestSelection } from "./selection.router";
 
+/** Ready capability set consumed by the disposable Provider test operation. */
 export interface ProviderTestDependencies {
   readonly selectedContent: SelectedContentResolver;
-  readonly nativeSessions: NativeProviderSessionResolver;
+  readonly nativeProviders: NativeAgentProviderResources;
 }
 
 export const test = module.test.effect(function* ({ context, input }) {
   return yield* runProviderTest(input, context);
 });
 
+/** Authors disposable Provider convergence over the app-supplied ready catalog. */
 export function runProviderTest(
   request: ProviderTestRequest,
   dependencies: ProviderTestDependencies
@@ -54,14 +55,12 @@ export function runProviderTest(
     // Disposable testing may replace selected members, but it never retires
     // other provider state. Canonical complete-set retirement belongs to sync.
     const retireOmitted = false;
-    const initial = yield* awaitDependencyPromise(() =>
-      inspectProviderTargets(
-        selected.content,
-        canonicalRequest.targets,
-        dependencies.nativeSessions,
-        { retireOmitted },
-        true
-      )
+    const initial = yield* inspectProviderTargets(
+      selected.content,
+      canonicalRequest.targets,
+      dependencies.nativeProviders,
+      { retireOmitted },
+      true
     );
     if (hasBlockingAssessment(initial)) {
       return completeResult(selected.content, blockedTargetResults(initial));
@@ -80,23 +79,19 @@ export function runProviderTest(
     ) {
       return blockedResult(selected.content, sourceChangedTargets(canonicalRequest.targets));
     }
-    const finalPreflight = yield* awaitDependencyPromise(() =>
-      inspectProviderTargets(
-        revalidated.content,
-        canonicalRequest.targets,
-        dependencies.nativeSessions,
-        { retireOmitted },
-        true
-      )
+    const finalPreflight = yield* inspectProviderTargets(
+      revalidated.content,
+      canonicalRequest.targets,
+      dependencies.nativeProviders,
+      { retireOmitted },
+      true
     );
     if (hasBlockingAssessment(finalPreflight)) {
       return completeResult(revalidated.content, blockedTargetResults(finalPreflight));
     }
     const targets = allTargetsConverged(finalPreflight)
       ? Object.freeze(finalPreflight.map(convergedMutationTargetResult))
-      : yield* awaitDependencyPromise(() =>
-          reconcileProviderTargets(revalidated.content, finalPreflight, { retireOmitted })
-        );
+      : yield* reconcileProviderTargets(revalidated.content, finalPreflight, { retireOmitted });
     return completeResult(revalidated.content, targets);
   });
 }

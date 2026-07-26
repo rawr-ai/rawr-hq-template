@@ -21,7 +21,7 @@ const LIFECYCLE_OBJECT_DEP_KEYS = Object.freeze([
   "contentWorkspace",
   "clock",
   "packageOutput",
-  "providerNativeSessions",
+  "nativeProviders",
   "versionedContent",
 ]);
 const OPERATION_CASES = Object.freeze([

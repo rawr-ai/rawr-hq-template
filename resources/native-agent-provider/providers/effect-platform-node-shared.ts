@@ -20,6 +20,7 @@ import type {
 import {
   CanonicalGitRepositoryUrlSchema,
   NativeMarketplaceSourceSchema,
+  NativeProviderExecutablePathSchema,
   NativeProviderMarketplaceIdentityInputSchema,
   NativeProviderPluginFilesReadInputSchema,
   NativeProviderPluginSelectorInputSchema,
@@ -33,6 +34,7 @@ const PROCESS_FORCE_KILL_AFTER = "5 seconds";
 const MAX_FAILURE_DETAIL = 4_096;
 const processSemaphores = new Map<string, Semaphore.Semaphore>();
 
+/** Effect Platform services required while a concrete Node provider acquires a ready session. */
 export type EffectPlatformNodeRequirements =
   | ChildProcessSpawner.ChildProcessSpawner
   | FileSystem.FileSystem
@@ -43,6 +45,7 @@ type NativeCommandOutput = Readonly<{
   stderr: string;
 }>;
 
+/** Shared, provider-neutral filesystem and process capabilities behind an acquired native session. */
 export type EffectPlatformNodeProviderKernel = Readonly<{
   provider: NativeAgentProviderId;
   executablePath: string;
@@ -71,8 +74,15 @@ export type EffectPlatformNodeProviderKernel = Readonly<{
   homePath: (...segments: readonly string[]) => string;
 }>;
 
+/**
+ * Acquires the bounded Node kernel used by one provider session.
+ *
+ * The concrete provider fixes its executable before acquisition; the caller
+ * supplies only the provider-owned home for this session.
+ */
 export function acquireEffectPlatformNodeProvider(
   provider: NativeAgentProviderId,
+  executablePathInput: string,
   input: NativeProviderSessionInput
 ): Effect.Effect<
   EffectPlatformNodeProviderKernel,
@@ -90,6 +100,16 @@ export function acquireEffectPlatformNodeProvider(
         "Provider session input is invalid"
       );
     }
+    if (!Value.Check(NativeProviderExecutablePathSchema, executablePathInput)) {
+      return yield* fail(
+        provider,
+        "acquire",
+        "InvalidInput",
+        "not-started",
+        undefined,
+        "Provider executable path is invalid"
+      );
+    }
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
     const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
@@ -97,7 +117,7 @@ export function acquireEffectPlatformNodeProvider(
       fs,
       paths,
       provider,
-      input.executablePath
+      executablePathInput
     );
     const home = yield* requireCanonicalDirectory(fs, paths, provider, "acquire", input.home);
     const semaphore = processSemaphore(provider, home);
@@ -146,6 +166,7 @@ export function acquireEffectPlatformNodeProvider(
   });
 }
 
+/** Validates a marketplace source before a concrete provider constructs native arguments. */
 export function requireMarketplaceSource(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
@@ -163,6 +184,14 @@ export function requireMarketplaceSource(
       );
 }
 
+/**
+ * Parses and validates one provider JSON response without exposing untyped native payloads.
+ *
+ * @param provider - Provider that emitted the response.
+ * @param operation - Native operation whose response is being decoded.
+ * @param schema - TypeBox authority for the normalized response.
+ * @param text - Raw native stdout to parse and validate.
+ */
 export function decodeProviderJson<const Schema extends TSchema>(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
@@ -196,6 +225,7 @@ export function decodeProviderJson<const Schema extends TSchema>(
   );
 }
 
+/** Extracts the canonical command names advertised by a native help surface. */
 export function parseHelpCommands(stdout: string): readonly string[] {
   const commands = new Set<string>();
   for (const line of stdout.split(/\r?\n/u)) {
@@ -206,6 +236,7 @@ export function parseHelpCommands(stdout: string): readonly string[] {
   return Object.freeze([...commands].sort(compareText));
 }
 
+/** Validates one marketplace identity before native removal argument construction. */
 export function requireMarketplaceIdentityInput(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
@@ -223,6 +254,7 @@ export function requireMarketplaceIdentityInput(
       );
 }
 
+/** Validates one provider-qualified plugin selector before native mutation. */
 export function requirePluginSelectorInput(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
@@ -240,6 +272,7 @@ export function requirePluginSelectorInput(
       );
 }
 
+/** Validates one bounded point-addressed plugin-file read request. */
 export function requirePluginFilesReadInput(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,
@@ -257,6 +290,15 @@ export function requirePluginFilesReadInput(
       );
 }
 
+/**
+ * Canonicalizes the Git fields used to construct one native marketplace source.
+ *
+ * @param provider - Provider that will consume the marketplace source.
+ * @param operation - Native operation for typed failure attribution.
+ * @param repositoryUrl - Canonical HTTPS Git repository URL.
+ * @param revision - Immutable or versioned Git revision selected by the caller.
+ * @param sparsePaths - Bounded provider content roots to expose natively.
+ */
 export function requireGitMarketplaceSource(
   provider: NativeAgentProviderId,
   operation: NativeAgentProviderOperation,

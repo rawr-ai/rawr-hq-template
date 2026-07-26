@@ -2,6 +2,7 @@ import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-ada
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { AgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
+import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
 
@@ -75,22 +76,22 @@ export function unavailableVersionedContent(): VersionedContentResource<never> {
   });
 }
 
-export function unavailableProviderResources() {
+/** Supplies a closed fail-fast native provider catalog to tests outside Providers. */
+export function unavailableProviderResources(): Readonly<{
+  nativeProviders: NativeAgentProviderResources;
+}> {
   return {
-    providerNativeSessions: {
-      acquire: async () => unavailableAsync("native provider acquisition"),
-    },
+    nativeProviders: Object.freeze({
+      codex: Object.freeze({
+        acquire: () => unavailableEffect("Codex native provider acquisition"),
+      }),
+      claude: Object.freeze({
+        acquire: () => unavailableEffect("Claude native provider acquisition"),
+      }),
+    }),
   };
-}
-
-function unavailable(label: string): never {
-  throw new Error(`Unexpected ${label} access in lifecycle service test`);
 }
 
 function unavailableEffect(label: string): Effect.Effect<never> {
   return Effect.die(new Error(`Unexpected ${label} access in lifecycle service test`));
-}
-
-async function unavailableAsync(label: string): Promise<never> {
-  return unavailable(label);
 }

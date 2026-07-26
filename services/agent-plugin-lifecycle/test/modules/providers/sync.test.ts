@@ -5,9 +5,9 @@ import { parseGitTreeId } from "../../../src/service/shared/release";
 import {
   channelRequest,
   createCurrentMainReader,
-  FakeNativeSession,
-  FakeNativeSessions,
+  FakeNativeProviders,
   FakeSelectedContentResolver,
+  fakeNativeSession,
   selectedContent,
   selectedContentWithAliases,
 } from "./fixture";
@@ -18,7 +18,7 @@ const runProviderSync = (...args: Parameters<typeof providerSyncEffect>) =>
 describe("provider sync", () => {
   it("refreshes an exact Codex marketplace with an unobservable revision before installing a missing selected member", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "exact",
@@ -26,7 +26,7 @@ describe("provider sync", () => {
     const dependencies = {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     };
 
     const result = await runProviderSync(channelRequest, dependencies);
@@ -47,7 +47,7 @@ describe("provider sync", () => {
 
   it("detects and repairs drift in a selected reference file, then repeats without mutation", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "exact",
@@ -61,7 +61,7 @@ describe("provider sync", () => {
     const dependencies = {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     };
 
     const result = await runProviderSync(channelRequest, dependencies);
@@ -89,7 +89,7 @@ describe("provider sync", () => {
 
   it("treats an oversized selected file as repairable drift", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "exact",
@@ -103,7 +103,7 @@ describe("provider sync", () => {
     const dependencies = {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     };
 
     const result = await runProviderSync(channelRequest, dependencies);
@@ -124,13 +124,13 @@ describe("provider sync", () => {
   it("enables a Claude plugin with unknown enablement and repeats without mutation", async () => {
     const content = selectedContent();
     const target = { provider: "claude" as const, home: "/tmp/claude-home" };
-    const session = new FakeNativeSession({ target, content, installed: ["cognition"] });
+    const session = fakeNativeSession({ target, content, installed: ["cognition"] });
     session.setPluginEnabled("cognition", null);
     const request = { ...channelRequest, targets: [target] as const };
     const dependencies = {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     };
 
     const result = await runProviderSync(request, dependencies);
@@ -147,7 +147,7 @@ describe("provider sync", () => {
 
   it("retires an alias-shaped managed residue omitted from the canonical member set", async () => {
     const content = selectedContentWithAliases(["cognition"], { cognition: ["cog"] });
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       installed: ["cognition"],
@@ -157,7 +157,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
 
     expect(result.classification).toBe("Changed");
@@ -170,7 +170,7 @@ describe("provider sync", () => {
 
   it("removes omitted native selector residue even when it is no longer installed", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       installed: ["cognition"],
@@ -180,7 +180,7 @@ describe("provider sync", () => {
     const dependencies = {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     };
 
     const result = await runProviderSync(channelRequest, dependencies);
@@ -199,7 +199,7 @@ describe("provider sync", () => {
 
   it("establishes the marketplace and refreshes selected members before retiring omitted residue", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "stale",
@@ -210,7 +210,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
     expect(result.classification).toBe("Changed");
     expect(result.targets[0]?.operations.map((operation) => operation.kind)).toEqual([
@@ -232,7 +232,7 @@ describe("provider sync", () => {
 
   it("preserves omitted residue when selected-file verification fails", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       installed: ["cognition"],
@@ -243,7 +243,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
     expect(result.classification).toBe("Partial");
     expect(result.targets[0]?.classification).toBe("Failed");
@@ -263,8 +263,8 @@ describe("provider sync", () => {
       channelRequest.targets[0],
       { provider: "claude" as const, home: "/tmp/claude-home" },
     ] as const;
-    const first = new FakeNativeSession({ target: targets[0], content });
-    const second = new FakeNativeSession({
+    const first = fakeNativeSession({ target: targets[0], content });
+    const second = fakeNativeSession({
       target: targets[1],
       content,
       installed: ["cognition"],
@@ -275,7 +275,7 @@ describe("provider sync", () => {
     const dependencies = {
       currentMain: createCurrentMainReader(),
       selectedContent: resolver,
-      nativeSessions: new FakeNativeSessions([first, second]),
+      nativeProviders: new FakeNativeProviders([first, second]),
     };
     const firstResult = await runProviderSync({ ...channelRequest, targets }, dependencies);
     expect(firstResult.classification).toBe("Uncertain");
@@ -320,7 +320,7 @@ describe("provider sync", () => {
 
   it("stops before marketplace add when native removal cannot be observed", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "stale",
@@ -331,7 +331,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
     expect(result.classification).toBe("Uncertain");
     expect(result.targets[0]).toMatchObject({
@@ -347,7 +347,7 @@ describe("provider sync", () => {
 
   it("does not retire identity-matched plugins until the selected marketplace is observed", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "absent",
@@ -357,7 +357,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
 
     expect(result.classification).toBe("Changed");
@@ -370,7 +370,7 @@ describe("provider sync", () => {
 
   it("refuses ambiguous marketplace provenance without removing plugins", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       marketplace: "ambiguous",
@@ -379,7 +379,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
 
     expect(result.classification).toBe("Blocked");
@@ -390,7 +390,7 @@ describe("provider sync", () => {
 
   it("preserves and blocks foreign desired-name residue even when it is not installed", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
     });
@@ -399,7 +399,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
 
     expect(result.classification).toBe("Blocked");
@@ -409,7 +409,7 @@ describe("provider sync", () => {
 
   it("refuses a reported disabled Codex plugin without inventing enablement", async () => {
     const content = selectedContent();
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content,
       installed: ["cognition"],
@@ -418,7 +418,7 @@ describe("provider sync", () => {
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [content] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
 
     expect(result.classification).toBe("Failed");
@@ -432,14 +432,14 @@ describe("provider sync", () => {
     const changedTree = parseGitTreeId("9".repeat(40));
     if (!changedTree.ok) throw new Error("Invalid changed-tree fixture");
     const changedContent = Object.freeze({ ...firstContent, sourceTree: changedTree.value });
-    const session = new FakeNativeSession({
+    const session = fakeNativeSession({
       target: channelRequest.targets[0],
       content: firstContent,
     });
     const result = await runProviderSync(channelRequest, {
       currentMain: createCurrentMainReader(),
       selectedContent: new FakeSelectedContentResolver({ channel: [firstContent, changedContent] }),
-      nativeSessions: new FakeNativeSessions([session]),
+      nativeProviders: new FakeNativeProviders([session]),
     });
     expect(result.classification).toBe("Blocked");
     expect(result.issues.some((issue) => issue.code === "SourceChanged")).toBe(true);
