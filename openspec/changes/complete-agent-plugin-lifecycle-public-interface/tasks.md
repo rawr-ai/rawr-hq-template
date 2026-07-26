@@ -76,9 +76,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   classification, require Bun to execute the official command-plugin manifest
   command, and prove the exact direct app entrypoints without admitting extra
   bootstrap statements.
-- [ ] 1.4 Add positive resource/provider topology only after the current corpus
-  supports one generic invariant. Do not claim Magic prior art that does not
-  exist.
+- [x] 1.4 Port Magic Migration's closed resource and provider package laws from
+  commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`, resource tree
+  `c057cfd7a6f7ae310a1e6e6de0b78dbecb607da8`, and provider tree
+  `218afe721e58774f56af2b9a0d40fefb3d068dc1`. Adapt only packet identity and
+  Template's existing Bun-workspace resource shell (`package.json` and
+  `tsconfig.build.json`); preserve the provider shape unchanged. Add
+  unregistered kind-local skill frames, keep both baselines empty, and admit
+  both rules through the existing `check:source-law` edge without another
+  runner or hook.
 - [ ] 1.5 Give the Habitat project owner-local policy targets, pattern execution,
   isolated named inputs, and a blueprint-packet topology law closing the allowed
   packet filename set. The bounded packet check is complete, but it does not yet

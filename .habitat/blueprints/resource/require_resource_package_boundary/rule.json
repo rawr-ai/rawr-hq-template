@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "require_resource_package_boundary",
+  "title": "Require Resource Package Boundary",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "resource",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a resource package without one provider-neutral contract, package and project metadata, build and source TypeScript boundaries, and provider family or with an alternate package-root implementation face",
+  "why": "A resource names one provider-neutral capability supplied by application runtime. Closing its package boundary prevents generic resources from accumulating provider implementation, runtime selection, or product policy while retaining RAWR's ordinary workspace package and build faces.",
+  "remediate": "Keep contract.ts, package.json, project.json, providers, tsconfig.build.json, and tsconfig.json as the resource package faces. Permit only the independently governed AGENTS.md router and colocated behavior tests beside them. Move concrete vendor code into the owning provider.",
+  "message": "Every resource must retain one closed provider-neutral contract package.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["resources/*/**"]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/resource/require_resource_package_boundary/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/resource/require_resource_package_boundary/structure.toml"
+    }
+  }
+}

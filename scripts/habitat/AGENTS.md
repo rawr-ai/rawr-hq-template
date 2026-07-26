@@ -57,10 +57,10 @@
 - `check:policy` composes `check:source-law` with the rule-owned Nx project
   admission adapter. The source-law leaf acquires the selected green Grit and
   structure rules once, including the workspace scheduler law, admitted Oclif
-  structure laws, and agent-plugin command-channel law. Rules with known
-  live-corpus violations remain outside the required batch until their owning
-  migration burns them down; direct rule selection is diagnostic, not a second
-  required surface.
+  structure laws, resource and provider package boundaries, and agent-plugin
+  command-channel law. Rules with known live-corpus violations remain outside
+  the required batch until their owning migration burns them down; direct rule
+  selection is diagnostic, not a second required surface.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
 

@@ -63,5 +63,7 @@ None may impersonate another.
 - [[plugin/skill|Plugins]]
 - [[plugin-server/skill|Server plugins]]
 - [[plugin-server-api/skill|API server plugins]]
+- [[provider/skill|Providers]]
+- [[resource/skill|Resources]]
 - [[service/skill|Services]]
 - [[typescript-source/skill|TypeScript source relations]]

@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Resources Name External Capabilities
+
+An external capability is not policy merely because one module currently calls
+it. A resource names one provider-neutral capability; a provider implements its
+acquisition, use, and release mechanics; the app selects provider and lifetime;
+runtime executes those mechanics and binds the ready capability into service
+context; module middleware projects it; router handlers sequence calls; policy
+interprets facts and makes domain decisions.
+
+This is a funnel, not a web. A model file that acquires remote content, reads a
+workspace, publishes output, or invokes a native provider is an ad hoc resource
+assembly in the wrong layer. Extract the provider-neutral operation, not the
+whole workflow. Vendor identity, fast-forward admission, payload equivalence,
+and authoring decisions remain Vendor policy while remote versioned-content
+observation becomes a resource. Existing content-workspace mechanics remain
+their own resource; current-main persistence remains service-owned storage.
+
+See [[.habitat/blueprints/service/skill|the service frame]],
+[[resources/content-workspace/AGENTS|the workspace resource]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/service-domain-frame|the lifecycle domain frame]].
+
+### Bag Of Keywords
+
+Provider, resource, app, runtime, service, module, router, policy, context,
+fact, decision, operation, flow, owner, narrow, extract.
+
 ## 2026-07-26 - Resources Stay Effectful
 
 A provider realizes one neutral resource contract. The host selects that

@@ -18,16 +18,15 @@ repository release, or HF01 candidate was mutated by this correction.
 
 ## Canonical Repositories
 
-| Repository | Canonical identity at correction | Role |
+| Repository | Checkpoint base identity | Role |
 | --- | --- | --- |
-| RAWR HQ-Template | `main` / `b7a98c567f4519e5d84229fafacd0a4179875c9c` | Executable code, Oclif CLI, services, resources, generic tooling |
-| Personal RAWR HQ | `main` / `a4201247795d1fa18d46ecab206515e33660a171` | Curated agent content, provenance, policy/evaluation, governed records |
+| RAWR HQ-Template | `main` / `b9c6c185642da9922bcc70492ca7167da9a2926f` | Executable code, Oclif CLI, services, resources, generic tooling |
+| Personal RAWR HQ | `main` / `1e7f346b9b0fb7b356675d3e837295256bda7d0d` | Curated agent content, provenance, policy/evaluation, governed records |
 
-Active Template execution is isolated on Graphite branch
-`codex/align-service-blueprint-authority` in
-`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-root-simplify-cli-lifecycle`.
-The branch started clean from canonical Template `main`. The clean Personal
-primary and unrelated worktrees remain outside this initiative's write set.
+Active Template execution uses isolated Graphite worktrees descended from
+canonical Template `main`; Git and Graphite retain exact branch/worktree
+identity for each independently green checkpoint. The clean Personal primary
+and unrelated worktrees remain outside this initiative's write set.
 
 The packet provenance remains Personal commit
 `cc631f60c9254802be647d66662823ae47d5e7db`, project tree
@@ -126,7 +125,7 @@ source-checkout renaming.
 | External CLI extensions | Direct `@oclif/plugin-plugins` |
 | Build, cache, version, release | Nx and Nx Release |
 | Architecture policy | Habitat closed topology plus Grit source relationships |
-| Package classification | Pure support matter only; resource acquisition and process-scoped runtime composition belong to a service plus explicit resource/provider boundaries |
+| Package classification | Pure support matter only; external capabilities use resource/provider boundaries, runtime owns acquisition, and resourced product behavior belongs to a service |
 | Curated desired state | Personal Git-reviewed closed release input/channel record |
 | Installed provider truth | Native Codex/Claude inventory in the explicit home |
 | Provider mutation | Native provider commands through thin adapters |
@@ -1425,6 +1424,25 @@ P0/P1. This completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7d]] without claiming
 the payload, release-input, release, or release-set aggregates complete under
 tasks 5.3 and 5.7.
+
+The resource/provider structure checkpoint closes the generic package kinds
+needed for the next service correction. It follows Magic Migration commit
+`e58cbebbee0755faf644aa36c0bd2d2527b79ee5`, resource tree
+`c057cfd7a6f7ae310a1e6e6de0b78dbecb607da8`, and provider tree
+`218afe721e58774f56af2b9a0d40fefb3d068dc1`. RAWR adapts only packet identity
+and its existing Bun workspace resource shell; provider topology is unchanged.
+Each resource now has one closed provider-neutral contract/package face, and
+each concrete provider has one closed typed implementation face.
+
+Both baselines remain empty and both rules run once through the existing
+Habitat source-law target. No custom runner, hook, inventory, or package
+exception was added. Direct evaluation passed both rules with zero findings;
+the complete selected source-law batch passed 17 rules with zero findings; and
+the Habitat project typecheck passed uncached. This completes
+[[tasks#1. Positive Habitat And Nx Checks|task 1.4]] and establishes the
+structural prerequisite for extracting remote versioned-content mechanics. It
+does not claim that loose cross-provider implementation files in the existing
+native-provider family are normalized.
 
 ## Settlement Oracles
 
