@@ -7,14 +7,15 @@ import type {
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
 import { describe, expect, it } from "vitest";
-import type { StagedIndexObservationResult } from "../../../src/service/model/dependencies/releases";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/releases/content-workspace";
+import type { StagedIndexObservationResult } from "../../../src/service/modules/releases/model/dto/staged-content-workspace";
 import {
   addStagedObservationByteLimits,
   classifyStagedObservationFailure,
+  MAX_STAGED_INDEX_BYTES,
+  MAX_STAGED_INDEX_ENTRIES,
   MAX_STAGED_MATERIALIZED_BLOB_BYTES,
 } from "../../../src/service/modules/releases/model/policy/staged-content-workspace";
-import type { ResourceContentWorkspaceStagedReadPort } from "../../../src/service/modules/releases/repository/staged-content-workspace";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -86,11 +87,15 @@ describe("releases.checkRepository", () => {
         .join("")
     );
     const selections: Array<Readonly<{ paths: readonly string[]; roots: readonly string[] }>> = [];
+    const entryLimits: number[] = [];
+    const indexLimits: number[] = [];
     const blobLimits: number[] = [];
     let fullMaterializations = 0;
-    const rawPort: ResourceContentWorkspaceStagedReadPort = {
+    const rawPort: Pick<ContentWorkspaceNodeAsyncPort, "observeGitStagedIndex"> = {
       observeGitStagedIndex: async (input) => {
         selections.push({ paths: input.materializedPaths, roots: input.materializedRoots });
+        entryLimits.push(input.maxEntries);
+        indexLimits.push(input.maxIndexBytes);
         blobLimits.push(input.maxBlobBytes);
         const selected = stagedEntries.filter(
           (entry) =>
@@ -135,6 +140,18 @@ describe("releases.checkRepository", () => {
       { paths: [releaseInputPath], roots: ["plugins/agent/alpha", "plugins/agent/beta"] },
     ]);
     expect(selections).toHaveLength(4);
+    expect(entryLimits).toEqual([
+      MAX_STAGED_INDEX_ENTRIES,
+      MAX_STAGED_INDEX_ENTRIES,
+      MAX_STAGED_INDEX_ENTRIES,
+      MAX_STAGED_INDEX_ENTRIES,
+    ]);
+    expect(indexLimits).toEqual([
+      MAX_STAGED_INDEX_BYTES,
+      MAX_STAGED_INDEX_BYTES,
+      MAX_STAGED_INDEX_BYTES,
+      MAX_STAGED_INDEX_BYTES,
+    ]);
     expect(blobLimits).toEqual([
       MAX_RELEASE_INPUT_ENVELOPE_BYTES,
       MAX_STAGED_MATERIALIZED_BLOB_BYTES,
@@ -282,6 +299,35 @@ describe("releases.checkRepository", () => {
     });
     expect(observations).toBe(1);
     expect(writes).toBe(0);
+  });
+
+  it("returns SourceChanged after one read when the closing staged anchor changes", async () => {
+    let observations = 0;
+    const [releaseInputObservation] = validStagedObservationResults();
+    const client = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: async () => {
+          observations += 1;
+          return rawStagedObservation(anchorChangedObservation(releaseInputObservation));
+        },
+      },
+    });
+
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "staged",
+          contentWorkspace: stagedPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
+      kind: "SourceChanged",
+      mode: "staged",
+      detail: "Git HEAD, ref, repository, or index changed during staged observation",
+    });
+    expect(observations).toBe(1);
   });
 
   it("maps dependency errors with ambient codes to the closed GitFailure result", async () => {
@@ -686,6 +732,26 @@ function sourceChangedObservation(
       closing: Object.freeze({
         anchor: result.observation.closing.anchor,
         indexEntries: bytes("changed staged index\0"),
+      }),
+    }),
+  });
+}
+
+function anchorChangedObservation(
+  result: StagedIndexObservationResult
+): StagedIndexObservationResult {
+  if (result.kind !== "Observed") throw new Error("Expected observed staged fixture");
+  return Object.freeze({
+    kind: "Observed",
+    observation: Object.freeze({
+      opening: result.observation.opening,
+      blobs: result.observation.blobs,
+      closing: Object.freeze({
+        anchor: Object.freeze({
+          ...result.observation.closing.anchor,
+          tree: "c".repeat(40),
+        }),
+        indexEntries: result.observation.closing.indexEntries,
       }),
     }),
   });

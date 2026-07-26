@@ -22,6 +22,9 @@
   validation, selection, and release derivation because those meanings span
   multiple capability modules. Modules own their operation DTOs, handlers,
   results, issues, and operation-specific mutation policy.
+- The Releases module owns staged-index observation DTOs, its ready observation
+  port, resource normalization, and staged eligibility policy. Resource
+  provenance does not promote transition-specific meaning into the root model.
 - Filesystem, clock, package-output, and native-provider mechanics remain
   behind host-supplied dependencies.
 - It does not own the Oclif installation, Personal repository contents, app

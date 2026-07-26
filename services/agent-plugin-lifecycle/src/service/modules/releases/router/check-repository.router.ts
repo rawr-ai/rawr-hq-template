@@ -1,5 +1,4 @@
 import { awaitDependencyPromise } from "../../../base";
-import type { StagedContentWorkspaceObservationReader } from "../../../model/dependencies/releases";
 import type { SourceEligibilityIssue } from "../../../model/dto/releases/content-workspace";
 import {
   normalizeReleaseSourceChangedDetail,
@@ -16,6 +15,7 @@ import {
   releaseInputObservationRequest,
   validateStagedContentWorkspacePolicy,
 } from "../model/policy/staged-content-workspace";
+import type { StagedContentWorkspaceObservationReader } from "../model/ports/staged-content-workspace";
 import { module } from "../module";
 
 export const checkRepository = module.checkRepository.effect(function* ({

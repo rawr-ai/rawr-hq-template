@@ -681,6 +681,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   settlement, and provider selection. Keep root context assembly, staged
   observation, provider derivation, legacy release-family placement, and the
   remaining platform boundary open for later owner-local checkpoints.
+- [x] 5.7e2c Localize staged-index observation under Releases. Move its
+  opening/closing DTOs, ready reader port, resource adapter, and failure
+  normalization into direct module model leaves; delete the false root
+  dependency leaf and staged repository adapter without aliases. Preserve exact
+  index and blob bounds, opening/closing anchor comparison, source-change
+  refusal, normalized failures, operation authorship, and current context
+  behavior. Keep selected-content placement, root context assembly, provider
+  derivation, and the legacy release family open.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

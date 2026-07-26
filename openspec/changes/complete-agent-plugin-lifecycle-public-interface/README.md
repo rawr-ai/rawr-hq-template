@@ -282,6 +282,18 @@ files. Root context assembly, staged observation, provider derivation, legacy
 release-family placement, `node:crypto`, and the remaining service corpus stay
 explicitly open.
 
+The following owner-local checkpoint moves staged-index observation fully into
+Releases. Its opening and closing DTOs, ready reader port, resource adapter, and
+failure normalization now live beside the staged eligibility policy that
+interprets them. The false root dependency leaf and staged repository adapter
+disappear without aliases. Exact entry, index-byte, and blob-byte bounds remain
+observable; a changed closing anchor or index returns the same source-change
+result after one read. The move changes no oRPC context, handler authorship,
+provider selection, clean-content behavior, or external resource
+implementation. Selected-content placement, root context assembly, provider
+derivation, and the legacy release family remain open under [[tasks#5. Bounded
+Agent-Plugin Lifecycle Service|task 5.7e2]].
+
 The governance module now owns the same direct declarative boundary. Its two
 operations derive directly from Effect-oRPC `eoc` and state their complete
 domain, audience, idempotence, audit, and module metadata without importing the

@@ -6,6 +6,26 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-25 - Observation Follows Transition
+
+An observation belongs to the transition whose policy interprets it, not to the
+service root merely because an outside resource supplied the raw facts. Staged
+index bindings exist so Releases can compare opening and closing source,
+materialize bounded content, and decide release eligibility. Their DTOs, ready
+port, resource adapter, and failure vocabulary therefore remain sealed
+inside Releases.
+
+The service context still carries the content-workspace resource downward.
+That transport does not promote staged transition meaning into root ownership,
+create a dependency registry, or authorize a second repository layer. This
+checkpoint changes placement only; context, operation authorship, and runtime
+behavior remain fixed.
+
+### Bag Of Keywords
+
+Observation, transition, release, module, resource, context, port, policy,
+anchor, index, opening, closing, bounds, owner.
+
 ## 2026-07-25 - Capability Provision Is Not Context Narrowing
 
 Native oRPC middleware merges contributed capabilities into its inherited
