@@ -14,6 +14,9 @@
 - Packaging consumes release-derivation policy and clean content facts; it
   does not choose channel authority, author source content, or converge native
   providers.
+- Cowork v1 archive projection and digest rules are Packaging-owned protocol
+  policy; only byte encoding and output publication cross the package-output
+  resource boundary.
 - Archive encoding and output replacement remain behind the package-output
   resource contract.
 

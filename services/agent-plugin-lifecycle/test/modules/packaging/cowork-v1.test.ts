@@ -8,7 +8,7 @@ import {
   COWORK_V1_MAX_PAYLOAD_BYTES,
   coworkV1PackageDigest,
   createCoworkV1ArchiveRequest,
-} from "../../../src/service/modules/packaging/model/helpers/cowork-v1";
+} from "../../../src/service/modules/packaging/model/policy/cowork-v1";
 import type { AgentPluginRelease } from "../../../src/service/shared/release";
 import {
   createOwnedFixtureRoot,

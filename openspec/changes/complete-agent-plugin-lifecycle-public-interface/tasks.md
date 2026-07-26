@@ -842,6 +842,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   in the Habitat-native module-isolation packet and its fixtures. Do not move
   or bless the legacy `service/shared` tree, narrow the package import map,
   change the Nx project graph, or alter lifecycle behavior.
+- [x] 5.7e2i Move Cowork v1 archive projection into Packaging policy. Keep
+  deterministic entry selection, protocol bounds, and digest derivation
+  unchanged; do not treat pure archive policy as a helper or move encoding and
+  output publication out of their existing resource.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
