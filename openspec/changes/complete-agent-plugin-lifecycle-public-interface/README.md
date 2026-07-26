@@ -524,6 +524,28 @@ failure mapping, defects, cancellation, and finalization. Lifecycle source and
 test typechecks and strict OpenSpec validation pass. The complete lifecycle
 suite passes all 272 cases across 31 files.
 
+The Packaging resource-authorship checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2k]]. Separate named
+middleware contributions now project the ready content-workspace and
+package-output resources without constructing a reader or adapter. The package
+operation authors both complete six-call source observations around encoding,
+honors a concrete second refusal before comparing eligibility bindings, and
+keeps only publication uninterruptible.
+
+Packaging no longer consumes the transitional clean-content reader. Expected
+content-workspace failures remain the existing `SourceIneligible` closed
+result, while defects, interruption, and finalizers remain native Effect
+behavior. The unreachable `SourceReadFailed` TypeBox literal and unknown-error
+diagnostic machinery are deleted; the public schema now rejects that code. No
+resource implementation, public result kind, Cowork bytes, output settlement,
+provider state, or Personal content changes.
+
+The focused Packaging suite passes 30 cases, including exact call order and
+bounds, typed failure mapping, defects, cancellation/finalization, concrete
+second-refusal precedence, repeat behavior, and publication settlement.
+Lifecycle source and test typechecks and strict OpenSpec validation pass. The
+complete lifecycle suite passes all 275 cases across 31 files.
+
 The package-output checkpoint completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4d]]. The neutral
 contract now exposes only its Effect resource. The Cowork Effect Platform Node

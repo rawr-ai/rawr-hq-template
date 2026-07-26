@@ -136,6 +136,10 @@ describe("packaging procedure result schema boundary", () => {
         kind: "RejectedBeforeOutputMutation",
         primaryFailure: { ...failure, code: "MadeUpFailure" },
       },
+      {
+        kind: "RejectedBeforeOutputMutation",
+        primaryFailure: { ...failure, code: "SourceReadFailed" },
+      },
       { kind: "OutputReplacedVerified", ...identity, priorOutput: "Unknown" },
     ];
 

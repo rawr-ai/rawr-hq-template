@@ -19,8 +19,8 @@ export type ResourceContentWorkspaceSnapshotReadPort = Pick<
 >;
 
 /**
- * Supplies release and packaging operations with one neutral clean-content
- * observation boundary while the service retains ownership of source policy.
+ * Supplies the transitional local provider-test path with one neutral
+ * clean-content observation boundary while source policy remains pure.
  */
 export interface CleanContentWorkspaceReader {
   inspect(policy: ContentWorkspacePolicy): Effect.Effect<ContentWorkspaceInspection>;

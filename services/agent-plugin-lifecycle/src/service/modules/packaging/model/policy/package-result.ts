@@ -11,7 +11,6 @@ import {
 } from "../dto/packaging-lifecycle";
 
 const TRUNCATED_PACKAGING_DIAGNOSTIC_SUFFIX = "...[truncated]";
-const UNREADABLE_EXTERNAL_DIAGNOSTIC = "External dependency failed without a readable diagnostic";
 
 /**
  * Projects a derived selection into the package identity reported by settled output.
@@ -114,17 +113,6 @@ export function createPackagingFailure(
   });
 }
 
-/**
- * Renders an unknown inspection or revalidation failure without exposing an unreadable value.
- */
-export function externalErrorMessage(error: unknown): string {
-  try {
-    return diagnosticString(error instanceof Error ? error.message : error);
-  } catch {
-    return UNREADABLE_EXTERNAL_DIAGNOSTIC;
-  }
-}
-
 function primaryFailureCode(failure: PackageOutputFailure): PackagingFailureCode {
   switch (failure.reason) {
     case "InvalidInput":
@@ -165,14 +153,6 @@ function isProviderFailpoint(phase: string): boolean {
     phase === "AfterCommit" ||
     phase === "BeforeFinalVerification"
   );
-}
-
-function diagnosticString(value: unknown): string {
-  try {
-    return typeof value === "string" ? value : String(value);
-  } catch {
-    return UNREADABLE_EXTERNAL_DIAGNOSTIC;
-  }
 }
 
 function boundedDiagnostic(value: string, maxLength: number): string {

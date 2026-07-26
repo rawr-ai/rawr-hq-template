@@ -14,6 +14,9 @@
 - Packaging consumes release-derivation policy and clean content facts; it
   does not choose channel authority, author source content, or converge native
   providers.
+- Packaging receives one ready content-workspace resource and one ready
+  package-output resource through separate named middleware contributions. It
+  does not construct a source reader, resource adapter, or dependency bag.
 - Cowork v1 archive projection and digest rules are Packaging-owned protocol
   policy; only byte encoding and output publication cross the package-output
   resource boundary.
@@ -34,14 +37,16 @@
 
 ## Flow
 
-- A package request enters with a content-workspace locator and output path;
-  derivation and rendering occur against one source binding; revalidation
-  precedes bounded publication.
+- A package request enters with a content-workspace locator and output path.
+  The operation authors the six bounded source observations, derives and
+  renders against that binding, repeats the complete observation, honors any
+  concrete refusal, and only then compares bindings and publishes.
 
 ## Interfaces
 
-- The `package` operation is the caller boundary. Clean-content observation
-  and Cowork encoding/publication enter through module context ports.
+- The `package` operation is the caller boundary. Ready content-workspace and
+  package-output resources enter through module context; pure root and module
+  policy receive only typed facts.
 
 ## Routing
 

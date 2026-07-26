@@ -6,12 +6,24 @@ import type {
   PackageOutputPublicationResult,
 } from "@rawr/resource-agent-plugin-package-output";
 import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import type {
+  ContentWorkspaceFailure,
+  ContentWorkspaceResource,
+} from "@rawr/resource-content-workspace";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { afterEach, describe, expect, it } from "vitest";
-
+import {
+  MAX_CLEAN_CONTENT_INDEX_BYTES,
+  MAX_CLEAN_CONTENT_TREE_BYTES,
+  MAX_CLEAN_CONTENT_TREE_ENTRIES,
+  MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+  MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+  MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
+  MAX_CLEAN_RELEASE_INPUT_BYTES,
+  MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+} from "../../../src/service/model/policy/clean-content-workspace";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -92,6 +104,130 @@ describe("package agent plugin application", () => {
     });
     expect(await fileIdentityAndMetadata(outputPath)).toEqual(before);
     expect(Value.Check(PackageAgentPluginResultSchema, repeated)).toBe(true);
+  });
+
+  it("authors the complete bounded source sequence around encoding before publication", async () => {
+    const root = await fixtureRoot();
+    const repository = await createGeneratedGitRepository(root, "ordered-source");
+    const delegate = makeNodeContentWorkspaceResource({
+      gitExecutable: await realpath(GIT_EXECUTABLE),
+    });
+    const outputDelegate = makeNodeAgentPluginPackageOutputResource();
+    const calls: string[] = [];
+    const treeBounds: Array<Readonly<{ maxEntries: number; maxBytes: number }>> = [];
+    const releaseInputBounds: number[] = [];
+    const payloadBounds: Array<
+      Readonly<{ maxBlobs: number; maxBlobBytes: number; maxTotalBytes: number }>
+    > = [];
+    const evidenceBounds: Array<
+      Readonly<{
+        maxPaths: number;
+        maxWorktreeFileBytes: number;
+        maxWorktreeBytes: number;
+        maxBytes: number;
+      }>
+    > = [];
+    const contentWorkspace: ContentWorkspaceResource<never> = {
+      ...delegate,
+      inspectGitWorkspace: (input) => {
+        calls.push("inspect-git-workspace");
+        return delegate.inspectGitWorkspace(input);
+      },
+      readGitTree: (input) => {
+        calls.push("read-git-tree");
+        treeBounds.push({ maxEntries: input.maxEntries, maxBytes: input.maxBytes });
+        return delegate.readGitTree(input);
+      },
+      readGitBlob: (input) => {
+        calls.push("read-git-blob");
+        releaseInputBounds.push(input.maxBytes);
+        return delegate.readGitBlob(input);
+      },
+      readGitBlobs: (input) => {
+        calls.push("read-git-blobs");
+        payloadBounds.push({
+          maxBlobs: input.maxBlobs,
+          maxBlobBytes: input.maxBlobBytes,
+          maxTotalBytes: input.maxTotalBytes,
+        });
+        return delegate.readGitBlobs(input);
+      },
+      captureGitWorkspaceEvidence: (input) => {
+        calls.push("capture-git-evidence");
+        evidenceBounds.push({
+          maxPaths: input.maxPaths,
+          maxWorktreeFileBytes: input.maxWorktreeFileBytes,
+          maxWorktreeBytes: input.maxWorktreeBytes,
+          maxBytes: input.maxBytes,
+        });
+        return delegate.captureGitWorkspaceEvidence(input);
+      },
+    };
+    const packageOutput: AgentPluginPackageOutputResource<never> = {
+      encodeCoworkV1: (input) => {
+        calls.push("encode-cowork-v1");
+        return outputDelegate.encodeCoworkV1(input);
+      },
+      publish: (input) => {
+        calls.push("publish-output");
+        return outputDelegate.publish(input);
+      },
+    };
+    const application = createPackageAgentPluginApplicationWithDefaults(packageOutput, {
+      contentWorkspace,
+    });
+
+    await expect(
+      application.package(
+        packageRequest(repository, join(root.path, "ordered.zip"), {
+          kind: "targeted",
+          pluginId: repository.pluginId,
+        })
+      )
+    ).resolves.toMatchObject({ kind: "OutputReplacedVerified" });
+
+    const inspectionCalls = [
+      "inspect-git-workspace",
+      "read-git-tree",
+      "read-git-blob",
+      "read-git-blobs",
+      "capture-git-evidence",
+      "capture-git-evidence",
+    ];
+    expect(calls).toEqual([
+      ...inspectionCalls,
+      "encode-cowork-v1",
+      ...inspectionCalls,
+      "publish-output",
+    ]);
+    expect(treeBounds).toEqual([
+      { maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES, maxBytes: MAX_CLEAN_CONTENT_TREE_BYTES },
+      { maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES, maxBytes: MAX_CLEAN_CONTENT_TREE_BYTES },
+    ]);
+    expect(releaseInputBounds).toEqual([
+      MAX_CLEAN_RELEASE_INPUT_BYTES,
+      MAX_CLEAN_RELEASE_INPUT_BYTES,
+    ]);
+    expect(payloadBounds).toEqual([
+      {
+        maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
+        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+      },
+      {
+        maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
+        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+      },
+    ]);
+    expect(evidenceBounds).toEqual(
+      Array.from({ length: 4 }, () => ({
+        maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+        maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+        maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
+      }))
+    );
   });
 
   it("packages the selected member or every complete-set member from exact Git content", async () => {
@@ -209,6 +345,62 @@ describe("package agent plugin application", () => {
     expect(output.publishCalls).toBe(0);
   });
 
+  it("preserves source defects and interruption finalizers outside public refusal results", async () => {
+    const root = await fixtureRoot();
+    const repository = await createGeneratedGitRepository(root, "source-lifecycle");
+    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const request = packageRequest(repository, join(root.path, "source-lifecycle.zip"), {
+      kind: "complete-set",
+    });
+    const defect = new Error("content workspace defect");
+    const defective = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        inspectGitWorkspace: () => Effect.die(defect),
+      },
+      packageOutput: output,
+    });
+
+    await expect(defective.packaging.package(request, testInvocation)).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      cause: defect,
+    });
+
+    let acquired = false;
+    let finalized = false;
+    const interrupted = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        inspectGitWorkspace: () =>
+          Effect.scoped(
+            Effect.acquireRelease(
+              Effect.sync(() => {
+                acquired = true;
+              }),
+              () =>
+                Effect.sync(() => {
+                  finalized = true;
+                })
+            ).pipe(Effect.flatMap(() => Effect.never))
+          ),
+      },
+      packageOutput: output,
+    });
+    const controller = new AbortController();
+    const pending = interrupted.packaging.package(request, {
+      ...testInvocation,
+      signal: controller.signal,
+    });
+    while (!acquired) await new Promise((resolve) => setTimeout(resolve, 1));
+
+    controller.abort(new Error("content workspace cancelled"));
+
+    await expect(pending).rejects.toBeDefined();
+    expect(finalized).toBe(true);
+    expect(output.encodeCalls).toBe(0);
+    expect(output.publishCalls).toBe(0);
+  });
+
   it("revalidates exact Git content before publishing and preserves an existing output", async () => {
     const root = await fixtureRoot();
     const repository = await createGeneratedGitRepository(root);
@@ -252,6 +444,53 @@ describe("package agent plugin application", () => {
     expect(publishCalls).toBe(0);
     expect(await readFile(outputPath)).toEqual(beforeBytes);
     expect(await fileIdentityAndMetadata(outputPath)).toEqual(before);
+  });
+
+  it("reports source change only when two eligible observations have different bindings", async () => {
+    const root = await fixtureRoot();
+    const repository = await createGeneratedGitRepository(root, "binding-shift");
+    const delegate = makeNodeContentWorkspaceResource({
+      gitExecutable: await realpath(GIT_EXECUTABLE),
+    });
+    let evidenceCalls = 0;
+    const contentWorkspace: ContentWorkspaceResource<never> = {
+      ...delegate,
+      captureGitWorkspaceEvidence: (input) =>
+        delegate.captureGitWorkspaceEvidence(input).pipe(
+          Effect.map((evidence) => {
+            evidenceCalls += 1;
+            return evidenceCalls <= 2
+              ? evidence
+              : Object.freeze({
+                  ...evidence,
+                  indexEntries: new TextEncoder().encode("second eligible binding"),
+                });
+          })
+        ),
+    };
+    const output = new CountingOutput({ kind: "ReadOnlyConverged" });
+    const application = createPackageAgentPluginApplicationWithDefaults(output, {
+      contentWorkspace,
+    });
+
+    await expect(
+      application.package(
+        packageRequest(repository, join(root.path, "binding-shift.zip"), {
+          kind: "targeted",
+          pluginId: repository.pluginId,
+        })
+      )
+    ).resolves.toEqual({
+      kind: "RejectedBeforeOutputMutation",
+      primaryFailure: {
+        code: "SourceIneligible",
+        phase: "source-revalidate",
+        message: "SourceChanged:repository, ref, index, worktree, or object bindings changed",
+      },
+    });
+    expect(evidenceCalls).toBe(4);
+    expect(output.encodeCalls).toBe(1);
+    expect(output.publishCalls).toBe(0);
   });
 
   it("rejects foreign request fields and oversized paths before source or output access", async () => {
