@@ -4,6 +4,12 @@
   "targets": {
     "check": {
       "executor": "nx:noop"
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test"
+      }
     }
   }
 }

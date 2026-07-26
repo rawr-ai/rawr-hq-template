@@ -4,5 +4,6 @@
     "outDir": "dist",
     "rootDir": "."
   },
+  "include": [],
   "files": ["contract.ts", "providers/memory/index.ts", "providers/fluree-http/index.ts"]
 }
