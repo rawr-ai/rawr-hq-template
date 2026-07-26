@@ -1,18 +1,17 @@
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
-import {
-  type AgentPluginReleaseInput,
-  compareCanonicalText,
-  type PluginId,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   type ClaudeAgentPluginMarketplace,
   ClaudeAgentPluginMarketplaceSchema,
   type CodexAgentPluginMarketplace,
   CodexAgentPluginMarketplaceSchema,
 } from "../dto/native-marketplace";
+import type { SelectedContentMember } from "../dto/selected-content";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
+type AgentPluginReleaseInput = ContentWorkspaceSnapshot["releaseInput"];
+type PluginId = SelectedContentMember["pluginId"];
 
 /** Result of comparing both native marketplace documents with reviewed release membership. */
 export type NativeMarketplaceValidation =
@@ -107,8 +106,8 @@ function validateExactMembers(
   if (new Set(actualMembers).size !== actualMembers.length) {
     return invalid(`${provider} marketplace contains duplicate plugin identities.`);
   }
-  const actual = [...actualMembers].sort(compareCanonicalText);
-  const expected = [...expectedMembers].sort(compareCanonicalText);
+  const actual = [...actualMembers].sort(compareText);
+  const expected = [...expectedMembers].sort(compareText);
   if (
     actual.length !== expected.length ||
     actual.some((pluginId, index) => pluginId !== expected[index])
@@ -124,4 +123,8 @@ function expectedPluginSource(pluginId: PluginId): string {
 
 function invalid(detail: string): Extract<NativeMarketplaceValidation, { ok: false }> {
   return Object.freeze({ ok: false, detail });
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

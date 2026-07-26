@@ -16,8 +16,16 @@
   selected bytes, and native inventory owns installed state.
 - The service model owns the current-main and release meanings that genuinely
   cross modules. This module owns selected-content DTOs, native marketplace
-  policy, its narrowed content-workspace read port, resolution, provider
-  operation DTOs, handlers, results, issues, and admitted mutation policy.
+  policy, source-interface classification, selected-content projection,
+  native-state policy, provider operation DTOs, handlers, results, issues, and
+  admitted mutation policy. Its narrowed content-workspace read port and
+  resolver are channel-only boundaries for status and sync.
+- Disposable test directly consumes the ready content-workspace resource in
+  its oRPC handler. It does not delegate source selection or native convergence
+  to an exported test runner, dependency bag, clean-content reader, or workspace
+  resolver branch. Native observation and mutation still use the module's
+  existing reconciliation functions until their separate operation-authorship
+  cut.
 - Native-provider sessions supply observation and mutation mechanics; they are
   not a competing authority.
 - Disposable test convergence never retires unrelated installed content;
@@ -39,17 +47,18 @@
 
 ## Flow
 
-- Status, test, or sync resolves desired content from the ready host
-  content-workspace capability, preflights target sessions, and either reports
-  observations or performs module-admitted mutations after exact-source
-  revalidation.
+- Status and sync resolve governed channel content from the narrowed host
+  content-workspace capability. Test performs complete local source selection
+  directly from the ready resource, preflights target sessions, repeats the
+  complete selection before mutation, and preserves omitted members.
 
 ## Interfaces
 
 - The `status`, `test`, and `sync` operations are caller boundaries.
-  Selected-content resolution consumes current-main or an explicit workspace;
-  the narrowed content-workspace port and native sessions are mechanics
-  handoffs, not competing authorities.
+  Channel resolution consumes current-main for status and sync. Test consumes
+  an explicit workspace through its ready resource context. The narrowed
+  channel port, ready resource, and native sessions are mechanics handoffs, not
+  competing authorities.
 
 ## Routing
 

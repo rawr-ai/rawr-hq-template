@@ -1,11 +1,12 @@
+import { compareCanonicalText } from "../../shared/release/primitives";
 import { type AgentPluginRelease, createAgentPluginRelease } from "../../shared/release/release";
 import { createAgentPluginReleaseSet } from "../../shared/release/release-set";
-import type { DerivedReleaseSelection, ReleaseSelection } from "../dto/release-derivation";
-import type { ContentWorkspaceSnapshot } from "../dto/releases/content-workspace";
-
-type ReleaseDerivationResult =
-  | { readonly ok: true; readonly value: DerivedReleaseSelection }
-  | { readonly ok: false; readonly detail: string };
+import type {
+  ReleaseDerivationFailure,
+  ReleaseDerivationResult,
+  ReleaseDerivationSelection,
+  ReleaseDerivationSource,
+} from "../dto/release-derivation";
 
 /**
  * Constructs the selected in-memory release artifacts from one exact content
@@ -13,49 +14,68 @@ type ReleaseDerivationResult =
  * module retains ownership of its public failure and success shapes.
  */
 export function deriveReleaseSelection(
-  snapshot: ContentWorkspaceSnapshot,
-  mode: ReleaseSelection
+  source: ReleaseDerivationSource,
+  mode: ReleaseDerivationSelection
 ): ReleaseDerivationResult {
-  const members =
-    mode.kind === "targeted"
-      ? snapshot.releaseInput.body.members.filter((member) => member.pluginId === mode.pluginId)
-      : snapshot.releaseInput.body.members;
-  if (members.length === 0) {
-    return {
-      ok: false,
-      detail: "selected plugin is not declared by the release input",
-    };
+  const requested =
+    mode.kind === "complete-set"
+      ? source.releaseInput.body.members.map((member) => member.pluginId)
+      : mode.kind === "targeted"
+        ? [mode.pluginId]
+        : [...mode.pluginIds];
+  requested.sort(compareCanonicalText);
+  if (requested.length === 0 || new Set(requested).size !== requested.length) {
+    return failed({
+      reason: "InvalidSelection",
+      detail: "selected plugin identities are empty or duplicated",
+    });
   }
 
+  const declared = new Set(source.releaseInput.body.members.map((member) => member.pluginId));
+  const absent = requested.find((pluginId) => !declared.has(pluginId));
+  if (absent !== undefined) {
+    return failed({
+      reason: "UndeclaredMember",
+      pluginId: absent,
+      detail: "selected plugin is not declared by the release input",
+    });
+  }
+  const payloadByPlugin = new Map(
+    source.payloads.map((entry) => [entry.pluginId, entry.payload] as const)
+  );
   const releases: AgentPluginRelease[] = [];
-  for (const member of members) {
-    const payload = snapshot.payloads.find((entry) => entry.pluginId === member.pluginId)?.payload;
+  for (const pluginId of requested) {
+    const payload = payloadByPlugin.get(pluginId);
     if (payload === undefined) {
-      return {
-        ok: false,
-        detail: `verified payload is absent for ${member.pluginId}`,
-      };
+      return failed({
+        reason: "MissingPayload",
+        pluginId,
+        detail: `verified payload is absent for ${pluginId}`,
+      });
     }
     const constructed = createAgentPluginRelease({
-      releaseInput: snapshot.releaseInput,
-      pluginId: member.pluginId,
+      releaseInput: source.releaseInput,
+      pluginId,
       source: {
-        sourceRepository: snapshot.repositoryIdentity,
-        sourceCommit: snapshot.sourceCommit,
-        sourceTree: snapshot.sourceTree,
+        sourceRepository: source.repositoryIdentity,
+        sourceCommit: source.sourceCommit,
+        sourceTree: source.sourceTree,
       },
       payload,
     });
     if (!constructed.ok) {
-      return {
-        ok: false,
-        detail: constructed.issues.map((issue) => issue.code).join(","),
-      };
+      const issueCodes = Object.freeze(constructed.issues.map((issue) => issue.code));
+      return failed({
+        reason: "InvalidRelease",
+        pluginId,
+        issueCodes,
+        detail: issueCodes.join(","),
+      });
     }
     releases.push(constructed.value);
   }
 
-  if (mode.kind === "targeted") {
+  if (mode.kind !== "complete-set") {
     return {
       ok: true,
       value: Object.freeze({
@@ -64,12 +84,14 @@ export function deriveReleaseSelection(
     };
   }
 
-  const set = createAgentPluginReleaseSet({ releaseInput: snapshot.releaseInput, releases });
+  const set = createAgentPluginReleaseSet({ releaseInput: source.releaseInput, releases });
   if (!set.ok) {
-    return {
-      ok: false,
-      detail: set.issues.map((issue) => issue.code).join(","),
-    };
+    const issueCodes = Object.freeze(set.issues.map((issue) => issue.code));
+    return failed({
+      reason: "InvalidReleaseSet",
+      issueCodes,
+      detail: issueCodes.join(","),
+    });
   }
   return {
     ok: true,
@@ -78,4 +100,10 @@ export function deriveReleaseSelection(
       releaseSet: set.value,
     }),
   };
+}
+
+function failed(
+  failure: ReleaseDerivationFailure
+): Extract<ReleaseDerivationResult, { ok: false }> {
+  return Object.freeze({ ok: false, failure });
 }

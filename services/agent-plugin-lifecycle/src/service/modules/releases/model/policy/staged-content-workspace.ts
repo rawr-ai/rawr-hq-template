@@ -11,7 +11,7 @@ import {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
-} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
   type AgentPluginPayload,

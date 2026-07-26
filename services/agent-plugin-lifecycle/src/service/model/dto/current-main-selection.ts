@@ -6,7 +6,7 @@ import {
   ReleaseInputDigestSchema,
   RepositoryIdentitySchema,
 } from "../../shared/release";
-import { CanonicalAbsoluteLocatorSchema } from "./releases/content-workspace";
+import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
 
 export const CURRENT_MAIN_V3_SCHEMA_VERSION = 3 as const;
 export const CURRENT_MAIN_V3_CHANNEL = "current-main" as const;

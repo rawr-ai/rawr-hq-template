@@ -31,10 +31,10 @@ import type { SelectedContent, SelectedContentMember } from "../model/dto/select
 import {
   marketplaceSourceIsRelated,
   marketplaceSourceMatches,
-  providerIssue,
   providerPluginSelector,
   verificationFiles,
-} from "../model/policy/selected-content";
+} from "../model/policy/native-state";
+import { providerIssue } from "../model/policy/selected-content";
 
 const MAX_FACTS_PER_TARGET = 4_096;
 const MAX_ISSUES_PER_TARGET = 256;

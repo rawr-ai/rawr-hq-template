@@ -6,6 +6,38 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Provider Tests Author Selection
+
+The disposable Provider test operation owns exact local-content selection. The
+host supplies one ready content-workspace resource through service and module
+context; the handler sequences that resource directly, and pure policy
+classifies source-interface facts and projects the selected content from the
+service-root release derivation.
+
+Each selection performs a complete clean observation, validates the native
+marketplace interface, rereads its local manifests, then repeats those checks
+before native mutation. There is no detached runner, caller dependency bag,
+clean-content reader, workspace resolver branch, or memoized selection. The
+channel resolver remains only for status and sync, so this checkpoint narrows
+Provider test source ownership without claiming the complete Providers shell is
+sealed. Native observation and mutation still use the existing reconciliation
+functions and remain a later operation-authorship cut.
+
+Provider source-interface, selected-content, and native-state policy occupy
+separate direct model leaves. The service-root content-workspace DTO is also a
+direct model leaf; a same-kind nested model directory is not an ownership
+boundary.
+
+See
+[[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Provider, resource, context, operation, policy, source, selection, observe,
+revalidate, mutate, delete, narrow.
+
 ## 2026-07-26 - Import Spelling Reveals Ownership
 
 Within one service module, a normalized relative import says that both leaves

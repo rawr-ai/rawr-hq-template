@@ -4,9 +4,8 @@ import {
   NativeProviderHomeSchema,
 } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-
+import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
-import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import {
   BoundedReadonlyArray,
   EmptyReadonlyArray,

@@ -3,7 +3,7 @@ import { Effect } from "effect";
 import {
   type ContentWorkspaceInspection,
   sourceEligibilityIssue,
-} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,

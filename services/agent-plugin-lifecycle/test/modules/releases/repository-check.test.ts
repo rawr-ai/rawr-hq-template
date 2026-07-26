@@ -10,7 +10,7 @@ import type {
 } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/releases/content-workspace";
+import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/content-workspace";
 import {
   addStagedObservationByteLimits,
   classifyStagedObservationFailure,

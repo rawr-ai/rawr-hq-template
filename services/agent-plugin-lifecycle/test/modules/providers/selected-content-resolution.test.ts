@@ -1,543 +1,199 @@
-import { mkdir, symlink, unlink, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-
-import type { ContentTreeEntry, ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
-import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+import type {
+  ContentTreeEntry,
+  ContentWorkspaceFailure,
+  ContentWorkspaceResource,
+} from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
-import type { ContentWorkspacePolicy } from "../../../src/service/model/dto/releases/content-workspace";
-import { createSelectedContentResolver } from "../../../src/service/modules/providers/model/helpers/selected-content-resolution";
-import type { SelectedContentResolver } from "../../../src/service/modules/providers/model/ports/selected-content";
+import { testInvocation } from "../../support/client";
 import {
-  canonicalSerializeAgentPluginReleaseInput,
-  createAgentPluginPayload,
-  createAgentPluginReleaseInput,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parsePluginId,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
-import { GIT_EXECUTABLE, git } from "../../support/git-repository";
-import {
-  createOwnedFixtureRoot,
-  disposeOwnedFixtureRoot,
-  type OwnedFixtureRoot,
-} from "../../support/owned-fixture-root";
+  channelRequest,
+  createProviderLifecycleClient,
+  FakeNativeProviders,
+  fakeNativeSession,
+  selectedContent,
+} from "./fixture";
 
-const TAG = "refs/tags/agent-plugins-v1";
-const REPOSITORY_URL = "https://github.com/rawr-ai/rawr-hq.git";
-const encoder = new TextEncoder();
+describe("provider channel selected content", () => {
+  it("resolves exact current-main content through the public status operation", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      installed: ["cognition"],
+    });
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
 
-describe("selected release content", () => {
-  let ownedRoot: OwnedFixtureRoot | undefined;
+    const result = await client.providers.status(channelRequest, testInvocation);
 
-  afterEach(async () => {
-    if (ownedRoot !== undefined) await disposeOwnedFixtureRoot(ownedRoot);
-    ownedRoot = undefined;
+    expect(result.classification).toBe("Converged");
+    expect(result.selection).toMatchObject({
+      sourceCommit: content.sourceCommit,
+      sourceTree: content.sourceTree,
+      releaseInputDigest: content.releaseInputDigest,
+      pluginIds: ["cognition"],
+    });
+    expect(resourceCalls.filter((call) => call === "read-tree")).toHaveLength(1);
+    expect(session.mutationCalls()).toEqual([]);
   });
 
-  it("resolves one exact tag twice without consulting checkout state", async () => {
-    const fixture = await createRepository(await root(), ["cognition", "docs"]);
-    await mkdir(join(fixture.root, "unrelated-tree"), { mode: 0o700 });
-    await Promise.all(
-      Array.from({ length: 512 }, (_, index) =>
-        writeFile(join(fixture.root, "unrelated-tree", `entry-${index}.txt`), `${index}\n`)
-      )
-    );
-    await symlink("missing-target", join(fixture.root, "unrelated-link"));
-    const scopedSelection = await commitAndRetag(fixture, "add unrelated committed tree");
-    await writeFile(join(fixture.root, "unrelated.txt"), "dirty but unrelated\n");
-    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
-    const treeSelections: string[][] = [];
-    const treeEntryLimits: number[] = [];
-    const resolver = createSelectedContentResolver({
-      contentWorkspace: {
-        ...delegate,
-        inspectGitWorkspace: () =>
-          Effect.die(new Error("Channel resolution must not inspect checkout state")),
-        readGitTree: (input) =>
-          Effect.tap(delegate.readGitTree(input), () =>
-            Effect.sync(() => {
-              treeSelections.push([...input.paths]);
-              treeEntryLimits.push(input.maxEntries);
-            })
-          ),
-      },
+  it("rejects a selected ref that changes before its closing observation", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({ target: channelRequest.targets[0], content });
+    let contentRefInspections = 0;
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          inspectGitRef: (input: Parameters<ContentWorkspaceResource<never>["inspectGitRef"]>[0]) =>
+            Effect.map(delegate.inspectGitRef(input), (observation) => {
+              if (input.refName !== "refs/tags/agent-plugins-v1") return observation;
+              contentRefInspections += 1;
+              return contentRefInspections === 3
+                ? Object.freeze({ ...observation, tree: "9".repeat(40) })
+                : observation;
+            }),
+        }),
     });
 
-    const first = await Effect.runPromise(
-      resolver.resolveChannel({
-        locator: fixture.locator,
-        selection: scopedSelection,
-      })
-    );
-    const second = await Effect.runPromise(
-      resolver.resolveChannel({
-        locator: fixture.locator,
-        selection: scopedSelection,
-      })
-    );
+    const result = await client.providers.status(channelRequest, testInvocation);
 
-    expect(first).toEqual(second);
-    expect(treeSelections).toEqual([
-      [".rawr/release-input.json", ".agents/plugins", ".claude-plugin", "plugins/agents"],
-      [".rawr/release-input.json", ".agents/plugins", ".claude-plugin", "plugins/agents"],
+    expect(result.classification).toBe("Blocked");
+    expect(result.issues).toEqual([
+      {
+        code: "SelectionRejected",
+        detail: "SelectionMismatch: Selected Git tag changed while its content was read.",
+      },
     ]);
-    expect(treeEntryLimits).toEqual([200_000, 200_000]);
-    expect(first).toMatchObject({
-      kind: "Selected",
-      content: {
-        releaseSetDigest: expect.stringMatching(/^rs1_[0-9a-f]{64}$/u),
-        members: [{ pluginId: "cognition" }, { pluginId: "docs" }],
-        marketplace: {
-          identity: "rawr-hq",
-          source: {
-            kind: "git",
-            repositoryUrl: REPOSITORY_URL,
-            revision: scopedSelection.contentCommit,
-            sparsePaths: [".agents/plugins", ".claude-plugin", "plugins/agents"],
-          },
-        },
-      },
-    });
+    expect(session.calls).toEqual([]);
   });
 
-  it("rejects a tag that moves before the closing observation", async () => {
-    const fixture = await createRepository(await root(), ["cognition"]);
-    await writeFile(join(fixture.root, "later.txt"), "later\n");
-    await git(fixture.root, ["add", "later.txt"]);
-    await git(fixture.root, ["commit", "-m", "later"]);
-    const laterCommit = await git(fixture.root, ["rev-parse", "HEAD"]);
-    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
-    let moved = false;
-    const resolver = createSelectedContentResolver({
-      contentWorkspace: {
-        ...delegate,
-        readGitBlobs: (input) =>
-          Effect.gen(function* () {
-            const result = yield* delegate.readGitBlobs(input);
-            if (!moved) {
-              moved = true;
-              yield* Effect.promise(() =>
-                git(fixture.root, ["tag", "--force", "agent-plugins-v1", laterCommit])
-              );
-            }
-            return result;
-          }),
-      },
-    });
-
-    await expect(
-      Effect.runPromise(
-        resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
-      )
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [{ code: "SelectionMismatch" }],
-    });
-  });
-
-  it("preserves typed Git tree failure details and lifecycle classifications", async () => {
-    const fixture = await createRepository(await root(), ["cognition"]);
-    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
-    const cases = [
-      {
-        reason: "GitFailed",
-        detail: "Git tree output contains invalid UTF-8",
-        code: "SourceReadFailed",
-      },
-      {
-        reason: "UnsupportedEntry",
-        detail: "Git tree contains a non-regular entry",
-        code: "SourceIneligible",
-      },
-      {
-        reason: "LimitExceeded",
-        detail: "Git tree output exceeds maxEntries",
-        code: "SourceIneligible",
-      },
-    ] as const;
-
-    for (const expected of cases) {
-      const failure: ContentWorkspaceFailure = Object.freeze({
-        _tag: "ContentWorkspaceFailure",
-        operation: "read-git-tree",
-        reason: expected.reason,
-        detail: expected.detail,
-      });
-      const resolver = createSelectedContentResolver({
-        contentWorkspace: {
-          ...delegate,
-          readGitTree: () => Effect.fail(failure),
-        },
-      });
-      await expect(
-        Effect.runPromise(
-          resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
-        )
-      ).resolves.toMatchObject({
-        kind: "Rejected",
-        issues: [{ code: expected.code, detail: expected.detail }],
-      });
-    }
-  });
-
-  it("retains canonical release-path policy at the typed resource boundary", async () => {
-    const fixture = await createRepository(await root(), ["cognition"]);
-    const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
-    const releaseInputPath = ".rawr/release-input.json";
-    const releaseInputBlob = await git(fixture.root, ["rev-parse", `HEAD:${releaseInputPath}`]);
-    const cases: readonly Readonly<{
-      entry: ContentTreeEntry;
-      detail: string;
-    }>[] = [
-      {
-        entry: Object.freeze({
-          path: releaseInputPath,
-          mode: "100644",
-          blob: releaseInputBlob,
-        }),
-        detail: "path collision",
-      },
-      {
-        entry: Object.freeze({
-          path: ".RAWR/release-input.json",
-          mode: "100644",
-          blob: releaseInputBlob,
-        }),
-        detail: "path collision",
-      },
-      {
-        entry: Object.freeze({
-          path: "plugins/agents/cognition/skills/cafe\u0301/SKILL.md",
-          mode: "100644",
-          blob: releaseInputBlob,
-        }),
-        detail: "noncanonical release path",
-      },
-    ];
-
-    for (const fixtureCase of cases) {
-      const resolver = createSelectedContentResolver({
-        contentWorkspace: {
-          ...delegate,
-          readGitTree: (input) =>
-            Effect.map(delegate.readGitTree(input), (original) =>
-              Object.freeze([...original, fixtureCase.entry])
-            ),
-        },
-      });
-      await expect(
-        Effect.runPromise(
-          resolver.resolveChannel({ locator: fixture.locator, selection: fixture.selection })
-        )
-      ).resolves.toMatchObject({
-        kind: "Rejected",
-        issues: [
-          {
-            code: "SourceIneligible",
-            detail: expect.stringContaining(fixtureCase.detail),
-          },
-        ],
-      });
-    }
-  });
-
-  it("rejects undeclared payload files and missing native marketplace manifests", async () => {
-    const extra = await createRepository(await root(), ["cognition"]);
-    await writeFile(join(extra.root, "plugins/agents/cognition/extra.txt"), "extra\n");
-    const extraSelection = await commitAndRetag(extra, "add undeclared payload");
-    const resolver = realResolver();
-    await expect(
-      Effect.runPromise(
-        resolver.resolveChannel({ locator: extra.locator, selection: extraSelection })
-      )
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [{ code: "SourceIneligible", detail: expect.stringContaining("undeclared") }],
-    });
-
-    await unlink(join(extra.root, ".agents/plugins/marketplace.json"));
-    await unlink(join(extra.root, "plugins/agents/cognition/extra.txt"));
-    const missingSelection = await commitAndRetag(extra, "remove native marketplace manifest");
-    await expect(
-      Effect.runPromise(
-        resolver.resolveChannel({ locator: extra.locator, selection: missingSelection })
-      )
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [
-        {
-          code: "SourceIneligible",
-          detail: expect.stringContaining(".agents/plugins/marketplace.json"),
-        },
-      ],
-    });
-  });
-
-  it("rejects marketplace membership, source, and JSON mismatches", async () => {
-    const fixture = await createRepository(await root(), ["cognition", "docs"]);
-    const resolver = realResolver();
-
-    await writeNativeMarketplaces(fixture.root, ["cognition"]);
-    const missingMember = await commitAndRetag(fixture, "remove marketplace member");
-    await expect(
-      Effect.runPromise(
-        resolver.resolveChannel({ locator: fixture.locator, selection: missingMember })
-      )
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [{ code: "SourceIneligible", detail: expect.stringContaining("plugin set") }],
-    });
-
-    await writeNativeMarketplaces(fixture.root, ["cognition", "docs"], {
-      codexSourceFor: (pluginId) =>
-        pluginId === "cognition" ? "./plugins/agents/docs" : `./plugins/agents/${pluginId}`,
-    });
-    const wrongSource = await commitAndRetag(fixture, "change marketplace source");
-    await expect(
-      Effect.runPromise(
-        resolver.resolveChannel({ locator: fixture.locator, selection: wrongSource })
-      )
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [{ code: "SourceIneligible", detail: expect.stringContaining("source") }],
-    });
-
-    await writeNativeMarketplaces(fixture.root, ["cognition", "docs"]);
-    await writeFile(join(fixture.root, ".claude-plugin/marketplace.json"), "{not-json}\n");
-    const malformed = await commitAndRetag(fixture, "malform marketplace JSON");
-    await expect(
-      Effect.runPromise(resolver.resolveChannel({ locator: fixture.locator, selection: malformed }))
-    ).resolves.toMatchObject({
-      kind: "Rejected",
-      issues: [{ code: "SourceIneligible", detail: expect.stringContaining("UTF-8 JSON") }],
-    });
-  });
-
-  it("reuses the exact workspace snapshot and selects only requested members", async () => {
-    const fixture = await createRepository(await root(), ["cognition", "docs"]);
-    const resolver = realResolver();
-    const input: Parameters<SelectedContentResolver["resolveWorkspace"]>[0] = {
-      contentWorkspace: fixture.policy,
-      mode: { kind: "targeted", pluginIds: [requirePluginId("docs")] },
+  it.each([
+    {
+      reason: "GitFailed" as const,
+      detail: "Git tree output contains invalid UTF-8",
+      code: "SourceReadFailed",
+    },
+    {
+      reason: "UnsupportedEntry" as const,
+      detail: "Git tree contains a non-regular entry",
+      code: "SourceIneligible",
+    },
+    {
+      reason: "LimitExceeded" as const,
+      detail: "Git tree output exceeds maxEntries",
+      code: "SourceIneligible",
+    },
+  ])("preserves typed selected-tree $reason classification", async ({ reason, detail, code }) => {
+    const content = selectedContent();
+    const session = fakeNativeSession({ target: channelRequest.targets[0], content });
+    const failure: ContentWorkspaceFailure = {
+      _tag: "ContentWorkspaceFailure",
+      operation: "read-git-tree",
+      reason,
+      detail,
     };
-
-    const first = await Effect.runPromise(resolver.resolveWorkspace(input));
-    const second = await Effect.runPromise(resolver.resolveWorkspace(input));
-
-    expect(first).toEqual(second);
-    expect(first).toMatchObject({
-      kind: "Selected",
-      content: {
-        releaseSetDigest: null,
-        members: [{ pluginId: "docs" }],
-        marketplace: { identity: "rawr-hq", source: { kind: "local", root: fixture.root } },
-      },
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({ ...delegate, readGitTree: () => Effect.fail(failure) }),
     });
-  });
 
-  async function root(): Promise<OwnedFixtureRoot> {
-    ownedRoot = await createOwnedFixtureRoot();
-    return ownedRoot;
-  }
-});
+    const result = await client.providers.status(channelRequest, testInvocation);
 
-interface RepositoryFixture {
-  readonly root: string;
-  readonly policy: ContentWorkspacePolicy;
-  readonly locator: Parameters<SelectedContentResolver["resolveChannel"]>[0]["locator"];
-  readonly selection: CanonicalChannelSelection;
-}
-
-async function createRepository(
-  fixture: OwnedFixtureRoot,
-  pluginNames: readonly string[]
-): Promise<RepositoryFixture> {
-  const root = join(fixture.path, "repository");
-  await mkdir(root, { mode: 0o700 });
-  const contentAuthority = must(parseContentAuthority("rawr-hq"));
-  const repositoryIdentity = must(parseRepositoryIdentity("github:rawr-ai/rawr-hq"));
-  const members = pluginNames.map((pluginName) => {
-    const pluginId = requirePluginId(pluginName);
-    const skillPath = must(parseReleaseRelativePath(`skills/${pluginId}/SKILL.md`));
-    const payload = must(
-      createAgentPluginPayload([
-        {
-          path: must(parseReleaseRelativePath(".claude-plugin/plugin.json")),
-          mode: 0o644,
-          bytes: encoder.encode(`{"name":"${pluginId}"}\n`),
-        },
-        {
-          path: must(parseReleaseRelativePath(".codex-plugin/plugin.json")),
-          mode: 0o644,
-          bytes: encoder.encode(`{"name":"${pluginId}"}\n`),
-        },
-        { path: skillPath, mode: 0o644, bytes: encoder.encode(`# ${pluginId}\n`) },
-      ])
-    );
-    return { pluginId, skillPath, payload };
-  });
-  const releaseInput = must(
-    createAgentPluginReleaseInput({
-      schemaVersion: 1,
-      contentAuthority,
-      members: members.map(({ pluginId, skillPath, payload }) => ({
-        kind: "agent-plugin",
-        pluginId,
-        skillInventory: [{ identity: `${pluginId}-skill`, manifestPath: skillPath }],
-        payload: {
-          protocolVersion: 1,
-          manifest: payload.manifest,
-          payloadDigest: payload.payloadDigest,
-        },
-        vendor: [],
-        curation: [],
-      })),
-      ownershipClaims: members.map(({ pluginId }) => ({
-        kind: "skill",
-        identity: `${pluginId}-skill`,
-        ownerPluginId: pluginId,
-      })),
-      locks: [],
-      qualityPolicies: [],
-    })
-  );
-  await write(
-    join(root, ".rawr/release-input.json"),
-    canonicalSerializeAgentPluginReleaseInput(releaseInput)
-  );
-  await writeNativeMarketplaces(
-    root,
-    members.map(({ pluginId }) => pluginId)
-  );
-  for (const { pluginId, payload } of members) {
-    for (const entry of payload.entries) {
-      await write(
-        join(root, "plugins/agents", pluginId, ...entry.path.split("/")),
-        Buffer.from(entry.bytesBase64, "base64")
-      );
-    }
-  }
-  await git(root, ["init", "-b", "main"]);
-  await git(root, ["config", "user.email", "fixture@example.invalid"]);
-  await git(root, ["config", "user.name", "Selected Content Fixture"]);
-  await git(root, ["remote", "add", "origin", REPOSITORY_URL]);
-  await git(root, ["add", "--all"]);
-  await git(root, ["commit", "-m", "selected content"]);
-  await git(root, ["tag", "agent-plugins-v1"]);
-  const commit = must(parseGitCommitId(await git(root, ["rev-parse", "HEAD"])));
-  const tree = must(parseGitTreeId(await git(root, ["rev-parse", "HEAD^{tree}"])));
-  const policy: ContentWorkspacePolicy = Object.freeze({
-    locator: root,
-    repositoryIdentity,
-    contentAuthority,
-    remoteName: "origin",
-    remoteUrl: REPOSITORY_URL,
-    refName: "refs/heads/main",
-    sourceCommit: commit,
-    sourceTree: tree,
-    releaseInputPath: must(parseReleaseRelativePath(".rawr/release-input.json")),
-    pluginRoot: must(parseReleaseRelativePath("plugins/agents")),
-  });
-  return {
-    root,
-    policy,
-    locator: Object.freeze({ workspacePath: root, expectedRepositoryIdentity: repositoryIdentity }),
-    selection: selection(policy, releaseInput.releaseInputDigest),
-  };
-}
-
-async function commitAndRetag(
-  fixture: RepositoryFixture,
-  message: string
-): Promise<CanonicalChannelSelection> {
-  await git(fixture.root, ["add", "--all"]);
-  await git(fixture.root, ["commit", "-m", message]);
-  await git(fixture.root, ["tag", "--force", "agent-plugins-v1"]);
-  const commit = must(parseGitCommitId(await git(fixture.root, ["rev-parse", "HEAD"])));
-  const tree = must(parseGitTreeId(await git(fixture.root, ["rev-parse", "HEAD^{tree}"])));
-  return Object.freeze({ ...fixture.selection, contentCommit: commit, contentTree: tree });
-}
-
-function selection(
-  policy: ContentWorkspacePolicy,
-  releaseInputDigest: CanonicalChannelSelection["releaseInputDigest"]
-): CanonicalChannelSelection {
-  return Object.freeze({
-    schemaVersion: 3,
-    channel: "current-main",
-    contentAuthority: policy.contentAuthority,
-    sourceRepositoryIdentity: policy.repositoryIdentity,
-    sourceRepositoryUrl: REPOSITORY_URL,
-    sourceRef: TAG,
-    contentCommit: policy.sourceCommit,
-    contentTree: policy.sourceTree,
-    releaseInputDigest,
-  });
-}
-
-function realResolver(): SelectedContentResolver {
-  return createSelectedContentResolver({
-    contentWorkspace: makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE }),
-  });
-}
-
-async function write(path: string, bytes: Uint8Array): Promise<void> {
-  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
-  await writeFile(path, bytes);
-}
-
-async function writeNativeMarketplaces(
-  root: string,
-  pluginIds: readonly string[],
-  override: Readonly<{
-    codexSourceFor?: (pluginId: string) => string;
-  }> = {}
-): Promise<void> {
-  const codex = {
-    name: "rawr-hq",
-    plugins: pluginIds.map((pluginId) => ({
-      name: pluginId,
-      source: {
-        source: "local",
-        path: override.codexSourceFor?.(pluginId) ?? `./plugins/agents/${pluginId}`,
+    expect(result.classification).toBe("Blocked");
+    expect(result.issues).toEqual([
+      {
+        code: "SelectionRejected",
+        detail: `${code}: ${detail}`,
       },
-      policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
-      category: "agent",
-    })),
-  };
-  const claude = {
-    $schema: "https://anthropic.com/claude-code/marketplace.schema.json",
-    name: "rawr-hq",
-    owner: { name: "RAWR HQ" },
-    plugins: pluginIds.map((pluginId) => ({
-      name: pluginId,
-      source: `./plugins/agents/${pluginId}`,
-      description: `${pluginId} agent plugin`,
-    })),
-  };
-  await write(
-    join(root, ".agents/plugins/marketplace.json"),
-    encoder.encode(`${JSON.stringify(codex, null, 2)}\n`)
-  );
-  await write(
-    join(root, ".claude-plugin/marketplace.json"),
-    encoder.encode(`${JSON.stringify(claude, null, 2)}\n`)
-  );
-}
+    ]);
+    expect(session.calls).toEqual([]);
+  });
 
-function requirePluginId(value: string) {
-  return must(parsePluginId(value));
-}
+  it("rejects missing native marketplace interface content at the public boundary", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({ target: channelRequest.targets[0], content });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          readGitTree: (input: Parameters<ContentWorkspaceResource<never>["readGitTree"]>[0]) =>
+            Effect.map(delegate.readGitTree(input), (entries) =>
+              Object.freeze(
+                entries.filter((entry) => entry.path !== ".agents/plugins/marketplace.json")
+              )
+            ),
+        }),
+    });
 
-function must<Value>(
-  result: Readonly<{ ok: true; value: Value }> | Readonly<{ ok: false; issues: readonly unknown[] }>
-): Value {
-  if (!result.ok) throw new Error("Selected-content fixture construction failed");
-  return result.value;
-}
+    const result = await client.providers.status(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Blocked");
+    expect(result.issues).toEqual([
+      {
+        code: "SelectionRejected",
+        detail:
+          "SourceIneligible: Selected tree is missing native marketplace manifest .agents/plugins/marketplace.json.",
+      },
+    ]);
+    expect(session.calls).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: "an exact duplicate",
+      path: ".rawr/release-input.json",
+      detail: "path collision",
+    },
+    {
+      name: "a portable case collision",
+      path: ".RAWR/release-input.json",
+      detail: "path collision",
+    },
+    {
+      name: "a noncanonical Unicode path",
+      path: "plugins/agents/cognition/skills/cafe\u0301/SKILL.md",
+      detail: "noncanonical release path",
+    },
+    {
+      name: "an undeclared payload file",
+      path: "plugins/agents/cognition/extra.txt",
+      detail: "undeclared",
+    },
+  ])("rejects $name through the public status boundary", async ({ path, detail }) => {
+    const content = selectedContent();
+    const session = fakeNativeSession({ target: channelRequest.targets[0], content });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          readGitTree: (input: Parameters<ContentWorkspaceResource<never>["readGitTree"]>[0]) =>
+            Effect.map(delegate.readGitTree(input), (entries) => {
+              const source = entries[0];
+              if (source === undefined) throw new Error("Expected selected-content tree fixture");
+              const injected: ContentTreeEntry = Object.freeze({
+                path,
+                mode: "100644",
+                blob: source.blob,
+              });
+              return Object.freeze([...entries, injected]);
+            }),
+        }),
+    });
+
+    const result = await client.providers.status(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Blocked");
+    expect(result.issues).toEqual([
+      {
+        code: "SelectionRejected",
+        detail: expect.stringContaining(detail),
+      },
+    ]);
+    expect(session.calls).toEqual([]);
+  });
+});

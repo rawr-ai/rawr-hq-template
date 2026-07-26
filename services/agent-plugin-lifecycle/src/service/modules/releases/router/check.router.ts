@@ -1,10 +1,9 @@
 import { Effect } from "effect";
-
+import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import type {
   DerivedReleaseSelection,
   ReleaseSelection,
 } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -138,7 +137,7 @@ export const check = module.check.effect(function* ({ context, input: request })
     return {
       kind: "IneligibleReport" as const,
       mode: request.mode,
-      issues: [releaseConstructionIssue(derivation.detail)] as const,
+      issues: [releaseConstructionIssue(derivation.failure.detail)] as const,
     };
   }
   return {

@@ -14,7 +14,7 @@ import {
   ReleaseRelativePathSchema,
   type RepositoryIdentity,
   RepositoryIdentitySchema,
-} from "../../../shared/release";
+} from "../../shared/release";
 
 export const MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH = 4_096;
 

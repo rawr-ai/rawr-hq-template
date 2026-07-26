@@ -1755,6 +1755,36 @@ without unresolved P0/P1/P2. Vendor router authorship remains open under
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.4c]]; this checkpoint
 does not claim that effectful Vendor policy has been retired.
 
+The disposable Provider-test authorship checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2l]]. The typed
+`providers.test` operation now performs exact local source selection in its
+Effect handler over the ready content-workspace capability. Every selection
+performs a complete clean-content observation, validates both native marketplace
+manifests against the release input, compares the local manifest bytes, and
+repeats those checks before any native mutation. Targeted and complete tests
+still preserve omitted members.
+
+The exported test runner, caller dependency bag, root clean-content reader and
+port, Provider workspace-resolver branch, duplicate test-mode schema, and
+direct helper tests are deleted together. Provider policy retains pure source
+interface classification and selected-content projection, while the
+service-root release policy owns release and release-set derivation. Those
+policy concerns now occupy separate direct model leaves, and the formerly
+nested content-workspace DTO is a direct root-model leaf. The channel resolver
+and its narrowed read port remain only for status and sync, so this checkpoint
+does not claim the complete Providers shell is sealed. Native observation and
+mutation still run through the existing reconciliation functions and remain
+open for their later operation-authorship checkpoint; this slice does not alter
+their behavior.
+
+The focused Provider plus release check/eligibility run passes 77 cases, and
+the complete Releases module passes 62 cases. The complete lifecycle service
+passes 272 cases. Service source and test typechecks, touched-source Biome,
+strict OpenSpec validation, diff hygiene, and the 115-task repository check are
+green; the repository gate completed in 44.4 seconds. No Personal repository,
+provider home, Oclif surface, Nx graph, Habitat policy, or live lifecycle state
+changes in this checkpoint.
+
 ## Settlement Oracles
 
 The final product must prove:

@@ -7,18 +7,14 @@ import type {
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
-import { Effect, type Result } from "effect";
+import type { Result } from "effect";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
   SourceEligibilityIssue,
   SourceEligibilityIssueCode,
-} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
-import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
-import type {
-  CleanContentWorkspaceReader,
-  ResourceContentWorkspaceSnapshotReadPort,
-} from "#agent-plugin-lifecycle-service/model/ports/clean-content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
@@ -127,145 +123,6 @@ interface CleanPayloadReadFacts extends CleanWorkspaceTreeFacts {
 /** Admitted payload facts required by the two workspace evidence captures. */
 interface CleanEvidenceReadFacts extends CleanPayloadReadFacts {
   readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
-}
-
-/**
- * Adapts the content-workspace resource into the transitional clean-content
- * reader still consumed by local provider tests.
- *
- * @remarks
- * Releases and Packaging now execute the same resource sequence directly in
- * their operation handlers. This adapter remains only for Providers until its
- * owner-local migration removes the transitional reader contract.
- */
-export function createCleanContentWorkspaceReader(
-  binding: Readonly<{
-    contentWorkspace: ResourceContentWorkspaceSnapshotReadPort;
-  }>
-): CleanContentWorkspaceReader {
-  const reader: CleanContentWorkspaceReader = {
-    inspect: (policy) => inspectWorkspace(binding.contentWorkspace, policy),
-    revalidate: (policy, eligibilityBinding) =>
-      Effect.gen(function* () {
-        const inspected = yield* inspectWorkspace(binding.contentWorkspace, policy);
-        if (inspected.kind === "Ineligible") return inspected;
-        if (inspected.snapshot.eligibilityBinding !== eligibilityBinding) {
-          return ineligible(
-            "SourceChanged",
-            "repository, ref, index, worktree, or object bindings changed"
-          );
-        }
-        return inspected;
-      }),
-  };
-  return Object.freeze(reader);
-}
-
-function inspectWorkspace(
-  contentWorkspace: ResourceContentWorkspaceSnapshotReadPort,
-  policy: ContentWorkspacePolicy
-): Effect.Effect<ContentWorkspaceInspection> {
-  return Effect.gen(function* () {
-    const policyIssue = validateCleanContentWorkspacePolicy(policy);
-    if (policyIssue !== undefined) {
-      return ineligibleIssue(policyIssue);
-    }
-
-    const anchorAttempt = yield* Effect.result(
-      contentWorkspace.inspectGitWorkspace({
-        locator: policy.locator,
-        remoteSelection: { kind: "Named", remoteName: policy.remoteName },
-        refName: policy.refName,
-      })
-    );
-    const anchor = classifyCleanContentWorkspaceAnchor(policy, anchorAttempt);
-    if (!anchor.ok) return anchor.result;
-
-    const treeAttempt = yield* Effect.result(
-      contentWorkspace.readGitTree({
-        root: anchor.value.anchor.root,
-        tree: anchor.value.anchor.tree,
-        objectFormat: anchor.value.anchor.objectFormat,
-        paths: [policy.releaseInputPath, policy.pluginRoot],
-        maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES,
-        maxBytes: MAX_CLEAN_CONTENT_TREE_BYTES,
-      })
-    );
-    const tree = classifyCleanContentWorkspaceTree(policy, anchor.value, treeAttempt);
-    if (!tree.ok) return tree.result;
-
-    const releaseInputAttempt = yield* Effect.result(
-      contentWorkspace.readGitBlob({
-        root: tree.value.anchor.root,
-        blob: tree.value.releaseInputEntry.objectId,
-        objectFormat: tree.value.anchor.objectFormat,
-        maxBytes: MAX_CLEAN_RELEASE_INPUT_BYTES,
-      })
-    );
-    const releaseInput = classifyCleanReleaseInput(policy, tree.value, releaseInputAttempt);
-    if (!releaseInput.ok) return releaseInput.result;
-
-    const payloadAttempt = yield* Effect.result(
-      contentWorkspace.readGitBlobs({
-        root: releaseInput.value.anchor.root,
-        blobs: releaseInput.value.blobEntries.map((entry) => entry.objectId),
-        objectFormat: releaseInput.value.anchor.objectFormat,
-        maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
-        maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
-        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
-      })
-    );
-    const payloads = classifyCleanPayloads(releaseInput.value, payloadAttempt);
-    if (!payloads.ok) return payloads.result;
-
-    const openingEvidenceAttempt = yield* Effect.result(
-      contentWorkspace.captureGitWorkspaceEvidence({
-        root: payloads.value.anchor.root,
-        remoteSelection: { kind: "Named", remoteName: policy.remoteName },
-        refName: policy.refName,
-        admittedPaths: payloads.value.admittedPaths,
-        consumedRoots: payloads.value.consumedRoots,
-        objectFormat: payloads.value.anchor.objectFormat,
-        maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
-        maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
-        maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
-        maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
-      })
-    );
-    const openingEvidence = classifyCleanWorkspaceEvidence(
-      policy,
-      payloads.value,
-      openingEvidenceAttempt
-    );
-    if (!openingEvidence.ok) return openingEvidence.result;
-
-    const closingEvidenceAttempt = yield* Effect.result(
-      contentWorkspace.captureGitWorkspaceEvidence({
-        root: payloads.value.anchor.root,
-        remoteSelection: { kind: "Named", remoteName: policy.remoteName },
-        refName: policy.refName,
-        admittedPaths: payloads.value.admittedPaths,
-        consumedRoots: payloads.value.consumedRoots,
-        objectFormat: payloads.value.anchor.objectFormat,
-        maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
-        maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
-        maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
-        maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
-      })
-    );
-    const closingEvidence = classifyClosingCleanWorkspaceEvidence(
-      payloads.value,
-      closingEvidenceAttempt
-    );
-    if (!closingEvidence.ok) return closingEvidence.result;
-
-    return finishCleanContentWorkspaceInspection(
-      policy,
-      payloads.value,
-      openingEvidence.value,
-      closingEvidence.value
-    );
-  });
 }
 
 /** Classifies one typed workspace anchor observation without performing I/O. */

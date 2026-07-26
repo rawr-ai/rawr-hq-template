@@ -862,6 +862,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   dependency bag, or alternate resource. Preserve exact bounds, Cowork bytes,
   digest and output identity, idempotent repeat, typed source refusals, native
   defects/interruption/finalizers, and publication-only uninterruptibility.
+- [x] 5.7e2l Author disposable Provider test source selection directly in its
+  oRPC operation. Consume the ready content-workspace capability from context;
+  perform each complete local selection lazily; repeat clean source, native
+  interface, and local manifest verification before mutation; and preserve
+  omitted members in both test modes. Reuse the root service's release
+  derivation, keep Provider source-interface, selected-content, and native-state
+  policy in separate direct leaves, and flatten the content-workspace DTO into
+  the direct root-model topology. Delete the exported test runner, caller
+  dependency bag, clean-content reader and port, workspace resolver branch,
+  duplicate test-mode schema, and their direct-call tests without adding
+  another adapter or resource. Keep the channel resolver and its narrowed port
+  for status and sync. Keep the existing native reconciliation functions open
+  for their later operation-authorship checkpoint; do not claim the remaining
+  Providers shell is sealed.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -31,11 +31,7 @@ import type {
   ProviderTarget,
   ProviderTestRequest,
 } from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
-import type {
-  SelectedContent,
-  SelectedContentResolution,
-} from "../../../src/service/modules/providers/model/dto/selected-content";
-import type { SelectedContentResolver } from "../../../src/service/modules/providers/model/ports/selected-content";
+import type { SelectedContent } from "../../../src/service/modules/providers/model/dto/selected-content";
 import type { AgentPluginPayload, PluginId } from "../../../src/service/shared/release";
 import {
   canonicalSerializeAgentPluginReleaseInput,
@@ -68,7 +64,7 @@ const REPOSITORY_IDENTITY = requireParsed(
   parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")
 );
 const CONTENT_AUTHORITY = requireParsed(parseContentAuthority("rawr-hq"));
-const RELEASE_INPUT_PATH = requireParsed(parseReleaseRelativePath("release-input.json"));
+const RELEASE_INPUT_PATH = requireParsed(parseReleaseRelativePath(".rawr/release-input.json"));
 const PLUGIN_ROOT = requireParsed(parseReleaseRelativePath("plugins/agents"));
 const REPOSITORY_URL = "https://github.com/rawr-ai/rawr-hq.git";
 const SOURCE_REF = "refs/tags/agent-plugins-v1";
@@ -313,14 +309,21 @@ export interface ProviderLifecycleClientFixture {
 export function createProviderLifecycleClient(
   content: SelectedContent,
   nativeProviders: NativeAgentProviderResources,
-  options: Readonly<{ failSecondCurrentMainOpening?: boolean }> = {}
+  options: Readonly<{
+    failSecondCurrentMainOpening?: boolean;
+    transformContentWorkspace?: (
+      resource: ContentWorkspaceResource<never>
+    ) => ContentWorkspaceResource<never>;
+  }> = {}
 ): ProviderLifecycleClientFixture {
   const fixture = workspaceFixtures.get(content);
   if (fixture === undefined) {
     throw new Error("Provider content was not created by the owner-local fixture");
   }
   const resourceCalls: string[] = [];
-  const contentWorkspace = providerContentWorkspace(fixture, resourceCalls, options);
+  const baseContentWorkspace = providerContentWorkspace(fixture, resourceCalls, options);
+  const contentWorkspace =
+    options.transformContentWorkspace?.(baseContentWorkspace) ?? baseContentWorkspace;
   return {
     client: createLifecycleTestClient({ contentWorkspace, nativeProviders }),
     resourceCalls,
@@ -425,8 +428,24 @@ function providerContentWorkspace(
   options: Readonly<{ failSecondCurrentMainOpening?: boolean }>
 ): ContentWorkspaceResource<never> {
   let mainInspections = 0;
+  const workspaceAnchor = Object.freeze({
+    root: testRequest.contentWorkspace.locator,
+    rootDevice: "provider-fixture-device",
+    rootInode: "provider-fixture-inode",
+    refName: testRequest.contentWorkspace.refName,
+    commit: COMMIT,
+    refCommit: COMMIT,
+    tree: TREE,
+    objectFormat: "sha1" as const,
+    remoteUrls: Object.freeze([REPOSITORY_URL]),
+  });
   return Object.freeze({
     ...unavailableContentWorkspace(),
+    inspectGitWorkspace: () =>
+      Effect.sync(() => {
+        calls.push("inspect-workspace");
+        return workspaceAnchor;
+      }),
     inspectGitRef: (input: Parameters<ContentWorkspaceResource<never>["inspectGitRef"]>[0]) =>
       Effect.suspend(() => {
         calls.push(`inspect:${input.refName}`);
@@ -471,10 +490,14 @@ function providerContentWorkspace(
         calls.push("ancestry");
         return true;
       }),
-    readGitTree: () =>
+    readGitTree: (input: Parameters<ContentWorkspaceResource<never>["readGitTree"]>[0]) =>
       Effect.sync(() => {
         calls.push("read-tree");
-        return fixture.treeEntries;
+        return Object.freeze(
+          fixture.treeEntries.filter((entry) =>
+            input.paths.some((path) => entry.path === path || entry.path.startsWith(`${path}/`))
+          )
+        );
       }),
     readGitBlob: ({ blob }: Parameters<ContentWorkspaceResource<never>["readGitBlob"]>[0]) =>
       Effect.sync(() => {
@@ -494,6 +517,48 @@ function providerContentWorkspace(
           })
         );
       }),
+    captureGitWorkspaceEvidence: (
+      input: Parameters<ContentWorkspaceResource<never>["captureGitWorkspaceEvidence"]>[0]
+    ) =>
+      Effect.sync(() => {
+        calls.push("capture-evidence");
+        const trackedFlags = Object.freeze(
+          input.admittedPaths.map((path) =>
+            Object.freeze({
+              path,
+              status: "Cached" as const,
+              assumeUnchanged: false,
+            })
+          )
+        );
+        const worktreeObjectIds = Object.freeze(
+          input.admittedPaths.map((path) => {
+            const entry = fixture.treeEntries.find((candidate) => candidate.path === path);
+            if (entry === undefined) {
+              throw new Error(`Missing provider fixture tree entry ${path}`);
+            }
+            return Object.freeze({ path, objectId: entry.blob });
+          })
+        );
+        return Object.freeze({
+          openingAnchor: workspaceAnchor,
+          openingStatus: new Uint8Array(),
+          openingTrackedFlags: trackedFlags,
+          worktreeObjectIds,
+          indexEntries: new Uint8Array(),
+          closingAnchor: workspaceAnchor,
+          closingStatus: new Uint8Array(),
+          closingTrackedFlags: trackedFlags,
+        });
+      }),
+    readFile: (input: Parameters<ContentWorkspaceResource<never>["readFile"]>[0]) =>
+      Effect.sync(() => {
+        calls.push(`read-file:${input.path}`);
+        const entry = fixture.treeEntries.find((candidate) => candidate.path === input.path);
+        const bytes = entry === undefined ? undefined : fixture.bytesByBlob.get(entry.blob);
+        if (bytes === undefined) throw new Error(`Missing provider fixture file ${input.path}`);
+        return bytes;
+      }),
   });
 }
 
@@ -505,44 +570,6 @@ function contentWorkspaceFailure(
   return { _tag: "ContentWorkspaceFailure", operation, reason, detail };
 }
 
-export class FakeSelectedContentResolver implements SelectedContentResolver {
-  readonly channelCalls: SelectedContent[] = [];
-  readonly workspaceCalls: SelectedContent[] = [];
-  private readonly channelResults: SelectedContent[];
-  private readonly workspaceResults: SelectedContent[];
-
-  constructor(
-    input: Readonly<{
-      channel?: readonly SelectedContent[];
-      workspace?: readonly SelectedContent[];
-    }>
-  ) {
-    this.channelResults = [...(input.channel ?? [])];
-    this.workspaceResults = [...(input.workspace ?? input.channel ?? [])];
-  }
-
-  resolveChannel(): Effect.Effect<SelectedContentResolution> {
-    return Effect.sync(() => {
-      const content = this.next(this.channelResults, this.channelCalls);
-      return { kind: "Selected", content };
-    });
-  }
-
-  resolveWorkspace(): Effect.Effect<SelectedContentResolution> {
-    return Effect.sync(() => {
-      const content = this.next(this.workspaceResults, this.workspaceCalls);
-      return { kind: "Selected", content };
-    });
-  }
-
-  private next(queue: SelectedContent[], calls: SelectedContent[]): SelectedContent {
-    const content = queue.length > 1 ? queue.shift()! : queue[0];
-    if (content === undefined) throw new Error("No selected-content fixture remains");
-    calls.push(content);
-    return content;
-  }
-}
-
 interface FakeNativeSessionInput {
   readonly target: ProviderTarget;
   readonly content: SelectedContent;
@@ -552,6 +579,7 @@ interface FakeNativeSessionInput {
   readonly omitted?: readonly string[];
   readonly staleFiles?: readonly string[];
   readonly probeOverride?: () => Effect.Effect<NativeProviderCapabilities>;
+  readonly onMutation?: () => void;
 }
 
 class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
@@ -568,6 +596,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
   private readonly content: SelectedContent;
   private readonly files = new Map<string, Uint8Array>();
   private readonly probeOverride?: () => Effect.Effect<NativeProviderCapabilities>;
+  protected readonly onMutation?: () => void;
 
   constructor(provider: Provider, input: FakeNativeSessionInput) {
     if (input.target.provider !== provider) {
@@ -578,6 +607,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
     this.executablePath = `/opt/${this.provider}`;
     this.content = input.content;
     this.probeOverride = input.probeOverride;
+    this.onMutation = input.onMutation;
     const marketplaces =
       input.marketplace === "absent"
         ? []
@@ -682,6 +712,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
 
   addMarketplace(source: NativeMarketplaceSource) {
     return Effect.sync(() => {
+      this.onMutation?.();
       this.calls.push("mutate:marketplace-add");
       this.inventoryValue = {
         ...this.inventoryValue,
@@ -710,6 +741,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
 
   removeMarketplace() {
     return Effect.suspend(() => {
+      this.onMutation?.();
       this.calls.push("mutate:marketplace-remove");
       if (this.marketplaceRemoveFailure === "before") {
         return Effect.fail(
@@ -739,6 +771,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
 
   installPlugin(input: Readonly<{ selector: string }>) {
     return Effect.suspend(() => {
+      this.onMutation?.();
       this.calls.push(`mutate:plugin-install:${input.selector}`);
       if (this.installFailure === "before") {
         return Effect.fail(
@@ -772,6 +805,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
 
   removePlugin(input: Readonly<{ selector: string }>) {
     return Effect.sync(() => {
+      this.onMutation?.();
       this.calls.push(`mutate:plugin-remove:${input.selector}`);
       this.inventoryValue = {
         ...this.inventoryValue,
@@ -870,6 +904,7 @@ class FakeClaudeNativeSession
 
   enablePlugin(input: Readonly<{ selector: string }>) {
     return Effect.suspend(() => {
+      this.onMutation?.();
       this.calls.push(`mutate:plugin-enable:${input.selector}`);
       const live = this.inventoryValue.plugins.find((entry) => entry.selector === input.selector);
       if (live === undefined) {
@@ -904,6 +939,7 @@ function compareText(left: string, right: string): number {
 export class FakeNativeProviders implements NativeAgentProviderResources {
   readonly codex;
   readonly claude;
+  readonly acquisitionCalls: string[] = [];
 
   constructor(sessions: readonly FakeNativeSession[]) {
     const codexSessions: FakeCodexNativeSession[] = [];
@@ -920,11 +956,17 @@ export class FakeNativeProviders implements NativeAgentProviderResources {
     }
     this.codex = Object.freeze({
       acquire: ({ home }: Readonly<{ home: string }>) =>
-        acquireFakeSession("codex", codexSessions, home),
+        Effect.suspend(() => {
+          this.acquisitionCalls.push(`codex:${home}`);
+          return acquireFakeSession("codex", codexSessions, home);
+        }),
     });
     this.claude = Object.freeze({
       acquire: ({ home }: Readonly<{ home: string }>) =>
-        acquireFakeSession("claude", claudeSessions, home),
+        Effect.suspend(() => {
+          this.acquisitionCalls.push(`claude:${home}`);
+          return acquireFakeSession("claude", claudeSessions, home);
+        }),
     });
   }
 }

@@ -1,10 +1,10 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
   ContentWorkspacePolicySchema,
   QualifiedHeadRefSchema,
   SourceEligibilityIssueSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ArtifactDigestSchema,

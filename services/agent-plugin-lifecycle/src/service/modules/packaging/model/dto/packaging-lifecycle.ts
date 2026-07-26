@@ -1,6 +1,6 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/releases/content-workspace";
 import { isCanonicalAbsolutePath } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   GitCommitIdSchema,
