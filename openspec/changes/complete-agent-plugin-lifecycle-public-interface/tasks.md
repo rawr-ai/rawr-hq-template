@@ -846,6 +846,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   deterministic entry selection, protocol bounds, and digest derivation
   unchanged; do not treat pure archive policy as a helper or move encoding and
   output publication out of their existing resource.
+- [x] 5.7e2j Project one ready content-workspace resource into Releases and
+  author clean and staged resource sequencing inside its oRPC operations.
+  Extract only pure clean-content classification phases into the shared model,
+  and compose those same phases behind the transitional reader still consumed
+  by Packaging and Providers. Preserve exact bounds, observation order,
+  failure precedence, cancellation, public results, and final revalidation; do
+  not create another resource, runner, dependency bag, or compatibility path.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

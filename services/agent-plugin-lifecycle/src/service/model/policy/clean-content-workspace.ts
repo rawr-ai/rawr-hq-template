@@ -2,11 +2,12 @@ import { createHash } from "node:crypto";
 import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
+  GitBlobObservation,
   GitTrackedPathFlag,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
 } from "@rawr/resource-content-workspace";
-import { Effect } from "effect";
+import { Effect, type Result } from "effect";
 import type {
   ContentWorkspaceInspection,
   ContentWorkspacePolicy,
@@ -40,24 +41,44 @@ import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
-const MAX_TREE_ENTRIES = 200_000;
-const MAX_TREE_BYTES = 100 * 1024 * 1024;
-const MAX_INDEX_BYTES = 64 * 1024 * 1024;
-const MAX_ADMITTED_WORKTREE_FILE_BYTES = Math.max(
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_PAYLOAD_BYTES_PER_MEMBER
-);
-const MAX_ADMITTED_WORKTREE_BYTES =
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES;
 
-interface TreeEntry {
+/** Maximum regular Git tree entries admitted by clean-content policy. */
+export const MAX_CLEAN_CONTENT_TREE_ENTRIES = 200_000;
+
+/** Maximum native Git tree bytes admitted by clean-content policy. */
+export const MAX_CLEAN_CONTENT_TREE_BYTES = 100 * 1024 * 1024;
+
+/** Maximum status, tracked-flag, or index bytes admitted per evidence field. */
+export const MAX_CLEAN_CONTENT_INDEX_BYTES = 64 * 1024 * 1024;
+
+/** Maximum canonical release-input bytes read by one clean-content operation. */
+export const MAX_CLEAN_RELEASE_INPUT_BYTES = MAX_RELEASE_INPUT_ENVELOPE_BYTES;
+
+/** Maximum decoded payload bytes admitted for any one release-set member. */
+export const MAX_CLEAN_MEMBER_PAYLOAD_BYTES = MAX_PAYLOAD_BYTES_PER_MEMBER;
+
+/** Maximum aggregate decoded payload bytes admitted for one release set. */
+export const MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
+
+/** Maximum bytes read from any one admitted worktree file. */
+export const MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES = Math.max(
+  MAX_CLEAN_RELEASE_INPUT_BYTES,
+  MAX_CLEAN_MEMBER_PAYLOAD_BYTES
+);
+
+/** Maximum aggregate bytes read from all admitted worktree files. */
+export const MAX_CLEAN_CONTENT_WORKTREE_BYTES =
+  MAX_CLEAN_RELEASE_INPUT_BYTES + MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES;
+
+/** Canonical regular Git tree fact interpreted by clean-content policy. */
+interface CleanContentTreeEntry {
   readonly mode: number;
-  readonly type: "blob";
   readonly objectId: string;
   readonly path: ReleaseRelativePath;
 }
 
-interface WorkspaceEvidence {
+/** One policy-classified clean workspace evidence capture. */
+interface CleanWorkspaceEvidence {
   readonly anchor: GitWorkspaceAnchor;
   readonly trackedStatus: Uint8Array;
   readonly trackedFlags: readonly GitTrackedPathFlag[];
@@ -67,9 +88,55 @@ interface WorkspaceEvidence {
   readonly index: Uint8Array;
 }
 
+/** Pure clean-content decision returned between resource observations. */
+type CleanContentDecision<T> =
+  | Readonly<{ ok: true; value: T }>
+  | Readonly<{
+      ok: false;
+      result: Extract<ContentWorkspaceInspection, { kind: "Ineligible" }>;
+    }>;
+
+/** Admitted Git anchor facts required by the clean tree observation. */
+interface CleanWorkspaceAnchorFacts {
+  readonly anchor: GitWorkspaceAnchor;
+}
+
+/** Admitted tree facts required by the release-input blob observation. */
+interface CleanWorkspaceTreeFacts extends CleanWorkspaceAnchorFacts {
+  readonly treeEntries: readonly CleanContentTreeEntry[];
+  readonly entryByPath: ReadonlyMap<ReleaseRelativePath, CleanContentTreeEntry>;
+  readonly releaseInputEntry: CleanContentTreeEntry;
+}
+
+/** Admitted release-input facts required by the payload blob batch observation. */
+interface CleanPayloadReadFacts extends CleanWorkspaceTreeFacts {
+  readonly releaseInput: AgentPluginReleaseInput;
+  readonly admittedPaths: readonly ReleaseRelativePath[];
+  readonly consumedRoots: readonly ReleaseRelativePath[];
+  readonly blobEntries: readonly CleanContentTreeEntry[];
+  readonly declaredPayloads: readonly Readonly<{
+    pluginId: PluginId;
+    expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
+    entries: readonly Readonly<{
+      path: ReleaseRelativePath;
+      entry: CleanContentTreeEntry;
+    }>[];
+  }>[];
+}
+
+/** Admitted payload facts required by the two workspace evidence captures. */
+interface CleanEvidenceReadFacts extends CleanPayloadReadFacts {
+  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
+}
+
 /**
  * Adapts the content-workspace resource into the service-owned clean-content
  * reader shared by release eligibility, packaging, and local provider tests.
+ *
+ * @remarks
+ * Releases now executes the same resource sequence directly in its operation
+ * handlers. This adapter remains only for Packaging and Providers until their
+ * owner-local migrations remove the transitional reader contract.
  */
 export function createCleanContentWorkspaceReader(
   binding: Readonly<{
@@ -99,354 +166,494 @@ function inspectWorkspace(
   policy: ContentWorkspacePolicy
 ): Effect.Effect<ContentWorkspaceInspection> {
   return Effect.gen(function* () {
-    const policyIssue = validatePolicy(policy);
+    const policyIssue = validateCleanContentWorkspacePolicy(policy);
     if (policyIssue !== undefined) {
-      return {
-        kind: "Ineligible",
-        issues: [policyIssue],
-      } satisfies ContentWorkspaceInspection;
-    }
-    const anchor = yield* contentWorkspace.inspectGitWorkspace({
-      locator: policy.locator,
-      remoteSelection: { kind: "Named", remoteName: policy.remoteName },
-      refName: policy.refName,
-    });
-    const objectFormat = anchor.objectFormat;
-    const objectIdPattern =
-      objectFormat === "sha1"
-        ? /^[0-9a-f]{40}$/u
-        : objectFormat === "sha256"
-          ? /^[0-9a-f]{64}$/u
-          : undefined;
-    if (objectIdPattern === undefined)
-      return ineligible("GitFailure", `unsupported Git object format: ${objectFormat}`);
-
-    const refName = anchor.refName;
-    if (refName !== policy.refName)
-      return ineligible("WrongRef", `expected ${policy.refName}, observed ${refName}`);
-
-    const remoteUrls = anchor.remoteUrls;
-    if (remoteUrls.length !== 1 || remoteUrls[0] !== policy.remoteUrl) {
-      return ineligible(
-        "WrongRepository",
-        "configured remote does not exactly match repository policy"
-      );
+      return ineligibleIssue(policyIssue);
     }
 
-    const commit = anchor.commit;
-    const refCommit = anchor.refCommit;
-    if (!objectIdPattern.test(commit) || commit !== policy.sourceCommit || refCommit !== commit) {
-      return ineligible("WrongCommit", `expected ${policy.sourceCommit}, observed ${commit}`);
-    }
-    const tree = anchor.tree;
-    if (!objectIdPattern.test(tree) || tree !== policy.sourceTree) {
-      return ineligible("WrongTree", `expected ${policy.sourceTree}, observed ${tree}`);
-    }
+    const anchorAttempt = yield* Effect.result(
+      contentWorkspace.inspectGitWorkspace({
+        locator: policy.locator,
+        remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+        refName: policy.refName,
+      })
+    );
+    const anchor = classifyCleanContentWorkspaceAnchor(policy, anchorAttempt);
+    if (!anchor.ok) return anchor.result;
 
-    const entriesResult = yield* contentWorkspace.readGitTree({
-      root: anchor.root,
-      tree,
-      objectFormat,
-      paths: [policy.releaseInputPath, policy.pluginRoot],
-      maxEntries: MAX_TREE_ENTRIES,
-      maxBytes: MAX_TREE_BYTES,
-    });
-    const treeEntries = yield* Effect.try({
-      try: () => interpretTreeEntries(entriesResult),
-      catch: asError,
-    });
+    const treeAttempt = yield* Effect.result(
+      contentWorkspace.readGitTree({
+        root: anchor.value.anchor.root,
+        tree: anchor.value.anchor.tree,
+        objectFormat: anchor.value.anchor.objectFormat,
+        paths: [policy.releaseInputPath, policy.pluginRoot],
+        maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxBytes: MAX_CLEAN_CONTENT_TREE_BYTES,
+      })
+    );
+    const tree = classifyCleanContentWorkspaceTree(policy, anchor.value, treeAttempt);
+    if (!tree.ok) return tree.result;
+
+    const releaseInputAttempt = yield* Effect.result(
+      contentWorkspace.readGitBlob({
+        root: tree.value.anchor.root,
+        blob: tree.value.releaseInputEntry.objectId,
+        objectFormat: tree.value.anchor.objectFormat,
+        maxBytes: MAX_CLEAN_RELEASE_INPUT_BYTES,
+      })
+    );
+    const releaseInput = classifyCleanReleaseInput(policy, tree.value, releaseInputAttempt);
+    if (!releaseInput.ok) return releaseInput.result;
+
+    const payloadAttempt = yield* Effect.result(
+      contentWorkspace.readGitBlobs({
+        root: releaseInput.value.anchor.root,
+        blobs: releaseInput.value.blobEntries.map((entry) => entry.objectId),
+        objectFormat: releaseInput.value.anchor.objectFormat,
+        maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
+        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+      })
+    );
+    const payloads = classifyCleanPayloads(releaseInput.value, payloadAttempt);
+    if (!payloads.ok) return payloads.result;
+
+    const openingEvidenceAttempt = yield* Effect.result(
+      contentWorkspace.captureGitWorkspaceEvidence({
+        root: payloads.value.anchor.root,
+        remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+        refName: policy.refName,
+        admittedPaths: payloads.value.admittedPaths,
+        consumedRoots: payloads.value.consumedRoots,
+        objectFormat: payloads.value.anchor.objectFormat,
+        maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+        maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+        maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
+      })
+    );
+    const openingEvidence = classifyCleanWorkspaceEvidence(
+      policy,
+      payloads.value,
+      openingEvidenceAttempt
+    );
+    if (!openingEvidence.ok) return openingEvidence.result;
+
+    const closingEvidenceAttempt = yield* Effect.result(
+      contentWorkspace.captureGitWorkspaceEvidence({
+        root: payloads.value.anchor.root,
+        remoteSelection: { kind: "Named", remoteName: policy.remoteName },
+        refName: policy.refName,
+        admittedPaths: payloads.value.admittedPaths,
+        consumedRoots: payloads.value.consumedRoots,
+        objectFormat: payloads.value.anchor.objectFormat,
+        maxPaths: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+        maxWorktreeFileBytes: MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
+        maxWorktreeBytes: MAX_CLEAN_CONTENT_WORKTREE_BYTES,
+        maxBytes: MAX_CLEAN_CONTENT_INDEX_BYTES,
+      })
+    );
+    const closingEvidence = classifyClosingCleanWorkspaceEvidence(
+      payloads.value,
+      closingEvidenceAttempt
+    );
+    if (!closingEvidence.ok) return closingEvidence.result;
+
+    return finishCleanContentWorkspaceInspection(
+      policy,
+      payloads.value,
+      openingEvidence.value,
+      closingEvidence.value
+    );
+  });
+}
+
+/** Classifies one typed workspace anchor observation without performing I/O. */
+export function classifyCleanContentWorkspaceAnchor(
+  policy: ContentWorkspacePolicy,
+  attempt: Result.Result<GitWorkspaceAnchor, ContentWorkspaceFailure>
+): CleanContentDecision<CleanWorkspaceAnchorFacts> {
+  if (attempt._tag === "Failure") return declined(inspectWorkspaceFailure(attempt.failure));
+  const anchor = attempt.success;
+  const objectFormat = anchor.objectFormat;
+  const objectIdPattern =
+    objectFormat === "sha1"
+      ? /^[0-9a-f]{40}$/u
+      : objectFormat === "sha256"
+        ? /^[0-9a-f]{64}$/u
+        : undefined;
+  if (objectIdPattern === undefined) {
+    return declined(ineligible("GitFailure", `unsupported Git object format: ${objectFormat}`));
+  }
+  if (anchor.refName !== policy.refName) {
+    return declined(
+      ineligible("WrongRef", `expected ${policy.refName}, observed ${anchor.refName}`)
+    );
+  }
+  if (anchor.remoteUrls.length !== 1 || anchor.remoteUrls[0] !== policy.remoteUrl) {
+    return declined(
+      ineligible("WrongRepository", "configured remote does not exactly match repository policy")
+    );
+  }
+  if (
+    !objectIdPattern.test(anchor.commit) ||
+    anchor.commit !== policy.sourceCommit ||
+    anchor.refCommit !== anchor.commit
+  ) {
+    return declined(
+      ineligible("WrongCommit", `expected ${policy.sourceCommit}, observed ${anchor.commit}`)
+    );
+  }
+  if (!objectIdPattern.test(anchor.tree) || anchor.tree !== policy.sourceTree) {
+    return declined(
+      ineligible("WrongTree", `expected ${policy.sourceTree}, observed ${anchor.tree}`)
+    );
+  }
+  return admitted(Object.freeze({ anchor }));
+}
+
+/** Classifies bounded Git tree facts and selects the declared release-input blob. */
+export function classifyCleanContentWorkspaceTree(
+  policy: ContentWorkspacePolicy,
+  anchor: CleanWorkspaceAnchorFacts,
+  attempt: Result.Result<readonly ContentTreeEntry[], ContentWorkspaceFailure>
+): CleanContentDecision<CleanWorkspaceTreeFacts> {
+  if (attempt._tag === "Failure") return declined(inspectWorkspaceFailure(attempt.failure));
+  try {
+    const treeEntries = interpretTreeEntries(attempt.success);
     const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
     const releaseInputEntry = entryByPath.get(policy.releaseInputPath);
     if (releaseInputEntry === undefined) {
-      return ineligible(
-        "MissingReleaseInput",
-        `missing tracked release input ${policy.releaseInputPath}`
+      return declined(
+        ineligible(
+          "MissingReleaseInput",
+          `missing tracked release input ${policy.releaseInputPath}`
+        )
       );
     }
-    const releaseInputBytes = yield* readGitBlobObject(
-      contentWorkspace,
-      anchor.root,
-      releaseInputEntry,
-      objectFormat,
-      MAX_RELEASE_INPUT_ENVELOPE_BYTES
-    );
-    const releaseInputResult = decodeAgentPluginReleaseInput(releaseInputBytes);
-    if (!releaseInputResult.ok) {
-      return ineligible(
-        "ReleaseInputMismatch",
-        releaseInputResult.issues.map((entry) => entry.code).join(",")
-      );
-    }
-    const releaseInput = releaseInputResult.value;
-    if (releaseInput.body.contentAuthority !== policy.contentAuthority) {
-      return ineligible(
-        "ReleaseInputMismatch",
-        "release input declares a different content authority"
-      );
-    }
-    const declaredPluginIssue = validateDeclaredPluginTree({
-      pluginRoot: policy.pluginRoot,
-      paths: treeEntries.map((entry) => entry.path),
-      declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
-    });
-    if (declaredPluginIssue !== undefined) {
-      return {
-        kind: "Ineligible",
-        issues: [declaredPluginIssue],
-      } satisfies ContentWorkspaceInspection;
-    }
-    const aggregatePayloadIssue = preflightAggregatePayloadBytes(releaseInput);
-    if (aggregatePayloadIssue !== undefined)
-      return ineligible("PayloadMismatch", aggregatePayloadIssue);
-
-    const admitted = new Set<ReleaseRelativePath>([policy.releaseInputPath]);
-    const consumedRoots: ReleaseRelativePath[] = [];
-    const declaredPayloads: Array<
-      Readonly<{
-        pluginId: PluginId;
-        expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
-        entries: readonly Readonly<{
-          path: ReleaseRelativePath;
-          entry: TreeEntry;
-        }>[];
-      }>
-    > = [];
-    const uniqueBlobEntries = new Map<string, TreeEntry>();
-    for (const member of releaseInput.body.members) {
-      const rootResult = parseReleaseRelativePath(
-        `${policy.pluginRoot}/${member.pluginId}`,
-        "memberRoot"
-      );
-      if (!rootResult.ok) return ineligible("ReleaseInputMismatch", "member root is not canonical");
-      const memberRoot = rootResult.value;
-      consumedRoots.push(memberRoot);
-      const entries: Array<Readonly<{ path: ReleaseRelativePath; entry: TreeEntry }>> = [];
-      for (const declared of member.payload.manifest) {
-        const repositoryPathResult = parseReleaseRelativePath(
-          `${memberRoot}/${declared.path}`,
-          "repositoryPayloadPath"
-        );
-        if (!repositoryPathResult.ok)
-          return ineligible("ReleaseInputMismatch", "payload path is not canonical");
-        const repositoryPath = repositoryPathResult.value;
-        const entry = entryByPath.get(repositoryPath);
-        if (entry === undefined)
-          return ineligible("PayloadMismatch", `missing tracked payload ${repositoryPath}`);
-        entries.push(Object.freeze({ path: declared.path, entry }));
-        uniqueBlobEntries.set(entry.objectId, entry);
-        admitted.add(repositoryPath);
-      }
-      const actualUnderRoot = treeEntries.filter((entry) =>
-        entry.path.startsWith(`${memberRoot}/`)
-      );
-      if (actualUnderRoot.some((entry) => !admitted.has(entry.path))) {
-        return ineligible(
-          "PayloadMismatch",
-          `tracked payload root ${memberRoot} contains undeclared files`
-        );
-      }
-      declaredPayloads.push(
-        Object.freeze({
-          pluginId: member.pluginId,
-          expected: member.payload,
-          entries: Object.freeze(entries),
-        })
-      );
-    }
-
-    const blobEntries = [...uniqueBlobEntries.values()];
-    const blobObservations = yield* contentWorkspace.readGitBlobs({
-      root: anchor.root,
-      blobs: blobEntries.map((entry) => entry.objectId),
-      objectFormat,
-      maxBlobs: MAX_TREE_ENTRIES,
-      maxBlobBytes: MAX_PAYLOAD_BYTES_PER_MEMBER,
-      maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
-    });
-    const bytesByBlob = new Map(
-      blobObservations.map((observation) => [observation.blob, observation.bytes])
-    );
-    if (bytesByBlob.size !== blobEntries.length) {
-      return ineligible(
-        "PayloadMismatch",
-        "Git batch omitted or duplicated a declared payload blob"
-      );
-    }
-
-    const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
-    for (const declaredPayload of declaredPayloads) {
-      const payloadEntries: Array<{ path: ReleaseRelativePath; mode: number; bytes: Uint8Array }> =
-        [];
-      for (const declared of declaredPayload.entries) {
-        const bytes = bytesByBlob.get(declared.entry.objectId);
-        if (bytes === undefined) {
-          return ineligible(
-            "PayloadMismatch",
-            `Git batch omitted declared payload ${declared.entry.path}`
-          );
-        }
-        payloadEntries.push({ path: declared.path, mode: declared.entry.mode, bytes });
-      }
-      const payloadResult = createAgentPluginPayload(payloadEntries);
-      if (!payloadResult.ok) {
-        return ineligible(
-          "PayloadMismatch",
-          payloadResult.issues.map((entry) => entry.code).join(",")
-        );
-      }
-      if (
-        payloadResult.value.payloadDigest !== declaredPayload.expected.payloadDigest ||
-        !sameManifest(payloadResult.value.manifest, declaredPayload.expected.manifest)
-      ) {
-        return ineligible(
-          "PayloadMismatch",
-          `payload declaration differs for ${declaredPayload.pluginId}`
-        );
-      }
-      payloads.push(
-        Object.freeze({ pluginId: declaredPayload.pluginId, payload: payloadResult.value })
-      );
-    }
-
-    const admittedPaths = [...admitted].sort(compareCanonicalText);
-    const consumedPathspecs = [...consumedRoots].sort(compareCanonicalText);
-    const evidence = yield* captureWorkspaceEvidence(
-      contentWorkspace,
-      anchor.root,
-      policy,
-      admittedPaths,
-      consumedPathspecs
-    );
-    const evidenceIssue = yield* Effect.try({
-      try: () =>
-        validateWorkspaceEvidence(evidence, policy, objectFormat, entryByPath, admittedPaths),
-      catch: asError,
-    });
-    if (evidenceIssue !== undefined) {
-      return {
-        kind: "Ineligible",
-        issues: [evidenceIssue],
-      } satisfies ContentWorkspaceInspection;
-    }
-
-    // A second matching capture closes the bounded status/flag eligibility observation.
-    const closingEvidence = yield* captureWorkspaceEvidence(
-      contentWorkspace,
-      anchor.root,
-      policy,
-      admittedPaths,
-      consumedPathspecs
-    );
-    if (!sameWorkspaceEvidence(evidence, closingEvidence)) {
-      return ineligible(
-        "SourceChanged",
-        "repository evidence changed before the eligibility linearization point"
-      );
-    }
-
-    const objectBindings = Object.freeze(
-      [...admitted].sort(compareCanonicalText).map((path) => {
-        const entry = entryByPath.get(path)!;
-        return Object.freeze({ path, objectId: entry.objectId, mode: entry.mode });
+    return admitted(
+      Object.freeze({
+        ...anchor,
+        treeEntries,
+        entryByPath,
+        releaseInputEntry,
       })
     );
-    const eligibilityBinding = digestBinding({
-      repositoryIdentity: policy.repositoryIdentity,
-      remoteName: policy.remoteName,
-      remoteUrl: policy.remoteUrl,
-      refName,
-      commit,
-      tree,
-      objectBindings,
-      index: hashBytes(closingEvidence.index),
-      trackedStatus: hashBytes(closingEvidence.trackedStatus),
-      untracked: hashBytes(closingEvidence.untracked),
-      ignored: hashBytes(closingEvidence.ignored),
-      trackedFlags: closingEvidence.trackedFlags,
-      worktreeObjectIds: closingEvidence.worktreeObjectIds,
-    });
-    return {
-      kind: "Eligible",
-      snapshot: Object.freeze({
-        repositoryIdentity: policy.repositoryIdentity,
-        sourceCommit: policy.sourceCommit,
-        sourceTree: policy.sourceTree,
-        releaseInput,
-        payloads: Object.freeze(payloads),
-        objectBindings,
-        eligibilityBinding,
-      }),
-    } satisfies ContentWorkspaceInspection;
-  }).pipe(Effect.catch((error) => Effect.succeed(inspectWorkspaceFailure(error))));
+  } catch (error) {
+    return declined(inspectWorkspaceFailure(error));
+  }
 }
 
-function captureWorkspaceEvidence(
-  contentWorkspace: ResourceContentWorkspaceSnapshotReadPort,
-  root: string,
+/**
+ * Classifies release-input bytes and derives the exact declared payload blob set.
+ *
+ * @remarks
+ * This phase owns release policy only. The calling operation remains responsible
+ * for invoking the content-workspace resource before and after this decision.
+ */
+export function classifyCleanReleaseInput(
   policy: ContentWorkspacePolicy,
-  admittedPaths: readonly ReleaseRelativePath[],
-  consumedPathspecs: readonly ReleaseRelativePath[]
-): Effect.Effect<WorkspaceEvidence, ContentWorkspaceFailure | Error> {
-  return Effect.gen(function* () {
-    const evidence = yield* contentWorkspace.captureGitWorkspaceEvidence({
-      root,
-      remoteSelection: { kind: "Named", remoteName: policy.remoteName },
-      refName: policy.refName,
-      admittedPaths,
-      consumedRoots: consumedPathspecs,
-      objectFormat: policy.sourceCommit.length === 40 ? "sha1" : "sha256",
-      maxPaths: MAX_TREE_ENTRIES,
-      maxWorktreeFileBytes: MAX_ADMITTED_WORKTREE_FILE_BYTES,
-      maxWorktreeBytes: MAX_ADMITTED_WORKTREE_BYTES,
-      maxBytes: MAX_INDEX_BYTES,
-    });
-    const openingStatus = yield* Effect.try({
-      try: () => classifyWorkspaceStatus(evidence.openingStatus, consumedPathspecs),
-      catch: asError,
-    });
-    const closingStatus = yield* Effect.try({
-      try: () => classifyWorkspaceStatus(evidence.closingStatus, consumedPathspecs),
-      catch: asError,
-    });
-    if (!sameRepositoryAnchor(evidence.openingAnchor, evidence.closingAnchor)) {
-      return yield* Effect.fail(
-        eligibilityError("SourceChanged", "repository anchor changed during its closing capture")
-      );
+  tree: CleanWorkspaceTreeFacts,
+  attempt: Result.Result<Uint8Array, ContentWorkspaceFailure>
+): CleanContentDecision<CleanPayloadReadFacts> {
+  if (attempt._tag === "Failure") return declined(inspectWorkspaceFailure(attempt.failure));
+  const releaseInputBytes = attempt.success;
+  if (releaseInputBytes.byteLength > MAX_CLEAN_RELEASE_INPUT_BYTES) {
+    return declined(
+      ineligible(
+        "GitFailure",
+        `blob for ${tree.releaseInputEntry.path} exceeds ${MAX_CLEAN_RELEASE_INPUT_BYTES} bytes`
+      )
+    );
+  }
+  const releaseInputResult = decodeAgentPluginReleaseInput(releaseInputBytes);
+  if (!releaseInputResult.ok) {
+    return declined(
+      ineligible(
+        "ReleaseInputMismatch",
+        releaseInputResult.issues.map((entry) => entry.code).join(",")
+      )
+    );
+  }
+  const releaseInput = releaseInputResult.value;
+  if (releaseInput.body.contentAuthority !== policy.contentAuthority) {
+    return declined(
+      ineligible("ReleaseInputMismatch", "release input declares a different content authority")
+    );
+  }
+  const declaredPluginIssue = validateDeclaredPluginTree({
+    pluginRoot: policy.pluginRoot,
+    paths: tree.treeEntries.map((entry) => entry.path),
+    declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
+  });
+  if (declaredPluginIssue !== undefined) return declined(ineligibleIssue(declaredPluginIssue));
+  const aggregatePayloadIssue = preflightAggregatePayloadBytes(releaseInput);
+  if (aggregatePayloadIssue !== undefined) {
+    return declined(ineligible("PayloadMismatch", aggregatePayloadIssue));
+  }
+
+  const admittedPaths = new Set<ReleaseRelativePath>([policy.releaseInputPath]);
+  const consumedRoots: ReleaseRelativePath[] = [];
+  const declaredPayloads: Array<
+    Readonly<{
+      pluginId: PluginId;
+      expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
+      entries: readonly Readonly<{
+        path: ReleaseRelativePath;
+        entry: CleanContentTreeEntry;
+      }>[];
+    }>
+  > = [];
+  const uniqueBlobEntries = new Map<string, CleanContentTreeEntry>();
+  for (const member of releaseInput.body.members) {
+    const rootResult = parseReleaseRelativePath(
+      `${policy.pluginRoot}/${member.pluginId}`,
+      "memberRoot"
+    );
+    if (!rootResult.ok) {
+      return declined(ineligible("ReleaseInputMismatch", "member root is not canonical"));
     }
-    if (!sameTrackedPathFlags(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
-      return yield* Effect.fail(
-        eligibilityError(
-          "SourceChanged",
-          "admitted path flags changed during the repository evidence capture"
+    const memberRoot = rootResult.value;
+    consumedRoots.push(memberRoot);
+    const entries: Array<Readonly<{ path: ReleaseRelativePath; entry: CleanContentTreeEntry }>> =
+      [];
+    for (const declared of member.payload.manifest) {
+      const repositoryPathResult = parseReleaseRelativePath(
+        `${memberRoot}/${declared.path}`,
+        "repositoryPayloadPath"
+      );
+      if (!repositoryPathResult.ok) {
+        return declined(ineligible("ReleaseInputMismatch", "payload path is not canonical"));
+      }
+      const repositoryPath = repositoryPathResult.value;
+      const entry = tree.entryByPath.get(repositoryPath);
+      if (entry === undefined) {
+        return declined(ineligible("PayloadMismatch", `missing tracked payload ${repositoryPath}`));
+      }
+      entries.push(Object.freeze({ path: declared.path, entry }));
+      uniqueBlobEntries.set(entry.objectId, entry);
+      admittedPaths.add(repositoryPath);
+    }
+    const actualUnderRoot = tree.treeEntries.filter((entry) =>
+      entry.path.startsWith(`${memberRoot}/`)
+    );
+    if (actualUnderRoot.some((entry) => !admittedPaths.has(entry.path))) {
+      return declined(
+        ineligible(
+          "PayloadMismatch",
+          `tracked payload root ${memberRoot} contains undeclared files`
         )
       );
     }
-    if (!sameWorkspaceStatus(openingStatus, closingStatus)) {
-      return yield* Effect.fail(
-        eligibilityError(
-          "SourceChanged",
-          "tracked or consumed-path status changed during the repository evidence capture"
-        )
+    declaredPayloads.push(
+      Object.freeze({
+        pluginId: member.pluginId,
+        expected: member.payload,
+        entries: Object.freeze(entries),
+      })
+    );
+  }
+
+  return admitted(
+    Object.freeze({
+      ...tree,
+      releaseInput,
+      admittedPaths: Object.freeze([...admittedPaths].sort(compareCanonicalText)),
+      consumedRoots: Object.freeze([...consumedRoots].sort(compareCanonicalText)),
+      blobEntries: Object.freeze([...uniqueBlobEntries.values()]),
+      declaredPayloads: Object.freeze(declaredPayloads),
+    })
+  );
+}
+
+/** Classifies one bounded payload blob batch against every declared payload manifest. */
+export function classifyCleanPayloads(
+  releaseInput: CleanPayloadReadFacts,
+  attempt: Result.Result<readonly GitBlobObservation[], ContentWorkspaceFailure>
+): CleanContentDecision<CleanEvidenceReadFacts> {
+  if (attempt._tag === "Failure") return declined(inspectWorkspaceFailure(attempt.failure));
+  const bytesByBlob = new Map(
+    attempt.success.map((observation) => [observation.blob, observation.bytes])
+  );
+  if (bytesByBlob.size !== releaseInput.blobEntries.length) {
+    return declined(
+      ineligible("PayloadMismatch", "Git batch omitted or duplicated a declared payload blob")
+    );
+  }
+
+  const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
+  for (const declaredPayload of releaseInput.declaredPayloads) {
+    const payloadEntries: Array<{
+      path: ReleaseRelativePath;
+      mode: number;
+      bytes: Uint8Array;
+    }> = [];
+    for (const declared of declaredPayload.entries) {
+      const bytes = bytesByBlob.get(declared.entry.objectId);
+      if (bytes === undefined) {
+        return declined(
+          ineligible("PayloadMismatch", `Git batch omitted declared payload ${declared.entry.path}`)
+        );
+      }
+      payloadEntries.push({ path: declared.path, mode: declared.entry.mode, bytes });
+    }
+    const payloadResult = createAgentPluginPayload(payloadEntries);
+    if (!payloadResult.ok) {
+      return declined(
+        ineligible("PayloadMismatch", payloadResult.issues.map((entry) => entry.code).join(","))
       );
     }
-    return yield* Effect.try({
-      try: () =>
-        Object.freeze({
-          anchor: evidence.closingAnchor,
-          trackedStatus: closingStatus.tracked,
-          trackedFlags: evidence.closingTrackedFlags,
-          worktreeObjectIds: evidence.worktreeObjectIds.map((entry) =>
-            Object.freeze({
-              path: requireReleasePath(entry.path),
-              objectId: entry.objectId,
-            })
-          ),
-          untracked: closingStatus.untracked,
-          ignored: closingStatus.ignored,
-          index: evidence.indexEntries,
-        }),
-      catch: asError,
-    });
+    if (
+      payloadResult.value.payloadDigest !== declaredPayload.expected.payloadDigest ||
+      !sameManifest(payloadResult.value.manifest, declaredPayload.expected.manifest)
+    ) {
+      return declined(
+        ineligible("PayloadMismatch", `payload declaration differs for ${declaredPayload.pluginId}`)
+      );
+    }
+    payloads.push(
+      Object.freeze({ pluginId: declaredPayload.pluginId, payload: payloadResult.value })
+    );
+  }
+
+  return admitted(
+    Object.freeze({
+      ...releaseInput,
+      payloads: Object.freeze(payloads),
+    })
+  );
+}
+
+/** Classifies one resource-owned evidence capture into clean-content policy facts. */
+export function classifyCleanWorkspaceEvidence(
+  policy: ContentWorkspacePolicy,
+  payloads: CleanEvidenceReadFacts,
+  attempt: Result.Result<GitWorkspaceEvidence, ContentWorkspaceFailure>
+): CleanContentDecision<CleanWorkspaceEvidence> {
+  if (attempt._tag === "Failure") return declined(inspectWorkspaceFailure(attempt.failure));
+  try {
+    const evidence = interpretWorkspaceEvidence(attempt.success, payloads.consumedRoots);
+    const issue = validateWorkspaceEvidence(
+      evidence,
+      policy,
+      payloads.anchor.objectFormat,
+      payloads.entryByPath,
+      payloads.admittedPaths
+    );
+    return issue === undefined ? admitted(evidence) : declined(ineligibleIssue(issue));
+  } catch (error) {
+    return declined(inspectWorkspaceFailure(error));
+  }
+}
+
+/**
+ * Classifies the closing evidence capture without assigning it a new refusal.
+ *
+ * @remarks
+ * The opening capture owns concrete eligibility. A different but internally
+ * coherent closing capture is classified as source change during finalization,
+ * preserving the operation's linearization precedence.
+ */
+export function classifyClosingCleanWorkspaceEvidence(
+  payloads: CleanEvidenceReadFacts,
+  attempt: Result.Result<GitWorkspaceEvidence, ContentWorkspaceFailure>
+): CleanContentDecision<CleanWorkspaceEvidence> {
+  if (attempt._tag === "Failure") return declined(inspectWorkspaceFailure(attempt.failure));
+  try {
+    return admitted(interpretWorkspaceEvidence(attempt.success, payloads.consumedRoots));
+  } catch (error) {
+    return declined(inspectWorkspaceFailure(error));
+  }
+}
+
+/** Finishes one clean snapshot after two equal, independently classified evidence captures. */
+export function finishCleanContentWorkspaceInspection(
+  policy: ContentWorkspacePolicy,
+  payloads: CleanEvidenceReadFacts,
+  openingEvidence: CleanWorkspaceEvidence,
+  closingEvidence: CleanWorkspaceEvidence
+): ContentWorkspaceInspection {
+  if (!sameWorkspaceEvidence(openingEvidence, closingEvidence)) {
+    return ineligible(
+      "SourceChanged",
+      "repository evidence changed before the eligibility linearization point"
+    );
+  }
+
+  const objectBindings: Array<
+    Readonly<{ path: ReleaseRelativePath; objectId: string; mode: number }>
+  > = [];
+  for (const path of payloads.admittedPaths) {
+    const entry = payloads.entryByPath.get(path);
+    if (entry === undefined) {
+      return ineligible("InvalidTree", `admitted path disappeared from tree facts: ${path}`);
+    }
+    objectBindings.push(Object.freeze({ path, objectId: entry.objectId, mode: entry.mode }));
+  }
+  const frozenBindings = Object.freeze(objectBindings);
+  const eligibilityBinding = digestBinding({
+    repositoryIdentity: policy.repositoryIdentity,
+    remoteName: policy.remoteName,
+    remoteUrl: policy.remoteUrl,
+    refName: payloads.anchor.refName,
+    commit: payloads.anchor.commit,
+    tree: payloads.anchor.tree,
+    objectBindings: frozenBindings,
+    index: hashBytes(closingEvidence.index),
+    trackedStatus: hashBytes(closingEvidence.trackedStatus),
+    untracked: hashBytes(closingEvidence.untracked),
+    ignored: hashBytes(closingEvidence.ignored),
+    trackedFlags: closingEvidence.trackedFlags,
+    worktreeObjectIds: closingEvidence.worktreeObjectIds,
+  });
+  return {
+    kind: "Eligible",
+    snapshot: Object.freeze({
+      repositoryIdentity: policy.repositoryIdentity,
+      sourceCommit: policy.sourceCommit,
+      sourceTree: policy.sourceTree,
+      releaseInput: payloads.releaseInput,
+      payloads: payloads.payloads,
+      objectBindings: frozenBindings,
+      eligibilityBinding,
+    }),
+  };
+}
+
+function interpretWorkspaceEvidence(
+  evidence: GitWorkspaceEvidence,
+  consumedRoots: readonly ReleaseRelativePath[]
+): CleanWorkspaceEvidence {
+  const openingStatus = classifyWorkspaceStatus(evidence.openingStatus, consumedRoots);
+  const closingStatus = classifyWorkspaceStatus(evidence.closingStatus, consumedRoots);
+  if (!sameRepositoryAnchor(evidence.openingAnchor, evidence.closingAnchor)) {
+    throw eligibilityError("SourceChanged", "repository anchor changed during its closing capture");
+  }
+  if (!sameTrackedPathFlags(evidence.openingTrackedFlags, evidence.closingTrackedFlags)) {
+    throw eligibilityError(
+      "SourceChanged",
+      "admitted path flags changed during the repository evidence capture"
+    );
+  }
+  if (!sameWorkspaceStatus(openingStatus, closingStatus)) {
+    throw eligibilityError(
+      "SourceChanged",
+      "tracked or consumed-path status changed during the repository evidence capture"
+    );
+  }
+  return Object.freeze({
+    anchor: evidence.closingAnchor,
+    trackedStatus: closingStatus.tracked,
+    trackedFlags: evidence.closingTrackedFlags,
+    worktreeObjectIds: evidence.worktreeObjectIds.map((entry) =>
+      Object.freeze({
+        path: requireReleasePath(entry.path),
+        objectId: entry.objectId,
+      })
+    ),
+    untracked: closingStatus.untracked,
+    ignored: closingStatus.ignored,
+    index: evidence.indexEntries,
   });
 }
 
@@ -516,10 +723,10 @@ function requireReleasePath(candidate: string): ReleaseRelativePath {
 }
 
 function validateWorkspaceEvidence(
-  evidence: WorkspaceEvidence,
+  evidence: CleanWorkspaceEvidence,
   policy: ContentWorkspacePolicy,
   objectFormat: string,
-  entryByPath: ReadonlyMap<ReleaseRelativePath, TreeEntry>,
+  entryByPath: ReadonlyMap<ReleaseRelativePath, CleanContentTreeEntry>,
   admittedPaths: readonly ReleaseRelativePath[]
 ): SourceEligibilityIssue | undefined {
   const anchor = evidence.anchor;
@@ -569,7 +776,10 @@ function validateWorkspaceEvidence(
   return undefined;
 }
 
-function sameWorkspaceEvidence(left: WorkspaceEvidence, right: WorkspaceEvidence): boolean {
+function sameWorkspaceEvidence(
+  left: CleanWorkspaceEvidence,
+  right: CleanWorkspaceEvidence
+): boolean {
   return (
     sameRepositoryAnchor(left.anchor, right.anchor) &&
     equalBytes(left.trackedStatus, right.trackedStatus) &&
@@ -597,8 +807,8 @@ function sameRepositoryAnchor(left: GitWorkspaceAnchor, right: GitWorkspaceAncho
 }
 
 function sameWorktreeObjectIds(
-  left: WorkspaceEvidence["worktreeObjectIds"],
-  right: WorkspaceEvidence["worktreeObjectIds"]
+  left: CleanWorkspaceEvidence["worktreeObjectIds"],
+  right: CleanWorkspaceEvidence["worktreeObjectIds"]
 ): boolean {
   return (
     left.length === right.length &&
@@ -635,29 +845,10 @@ function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
   return difference === 0;
 }
 
-function readGitBlobObject(
-  contentWorkspace: ResourceContentWorkspaceSnapshotReadPort,
-  cwd: string,
-  entry: Readonly<{ objectId: string; path: string }>,
-  objectFormat: "sha1" | "sha256",
-  maximumBytes: number
-): Effect.Effect<Uint8Array, ContentWorkspaceFailure | Error> {
-  return Effect.gen(function* () {
-    const bytes = yield* contentWorkspace.readGitBlob({
-      root: cwd,
-      blob: entry.objectId,
-      objectFormat,
-      maxBytes: maximumBytes,
-    });
-    if (bytes.byteLength > maximumBytes) {
-      return yield* Effect.fail(new Error(`blob for ${entry.path} exceeds ${maximumBytes} bytes`));
-    }
-    return bytes;
-  });
-}
-
-function interpretTreeEntries(entries: readonly ContentTreeEntry[]): readonly TreeEntry[] {
-  const interpreted: TreeEntry[] = [];
+function interpretTreeEntries(
+  entries: readonly ContentTreeEntry[]
+): readonly CleanContentTreeEntry[] {
+  const interpreted: CleanContentTreeEntry[] = [];
   const exactPaths = new Set<string>();
   const portablePaths = new Set<string>();
   for (const entry of entries) {
@@ -682,7 +873,6 @@ function interpretTreeEntries(entries: readonly ContentTreeEntry[]): readonly Tr
     interpreted.push(
       Object.freeze({
         mode: entry.mode === "100755" ? 0o755 : 0o644,
-        type: "blob",
         objectId: entry.blob,
         path: path.value,
       })
@@ -765,11 +955,32 @@ function hashBytes(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
-function ineligible(code: SourceEligibilityIssueCode, detail: string): ContentWorkspaceInspection {
+function ineligible(
+  code: SourceEligibilityIssueCode,
+  detail: string
+): Extract<ContentWorkspaceInspection, { kind: "Ineligible" }> {
   return { kind: "Ineligible", issues: [sourceEligibilityIssue(code, detail)] };
 }
 
-function inspectWorkspaceFailure(error: unknown): ContentWorkspaceInspection {
+function ineligibleIssue(
+  issue: SourceEligibilityIssue
+): Extract<ContentWorkspaceInspection, { kind: "Ineligible" }> {
+  return { kind: "Ineligible", issues: [issue] };
+}
+
+function admitted<T>(value: T): CleanContentDecision<T> {
+  return { ok: true, value };
+}
+
+function declined(
+  result: Extract<ContentWorkspaceInspection, { kind: "Ineligible" }>
+): CleanContentDecision<never> {
+  return { ok: false, result };
+}
+
+function inspectWorkspaceFailure(
+  error: unknown
+): Extract<ContentWorkspaceInspection, { kind: "Ineligible" }> {
   if (isEligibilityError(error)) return ineligible(error.eligibilityCode, error.message);
   if (isContentWorkspaceFailure(error)) {
     if (error.operation === "read-git-tree" && error.reason === "UnsupportedEntry") {
@@ -783,10 +994,13 @@ function inspectWorkspaceFailure(error: unknown): ContentWorkspaceInspection {
     }
     return ineligible("GitFailure", error.detail);
   }
-  return ineligible("GitFailure", error instanceof Error ? error.message : String(error));
+  throw error;
 }
 
-function validatePolicy(policy: ContentWorkspacePolicy): SourceEligibilityIssue | undefined {
+/** Validates the service-wide clean-content policy before any resource call. */
+export function validateCleanContentWorkspacePolicy(
+  policy: ContentWorkspacePolicy
+): SourceEligibilityIssue | undefined {
   const repositoryIdentity = parseRepositoryIdentity(
     policy.repositoryIdentity,
     "policy.repositoryIdentity"
@@ -842,10 +1056,6 @@ function validatePolicy(policy: ContentWorkspacePolicy): SourceEligibilityIssue 
 
 function sourceIssue(code: SourceEligibilityIssueCode, detail: string): SourceEligibilityIssue {
   return sourceEligibilityIssue(code, detail);
-}
-
-function asError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
 }
 
 function eligibilityError(

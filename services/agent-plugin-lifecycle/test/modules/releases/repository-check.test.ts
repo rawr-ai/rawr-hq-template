@@ -538,28 +538,7 @@ describe("releases.checkRepository", () => {
   });
 
   it("returns only the clean mismatch after final exact revalidation", async () => {
-    const fixture = productFixture();
-    const eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }> = {
-      kind: "Eligible",
-      snapshot: {
-        repositoryIdentity,
-        sourceCommit: headCommit,
-        sourceTree: headTree,
-        releaseInput: fixture.releaseInput,
-        payloads: [
-          {
-            pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId,
-            payload: fixture.alphaPayload,
-          },
-          {
-            pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId,
-            payload: fixture.betaPayload,
-          },
-        ],
-        objectBindings: [],
-        eligibilityBinding: "clean-binding-v1",
-      },
-    };
+    const eligible = cleanEligibleInspection();
     let cleanReads = 0;
     const client = createLifecycleTestClient({
       contentWorkspace: cleanContentWorkspace(eligible, {
@@ -589,28 +568,8 @@ describe("releases.checkRepository", () => {
   it("returns the clean result while the staged port remains cold", async () => {
     let cleanReads = 0;
     let stagedReads = 0;
-    const fixture = productFixture();
-    const eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }> = {
-      kind: "Eligible",
-      snapshot: {
-        repositoryIdentity,
-        sourceCommit: headCommit,
-        sourceTree: headTree,
-        releaseInput: fixture.releaseInput,
-        payloads: [
-          {
-            pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId,
-            payload: fixture.alphaPayload,
-          },
-          {
-            pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId,
-            payload: fixture.betaPayload,
-          },
-        ],
-        objectBindings: [],
-        eligibilityBinding: "clean-binding-v1",
-      },
-    };
+    const operations: string[] = [];
+    const eligible = cleanEligibleInspection();
     const client = createLifecycleTestClient({
       contentWorkspace: cleanContentWorkspace(eligible, {
         onInspect: () => {
@@ -618,6 +577,9 @@ describe("releases.checkRepository", () => {
         },
         onStagedObserve: () => {
           stagedReads += 1;
+        },
+        onOperation: (operation) => {
+          operations.push(operation);
         },
       }),
     });
@@ -640,6 +602,48 @@ describe("releases.checkRepository", () => {
     });
     expect(cleanReads).toBe(2);
     expect(stagedReads).toBe(0);
+    expect(operations).toEqual([
+      "inspectGitWorkspace",
+      "readGitTree",
+      "readGitBlob",
+      "readGitBlobs",
+      "captureGitWorkspaceEvidence",
+      "captureGitWorkspaceEvidence",
+      "inspectGitWorkspace",
+      "readGitTree",
+      "readGitBlob",
+      "readGitBlobs",
+      "captureGitWorkspaceEvidence",
+      "captureGitWorkspaceEvidence",
+    ]);
+  });
+
+  it("classifies a binding-only clean revalidation difference as SourceChanged", async () => {
+    const eligible = cleanEligibleInspection();
+    const client = createLifecycleTestClient({
+      contentWorkspace: cleanContentWorkspace(eligible, {
+        indexAfterFirstInspect: bytes("changed clean index evidence"),
+      }),
+    });
+
+    await expect(
+      client.releases.checkRepository(
+        {
+          kind: "clean",
+          contentWorkspace: cleanPolicy(),
+        },
+        testInvocation
+      )
+    ).resolves.toEqual({
+      kind: "RepositoryIneligible",
+      mode: "clean",
+      issues: [
+        {
+          code: "SourceChanged",
+          detail: "repository, ref, index, worktree, or object bindings changed",
+        },
+      ],
+    });
   });
 
   it("reports a final staged revalidation race once without retry or write authority", async () => {
@@ -959,7 +963,9 @@ function stagedIndexEntries(
 function cleanContentWorkspace(
   eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }>,
   options: Readonly<{
+    indexAfterFirstInspect?: Uint8Array;
     onInspect?: () => void;
+    onOperation?: (operation: string) => void;
     onStagedObserve?: () => void;
     treeAfterFirstInspect?: string;
   }> = {}
@@ -1017,29 +1023,37 @@ function cleanContentWorkspace(
     ...unavailableContentWorkspace(),
     inspectGitWorkspace: () =>
       Effect.sync(() => {
+        options.onOperation?.("inspectGitWorkspace");
         inspections += 1;
         options.onInspect?.();
         return inspections > 1 && options.treeAfterFirstInspect !== undefined
           ? Object.freeze({ ...stagedAnchor(), tree: options.treeAfterFirstInspect })
           : stagedAnchor();
       }),
-    readGitTree: () => Effect.succeed(treeEntries),
+    readGitTree: () =>
+      Effect.sync(() => {
+        options.onOperation?.("readGitTree");
+        return treeEntries;
+      }),
     readGitBlob: (input) =>
       Effect.sync(() => {
+        options.onOperation?.("readGitBlob");
         const value = blobs.get(input.blob);
         if (value === undefined) throw new Error(`Missing clean Git blob ${input.blob}`);
         return new Uint8Array(value);
       }),
     readGitBlobs: (input) =>
-      Effect.sync(() =>
-        input.blobs.map((blob) => {
+      Effect.sync(() => {
+        options.onOperation?.("readGitBlobs");
+        return input.blobs.map((blob) => {
           const value = blobs.get(blob);
           if (value === undefined) throw new Error(`Missing clean Git blob ${blob}`);
           return Object.freeze({ blob, bytes: new Uint8Array(value) });
-        })
-      ),
+        });
+      }),
     captureGitWorkspaceEvidence: (input): Effect.Effect<GitWorkspaceEvidence> =>
       Effect.sync(() => {
+        options.onOperation?.("captureGitWorkspaceEvidence");
         const trackedFlags = Object.freeze(
           input.admittedPaths.map(
             (path): GitTrackedPathFlag =>
@@ -1060,18 +1074,47 @@ function cleanContentWorkspace(
           openingStatus: new Uint8Array(),
           openingTrackedFlags: trackedFlags,
           worktreeObjectIds: Object.freeze(worktreeObjectIds),
-          indexEntries: treeBytes,
+          indexEntries:
+            inspections > 1 && options.indexAfterFirstInspect !== undefined
+              ? options.indexAfterFirstInspect
+              : treeBytes,
           closingAnchor: stagedAnchor(),
           closingStatus: new Uint8Array(),
           closingTrackedFlags: trackedFlags,
         });
       }),
     observeGitStagedIndex: () => {
+      options.onOperation?.("observeGitStagedIndex");
       options.onStagedObserve?.();
       return Effect.die(new Error("Unexpected staged observation"));
     },
   };
   return Object.freeze(contentWorkspace);
+}
+
+function cleanEligibleInspection(): Extract<ContentWorkspaceInspection, { kind: "Eligible" }> {
+  const fixture = productFixture();
+  return {
+    kind: "Eligible",
+    snapshot: {
+      repositoryIdentity,
+      sourceCommit: headCommit,
+      sourceTree: headTree,
+      releaseInput: fixture.releaseInput,
+      payloads: [
+        {
+          pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId,
+          payload: fixture.alphaPayload,
+        },
+        {
+          pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId,
+          payload: fixture.betaPayload,
+        },
+      ],
+      objectBindings: [],
+      eligibilityBinding: "clean-binding-v1",
+    },
+  };
 }
 
 function gitBlobId(value: Uint8Array): string {
