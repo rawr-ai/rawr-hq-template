@@ -10,6 +10,13 @@ const includes = [
   "test/**/*.spec.tsx",
 ] as const;
 
+// A suite that reaches the Fluree container is paced by a real server rather
+// than by the code under test, and its ledger setup runs in hooks. Both budgets
+// are stated here so a run of the suite needs no flags to be the run that was
+// designed; a suite that exceeds these has found something worth reading, not a
+// number worth raising.
+const flureeBacked = { testTimeout: 60_000, hookTimeout: 60_000 } as const;
+
 export default defineConfig({
   test: {
     exclude: ["**/dist/**", "**/node_modules/**"],
@@ -110,13 +117,18 @@ export default defineConfig({
           name: "semantic-ledger",
           environment: "node",
           include: [...includes],
-          testTimeout: 60_000,
+          ...flureeBacked,
         },
       },
       {
         extends: true,
         root: r("services/workstream-frame"),
-        test: { name: "workstream-frame", environment: "node", include: [...includes] },
+        test: {
+          name: "workstream-frame",
+          environment: "node",
+          include: [...includes],
+          ...flureeBacked,
+        },
       },
       {
         extends: true,

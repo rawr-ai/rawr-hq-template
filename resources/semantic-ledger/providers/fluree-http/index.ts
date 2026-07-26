@@ -77,10 +77,9 @@ export interface FlureeHttpOptions {
   readonly fetch?: typeof globalThis.fetch;
 }
 
-interface LedgerListEntry {
-  readonly name: string;
-  readonly branch: string;
-  readonly t: number;
+/** The head of one ledger's commit log, newest first. */
+interface LedgerLog {
+  readonly commits: readonly { readonly t: number }[];
 }
 
 /** One send: either the server answered it, or the answer was lost. */
@@ -400,22 +399,35 @@ export function createFlureeHttpSemanticLedgerPort(options: FlureeHttpOptions): 
     throw semanticLedgerFailure(operation, reason, message.slice(0, 400));
   }
 
-  async function listLedgers(
-    operation: SemanticLedgerFailure["operation"]
-  ): Promise<readonly LedgerListEntry[]> {
-    const { status, body } = await request(operation, "/v1/fluree/ledgers", { method: "GET" });
-    rejectOnError(operation, status, body);
-    return parseJson<LedgerListEntry[]>(operation, body);
-  }
-
+  /**
+   * Read one ledger's position, or learn that it does not exist.
+   *
+   * @remarks
+   * The commit log is asked for a single entry, because the newest commit is
+   * the position and nothing older bears on it. Asking the ledger directly is
+   * what keeps this a constant-cost read: the server also answers with every
+   * ledger it holds, and a caller that filters that list pays for every other
+   * caller's ledgers on each of its own reads.
+   *
+   * A ledger with no commits reports an empty log and stands at position 0,
+   * which is the position `ensureLedger` observes on a ledger it just made.
+   * Absence is a 404 on a route that exists, so it is an answer rather than a
+   * failure, and it is the discriminator `ensureLedger` and `head` split on.
+   */
   async function findHead(
     operation: SemanticLedgerFailure["operation"],
     ledger: string
   ): Promise<LedgerHead | null> {
-    const entry = (await listLedgers(operation)).find(
-      (candidate) => `${candidate.name}:${candidate.branch}` === ledger
+    const { status, body } = await request(
+      operation,
+      `/v1/fluree/log/${encodeURIComponent(ledger)}?limit=1`,
+      { method: "GET" }
     );
-    return entry ? { ledger, t: entry.t } : null;
+    if (status === 404) return null;
+    rejectOnError(operation, status, body);
+
+    const log = parseJson<LedgerLog>(operation, body);
+    return { ledger, t: log.commits[0]?.t ?? 0 };
   }
 
   /**

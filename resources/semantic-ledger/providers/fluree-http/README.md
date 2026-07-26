@@ -310,6 +310,16 @@ and the write receipt's own `t` is authoritative. The `Fluree-Min-T` header bloc
 until a `t` is visible; waiting on a `t` that never arrives returns 408
 `ReadAfterWriteTimeout`.
 
+`GET /log/{ledger}?limit=1` is therefore the read that answers "where does this
+ledger stand", and it is the only one that costs the same on a server holding one
+ledger and a server holding ten thousand. `/ledgers` also reports every ledger's
+`t`, and a caller that filters that array pays for every other caller's ledgers on
+each of its own reads — a linear cost that is invisible on a fresh server and
+compounds silently as one accumulates them. Absence answers on the same route: a
+404 carrying `err:db/LedgerNotFound`, which makes "does not exist" a reply rather
+than a failure. A ledger with no commits returns an empty `commits` array and
+stands at position 0, which is the position a just-created ledger reports.
+
 ---
 
 ## 5. Writes
@@ -859,6 +869,7 @@ without writing.
 | History row count as a flake count | a re-assert is one flake and two projection rows |
 | `POST /update` on `ledger@t:N` | 500; the past is readable and not writable |
 | `/info.t` | lags read-after-write; use the receipt or `/log[0].t` |
+| `/ledgers` filtered down to one ledger | one ledger's `t` at the cost of every ledger; use `/log/{ledger}?limit=1` |
 | Read-then-write | loses concurrent updates silently, with `t` regression |
 | A misspelled JSON-LD `where` key | discarded silently; the change applies unconditionally with 200 |
 | A ground literal beginning with `?` in a JSON-LD `where` or `insert` | read as a variable, not as a value |
