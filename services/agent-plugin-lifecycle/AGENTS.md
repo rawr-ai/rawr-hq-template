@@ -48,11 +48,12 @@
 
 ## Flow
 
-- The host supplies dependencies to the base boundary, which admits invocation
-  context and selects the service branch. Each `module.ts` provides the ready
-  capabilities its router consumes. Exact module authoring views remain a
-  service-context migration requirement until broader root lanes are absent
-  from handler types.
+- The host supplies ready capabilities to the context-seeded base boundary.
+  The base exposes one separate native middleware author; each documented named module
+  middleware contributes its owner capabilities, and `module.ts` attaches that
+  middleware through inferred `.use(middleware)` composition. Native context
+  remains additive; owner-local resource and handler cuts remove broad
+  dependency access rather than hiding it behind a shadow `Context` type.
 
 ## Interfaces
 

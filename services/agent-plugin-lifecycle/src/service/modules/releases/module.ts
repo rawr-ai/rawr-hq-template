@@ -1,20 +1,11 @@
-import { createCleanContentWorkspaceReader } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { service } from "../../impl";
-import { analytics, observability } from "./middleware";
-import { createStagedContentWorkspaceObservationReader } from "./model/helpers/staged-content-workspace";
+import { capabilities } from "./middleware/capabilities.middleware";
 
-export const module = service.releases
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        source: createCleanContentWorkspaceReader({
-          contentWorkspace: context.deps.contentWorkspace,
-        }),
-        stagedSource: createStagedContentWorkspaceObservationReader({
-          contentWorkspace: context.deps.contentWorkspace,
-        }),
-      },
-    })
-  );
+/**
+ * Releases implementer composed from base-authored capability middleware.
+ *
+ * @remarks
+ * TypeScript infers the additive capability contribution from the completed
+ * middleware value; this attachment does not claim to remove inherited lanes.
+ */
+export const module = service.releases.use(capabilities);

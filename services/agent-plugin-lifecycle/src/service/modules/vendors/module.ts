@@ -1,14 +1,11 @@
 import { service } from "../../impl";
-import { analytics, observability } from "./middleware";
+import { capabilities } from "./middleware/capabilities.middleware";
 
-export const module = service.vendors
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        contentWorkspace: context.deps.contentWorkspace,
-        clock: context.deps.clock,
-      },
-    })
-  );
+/**
+ * Vendor implementer composed from its base-authored capability middleware.
+ *
+ * @remarks
+ * TypeScript infers the additive capability contribution from the completed
+ * middleware value; this attachment does not claim to remove inherited lanes.
+ */
+export const module = service.vendors.use(capabilities);

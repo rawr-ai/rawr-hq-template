@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "advisory",
-  "forbids": "an existing service spine or module composition router without the direct generic const export for its role, while excluding named operation leaves and the required embedded API-plugin boundary/type base.ts from generic base/router anchor naming",
-  "why": "Direct base, contract, service, module, and router anchors give exact authoring and composition one stable structural name while callers provide product qualification.",
-  "remediate": "Directly export base from standalone base.ts; service from root impl.ts; contract from contract.ts; module from module.ts; and router from each root or module router.ts. Give named router/*.router.ts leaves and subrouters domain names, then compose them in module/router.ts. Keep embedded API-plugin base.ts as its required boundary/type anchor without a runtime base export.",
+  "forbids": "an existing service spine or module composition router without the direct generic const export for its role, an elected createMiddleware factory that returns the contract implementer or constructs a second native context author, an aliased runtime os import that creates another authoring name, or an untyped context root",
+  "why": "Direct base, contract, service, module, and router anchors give exact authoring and composition one stable structural name. An optional middleware factory exposes one context-seeded native author without leaking contract or router authority.",
+  "remediate": "Directly export base from standalone base.ts; service from root impl.ts; contract from contract.ts; module from module.ts; and router from each root or module router.ts. Name the context type on every context root. When host projection is needed, import os once under its native name, construct one private os.$context<CompleteInitialContext>() value, and return that same value from createMiddleware(). Give named router/*.router.ts leaves and subrouters domain names, then compose them in module/router.ts.",
   "message": "Each service spine file must directly export its generic local anchor.",
   "pathCoverage": [
     {

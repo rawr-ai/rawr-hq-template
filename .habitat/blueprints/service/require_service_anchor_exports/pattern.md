@@ -5,18 +5,23 @@ tags: [orpc, service, positive, anchor]
 # Require Generic Service Anchor Exports
 
 Every existing service spine file directly exports the generic value for its
-role: standalone services export the exact service implementer anchor `base`;
-every service interior exports `contract`, `service`, `module`, or `router`,
-and product qualification belongs at the import site. Each module `router.ts`
+role: standalone services export the exact service implementer anchor `base`
+and may export a context-seeded `createMiddleware` factory when host projection
+is needed; every service interior exports `contract`, `service`, `module`, or
+`router`, and product qualification belongs at the import site. Each module `router.ts`
 exports the module's completed local `router`; named `router/*.router.ts` files
 export their standalone operation leaves or completed subrouter values under
 domain names. Embedded API-plugin `base.ts` remains the required boundary/type
 anchor, but it does not export a runtime `base`; its implementation begins at
 `impl.ts`.
 
-This law proves only anchor presence. Other declarations and exports are
-outside its scope; Knip and the future intentional-export/JSDoc boundary own
-whether those exports are used or authorized.
+When elected, `createMiddleware` returns one private native
+`os.$context<CompleteInitialContext>()` author. It does not return the contract
+implementer, construct a fresh author per call, or hide another native author
+behind an aliased `os` import. Every context root names its context type;
+untyped `$context()` is not admitted. This law otherwise proves anchor presence
+only; Knip and the intentional-export/JSDoc boundary own whether other exports
+are used or authorized.
 
 ```grit
 language js(typescript)
@@ -28,6 +33,54 @@ predicate require_service_anchor_exports_exports_direct_const($statements, $anch
       `export const $anchor = $value`,
       `export const $anchor: $type = $value`
     }
+  }
+}
+
+// Detects whether a standalone base elects the optional middleware factory.
+predicate require_service_anchor_exports_has_middleware_factory_export($statements) {
+  $statements <: contains `export function createMiddleware($parameters) { $body }`
+}
+
+// Proves one implementer seed, one private native author, and one returned author.
+predicate require_service_anchor_exports_has_middleware_factory($statements) {
+  $statements <: contains import_statement(source=$source) as $import where {
+    $source <: r"^[\"']@orpc/server[\"']$",
+    not { $import <: import_statement(type=type()) },
+    $import <: contains import_specifier(name=`os`) as $specifier where {
+      $specifier <: not contains type()
+    }
+  },
+  $context_calls = [],
+  $statements <: contains bubble($context_calls) `$receiver.$context_method<$context_type>()` as $call where {
+    $context_method <: r"^\$context$",
+    $context_calls += $call
+  },
+  $context_call_count = length(target=$context_calls),
+  $context_call_count <: 2,
+  $statements <: contains `const $author = os.$context_method<$context_type>()` where {
+    $context_method <: r"^\$context$"
+  },
+  $statements <: contains `export function createMiddleware() {
+    return $author;
+  }`
+}
+
+// Detects a second runtime name for the native middleware authoring root.
+predicate require_service_anchor_exports_has_aliased_os_import($statements) {
+  $statements <: contains import_statement(source=$source) as $import where {
+    $source <: r"^[\"']@orpc/server[\"']$",
+    not { $import <: import_statement(type=type()) },
+    $import <: contains import_specifier(name=`os`) as $specifier where {
+      $specifier <: r"^os\s+as\s+[$A-Za-z_][$A-Za-z0-9_]*$"
+    }
+  }
+}
+
+// Detects an untyped context root that escapes the explicit service boundary.
+predicate require_service_anchor_exports_has_untyped_context_call($statements) {
+  $statements <: contains `$receiver.$context_method()` as $call where {
+    $context_method <: r"^\$context$",
+    $call <: r"(?s)^[^<]*\.\$context\(\)$"
   }
 }
 
@@ -62,6 +115,25 @@ or {
     not { require_service_anchor_exports_exports_direct_const(statements=$statements, anchor=`base`) }
   },
   program(statements=$statements) where {
+    require_service_anchor_exports_is_base_anchor_file(),
+    require_service_anchor_exports_has_middleware_factory_export(
+      statements=$statements
+    ),
+    not {
+      require_service_anchor_exports_has_middleware_factory(
+        statements=$statements
+      )
+    }
+  },
+  program(statements=$statements) where {
+    require_service_anchor_exports_is_base_anchor_file(),
+    require_service_anchor_exports_has_aliased_os_import(statements=$statements)
+  },
+  program(statements=$statements) where {
+    require_service_anchor_exports_is_base_anchor_file(),
+    require_service_anchor_exports_has_untyped_context_call(statements=$statements)
+  },
+  program(statements=$statements) where {
     require_service_anchor_exports_is_contract_anchor_file(),
     not { require_service_anchor_exports_exports_direct_const(statements=$statements, anchor=`contract`) }
   },
@@ -92,6 +164,19 @@ export const runtime = implementEffect(contract, Layer.empty);
 ```typescript
 // @filename: services/jobs/src/service/contract.ts
 export const jobsContract = eoc.router({});
+```
+
+## Matches a factory disconnected from its native context author
+
+```typescript
+// @filename: services/jobs/src/service/base.ts
+import { implement, os } from "@orpc/server";
+import { contract } from "./contract";
+export const base = implement(contract).$context<InitialContext>();
+const middleware = os.$context<InitialContext>();
+export function createMiddleware() {
+  return base;
+}
 ```
 
 ## Ignores an embedded API-plugin boundary and type anchor
@@ -129,6 +214,15 @@ export const catalogRouter = { find };
 ```typescript
 // @filename: services/jobs/src/service/base.ts
 export const base = implementEffect(contract, Layer.empty);
+
+// @filename: services/catalog/src/service/base.ts
+import { implement, os } from "@orpc/server";
+import { contract } from "./contract";
+export const base = implement(contract).$context<InitialContext>();
+const middleware = os.$context<InitialContext>();
+export function createMiddleware() {
+  return middleware;
+}
 
 // @filename: services/jobs/src/service/contract.ts
 export const contract = eoc.router({});

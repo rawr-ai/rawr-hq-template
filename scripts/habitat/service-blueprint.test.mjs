@@ -323,8 +323,61 @@ describe("service blueprint authority", () => {
           "export const catalog = service.catalog;",
         "services/missing/src/service/modules/catalog/router.ts":
           "export const catalogRouter = {};",
+        "services/invalid-factory/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          export const base = implementEffect(contract, layer).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          export function createMiddleware() {
+            return base;
+          }
+        `,
+        "services/aliased-author/src/service/base.ts": `
+          import { os, os as native } from "@orpc/server";
+          export const base = implementEffect(contract, layer).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          const other = native.$context<InitialContext>();
+          export function createMiddleware() {
+            return middleware;
+          }
+          export function createOtherMiddleware() {
+            return other;
+          }
+        `,
+        "services/local-aliased-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          export const base = implementEffect(contract, layer).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          const native = os;
+          const other = native.$context<InitialContext>();
+          export function createMiddleware() {
+            return middleware;
+          }
+          export function createOtherMiddleware() {
+            return other;
+          }
+        `,
+        "services/untyped-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          export const base = implementEffect(contract, layer).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          const other = os.$context();
+          export function createMiddleware() {
+            return middleware;
+          }
+          export function createOtherMiddleware() {
+            return other;
+          }
+        `,
         "services/valid/src/service/base.ts":
           "export const base = implementEffect(contract, layer);",
+        "services/valid-factory/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          export const base = implementEffect(contract, layer).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
         "services/valid/src/service/contract.ts": "export const contract = {};",
         "services/valid/src/service/impl.ts": "export const service = base.use(provider);",
         "services/valid/src/service/router.ts": "export const router = {};",
@@ -352,11 +405,16 @@ describe("service blueprint authority", () => {
       "services/missing/src/service/modules/catalog/contract.ts",
       "services/missing/src/service/modules/catalog/module.ts",
       "services/missing/src/service/modules/catalog/router.ts",
+      "services/invalid-factory/src/service/base.ts",
+      "services/aliased-author/src/service/base.ts",
+      "services/local-aliased-author/src/service/base.ts",
+      "services/untyped-author/src/service/base.ts",
     ]) {
       expect(paths).toContain(path);
     }
     for (const path of [
       "services/valid/src/service/base.ts",
+      "services/valid-factory/src/service/base.ts",
       "services/valid/src/service/contract.ts",
       "services/valid/src/service/impl.ts",
       "services/valid/src/service/router.ts",
@@ -649,6 +707,10 @@ describe("service blueprint authority", () => {
           'import { router } from "../router";',
         "services/jobs/src/service/modules/catalog/router/reexport.router.ts":
           'export { router } from "../router";',
+        "services/jobs/src/service/modules/catalog/middleware/capabilities.middleware.ts":
+          'import { createMiddleware } from "../../../base";',
+        "services/jobs/src/service/modules/catalog/middleware/raw-base.middleware.ts":
+          'import { base } from "../../../base";',
         "services/default-module/src/service/modules/catalog/module.ts":
           'import extra, { service } from "../../impl"; export const module = service.catalog;',
       },
@@ -665,11 +727,15 @@ describe("service blueprint authority", () => {
       "services/jobs/src/service/modules/catalog/router/trailing.router.ts",
       "services/jobs/src/service/modules/catalog/router/cycle.router.ts",
       "services/jobs/src/service/modules/catalog/router/reexport.router.ts",
+      "services/jobs/src/service/modules/catalog/middleware/raw-base.middleware.ts",
       "services/default-module/src/service/modules/catalog/module.ts",
     ]) {
       expect(paths).toContain(path);
     }
     expect(paths).not.toContain("services/jobs/src/service/modules/catalog/router/valid.router.ts");
+    expect(paths).not.toContain(
+      "services/jobs/src/service/modules/catalog/middleware/capabilities.middleware.ts"
+    );
     expect(paths).not.toContain("services/jobs/src/service/modules/catalog/module.ts");
   });
 
@@ -711,93 +777,91 @@ describe("service blueprint authority", () => {
     expect(paths).not.toContain("services/alias/src/service/modules/catalog/module.ts");
   });
 
-  it("keeps context ownership, middleware, and handler access inside the funnel", async () => {
+  it("keeps context ownership and middleware provenance inside the funnel", async () => {
     const rule = "require_service_context_boundaries";
     const root = await createFixture(
       {
-        "services/invalid/src/service/base.ts":
-          "export type Context = { readonly catalog: CatalogReader };",
-        "services/invalid/src/service/impl.ts":
-          "export type Context = {}; export const service = base;",
-        "services/invalid/src/service/modules/catalog/module.ts": `
+        "services/shadow/src/service/modules/catalog/module.ts": `
           import { service } from "../../impl";
+          import { capabilities } from "./middleware/catalog.middleware";
           type Context = { readonly catalog: CatalogReader };
-          export const module = service.catalog;
+          export const module = service.catalog.use<Context>(capabilities);
         `,
-        "services/invalid-extended/src/service/modules/catalog/module.ts": `
-          import { service } from "../../impl";
-          interface Context extends SharedContext {
-            readonly catalog: CatalogReader;
-          }
-          export const module = service.catalog;
+        "services/alternate/src/service/modules/catalog/middleware/catalog.middleware.ts": `
+          import { base } from "../../../base";
+          /** Contributes Catalog's reader. */
+          export const capabilities = base.catalog.middleware(projectCatalog);
         `,
-        "services/invalid-slot/src/service/modules/catalog/module.ts": `
-          import { service } from "../../impl";
-          interface Context extends SharedContext {
-            readonly catalog: CatalogReader;
-          }
-          type ProviderContext = { readonly catalog: CatalogReader };
-          export const module =
-            service.catalog.use<ProviderContext, Context>(provideCatalog);
+        "services/undocumented/src/service/modules/catalog/middleware/catalog.middleware.ts": `
+          import { createMiddleware } from "../../../base";
+          export const capabilities = createMiddleware().middleware(projectCatalog);
         `,
-        "services/invalid/src/service/modules/catalog/middleware/context.ts": `
-          import { module } from "../module";
-          export const provideContext = module.middleware(handler);
+        "services/default/src/service/modules/catalog/middleware/catalog.middleware.ts": `
+          import { createMiddleware } from "../../../base";
+          /** Contributes Catalog's reader. */
+          export const capabilities = createMiddleware().middleware(projectCatalog);
+          export default capabilities;
         `,
-        "services/invalid/src/service/modules/catalog/middleware/default.middleware.ts": `
-          import { os } from "@orpc/server";
-          export const requireRead = os.middleware(handler);
-          export default requireRead;
-        `,
-        "services/invalid/src/service/modules/catalog/middleware/forged.middleware.ts": `
-          const read = [];
-          export const requireRead = read.concat(authorize);
-        `,
-        "services/invalid/src/service/modules/catalog/middleware/foreign.middleware.ts": `
-          import { module } from "./foreign";
-          export const requireRead = module.middleware(handler);
-        `,
-        "services/invalid/src/service/modules/catalog/model/helpers/reader.ts":
-          'import type { Reader } from "#invalid-service/model/dependencies/reader";',
-        "services/invalid/src/service/modules/catalog/router/raw.router.ts": `
-          import { module } from "../module";
-          export const raw = module.find.effect(({ context }) => context.deps.catalog.find());
-        `,
-        "services/invalid/src/service/modules/catalog/router/inline.router.ts": `
+        "services/alias/src/service/modules/catalog/model/helpers/reader.ts":
+          'import { createMiddleware } from "#alias-service/base";',
+        "services/dependency-alias/src/service/modules/catalog/model/helpers/reader.ts":
+          'import type { CatalogReader } from "#dependency-alias-service/model/dependencies/catalog";',
+        "services/inline/src/service/modules/catalog/router/inline.router.ts": `
           import { module } from "../module";
           export const inline = module.find.use(async ({ next }) => next()).effect(handler);
         `,
-        "services/invalid/src/service/modules/catalog/router/plain.router.ts": `
+        "services/local/src/service/modules/catalog/router/plain.router.ts": `
           import { module } from "../module";
           const requireRead = async ({ next }) => next();
           export const plain = module.find.use(requireRead).effect(handler);
         `,
+        "services/helper/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          import { projectCatalog } from "./model/helpers/project-catalog";
+          export const module = service.catalog.use(projectCatalog);
+        `,
+        "services/helper/src/service/modules/catalog/model/helpers/project-catalog.ts": `
+          export const projectCatalog = async ({ context, next }) =>
+            next({ context: { catalog: context.catalog } });
+        `,
+        "services/rogue-base/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          export const base =
+            implementEffect(contract, Layer.empty).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          export function createMiddleware() {
+            return middleware;
+          }
+          export const rogue = os.middleware(handler);
+        `,
+        "services/rogue-base/src/service/impl.ts": `
+          import { base, rogue } from "./base";
+          export const service = base.use(rogue);
+        `,
         "services/valid/src/service/base.ts": `
-          export interface Dependencies extends SharedDependencies {
-            readonly catalog: CatalogReader;
-          }
-          export interface InitialContext extends SharedInitialContext {
-            readonly deps: Dependencies;
-          }
-          export interface Context extends SharedContext {
-            readonly catalog: CatalogReader;
+          import { os } from "@orpc/server";
+          export const base =
+            implementEffect(contract, Layer.empty).$context<InitialContext>();
+          const middleware = os.$context<InitialContext>();
+          export function createMiddleware() {
+            return middleware;
           }
         `,
         "services/valid/src/service/modules/catalog/module.ts": `
           import { service } from "../../impl";
-          interface Context extends SharedContext {
-            readonly catalog: CatalogReader;
-          }
-          type ProviderContext = { readonly catalog: CatalogReader };
-          export const module =
-            service.catalog.use<Context, ProviderContext>(provideCatalog);
+          import { capabilities } from "./middleware/catalog.middleware";
+          export const module = service.catalog.use(capabilities);
         `,
-        "services/inherited/src/service/modules/catalog/module.ts":
-          'import { service } from "../../impl"; export const module = service.catalog;',
-        "services/valid/src/service/modules/catalog/middleware/access.middleware.ts": `
-          import { os } from "@orpc/server";
-          const read = os.middleware(({ next }) => next());
-          export const requireRead = read.concat(authorize);
+        "services/valid/src/service/modules/catalog/middleware/catalog.middleware.ts": `
+          import { createMiddleware } from "../../../base";
+          /** Contributes Catalog's reader capability. */
+          export const capabilities = createMiddleware().middleware(projectCatalog);
+        `,
+        "services/valid/src/service/middleware/observability.middleware.ts": `
+          import { createRequiredServiceObservabilityMiddleware } from "../base";
+          /** Adds service fields to the SDK-owned observability baseline. */
+          export const observability =
+            createRequiredServiceObservabilityMiddleware(options);
         `,
         "services/valid/src/service/modules/catalog/router.ts": `
           import { find } from "./router/find.router";
@@ -818,27 +882,24 @@ describe("service blueprint authority", () => {
     expect(result.exitCode).toBe(0);
     const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
     for (const path of [
-      "services/invalid/src/service/base.ts",
-      "services/invalid/src/service/impl.ts",
-      "services/invalid/src/service/modules/catalog/module.ts",
-      "services/invalid-extended/src/service/modules/catalog/module.ts",
-      "services/invalid-slot/src/service/modules/catalog/module.ts",
-      "services/invalid/src/service/modules/catalog/middleware/context.ts",
-      "services/invalid/src/service/modules/catalog/middleware/default.middleware.ts",
-      "services/invalid/src/service/modules/catalog/middleware/forged.middleware.ts",
-      "services/invalid/src/service/modules/catalog/middleware/foreign.middleware.ts",
-      "services/invalid/src/service/modules/catalog/model/helpers/reader.ts",
-      "services/invalid/src/service/modules/catalog/router/raw.router.ts",
-      "services/invalid/src/service/modules/catalog/router/inline.router.ts",
-      "services/invalid/src/service/modules/catalog/router/plain.router.ts",
+      "services/shadow/src/service/modules/catalog/module.ts",
+      "services/alternate/src/service/modules/catalog/middleware/catalog.middleware.ts",
+      "services/undocumented/src/service/modules/catalog/middleware/catalog.middleware.ts",
+      "services/default/src/service/modules/catalog/middleware/catalog.middleware.ts",
+      "services/alias/src/service/modules/catalog/model/helpers/reader.ts",
+      "services/dependency-alias/src/service/modules/catalog/model/helpers/reader.ts",
+      "services/inline/src/service/modules/catalog/router/inline.router.ts",
+      "services/local/src/service/modules/catalog/router/plain.router.ts",
+      "services/helper/src/service/modules/catalog/module.ts",
+      "services/rogue-base/src/service/impl.ts",
     ]) {
       expect(paths).toContain(path);
     }
     for (const path of [
       "services/valid/src/service/base.ts",
       "services/valid/src/service/modules/catalog/module.ts",
-      "services/inherited/src/service/modules/catalog/module.ts",
-      "services/valid/src/service/modules/catalog/middleware/access.middleware.ts",
+      "services/valid/src/service/modules/catalog/middleware/catalog.middleware.ts",
+      "services/valid/src/service/middleware/observability.middleware.ts",
       "services/valid/src/service/modules/catalog/router.ts",
       "services/valid/src/service/modules/catalog/router/find.router.ts",
     ]) {
@@ -926,7 +987,10 @@ describe("service blueprint authority", () => {
           type Dependencies = {};
           export type InitialContext = {};
           export type Context = {};
-          export const base = implementEffect(contract, layer);
+          export const base = implementEffect(contract, layer).$context<InitialContext>();
+          export function createMiddleware() {
+            return base;
+          }
         `,
         "services/duplicate/src/service/base.ts": `
           import { implementEffect } from "effect-orpc";
@@ -941,8 +1005,9 @@ describe("service blueprint authority", () => {
           export const access = os.middleware(handler);
         `,
         "services/mixed/src/service/middleware/mixed.middleware.ts": `
-          import { os, type Middleware } from "@orpc/server";
-          export const access = os.middleware(handler);
+          import { createMiddleware, type InitialContext } from "../base";
+          /** Admits service access. */
+          export const access = createMiddleware().middleware(handler);
         `,
         "services/mixed/src/service/modules/catalog/model/helpers/second.ts": `
           import { implementEffect } from "effect-orpc";
@@ -950,12 +1015,10 @@ describe("service blueprint authority", () => {
         `,
         "services/module-type/src/service/modules/catalog/module.ts": `
           import type { service } from "../../impl";
-          type Context = {};
           export const module = service.catalog;
         `,
         "services/module-mixed/src/service/modules/catalog/module.ts": `
           import { service, type ServiceContext } from "../../impl";
-          type Context = {};
           export const module = service.catalog;
         `,
         "services/root-invalid/src/service/router.ts": `

@@ -1,7 +1,6 @@
 import { ORPCError } from "@orpc/client";
 import { Effect } from "effect";
 
-import { currentMain } from "../middleware/current-main.middleware";
 import { module } from "../module";
 
 /**
@@ -11,7 +10,7 @@ import { module } from "../module";
  * @relation Keep exact selection distinct from current-main record encoding.
  */
 export const router = {
-  currentMainSelection: module.currentMainSelection.use(currentMain).effect(({ context, input }) =>
+  currentMainSelection: module.currentMainSelection.effect(({ context, input }) =>
     Effect.uninterruptible(
       Effect.tryPromise({
         try: () => context.currentMain.resolve(input.locator),

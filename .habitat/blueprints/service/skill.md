@@ -35,17 +35,19 @@ host
 ```
 
 The host begins with everything needed to run the application. Standalone
-`base.ts` declares the dependency lanes, initial context, service context, and
-the sole direct Effect-oRPC contract implementer. `impl.ts` derives the one
-service from that imported base plus genuine cross-cutting middleware. A
-module derives its exact `service.<module>` branch. A bare branch inherits the
-service context; a module that narrows or enriches it declares and applies that
-local context in `module.ts`. The root router composes completed module
-routers; the handler acts on the resulting module context.
+`base.ts` declares initial context, constructs the sole configured oRPC base,
+and may expose one separate context-seeded native middleware author.
+`impl.ts` derives the one service from the
+imported base plus genuine cross-cutting middleware. A module derives its exact
+`service.<module>` branch and attaches completed capability middleware authored
+from that author. TypeScript infers additive composition. The root router
+composes completed module routers; the handler acts on the resulting capability
+surface.
 
-Each descent should reduce possible knowledge and action. An upward import
-that recovers raw context, a sibling reach, or a second context assembler
-widens the funnel and therefore changes the architecture.
+Each descent reduces what source is allowed to know and author. Native oRPC
+runtime context remains additive; an upward import that recovers raw context, a
+sibling reach, or a second middleware factory still widens the authored
+capability surface and therefore changes the architecture.
 
 ## Layers
 
@@ -83,7 +85,7 @@ narrow it.
 ## Authorship
 
 The native oRPC handler is the operation authoring site. It receives
-TypeBox-admitted input and module-narrowed context, applies operation guards
+TypeBox-admitted input and the module-admitted capability surface, applies operation guards
 and sequencing, calls policies or ports where their independent meanings
 warrant extraction, and returns the declared result through Effect.
 
@@ -120,7 +122,7 @@ subrouter. That real grouping judgment should be explicit:
 ```typescript
 /**
  * @purpose What cohesive operation subset this router owns.
- * @capability Which narrowed context, guard, or policy the subset shares.
+ * @capability Which capability, guard, or policy the subset shares.
  * @behavior What transition or observation the subset performs.
  * @relation How the subset differs from neighboring operation groups.
  */
@@ -135,27 +137,30 @@ Context is capability, not a transport bag. `deps`, `scope`, `config`,
 `invocation`, and `provided` are host or service transition lanes. A router
 that reads them has reopened a wider layer and made the module boundary false.
 
-Middleware is valid when it guards, narrows, or enriches a real capability.
+Middleware is valid when it guards or enriches a real capability.
 It is not a second place to assemble service or module context. Root context
-projection belongs to `base.ts`; final module projection belongs to
-`module.ts`. Middleware names should reveal the capability or guard they add,
-not claim generic context ownership.
+seeding belongs to `base.ts`; a module middleware owns one capability
+contribution and `module.ts` owns its attachment. Middleware names should reveal
+the capability or guard they add, not claim generic context ownership.
 
-Middleware authorship stays visibly native and named. A middleware source
-exports a named `const` created from oRPC authority or from native
-`mapInput`/`concat` composition; it does not default-export an anonymous policy.
-Native `.use` attachments name that middleware in their first argument instead
-of hiding a guard or projection in an inline or local plain callback. A later
-input selector remains an ordinary callback.
+Middleware authorship stays visibly base-derived and named. A module
+middleware source exports a named `const` created from the native author bound
+in `base.ts`; service-wide SDK telemetry extensions remain separately named
+framework values.
+A middleware never originates from the already-derived `service` or `module`
+implementer and then feeds back into that branch. Native `.use` attachments
+name the completed middleware in their first argument instead of hiding a
+guard or projection in an inline or local plain callback. A later input
+selector remains an ordinary callback.
 
 Native oRPC middleware contributions merge with the current context. Returning
-a smaller object from middleware therefore does not by itself narrow the
-handler type. The standalone base establishes the service context and
-implementation once. Each `module.ts` derives the matching service branch and
-owns any further projection before its router authors operations. The absence
-of reserved root lanes from the handler type and the host-only initial context
-are part of the boundary proof. Native runtime objects remain additive; no
-wrapper pretends otherwise.
+a smaller object or passing an explicit `.use<Context>(...)` argument does not
+remove inherited lanes and is not a narrowing proof. The standalone base
+establishes initial context and implementation once; each `module.ts` derives
+the matching service branch and attaches named middleware without explicit type
+arguments. TypeScript infers the contribution. Owner-local resource and handler
+cuts remove broad lanes at their source; no wrapper, witness, source-spelling
+blacklist, or shadow context pretends the runtime object became subtractive.
 
 ## Native Authorities
 
@@ -177,7 +182,7 @@ domain meaning is narrower than the native authority it wraps.
 Look downward, not sideways:
 
 - Which layer owns this meaning?
-- What capability is removed at the next layer?
+- Which capabilities may the next layer author against?
 - Is the handler still visibly the operation?
 - Does an extraction retain independent meaning without the operation?
 - Does a model placement express shared domain meaning rather than access?

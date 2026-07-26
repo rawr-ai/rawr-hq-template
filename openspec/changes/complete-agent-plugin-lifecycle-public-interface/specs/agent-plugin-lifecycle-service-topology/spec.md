@@ -49,11 +49,15 @@ Operation handlers MUST be authored directly in named
 object by module `router.ts`. A handler MAY call module-owned pure policy or
 ready resource capabilities, but MUST NOT delegate its operation to a parallel
 business entrypoint or acquire an ornamental `*Procedure` export name merely
-for composition. Router files MUST consume the exact context inferred from the
-module handler and MUST NOT redeclare a local dependency bag or reconstruct
-root context. Each module MUST retain one `router.ts` as its public composition
-boundary and one `router/` directory for named authored files; `router/index.ts`
-MUST NOT exist.
+for composition. Router files MUST consume the inferred module capability
+surface and MUST NOT redeclare a local dependency bag or reconstruct root
+context. The completed service MUST remove operation dependencies on broad
+`deps`, `scope`, `config`, `invocation`, or `provided` lanes through
+owner-qualified resource and middleware boundaries rather than claim those
+additive native fields were subtracted.
+Each module MUST retain one `router.ts` as its public composition boundary and
+one `router/` directory for named authored files; `router/index.ts` MUST NOT
+exist.
 
 #### Scenario: Operation composition is direct
 - **WHEN** module router exports and operation handler call sites are inspected
@@ -63,23 +67,31 @@ MUST NOT exist.
 
 ### Requirement: Runtime authorities are explicit and transport-neutral
 
-Root construction context MUST contain only cross-cutting ready host lanes that
-multiple modules actually consume. Module middleware MUST acquire or project
-owner-specific capabilities, and each module MUST expose to operations only the
-exact context they consume. A Personal workspace, provider home, package output,
-or governed Git ref that selects semantic authority MUST remain explicit
-validated input. Provider command names MUST resolve through the ordinary
-process environment at the owning native-provider resource; provider-home
-validation MUST remain at that resource boundary. No executable identity,
-controller identity, artifact store, projection store, receipt, evidence store,
-`UndoWriter`, cwd, ambient home discovery, or Personal executable code may
-enter service context.
+`base.ts` MUST seed the complete ready host dependency context exactly once and
+MAY expose one separate complete context-seeded native middleware factory. A
+documented named module-middleware leaf MAY import only that factory from
+`../../../base`; it MUST contribute owner-specific capabilities, and the
+matching `module.ts` MUST attach the completed value through inferred
+`.use(middleware)` composition. Native oRPC context merging is additive, so an
+explicit `.use<Context>` argument, shadow context type, adapter, or witness MUST
+NOT be treated as removal of inherited lanes. Owner-local resource and handler
+cuts MUST remove broad dependency access at its source; a source-spelling
+blacklist MUST NOT impersonate subtractive context.
+SDK-owned baseline observability and analytics builders MUST remain distinct
+from the native context factory. A Personal workspace, provider home, package
+output, or governed Git ref that selects semantic authority MUST remain
+explicit validated input. Provider command names MUST resolve through the
+ordinary process environment at the owning native-provider resource;
+provider-home validation MUST remain at that resource boundary. No executable
+identity, controller identity, artifact store, projection store, receipt,
+evidence store, `UndoWriter`, cwd, ambient home discovery, or Personal
+executable code may enter service context.
 
 #### Scenario: Misleading ambient state has no authority
 - **WHEN** cwd, home variables, Personal runtime-like files, and unrelated
   provider state disagree with explicit input and ready capabilities
-- **THEN** the operation uses only validated input and its exact projected
-  module context, while the owning resource resolves its ordinary local tool
+- **THEN** the operation authors only against validated input and named module
+  capabilities, while the owning resource resolves its ordinary local tool
 - **AND** no ambient home locator, global dependency bag, or Personal
   executable implementation is consulted
 

@@ -232,15 +232,21 @@ canonicalize ordering, compute digests, and enforce cross-field domain rules
 after structural validation. They do not manually recreate closed-object
 parsing.
 
-Root context contains only ready host capabilities that are genuinely
-cross-cutting. Module middleware acquires or projects owner-specific
-capabilities, and each operation receives only the exact context it consumes.
-Leaf modules do not import sibling internals or concrete resource providers.
-Effect/Platform filesystem and process programs terminate inside resource
-adapters and expose ready capabilities. The service uses the same
-Effect-backed oRPC construction as the generic Magic Migration service
-blueprint; this is the standard service shape, not a lifecycle-specific
-exception or a reason to move provider mechanics into handlers.
+Root context is seeded once with the complete ready host dependency context,
+and the base exposes a separate complete context-seeded native middleware
+factory when host projection is needed.
+Documented named module middleware uses that factory to contribute
+owner-specific capabilities; the matching module branch attaches it through
+inferred `.use(middleware)` composition. Native oRPC context merging is
+additive, so no `.use<Context>` claim, shadow context type, adapter, or witness
+pretends to remove inherited lanes. Owner-local resource and handler cuts remove
+broad dependency access rather than hiding it behind a spelling law. Leaf
+modules do not import sibling internals or concrete resource providers.
+Effect/Platform filesystem
+and process programs terminate inside resource adapters and expose ready
+capabilities. This is the generic Magic Migration service shape, not a
+lifecycle-specific exception or a reason to move provider mechanics into
+handlers.
 
 The surviving filesystem/process resource family and lifecycle service migrate
 coherently to Effect 4 only after controller authority, persistent

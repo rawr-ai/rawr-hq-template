@@ -87,7 +87,17 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       testInvocation
     );
 
-    expect(analyticsEntries).toContainEqual({
+    const procedureAnalytics = analyticsEntries.filter(
+      (entry) =>
+        entry.event === "orpc.procedure" && entry.payload.path === "releases.releaseInputRecord"
+    );
+    const procedureLogs = logEntries.filter(
+      (entry) =>
+        entry.event === "orpc.procedure" && entry.payload.path === "releases.releaseInputRecord"
+    );
+
+    expect(procedureAnalytics).toHaveLength(1);
+    expect(procedureAnalytics[0]).toEqual({
       event: "orpc.procedure",
       payload: expect.objectContaining({
         app: "agent-plugin-lifecycle",
@@ -97,7 +107,8 @@ describe("agent plugin lifecycle oRPC service spine", () => {
         analytics_command_id: "command-agent-plugin-lifecycle-test",
       }),
     });
-    expect(logEntries).toContainEqual({
+    expect(procedureLogs).toHaveLength(1);
+    expect(procedureLogs[0]).toEqual({
       level: "info",
       event: "orpc.procedure",
       payload: expect.objectContaining({

@@ -44,11 +44,16 @@ implementation independent of concrete platform and provider code. Root
 `router.ts` imports completed module routers only and directly checks the plain
 object against `Router<typeof contract, never>`. Each `module.ts` derives its
 matching `service.<module>` branch. A bare branch inherits service context;
-local context exists only when the module applies it through native
-enrichment. The pinned oRPC 1.x lane cannot close this heterogeneous-context
-router with native `.router(...)` without centralizing module dependencies, so
-the public host boundary infers the completed router's actual context.
-TypeScript owns context assignability. Source law keeps native ownership hops
+module capability middleware is authored from the one complete-context native
+author in `base.ts` and attached without explicit type arguments. The
+contribution is additive and inferred; the elected author is separate from the
+contract implementer and does not claim subtractive handler context. SDK-owned
+required observability and analytics builders remain distinct baseline
+extensions, not alternate context factories. The pinned oRPC 1.x lane cannot
+close this heterogeneous-context router with native `.router(...)` without
+centralizing module dependencies, so the public host boundary infers the
+completed router's actual context. TypeScript
+owns context assignability. Source law keeps native ownership hops
 and root contract completeness visible without simulating path resolution,
 inferred types, expression purity, or runtime behavior. This root composition
 law adopts Magic Migration `52873620ffe0b8b6e60527cd399076fc13ab86a7`
