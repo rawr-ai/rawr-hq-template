@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Aggregate Bounds Are Service Policy
+
+One aggregate payload limit governs release-input admission, clean and staged
+content observation, and Provider source admission. That meaning spans modules,
+so it belongs in one service-root policy leaf. Leaving the limit in the invalid
+`service/shared` tree while moving only its arithmetic would make the new owner
+depend on the old one and preserve two destinations for the same concept.
+
+Move the bound, its checked addition, and its result together. Modules import
+that policy through the private service alias; root policy uses a relative
+model import. Delete the old definitions and exports without a compatibility
+face. The operation sequence, TypeBox contracts, release bytes, and provider
+behavior remain unchanged.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-payload-accounting|release payload accounting]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Owner, policy, bound, aggregate, payload, service, module, fact, delete, narrow.
+
 ## 2026-07-26 - Resources Return Admitted Facts
 
 A ready resource owns the mechanical meaning of the facts it returns. For

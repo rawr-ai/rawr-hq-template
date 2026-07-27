@@ -18,13 +18,11 @@ import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dt
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
-  addReleaseSetPayloadBytes,
   compareCanonicalText,
   createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type PluginId,
   parseContentAuthority,
   parseGitCommitId,
@@ -34,6 +32,10 @@ import {
   type ReleaseRelativePath,
 } from "../../shared/release";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
+import {
+  addReleaseSetPayloadBytes,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+} from "./release-payload-accounting";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
@@ -53,9 +55,6 @@ export const MAX_CLEAN_RELEASE_INPUT_BYTES = MAX_RELEASE_INPUT_ENVELOPE_BYTES;
 /** Maximum decoded payload bytes admitted for any one release-set member. */
 export const MAX_CLEAN_MEMBER_PAYLOAD_BYTES = MAX_PAYLOAD_BYTES_PER_MEMBER;
 
-/** Maximum aggregate decoded payload bytes admitted for one release set. */
-export const MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
-
 /** Maximum bytes read from any one admitted worktree file. */
 export const MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES = Math.max(
   MAX_CLEAN_RELEASE_INPUT_BYTES,
@@ -64,7 +63,7 @@ export const MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES = Math.max(
 
 /** Maximum aggregate bytes read from all admitted worktree files. */
 export const MAX_CLEAN_CONTENT_WORKTREE_BYTES =
-  MAX_CLEAN_RELEASE_INPUT_BYTES + MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES;
+  MAX_CLEAN_RELEASE_INPUT_BYTES + MAX_RELEASE_SET_PAYLOAD_BYTES;
 
 /** Canonical regular Git tree fact interpreted by clean-content policy. */
 interface CleanContentTreeEntry {

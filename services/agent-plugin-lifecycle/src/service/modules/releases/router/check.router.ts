@@ -19,10 +19,10 @@ import {
   MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
   MAX_CLEAN_RELEASE_INPUT_BYTES,
-  MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
   validateCleanContentWorkspacePolicy,
 } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import type {
   CheckResult,
   ReleaseCheckIssue,
@@ -78,7 +78,7 @@ export const check = module.check.effect(function* ({ context, input: request })
       objectFormat: releaseInput.value.anchor.objectFormat,
       maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
       maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
-      maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+      maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
     })
   );
   const payloads = classifyCleanPayloads(releaseInput.value, payloadAttempt);

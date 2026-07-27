@@ -27,6 +27,7 @@ import {
   MAX_CURRENT_MAIN_GIT_BLOB_BYTES,
 } from "#agent-plugin-lifecycle-service/model/policy/current-main-selection";
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import type { ProviderStatusResult, ProviderTarget } from "../model/dto/provider-lifecycle";
 import type { SelectedContent } from "../model/dto/selected-content";
 import {
@@ -65,7 +66,6 @@ import {
   MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
   MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES,
   MAX_SELECTED_CONTENT_RELEASE_INPUT_BYTES,
-  MAX_SELECTED_CONTENT_RELEASE_SET_PAYLOAD_BYTES,
   MAX_SELECTED_CONTENT_TREE_BYTES,
   MAX_SELECTED_CONTENT_TREE_ENTRIES,
   NATIVE_MARKETPLACE_MANIFESTS,
@@ -389,7 +389,7 @@ export const status = module.status.effect(function* ({ context, input }) {
               objectFormat: payloadPlan.value.observation.objectFormat,
               maxBlobs: MAX_SELECTED_CONTENT_TREE_ENTRIES,
               maxBlobBytes: MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES,
-              maxTotalBytes: MAX_SELECTED_CONTENT_RELEASE_SET_PAYLOAD_BYTES,
+              maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
             })
           );
           const payloads = classifySelectedContentChannelPayloads(

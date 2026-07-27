@@ -1900,6 +1900,29 @@ mutation, native provider command, or live lifecycle mutation is introduced.
 The required repository check passed 39 projects and 76 dependency tasks in
 43.6 seconds, including all 17 enforced Habitat laws with zero findings.
 
+The aggregate payload-accounting checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2r]]. The maximum
+decoded bytes admitted for a release set, its checked addition, and its result
+type now have one service-root policy owner. Clean and staged observation,
+release-input admission and refresh, Packaging, and Provider selection consume
+that owner directly. The former `shared/release/payload-bounds.ts` leaf, its
+barrel exports, its primitive constant, and two module-flavored pass-through
+constants are deleted without aliases or compatibility exports.
+
+Exact-bound and one-byte-over behavior remain unchanged. The focused policy
+oracles also reject negative, fractional, and unsafe operands. Release-input
+diagnostics retain their exact aggregate facts, and refresh retains its
+saturating diagnostic total; those are local observations rather than alternate
+limit authorities. The complete lifecycle suite passes 290 cases across 31
+files. Uncached production and test typechecks, Biome, strict OpenSpec
+validation, and diff hygiene pass. Architecture, behavior-first testing, and
+TypeScript/Effect/oRPC/structural reviews closed without unresolved P0, P1, or
+P2 findings. No resource, provider, state owner, Habitat law, Oclif surface,
+Personal repository, native command, or live lifecycle state changed.
+
+The required repository check passed 39 projects and 76 dependency tasks in
+39.0 seconds, including all 17 enforced Habitat laws with zero findings.
+
 ## Settlement Oracles
 
 The final product must prove:

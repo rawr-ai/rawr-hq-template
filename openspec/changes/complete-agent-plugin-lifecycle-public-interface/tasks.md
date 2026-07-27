@@ -927,6 +927,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   cloning, and authoring behavior. Replace the contract-breaking fake-resource
   oracle with owner-correct missing-skill and advancing-ref cases. Add no
   resource, provider, adapter, facade, or Habitat law.
+- [x] 5.7e2r Give aggregate release-payload accounting one service-root policy
+  owner. Move the aggregate byte limit, checked addition, and result type
+  together; update clean observation, staged observation, release-input
+  admission, Provider admission, and their tests to use that direct owner.
+  Delete the old definitions and barrel exports without an alias,
+  compatibility face, duplicate constant, resource, or Habitat-law change.
+  Preserve exact-bound admission, one-byte-over refusal, unsafe and negative
+  refusal, release-input behavior, source eligibility, and provider behavior.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

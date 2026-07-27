@@ -23,7 +23,6 @@ import {
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
 } from "../../../../shared/release/index";
 import type { SelectedContentResolution } from "../dto/selected-content";
 import { validateNativeMarketplaces } from "./native-marketplace";
@@ -40,9 +39,6 @@ export const MAX_SELECTED_CONTENT_RELEASE_INPUT_BYTES = MAX_RELEASE_INPUT_ENVELO
 
 /** Maximum decoded payload bytes admitted for one selected member. */
 export const MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES = MAX_PAYLOAD_BYTES_PER_MEMBER;
-
-/** Maximum aggregate decoded payload bytes admitted for one selected release set. */
-export const MAX_SELECTED_CONTENT_RELEASE_SET_PAYLOAD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
 
 /** Maximum bytes accepted from either provider-native marketplace manifest. */
 export const MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES = 2 * 1024 * 1024;

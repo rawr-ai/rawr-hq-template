@@ -22,8 +22,8 @@ import {
   MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
   MAX_CLEAN_RELEASE_INPUT_BYTES,
-  MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
 } from "../../../src/service/model/policy/clean-content-workspace";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   COWORK_PACKAGE_FORMAT,
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -212,12 +212,12 @@ describe("package agent plugin application", () => {
       {
         maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
         maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
-        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+        maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
       },
       {
         maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
         maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
-        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+        maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
       },
     ]);
     expect(evidenceBounds).toEqual(

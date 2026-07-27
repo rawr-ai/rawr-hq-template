@@ -13,8 +13,8 @@ import {
   MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
   MAX_CLEAN_RELEASE_INPUT_BYTES,
-  MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
 } from "../../../src/service/model/policy/clean-content-workspace";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import { MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES } from "../../../src/service/modules/providers/model/policy/source-interface";
 import { testInvocation } from "../../support/client";
 import {
@@ -249,7 +249,7 @@ describe("provider disposable-home test", () => {
       Array.from({ length: 4 }, () => ({
         maxBlobs: MAX_CLEAN_CONTENT_TREE_ENTRIES,
         maxBlobBytes: MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
-        maxTotalBytes: MAX_CLEAN_RELEASE_SET_PAYLOAD_BYTES,
+        maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
       }))
     );
     expect(evidenceLimits).toEqual(
