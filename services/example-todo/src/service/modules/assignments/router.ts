@@ -11,7 +11,8 @@
  * This module is composite; cross-module orchestration belongs in handlers here.
  * Do not route through client-to-client calls inside the same domain package.
  */
-import { randomUUID } from "node:crypto";
+
+import { admitGeneratedIdentifier } from "../../model/policy/identifier";
 import { createProcedureObservability } from "./middleware";
 import { module } from "./module";
 import { type Assignment } from "./schemas";
@@ -67,7 +68,7 @@ const assign = module.assign
     }
 
     const assignment: Assignment = {
-      id: randomUUID(),
+      id: admitGeneratedIdentifier(context.identifierGenerator.generate()),
       workspaceId: context.workspaceId,
       taskId: input.taskId,
       tagId: input.tagId,

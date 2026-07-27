@@ -756,10 +756,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   layers, keep operation-specific matter in its owning module, and pass ready
   capabilities through service and module context. Prove each semantic
   checkpoint with owner-local behavior and typecheck. Only after the complete
-  admitted corpus is green, change all seven staged rules to enforced, select the
-  source laws in the Habitat-owned repository gate, and run normalized
-  workspace lint plus standing architecture, oRPC/Effect-oRPC, TypeScript,
-  testing, and structural-quality reviews.
+  admitted corpus is green, change the six staged topology and authorship
+  rules to enforced, select the source laws in the Habitat-owned repository
+  gate, and run normalized workspace lint plus standing architecture,
+  oRPC/Effect-oRPC, TypeScript, testing, and structural-quality reviews. The
+  independent production platform-import law may activate as soon as its
+  complete admitted service corpus is green.
 - [x] 5.7e2a Promote only the release derivation shared by release eligibility
   and packaging into the root service model. Keep the TypeBox selection and
   inert constructed release artifacts neutral; map release-check identity,
@@ -1099,6 +1101,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   brands, generated types, diagnostics, caller paths, and canonical digest
   preimages. Do not add persistence, an address or lookup protocol, a barrel,
   alias, facade, compatibility path, or exported generic digest framework.
+- [x] 5.7e9d Remove every concrete Node or Bun import from the complete
+  admitted production-service corpus, then enforce the existing Habitat
+  platform-independence law with an empty baseline. Use the pinned portable
+  SHA-256 implementation locally in each owning lifecycle workspace policy;
+  do not misclassify workspace bindings as release content digests. Supply
+  Example Todo identifier generation from its host through service and module
+  context into the owning handlers. Give identifier structure one service-root
+  TypeBox schema reused by module entities and contracts, and admit each
+  untrusted host candidate through its matching policy before any repository mutation.
+  Preserve exact workspace bindings, UUID-shaped identities, contracts,
+  results, resource behavior, and native-provider boundaries. Do not add a
+  hash facade, runtime abstraction, generic resource, compatibility path, or
+  source-law script.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

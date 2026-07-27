@@ -2384,8 +2384,41 @@ imported digest export is documented.
 
 Final architecture/Habitat, behavior/TypeBox/testing, and
 TypeScript/refactor/structural reviews report no P0, P1, P2, or P3 finding.
-Implementation and proof are complete. Graphite landing evidence remains
-open.
+Implementation and proof landed through Template PR #594 at canonical main
+commit `95f2a23ff27089485296f1a6f86434aeec1cfa3b`.
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e9d]]. It removes the
+five remaining concrete platform imports from the complete admitted
+production-service corpus. Each lifecycle workspace policy uses the pinned
+portable SHA-256 implementation locally without changing its raw 64-character
+binding encoding or preimage and without misclassifying that binding as a
+release content digest. Example Todo receives UUID generation from its host
+through the service and module context funnel. One service-root TypeBox model
+owns the UUID structure reused by module entities and contracts and admits each
+untrusted candidate before repository mutation, while its handlers retain
+ownership of identity timing.
+
+Once the corpus is green, the existing Habitat
+`require_service_boundary_platform_independence` law becomes enforced and
+joins the Habitat-owned source-law gate with an empty baseline. This cut adds
+no resource, provider, facade, runtime abstraction, source-law script, public
+contract, or native-provider behavior.
+
+Exact staged and clean workspace bindings remain
+`4a4d21e4ac6583e825f0eb4821872c9d5b376a0362ce98daabc255e59abf7e75`
+and
+`9101b1506c82dd7015cc631cf0ae1ed6be8310e9d61d1a632dc72b68d076e02a`.
+The lifecycle suite passes 43 files and 370 tests; Example Todo passes six
+files and 36 tests. Its behavior proof binds exact task, tag, and assignment
+identities to the host generator, refuses an invalid candidate before storage,
+and proves read-only, validation, duplicate, and assignment-limit refusals do
+not consume an identity. Lifecycle, Example Todo, and Server typechecks pass.
+Habitat passes all 31 fixture tests and all 18 enforced source laws with zero
+findings. Strict OpenSpec, Biome, and diff hygiene pass. Implementation and
+behavior proof are complete. Standing architecture/Habitat, testing/oRPC, and
+TypeScript/refactor reviews report no P0, P1, P2, or P3 finding. Graphite
+landing remains open.
 
 ## Settlement Oracles
 

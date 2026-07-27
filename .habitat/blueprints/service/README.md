@@ -68,9 +68,14 @@ remain with the behavior they prove. `shared`, `internal`, `dependencies`,
 loose `schemas.ts`, model `index.ts` barrels, context assembly files, and
 detached operation buckets are not service destinations.
 
-The topology, anchor, module-isolation, context, composition, router-authorship,
-and production platform-independence rules remain advisory while the lifecycle
-service is being moved into this shape. Their fixture contracts are sealed now;
-the burn-down must make the live corpus conform before one later activation
-checkpoint changes them to enforced rules and adds them to the Habitat-owned
-repository gate.
+The topology, anchor, module-isolation, context, composition, and
+router-authorship rules remain advisory while the lifecycle service is being
+moved into this shape. Their fixture contracts are sealed now; the burn-down
+must make the live corpus conform before a later activation checkpoint changes
+them to enforced rules and adds them to the Habitat-owned repository gate.
+
+Production platform independence is enforced across the complete admitted
+service corpus. Concrete Node and Bun runtime acquisition must terminate at a
+host, resource, or provider and enter service behavior as a ready context
+capability. Portable deterministic computation may remain with its owning
+policy when it has no acquisition or lifecycle protocol.

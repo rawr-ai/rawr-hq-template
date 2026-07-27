@@ -6,6 +6,37 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Platform Capability Narrows Through Context
+
+Service behavior consumes ready capabilities. A concrete runtime mechanism
+terminates at the host, which supplies the declared service context. Each
+module projects only the capability its handlers need, and each oRPC handler
+authors the operation that consumes it. Identifier generation follows this
+funnel: the host owns randomness while task, tag, and assignment handlers own
+when a new domain identity is required. The generated candidate is untrusted
+until the service-root TypeBox model admits it; admission precedes every
+repository mutation.
+
+Deterministic hashing of admitted bytes is pure policy, not runtime
+acquisition. Each owning workspace policy uses the pinned portable SHA-256
+implementation locally; a workspace binding is not misclassified as a release
+content digest merely to reuse a function. This computation does not justify a
+resource, provider, helper facade, or alternate domain owner. Habitat enforces
+the platform distinction across the entire production-service corpus once
+every concrete platform import has been removed.
+
+See
+[[services/example-todo/src/service/base|the Example Todo service base]],
+[[services/example-todo/src/service/model/policy/identifier|the identifier policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/clean-content-workspace|the clean-content policy]],
+and
+[[.habitat/blueprints/service/require_service_boundary_platform_independence/rule|the platform-independence law]].
+
+### Bag Of Keywords
+
+service, context, host, module, handler, policy, bytes, hash, identity,
+randomness, platform, resource, provider, portability, closure.
+
 ## 2026-07-27 - Digest Meaning Has Direct Owners
 
 A digest is inert verification identity for one qualified lifecycle domain.

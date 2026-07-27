@@ -10,13 +10,11 @@
  * and the procedures that accept/normalize input accordingly.
  */
 import { type Static, Type } from "typebox";
+import { TodoIdentifierSchema } from "../../model/dto/identifier";
 
 export const TagSchema = Type.Object(
   {
-    id: Type.String({
-      format: "uuid",
-      description: "Stable unique identifier for the tag.",
-    }),
+    id: TodoIdentifierSchema,
     workspaceId: Type.String({
       minLength: 1,
       description: "Workspace scope that owns this tag record.",

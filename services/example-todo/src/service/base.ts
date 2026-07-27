@@ -32,6 +32,18 @@ export interface Clock {
 }
 
 /**
+ * Host-owned source of stable identifiers for newly created domain records.
+ *
+ * @remarks
+ * The service decides when an identity is required; the host supplies the
+ * concrete runtime mechanism so procedure handlers remain platform-neutral.
+ */
+export interface IdentifierGenerator {
+  /** Produces one identifier candidate for service-owned admission. */
+  generate(): unknown;
+}
+
+/**
  * Construction-time context supplied when the in-process client is created.
  *
  * @remarks
@@ -48,6 +60,7 @@ type InitialContext = {
   deps: {
     dbPool: DbPool;
     clock: Clock;
+    identifierGenerator: IdentifierGenerator;
   };
   scope: {
     workspaceId: string;

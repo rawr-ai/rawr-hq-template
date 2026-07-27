@@ -10,7 +10,8 @@
  * `module.ts` owns module composition.
  * This file owns handler behavior and router composition.
  */
-import { randomUUID } from "node:crypto";
+
+import { admitGeneratedIdentifier } from "../../model/policy/identifier";
 import { module } from "./module";
 import { type Task } from "./schemas";
 
@@ -30,7 +31,7 @@ const create = module.create.handler(async ({ context, input, errors }) => {
 
   const now = context.clock.now();
   const task: Task = {
-    id: randomUUID(),
+    id: admitGeneratedIdentifier(context.identifierGenerator.generate()),
     workspaceId: context.workspaceId,
     title,
     description: input.description?.trim() ?? null,

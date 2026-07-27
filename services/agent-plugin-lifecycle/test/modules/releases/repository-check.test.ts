@@ -127,7 +127,7 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       headCommit,
       headTree,
-      stagedBinding: expect.any(String),
+      stagedBinding: "4a4d21e4ac6583e825f0eb4821872c9d5b376a0362ce98daabc255e59abf7e75",
     });
     expect(selections).toEqual([
       { paths: [releaseInputPath], roots: [] },
@@ -598,7 +598,7 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       sourceCommit: headCommit,
       sourceTree: headTree,
-      eligibilityBinding: expect.any(String),
+      eligibilityBinding: "9101b1506c82dd7015cc631cf0ae1ed6be8310e9d61d1a632dc72b68d076e02a",
     });
     expect(cleanReads).toBe(2);
     expect(stagedReads).toBe(0);

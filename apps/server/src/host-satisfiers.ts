@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   createClient as createExampleTodoClient,
   type Client as ExampleTodoClient,
@@ -64,6 +65,9 @@ function createExampleTodoDeps(hostLogger: HostServiceLogger): ExampleTodoBounda
         tick += 1;
         return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
       },
+    },
+    identifierGenerator: {
+      generate: randomUUID,
     },
     logger: hostLogger,
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),

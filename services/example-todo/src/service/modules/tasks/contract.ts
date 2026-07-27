@@ -17,6 +17,7 @@ import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../common/errors";
+import { TodoIdentifierSchema } from "../../model/dto/identifier";
 import { TaskSchema } from "./schemas";
 
 export const contract = {
@@ -74,10 +75,7 @@ export const contract = {
       schema(
         Type.Object(
           {
-            id: Type.String({
-              format: "uuid",
-              description: "Unique task identifier.",
-            }),
+            id: TodoIdentifierSchema,
           },
           {
             additionalProperties: false,

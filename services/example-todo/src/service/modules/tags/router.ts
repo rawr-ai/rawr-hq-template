@@ -15,7 +15,8 @@
  * package adopts a different deliberate seam for demonstrating procedure-local
  * middleware.
  */
-import { randomUUID } from "node:crypto";
+
+import { admitGeneratedIdentifier } from "../../model/policy/identifier";
 import { createProcedureAnalytics, createProcedureObservability } from "./middleware";
 import { module } from "./module";
 import { type Tag } from "./schemas";
@@ -76,7 +77,7 @@ const create = module.create
     }
 
     const tag: Tag = {
-      id: randomUUID(),
+      id: admitGeneratedIdentifier(context.identifierGenerator.generate()),
       workspaceId: context.workspaceId,
       name: normalizedName,
       color: normalizedColor,

@@ -10,6 +10,24 @@ import {
   type OrpcErrorShape,
 } from "./helpers";
 
+function createIdentifierProbe() {
+  let calls = 0;
+  const deps = createDeps();
+
+  return {
+    deps: {
+      ...deps,
+      identifierGenerator: {
+        generate: () => {
+          calls += 1;
+          return `00000000-0000-4000-8000-${calls.toString().padStart(12, "0")}`;
+        },
+      },
+    },
+    calls: () => calls,
+  };
+}
+
 describe("example-todo service", () => {
   it("creates and fetches tasks", async () => {
     const client = createClient(createClientOptions());
@@ -31,6 +49,128 @@ describe("example-todo service", () => {
       completed: false,
     });
     expect(loaded.createdAt).toContain("2026-02-25T00:00:");
+  });
+
+  it("uses the host identifier generator for new domain records", async () => {
+    const identifiers = [
+      "11111111-1111-4111-8111-111111111111",
+      "22222222-2222-4222-8222-222222222222",
+      "33333333-3333-4333-8333-333333333333",
+    ];
+    const deps = createDeps();
+    const client = createClient(
+      createClientOptions({
+        deps: {
+          ...deps,
+          identifierGenerator: {
+            generate: () => {
+              const identifier = identifiers.shift();
+              if (identifier === undefined) throw new Error("Identifier fixture exhausted");
+              return identifier;
+            },
+          },
+        },
+      })
+    );
+
+    const task = await client.tasks.create({ title: "Generated task" }, invocation("trace-task"));
+    const tag = await client.tags.create(
+      { name: "generated", color: "#112233" },
+      invocation("trace-tag")
+    );
+    const assignment = await client.assignments.assign(
+      { taskId: task.id, tagId: tag.id },
+      invocation("trace-assignment")
+    );
+
+    expect([task.id, tag.id, assignment.id]).toEqual([
+      "11111111-1111-4111-8111-111111111111",
+      "22222222-2222-4222-8222-222222222222",
+      "33333333-3333-4333-8333-333333333333",
+    ]);
+    expect(identifiers).toEqual([]);
+  });
+
+  it("refuses an invalid host identifier before repository mutation", async () => {
+    const deps = createDeps();
+    const client = createClient(
+      createClientOptions({
+        deps: {
+          ...deps,
+          identifierGenerator: {
+            generate: () => "not-a-uuid",
+          },
+        },
+      })
+    );
+
+    const result = await safe(
+      client.tasks.create({ title: "Invalid identity" }, invocation("trace-invalid-identity"))
+    );
+    const sql = await deps.dbPool.connect();
+    const stored = await sql.queryOne("SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2", [
+      "not-a-uuid",
+      "workspace-default",
+    ]);
+
+    expect(result.isSuccess).toBe(false);
+    expect(stored).toBeNull();
+  });
+
+  it("consumes identifiers only after write policy accepts an operation", async () => {
+    const readOnlyProbe = createIdentifierProbe();
+    const readOnlyClient = createClient(
+      createClientOptions({ deps: readOnlyProbe.deps, readOnly: true })
+    );
+    await safe(readOnlyClient.tasks.create({ title: "Blocked" }, invocation("trace-read-only-id")));
+    expect(readOnlyProbe.calls()).toBe(0);
+
+    const invalidTitleProbe = createIdentifierProbe();
+    const invalidTitleClient = createClient(createClientOptions({ deps: invalidTitleProbe.deps }));
+    await safe(invalidTitleClient.tasks.create({ title: "   " }, invocation("trace-title-id")));
+    expect(invalidTitleProbe.calls()).toBe(0);
+
+    const duplicateProbe = createIdentifierProbe();
+    const duplicateClient = createClient(createClientOptions({ deps: duplicateProbe.deps }));
+    await duplicateClient.tags.create(
+      { name: "duplicate", color: "#112233" },
+      invocation("trace-duplicate-first")
+    );
+    await safe(
+      duplicateClient.tags.create(
+        { name: "duplicate", color: "#445566" },
+        invocation("trace-duplicate-second")
+      )
+    );
+    expect(duplicateProbe.calls()).toBe(1);
+
+    const limitProbe = createIdentifierProbe();
+    const limitClient = createClient(
+      createClientOptions({ deps: limitProbe.deps, maxAssignmentsPerTask: 1 })
+    );
+    const task = await limitClient.tasks.create(
+      { title: "Bounded" },
+      invocation("trace-limit-task-id")
+    );
+    const firstTag = await limitClient.tags.create(
+      { name: "first", color: "#112233" },
+      invocation("trace-limit-first-id")
+    );
+    const secondTag = await limitClient.tags.create(
+      { name: "second", color: "#445566" },
+      invocation("trace-limit-second-id")
+    );
+    await limitClient.assignments.assign(
+      { taskId: task.id, tagId: firstTag.id },
+      invocation("trace-limit-assignment-id")
+    );
+    await safe(
+      limitClient.assignments.assign(
+        { taskId: task.id, tagId: secondTag.id },
+        invocation("trace-limit-refusal-id")
+      )
+    );
+    expect(limitProbe.calls()).toBe(4);
   });
 
   it("keeps workspace-scoped clients isolated", async () => {

@@ -11,25 +11,17 @@
  * base entity schema.
  */
 import { type Static, Type } from "typebox";
+import { TodoIdentifierSchema } from "../../model/dto/identifier";
 
 export const AssignmentSchema = Type.Object(
   {
-    id: Type.String({
-      format: "uuid",
-      description: "Stable unique identifier for the assignment row.",
-    }),
+    id: TodoIdentifierSchema,
     workspaceId: Type.String({
       minLength: 1,
       description: "Workspace scope that owns this assignment row.",
     }),
-    taskId: Type.String({
-      format: "uuid",
-      description: "Identifier of the task being tagged.",
-    }),
-    tagId: Type.String({
-      format: "uuid",
-      description: "Identifier of the tag assigned to the task.",
-    }),
+    taskId: TodoIdentifierSchema,
+    tagId: TodoIdentifierSchema,
     createdAt: Type.String({
       format: "date-time",
       description: "ISO timestamp when the assignment was created.",

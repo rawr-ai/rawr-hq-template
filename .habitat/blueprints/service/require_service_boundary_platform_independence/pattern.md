@@ -1,14 +1,14 @@
 ---
 level: error
-tags: [service, api, boundary, platform, resource]
+tags: [service, api, boundary, platform, host, resource, provider]
 ---
 # Require Service Platform Independence
 
 Production service source describes and executes domain capabilities over
 context-provided ports. It does not acquire concrete Node or Bun platform
 modules. Filesystem, process, storage, and runtime capabilities terminate in
-explicit resources/providers and enter service construction as ready
-capabilities.
+a qualified host, resource, or provider and enter service construction as
+ready capabilities.
 
 ```grit
 language js(typescript)

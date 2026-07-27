@@ -13,6 +13,7 @@ import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
 import { ASSIGNMENT_LIMIT_REACHED, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../common/errors";
+import { TodoIdentifierSchema } from "../../model/dto/identifier";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
@@ -24,14 +25,8 @@ export const contract = {
       schema(
         Type.Object(
           {
-            taskId: Type.String({
-              format: "uuid",
-              description: "Task identifier to attach a tag to.",
-            }),
-            tagId: Type.String({
-              format: "uuid",
-              description: "Tag identifier being assigned to the task.",
-            }),
+            taskId: TodoIdentifierSchema,
+            tagId: TodoIdentifierSchema,
           },
           {
             additionalProperties: false,
@@ -78,10 +73,7 @@ export const contract = {
       schema(
         Type.Object(
           {
-            taskId: Type.String({
-              format: "uuid",
-              description: "Task identifier to fetch all assigned tags for.",
-            }),
+            taskId: TodoIdentifierSchema,
           },
           {
             additionalProperties: false,

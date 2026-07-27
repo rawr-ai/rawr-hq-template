@@ -15,6 +15,8 @@
   and tag entity creation remain with their modules.
 - Cross-entity reads use admitted repositories through module context rather
   than invoking sibling operation implementations.
+- Identifier generation enters through service context; assignment policy
+  decides when a relation receives an identity without acquiring a runtime.
 
 ## Behavior
 
