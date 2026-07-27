@@ -1,14 +1,8 @@
 import { Value } from "typebox/value";
 import {
-  type PluginId,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parsePluginId,
   parseReleaseDigest,
   parseReleaseInputDigest,
   parseReleaseSetDigest,
-  parseRepositoryIdentity,
   releaseSetDigest,
 } from "../../shared/release/primitives";
 import {
@@ -27,6 +21,7 @@ import {
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
 } from "../dto/agent-plugin-release-set";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
+import type { PluginId } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
   AgentPluginReleaseInputSchema,
@@ -52,6 +47,13 @@ import {
 } from "./distribution-ownership";
 import { samePayloadManifest } from "./payload-manifest";
 import { provenanceBindingValue } from "./provenance-binding";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parsePluginId,
+  parseRepositoryIdentity,
+} from "./release-identity";
 import { verifyAgentPluginReleaseInput } from "./release-input";
 import { releaseInputValue } from "./release-input-codec";
 import { prefixReleaseIssuePath, releaseIssue, sortReleaseIssues } from "./release-issue";

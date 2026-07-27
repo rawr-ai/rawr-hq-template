@@ -9,9 +9,8 @@ import {
 import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-
+import { parseReleaseRelativePath } from "../src/service/model/policy/release-identity";
 import { router } from "../src/service/router";
-import { parseReleaseRelativePath } from "../src/service/shared/release/primitives";
 import { testRequest } from "./modules/providers/fixture";
 import { productFixture } from "./shared/release/fixtures";
 import {

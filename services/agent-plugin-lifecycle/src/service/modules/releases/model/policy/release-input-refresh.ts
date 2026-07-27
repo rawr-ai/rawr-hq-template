@@ -7,6 +7,10 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type {
+  ContentAuthority,
+  PluginId,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { RELEASE_INPUT_SCHEMA_VERSION } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
@@ -18,10 +22,6 @@ import {
 import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
 import { releaseIssue } from "#agent-plugin-lifecycle-service/model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
-import {
-  type ContentAuthority,
-  type PluginId,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { ReleaseInputRefreshResult } from "../dto/release-lifecycle";
 
 export interface ReleaseInputRefreshMemberSource {

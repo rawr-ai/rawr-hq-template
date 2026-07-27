@@ -25,10 +25,20 @@ import {
   CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
 } from "../../../src/service/model/dto/current-main-record";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
+import type { PluginId } from "../../../src/service/model/dto/release-identity";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { createAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
 import { createAgentPluginReleaseSet } from "../../../src/service/model/policy/agent-plugin-release-set";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseOwnershipIdentity,
+  parsePluginId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+} from "../../../src/service/model/policy/release-identity";
 import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import type {
@@ -38,18 +48,7 @@ import type {
   ProviderTestRequest,
 } from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
 import type { SelectedContent } from "../../../src/service/modules/providers/model/dto/selected-content";
-import type { PluginId } from "../../../src/service/shared/release/primitives";
-import {
-  contentDigest,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseOwnershipIdentity,
-  parsePluginId,
-  parseReleaseDigest,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
-} from "../../../src/service/shared/release/primitives";
+import { contentDigest, parseReleaseDigest } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

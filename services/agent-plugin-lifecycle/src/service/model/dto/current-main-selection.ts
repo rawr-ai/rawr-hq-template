@@ -1,12 +1,12 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReleaseInputDigestSchema } from "../../shared/release/primitives";
+import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
-  ReleaseInputDigestSchema,
   RepositoryIdentitySchema,
-} from "../../shared/release/primitives";
-import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
+} from "./release-identity";
 
 export const CURRENT_MAIN_V3_SCHEMA_VERSION = 3 as const;
 export const CURRENT_MAIN_V3_CHANNEL = "current-main" as const;

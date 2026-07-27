@@ -2282,7 +2282,7 @@ input subpath re-exports its two release-input limits without a local alias.
 Release identity and digest meanings remain in the transitional primitive leaf
 for later complete cuts. No barrel, facade, compatibility path, resource,
 provider, router, native state, or public behavior changes. Implementation and
-proof are complete; landing evidence remains open.
+proof are complete.
 
 The checkpoint gives payload, release-input, ownership, individual-release,
 and complete-set structural constants one qualified DTO owner each.
@@ -2302,7 +2302,52 @@ dependency tasks in 34.8 seconds, including all 17 enforced Habitat laws with
 zero findings. Strict OpenSpec, Biome, Oclif source/compiled command parity,
 stale-import scans, and diff hygiene pass. Final architecture/Habitat,
 behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
-P0, P1, P2, or P3 finding.
+P0, P1, P2, or P3 finding. Graphite PR
+[#592](https://github.com/rawr-ai/rawr-hq-template/pull/592) landed the
+checkpoint on canonical `main` at
+`753922936e10cdbb93d21c46db4d4d3719c8308b`.
+
+The next bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e9b]]. It gives
+service-wide release identities and release-relative paths one direct TypeBox
+DTO owner and one direct diagnostic-admission policy owner, then rewires
+consumers and deletes the current-main identity alias facade. Current-main Git
+shapes remain qualified current-main meaning; live parsing and construction
+move to the matching policy rather than another primitive file, while an
+unused comparison is deleted.
+Digest meanings remain untouched in the transitional leaf for the following
+complete cut. Canonical public inputs, path semantics, brands, bounds,
+diagnostics, current-main behavior, resources, providers, routers, and native
+state remain unchanged. Vendor workspace values formerly admitted only by its
+duplicate, looser identity vocabulary now fail at the CLI and oRPC boundary;
+upstream repository locators remain qualified locator values.
+
+The checkpoint now gives the seven service-wide release identities and
+release-relative path one direct TypeBox DTO owner with generated branded
+types. One matching policy owns their exact diagnostic admission. Current-main
+Git shapes remain qualified current-main DTO meaning, while their parsing and
+selection construction move to the matching policy. Vendor workspace
+operations consume the same service-wide repository, content-authority,
+commit, and tree schemas. Vendor upstream records retain a qualified
+repository locator because that value locates versioned content rather than
+identifying the reviewed content repository; their exact commit and tree still
+consume the service-wide schemas. Every identity consumer imports the
+qualified owner directly, the `current-main-primitives` alias facade is
+deleted, and the residual
+transitional primitive leaf contains digest meaning only.
+
+Identity and direct Vendor contract proof passes 77 focused cases across seven
+files; the native CLI Vendor runtime passes two cases. The complete lifecycle
+suite passes 42 files and 366 tests in 1 minute 26 seconds; its uncached Nx
+graph passes in 1 minute 35 seconds. The uncached lifecycle typecheck graph
+passes in 16.2 seconds and the CLI typecheck graph passes in 31.4 seconds. The
+required repository check passes 39 projects and 76 dependency tasks in 39.9
+seconds, including all 17 enforced Habitat laws with zero findings. Strict
+OpenSpec, Biome, Oclif source/compiled command parity, stale-import scans, and
+diff hygiene pass. TypeScript review found and closed the competing Vendor
+identity vocabulary before final proof. Final architecture/Habitat,
+behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
+P0, P1, P2, or P3 finding. Graphite landing evidence remains open.
 
 ## Settlement Oracles
 

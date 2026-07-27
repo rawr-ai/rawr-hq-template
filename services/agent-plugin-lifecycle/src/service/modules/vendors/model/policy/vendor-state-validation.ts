@@ -1,20 +1,23 @@
 import { Value } from "typebox/value";
-
+import {
+  ContentAuthoritySchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  RepositoryIdentitySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import type { VendorStatusRequest, VendorUpdateIssue } from "../dto/vendor-operations";
 import type { VendorSourceIdentity } from "../dto/vendor-records";
 import {
   CANONICAL_ABSOLUTE_PATH_PATTERN,
-  CONTENT_AUTHORITY_PATTERN,
-  GIT_OBJECT_ID_PATTERN,
   NORMALIZED_RELATIVE_PATH_PATTERN,
   QUALIFIED_HEAD_REF_PATTERN,
-  REPOSITORY_IDENTITY_PATTERN,
   SHA256_DIGEST_PATTERN,
   STRICT_UTC_RFC3339_PATTERN,
   VendorLockRecordSchema,
   VendorProvenanceRecordSchema,
   VendorRecordBindingSchema,
+  VendorRepositoryLocatorSchema,
   VendorSourceDeclarationSchema,
 } from "../dto/vendor-records";
 import type {
@@ -25,11 +28,8 @@ import type {
 import { vendorIssue } from "./vendor-policy-result";
 
 const canonicalAbsolutePath = new RegExp(CANONICAL_ABSOLUTE_PATH_PATTERN, "u");
-const contentAuthority = new RegExp(CONTENT_AUTHORITY_PATTERN, "u");
-const gitObjectId = new RegExp(GIT_OBJECT_ID_PATTERN, "u");
 const normalizedRelativePath = new RegExp(NORMALIZED_RELATIVE_PATH_PATTERN, "u");
 const qualifiedHeadRef = new RegExp(QUALIFIED_HEAD_REF_PATTERN, "u");
-const repositoryIdentity = new RegExp(REPOSITORY_IDENTITY_PATTERN, "u");
 const sha256Digest = new RegExp(SHA256_DIGEST_PATTERN, "u");
 const strictUtcRfc3339 = new RegExp(STRICT_UTC_RFC3339_PATTERN, "u");
 
@@ -46,7 +46,7 @@ export function vendorWorkspaceIssue(
     );
   }
   if (
-    !repositoryIdentity.test(actual.repositoryIdentity) ||
+    !Value.Check(RepositoryIdentitySchema, actual.repositoryIdentity) ||
     actual.repositoryIdentity !== expected.repositoryIdentity
   ) {
     return vendorIssue(
@@ -55,7 +55,7 @@ export function vendorWorkspaceIssue(
     );
   }
   if (
-    !contentAuthority.test(actual.contentAuthority) ||
+    !Value.Check(ContentAuthoritySchema, actual.contentAuthority) ||
     actual.contentAuthority !== expected.contentAuthority
   ) {
     return vendorIssue(
@@ -70,9 +70,9 @@ export function vendorWorkspaceIssue(
     );
   }
   if (
-    !gitObjectId.test(actual.sourceCommit) ||
+    !Value.Check(GitCommitIdSchema, actual.sourceCommit) ||
     actual.sourceCommit !== expected.sourceCommit ||
-    !gitObjectId.test(actual.sourceTree) ||
+    !Value.Check(GitTreeIdSchema, actual.sourceTree) ||
     actual.sourceTree !== expected.sourceTree
   ) {
     return vendorIssue(
@@ -315,10 +315,10 @@ export function sameVendorIdentity(
 
 export function validVendorIdentity(identity: VendorSourceIdentity): boolean {
   return (
-    repositoryIdentity.test(identity.repositoryIdentity) &&
+    Value.Check(VendorRepositoryLocatorSchema, identity.repositoryIdentity) &&
     qualifiedHeadRef.test(identity.refName) &&
-    gitObjectId.test(identity.sourceCommit) &&
-    gitObjectId.test(identity.sourceTree) &&
+    Value.Check(GitCommitIdSchema, identity.sourceCommit) &&
+    Value.Check(GitTreeIdSchema, identity.sourceTree) &&
     sha256Digest.test(identity.payloadDigest)
   );
 }

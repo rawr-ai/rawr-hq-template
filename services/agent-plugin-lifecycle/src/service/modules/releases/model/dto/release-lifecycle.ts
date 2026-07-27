@@ -6,19 +6,21 @@ import {
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  PluginIdSchema,
+  RepositoryIdentitySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
 } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-  RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 

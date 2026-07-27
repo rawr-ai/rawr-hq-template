@@ -1,14 +1,17 @@
 import { type Static, Type } from "typebox";
 
+import {
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+
 export const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1" as const;
 export const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1" as const;
 export const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1" as const;
 
-export const GIT_OBJECT_ID_PATTERN = "^(?:[0-9a-f]{40}|[0-9a-f]{64})$";
 export const SHA256_DIGEST_PATTERN = "^sha256_[0-9a-f]{64}$";
 export const SOURCE_ID_PATTERN = "^[a-z0-9](?:[a-z0-9-]{0,126}[a-z0-9])?$";
-export const REPOSITORY_IDENTITY_PATTERN = "^[A-Za-z0-9][A-Za-z0-9._:@/+\\-]{0,511}$";
-export const CONTENT_AUTHORITY_PATTERN = "^[a-z0-9][a-z0-9._-]{0,127}$";
+const VENDOR_REPOSITORY_LOCATOR_PATTERN = "^[A-Za-z0-9][A-Za-z0-9._:@/+\\-]{0,511}$";
 export const QUALIFIED_HEAD_REF_PATTERN =
   "^refs/heads/(?![./])(?!.*(?:\\.\\.|@\\{|//|[~^:?*\\[\\]\\\\]))(?!.*[./]$)[A-Za-z0-9._/-]+$";
 export const CANONICAL_ABSOLUTE_PATH_PATTERN =
@@ -24,15 +27,11 @@ export const CanonicalAbsolutePathSchema = Type.String({
   maxLength: 16_384,
   pattern: CANONICAL_ABSOLUTE_PATH_PATTERN,
 });
-export const RepositoryIdentitySchema = Type.String({
+/** Locates an upstream Vendor repository without claiming service repository identity. */
+export const VendorRepositoryLocatorSchema = Type.String({
   minLength: 1,
   maxLength: 512,
-  pattern: REPOSITORY_IDENTITY_PATTERN,
-});
-export const ContentAuthoritySchema = Type.String({
-  minLength: 1,
-  maxLength: 128,
-  pattern: CONTENT_AUTHORITY_PATTERN,
+  pattern: VENDOR_REPOSITORY_LOCATOR_PATTERN,
 });
 export const QualifiedHeadRefSchema = Type.String({
   minLength: "refs/heads/a".length,
@@ -49,7 +48,6 @@ export const SourceIdSchema = Type.String({
   maxLength: 128,
   pattern: SOURCE_ID_PATTERN,
 });
-export const GitObjectIdSchema = Type.String({ pattern: GIT_OBJECT_ID_PATTERN });
 export const Sha256DigestSchema = Type.String({ pattern: SHA256_DIGEST_PATTERN });
 export const PositiveCurationRevisionSchema = Type.Integer({
   minimum: 1,
@@ -68,10 +66,10 @@ export const StrictUtcRfc3339Schema = Type.String({
 
 export const VendorSourceIdentitySchema = Type.Object(
   {
-    repositoryIdentity: RepositoryIdentitySchema,
+    repositoryIdentity: VendorRepositoryLocatorSchema,
     refName: QualifiedHeadRefSchema,
-    sourceCommit: GitObjectIdSchema,
-    sourceTree: GitObjectIdSchema,
+    sourceCommit: GitCommitIdSchema,
+    sourceTree: GitTreeIdSchema,
     payloadDigest: Sha256DigestSchema,
   },
   { additionalProperties: false }
@@ -95,7 +93,7 @@ export const VendorSourceDeclarationSchema = Type.Object(
     schemaVersion: Type.Literal(1),
     sourceId: SourceIdSchema,
     policy: Type.Union([Type.Literal("tracked"), Type.Literal("held")]),
-    repositoryIdentity: RepositoryIdentitySchema,
+    repositoryIdentity: VendorRepositoryLocatorSchema,
     refName: QualifiedHeadRefSchema,
     sourcePath: NormalizedRelativePathSchema,
     destinationPath: NormalizedRelativePathSchema,

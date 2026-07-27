@@ -10,6 +10,7 @@ import {
   type OwnershipClaim,
   OwnershipClaimSchema,
 } from "../../src/service/model/dto/distribution-ownership";
+import type { OwnershipIdentity, PluginId } from "../../src/service/model/dto/release-identity";
 import type { ReleaseIssue } from "../../src/service/model/dto/release-issue";
 import {
   createDistributionOwnershipIndex,
@@ -18,13 +19,11 @@ import {
   parseDeclaredOwnershipClaims,
   parseDistributionOwnershipIndex,
 } from "../../src/service/model/policy/distribution-ownership";
-import { releaseIssue } from "../../src/service/model/policy/release-issue";
 import {
-  type OwnershipIdentity,
-  type PluginId,
   parseOwnershipIdentity,
   parsePluginId,
-} from "../../src/service/shared/release/primitives";
+} from "../../src/service/model/policy/release-identity";
+import { releaseIssue } from "../../src/service/model/policy/release-issue";
 
 describe("distribution ownership", () => {
   it("uses closed TypeBox contracts for declared claims and derived indexes", () => {

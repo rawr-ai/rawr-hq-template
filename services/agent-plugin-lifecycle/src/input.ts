@@ -8,7 +8,7 @@ import {
   PluginIdSchema,
   ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
-} from "./service/shared/release/primitives";
+} from "./service/model/dto/release-identity";
 
 /**
  * Public CLI parsing facade.

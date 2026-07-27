@@ -5,25 +5,12 @@ import type {
 } from "@rawr/resource-content-workspace";
 import type { Result } from "effect";
 
-import {
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseRelativePath,
-} from "../../shared/release/primitives";
-import {
-  createExactGitBlobPointer,
-  type ExactGitBlobObservation,
-  type GitBlobSelection,
-  type GitLocator,
+import type {
+  CanonicalRef,
+  ExactGitBlobObservation,
+  GitBlobSelection,
+  GitLocator,
 } from "../dto/current-main-git";
-import {
-  type CanonicalRef,
-  type GitCommitId,
-  type GitTreeId,
-  parseCanonicalRef,
-  parseRepository,
-  parseTree,
-} from "../dto/current-main-primitives";
 import {
   CURRENT_MAIN_V3_CANONICAL_REF,
   CURRENT_MAIN_V3_RECORD_PATH,
@@ -35,10 +22,18 @@ import {
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../dto/current-main-selection";
+import { type GitCommitId, type GitTreeId } from "../dto/release-identity";
+import { createExactGitBlobPointer, parseCanonicalRef } from "./current-main-git";
 import {
   decodeCurrentMainRecord,
   describeCurrentMainRecordValidation,
 } from "./current-main-record";
+import {
+  parseGitCommitId,
+  parseGitTreeId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+} from "./release-identity";
 import { decodeAgentPluginReleaseInput } from "./release-input";
 
 /** Maximum bytes admitted for either exact Git blob used by current-main selection. */
@@ -100,7 +95,7 @@ export function classifyCurrentMainInspection(
     return rejected("UNREACHABLE_REPOSITORY", "Git provider observed another canonical ref");
   }
   const headCommit = parseGitCommitId(observed.commit, "inspection.headCommit");
-  const headTree = parseTree(observed.tree, "inspection.headTree");
+  const headTree = parseGitTreeId(observed.tree, "inspection.headTree");
   if (!headCommit.ok || !headTree.ok) {
     return rejected(
       "UNREACHABLE_REPOSITORY",
@@ -304,7 +299,7 @@ function exactRepositoryIdentity(remoteUrls: readonly string[], expected: string
 
 function repositoryIdentityFromRemote(remoteUrl: string): string | undefined {
   if (remoteUrl.startsWith("git:") && !remoteUrl.startsWith("git://")) {
-    const parsed = parseRepository(remoteUrl, "remoteUrl");
+    const parsed = parseRepositoryIdentity(remoteUrl, "remoteUrl");
     return parsed.ok ? parsed.value : undefined;
   }
 
@@ -333,7 +328,7 @@ function repositoryIdentityFromRemote(remoteUrl: string): string | undefined {
 function canonicalGitRepositoryIdentity(host: string, rawPath: string): string | undefined {
   const path = rawPath.replace(/^\/+|\/+$/gu, "").replace(/\.git$/u, "");
   if (path.length === 0) return undefined;
-  const parsed = parseRepository(`git:${host.toLowerCase()}/${path}`, "remoteUrl");
+  const parsed = parseRepositoryIdentity(`git:${host.toLowerCase()}/${path}`, "remoteUrl");
   return parsed.ok ? parsed.value : undefined;
 }
 

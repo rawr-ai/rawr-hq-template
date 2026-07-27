@@ -5,9 +5,9 @@ import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
-  parseReleaseInputDigest,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release/primitives";
+} from "../../../src/service/model/policy/release-identity";
+import { parseReleaseInputDigest } from "../../../src/service/shared/release/primitives";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 describe("current-main record procedure", () => {

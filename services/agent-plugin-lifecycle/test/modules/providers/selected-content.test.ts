@@ -1,6 +1,6 @@
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
-
+import { parseOwnershipIdentity } from "../../../src/service/model/policy/release-identity";
 import {
   type SelectedContent,
   SelectedContentSchema,
@@ -13,7 +13,6 @@ import {
   sameSelectedContent,
   validateSelectedContent,
 } from "../../../src/service/modules/providers/model/policy/selected-content";
-import { parseOwnershipIdentity } from "../../../src/service/shared/release/primitives";
 import { member, selectedContent } from "./fixture";
 
 describe("selected provider content", () => {

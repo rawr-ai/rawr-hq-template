@@ -1,16 +1,8 @@
 import { Value } from "typebox/value";
 import {
-  type ContentAuthority,
-  type OwnershipIdentity,
-  type PluginId,
-  parseContentAuthority,
-  parseOwnershipIdentity,
   parsePayloadDigest,
-  parsePluginId,
   parseReleaseInputDigest,
-  parseReleaseRelativePath,
   type ReleaseInputDigest,
-  type ReleaseRelativePath,
   releaseInputDigest,
 } from "../../shared/release/primitives";
 import {
@@ -23,6 +15,12 @@ import {
   type DistributionOwnershipIndex,
   MAX_OWNERSHIP_CLAIMS,
 } from "../dto/distribution-ownership";
+import type {
+  ContentAuthority,
+  OwnershipIdentity,
+  PluginId,
+  ReleaseRelativePath,
+} from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
   type DeclaredPayload,
@@ -48,6 +46,12 @@ import {
 } from "./distribution-ownership";
 import { parsePayloadManifest } from "./payload-manifest";
 import { parseProvenanceBindings } from "./provenance-binding";
+import {
+  parseContentAuthority,
+  parseOwnershipIdentity,
+  parsePluginId,
+  parseReleaseRelativePath,
+} from "./release-identity";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   canonicalSerializeReleaseInputBody,

@@ -5,6 +5,12 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseRepositoryIdentity,
+} from "@rawr/agent-plugin-lifecycle/input";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
@@ -190,8 +196,8 @@ async function createUpstreamRepository(parent: string): Promise<
   const initialIdentity = Object.freeze({
     repositoryIdentity,
     refName: "refs/heads/main",
-    sourceCommit,
-    sourceTree,
+    sourceCommit: parsed(parseGitCommitId(sourceCommit)),
+    sourceTree: parsed(parseGitTreeId(sourceTree)),
     payloadDigest: contentDigest(
       jsonLine([
         { blob: skillBlob, mode: "100644", path: "SKILL.md" },
@@ -212,7 +218,7 @@ async function createContentRepository(
   }>
 > {
   const root = path.join(parent, "content");
-  const repositoryIdentity = `file://${path.join(parent, "content-origin.git")}`;
+  const repositoryIdentity = parsed(parseRepositoryIdentity("git:fixture-content"));
   const declaration = Object.freeze({
     schemaVersion: 1 as const,
     sourceId: "example",
@@ -337,10 +343,10 @@ async function createContentRepository(
     workspace: Object.freeze({
       locator: root,
       repositoryIdentity,
-      contentAuthority: "fixture-authority",
+      contentAuthority: parsed(parseContentAuthority("fixture-authority")),
       refName: "refs/heads/main",
-      sourceCommit: await git(root, ["rev-parse", "HEAD"]),
-      sourceTree: await git(root, ["rev-parse", "HEAD^{tree}"]),
+      sourceCommit: parsed(parseGitCommitId(await git(root, ["rev-parse", "HEAD"]))),
+      sourceTree: parsed(parseGitTreeId(await git(root, ["rev-parse", "HEAD^{tree}"]))),
       releaseInputPath: ".rawr/release-input.json",
     }),
   });
@@ -349,6 +355,11 @@ async function createContentRepository(
 async function configureGit(root: string): Promise<void> {
   await git(root, ["config", "user.email", "fixture@example.invalid"]);
   await git(root, ["config", "user.name", "Vendor Fixture"]);
+}
+
+function parsed<T>(result: T | undefined): T {
+  if (result === undefined) throw new Error("Expected a valid lifecycle fixture identity");
+  return result;
 }
 
 async function git(root: string, args: readonly string[]): Promise<string> {

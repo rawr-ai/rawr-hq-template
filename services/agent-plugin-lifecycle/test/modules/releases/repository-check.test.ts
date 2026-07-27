@@ -13,6 +13,13 @@ import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/content-workspace";
 import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "../../../src/service/model/dto/release-input";
 import { payloadEntryBytes } from "../../../src/service/model/policy/agent-plugin-payload";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+} from "../../../src/service/model/policy/release-identity";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
@@ -22,13 +29,6 @@ import {
   MAX_STAGED_INDEX_ENTRIES,
   MAX_STAGED_MATERIALIZED_BLOB_BYTES,
 } from "../../../src/service/modules/releases/model/policy/staged-content-workspace";
-import {
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseRelativePath,
-  parseRepositoryIdentity,
-} from "../../../src/service/shared/release/primitives";
 import { productFixture } from "../../shared/release/fixtures";
 import {
   createLifecycleTestClient,

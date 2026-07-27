@@ -6,6 +6,12 @@ import {
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+import {
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  PluginIdSchema,
+  RepositoryIdentitySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import {
   BoundedReadonlyArray,
@@ -13,12 +19,8 @@ import {
   NonEmptyReadonlyArray,
 } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  PluginIdSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-  RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import { hasStrictDescendantHomes } from "../policy/disposable-root";
 

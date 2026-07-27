@@ -7,21 +7,19 @@ import type {
 import type { Result } from "effect";
 import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import {
-  parseRelativePath,
-  type ReleaseRelativePath,
-} from "#agent-plugin-lifecycle-service/model/dto/current-main-primitives";
 import type {
   CanonicalChannelSelection,
   CurrentMainSelectionLocator,
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
+import { parseReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/policy/release-identity";
 import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 import type { SelectedContentResolution } from "../dto/selected-content";
 import { validateNativeMarketplaces } from "./native-marketplace";
@@ -544,7 +542,7 @@ function classifySelectedContentTree(
   const exactPaths = new Set<string>();
   const portablePaths = new Set<string>();
   for (const observed of attempt.success) {
-    const parsedPath = parseRelativePath(observed.path, "selectedContent.tree.path");
+    const parsedPath = parseReleaseRelativePath(observed.path, "selectedContent.tree.path");
     if (!parsedPath.ok) {
       return declined(
         selectedContentRejected(
@@ -628,7 +626,7 @@ function sameRefObservation(left: GitRefObservation, right: GitRefObservation): 
 }
 
 function requireReleasePath(value: string): ReleaseRelativePath {
-  const parsed = parseRelativePath(value, "selectedContent.path");
+  const parsed = parseReleaseRelativePath(value, "selectedContent.path");
   if (!parsed.ok) throw new Error(`Compiled selected-content path is invalid: ${value}`);
   return parsed.value;
 }

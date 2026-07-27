@@ -1,9 +1,6 @@
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
-
-import { parseGitBlobSelection } from "../../src/service/model/dto/current-main-git";
-import { parseCanonicalRef } from "../../src/service/model/dto/current-main-primitives";
 import {
   MAX_RELEASE_ISSUE_ACTUAL_LENGTH,
   MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH,
@@ -19,6 +16,10 @@ import {
   ReleaseIssueCodeSchema,
   ReleaseIssueSchema,
 } from "../../src/service/model/dto/release-issue";
+import {
+  parseCanonicalRef,
+  parseGitBlobSelection,
+} from "../../src/service/model/policy/current-main-git";
 import { releaseIssue, sortReleaseIssues } from "../../src/service/model/policy/release-issue";
 
 const TRUNCATED_SUFFIX = "...[truncated]";

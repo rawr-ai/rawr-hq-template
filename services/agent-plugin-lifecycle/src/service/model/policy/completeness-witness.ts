@@ -1,7 +1,6 @@
 import { Value } from "typebox/value";
 import {
   parsePayloadDigest,
-  parsePluginId,
   parseReleaseInputDigest,
   type ReleaseInputDigest,
 } from "../../shared/release/primitives";
@@ -17,6 +16,7 @@ import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { ownershipIndexValue, parseDistributionOwnershipIndex } from "./distribution-ownership";
+import { parsePluginId } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
 import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";

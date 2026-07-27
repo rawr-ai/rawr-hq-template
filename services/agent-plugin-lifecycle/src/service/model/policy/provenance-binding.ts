@@ -1,12 +1,10 @@
-import {
-  MAX_CANONICAL_ID_BYTES,
-  parseContentDigest,
-  parseOwnershipIdentity,
-} from "../../shared/release/primitives";
+import { parseContentDigest } from "../../shared/release/primitives";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
+import { MAX_CANONICAL_ID_BYTES } from "../dto/release-identity";
 import { MAX_PROVENANCE_BINDINGS, type ProvenanceBinding } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import { compareCanonicalText } from "./canonical-text-ordering";
+import { parseOwnershipIdentity } from "./release-identity";
 import { releaseIssue } from "./release-issue";
 import { collectReleaseResult } from "./release-result";
 import {

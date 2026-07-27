@@ -1,6 +1,6 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import { OwnershipIdentitySchema, PluginIdSchema } from "../../shared/release/primitives";
+import { OwnershipIdentitySchema, PluginIdSchema } from "./release-identity";
 
 declare const distributionOwnershipIndexBrand: unique symbol;
 

@@ -20,6 +20,12 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../../../src/client";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseRepositoryIdentity,
+} from "../../../src/service/model/policy/release-identity";
+import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
 } from "../../../src/service/model/policy/release-input";
@@ -66,11 +72,11 @@ type VendorUpdateRequest = Parameters<Client["vendors"]["update"]>[0];
 type VendorContentWorkspaceRef = VendorStatusRequest["contentWorkspace"];
 const contentWorkspace: VendorContentWorkspaceRef = Object.freeze({
   locator: "/tmp/content-workspace",
-  repositoryIdentity: "git:personal-rawr-hq",
-  contentAuthority: "personal-rawr-hq",
+  repositoryIdentity: parsed(parseRepositoryIdentity("git:personal-rawr-hq")),
+  contentAuthority: parsed(parseContentAuthority("personal-rawr-hq")),
   refName: "refs/heads/main",
-  sourceCommit: "a".repeat(40),
-  sourceTree: "b".repeat(40),
+  sourceCommit: parsed(parseGitCommitId("a".repeat(40))),
+  sourceTree: parsed(parseGitTreeId("b".repeat(40))),
   releaseInputPath,
 });
 
@@ -911,10 +917,15 @@ function sourceIdentity(
   return Object.freeze({
     repositoryIdentity: "git:vendor-upstream",
     refName: "refs/heads/main",
-    sourceCommit: seed.repeat(40),
-    sourceTree: seed.repeat(40),
+    sourceCommit: parsed(parseGitCommitId(seed.repeat(40))),
+    sourceTree: parsed(parseGitTreeId(seed.repeat(40))),
     payloadDigest: vendorPayloadDigest(entries),
   });
+}
+
+function parsed<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {
+  if (!result.ok) throw new Error("Expected a valid vendor identity fixture");
+  return result.value;
 }
 
 function materializedEntries(text: string): readonly MaterializedContentTreeEntry[] {

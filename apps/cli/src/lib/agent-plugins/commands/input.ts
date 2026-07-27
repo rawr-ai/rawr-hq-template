@@ -416,11 +416,23 @@ function targetMode(plugin: string): CheckRequest["mode"] {
 function vendorWorkspace(flags: RawFlags): VendorStatusRequest["contentWorkspace"] {
   return Object.freeze({
     locator: requireCanonicalAbsolute(flags["content-workspace"], "--content-workspace"),
-    repositoryIdentity: requireString(flags["repository-identity"], "--repository-identity"),
-    contentAuthority: requireString(flags["content-authority"], "--content-authority"),
+    repositoryIdentity: requireLifecycleInput(
+      parseRepositoryIdentity(flags["repository-identity"]),
+      "--repository-identity must be a canonical logical repository identity"
+    ),
+    contentAuthority: requireLifecycleInput(
+      parseContentAuthority(flags["content-authority"]),
+      "--content-authority must be canonical"
+    ),
     refName: requireString(flags.ref, "--ref"),
-    sourceCommit: requireGitObject(flags["source-commit"], "--source-commit"),
-    sourceTree: requireGitObject(flags["source-tree"], "--source-tree"),
+    sourceCommit: requireLifecycleInput(
+      parseGitCommitId(flags["source-commit"]),
+      "--source-commit must be an exact lowercase Git object ID"
+    ),
+    sourceTree: requireLifecycleInput(
+      parseGitTreeId(flags["source-tree"]),
+      "--source-tree must be an exact lowercase Git object ID"
+    ),
     releaseInputPath: requireRelativePath(flags["release-input"], "--release-input"),
   });
 }
@@ -515,14 +527,6 @@ function requireRelativePath(input: unknown, label: string): string {
     value.split("/").some((segment) => segment === "" || segment === "." || segment === "..")
   ) {
     throw new LifecycleInputError(`${label} must be a canonical repository-relative path`);
-  }
-  return value;
-}
-
-function requireGitObject(input: unknown, label: string): string {
-  const value = requireString(input, label, { max: 64 });
-  if (!/^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u.test(value)) {
-    throw new LifecycleInputError(`${label} must be an exact lowercase Git object ID`);
   }
   return value;
 }

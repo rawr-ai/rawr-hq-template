@@ -1,5 +1,4 @@
 import { Value } from "typebox/value";
-import { OwnershipIdentitySchema, type PluginId } from "../../shared/release/primitives";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import {
   type DeclaredOwnershipClaim,
@@ -11,6 +10,7 @@ import {
   type OwnershipClaim,
   type OwnershipClaimKind,
 } from "../dto/distribution-ownership";
+import { OwnershipIdentitySchema, type PluginId } from "../dto/release-identity";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";

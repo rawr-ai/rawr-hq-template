@@ -7,7 +7,6 @@ import {
   RemoteUrlSchema,
   type SourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import type { AgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import {
   ContentAuthoritySchema,
   type GitCommitId,
@@ -17,7 +16,8 @@ import {
   ReleaseRelativePathSchema,
   type RepositoryIdentity,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+import type { AgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 
 export const StagedContentWorkspacePolicySchema = ReadonlyObject(
   Type.Object({

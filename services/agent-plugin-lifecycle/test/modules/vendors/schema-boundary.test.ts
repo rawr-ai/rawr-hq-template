@@ -195,6 +195,7 @@ describe("vendor procedure schema boundary", () => {
       { ...contentWorkspace, locator: "relative/workspace" },
       { ...contentWorkspace, locator: "/tmp/../workspace" },
       { ...contentWorkspace, locator: "/tmp//workspace" },
+      { ...contentWorkspace, repositoryIdentity: "file:/tmp/content-workspace" },
       { ...contentWorkspace, refName: "main" },
       { ...contentWorkspace, refName: "refs/heads/main..next" },
       { ...contentWorkspace, sourceCommit: "a".repeat(41) },
@@ -376,6 +377,12 @@ describe("vendor procedure schema boundary", () => {
     expect(Value.Check(VendorSourceDeclarationSchema, declaration)).toBe(true);
     expect(Value.Check(VendorLockRecordSchema, lock)).toBe(true);
     expect(Value.Check(VendorProvenanceRecordSchema, provenance)).toBe(true);
+    expect(
+      Value.Check(VendorSourceDeclarationSchema, {
+        ...declaration,
+        repositoryIdentity: "file:/tmp/vendor-upstream",
+      })
+    ).toBe(true);
     expect(
       Value.Check(VendorRecordBindingSchema, {
         id: "vendor/sources/upstream.json",

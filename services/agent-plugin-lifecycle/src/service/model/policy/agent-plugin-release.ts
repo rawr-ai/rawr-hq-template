@@ -1,16 +1,9 @@
 import { Value } from "typebox/value";
 import {
-  type OwnershipIdentity,
   type PayloadDigest,
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseOwnershipIdentity,
   parsePayloadDigest,
-  parsePluginId,
   parseReleaseDigest,
   parseReleaseInputDigest,
-  parseRepositoryIdentity,
   releaseDigest,
 } from "../../shared/release/primitives";
 import { type AgentPluginPayload, AgentPluginPayloadSchema } from "../dto/agent-plugin-payload";
@@ -27,6 +20,7 @@ import {
   ReleaseSourceIdentitySchema,
 } from "../dto/agent-plugin-release";
 import { MAX_OWNERSHIP_CLAIMS } from "../dto/distribution-ownership";
+import type { OwnershipIdentity } from "../dto/release-identity";
 import { type AgentPluginReleaseInput, AgentPluginReleaseInputSchema } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
@@ -43,6 +37,14 @@ import { compareCanonicalText } from "./canonical-text-ordering";
 import { ownershipClaimsFor } from "./distribution-ownership";
 import { parsePayloadManifest, samePayloadManifest } from "./payload-manifest";
 import { parseProvenanceBindings } from "./provenance-binding";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseOwnershipIdentity,
+  parsePluginId,
+  parseRepositoryIdentity,
+} from "./release-identity";
 import { verifyAgentPluginReleaseInput } from "./release-input";
 import { releaseInputValue } from "./release-input-codec";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";

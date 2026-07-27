@@ -1075,6 +1075,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   semantics in the transitional primitive leaf for their later complete cuts.
   Do not add a barrel, facade, compatibility path, generic primitive owner,
   resource, provider, router, or public behavior change.
+- [x] 5.7e9b Give service-wide release identity and release-relative-path
+  structure one direct root-model TypeBox DTO owner and give their diagnostic
+  admission one direct policy owner. Rewire all consumers to the exact owner,
+  delete the `current-main-primitives` alias facade, and keep current-main Git
+  structure in its existing qualified DTO while live parsing and construction
+  move to a matching policy leaf; delete its unused comparison rather than
+  preserving dead behavior. Leave all digest schemas, parsers, and constructors
+  in the transitional primitive leaf for the next complete cut. Preserve
+  public input parsing, brands, bounds, diagnostics, canonical path semantics,
+  and current-main selection behavior. Refuse Vendor workspace values admitted
+  only by its duplicate, looser identity vocabulary while keeping upstream
+  repository locators qualified as locators. Do not add a barrel, alias,
+  compatibility path, generic identity framework, resource, provider, router,
+  native-state change, or command-shape change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

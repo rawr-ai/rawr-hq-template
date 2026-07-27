@@ -1,20 +1,22 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
-  ContentAuthoritySchema,
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-  RepositoryIdentitySchema,
 } from "../../shared/release/primitives";
 import { BUILDER_PROTOCOL_VERSION } from "./agent-plugin-release";
 import {
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
 } from "./distribution-ownership";
+import {
+  ContentAuthoritySchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  PluginIdSchema,
+  RepositoryIdentitySchema,
+} from "./release-identity";
 import {
   type CompletenessWitness,
   CompletenessWitnessRecordSchema,
