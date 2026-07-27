@@ -914,6 +914,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   observation, failure-phase uncertainty, applied prefix, later-target
   refusal, final verification, TypeBox validation, interruption, defects,
   finalizers, and every public result.
+- [x] 5.7e2p Delete the loose Provider schema facade. Make the module contract
+  and schema-boundary tests import the TypeBox authorities directly from their
+  owning `model/dto` leaf. Preserve every schema identity, generated contract
+  type, validation result, and public operation without adding a barrel,
+  compatibility export, or alternate schema face.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

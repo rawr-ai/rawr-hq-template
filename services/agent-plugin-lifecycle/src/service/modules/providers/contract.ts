@@ -8,7 +8,7 @@ import {
   ProviderSyncResultSchema,
   ProviderTestRequestSchema,
   ProviderTestResultSchema,
-} from "./schemas";
+} from "./model/dto/provider-lifecycle";
 
 export const contract = {
   test: eoc
