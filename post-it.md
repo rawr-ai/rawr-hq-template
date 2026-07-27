@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Invocation Snapshots Belong To Operations
+
+A request snapshot taken before the first resource yield is part of an
+operation's temporal authorship. It is neither reusable domain policy nor a
+second callable boundary. The oRPC handler should visibly take the defensive
+copy, derive its plan, perform the resource transition, and classify the
+result.
+
+Inlining this one-use snapshot deletes a detached router function without
+inventing a model export. Caller mutation remains unable to change the
+in-flight request, and the module retains one obvious execution sequence.
+
+See
+[[services/agent-plugin-lifecycle/src/service/modules/releases/router/refresh-release-input.router|the refresh operation]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Router, operation, input, snapshot, context, resource, sequence, delete, narrow.
+
 ## 2026-07-26 - Aggregate Bounds Are Service Policy
 
 One aggregate payload limit governs release-input admission, clean and staged

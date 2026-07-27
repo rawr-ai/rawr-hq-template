@@ -1923,6 +1923,24 @@ Personal repository, native command, or live lifecycle state changed.
 The required repository check passed 39 projects and 76 dependency tasks in
 39.0 seconds, including all 17 enforced Habitat laws with zero findings.
 
+The refresh snapshot-authorship checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2s]]. The
+`refreshReleaseInput` oRPC handler now takes its invocation-owned defensive
+snapshot before planning or the first resource yield. Planning and
+post-observation classification consume that same snapshot, so caller mutation
+cannot change the in-flight authority or selected members. The one-use detached
+router function and its type-only import are deleted without creating a model
+export, helper, alias, or compatibility face.
+
+The focused 11-case refresh suite and complete 290-case lifecycle suite pass.
+Production and test TypeScript checks, Biome, strict OpenSpec validation, diff
+hygiene, and the repository check across 39 projects and 76 dependency tasks
+are green. The cached repository graph completed in 42.3 seconds and enforced
+all 17 Habitat laws with zero findings. Architecture/oRPC, behavior-first
+testing, and TypeScript/structural standing reviews found no P0, P1, or P2
+issues. No resource, provider, schema, public result, Personal repository,
+native command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:
