@@ -1,7 +1,5 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-
 import {
-  type AgentPluginPayload,
   type AgentPluginReleaseInput,
   type ContentAuthority,
   ContentAuthoritySchema,
@@ -15,6 +13,7 @@ import {
   type RepositoryIdentity,
   RepositoryIdentitySchema,
 } from "../../shared/release";
+import type { AgentPluginPayload } from "./agent-plugin-payload";
 
 export const MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH = 4_096;
 

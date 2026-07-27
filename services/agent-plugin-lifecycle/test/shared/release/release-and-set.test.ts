@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 
 import { ReleaseIssueSchema } from "../../../src/service/model/dto/release-issue";
 import {
+  createAgentPluginPayload,
+  verifyAgentPluginPayload,
+} from "../../../src/service/model/policy/agent-plugin-payload";
+import {
   canonicalSerializeAgentPluginArtifactBody,
   canonicalSerializeAgentPluginRelease,
   canonicalSerializeAgentPluginReleaseBody,
   canonicalSerializeAgentPluginReleaseSet,
   canonicalSerializeAgentPluginReleaseSetBody,
-  createAgentPluginPayload,
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
@@ -20,7 +23,6 @@ import {
   parseReleaseDigest,
   parseReleaseInputDigest,
   parseReleaseSetDigest,
-  verifyAgentPluginPayload,
   verifyAgentPluginRelease,
   verifyAgentPluginReleaseInput,
   verifyAgentPluginReleaseSet,

@@ -2,12 +2,15 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import {
+  type PayloadManifestEntry,
+  PayloadManifestEntrySchema,
+} from "../../../src/service/model/dto/agent-plugin-payload";
+import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
-  canonicalSerializeAgentPluginPayload,
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
-  createAgentPluginPayload,
   createAgentPluginReleaseInput,
   decodeAgentPluginRelease,
   decodeAgentPluginReleaseInput,
@@ -19,86 +22,14 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  type PayloadManifestEntry,
-  PayloadManifestEntrySchema,
-  payloadEntryBytes,
   ReleaseInputBodySchema,
   ReleaseInputEnvelopeSchema,
-  verifyAgentPluginPayload,
 } from "../../../src/service/shared/release";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
 const encoder = new TextEncoder();
 
 describe("canonical payload and release input", () => {
-  it("owns payload bytes, sorts entries, and emits exactly one trailing LF", () => {
-    const mutable = encoder.encode("owned\n");
-    const first = must(
-      createAgentPluginPayload([
-        { path: "z.txt", mode: 0o644, bytes: mutable },
-        { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
-      ])
-    );
-    const second = must(
-      createAgentPluginPayload([
-        { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
-        { path: "z.txt", mode: 0o644, bytes: encoder.encode("owned\n") },
-      ])
-    );
-    mutable.fill(0);
-
-    expect(first.payloadDigest).toBe(second.payloadDigest);
-    expect(first.entries.map((entry) => entry.path)).toEqual(["a.sh", "z.txt"]);
-    const owned = payloadEntryBytes(first.entries[1]!);
-    owned.fill(0);
-    expect(new TextDecoder().decode(payloadEntryBytes(first.entries[1]!))).toBe("owned\n");
-    const bytes = canonicalSerializeAgentPluginPayload(first);
-    expect(bytes.at(-1)).toBe(0x0a);
-    expect(bytes.at(-2)).not.toBe(0x0a);
-  });
-
-  it("changes payload identity for path, mode, or exact bytes", () => {
-    const base = must(
-      createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("x") }])
-    );
-    const path = must(
-      createAgentPluginPayload([{ path: "b", mode: 0o644, bytes: encoder.encode("x") }])
-    );
-    const mode = must(
-      createAgentPluginPayload([{ path: "a", mode: 0o755, bytes: encoder.encode("x") }])
-    );
-    const bytes = must(
-      createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("y") }])
-    );
-    expect(
-      new Set([base.payloadDigest, path.payloadDigest, mode.payloadDigest, bytes.payloadDigest])
-        .size
-    ).toBe(4);
-  });
-
-  it("rejects unsafe paths, duplicate paths, unknown fields, and manifest tampering", () => {
-    expect(
-      createAgentPluginPayload([{ path: "../escape", mode: 0o644, bytes: new Uint8Array() }]).ok
-    ).toBe(false);
-    expect(
-      createAgentPluginPayload([
-        { path: "same", mode: 0o644, bytes: new Uint8Array() },
-        { path: "same", mode: 0o644, bytes: new Uint8Array() },
-      ]).ok
-    ).toBe(false);
-
-    const fixture = productFixture();
-    const payloadWire = wire(canonicalSerializeAgentPluginPayload(fixture.alphaPayload));
-    payloadWire.extra = true;
-    expect(verifyAgentPluginPayload(payloadWire).ok).toBe(false);
-    delete payloadWire.extra;
-    payloadWire.entries[0].bytesBase64 = "eA==";
-    const verified = verifyAgentPluginPayload(payloadWire);
-    expect(verified.ok).toBe(false);
-    if (!verified.ok)
-      expect(verified.issues.map((entry) => entry.code)).toContain("PAYLOAD_DIGEST_MISMATCH");
-  });
-
   it("canonicalizes unordered declarations and covers every admitted declaration class", () => {
     const fixture = productFixture();
     const baseBody = releaseInputBody(fixture.alphaPayload, fixture.betaPayload);

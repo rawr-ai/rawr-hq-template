@@ -17,10 +17,11 @@ import type {
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
+import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
+import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
 import {
-  createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -626,35 +627,6 @@ function sameRefObservation(left: GitRefObservation, right: GitRefObservation): 
     left.objectFormat === right.objectFormat &&
     left.remoteUrls.length === right.remoteUrls.length &&
     left.remoteUrls.every((value, index) => value === right.remoteUrls[index])
-  );
-}
-
-function samePayloadManifest(
-  left: readonly Readonly<{
-    path: string;
-    mode: number;
-    byteLength: number;
-    contentDigest: string;
-  }>[],
-  right: readonly Readonly<{
-    path: string;
-    mode: number;
-    byteLength: number;
-    contentDigest: string;
-  }>[]
-): boolean {
-  return (
-    left.length === right.length &&
-    left.every((entry, index) => {
-      const other = right[index];
-      return (
-        other !== undefined &&
-        entry.path === other.path &&
-        entry.mode === other.mode &&
-        entry.byteLength === other.byteLength &&
-        entry.contentDigest === other.contentDigest
-      );
-    })
   );
 }
 

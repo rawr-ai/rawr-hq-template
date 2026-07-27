@@ -4,6 +4,7 @@ import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
+import { samePayloadManifest } from "../../model/policy/payload-manifest";
 import {
   prefixReleaseIssuePath,
   releaseIssue,
@@ -18,7 +19,6 @@ import {
   parseDistributionOwnershipIndex,
 } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
-import { payloadManifestValue } from "./payload";
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   type AgentPluginReleaseSetSchemaVersion,
@@ -724,12 +724,7 @@ function validateReleaseIdentity(
         )
       );
     }
-    if (
-      !sameCanonicalValue(
-        payloadManifestValue(declaration.payload.manifest),
-        payloadManifestValue(body.payloadManifest)
-      )
-    ) {
+    if (!samePayloadManifest(declaration.payload.manifest, body.payloadManifest)) {
       issues.push(
         releaseIssue(
           "PAYLOAD_MANIFEST_MISMATCH",

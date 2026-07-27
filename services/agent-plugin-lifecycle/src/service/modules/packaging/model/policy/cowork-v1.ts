@@ -3,12 +3,12 @@ import type {
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { payloadEntryBytes } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import {
   type AgentPluginRelease,
   contentDigest,
   parseReleaseRelativePath,
-  payloadEntryBytes,
   verifyCompleteReleaseSet,
 } from "#agent-plugin-lifecycle-service/shared/release/index";
 import type { PackageDigest } from "../dto/packaging-lifecycle";

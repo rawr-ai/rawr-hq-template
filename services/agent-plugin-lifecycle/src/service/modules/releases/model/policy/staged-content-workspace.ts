@@ -7,21 +7,22 @@ import type {
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
+import type { AgentPluginPayload } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
+import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
 import {
   addReleaseSetPayloadBytes,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
 } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
-  type AgentPluginPayload,
   type AgentPluginReleaseInput,
-  createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   type PluginId,
@@ -445,7 +446,7 @@ export function classifyStagedMaterializationObservation(
       }
       if (
         payloadResult.value.payloadDigest !== member.payload.payloadDigest ||
-        !sameManifest(payloadResult.value.manifest, member.payload.manifest)
+        !samePayloadManifest(payloadResult.value.manifest, member.payload.manifest)
       )
         return stagedIneligible(
           "PayloadMismatch",
@@ -652,25 +653,6 @@ function sameStagedIndexEntries(
         entry.mode === other.mode &&
         entry.objectId === other.objectId &&
         entry.stage === other.stage
-      );
-    })
-  );
-}
-
-function sameManifest(
-  left: readonly { path: string; mode: number; byteLength: number; contentDigest: string }[],
-  right: readonly { path: string; mode: number; byteLength: number; contentDigest: string }[]
-): boolean {
-  return (
-    left.length === right.length &&
-    left.every((entry, index) => {
-      const other = right[index];
-      return (
-        other !== undefined &&
-        entry.path === other.path &&
-        entry.mode === other.mode &&
-        entry.byteLength === other.byteLength &&
-        entry.contentDigest === other.contentDigest
       );
     })
   );

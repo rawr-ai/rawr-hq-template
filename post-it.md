@@ -6,6 +6,40 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Payload Meaning Has Direct Owners
+
+Agent-plugin payloads are inert service-wide release data used by root policy
+and the Releases, Packaging, and Providers modules. Their structure, manifest
+semantics, canonical encoding, and admitted construction are distinct
+meanings, but they belong to one service model rather than a transitional
+`shared` release face.
+
+The DTO owns the existing manifest TypeBox schema and branded in-memory types.
+Manifest policy owns parsing, ordering, derivation, duplicate reporting, and
+exact equality. Codec policy owns canonical JSON projection and bytes. Payload
+policy owns construction, verification, bounds, cloning, freezing, and trusted
+byte access. Consumers import those exact leaves directly; the old file,
+barrel exports, and repeated manifest comparators disappear.
+
+Full TypeBox payload admission is deliberately outside this checkpoint.
+Replacing the existing granular parser now would change diagnostic vocabulary
+unless another mapping layer duplicated structural authority. The ownership
+move therefore preserves the current schema, bytes, bounds, diagnostics, and
+digest behavior while exposing that later contract decision cleanly.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/agent-plugin-payload|the payload DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/payload-manifest|the manifest policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-payload-codec|the payload codec]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-payload|the payload policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+payload, manifest, bytes, bound, clone, order, schema, policy, codec, owner,
+direct, delete.
+
 ## 2026-07-27 - Canonical Text Ordering Is Service Policy
 
 Canonical UTF-8 text order is service-wide release meaning. It governs record

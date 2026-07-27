@@ -1,16 +1,4 @@
 export {
-  type AgentPluginPayload,
-  canonicalSerializeAgentPluginPayload,
-  canonicalSerializePayloadEntries,
-  createAgentPluginPayload,
-  type PayloadEntry,
-  type PayloadEntryInput,
-  type PayloadManifestEntry,
-  PayloadManifestEntrySchema,
-  payloadEntryBytes,
-  verifyAgentPluginPayload,
-} from "./payload";
-export {
   AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   type AgentPluginReleaseSchemaVersion,

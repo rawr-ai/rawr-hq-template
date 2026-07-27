@@ -5,6 +5,7 @@ import type {
   DerivedReleaseSelection,
   ReleaseDerivationFailure,
 } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
 import type {
   ProviderIssue,
   ProviderIssueCode,
@@ -289,17 +290,7 @@ function sameMembers(
         member.payloadDigest === other.payloadDigest &&
         member.releaseDigest === other.releaseDigest &&
         sameTextArray(member.aliases, other.aliases) &&
-        member.manifest.length === other.manifest.length &&
-        member.manifest.every((file, fileIndex) => {
-          const otherFile = other.manifest[fileIndex];
-          return (
-            otherFile !== undefined &&
-            file.path === otherFile.path &&
-            file.mode === otherFile.mode &&
-            file.byteLength === otherFile.byteLength &&
-            file.contentDigest === otherFile.contentDigest
-          );
-        })
+        samePayloadManifest(member.manifest, other.manifest)
       );
     })
   );

@@ -30,7 +30,9 @@
   mechanic supports canonical record checks. Concrete record TypeBox schemas
   remain with their owning DTOs. Canonical UTF-8 text ordering has one
   service-root policy owner shared by record construction, projection, and
-  packaging.
+  packaging. Agent-plugin payload structure, manifest semantics, canonical
+  encoding, and admitted construction have direct service-root DTO and policy
+  owners; modules consume those leaves without a `shared` payload face.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

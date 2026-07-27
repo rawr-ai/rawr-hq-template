@@ -1,6 +1,7 @@
 import { NativeMarketplaceSourceSchema } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
+import { PayloadManifestEntrySchema } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ContentAuthoritySchema,
@@ -12,7 +13,6 @@ import {
   type OwnershipIdentity,
   OwnershipIdentitySchema,
   PayloadDigestSchema,
-  PayloadManifestEntrySchema,
   PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
