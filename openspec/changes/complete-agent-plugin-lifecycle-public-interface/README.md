@@ -2027,6 +2027,28 @@ Habitat laws with zero findings. No TypeBox schema, digest implementation,
 `node:crypto` use, resource, provider, oRPC surface, Personal repository,
 native command, or live lifecycle state changed.
 
+The agent-plugin-payload ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2x]]. Payload DTO,
+manifest policy, canonical codec, and construction/verification policy now
+have direct service-root leaves. Root model, Releases, Packaging, Providers,
+transitional release records, and tests import the exact owner; the old
+`shared/release/payload.ts` file, its barrel exports, and repeated manifest
+comparators are deleted without a compatibility face.
+
+Owner-local tests preserve canonical bytes and payload identity, UTF-8 scalar
+ordering, cloning and deep freezing, bounded traversal, exact duplicate
+diagnostics, and field-exact manifest equality. Full TypeBox payload admission
+remains a separate contract decision because replacing granular parsing here
+would change the established diagnostic vocabulary. The complete lifecycle
+suite passes 317 cases across 36 files. Production and test TypeScript checks,
+service and repository Biome, strict OpenSpec validation, diff hygiene, and
+standing architecture/oRPC, behavior-first testing, and
+TypeScript/TypeBox/structural reviews pass without an unresolved P0, P1, P2,
+or P3 finding. The repository check passed 39 projects and 76 dependency tasks
+in 37.1 seconds, including all 17 enforced Habitat laws with zero findings. No
+digest implementation, resource, provider, router, oRPC surface, Personal
+repository, native command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

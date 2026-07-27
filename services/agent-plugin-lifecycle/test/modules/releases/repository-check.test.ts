@@ -11,6 +11,7 @@ import type {
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/content-workspace";
+import { payloadEntryBytes } from "../../../src/service/model/policy/agent-plugin-payload";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   addStagedObservationByteLimits,
@@ -27,7 +28,6 @@ import {
   parseGitTreeId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  payloadEntryBytes,
 } from "../../../src/service/shared/release";
 import { productFixture } from "../../shared/release/fixtures";
 import {

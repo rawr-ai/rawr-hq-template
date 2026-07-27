@@ -1,4 +1,5 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
+import type { AgentPluginPayload } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import {
   CanonicalAbsoluteLocatorSchema,
   QualifiedHeadRefSchema,
@@ -7,7 +8,6 @@ import {
   type SourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
-  type AgentPluginPayload,
   type AgentPluginReleaseInput,
   ContentAuthoritySchema,
   type GitCommitId,

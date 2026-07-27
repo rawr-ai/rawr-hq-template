@@ -1,0 +1,222 @@
+import { describe, expect, it } from "vitest";
+
+import type { PayloadManifestEntry } from "../../src/service/model/dto/agent-plugin-payload";
+import {
+  createAgentPluginPayload,
+  payloadEntryBytes,
+  verifyAgentPluginPayload,
+} from "../../src/service/model/policy/agent-plugin-payload";
+import {
+  canonicalSerializeAgentPluginPayload,
+  canonicalSerializePayloadEntries,
+} from "../../src/service/model/policy/agent-plugin-payload-codec";
+import { samePayloadManifest } from "../../src/service/model/policy/payload-manifest";
+import {
+  contentDigest,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+} from "../../src/service/shared/release/primitives";
+import { must, productFixture, wire } from "../shared/release/fixtures";
+
+const encoder = new TextEncoder();
+
+describe("agent-plugin payload", () => {
+  it("owns payload bytes, sorts entries, and emits exactly one trailing LF", () => {
+    const mutable = encoder.encode("owned\n");
+    const first = must(
+      createAgentPluginPayload([
+        { path: "z.txt", mode: 0o644, bytes: mutable },
+        { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
+      ])
+    );
+    const second = must(
+      createAgentPluginPayload([
+        { path: "a.sh", mode: 0o755, bytes: encoder.encode("a\n") },
+        { path: "z.txt", mode: 0o644, bytes: encoder.encode("owned\n") },
+      ])
+    );
+    mutable.fill(0);
+
+    expect(first.payloadDigest).toBe(second.payloadDigest);
+    expect(first.entries.map((entry) => entry.path)).toEqual(["a.sh", "z.txt"]);
+    const owned = payloadEntryBytes(first.entries[1]!);
+    owned.fill(0);
+    expect(new TextDecoder().decode(payloadEntryBytes(first.entries[1]!))).toBe("owned\n");
+    const bytes = canonicalSerializeAgentPluginPayload(first);
+    expect(bytes.at(-1)).toBe(0x0a);
+    expect(bytes.at(-2)).not.toBe(0x0a);
+  });
+
+  it("changes payload identity for path, mode, or exact bytes", () => {
+    const base = must(
+      createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("x") }])
+    );
+    const path = must(
+      createAgentPluginPayload([{ path: "b", mode: 0o644, bytes: encoder.encode("x") }])
+    );
+    const mode = must(
+      createAgentPluginPayload([{ path: "a", mode: 0o755, bytes: encoder.encode("x") }])
+    );
+    const bytes = must(
+      createAgentPluginPayload([{ path: "a", mode: 0o644, bytes: encoder.encode("y") }])
+    );
+    expect(
+      new Set([base.payloadDigest, path.payloadDigest, mode.payloadDigest, bytes.payloadDigest])
+        .size
+    ).toBe(4);
+  });
+
+  it("rejects unsafe paths, duplicate paths, unknown fields, and manifest tampering", () => {
+    expect(
+      createAgentPluginPayload([{ path: "../escape", mode: 0o644, bytes: new Uint8Array() }]).ok
+    ).toBe(false);
+    expect(
+      createAgentPluginPayload([
+        { path: "same", mode: 0o644, bytes: new Uint8Array() },
+        { path: "same", mode: 0o644, bytes: new Uint8Array() },
+      ]).ok
+    ).toBe(false);
+
+    const fixture = productFixture();
+    const payloadWire = wire(canonicalSerializeAgentPluginPayload(fixture.alphaPayload));
+    payloadWire.extra = true;
+    expect(verifyAgentPluginPayload(payloadWire).ok).toBe(false);
+    delete payloadWire.extra;
+    payloadWire.entries[0].bytesBase64 = "eA==";
+    const verified = verifyAgentPluginPayload(payloadWire);
+    expect(verified.ok).toBe(false);
+    if (!verified.ok)
+      expect(verified.issues.map((entry) => entry.code)).toContain("PAYLOAD_DIGEST_MISMATCH");
+  });
+
+  it("compares ordered manifest fields exactly without mutating either input", () => {
+    const base = must(
+      createAgentPluginPayload([
+        { path: "a", mode: 0o644, bytes: encoder.encode("x") },
+        { path: "b", mode: 0o755, bytes: encoder.encode("yy") },
+      ])
+    ).manifest;
+    const alternatePath = must(
+      createAgentPluginPayload([{ path: "c", mode: 0o644, bytes: encoder.encode("x") }])
+    ).manifest[0]!.path;
+    const withFirst = (patch: Partial<PayloadManifestEntry>): readonly PayloadManifestEntry[] =>
+      Object.freeze([Object.freeze({ ...base[0]!, ...patch }), base[1]!]);
+    const matrix: ReadonlyArray<
+      readonly [name: string, candidate: readonly PayloadManifestEntry[], equivalent: boolean]
+    > = [
+      ["equal", Object.freeze(base.map((entry) => Object.freeze({ ...entry }))), true],
+      ["length", Object.freeze(base.slice(0, 1)), false],
+      ["order", Object.freeze([...base].reverse()), false],
+      ["path", withFirst({ path: alternatePath }), false],
+      ["mode", withFirst({ mode: 0o755 }), false],
+      ["byteLength", withFirst({ byteLength: base[0]!.byteLength + 1 }), false],
+      [
+        "contentDigest",
+        withFirst({ contentDigest: contentDigest(encoder.encode("changed")) }),
+        false,
+      ],
+    ];
+    const snapshots = matrix.map(([, candidate]) => JSON.stringify(candidate));
+
+    for (const [name, candidate, equivalent] of matrix) {
+      expect(samePayloadManifest(base, candidate), name).toBe(equivalent);
+      expect(samePayloadManifest(candidate, base), `${name} reverse`).toBe(equivalent);
+    }
+    expect(matrix.map(([, candidate]) => JSON.stringify(candidate))).toEqual(snapshots);
+  });
+
+  it("fixes canonical UTF-8 scalar ordering, bytes, identity, and immutable ownership", () => {
+    const privateUseBytes = encoder.encode("A\n");
+    const supplementaryBytes = encoder.encode("B\n");
+    const payload = must(
+      createAgentPluginPayload([
+        { path: "\u{10000}/b.sh", mode: 0o755, bytes: supplementaryBytes },
+        { path: "\uE000/a.txt", mode: 0o644, bytes: privateUseBytes },
+      ])
+    );
+    privateUseBytes.fill(0);
+    supplementaryBytes.fill(0);
+
+    const expectedEntryPreimage = encoder.encode(
+      '[{"path":"\uE000/a.txt","mode":420,"bytesBase64":"QQo="},{"path":"\u{10000}/b.sh","mode":493,"bytesBase64":"Qgo="}]\n'
+    );
+    const expectedPayloadBytes = encoder.encode(
+      '{"protocolVersion":1,"manifest":[' +
+        '{"path":"\uE000/a.txt","mode":420,"byteLength":2,"contentDigest":"sha256_06f961b802bc46ee168555f066d28f4f0e9afdf3f88174c1ee6f9de004fc30a0"},' +
+        '{"path":"\u{10000}/b.sh","mode":493,"byteLength":2,"contentDigest":"sha256_c0cde77fa8fef97d476c10aad3d2d54fcc2f336140d073651c2dcccf1e379fd6"}' +
+        '],"entries":[' +
+        '{"path":"\uE000/a.txt","mode":420,"bytesBase64":"QQo="},' +
+        '{"path":"\u{10000}/b.sh","mode":493,"bytesBase64":"Qgo="}' +
+        '],"payloadDigest":"pd1_b450dd7709a5a683c8c5159d7c2c11ba0e60ff96c3cf33d5bdecfc30076396ce"}\n'
+    );
+
+    expect(payload.entries.map(({ path }) => path)).toEqual(["\uE000/a.txt", "\u{10000}/b.sh"]);
+    expect(canonicalSerializePayloadEntries(payload.entries)).toEqual(expectedEntryPreimage);
+    expect(payload.payloadDigest).toBe(
+      "pd1_b450dd7709a5a683c8c5159d7c2c11ba0e60ff96c3cf33d5bdecfc30076396ce"
+    );
+    expect(canonicalSerializeAgentPluginPayload(payload)).toEqual(expectedPayloadBytes);
+
+    expect(Object.isFrozen(payload)).toBe(true);
+    expect(Object.isFrozen(payload.entries)).toBe(true);
+    expect(Object.isFrozen(payload.manifest)).toBe(true);
+    expect(payload.entries.every((entry) => Object.isFrozen(entry))).toBe(true);
+    expect(payload.manifest.every((entry) => Object.isFrozen(entry))).toBe(true);
+
+    const decoded = payloadEntryBytes(payload.entries[0]!);
+    expect(decoded).toEqual(Uint8Array.of(0x41, 0x0a));
+    decoded.fill(0);
+    expect(payloadEntryBytes(payload.entries[0]!)).toEqual(Uint8Array.of(0x41, 0x0a));
+    expect(payloadEntryBytes(payload.entries[1]!)).toEqual(Uint8Array.of(0x42, 0x0a));
+  });
+
+  it("bounds traversal before excluded getters and reports every adjacent duplicate", () => {
+    const overLimit = Array.from({ length: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1 }, (_, index) => ({
+      path: `files/${index}`,
+      mode: 0o644,
+      bytes: new Uint8Array(),
+    }));
+    let excludedRead = false;
+    Object.defineProperty(overLimit, MAX_PAYLOAD_ENTRIES_PER_MEMBER, {
+      get() {
+        excludedRead = true;
+        throw new Error("excluded payload entry was read");
+      },
+    });
+
+    const bounded = createAgentPluginPayload(overLimit);
+    expect(excludedRead).toBe(false);
+    expect(bounded).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "COUNT_LIMIT_EXCEEDED",
+          path: "payload.entries",
+          message: `Array exceeds protocol limit ${MAX_PAYLOAD_ENTRIES_PER_MEMBER}`,
+          expected: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+          actual: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1,
+        },
+      ],
+    });
+
+    const duplicates = createAgentPluginPayload([
+      { path: "same", mode: 0o644, bytes: new Uint8Array() },
+      { path: "same", mode: 0o644, bytes: new Uint8Array() },
+      { path: "same", mode: 0o644, bytes: new Uint8Array() },
+    ]);
+    expect(duplicates).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "DUPLICATE_PAYLOAD_PATH",
+          path: "payload.entries",
+          message: "Duplicate payload path: same",
+        },
+        {
+          code: "DUPLICATE_PAYLOAD_PATH",
+          path: "payload.entries",
+          message: "Duplicate payload path: same",
+        },
+      ],
+    });
+  });
+});

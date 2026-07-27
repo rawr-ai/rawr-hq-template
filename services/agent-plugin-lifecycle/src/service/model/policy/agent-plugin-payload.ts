@@ -1,71 +1,38 @@
-import { ReadonlyObject, type Static, Type } from "typebox";
-
-import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
-import type { ReleaseIssue } from "../../model/dto/release-issue";
-import type { ReleaseResult } from "../../model/dto/release-result";
-import { decodeBase64, encodeBase64 } from "../../model/policy/canonical-base64";
-import { canonicalJsonLine } from "../../model/policy/canonical-json";
-import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
-import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
-import { asNonEmpty, failure, success } from "../../model/policy/release-result";
-
-import { collect, isExactRecord, parseBoundedArray, parseInteger } from "./parse";
+import { collect, isExactRecord, parseBoundedArray } from "../../shared/release/parse";
 import {
-  type ContentDigest,
-  ContentDigestSchema,
   contentDigest,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  type NormalizedFileMode,
-  NormalizedFileModeSchema,
   PAYLOAD_PROTOCOL_VERSION,
   type PayloadDigest,
-  type PayloadProtocolVersion,
-  parseContentDigest,
   parseNormalizedFileMode,
   parsePayloadDigest,
   parseReleaseRelativePath,
   payloadDigest,
-  type ReleaseRelativePath,
-  ReleaseRelativePathSchema,
-} from "./primitives";
+} from "../../shared/release/primitives";
+import type {
+  AgentPluginPayload,
+  PayloadEntry,
+  PayloadManifestEntry,
+} from "../dto/agent-plugin-payload";
+import type { ReleaseIssue } from "../dto/release-issue";
+import type { ReleaseResult } from "../dto/release-result";
+import { canonicalSerializePayloadEntries } from "./agent-plugin-payload-codec";
+import { decodeBase64, encodeBase64 } from "./canonical-base64";
+import { compareCanonicalText } from "./canonical-text-ordering";
+import {
+  manifestFromPayloadEntries,
+  parsePayloadManifest,
+  reportDuplicatePayloadPaths,
+  samePayloadManifest,
+} from "./payload-manifest";
+import { releaseIssue, sortReleaseIssues } from "./release-issue";
+import { asNonEmpty, failure, success } from "./release-result";
 
-declare const agentPluginPayloadBrand: unique symbol;
-
-export const PayloadManifestEntrySchema = ReadonlyObject(
-  Type.Object({
-    path: ReleaseRelativePathSchema,
-    mode: NormalizedFileModeSchema,
-    byteLength: Type.Integer({ minimum: 0, maximum: MAX_PAYLOAD_BYTES_PER_MEMBER }),
-    contentDigest: ContentDigestSchema,
-  }),
-  { additionalProperties: false }
-);
-
-export interface PayloadEntryInput {
-  readonly path: unknown;
-  readonly mode: unknown;
-  readonly bytes: unknown;
-}
-
-export interface PayloadEntry {
-  readonly path: ReleaseRelativePath;
-  readonly mode: NormalizedFileMode;
-  readonly bytesBase64: string;
-  readonly byteLength: number;
-  readonly contentDigest: ContentDigest;
-}
-
-export type PayloadManifestEntry = Static<typeof PayloadManifestEntrySchema>;
-
-export type AgentPluginPayload = Readonly<{
-  protocolVersion: PayloadProtocolVersion;
-  manifest: readonly PayloadManifestEntry[];
-  entries: readonly PayloadEntry[];
-  payloadDigest: PayloadDigest;
-  [agentPluginPayloadBrand]: "AgentPluginPayload";
-}>;
-
+/**
+ * Owns caller-supplied payload bytes, derives canonical entries and identity,
+ * and returns every construction diagnostic in stable order.
+ */
 export function createAgentPluginPayload(
   input: unknown
 ): ReleaseResult<AgentPluginPayload, ReleaseIssue> {
@@ -107,6 +74,10 @@ export function createAgentPluginPayload(
   return finishPayload(entries, totalBytes, issues);
 }
 
+/**
+ * Verifies an untrusted payload wire value while preserving field-level
+ * diagnostics, canonical ordering, bounds, and digest semantics.
+ */
 export function verifyAgentPluginPayload(
   input: unknown,
   path = "payload"
@@ -159,7 +130,7 @@ export function verifyAgentPluginPayload(
   if (
     entries !== undefined &&
     manifest !== undefined &&
-    !sameManifest(manifest, manifestFromEntries(entries))
+    !samePayloadManifest(manifest, manifestFromPayloadEntries(entries))
   ) {
     issues.push(
       releaseIssue(
@@ -196,97 +167,11 @@ export function verifyAgentPluginPayload(
   return success(freezePayload(entries, manifest, claimedDigest));
 }
 
-export function canonicalSerializePayloadEntries(entries: readonly PayloadEntry[]): Uint8Array {
-  return canonicalJsonLine(payloadEntriesValue(entries));
-}
-
-export function canonicalSerializeAgentPluginPayload(payload: AgentPluginPayload): Uint8Array {
-  return canonicalJsonLine(payloadValue(payload));
-}
-
+/** Decodes one trusted entry into a fresh caller-owned byte array. */
 export function payloadEntryBytes(entry: PayloadEntry): Uint8Array {
   const decoded = decodeBase64(entry.bytesBase64, "payload.entry.bytesBase64");
   if (!decoded.ok) throw new Error("Trusted payload entry contains invalid base64");
   return new Uint8Array(decoded.value);
-}
-
-export function payloadManifestValue(
-  manifest: readonly PayloadManifestEntry[]
-): CanonicalJsonValue {
-  return manifest.map((entry) => ({
-    path: entry.path,
-    mode: entry.mode,
-    byteLength: entry.byteLength,
-    contentDigest: entry.contentDigest,
-  }));
-}
-
-export function payloadEntriesValue(entries: readonly PayloadEntry[]): CanonicalJsonValue {
-  return entries.map((entry) => ({
-    path: entry.path,
-    mode: entry.mode,
-    bytesBase64: entry.bytesBase64,
-  }));
-}
-
-export function payloadValue(payload: AgentPluginPayload): CanonicalJsonValue {
-  return {
-    protocolVersion: payload.protocolVersion,
-    manifest: payloadManifestValue(payload.manifest),
-    entries: payloadEntriesValue(payload.entries),
-    payloadDigest: payload.payloadDigest,
-  };
-}
-
-export function parsePayloadManifest(
-  input: unknown,
-  path: string,
-  issues: ReleaseIssue[]
-): readonly PayloadManifestEntry[] | undefined {
-  const values = parseBoundedArray(input, path, MAX_PAYLOAD_ENTRIES_PER_MEMBER, issues);
-  if (values === undefined) return undefined;
-  const manifest: PayloadManifestEntry[] = [];
-  values.forEach((candidate, index) => {
-    const entryPath = `${path}[${index}]`;
-    if (
-      !isExactRecord(candidate, ["byteLength", "contentDigest", "mode", "path"], entryPath, issues)
-    )
-      return;
-    const relativePath = collect(
-      parseReleaseRelativePath(candidate.path, `${entryPath}.path`),
-      issues
-    );
-    const mode = collect(parseNormalizedFileMode(candidate.mode, `${entryPath}.mode`), issues);
-    const byteLength = parseInteger(candidate.byteLength, `${entryPath}.byteLength`, issues);
-    const digest = collect(
-      parseContentDigest(candidate.contentDigest, `${entryPath}.contentDigest`),
-      issues
-    );
-    if (byteLength !== undefined && (byteLength < 0 || byteLength > MAX_PAYLOAD_BYTES_PER_MEMBER)) {
-      issues.push(
-        releaseIssue(
-          "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-          `${entryPath}.byteLength`,
-          "Entry byte length exceeds payload bound",
-          {
-            expected: MAX_PAYLOAD_BYTES_PER_MEMBER,
-            actual: byteLength,
-          }
-        )
-      );
-    }
-    if (
-      relativePath !== undefined &&
-      mode !== undefined &&
-      byteLength !== undefined &&
-      digest !== undefined
-    ) {
-      manifest.push(Object.freeze({ path: relativePath, mode, byteLength, contentDigest: digest }));
-    }
-  });
-  manifest.sort((left, right) => compareCanonicalText(left.path, right.path));
-  reportDuplicatePaths(manifest, path, issues);
-  return Object.freeze(manifest);
 }
 
 function parseWireEntries(
@@ -319,7 +204,7 @@ function parseWireEntries(
     }
   });
   entries.sort((left, right) => compareCanonicalText(left.path, right.path));
-  reportDuplicatePaths(entries, path, issues);
+  reportDuplicatePayloadPaths(entries, path, issues);
   return Object.freeze(entries);
 }
 
@@ -329,7 +214,7 @@ function finishPayload(
   issues: ReleaseIssue[]
 ): ReleaseResult<AgentPluginPayload, ReleaseIssue> {
   entries.sort((left, right) => compareCanonicalText(left.path, right.path));
-  reportDuplicatePaths(entries, "payload.entries", issues);
+  reportDuplicatePayloadPaths(entries, "payload.entries", issues);
   if (totalBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
     issues.push(
       releaseIssue(
@@ -346,7 +231,7 @@ function finishPayload(
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
   const frozenEntries = Object.freeze(entries);
-  const manifest = manifestFromEntries(frozenEntries);
+  const manifest = manifestFromPayloadEntries(frozenEntries);
   const digest = payloadDigest(canonicalSerializePayloadEntries(frozenEntries));
   return success(freezePayload(frozenEntries, manifest, digest));
 }
@@ -362,52 +247,4 @@ function freezePayload(
     entries: Object.freeze([...entries]),
     payloadDigest: digest,
   }) as AgentPluginPayload;
-}
-
-function manifestFromEntries(entries: readonly PayloadEntry[]): readonly PayloadManifestEntry[] {
-  return Object.freeze(
-    entries.map((entry) =>
-      Object.freeze({
-        path: entry.path,
-        mode: entry.mode,
-        byteLength: entry.byteLength,
-        contentDigest: entry.contentDigest,
-      })
-    )
-  );
-}
-
-function sameManifest(
-  left: readonly PayloadManifestEntry[],
-  right: readonly PayloadManifestEntry[]
-): boolean {
-  if (left.length !== right.length) return false;
-  return left.every((entry, index) => {
-    const other = right[index];
-    return (
-      other !== undefined &&
-      entry.path === other.path &&
-      entry.mode === other.mode &&
-      entry.byteLength === other.byteLength &&
-      entry.contentDigest === other.contentDigest
-    );
-  });
-}
-
-function reportDuplicatePaths(
-  entries: readonly { readonly path: ReleaseRelativePath }[],
-  path: string,
-  issues: ReleaseIssue[]
-): void {
-  for (let index = 1; index < entries.length; index += 1) {
-    if (entries[index - 1]!.path === entries[index]!.path) {
-      issues.push(
-        releaseIssue(
-          "DUPLICATE_PAYLOAD_PATH",
-          path,
-          `Duplicate payload path: ${entries[index]!.path}`
-        )
-      );
-    }
-  }
 }

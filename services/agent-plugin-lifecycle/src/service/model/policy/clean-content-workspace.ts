@@ -16,9 +16,7 @@ import type {
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
-  type AgentPluginPayload,
   type AgentPluginReleaseInput,
-  createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -30,9 +28,12 @@ import {
   parseRepositoryIdentity,
   type ReleaseRelativePath,
 } from "../../shared/release";
+import type { AgentPluginPayload } from "../dto/agent-plugin-payload";
 import { equalBytes } from "../helpers/byte-equality";
+import { createAgentPluginPayload } from "./agent-plugin-payload";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
+import { samePayloadManifest } from "./payload-manifest";
 import {
   addReleaseSetPayloadBytes,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
@@ -362,7 +363,7 @@ export function classifyCleanPayloads(
     }
     if (
       payloadResult.value.payloadDigest !== declaredPayload.expected.payloadDigest ||
-      !sameManifest(payloadResult.value.manifest, declaredPayload.expected.manifest)
+      !samePayloadManifest(payloadResult.value.manifest, declaredPayload.expected.manifest)
     ) {
       return declined(
         ineligible("PayloadMismatch", `payload declaration differs for ${declaredPayload.pluginId}`)
@@ -761,25 +762,6 @@ function decodeNulList(bytes: Uint8Array): readonly string[] {
 
 function encodeNulList(values: readonly string[]): Uint8Array {
   return values.length === 0 ? new Uint8Array() : encoder.encode(`${values.join("\0")}\0`);
-}
-
-function sameManifest(
-  left: readonly { path: string; mode: number; byteLength: number; contentDigest: string }[],
-  right: readonly { path: string; mode: number; byteLength: number; contentDigest: string }[]
-): boolean {
-  return (
-    left.length === right.length &&
-    left.every((entry, index) => {
-      const other = right[index];
-      return (
-        other !== undefined &&
-        entry.path === other.path &&
-        entry.mode === other.mode &&
-        entry.byteLength === other.byteLength &&
-        entry.contentDigest === other.contentDigest
-      );
-    })
-  );
 }
 
 function preflightAggregatePayloadBytes(releaseInput: AgentPluginReleaseInput): string | undefined {

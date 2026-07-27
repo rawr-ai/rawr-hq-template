@@ -3,10 +3,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import type { Client } from "../../src/client";
+import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
 import {
   type ContentAuthority,
   canonicalSerializeAgentPluginReleaseInput,
-  createAgentPluginPayload,
   createAgentPluginReleaseInput,
   type GitCommitId,
   type GitTreeId,

@@ -1,11 +1,11 @@
+import type { AgentPluginPayload } from "../../../src/service/model/dto/agent-plugin-payload";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
+import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import {
-  type AgentPluginPayload,
   type AgentPluginRelease,
   type AgentPluginReleaseInput,
   type AgentPluginReleaseSet,
   contentDigest,
-  createAgentPluginPayload,
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,

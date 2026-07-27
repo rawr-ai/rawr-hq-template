@@ -1,24 +1,26 @@
+import type {
+  AgentPluginPayload,
+  PayloadEntry,
+  PayloadManifestEntry,
+} from "../../model/dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
+import { verifyAgentPluginPayload } from "../../model/policy/agent-plugin-payload";
+import { payloadEntriesValue, payloadValue } from "../../model/policy/agent-plugin-payload-codec";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
+import {
+  parsePayloadManifest,
+  payloadManifestValue,
+  samePayloadManifest,
+} from "../../model/policy/payload-manifest";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
 import { ownershipClaimsFor } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
-import {
-  type AgentPluginPayload,
-  type PayloadEntry,
-  type PayloadManifestEntry,
-  parsePayloadManifest,
-  payloadEntriesValue,
-  payloadManifestValue,
-  payloadValue,
-  verifyAgentPluginPayload,
-} from "./payload";
 import {
   AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
   type AgentPluginReleaseSchemaVersion,
@@ -150,7 +152,7 @@ export function createAgentPluginRelease(
         )
       );
     }
-    if (!sameManifest(member.payload.manifest, payload.manifest)) {
+    if (!samePayloadManifest(member.payload.manifest, payload.manifest)) {
       issues.push(
         releaseIssue(
           "PAYLOAD_MANIFEST_MISMATCH",
@@ -475,7 +477,7 @@ function parseArtifactBody(
   if (
     body !== undefined &&
     storageManifest !== undefined &&
-    !sameManifest(body.payloadManifest, storageManifest)
+    !samePayloadManifest(body.payloadManifest, storageManifest)
   ) {
     issues.push(
       releaseIssue(
@@ -726,23 +728,6 @@ function freezeRelease(
     artifactDigest: ad,
     artifactBody,
   }) as AgentPluginRelease;
-}
-
-function sameManifest(
-  left: readonly PayloadManifestEntry[],
-  right: readonly PayloadManifestEntry[]
-): boolean {
-  if (left.length !== right.length) return false;
-  return left.every((entry, index) => {
-    const other = right[index];
-    return (
-      other !== undefined &&
-      entry.path === other.path &&
-      entry.mode === other.mode &&
-      entry.byteLength === other.byteLength &&
-      entry.contentDigest === other.contentDigest
-    );
-  });
 }
 
 // Keep the input projection explicit so branded construction never depends on private symbol fields.

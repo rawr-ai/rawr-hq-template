@@ -18,12 +18,14 @@ import type {
 import { Effect } from "effect";
 
 import type { Client } from "../../../src/client";
+import type { AgentPluginPayload } from "../../../src/service/model/dto/agent-plugin-payload";
 import {
   CURRENT_MAIN_V3_CANONICAL_REF,
   CURRENT_MAIN_V3_RECORD_PATH,
   CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
 } from "../../../src/service/model/dto/current-main-record";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
+import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import type {
   ProviderStatusRequest,
@@ -32,11 +34,10 @@ import type {
   ProviderTestRequest,
 } from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
 import type { SelectedContent } from "../../../src/service/modules/providers/model/dto/selected-content";
-import type { AgentPluginPayload, PluginId } from "../../../src/service/shared/release";
+import type { PluginId } from "../../../src/service/shared/release";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
-  createAgentPluginPayload,
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,

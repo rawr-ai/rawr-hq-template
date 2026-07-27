@@ -969,6 +969,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   transitional release consumers; delete the old primitive/barrel export and
   duplicate Cowork comparator without an alias, facade, schema, resource,
   provider, digest, runtime, or public-contract change.
+- [x] 5.7e2x Give service-wide agent-plugin payload structure, manifest
+  semantics, canonical encoding, and admitted construction direct root-model
+  owners. Move the existing manifest TypeBox schema and granular admission
+  unchanged; rewire root, module, transitional release, and test consumers;
+  consolidate exact manifest comparison; and delete the old
+  `shared/release/payload.ts` file and barrel exports without an alias, facade,
+  schema-admission redesign, digest, resource, provider, runtime, oRPC, or
+  public-contract change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -1,5 +1,5 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import { type AgentPluginPayload, type AgentPluginReleaseInput } from "../../shared/release";
+import type { AgentPluginReleaseInput } from "../../shared/release";
 import {
   type GitCommitId,
   type GitTreeId,
@@ -10,6 +10,7 @@ import {
 } from "../../shared/release/primitives";
 import type { AgentPluginRelease } from "../../shared/release/release";
 import type { AgentPluginReleaseSet } from "../../shared/release/release-set";
+import type { AgentPluginPayload } from "./agent-plugin-payload";
 import { NonEmptyReadonlyArray } from "./structural";
 
 /**
