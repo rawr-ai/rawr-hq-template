@@ -6,9 +6,9 @@
  * handlers can decide caller-actionable boundary errors explicitly.
  */
 import type { Sql } from "@rawr/hq-sdk";
+import type { Assignment } from "#example-todo-service/model/dto/assignment";
 import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
 import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
-import type { Assignment } from "./schemas";
 
 export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
   return {

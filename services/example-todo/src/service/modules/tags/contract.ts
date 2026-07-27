@@ -12,8 +12,8 @@
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
+import { TagSchema } from "#example-todo-service/model/dto/tag";
 import { ocBase } from "../../base";
-import { TagSchema } from "./schemas";
 
 const ReadOnlyModeData = schema(
   Type.Object(

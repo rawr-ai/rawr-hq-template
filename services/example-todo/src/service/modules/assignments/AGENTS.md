@@ -12,7 +12,9 @@
 ## Boundaries
 
 - Assignments owns relation uniqueness and the configured per-task limit; task
-  and tag entity creation remain with their modules.
+  and tag entity creation remain with their modules. The inert assignment,
+  task, and tag record schemas belong to the service model because the
+  composite contract and persistence share them.
 - Cross-entity reads use admitted repositories through module context rather
   than invoking sibling operation implementations.
 - Identifier generation enters through service context; assignment policy
@@ -44,6 +46,7 @@
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
+- [[../../model/dto/assignment|Assignment record DTO]]
 - [Tasks module](../tasks/AGENTS.md)
 - [Tags module](../tags/AGENTS.md)
 

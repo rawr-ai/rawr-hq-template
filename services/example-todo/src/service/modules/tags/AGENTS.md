@@ -10,8 +10,10 @@
 
 ## Boundaries
 
-- Tags owns label identity, display color, uniqueness, and persistence; the
-  relation between a tag and a task belongs to assignments.
+- Tags owns label creation/listing policy, display-color normalization,
+  uniqueness, and declared failures. The inert tag record schema belongs to
+  the service model because persistence and Assignments share it; the relation
+  between a tag and a task belongs to Assignments.
 - Read-only policy is enforced at the service boundary, while database,
   identifier, logging, and analytics mechanics remain host-supplied.
 
@@ -40,6 +42,7 @@
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
+- [[../../model/dto/tag|Tag record DTO]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

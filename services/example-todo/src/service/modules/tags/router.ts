@@ -16,10 +16,10 @@
  * middleware.
  */
 
+import type { Tag } from "#example-todo-service/model/dto/tag";
 import { admitGeneratedIdentifier } from "#example-todo-service/model/policy/identifier";
 import { createProcedureAnalytics, createProcedureObservability } from "./middleware";
 import { module } from "./module";
-import { type Tag } from "./schemas";
 
 /**
  * SECTION: Module Procedure Implementations (Always Present)

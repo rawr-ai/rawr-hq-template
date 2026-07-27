@@ -1,18 +1,16 @@
 /**
- * @fileoverview Tag entity schema and inferred type.
+ * @fileoverview Canonical tag record shared across the Todo capability suite.
  *
  * @remarks
- * Keep this as the canonical shape for tag records in this domain module. Procedure contracts may be
- * more specific in input form but should resolve to this output entity shape.
- *
- * @agents
- * If tag semantics change (for example color format rules), update this schema
- * and the procedures that accept/normalize input accordingly.
+ * Tags owns tag operations and policy. The service root owns this inert record
+ * vocabulary because tag records cross the Tags, Assignments, and persistence
+ * boundaries without transferring operation ownership.
  */
 import { type Static, Type } from "typebox";
-import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
-import { WorkspaceIdSchema } from "#example-todo-service/model/dto/workspace-id";
+import { TodoIdentifierSchema } from "./identifier";
+import { WorkspaceIdSchema } from "./workspace-id";
 
+/** Structural authority for a persisted tag record. */
 export const TagSchema = Type.Object(
   {
     id: TodoIdentifierSchema,
@@ -37,4 +35,5 @@ export const TagSchema = Type.Object(
   }
 );
 
+/** Tag record type generated from the canonical TypeBox schema. */
 export type Tag = Static<typeof TagSchema>;
