@@ -3,10 +3,11 @@ import type {
   MaterializedContentTreeEntry,
 } from "@rawr/resource-content-workspace";
 import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
+import type { ContentDigest } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
+import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
-import { contentDigest } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,
@@ -313,7 +314,10 @@ function cloneEntries(
   );
 }
 
-function withContentDigest(binding: VendorRecordBinding, digest: string): VendorRecordBinding {
+function withContentDigest(
+  binding: VendorRecordBinding,
+  digest: ContentDigest
+): VendorRecordBinding {
   return Object.freeze({ id: binding.id, protocol: binding.protocol, contentDigest: digest });
 }
 

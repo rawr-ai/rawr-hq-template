@@ -8,6 +8,7 @@ import type {
 } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
+import { contentDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
   parsePluginId,
@@ -19,7 +20,6 @@ import {
   decodeAgentPluginReleaseInput,
 } from "../../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
-import { contentDigest } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

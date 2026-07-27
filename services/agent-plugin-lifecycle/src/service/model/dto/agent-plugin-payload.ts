@@ -1,6 +1,6 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import { ContentDigestSchema, PayloadDigestSchema } from "../../shared/release/primitives";
+import { ContentDigestSchema, PayloadDigestSchema } from "./release-digest";
 import { ReleaseRelativePathSchema } from "./release-identity";
 
 declare const agentPluginPayloadBrand: unique symbol;

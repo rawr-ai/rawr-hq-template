@@ -1,15 +1,14 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
-
-import {
-  ReleaseDigestSchema,
-  ReleaseInputDigestSchema,
-  ReleaseSetDigestSchema,
-} from "../../shared/release/primitives";
 import { BUILDER_PROTOCOL_VERSION } from "./agent-plugin-release";
 import {
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
 } from "./distribution-ownership";
+import {
+  ReleaseDigestSchema,
+  ReleaseInputDigestSchema,
+  ReleaseSetDigestSchema,
+} from "./release-digest";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,

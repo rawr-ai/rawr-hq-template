@@ -2,16 +2,16 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
+  ReleaseDigestSchema,
+  ReleaseSetDigestSchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
   RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { isCanonicalAbsolutePath } from "#agent-plugin-lifecycle-service/model/dto/structural";
-import {
-  ReleaseDigestSchema,
-  ReleaseSetDigestSchema,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 /** Identifies the only package format accepted and emitted by this module. */
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;

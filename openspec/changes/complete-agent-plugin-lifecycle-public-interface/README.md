@@ -1387,7 +1387,7 @@ removal unless the canonical path is a non-symlink directory directly under
 the canonical temporary parent with the exact acceptance prefix.
 
 The CLI declares Bun `>=1.3.14` for its entrypoint and Node
-`^20.17.0 || >=22.9.0` for the bundled npm `11.9.0` used by native extension
+`^20.19.0 || >=22.9.0` for the bundled npm `11.9.0` used by native extension
 installation. Task 3 re-derives these requirements from the packed closure.
 The stateful target is uncached and composes the cached source/built ownership
 oracle with the Hello manifest owner. Its behavior case completes in 4.6
@@ -2307,7 +2307,7 @@ P0, P1, P2, or P3 finding. Graphite PR
 checkpoint on canonical `main` at
 `753922936e10cdbb93d21c46db4d4d3719c8308b`.
 
-The next bounded checkpoint is
+The bounded checkpoint is
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e9b]]. It gives
 service-wide release identities and release-relative paths one direct TypeBox
 DTO owner and one direct diagnostic-admission policy owner, then rewires
@@ -2347,7 +2347,45 @@ OpenSpec, Biome, Oclif source/compiled command parity, stale-import scans, and
 diff hygiene pass. TypeScript review found and closed the competing Vendor
 identity vocabulary before final proof. Final architecture/Habitat,
 behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
-P0, P1, P2, or P3 finding. Graphite landing evidence remains open.
+P0, P1, P2, or P3 finding. Graphite PR
+[#593](https://github.com/rawr-ai/rawr-hq-template/pull/593) landed the
+checkpoint on canonical `main` at
+`8d4075517d289ba985b543ecf1521b8f02415c89`.
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e9c]]. It gives the
+five service-wide content, release-input, payload, individual-release, and
+complete-set digest domains one direct root-model TypeBox DTO owner. One
+matching policy owns exact diagnostic admission and deterministic SHA-256 byte
+construction. Every consumer names the qualified owner directly, and the
+production `service/shared` aggregate is deleted as one complete cut.
+
+The checkpoint preserves the exact `sha256_`, `ri1_`, `pd1_`, `rd1_`, and
+`rs1_` prefixes, brands, generated types, diagnostics, caller paths, and
+canonical digest preimages. A digest remains a verification value rather than
+a persistence key, address, lookup handle, provider
+identity, or installation identity. No barrel, alias, facade, compatibility
+path, or exported generic digest framework replaces the deleted aggregate.
+
+The service uses the pinned portable `@noble/hashes` `2.2.0` implementation
+rather than importing a Node runtime primitive. The CLI's supported Node 20
+floor is correspondingly truthful at `^20.19.0`, while the existing
+`>=22.9.0` lane remains unchanged. Focused digest and Vendor proof passes 33
+cases. The complete lifecycle suite passes 43 files and 370 tests in 1 minute
+17 seconds; its uncached Nx graph completes in 1 minute 23 seconds. The
+uncached lifecycle typecheck graph passes in 17.8 seconds, the CLI test
+typecheck graph passes in 29.1 seconds, and Oclif source/compiled parity passes
+through the ordinary built CLI in 26.8 seconds. Frozen installation, strict
+OpenSpec, Biome, repository separation, and diff hygiene pass. The enforced
+Habitat source-law gate passes all 17 locked rules with zero findings in 19.3
+seconds. The broader imported-export JSDoc target still exposes its existing
+repository baseline and is not claimed green by this checkpoint; every new
+imported digest export is documented.
+
+Final architecture/Habitat, behavior/TypeBox/testing, and
+TypeScript/refactor/structural reviews report no P0, P1, P2, or P3 finding.
+Implementation and proof are complete. Graphite landing evidence remains
+open.
 
 ## Settlement Oracles
 

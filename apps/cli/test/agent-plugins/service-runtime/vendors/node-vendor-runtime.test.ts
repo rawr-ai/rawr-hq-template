@@ -28,9 +28,17 @@ const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1";
 const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1";
 type VendorStatusRequest = Parameters<Client["vendors"]["status"]>[0];
 type VendorContentWorkspaceRef = VendorStatusRequest["contentWorkspace"];
-type VendorStatusResult = Awaited<ReturnType<Client["vendors"]["status"]>>;
-type VendorSourceIdentity = NonNullable<
-  Extract<VendorStatusResult, { kind: "VendorStatus" }>["sources"][number]["admitted"]
+type AdmittedVendorSourceIdentity = NonNullable<
+  Extract<
+    Awaited<ReturnType<Client["vendors"]["status"]>>,
+    { kind: "VendorStatus" }
+  >["sources"][number]["admitted"]
+>;
+
+type VendorSourceRecord = Readonly<
+  Omit<AdmittedVendorSourceIdentity, "payloadDigest"> & {
+    readonly payloadDigest: string;
+  }
 >;
 
 const invocation = {
@@ -177,7 +185,7 @@ describe("node vendor lifecycle runtime", () => {
 async function createUpstreamRepository(parent: string): Promise<
   Readonly<{
     root: string;
-    initialIdentity: VendorSourceIdentity;
+    initialIdentity: VendorSourceRecord;
   }>
 > {
   const root = path.join(parent, "upstream");
@@ -210,7 +218,7 @@ async function createUpstreamRepository(parent: string): Promise<
 
 async function createContentRepository(
   parent: string,
-  admitted: VendorSourceIdentity
+  admitted: VendorSourceRecord
 ): Promise<
   Readonly<{
     root: string;
@@ -445,7 +453,7 @@ function contentDigest(bytes: Uint8Array): string {
   return `sha256_${createHash("sha256").update(bytes).digest("hex")}`;
 }
 
-function identityValue(identity: VendorSourceIdentity) {
+function identityValue(identity: VendorSourceRecord) {
   return Object.freeze({
     payloadDigest: identity.payloadDigest,
     refName: identity.refName,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { MAX_CURRENT_MAIN_V3_RECORD_BYTES } from "../../../src/service/model/dto/current-main-record";
 import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
+import { parseReleaseInputDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -13,7 +14,6 @@ import {
   encodeCurrentMainBodyV3,
   validateCurrentMainRecordV3,
 } from "../../../src/service/modules/governance/model/policy/current-main-record";
-import { parseReleaseInputDigest } from "../../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

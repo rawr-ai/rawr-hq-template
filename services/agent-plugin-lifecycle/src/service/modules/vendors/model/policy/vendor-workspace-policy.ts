@@ -1,8 +1,9 @@
 import type { ContentTreeEntry, ContentWorkspaceIdentity } from "@rawr/resource-content-workspace";
+import { Value } from "typebox/value";
+import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import type { ProvenanceBinding } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
 import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
-
-import { contentDigest } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { VendorContentWorkspaceRef, VendorUpdateIssue } from "../dto/vendor-operations";
 import type {
   VendorLockRecord,
@@ -90,7 +91,7 @@ export function vendorRecordBinding(
     input === undefined ||
     input.protocol !== protocol ||
     !normalizedRelativePath.test(input.id) ||
-    !/^sha256_[0-9a-f]{64}$/u.test(input.contentDigest)
+    !Value.Check(ContentDigestSchema, input.contentDigest)
   ) {
     return undefined;
   }

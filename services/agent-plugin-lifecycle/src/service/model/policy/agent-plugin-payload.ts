@@ -1,12 +1,6 @@
 import { Value } from "typebox/value";
 
 import {
-  contentDigest,
-  type PayloadDigest,
-  parsePayloadDigest,
-  payloadDigest,
-} from "../../shared/release/primitives";
-import {
   type AgentPluginPayload,
   AgentPluginPayloadRecordSchema,
   AgentPluginPayloadSchema,
@@ -16,6 +10,7 @@ import {
   type PayloadEntry,
   type PayloadManifestEntry,
 } from "../dto/agent-plugin-payload";
+import type { PayloadDigest } from "../dto/release-digest";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { canonicalSerializePayloadEntries, payloadValue } from "./agent-plugin-payload-codec";
@@ -28,6 +23,7 @@ import {
   reportDuplicatePayloadPaths,
   samePayloadManifest,
 } from "./payload-manifest";
+import { contentDigest, parsePayloadDigest, payloadDigest } from "./release-digest";
 import { parseReleaseRelativePath } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";

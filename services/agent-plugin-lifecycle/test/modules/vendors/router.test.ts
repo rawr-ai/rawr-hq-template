@@ -19,6 +19,7 @@ import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../../../src/client";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
+import { contentDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -51,7 +52,6 @@ import {
   encodeVendorSourceDeclaration,
   vendorPayloadDigest,
 } from "../../../src/service/modules/vendors/model/policy/vendor-record-codec";
-import { contentDigest } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

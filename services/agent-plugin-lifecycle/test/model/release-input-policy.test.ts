@@ -6,6 +6,7 @@ import {
   type ReleaseInputBody,
 } from "../../src/service/model/dto/release-input";
 import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
+import { releaseInputDigest } from "../../src/service/model/policy/release-digest";
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
@@ -16,7 +17,6 @@ import {
   canonicalSerializeReleaseInputBody,
   releaseInputValue,
 } from "../../src/service/model/policy/release-input-codec";
-import { releaseInputDigest } from "../../src/service/shared/release/primitives";
 import { member, must, productFixture, releaseInputBody } from "../shared/release/fixtures";
 
 const encoder = new TextEncoder();

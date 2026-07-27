@@ -22,7 +22,7 @@ import {
   parseNormalizedFileMode,
   samePayloadManifest,
 } from "../../src/service/model/policy/payload-manifest";
-import { contentDigest } from "../../src/service/shared/release/primitives";
+import { contentDigest } from "../../src/service/model/policy/release-digest";
 import { must, productFixture, wire } from "../shared/release/fixtures";
 
 const encoder = new TextEncoder();

@@ -29,15 +29,8 @@ import {
   canonicalSerializeAgentPluginReleaseSet,
   canonicalSerializeAgentPluginReleaseSetBody,
 } from "../../src/service/model/policy/agent-plugin-release-set-codec";
+import { releaseDigest, releaseSetDigest } from "../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
-import {
-  parsePayloadDigest,
-  parseReleaseDigest,
-  parseReleaseInputDigest,
-  parseReleaseSetDigest,
-  releaseDigest,
-  releaseSetDigest,
-} from "../../src/service/shared/release/primitives";
 import {
   member,
   must,
@@ -170,25 +163,6 @@ describe("complete release-set integrity", () => {
         );
       }
     }
-  });
-
-  it("keeps the remaining release identity digest domains distinct", () => {
-    const fixture = productFixture();
-    const domains = [
-      [fixture.releaseInput.releaseInputDigest, parseReleaseInputDigest],
-      [fixture.alphaPayload.payloadDigest, parsePayloadDigest],
-      [fixture.alphaRelease.releaseDigest, parseReleaseDigest],
-      [fixture.releaseSet.releaseSetDigest, parseReleaseSetDigest],
-    ] as const;
-
-    domains.forEach(([digest, parse], parserIndex) => {
-      domains.forEach(([candidate], candidateIndex) => {
-        expect(parse(candidate).ok, `${parserIndex}:${candidateIndex}`).toBe(
-          parserIndex === candidateIndex
-        );
-      });
-      expect(parse(digest).ok).toBe(true);
-    });
   });
 
   it("canonicalizes complete membership as plugin and release identities only", () => {

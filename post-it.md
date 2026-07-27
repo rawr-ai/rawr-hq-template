@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Digest Meaning Has Direct Owners
+
+A digest is inert verification identity for one qualified lifecycle domain.
+Content, release-input, payload, individual-release, and complete-set digest
+structure, prefixes, brands, and generated types belong to one direct
+service-root TypeBox DTO. Exact diagnostic admission and deterministic SHA-256
+construction from bytes belong to one matching policy.
+
+The active cut rewires consumers to those exact owners and deletes production
+`service/shared` rather than renaming the aggregate. A digest does not become a
+persistence key, address, lookup handle, provider identity, or installation
+identity. No barrel, alias, facade, compatibility path, or exported generic
+digest framework replaces the deleted owner.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-digest|the release-digest DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-digest|the release-digest policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+digest, schema, type, policy, bytes, prefix, identity, verification, directness,
+deletion.
+
 ## 2026-07-27 - Identity Structure And Admission Have Direct Owners
 
 Release identities and release-relative paths are inert service-wide meaning

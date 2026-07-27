@@ -20,13 +20,13 @@ import {
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { decodeAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
 import { decodeAgentPluginReleaseSet } from "../../../src/service/model/policy/agent-plugin-release-set";
+import { contentDigest } from "../../../src/service/model/policy/release-digest";
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
 } from "../../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
-import { contentDigest } from "../../../src/service/shared/release/primitives";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
 const encoder = new TextEncoder();

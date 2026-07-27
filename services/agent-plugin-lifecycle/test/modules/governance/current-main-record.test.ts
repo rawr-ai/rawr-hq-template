@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { Client } from "../../../src/client";
+import { parseReleaseInputDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
 } from "../../../src/service/model/policy/release-identity";
-import { parseReleaseInputDigest } from "../../../src/service/shared/release/primitives";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 describe("current-main record procedure", () => {

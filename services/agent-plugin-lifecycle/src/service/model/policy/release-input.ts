@@ -1,11 +1,5 @@
 import { Value } from "typebox/value";
 import {
-  parsePayloadDigest,
-  parseReleaseInputDigest,
-  type ReleaseInputDigest,
-  releaseInputDigest,
-} from "../../shared/release/primitives";
-import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   PAYLOAD_PROTOCOL_VERSION,
@@ -15,6 +9,7 @@ import {
   type DistributionOwnershipIndex,
   MAX_OWNERSHIP_CLAIMS,
 } from "../dto/distribution-ownership";
+import type { ReleaseInputDigest } from "../dto/release-digest";
 import type {
   ContentAuthority,
   OwnershipIdentity,
@@ -46,6 +41,7 @@ import {
 } from "./distribution-ownership";
 import { parsePayloadManifest } from "./payload-manifest";
 import { parseProvenanceBindings } from "./provenance-binding";
+import { parsePayloadDigest, parseReleaseInputDigest, releaseInputDigest } from "./release-digest";
 import {
   parseContentAuthority,
   parseOwnershipIdentity,

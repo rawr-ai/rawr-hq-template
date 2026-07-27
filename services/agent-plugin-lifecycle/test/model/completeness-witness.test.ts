@@ -15,9 +15,9 @@ import {
   parseCompletenessWitness,
 } from "../../src/service/model/policy/completeness-witness";
 import { createDistributionOwnershipIndex } from "../../src/service/model/policy/distribution-ownership";
+import { payloadDigest, releaseInputDigest } from "../../src/service/model/policy/release-digest";
 import { parsePluginId } from "../../src/service/model/policy/release-identity";
 import { releaseIssue } from "../../src/service/model/policy/release-issue";
-import { payloadDigest, releaseInputDigest } from "../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 

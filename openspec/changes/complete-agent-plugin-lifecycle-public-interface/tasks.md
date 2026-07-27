@@ -1089,6 +1089,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   repository locators qualified as locators. Do not add a barrel, alias,
   compatibility path, generic identity framework, resource, provider, router,
   native-state change, or command-shape change.
+- [x] 5.7e9c Give the five service-wide `ContentDigest`,
+  `ReleaseInputDigest`, `PayloadDigest`, `ReleaseDigest`, and
+  `ReleaseSetDigest` domains one direct root-model TypeBox DTO owner and give
+  their diagnostic admission and deterministic SHA-256 byte construction one
+  direct policy owner. Rewire every consumer to the exact owner and delete
+  production `service/shared` as one complete cut.
+  Preserve the exact `sha256_`, `ri1_`, `pd1_`, `rd1_`, and `rs1_` prefixes,
+  brands, generated types, diagnostics, caller paths, and canonical digest
+  preimages. Do not add persistence, an address or lookup protocol, a barrel,
+  alias, facade, compatibility path, or exported generic digest framework.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

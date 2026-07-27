@@ -1,11 +1,5 @@
 import { Value } from "typebox/value";
 import {
-  parseReleaseDigest,
-  parseReleaseInputDigest,
-  parseReleaseSetDigest,
-  releaseSetDigest,
-} from "../../shared/release/primitives";
-import {
   type AgentPluginRelease,
   AgentPluginReleaseSchema,
   BUILDER_PROTOCOL_VERSION,
@@ -47,6 +41,12 @@ import {
 } from "./distribution-ownership";
 import { samePayloadManifest } from "./payload-manifest";
 import { provenanceBindingValue } from "./provenance-binding";
+import {
+  parseReleaseDigest,
+  parseReleaseInputDigest,
+  parseReleaseSetDigest,
+  releaseSetDigest,
+} from "./release-digest";
 import {
   parseContentAuthority,
   parseGitCommitId,

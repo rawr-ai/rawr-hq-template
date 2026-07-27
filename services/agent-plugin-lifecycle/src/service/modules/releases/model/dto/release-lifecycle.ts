@@ -6,6 +6,11 @@ import {
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
+  ReleaseDigestSchema,
+  ReleaseInputDigestSchema,
+  ReleaseSetDigestSchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
@@ -17,11 +22,6 @@ import {
 } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
-import {
-  ReleaseDigestSchema,
-  ReleaseInputDigestSchema,
-  ReleaseSetDigestSchema,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
 export const CheckInputSchema = ReadonlyObject(
