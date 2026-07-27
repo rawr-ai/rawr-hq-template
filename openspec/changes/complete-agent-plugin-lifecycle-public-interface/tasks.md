@@ -935,6 +935,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   compatibility face, duplicate constant, resource, or Habitat-law change.
   Preserve exact-bound admission, one-byte-over refusal, unsafe and negative
   refusal, release-input behavior, source eligibility, and provider behavior.
+- [x] 5.7e2s Author the refresh invocation snapshot directly in its oRPC
+  handler before planning or the first resource yield. Delete the detached
+  one-use router function without exporting a model helper or adding a
+  compatibility face. Preserve caller-mutation isolation, staged observation,
+  source-change classification, interruption, defects, and every public
+  result.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
