@@ -61,6 +61,10 @@
   command-channel law. Rules with known live-corpus violations remain outside
   the required batch until their owning migration burns them down; direct rule
   selection is diagnostic, not a second required surface.
+- The selected source-law batch is intentionally uncached because Nx and
+  Habitat do not share one ignore model. Nx may schedule independent graph work
+  beside it; Habitat owns bounded execution of the selected rules inside its
+  one process.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
 

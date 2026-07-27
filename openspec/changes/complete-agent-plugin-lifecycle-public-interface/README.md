@@ -2507,6 +2507,40 @@ validation and diff hygiene pass. Standing architecture, behavior/testing, and
 TypeScript/structural reviews report no unresolved P0, P1, or P2 finding.
 Repository landing remains open.
 
+## Habitat Source-Law Scheduling Boundary
+
+The required Habitat source-law batch retains one Nx task, one native Habitat
+acquisition, and the same twenty selected rules. Nx constructs task inputs from
+a file inventory filtered through optional `.nxignore`; Habitat structure and
+Grit evaluation retain their own native Git/Grit visibility. A cacheable Nx
+fileset cannot therefore represent the evaluator's complete read surface.
+
+The task is intentionally uncached rather than introducing a second file
+enumerator, digest, ignore synchronizer, or root-file exception. Its former
+target-wide `parallelism: false` declaration is also gone: Nx may schedule
+independent repository work beside the task while Habitat keeps bounded rule
+execution inside one process. This follows the scheduling direction proven by
+Civ7 commits
+`b2cefe47f98d482f8514adb5d34f282a347b1412` and
+`9544e538b8937604a8f76e58b555e05c00170e7e` without copying Civ7's Nx plugin
+or changing Template's curated activation owner. The pinned Habitat `v0.1.6`
+consumer already owns bounded internal rule execution; Template continues to
+own which green rules are required.
+
+A foreign private service alias under `docs`, hidden only from Nx by a temporary
+`.nxignore`, must still execute and fail the owning Habitat rule. The public
+graph remains 39 project checks and 115 total tasks with exactly one Habitat
+lint, source-law, project-admission, and test task.
+
+The disposable `.nxignore` probe did execute and failed
+`require_service_private_alias_ownership` in 37.9 seconds; removing the probe
+returned the same source-law task to green in 38.6 seconds. Nx resolves the
+target as `cache: false` and `parallelism: true`. A full cache-disabled
+repository check then passed all 115 tasks in 1 minute 38 seconds; Nx reported
+a 42.3-second critical path and 57% recoverable time, confirming that the
+source-law task no longer serializes independent graph work. The probe and
+temporary ignore file were removed after proof.
+
 ## Settlement Oracles
 
 The final product must prove:

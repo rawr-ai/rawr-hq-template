@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Source Law Uses Native Visibility
+
+Nx schedules one selected Habitat source-law task. Habitat evaluates the
+twenty admitted rules once inside that task. Nx filters its file inventory
+through `.nxignore`; Habitat and Grit retain their own native visibility. A
+cacheable Nx fileset therefore cannot represent the evaluator's complete read
+surface.
+
+The source-law task stays uncached rather than introducing another file
+enumerator, digest, ignore synchronizer, or root-file exception. It does not
+claim exclusive scheduler access: Nx may run independent graph work beside the
+task while Habitat owns bounded rule execution inside its one process. The
+command, rule selection, hooks, dependencies, and green admission boundary
+remain unchanged.
+
+See [[nx.json|the Nx workspace configuration]],
+[[scripts/habitat/project.json|the Habitat project]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/tasks|the active tasks]].
+
+### Bag Of Keywords
+
+scheduler, task, owner, input, visibility, cache, concurrency, rule, hook,
+evidence.
+
 ## 2026-07-27 - Temporary Marketplace Is A Scoped Resource
 
 Disposable provider testing reads exact Git objects, then exposes those bytes
