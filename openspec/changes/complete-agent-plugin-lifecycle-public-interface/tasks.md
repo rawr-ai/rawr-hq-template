@@ -59,6 +59,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   type-only oRPC ownership bindings, and admit only bounded private contract
   support reachable from one exported contract. Preserve RAWR packet identity,
   the `@rawr/hq-sdk` TypeBox bridge, and the three RAWR service extensions.
+- [x] 1.1e Port Magic Migration's standalone production source isolation from
+  proof and literal service-tree consumer-sealing laws from commits
+  `21497500629f6b77ccbd6b0e983f2cc7c16ca663` and
+  `60320c47ff3b1ca582bf918c35127f7b86b6a847`. Keep the existing
+  `require_service_private_alias_ownership` rule as the sole private-alias edge
+  owner. Adapt packet placement to `rawr`; limit sibling shortcuts to the
+  admitted lowercase-kebab owner shape from standalone production source; and
+  apply literal-path sealing through the JavaScript-family workspace gate so
+  root, script, and TSX consumers remain covered. Keep both new baselines empty
+  and select both enforced rules once in the existing source-law batch. Add no
+  scanner, wrapper, or second runner.
 - [x] 1.2 Adopt one canonical service-module router topology. Keep module
   `router.ts` as the plain public composition face, author operation leaves or
   semantic groups in named `router/*.router.ts`, and do not admit

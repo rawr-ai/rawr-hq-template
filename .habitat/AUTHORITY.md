@@ -29,7 +29,7 @@ relationships:
 ## Service Source Law
 
 The generic service kind narrows construction through one topology axis and
-thirteen independent source axes:
+fifteen independent source axes:
 
 1. Every package, public surface, service, module, model kind, database, router,
    and middleware directory is positively closed.
@@ -62,9 +62,15 @@ thirteen independent source axes:
 11. Service source remains independent of concrete Node, Bun, and provider
    implementations; outside capabilities arrive through context and resource
    contracts, while execution frameworks remain outside model source.
-12. TypeBox schemas remain the declarative input and output authority in module
+12. Standalone production service source never imports its package-owned proof
+    corpus; tests may consume production behavior, but the dependency never
+    reverses.
+13. Foreign consumers cross a standalone service through its public client;
+    literal `src/service` paths remain sealed, while the independent
+    private-alias law keeps aliases owner-local.
+14. TypeBox schemas remain the declarative input and output authority in module
    contracts, adapted through the one canonical RAWR bridge.
-13. Module contracts own attached public oRPC error constructors; routers use
+15. Module contracts own attached public oRPC error constructors; routers use
    injected error constructors rather than importing error authority.
 TypeScript owns inferred types and complete object compatibility. Habitat does
 not simulate module resolution or runtime behavior. Public error declarations

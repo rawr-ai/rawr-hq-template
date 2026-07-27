@@ -19,9 +19,13 @@ Every module has `router.ts` as its completed public composition face and
 `router/index.ts` is not admitted. Router-authorship keeps module `router.ts`
 composition-only and documents real semantic groups. The remaining independent
 packets own positive generic-anchor presence, the direct native base and exact
-service-branch module hop, the context funnel, and module isolation. Module-local
-imports use normalized relative paths; the service-private alias is reserved
-inside modules for genuinely service-wide `service/model/**` meaning.
+service-branch module hop, the context funnel, and module isolation. Proof
+isolation keeps package tests downstream from standalone production service
+source. Private-alias ownership keeps service aliases owner-local, while
+public-consumer sealing rejects literal `src/service` paths from foreign
+callers. Module-local imports use normalized relative paths; the service-private
+alias is reserved inside modules for genuinely service-wide `service/model/**`
+meaning.
 Embedded API-plugin `base.ts` remains its required boundary and type anchor but
 does not export the standalone runtime `base`; its implementer begins at
 `impl.ts`. Named runtime oRPC imports may share a declaration with type-only

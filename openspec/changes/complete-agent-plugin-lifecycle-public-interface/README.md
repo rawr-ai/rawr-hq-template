@@ -164,6 +164,28 @@ The current service packet follows the later committed Magic lineage:
   `52873620ffe0b8b6e60527cd399076fc13ab86a7`, service-blueprint tree
   `e8f0d548fba17936bf39084607c3cf12c5c97ee0`.
 
+Two further Magic boundary laws are now part of the enforced RAWR service
+packet. Commit `21497500629f6b77ccbd6b0e983f2cc7c16ca663` isolates production
+from proof: proof may consume production, while production cannot import the
+proof corpus. Commit
+`60320c47ff3b1ca582bf918c35127f7b86b6a847` seals literal module paths that
+enter a standalone service implementation tree. The existing
+`require_service_private_alias_ownership` rule remains the sole owner of
+private-alias edges. Template adapts the new packet placement, limits sibling
+shortcuts to lowercase-kebab owners named from standalone production source,
+and applies literal-path sealing through the JavaScript-family workspace gate
+so root, script, and TSX consumers remain covered. Both new empty-baseline rules
+run exactly once in the existing source-law batch; the fixture suite proves
+rejected and admitted edges without a scanner or second policy runner.
+
+The final service-blueprint suite passes 15 cases and 192 assertions. The
+focused alias, proof, and consumer laws report zero findings, and the complete
+required batch passes all 22 selected source laws with empty baselines. The
+repository gate passes 115 tasks in 55.8 seconds, including 36 Habitat tests
+and 225 assertions. Strict OpenSpec validation, formatting, and diff hygiene
+pass. Standing architecture/Habitat and structural code-quality/test reviews
+report no unresolved P0, P1, P2, or P3 finding. Graphite landing remains open.
+
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
 authority, preserve direct semantic leaves, and close normalized owner-alias

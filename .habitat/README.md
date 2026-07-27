@@ -15,7 +15,8 @@ The current generic kinds are:
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
   laws for generic anchors, native oRPC composition, context boundaries,
-  module isolation, owner-private aliases, platform-independent service
+  module isolation, owner-private aliases, standalone production source
+  isolation from proof, public-consumer sealing, platform-independent service
   implementation, declarative TypeBox contracts, and public error authority.
 - `resource`: one closed RAWR workspace package around a provider-neutral
   capability contract and its provider family.
@@ -81,6 +82,16 @@ composition, router-handler authorship, kind-local model indices, module
 isolation, owner-private aliases, and platform-independent service source.
 Those amendments retain the canonical `@rawr/hq-sdk` TypeBox Standard Schema
 bridge; they are not represented as unchanged Magic Migration algorithms.
+
+Magic Migration commits `21497500629f6b77ccbd6b0e983f2cc7c16ca663` and
+`60320c47ff3b1ca582bf918c35127f7b86b6a847` respectively supply standalone
+production source isolation from proof and public-consumer sealing. RAWR
+composes the second law with the existing private-alias rule rather than
+creating another alias owner: private aliases remain owner-local under that
+rule, while the new law owns literal paths into `src/service`. RAWR also limits
+sibling shortcuts to lowercase-kebab owners named from standalone production
+source and applies literal-path sealing at the workspace gate so root, script,
+and TSX consumers remain covered.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed

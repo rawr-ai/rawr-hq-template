@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_proof_isolation",
+  "title": "Require Service Proof Isolation",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "standalone service production source that statically imports, re-exports, dynamically imports, requires, or resolves a relative module source containing an exact test path segment",
+  "why": "Package-root service proof may consume production behavior, but production source must not acquire proof fixtures, harnesses, or suites. Keeping the edge one-way preserves the production boundary without inventing a service-test alias lane.",
+  "remediate": "Move proof-only code under the package-root test tree and keep production dependencies under src. Remove the relative edge from production source; do not replace it with an alias to proof code.",
+  "message": "Standalone service production source must not import package proof code.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["services/*/src/**/*.ts"]
+    }
+  ],
+  "scanRoots": ["services"],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_proof_isolation/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_proof_isolation/pattern.md"
+    },
+    "patternName": "require_service_proof_isolation"
+  }
+}
