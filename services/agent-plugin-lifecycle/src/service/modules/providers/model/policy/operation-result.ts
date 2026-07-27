@@ -5,10 +5,10 @@ import type {
   ProviderTarget,
   ProviderTargetResult,
   ProviderTestResult,
-} from "../model/dto/provider-lifecycle";
-import type { SelectedContent } from "../model/dto/selected-content";
-import { providerIssue, selectedContentObservation } from "../model/policy/selected-content";
+} from "../dto/provider-lifecycle";
+import { providerIssue } from "./selected-content";
 
+/** Projects one Provider selection refusal across every mutation target. */
 export function rejectedTargets(
   targets: readonly ProviderTarget[],
   issues: readonly ProviderIssue[]
@@ -26,6 +26,7 @@ export function rejectedTargets(
   );
 }
 
+/** Projects one Provider selection refusal across every read-only target. */
 export function rejectedStatusTargets(
   targets: readonly ProviderTarget[],
   issues: readonly ProviderIssue[]
@@ -43,6 +44,7 @@ export function rejectedStatusTargets(
   );
 }
 
+/** Projects a failed pre-mutation revalidation across every mutation target. */
 export function sourceChangedTargets(
   targets: readonly ProviderTarget[],
   detail = "Selected content changed immediately before native mutation."
@@ -50,12 +52,14 @@ export function sourceChangedTargets(
   return rejectedTargets(targets, [providerIssue("SourceChanged", detail)]);
 }
 
+/** Collects bounded target-local issues into one operation result. */
 export function collectTargetIssues(
   targets: readonly ProviderTargetResult[]
 ): readonly ProviderIssue[] {
   return Object.freeze(targets.flatMap((target) => target.issues).slice(0, 256));
 }
 
+/** Classifies the aggregate outcome of one Provider mutation operation. */
 export function mutationClassification(
   targets: readonly ProviderMutationTargetResult[]
 ): ProviderTestResult["classification"] {
@@ -71,10 +75,7 @@ export function mutationClassification(
   return changed ? "Changed" : "Converged";
 }
 
-export function selectionObservation(content: SelectedContent) {
-  return selectedContentObservation(content);
-}
-
+/** Canonicalizes Provider targets before any resource acquisition occurs. */
 export function canonicalProviderTargets(
   targets: readonly ProviderTarget[]
 ): readonly [ProviderTarget, ...ProviderTarget[]] {

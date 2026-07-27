@@ -892,6 +892,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   behavior. Keep native reconciliation functions, the loose schema barrel, the
   legacy release family, and whole-service law activation open for later
   checkpoints.
+- [x] 5.7e2n Move pure Provider operation-result classification into the
+  module model and delete the false result router. Delete the pass-through
+  selection-observation wrapper so handlers call its existing Provider policy
+  owner directly. Preserve target ordering, rejected-target projection,
+  bounded issue aggregation, aggregate classifications, and every public
+  result without changing source selection or native observation/mutation.
+  Keep the detached native reconciliation engine open for its atomic
+  operation-authorship checkpoint.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
