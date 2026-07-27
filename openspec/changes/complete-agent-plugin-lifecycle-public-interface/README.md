@@ -184,7 +184,39 @@ required batch passes all 22 selected source laws with empty baselines. The
 repository gate passes 115 tasks in 55.8 seconds, including 36 Habitat tests
 and 225 assertions. Strict OpenSpec validation, formatting, and diff hygiene
 pass. Standing architecture/Habitat and structural code-quality/test reviews
-report no unresolved P0, P1, P2, or P3 finding. Graphite landing remains open.
+report no unresolved P0, P1, P2, or P3 finding. Template PR #603 landed this
+preceding source-boundary checkpoint on canonical `main` at `396b3214`.
+
+The active Habitat checkpoint is
+[[tasks#1. Positive Habitat And Nx Checks|task 1.1f]]. It adds one optional
+service-owned database at `services/<service>/src/service/db`, positively
+closed to owner-issued SQL migrations, named schema leaves, and store
+implementations. The service spine admits `db` only at a standalone service
+root. The database topology's own closed-empty placement scopes reject tracked
+DB content under standalone modules, embedded API service roots, and embedded
+API modules without activating the still-advisory full service-spine rule. A
+matching Grit law admits literal database-source imports only from
+database-owned source and named root middleware. Modules and handlers receive
+store capabilities through inherited oRPC context; external acquisition
+remains resource/provider-owned.
+
+The two empty-baseline rules are selected once in the existing Habitat batch.
+The focused fixture suite passes 19 cases and 217 assertions. Separate fixtures
+prove canonical service topology without a database, the exact valid root
+shape, rejected incomplete/provider/helper interiors, and database-rule-only
+rejection of all three invalid placement classes. Loader proof covers quoted
+and substitution-free template `import()`, `require()`, and
+`require.resolve()` for both relative and matching-owner alias sources. Exact
+per-file diagnostic counts bind all twelve refused loader forms plus the four
+static import/re-export edges, while admitted root-middleware and database
+source exercise both literal forms and computed-import/ordinary-path data stay
+excluded. The full repository gate passes all 115 tasks in 1 minute 6 seconds,
+including 40 Habitat tests with 250 assertions and all 24 selected source laws
+with zero findings. Strict OpenSpec, Biome, and diff hygiene pass. Standing
+architecture/Habitat and structural-quality/testing reviews report no
+unresolved P0, P1, P2, or P3 finding. No Nx project or target, SDK change,
+scanner, wrapper, baseline debt, or runtime implementation enters this
+checkpoint. Graphite landing remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
@@ -197,8 +229,8 @@ require a completed-module-router-only root, make base and optional module
 context ownership explicit, close raw handler transport lanes and
 context-assembly destinations, document router groups and module boundaries,
 preserve platform independence and exact private aliases, require `AGENTS.md`
-at every service-module boundary, exclude open database interiors until a
-closed database blueprint exists, and close junk-drawer destinations. The
+at every service-module boundary, admit only the separately closed optional
+root database boundary, and close junk-drawer destinations. The
 seven staged rules remain outside repository admission until the admitted
 service corpus conforms and the owner-local Nx check activates them together.
 The generic agent-router packet retains the imported document source law. Its

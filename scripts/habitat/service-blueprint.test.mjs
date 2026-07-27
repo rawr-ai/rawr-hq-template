@@ -39,8 +39,12 @@ afterAll(async () => {
   }
 });
 
-/** @param {Record<string, string>} files @param {string[]} rules */
-async function createFixture(files, rules) {
+/**
+ * @param {Record<string, string>} files
+ * @param {string[]} rules
+ * @param {Record<string, string>} [ruleBlueprints]
+ */
+async function createFixture(files, rules, ruleBlueprints = {}) {
   const root = await createHabitatTestRoot(TEMP_PREFIX);
   roots.push(root);
 
@@ -50,9 +54,10 @@ async function createFixture(files, rules) {
   await mkdir(join(root, "plugins", "server", "api"), { recursive: true });
   await symlink(join(REPOSITORY_ROOT, "node_modules"), join(root, "node_modules"), "dir");
   for (const rule of rules) {
+    const blueprint = ruleBlueprints[rule] ?? "service";
     await cp(
-      join(REPOSITORY_ROOT, ".habitat", "blueprints", "service", rule),
-      join(root, ".habitat", "blueprints", "service", rule),
+      join(REPOSITORY_ROOT, ".habitat", "blueprints", blueprint, rule),
+      join(root, ".habitat", "blueprints", blueprint, rule),
       { recursive: true }
     );
   }
@@ -157,8 +162,8 @@ function diagnostics(report, ruleId) {
 }
 
 describe("service blueprint authority", () => {
-  it("admits the canonical module router topology", async () => {
-    const rules = ["require_service_spine_topology"];
+  it("admits the canonical service topology without a database", async () => {
+    const rules = ["require_service_spine_topology", "require_service_database_topology"];
     const root = await createFixture(
       standaloneService({
         "services/orders/src/service/modules/catalog/AGENTS.md": "# Catalog",
@@ -187,7 +192,8 @@ describe("service blueprint authority", () => {
           "export const inspect = {};",
         ...apiService(),
       }),
-      rules
+      rules,
+      { require_service_database_topology: "database" }
     );
 
     const result = await check(root, rules);
@@ -306,6 +312,200 @@ describe("service blueprint authority", () => {
     expect(structurePaths).toContain("services/orders/src/service/modules/1st");
     expect(structurePaths).toContain("services/orders/src/service/modules/a--b");
     expect(structurePaths).toContain("services/orders/src/service/modules/a-2");
+  });
+
+  it("admits the exact optional root database shape", async () => {
+    const rule = "require_service_database_topology";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/db/migrations/0001_create_orders.sql":
+          "create table orders (id text primary key);",
+        "services/orders/src/service/db/schema/orders.schema.ts": "export const orders = {};",
+        "services/orders/src/service/db/stores/orders.store.ts":
+          "export const createOrdersStore = () => ({});",
+      },
+      [rule],
+      { [rule]: "database" }
+    );
+
+    const result = await check(root, [rule]);
+    expect(diagnostics(result.report, rule)).toEqual([]);
+    expect(result.exitCode).toBe(0);
+    expect(result.report.ok).toBe(true);
+  });
+
+  it("rejects incomplete and noncanonical root database interiors", async () => {
+    const rule = "require_service_database_topology";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/db/migrations/0001_create_orders.sql":
+          "create table orders (id text primary key);",
+        "services/orders/src/service/db/schema/orders.schema.ts": "export const orders = {};",
+        "services/orders/src/service/db/stores/orders.store.ts":
+          "export const createOrdersStore = () => ({});",
+        "services/orders/src/service/db/stores/store.helper.ts": "export const helper = {};",
+        "services/orders/src/service/db/providers/postgres.provider.ts":
+          "export const provider = {};",
+        "services/orders/src/service/db/helpers/query.ts": "export const query = {};",
+        "services/incomplete/src/service/db/migrations/0001_create_incomplete.sql":
+          "create table incomplete (id text primary key);",
+      },
+      [rule],
+      { [rule]: "database" }
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    expect(paths).toContain("services/orders/src/service/db/stores/store.helper.ts");
+    expect(paths).toContain("services/orders/src/service/db/providers");
+    expect(paths).toContain("services/orders/src/service/db/helpers");
+    expect(paths).toContain("services/incomplete/src/service/db");
+  });
+
+  it("rejects module and embedded API database placement by database law alone", async () => {
+    const rule = "require_service_database_topology";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/modules/catalog/db/stores/orders.store.ts":
+          "export const createOrdersStore = () => ({});",
+        "plugins/server/api/catalog/src/service/db/schema/catalog.schema.ts":
+          "export const catalog = {};",
+        "plugins/server/api/catalog/src/service/modules/search/db/migrations/0001_search.sql":
+          "create table search (id text primary key);",
+      },
+      [rule],
+      { [rule]: "database" }
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    expect(paths).toContain("services/orders/src/service/modules/catalog/db/stores");
+    expect(paths).toContain("plugins/server/api/catalog/src/service/db/schema");
+    expect(paths).toContain("plugins/server/api/catalog/src/service/modules/search/db/migrations");
+  });
+
+  it("funnels database source through root middleware and inherited context", async () => {
+    const rule = "require_service_database_import_funnel";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/middleware/orders.middleware.ts": `
+          import { createOrdersStore } from "../db/stores/orders.store";
+          const quotedImport = import("../db/stores/orders.store");
+          const templateImport = import(\`../db/stores/orders.store\`);
+          const quotedRequire = require("../db/stores/orders.store");
+          const templateRequire = require(\`../db/stores/orders.store\`);
+          const quotedResolve = require.resolve("../db/stores/orders.store");
+          const templateResolve = require.resolve(\`../db/stores/orders.store\`);
+          export const ordersMiddleware = {
+            createOrdersStore,
+            quotedImport,
+            templateImport,
+            quotedRequire,
+            templateRequire,
+            quotedResolve,
+            templateResolve,
+          };
+        `,
+        "services/orders/src/service/db/stores/orders.store.ts": `
+          import { orders } from "#orders-service/db/schema/orders.schema";
+          const quotedImport = import("#orders-service/db/schema/orders.schema");
+          const templateImport = import(\`#orders-service/db/schema/orders.schema\`);
+          const quotedRequire = require("#orders-service/db/schema/orders.schema");
+          const templateRequire = require(\`#orders-service/db/schema/orders.schema\`);
+          const quotedResolve = require.resolve("#orders-service/db/schema/orders.schema");
+          const templateResolve = require.resolve(\`#orders-service/db/schema/orders.schema\`);
+          export const createOrdersStore = () => ({
+            orders,
+            quotedImport,
+            templateImport,
+            quotedRequire,
+            templateRequire,
+            quotedResolve,
+            templateResolve,
+          });
+        `,
+        "services/orders/src/service/base.ts": `
+          import type { OrdersStore } from "#orders-service/db/stores/orders.store";
+          const quotedImport = import("./db/stores/orders.store");
+          const templateImport = import(\`./db/stores/orders.store\`);
+          const quotedRequire = require("./db/stores/orders.store");
+          const templateRequire = require(\`./db/stores/orders.store\`);
+          const quotedResolve = require.resolve("./db/stores/orders.store");
+          const templateResolve = require.resolve(\`./db/stores/orders.store\`);
+          export type Context = { orders: OrdersStore };
+          export const loaders = {
+            quotedImport,
+            templateImport,
+            quotedRequire,
+            templateRequire,
+            quotedResolve,
+            templateResolve,
+          };
+        `,
+        "services/orders/src/service/contract.ts": `
+          const quotedImport = import("#orders-service/db/stores/orders.store");
+          const templateImport = import(\`#orders-service/db/stores/orders.store\`);
+          const quotedRequire = require("#orders-service/db/stores/orders.store");
+          const templateRequire = require(\`#orders-service/db/stores/orders.store\`);
+          const quotedResolve = require.resolve("#orders-service/db/stores/orders.store");
+          const templateResolve = require.resolve(\`#orders-service/db/stores/orders.store\`);
+          export const loaders = {
+            quotedImport,
+            templateImport,
+            quotedRequire,
+            templateRequire,
+            quotedResolve,
+            templateResolve,
+          };
+        `,
+        "services/orders/src/service/router.ts": `
+          export { createOrdersStore } from "./db/stores/orders.store";
+        `,
+        "services/orders/src/service/modules/catalog/middleware/catalog.middleware.ts": `
+          import { createOrdersStore } from "#orders-service/db/stores/orders.store";
+          export const catalogMiddleware = createOrdersStore;
+        `,
+        "services/orders/src/service/modules/catalog/router/read.router.ts": `
+          import { createOrdersStore } from "../../../db/stores/orders.store";
+          export const read = createOrdersStore;
+        `,
+        "services/orders/src/service/modules/catalog/router/path.router.ts": `
+          const migrationDirectory = "../../../db/migrations";
+          const owner = "orders";
+          export const database = import(\`#\${owner}-service/db/stores/orders.store\`);
+          export { migrationDirectory };
+        `,
+      },
+      [rule],
+      { [rule]: "database" }
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const findings = diagnostics(result.report, rule);
+    const counts = new Map();
+    for (const finding of findings) {
+      counts.set(finding.path, (counts.get(finding.path) ?? 0) + 1);
+    }
+
+    for (const [path, count] of [
+      ["services/orders/src/service/base.ts", 7],
+      ["services/orders/src/service/contract.ts", 6],
+      ["services/orders/src/service/router.ts", 1],
+      ["services/orders/src/service/modules/catalog/middleware/catalog.middleware.ts", 1],
+      ["services/orders/src/service/modules/catalog/router/read.router.ts", 1],
+      ["services/orders/src/service/middleware/orders.middleware.ts", 0],
+      ["services/orders/src/service/db/stores/orders.store.ts", 0],
+      ["services/orders/src/service/modules/catalog/router/path.router.ts", 0],
+    ]) {
+      expect(counts.get(path) ?? 0).toBe(count);
+    }
+    expect(findings).toHaveLength(16);
   });
 
   it("requires direct role anchors without imposing a runtime API base", async () => {

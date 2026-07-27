@@ -75,8 +75,11 @@ Module-level model matter belongs to that module's domain. Policies decide.
 DTOs and schemas describe. Errors name admitted failures. Helpers perform
 small subordinate mechanics. Ports describe outside capabilities. Prompts and
 actors retain their domain meanings. Persistent stores require a separately
-owned, positively closed database boundary; they do not enter an unbounded
-`db` directory merely because a service needs persistence.
+owned, positively closed database boundary at the service root; they do not
+enter a module or an unbounded `db` directory merely because a service needs
+persistence. Named root middleware may turn a ready context dependency into
+store capabilities. Modules consume those capabilities through inherited oRPC
+context rather than importing database source.
 
 Every model fact is a direct semantic leaf. Contracts, modules, routers, and
 other model leaves import the concrete leaf they use. A model `index.ts`

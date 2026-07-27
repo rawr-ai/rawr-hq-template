@@ -9,27 +9,30 @@ relationships:
 
 1. A `service` has one contract-first oRPC spine, module-owned domain matter,
    native context projection, and one router lineage.
-2. A `resource` has one closed provider-neutral capability contract and
+2. An optional service-owned `database` has one closed migrations, schema, and
+   stores boundary. Root middleware projects its stores into context; modules
+   never acquire database source.
+3. A `resource` has one closed provider-neutral capability contract and
    provider family. Each nested `provider` has one typed public realization
    face. The application selects providers and lifetimes; runtime acquisition
    scopes, releases, and binds ready resources into service context.
-3. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
+4. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
    service. The API surface exposes operations while its application host retains
    transport ownership.
-4. The repository requires one concise `AGENTS.md` operator router at each
+5. The repository requires one concise `AGENTS.md` operator router at each
    admitted package and service-module boundary; the generic document kind
    defines its stable orientation anchors and repository-relative routes.
-5. The executable CLI is one conventional Oclif app, and every first-party
+6. The executable CLI is one conventional Oclif app, and every first-party
    command capability is one uniform host-composed Oclif plugin on public
    package boundaries.
-6. The workspace root exposes one exact Nx scheduler surface. Repository lint
+7. The workspace root exposes one exact Nx scheduler surface. Repository lint
    has one workspace owner; project checks compose it once through Nx rather
    than re-running a project-local aggregate.
 
 ## Service Source Law
 
-The generic service kind narrows construction through one topology axis and
-fifteen independent source axes:
+The generic service and optional database kinds narrow construction through
+independently owned topology and source axes:
 
 1. Every package, public surface, service, module, model kind, database, router,
    and middleware directory is positively closed.
@@ -41,36 +44,40 @@ fifteen independent source axes:
    middleware author when host projection is needed. Module capability
    contributions remain additive and inferred; owner-local resource cuts remove
    raw lanes instead of hiding them behind a shadow context type.
-5. Qualified middleware is one documented named native value authored from the
+5. Database source is closed to owner-issued migrations, named schemas, and
+   stores. Only database-owned source and named service-root middleware import
+   it; modules and handlers receive projected store capabilities through
+   inherited oRPC context.
+6. Qualified middleware is one documented named native value authored from the
    base factory and attached through a native middleware operator rather than
    an inline callback or explicit context type argument.
-6. Root composition uses exact relative imports of module contracts and
+7. Root composition uses exact relative imports of module contracts and
    completed routers. A module reaches root only through its exact
    `module.ts`-to-`impl.ts` branch edge and
    named-middleware-to-base-factory edge; it does not reach upward or sideways
    for other implementation.
-7. Named module router files remain operation authoring sites; module
+8. Named module router files remain operation authoring sites; module
    `router.ts` only composes completed operation leaves and semantic groups.
-8. Every model fact has one direct semantic leaf. Model indexes are
+9. Every model fact has one direct semantic leaf. Model indexes are
    inadmissible so concrete same-owner dependencies remain visible.
-9. Every private service or API alias maps to its owner's `src/service`
+10. Every private service or API alias maps to its owner's `src/service`
    interior rather than creating another public package surface.
-10. Module-local imports use normalized relative paths. Module code reserves
+11. Module-local imports use normalized relative paths. Module code reserves
     its owner-private alias for `service/model/**`; same-module, sibling,
     runtime, and legacy shared aliases are inadmissible. Foreign, cross-kind,
     and outside-owner imports use public exports.
-11. Service source remains independent of concrete Node, Bun, and provider
+12. Service source remains independent of concrete Node, Bun, and provider
    implementations; outside capabilities arrive through context and resource
    contracts, while execution frameworks remain outside model source.
-12. Standalone production service source never imports its package-owned proof
+13. Standalone production service source never imports its package-owned proof
     corpus; tests may consume production behavior, but the dependency never
     reverses.
-13. Foreign consumers cross a standalone service through its public client;
+14. Foreign consumers cross a standalone service through its public client;
     literal `src/service` paths remain sealed, while the independent
     private-alias law keeps aliases owner-local.
-14. TypeBox schemas remain the declarative input and output authority in module
+15. TypeBox schemas remain the declarative input and output authority in module
    contracts, adapted through the one canonical RAWR bridge.
-15. Module contracts own attached public oRPC error constructors; routers use
+16. Module contracts own attached public oRPC error constructors; routers use
    injected error constructors rather than importing error authority.
 TypeScript owns inferred types and complete object compatibility. Habitat does
 not simulate module resolution or runtime behavior. Public error declarations
