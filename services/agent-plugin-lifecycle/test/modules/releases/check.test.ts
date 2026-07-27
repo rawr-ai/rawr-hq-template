@@ -68,7 +68,6 @@ describe("release check", () => {
         kind: "release",
         pluginId: repository.pluginIds[0],
         releaseDigest: expect.stringMatching(/^rd1_[0-9a-f]{64}$/u),
-        artifactDigest: expect.stringMatching(/^ad1_[0-9a-f]{64}$/u),
       },
       eligibilityBinding: expect.stringMatching(/^[0-9a-f]{64}$/u),
     });
@@ -81,6 +80,18 @@ describe("release check", () => {
       },
       eligibilityBinding: expect.stringMatching(/^[0-9a-f]{64}$/u),
     });
+    if (firstTargeted.kind === "EligibleReport" && firstTargeted.derivation.kind === "release") {
+      expect(Object.keys(firstTargeted.derivation).sort()).toEqual([
+        "kind",
+        "pluginId",
+        "releaseDigest",
+      ]);
+    }
+    if (complete.kind === "EligibleReport" && complete.derivation.kind === "complete-set") {
+      expect(
+        complete.derivation.members.map((memberValue) => Object.keys(memberValue).sort())
+      ).toEqual(complete.derivation.members.map(() => ["pluginId", "releaseDigest"]));
+    }
   });
 
   it("maps an undeclared targeted selection into the releases module failure vocabulary", async () => {

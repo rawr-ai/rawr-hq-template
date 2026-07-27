@@ -31,7 +31,7 @@ export function packagedReleaseIdentity(
   if (release === undefined) throw new Error("Targeted release construction returned no release");
   return Object.freeze({
     kind: "release",
-    pluginId: release.artifactBody.releaseBody.pluginId,
+    pluginId: release.body.pluginId,
     releaseDigest: release.releaseDigest,
   });
 }

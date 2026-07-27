@@ -3,10 +3,6 @@ export {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   type AgentPluginReleaseSchemaVersion,
   type AgentPluginReleaseSetSchemaVersion,
-  ARTIFACT_PROTOCOL_VERSION,
-  type ArtifactDigest,
-  ArtifactDigestSchema,
-  type ArtifactProtocolVersion,
   BUILDER_PROTOCOL_VERSION,
   type BuilderProtocolVersion,
   type ContentAuthority,
@@ -37,7 +33,6 @@ export {
   type PayloadProtocolVersion,
   type PluginId,
   PluginIdSchema,
-  parseArtifactDigest,
   parseContentAuthority,
   parseContentDigest,
   parseGitCommitId,
@@ -63,19 +58,6 @@ export {
   type RepositoryIdentity,
   RepositoryIdentitySchema,
 } from "./primitives";
-export {
-  type AgentPluginArtifactBody,
-  type AgentPluginRelease,
-  type AgentPluginReleaseBody,
-  type CreateAgentPluginReleaseInput,
-  canonicalSerializeAgentPluginArtifactBody,
-  canonicalSerializeAgentPluginRelease,
-  canonicalSerializeAgentPluginReleaseBody,
-  createAgentPluginRelease,
-  decodeAgentPluginRelease,
-  type ReleaseSourceIdentity,
-  verifyAgentPluginRelease,
-} from "./release";
 export {
   type AgentPluginReleaseSet,
   type AgentPluginReleaseSetBody,

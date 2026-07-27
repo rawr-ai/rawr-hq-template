@@ -7,9 +7,9 @@ import {
   PluginIdSchema,
   type RepositoryIdentity,
 } from "../../shared/release/primitives";
-import type { AgentPluginRelease } from "../../shared/release/release";
 import type { AgentPluginReleaseSet } from "../../shared/release/release-set";
 import type { AgentPluginPayload } from "./agent-plugin-payload";
+import type { AgentPluginRelease } from "./agent-plugin-release";
 import type { AgentPluginReleaseInput } from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 
@@ -86,8 +86,8 @@ export interface ReleaseDerivationSource {
 }
 
 /**
- * Carries constructed release artifacts from service policy to an owning
- * operation. Each module projects these inert artifacts into its own public
+ * Carries constructed release values from service policy to an owning
+ * operation. Each module projects these inert values into its own public
  * result vocabulary.
  */
 export interface DerivedReleaseSelection {

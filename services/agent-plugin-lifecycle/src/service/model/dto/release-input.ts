@@ -131,6 +131,21 @@ export const CompletenessWitnessRecordSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/**
+ * Defines the closed in-memory release input admitted before wire projection.
+ *
+ * Ownership and completeness are derived observations, not wire fields, but
+ * they remain structurally closed whenever an admitted value is reused.
+ */
+export const AgentPluginReleaseInputSchema = ReadonlyObject(
+  Type.Object({
+    ...ReleaseInputEnvelopeSchema.properties,
+    ownershipIndex: DistributionOwnershipIndexRecordSchema,
+    completenessWitness: CompletenessWitnessRecordSchema,
+  }),
+  { additionalProperties: false }
+);
+
 /** TypeBox-derived immutable provenance binding. */
 export type ProvenanceBinding = Static<typeof ProvenanceBindingSchema>;
 
@@ -153,7 +168,7 @@ export type ReleaseInputEnvelope = Static<typeof ReleaseInputEnvelopeSchema>;
 export type ExpectedReleaseMember = Static<typeof ExpectedReleaseMemberSchema>;
 
 /** TypeBox-derived wire record for a persisted completeness witness. */
-export type CompletenessWitnessRecord = Static<typeof CompletenessWitnessRecordSchema>;
+type CompletenessWitnessRecord = Static<typeof CompletenessWitnessRecordSchema>;
 
 /** Binds the expected member set and ownership index to one release-input digest. */
 export type CompletenessWitness = CompletenessWitnessRecord &
@@ -163,10 +178,9 @@ export type CompletenessWitness = CompletenessWitnessRecord &
   }>;
 
 /** Branded release input admitted by release-input policy. */
-export type AgentPluginReleaseInput = Readonly<
-  ReleaseInputEnvelope & {
+export type AgentPluginReleaseInput = Static<typeof AgentPluginReleaseInputSchema> &
+  Readonly<{
     ownershipIndex: DistributionOwnershipIndex;
     completenessWitness: CompletenessWitness;
     [agentPluginReleaseInputBrand]: "AgentPluginReleaseInput";
-  }
->;
+  }>;

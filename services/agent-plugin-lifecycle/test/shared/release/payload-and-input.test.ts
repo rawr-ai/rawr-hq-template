@@ -11,6 +11,7 @@ import {
   ReleaseInputEnvelopeSchema,
 } from "../../../src/service/model/dto/release-input";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
+import { decodeAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
@@ -19,8 +20,6 @@ import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   contentDigest,
-  decodeAgentPluginRelease,
-  decodeAgentPluginReleaseSet,
   MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
   MAX_OWNERSHIP_CLAIMS,
@@ -28,7 +27,8 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
+import { decodeAgentPluginReleaseSet } from "../../../src/service/shared/release/release-set";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
 const encoder = new TextEncoder();

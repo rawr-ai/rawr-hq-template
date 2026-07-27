@@ -1,15 +1,15 @@
 import type { AgentPluginPayload } from "../../../src/service/model/dto/agent-plugin-payload";
+import type { AgentPluginRelease } from "../../../src/service/model/dto/agent-plugin-release";
 import type { AgentPluginReleaseInput } from "../../../src/service/model/dto/release-input";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
+import { createAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
 import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
+import { contentDigest } from "../../../src/service/shared/release/primitives";
 import {
-  type AgentPluginRelease,
   type AgentPluginReleaseSet,
-  contentDigest,
-  createAgentPluginRelease,
   createAgentPluginReleaseSet,
-} from "../../../src/service/shared/release/index";
+} from "../../../src/service/shared/release/release-set";
 
 const encoder = new TextEncoder();
 const SOURCE = Object.freeze({
@@ -18,17 +18,23 @@ const SOURCE = Object.freeze({
   sourceTree: "b".repeat(40),
 });
 
-export interface PackagingArtifactFixture {
+interface PackagingReleaseFixture {
   readonly releaseInput: AgentPluginReleaseInput;
   readonly alphaRelease: AgentPluginRelease;
   readonly betaRelease: AgentPluginRelease;
   readonly releaseSet: AgentPluginReleaseSet;
 }
 
-export function packagingArtifactFixture(
+/**
+ * Builds the complete two-member release set exercised by packaging behavior.
+ *
+ * The fixture crosses into `cowork-v1.test.ts`, keeping packaging tests on the
+ * same admitted release and payload contracts as production policy.
+ */
+export function packagingReleaseFixture(
   alphaText = "alpha\n",
   betaText = "beta\n"
-): PackagingArtifactFixture {
+): PackagingReleaseFixture {
   const alphaPayload = payload([
     ["skills/alpha/SKILL.md", 0o644, alphaText],
     ["scripts/alpha.sh", 0o755, "#!/bin/sh\nexit 0\n"],
@@ -125,6 +131,6 @@ function release(
 
 function must<T, E>(result: ReleaseResult<T, E>): T {
   if (!result.ok)
-    throw new Error(`Generated artifact fixture is invalid: ${JSON.stringify(result.issues)}`);
+    throw new Error(`Generated release fixture is invalid: ${JSON.stringify(result.issues)}`);
   return result.value;
 }

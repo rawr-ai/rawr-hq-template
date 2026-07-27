@@ -1,9 +1,21 @@
+import { Value } from "typebox/value";
+
+import {
+  type AgentPluginRelease,
+  AgentPluginReleaseSchema,
+} from "../../model/dto/agent-plugin-release";
 import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { DistributionOwnershipIndex } from "../../model/dto/distribution-ownership";
-import type { AgentPluginReleaseInput, CompletenessWitness } from "../../model/dto/release-input";
+import {
+  type AgentPluginReleaseInput,
+  AgentPluginReleaseInputSchema,
+  type CompletenessWitness,
+} from "../../model/dto/release-input";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
+import { verifyAgentPluginRelease } from "../../model/policy/agent-plugin-release";
+import { agentPluginReleaseValue } from "../../model/policy/agent-plugin-release-codec";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
 import {
@@ -37,7 +49,6 @@ import {
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   type AgentPluginReleaseSetSchemaVersion,
-  type ArtifactDigest,
   BUILDER_PROTOCOL_VERSION,
   type BuilderProtocolVersion,
   type ContentAuthority,
@@ -46,7 +57,6 @@ import {
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   type PluginId,
-  parseArtifactDigest,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
@@ -61,18 +71,12 @@ import {
   type RepositoryIdentity,
   releaseSetDigest,
 } from "./primitives";
-import {
-  type AgentPluginRelease,
-  agentPluginReleaseValue,
-  verifyAgentPluginRelease,
-} from "./release";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
 
 export interface AgentPluginReleaseSetMember {
   readonly pluginId: PluginId;
   readonly releaseDigest: ReleaseDigest;
-  readonly artifactDigest: ArtifactDigest;
 }
 
 export interface AgentPluginReleaseSetBody {
@@ -132,12 +136,7 @@ export function createAgentPluginReleaseSet(
         )
       );
   });
-  releases.sort((left, right) =>
-    compareCanonicalText(
-      left.artifactBody.releaseBody.pluginId,
-      right.artifactBody.releaseBody.pluginId
-    )
-  );
+  releases.sort((left, right) => compareCanonicalText(left.body.pluginId, right.body.pluginId));
   reportDuplicateReleaseMembers(releases, issues);
   if (releaseInput !== undefined) validateExpectedMembership(releaseInput, releases, issues);
 
@@ -170,7 +169,7 @@ export function createAgentPluginReleaseSet(
       ),
     ]);
   }
-  const firstBody = first.artifactBody.releaseBody;
+  const firstBody = first.body;
   const body: AgentPluginReleaseSetBody = Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
     builderProtocolVersion: BUILDER_PROTOCOL_VERSION,
@@ -184,9 +183,8 @@ export function createAgentPluginReleaseSet(
     members: Object.freeze(
       releases.map((release) =>
         Object.freeze({
-          pluginId: release.artifactBody.releaseBody.pluginId,
+          pluginId: release.body.pluginId,
           releaseDigest: release.releaseDigest,
-          artifactDigest: release.artifactDigest,
         })
       )
     ),
@@ -376,7 +374,6 @@ export function agentPluginReleaseSetBodyValue(
     members: body.members.map((member) => ({
       pluginId: member.pluginId,
       releaseDigest: member.releaseDigest,
-      artifactDigest: member.artifactDigest,
     })),
   };
 }
@@ -548,12 +545,7 @@ function parseSetMembers(
   values.forEach((candidate, index) => {
     const memberPath = `${path}[${index}]`;
     if (
-      !admitClosedRecordForTraversal(
-        candidate,
-        ["artifactDigest", "pluginId", "releaseDigest"],
-        memberPath,
-        issues
-      )
+      !admitClosedRecordForTraversal(candidate, ["pluginId", "releaseDigest"], memberPath, issues)
     )
       return;
     const pluginId = collectReleaseResult(
@@ -564,12 +556,8 @@ function parseSetMembers(
       parseReleaseDigest(candidate.releaseDigest, `${memberPath}.releaseDigest`),
       issues
     );
-    const ad = collectReleaseResult(
-      parseArtifactDigest(candidate.artifactDigest, `${memberPath}.artifactDigest`),
-      issues
-    );
-    if (pluginId !== undefined && rd !== undefined && ad !== undefined) {
-      members.push(Object.freeze({ pluginId, releaseDigest: rd, artifactDigest: ad }));
+    if (pluginId !== undefined && rd !== undefined) {
+      members.push(Object.freeze({ pluginId, releaseDigest: rd }));
     }
   });
   members.sort((left, right) => compareCanonicalText(left.pluginId, right.pluginId));
@@ -606,12 +594,9 @@ function verifyEmbeddedReleaseInput(
     );
     return undefined;
   }
-  let candidate: unknown;
-  try {
-    candidate = releaseInputValue(input as AgentPluginReleaseInput);
-  } catch {
-    candidate = input;
-  }
+  const candidate = Value.Check(AgentPluginReleaseInputSchema, input)
+    ? releaseInputValue(input as AgentPluginReleaseInput)
+    : input;
   const verified = verifyAgentPluginReleaseInput(candidate);
   if (!verified.ok) {
     issues.push(...verified.issues);
@@ -624,11 +609,8 @@ function verifyReleaseCandidate(input: unknown): ReleaseResult<AgentPluginReleas
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     return verifyAgentPluginRelease(input);
   }
-  try {
-    return verifyAgentPluginRelease(agentPluginReleaseValue(input as AgentPluginRelease));
-  } catch {
-    return verifyAgentPluginRelease(input);
-  }
+  if (!Value.Check(AgentPluginReleaseSchema, input)) return verifyAgentPluginRelease(input);
+  return verifyAgentPluginRelease(agentPluginReleaseValue(input as AgentPluginRelease));
 }
 
 function validateExpectedMembership(
@@ -642,9 +624,7 @@ function validateExpectedMembership(
       member.payloadDigest,
     ])
   );
-  const actual = new Map(
-    releases.map((release) => [release.artifactBody.releaseBody.pluginId, release])
-  );
+  const actual = new Map(releases.map((release) => [release.body.pluginId, release]));
   for (const [pluginId, payloadDigest] of [...expected].sort(([left], [right]) =>
     compareCanonicalText(left, right)
   )) {
@@ -658,7 +638,7 @@ function validateExpectedMembership(
           { actual: pluginId }
         )
       );
-    } else if (release.artifactBody.releaseBody.payloadDigest !== payloadDigest) {
+    } else if (release.body.payloadDigest !== payloadDigest) {
       issues.push(
         releaseIssue(
           "PAYLOAD_DIGEST_MISMATCH",
@@ -666,7 +646,7 @@ function validateExpectedMembership(
           "Member payload differs from the completeness witness",
           {
             expected: payloadDigest,
-            actual: release.artifactBody.releaseBody.payloadDigest,
+            actual: release.body.payloadDigest,
           }
         )
       );
@@ -692,8 +672,8 @@ function validateReleaseIdentity(
   release: AgentPluginRelease,
   issues: ReleaseIssue[]
 ): void {
-  const body = release.artifactBody.releaseBody;
-  const firstBody = first?.artifactBody.releaseBody;
+  const body = release.body;
+  const firstBody = first?.body;
   if (body.contentAuthority !== input.body.contentAuthority) {
     issues.push(
       releaseIssue(
@@ -837,7 +817,7 @@ function validateReleaseSetMembers(
   for (let index = 0; index < Math.max(body.members.length, releases.length); index += 1) {
     const expectedMember = body.members[index];
     const actualRelease = releases[index];
-    const actualPluginId = actualRelease?.artifactBody.releaseBody.pluginId;
+    const actualPluginId = actualRelease?.body.pluginId;
     if (expectedMember?.pluginId !== actualPluginId) {
       issues.push(
         releaseIssue(
@@ -853,9 +833,7 @@ function validateReleaseSetMembers(
     }
   }
   const expected = new Map(body.members.map((member) => [member.pluginId, member]));
-  const actual = new Map(
-    releases.map((release) => [release.artifactBody.releaseBody.pluginId, release])
-  );
+  const actual = new Map(releases.map((release) => [release.body.pluginId, release]));
   for (const [pluginId, member] of body.members.map((entry) => [entry.pluginId, entry] as const)) {
     const release = actual.get(pluginId);
     if (release === undefined) {
@@ -863,7 +841,7 @@ function validateReleaseSetMembers(
         releaseIssue(
           "MISSING_EXPECTED_MEMBER",
           `releases.${pluginId}`,
-          "Set member artifact is absent",
+          "Set member release is absent",
           {
             actual: pluginId,
           }
@@ -884,20 +862,7 @@ function validateReleaseSetMembers(
         )
       );
     }
-    if (release.artifactDigest !== member.artifactDigest) {
-      issues.push(
-        releaseIssue(
-          "ARTIFACT_DIGEST_MISMATCH",
-          `releases.${pluginId}.artifactDigest`,
-          "Member artifact digest differs from the set",
-          {
-            expected: member.artifactDigest,
-            actual: release.artifactDigest,
-          }
-        )
-      );
-    }
-    const releaseBody = release.artifactBody.releaseBody;
+    const releaseBody = release.body;
     const sourceFields = [
       "contentAuthority",
       "sourceRepository",
@@ -973,7 +938,7 @@ function reportDuplicateReleaseMembers(
 ): void {
   const counts = new Map<PluginId, number>();
   for (const release of releases) {
-    const pluginId = release.artifactBody.releaseBody.pluginId;
+    const pluginId = release.body.pluginId;
     counts.set(pluginId, (counts.get(pluginId) ?? 0) + 1);
   }
   for (const [pluginId, count] of [...counts].sort(([left], [right]) =>
@@ -1002,9 +967,4 @@ function freezeReleaseSet(body: AgentPluginReleaseSetBody): AgentPluginReleaseSe
 
 function sameCanonicalValue(left: CanonicalJsonValue, right: CanonicalJsonValue): boolean {
   return equalBytes(canonicalJsonLine(left), canonicalJsonLine(right));
-}
-
-// This projection is intentionally public only through the package root's release-set serializer.
-export function agentPluginReleaseProjection(release: AgentPluginRelease): CanonicalJsonValue {
-  return agentPluginReleaseValue(release);
 }

@@ -91,7 +91,6 @@ describe("release issue model", () => {
       "PAYLOAD_DIGEST_MISMATCH",
       "PAYLOAD_MANIFEST_MISMATCH",
       "RELEASE_DIGEST_MISMATCH",
-      "ARTIFACT_DIGEST_MISMATCH",
       "RELEASE_SET_DIGEST_MISMATCH",
       "MEMBER_NOT_DECLARED",
       "MISSING_EXPECTED_MEMBER",
@@ -99,7 +98,6 @@ describe("release issue model", () => {
       "SOURCE_IDENTITY_MISMATCH",
       "RELEASE_INPUT_IDENTITY_MISMATCH",
       "OWNERSHIP_INDEX_MISMATCH",
-      "INVALID_ARTIFACT_REF",
     ]);
     expect(Value.Check(ReleaseIssueCodeSchema, "NOT_A_RELEASE_ISSUE")).toBe(false);
 

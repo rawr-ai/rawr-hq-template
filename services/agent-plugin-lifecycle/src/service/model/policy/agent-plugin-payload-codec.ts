@@ -4,7 +4,7 @@ import { canonicalJsonLine } from "./canonical-json";
 import { payloadManifestValue } from "./payload-manifest";
 
 /** Projects canonical payload entries into the digest-bearing JSON value. */
-export function payloadEntriesValue(entries: readonly PayloadEntry[]): CanonicalJsonValue {
+function payloadEntriesValue(entries: readonly PayloadEntry[]): CanonicalJsonValue {
   return entries.map((entry) => ({
     path: entry.path,
     mode: entry.mode,

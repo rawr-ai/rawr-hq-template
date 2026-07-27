@@ -1,15 +1,16 @@
-import { type AgentPluginRelease, createAgentPluginRelease } from "../../shared/release/release";
 import { createAgentPluginReleaseSet } from "../../shared/release/release-set";
+import type { AgentPluginRelease } from "../dto/agent-plugin-release";
 import type {
   ReleaseDerivationFailure,
   ReleaseDerivationResult,
   ReleaseDerivationSelection,
   ReleaseDerivationSource,
 } from "../dto/release-derivation";
+import { createAgentPluginRelease } from "./agent-plugin-release";
 import { compareCanonicalText } from "./canonical-text-ordering";
 
 /**
- * Constructs the selected in-memory release artifacts from one exact content
+ * Constructs the selected in-memory release values from one exact content
  * snapshot. The policy reports neutral construction detail so each consuming
  * module retains ownership of its public failure and success shapes.
  */

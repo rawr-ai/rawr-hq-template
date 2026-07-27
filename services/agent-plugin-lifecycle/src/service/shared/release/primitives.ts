@@ -19,7 +19,6 @@ declare const contentDigestBrand: unique symbol;
 declare const releaseInputDigestBrand: unique symbol;
 declare const payloadDigestBrand: unique symbol;
 declare const releaseDigestBrand: unique symbol;
-declare const artifactDigestBrand: unique symbol;
 declare const releaseSetDigestBrand: unique symbol;
 
 type ContentAuthorityBrand = string & { readonly [contentAuthorityBrand]: "ContentAuthority" };
@@ -41,13 +40,11 @@ type ReleaseInputDigestBrand = string & {
 };
 type PayloadDigestBrand = string & { readonly [payloadDigestBrand]: "PayloadDigest" };
 type ReleaseDigestBrand = string & { readonly [releaseDigestBrand]: "ReleaseDigest" };
-type ArtifactDigestBrand = string & { readonly [artifactDigestBrand]: "ArtifactDigest" };
 type ReleaseSetDigestBrand = string & { readonly [releaseSetDigestBrand]: "ReleaseSetDigest" };
 
 export const RELEASE_INPUT_SCHEMA_VERSION = 1 as const;
 export const PAYLOAD_PROTOCOL_VERSION = 1 as const;
 export const AGENT_PLUGIN_RELEASE_SCHEMA_VERSION = 1 as const;
-export const ARTIFACT_PROTOCOL_VERSION = 1 as const;
 export const AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION = 1 as const;
 /** Pins the wire version carried by every admitted distribution ownership index. */
 export const OWNERSHIP_INDEX_SCHEMA_VERSION = 1 as const;
@@ -68,7 +65,6 @@ export const MAX_PROVENANCE_BINDINGS = 16_384;
 export type ReleaseInputSchemaVersion = typeof RELEASE_INPUT_SCHEMA_VERSION;
 export type PayloadProtocolVersion = typeof PAYLOAD_PROTOCOL_VERSION;
 export type AgentPluginReleaseSchemaVersion = typeof AGENT_PLUGIN_RELEASE_SCHEMA_VERSION;
-export type ArtifactProtocolVersion = typeof ARTIFACT_PROTOCOL_VERSION;
 export type AgentPluginReleaseSetSchemaVersion = typeof AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION;
 export type OwnershipIndexSchemaVersion = typeof OWNERSHIP_INDEX_SCHEMA_VERSION;
 export type BuilderProtocolVersion = typeof BUILDER_PROTOCOL_VERSION;
@@ -158,11 +154,6 @@ export const ReleaseDigestSchema = Type.Unsafe<ReleaseDigestBrand>(
   Type.String({ pattern: "^rd1_[0-9a-f]{64}$" })
 );
 
-/** Identifies one canonical packaged release artifact. */
-export const ArtifactDigestSchema = Type.Unsafe<ArtifactDigestBrand>(
-  Type.String({ pattern: "^ad1_[0-9a-f]{64}$" })
-);
-
 /** Identifies one canonical complete curated release set. */
 export const ReleaseSetDigestSchema = Type.Unsafe<ReleaseSetDigestBrand>(
   Type.String({ pattern: "^rs1_[0-9a-f]{64}$" })
@@ -182,7 +173,6 @@ export type ContentDigest = Static<typeof ContentDigestSchema>;
 export type ReleaseInputDigest = Static<typeof ReleaseInputDigestSchema>;
 export type PayloadDigest = Static<typeof PayloadDigestSchema>;
 export type ReleaseDigest = Static<typeof ReleaseDigestSchema>;
-export type ArtifactDigest = Static<typeof ArtifactDigestSchema>;
 export type ReleaseSetDigest = Static<typeof ReleaseSetDigestSchema>;
 export type NormalizedFileMode = Static<typeof NormalizedFileModeSchema>;
 
@@ -322,13 +312,6 @@ export function parseReleaseDigest(
   return parseDigest(ReleaseDigestSchema, value, path);
 }
 
-export function parseArtifactDigest(
-  value: unknown,
-  path = "artifactDigest"
-): ReleaseResult<ArtifactDigest, ReleaseIssue> {
-  return parseDigest(ArtifactDigestSchema, value, path);
-}
-
 export function parseReleaseSetDigest(
   value: unknown,
   path = "releaseSetDigest"
@@ -350,10 +333,6 @@ export function payloadDigest(bytes: Uint8Array): PayloadDigest {
 
 export function releaseDigest(bytes: Uint8Array): ReleaseDigest {
   return `rd1_${sha256Hex(bytes)}` as ReleaseDigest;
-}
-
-export function artifactDigest(bytes: Uint8Array): ArtifactDigest {
-  return `ad1_${sha256Hex(bytes)}` as ArtifactDigest;
 }
 
 export function releaseSetDigest(bytes: Uint8Array): ReleaseSetDigest {

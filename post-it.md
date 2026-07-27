@@ -6,6 +6,34 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Individual Release Is In-Memory Domain Data
+
+An individual agent-plugin release is verified in-memory domain data. Its
+release digest verifies a digest-free canonical body; neither the digest nor
+the release is a storage address, store handle, provider identity, or local
+installation. The admitted payload remains attached as verified bytes rather
+than being recast as a persistent artifact.
+
+One direct service-root TypeBox DTO owns release body and envelope structure
+and generated types. One direct release policy owns construction, admission,
+verification, decoding, defensive freezing, and diagnostics. One direct codec
+owns canonical body and envelope projection and bytes. Consumers import those
+exact leaves without an alias, facade, or compatibility path. Release-set
+policy temporarily retains cross-member relationships while artifact body,
+artifact digest, artifact protocol, and local storage identity are deleted.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/agent-plugin-release|the individual-release DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release|the individual-release policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release-codec|the individual-release codec]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+release, payload, digest, identity, memory, schema, policy, codec, authority,
+boundary, deletion.
+
 ## 2026-07-27 - Release Input Has Direct Policy And Codec Owners
 
 Release input has three adjacent, nonoverlapping owners. The existing TypeBox
