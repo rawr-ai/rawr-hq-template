@@ -476,15 +476,32 @@ belong to a qualified host, not this reference service slice.
 One uncached Nx graph completes Example Todo build, typecheck, and all seven
 files and 37 behavior tests in 6.3 seconds. The two enforced Habitat database
 rules pass with zero findings in 3.1 seconds, and workspace Biome lint completes
-in 525 milliseconds. The underlying imported-export documentation check and
-strict OpenSpec validation pass.
+in 525 milliseconds. Imported exports introduced by this slice carry the
+required documentation, and strict OpenSpec validation passes.
 
-The `habitat:check:documentation` Nx target currently fails before execution
-because Nx cannot parse its legacy composite-brace input glob. That pre-existing
-foundation defect is not a service behavior failure, but it blocks claiming the
-documentation ratchet is operational through Nx; the next separate checkpoint
-owns that wiring repair. Standing architecture and structural-quality review
-report no unresolved P0, P1, or P2 finding. Graphite landing remains open.
+The Example Todo checkpoint exposed a pre-existing
+`habitat:check:documentation` Nx input parser failure before checker execution.
+That foundation defect was not a service behavior failure; the separate
+checkpoint below owns its repair. Standing architecture and structural-quality
+review report no unresolved P0, P1, or P2 finding. Graphite landing remains
+open.
+
+### Documentation Target Admission
+
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e18]] repairs the
+pre-existing Nx input parser defect as a separate infrastructure checkpoint.
+The cacheable `habitat:check:documentation` leaf now uses one Nx-supported
+extglob for the same seven source roots. Nx workspace glob evaluation observes
+901 files for both the explicit root union and the replacement, with identical
+sets. No script, wrapper, checker, or baseline is added.
+
+An uncached direct run now reaches the existing imported-export JSDoc checker
+and reports the repository's existing undocumented corpus after 61 seconds.
+That is a real documentation burn-down boundary, not a parser or service
+failure. The target therefore remains manual and is not yet a dependency of
+`habitat:check:policy`; activation remains one dependency edge after the corpus
+itself is green. This checkpoint makes the existing law executable through Nx
+without weakening it or pretending that a red corpus is admitted.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
