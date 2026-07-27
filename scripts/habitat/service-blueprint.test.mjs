@@ -945,6 +945,204 @@ describe("service blueprint authority", () => {
     }
   });
 
+  it("keeps standalone service proof imports downstream from production source", async () => {
+    const rule = "require_service_proof_isolation";
+    const root = await createFixture(
+      {
+        "services/jobs/src/service/modules/catalog/router/read.router.ts": `
+          import { catalogFixture } from "../../../../../test/support/modules/catalog/fixture";
+          export const read = catalogFixture;
+        `,
+        "services/jobs/src/service/model/policy/load-proof.ts": `
+          export const proofPath = require.resolve(
+            \`../../../test/support/service/fixture\`
+          );
+        `,
+        "services/jobs/src/service/model/policy/contest.ts": `
+          import { contestPolicy } from "./contest/policy";
+          export { contestPolicy };
+        `,
+        "services/jobs/test/behavior/catalog.test.ts": `
+          import { createClient } from "../../src/client";
+          export { createClient };
+        `,
+        "plugins/server/api/catalog/src/service/modules/jobs/router/read.router.ts": `
+          import { jobsFixture } from "../../../../test/support/modules/jobs/fixture";
+          export const read = jobsFixture;
+        `,
+      },
+      [rule]
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "services/jobs/src/service/modules/catalog/router/read.router.ts",
+      "services/jobs/src/service/model/policy/load-proof.ts",
+    ]) {
+      expect(paths).toContain(path);
+    }
+    for (const path of [
+      "services/jobs/src/service/model/policy/contest.ts",
+      "services/jobs/test/behavior/catalog.test.ts",
+      "plugins/server/api/catalog/src/service/modules/jobs/router/read.router.ts",
+    ]) {
+      expect(paths).not.toContain(path);
+    }
+  });
+
+  it("keeps private aliases inside their owner across TSX and template loaders", async () => {
+    const rule = "require_service_private_alias_ownership";
+    const root = await createFixture(
+      {
+        "apps/web/src/features/jobs.tsx": `
+          import { router } from "#jobs-service/router";
+          export const Jobs = () => <output>{String(router)}</output>;
+        `,
+        "services/jobs/src/client.tsx": `
+          import { router } from "#jobs-service/router";
+          export const JobsClient = () => <output>{String(router)}</output>;
+        `,
+        "apps/server/src/runtime/jobs-import.ts": `
+          export const jobs = import(\`#jobs-service/router\`);
+        `,
+        "apps/server/src/runtime/jobs-require.ts": `
+          export const jobs = require(\`#jobs-service/router\`);
+        `,
+        "apps/server/src/runtime/jobs-resolve.ts": `
+          export const jobs = require.resolve(\`#jobs-service/router\`);
+        `,
+        "apps/server/src/runtime/catalog-api.ts": `
+          export const catalog = require(\`#catalog-api/service/impl\`);
+        `,
+        "services/jobs/src/runtime/import.ts": `
+          export const jobs = import(\`#jobs-service/router\`);
+        `,
+        "services/jobs/src/runtime/require.ts": `
+          export const jobs = require(\`#jobs-service/router\`);
+        `,
+        "services/jobs/src/runtime/resolve.ts": `
+          export const jobs = require.resolve(\`#jobs-service/router\`);
+        `,
+        "plugins/server/api/catalog/src/runtime.ts": `
+          export const catalog = require(\`#catalog-api/service/impl\`);
+        `,
+        "apps/server/src/runtime/jobs-computed.ts": `
+          const owner = "jobs";
+          export const jobs = import(\`#\${owner}-service/router\`);
+        `,
+      },
+      [rule]
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "apps/web/src/features/jobs.tsx",
+      "apps/server/src/runtime/jobs-import.ts",
+      "apps/server/src/runtime/jobs-require.ts",
+      "apps/server/src/runtime/jobs-resolve.ts",
+      "apps/server/src/runtime/catalog-api.ts",
+    ]) {
+      expect(paths).toContain(path);
+    }
+    for (const path of [
+      "services/jobs/src/client.tsx",
+      "services/jobs/src/runtime/import.ts",
+      "services/jobs/src/runtime/require.ts",
+      "services/jobs/src/runtime/resolve.ts",
+      "plugins/server/api/catalog/src/runtime.ts",
+      "apps/server/src/runtime/jobs-computed.ts",
+    ]) {
+      expect(paths).not.toContain(path);
+    }
+  });
+
+  it("seals private service implementation paths from public consumers", async () => {
+    const rule = "require_service_public_consumer_sealing";
+    const root = await createFixture(
+      {
+        "apps/web/src/features/jobs.tsx": `
+          import { router } from "../../../../services/jobs/src/service/router";
+          export const Jobs = () => <output>{String(router)}</output>;
+        `,
+        "services/discovery/src/service/jobs.ts": `
+          import { router } from "../../../job-search/src/service/router";
+          export { router };
+        `,
+        "services/discovery/src/service/jobs-template.ts": `
+          export const contractPath = require.resolve(
+            \`../../../job-search/src/service/contract\`
+          );
+        `,
+        "tools/ops/src/jobs.ts": `
+          export const jobs = require("../../../services/jobs/src/service/router");
+        `,
+        "scripts/ops/jobs.ts": `
+          export { contract } from "../../services/jobs/src/service/contract";
+        `,
+        "service-consumer.ts": `
+          import { router } from "./services/jobs/src/service/router";
+          export { router };
+        `,
+        "apps/web/src/features/jobs-alias.ts": `
+          import { router } from "#jobs-service/router";
+          export { router };
+        `,
+        "services/jobs/test/mechanics/client.test.ts": `
+          import { createJobsStore } from "#jobs-service/modules/jobs/db/memory/jobs.store";
+          export { createJobsStore };
+        `,
+        "services/jobs/test/mechanics/private-service.test.ts": `
+          import { router } from "../../src/service/router";
+          export { router };
+        `,
+        "services/discovery/test/fixtures/services/jobs/src/client.test.ts": `
+          import { router } from "../../../../job-search/src/service/router";
+          export { router };
+        `,
+        "plugins/server/api/catalog/src/service/modules/jobs/router/read.router.ts": `
+          import type { Client as JobsClient } from "#jobs/client";
+          export type { JobsClient };
+        `,
+        "services/discovery/src/service/legacy-owner.ts": `
+          import { router } from "../../../Jobs/src/service/router";
+          export { router };
+        `,
+      },
+      [rule]
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "apps/web/src/features/jobs.tsx",
+      "services/discovery/src/service/jobs.ts",
+      "services/discovery/src/service/jobs-template.ts",
+      "tools/ops/src/jobs.ts",
+      "scripts/ops/jobs.ts",
+      "service-consumer.ts",
+    ]) {
+      expect(paths).toContain(path);
+    }
+    for (const path of [
+      "apps/web/src/features/jobs-alias.ts",
+      "services/jobs/test/mechanics/client.test.ts",
+      "services/jobs/test/mechanics/private-service.test.ts",
+      "services/discovery/test/fixtures/services/jobs/src/client.test.ts",
+      "plugins/server/api/catalog/src/service/modules/jobs/router/read.router.ts",
+      "services/discovery/src/service/legacy-owner.ts",
+    ]) {
+      expect(paths).not.toContain(path);
+    }
+  });
+
   it("keeps concrete platform acquisition behind qualified hosts, resources, and providers", async () => {
     const rule = "require_service_boundary_platform_independence";
     const root = await createFixture(

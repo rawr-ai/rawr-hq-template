@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_public_consumer_sealing",
+  "title": "Require Service Public Consumer Sealing",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a literal module-loading edge that visibly enters a standalone service's src/service tree, including a relative sibling-service shortcut from standalone production source",
+  "why": "Foreign callers cross a standalone service through its deliberate public client face. Literal implementation-tree paths bypass that boundary; the independent private-alias law owns alias edges.",
+  "remediate": "Import the service's public client face instead of a literal path that enters services/<owner>/src/service. Owner-local proof may use a normalized relative path to its own implementation; foreign and sibling callers use public package exports.",
+  "message": "Standalone service implementation trees are private to their owning package.",
+  "pathCoverage": [
+    {
+      "kind": "workspace-gate"
+    }
+  ],
+  "scanRoots": ["."],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_public_consumer_sealing/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_public_consumer_sealing/pattern.md"
+    },
+    "patternName": "require_service_public_consumer_sealing"
+  }
+}

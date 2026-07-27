@@ -11,11 +11,18 @@ outside-owner use is a violation. Public cross-project dependencies use package
 exports instead.
 
 ```grit
-language js(typescript)
+language js
 
 // Identifies the private alias namespace shared by service and API owners.
 predicate is_private_service_alias($source) {
-  $source <: r"^[\"']#[^/]+-(?:service|api)(?:/[^\"']*)?[\"']$"
+  or {
+    $source <: r"^[\"']#[^/]+-(?:service|api)(?:/[^\"']*)?[\"']$",
+    and {
+      $source <: template_string(),
+      $source <: not contains template_substitution(),
+      $source <: r"^`#[^/`]+-(?:service|api)(?:/[^`]*)?`$"
+    }
+  }
 }
 
 // Admits only the current standalone service owner's qualified alias.
@@ -24,7 +31,14 @@ predicate is_matching_service_owner_alias($source) {
   not {
     $filename <: r".*/(?:apps|packages|plugins|resources|scripts|services|tools)/.*services/[^/]+/.*"
   },
-  $source <: r"^[\"']#([^/]+)-service/[^\"']+[\"']$"($alias_owner),
+  or {
+    $source <: r"^[\"']#([^/]+)-service/[^\"']+[\"']$"($alias_owner),
+    and {
+      $source <: template_string(),
+      $source <: not contains template_substitution(),
+      $source <: r"^`#([^/`]+)-service/[^`]+`$"($alias_owner)
+    }
+  },
   $alias_owner <: $owner
 }
 
@@ -34,7 +48,14 @@ predicate is_matching_api_owner_alias($source) {
   not {
     $filename <: r".*/(?:apps|packages|plugins|resources|scripts|services|tools)/.*plugins/server/api/[^/]+/.*"
   },
-  $source <: r"^[\"']#([^/]+)-api/[^\"']+[\"']$"($alias_owner),
+  or {
+    $source <: r"^[\"']#([^/]+)-api/[^\"']+[\"']$"($alias_owner),
+    and {
+      $source <: template_string(),
+      $source <: not contains template_substitution(),
+      $source <: r"^`#([^/`]+)-api/[^`]+`$"($alias_owner)
+    }
+  },
   $alias_owner <: $owner
 }
 
@@ -86,6 +107,15 @@ void import("#catalog-service/router");
 type Service = typeof import("#jobs-service");
 ```
 
+## Matches substitution-free template loaders outside the owner
+
+```typescript
+// @filename: apps/server/src/runtime/jobs.ts
+const imported = import(`#jobs-service/router`);
+const required = require(`#jobs-service/router`);
+const resolved = require.resolve(`#jobs-service/router`);
+```
+
 ## Matches a nested path that only resembles an owner root
 
 ```typescript
@@ -109,4 +139,17 @@ export type { Context } from "#jobs-service/model/context";
 type Service = typeof import("#jobs-service/impl");
 // @filename: plugins/server/api/catalog/src/api.ts
 const service = require("#catalog-api/service/impl");
+const templateService = require(`#catalog-api/service/impl`);
+// @filename: services/jobs/src/runtime.ts
+const imported = import(`#jobs-service/router`);
+const required = require(`#jobs-service/router`);
+const resolved = require.resolve(`#jobs-service/router`);
+```
+
+## Ignores interpolated template sources
+
+```typescript
+// @filename: apps/server/src/runtime/computed.ts
+const owner = "jobs";
+const service = import(`#${owner}-service/router`);
 ```
