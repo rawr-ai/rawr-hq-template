@@ -919,6 +919,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   owning `model/dto` leaf. Preserve every schema identity, generated contract
   type, validation result, and public operation without adding a barrel,
   compatibility export, or alternate schema face.
+- [x] 5.7e2q Narrow Vendor payload policy to product semantics. Treat ready
+  versioned-content and content-workspace results as exact mechanical facts;
+  delete Vendor's duplicate Git object validation and blob rehashing. Retain
+  declaration equality, the root `SKILL.md` requirement, observation-to-
+  materialization drift refusal, payload identity, provenance, defensive byte
+  cloning, and authoring behavior. Replace the contract-breaking fake-resource
+  oracle with owner-correct missing-skill and advancing-ref cases. Add no
+  resource, provider, adapter, facade, or Habitat law.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

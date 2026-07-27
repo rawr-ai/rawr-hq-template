@@ -1,8 +1,4 @@
-import type {
-  ContentTreeEntry,
-  ContentWorkspaceIdentity,
-  GitObjectFormat,
-} from "@rawr/resource-content-workspace";
+import type { ContentTreeEntry, ContentWorkspaceIdentity } from "@rawr/resource-content-workspace";
 
 import {
   contentDigest,
@@ -16,13 +12,13 @@ import type {
   VendorRecordBinding,
   VendorSourceDeclaration,
 } from "../dto/vendor-records";
-import { GIT_OBJECT_ID_PATTERN, NORMALIZED_RELATIVE_PATH_PATTERN } from "../dto/vendor-records";
+import { NORMALIZED_RELATIVE_PATH_PATTERN } from "../dto/vendor-records";
 import type {
   VendorDeclaredSourceObservation,
   VendorDestinationObservation,
   VendorWorkspaceObservation,
 } from "../dto/vendor-workspace";
-import { validGitObjectForFormat, vendorPayloadLayoutIssue } from "./vendor-payload-policy";
+import { vendorPayloadLayoutIssue } from "./vendor-payload-policy";
 import {
   policyFailure,
   policySuccess,
@@ -33,7 +29,6 @@ import { vendorPayloadDigest } from "./vendor-record-codec";
 import { vendorWorkspaceReadToken } from "./vendor-workspace-token";
 
 const normalizedRelativePath = new RegExp(NORMALIZED_RELATIVE_PATH_PATTERN, "u");
-const gitObjectId = new RegExp(GIT_OBJECT_ID_PATTERN, "u");
 
 /** Validates the provider-reported identity against the requested content workspace. */
 export function vendorWorkspaceIdentityIssue(
@@ -54,14 +49,6 @@ export function vendorWorkspaceIdentityIssue(
   }
   if (actual.refName !== requested.refName) {
     return vendorIssue("WrongRef", "Content workspace is on a different qualified ref.");
-  }
-  if (
-    !gitObjectId.test(actual.commit) ||
-    !gitObjectId.test(actual.tree) ||
-    !validGitObjectForFormat(actual.commit, actual.objectFormat) ||
-    !validGitObjectForFormat(actual.tree, actual.objectFormat)
-  ) {
-    return vendorIssue("RuntimeFailure", "Content workspace returned an invalid Git identity.");
   }
   if (actual.commit !== requested.sourceCommit || actual.tree !== requested.sourceTree) {
     return vendorIssue(
@@ -114,10 +101,9 @@ export function vendorRecordBinding(
 
 /** Interprets exact destination-tree facts as Vendor destination state. */
 export function createVendorDestinationObservation(
-  entries: readonly ContentTreeEntry[],
-  objectFormat: GitObjectFormat
+  entries: readonly ContentTreeEntry[]
 ): VendorDestinationObservation {
-  const layoutIssue = vendorPayloadLayoutIssue(entries, objectFormat);
+  const layoutIssue = vendorPayloadLayoutIssue(entries);
   if (layoutIssue !== undefined) {
     return Object.freeze({ kind: "Invalid", detail: layoutIssue });
   }

@@ -164,9 +164,7 @@ export const router = {
               )
             );
           }
-          return policySuccess(
-            createVendorDestinationObservation(entriesAttempt.success, objectFormat)
-          );
+          return policySuccess(createVendorDestinationObservation(entriesAttempt.success));
         });
 
       const identityAttempt = yield* Effect.result(
@@ -425,9 +423,7 @@ export const router = {
               )
             );
           }
-          return policySuccess(
-            createVendorDestinationObservation(entriesAttempt.success, objectFormat)
-          );
+          return policySuccess(createVendorDestinationObservation(entriesAttempt.success));
         });
 
       const observeWorkspace = Effect.gen(function* () {

@@ -14,7 +14,7 @@ import type {
   VendorDeclaredSourceObservation,
   VendorUpstreamObservation,
 } from "../dto/vendor-workspace";
-import { validGitObjectForFormat, vendorPayloadLayoutIssue } from "./vendor-payload-policy";
+import { vendorPayloadLayoutIssue } from "./vendor-payload-policy";
 import {
   policyFailure,
   policySuccess,
@@ -127,13 +127,7 @@ function remoteIssue(
       sourceId
     );
   }
-  if (
-    !validGitObjectForFormat(remote.commit, remote.objectFormat) ||
-    !validGitObjectForFormat(remote.tree, remote.objectFormat)
-  ) {
-    return vendorIssue("PayloadMismatch", "Observed upstream Git identity is invalid.", sourceId);
-  }
-  const layoutIssue = vendorPayloadLayoutIssue(remote.entries, remote.objectFormat);
+  const layoutIssue = vendorPayloadLayoutIssue(remote.entries);
   return layoutIssue === undefined
     ? undefined
     : vendorIssue("UnsupportedLayout", layoutIssue, sourceId);

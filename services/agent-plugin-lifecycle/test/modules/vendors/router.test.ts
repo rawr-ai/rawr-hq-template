@@ -267,16 +267,31 @@ describe("vendor lifecycle applications", () => {
     expect(harness.counters.restore).toBe(0);
   });
 
-  it("rejects materialized bytes that do not match the classified Git tree", async () => {
+  it("rejects an upstream payload without a root SKILL.md before materialization", async () => {
     const harness = new VendorHarness();
-    harness.setRemote("next payload\n", "7");
-    harness.corruptMaterializedBytes = true;
+    harness.setRemoteWithoutSkill();
 
     const result = await createVendorUpdate(harness)({ contentWorkspace, sourceIds: [sourceId] });
 
     expect(result).toMatchObject({
       kind: "Rejected",
-      issues: [{ code: "PayloadMismatch", sourceId }],
+      issues: [{ code: "UnsupportedLayout", sourceId }],
+    });
+    expect(harness.counters.materializeRemote).toBe(0);
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
+  });
+
+  it("rejects a remote that advances between observation and materialization", async () => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    harness.driftMaterializedRemote = true;
+
+    const result = await createVendorUpdate(harness)({ contentWorkspace, sourceIds: [sourceId] });
+
+    expect(result).toMatchObject({
+      kind: "Rejected",
+      issues: [{ code: "NonFastForward", sourceId }],
     });
     expect(harness.counters.materializeRemote).toBe(1);
     expect(harness.counters.capture).toBe(0);
@@ -507,7 +522,7 @@ class VendorHarness {
   lastWrites: readonly ContentWorkspaceWrite[] = [];
   releasedDisposition: "NoMutation" | "UnsettledRecovery" | undefined;
   driftAfterCapture = false;
-  corruptMaterializedBytes = false;
+  driftMaterializedRemote = false;
   failApplyAfterFirstWrite = false;
   pauseAfterPartialApply = false;
   failRestore = false;
@@ -704,16 +719,9 @@ class VendorHarness {
           harness.counters.materializeRemote += 1;
           const failure = harness.upstreamFailures.get("materialize");
           if (failure !== undefined) return yield* Effect.fail(failure);
-          if (!harness.corruptMaterializedBytes) return cloneRemote(harness.remote);
-          return Object.freeze({
-            ...harness.remote,
-            entries: harness.remote.entries.map((entry) =>
-              Object.freeze({
-                ...entry,
-                bytes: encoder.encode("wrong bytes\n"),
-              })
-            ),
-          });
+          if (!harness.driftMaterializedRemote) return cloneRemote(harness.remote);
+          const entries = materializedEntries("later payload\n");
+          return remoteTree("8".repeat(40), "8".repeat(40), entries);
         }),
       isAncestor: () =>
         Effect.gen(function* () {
@@ -728,6 +736,19 @@ class VendorHarness {
   setRemote(text: string, seed: string): void {
     const entries = materializedEntries(text);
     this.remote = remoteTree(seed.repeat(40), seed.repeat(40), entries);
+  }
+
+  setRemoteWithoutSkill(): void {
+    const bytes = encoder.encode("supporting material\n");
+    const entries = Object.freeze([
+      Object.freeze({
+        path: "README.md",
+        mode: "100644" as const,
+        blob: gitBlobId(bytes),
+        bytes,
+      }),
+    ]);
+    this.remote = remoteTree("7".repeat(40), "7".repeat(40), entries);
   }
 
   setDestination(text: string): void {

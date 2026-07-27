@@ -1874,6 +1874,32 @@ TypeScript/TypeBox/oRPC/structural reviews closed without unresolved P0 or P1
 findings. No Personal repository, provider home, Oclif surface, resource,
 provider command, or live lifecycle state changed.
 
+The Vendor payload-ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2q]]. The
+versioned-content and content-workspace resources now remain the sole owners of
+Git object shape, object-format coupling, canonical entry mechanics, and the
+relation between reported blob identifiers and materialized bytes. Vendor
+policy no longer rehashes resource bytes or revalidates those mechanical facts.
+
+Vendor still compares the complete independently observed and materialized
+remote identities before authoring. It retains declaration matching, the root
+`SKILL.md` requirement, payload digest and provenance, defensive byte cloning,
+update classification, and exact authoring settlement. The old fake-resource
+case returned unrelated bytes under an unchanged blob identifier and is
+replaced by owner-correct oracles for a missing skill entry and a valid remote
+advance between the two resource calls.
+
+The 22 Vendor router cases, four versioned-content contract cases, six Git
+provider cases, and complete 290-case lifecycle suite pass. Uncached lifecycle
+production and test typechecks, resource and provider typechecks, the lifecycle
+Habitat owner gate, Biome, strict OpenSpec validation, and diff hygiene pass.
+Architecture, behavior-first testing, and TypeScript/Effect/oRPC/structural
+reviews closed without unresolved P0, P1, or P2 findings. No new resource,
+provider, adapter, facade, state owner, Habitat law, Personal repository
+mutation, native provider command, or live lifecycle mutation is introduced.
+The required repository check passed 39 projects and 76 dependency tasks in
+43.6 seconds, including all 17 enforced Habitat laws with zero findings.
+
 ## Settlement Oracles
 
 The final product must prove:
