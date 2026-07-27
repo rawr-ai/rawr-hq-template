@@ -42,6 +42,23 @@ afterEach(async () => {
 });
 
 describe("codex-effect-platform-node", () => {
+  it("resolves the ordinary codex command from PATH for an explicit home", async () => {
+    const fixture = await makeFixture("codex");
+    await withPathPrefix(fixture.root, async () => {
+      const session = await Effect.runPromise(
+        makeNodeCodexNativeAgentProviderResource().acquire({ home: fixture.home })
+      );
+
+      expect(await Effect.runPromise(session.probe())).toMatchObject({
+        provider: "codex",
+        home: fixture.home,
+        version: "codex-cli 0.144.6",
+      });
+    });
+
+    expect(await commandLines(fixture.home)).toEqual(["--version"]);
+  });
+
   it("maps exact native inventory and mutation commands in the explicit home", async () => {
     const fixture = await makeFixture();
     const localMarketplace = path.join(fixture.root, "local-marketplace");
@@ -102,7 +119,6 @@ describe("codex-effect-platform-node", () => {
 
     expect(probe).toEqual({
       provider: "codex",
-      executablePath: fixture.executablePath,
       home: fixture.home,
       version: "codex-cli 0.144.6",
       capabilities: [
@@ -154,8 +170,6 @@ describe("codex-effect-platform-node", () => {
     });
     expect(await commandLines(fixture.home)).toEqual([
       "--version",
-      "plugin --help",
-      "plugin marketplace --help",
       "plugin marketplace list --json",
       "plugin list --json",
       `plugin marketplace add ${localMarketplace} --json`,
@@ -194,7 +208,7 @@ describe("codex-effect-platform-node", () => {
   }, async () => {
     const spawnFixture = await makeFixture();
     const spawnSession = await acquire(spawnFixture);
-    await rm(spawnFixture.executablePath);
+    await rm(spawnFixture.command);
     const spawn = await Effect.runPromiseExit(
       spawnSession.installPlugin({ selector: "cognition@rawr-hq" })
     );
@@ -214,7 +228,7 @@ describe("codex-effect-platform-node", () => {
     const timedOut = await Effect.runPromise(
       Effect.gen(function* () {
         const session = yield* makeCodexEffectPlatformNodeProvider({
-          executablePath: timeoutFixture.executablePath,
+          command: timeoutFixture.command,
         }).acquire({ home: timeoutFixture.home });
         const fiber = yield* session
           .installPlugin({ selector: "hang@rawr-hq" })
@@ -233,7 +247,7 @@ describe("codex-effect-platform-node", () => {
     const forceKilled = await Effect.runPromise(
       Effect.gen(function* () {
         const session = yield* makeCodexEffectPlatformNodeProvider({
-          executablePath: forceKillFixture.executablePath,
+          command: forceKillFixture.command,
         }).acquire({ home: forceKillFixture.home });
         const fiber = yield* session
           .installPlugin({ selector: "ignore-term@rawr-hq" })
@@ -284,7 +298,7 @@ describe("codex-effect-platform-node", () => {
     const fixture = await makeFixture();
     const rootHome = path.parse(fixture.home).root;
     const refused = await Effect.runPromiseExit(
-      makeCodexEffectPlatformNodeProvider({ executablePath: fixture.executablePath })
+      makeCodexEffectPlatformNodeProvider({ command: fixture.command })
         .acquire({ home: rootHome })
         .pipe(Effect.provide(NodeServices.layer))
     );
@@ -398,7 +412,6 @@ describe("codex-effect-platform-node", () => {
     const session = await acquire(await makeFixture());
     expect(Object.keys(session).sort()).toEqual([
       "addMarketplace",
-      "executablePath",
       "home",
       "installPlugin",
       "inventory",
@@ -411,23 +424,34 @@ describe("codex-effect-platform-node", () => {
   });
 });
 
-async function makeFixture(): Promise<
-  Readonly<{ root: string; executablePath: string; home: string }>
-> {
+async function makeFixture(
+  commandName = "fake-codex"
+): Promise<Readonly<{ root: string; command: string; home: string }>> {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-native-provider-test-")));
   roots.push(root);
   const home = path.join(root, "home");
-  const executablePath = path.join(root, "fake-codex");
+  const command = path.join(root, commandName);
   await mkdir(home);
-  await writeFile(executablePath, fakeCodexScript(), { mode: 0o755 });
-  await chmod(executablePath, 0o755);
-  return Object.freeze({ root, executablePath, home });
+  await writeFile(command, fakeCodexScript(), { mode: 0o755 });
+  await chmod(command, 0o755);
+  return Object.freeze({ root, command, home });
 }
 
-async function acquire(fixture: Readonly<{ executablePath: string; home: string }>) {
+async function withPathPrefix<A>(root: string, effect: () => Promise<A>): Promise<A> {
+  const previous = process.env.PATH;
+  process.env.PATH = previous === undefined ? root : `${root}${path.delimiter}${previous}`;
+  try {
+    return await effect();
+  } finally {
+    if (previous === undefined) delete process.env.PATH;
+    else process.env.PATH = previous;
+  }
+}
+
+async function acquire(fixture: Readonly<{ command: string; home: string }>) {
   return Effect.runPromise(
     makeNodeCodexNativeAgentProviderResource({
-      executablePath: fixture.executablePath,
+      command: fixture.command,
     }).acquire({ home: fixture.home })
   );
 }
@@ -518,8 +542,6 @@ printf 'start:%s\\n' "$*" >> "$HOME/events.log"
 sleep 0.02
 case "$*" in
   "--version") printf '%s\\n' 'codex-cli 0.144.6' ;;
-  "plugin --help") printf 'Commands:\\n  list  list plugins\\n  add  add plugin\\n  remove  remove plugin\\n' ;;
-  "plugin marketplace --help") printf 'Commands:\\n  list  list markets\\n  add  add market\\n  remove  remove market\\n' ;;
   "plugin marketplace list --json")
     if [ -f "$HOME/codex-marketplaces.json" ]; then cat "$HOME/codex-marketplaces.json"; else printf '%s\\n' '{"marketplaces":[]}'; fi ;;
   "plugin list --json")

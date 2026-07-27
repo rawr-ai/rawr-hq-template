@@ -204,11 +204,7 @@ export const sync = module.sync.effect(function* ({ context, input }) {
         });
       }
       const session = acquisition.success;
-      if (
-        session.provider !== target.provider ||
-        session.home !== target.home ||
-        session.executablePath.length === 0
-      ) {
+      if (session.provider !== target.provider || session.home !== target.home) {
         return Object.freeze({
           kind: "Unavailable" as const,
           assessment: unavailableNativeTarget(
@@ -239,7 +235,6 @@ export const sync = module.sync.effect(function* ({ context, input }) {
         capabilities.provider !== target.provider ||
         inventory.provider !== target.provider ||
         capabilities.home !== target.home ||
-        capabilities.executablePath !== session.executablePath ||
         (session.provider === "claude" &&
           (typeof session.enablePlugin !== "function" ||
             !new Set<string>(capabilities.capabilities).has("plugin-enable")))

@@ -18,7 +18,6 @@ import { makeNodeVersionedContentResource } from "@rawr/resource-versioned-conte
 import { createNodeNativeAgentProviderResources } from "../bindings/providers";
 import {
   type LifecycleClientFactory,
-  type LifecycleExecutableBinding,
   type LifecycleOperation,
   type LifecycleOperationClient,
 } from "../commands/binding";
@@ -93,10 +92,9 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
 });
 
 export const createProductionLifecycleClient: LifecycleClientFactory = (
-  operation,
-  binding
+  operation
 ): LifecycleOperationClient<typeof operation> => {
-  const deps = createProductionLifecycleDeps({ binding });
+  const deps = createProductionLifecycleDeps();
 
   const lifecycleService = bindService(createClient, {
     bindingId: `rawr-cli/agent-plugin-lifecycle/${operation}`,
@@ -114,20 +112,14 @@ export const createProductionLifecycleClient: LifecycleClientFactory = (
   return selectLifecycleOperationClient(operation, client);
 };
 
-export function createProductionLifecycleDeps(
-  input: Readonly<{
-    binding: LifecycleExecutableBinding;
-  }>
-): LifecycleDeps {
-  const { binding } = input;
-
+export function createProductionLifecycleDeps(): LifecycleDeps {
   return Object.freeze({
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     contentWorkspace: makeNodeContentWorkspaceResource(),
     clock: Object.freeze({ now: () => new Date() }),
     packageOutput: makeNodeAgentPluginPackageOutputResource(),
-    nativeProviders: createNodeNativeAgentProviderResources(binding.providerExecutables),
+    nativeProviders: createNodeNativeAgentProviderResources(),
     versionedContent: makeNodeVersionedContentResource(),
   } satisfies LifecycleDeps);
 }

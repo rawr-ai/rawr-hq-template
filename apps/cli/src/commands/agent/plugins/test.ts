@@ -3,7 +3,6 @@ import { RawrCommand } from "@rawr/core";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
 import {
-  providerExecutableFlag,
   providerTargetFlag,
   providerTestDisposableRootFlag,
   releaseWorkspaceFlags,
@@ -20,16 +19,12 @@ export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
     plugin: Flags.string({ multiple: true, description: "Target one declared agent plugin" }),
     "disposable-root": providerTestDisposableRootFlag,
     target: providerTargetFlag,
-    "provider-executable": providerExecutableFlag,
   } as const;
 
   async run(): Promise<void> {
     const { flags } = await this.parseRawr(AgentPluginsTest);
     const input = this.parseInput(flags, parseTestRequest);
     if (input === undefined) return;
-    const providers = [...new Set(input.targets.map((target) => target.provider))];
-    await this.project({ operation: "providers.test", input }, flags, {
-      providers,
-    });
+    await this.project({ operation: "providers.test", input }, flags);
   }
 }

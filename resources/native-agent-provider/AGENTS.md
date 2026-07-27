@@ -31,14 +31,15 @@
 
 ## Concepts
 
-- A **native provider session** binds an executable and home. **Inventory** is
-  live installed-state truth; **marketplaces** and **plugins** are provider
-  entities, not curated release records.
+- A **native provider session** binds one ordinary provider command to one
+  explicit home. **Inventory** is live installed-state truth; **marketplaces**
+  and **plugins** are provider entities, not curated release records.
 
 ## Flow
 
-- A host acquires a provider session for an explicit executable and home; the
-  consumer probes or observes live state, then may request one supported native
+- A host acquires a provider session for an explicit home; the concrete
+  provider resolves its ordinary command from the process environment. The
+  consumer observes live state, then may request one supported native
   marketplace or plugin mutation.
 
 ## Interfaces

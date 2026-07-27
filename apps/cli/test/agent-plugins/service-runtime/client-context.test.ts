@@ -58,7 +58,6 @@ const OPERATION_CASES = Object.freeze([
   owner: string;
   procedure: string;
 }>[]);
-const EMPTY_BINDING = Object.freeze({ providerExecutables: Object.freeze({}) });
 const invocation = Object.freeze({
   context: Object.freeze({
     invocation: Object.freeze({
@@ -81,7 +80,7 @@ describe("production lifecycle service context", () => {
   it("assembles root-owned raw resources as cold ordinary data properties", async () => {
     const root = requireFixture();
     const before = await directoryNames(root.path);
-    const deps = createProductionLifecycleDeps({ binding: EMPTY_BINDING });
+    const deps = createProductionLifecycleDeps();
 
     expect(Object.isFrozen(deps)).toBe(true);
     for (const dependency of LIFECYCLE_OBJECT_DEP_KEYS) {
@@ -113,7 +112,7 @@ describe("production lifecycle service context", () => {
     const root = requireFixture();
     for (const expected of OPERATION_CASES) {
       const before = await directoryNames(root.path);
-      const client = await createProductionLifecycleClient(expected.operation, EMPTY_BINDING);
+      const client = await createProductionLifecycleClient(expected.operation);
       const ownerClient = Object.values(client)[0];
 
       expect(Reflect.ownKeys(client), expected.operation).toEqual([expected.owner]);
@@ -137,7 +136,7 @@ describe("production lifecycle service context", () => {
     );
     const before = await directoryNames(root.path);
     const client = createClient({
-      deps: createProductionLifecycleDeps({ binding: EMPTY_BINDING }),
+      deps: createProductionLifecycleDeps(),
       scope: {},
       config: {},
     });

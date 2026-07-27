@@ -58,8 +58,3 @@ export const currentMainBodyJsonFlag = Flags.string({
 export const currentMainRecordJsonFlag = Flags.string({
   description: "Exact inline current-main v3 record JSON",
 });
-
-export const providerExecutableFlag = Flags.string({
-  description: "Explicit provider=absolute-executable binding",
-  multiple: true,
-});

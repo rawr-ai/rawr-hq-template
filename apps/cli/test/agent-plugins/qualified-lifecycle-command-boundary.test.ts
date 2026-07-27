@@ -27,8 +27,6 @@ import {
   invokeLifecycleProcedure,
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
-  parseLifecycleExecutableBinding,
-  projectLifecycleOperation,
 } from "../../src/lib/agent-plugins/commands/projection";
 import { releaseInputBodyFixture } from "./fixtures/release-input-body";
 import {
@@ -89,6 +87,22 @@ describe("qualified lifecycle command boundary", () => {
     expect(result.stderr).toContain(`command ${retired.join(":")} not found`);
   });
 
+  it("rejects executable binding on every native provider lifecycle command", () => {
+    for (const operation of ["status", "sync", "test"] as const) {
+      const result = runRawr([
+        "agent",
+        "plugins",
+        operation,
+        "--provider-executable",
+        "codex=/usr/bin/false",
+        "--json",
+      ]);
+
+      expect(result.status, `${operation}\n${result.stderr}`).toBe(2);
+      expect(result.stderr).toContain("Nonexistent flag: --provider-executable");
+    }
+  });
+
   it("rejects ambiguous and noncanonical inputs before a client can be constructed", () => {
     let clientConstructions = 0;
     const construct = () => {
@@ -129,10 +143,6 @@ describe("qualified lifecycle command boundary", () => {
           "content-workspace": "/tmp/content",
           "repository-identity": "repo",
           target: ["codex=relative"],
-        }),
-      () =>
-        parseLifecycleExecutableBinding({
-          "provider-executable": ["codex=/tmp/codex", "codex=/tmp/other-codex"],
         }),
     ]) {
       expect(() => {
@@ -526,13 +536,6 @@ describe("qualified lifecycle command boundary", () => {
     );
     expect(retiredGitBinding.status).toBe(2);
     expect(retiredGitBinding.stderr).toContain("Nonexistent flag: --git-executable");
-    const providerBinding = runRawr(
-      [...args, "--provider-executable", "codex=/usr/bin/false", "--json"],
-      bodyText
-    );
-    expect(providerBinding.status).toBe(2);
-    expect(providerBinding.stderr).toContain("Nonexistent flag: --provider-executable");
-
     const invalidJsonResult = runRawr([...args, "--json"], "{");
     expect(invalidJsonResult.status, invalidJsonResult.stderr).toBe(1);
     const invalidJson = parseSingleJson(invalidJsonResult.stdout);
@@ -619,7 +622,7 @@ describe("qualified lifecycle command boundary", () => {
     const requests = operationRequests();
     for (const request of requests) {
       calls.length = 0;
-      await invokeLifecycleProcedure(request, { providerExecutables: {} }, () => client);
+      await invokeLifecycleProcedure(request, () => client);
       expect(calls).toEqual([request.operation]);
     }
   });
@@ -713,7 +716,6 @@ describe("qualified lifecycle command boundary", () => {
         operation: "vendors.status",
         input: parseVendorStatusRequest(vendorWorkspace()),
       },
-      { providerExecutables: {} },
       () => client
     );
     await invokeLifecycleProcedure(
@@ -721,7 +723,6 @@ describe("qualified lifecycle command boundary", () => {
         operation: "vendors.update",
         input: parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] }),
       },
-      { providerExecutables: {} },
       () => client
     );
     await invokeLifecycleProcedure(
@@ -729,7 +730,6 @@ describe("qualified lifecycle command boundary", () => {
         operation: "providers.status",
         input: parseStatusRequest(providerWorkspace()),
       },
-      { providerExecutables: {} },
       () => client
     );
     expect(writes).toBe(0);
@@ -739,11 +739,9 @@ describe("qualified lifecycle command boundary", () => {
       const providerHome = path.join(fixture.path, "provider-home");
       await mkdir(providerHome, { mode: 0o700 });
       const blocked = runRawr([
-        ...providerStatusCommand(
-          path.join(fixture.path, "missing-content-workspace"),
-          [`codex=${providerHome}`],
-          "/usr/bin/false"
-        ),
+        ...providerStatusCommand(path.join(fixture.path, "missing-content-workspace"), [
+          `codex=${providerHome}`,
+        ]),
         "--json",
       ]);
       expect(blocked.status, `${blocked.stderr}\n${blocked.stdout}`).toBe(2);
@@ -1039,9 +1037,7 @@ function git(cwd: string, args: readonly string[]): void {
 
 function providerStatusCommand(
   contentWorkspace: string,
-  targets: readonly string[],
-  codexExecutable: string,
-  claudeExecutable?: string
+  targets: readonly string[]
 ): readonly string[] {
   return [
     "agent",
@@ -1052,11 +1048,6 @@ function providerStatusCommand(
     "--repository-identity",
     "git:fixture-agent-plugins",
     ...targets.flatMap((target) => ["--target", target]),
-    "--provider-executable",
-    `codex=${codexExecutable}`,
-    ...(claudeExecutable === undefined
-      ? []
-      : ["--provider-executable", `claude=${claudeExecutable}`]),
   ];
 }
 

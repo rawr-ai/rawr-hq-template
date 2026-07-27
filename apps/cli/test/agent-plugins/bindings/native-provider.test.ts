@@ -24,11 +24,6 @@ vi.mock("@rawr/resource-native-agent-provider/providers/claude-effect-platform-n
 
 import { createNodeNativeAgentProviderResources } from "../../../src/lib/agent-plugins/bindings/providers";
 
-const EXECUTABLES = Object.freeze({
-  codex: "/opt/rawr/bin/codex",
-  claude: "/opt/rawr/bin/claude",
-});
-
 describe("native provider resource binding", () => {
   beforeEach(() => {
     provider.codexFactory.mockReset();
@@ -36,10 +31,10 @@ describe("native provider resource binding", () => {
     provider.codexAcquire.mockReset();
     provider.claudeAcquire.mockReset();
     provider.codexAcquire.mockImplementation((input: NativeProviderSessionInput) =>
-      Effect.succeed(codexSession(input, EXECUTABLES.codex))
+      Effect.succeed(codexSession(input))
     );
     provider.claudeAcquire.mockImplementation((input: NativeProviderSessionInput) =>
-      Effect.succeed(claudeSession(input, EXECUTABLES.claude))
+      Effect.succeed(claudeSession(input))
     );
     provider.codexFactory.mockReturnValue(Object.freeze({ acquire: provider.codexAcquire }));
     provider.claudeFactory.mockReturnValue(Object.freeze({ acquire: provider.claudeAcquire }));
@@ -50,7 +45,7 @@ describe("native provider resource binding", () => {
     "claude",
   ] as const)("keeps the catalog cold and acquires only the selected %s resource", async (id) => {
     const home = `/tmp/rawr-native-binding-${id}`;
-    const resources = createNodeNativeAgentProviderResources(EXECUTABLES);
+    const resources = createNodeNativeAgentProviderResources();
 
     expect(provider.codexAcquire).not.toHaveBeenCalled();
     expect(provider.claudeAcquire).not.toHaveBeenCalled();
@@ -62,13 +57,11 @@ describe("native provider resource binding", () => {
     expect(provider.codexAcquire).toHaveBeenCalledTimes(id === "codex" ? 1 : 0);
     expect(provider.claudeAcquire).toHaveBeenCalledTimes(id === "claude" ? 1 : 0);
     expect(provider[`${id}Acquire`]).toHaveBeenCalledWith({ home });
-    expect(provider[`${id}Factory`]).toHaveBeenCalledWith({
-      executablePath: EXECUTABLES[id],
-    });
+    expect(provider[`${id}Factory`]).toHaveBeenCalledWith();
   });
 
   it("preserves the provider-discriminated Effect surface", async () => {
-    const resources = createNodeNativeAgentProviderResources(EXECUTABLES);
+    const resources = createNodeNativeAgentProviderResources();
     const codex = await Effect.runPromise(resources.codex.acquire({ home: "/tmp/codex" }));
     const claude = await Effect.runPromise(resources.claude.acquire({ home: "/tmp/claude" }));
 
@@ -87,7 +80,7 @@ describe("native provider resource binding", () => {
     let finalized = false;
     provider.codexAcquire.mockReturnValue(
       Effect.succeed(
-        codexSession({ home: "/tmp/codex" }, EXECUTABLES.codex, () =>
+        codexSession({ home: "/tmp/codex" }, () =>
           Effect.sync(() => started.resolve()).pipe(
             Effect.andThen(Effect.never),
             Effect.ensuring(
@@ -99,7 +92,7 @@ describe("native provider resource binding", () => {
         )
       )
     );
-    const resources = createNodeNativeAgentProviderResources(EXECUTABLES);
+    const resources = createNodeNativeAgentProviderResources();
     const session = await Effect.runPromise(resources.codex.acquire({ home: "/tmp/codex" }));
     const controller = new AbortController();
     const probe = Effect.runPromiseExit(session.probe(), { signal: controller.signal });
@@ -122,40 +115,29 @@ describe("native provider resource binding", () => {
       operation: "acquire",
       reason: "Missing",
       commandPhase: "not-started",
-      detail: "Codex executable is missing",
+      detail: "Codex command is missing",
     });
     provider.codexAcquire.mockReturnValue(Effect.fail(failure));
-    const resources = createNodeNativeAgentProviderResources(EXECUTABLES);
+    const resources = createNodeNativeAgentProviderResources();
     const exit = await Effect.runPromiseExit(resources.codex.acquire({ home: "/tmp/codex" }));
 
     expect(typedFailure(exit)).toBe(failure);
   });
 
-  it("keeps the catalog closed and fails exactly when one executable is unbound", async () => {
-    const resources = createNodeNativeAgentProviderResources({ codex: EXECUTABLES.codex });
-
+  it("constructs the complete closed catalog from the two ordinary provider factories", () => {
+    const resources = createNodeNativeAgentProviderResources();
     expect(Object.keys(resources).sort()).toEqual(["claude", "codex"]);
-    const exit = await Effect.runPromiseExit(resources.claude.acquire({ home: "/tmp/claude" }));
-    expect(typedFailure(exit)).toEqual({
-      _tag: "NativeAgentProviderFailure",
-      provider: "claude",
-      operation: "acquire",
-      reason: "Missing",
-      commandPhase: "not-started",
-      detail: "Native claude executable is not bound",
-    });
-    expect(provider.claudeFactory).not.toHaveBeenCalled();
+    expect(provider.codexFactory).toHaveBeenCalledWith();
+    expect(provider.claudeFactory).toHaveBeenCalledWith();
   });
 });
 
 function codexSession(
   input: NativeProviderSessionInput,
-  executablePath: string,
   probeOverride?: CodexNativeAgentProviderSession["probe"]
 ): CodexNativeAgentProviderSession {
   const capabilities: NativeProviderCapabilities = {
     provider: "codex",
-    executablePath,
     home: input.home,
     version: "1.0.0",
     capabilities: [
@@ -168,19 +150,15 @@ function codexSession(
     ],
   };
   return Object.freeze({
-    ...commonSession(input, executablePath, "codex"),
+    ...commonSession(input, "codex"),
     provider: "codex",
     probe: probeOverride ?? (() => Effect.succeed(capabilities)),
   });
 }
 
-function claudeSession(
-  input: NativeProviderSessionInput,
-  executablePath: string
-): ClaudeNativeAgentProviderSession {
+function claudeSession(input: NativeProviderSessionInput): ClaudeNativeAgentProviderSession {
   const capabilities: NativeProviderCapabilities = {
     provider: "claude",
-    executablePath,
     home: input.home,
     version: "1.0.0",
     capabilities: [
@@ -197,21 +175,16 @@ function claudeSession(
     ],
   };
   return Object.freeze({
-    ...commonSession(input, executablePath, "claude"),
+    ...commonSession(input, "claude"),
     provider: "claude",
     probe: () => Effect.succeed(capabilities),
     enablePlugin: () => mutation("claude", "plugin-enable"),
   });
 }
 
-function commonSession(
-  input: NativeProviderSessionInput,
-  executablePath: string,
-  providerId: "claude" | "codex"
-) {
+function commonSession(input: NativeProviderSessionInput, providerId: "claude" | "codex") {
   return {
     provider: providerId,
-    executablePath,
     home: input.home,
     inventory: () => Effect.succeed({ provider: providerId, marketplaces: [], plugins: [] }),
     readPluginFiles: (request: Readonly<{ selector: string; files: readonly unknown[] }>) =>

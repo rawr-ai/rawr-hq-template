@@ -677,7 +677,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   injected command configuration, and the deferred executable-binding state
   machine. Keep an optional provider-construction seam for focused tests, and
   preserve repository locator, ref, object, bound, and opening/closing checks.
-- [ ] 5.6d Use the operator's ordinary `codex` and `claude` commands at the
+- [x] 5.6d Use the operator's ordinary `codex` and `claude` commands at the
   concrete native-provider boundary. Remove public `--provider-executable`
   flags, lifecycle executable-binding DTOs and selectors, executable identity
   validation, and help-probe admission. Keep an optional provider-construction

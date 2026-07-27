@@ -42,11 +42,6 @@ export type LifecycleClientByOperation = Readonly<{
 export type LifecycleOperationClient<TOperation extends LifecycleOperation> =
   LifecycleClientByOperation[TOperation];
 
-export type LifecycleExecutableBinding = Readonly<{
-  providerExecutables: Readonly<Partial<Record<"claude" | "codex", string>>>;
-}>;
-
 export type LifecycleClientFactory = <TOperation extends LifecycleOperation>(
-  operation: TOperation,
-  binding: LifecycleExecutableBinding
+  operation: TOperation
 ) => LifecycleOperationClient<TOperation> | Promise<LifecycleOperationClient<TOperation>>;

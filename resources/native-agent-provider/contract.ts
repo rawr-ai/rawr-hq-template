@@ -109,13 +109,10 @@ export const NativeAgentProviderFailureSchema = Type.Readonly(
   )
 );
 
-/** Validates the executable fixed when constructing one concrete provider. */
-export const NativeProviderExecutablePathSchema = CanonicalProviderPathSchema;
-
 /** Validates the explicit provider home supplied for one acquired native session. */
 export const NativeProviderHomeSchema = CanonicalProviderPathSchema;
 
-/** Admits the operation input for a provider whose executable is fixed at construction. */
+/** Admits the explicit home for one native-provider session. */
 export const NativeProviderSessionInputSchema = Type.Readonly(
   Type.Object(
     {
@@ -173,7 +170,6 @@ const CodexNativeProviderCapabilitySchema = Type.Union([
 const ClaudeNativeProviderCapabilitySchema = NativeProviderCapabilitySchema;
 
 const nativeCapabilityProperties = {
-  executablePath: CanonicalProviderPathSchema,
   home: CanonicalProviderPathSchema,
   version: BoundedTextSchema,
 } as const;
@@ -488,7 +484,6 @@ export function isNativeAgentProviderFailure(input: unknown): input is NativeAge
 
 export type NativeAgentProviderSessionBase = Readonly<{
   provider: NativeAgentProviderId;
-  executablePath: string;
   home: string;
   probe: () => Effect.Effect<NativeProviderCapabilities, NativeAgentProviderFailure>;
   inventory: () => Effect.Effect<NativeProviderInventory, NativeAgentProviderFailure>;
@@ -539,8 +534,9 @@ export type NativeAgentProviderResource<Session, R = never> = Readonly<{
  * Closed app-supplied catalog of ready native provider resources.
  *
  * @remarks
- * Both providers remain structurally present. A missing executable binding is
- * represented by that provider's typed failing resource, never by a partial map.
+ * Both ordinary command adapters remain structurally present. Command
+ * reachability failures stay provider-discriminated rather than producing a
+ * partial map.
  */
 export type NativeAgentProviderResources = Readonly<{
   codex: NativeAgentProviderResource<CodexNativeAgentProviderSession, never>;

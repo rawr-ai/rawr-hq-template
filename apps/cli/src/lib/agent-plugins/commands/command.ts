@@ -5,7 +5,6 @@ import { LifecycleInputError } from "./input";
 import {
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
-  parseLifecycleExecutableBinding,
   projectLifecycleOperation,
   projectLifecycleResultForOutput,
 } from "./projection";
@@ -32,10 +31,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
 
   protected async project(
     request: LifecycleOperationRequest,
-    flags: Readonly<Record<string, unknown>>,
-    requirements: Readonly<{
-      providers?: readonly ("claude" | "codex")[];
-    }> = {}
+    flags: Readonly<Record<string, unknown>>
   ): Promise<void> {
     const baseFlags = RawrCommand.extractBaseFlags(flags as Record<string, unknown>);
     if (baseFlags.dryRun || baseFlags.yes) {
@@ -47,8 +43,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     }
     let exitCode: 0 | 1 | 2;
     try {
-      const binding = parseLifecycleExecutableBinding(flags, requirements);
-      const result = await projectLifecycleOperation(request, binding);
+      const result = await projectLifecycleOperation(request);
       exitCode = lifecycleResultExitCode(request.operation, result);
       const projectedResult = projectLifecycleResultForOutput(request.operation, result);
       this.outputResult(this.ok({ operation: request.operation, result: projectedResult }), {

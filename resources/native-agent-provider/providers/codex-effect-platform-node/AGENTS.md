@@ -16,16 +16,16 @@
 
 - Treat Codex inventory as live provider state; do not synthesize desired
   lifecycle state or persist a competing provider record.
-- Own Codex command arguments, protocol decoding, capability probes, and
-  serialized native mutations only.
+- Own Codex command arguments, protocol decoding, adapter-declared
+  capabilities, version observation, and serialized native mutations only.
 - Report canonical provider observations and typed failures through the parent
   contract.
 
 ## Behavior
 
-- The provider probes a selected Codex executable and home, decodes live
-  marketplace and plugin state, serializes requested mutations, and returns
-  the native observation.
+- The provider resolves the ordinary `codex` command for one explicit home,
+  decodes live marketplace and plugin state, serializes requested mutations,
+  and returns the native observation.
 
 ## Concepts
 
@@ -35,9 +35,9 @@
 
 ## Flow
 
-- The caller acquires a session for an explicit Codex executable and home; the
-  provider probes or reads native inventory and delegates requested
-  marketplace or plugin changes to Codex.
+- The caller acquires a session for an explicit Codex home; the provider uses
+  the ordinary process command to observe native inventory and delegate
+  requested marketplace or plugin changes to Codex.
 
 ## Interfaces
 

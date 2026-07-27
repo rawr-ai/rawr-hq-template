@@ -6,6 +6,35 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Native Commands Are Provider Boundaries
+
+The CLI chooses a provider and an explicit home; it does not choose, identify,
+or authenticate a provider executable. Each concrete provider adapter invokes
+the operator's ordinary `codex` or `claude` command and delegates marketplace
+and plugin behavior to that native command. The adapter owns only translation,
+bounded observation, typed failure, serialization, and process lifetime. Live
+provider inventory remains installed-state truth.
+
+The process environment is therefore an operational precondition, not a new
+lifecycle authority. A command selector that rewrites the requested native
+home is ineligible for disposable acceptance because its behavior falsifies
+the explicit-home boundary. That conflict is settled by selecting the native
+command or correcting local installation, not by restoring public executable
+flags, path authentication, wrapper inference, or help-derived capability
+admission.
+
+See
+[[resources/native-agent-provider/AGENTS|the native-provider resource router]],
+[[resources/native-agent-provider/providers/codex-effect-platform-node/AGENTS|the Codex provider router]],
+[[resources/native-agent-provider/providers/claude-effect-platform-node/AGENTS|the Claude provider router]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+command, provider, native, home, adapter, operator, environment, inventory,
+translation, observation, failure, process, refusal, settlement, deletion.
+
 ## 2026-07-27 - Platform Capability Narrows Through Context
 
 Service behavior consumes ready capabilities. A concrete runtime mechanism
