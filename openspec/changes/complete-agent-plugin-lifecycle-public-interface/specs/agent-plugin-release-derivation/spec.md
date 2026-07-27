@@ -72,8 +72,9 @@ materializing provider package bytes. Canonical sync MUST give the native
 provider an immutable Git marketplace source at the selected Personal revision;
 the provider owns any clone or cache below its explicit home. A disposable test
 MAY expose the selected Git bytes through an owner-created temporary marketplace
-only when the temporary source and disposable provider home share one bounded
-lifetime. No Template-owned persistent projection root may participate.
+only while the temporary source remains scoped to that test operation and its
+explicit disposable root. The caller retains ownership of the disposable home.
+No Template-owned persistent projection root may participate.
 
 #### Scenario: Converged status and sync are read-only
 - **WHEN** live provider state already matches the selected native content
@@ -91,10 +92,12 @@ lifetime. No Template-owned persistent projection root may participate.
 - **WHEN** a not-yet-published exact selection is tested through a local native
   marketplace
 - **THEN** the source remains valid for the entire disposable-home test and both
-  are retired together after final observation
+  initial and final provider observation
+- **AND** the scoped source is retired before the operation returns without
+  claiming deletion authority over the caller-owned home
 
 #### Scenario: Temporary cleanup candidate is unsafe
-- **WHEN** the bounded disposable root fails exact temp-parent, owner-prefix,
-  directory/non-symlink, or realpath-containment checks
-- **THEN** cleanup refuses without recursive removal or mutation of any provider,
-  repository, or unrelated path
+- **WHEN** the bounded disposable parent or allocated child fails canonical
+  directory, owner-prefix, or direct-containment admission
+- **THEN** materialization refuses without mutation of any provider, repository,
+  caller-owned home, or unrelated path

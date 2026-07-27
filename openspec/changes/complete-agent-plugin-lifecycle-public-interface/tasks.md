@@ -642,8 +642,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   reader or writer remains before closing the subtask.
 - [ ] 5.5d Materialize the exact selected provider-test marketplace below the
   explicit disposable root, keep it alive through final provider observation,
-  and retire it with the disposable homes using exact ownership and containment
-  checks. Persist no projection, receipt, or lifecycle handle.
+  and retire the exact scoped child before the operation returns. The caller
+  owns the disposable parent and provider homes; the service MUST NOT infer
+  deletion authority over those caller-created paths. Persist no projection,
+  receipt, or lifecycle handle.
 - [x] 5.6 Keep native provider adapters thin and point-addressed. No provider
   home scan, direct cache/config write, rollback state, or ambient multi-home
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and

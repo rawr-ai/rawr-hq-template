@@ -6,6 +6,39 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Temporary Marketplace Is A Scoped Resource
+
+Disposable provider testing reads exact Git objects, then exposes those bytes
+through one temporary local marketplace. The Providers handler owns selection,
+marketplace meaning, native observation, and mutation. The content-workspace
+resource owns only bounded filesystem materialization through its existing
+Effect provider. The service never imports platform mechanics.
+
+The resource allocates one fresh child below the caller's explicit disposable
+root with Effect's scoped temporary-directory capability. The child exists
+through initial observation, source revalidation, final preflight, mutation,
+and terminal observation, then scope closure removes exactly that allocation.
+No path, handle, receipt, digest, record, or index survives the invocation.
+The caller still owns the disposable parent and provider homes; test does not
+infer deletion authority over paths it did not allocate.
+
+The materialized marketplace contains the two exact Git-native manifests and
+the complete payload tree those manifests name. Targeted mode narrows native
+observation and mutation, not the truth of a copied manifest. Rewriting or
+pruning those manifests would create another projection rather than expose the
+selected Git interface.
+
+See
+[[resources/content-workspace/AGENTS|the content-workspace resource router]],
+[[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module router]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/service-domain-frame|the lifecycle domain frame]].
+
+### Bag Of Keywords
+
+scope, parent, child, bytes, Git, marketplace, handler, resource, provider,
+selection, observation, mutation, cleanup, caller, home.
+
 ## 2026-07-27 - Native Commands Are Provider Boundaries
 
 The CLI chooses a provider and an explicit home; it does not choose, identify,
