@@ -70,6 +70,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   root, script, and TSX consumers remain covered. Keep both new baselines empty
   and select both enforced rules once in the existing source-law batch. Add no
   scanner, wrapper, or second runner.
+- [x] 1.1f Add one optional, positively closed database boundary at
+  `services/<service>/src/service/db`, containing only
+  `migrations/*.sql`, `schema/*.schema.ts`, and `stores/*.store.ts`. Make the
+  database topology itself reject tracked DB placement under modules and
+  embedded API services. Admit direct database-source imports only from
+  database-owned source and named service-root middleware;
+  modules and handlers consume projected store capabilities through inherited
+  oRPC context. Keep external acquisition resource/provider-owned, add both
+  empty-baseline rules once to the existing source-law batch, and add no Nx
+  project, target, scanner, wrapper, or implementation code.
 - [x] 1.2 Adopt one canonical service-module router topology. Keep module
   `router.ts` as the plain public composition face, author operation leaves or
   semantic groups in named `router/*.router.ts`, and do not admit

@@ -56,6 +56,7 @@ None may impersonate another.
 - [[../AUTHORITY|Habitat authority]]
 - [[agent-router/skill|Agent routers]]
 - [[blueprint-packet/skill|Blueprint packets]]
+- [[database/skill|Service databases]]
 - [[grit-pattern/skill|Grit patterns]]
 - [[nx-workspace/skill|Nx workspaces]]
 - [[oclif-app/skill|Oclif applications]]

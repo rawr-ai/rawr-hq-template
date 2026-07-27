@@ -18,6 +18,10 @@ The current generic kinds are:
   module isolation, owner-private aliases, standalone production source
   isolation from proof, public-consumer sealing, platform-independent service
   implementation, declarative TypeBox contracts, and public error authority.
+- `database`: the optional closed persistence interior at a standalone service
+  root, limited to migrations, schema, and stores whose capabilities enter
+  modules only through named root middleware and inherited context. Its own
+  closed placement scopes exclude module and embedded API ownership.
 - `resource`: one closed RAWR workspace package around a provider-neutral
   capability contract and its provider family.
 - `provider`: one closed typed realization nested beneath its parent resource,
@@ -92,6 +96,20 @@ rule, while the new law owns literal paths into `src/service`. RAWR also limits
 sibling shortcuts to lowercase-kebab owners named from standalone production
 source and applies literal-path sealing at the workspace gate so root, script,
 and TSX consumers remain covered.
+
+Template PR #603 landed that preceding source-boundary checkpoint on canonical
+`main` at `396b3214`. The database blueprint is the next RAWR-owned structural
+checkpoint. Current Magic service/database shapes were read only as ownership
+evidence: RAWR deliberately rejects their open root/module interiors and keeps
+one closed standalone service-root destination instead.
+
+The database topology admits exactly `migrations/*.sql`,
+`schema/*.schema.ts`, and `stores/*.store.ts` when `db` is present. Its source
+law recognizes only literal module-loading edges that visibly name the current
+service database. Database-owned TypeScript and root named middleware may
+import those leaves; modules and other service-root source consume projected
+capabilities through context. Both empty-baseline rules run once in the
+existing Habitat source-law batch without another target or runner.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed

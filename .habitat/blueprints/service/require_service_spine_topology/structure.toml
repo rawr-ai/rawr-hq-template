@@ -43,6 +43,7 @@ required = [
   "router.ts",
 ]
 allowed = [
+  "db",
   "middleware",
   "model",
 ]

@@ -1,0 +1,92 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "standalone-service-module-database-placement"
+root = "services/!(*.*)/src/service/modules/!(*.*)/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = []
+
+[[scopes]]
+name = "api-service-root-database-placement"
+root = "plugins/server/api/!(*.*)/src/service/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = []
+
+[[scopes]]
+name = "api-service-module-database-placement"
+root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = []
+
+[[scopes]]
+name = "standalone-service-databases"
+root = "services/!(*.*)/src/service/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "migrations",
+  "schema",
+  "stores",
+]
+allowed = []
+
+[[scopes]]
+name = "standalone-service-database-migrations"
+root = "services/!(*.*)/src/service/db/migrations"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.sql",
+]
+allowed = []
+
+[[scopes]]
+name = "standalone-service-database-schema"
+root = "services/!(*.*)/src/service/db/schema"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.schema.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "standalone-service-database-stores"
+root = "services/!(*.*)/src/service/db/stores"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.store.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "standalone-service-database-migration-leaves"
+root = "services/!(*.*)/src/service/db/migrations/*.sql"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-database-schema-leaves"
+root = "services/!(*.*)/src/service/db/schema/*.schema.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-database-store-leaves"
+root = "services/!(*.*)/src/service/db/stores/*.store.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true

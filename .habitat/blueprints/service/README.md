@@ -11,8 +11,10 @@ spines, the canonical lowercase-kebab module namespace, closed module spines,
 direct model leaves, and one module router shape. A name such as `orders.v2`
 is not an alternate module version; the closed namespace rejects it. Model
 `index.ts` files are structurally forbidden so imports retain the concrete
-owner and leaf. No service currently admits `db`; persistence returns only
-through a separately owned, positively closed database blueprint.
+owner and leaf. A standalone service may add one optional root `db` boundary
+governed by the separately owned, positively closed
+[[../database/README|database blueprint]]. Modules and embedded API services
+do not admit `db`.
 
 Every module has `router.ts` as its completed public composition face and
 `router/*.router.ts` as its operation-authoring leaves or semantic groups.
@@ -25,7 +27,9 @@ source. Private-alias ownership keeps service aliases owner-local, while
 public-consumer sealing rejects literal `src/service` paths from foreign
 callers. Module-local imports use normalized relative paths; the service-private
 alias is reserved inside modules for genuinely service-wide `service/model/**`
-meaning.
+meaning. Database source flows only into other database-owned source or named
+service-root middleware; modules receive projected store capabilities through
+inherited context.
 Embedded API-plugin `base.ts` remains its required boundary and type anchor but
 does not export the standalone runtime `base`; its implementer begins at
 `impl.ts`. Named runtime oRPC imports may share a declaration with type-only

@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Persistence Narrows Through The Service Root
+
+A database is an optional persistence interior owned by one standalone
+service. Its migrations, schemas, and stores form one positively closed root
+boundary. It is not a module, provider, resource, project, helper namespace,
+or alternate service face, and embedded API services do not acquire a second
+database interior.
+
+The host supplies a ready external database resource through initial context.
+Named root middleware may combine that dependency with service-owned database
+source and project narrow store capabilities downward. Module handlers consume
+those capabilities from inherited oRPC context; they do not import database
+source or reconstruct persistence. Habitat closes the destination and the
+literal import funnel while runtime behavior remains owned by the service and
+its tests.
+
+See [[.habitat/blueprints/database/skill|the database frame]],
+[[.habitat/blueprints/service/skill|the service frame]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+database, persistence, migration, schema, store, resource, provider, host,
+base, middleware, context, module, handler, closure.
+
 ## 2026-07-27 - Client Is The Only Package Face
 
 The service spine is private implementation. A caller crosses one package
