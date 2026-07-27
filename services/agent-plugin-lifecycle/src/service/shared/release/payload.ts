@@ -5,6 +5,7 @@ import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { decodeBase64, encodeBase64 } from "../../model/policy/canonical-base64";
 import { canonicalJsonLine } from "../../model/policy/canonical-json";
+import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
@@ -12,7 +13,6 @@ import { collect, isExactRecord, parseBoundedArray, parseInteger } from "./parse
 import {
   type ContentDigest,
   ContentDigestSchema,
-  compareCanonicalText,
   contentDigest,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,

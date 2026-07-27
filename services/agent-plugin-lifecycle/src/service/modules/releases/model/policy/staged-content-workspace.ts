@@ -12,6 +12,7 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
   addReleaseSetPayloadBytes,
@@ -20,7 +21,6 @@ import {
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
-  compareCanonicalText,
   createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,

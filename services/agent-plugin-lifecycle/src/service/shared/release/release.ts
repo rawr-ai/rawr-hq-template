@@ -3,6 +3,7 @@ import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
+import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
@@ -28,7 +29,6 @@ import {
   BUILDER_PROTOCOL_VERSION,
   type BuilderProtocolVersion,
   type ContentAuthority,
-  compareCanonicalText,
   type GitCommitId,
   type GitTreeId,
   MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,

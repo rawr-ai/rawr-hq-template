@@ -17,9 +17,9 @@ import type {
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
+import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
-  compareCanonicalText,
   createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,

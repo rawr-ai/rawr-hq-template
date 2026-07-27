@@ -25,7 +25,6 @@ export {
   ContentAuthoritySchema,
   type ContentDigest,
   ContentDigestSchema,
-  compareCanonicalText,
   contentDigest,
   type GitCommitId,
   GitCommitIdSchema,

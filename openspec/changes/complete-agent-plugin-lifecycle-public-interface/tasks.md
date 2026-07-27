@@ -963,6 +963,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   path; delete `shared/release/canonical.ts` and all private byte-comparison
   copies without a barrel, alias, facade, schema, resource, provider, or
   runtime change.
+- [x] 5.7e2w Give release-wide canonical UTF-8 text ordering one direct
+  service-root policy owner. Preserve bytewise comparison, equality, prefix,
+  ASCII, multibyte, and caller ordering; rewire root, module, packaging, and
+  transitional release consumers; delete the old primitive/barrel export and
+  duplicate Cowork comparator without an alias, facade, schema, resource,
+  provider, digest, runtime, or public-contract change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

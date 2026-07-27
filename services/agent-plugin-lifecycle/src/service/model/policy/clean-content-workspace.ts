@@ -18,7 +18,6 @@ import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dt
 import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
-  compareCanonicalText,
   createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -32,6 +31,7 @@ import {
   type ReleaseRelativePath,
 } from "../../shared/release";
 import { equalBytes } from "../helpers/byte-equality";
+import { compareCanonicalText } from "./canonical-text-ordering";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 import {
   addReleaseSetPayloadBytes,

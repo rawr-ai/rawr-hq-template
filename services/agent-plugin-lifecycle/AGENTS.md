@@ -28,7 +28,9 @@
   Its canonical JSON DTO constrains pure serializer input; separate JSON and
   Base64 policy leaves own established encoding, while one byte-equality
   mechanic supports canonical record checks. Concrete record TypeBox schemas
-  remain with their owning DTOs.
+  remain with their owning DTOs. Canonical UTF-8 text ordering has one
+  service-root policy owner shared by record construction, projection, and
+  packaging.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

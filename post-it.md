@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Canonical Text Ordering Is Service Policy
+
+Canonical UTF-8 text order is service-wide release meaning. It governs record
+construction, source admission, projection, and packaging across root model
+policy and the Releases, Providers, and Packaging modules. That meaning has
+one direct service-root policy owner rather than living in a transitional
+release primitive or a module-local copy.
+
+Consumers import the policy directly. The old barrel face and the duplicate
+Cowork comparator disappear, while Cowork retains its distinct byte-length
+mechanic. This cut changes no TypeBox schema, digest implementation, platform
+dependency, resource, provider, runtime, or public contract. Digest ownership
+remains a separate blocked design boundary because the transitional primitive
+still imports Node crypto.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/policy/canonical-text-ordering|the canonical text-ordering policy]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+text, UTF-8, bytes, order, prefix, policy, owner, module, direct, delete.
+
 ## 2026-07-27 - Canonical Encoding Has Exact Model Owners
 
 Canonical encoding is service-wide release meaning, but it is not one generic
