@@ -117,7 +117,12 @@ describe("provider disposable-home test", () => {
     const localLimits: number[] = [];
     let resourceCallsAtFirstMutation = -1;
     let resourceCalls: string[] = [];
-    const session = fakeNativeSession({
+    const initialSession = fakeNativeSession({
+      target: testRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const finalSession = fakeNativeSession({
       target: testRequest.targets[0],
       content,
       marketplace: "absent",
@@ -127,7 +132,8 @@ describe("provider disposable-home test", () => {
         }
       },
     });
-    const fixture = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+    const nativeProviders = new FakeNativeProviders([initialSession, finalSession]);
+    const fixture = createProviderLifecycleClient(content, nativeProviders, {
       transformContentWorkspace: (delegate) =>
         Object.freeze({
           ...delegate,
@@ -257,6 +263,12 @@ describe("provider disposable-home test", () => {
     expect(localLimits).toEqual(
       Array.from({ length: 8 }, () => MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES)
     );
+    expect(nativeProviders.acquisitionCalls).toEqual([
+      "codex:/tmp/rawr-provider-test/codex-home",
+      "codex:/tmp/rawr-provider-test/codex-home",
+    ]);
+    expect(initialSession.mutationCalls()).toEqual([]);
+    expect(finalSession.mutationCalls()).not.toEqual([]);
   });
 
   it("returns the concrete second clean refusal before comparing bindings", async () => {

@@ -6,7 +6,8 @@ import type {
   ProviderTargetResult,
   ProviderTestResult,
 } from "../dto/provider-lifecycle";
-import { providerIssue } from "./selected-content";
+import type { SelectedContent } from "../dto/selected-content";
+import { providerIssue, selectedContentObservation } from "./selected-content";
 
 /** Projects one Provider selection refusal across every mutation target. */
 export function rejectedTargets(
@@ -73,6 +74,34 @@ export function mutationClassification(
   if (failed) return changed ? "Partial" : "Failed";
   if (targets.some((target) => target.classification === "Blocked")) return "Blocked";
   return changed ? "Changed" : "Converged";
+}
+
+/** Projects one completed disposable Provider test from target-local results. */
+export function completedProviderTestResult(
+  content: SelectedContent,
+  targets: ProviderTestResult["targets"]
+): ProviderTestResult {
+  return Object.freeze({
+    operation: "test",
+    classification: mutationClassification(targets),
+    selection: selectedContentObservation(content),
+    targets,
+    issues: collectTargetIssues(targets),
+  });
+}
+
+/** Projects a pre-mutation disposable Provider test refusal. */
+export function blockedProviderTestResult(
+  content: SelectedContent,
+  targets: ProviderTestResult["targets"]
+): ProviderTestResult {
+  return Object.freeze({
+    operation: "test",
+    classification: "Blocked",
+    selection: selectedContentObservation(content),
+    targets,
+    issues: collectTargetIssues(targets),
+  });
 }
 
 /** Canonicalizes Provider targets before any resource acquisition occurs. */

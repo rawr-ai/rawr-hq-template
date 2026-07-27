@@ -596,7 +596,10 @@ interface FakeNativeSessionInput {
   readonly disabled?: readonly string[];
   readonly omitted?: readonly string[];
   readonly staleFiles?: readonly string[];
-  readonly probeOverride?: () => Effect.Effect<NativeProviderCapabilities>;
+  readonly probeOverride?: () => Effect.Effect<
+    NativeProviderCapabilities,
+    NativeAgentProviderFailure
+  >;
   readonly onMutation?: () => void;
 }
 
@@ -607,13 +610,22 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
   readonly calls: string[] = [];
   readonly fileReadRequests: NativeProviderPluginFilesReadInput[] = [];
   inventoryFailureCount = 0;
+  inventoryFailureAfterInstall = false;
+  inventoryFailureAfterMarketplaceRemove = false;
   installFailure: "before" | "after" | null = null;
   marketplaceRemoveFailure: "before" | "after" | null = null;
+  malformedCapabilities = false;
+  malformedFileBatch = false;
+  malformedInventory = false;
+  probeFailure = false;
   installBadFiles = false;
   protected inventoryValue: NativeProviderInventory;
   private readonly content: SelectedContent;
   private readonly files = new Map<string, Uint8Array>();
-  private readonly probeOverride?: () => Effect.Effect<NativeProviderCapabilities>;
+  private readonly probeOverride?: () => Effect.Effect<
+    NativeProviderCapabilities,
+    NativeAgentProviderFailure
+  >;
   protected readonly onMutation?: () => void;
 
   constructor(provider: Provider, input: FakeNativeSessionInput) {
@@ -647,11 +659,17 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
     }
   }
 
-  probe(): Effect.Effect<NativeProviderCapabilities> {
+  probe(): Effect.Effect<NativeProviderCapabilities, NativeAgentProviderFailure> {
+    this.calls.push("probe");
     if (this.probeOverride !== undefined) return this.probeOverride();
-    return Effect.succeed(
+    if (this.probeFailure) {
+      return Effect.fail(
+        failure(this.provider, "probe", "started", "fixture capability probe failure")
+      );
+    }
+    const capabilities =
       this.provider === "codex"
-        ? {
+        ? ({
             provider: "codex",
             executablePath: this.executablePath,
             home: this.home,
@@ -664,8 +682,8 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
               "plugin-install",
               "plugin-remove",
             ],
-          }
-        : {
+          } satisfies NativeProviderCapabilities)
+        : ({
             provider: "claude",
             executablePath: this.executablePath,
             home: this.home,
@@ -682,8 +700,11 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
               "plugin-remove",
               "plugin-update",
             ],
-          }
-    );
+          } satisfies NativeProviderCapabilities);
+    if (this.malformedCapabilities) {
+      Reflect.deleteProperty(capabilities, "home");
+    }
+    return Effect.succeed(capabilities);
   }
 
   inventory(): Effect.Effect<NativeProviderInventory, NativeAgentProviderFailure> {
@@ -694,6 +715,9 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
         return Effect.fail(
           failure(this.provider, "inventory", "started", "fixture inventory failure")
         );
+      }
+      if (this.malformedInventory) {
+        Reflect.deleteProperty(this.inventoryValue, "provider");
       }
       return Effect.succeed(this.inventoryValue);
     });
@@ -707,7 +731,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
       this.calls.push(
         `read-batch:${input.selector}:${input.files.map((file) => file.relativePath).join(",")}`
       );
-      return Object.freeze({
+      const observed = {
         selector: input.selector,
         files: Object.freeze(
           input.files.map((file) => {
@@ -724,7 +748,11 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
                   });
           })
         ),
-      });
+      };
+      if (this.malformedFileBatch) {
+        Reflect.deleteProperty(observed, "selector");
+      }
+      return Object.freeze(observed);
     });
   }
 
@@ -767,9 +795,12 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
         );
       }
       this.inventoryValue = { ...this.inventoryValue, marketplaces: [] };
+      if (this.inventoryFailureAfterMarketplaceRemove) {
+        this.inventoryFailureAfterMarketplaceRemove = false;
+        this.inventoryFailureCount += 1;
+      }
       if (this.marketplaceRemoveFailure === "after") {
         this.marketplaceRemoveFailure = null;
-        this.inventoryFailureCount = 1;
         return Effect.fail(
           failure(
             this.provider,
@@ -801,9 +832,12 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
       if (selected === undefined) return Effect.die(new Error(`Unknown fixture plugin ${name}`));
       this.upsertPlugin(plugin(name, this.provider, this.provider === "codex"));
       this.writeSelectedFiles(selected, this.installBadFiles);
+      if (this.inventoryFailureAfterInstall) {
+        this.inventoryFailureAfterInstall = false;
+        this.inventoryFailureCount += 1;
+      }
       if (this.installFailure === "after") {
         this.installFailure = null;
-        this.inventoryFailureCount = 1;
         return Effect.fail(
           failure(
             this.provider,
@@ -978,17 +1012,29 @@ export class FakeNativeProviders implements NativeAgentProviderResources {
     this.codex = Object.freeze({
       acquire: ({ home }: Readonly<{ home: string }>) =>
         Effect.suspend(() => {
-          this.acquisitionCalls.push(`codex:${home}`);
+          const key = `codex:${home}`;
+          this.acquisitionCalls.push(key);
           onAcquire?.({ provider: "codex", home });
-          return acquireFakeSession("codex", codexSessions, home);
+          return acquireFakeSession(
+            "codex",
+            codexSessions,
+            home,
+            this.acquisitionCalls.filter((call) => call === key).length - 1
+          );
         }),
     });
     this.claude = Object.freeze({
       acquire: ({ home }: Readonly<{ home: string }>) =>
         Effect.suspend(() => {
-          this.acquisitionCalls.push(`claude:${home}`);
+          const key = `claude:${home}`;
+          this.acquisitionCalls.push(key);
           onAcquire?.({ provider: "claude", home });
-          return acquireFakeSession("claude", claudeSessions, home);
+          return acquireFakeSession(
+            "claude",
+            claudeSessions,
+            home,
+            this.acquisitionCalls.filter((call) => call === key).length - 1
+          );
         }),
     });
   }
@@ -997,9 +1043,11 @@ export class FakeNativeProviders implements NativeAgentProviderResources {
 function acquireFakeSession<Session extends Readonly<{ home: string }>>(
   provider: ProviderTarget["provider"],
   sessions: readonly Session[],
-  home: string
+  home: string,
+  acquisitionIndex: number
 ): Effect.Effect<Session, NativeAgentProviderFailure> {
-  const session = sessions.find((candidate) => candidate.home === home);
+  const matches = sessions.filter((candidate) => candidate.home === home);
+  const session = matches[Math.min(acquisitionIndex, matches.length - 1)];
   return session === undefined
     ? Effect.fail(failure(provider, "acquire", "not-started", "Fixture target is absent"))
     : Effect.succeed(session);
