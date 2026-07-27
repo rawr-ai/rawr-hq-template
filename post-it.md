@@ -6,6 +6,34 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Contract Constants Follow Their Structure
+
+Protocol versions and structural bounds belong beside the TypeBox DTO whose
+shape they constrain. Reuse does not turn them into generic primitives:
+consumers import the qualified owner directly. Payload protocol, entry bounds,
+byte bounds, and normalized file mode belong to the payload DTO. Release-input,
+ownership, individual-release, and complete-set versions and bounds belong to
+their corresponding DTOs.
+
+Structure and admission remain distinct. TypeBox owns normalized mode schema
+and generated type in the payload DTO; payload-manifest policy owns the exact
+diagnostic parser. The public input boundary re-exports its two established
+release-input limits directly from their owner without a local alias. Unused
+version aliases are deleted. The residual transitional primitive leaf retains
+only release identity and digest meanings for the next owner-sized cuts.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/agent-plugin-payload|the payload DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/payload-manifest|the payload-manifest policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+contract, version, bound, mode, schema, type, policy, admission, owner, direct,
+residual, deletion.
+
 ## 2026-07-27 - Complete Release Set Is Service-Wide Meaning
 
 A complete release set is closed in-memory domain data shared by Releases,

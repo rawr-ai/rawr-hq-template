@@ -4,8 +4,8 @@ import { Effect } from "effect";
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
+} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
+import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import type {
   VendorSourceStatus,
   VendorUpdateIssue,

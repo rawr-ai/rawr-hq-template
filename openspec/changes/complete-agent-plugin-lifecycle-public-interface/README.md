@@ -2244,7 +2244,7 @@ than storage identity. The cut preserves complete membership, ownership,
 provenance, ordering, release-input identity, release-digest binding, canonical
 bytes, diagnostics, and bounds without adding persistence or changing
 resources, providers, routers, native state, or public behavior. Implementation
-and proof are complete; landing evidence remains open.
+and proof are complete.
 
 The checkpoint now owns closed TypeBox member, body, and envelope schemas,
 generated types, policy, and canonical encoding directly. Production admits
@@ -2267,8 +2267,42 @@ the uncached lifecycle typecheck graph passes in 14 seconds. The required
 repository check passes 39 projects and 76 dependency tasks in 34.2 seconds,
 including all 17 enforced Habitat laws with zero findings. Strict OpenSpec,
 Biome, Oclif source/compiled command parity, stale-import scans, and diff
-hygiene pass. Landing evidence remains open until Graphite merges the
-checkpoint to canonical `main`.
+hygiene pass. Graphite PR
+[#591](https://github.com/rawr-ai/rawr-hq-template/pull/591) landed the
+checkpoint on canonical `main` at
+`7b8ffaa9d3b55fca2868ee4c73c1b76c344d26e7`.
+
+The next bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e9a]]. It returns
+protocol versions and structural bounds to the exact TypeBox DTOs they
+constrain, moves normalized file-mode structure to the payload DTO and its
+diagnostic admission to payload-manifest policy, and deletes unused version
+aliases. Consumers import qualified owners directly, while the existing public
+input subpath re-exports its two release-input limits without a local alias.
+Release identity and digest meanings remain in the transitional primitive leaf
+for later complete cuts. No barrel, facade, compatibility path, resource,
+provider, router, native state, or public behavior changes. Implementation and
+proof are complete; landing evidence remains open.
+
+The checkpoint gives payload, release-input, ownership, individual-release,
+and complete-set structural constants one qualified DTO owner each.
+Payload-manifest policy retains the exact normalized-mode diagnostic split
+while delegating structural admission to the payload TypeBox schema. The
+public `./input` subpath directly re-exports its existing byte and member
+limits. Six unused version aliases and every relocated primitive declaration
+are deleted; the residual primitive leaf contains only identity, path, and
+digest meanings reserved for the next cuts.
+
+Owner-local proof adds normalized-mode schema/type parity, exact admitted and
+refused modes, stable caller paths and issue vocabulary, and unsupported
+payload-protocol refusal. The complete lifecycle suite passes 41 files and 360
+tests in 1 minute 7 seconds; the uncached lifecycle typecheck graph passes in
+15.9 seconds. The required repository check passes 39 projects and 76
+dependency tasks in 34.8 seconds, including all 17 enforced Habitat laws with
+zero findings. Strict OpenSpec, Biome, Oclif source/compiled command parity,
+stale-import scans, and diff hygiene pass. Final architecture/Habitat,
+behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
+P0, P1, P2, or P3 finding.
 
 ## Settlement Oracles
 

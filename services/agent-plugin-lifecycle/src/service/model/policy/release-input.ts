@@ -1,13 +1,7 @@
 import { Value } from "typebox/value";
 import {
   type ContentAuthority,
-  MAX_OWNERSHIP_CLAIMS,
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
   type OwnershipIdentity,
-  PAYLOAD_PROTOCOL_VERSION,
   type PluginId,
   parseContentAuthority,
   parseOwnershipIdentity,
@@ -15,18 +9,26 @@ import {
   parsePluginId,
   parseReleaseInputDigest,
   parseReleaseRelativePath,
-  RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseInputDigest,
   type ReleaseRelativePath,
   releaseInputDigest,
 } from "../../shared/release/primitives";
 import {
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  PAYLOAD_PROTOCOL_VERSION,
+} from "../dto/agent-plugin-payload";
+import {
   type DeclaredOwnershipClaim,
   type DistributionOwnershipIndex,
+  MAX_OWNERSHIP_CLAIMS,
 } from "../dto/distribution-ownership";
 import {
   type AgentPluginReleaseInput,
   type DeclaredPayload,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+  RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseInputBody,
   ReleaseInputBodySchema,
   type ReleaseInputEnvelope,

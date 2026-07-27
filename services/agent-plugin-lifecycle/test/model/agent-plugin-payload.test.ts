@@ -1,6 +1,14 @@
-import { describe, expect, it } from "vitest";
+import type { Static } from "typebox";
+import { Value } from "typebox/value";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
-import type { PayloadManifestEntry } from "../../src/service/model/dto/agent-plugin-payload";
+import {
+  AgentPluginPayloadRecordSchema,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  type NormalizedFileMode,
+  NormalizedFileModeSchema,
+  type PayloadManifestEntry,
+} from "../../src/service/model/dto/agent-plugin-payload";
 import {
   createAgentPluginPayload,
   payloadEntryBytes,
@@ -10,16 +18,79 @@ import {
   canonicalSerializeAgentPluginPayload,
   canonicalSerializePayloadEntries,
 } from "../../src/service/model/policy/agent-plugin-payload-codec";
-import { samePayloadManifest } from "../../src/service/model/policy/payload-manifest";
 import {
-  contentDigest,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-} from "../../src/service/shared/release/primitives";
+  parseNormalizedFileMode,
+  samePayloadManifest,
+} from "../../src/service/model/policy/payload-manifest";
+import { contentDigest } from "../../src/service/shared/release/primitives";
 import { must, productFixture, wire } from "../shared/release/fixtures";
 
 const encoder = new TextEncoder();
 
 describe("agent-plugin payload", () => {
+  it("derives normalized file modes from one closed TypeBox authority", () => {
+    expectTypeOf<NormalizedFileMode>().toEqualTypeOf<Static<typeof NormalizedFileModeSchema>>();
+
+    for (const mode of [0o644, 0o755] as const) {
+      expect(Value.Check(NormalizedFileModeSchema, mode)).toBe(true);
+      expect(parseNormalizedFileMode(mode, "payload.mode")).toEqual({
+        ok: true,
+        value: mode,
+      });
+    }
+
+    for (const candidate of [0o600, "0644", 420.5, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(Value.Check(NormalizedFileModeSchema, candidate), String(candidate)).toBe(false);
+    }
+  });
+
+  it("splits unsupported normalized modes from non-integer mode diagnostics", () => {
+    expect(parseNormalizedFileMode(0o600, "payload.entries[0].mode")).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "INVALID_MODE",
+          path: "payload.entries[0].mode",
+          message: "File mode must be normalized to 0644 or 0755",
+          expected: "0644|0755",
+          actual: 0o600,
+        },
+      ],
+    });
+
+    for (const candidate of ["0644", 420.5, Number.MAX_SAFE_INTEGER + 1]) {
+      expect(parseNormalizedFileMode(candidate, "payload.manifest[0].mode")).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: "EXPECTED_INTEGER",
+            path: "payload.manifest[0].mode",
+            message: "Value must be a safe integer",
+          },
+        ],
+      });
+    }
+  });
+
+  it("rejects an unsupported payload protocol version before TypeBox admission", () => {
+    const payloadWire = wire(canonicalSerializeAgentPluginPayload(productFixture().alphaPayload));
+    payloadWire.protocolVersion = 2;
+
+    expect(Value.Check(AgentPluginPayloadRecordSchema, payloadWire)).toBe(false);
+    expect(verifyAgentPluginPayload(payloadWire)).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "INVALID_SCHEMA_VERSION",
+          path: "payload.protocolVersion",
+          message: "Unsupported payload protocol version",
+          expected: 1,
+          actual: 2,
+        },
+      ],
+    });
+  });
+
   it("owns payload bytes, sorts entries, and emits exactly one trailing LF", () => {
     const mutable = encoder.encode("owned\n");
     const first = must(

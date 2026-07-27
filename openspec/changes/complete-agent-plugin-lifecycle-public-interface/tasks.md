@@ -1065,6 +1065,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   defensive immutability, deterministic diagnostics, direct imports, and
   focused Releases, Packaging, and Providers behavior without moving
   primitives, resources, providers, routers, or native state.
+- [x] 5.7e9a Return structural constants to the exact TypeBox DTOs they
+  constrain. Co-locate payload, release-input, ownership, individual-release,
+  and complete-set protocol versions and bounds with their schemas; give
+  normalized file mode one payload DTO schema and generated type; and give
+  payload-manifest policy its established diagnostic parser. Rewire consumers
+  directly, preserve the two existing public input-limit exports without local
+  aliases, and delete unused version aliases. Leave identity and digest
+  semantics in the transitional primitive leaf for their later complete cuts.
+  Do not add a barrel, facade, compatibility path, generic primitive owner,
+  resource, provider, router, or public behavior change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

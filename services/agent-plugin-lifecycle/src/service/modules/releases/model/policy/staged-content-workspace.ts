@@ -13,7 +13,10 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import type { AgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+import {
+  type AgentPluginReleaseInput,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+} from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
@@ -24,7 +27,6 @@ import {
   MAX_RELEASE_SET_PAYLOAD_BYTES,
 } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   type PluginId,
   parseContentAuthority,
   parseGitCommitId,

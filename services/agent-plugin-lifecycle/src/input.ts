@@ -8,8 +8,6 @@ import {
   PluginIdSchema,
   ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES as releaseInputEnvelopeByteLimit,
-  MAX_RELEASE_MEMBERS as releaseMemberLimit,
 } from "./service/shared/release/primitives";
 
 /**
@@ -20,11 +18,11 @@ import {
  * private to the lifecycle service.
  */
 
-/** Maximum release-input envelope size admitted before operation dispatch. */
-export const MAX_RELEASE_INPUT_ENVELOPE_BYTES = releaseInputEnvelopeByteLimit;
-
-/** Maximum curated-member count admitted before operation dispatch. */
-export const MAX_RELEASE_MEMBERS = releaseMemberLimit;
+/** Public release-input byte and curated-member bounds admitted before dispatch. */
+export {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+} from "./service/model/dto/release-input";
 
 /** Validates one raw CLI content-authority value against the service contract. */
 export const parseContentAuthority = inputParser(ContentAuthoritySchema);

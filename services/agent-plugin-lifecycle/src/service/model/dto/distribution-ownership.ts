@@ -1,13 +1,14 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import {
-  MAX_OWNERSHIP_CLAIMS,
-  OWNERSHIP_INDEX_SCHEMA_VERSION,
-  OwnershipIdentitySchema,
-  PluginIdSchema,
-} from "../../shared/release/primitives";
+import { OwnershipIdentitySchema, PluginIdSchema } from "../../shared/release/primitives";
 
 declare const distributionOwnershipIndexBrand: unique symbol;
+
+/** Identifies the distribution-ownership index schema admitted by lifecycle policy. */
+export const OWNERSHIP_INDEX_SCHEMA_VERSION = 1 as const;
+
+/** Bounds declared plus service-derived claims before ownership semantics run. */
+export const MAX_OWNERSHIP_CLAIMS = 16_384;
 
 /** Enumerates every ownership namespace represented in a derived release index. */
 export const OwnershipClaimKindSchema = Type.Union([

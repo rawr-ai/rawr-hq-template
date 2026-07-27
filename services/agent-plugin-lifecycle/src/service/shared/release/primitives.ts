@@ -42,32 +42,8 @@ type PayloadDigestBrand = string & { readonly [payloadDigestBrand]: "PayloadDige
 type ReleaseDigestBrand = string & { readonly [releaseDigestBrand]: "ReleaseDigest" };
 type ReleaseSetDigestBrand = string & { readonly [releaseSetDigestBrand]: "ReleaseSetDigest" };
 
-export const RELEASE_INPUT_SCHEMA_VERSION = 1 as const;
-export const PAYLOAD_PROTOCOL_VERSION = 1 as const;
-export const AGENT_PLUGIN_RELEASE_SCHEMA_VERSION = 1 as const;
-export const AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION = 1 as const;
-/** Pins the wire version carried by every admitted distribution ownership index. */
-export const OWNERSHIP_INDEX_SCHEMA_VERSION = 1 as const;
-export const BUILDER_PROTOCOL_VERSION = 1 as const;
-
-export const MAX_RELEASE_MEMBERS = 1_024;
-/** Bounds declared plus service-derived claims before ownership semantics run. */
-export const MAX_OWNERSHIP_CLAIMS = 16_384;
-export const MAX_PAYLOAD_ENTRIES_PER_MEMBER = 16_384;
-export const MAX_PAYLOAD_BYTES_PER_MEMBER = 64 * 1024 * 1024;
-export const MAX_RELEASE_INPUT_ENVELOPE_BYTES = 96 * 1024 * 1024;
-export const MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES = 3 * MAX_RELEASE_INPUT_ENVELOPE_BYTES;
-export const MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES = MAX_RELEASE_INPUT_ENVELOPE_BYTES;
 export const MAX_RELEASE_RELATIVE_PATH_BYTES = 1_024;
 export const MAX_CANONICAL_ID_BYTES = 512;
-export const MAX_PROVENANCE_BINDINGS = 16_384;
-
-export type ReleaseInputSchemaVersion = typeof RELEASE_INPUT_SCHEMA_VERSION;
-export type PayloadProtocolVersion = typeof PAYLOAD_PROTOCOL_VERSION;
-export type AgentPluginReleaseSchemaVersion = typeof AGENT_PLUGIN_RELEASE_SCHEMA_VERSION;
-export type AgentPluginReleaseSetSchemaVersion = typeof AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION;
-export type OwnershipIndexSchemaVersion = typeof OWNERSHIP_INDEX_SCHEMA_VERSION;
-export type BuilderProtocolVersion = typeof BUILDER_PROTOCOL_VERSION;
 
 const encoder = new TextEncoder();
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
@@ -159,9 +135,6 @@ export const ReleaseSetDigestSchema = Type.Unsafe<ReleaseSetDigestBrand>(
   Type.String({ pattern: "^rs1_[0-9a-f]{64}$" })
 );
 
-/** Admits only the two normalized executable-bit states used in release payloads. */
-export const NormalizedFileModeSchema = Type.Union([Type.Literal(0o644), Type.Literal(0o755)]);
-
 export type ContentAuthority = Static<typeof ContentAuthoritySchema>;
 export type RepositoryIdentity = Static<typeof RepositoryIdentitySchema>;
 export type GitCommitId = Static<typeof GitCommitIdSchema>;
@@ -174,7 +147,6 @@ export type ReleaseInputDigest = Static<typeof ReleaseInputDigestSchema>;
 export type PayloadDigest = Static<typeof PayloadDigestSchema>;
 export type ReleaseDigest = Static<typeof ReleaseDigestSchema>;
 export type ReleaseSetDigest = Static<typeof ReleaseSetDigestSchema>;
-export type NormalizedFileMode = Static<typeof NormalizedFileModeSchema>;
 
 export function parseContentAuthority(
   value: unknown,
@@ -265,23 +237,6 @@ export function parseReleaseRelativePath(
     "INVALID_RELATIVE_PATH",
     "Path must be a canonical POSIX relative path"
   );
-}
-
-export function parseNormalizedFileMode(
-  value: unknown,
-  path = "mode"
-): ReleaseResult<NormalizedFileMode, ReleaseIssue> {
-  if (!Value.Check(NormalizedFileModeSchema, value)) {
-    return failure([
-      typeof value === "number" && Number.isSafeInteger(value)
-        ? releaseIssue("INVALID_MODE", path, "File mode must be normalized to 0644 or 0755", {
-            expected: "0644|0755",
-            actual: value,
-          })
-        : releaseIssue("EXPECTED_INTEGER", path, "Value must be a safe integer"),
-    ]);
-  }
-  return success(value);
 }
 
 export function parseContentDigest(

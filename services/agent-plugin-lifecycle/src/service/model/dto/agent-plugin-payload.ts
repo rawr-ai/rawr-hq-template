@@ -2,15 +2,26 @@ import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
   ContentDigestSchema,
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  NormalizedFileModeSchema,
-  PAYLOAD_PROTOCOL_VERSION,
   PayloadDigestSchema,
   ReleaseRelativePathSchema,
 } from "../../shared/release/primitives";
 
 declare const agentPluginPayloadBrand: unique symbol;
+
+/** Identifies the payload record protocol admitted by lifecycle policy. */
+export const PAYLOAD_PROTOCOL_VERSION = 1 as const;
+
+/** Bounds the number of files admitted for one plugin payload. */
+export const MAX_PAYLOAD_ENTRIES_PER_MEMBER = 16_384;
+
+/** Bounds the aggregate decoded bytes admitted for one plugin payload. */
+export const MAX_PAYLOAD_BYTES_PER_MEMBER = 64 * 1024 * 1024;
+
+/** Admits only the two normalized executable-bit states used in release payloads. */
+export const NormalizedFileModeSchema = Type.Union([Type.Literal(0o644), Type.Literal(0o755)]);
+
+/** TypeBox-derived normalized mode carried by one payload file. */
+export type NormalizedFileMode = Static<typeof NormalizedFileModeSchema>;
 
 /** Defines one exact file record in an agent-plugin payload manifest. */
 export const PayloadManifestEntrySchema = ReadonlyObject(

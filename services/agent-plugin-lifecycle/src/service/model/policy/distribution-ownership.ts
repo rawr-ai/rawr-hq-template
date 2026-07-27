@@ -1,16 +1,13 @@
 import { Value } from "typebox/value";
-import {
-  MAX_OWNERSHIP_CLAIMS,
-  OWNERSHIP_INDEX_SCHEMA_VERSION,
-  OwnershipIdentitySchema,
-  type PluginId,
-} from "../../shared/release/primitives";
+import { OwnershipIdentitySchema, type PluginId } from "../../shared/release/primitives";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import {
   type DeclaredOwnershipClaim,
   DeclaredOwnershipClaimsSchema,
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
+  MAX_OWNERSHIP_CLAIMS,
+  OWNERSHIP_INDEX_SCHEMA_VERSION,
   type OwnershipClaim,
   type OwnershipClaimKind,
 } from "../dto/distribution-ownership";

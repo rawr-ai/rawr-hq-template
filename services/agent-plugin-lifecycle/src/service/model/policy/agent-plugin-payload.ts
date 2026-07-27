@@ -2,11 +2,7 @@ import { Value } from "typebox/value";
 
 import {
   contentDigest,
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  PAYLOAD_PROTOCOL_VERSION,
   type PayloadDigest,
-  parseNormalizedFileMode,
   parsePayloadDigest,
   parseReleaseRelativePath,
   payloadDigest,
@@ -15,6 +11,9 @@ import {
   type AgentPluginPayload,
   AgentPluginPayloadRecordSchema,
   AgentPluginPayloadSchema,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  PAYLOAD_PROTOCOL_VERSION,
   type PayloadEntry,
   type PayloadManifestEntry,
 } from "../dto/agent-plugin-payload";
@@ -25,6 +24,7 @@ import { decodeBase64, encodeBase64 } from "./canonical-base64";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import {
   manifestFromPayloadEntries,
+  parseNormalizedFileMode,
   parsePayloadManifest,
   reportDuplicatePayloadPaths,
   samePayloadManifest,

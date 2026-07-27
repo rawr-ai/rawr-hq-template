@@ -6,6 +6,7 @@ import {
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import {
   BoundedReadonlyArray,
   EmptyReadonlyArray,
@@ -14,7 +15,6 @@ import {
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
-  MAX_RELEASE_MEMBERS,
   PluginIdSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,

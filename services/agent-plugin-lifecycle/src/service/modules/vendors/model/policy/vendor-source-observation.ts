@@ -8,7 +8,7 @@ import type {
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
+} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import type { VendorUpdateIssue } from "../dto/vendor-operations";
 import type {
   VendorDeclaredSourceObservation,

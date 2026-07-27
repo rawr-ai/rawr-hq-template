@@ -6,6 +6,7 @@ import {
   CompletenessWitnessRecordSchema,
   type ExpectedReleaseMember,
   ExpectedReleaseMemberSchema,
+  MAX_RELEASE_MEMBERS,
 } from "../../src/service/model/dto/release-input";
 import type { ReleaseIssue } from "../../src/service/model/dto/release-issue";
 import {
@@ -16,7 +17,6 @@ import {
 import { createDistributionOwnershipIndex } from "../../src/service/model/policy/distribution-ownership";
 import { releaseIssue } from "../../src/service/model/policy/release-issue";
 import {
-  MAX_RELEASE_MEMBERS,
   parsePluginId,
   payloadDigest,
   releaseInputDigest,

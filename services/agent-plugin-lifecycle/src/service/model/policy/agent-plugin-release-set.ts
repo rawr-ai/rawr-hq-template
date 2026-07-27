@@ -1,9 +1,5 @@
 import { Value } from "typebox/value";
 import {
-  AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
-  BUILDER_PROTOCOL_VERSION,
-  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
   type PluginId,
   parseContentAuthority,
   parseGitCommitId,
@@ -15,20 +11,27 @@ import {
   parseRepositoryIdentity,
   releaseSetDigest,
 } from "../../shared/release/primitives";
-import { type AgentPluginRelease, AgentPluginReleaseSchema } from "../dto/agent-plugin-release";
+import {
+  type AgentPluginRelease,
+  AgentPluginReleaseSchema,
+  BUILDER_PROTOCOL_VERSION,
+} from "../dto/agent-plugin-release";
 import type {
   AgentPluginReleaseSet,
   AgentPluginReleaseSetMember,
 } from "../dto/agent-plugin-release-set";
 import {
+  AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   AgentPluginReleaseSetBodySchema,
   AgentPluginReleaseSetSchema,
+  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
 } from "../dto/agent-plugin-release-set";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import {
   type AgentPluginReleaseInput,
   AgentPluginReleaseInputSchema,
   type CompletenessWitness,
+  MAX_RELEASE_MEMBERS,
 } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";

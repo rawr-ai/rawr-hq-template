@@ -3,10 +3,17 @@ import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   type PayloadManifestEntry,
   PayloadManifestEntrySchema,
 } from "../../../src/service/model/dto/agent-plugin-payload";
+import { MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES } from "../../../src/service/model/dto/agent-plugin-release";
+import { MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES } from "../../../src/service/model/dto/agent-plugin-release-set";
+import { MAX_OWNERSHIP_CLAIMS } from "../../../src/service/model/dto/distribution-ownership";
 import {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
   ReleaseInputBodySchema,
   ReleaseInputEnvelopeSchema,
 } from "../../../src/service/model/dto/release-input";
@@ -19,16 +26,7 @@ import {
 } from "../../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
-import {
-  contentDigest,
-  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
-  MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-  MAX_OWNERSHIP_CLAIMS,
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
-} from "../../../src/service/shared/release/primitives";
+import { contentDigest } from "../../../src/service/shared/release/primitives";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
 const encoder = new TextEncoder();
