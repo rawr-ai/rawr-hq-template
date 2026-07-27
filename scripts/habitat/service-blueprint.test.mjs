@@ -1205,4 +1205,56 @@ describe("service blueprint authority", () => {
       "execution-failed"
     );
   }, 15_000);
+
+  it("rejects undocumented contract properties in standalone and API services", async () => {
+    const serviceRule = "require_service_contract_property_descriptions";
+    const apiRule = "require_api_service_contract_property_descriptions";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/modules/catalog/contract.ts": `
+          import { Type } from "typebox";
+          export const contract = Type.Object({ query: Type.String() });
+        `,
+        "plugins/server/api/catalog/src/service/modules/search/contract.ts": `
+          import { Type } from "typebox";
+          export const contract = Type.Object({ query: Type.String() });
+        `,
+      },
+      [serviceRule, apiRule]
+    );
+
+    const result = await check(root, [serviceRule, apiRule]);
+    expect(result.exitCode).toBe(1);
+    expect(diagnostics(result.report, serviceRule).map((diagnostic) => diagnostic.path)).toContain(
+      "services/orders/src/service/modules/catalog/contract.ts"
+    );
+    expect(diagnostics(result.report, apiRule).map((diagnostic) => diagnostic.path)).toContain(
+      "plugins/server/api/catalog/src/service/modules/search/contract.ts"
+    );
+  });
+
+  it("admits described and named-schema contract properties in both service forms", async () => {
+    const serviceRule = "require_service_contract_property_descriptions";
+    const apiRule = "require_api_service_contract_property_descriptions";
+    const describedContract = `
+      import { Type } from "typebox";
+      const QuerySchema = Type.String({ description: "Search text." });
+      export const contract = Type.Object({
+        query: QuerySchema,
+        limit: Type.Optional(Type.Integer({ description: "Maximum results." })),
+      });
+    `;
+    const root = await createFixture(
+      {
+        "services/orders/src/service/modules/catalog/contract.ts": describedContract,
+        "plugins/server/api/catalog/src/service/modules/search/contract.ts": describedContract,
+      },
+      [serviceRule, apiRule]
+    );
+
+    const result = await check(root, [serviceRule, apiRule]);
+    expect(result.exitCode).toBe(0);
+    expect(diagnostics(result.report, serviceRule)).toEqual([]);
+    expect(diagnostics(result.report, apiRule)).toEqual([]);
+  });
 });

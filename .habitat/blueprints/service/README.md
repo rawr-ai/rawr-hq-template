@@ -36,10 +36,14 @@ shape.
 Contract and error packets own the single exported contract, Standard Schema
 adaptation at every operation input/output, bounded private support
 reachability, and private public-error constructor lineage when those support
-declarations are present. Private schema composition, local error maps,
-fragments, and helpers remain valid only while they are syntactically reachable
-from the one contract anchor; imported or dynamic error-map authority and
-exported parallel schema, type, envelope, or helper authority remain invalid.
+declarations are present. Contract property-description law requires every
+directly authored TypeBox object property, including API transport containers,
+to declare its meaning or delegate it to a named schema authority. Standalone
+and embedded API services apply that one source law at their own bounded
+Habitat scan roots. Private schema composition, local error maps, fragments,
+and helpers remain valid only while they are syntactically reachable from the
+one contract anchor; imported or dynamic error-map authority and exported
+parallel schema, type, envelope, or helper authority remain invalid.
 RAWR-owned amendments keep private import aliases owner-local, keep module
 colocality visible through relative imports, and keep service
 implementation independent of concrete platform and provider code. Root

@@ -145,6 +145,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   plus the selected Habitat source laws as fast feedback, and remove hook
   config/source projection from the workstream installer. Keep full lint,
   typecheck, behavior, and Habitat admission in pre-push and protected CI.
+- [x] 1.5j Adopt Magic Migration commit
+  `fb91606db1c63dad92d3d4945bbb21bc92f9d1c3` as one shared TypeBox/oRPC
+  contract-property-description pattern with bounded standalone-service and
+  API-service applications. Require directly authored properties to declare
+  nonblank static meaning or delegate to one named schema authority; preserve
+  canonical TypeBox syntax, empty baselines, and one Habitat-native runner.
+  Burn the complete admitted corpus to green without adding a script, fork,
+  exception, or compatibility grammar.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation
