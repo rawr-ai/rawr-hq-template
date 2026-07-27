@@ -1,9 +1,15 @@
 import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
+import type { DistributionOwnershipIndex } from "../../model/dto/distribution-ownership";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
+import {
+  ownershipClaimsFor,
+  ownershipIndexValue,
+  parseDistributionOwnershipIndex,
+} from "../../model/policy/distribution-ownership";
 import { samePayloadManifest } from "../../model/policy/payload-manifest";
 import {
   prefixReleaseIssuePath,
@@ -12,12 +18,6 @@ import {
 } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
-import {
-  type DistributionOwnershipIndex,
-  ownershipClaimsFor,
-  ownershipIndexValue,
-  parseDistributionOwnershipIndex,
-} from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,

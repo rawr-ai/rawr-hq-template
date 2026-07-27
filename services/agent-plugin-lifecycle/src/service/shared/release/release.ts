@@ -11,6 +11,7 @@ import { verifyAgentPluginPayload } from "../../model/policy/agent-plugin-payloa
 import { payloadEntriesValue, payloadValue } from "../../model/policy/agent-plugin-payload-codec";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
+import { ownershipClaimsFor } from "../../model/policy/distribution-ownership";
 import {
   parsePayloadManifest,
   payloadManifestValue,
@@ -19,7 +20,6 @@ import {
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
-import { ownershipClaimsFor } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
 import {
   AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,

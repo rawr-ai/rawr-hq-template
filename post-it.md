@@ -6,6 +6,35 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Distribution Ownership Has Direct Owners
+
+Distribution ownership is inert service-wide release meaning used by
+release-input admission, individual release projection, and complete-set
+verification. Its structure and semantics belong to the service model rather
+than a transitional `shared` release face.
+
+The DTO owns the closed TypeBox schemas, generated types, and admitted index
+brand. Policy owns claim synthesis, admission, bounds, canonical ordering and
+projection, immutability, member coverage, conflict classification, and
+owner-local selection. Consumers import those exact leaves directly; the old
+ownership file is deleted and its tests move without a barrel, alias, facade,
+or compatibility path.
+
+Primitive identity, parsing, and digest mechanics remain separate. This
+checkpoint changes no resource, provider, runtime, router, oRPC surface, or
+public result.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/distribution-ownership|the ownership DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/distribution-ownership|the ownership policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+ownership, claim, index, schema, policy, conflict, order, bound, freeze,
+direct, delete.
+
 ## 2026-07-27 - Payload Meaning Has Direct Owners
 
 Agent-plugin payloads are inert service-wide release data used by root policy

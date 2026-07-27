@@ -1,8 +1,6 @@
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
-import type { ReleaseIssue } from "../../../src/service/model/dto/release-issue";
 import {
-  createDistributionOwnershipIndex,
   type DeclaredOwnershipClaim,
   DeclaredOwnershipClaimSchema,
   DeclaredOwnershipClaimsSchema,
@@ -10,18 +8,23 @@ import {
   DistributionOwnershipIndexRecordSchema,
   type OwnershipClaim,
   OwnershipClaimSchema,
+} from "../../src/service/model/dto/distribution-ownership";
+import type { ReleaseIssue } from "../../src/service/model/dto/release-issue";
+import {
+  createDistributionOwnershipIndex,
   ownershipClaimsFor,
   ownershipIndexValue,
   parseDeclaredOwnershipClaims,
   parseDistributionOwnershipIndex,
-} from "../../../src/service/shared/release/ownership";
+} from "../../src/service/model/policy/distribution-ownership";
+import { releaseIssue } from "../../src/service/model/policy/release-issue";
 import {
   MAX_OWNERSHIP_CLAIMS,
   type OwnershipIdentity,
   type PluginId,
   parseOwnershipIdentity,
   parsePluginId,
-} from "../../../src/service/shared/release/primitives";
+} from "../../src/service/shared/release/primitives";
 
 describe("distribution ownership", () => {
   it("uses closed TypeBox contracts for declared claims and derived indexes", () => {
@@ -156,6 +159,27 @@ describe("distribution ownership", () => {
     expect(mismatchIssues.map(({ code }) => code)).toContain("OWNERSHIP_INDEX_MISMATCH");
   });
 
+  it("preserves pre-existing issues by identity while parsing a valid index", () => {
+    const created = mustIndex(
+      createDistributionOwnershipIndex(
+        [pluginId("alpha")],
+        [claim("skill", "alpha-skill", "alpha")]
+      )
+    );
+    const seededIssue = releaseIssue("EXPECTED_OBJECT", "seeded.path", "Seeded release issue");
+    const issues: ReleaseIssue[] = [seededIssue];
+
+    const parsed = parseDistributionOwnershipIndex(
+      ownershipIndexValue(created),
+      "ownershipIndex",
+      issues
+    );
+
+    expect(parsed).toEqual(created);
+    expect(issues).toHaveLength(1);
+    expect(issues[0]).toBe(seededIssue);
+  });
+
   it("classifies every ownership conflict independently of input order", () => {
     const memberIds = [pluginId("alpha"), pluginId("beta")];
     const claims = [
@@ -173,12 +197,39 @@ describe("distribution ownership", () => {
     expect(right.ok).toBe(false);
     if (left.ok || right.ok) throw new Error("Expected ownership conflicts");
     expect(right.issues).toEqual(left.issues);
-    expect(new Set(left.issues.map(({ code }) => code))).toEqual(
-      new Set(["DUPLICATE_OWNERSHIP_CLAIM", "MISSING_OWNER", "OWNERSHIP_CONFLICT"])
-    );
-    expect(left.issues.find(({ claim }) => claim === "shared")?.claimants).toEqual([
-      "alpha",
-      "beta",
+    expect(left.issues).toEqual([
+      {
+        code: "DUPLICATE_OWNERSHIP_CLAIM",
+        path: "ownership.claims.alias.duplicate",
+        message: "Ownership claim is duplicated",
+        claimKind: "alias",
+        claim: "duplicate",
+        claimants: ["alpha"],
+      },
+      {
+        code: "MISSING_OWNER",
+        path: "ownership.claims.destination.orphan",
+        message: "Claim owner is not a declared release member",
+        claimKind: "destination",
+        claim: "orphan",
+        claimants: ["ghost"],
+      },
+      {
+        code: "OWNERSHIP_CONFLICT",
+        path: "ownership.claims.skill.shared",
+        message: "Ownership claim has multiple owners",
+        claimKind: "skill",
+        claim: "shared",
+        claimants: ["alpha", "beta"],
+      },
+      {
+        code: "OWNERSHIP_CONFLICT",
+        path: "ownership.routing.alpha",
+        message: "Plugin identity and alias namespace is ambiguous",
+        claimKind: "plugin-routing",
+        claim: "alpha",
+        claimants: ["alpha", "beta"],
+      },
     ]);
   });
 
@@ -217,6 +268,24 @@ describe("distribution ownership", () => {
     ]);
   });
 
+  it("refuses a plugin and alias routing collision owned by the same plugin", () => {
+    expect(
+      createDistributionOwnershipIndex([pluginId("alpha")], [claim("alias", "alpha", "alpha")])
+    ).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "OWNERSHIP_CONFLICT",
+          path: "ownership.routing.alpha",
+          message: "Plugin identity and alias namespace is ambiguous",
+          claimKind: "plugin-routing",
+          claim: "alpha",
+          claimants: ["alpha"],
+        },
+      ],
+    });
+  });
+
   it("admits the exact total bound and refuses one over without traversing it", () => {
     const declared = Array.from({ length: MAX_OWNERSHIP_CLAIMS }, (_, index) =>
       claim("alias", `alias-${index}`, "alpha")
@@ -226,10 +295,21 @@ describe("distribution ownership", () => {
       declared.slice(0, MAX_OWNERSHIP_CLAIMS - 1)
     );
     expect(exact.ok).toBe(true);
+    if (exact.ok) expect(exact.value.claims).toHaveLength(MAX_OWNERSHIP_CLAIMS);
 
     const over = createDistributionOwnershipIndex([pluginId("alpha")], declared);
-    expect(over.ok).toBe(false);
-    if (!over.ok) expect(over.issues.map(({ code }) => code)).toContain("COUNT_LIMIT_EXCEEDED");
+    expect(over).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "COUNT_LIMIT_EXCEEDED",
+          path: "ownership.claims",
+          message: "Ownership claims exceed the protocol limit",
+          expected: MAX_OWNERSHIP_CLAIMS,
+          actual: MAX_OWNERSHIP_CLAIMS + 1,
+        },
+      ],
+    });
 
     Object.defineProperty(declared, MAX_OWNERSHIP_CLAIMS, {
       configurable: true,
@@ -240,7 +320,15 @@ describe("distribution ownership", () => {
     const issues: ReleaseIssue[] = [];
     const parsed = parseDeclaredOwnershipClaims(declared, "ownershipClaims", issues);
     expect(parsed).toHaveLength(MAX_OWNERSHIP_CLAIMS);
-    expect(issues.map(({ code }) => code)).toContain("COUNT_LIMIT_EXCEEDED");
+    expect(issues).toEqual([
+      {
+        code: "COUNT_LIMIT_EXCEEDED",
+        path: "ownershipClaims",
+        message: `Array exceeds protocol limit ${MAX_OWNERSHIP_CLAIMS}`,
+        expected: MAX_OWNERSHIP_CLAIMS,
+        actual: MAX_OWNERSHIP_CLAIMS + 1,
+      },
+    ]);
 
     const indexClaims: OwnershipClaim[] = Array.from(
       { length: MAX_OWNERSHIP_CLAIMS },
@@ -262,7 +350,15 @@ describe("distribution ownership", () => {
       indexIssues
     );
     expect(parsedIndex).toBeUndefined();
-    expect(indexIssues.map(({ code }) => code)).toContain("COUNT_LIMIT_EXCEEDED");
+    expect(indexIssues).toEqual([
+      {
+        code: "COUNT_LIMIT_EXCEEDED",
+        path: "ownershipIndex.claims",
+        message: `Array exceeds protocol limit ${MAX_OWNERSHIP_CLAIMS}`,
+        expected: MAX_OWNERSHIP_CLAIMS,
+        actual: MAX_OWNERSHIP_CLAIMS + 1,
+      },
+    ]);
   });
 });
 

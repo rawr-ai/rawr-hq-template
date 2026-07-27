@@ -1,92 +1,27 @@
-import { ReadonlyObject, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
-import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
-import type { ReleaseIssue } from "../../model/dto/release-issue";
-import type { ReleaseResult } from "../../model/dto/release-result";
-import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
-import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
-import { asNonEmpty, failure, success } from "../../model/policy/release-result";
-import { parseBoundedArray } from "./parse";
+import { parseBoundedArray } from "../../shared/release/parse";
 import {
   MAX_OWNERSHIP_CLAIMS,
   OWNERSHIP_INDEX_SCHEMA_VERSION,
   OwnershipIdentitySchema,
   type PluginId,
-  PluginIdSchema,
-} from "./primitives";
+} from "../../shared/release/primitives";
+import type { CanonicalJsonValue } from "../dto/canonical-json";
+import {
+  type DeclaredOwnershipClaim,
+  DeclaredOwnershipClaimsSchema,
+  type DistributionOwnershipIndex,
+  DistributionOwnershipIndexRecordSchema,
+  type OwnershipClaim,
+  type OwnershipClaimKind,
+} from "../dto/distribution-ownership";
+import type { ReleaseIssue } from "../dto/release-issue";
+import type { ReleaseResult } from "../dto/release-result";
+import { compareCanonicalText } from "./canonical-text-ordering";
+import { releaseIssue, sortReleaseIssues } from "./release-issue";
+import { asNonEmpty, failure, success } from "./release-result";
 
-declare const distributionOwnershipIndexBrand: unique symbol;
-
-/** Enumerates every ownership namespace represented in a derived release index. */
-export const OwnershipClaimKindSchema = Type.Union([
-  Type.Literal("plugin"),
-  Type.Literal("skill"),
-  Type.Literal("alias"),
-  Type.Literal("provider-identity"),
-  Type.Literal("destination"),
-]);
-
-/** Admits only claim kinds a content repository may declare directly. */
-export const DeclaredOwnershipClaimKindSchema = Type.Union([
-  Type.Literal("skill"),
-  Type.Literal("alias"),
-  Type.Literal("provider-identity"),
-  Type.Literal("destination"),
-]);
-
-/** Describes one structurally valid claim in a derived distribution index. */
-export const OwnershipClaimSchema = ReadonlyObject(
-  Type.Object({
-    kind: OwnershipClaimKindSchema,
-    identity: OwnershipIdentitySchema,
-    ownerPluginId: PluginIdSchema,
-  }),
-  { additionalProperties: false }
-);
-
-/** Describes one content-declared claim; plugin claims remain service-derived. */
-export const DeclaredOwnershipClaimSchema = ReadonlyObject(
-  Type.Object({
-    kind: DeclaredOwnershipClaimKindSchema,
-    identity: OwnershipIdentitySchema,
-    ownerPluginId: PluginIdSchema,
-  }),
-  { additionalProperties: false }
-);
-
-/** Bounds the full claim inventory before ownership semantics are evaluated. */
-export const OwnershipClaimsSchema = ReadonlyObject(Type.Array(OwnershipClaimSchema), {
-  maxItems: MAX_OWNERSHIP_CLAIMS,
-});
-
-/** Bounds content-declared claims without admitting derived plugin claims. */
-export const DeclaredOwnershipClaimsSchema = ReadonlyObject(
-  Type.Array(DeclaredOwnershipClaimSchema),
-  { maxItems: MAX_OWNERSHIP_CLAIMS }
-);
-
-/** Owns the closed wire shape of a version-one distribution ownership index. */
-export const DistributionOwnershipIndexRecordSchema = ReadonlyObject(
-  Type.Object({
-    schemaVersion: Type.Literal(OWNERSHIP_INDEX_SCHEMA_VERSION),
-    claims: OwnershipClaimsSchema,
-  }),
-  { additionalProperties: false }
-);
-
-export type OwnershipClaimKind = Static<typeof OwnershipClaimKindSchema>;
-export type DeclaredOwnershipClaimKind = Static<typeof DeclaredOwnershipClaimKindSchema>;
-export type OwnershipClaim = Static<typeof OwnershipClaimSchema>;
-export type DeclaredOwnershipClaim = Static<typeof DeclaredOwnershipClaimSchema>;
-export type DistributionOwnershipIndexRecord = Static<
-  typeof DistributionOwnershipIndexRecordSchema
->;
-
-export type DistributionOwnershipIndex = DistributionOwnershipIndexRecord &
-  Readonly<{
-    [distributionOwnershipIndexBrand]: "DistributionOwnershipIndex";
-  }>;
-
+/** Synthesizes plugin claims and admits one complete, conflict-free ownership index. */
 export function createDistributionOwnershipIndex(
   memberIds: readonly PluginId[],
   declaredClaims: readonly DeclaredOwnershipClaim[]
@@ -126,6 +61,7 @@ export function createDistributionOwnershipIndex(
   return success(freezeIndex(claims));
 }
 
+/** Admits, bounds, canonically orders, and freezes content-declared claims. */
 export function parseDeclaredOwnershipClaims(
   input: unknown,
   path: string,
@@ -146,6 +82,7 @@ export function parseDeclaredOwnershipClaims(
   return freezeDeclaredClaims(values);
 }
 
+/** Admits one closed ownership-index record and revalidates its claim semantics. */
 export function parseDistributionOwnershipIndex(
   input: unknown,
   path: string,
@@ -174,6 +111,7 @@ export function parseDistributionOwnershipIndex(
   return freezeIndex(boundedRecord.claims);
 }
 
+/** Projects an admitted ownership index into its canonical JSON representation. */
 export function ownershipIndexValue(index: DistributionOwnershipIndex): CanonicalJsonValue {
   return {
     schemaVersion: index.schemaVersion,
@@ -190,6 +128,7 @@ export function ownershipClaimValue(claim: OwnershipClaim): CanonicalJsonValue {
   };
 }
 
+/** Returns a frozen owner-local view, optionally narrowed to one claim namespace. */
 export function ownershipClaimsFor(
   index: DistributionOwnershipIndex,
   ownerPluginId: PluginId,
