@@ -6,6 +6,7 @@ import { contract as providers } from "./modules/providers/contract";
 import { contract as releases } from "./modules/releases/contract";
 import { contract as vendors } from "./modules/vendors/contract";
 
+/** Composes the five lifecycle capability contracts into the service boundary. */
 export const contract = eoc.router({
   releases,
   vendors,
@@ -14,4 +15,5 @@ export const contract = eoc.router({
   governance,
 });
 
+/** Type-safe caller contract exposed through the package's client face. */
 export type Contract = typeof contract;

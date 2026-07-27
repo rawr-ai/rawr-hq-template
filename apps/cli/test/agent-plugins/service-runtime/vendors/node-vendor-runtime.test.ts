@@ -10,7 +10,7 @@ import {
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
-} from "@rawr/agent-plugin-lifecycle/input";
+} from "@rawr/agent-plugin-lifecycle/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";

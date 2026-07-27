@@ -7,7 +7,7 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "../src/input";
+} from "../src/client";
 
 describe("public lifecycle input parsing", () => {
   it("admits canonical command values", () => {

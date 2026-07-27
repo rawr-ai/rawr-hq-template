@@ -10,7 +10,7 @@ import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-} from "@rawr/agent-plugin-lifecycle/input";
+} from "@rawr/agent-plugin-lifecycle/client";
 import { describe, expect, it } from "vitest";
 
 import {

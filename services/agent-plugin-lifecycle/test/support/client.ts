@@ -6,7 +6,9 @@ import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-p
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import { Effect } from "effect";
 
-import { type Client, createClient, type Deps } from "../../src/client";
+import { type Client, type CreateClientOptions, createClient } from "../../src/client";
+
+type LifecycleTestDeps = CreateClientOptions["deps"];
 
 export const testInvocation = Object.freeze({
   context: {
@@ -17,8 +19,8 @@ export const testInvocation = Object.freeze({
   },
 });
 
-export function createLifecycleTestClient(overrides: Partial<Deps> = {}): Client {
-  const deps: Deps = {
+export function createLifecycleTestClient(overrides: Partial<LifecycleTestDeps> = {}): Client {
+  const deps: LifecycleTestDeps = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     contentWorkspace: unavailableContentWorkspace(),

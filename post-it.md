@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Client Is The Only Package Face
+
+The service spine is private implementation. A caller crosses one package
+boundary through `client.ts`, which creates the typed local client and exposes
+only the contract and input admission deliberately needed to call the service.
+The router, host context lanes, schemas, model, and module interiors do not
+become public merely because they are reachable inside the package.
+
+This boundary is a deletion, not a facade. The package has no root export,
+`index.ts`, input subpath, router subpath, contract subpath, or compatibility
+alias. Callers receive one stable client surface while the service remains free
+to preserve its sealed downward flow from host context through module routers
+and authored operation handlers.
+
+See
+[[services/agent-plugin-lifecycle/src/client|the lifecycle client]],
+[[services/agent-plugin-lifecycle/AGENTS|the service router]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/specs/agent-plugin-lifecycle-service-topology/spec|the active topology contract]].
+
+### Bag Of Keywords
+
+client, service, contract, input, boundary, caller, context, router, schema,
+closure, deletion.
+
 ## 2026-07-27 - Source Law Uses Native Visibility
 
 Nx schedules one selected Habitat source-law task. Habitat evaluates the

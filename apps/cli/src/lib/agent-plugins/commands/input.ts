@@ -9,7 +9,7 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "@rawr/agent-plugin-lifecycle/input";
+} from "@rawr/agent-plugin-lifecycle/client";
 
 import { CHECK_MODES, type CheckMode } from "./flags";
 

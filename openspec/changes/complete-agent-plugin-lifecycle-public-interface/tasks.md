@@ -1137,6 +1137,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   results, resource behavior, and native-provider boundaries. Do not add a
   hash facade, runtime abstraction, generic resource, compatibility path, or
   source-law script.
+- [x] 5.7e10 Seal the lifecycle package behind one `/client` specifier. Keep
+  the private service contract and router in the service spine; expose only
+  client construction, its construction-options type, the deliberate contract,
+  and existing bounded input admission through `src/client.ts`. Delete the
+  root, input, router, and contract subpath facades without aliases; remove
+  public host-context lane types; and update the finite CLI and test callers as
+  one complete cut. Preserve TypeBox admission and lifecycle behavior.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
