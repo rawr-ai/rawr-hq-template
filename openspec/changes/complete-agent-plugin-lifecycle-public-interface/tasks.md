@@ -1013,6 +1013,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Preserve every bound, diagnostic, byte, digest, and public contract without
   moving completeness-witness policy, primitives, resources, providers,
   routers, or oRPC behavior.
+- [x] 5.7e5 Give service-wide completeness-witness structure and intrinsic
+  semantics direct root-model owners. Derive expected-member and witness-record
+  types from closed TypeBox schemas; move witness construction, bounded
+  admission, ordering, duplicate refusal, ownership-member closure, defensive
+  freezing, and canonical projection into one policy leaf; and rewire
+  release-input and release-set directly. Keep set-header, set-member, and
+  derived-release relationship checks in release-set policy. Preserve every
+  diagnostic, byte, digest, bound, and public contract without a barrel, alias,
+  facade, generic relationship engine, primitive, resource, provider, router,
+  or oRPC change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

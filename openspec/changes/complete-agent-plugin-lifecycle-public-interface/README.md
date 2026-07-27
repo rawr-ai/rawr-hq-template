@@ -2148,6 +2148,39 @@ contract, Personal repository, native command, or live lifecycle state changed.
 The required repository check passed 39 projects and 76 dependency tasks in
 34.9 seconds, including all 17 enforced Habitat laws with zero findings.
 
+The completeness-witness-policy checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e5]]. Expected-member
+and persisted-witness structure now derive from closed TypeBox schemas in the
+release-input DTO. One direct service-root policy owns witness construction,
+bounded admission, canonical ordering, duplicate refusal, ownership-member
+closure, defensive freezing, and canonical projection. Release-input and
+release-set policy import that exact leaf directly; the transitional
+release-input file no longer defines or exports witness policy.
+
+Release-set policy retains the relationships between a witness, its containing
+set header and members, and the actual derived release payloads. The root
+witness owner therefore stays intrinsic rather than becoming a generic
+relationship engine. Owner-local tests cover closed schema admission,
+canonical projection and ordering, defensive copying and freezing, duplicate
+refusal, exact-bound admission, overflow refusal without tail traversal,
+ownership mismatch, seeded diagnostic identity, malformed input, and refusal
+to brand fully typed duplicate, mismatched, or overbound construction facts.
+The focused corpus passes 29 cases across three files in 4.45 seconds, and the
+complete lifecycle suite passes 334 cases across 39 files in 65.91 seconds.
+Nx completed the uncached lifecycle target and its five dependencies in 71.43
+seconds.
+
+Production and test TypeScript checks, targeted Biome, and diff hygiene pass.
+Standing architecture/Habitat, behavior/TypeBox, and
+TypeScript/refactor/structural reviews report no remaining P0, P1, P2, or P3
+finding. The source graph contains 115 files, 474 internal import/export edges,
+466 unique edges, and no cycle.
+The required repository check passed 39 projects and 76 dependency tasks in
+33.89 seconds, including all 17 enforced Habitat laws with zero findings. No
+canonical byte, digest, diagnostic vocabulary, bound, primitive, resource,
+provider, runtime, router, oRPC surface, public package contract, Personal
+repository, native command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

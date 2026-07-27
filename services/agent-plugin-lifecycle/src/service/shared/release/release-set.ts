@@ -7,6 +7,10 @@ import { equalBytes } from "../../model/helpers/byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
 import {
+  completenessWitnessValue,
+  parseCompletenessWitness,
+} from "../../model/policy/completeness-witness";
+import {
   ownershipClaimsFor,
   ownershipIndexValue,
   parseDistributionOwnershipIndex,
@@ -61,11 +65,7 @@ import {
   agentPluginReleaseValue,
   verifyAgentPluginRelease,
 } from "./release";
-import {
-  completenessWitnessValue,
-  parseCompletenessWitness,
-  verifyAgentPluginReleaseInput,
-} from "./release-input";
+import { verifyAgentPluginReleaseInput } from "./release-input";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
 

@@ -6,6 +6,33 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Completeness Witness Is One Policy
+
+A completeness witness is inert release meaning shared by release-input
+construction and complete-set verification. TypeBox owns its closed persisted
+structure and generated types in the release-input DTO. One direct service-root
+policy owns witness construction, bounded admission, canonical ordering,
+duplicate refusal, ownership-member closure, defensive freezing, and canonical
+projection.
+
+The witness owner stops at the witness boundary. Release-set policy retains the
+relationships between the witness, the containing set header, set membership,
+and the derived release payloads. This distinction keeps intrinsic witness
+meaning together without turning the root policy into a generic relationship
+engine. The transitional release-input file no longer defines or exports
+witness policy, and release-set imports the exact policy leaf directly.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/policy/completeness-witness|the completeness-witness policy]],
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+witness, schema, policy, input, set, member, ownership, order, bound, freeze,
+projection, direct, delete.
+
 ## 2026-07-27 - Provenance Binding Is One Policy
 
 A provenance binding is inert release meaning carried by release inputs,
