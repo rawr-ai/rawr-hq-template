@@ -7,9 +7,7 @@ import {
 } from "../../model/dto/distribution-ownership";
 import {
   type AgentPluginReleaseInput,
-  type CompletenessWitness,
   type DeclaredPayload,
-  type ExpectedReleaseMember,
   type ReleaseInputBody,
   ReleaseInputBodySchema,
   type ReleaseInputEnvelope,
@@ -22,12 +20,11 @@ import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
+import { createCompletenessWitness } from "../../model/policy/completeness-witness";
 import {
   createDistributionOwnershipIndex,
   ownershipClaimValue,
-  ownershipIndexValue,
   parseDeclaredOwnershipClaims,
-  parseDistributionOwnershipIndex,
 } from "../../model/policy/distribution-ownership";
 import { parsePayloadManifest, payloadManifestValue } from "../../model/policy/payload-manifest";
 import {
@@ -74,7 +71,9 @@ export function createAgentPluginReleaseInput(
   const parsed = parseReleaseInputBody(input, "releaseInput.body");
   if (!parsed.ok) return parsed;
   const digest = releaseInputDigest(canonicalSerializeReleaseInputBody(parsed.value.body));
-  const releaseInput = freezeReleaseInput(parsed.value.body, digest, parsed.value.ownershipIndex);
+  const frozen = freezeReleaseInput(parsed.value.body, digest, parsed.value.ownershipIndex);
+  if (!frozen.ok) return frozen;
+  const releaseInput = frozen.value;
   const byteLength = canonicalSerializeAgentPluginReleaseInput(releaseInput).byteLength;
   if (byteLength > MAX_RELEASE_INPUT_ENVELOPE_BYTES) {
     return failure([
@@ -172,11 +171,13 @@ export function verifyAgentPluginReleaseInput(
       ),
     ]);
   }
-  const releaseInput = freezeReleaseInput(
+  const frozen = freezeReleaseInput(
     parsedBody.value.body,
     claimedDigest,
     parsedBody.value.ownershipIndex
   );
+  if (!frozen.ok) return frozen;
+  const releaseInput = frozen.value;
   const byteLength = canonicalSerializeAgentPluginReleaseInput(releaseInput).byteLength;
   if (byteLength > MAX_RELEASE_INPUT_ENVELOPE_BYTES) {
     return failure([
@@ -235,97 +236,6 @@ export function releaseInputBodyValue(body: ReleaseInputBody): CanonicalJsonValu
     locks: body.locks.map(provenanceBindingValue),
     qualityPolicies: body.qualityPolicies.map(provenanceBindingValue),
   };
-}
-
-export function completenessWitnessValue(witness: CompletenessWitness): CanonicalJsonValue {
-  return {
-    releaseInputDigest: witness.releaseInputDigest,
-    expectedMembers: witness.expectedMembers.map((member) => ({
-      pluginId: member.pluginId,
-      payloadDigest: member.payloadDigest,
-    })),
-    ownershipIndex: ownershipIndexValue(witness.ownershipIndex),
-  };
-}
-
-export function parseCompletenessWitness(
-  input: unknown,
-  path: string,
-  issues: ReleaseIssue[]
-): CompletenessWitness | undefined {
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["expectedMembers", "ownershipIndex", "releaseInputDigest"],
-      path,
-      issues
-    )
-  )
-    return undefined;
-  const digest = collectReleaseResult(
-    parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`),
-    issues
-  );
-  const ownershipIndex = parseDistributionOwnershipIndex(
-    input.ownershipIndex,
-    `${path}.ownershipIndex`,
-    issues
-  );
-  const rawMembers = parseBoundedArray(
-    input.expectedMembers,
-    `${path}.expectedMembers`,
-    MAX_RELEASE_MEMBERS,
-    issues
-  );
-  const expectedMembers: ExpectedReleaseMember[] = [];
-  rawMembers?.forEach((candidate, index) => {
-    const memberPath = `${path}.expectedMembers[${index}]`;
-    if (
-      !admitClosedRecordForTraversal(candidate, ["payloadDigest", "pluginId"], memberPath, issues)
-    )
-      return;
-    const pluginId = collectReleaseResult(
-      parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
-      issues
-    );
-    const payload = collectReleaseResult(
-      parsePayloadDigest(candidate.payloadDigest, `${memberPath}.payloadDigest`),
-      issues
-    );
-    if (pluginId !== undefined && payload !== undefined)
-      expectedMembers.push(Object.freeze({ pluginId, payloadDigest: payload }));
-  });
-  expectedMembers.sort((left, right) => compareCanonicalText(left.pluginId, right.pluginId));
-  reportDuplicateMembers(
-    expectedMembers.map((member) => member.pluginId),
-    `${path}.expectedMembers`,
-    issues
-  );
-  if (ownershipIndex !== undefined) {
-    const expectedIds = expectedMembers.map((member) => member.pluginId);
-    const ownedIds = ownershipIndex.claims
-      .filter((claim) => claim.kind === "plugin")
-      .map((claim) => claim.ownerPluginId)
-      .sort(compareCanonicalText);
-    if (
-      expectedIds.length !== ownedIds.length ||
-      expectedIds.some((pluginId, index) => pluginId !== ownedIds[index])
-    ) {
-      issues.push(
-        releaseIssue(
-          "OWNERSHIP_INDEX_MISMATCH",
-          `${path}.ownershipIndex`,
-          "Completeness members and ownership members differ"
-        )
-      );
-    }
-  }
-  if (digest === undefined || ownershipIndex === undefined) return undefined;
-  return Object.freeze({
-    releaseInputDigest: digest,
-    expectedMembers: Object.freeze(expectedMembers),
-    ownershipIndex,
-  }) as CompletenessWitness;
 }
 
 function parseReleaseInputBody(
@@ -812,7 +722,7 @@ function freezeReleaseInput(
   body: ReleaseInputBody,
   digest: ReleaseInputDigest,
   ownershipIndex: DistributionOwnershipIndex
-): AgentPluginReleaseInput {
+): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
   const expectedMembers = Object.freeze(
     body.members.map((member) =>
       Object.freeze({
@@ -821,18 +731,21 @@ function freezeReleaseInput(
       })
     )
   );
-  const witness = Object.freeze({
+  const witness = createCompletenessWitness({
     releaseInputDigest: digest,
     expectedMembers,
     ownershipIndex,
-  }) as CompletenessWitness;
-  return Object.freeze({
-    schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
-    releaseInputDigest: digest,
-    body,
-    ownershipIndex,
-    completenessWitness: witness,
-  }) as AgentPluginReleaseInput;
+  });
+  if (!witness.ok) return witness;
+  return success(
+    Object.freeze({
+      schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
+      releaseInputDigest: digest,
+      body,
+      ownershipIndex,
+      completenessWitness: witness.value,
+    }) as AgentPluginReleaseInput
+  );
 }
 
 function releaseInputEnvelopeValue(input: AgentPluginReleaseInput): CanonicalJsonValue {

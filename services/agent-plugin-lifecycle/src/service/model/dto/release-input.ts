@@ -8,12 +8,9 @@ import {
   MAX_RELEASE_MEMBERS,
   OwnershipIdentitySchema,
   PAYLOAD_PROTOCOL_VERSION,
-  type PayloadDigest,
   PayloadDigestSchema,
-  type PluginId,
   PluginIdSchema,
   RELEASE_INPUT_SCHEMA_VERSION,
-  type ReleaseInputDigest,
   ReleaseInputDigestSchema,
   ReleaseRelativePathSchema,
 } from "../../shared/release/primitives";
@@ -21,6 +18,7 @@ import { PayloadManifestEntrySchema } from "./agent-plugin-payload";
 import {
   DeclaredOwnershipClaimsSchema,
   type DistributionOwnershipIndex,
+  DistributionOwnershipIndexRecordSchema,
 } from "./distribution-ownership";
 
 declare const agentPluginReleaseInputBrand: unique symbol;
@@ -112,6 +110,27 @@ export const ReleaseInputEnvelopeSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** Defines one member and payload that a complete release set must cover. */
+export const ExpectedReleaseMemberSchema = ReadonlyObject(
+  Type.Object({
+    pluginId: PluginIdSchema,
+    payloadDigest: PayloadDigestSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** Defines the closed persisted structure of a release-input completeness witness. */
+export const CompletenessWitnessRecordSchema = ReadonlyObject(
+  Type.Object({
+    releaseInputDigest: ReleaseInputDigestSchema,
+    expectedMembers: ReadonlyObject(Type.Array(ExpectedReleaseMemberSchema), {
+      maxItems: MAX_RELEASE_MEMBERS,
+    }),
+    ownershipIndex: DistributionOwnershipIndexRecordSchema,
+  }),
+  { additionalProperties: false }
+);
+
 /** TypeBox-derived immutable provenance binding. */
 export type ProvenanceBinding = Static<typeof ProvenanceBindingSchema>;
 
@@ -130,19 +149,18 @@ export type ReleaseInputBody = Static<typeof ReleaseInputBodySchema>;
 /** TypeBox-derived persisted release-input envelope. */
 export type ReleaseInputEnvelope = Static<typeof ReleaseInputEnvelopeSchema>;
 
-/** Identifies one member and payload that a complete release set must cover. */
-export interface ExpectedReleaseMember {
-  readonly pluginId: PluginId;
-  readonly payloadDigest: PayloadDigest;
-}
+/** TypeBox-derived member and payload expected in one complete release set. */
+export type ExpectedReleaseMember = Static<typeof ExpectedReleaseMemberSchema>;
+
+/** TypeBox-derived wire record for a persisted completeness witness. */
+export type CompletenessWitnessRecord = Static<typeof CompletenessWitnessRecordSchema>;
 
 /** Binds the expected member set and ownership index to one release-input digest. */
-export type CompletenessWitness = Readonly<{
-  releaseInputDigest: ReleaseInputDigest;
-  expectedMembers: readonly ExpectedReleaseMember[];
-  ownershipIndex: DistributionOwnershipIndex;
-  [completenessWitnessBrand]: "CompletenessWitness";
-}>;
+export type CompletenessWitness = CompletenessWitnessRecord &
+  Readonly<{
+    ownershipIndex: DistributionOwnershipIndex;
+    [completenessWitnessBrand]: "CompletenessWitness";
+  }>;
 
 /** Branded release input admitted by release-input policy. */
 export type AgentPluginReleaseInput = Readonly<

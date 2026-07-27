@@ -50,6 +50,11 @@
   duplicate-identity refusal, defensive freezing, and canonical projection
   across release input, individual release, and complete-set records. Its
   closed TypeBox structure remains owned by the release-input DTO.
+  Completeness-witness structure and generated types also remain in that DTO.
+  Witness construction, admission, ordering, duplicate refusal, ownership
+  closure, freezing, and canonical projection have one direct service-root
+  policy owner. Release-set policy retains the relationships between that
+  witness, the containing set, and the derived releases.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module
