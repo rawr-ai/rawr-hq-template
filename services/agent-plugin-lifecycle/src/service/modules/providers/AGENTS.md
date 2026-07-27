@@ -28,6 +28,9 @@
   observations, and command outcomes; it returns assessments, bounded plans,
   postconditions, and public result classifications without retaining a
   session or performing an Effect.
+- TypeBox request, result, issue, and fact schemas live with their Provider DTO
+  meanings. The module contract imports those authorities directly; no parallel
+  schema facade or barrel may create a second public model face.
 - Aggregate result classification, rejected-target projection, issue
   collection, and target ordering are module policy. A router leaf authors an
   oRPC operation; it is not a destination for detached result helpers.

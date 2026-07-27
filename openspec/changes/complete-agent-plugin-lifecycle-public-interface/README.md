@@ -1858,6 +1858,22 @@ TypeScript/Effect/structural standing reviews closed with no unresolved P0 or
 P1 findings. No Personal repository, provider home, Oclif surface, Nx graph,
 Habitat policy, or live lifecycle state changed.
 
+The Provider schema-ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2p]]. The module
+contract and its boundary tests now import the TypeBox request and result
+schemas directly from their owning `model/dto/provider-lifecycle.ts` leaf. The
+loose `schemas.ts` re-export facade is deleted, so the module has one schema
+authority and no alternate public model face. Schema object identity, generated
+oRPC input and output types, runtime validation, and package exports remain
+unchanged.
+
+The seven Provider schema-boundary cases, lifecycle production and test
+typechecks, the Provider-owned Habitat law, Biome, strict OpenSpec validation,
+and diff hygiene pass. Habitat architecture and
+TypeScript/TypeBox/oRPC/structural reviews closed without unresolved P0 or P1
+findings. No Personal repository, provider home, Oclif surface, resource,
+provider command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

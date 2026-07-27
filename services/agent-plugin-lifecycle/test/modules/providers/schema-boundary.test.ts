@@ -13,7 +13,7 @@ import {
   ProviderTestRequestSchema,
   ProviderTestResultSchema,
   SelectedContentObservationSchema,
-} from "../../../src/service/modules/providers/schemas";
+} from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
 import { testInvocation } from "../../support/client";
 import {
   channelRequest,
