@@ -216,7 +216,44 @@ with zero findings. Strict OpenSpec, Biome, and diff hygiene pass. Standing
 architecture/Habitat and structural-quality/testing reviews report no
 unresolved P0, P1, P2, or P3 finding. No Nx project or target, SDK change,
 scanner, wrapper, baseline debt, or runtime implementation enters this
-checkpoint. Graphite landing remains open.
+checkpoint. Template PR #604 landed the preceding Habitat checkpoint on
+canonical `main` at `861e7337`.
+
+## Example Todo Public Face
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e11]]. Example Todo's
+source root now contains only `client.ts` and the private `service/` spine, and
+the package manifest exposes only `@rawr/example-todo/client`. That face exports
+exactly the runtime values `contract` and `createClient`, the `Contract` and
+`Client` types, and the deliberate `Deps`, `Scope`, `Config`, `Invocation`, and
+`CreateClientOptions` lane vocabulary. The named lanes preserve the service's
+construction and per-call language without exposing its router, authoring
+surface, or composed execution context.
+
+The former bare root, types, service-contract, and router subpaths are deleted
+without aliases or forwarding files, and their redundant TypeScript path
+mappings are gone. The API plugin derives its projection from the public client
+contract and retains its existing `api.ts`, `client.ts`, and host-injected
+`ClientResolver` boundaries. The finite Server host and proof callers cross the
+same client face. An existing Server typecheck now owns positive resolution,
+positive lane types, exact public runtime values, private router/service/context
+symbols, and retired-subpath assertions; no new project, checker, target,
+dependency, or compatibility surface is introduced.
+
+Example Todo passes all 6 files and 36 behavior tests; the two focused Server
+projection suites pass 6 cases. Example Todo, the API plugin, and Server
+typechecks pass, including the compile-time package-surface oracle. The API
+plugin and Server structural targets pass. The enforced private-alias
+configuration, private-alias ownership, and public-consumer sealing laws report
+zero findings. The advisory service-spine topology no longer reports an Example
+Todo public-face violation; its 16 existing internal `common`, module-shell,
+and middleware findings remain outside this checkpoint. Strict OpenSpec,
+touched Biome, and diff hygiene pass. The full repository gate passes all 115
+Nx tasks in 52.9 seconds, with 63 cache hits. Standing
+architecture/Habitat/oRPC and TypeScript/structural/testing reviews report no
+unresolved P0, P1, P2, or P3 finding. The parent workstream retains final
+closure-gate ownership. Graphite landing remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`

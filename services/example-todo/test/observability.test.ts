@@ -15,7 +15,7 @@ import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapte
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
 
-import { createClient } from "../src";
+import { createClient } from "../src/client";
 import { type AnalyticsEntry, createClientOptions, invocation, type LogEntry } from "./helpers";
 
 function createBaselineDeps(logs: LogEntry[], analytics: AnalyticsEntry[]) {

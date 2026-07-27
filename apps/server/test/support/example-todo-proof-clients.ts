@@ -1,4 +1,4 @@
-import type { Client as ExampleTodoClient } from "@rawr/example-todo";
+import type { Client as ExampleTodoClient } from "@rawr/example-todo/client";
 import { createTestingExampleTodoServiceClient } from "../../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {

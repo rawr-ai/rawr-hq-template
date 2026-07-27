@@ -1,6 +1,6 @@
 import { safe } from "@orpc/server";
 import { describe, expect, it } from "vitest";
-import { createClient } from "../src";
+import { createClient } from "../src/client";
 import { contract as assignmentsContract } from "../src/service/modules/assignments/contract";
 import { contract as tagsContract } from "../src/service/modules/tags/contract";
 import { contract as tasksContract } from "../src/service/modules/tasks/contract";

@@ -1165,6 +1165,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   root, input, router, and contract subpath facades without aliases; remove
   public host-context lane types; and update the finite CLI and test callers as
   one complete cut. Preserve TypeBox admission and lifecycle behavior.
+- [x] 5.7e11 Seal Example Todo behind one `/client` specifier. Keep runtime
+  values exact to `contract` and `createClient`; expose `Contract`, `Client`,
+  and the deliberate `Deps`, `Scope`, `Config`, `Invocation`, and
+  `CreateClientOptions` lane types through that same face.
+  Delete the bare root, types, contract, and router faces without an alias or
+  facade, remove their redundant TypeScript path mappings, and move the finite
+  API plugin, server, and proof consumers to `/client`. Preserve the API
+  plugin's `api.ts` and `client.ts` faces, host-injected `ClientResolver`,
+  routes, OpenAPI, task/tag/assignment policy, runtime acquisition, database,
+  and behavior. Bind positive lane, exact runtime-value, and negative private
+  router/service/context package-surface proof in the existing Server test
+  project; add no project, checker, target, dependency, or compatibility face.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

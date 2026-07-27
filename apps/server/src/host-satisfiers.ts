@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
 import {
+  type CreateClientOptions,
   createClient as createExampleTodoClient,
   type Client as ExampleTodoClient,
-} from "@rawr/example-todo";
+} from "@rawr/example-todo/client";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
 import {
@@ -13,7 +14,6 @@ import {
   type ServiceBindingContext,
 } from "@rawr/hq-sdk/plugins";
 
-type ExampleTodoBoundary = Parameters<typeof createExampleTodoClient>[0];
 type HostProcess = ProcessView & {
   processId: "server";
   repoRoot: string;
@@ -24,7 +24,7 @@ type ExampleTodoRole = RoleView & {
 };
 type ExampleTodoBindingContext = ServiceBindingContext<HostProcess, ExampleTodoRole>;
 
-export type HostServiceLogger = ExampleTodoBoundary["deps"]["logger"];
+export type HostServiceLogger = CreateClientOptions["deps"]["logger"];
 
 export type RawrHostSatisfiers = Readonly<{
   exampleTodo: {
@@ -55,7 +55,7 @@ export type RawrHostSatisfiers = Readonly<{
  * - no provider registry
  * - no capability-keyed generic map API
  */
-function createExampleTodoDeps(hostLogger: HostServiceLogger): ExampleTodoBoundary["deps"] {
+function createExampleTodoDeps(hostLogger: HostServiceLogger): CreateClientOptions["deps"] {
   let tick = 0;
 
   return {
@@ -89,7 +89,7 @@ function createExampleTodoBinding(hostLogger: HostServiceLogger) {
     },
     cacheKey: (context: ExampleTodoBindingContext) =>
       `${context.process.processId}:${context.process.repoRoot}:${context.role.roleId}`,
-  } satisfies ServiceBinding<ExampleTodoBoundary, HostProcess, ExampleTodoRole>);
+  } satisfies ServiceBinding<CreateClientOptions, HostProcess, ExampleTodoRole>);
 }
 
 export function createRawrHostSatisfiers(input: {
