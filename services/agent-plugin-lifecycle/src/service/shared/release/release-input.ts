@@ -10,7 +10,6 @@ import {
   type CompletenessWitness,
   type DeclaredPayload,
   type ExpectedReleaseMember,
-  type ProvenanceBinding,
   type ReleaseInputBody,
   ReleaseInputBodySchema,
   type ReleaseInputEnvelope,
@@ -31,6 +30,10 @@ import {
   parseDistributionOwnershipIndex,
 } from "../../model/policy/distribution-ownership";
 import { parsePayloadManifest, payloadManifestValue } from "../../model/policy/payload-manifest";
+import {
+  parseProvenanceBindings,
+  provenanceBindingValue,
+} from "../../model/policy/provenance-binding";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
 import {
@@ -42,22 +45,18 @@ import {
 import {
   admitClosedRecordForTraversal,
   parseBoundedArray,
-  parseCanonicalString,
 } from "../../model/policy/release-value-admission";
 import {
   type ContentAuthority,
-  MAX_CANONICAL_ID_BYTES,
   MAX_OWNERSHIP_CLAIMS,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_PROVENANCE_BINDINGS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   type OwnershipIdentity,
   PAYLOAD_PROTOCOL_VERSION,
   type PluginId,
   parseContentAuthority,
-  parseContentDigest,
   parseOwnershipIdentity,
   parsePayloadDigest,
   parsePluginId,
@@ -809,56 +808,6 @@ function parseDeclaredPayload(
   });
 }
 
-export function parseProvenanceBindings(
-  input: unknown,
-  path: string,
-  issues: ReleaseIssue[]
-): readonly ProvenanceBinding[] | undefined {
-  const values = parseBoundedArray(input, path, MAX_PROVENANCE_BINDINGS, issues);
-  if (values === undefined) return undefined;
-  const bindings: ProvenanceBinding[] = [];
-  values.forEach((candidate, index) => {
-    const bindingPath = `${path}[${index}]`;
-    if (
-      !admitClosedRecordForTraversal(
-        candidate,
-        ["contentDigest", "id", "protocol"],
-        bindingPath,
-        issues
-      )
-    )
-      return;
-    const id = collectReleaseResult(
-      parseOwnershipIdentity(candidate.id, `${bindingPath}.id`),
-      issues
-    );
-    const protocol = parseCanonicalString(candidate.protocol, `${bindingPath}.protocol`, issues, {
-      maxBytes: MAX_CANONICAL_ID_BYTES,
-      pattern: /^[a-z0-9][a-z0-9._:@/-]*$/u,
-    });
-    const digest = collectReleaseResult(
-      parseContentDigest(candidate.contentDigest, `${bindingPath}.contentDigest`),
-      issues
-    );
-    if (id !== undefined && protocol !== undefined && digest !== undefined) {
-      bindings.push(Object.freeze({ id, protocol, contentDigest: digest }));
-    }
-  });
-  bindings.sort(compareBindings);
-  for (let index = 1; index < bindings.length; index += 1) {
-    if (bindings[index - 1]!.id === bindings[index]!.id) {
-      issues.push(
-        releaseIssue(
-          "DUPLICATE_VALUE",
-          path,
-          `Duplicate provenance binding: ${bindings[index]!.id}`
-        )
-      );
-    }
-  }
-  return Object.freeze(bindings);
-}
-
 function freezeReleaseInput(
   body: ReleaseInputBody,
   digest: ReleaseInputDigest,
@@ -910,22 +859,6 @@ function releaseMemberValue(member: ReleaseMemberDeclaration): CanonicalJsonValu
     vendor: member.vendor.map(provenanceBindingValue),
     curation: member.curation.map(provenanceBindingValue),
   };
-}
-
-export function provenanceBindingValue(binding: ProvenanceBinding): CanonicalJsonValue {
-  return {
-    id: binding.id,
-    protocol: binding.protocol,
-    contentDigest: binding.contentDigest,
-  };
-}
-
-function compareBindings(left: ProvenanceBinding, right: ProvenanceBinding): number {
-  return (
-    compareCanonicalText(left.id, right.id) ||
-    compareCanonicalText(left.protocol, right.protocol) ||
-    compareCanonicalText(left.contentDigest, right.contentDigest)
-  );
 }
 
 function compareSkillInventoryEntries(

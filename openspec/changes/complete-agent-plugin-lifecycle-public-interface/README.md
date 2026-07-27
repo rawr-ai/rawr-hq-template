@@ -2121,6 +2121,33 @@ commands, and live lifecycle state are unchanged.
 The required repository check passed 39 projects and 76 dependency tasks in
 37.6 seconds, including all 17 enforced Habitat laws with zero findings.
 
+The provenance-binding-policy checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e4]]. Bounded
+admission, canonical ordering, duplicate-identity refusal, defensive freezing,
+and canonical projection now have one direct service-root policy owner. The
+release-input DTO remains the TypeBox structure and generated-type authority.
+Release-input, individual-release, and complete-set policy import the exact
+owner directly; the transitional release-input file no longer defines or
+exports that policy, and no barrel, alias, facade, or duplicate format replaces
+it.
+
+Owner-local tests cover canonical projection and ordering, empty admission,
+defensive copying and freezing, seeded diagnostic identity, duplicate
+refusal independent of declaration order, exact-bound admission, overflow
+refusal without tail traversal, and the existing granular diagnostic
+vocabulary. The focused corpus passes 38 cases across four files, and the
+complete lifecycle suite passes 328 cases across 38 files in 65.22 seconds.
+Production and test TypeScript checks, targeted Biome, strict OpenSpec, and
+diff hygiene pass. The source graph contains 114 files, 461 internal
+import/export edges, and no cycle. Standing architecture, behavior-first
+testing, and TypeScript/structural reviews report no P0, P1, P2, or P3 finding.
+
+No TypeBox schema, completeness-witness behavior, primitive, digest, canonical
+byte, resource, provider, runtime, router, oRPC surface, public package
+contract, Personal repository, native command, or live lifecycle state changed.
+The required repository check passed 39 projects and 76 dependency tasks in
+34.9 seconds, including all 17 enforced Habitat laws with zero findings.
+
 ## Settlement Oracles
 
 The final product must prove:

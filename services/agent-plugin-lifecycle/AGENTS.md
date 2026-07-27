@@ -46,6 +46,10 @@
   Construction, verification, canonical encoding, diagnostics, ordering, and
   digest policy remain outside that DTO; modules name the structural owner
   directly rather than reaching through the transitional release barrel.
+  Provenance-binding policy owns bounded admission, canonical ordering,
+  duplicate-identity refusal, defensive freezing, and canonical projection
+  across release input, individual release, and complete-set records. Its
+  closed TypeBox structure remains owned by the release-input DTO.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

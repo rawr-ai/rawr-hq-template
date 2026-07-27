@@ -18,6 +18,10 @@ import {
   payloadManifestValue,
   samePayloadManifest,
 } from "../../model/policy/payload-manifest";
+import {
+  parseProvenanceBindings,
+  provenanceBindingValue,
+} from "../../model/policy/provenance-binding";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import {
   asNonEmpty,
@@ -61,12 +65,7 @@ import {
   type RepositoryIdentity,
   releaseDigest,
 } from "./primitives";
-import {
-  parseProvenanceBindings,
-  provenanceBindingValue,
-  releaseInputBodyValue,
-  verifyAgentPluginReleaseInput,
-} from "./release-input";
+import { releaseInputBodyValue, verifyAgentPluginReleaseInput } from "./release-input";
 
 declare const agentPluginReleaseBrand: unique symbol;
 
