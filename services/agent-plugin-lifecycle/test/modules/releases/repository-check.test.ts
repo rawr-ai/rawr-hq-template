@@ -1103,11 +1103,11 @@ function cleanEligibleInspection(): Extract<ContentWorkspaceInspection, { kind: 
       releaseInput: fixture.releaseInput,
       payloads: [
         {
-          pluginId: fixture.alphaRelease.artifactBody.releaseBody.pluginId,
+          pluginId: fixture.alphaRelease.body.pluginId,
           payload: fixture.alphaPayload,
         },
         {
-          pluginId: fixture.betaRelease.artifactBody.releaseBody.pluginId,
+          pluginId: fixture.betaRelease.body.pluginId,
           payload: fixture.betaPayload,
         },
       ],

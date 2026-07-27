@@ -26,6 +26,7 @@ import {
 } from "../../../src/service/model/dto/current-main-record";
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
+import { createAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
@@ -39,8 +40,6 @@ import type { SelectedContent } from "../../../src/service/modules/providers/mod
 import type { PluginId } from "../../../src/service/shared/release";
 import {
   contentDigest,
-  createAgentPluginRelease,
-  createAgentPluginReleaseSet,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
@@ -50,6 +49,7 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
 } from "../../../src/service/shared/release";
+import { createAgentPluginReleaseSet } from "../../../src/service/shared/release/release-set";
 import {
   createLifecycleTestClient,
   testInvocation,
@@ -221,11 +221,11 @@ function buildSelectedContent(
     members: Object.freeze(
       releases.map((release) =>
         Object.freeze({
-          pluginId: release.artifactBody.releaseBody.pluginId,
-          aliases: release.artifactBody.releaseBody.aliases,
-          payloadDigest: release.artifactBody.releaseBody.payloadDigest,
+          pluginId: release.body.pluginId,
+          aliases: release.body.aliases,
+          payloadDigest: release.body.payloadDigest,
           releaseDigest: release.releaseDigest,
-          manifest: release.artifactBody.releaseBody.payloadManifest,
+          manifest: release.body.payloadManifest,
         })
       )
     ),

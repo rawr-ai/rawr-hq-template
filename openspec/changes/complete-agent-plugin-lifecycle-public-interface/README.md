@@ -2205,6 +2205,34 @@ P0, P1, P2, or P3 finding. The required repository check passed 39 projects
 and 76 dependency tasks in 33.4 seconds, including all 17 enforced Habitat laws
 with zero findings.
 
+The individual-release checkpoint in
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e7]] is complete.
+The checkpoint replaces the transitional individual-release owner with direct
+TypeBox DTO, policy, and codec leaves and treats the verified release as
+in-memory domain data. Artifact body, artifact digest, artifact protocol, local
+store-handle identity, and artifact identity in the public Releases check and
+release-set members are deleted rather than renamed. Release-set policy
+temporarily retains cross-member relationships.
+
+The first behavior review found that composed constructors projected enriched
+in-memory values before closed admission, allowing unknown fields to disappear
+before validation. The corrected boundary gives wire and in-memory payload,
+release-input, and release values distinct closed TypeBox schemas in their
+existing DTO owners. Policy projects only after in-memory admission, then
+reconstructs derived observations from identity-bearing bodies and exact
+payload bytes. Regression tests prove refusal at request, release-input body,
+release body, payload, and payload-entry boundaries through release
+construction, set construction, and complete-set verification.
+
+The uncached lifecycle suite passed 41 files and 349 tests in 1 minute 14
+seconds. Lifecycle typecheck passed its seven-task graph in 13.8 seconds. The
+required repository check passed 39 projects and 76 dependency tasks in 37.7
+seconds, including all 17 enforced Habitat laws with zero findings. Strict
+OpenSpec validation and diff hygiene passed. Final architecture/Habitat,
+behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
+P0, P1, P2, or P3 finding. Landing evidence remains open until Graphite merges
+the checkpoint to canonical `main`.
+
 ## Settlement Oracles
 
 The final product must prove:

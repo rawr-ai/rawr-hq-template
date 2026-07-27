@@ -1,3 +1,5 @@
+import { Value } from "typebox/value";
+
 import {
   contentDigest,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -9,14 +11,16 @@ import {
   parseReleaseRelativePath,
   payloadDigest,
 } from "../../shared/release/primitives";
-import type {
-  AgentPluginPayload,
-  PayloadEntry,
-  PayloadManifestEntry,
+import {
+  type AgentPluginPayload,
+  AgentPluginPayloadRecordSchema,
+  AgentPluginPayloadSchema,
+  type PayloadEntry,
+  type PayloadManifestEntry,
 } from "../dto/agent-plugin-payload";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
-import { canonicalSerializePayloadEntries } from "./agent-plugin-payload-codec";
+import { canonicalSerializePayloadEntries, payloadValue } from "./agent-plugin-payload-codec";
 import { decodeBase64, encodeBase64 } from "./canonical-base64";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import {
@@ -175,7 +179,7 @@ export function verifyAgentPluginPayload(
       releaseIssue("EXPECTED_OBJECT", path, "Payload validation did not produce a complete value"),
     ]);
   }
-  return success(freezePayload(entries, manifest, claimedDigest));
+  return admitPayloadRecord(freezePayload(entries, manifest, claimedDigest), path);
 }
 
 /** Decodes one trusted entry into a fresh caller-owned byte array. */
@@ -253,7 +257,7 @@ function finishPayload(
   const frozenEntries = Object.freeze(entries);
   const manifest = manifestFromPayloadEntries(frozenEntries);
   const digest = payloadDigest(canonicalSerializePayloadEntries(frozenEntries));
-  return success(freezePayload(frozenEntries, manifest, digest));
+  return admitPayloadRecord(freezePayload(frozenEntries, manifest, digest), "payload");
 }
 
 function freezePayload(
@@ -267,4 +271,23 @@ function freezePayload(
     entries: Object.freeze([...entries]),
     payloadDigest: digest,
   }) as AgentPluginPayload;
+}
+
+function admitPayloadRecord(
+  payload: AgentPluginPayload,
+  path: string
+): ReleaseResult<AgentPluginPayload, ReleaseIssue> {
+  if (
+    Value.Check(AgentPluginPayloadSchema, payload) &&
+    Value.Check(AgentPluginPayloadRecordSchema, payloadValue(payload))
+  ) {
+    return success(payload);
+  }
+  return failure([
+    releaseIssue(
+      "EXPECTED_OBJECT",
+      path,
+      "Payload construction did not produce a TypeBox-valid wire record"
+    ),
+  ]);
 }

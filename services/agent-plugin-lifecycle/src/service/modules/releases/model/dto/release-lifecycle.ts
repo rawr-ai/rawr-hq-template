@@ -8,7 +8,6 @@ import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dt
 import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
-  ArtifactDigestSchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -245,7 +244,6 @@ const DerivedReleaseMemberSchema = ReadonlyObject(
   Type.Object({
     pluginId: PluginIdSchema,
     releaseDigest: ReleaseDigestSchema,
-    artifactDigest: ArtifactDigestSchema,
   }),
   { additionalProperties: false }
 );
@@ -256,7 +254,6 @@ export const ReleaseDerivationIdentitySchema = Type.Union([
       kind: Type.Literal("release"),
       pluginId: PluginIdSchema,
       releaseDigest: ReleaseDigestSchema,
-      artifactDigest: ArtifactDigestSchema,
     }),
     { additionalProperties: false }
   ),

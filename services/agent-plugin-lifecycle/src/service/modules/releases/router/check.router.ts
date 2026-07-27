@@ -157,7 +157,6 @@ function releaseDerivationIdentity(derivation: DerivedReleaseSelection): Release
           Object.freeze({
             pluginId: member.pluginId,
             releaseDigest: member.releaseDigest,
-            artifactDigest: member.artifactDigest,
           })
         )
       ),
@@ -166,9 +165,8 @@ function releaseDerivationIdentity(derivation: DerivedReleaseSelection): Release
   const release = derivation.releases[0]!;
   return Object.freeze({
     kind: "release",
-    pluginId: release.artifactBody.releaseBody.pluginId,
+    pluginId: release.body.pluginId,
     releaseDigest: release.releaseDigest,
-    artifactDigest: release.artifactDigest,
   });
 }
 

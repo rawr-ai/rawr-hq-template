@@ -1,14 +1,12 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
-  type ContentDigest,
   ContentDigestSchema,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
-  type NormalizedFileMode,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   NormalizedFileModeSchema,
-  type PayloadDigest,
-  type PayloadProtocolVersion,
-  type ReleaseRelativePath,
+  PAYLOAD_PROTOCOL_VERSION,
+  PayloadDigestSchema,
   ReleaseRelativePathSchema,
 } from "../../shared/release/primitives";
 
@@ -19,8 +17,75 @@ export const PayloadManifestEntrySchema = ReadonlyObject(
   Type.Object({
     path: ReleaseRelativePathSchema,
     mode: NormalizedFileModeSchema,
-    byteLength: Type.Integer({ minimum: 0, maximum: MAX_PAYLOAD_BYTES_PER_MEMBER }),
+    byteLength: Type.Integer({
+      minimum: 0,
+      maximum: MAX_PAYLOAD_BYTES_PER_MEMBER,
+      description: "Decoded byte length of this exact payload file.",
+    }),
     contentDigest: ContentDigestSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/**
+ * Defines the canonical wire fields for one payload entry.
+ *
+ * Byte length and content digest are deliberately absent: payload policy
+ * derives them from decoded bytes and cross-checks them against the manifest.
+ */
+const PayloadEntryRecordSchema = ReadonlyObject(
+  Type.Object({
+    path: ReleaseRelativePathSchema,
+    mode: NormalizedFileModeSchema,
+    bytesBase64: Type.String({
+      description: "Canonical Base64 encoding of this payload file's bytes.",
+    }),
+  }),
+  { additionalProperties: false }
+);
+
+/** Defines one closed in-memory payload entry with its derived byte metadata. */
+const PayloadEntrySchema = ReadonlyObject(
+  Type.Object({
+    ...PayloadEntryRecordSchema.properties,
+    byteLength: PayloadManifestEntrySchema.properties.byteLength,
+    contentDigest: PayloadManifestEntrySchema.properties.contentDigest,
+  }),
+  { additionalProperties: false }
+);
+
+/** Defines the canonical wire record carried inside one release envelope. */
+export const AgentPluginPayloadRecordSchema = ReadonlyObject(
+  Type.Object({
+    protocolVersion: Type.Literal(PAYLOAD_PROTOCOL_VERSION, {
+      description: "Payload protocol version used to interpret this record.",
+    }),
+    manifest: ReadonlyObject(Type.Array(PayloadManifestEntrySchema), {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+      description: "Canonical manifest derived from the exact payload entries.",
+    }),
+    entries: ReadonlyObject(Type.Array(PayloadEntryRecordSchema), {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+      description: "Canonical payload entries carrying the exact file bytes.",
+    }),
+    payloadDigest: PayloadDigestSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/**
+ * Defines the closed in-memory payload admitted before wire projection.
+ *
+ * This schema keeps policy from treating a codec projection as structural
+ * admission when a payload crosses directly between lifecycle operations.
+ */
+export const AgentPluginPayloadSchema = ReadonlyObject(
+  Type.Object({
+    ...AgentPluginPayloadRecordSchema.properties,
+    entries: ReadonlyObject(Type.Array(PayloadEntrySchema), {
+      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+      description: "Canonical payload entries with policy-derived byte metadata.",
+    }),
   }),
   { additionalProperties: false }
 );
@@ -32,23 +97,14 @@ export interface PayloadEntryInput {
   readonly bytes: unknown;
 }
 
-/** Owns one canonical payload file and its derived byte metadata. */
-export interface PayloadEntry {
-  readonly path: ReleaseRelativePath;
-  readonly mode: NormalizedFileMode;
-  readonly bytesBase64: string;
-  readonly byteLength: number;
-  readonly contentDigest: ContentDigest;
-}
+/** TypeBox-derived in-memory payload entry with policy-derived byte metadata. */
+export type PayloadEntry = Static<typeof PayloadEntrySchema>;
 
 /** TypeBox-derived exact file record carried by a payload manifest. */
 export type PayloadManifestEntry = Static<typeof PayloadManifestEntrySchema>;
 
 /** Branded, immutable payload admitted by lifecycle payload policy. */
-export type AgentPluginPayload = Readonly<{
-  protocolVersion: PayloadProtocolVersion;
-  manifest: readonly PayloadManifestEntry[];
-  entries: readonly PayloadEntry[];
-  payloadDigest: PayloadDigest;
-  [agentPluginPayloadBrand]: "AgentPluginPayload";
-}>;
+export type AgentPluginPayload = Static<typeof AgentPluginPayloadSchema> &
+  Readonly<{
+    [agentPluginPayloadBrand]: "AgentPluginPayload";
+  }>;

@@ -2,15 +2,15 @@ import type {
   CoworkV1ArchiveEncodingRequest,
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
+import type { AgentPluginRelease } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-release";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import { payloadEntryBytes } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import {
-  type AgentPluginRelease,
   contentDigest,
   parseReleaseRelativePath,
-  verifyCompleteReleaseSet,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
+import { verifyCompleteReleaseSet } from "#agent-plugin-lifecycle-service/shared/release/release-set";
 import type { PackageDigest } from "../dto/packaging-lifecycle";
 
 /** Stable archive comment that identifies RAWR's Cowork v1 package profile. */
@@ -66,9 +66,7 @@ function collectCoworkEntries(selection: DerivedReleaseSelection): readonly Pack
   const entries = releases.flatMap((release) =>
     collectReleaseEntries(
       release,
-      selection.releaseSet === undefined
-        ? ""
-        : `plugins/${release.artifactBody.releaseBody.pluginId}/`
+      selection.releaseSet === undefined ? "" : `plugins/${release.body.pluginId}/`
     )
   );
   entries.sort((left, right) => compareCanonicalText(left.path, right.path));
@@ -119,7 +117,7 @@ function* protocolEntrySizes(
   for (const release of releases) {
     yield* releaseProtocolEntrySizes(
       release,
-      completeSet ? `plugins/${release.artifactBody.releaseBody.pluginId}/` : ""
+      completeSet ? `plugins/${release.body.pluginId}/` : ""
     );
   }
 }
@@ -128,13 +126,13 @@ function* releaseProtocolEntrySizes(
   release: AgentPluginRelease,
   prefix: string
 ): Generator<CoworkV1ProtocolEntrySize> {
-  for (const entry of release.artifactBody.payloadEntries) {
+  for (const entry of release.payload.entries) {
     yield { path: `${prefix}${entry.path}`, byteLength: entry.byteLength };
   }
 }
 
 function collectReleaseEntries(release: AgentPluginRelease, prefix: string): PackageArchiveEntry[] {
-  return release.artifactBody.payloadEntries.map((entry) => {
+  return release.payload.entries.map((entry) => {
     const bytes = payloadEntryBytes(entry);
     assertPayloadEntry(entry.path, entry.mode, entry.contentDigest, entry.byteLength, bytes);
     return {
@@ -152,10 +150,7 @@ function verifiedSelectionReleases(
     throw new Error("Targeted packaging requires exactly one release");
   }
   const releases = [...selection.releases].sort((left, right) =>
-    compareCanonicalText(
-      left.artifactBody.releaseBody.pluginId,
-      right.artifactBody.releaseBody.pluginId
-    )
+    compareCanonicalText(left.body.pluginId, right.body.pluginId)
   );
   if (selection.releaseSet !== undefined) {
     const verification = verifyCompleteReleaseSet(selection.releaseSet, releases);

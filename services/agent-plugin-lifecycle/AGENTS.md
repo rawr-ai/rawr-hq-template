@@ -48,6 +48,16 @@
   diagnostics. One direct codec owns canonical body and envelope projection
   and bytes. Consumers import those exact leaves directly; the transitional
   release-input implementation and its release-barrel exports are deleted.
+  Individual agent-plugin release body and envelope structure, generated
+  types, and its admitted brand have one direct service-root TypeBox DTO
+  owner. One direct release policy owns construction, admission, verification,
+  decoding, defensive freezing, diagnostics, and the association with its
+  verified in-memory payload. One direct release codec owns canonical body and
+  envelope projection and bytes. The release digest is a verification value,
+  never an artifact address, store handle, provider identity, or local
+  installation identity. Artifact body, artifact digest, artifact protocol,
+  and local storage identity are rejected rather than preserved behind another
+  name. Release-set policy temporarily retains cross-member relationships.
   Primitive and digest mechanics remain separate owners.
   Provenance-binding policy owns bounded admission, canonical ordering,
   duplicate-identity refusal, defensive freezing, and canonical projection

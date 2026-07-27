@@ -59,7 +59,6 @@ const contentWorkspace = Object.freeze({
   pluginRoot: "plugins/agent",
 });
 const releaseDigest = `rd1_${"c".repeat(64)}`;
-const artifactDigest = `ad1_${"d".repeat(64)}`;
 const releaseSetDigest = `rs1_${"e".repeat(64)}`;
 const workspaceBinding = "f".repeat(64);
 
@@ -234,7 +233,7 @@ describe("release procedure schema boundary", () => {
         derivation: {
           kind: "complete-set",
           releaseSetDigest,
-          members: [{ pluginId: "cognition", releaseDigest, artifactDigest }],
+          members: [{ pluginId: "cognition", releaseDigest }],
         },
         eligibilityBinding: workspaceBinding,
       })
@@ -242,11 +241,23 @@ describe("release procedure schema boundary", () => {
     expect(
       Value.Check(CheckResultSchema, {
         kind: "EligibleReport",
+        derivation: {
+          kind: "release",
+          pluginId: "cognition",
+          releaseDigest,
+          localHandle: "/tmp/release",
+        },
+        eligibilityBinding: workspaceBinding,
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(CheckResultSchema, {
+        kind: "EligibleReport",
         mode: { kind: "complete-set" },
         derivation: {
           kind: "complete-set",
           releaseSetDigest,
-          members: [{ pluginId: "cognition", releaseDigest, artifactDigest }],
+          members: [{ pluginId: "cognition", releaseDigest }],
         },
         eligibilityBinding: workspaceBinding,
       })
@@ -265,7 +276,6 @@ describe("release procedure schema boundary", () => {
           kind: "release",
           pluginId: "cognition",
           releaseDigest,
-          artifactDigest,
           storePath: "/not-public",
         },
         eligibilityBinding: workspaceBinding,
@@ -280,9 +290,7 @@ describe("release procedure schema boundary", () => {
         derivation: {
           kind: "complete-set",
           releaseSetDigest,
-          members: [
-            { pluginId: "cognition", releaseDigest, artifactDigest, locator: "not-public" },
-          ],
+          members: [{ pluginId: "cognition", releaseDigest, locator: "not-public" }],
         },
         eligibilityBinding: workspaceBinding,
       },
@@ -291,7 +299,7 @@ describe("release procedure schema boundary", () => {
         derivation: {
           kind: "complete-set",
           releaseSetDigest,
-          members: [{ pluginId: "cognition", releaseDigest, artifactDigest }],
+          members: [{ pluginId: "cognition", releaseDigest }],
         },
         eligibilityBinding: "",
       },
@@ -567,7 +575,7 @@ describe("release procedure schema boundary", () => {
       derivation: {
         kind: "complete-set",
         releaseSetDigest,
-        members: [{ pluginId: "cognition", releaseDigest, artifactDigest }],
+        members: [{ pluginId: "cognition", releaseDigest }],
       },
       eligibilityBinding: workspaceBinding,
     } as const;

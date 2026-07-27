@@ -55,7 +55,7 @@ export function constructSelectedContent(
     );
   }
   const members = input.derivation.releases.map((release) => {
-    const body = release.artifactBody.releaseBody;
+    const body = release.body;
     return Object.freeze({
       pluginId: body.pluginId,
       aliases: [...body.aliases],
@@ -64,7 +64,7 @@ export function constructSelectedContent(
       manifest: body.payloadManifest.map((entry) => Object.freeze({ ...entry })),
     });
   });
-  const releaseBody = firstRelease.artifactBody.releaseBody;
+  const releaseBody = firstRelease.body;
   const common = Object.freeze({
     contentAuthority: releaseBody.contentAuthority,
     repositoryIdentity: releaseBody.sourceRepository,

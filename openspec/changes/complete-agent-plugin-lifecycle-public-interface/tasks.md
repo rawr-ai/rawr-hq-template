@@ -1033,6 +1033,23 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   alias or facade. Preserve canonical bytes and digests, issue codes and order,
   bounds, and public oRPC behavior without moving primitives, resources,
   providers, routers, or native state.
+- [x] 5.7e7 Give service-wide individual-release structure, canonical encoding,
+  and admission direct root-model owners under the corrected in-memory release
+  identity. Let one closed TypeBox DTO own release body and envelope structure,
+  generated types, and the admitted brand; let one policy own construction,
+  admission, verification, decoding, defensive freezing, diagnostics, and the
+  verified payload association; and let one codec own canonical body and
+  envelope projection and bytes. Delete artifact body, artifact digest,
+  artifact protocol, local store-handle semantics, the transitional
+  `shared/release/release.ts` owner, and its barrel exports without an alias,
+  facade, or compatibility path. Remove artifact identity from the public
+  Releases check result and release-set members; keep only
+  `{ pluginId, releaseDigest }` member identity and leave cross-member
+  relationships in release-set policy. Prove TypeBox closure and generated
+  types, an exact digest-free preimage, payload tamper and noncanonical-byte
+  refusal, defensive immutability, deterministic diagnostics, direct consumer
+  imports, and the full lifecycle behavior without moving the release-set
+  owner, resources, providers, routers, or native state.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

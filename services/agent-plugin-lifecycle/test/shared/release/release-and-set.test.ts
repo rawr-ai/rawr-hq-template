@@ -3,112 +3,47 @@ import { describe, expect, it } from "vitest";
 
 import { ReleaseIssueSchema } from "../../../src/service/model/dto/release-issue";
 import {
-  createAgentPluginPayload,
-  verifyAgentPluginPayload,
-} from "../../../src/service/model/policy/agent-plugin-payload";
+  createAgentPluginRelease,
+  verifyAgentPluginRelease,
+} from "../../../src/service/model/policy/agent-plugin-release";
 import {
-  createAgentPluginReleaseInput,
-  decodeAgentPluginReleaseInput,
-  verifyAgentPluginReleaseInput,
-} from "../../../src/service/model/policy/release-input";
-import {
-  canonicalSerializeAgentPluginArtifactBody,
   canonicalSerializeAgentPluginRelease,
   canonicalSerializeAgentPluginReleaseBody,
-  canonicalSerializeAgentPluginReleaseSet,
-  canonicalSerializeAgentPluginReleaseSetBody,
-  createAgentPluginRelease,
-  createAgentPluginReleaseSet,
-  decodeAgentPluginRelease,
-  decodeAgentPluginReleaseSet,
-  parseArtifactDigest,
+} from "../../../src/service/model/policy/agent-plugin-release-codec";
+import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
+import {
   parsePayloadDigest,
   parseReleaseDigest,
   parseReleaseInputDigest,
   parseReleaseSetDigest,
-  verifyAgentPluginRelease,
-  verifyAgentPluginReleaseSet,
-  verifyCompleteReleaseSet,
-} from "../../../src/service/shared/release";
-import {
-  artifactDigest,
   releaseDigest,
   releaseSetDigest,
 } from "../../../src/service/shared/release/primitives";
+import {
+  canonicalSerializeAgentPluginReleaseSet,
+  canonicalSerializeAgentPluginReleaseSetBody,
+  createAgentPluginReleaseSet,
+  decodeAgentPluginReleaseSet,
+  verifyAgentPluginReleaseSet,
+  verifyCompleteReleaseSet,
+} from "../../../src/service/shared/release/release-set";
 import { member, must, productFixture, releaseInputBody, SOURCE, wire } from "./fixtures";
 
-describe("release and complete-set integrity", () => {
-  it("constructs and verifies exact non-circular release and artifact bodies", () => {
-    const fixture = productFixture();
-    const release = fixture.alphaRelease;
-    expect(release.releaseDigest).toMatch(/^rd1_[0-9a-f]{64}$/u);
-    expect(release.artifactDigest).toMatch(/^ad1_[0-9a-f]{64}$/u);
-    expect(release.artifactBody.releaseDigest).toBe(release.releaseDigest);
-    expect(release.artifactBody.releaseBody.aliases).toEqual(["a"]);
-    expect(release.artifactBody.releaseBody.releaseInputDigest).toBe(
-      fixture.releaseInput.releaseInputDigest
-    );
-    expect(release.artifactBody.releaseBody.payloadDigest).toBe(fixture.alphaPayload.payloadDigest);
+interface MutableReleaseInput {
+  [key: string]: unknown;
+  body: Record<string, unknown>;
+}
 
-    const bytes = canonicalSerializeAgentPluginRelease(release);
-    expect(bytes.at(-1)).toBe(0x0a);
-    const decoded = decodeAgentPluginRelease(bytes);
-    expect(decoded.ok).toBe(true);
-    if (decoded.ok) {
-      expect(decoded.value.releaseDigest).toBe(release.releaseDigest);
-      expect(decoded.value.artifactDigest).toBe(release.artifactDigest);
-    }
-  });
+interface MutableInMemoryRelease {
+  [key: string]: unknown;
+  body: Record<string, unknown>;
+  payload: {
+    [key: string]: unknown;
+    entries: Array<Record<string, unknown>>;
+  };
+}
 
-  it("changes release and artifact identities with source provenance while preserving input and payload identity", () => {
-    const fixture = productFixture();
-    const changed = must(
-      createAgentPluginRelease({
-        releaseInput: fixture.releaseInput,
-        pluginId: "alpha",
-        source: { ...SOURCE, sourceTree: "c".repeat(40) },
-        payload: fixture.alphaPayload,
-      })
-    );
-    expect(changed.artifactBody.releaseBody.releaseInputDigest).toBe(
-      fixture.alphaRelease.artifactBody.releaseBody.releaseInputDigest
-    );
-    expect(changed.artifactBody.releaseBody.payloadDigest).toBe(
-      fixture.alphaRelease.artifactBody.releaseBody.payloadDigest
-    );
-    expect(changed.releaseDigest).not.toBe(fixture.alphaRelease.releaseDigest);
-    expect(changed.artifactDigest).not.toBe(fixture.alphaRelease.artifactDigest);
-  });
-
-  it("rejects body, digest, manifest, byte, and unknown-field tampering", () => {
-    const fixture = productFixture();
-    const mutations: Array<(value: any) => void> = [
-      (value) => {
-        value.artifactBody.releaseBody.sourceCommit = "c".repeat(40);
-      },
-      (value) => {
-        value.artifactBody.releaseBody.aliases = ["changed"];
-      },
-      (value) => {
-        value.artifactBody.releaseDigest = `rd1_${"0".repeat(64)}`;
-      },
-      (value) => {
-        value.artifactBody.storageManifest[0].mode = 0o755;
-      },
-      (value) => {
-        value.artifactBody.payloadEntries[0].bytesBase64 = "eA==";
-      },
-      (value) => {
-        value.unknown = true;
-      },
-    ];
-    for (const mutate of mutations) {
-      const candidate = wire(canonicalSerializeAgentPluginRelease(fixture.alphaRelease));
-      mutate(candidate);
-      expect(verifyAgentPluginRelease(candidate).ok).toBe(false);
-    }
-  });
-
+describe("complete release-set integrity", () => {
   it("keeps nested release diagnostics inside their public schema", () => {
     const longKey = "x".repeat(5_000);
     const candidates = [
@@ -129,15 +64,15 @@ describe("release and complete-set integrity", () => {
     }
   });
 
-  it("keeps release identity digest domains distinct", () => {
+  it("keeps the remaining release identity digest domains distinct", () => {
     const fixture = productFixture();
     const domains = [
       [fixture.releaseInput.releaseInputDigest, parseReleaseInputDigest],
       [fixture.alphaPayload.payloadDigest, parsePayloadDigest],
       [fixture.alphaRelease.releaseDigest, parseReleaseDigest],
-      [fixture.alphaRelease.artifactDigest, parseArtifactDigest],
       [fixture.releaseSet.releaseSetDigest, parseReleaseSetDigest],
     ] as const;
+
     domains.forEach(([digest, parse], parserIndex) => {
       domains.forEach(([candidate], candidateIndex) => {
         expect(parse(candidate).ok, `${parserIndex}:${candidateIndex}`).toBe(
@@ -148,7 +83,7 @@ describe("release and complete-set integrity", () => {
     });
   });
 
-  it("canonicalizes full membership but rejects targeted, extra, and mixed-source construction", () => {
+  it("canonicalizes complete membership as plugin and release identities only", () => {
     const fixture = productFixture();
     const reordered = must(
       createAgentPluginReleaseSet({
@@ -156,9 +91,16 @@ describe("release and complete-set integrity", () => {
         releases: [fixture.alphaRelease, fixture.betaRelease],
       })
     );
-    expect(reordered.releaseSetDigest).toBe(fixture.releaseSet.releaseSetDigest);
-    expect(reordered.body.members.map((entry) => entry.pluginId)).toEqual(["alpha", "beta"]);
 
+    expect(reordered.releaseSetDigest).toBe(fixture.releaseSet.releaseSetDigest);
+    expect(reordered.body.members).toEqual([
+      { pluginId: "alpha", releaseDigest: fixture.alphaRelease.releaseDigest },
+      { pluginId: "beta", releaseDigest: fixture.betaRelease.releaseDigest },
+    ]);
+  });
+
+  it("rejects targeted, extra, and mixed-source construction", () => {
+    const fixture = productFixture();
     const targeted = createAgentPluginReleaseSet({
       releaseInput: fixture.releaseInput,
       releases: [fixture.alphaRelease],
@@ -207,18 +149,11 @@ describe("release and complete-set integrity", () => {
       expect(mixed.issues.map((entry) => entry.code)).toContain("SOURCE_IDENTITY_MISMATCH");
   });
 
-  it("rejects a self-consistent release whose derived fields disagree with its release input", () => {
+  it("rejects a self-consistent release whose body disagrees with its release input", () => {
     const fixture = productFixture();
     const forged = wire(canonicalSerializeAgentPluginRelease(fixture.alphaRelease));
-    forged.artifactBody.releaseBody.aliases = ["rogue"];
-    const rd = releaseDigest(
-      canonicalSerializeAgentPluginReleaseBody(forged.artifactBody.releaseBody)
-    );
-    forged.releaseDigest = rd;
-    forged.artifactBody.releaseDigest = rd;
-    forged.artifactDigest = artifactDigest(
-      canonicalSerializeAgentPluginArtifactBody(forged.artifactBody)
-    );
+    forged.body.aliases = ["rogue"];
+    forged.releaseDigest = releaseDigest(canonicalSerializeAgentPluginReleaseBody(forged.body));
     expect(verifyAgentPluginRelease(forged).ok).toBe(true);
 
     const result = createAgentPluginReleaseSet({
@@ -230,7 +165,47 @@ describe("release and complete-set integrity", () => {
       expect(result.issues.map((entry) => entry.code)).toContain("RELEASE_INPUT_IDENTITY_MISMATCH");
   });
 
-  it("verifies the exact ordered complete release set without partial fallback", () => {
+  it("rejects unknown fields before projecting in-memory release-set inputs", () => {
+    const fixture = productFixture();
+    const releaseInputOuter = structuredClone(fixture.releaseInput) as MutableReleaseInput;
+    releaseInputOuter.unknown = true;
+    const releaseInputBody = structuredClone(fixture.releaseInput) as MutableReleaseInput;
+    releaseInputBody.body.unknown = true;
+
+    for (const releaseInput of [releaseInputOuter, releaseInputBody]) {
+      const result = createAgentPluginReleaseSet({
+        releaseInput,
+        releases: [fixture.alphaRelease, fixture.betaRelease],
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.issues.map((issue) => issue.code)).toContain("UNKNOWN_FIELD");
+    }
+
+    const taintedReleases = [
+      withUnknownReleaseField(fixture.alphaRelease, "outer"),
+      withUnknownReleaseField(fixture.alphaRelease, "body"),
+      withUnknownReleaseField(fixture.alphaRelease, "payload"),
+      withUnknownReleaseField(fixture.alphaRelease, "payload-entry"),
+    ];
+    for (const candidate of taintedReleases) {
+      const created = createAgentPluginReleaseSet({
+        releaseInput: fixture.releaseInput,
+        releases: [candidate, fixture.betaRelease],
+      });
+      expect(created.ok).toBe(false);
+      if (!created.ok) expect(created.issues.map((issue) => issue.code)).toContain("UNKNOWN_FIELD");
+
+      const verified = verifyCompleteReleaseSet(fixture.releaseSet, [
+        candidate,
+        fixture.betaRelease,
+      ]);
+      expect(verified.ok).toBe(false);
+      if (!verified.ok)
+        expect(verified.issues.map((issue) => issue.code)).toContain("UNKNOWN_FIELD");
+    }
+  });
+
+  it("verifies exact ordered membership and payload binding without partial fallback", () => {
     const fixture = productFixture();
     const ordered = [fixture.alphaRelease, fixture.betaRelease];
     expect(verifyCompleteReleaseSet(fixture.releaseSet, ordered).ok).toBe(true);
@@ -246,8 +221,22 @@ describe("release and complete-set integrity", () => {
       expect(reordered.issues.map((entry) => entry.code)).toContain("RELEASE_SET_DIGEST_MISMATCH");
 
     const tampered = wire(canonicalSerializeAgentPluginRelease(fixture.betaRelease));
-    tampered.artifactBody.payloadEntries[0].bytesBase64 = "eA==";
+    tampered.payload.entries[0].bytesBase64 = "eA==";
     expect(verifyCompleteReleaseSet(fixture.releaseSet, [fixture.alphaRelease, tampered]).ok).toBe(
+      false
+    );
+  });
+
+  it("binds each set member to the exact release digest", () => {
+    const fixture = productFixture();
+    const forged = wire(canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet));
+    forged.body.members[0].releaseDigest = `rd1_${"0".repeat(64)}`;
+    forged.releaseSetDigest = releaseSetDigest(
+      canonicalSerializeAgentPluginReleaseSetBody(forged.body)
+    );
+
+    expect(verifyAgentPluginReleaseSet(forged).ok).toBe(true);
+    expect(verifyCompleteReleaseSet(forged, [fixture.alphaRelease, fixture.betaRelease]).ok).toBe(
       false
     );
   });
@@ -295,31 +284,36 @@ describe("release and complete-set integrity", () => {
     expect(decodeAgentPluginReleaseSet(noncanonicalBytes).ok).toBe(false);
   });
 
-  it("returns closed failures rather than throwing for malformed public inputs", () => {
+  it("returns closed failures rather than throwing for malformed set inputs", () => {
     const calls = [
-      () => createAgentPluginPayload({}),
-      () => verifyAgentPluginPayload({}),
-      () => createAgentPluginReleaseInput({}),
-      () => verifyAgentPluginReleaseInput({}),
-      () => decodeAgentPluginReleaseInput({}),
-      () =>
-        createAgentPluginRelease({ releaseInput: {}, pluginId: "alpha", source: {}, payload: {} }),
-      () =>
-        verifyAgentPluginRelease({
-          artifactBody: {},
-          artifactDigest: "",
-          releaseDigest: "",
-          schemaVersion: 1,
-        }),
-      () => decodeAgentPluginRelease({}),
       () => createAgentPluginReleaseSet({ releaseInput: {}, releases: [] }),
       () => verifyAgentPluginReleaseSet({ body: {}, releaseSetDigest: "", schemaVersion: 1 }),
       () => decodeAgentPluginReleaseSet({}),
       () => verifyCompleteReleaseSet({}, {}),
     ];
+
     for (const call of calls) {
       expect(call).not.toThrow();
       expect(call().ok).toBe(false);
     }
   });
 });
+
+function withUnknownReleaseField(
+  release: ReturnType<typeof productFixture>["alphaRelease"],
+  level: "outer" | "body" | "payload" | "payload-entry"
+): MutableInMemoryRelease {
+  const candidate: MutableInMemoryRelease = {
+    ...release,
+    body: { ...release.body },
+    payload: {
+      ...release.payload,
+      entries: release.payload.entries.map((entry) => ({ ...entry })),
+    },
+  };
+  if (level === "outer") candidate.unknown = true;
+  if (level === "body") candidate.body.unknown = true;
+  if (level === "payload") candidate.payload.unknown = true;
+  if (level === "payload-entry") candidate.payload.entries[0].unknown = true;
+  return candidate;
+}
