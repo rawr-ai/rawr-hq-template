@@ -985,6 +985,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   move owner-local tests; and delete `shared/release/ownership.ts` without a
   barrel, alias, facade, parser redesign, primitive or digest move, resource,
   provider, runtime, router, oRPC, or public-contract change.
+- [x] 5.7e2z Give raw-value admission and release-result elimination their
+  direct root-model policy owners. Keep TypeBox as aggregate structural
+  authority while preserving established field diagnostics, bounded traversal,
+  canonical string and safe-integer admission, successful value identity, and
+  failed diagnostic identity and order. Rewire exact consumers and delete
+  `shared/release/parse.ts` without a barrel, alias, facade, compatibility
+  path, schema, primitive, digest, resource, provider, runtime, router, oRPC,
+  or public-contract change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

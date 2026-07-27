@@ -23,8 +23,11 @@
   diagnostics only where those meanings span capability modules. Its TypeBox
   DTOs define diagnostic structure; its policy bounds construction and
   canonical ordering. Its generic release-result DTO and policy own only the
-  internal computation discriminant, construction, and nonempty narrowing;
-  concrete caller-facing result schemas remain with their operation modules.
+  internal computation discriminant, construction, nonempty narrowing, and
+  identity-preserving elimination; concrete caller-facing result schemas
+  remain with their operation modules. Raw-value admission policy owns only
+  bounded traversal and established granular diagnostics before TypeBox
+  aggregate checks; it is not a second schema or parser framework.
   Its canonical JSON DTO constrains pure serializer input; separate JSON and
   Base64 policy leaves own established encoding, while one byte-equality
   mechanic supports canonical record checks. Concrete record TypeBox schemas

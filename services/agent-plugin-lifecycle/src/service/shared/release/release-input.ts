@@ -23,8 +23,17 @@ import {
 import { parsePayloadManifest, payloadManifestValue } from "../../model/policy/payload-manifest";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
-import { asNonEmpty, failure, success } from "../../model/policy/release-result";
-import { collect, isExactRecord, parseBoundedArray, parseCanonicalString } from "./parse";
+import {
+  asNonEmpty,
+  collectReleaseResult,
+  failure,
+  success,
+} from "../../model/policy/release-result";
+import {
+  admitClosedRecordForTraversal,
+  parseBoundedArray,
+  parseCanonicalString,
+} from "../../model/policy/release-value-admission";
 import {
   BUILDER_PROTOCOL_VERSION,
   type BuilderProtocolVersion,
@@ -203,7 +212,12 @@ export function verifyAgentPluginReleaseInput(
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   if (
-    !isExactRecord(input, ["body", "releaseInputDigest", "schemaVersion"], "releaseInput", issues)
+    !admitClosedRecordForTraversal(
+      input,
+      ["body", "releaseInputDigest", "schemaVersion"],
+      "releaseInput",
+      issues
+    )
   ) {
     return failure([
       issues[0] ??
@@ -226,7 +240,7 @@ export function verifyAgentPluginReleaseInput(
       )
     );
   }
-  const claimedDigest = collect(
+  const claimedDigest = collectReleaseResult(
     parseReleaseInputDigest(input.releaseInputDigest, "releaseInput.releaseInputDigest"),
     issues
   );
@@ -355,10 +369,15 @@ export function parseCompletenessWitness(
   issues: ReleaseIssue[]
 ): CompletenessWitness | undefined {
   if (
-    !isExactRecord(input, ["expectedMembers", "ownershipIndex", "releaseInputDigest"], path, issues)
+    !admitClosedRecordForTraversal(
+      input,
+      ["expectedMembers", "ownershipIndex", "releaseInputDigest"],
+      path,
+      issues
+    )
   )
     return undefined;
-  const digest = collect(
+  const digest = collectReleaseResult(
     parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`),
     issues
   );
@@ -376,9 +395,15 @@ export function parseCompletenessWitness(
   const expectedMembers: ExpectedReleaseMember[] = [];
   rawMembers?.forEach((candidate, index) => {
     const memberPath = `${path}.expectedMembers[${index}]`;
-    if (!isExactRecord(candidate, ["payloadDigest", "pluginId"], memberPath, issues)) return;
-    const pluginId = collect(parsePluginId(candidate.pluginId, `${memberPath}.pluginId`), issues);
-    const payload = collect(
+    if (
+      !admitClosedRecordForTraversal(candidate, ["payloadDigest", "pluginId"], memberPath, issues)
+    )
+      return;
+    const pluginId = collectReleaseResult(
+      parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
+      issues
+    );
+    const payload = collectReleaseResult(
       parsePayloadDigest(candidate.payloadDigest, `${memberPath}.payloadDigest`),
       issues
     );
@@ -428,7 +453,7 @@ function parseReleaseInputBody(
 > {
   const issues: ReleaseIssue[] = [];
   if (
-    !isExactRecord(
+    !admitClosedRecordForTraversal(
       input,
       [
         "contentAuthority",
@@ -462,7 +487,7 @@ function parseReleaseInputBody(
       )
     );
   }
-  const contentAuthority = collect(
+  const contentAuthority = collectReleaseResult(
     parseContentAuthority(input.contentAuthority, `${path}.contentAuthority`),
     issues
   );
@@ -564,7 +589,7 @@ function parseMembers(
   values.forEach((candidate, index) => {
     const memberPath = `${path}[${index}]`;
     if (
-      !isExactRecord(
+      !admitClosedRecordForTraversal(
         candidate,
         ["curation", "kind", "payload", "pluginId", "skillInventory", "vendor"],
         memberPath,
@@ -573,7 +598,10 @@ function parseMembers(
     )
       return;
     const kind = parseUnitKind(candidate.kind, `${memberPath}.kind`, issues);
-    const pluginId = collect(parsePluginId(candidate.pluginId, `${memberPath}.pluginId`), issues);
+    const pluginId = collectReleaseResult(
+      parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
+      issues
+    );
     const skillInventory = parseSkillInventory(
       candidate.skillInventory,
       `${memberPath}.skillInventory`,
@@ -651,12 +679,13 @@ function parseSkillInventory(
   budget.remaining -= admitted.length;
   admitted.forEach((candidate, index) => {
     const entryPath = `${path}[${index}]`;
-    if (!isExactRecord(candidate, ["identity", "manifestPath"], entryPath, issues)) return;
-    const identity = collect(
+    if (!admitClosedRecordForTraversal(candidate, ["identity", "manifestPath"], entryPath, issues))
+      return;
+    const identity = collectReleaseResult(
       parseOwnershipIdentity(candidate.identity, `${entryPath}.identity`),
       issues
     );
-    const manifestPath = collect(
+    const manifestPath = collectReleaseResult(
       parseReleaseRelativePath(candidate.manifestPath, `${entryPath}.manifestPath`),
       issues
     );
@@ -837,7 +866,14 @@ function parseDeclaredPayload(
   path: string,
   issues: ReleaseIssue[]
 ): DeclaredPayload | undefined {
-  if (!isExactRecord(input, ["manifest", "payloadDigest", "protocolVersion"], path, issues))
+  if (
+    !admitClosedRecordForTraversal(
+      input,
+      ["manifest", "payloadDigest", "protocolVersion"],
+      path,
+      issues
+    )
+  )
     return undefined;
   if (input.protocolVersion !== PAYLOAD_PROTOCOL_VERSION) {
     issues.push(
@@ -856,7 +892,10 @@ function parseDeclaredPayload(
     );
   }
   const manifest = parsePayloadManifest(input.manifest, `${path}.manifest`, issues);
-  const digest = collect(parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`), issues);
+  const digest = collectReleaseResult(
+    parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`),
+    issues
+  );
   const totalBytes = manifest?.reduce((total, entry) => total + entry.byteLength, 0) ?? 0;
   if (totalBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
     issues.push(
@@ -894,13 +933,24 @@ export function parseProvenanceBindings(
   const bindings: ProvenanceBinding[] = [];
   values.forEach((candidate, index) => {
     const bindingPath = `${path}[${index}]`;
-    if (!isExactRecord(candidate, ["contentDigest", "id", "protocol"], bindingPath, issues)) return;
-    const id = collect(parseOwnershipIdentity(candidate.id, `${bindingPath}.id`), issues);
+    if (
+      !admitClosedRecordForTraversal(
+        candidate,
+        ["contentDigest", "id", "protocol"],
+        bindingPath,
+        issues
+      )
+    )
+      return;
+    const id = collectReleaseResult(
+      parseOwnershipIdentity(candidate.id, `${bindingPath}.id`),
+      issues
+    );
     const protocol = parseCanonicalString(candidate.protocol, `${bindingPath}.protocol`, issues, {
       maxBytes: MAX_CANONICAL_ID_BYTES,
       pattern: /^[a-z0-9][a-z0-9._:@/-]*$/u,
     });
-    const digest = collect(
+    const digest = collectReleaseResult(
       parseContentDigest(candidate.contentDigest, `${bindingPath}.contentDigest`),
       issues
     );

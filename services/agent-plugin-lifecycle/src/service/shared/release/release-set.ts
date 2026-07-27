@@ -16,9 +16,16 @@ import {
   releaseIssue,
   sortReleaseIssues,
 } from "../../model/policy/release-issue";
-import { asNonEmpty, failure, success } from "../../model/policy/release-result";
-
-import { collect, isExactRecord, parseBoundedArray } from "./parse";
+import {
+  asNonEmpty,
+  collectReleaseResult,
+  failure,
+  success,
+} from "../../model/policy/release-result";
+import {
+  admitClosedRecordForTraversal,
+  parseBoundedArray,
+} from "../../model/policy/release-value-admission";
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   type AgentPluginReleaseSetSchemaVersion,
@@ -98,7 +105,7 @@ export function createAgentPluginReleaseSet(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (!isExactRecord(input, ["releaseInput", "releases"], "releaseSet", issues)) {
+  if (!admitClosedRecordForTraversal(input, ["releaseInput", "releases"], "releaseSet", issues)) {
     return failure([
       issues[0] ??
         releaseIssue(
@@ -207,7 +214,14 @@ export function verifyAgentPluginReleaseSet(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (!isExactRecord(input, ["body", "releaseSetDigest", "schemaVersion"], "releaseSet", issues)) {
+  if (
+    !admitClosedRecordForTraversal(
+      input,
+      ["body", "releaseSetDigest", "schemaVersion"],
+      "releaseSet",
+      issues
+    )
+  ) {
     return failure([
       issues[0] ??
         releaseIssue("EXPECTED_OBJECT", "releaseSet", "Release-set envelope must be an object"),
@@ -229,7 +243,7 @@ export function verifyAgentPluginReleaseSet(
       )
     );
   }
-  const claimedDigest = collect(
+  const claimedDigest = collectReleaseResult(
     parseReleaseSetDigest(input.releaseSetDigest, "releaseSet.releaseSetDigest"),
     issues
   );
@@ -382,7 +396,7 @@ function parseReleaseSetBody(
   issues: ReleaseIssue[]
 ): AgentPluginReleaseSetBody | undefined {
   if (
-    !isExactRecord(
+    !admitClosedRecordForTraversal(
       input,
       [
         "builderProtocolVersion",
@@ -433,17 +447,20 @@ function parseReleaseSetBody(
       )
     );
   }
-  const authority = collect(
+  const authority = collectReleaseResult(
     parseContentAuthority(input.contentAuthority, `${path}.contentAuthority`),
     issues
   );
-  const repository = collect(
+  const repository = collectReleaseResult(
     parseRepositoryIdentity(input.sourceRepository, `${path}.sourceRepository`),
     issues
   );
-  const commit = collect(parseGitCommitId(input.sourceCommit, `${path}.sourceCommit`), issues);
-  const tree = collect(parseGitTreeId(input.sourceTree, `${path}.sourceTree`), issues);
-  const inputDigest = collect(
+  const commit = collectReleaseResult(
+    parseGitCommitId(input.sourceCommit, `${path}.sourceCommit`),
+    issues
+  );
+  const tree = collectReleaseResult(parseGitTreeId(input.sourceTree, `${path}.sourceTree`), issues);
+  const inputDigest = collectReleaseResult(
     parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`),
     issues
   );
@@ -532,15 +549,23 @@ function parseSetMembers(
   values.forEach((candidate, index) => {
     const memberPath = `${path}[${index}]`;
     if (
-      !isExactRecord(candidate, ["artifactDigest", "pluginId", "releaseDigest"], memberPath, issues)
+      !admitClosedRecordForTraversal(
+        candidate,
+        ["artifactDigest", "pluginId", "releaseDigest"],
+        memberPath,
+        issues
+      )
     )
       return;
-    const pluginId = collect(parsePluginId(candidate.pluginId, `${memberPath}.pluginId`), issues);
-    const rd = collect(
+    const pluginId = collectReleaseResult(
+      parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
+      issues
+    );
+    const rd = collectReleaseResult(
       parseReleaseDigest(candidate.releaseDigest, `${memberPath}.releaseDigest`),
       issues
     );
-    const ad = collect(
+    const ad = collectReleaseResult(
       parseArtifactDigest(candidate.artifactDigest, `${memberPath}.artifactDigest`),
       issues
     );

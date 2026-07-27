@@ -1,10 +1,4 @@
 import {
-  collect,
-  isExactRecord,
-  parseBoundedArray,
-  parseInteger,
-} from "../../shared/release/parse";
-import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   parseContentDigest,
@@ -17,6 +11,12 @@ import type { CanonicalJsonValue } from "../dto/canonical-json";
 import type { ReleaseIssue } from "../dto/release-issue";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { releaseIssue } from "./release-issue";
+import { collectReleaseResult } from "./release-result";
+import {
+  admitClosedRecordForTraversal,
+  parseBoundedArray,
+  parseInteger,
+} from "./release-value-admission";
 
 /**
  * Parses, canonically orders, freezes, and diagnoses one untrusted payload
@@ -33,16 +33,24 @@ export function parsePayloadManifest(
   values.forEach((candidate, index) => {
     const entryPath = `${path}[${index}]`;
     if (
-      !isExactRecord(candidate, ["byteLength", "contentDigest", "mode", "path"], entryPath, issues)
+      !admitClosedRecordForTraversal(
+        candidate,
+        ["byteLength", "contentDigest", "mode", "path"],
+        entryPath,
+        issues
+      )
     )
       return;
-    const relativePath = collect(
+    const relativePath = collectReleaseResult(
       parseReleaseRelativePath(candidate.path, `${entryPath}.path`),
       issues
     );
-    const mode = collect(parseNormalizedFileMode(candidate.mode, `${entryPath}.mode`), issues);
+    const mode = collectReleaseResult(
+      parseNormalizedFileMode(candidate.mode, `${entryPath}.mode`),
+      issues
+    );
     const byteLength = parseInteger(candidate.byteLength, `${entryPath}.byteLength`, issues);
-    const digest = collect(
+    const digest = collectReleaseResult(
       parseContentDigest(candidate.contentDigest, `${entryPath}.contentDigest`),
       issues
     );

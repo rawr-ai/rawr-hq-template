@@ -2074,6 +2074,29 @@ Primitive identity, parsing, and digest mechanics remain separate. No resource,
 provider, runtime, router, oRPC surface, Personal repository, native command,
 or live lifecycle state changed.
 
+The raw-value-admission checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2z]]. Raw JavaScript
+value defects and traversal bounds now map to the established release
+diagnostic vocabulary in one direct service-root policy leaf, while TypeBox
+remains aggregate structural authority. Identity-preserving release-result
+elimination now lives beside result construction and nonempty narrowing.
+Payload, manifest, ownership, release-input, release, and release-set policy
+import the exact owners directly; `shared/release/parse.ts` is deleted without
+a compatibility face.
+
+Owner-local tests preserve unknown-then-missing diagnostic order, bounded
+prefix admission, exact over-limit facts, canonical UTF-8 and NFC handling,
+safe-integer admission, successful value identity, and failed diagnostic
+identity and order. The focused owner corpus passes eight cases across two
+files, and the complete lifecycle suite passes 323 cases across 37 files.
+Production and test TypeScript checks, targeted Biome, diff hygiene, and
+standing architecture, behavior-first testing, and TypeScript/structural
+reviews pass without an unresolved P0, P1, P2, or P3 finding. No TypeBox
+schema, primitive, digest, resource, provider, runtime, router, oRPC surface,
+Personal repository, native command, or live lifecycle state changed.
+The required repository check passed 39 projects and 76 dependency tasks in
+35.3 seconds, including all 17 enforced Habitat laws with zero findings.
+
 ## Settlement Oracles
 
 The final product must prove:

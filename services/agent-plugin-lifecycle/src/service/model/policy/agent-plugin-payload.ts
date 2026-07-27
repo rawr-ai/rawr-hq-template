@@ -1,4 +1,3 @@
-import { collect, isExactRecord, parseBoundedArray } from "../../shared/release/parse";
 import {
   contentDigest,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -27,7 +26,8 @@ import {
   samePayloadManifest,
 } from "./payload-manifest";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
-import { asNonEmpty, failure, success } from "./release-result";
+import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
+import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
 /**
  * Owns caller-supplied payload bytes, derives canonical entries and identity,
@@ -48,9 +48,15 @@ export function createAgentPluginPayload(
 
   rawEntries?.forEach((candidate, index) => {
     const path = `payload.entries[${index}]`;
-    if (!isExactRecord(candidate, ["bytes", "mode", "path"], path, issues)) return;
-    const parsedPath = collect(parseReleaseRelativePath(candidate.path, `${path}.path`), issues);
-    const mode = collect(parseNormalizedFileMode(candidate.mode, `${path}.mode`), issues);
+    if (!admitClosedRecordForTraversal(candidate, ["bytes", "mode", "path"], path, issues)) return;
+    const parsedPath = collectReleaseResult(
+      parseReleaseRelativePath(candidate.path, `${path}.path`),
+      issues
+    );
+    const mode = collectReleaseResult(
+      parseNormalizedFileMode(candidate.mode, `${path}.mode`),
+      issues
+    );
     if (!(candidate.bytes instanceof Uint8Array)) {
       issues.push(
         releaseIssue("EXPECTED_BYTES", `${path}.bytes`, "Payload bytes must be a Uint8Array")
@@ -84,7 +90,12 @@ export function verifyAgentPluginPayload(
 ): ReleaseResult<AgentPluginPayload, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   if (
-    !isExactRecord(input, ["entries", "manifest", "payloadDigest", "protocolVersion"], path, issues)
+    !admitClosedRecordForTraversal(
+      input,
+      ["entries", "manifest", "payloadDigest", "protocolVersion"],
+      path,
+      issues
+    )
   ) {
     return failure([
       issues[0] ?? releaseIssue("EXPECTED_OBJECT", path, "Payload must be an object"),
@@ -108,7 +119,7 @@ export function verifyAgentPluginPayload(
   }
   const entries = parseWireEntries(input.entries, `${path}.entries`, issues);
   const manifest = parsePayloadManifest(input.manifest, `${path}.manifest`, issues);
-  const claimedDigest = collect(
+  const claimedDigest = collectReleaseResult(
     parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`),
     issues
   );
@@ -184,13 +195,22 @@ function parseWireEntries(
   const entries: PayloadEntry[] = [];
   values.forEach((candidate, index) => {
     const entryPath = `${path}[${index}]`;
-    if (!isExactRecord(candidate, ["bytesBase64", "mode", "path"], entryPath, issues)) return;
-    const relativePath = collect(
+    if (
+      !admitClosedRecordForTraversal(candidate, ["bytesBase64", "mode", "path"], entryPath, issues)
+    )
+      return;
+    const relativePath = collectReleaseResult(
       parseReleaseRelativePath(candidate.path, `${entryPath}.path`),
       issues
     );
-    const mode = collect(parseNormalizedFileMode(candidate.mode, `${entryPath}.mode`), issues);
-    const bytes = collect(decodeBase64(candidate.bytesBase64, `${entryPath}.bytesBase64`), issues);
+    const mode = collectReleaseResult(
+      parseNormalizedFileMode(candidate.mode, `${entryPath}.mode`),
+      issues
+    );
+    const bytes = collectReleaseResult(
+      decodeBase64(candidate.bytesBase64, `${entryPath}.bytesBase64`),
+      issues
+    );
     if (relativePath !== undefined && mode !== undefined && bytes !== undefined) {
       entries.push(
         Object.freeze({

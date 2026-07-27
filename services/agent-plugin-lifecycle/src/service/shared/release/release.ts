@@ -18,9 +18,16 @@ import {
   samePayloadManifest,
 } from "../../model/policy/payload-manifest";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
-import { asNonEmpty, failure, success } from "../../model/policy/release-result";
-
-import { collect, isExactRecord, parseBoundedArray } from "./parse";
+import {
+  asNonEmpty,
+  collectReleaseResult,
+  failure,
+  success,
+} from "../../model/policy/release-result";
+import {
+  admitClosedRecordForTraversal,
+  parseBoundedArray,
+} from "../../model/policy/release-value-admission";
 import {
   AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
   type AgentPluginReleaseSchemaVersion,
@@ -110,7 +117,14 @@ export function createAgentPluginRelease(
   input: unknown
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (!isExactRecord(input, ["payload", "pluginId", "releaseInput", "source"], "release", issues)) {
+  if (
+    !admitClosedRecordForTraversal(
+      input,
+      ["payload", "pluginId", "releaseInput", "source"],
+      "release",
+      issues
+    )
+  ) {
     return failure([
       issues[0] ??
         releaseIssue("EXPECTED_OBJECT", "release", "Release construction input must be an object"),
@@ -118,7 +132,7 @@ export function createAgentPluginRelease(
   }
 
   const verifiedInput = verifyEmbeddedReleaseInput(input.releaseInput, issues);
-  const pluginId = collect(parsePluginId(input.pluginId, "release.pluginId"), issues);
+  const pluginId = collectReleaseResult(parsePluginId(input.pluginId, "release.pluginId"), issues);
   const source = parseReleaseSourceIdentity(input.source, "release.source", issues);
   const payload = verifyEmbeddedPayload(input.payload, issues);
 
@@ -224,7 +238,7 @@ export function verifyAgentPluginRelease(
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   if (
-    !isExactRecord(
+    !admitClosedRecordForTraversal(
       input,
       ["artifactBody", "artifactDigest", "releaseDigest", "schemaVersion"],
       "release",
@@ -251,11 +265,11 @@ export function verifyAgentPluginRelease(
       )
     );
   }
-  const claimedReleaseDigest = collect(
+  const claimedReleaseDigest = collectReleaseResult(
     parseReleaseDigest(input.releaseDigest, "release.releaseDigest"),
     issues
   );
-  const claimedArtifactDigest = collect(
+  const claimedArtifactDigest = collectReleaseResult(
     parseArtifactDigest(input.artifactDigest, "release.artifactDigest"),
     issues
   );
@@ -426,7 +440,7 @@ function parseArtifactBody(
   issues: ReleaseIssue[]
 ): AgentPluginArtifactBody | undefined {
   if (
-    !isExactRecord(
+    !admitClosedRecordForTraversal(
       input,
       ["payloadEntries", "protocolVersion", "releaseBody", "releaseDigest", "storageManifest"],
       path,
@@ -451,7 +465,7 @@ function parseArtifactBody(
     );
   }
   const body = parseReleaseBody(input.releaseBody, `${path}.releaseBody`, issues);
-  const boundDigest = collect(
+  const boundDigest = collectReleaseResult(
     parseReleaseDigest(input.releaseDigest, `${path}.releaseDigest`),
     issues
   );
@@ -511,7 +525,7 @@ function parseReleaseBody(
   issues: ReleaseIssue[]
 ): AgentPluginReleaseBody | undefined {
   if (
-    !isExactRecord(
+    !admitClosedRecordForTraversal(
       input,
       [
         "aliases",
@@ -565,19 +579,22 @@ function parseReleaseBody(
       )
     );
   }
-  const contentAuthority = collect(
+  const contentAuthority = collectReleaseResult(
     parseContentAuthority(input.contentAuthority, `${path}.contentAuthority`),
     issues
   );
   const source = parseReleaseSourceFields(input, path, issues);
-  const inputDigest = collect(
+  const inputDigest = collectReleaseResult(
     parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`),
     issues
   );
-  const pluginId = collect(parsePluginId(input.pluginId, `${path}.pluginId`), issues);
+  const pluginId = collectReleaseResult(parsePluginId(input.pluginId, `${path}.pluginId`), issues);
   const aliases = parseAliases(input.aliases, `${path}.aliases`, issues);
   const manifest = parsePayloadManifest(input.payloadManifest, `${path}.payloadManifest`, issues);
-  const digest = collect(parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`), issues);
+  const digest = collectReleaseResult(
+    parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`),
+    issues
+  );
   const vendor = parseProvenanceBindings(input.vendor, `${path}.vendor`, issues);
   const curation = parseProvenanceBindings(input.curation, `${path}.curation`, issues);
   if (
@@ -614,7 +631,14 @@ function parseReleaseSourceIdentity(
   path: string,
   issues: ReleaseIssue[]
 ): ReleaseSourceIdentity | undefined {
-  if (!isExactRecord(input, ["sourceCommit", "sourceRepository", "sourceTree"], path, issues))
+  if (
+    !admitClosedRecordForTraversal(
+      input,
+      ["sourceCommit", "sourceRepository", "sourceTree"],
+      path,
+      issues
+    )
+  )
     return undefined;
   return parseReleaseSourceFields(input, path, issues);
 }
@@ -624,12 +648,15 @@ function parseReleaseSourceFields(
   path: string,
   issues: ReleaseIssue[]
 ): ReleaseSourceIdentity | undefined {
-  const repository = collect(
+  const repository = collectReleaseResult(
     parseRepositoryIdentity(input.sourceRepository, `${path}.sourceRepository`),
     issues
   );
-  const commit = collect(parseGitCommitId(input.sourceCommit, `${path}.sourceCommit`), issues);
-  const tree = collect(parseGitTreeId(input.sourceTree, `${path}.sourceTree`), issues);
+  const commit = collectReleaseResult(
+    parseGitCommitId(input.sourceCommit, `${path}.sourceCommit`),
+    issues
+  );
+  const tree = collectReleaseResult(parseGitTreeId(input.sourceTree, `${path}.sourceTree`), issues);
   if (repository === undefined || commit === undefined || tree === undefined) return undefined;
   return Object.freeze({ sourceRepository: repository, sourceCommit: commit, sourceTree: tree });
 }
@@ -643,7 +670,10 @@ function parseAliases(
   if (values === undefined) return undefined;
   const aliases: OwnershipIdentity[] = [];
   values.forEach((candidate, index) => {
-    const alias = collect(parseOwnershipIdentity(candidate, `${path}[${index}]`), issues);
+    const alias = collectReleaseResult(
+      parseOwnershipIdentity(candidate, `${path}[${index}]`),
+      issues
+    );
     if (alias !== undefined) aliases.push(alias);
   });
   aliases.sort(compareCanonicalText);
