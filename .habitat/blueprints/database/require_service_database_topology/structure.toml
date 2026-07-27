@@ -32,10 +32,11 @@ mode = "closed"
 allowEmpty = true
 required = [
   "migrations",
-  "schema",
   "stores",
 ]
-allowed = []
+allowed = [
+  "schema",
+]
 
 [[scopes]]
 name = "standalone-service-database-migrations"

@@ -331,7 +331,7 @@ landing completed through Template PR #607 on canonical `main` at
 
 ### Example Todo Context Lanes
 
-The active bounded checkpoint is
+The preceding bounded checkpoint was
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e14]]. Example Todo
 remains the canonical worked construction and invocation reference. `Deps` carries stable
 host capabilities, `Scope` carries stable binding identity, and `Config`
@@ -362,8 +362,41 @@ in 12.6 seconds, including their required build dependencies. Strict OpenSpec,
 link-target validation, and diff hygiene pass. Standing Habitat/architecture
 and oRPC/TypeScript reviews report no unresolved P0, P1, P2, or P3 finding.
 Only the Habitat service frame, Example Todo and HQ SDK context routers, active
-OpenSpec record, and rolling mental model change. Graphite landing remains
-open.
+OpenSpec record, and rolling mental model change. PR #608 landed this checkpoint
+on canonical `main` at merge commit
+`1c1ebbf195fccb45befac35498bcbfaf1b17246d`.
+
+### Schema-Optional Service Database
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e15]]. A standalone
+service database still has one positively closed service-root interior. When
+that interior exists, owner-issued SQL migrations and named store
+implementations are required. A separately closed physical-schema directory is
+optional because TypeBox already owns logical record structure and only some
+database technologies require another physical mapping.
+
+The topology therefore admits exactly `migrations/*.sql` and
+`stores/*.store.ts`, plus optional `schema/*.schema.ts`. It continues to reject
+module databases, embedded API databases, generated clients, memory
+substitutes, repositories, sessions, helpers, indexes, providers, and alternate
+source shapes. The existing import-funnel law, Habitat runner, Nx scheduling,
+and source-law batch do not change. No Example Todo source, runtime, SDK,
+resource, provider, package, application, or service import relationship enters
+this checkpoint.
+
+The focused Habitat service-blueprint suite passes all 21 tests in 9.25
+seconds. It proves both admitted shapes and injects red fixtures for missing
+migrations, missing stores, a malformed optional schema leaf, noncanonical
+database interiors, and forbidden module/API placement. The targeted live
+`require_service_database_topology` and
+`require_service_database_import_funnel` rules pass with zero findings in 561
+and 3,133 milliseconds respectively. Strict OpenSpec, touched Biome, and diff
+hygiene pass. Standing Habitat/architecture and structural/testing reviews
+report no unresolved P0, P1, P2, or P3 finding. No source or import-funnel rule
+changes, red-corpus suppressions, compatibility shapes, new scripts, runners,
+runtime code, or generated artifacts enter the checkpoint. Graphite landing
+remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
