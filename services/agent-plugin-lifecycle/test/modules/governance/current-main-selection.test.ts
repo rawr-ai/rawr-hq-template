@@ -13,6 +13,7 @@ import {
   type CanonicalChannelSelection,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../../../src/service/model/dto/current-main-selection";
+import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import {
   type AgentPluginReleaseInput,
@@ -24,7 +25,6 @@ import {
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
-  type ReleaseResult,
 } from "../../../src/service/shared/release";
 import {
   createLifecycleTestClient,

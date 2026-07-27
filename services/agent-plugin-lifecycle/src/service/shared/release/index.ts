@@ -121,4 +121,3 @@ export {
   verifyAgentPluginReleaseSet,
   verifyCompleteReleaseSet,
 } from "./release-set";
-export type { NonEmptyReadonlyArray, ReleaseResult } from "./result";

@@ -18,6 +18,7 @@ import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import type { Client } from "../../../src/client";
+import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import {
   VendorStatusResultSchema,
   VendorUpdateResultSchema,
@@ -44,7 +45,6 @@ import {
   contentDigest,
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
-  type ReleaseResult,
 } from "../../../src/service/shared/release";
 import {
   createLifecycleTestClient,

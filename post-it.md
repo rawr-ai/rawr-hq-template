@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Internal Results Are Not Transport Contracts
+
+The generic release result is an internal computational algebra shared across
+the service. Its discriminant separates a successful value from an ordered,
+nonempty diagnostic tuple. It does not define any caller-facing operation
+result: each oRPC operation retains its concrete, bounded TypeBox contract in
+the module that owns that boundary.
+
+The DTO owns the union's structure. Policy owns construction and length
+narrowing. Those policy functions preserve the caller's value or issue
+collection by identity and do not freeze, copy, sort, or otherwise add
+semantics. Consumers import the two leaves directly. The old `shared` result
+file and barrel face disappear without an alias.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-result|the release result DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-result|the release result policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Result, branch, value, issue, tuple, DTO, policy, schema, boundary, identity,
+order, direct, delete.
+
 ## 2026-07-26 - Diagnostics Are Boundary Data
 
 A release diagnostic is structured validation data returned inside ordinary

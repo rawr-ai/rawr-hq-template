@@ -1,9 +1,11 @@
 import type { ReleaseIssue } from "../../model/dto/release-issue";
+import type { ReleaseResult } from "../../model/dto/release-result";
 import {
   prefixReleaseIssuePath,
   releaseIssue,
   sortReleaseIssues,
 } from "../../model/policy/release-issue";
+import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
 import {
   type CanonicalJsonValue,
@@ -61,7 +63,6 @@ import {
   provenanceBindingValue,
   verifyAgentPluginReleaseInput,
 } from "./release-input";
-import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
 
