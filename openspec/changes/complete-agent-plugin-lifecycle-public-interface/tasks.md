@@ -876,6 +876,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   for status and sync. Keep the existing native reconciliation functions open
   for their later operation-authorship checkpoint; do not claim the remaining
   Providers shell is sealed.
+- [x] 5.7e2m Author governed Provider channel selection directly in status and
+  sync. Pass ready content-workspace and native-provider resources downward
+  through separate named module middleware values; sequence current-main and
+  selected channel reads in the oRPC handlers; and keep only typed,
+  Effect-free classification and projection in Provider policy. Status performs
+  one complete selection. Sync defines one lazy procedure-local selection,
+  repeats it only when mutation may be required, and refuses a changed or
+  rejected second selection before mutation. Delete the selected-content
+  resolver, narrowed read port, selection router, resolver context field, and
+  their input schema without introducing a new resource, adapter, facade,
+  runner, dependency bag, or alias. Preserve exact Git bounds and ordering,
+  typed resource failure mapping, interruption and defect behavior, converged
+  fast path, current-main semantics, public Provider results, and native
+  behavior. Keep native reconciliation functions, the loose schema barrel, the
+  legacy release family, and whole-service law activation open for later
+  checkpoints.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

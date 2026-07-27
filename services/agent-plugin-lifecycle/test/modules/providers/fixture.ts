@@ -311,6 +311,7 @@ export function createProviderLifecycleClient(
   nativeProviders: NativeAgentProviderResources,
   options: Readonly<{
     failSecondCurrentMainOpening?: boolean;
+    secondSelectionContent?: SelectedContent;
     transformContentWorkspace?: (
       resource: ContentWorkspaceResource<never>
     ) => ContentWorkspaceResource<never>;
@@ -320,8 +321,20 @@ export function createProviderLifecycleClient(
   if (fixture === undefined) {
     throw new Error("Provider content was not created by the owner-local fixture");
   }
+  const secondFixture =
+    options.secondSelectionContent === undefined
+      ? undefined
+      : workspaceFixtures.get(options.secondSelectionContent);
+  if (options.secondSelectionContent !== undefined && secondFixture === undefined) {
+    throw new Error("Second Provider content was not created by the owner-local fixture");
+  }
   const resourceCalls: string[] = [];
-  const baseContentWorkspace = providerContentWorkspace(fixture, resourceCalls, options);
+  const baseContentWorkspace = providerContentWorkspace(
+    fixture,
+    secondFixture,
+    resourceCalls,
+    options
+  );
   const contentWorkspace =
     options.transformContentWorkspace?.(baseContentWorkspace) ?? baseContentWorkspace;
   return {
@@ -424,9 +437,11 @@ function createProviderWorkspaceFixture(
 
 function providerContentWorkspace(
   fixture: ProviderWorkspaceFixture,
+  secondFixture: ProviderWorkspaceFixture | undefined,
   calls: string[],
   options: Readonly<{ failSecondCurrentMainOpening?: boolean }>
 ): ContentWorkspaceResource<never> {
+  let activeFixture = fixture;
   let mainInspections = 0;
   const workspaceAnchor = Object.freeze({
     root: testRequest.contentWorkspace.locator,
@@ -460,6 +475,9 @@ function providerContentWorkspace(
               )
             );
           }
+          if (mainInspections === 4 && secondFixture !== undefined) {
+            activeFixture = secondFixture;
+          }
         }
         const isContent = input.refName === SOURCE_REF;
         return Effect.succeed({
@@ -482,7 +500,7 @@ function providerContentWorkspace(
           commit: record ? HEAD_COMMIT : COMMIT,
           tree: record ? HEAD_TREE : TREE,
           blob: record ? "7".repeat(40) : "8".repeat(40),
-          bytes: record ? fixture.recordBytes : fixture.releaseInputBytes,
+          bytes: record ? activeFixture.recordBytes : activeFixture.releaseInputBytes,
         };
       }),
     isLocalGitAncestor: () =>
@@ -494,7 +512,7 @@ function providerContentWorkspace(
       Effect.sync(() => {
         calls.push("read-tree");
         return Object.freeze(
-          fixture.treeEntries.filter((entry) =>
+          activeFixture.treeEntries.filter((entry) =>
             input.paths.some((path) => entry.path === path || entry.path.startsWith(`${path}/`))
           )
         );
@@ -502,7 +520,7 @@ function providerContentWorkspace(
     readGitBlob: ({ blob }: Parameters<ContentWorkspaceResource<never>["readGitBlob"]>[0]) =>
       Effect.sync(() => {
         calls.push(`read-blob:${blob}`);
-        const bytes = fixture.bytesByBlob.get(blob);
+        const bytes = activeFixture.bytesByBlob.get(blob);
         if (bytes === undefined) throw new Error(`Missing provider fixture blob ${blob}`);
         return bytes;
       }),
@@ -511,7 +529,7 @@ function providerContentWorkspace(
         calls.push("read-blobs");
         return Object.freeze(
           blobs.map((blob) => {
-            const bytes = fixture.bytesByBlob.get(blob);
+            const bytes = activeFixture.bytesByBlob.get(blob);
             if (bytes === undefined) throw new Error(`Missing provider fixture blob ${blob}`);
             return Object.freeze({ blob, bytes });
           })
@@ -533,7 +551,7 @@ function providerContentWorkspace(
         );
         const worktreeObjectIds = Object.freeze(
           input.admittedPaths.map((path) => {
-            const entry = fixture.treeEntries.find((candidate) => candidate.path === path);
+            const entry = activeFixture.treeEntries.find((candidate) => candidate.path === path);
             if (entry === undefined) {
               throw new Error(`Missing provider fixture tree entry ${path}`);
             }
@@ -554,8 +572,8 @@ function providerContentWorkspace(
     readFile: (input: Parameters<ContentWorkspaceResource<never>["readFile"]>[0]) =>
       Effect.sync(() => {
         calls.push(`read-file:${input.path}`);
-        const entry = fixture.treeEntries.find((candidate) => candidate.path === input.path);
-        const bytes = entry === undefined ? undefined : fixture.bytesByBlob.get(entry.blob);
+        const entry = activeFixture.treeEntries.find((candidate) => candidate.path === input.path);
+        const bytes = entry === undefined ? undefined : activeFixture.bytesByBlob.get(entry.blob);
         if (bytes === undefined) throw new Error(`Missing provider fixture file ${input.path}`);
         return bytes;
       }),
@@ -941,7 +959,10 @@ export class FakeNativeProviders implements NativeAgentProviderResources {
   readonly claude;
   readonly acquisitionCalls: string[] = [];
 
-  constructor(sessions: readonly FakeNativeSession[]) {
+  constructor(
+    sessions: readonly FakeNativeSession[],
+    onAcquire?: (target: ProviderTarget) => void
+  ) {
     const codexSessions: FakeCodexNativeSession[] = [];
     const claudeSessions: FakeClaudeNativeSession[] = [];
     for (const session of sessions) {
@@ -958,6 +979,7 @@ export class FakeNativeProviders implements NativeAgentProviderResources {
       acquire: ({ home }: Readonly<{ home: string }>) =>
         Effect.suspend(() => {
           this.acquisitionCalls.push(`codex:${home}`);
+          onAcquire?.({ provider: "codex", home });
           return acquireFakeSession("codex", codexSessions, home);
         }),
     });
@@ -965,6 +987,7 @@ export class FakeNativeProviders implements NativeAgentProviderResources {
       acquire: ({ home }: Readonly<{ home: string }>) =>
         Effect.suspend(() => {
           this.acquisitionCalls.push(`claude:${home}`);
+          onAcquire?.({ provider: "claude", home });
           return acquireFakeSession("claude", claudeSessions, home);
         }),
     });

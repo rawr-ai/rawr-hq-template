@@ -1,10 +1,6 @@
 import { NativeMarketplaceSourceSchema } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
-import {
-  CanonicalChannelSelectionSchema,
-  CurrentMainSelectionLocatorSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ContentAuthoritySchema,
@@ -153,15 +149,6 @@ export const SelectedContentResolutionSchema = Type.Union([
   ),
 ]);
 
-/** Binds provider status or sync to one governed selection and its current-main locator. */
-export const SelectedContentChannelResolutionInputSchema = ReadonlyObject(
-  Type.Object({
-    locator: CurrentMainSelectionLocatorSchema,
-    selection: CanonicalChannelSelectionSchema,
-  }),
-  { additionalProperties: false }
-);
-
 /** One exact file expected in a selected provider plugin payload. */
 export type SelectedContentFile = Static<typeof SelectedContentFileSchema>;
 
@@ -179,11 +166,6 @@ export type SelectedContentIssue = Static<typeof SelectedContentIssueSchema>;
 
 /** Selected provider content or the exact reasons selection was refused. */
 export type SelectedContentResolution = Static<typeof SelectedContentResolutionSchema>;
-
-/** Input used to derive provider-selected content from one governed current-main selection. */
-export type SelectedContentChannelResolutionInput = Static<
-  typeof SelectedContentChannelResolutionInputSchema
->;
 
 function isCanonicalDistinctOrder(values: readonly string[]): boolean {
   for (let index = 1; index < values.length; index += 1) {

@@ -1,35 +1,99 @@
-import type { ContentTreeEntry, ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import type {
+  ContentTreeEntry,
+  ContentWorkspaceFailure,
+  GitBlobObservation,
+  GitRefObservation,
+} from "@rawr/resource-content-workspace";
 import type { Result } from "effect";
+
 import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   parseRelativePath,
   type ReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-primitives";
+import type {
+  CanonicalChannelSelection,
+  CurrentMainSelectionLocator,
+} from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
+import {
+  compareCanonicalText,
+  createAgentPluginPayload,
+  decodeAgentPluginReleaseInput,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+} from "../../../../shared/release/index";
 import type { SelectedContentResolution } from "../dto/selected-content";
 import { validateNativeMarketplaces } from "./native-marketplace";
 import { selectedContentRejected } from "./selected-content";
 
+/** Maximum regular Git tree entries admitted by one channel selection. */
+export const MAX_SELECTED_CONTENT_TREE_ENTRIES = 200_000;
+
+/** Maximum native Git tree bytes admitted by one channel selection. */
+export const MAX_SELECTED_CONTENT_TREE_BYTES = 100 * 1024 * 1024;
+
+/** Maximum canonical release-input bytes read by one channel selection. */
+export const MAX_SELECTED_CONTENT_RELEASE_INPUT_BYTES = MAX_RELEASE_INPUT_ENVELOPE_BYTES;
+
+/** Maximum decoded payload bytes admitted for one selected member. */
+export const MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES = MAX_PAYLOAD_BYTES_PER_MEMBER;
+
+/** Maximum aggregate decoded payload bytes admitted for one selected release set. */
+export const MAX_SELECTED_CONTENT_RELEASE_SET_PAYLOAD_BYTES = MAX_RELEASE_SET_PAYLOAD_BYTES;
+
 /** Maximum bytes accepted from either provider-native marketplace manifest. */
 export const MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES = 2 * 1024 * 1024;
 
-/** Fixed release-input path admitted by disposable Provider testing. */
+/** Fixed release-input path admitted by Provider selection. */
 export const SELECTED_CONTENT_RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
-/** Fixed agent-plugin source root admitted by disposable Provider testing. */
+
+/** Fixed agent-plugin source root admitted by Provider selection. */
 export const SELECTED_CONTENT_PLUGIN_ROOT = requireReleasePath("plugins/agents");
+
 /** Codex marketplace interface path selected from exact Git content. */
 export const CODEX_MARKETPLACE_MANIFEST = requireReleasePath(".agents/plugins/marketplace.json");
+
 /** Claude marketplace interface path selected from exact Git content. */
 export const CLAUDE_MARKETPLACE_MANIFEST = requireReleasePath(".claude-plugin/marketplace.json");
+
 /** Required provider-native marketplace manifest paths in canonical order. */
 export const NATIVE_MARKETPLACE_MANIFESTS = Object.freeze([
   CODEX_MARKETPLACE_MANIFEST,
   CLAUDE_MARKETPLACE_MANIFEST,
 ]);
+
 /** Git tree roots required to read the provider-native marketplace interface. */
 export const NATIVE_MARKETPLACE_INTERFACE_PATHS = Object.freeze([
   requireReleasePath(".agents/plugins"),
   requireReleasePath(".claude-plugin"),
 ]);
+
+/** Exact Git tree paths consumed by governed Provider channel selection. */
+export const CHANNEL_SELECTED_CONTENT_PATHS = Object.freeze([
+  SELECTED_CONTENT_RELEASE_INPUT_PATH,
+  ...NATIVE_MARKETPLACE_INTERFACE_PATHS,
+  SELECTED_CONTENT_PLUGIN_ROOT,
+]);
+
+/** Sparse Git paths passed to native providers for the selected marketplace. */
+export const CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS = Object.freeze([
+  ".agents/plugins",
+  ".claude-plugin",
+  "plugins/agents",
+]);
+
+type AgentPluginReleaseInput = ReleaseDerivationSource["releaseInput"];
+type AgentPluginPayload = ReleaseDerivationSource["payloads"][number]["payload"];
+type PluginId = ReleaseDerivationSource["payloads"][number]["pluginId"];
+
+interface SelectedContentTreeEntry {
+  readonly mode: 0o644 | 0o755;
+  readonly objectId: string;
+  readonly path: ReleaseRelativePath;
+}
 
 interface SelectedContentInterfaceEntry {
   readonly objectId: string;
@@ -40,12 +104,354 @@ interface SelectedContentInterfaceFacts {
   readonly manifestEntries: readonly SelectedContentInterfaceEntry[];
 }
 
+interface ChannelAnchorFacts {
+  readonly observation: GitRefObservation;
+}
+
+interface ChannelTreeFacts extends ChannelAnchorFacts {
+  readonly treeEntries: readonly SelectedContentTreeEntry[];
+  readonly entryByPath: ReadonlyMap<ReleaseRelativePath, SelectedContentTreeEntry>;
+  readonly releaseInputEntry: SelectedContentTreeEntry;
+}
+
+interface ChannelReleaseInputFacts extends ChannelTreeFacts {
+  readonly releaseInput: AgentPluginReleaseInput;
+}
+
+interface ChannelPayloadReadPlan extends ChannelReleaseInputFacts {
+  readonly blobs: readonly string[];
+  readonly declaredPayloads: readonly Readonly<{
+    pluginId: PluginId;
+    expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
+    entries: readonly Readonly<{
+      relativePath: ReleaseRelativePath;
+      entry: SelectedContentTreeEntry;
+    }>[];
+  }>[];
+}
+
+interface ChannelPayloadFacts extends ChannelPayloadReadPlan {
+  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
+}
+
 type SelectedContentDecision<T> =
   | Readonly<{ ok: true; value: T }>
   | Readonly<{
       ok: false;
       result: Extract<SelectedContentResolution, { kind: "Rejected" }>;
     }>;
+
+/**
+ * Admits current-main for Provider channel reads only when its repository
+ * identity still matches the explicit invocation locator.
+ */
+export function classifySelectedContentChannelSelection(
+  locator: CurrentMainSelectionLocator,
+  selection: CanonicalChannelSelection
+): SelectedContentDecision<CanonicalChannelSelection> {
+  return locator.expectedRepositoryIdentity === selection.sourceRepositoryIdentity
+    ? admitted(selection)
+    : declined(
+        selectedContentRejected(
+          "SelectionMismatch",
+          "Current-main selection belongs to another repository identity."
+        )
+      );
+}
+
+/** Classifies the opening selected-ref observation for one channel selection. */
+export function classifySelectedContentChannelAnchor(
+  selection: CanonicalChannelSelection,
+  attempt: Result.Result<GitRefObservation, ContentWorkspaceFailure>
+): SelectedContentDecision<ChannelAnchorFacts> {
+  if (attempt._tag === "Failure") {
+    return declined(selectedContentResourceFailure(attempt.failure));
+  }
+  const observation = attempt.success;
+  if (
+    observation.refName !== selection.sourceRef ||
+    observation.commit !== selection.contentCommit ||
+    observation.tree !== selection.contentTree
+  ) {
+    return declined(
+      selectedContentRejected(
+        "SelectionMismatch",
+        "Selected Git tag does not resolve to the reviewed commit and tree."
+      )
+    );
+  }
+  if (!observation.remoteUrls.includes(selection.sourceRepositoryUrl)) {
+    return declined(
+      selectedContentRejected(
+        "SelectionMismatch",
+        "Selected Git workspace does not expose the reviewed repository URL."
+      )
+    );
+  }
+  return admitted(Object.freeze({ observation }));
+}
+
+/**
+ * Classifies the complete channel tree and selects its release-input blob.
+ *
+ * @remarks
+ * Marketplace presence remains unclassified until after the release input is
+ * read and validated so public failure precedence matches the operation.
+ */
+export function classifySelectedContentChannelTree(
+  anchor: ChannelAnchorFacts,
+  attempt: Result.Result<readonly ContentTreeEntry[], ContentWorkspaceFailure>
+): SelectedContentDecision<ChannelTreeFacts> {
+  const interpreted = classifySelectedContentTree(attempt);
+  if (!interpreted.ok) return interpreted;
+  const entryByPath = new Map(interpreted.value.map((entry) => [entry.path, entry]));
+  const releaseInputEntry = entryByPath.get(SELECTED_CONTENT_RELEASE_INPUT_PATH);
+  if (releaseInputEntry === undefined) {
+    return declined(
+      selectedContentRejected(
+        "SourceIneligible",
+        `Selected tree is missing ${SELECTED_CONTENT_RELEASE_INPUT_PATH}.`
+      )
+    );
+  }
+  return admitted(
+    Object.freeze({
+      ...anchor,
+      treeEntries: interpreted.value,
+      entryByPath,
+      releaseInputEntry,
+    })
+  );
+}
+
+/** Classifies the selected release-input blob against current-main. */
+export function classifySelectedContentChannelReleaseInput(
+  selection: CanonicalChannelSelection,
+  tree: ChannelTreeFacts,
+  attempt: Result.Result<Uint8Array, ContentWorkspaceFailure>
+): SelectedContentDecision<ChannelReleaseInputFacts> {
+  if (attempt._tag === "Failure") {
+    return declined(selectedContentResourceFailure(attempt.failure));
+  }
+  if (attempt.success.byteLength > MAX_SELECTED_CONTENT_RELEASE_INPUT_BYTES) {
+    return declined(
+      selectedContentRejected(
+        "SourceReadFailed",
+        `Git blob exceeds its bound: ${tree.releaseInputEntry.path}.`
+      )
+    );
+  }
+  const decoded = decodeAgentPluginReleaseInput(attempt.success);
+  if (!decoded.ok) {
+    return declined(
+      selectedContentRejected(
+        "SourceIneligible",
+        `Selected release input is invalid: ${decoded.issues.map((issue) => issue.code).join(",")}.`
+      )
+    );
+  }
+  if (decoded.value.releaseInputDigest !== selection.releaseInputDigest) {
+    return declined(
+      selectedContentRejected(
+        "SelectionMismatch",
+        "Selected release-input digest differs from current-main."
+      )
+    );
+  }
+  if (decoded.value.body.contentAuthority !== selection.contentAuthority) {
+    return declined(
+      selectedContentRejected(
+        "SelectionMismatch",
+        "Selected release input declares another content authority."
+      )
+    );
+  }
+  return admitted(Object.freeze({ ...tree, releaseInput: decoded.value }));
+}
+
+/**
+ * Selects one required marketplace manifest after release-input admission.
+ *
+ * @remarks
+ * Handlers call this in canonical manifest order immediately before each blob
+ * read. A missing later manifest therefore cannot outrank an earlier read
+ * failure.
+ */
+export function selectSelectedContentChannelManifestEntry(
+  source: ChannelReleaseInputFacts,
+  path: ReleaseRelativePath
+): SelectedContentDecision<SelectedContentTreeEntry> {
+  const entry = source.entryByPath.get(path);
+  return entry === undefined
+    ? declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Selected tree is missing native marketplace manifest ${path}.`
+        )
+      )
+    : admitted(entry);
+}
+
+/**
+ * Plans the one bounded payload batch from the selected tree and release input.
+ *
+ * @remarks
+ * This phase is inert: it validates declared membership and returns exact blob
+ * identities without reading the content-workspace resource.
+ */
+export function planSelectedContentChannelPayloadRead(
+  source: ChannelReleaseInputFacts
+): SelectedContentDecision<ChannelPayloadReadPlan> {
+  const declaredTreeIssue = validateDeclaredPluginTree({
+    pluginRoot: SELECTED_CONTENT_PLUGIN_ROOT,
+    paths: source.treeEntries.map((entry) => entry.path),
+    declaredPluginIds: source.releaseInput.body.members.map((member) => member.pluginId),
+  });
+  if (declaredTreeIssue !== undefined) {
+    return declined(
+      selectedContentRejected(
+        "SourceIneligible",
+        `${declaredTreeIssue.code}: ${declaredTreeIssue.detail}`
+      )
+    );
+  }
+
+  const uniqueBlobs = new Set<string>();
+  const declaredPayloads: ChannelPayloadReadPlan["declaredPayloads"][number][] = [];
+  for (const member of source.releaseInput.body.members) {
+    if (member.payload.manifest.length === 0) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Declared payload is empty for ${member.pluginId}.`
+        )
+      );
+    }
+    const memberRoot = requireReleasePath(`${SELECTED_CONTENT_PLUGIN_ROOT}/${member.pluginId}`);
+    const entries: Array<
+      Readonly<{ relativePath: ReleaseRelativePath; entry: SelectedContentTreeEntry }>
+    > = [];
+    for (const manifestEntry of member.payload.manifest) {
+      const repositoryPath = requireReleasePath(`${memberRoot}/${manifestEntry.path}`);
+      const entry = source.entryByPath.get(repositoryPath);
+      if (entry === undefined) {
+        return declined(
+          selectedContentRejected("SourceIneligible", `Selected tree is missing ${repositoryPath}.`)
+        );
+      }
+      uniqueBlobs.add(entry.objectId);
+      entries.push(Object.freeze({ relativePath: manifestEntry.path, entry }));
+    }
+    const expectedPaths = new Set(entries.map(({ entry }) => entry.path));
+    const undeclared = source.treeEntries.find(
+      (entry) => entry.path.startsWith(`${memberRoot}/`) && !expectedPaths.has(entry.path)
+    );
+    if (undeclared !== undefined) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Declared payload root contains an undeclared file: ${undeclared.path}.`
+        )
+      );
+    }
+    declaredPayloads.push(
+      Object.freeze({
+        pluginId: member.pluginId,
+        expected: member.payload,
+        entries: Object.freeze(entries),
+      })
+    );
+  }
+
+  return admitted(
+    Object.freeze({
+      ...source,
+      blobs: Object.freeze([...uniqueBlobs].sort(compareCanonicalText)),
+      declaredPayloads: Object.freeze(declaredPayloads),
+    })
+  );
+}
+
+/** Classifies the exact payload blob batch and constructs verified payloads. */
+export function classifySelectedContentChannelPayloads(
+  plan: ChannelPayloadReadPlan,
+  attempt: Result.Result<readonly GitBlobObservation[], ContentWorkspaceFailure>
+): SelectedContentDecision<ChannelPayloadFacts> {
+  if (attempt._tag === "Failure") {
+    return declined(selectedContentResourceFailure(attempt.failure));
+  }
+  const bytesByBlob = new Map(
+    attempt.success.map((observation) => [observation.blob, observation.bytes])
+  );
+  if (bytesByBlob.size !== plan.blobs.length) {
+    return declined(
+      selectedContentRejected(
+        "SourceReadFailed",
+        "Git batch omitted or duplicated a declared payload blob."
+      )
+    );
+  }
+
+  const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
+  for (const member of plan.declaredPayloads) {
+    const payloadEntries: Array<{
+      path: ReleaseRelativePath;
+      mode: SelectedContentTreeEntry["mode"];
+      bytes: Uint8Array;
+    }> = [];
+    for (const { relativePath, entry } of member.entries) {
+      const bytes = bytesByBlob.get(entry.objectId);
+      if (bytes === undefined) {
+        return declined(
+          selectedContentRejected("SourceReadFailed", `Git batch omitted ${entry.path}.`)
+        );
+      }
+      payloadEntries.push({ path: relativePath, mode: entry.mode, bytes });
+    }
+    const created = createAgentPluginPayload(payloadEntries);
+    if (!created.ok) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Payload construction failed for ${member.pluginId}: ${created.issues
+            .map((issue) => issue.code)
+            .join(",")}.`
+        )
+      );
+    }
+    if (
+      created.value.payloadDigest !== member.expected.payloadDigest ||
+      !samePayloadManifest(created.value.manifest, member.expected.manifest)
+    ) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Selected payload differs from its declaration for ${member.pluginId}.`
+        )
+      );
+    }
+    payloads.push(Object.freeze({ pluginId: member.pluginId, payload: created.value }));
+  }
+  return admitted(Object.freeze({ ...plan, payloads: Object.freeze(payloads) }));
+}
+
+/** Classifies the closing selected-ref observation against its opening fact. */
+export function classifyClosingSelectedContentChannel(
+  opening: ChannelAnchorFacts,
+  attempt: Result.Result<GitRefObservation, ContentWorkspaceFailure>
+): SelectedContentDecision<true> {
+  if (attempt._tag === "Failure") {
+    return declined(selectedContentResourceFailure(attempt.failure));
+  }
+  return sameRefObservation(opening.observation, attempt.success)
+    ? admitted(true)
+    : declined(
+        selectedContentRejected(
+          "SelectionMismatch",
+          "Selected Git tag changed while its content was read."
+        )
+      );
+}
 
 /**
  * Classifies the provider-native interface tree without performing resource work.
@@ -57,59 +463,19 @@ type SelectedContentDecision<T> =
 export function classifySelectedContentInterfaceTree(
   attempt: Result.Result<readonly ContentTreeEntry[], ContentWorkspaceFailure>
 ): SelectedContentDecision<SelectedContentInterfaceFacts> {
-  if (attempt._tag === "Failure") {
-    return declined(selectedContentResourceFailure(attempt.failure));
-  }
-  const entries: SelectedContentInterfaceEntry[] = [];
-  const exactPaths = new Set<string>();
-  const portablePaths = new Set<string>();
-  for (const observed of attempt.success) {
-    const parsedPath = parseRelativePath(observed.path, "selectedContent.tree.path");
-    if (!parsedPath.ok) {
-      return declined(
-        selectedContentRejected(
-          "SourceIneligible",
-          `Selected Git tree contains a noncanonical release path: ${observed.path}.`
-        )
-      );
-    }
-    const portablePath = parsedPath.value.normalize("NFC").toLowerCase();
-    if (exactPaths.has(parsedPath.value) || portablePaths.has(portablePath)) {
-      return declined(
-        selectedContentRejected(
-          "SourceIneligible",
-          `Selected Git tree contains a path collision: ${parsedPath.value}.`
-        )
-      );
-    }
-    exactPaths.add(parsedPath.value);
-    portablePaths.add(portablePath);
-    entries.push(
-      Object.freeze({
-        objectId: observed.blob,
-        path: parsedPath.value,
-      })
-    );
-  }
-  const entryByPath = new Map(entries.map((entry) => [entry.path, entry]));
-  const manifestEntries: SelectedContentInterfaceEntry[] = [];
-  for (const path of NATIVE_MARKETPLACE_MANIFESTS) {
-    const entry = entryByPath.get(path);
-    if (entry === undefined) {
-      return declined(
-        selectedContentRejected(
-          "SourceIneligible",
-          `Selected tree is missing native marketplace manifest ${path}.`
-        )
-      );
-    }
-    manifestEntries.push(entry);
-  }
-  return admitted(
-    Object.freeze({
-      manifestEntries: Object.freeze(manifestEntries),
-    })
-  );
+  const interpreted = classifySelectedContentTree(attempt);
+  if (!interpreted.ok) return interpreted;
+  const entryByPath = new Map(interpreted.value.map((entry) => [entry.path, entry]));
+  const manifestEntries = requiredManifestEntries(entryByPath);
+  return manifestEntries.ok
+    ? admitted(
+        Object.freeze({
+          manifestEntries: Object.freeze(
+            manifestEntries.value.map(({ objectId, path }) => Object.freeze({ objectId, path }))
+          ),
+        })
+      )
+    : manifestEntries;
 }
 
 /** Classifies one bounded native marketplace manifest blob read. */
@@ -173,6 +539,66 @@ export function classifyLocalSelectedContentManifest(
   return admitted(true);
 }
 
+function classifySelectedContentTree(
+  attempt: Result.Result<readonly ContentTreeEntry[], ContentWorkspaceFailure>
+): SelectedContentDecision<readonly SelectedContentTreeEntry[]> {
+  if (attempt._tag === "Failure") {
+    return declined(selectedContentResourceFailure(attempt.failure));
+  }
+  const entries: SelectedContentTreeEntry[] = [];
+  const exactPaths = new Set<string>();
+  const portablePaths = new Set<string>();
+  for (const observed of attempt.success) {
+    const parsedPath = parseRelativePath(observed.path, "selectedContent.tree.path");
+    if (!parsedPath.ok) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Selected Git tree contains a noncanonical release path: ${observed.path}.`
+        )
+      );
+    }
+    const portablePath = parsedPath.value.normalize("NFC").toLowerCase();
+    if (exactPaths.has(parsedPath.value) || portablePaths.has(portablePath)) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Selected Git tree contains a path collision: ${parsedPath.value}.`
+        )
+      );
+    }
+    exactPaths.add(parsedPath.value);
+    portablePaths.add(portablePath);
+    entries.push(
+      Object.freeze({
+        mode: observed.mode === "100755" ? 0o755 : 0o644,
+        objectId: observed.blob,
+        path: parsedPath.value,
+      })
+    );
+  }
+  return admitted(Object.freeze(entries));
+}
+
+function requiredManifestEntries(
+  entryByPath: ReadonlyMap<ReleaseRelativePath, SelectedContentTreeEntry>
+): SelectedContentDecision<readonly SelectedContentTreeEntry[]> {
+  const manifestEntries: SelectedContentTreeEntry[] = [];
+  for (const path of NATIVE_MARKETPLACE_MANIFESTS) {
+    const entry = entryByPath.get(path);
+    if (entry === undefined) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Selected tree is missing native marketplace manifest ${path}.`
+        )
+      );
+    }
+    manifestEntries.push(entry);
+  }
+  return admitted(Object.freeze(manifestEntries));
+}
+
 function admitted<T>(value: T): SelectedContentDecision<T> {
   return Object.freeze({ ok: true, value });
 }
@@ -192,6 +618,47 @@ function selectedContentResourceFailure(
       ? "SourceIneligible"
       : "SourceReadFailed";
   return selectedContentRejected(code, failure.detail);
+}
+
+function sameRefObservation(left: GitRefObservation, right: GitRefObservation): boolean {
+  return (
+    left.root === right.root &&
+    left.refName === right.refName &&
+    left.commit === right.commit &&
+    left.tree === right.tree &&
+    left.objectFormat === right.objectFormat &&
+    left.remoteUrls.length === right.remoteUrls.length &&
+    left.remoteUrls.every((value, index) => value === right.remoteUrls[index])
+  );
+}
+
+function samePayloadManifest(
+  left: readonly Readonly<{
+    path: string;
+    mode: number;
+    byteLength: number;
+    contentDigest: string;
+  }>[],
+  right: readonly Readonly<{
+    path: string;
+    mode: number;
+    byteLength: number;
+    contentDigest: string;
+  }>[]
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((entry, index) => {
+      const other = right[index];
+      return (
+        other !== undefined &&
+        entry.path === other.path &&
+        entry.mode === other.mode &&
+        entry.byteLength === other.byteLength &&
+        entry.contentDigest === other.contentDigest
+      );
+    })
+  );
 }
 
 function requireReleasePath(value: string): ReleaseRelativePath {

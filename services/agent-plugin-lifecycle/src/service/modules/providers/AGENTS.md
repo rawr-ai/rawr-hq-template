@@ -18,14 +18,13 @@
   cross modules. This module owns selected-content DTOs, native marketplace
   policy, source-interface classification, selected-content projection,
   native-state policy, provider operation DTOs, handlers, results, issues, and
-  admitted mutation policy. Its narrowed content-workspace read port and
-  resolver are channel-only boundaries for status and sync.
-- Disposable test directly consumes the ready content-workspace resource in
-  its oRPC handler. It does not delegate source selection or native convergence
-  to an exported test runner, dependency bag, clean-content reader, or workspace
-  resolver branch. Native observation and mutation still use the module's
-  existing reconciliation functions until their separate operation-authorship
-  cut.
+  admitted mutation policy.
+- Status, sync, and disposable test directly consume the ready
+  content-workspace resource in their oRPC handlers. They do not delegate
+  source selection to an exported runner, resolver, narrowed port, dependency
+  bag, or workspace branch. Native observation and mutation still use the
+  module's existing reconciliation functions until their separate
+  operation-authorship cut.
 - Native-provider sessions supply observation and mutation mechanics; they are
   not a competing authority.
 - Disposable test convergence never retires unrelated installed content;
@@ -47,17 +46,16 @@
 
 ## Flow
 
-- Status and sync resolve governed channel content from the narrowed host
-  content-workspace capability. Test performs complete local source selection
-  directly from the ready resource, preflights target sessions, repeats the
-  complete selection before mutation, and preserves omitted members.
+- Status performs one complete governed channel selection from the ready
+  content-workspace resource. Sync repeats that complete selection only when
+  mutation may be required. Test performs complete local source selection,
+  repeats it before mutation, and preserves omitted members.
 
 ## Interfaces
 
-- The `status`, `test`, and `sync` operations are caller boundaries.
-  Channel resolution consumes current-main for status and sync. Test consumes
-  an explicit workspace through its ready resource context. The narrowed
-  channel port, ready resource, and native sessions are mechanics handoffs, not
+- The `status`, `test`, and `sync` operations are caller boundaries. Status and
+  sync consume current-main; test consumes an explicit workspace. The ready
+  content-workspace and native-provider resources are mechanics handoffs, not
   competing authorities.
 
 ## Routing

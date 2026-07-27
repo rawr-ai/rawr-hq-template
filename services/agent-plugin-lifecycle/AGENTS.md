@@ -23,9 +23,8 @@
   those meanings span capability modules. Providers owns selected-content
   structure, source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module
-  consumes those meanings. Its channel resolver and narrowed read port serve
-  status and sync only; disposable test handlers directly sequence the ready
-  content-workspace resource.
+  consumes those meanings. Provider status, sync, and disposable test handlers
+  directly sequence the ready content-workspace resource.
 - The Releases module owns clean and staged eligibility operations and directly
   consumes one ready content-workspace resource. Its handlers own observation
   order and final revalidation; pure shared policy classifies the resulting Git
@@ -45,10 +44,9 @@
 
 - The service admits exact reviewed content, applies cross-module
   release-derivation policy, and dispatches package, vendor, and provider
-  operations through their owning modules. Provider test derives its
-  invocation-local selection in the operation handler before native
-  observation or mutation; status and sync derive governed channel content
-  through the remaining channel resolver.
+  operations through their owning modules. Provider status, test, and sync
+  derive their invocation-local selections in their operation handlers before
+  native observation or mutation.
 
 ## Concepts
 

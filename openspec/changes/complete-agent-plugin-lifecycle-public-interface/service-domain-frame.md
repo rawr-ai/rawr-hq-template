@@ -178,11 +178,10 @@ import, or permission for siblings to import one another.
 
 Provider-selected content is not a third shared collaboration. Providers alone
 consumes its exact Git payload, native marketplace, and selection-result
-meanings, so it owns the DTOs, policy, and construction. Status and sync retain
-one channel-only resolver over their narrowed read port. Disposable test
-sequences the ready content-workspace resource directly in its handler and
-passes only typed facts into pure policy. The raw capability continues to enter
-through service context without promoting provider meaning to the root.
+meanings, so it owns the DTOs and pure policy. Status, test, and sync sequence
+the ready content-workspace resource in their handlers and pass only typed
+facts into that policy. No selected-content resolver, narrowed port, or
+service-root Provider meaning sits between the operations and the resource.
 
 ## Target Topology
 
@@ -406,7 +405,7 @@ in-place and deletion-first:
 | Package exports the broad release implementation | CLI consumes one narrow public input boundary; release implementation remains private | Narrow package exports |
 | Manual release parsers duplicate TypeBox | TypeBox validates structure once; canonicalization and semantic checks remain | Normalize release model by family |
 | Release derivation has competing check/package paths | One service-owned release-derivation policy over the content-workspace port serves Releases and Packaging | Seal shared derivation |
-| Root selected-content middleware imports release implementation | Providers owns selected-content DTOs, policy, narrowed read port, and resolution helper and constructs the resolver in its named capability middleware | Delete reversed root edge |
+| Provider status and sync delegate channel selection to a resolver and narrowed read port | Their oRPC handlers sequence the ready content-workspace resource directly and pass typed facts into Provider policy | Delete the false intermediate owner |
 | Modules import root `base.ts` and siblings | `module.ts` uses only the matching `impl` branch; one named middleware leaf uses only the base `createMiddleware` factory; all other edges stay owner-local or public | Seal each module |
 | Module operations delegate to parallel business entrypoints | Direct oRPC handlers own sequencing and call only pure policy or ready capabilities | Seal each router |
 | Root requires owner-specific capabilities for every operation | Host seeds ready resources; named module middleware contributes owner capabilities; operation cuts delete broad dependency access instead of masking additive native context | Seal context authoring |
