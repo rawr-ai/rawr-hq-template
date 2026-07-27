@@ -63,7 +63,7 @@ describe("node vendor lifecycle runtime", () => {
     fixture = await createOwnedFixtureRoot();
     const upstream = await createUpstreamRepository(fixture.path);
     const content = await createContentRepository(fixture.path, upstream.initialIdentity);
-    const client = await createProductionLifecycleClient("vendors.status", lifecycleBinding());
+    const client = await createProductionLifecycleClient("vendors.status");
     expect(Object.keys(client.vendors)).toEqual(["status"]);
     // @ts-expect-error A status binding cannot represent the update procedure.
     void client.vendors.update;
@@ -104,7 +104,7 @@ describe("node vendor lifecycle runtime", () => {
     await writeFile(path.join(upstream.root, "source", "payload.txt"), "updated\n");
     await git(upstream.root, ["add", "--all"]);
     await git(upstream.root, ["commit", "-m", "update"]);
-    const client = await createProductionLifecycleClient("vendors.update", lifecycleBinding());
+    const client = await createProductionLifecycleClient("vendors.update");
     expect(Object.keys(client.vendors)).toEqual(["update"]);
     // @ts-expect-error An update binding cannot represent the status procedure.
     void client.vendors.status;
@@ -132,8 +132,7 @@ describe("node vendor lifecycle runtime", () => {
     ).toBe("updated\n");
     const releaseInputBytes = await readFile(path.join(content.root, ".rawr/release-input.json"));
     const releaseRecordClient = await createProductionLifecycleClient(
-      "releases.releaseInputRecord",
-      lifecycleBinding()
+      "releases.releaseInputRecord"
     );
     const validatedReleaseInput = await releaseRecordClient.releases.releaseInputRecord(
       { kind: "validate-envelope", bytes: releaseInputBytes },
@@ -281,10 +280,7 @@ async function createContentRepository(
     schemaVersion: lock.schemaVersion,
     sourceId: lock.sourceId,
   });
-  const releaseRecordClient = await createProductionLifecycleClient(
-    "releases.releaseInputRecord",
-    lifecycleBinding()
-  );
+  const releaseRecordClient = await createProductionLifecycleClient("releases.releaseInputRecord");
   const release = await releaseRecordClient.releases.releaseInputRecord(
     {
       kind: "encode-body",
@@ -435,12 +431,6 @@ async function isolatePrivateContentWorkspaceRoots(ownerRoot: string): Promise<v
   if (path.resolve(tmpdir()) !== privateTemporaryRoot) {
     throw new Error("test runtime did not select its private temporary root");
   }
-}
-
-function lifecycleBinding() {
-  return Object.freeze({
-    providerExecutables: Object.freeze({}),
-  });
 }
 
 function jsonLine(value: unknown): Uint8Array {

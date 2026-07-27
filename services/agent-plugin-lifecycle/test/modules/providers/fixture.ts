@@ -608,7 +608,6 @@ interface FakeNativeSessionInput {
 
 class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
   readonly provider: Provider;
-  readonly executablePath: string;
   readonly home: string;
   readonly calls: string[] = [];
   readonly fileReadRequests: NativeProviderPluginFilesReadInput[] = [];
@@ -637,7 +636,6 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
     }
     this.provider = provider;
     this.home = input.target.home;
-    this.executablePath = `/opt/${this.provider}`;
     this.content = input.content;
     this.probeOverride = input.probeOverride;
     this.onMutation = input.onMutation;
@@ -674,7 +672,6 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
       this.provider === "codex"
         ? ({
             provider: "codex",
-            executablePath: this.executablePath,
             home: this.home,
             version: "fixture-1",
             capabilities: [
@@ -688,7 +685,6 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
           } satisfies NativeProviderCapabilities)
         : ({
             provider: "claude",
-            executablePath: this.executablePath,
             home: this.home,
             version: "fixture-1",
             capabilities: [

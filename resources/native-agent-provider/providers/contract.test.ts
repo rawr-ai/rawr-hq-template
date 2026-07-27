@@ -10,7 +10,6 @@ import {
   NativeAgentProviderFailureSchema,
   NativeMarketplaceSourceSchema,
   NativeProviderCapabilitiesSchema,
-  NativeProviderExecutablePathSchema,
   NativeProviderInventorySchema,
   NativeProviderMarketplaceIdentityInputSchema,
   NativeProviderPluginFilesReadInputSchema,
@@ -119,7 +118,6 @@ describe("native agent provider contract", () => {
     expect(
       Value.Check(NativeProviderCapabilitiesSchema, {
         provider: "codex",
-        executablePath: "/opt/rawr/bin/codex",
         home: "/tmp/codex-home",
         version: "1.0.0",
         capabilities: ["marketplace-list", "plugin-enable"],
@@ -127,25 +125,28 @@ describe("native agent provider contract", () => {
     ).toBe(false);
     expect(
       Value.Check(NativeProviderCapabilitiesSchema, {
+        provider: "codex",
+        executablePath: "/opt/rawr/bin/codex",
+        home: "/tmp/codex-home",
+        version: "1.0.0",
+        capabilities: [
+          "marketplace-list",
+          "marketplace-add",
+          "marketplace-remove",
+          "plugin-list",
+          "plugin-install",
+          "plugin-remove",
+        ],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(NativeProviderCapabilitiesSchema, {
         provider: "claude",
-        executablePath: "/opt/rawr/bin/claude",
         home: "/tmp/claude-home",
         version: "1.0.0",
         capabilities: ["marketplace-list", "plugin-list"],
       })
     ).toBe(false);
-  });
-
-  it("admits only canonical non-root absolute provider executable paths", () => {
-    expect(Value.Check(NativeProviderExecutablePathSchema, "/opt/rawr/bin/codex")).toBe(true);
-    for (const executablePath of [
-      "codex",
-      "/",
-      "/opt/rawr/../rawr/bin/codex",
-      "/opt/rawr/bin/./codex",
-    ]) {
-      expect(Value.Check(NativeProviderExecutablePathSchema, executablePath)).toBe(false);
-    }
   });
 
   it("keeps normalized inventory free of raw provider JSON", () => {
@@ -285,7 +286,6 @@ describe("native agent provider contract", () => {
     ]);
     const codexMethods: Readonly<Record<keyof CodexNativeAgentProviderSession, true>> = {
       provider: true,
-      executablePath: true,
       home: true,
       probe: true,
       inventory: true,

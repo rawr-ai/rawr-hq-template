@@ -2420,6 +2420,48 @@ behavior proof are complete. Standing architecture/Habitat, testing/oRPC, and
 TypeScript/refactor reviews report no P0, P1, P2, or P3 finding. Graphite
 landing remains open.
 
+The next bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.6d]]. Production now
+constructs the Codex and Claude adapters with the operator's ordinary `codex`
+and `claude` commands. The public `--provider-executable` flag, lifecycle
+executable-binding DTO and selector, executable-path admission, executable
+identity in provider sessions and capability results, and help-output parsing
+are deleted together. A constructor-local `command` option remains only as the
+focused fake-executable test seam; it is not projected through the CLI,
+lifecycle service, or public resource contract.
+
+Provider acquisition still requires an explicit canonical home. Probe and
+inventory retain native version, adapter capability, marketplace, plugin, and
+file observations. Unsupported native operations therefore fail through the
+ordinary provider command rather than a help-derived admission model. Native
+exit, timeout, interruption, process-group finalization, mutation refusal,
+serialization, exact applied-prefix, and lifecycle status behavior remain
+covered without ambient home discovery.
+
+The resource contract and Codex/Claude adapters pass 22 tests, including the
+zero-option constructors through hermetic PATH fixtures. The lifecycle
+Providers module passes 79 tests, and the complete CLI passes 23 files and 85
+tests through the built Oclif application, including rejection of the retired
+executable flag on all three former owner commands. All five changed Nx owners pass
+source and test typecheck in 17.6 seconds. Biome checks all 1,088 files in less
+than one second, and Habitat passes all 18 enforced rules with zero findings in
+27.9 seconds. Strict OpenSpec validation and diff hygiene pass. Implementation
+and repository proof are complete; Graphite landing remains open.
+
+The adapter supplies `HOME` plus `CODEX_HOME` or `CLAUDE_CONFIG_DIR` and does
+not discover another home. It deliberately trusts the operator-selected PATH
+command to honor that native contract rather than reintroducing executable
+identity or wrapper admission. The current local `~/.codex-switch/bin/codex`
+selector overwrites a supplied `CODEX_HOME`; it is therefore ineligible for
+disposable-home settlement until the local selector is retired or the
+settlement environment selects the native Codex command. No live provider
+mutation was used for this checkpoint.
+
+Standing architecture, TypeScript/refactor, testing, and structural-quality
+reviews are complete. The TypeScript review's stale capability-probe router
+language and the testing review's two missing behavioral oracles were repaired;
+no P0-P3 finding remains.
+
 ## Settlement Oracles
 
 The final product must prove:

@@ -27,6 +27,23 @@ afterEach(async () => {
 });
 
 describe("claude-effect-platform-node", () => {
+  it("resolves the ordinary claude command from PATH for an explicit home", async () => {
+    const fixture = await makeFixture("claude");
+    await withPathPrefix(fixture.root, async () => {
+      const session = await Effect.runPromise(
+        makeNodeClaudeNativeAgentProviderResource().acquire({ home: fixture.home })
+      );
+
+      expect(await Effect.runPromise(session.probe())).toMatchObject({
+        provider: "claude",
+        home: fixture.home,
+        version: "2.1.215 (Claude Code)",
+      });
+    });
+
+    expect(await commandLines(fixture.home)).toEqual(["--version"]);
+  });
+
   it("maps exact scoped native commands and normalized inventory", async () => {
     const fixture = await makeFixture();
     const localMarketplace = path.join(fixture.root, "local-marketplace");
@@ -80,7 +97,6 @@ describe("claude-effect-platform-node", () => {
 
     expect(probe).toEqual({
       provider: "claude",
-      executablePath: fixture.executablePath,
       home: fixture.home,
       version: "2.1.215 (Claude Code)",
       capabilities: [
@@ -136,8 +152,6 @@ describe("claude-effect-platform-node", () => {
     });
     expect(await commandLines(fixture.home)).toEqual([
       "--version",
-      "plugin --help",
-      "plugin marketplace --help",
       "plugin marketplace list --json",
       "plugin list --json",
       `plugin marketplace add ${localMarketplace} --scope user`,
@@ -185,7 +199,7 @@ describe("claude-effect-platform-node", () => {
       commandPhase: "command-returned",
     });
 
-    await rm(fixture.executablePath);
+    await rm(fixture.command);
     const notStarted = await Effect.runPromiseExit(
       session.removePlugin({ selector: "cognition@rawr-hq" })
     );
@@ -260,7 +274,6 @@ describe("claude-effect-platform-node", () => {
     expect(Object.keys(session).sort()).toEqual([
       "addMarketplace",
       "enablePlugin",
-      "executablePath",
       "home",
       "installPlugin",
       "inventory",
@@ -273,23 +286,34 @@ describe("claude-effect-platform-node", () => {
   });
 });
 
-async function makeFixture(): Promise<
-  Readonly<{ root: string; executablePath: string; home: string }>
-> {
+async function makeFixture(
+  commandName = "fake-claude"
+): Promise<Readonly<{ root: string; command: string; home: string }>> {
   const root = await realpath(await mkdtemp(path.join(tmpdir(), "rawr-native-provider-test-")));
   roots.push(root);
   const home = path.join(root, "home");
-  const executablePath = path.join(root, "fake-claude");
+  const command = path.join(root, commandName);
   await mkdir(home);
-  await writeFile(executablePath, fakeClaudeScript(), { mode: 0o755 });
-  await chmod(executablePath, 0o755);
-  return Object.freeze({ root, executablePath, home });
+  await writeFile(command, fakeClaudeScript(), { mode: 0o755 });
+  await chmod(command, 0o755);
+  return Object.freeze({ root, command, home });
 }
 
-async function acquire(fixture: Readonly<{ executablePath: string; home: string }>) {
+async function withPathPrefix<A>(root: string, effect: () => Promise<A>): Promise<A> {
+  const previous = process.env.PATH;
+  process.env.PATH = previous === undefined ? root : `${root}${path.delimiter}${previous}`;
+  try {
+    return await effect();
+  } finally {
+    if (previous === undefined) delete process.env.PATH;
+    else process.env.PATH = previous;
+  }
+}
+
+async function acquire(fixture: Readonly<{ command: string; home: string }>) {
   return Effect.runPromise(
     makeNodeClaudeNativeAgentProviderResource({
-      executablePath: fixture.executablePath,
+      command: fixture.command,
     }).acquire({ home: fixture.home })
   );
 }
@@ -321,8 +345,6 @@ printf '%s\\n' "$*" >> "$HOME/commands.log"
 printf '%s|%s|%s|%s\\n' "$HOME" "\${CODEX_HOME:-}" "$CLAUDE_CONFIG_DIR" "\${PATH:+set}" >> "$HOME/env.log"
 case "$*" in
   "--version") printf '%s\\n' '2.1.215 (Claude Code)' ;;
-  "plugin --help") printf 'Commands:\\n  list  list plugins\\n  install  install plugin\\n  enable  enable plugin\\n  disable  disable plugin\\n  uninstall  uninstall plugin\\n  update  update plugin\\n' ;;
-  "plugin marketplace --help") printf 'Commands:\\n  list  list markets\\n  add  add market\\n  remove  remove market\\n  update  update market\\n' ;;
   "plugin marketplace list --json")
     if [ -f "$HOME/claude-marketplaces.json" ]; then cat "$HOME/claude-marketplaces.json"; else printf '%s\\n' '[]'; fi ;;
   "plugin list --json")

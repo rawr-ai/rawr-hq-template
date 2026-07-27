@@ -5,7 +5,6 @@ import type {
   NativeAgentProviderResource,
   NativeMarketplaceSource,
   NativeProviderCapabilities,
-  NativeProviderCapability,
   NativeProviderInventory,
   NativeProviderMarketplaceObservation,
   NativeProviderPluginFileObservation,
@@ -22,7 +21,6 @@ import {
   decodeProviderJson,
   type EffectPlatformNodeProviderKernel,
   type EffectPlatformNodeRequirements,
-  parseHelpCommands,
   requireGitMarketplaceSource,
   requireMarketplaceIdentityInput,
   requireMarketplaceSource,
@@ -63,38 +61,45 @@ const ClaudePluginListSchema = Type.Array(
 type ClaudeMarketplaceList = Static<typeof ClaudeMarketplaceListSchema>;
 type ClaudePluginList = Static<typeof ClaudePluginListSchema>;
 
-/** Fixes the exact Claude executable used by every session from this resource. */
+const CLAUDE_CAPABILITIES = [
+  "marketplace-list",
+  "marketplace-add",
+  "marketplace-remove",
+  "marketplace-update",
+  "plugin-list",
+  "plugin-install",
+  "plugin-enable",
+  "plugin-disable",
+  "plugin-remove",
+  "plugin-update",
+] satisfies Extract<NativeProviderCapabilities, { provider: "claude" }>["capabilities"];
+
+/** Overrides the ordinary Claude command only for focused provider tests. */
 export interface ClaudeEffectPlatformNodeProviderOptions {
-  readonly executablePath: string;
+  readonly command?: string;
 }
 
 /**
  * Constructs the platform-requiring Claude provider without choosing a runtime.
  */
 export function makeClaudeEffectPlatformNodeProvider(
-  options: ClaudeEffectPlatformNodeProviderOptions
+  options: ClaudeEffectPlatformNodeProviderOptions = {}
 ): NativeAgentProviderResource<ClaudeNativeAgentProviderSession, EffectPlatformNodeRequirements> {
+  const command = options.command ?? "claude";
   return Object.freeze({
     acquire: (input: NativeProviderSessionInput) =>
-      acquireEffectPlatformNodeProvider("claude", options.executablePath, input).pipe(
+      acquireEffectPlatformNodeProvider("claude", command, input).pipe(
         Effect.map((kernel): ClaudeNativeAgentProviderSession => {
           const probe: ClaudeNativeAgentProviderSession["probe"] = () =>
             kernel.serialized(
               "probe",
               Effect.gen(function* () {
                 const version = yield* kernel.run("probe", ["--version"]);
-                const pluginHelp = yield* kernel.run("probe", ["plugin", "--help"]);
-                const marketplaceHelp = yield* kernel.run("probe", [
-                  "plugin",
-                  "marketplace",
-                  "--help",
-                ]);
                 return Object.freeze({
                   provider: "claude",
-                  executablePath: kernel.executablePath,
                   home: kernel.home,
                   version: yield* requireVersion(version.stdout),
-                  capabilities: observedCapabilities(pluginHelp.stdout, marketplaceHelp.stdout),
+                  capabilities: [...CLAUDE_CAPABILITIES],
                 }) satisfies NativeProviderCapabilities;
               })
             );
@@ -105,7 +110,6 @@ export function makeClaudeEffectPlatformNodeProvider(
 
           return Object.freeze({
             provider: "claude",
-            executablePath: kernel.executablePath,
             home: kernel.home,
             probe,
             inventory,
@@ -215,7 +219,7 @@ export function makeClaudeEffectPlatformNodeProvider(
  * acquiring a session.
  */
 export function makeNodeClaudeNativeAgentProviderResource(
-  options: ClaudeEffectPlatformNodeProviderOptions
+  options: ClaudeEffectPlatformNodeProviderOptions = {}
 ): NativeAgentProviderResource<ClaudeNativeAgentProviderSession, never> {
   const provider = makeClaudeEffectPlatformNodeProvider(options);
   return Object.freeze({
@@ -436,29 +440,6 @@ function pluginMutation(
   selector: string
 ) {
   return kernel.mutation(operation, ["plugin", action, selector, "--scope", "user"]);
-}
-
-function observedCapabilities(
-  pluginHelp: string,
-  marketplaceHelp: string
-): Extract<NativeProviderCapabilities, { provider: "claude" }>["capabilities"] {
-  const plugin = new Set(parseHelpCommands(pluginHelp));
-  const marketplace = new Set(parseHelpCommands(marketplaceHelp));
-  const capabilities: Extract<
-    NativeProviderCapabilities,
-    { provider: "claude" }
-  >["capabilities"][number][] = [];
-  if (marketplace.has("list")) capabilities.push("marketplace-list");
-  if (marketplace.has("add")) capabilities.push("marketplace-add");
-  if (marketplace.has("remove")) capabilities.push("marketplace-remove");
-  if (marketplace.has("update")) capabilities.push("marketplace-update");
-  if (plugin.has("list")) capabilities.push("plugin-list");
-  if (plugin.has("install")) capabilities.push("plugin-install");
-  if (plugin.has("enable")) capabilities.push("plugin-enable");
-  if (plugin.has("disable")) capabilities.push("plugin-disable");
-  if (plugin.has("uninstall")) capabilities.push("plugin-remove");
-  if (plugin.has("update")) capabilities.push("plugin-update");
-  return capabilities;
 }
 
 function requireVersion(stdout: string): Effect.Effect<string, NativeAgentProviderFailure> {

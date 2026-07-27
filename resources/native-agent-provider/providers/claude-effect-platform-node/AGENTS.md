@@ -16,28 +16,28 @@
 
 - Treat Claude inventory as live provider state; do not synthesize desired
   lifecycle state or persist a competing provider record.
-- Own Claude command arguments, protocol decoding, capability probes, and
-  serialized native mutations only.
+- Own Claude command arguments, protocol decoding, adapter-declared
+  capabilities, version observation, and serialized native mutations only.
 - Report canonical provider observations and typed failures through the parent
   contract.
 
 ## Behavior
 
-- The provider probes a selected Claude executable and home, decodes its
-  marketplace and plugin inventory, serializes requested mutations, and
-  reports the observed native result.
+- The provider resolves the ordinary `claude` command for one explicit home,
+  decodes its marketplace and plugin inventory, serializes requested
+  mutations, and reports the observed native result.
 
 ## Concepts
 
-- A **Claude home** scopes native state. A **capability probe** determines
-  supported commands; a **serialized mutation** prevents overlapping native
-  marketplace or plugin changes.
+- A **Claude home** scopes native state. **Adapter capabilities** name the
+  native operations this provider implements; a **serialized mutation**
+  prevents overlapping native marketplace or plugin changes.
 
 ## Flow
 
-- The caller acquires a session for an explicit Claude executable and home;
-  the provider probes or reads native inventory and delegates requested
-  marketplace or plugin changes to Claude.
+- The caller acquires a session for an explicit Claude home; the provider uses
+  the ordinary process command to observe native inventory and delegate
+  requested marketplace or plugin changes to Claude.
 
 ## Interfaces
 

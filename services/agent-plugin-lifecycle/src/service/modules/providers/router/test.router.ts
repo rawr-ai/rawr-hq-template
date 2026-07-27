@@ -506,11 +506,7 @@ export const test = module.test.effect(function* ({ context, input: request }) {
         });
       }
       const session: NativeAgentProviderSession = acquisition.success;
-      if (
-        session.provider !== target.provider ||
-        session.home !== target.home ||
-        session.executablePath.length === 0
-      ) {
+      if (session.provider !== target.provider || session.home !== target.home) {
         return Object.freeze({
           kind: "Unavailable" as const,
           assessment: unavailableNativeTarget(
@@ -541,7 +537,6 @@ export const test = module.test.effect(function* ({ context, input: request }) {
         capabilities.provider !== target.provider ||
         inventory.provider !== target.provider ||
         capabilities.home !== target.home ||
-        capabilities.executablePath !== session.executablePath ||
         (session.provider === "claude" &&
           (typeof session.enablePlugin !== "function" ||
             !new Set<string>(capabilities.capabilities).has("plugin-enable")))

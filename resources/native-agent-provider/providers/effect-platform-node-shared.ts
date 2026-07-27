@@ -20,7 +20,6 @@ import type {
 import {
   CanonicalGitRepositoryUrlSchema,
   NativeMarketplaceSourceSchema,
-  NativeProviderExecutablePathSchema,
   NativeProviderMarketplaceIdentityInputSchema,
   NativeProviderPluginFilesReadInputSchema,
   NativeProviderPluginSelectorInputSchema,
@@ -48,7 +47,6 @@ type NativeCommandOutput = Readonly<{
 /** Shared, provider-neutral filesystem and process capabilities behind an acquired native session. */
 export type EffectPlatformNodeProviderKernel = Readonly<{
   provider: NativeAgentProviderId;
-  executablePath: string;
   home: string;
   serialized: <A, R>(
     operation: NativeAgentProviderOperation,
@@ -77,12 +75,12 @@ export type EffectPlatformNodeProviderKernel = Readonly<{
 /**
  * Acquires the bounded Node kernel used by one provider session.
  *
- * The concrete provider fixes its executable before acquisition; the caller
- * supplies only the provider-owned home for this session.
+ * The concrete provider fixes its ordinary command before acquisition; the
+ * caller supplies only the provider-owned home for this session.
  */
 export function acquireEffectPlatformNodeProvider(
   provider: NativeAgentProviderId,
-  executablePathInput: string,
+  command: string,
   input: NativeProviderSessionInput
 ): Effect.Effect<
   EffectPlatformNodeProviderKernel,
@@ -100,25 +98,9 @@ export function acquireEffectPlatformNodeProvider(
         "Provider session input is invalid"
       );
     }
-    if (!Value.Check(NativeProviderExecutablePathSchema, executablePathInput)) {
-      return yield* fail(
-        provider,
-        "acquire",
-        "InvalidInput",
-        "not-started",
-        undefined,
-        "Provider executable path is invalid"
-      );
-    }
     const fs = yield* FileSystem.FileSystem;
     const paths = yield* Path.Path;
     const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
-    const executablePath = yield* requireCanonicalExecutable(
-      fs,
-      paths,
-      provider,
-      executablePathInput
-    );
     const home = yield* requireCanonicalDirectory(fs, paths, provider, "acquire", input.home);
     const semaphore = processSemaphore(provider, home);
 
@@ -128,7 +110,7 @@ export function acquireEffectPlatformNodeProvider(
       );
 
     const run: EffectPlatformNodeProviderKernel["run"] = (operation, args) =>
-      runCommand({ provider, operation, executablePath, home, args, spawner });
+      runCommand({ provider, operation, command, home, args, spawner });
 
     const mutation: EffectPlatformNodeProviderKernel["mutation"] = (operation, args) =>
       run(operation, args).pipe(
@@ -154,7 +136,6 @@ export function acquireEffectPlatformNodeProvider(
 
     return Object.freeze({
       provider,
-      executablePath,
       home,
       serialized,
       run,
@@ -223,17 +204,6 @@ export function decodeProviderJson<const Schema extends TSchema>(
           )
     )
   );
-}
-
-/** Extracts the canonical command names advertised by a native help surface. */
-export function parseHelpCommands(stdout: string): readonly string[] {
-  const commands = new Set<string>();
-  for (const line of stdout.split(/\r?\n/u)) {
-    const match = /^ {2,4}([a-z][a-z0-9-]*(?:\|[a-z][a-z0-9-]*)*)(?=\s|\[|<|$)/u.exec(line);
-    if (match?.[1] === undefined) continue;
-    for (const command of match[1].split("|")) commands.add(command);
-  }
-  return Object.freeze([...commands].sort(compareText));
 }
 
 /** Validates one marketplace identity before native removal argument construction. */
@@ -373,7 +343,7 @@ export function requireGitMarketplaceSource(
 interface CommandRunInput {
   readonly provider: NativeAgentProviderId;
   readonly operation: NativeAgentProviderOperation;
-  readonly executablePath: string;
+  readonly command: string;
   readonly home: string;
   readonly args: readonly string[];
   readonly spawner: ChildProcessSpawner.ChildProcessSpawner["Service"];
@@ -382,7 +352,7 @@ interface CommandRunInput {
 function runCommand(
   input: CommandRunInput
 ): Effect.Effect<NativeCommandOutput, NativeAgentProviderFailure> {
-  const command = ChildProcess.make(input.executablePath, input.args, {
+  const command = ChildProcess.make(input.command, input.args, {
     cwd: input.home,
     env: providerEnvironment(input.provider, input.home),
     extendEnv: true,
@@ -395,7 +365,7 @@ function runCommand(
         platformFailure(
           input.provider,
           input.operation,
-          input.executablePath,
+          undefined,
           cause,
           "CommandFailed",
           "not-started"
@@ -409,7 +379,7 @@ function runCommand(
             input.operation,
             "CommandTimedOut",
             "not-started",
-            input.executablePath,
+            undefined,
             "Provider command did not start within its bounded timeout"
           ),
       }),
@@ -423,7 +393,7 @@ function runCommand(
                 platformFailure(
                   input.provider,
                   input.operation,
-                  input.executablePath,
+                  undefined,
                   cause,
                   "CommandFailed",
                   "started"
@@ -441,7 +411,7 @@ function runCommand(
                 input.operation,
                 "CommandTimedOut",
                 "started",
-                input.executablePath,
+                undefined,
                 "Provider command exceeded its bounded execution timeout"
               ),
           })
@@ -455,7 +425,7 @@ function runCommand(
               input.operation,
               "CommandFailed",
               "command-returned",
-              input.executablePath,
+              undefined,
               `Provider command exited ${Number(exitCode)}: ${stderr.trim() || stdout.trim()}`
             )
       )
@@ -601,53 +571,6 @@ function readBoundedPluginFile(
       byteLength: bytes.byteLength,
       contentBase64: Buffer.from(bytes).toString("base64"),
     });
-  });
-}
-
-function requireCanonicalExecutable(
-  fs: FileSystem.FileSystem,
-  paths: Path.Path,
-  provider: NativeAgentProviderId,
-  candidate: string
-): Effect.Effect<string, NativeAgentProviderFailure> {
-  return Effect.gen(function* () {
-    if (!isCanonicalAbsolutePath(paths, candidate)) {
-      return yield* fail(
-        provider,
-        "acquire",
-        "InvalidInput",
-        "not-started",
-        candidate,
-        "Provider executable must be an explicit canonical absolute path"
-      );
-    }
-    const resolved = yield* fs
-      .realPath(candidate)
-      .pipe(mapPlatform(provider, "acquire", candidate, "not-started"));
-    if (resolved !== candidate) {
-      return yield* fail(
-        provider,
-        "acquire",
-        "Aliased",
-        "not-started",
-        candidate,
-        "Provider executable path is aliased"
-      );
-    }
-    const status = yield* fs
-      .stat(candidate)
-      .pipe(mapPlatform(provider, "acquire", candidate, "not-started"));
-    if (status.type !== "File" || (status.mode & 0o111) === 0) {
-      return yield* fail(
-        provider,
-        "acquire",
-        "UnsupportedEntry",
-        "not-started",
-        candidate,
-        "Provider executable must be one executable regular file"
-      );
-    }
-    return candidate;
   });
 }
 

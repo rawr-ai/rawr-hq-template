@@ -2,10 +2,7 @@ import { Flags } from "@oclif/core";
 import { RawrCommand } from "@rawr/core";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
-import {
-  providerExecutableFlag,
-  providerTargetFlag,
-} from "../../../lib/agent-plugins/commands/flags";
+import { providerTargetFlag } from "../../../lib/agent-plugins/commands/flags";
 import { parseStatusRequest } from "../../../lib/agent-plugins/commands/input";
 
 export default class AgentPluginsStatus extends AgentPluginLifecycleCommand {
@@ -16,16 +13,12 @@ export default class AgentPluginsStatus extends AgentPluginLifecycleCommand {
     "content-workspace": Flags.string({ description: "Canonical content record workspace" }),
     "repository-identity": Flags.string({ description: "Expected content repository identity" }),
     target: providerTargetFlag,
-    "provider-executable": providerExecutableFlag,
   } as const;
 
   async run(): Promise<void> {
     const { flags } = await this.parseRawr(AgentPluginsStatus);
     const input = this.parseInput(flags, parseStatusRequest);
     if (input === undefined) return;
-    const providers = [...new Set(input.targets.map((target) => target.provider))];
-    await this.project({ operation: "providers.status", input }, flags, {
-      providers,
-    });
+    await this.project({ operation: "providers.status", input }, flags);
   }
 }

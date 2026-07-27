@@ -6,7 +6,6 @@ import type {
   NativeAgentProviderResource,
   NativeMarketplaceSource,
   NativeProviderCapabilities,
-  NativeProviderCapability,
   NativeProviderInventory,
   NativeProviderMarketplaceObservation,
   NativeProviderPluginFileObservation,
@@ -23,7 +22,6 @@ import {
   decodeProviderJson,
   type EffectPlatformNodeProviderKernel,
   type EffectPlatformNodeRequirements,
-  parseHelpCommands,
   requireGitMarketplaceSource,
   requireMarketplaceIdentityInput,
   requireMarketplaceSource,
@@ -82,38 +80,41 @@ const CodexPluginListSchema = Type.Object(
 type CodexMarketplaceList = Static<typeof CodexMarketplaceListSchema>;
 type CodexPluginList = Static<typeof CodexPluginListSchema>;
 
-/** Fixes the exact Codex executable used by every session from this resource. */
+const CODEX_CAPABILITIES = [
+  "marketplace-list",
+  "marketplace-add",
+  "marketplace-remove",
+  "plugin-list",
+  "plugin-install",
+  "plugin-remove",
+] satisfies Extract<NativeProviderCapabilities, { provider: "codex" }>["capabilities"];
+
+/** Overrides the ordinary Codex command only for focused provider tests. */
 export interface CodexEffectPlatformNodeProviderOptions {
-  readonly executablePath: string;
+  readonly command?: string;
 }
 
 /**
  * Constructs the platform-requiring Codex provider without choosing a runtime.
  */
 export function makeCodexEffectPlatformNodeProvider(
-  options: CodexEffectPlatformNodeProviderOptions
+  options: CodexEffectPlatformNodeProviderOptions = {}
 ): NativeAgentProviderResource<CodexNativeAgentProviderSession, EffectPlatformNodeRequirements> {
+  const command = options.command ?? "codex";
   return Object.freeze({
     acquire: (input: NativeProviderSessionInput) =>
-      acquireEffectPlatformNodeProvider("codex", options.executablePath, input).pipe(
+      acquireEffectPlatformNodeProvider("codex", command, input).pipe(
         Effect.map((kernel): CodexNativeAgentProviderSession => {
           const probe: CodexNativeAgentProviderSession["probe"] = () =>
             kernel.serialized(
               "probe",
               Effect.gen(function* () {
                 const version = yield* kernel.run("probe", ["--version"]);
-                const pluginHelp = yield* kernel.run("probe", ["plugin", "--help"]);
-                const marketplaceHelp = yield* kernel.run("probe", [
-                  "plugin",
-                  "marketplace",
-                  "--help",
-                ]);
                 return Object.freeze({
                   provider: "codex",
-                  executablePath: kernel.executablePath,
                   home: kernel.home,
                   version: yield* requireVersion(version.stdout),
-                  capabilities: observedCapabilities(pluginHelp.stdout, marketplaceHelp.stdout),
+                  capabilities: [...CODEX_CAPABILITIES],
                 }) satisfies NativeProviderCapabilities;
               })
             );
@@ -124,7 +125,6 @@ export function makeCodexEffectPlatformNodeProvider(
 
           return Object.freeze({
             provider: "codex",
-            executablePath: kernel.executablePath,
             home: kernel.home,
             probe,
             inventory,
@@ -224,7 +224,7 @@ export function makeCodexEffectPlatformNodeProvider(
  * acquiring a session.
  */
 export function makeNodeCodexNativeAgentProviderResource(
-  options: CodexEffectPlatformNodeProviderOptions
+  options: CodexEffectPlatformNodeProviderOptions = {}
 ): NativeAgentProviderResource<CodexNativeAgentProviderSession, never> {
   const provider = makeCodexEffectPlatformNodeProvider(options);
   return Object.freeze({
@@ -419,25 +419,6 @@ function codexMarketplaceAddArgs(
       ])
     )
   );
-}
-
-function observedCapabilities(
-  pluginHelp: string,
-  marketplaceHelp: string
-): Extract<NativeProviderCapabilities, { provider: "codex" }>["capabilities"] {
-  const plugin = new Set(parseHelpCommands(pluginHelp));
-  const marketplace = new Set(parseHelpCommands(marketplaceHelp));
-  const capabilities: Extract<
-    NativeProviderCapabilities,
-    { provider: "codex" }
-  >["capabilities"][number][] = [];
-  if (marketplace.has("list")) capabilities.push("marketplace-list");
-  if (marketplace.has("add")) capabilities.push("marketplace-add");
-  if (marketplace.has("remove")) capabilities.push("marketplace-remove");
-  if (plugin.has("list")) capabilities.push("plugin-list");
-  if (plugin.has("add")) capabilities.push("plugin-install");
-  if (plugin.has("remove")) capabilities.push("plugin-remove");
-  return capabilities;
 }
 
 function requireVersion(stdout: string): Effect.Effect<string, NativeAgentProviderFailure> {
