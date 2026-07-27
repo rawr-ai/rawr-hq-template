@@ -143,9 +143,61 @@ repeat operation names.
 
 ## Context
 
-Context is capability, not a transport bag. `deps`, `scope`, `config`,
-`invocation`, and `provided` are host or service transition lanes. A router
-that reads them has reopened a wider layer and made the module boundary false.
+Context is capability organized by lifetime and owner, not a transport bag.
+The service declares four input lanes once; the SDK reserves one execution
+bucket that middleware populates:
+
+| Lane | Owner | Lifetime | Meaning |
+| --- | --- | --- | --- |
+| `deps` | host | client | Ready resource or service capabilities supplied from outside the service. |
+| `scope` | binding | client | Stable business identity and metadata for the bound service instance. |
+| `config` | host | client | Stable externally selected service behavior. |
+| `invocation` | caller | call | Request facts such as trace, request, or idempotency identity. |
+| `provided` | SDK and middleware | execution | SDK-seeded empty bucket whose keys are acquired or derived capabilities for downstream middleware and handlers. |
+
+Static procedure metadata is not execution context and does not enter these
+lanes. The construction and execution flow is explicit:
+
+```text
+host binding
+  -> createClient({ deps, scope, config })
+  -> call({ context: { invocation } })
+  -> base execution context
+  -> service middleware
+  -> provided capabilities
+  -> module projection
+  -> handler
+```
+
+`base.ts` declares the stable and per-call shapes and seeds the native oRPC
+author once. The public client binds the construction lanes. The caller
+supplies invocation facts per call. Provider middleware adds execution
+capabilities under `provided`; it does not rename, flatten, or reconstruct the
+four semantic input lanes. A module
+inherits the service context through its exact service branch, attaches its
+named capability middleware in `module.ts`, and lets handlers consume the
+resulting context directly.
+
+Reading an inherited lane in a handler is not an upward reach. Importing root
+runtime assembly to obtain it, restating the whole service context in a module,
+or manually rebuilding the lanes is. Module boundaries narrow which
+capabilities an operation authors against; they do not pretend inherited
+runtime context disappeared.
+
+Example Todo currently retains transitional module projections that copy
+selected lane values into flat handler fields. They are migration evidence,
+not an alternate lane model or a pattern to reproduce. A later runtime cut may
+move those capabilities under the qualified `provided` surface; this frame
+does not claim that cut has already happened.
+
+The canonical worked reference is
+[[services/example-todo/AGENTS|Example Todo]]. The reusable type and client
+boundary are
+[[packages/hq-sdk/src/orpc/context/types|the HQ SDK context model]] and
+[[packages/hq-sdk/src/orpc/boundary/service-package|the service-package boundary]].
+Their executable oracles are
+[[services/example-todo/test/context-typing|Example Todo context typing]] and
+[[apps/server/test/example-todo-package-surface.typecheck|the public package-surface proof]].
 
 Middleware is valid when it guards or enriches a real capability.
 It is not a second place to assemble service or module context. Root context

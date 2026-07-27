@@ -31,10 +31,18 @@
 - A **service declaration** names caller-visible capability. A **capability
   port** names a required host satisfier. A **declared surface** is a composed
   tree awaiting host realization.
+- A service declares four input lanes: host-supplied `deps`, stable binding
+  `scope`, stable behavior `config`, and per-call `invocation`. The SDK reserves
+  the empty execution bucket `provided`; provider middleware populates its
+  qualified keys. Procedure metadata remains outside execution context.
 
 ## Flow
 
 - A service declares contracts and routers with the SDK's stable builders.
+- The service-package boundary binds `deps`, `scope`, and `config` once; each
+  call supplies `invocation`; the SDK seeds `provided: {}`. Provider middleware
+  grows that bucket while retaining the named semantic lanes. Existing flat
+  module projections are consumer migration evidence, not another SDK lane.
 - An application declares selected surfaces, then a host supplies concrete
   ports and composes the declared trees.
 - The host projects the composed internal and published surfaces to its
@@ -51,6 +59,9 @@
 - [Packages router](../AGENTS.md)
 - [HQ application declarations](../../apps/hq/AGENTS.md)
 - [Server host](../../apps/server/AGENTS.md)
+- [[src/orpc/context/types|Context lane model]]
+- [[src/orpc/boundary/service-package|Service-package client boundary]]
+- [[../../services/example-todo/AGENTS|Example Todo worked reference]]
 
 ## Validation
 

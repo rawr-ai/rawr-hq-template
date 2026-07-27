@@ -40,6 +40,28 @@
   is service policy, not a database feature. A **workspace id** scopes every
   record in the capability suite.
 
+## Context Lanes
+
+| Lane | Bound by | Lifetime | Example Todo meaning |
+| --- | --- | --- | --- |
+| `Deps` | host | client | Database pool, clock, identifier generator, logger, and analytics capabilities. |
+| `Scope` | host binding | client | Workspace identity shared by every operation on that client. |
+| `Config` | host binding | client | Read-only policy and assignment limits selected from outside the service. |
+| `Invocation` | caller | call | Request facts; the current client requires a trace id, while request and idempotency identities belong here when a capability needs them. |
+| `provided` | middleware | execution | SQL and module repository capabilities acquired or derived for downstream handlers. |
+
+Procedure metadata is static service-authored meaning, not another execution
+lane. The four input lanes are service-declared; the SDK seeds an empty
+`provided` bucket and middleware populates it during execution. The lane model
+entered the sealed public face at Template commit
+`07ff505ff781ee2f27af700e25beb1032cb53d37` and remains the canonical worked
+reference for construction and invocation. Current module composition also
+projects selected values into flat handler fields; that transitional wiring is
+retained here as implementation evidence, not as a fifth input lane or a
+pattern to copy. Preserve the named lanes through service refactors: change a
+lane only when its owner or lifetime changes, never to make local wiring
+convenient.
+
 ## Flow
 
 - The private authoring funnel is
@@ -68,6 +90,9 @@
 
 - [Repository router](../../AGENTS.md)
 - [[src/client|Public client]]
+- [[src/service/base|Service context declaration]]
+- [[src/service/impl|Service middleware assembly]]
+- [[test/context-typing|Context lane type proof]]
 - [[src/service/contract|Private service contract]]
 - [[src/service/model/dto/identifier|Todo identifier DTO]]
 - [[src/service/model/dto/workspace-id|Workspace identity DTO]]
