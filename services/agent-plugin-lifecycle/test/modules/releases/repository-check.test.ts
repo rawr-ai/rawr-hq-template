@@ -28,7 +28,7 @@ import {
   parseGitTreeId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
 import { productFixture } from "../../shared/release/fixtures";
 import {
   createLifecycleTestClient,

@@ -9,7 +9,7 @@ import {
   ReleaseDigestSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 /** Identifies the only package format accepted and emitted by this module. */
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;

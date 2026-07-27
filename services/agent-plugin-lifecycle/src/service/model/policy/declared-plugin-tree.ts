@@ -2,7 +2,11 @@ import {
   type SourceEligibilityIssue,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import { type PluginId, parsePluginId, type ReleaseRelativePath } from "../../shared/release";
+import {
+  type PluginId,
+  parsePluginId,
+  type ReleaseRelativePath,
+} from "../../shared/release/primitives";
 import { compareCanonicalText } from "./canonical-text-ordering";
 
 /**

@@ -1,4 +1,3 @@
-import { createAgentPluginReleaseSet } from "../../shared/release/release-set";
 import type { AgentPluginRelease } from "../dto/agent-plugin-release";
 import type {
   ReleaseDerivationFailure,
@@ -7,6 +6,7 @@ import type {
   ReleaseDerivationSource,
 } from "../dto/release-derivation";
 import { createAgentPluginRelease } from "./agent-plugin-release";
+import { createAgentPluginReleaseSet } from "./agent-plugin-release-set";
 import { compareCanonicalText } from "./canonical-text-ordering";
 
 /**

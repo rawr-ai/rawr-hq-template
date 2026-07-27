@@ -16,7 +16,7 @@ import {
   MAX_CLEAN_RELEASE_INPUT_BYTES,
 } from "../../../src/service/model/policy/clean-content-workspace";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
-import { parsePluginId } from "../../../src/service/shared/release";
+import { parsePluginId } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

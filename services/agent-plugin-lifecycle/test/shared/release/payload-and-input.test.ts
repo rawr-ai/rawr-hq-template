@@ -12,6 +12,7 @@ import {
 } from "../../../src/service/model/dto/release-input";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { decodeAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
+import { decodeAgentPluginReleaseSet } from "../../../src/service/model/policy/agent-plugin-release-set";
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
@@ -28,7 +29,6 @@ import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
 } from "../../../src/service/shared/release/primitives";
-import { decodeAgentPluginReleaseSet } from "../../../src/service/shared/release/release-set";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
 const encoder = new TextEncoder();

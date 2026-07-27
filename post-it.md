@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Complete Release Set Is Service-Wide Meaning
+
+A complete release set is closed in-memory domain data shared by Releases,
+Packaging, and Providers. One direct service-root TypeBox DTO owns member, body,
+and envelope structure and generated types. One direct policy owns
+construction, admission, relationship checks, deterministic diagnostics,
+bounds, and immutability. One direct codec owns the digest-free canonical body
+preimage and envelope bytes.
+
+The set digest verifies those bytes; it is not a store address, provider
+identity, retention key, or lookup handle. The complete set preserves exact
+witness membership, ownership, provenance, ordering, release-input identity,
+and release-digest binding without a persistent set artifact. Consumers import
+the qualified owners directly. The transitional release-set implementation and
+release barrel are deleted rather than preserved through an alias, facade, or
+compatibility path; only the explicitly transitional primitive leaf remains
+for the next bounded cut.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/agent-plugin-release-set|the release-set DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release-set|the release-set policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release-set-codec|the release-set codec]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+set, member, witness, ownership, provenance, digest, order, closure, schema,
+policy, codec, memory, deletion.
+
 ## 2026-07-27 - Individual Release Is In-Memory Domain Data
 
 An individual agent-plugin release is verified in-memory domain data. Its

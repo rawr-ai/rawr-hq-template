@@ -33,7 +33,7 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
   type ReleaseRelativePath,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import {
   normalizeReleaseSourceChangedDetail,
   type ReleaseInputRefreshRequest,

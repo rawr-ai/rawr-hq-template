@@ -13,7 +13,7 @@ import {
   sameSelectedContent,
   validateSelectedContent,
 } from "../../../src/service/modules/providers/model/policy/selected-content";
-import { parseOwnershipIdentity } from "../../../src/service/shared/release";
+import { parseOwnershipIdentity } from "../../../src/service/shared/release/primitives";
 import { member, selectedContent } from "./fixture";
 
 describe("selected provider content", () => {

@@ -5,7 +5,7 @@ import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-} from "../../../shared/release";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type {
   VendorSourceStatus,
   VendorUpdateIssue,

@@ -25,7 +25,7 @@ import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/m
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-} from "../../../../shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { SelectedContentResolution } from "../dto/selected-content";
 import { validateNativeMarketplaces } from "./native-marketplace";
 import { selectedContentRejected } from "./selected-content";

@@ -7,9 +7,9 @@ import {
   PluginIdSchema,
   type RepositoryIdentity,
 } from "../../shared/release/primitives";
-import type { AgentPluginReleaseSet } from "../../shared/release/release-set";
 import type { AgentPluginPayload } from "./agent-plugin-payload";
 import type { AgentPluginRelease } from "./agent-plugin-release";
+import type { AgentPluginReleaseSet } from "./agent-plugin-release-set";
 import type { AgentPluginReleaseInput } from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 

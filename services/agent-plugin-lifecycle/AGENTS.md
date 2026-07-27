@@ -57,8 +57,14 @@
   never an artifact address, store handle, provider identity, or local
   installation identity. Artifact body, artifact digest, artifact protocol,
   and local storage identity are rejected rather than preserved behind another
-  name. Release-set policy temporarily retains cross-member relationships.
-  Primitive and digest mechanics remain separate owners.
+  name. Complete release-set member, body, and envelope structure and generated
+  types have one direct service-root TypeBox DTO owner. One direct release-set
+  policy owns construction, admission, cross-member relationships,
+  deterministic diagnostics, bounds, and immutability. One direct codec owns
+  the digest-free canonical body preimage and envelope bytes. The release-set
+  digest is an invocation-local verification value, never storage or provider
+  identity. Consumers import those exact leaves; the only transitional
+  `shared/release` owner is the qualified primitive leaf.
   Provenance-binding policy owns bounded admission, canonical ordering,
   duplicate-identity refusal, defensive freezing, and canonical projection
   across release input, individual release, and complete-set records. Its
@@ -66,8 +72,8 @@
   Completeness-witness structure and generated types also remain in that DTO.
   Witness construction, admission, ordering, duplicate refusal, ownership
   closure, freezing, and canonical projection have one direct service-root
-  policy owner. Release-set policy retains the relationships between that
-  witness, the containing set, and the derived releases.
+  policy owner. Release-set policy owns the relationships between that witness,
+  the containing set, and the derived releases.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

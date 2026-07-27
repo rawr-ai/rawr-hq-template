@@ -45,7 +45,7 @@ import {
   encodeVendorSourceDeclaration,
   vendorPayloadDigest,
 } from "../../../src/service/modules/vendors/model/policy/vendor-record-codec";
-import { contentDigest } from "../../../src/service/shared/release";
+import { contentDigest } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

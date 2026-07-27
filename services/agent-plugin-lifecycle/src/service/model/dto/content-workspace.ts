@@ -11,7 +11,7 @@ import {
   ReleaseRelativePathSchema,
   type RepositoryIdentity,
   RepositoryIdentitySchema,
-} from "../../shared/release";
+} from "../../shared/release/primitives";
 import type { AgentPluginPayload } from "./agent-plugin-payload";
 import type { AgentPluginReleaseInput } from "./release-input";
 

@@ -19,7 +19,7 @@ import {
   parseRepositoryIdentity,
   type ReleaseRelativePath,
   type RepositoryIdentity,
-} from "../../src/service/shared/release";
+} from "../../src/service/shared/release/primitives";
 
 type ContentWorkspacePolicy = Parameters<Client["releases"]["check"]>[0]["contentWorkspace"];
 type GitRepositoryFixtureRoot = Readonly<{ path: string }>;

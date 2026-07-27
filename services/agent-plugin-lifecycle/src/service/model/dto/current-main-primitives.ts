@@ -7,7 +7,7 @@ import {
   parseRepositoryIdentity,
   type ReleaseRelativePath,
   type RepositoryIdentity,
-} from "../../shared/release";
+} from "../../shared/release/primitives";
 import { releaseIssue } from "../policy/release-issue";
 import type { ReleaseIssue } from "./release-issue";
 import type { ReleaseResult } from "./release-result";

@@ -6,7 +6,7 @@ import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/d
 import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
 import { createAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
-import { contentDigest } from "../../../../shared/release";
+import { contentDigest } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,

@@ -2230,8 +2230,45 @@ required repository check passed 39 projects and 76 dependency tasks in 37.7
 seconds, including all 17 enforced Habitat laws with zero findings. Strict
 OpenSpec validation and diff hygiene passed. Final architecture/Habitat,
 behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
-P0, P1, P2, or P3 finding. Landing evidence remains open until Graphite merges
-the checkpoint to canonical `main`.
+P0, P1, P2, or P3 finding. Graphite PR
+[#590](https://github.com/rawr-ai/rawr-hq-template/pull/590) landed the
+checkpoint on canonical `main` at
+`d3e7428529c77511b874c4e501425bd9e4ceabd9`.
+
+The next bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e8]]. It gives the
+complete in-memory release set direct service-root TypeBox DTO, policy, and
+codec owners, then deletes both the transitional release-set implementation
+and the release barrel. `ReleaseSetDigest` remains a verification value rather
+than storage identity. The cut preserves complete membership, ownership,
+provenance, ordering, release-input identity, release-digest binding, canonical
+bytes, diagnostics, and bounds without adding persistence or changing
+resources, providers, routers, native state, or public behavior. Implementation
+and proof are complete; landing evidence remains open.
+
+The checkpoint now owns closed TypeBox member, body, and envelope schemas,
+generated types, policy, and canonical encoding directly. Production admits
+reconstructed bodies and envelopes through those schemas before the sole brand
+refinement. A private bounded diagnostic candidate preserves established
+witness and stale-digest diagnostics for empty or malformed membership without
+making invalid state admissible. The transitional release-set implementation,
+aggregate barrel, dead construction interface, and public value projections
+are deleted; remaining primitive consumers import the one explicit
+transitional primitive leaf directly.
+
+The first standing reviews found that TypeBox was initially descriptive rather
+than authoritative and that early nonempty narrowing suppressed existing
+malformed-member diagnostics. Both findings were repaired and received final
+architecture/Habitat, behavior/TypeBox/testing, and
+TypeScript/refactor/structural acceptance with no remaining P0, P1, P2, or P3
+finding. Owner-local release-set proof passes 19 cases and 126 assertions. The
+complete lifecycle suite passes 41 files and 357 tests in 1 minute 11 seconds;
+the uncached lifecycle typecheck graph passes in 14 seconds. The required
+repository check passes 39 projects and 76 dependency tasks in 34.2 seconds,
+including all 17 enforced Habitat laws with zero findings. Strict OpenSpec,
+Biome, Oclif source/compiled command parity, stale-import scans, and diff
+hygiene pass. Landing evidence remains open until Graphite merges the
+checkpoint to canonical `main`.
 
 ## Settlement Oracles
 
