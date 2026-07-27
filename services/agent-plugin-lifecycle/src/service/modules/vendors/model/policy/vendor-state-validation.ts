@@ -1,6 +1,6 @@
 import { Value } from "typebox/value";
 
-import { equalBytes } from "../../../../shared/release/canonical";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import type { VendorStatusRequest, VendorUpdateIssue } from "../dto/vendor-operations";
 import type { VendorSourceIdentity } from "../dto/vendor-records";
 import {

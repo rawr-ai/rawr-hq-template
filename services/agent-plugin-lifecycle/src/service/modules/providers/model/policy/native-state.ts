@@ -10,9 +10,8 @@ import {
   MAX_NATIVE_PROVIDER_PLUGIN_FILE_BYTES,
   MAX_NATIVE_PROVIDER_PLUGIN_FILES,
 } from "@rawr/resource-native-agent-provider";
-
+import { decodeBase64 } from "#agent-plugin-lifecycle-service/model/policy/canonical-base64";
 import { contentDigest } from "../../../../shared/release";
-import { decodeBase64 } from "../../../../shared/release/canonical";
 import type {
   ProviderId,
   ProviderIssue,

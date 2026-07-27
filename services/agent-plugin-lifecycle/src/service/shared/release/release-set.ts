@@ -1,5 +1,8 @@
+import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
+import { equalBytes } from "../../model/helpers/byte-equality";
+import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
 import {
   prefixReleaseIssuePath,
   releaseIssue,
@@ -7,12 +10,6 @@ import {
 } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
-import {
-  type CanonicalJsonValue,
-  canonicalJsonLine,
-  decodeCanonicalJson,
-  equalBytes,
-} from "./canonical";
 import {
   type DistributionOwnershipIndex,
   ownershipClaimsFor,

@@ -1,12 +1,10 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
-
+import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
-
-import type { CanonicalJsonValue } from "./canonical";
 import { parseBoundedArray } from "./parse";
 import {
   compareCanonicalText,

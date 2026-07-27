@@ -2,13 +2,13 @@ import type {
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
 } from "@rawr/resource-content-workspace";
-
+import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
+import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
   createAgentPluginReleaseInput,
 } from "../../../../shared/release";
-import { type CanonicalJsonValue, canonicalJsonLine } from "../../../../shared/release/canonical";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,

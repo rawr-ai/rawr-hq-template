@@ -1,18 +1,8 @@
-import type { ReleaseIssue } from "../../model/dto/release-issue";
-import type { ReleaseResult } from "../../model/dto/release-result";
-import { releaseIssue } from "../../model/policy/release-issue";
-import { failure, success } from "../../model/policy/release-result";
+import type { ReleaseIssue } from "../dto/release-issue";
+import type { ReleaseResult } from "../dto/release-result";
+import { releaseIssue } from "./release-issue";
+import { failure, success } from "./release-result";
 
-export type CanonicalJsonValue =
-  | null
-  | boolean
-  | number
-  | string
-  | readonly CanonicalJsonValue[]
-  | { readonly [key: string]: CanonicalJsonValue };
-
-const encoder = new TextEncoder();
-const decoder = new TextDecoder("utf-8", { fatal: true });
 const BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const BASE64_PATTERN = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u;
 const BASE64_CHUNK_LENGTH = 8_192;
@@ -21,52 +11,12 @@ for (let index = 0; index < BASE64_ALPHABET.length; index += 1) {
   base64Values[BASE64_ALPHABET.charCodeAt(index)] = index;
 }
 
-export function canonicalJsonLine(value: CanonicalJsonValue): Uint8Array {
-  return encoder.encode(`${JSON.stringify(value)}\n`);
-}
-
-export function decodeCanonicalJson(
-  bytes: unknown,
-  path: string,
-  maxBytes: number
-): ReleaseResult<unknown, ReleaseIssue> {
-  if (!(bytes instanceof Uint8Array)) {
-    return failure([
-      releaseIssue("EXPECTED_BYTES", path, "Canonical envelope must be a Uint8Array"),
-    ]);
-  }
-  if (bytes.byteLength > maxBytes) {
-    return failure([
-      releaseIssue("ENVELOPE_TOO_LARGE", path, "Canonical envelope exceeds its protocol bound", {
-        expected: maxBytes,
-        actual: bytes.byteLength,
-      }),
-    ]);
-  }
-  let text: string;
-  try {
-    text = decoder.decode(bytes);
-  } catch {
-    return failure([releaseIssue("INVALID_UTF8", path, "Canonical envelope is not valid UTF-8")]);
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return failure([releaseIssue("INVALID_JSON", path, "Canonical envelope is not valid JSON")]);
-  }
-  return success(parsed);
-}
-
-export function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  if (left.byteLength !== right.byteLength) return false;
-  let difference = 0;
-  for (let index = 0; index < left.byteLength; index += 1) {
-    difference |= left[index]! ^ right[index]!;
-  }
-  return difference === 0;
-}
-
+/**
+ * Encodes payload bytes using the lifecycle protocol's canonical padded base64 form.
+ *
+ * @param bytes Payload bytes to encode without mutation.
+ * @returns Canonical padded base64 text.
+ */
 export function encodeBase64(bytes: Uint8Array): string {
   const chunks: string[] = [];
   let chunk = "";
@@ -89,6 +39,16 @@ export function encodeBase64(bytes: Uint8Array): string {
   return chunks.join("");
 }
 
+/**
+ * Decodes only canonical padded base64 into payload bytes.
+ *
+ * Structural alphabet and padding failures remain distinguishable in their
+ * diagnostic message from values whose unused trailing bits are noncanonical.
+ *
+ * @param value Candidate base64 value supplied by a persisted release record.
+ * @param path Diagnostic location associated with the candidate value.
+ * @returns Decoded bytes or one bounded release diagnostic.
+ */
 export function decodeBase64(
   value: unknown,
   path: string

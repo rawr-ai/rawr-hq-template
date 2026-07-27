@@ -1,16 +1,13 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
+import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
+import { decodeBase64, encodeBase64 } from "../../model/policy/canonical-base64";
+import { canonicalJsonLine } from "../../model/policy/canonical-json";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
-import {
-  type CanonicalJsonValue,
-  canonicalJsonLine,
-  decodeBase64,
-  encodeBase64,
-} from "./canonical";
 import { collect, isExactRecord, parseBoundedArray, parseInteger } from "./parse";
 import {
   type ContentDigest,

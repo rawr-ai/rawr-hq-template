@@ -1,12 +1,12 @@
 import { type Static, type TSchema } from "typebox";
 import { Value } from "typebox/value";
 
+import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import {
-  type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
-  equalBytes,
-} from "../../../../shared/release/canonical";
+} from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
 import { contentDigest } from "../../../../shared/release/primitives";
 import {
   type VendorLockRecord,
