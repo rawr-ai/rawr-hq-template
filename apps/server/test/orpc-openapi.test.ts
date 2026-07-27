@@ -18,7 +18,19 @@ describe("orpc openapi", () => {
       rawrHqHostSeam.realization.orpc.published.router
     )) as {
       openapi?: string;
-      paths?: Record<string, unknown>;
+      paths?: Record<
+        string,
+        {
+          post?: {
+            requestBody?: {
+              content?: Record<
+                string,
+                { schema?: { properties?: Record<string, { description?: string }> } }
+              >;
+            };
+          };
+        }
+      >;
     };
 
     expect(typeof spec.openapi).toBe("string");
@@ -26,6 +38,10 @@ describe("orpc openapi", () => {
     expect(spec.paths?.["/exampleTodo/tasks/create"]).toBeDefined();
     expect(spec.paths?.["/exampleTodo/tasks/{id}"]).toBeDefined();
     expect(spec.paths?.["/state/runtime"]).toBeUndefined();
+    expect(
+      spec.paths?.["/exampleTodo/tasks/create"]?.post?.requestBody?.content?.["application/json"]
+        ?.schema?.properties?.title?.description
+    ).toBe("Human-readable task title.");
   });
 
   it("serves openapi spec at /api/orpc/openapi.json", async () => {

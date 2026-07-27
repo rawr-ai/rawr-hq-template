@@ -200,11 +200,28 @@ forms is recorded for the upstream SDK in
 [[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]]. It is not implemented or
 emulated in Template, and it does not block this single-shape service law.
 
-Magic commit `fb91606db1c63dad92d3d4945bbb21bc92f9d1c3` separately hands off
-the shared TypeBox/oRPC contract-property-description law. Template has no
-stronger equivalent. Its shared pattern and bounded standalone/API
-applications are queued as a distinct Habitat-native checkpoint so this
-topology packet does not fork or absorb the contract law.
+Magic commit `fb91606db1c63dad92d3d4945bbb21bc92f9d1c3` supplies the shared
+TypeBox/oRPC contract-property-description law. Template adopts its pattern
+verbatim and applies it through bounded standalone-service and API-service
+rules, adapting only the `rawr` placement identity. Directly authored contract
+properties declare nonblank static meaning or delegate to a named schema
+authority. Within directly authored object literals, canonical TypeBox bindings
+and property grammar remain closed; nonliteral shape provenance remains a
+TypeScript and review concern. Both baselines are empty, both rules are enforced
+through the existing Habitat batch, and no script or second pattern exists.
+
+The import audit found 42 undocumented object sites across ten standalone
+module contracts and no API-service violation. The same checkpoint burns those
+sites down with domain descriptions while preserving every validation
+constraint, generated static type, router, and handler behavior. Session
+Intelligence passes 15 tests, ChatGPT Corpus 10, HQ Ops 11, and Hyperresearch
+Codex 47; all four owner typechecks pass. The complete 20-rule Habitat source
+law, its 33-test owner suite, repository formatting, strict OpenSpec validation,
+and both focused applications report zero findings. The Habitat suite exercises
+standalone and API rejection plus described and named-schema admission through
+the existing guarded fixture harness; it adds no scanner or policy runner. The
+server's 44-test suite and typecheck also prove that representative TypeBox
+property meaning survives the generated OpenAPI boundary.
 
 The narrower API-plugin face and Grit-helper documentation laws are now active
 repository admission checks. The API kind positively requires only
@@ -1205,6 +1222,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, Habitat source-law policy, and Habitat-owned project admission are active; generic service-rule inclusion remains pending |
+| TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |

@@ -21,7 +21,10 @@ const SecurityCheckInputSchema = schema(
 const GateEnableInputSchema = schema(
   Type.Object(
     {
-      pluginId: Type.String({ minLength: 1 }),
+      pluginId: Type.String({
+        description: "Plugin identifier whose enablement is being evaluated.",
+        minLength: 1,
+      }),
       riskTolerance: RiskToleranceSchema,
       mode: SecurityModeSchema,
     },

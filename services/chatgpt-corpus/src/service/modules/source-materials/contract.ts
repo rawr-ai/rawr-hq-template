@@ -7,14 +7,29 @@ import { SourceSnapshotSchema } from "./entities";
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const ReadSourceSnapshotOutputSchema = Type.Object(
   {
-    workspaceRef: Type.String({ minLength: 1 }),
+    workspaceRef: Type.String({
+      minLength: 1,
+      description: "Workspace identity from which the normalized source snapshot was read.",
+    }),
     sourceCounts: Type.Object(
       {
-        jsonConversations: Type.Number({ minimum: 0 }),
-        markdownDocuments: Type.Number({ minimum: 0 }),
-        totalSources: Type.Number({ minimum: 0 }),
+        jsonConversations: Type.Number({
+          minimum: 0,
+          description: "Number of admitted ChatGPT conversation exports in the snapshot.",
+        }),
+        markdownDocuments: Type.Number({
+          minimum: 0,
+          description: "Number of admitted supporting Markdown documents in the snapshot.",
+        }),
+        totalSources: Type.Number({
+          minimum: 0,
+          description: "Total number of admitted source documents in the snapshot.",
+        }),
       },
-      { additionalProperties: false }
+      {
+        additionalProperties: false,
+        description: "Counts summarizing the complete admitted source snapshot.",
+      }
     ),
     snapshot: SourceSnapshotSchema,
   },
