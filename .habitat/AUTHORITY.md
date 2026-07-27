@@ -9,9 +9,11 @@ relationships:
 
 1. A `service` has one contract-first oRPC spine, module-owned domain matter,
    native context projection, and one router lineage.
-2. An optional service-owned `database` has one closed migrations, schema, and
-   stores boundary. Root middleware projects its stores into context; modules
-   never acquire database source.
+2. An optional service-owned `database` has closed migrations and stores, plus
+   an optional closed physical-schema boundary when its technology needs one.
+   TypeBox owns logical record structure; migrations own physical evolution.
+   Root middleware projects stores into context; modules never acquire
+   database source.
 3. A `resource` has one closed provider-neutral capability contract and
    provider family. Each nested `provider` has one typed public realization
    face. The application selects providers and lifetimes; runtime acquisition
@@ -44,10 +46,11 @@ independently owned topology and source axes:
    middleware author when host projection is needed. Module capability
    contributions remain additive and inferred; owner-local resource cuts remove
    raw lanes instead of hiding them behind a shadow context type.
-5. Database source is closed to owner-issued migrations, named schemas, and
-   stores. Only database-owned source and named service-root middleware import
-   it; modules and handlers receive projected store capabilities through
-   inherited oRPC context.
+5. Database source is closed to owner-issued migrations and stores, with named
+   physical schemas admitted only when required by the database technology.
+   TypeBox retains logical DTO-schema authority. Only database-owned source and
+   named service-root middleware import database leaves; modules and handlers
+   receive projected store capabilities through inherited oRPC context.
 6. Qualified middleware is one documented named native value authored from the
    base factory and attached through a native middleware operator rather than
    an inline callback or explicit context type argument.

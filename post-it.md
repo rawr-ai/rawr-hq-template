@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Database Shape Separates Logical And Physical Authority
+
+A service database always owns migrations and stores. Migrations describe how
+physical state evolves; stores implement service-owned persistence behavior.
+TypeBox already owns the logical record schemas consumed by service contracts,
+so another schema directory is not a ceremony every database must repeat.
+
+Some database technologies still need distinct physical mappings. For those
+technologies, the same closed database boundary may contain a closed `schema`
+interior with only named `*.schema.ts` leaves. Making that interior optional
+removes duplicate authority without opening the database or weakening its
+service-root ownership.
+
+See [[.habitat/blueprints/database/skill|the database frame]],
+[[.habitat/blueprints/database/require_service_database_topology/structure.toml|the closed topology]],
+[[.habitat/AUTHORITY|Habitat authority]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Schema-Optional Service Database|the checkpoint record]].
+
+### Bag Of Keywords
+
+database, migration, store, schema, TypeBox, logical, physical, evolution,
+mapping, service, owner, closure.
+
 ## 2026-07-27 - Context Is Organized By Owner And Lifetime
 
 Example Todo's context lanes are a retained service-design asset, not temporary

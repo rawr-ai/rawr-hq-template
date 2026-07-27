@@ -103,13 +103,16 @@ checkpoint. Current Magic service/database shapes were read only as ownership
 evidence: RAWR deliberately rejects their open root/module interiors and keeps
 one closed standalone service-root destination instead.
 
-The database topology admits exactly `migrations/*.sql`,
-`schema/*.schema.ts`, and `stores/*.store.ts` when `db` is present. Its source
-law recognizes only literal module-loading edges that visibly name the current
-service database. Database-owned TypeScript and root named middleware may
-import those leaves; modules and other service-root source consume projected
-capabilities through context. Both empty-baseline rules run once in the
-existing Habitat source-law batch without another target or runner.
+The database topology requires closed `migrations/*.sql` and
+`stores/*.store.ts` interiors when `db` is present. It admits an optional closed
+`schema/*.schema.ts` interior only for technology-specific physical mappings;
+TypeBox remains the logical DTO-schema owner and migrations own physical
+evolution. Its source law recognizes only literal module-loading edges that
+visibly name the current service database. Database-owned TypeScript and root
+named middleware may import those leaves; modules and other service-root
+source consume projected capabilities through context. Both empty-baseline
+rules run once in the existing Habitat source-law batch without another target
+or runner.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed

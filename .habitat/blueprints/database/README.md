@@ -2,7 +2,10 @@
 
 `database` is an optional persistence boundary owned by one standalone
 service. Its closed topology admits only owner-issued SQL migrations, named
-schema leaves, and store implementations under `src/service/db`. The same
+store implementations, and optional technology-specific physical schema leaves
+under `src/service/db`. TypeBox remains the logical record-schema owner;
+migrations own physical evolution. A `schema` directory exists only when the
+selected database technology needs a separate physical mapping. The same
 packet's closed-empty placement scopes reject tracked database content under a
 standalone module, embedded API service root, or embedded API module.
 

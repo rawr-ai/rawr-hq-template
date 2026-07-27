@@ -1214,6 +1214,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   use in handlers is distinguished from forbidden context reconstruction. Do
   not change runtime code, HQ SDK behavior, public exports, module wiring,
   middleware, providers, schemas, or tests.
+- [x] 5.7e15 Correct the closed service-database topology so the persistence
+  boundary requires `migrations/*.sql` and `stores/*.store.ts` while admitting
+  optional `schema/*.schema.ts` only when a database technology needs separate
+  physical mappings. Keep TypeBox as logical record-schema authority and SQL
+  migrations as physical-evolution authority. Prove schema-free and
+  schema-present databases green; prove missing migrations, missing stores,
+  malformed schema leaves, and noncanonical interiors red. Update only the
+  Habitat database packet, its existing service-blueprint proof, authority
+  records, and this execution record. Do not change Example Todo source,
+  service import law, runtime, SDK, resources, providers, or Nx wiring, and do
+  not add another script or runner.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

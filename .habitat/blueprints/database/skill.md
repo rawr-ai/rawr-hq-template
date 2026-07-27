@@ -12,10 +12,13 @@ description: Frame a database as an optional service-owned persistence boundary 
 ## Frame
 
 A database is persistence owned by one service, not a module, provider,
-resource, or Nx project. It holds only the service's owner-issued migrations,
-schema leaves, and store implementations. It does not become a home for
-generated clients, memory substitutes, repositories, sessions, provider
-wiring, helpers, or alternate composition faces.
+resource, or Nx project. It always holds the service's owner-issued migrations
+and store implementations. TypeBox owns logical record structure, while the
+migrations own physical evolution. A closed `schema` interior appears only
+when the selected database technology requires physical mappings beyond those
+two authorities. The database does not become a home for generated clients,
+memory substitutes, repositories, sessions, provider wiring, helpers, or
+alternate composition faces.
 
 ## Funnel
 

@@ -314,7 +314,26 @@ describe("service blueprint authority", () => {
     expect(structurePaths).toContain("services/orders/src/service/modules/a-2");
   });
 
-  it("admits the exact optional root database shape", async () => {
+  it("admits a root database without separate physical schema leaves", async () => {
+    const rule = "require_service_database_topology";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/db/migrations/0001_create_orders.sql":
+          "create table orders (id text primary key);",
+        "services/orders/src/service/db/stores/orders.store.ts":
+          "export const createOrdersStore = () => ({});",
+      },
+      [rule],
+      { [rule]: "database" }
+    );
+
+    const result = await check(root, [rule]);
+    expect(diagnostics(result.report, rule)).toEqual([]);
+    expect(result.exitCode).toBe(0);
+    expect(result.report.ok).toBe(true);
+  });
+
+  it("admits a root database with separate physical schema leaves", async () => {
     const rule = "require_service_database_topology";
     const root = await createFixture(
       {
@@ -334,21 +353,14 @@ describe("service blueprint authority", () => {
     expect(result.report.ok).toBe(true);
   });
 
-  it("rejects incomplete and noncanonical root database interiors", async () => {
+  it("rejects databases missing migrations or stores", async () => {
     const rule = "require_service_database_topology";
     const root = await createFixture(
       {
-        "services/orders/src/service/db/migrations/0001_create_orders.sql":
-          "create table orders (id text primary key);",
-        "services/orders/src/service/db/schema/orders.schema.ts": "export const orders = {};",
-        "services/orders/src/service/db/stores/orders.store.ts":
+        "services/missing-migrations/src/service/db/stores/orders.store.ts":
           "export const createOrdersStore = () => ({});",
-        "services/orders/src/service/db/stores/store.helper.ts": "export const helper = {};",
-        "services/orders/src/service/db/providers/postgres.provider.ts":
-          "export const provider = {};",
-        "services/orders/src/service/db/helpers/query.ts": "export const query = {};",
-        "services/incomplete/src/service/db/migrations/0001_create_incomplete.sql":
-          "create table incomplete (id text primary key);",
+        "services/missing-stores/src/service/db/migrations/0001_create_orders.sql":
+          "create table orders (id text primary key);",
       },
       [rule],
       { [rule]: "database" }
@@ -358,10 +370,37 @@ describe("service blueprint authority", () => {
     expect(result.exitCode).toBe(1);
     expect(result.report.ok).toBe(false);
     const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    expect(paths).toContain("services/missing-migrations/src/service/db");
+    expect(paths).toContain("services/missing-stores/src/service/db");
+  });
+
+  it("rejects malformed physical schema leaves and noncanonical interiors", async () => {
+    const rule = "require_service_database_topology";
+    const root = await createFixture(
+      {
+        "services/orders/src/service/db/migrations/0001_create_orders.sql":
+          "create table orders (id text primary key);",
+        "services/orders/src/service/db/schema/orders.schema.ts": "export const orders = {};",
+        "services/orders/src/service/db/schema/order-mapping.ts": "export const orderMapping = {};",
+        "services/orders/src/service/db/stores/orders.store.ts":
+          "export const createOrdersStore = () => ({});",
+        "services/orders/src/service/db/stores/store.helper.ts": "export const helper = {};",
+        "services/orders/src/service/db/providers/postgres.provider.ts":
+          "export const provider = {};",
+        "services/orders/src/service/db/helpers/query.ts": "export const query = {};",
+      },
+      [rule],
+      { [rule]: "database" }
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    expect(paths).toContain("services/orders/src/service/db/schema/order-mapping.ts");
     expect(paths).toContain("services/orders/src/service/db/stores/store.helper.ts");
     expect(paths).toContain("services/orders/src/service/db/providers");
     expect(paths).toContain("services/orders/src/service/db/helpers");
-    expect(paths).toContain("services/incomplete/src/service/db");
   });
 
   it("rejects module and embedded API database placement by database law alone", async () => {

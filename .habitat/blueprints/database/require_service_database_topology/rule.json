@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an open service database interior; database ownership under a module or embedded API service; or generated, memory, repository, session, persistence, helper, index, provider, and alternate source shapes",
-  "why": "A database is an optional service-owned persistence boundary. Closing it to migrations, schema, and stores keeps persistence authority at the service root without creating a module, provider, resource, or project.",
-  "remediate": "Keep an optional standalone database at services/<service>/src/service/db with only migrations/*.sql, schema/*.schema.ts, and stores/*.store.ts. Move external acquisition to a resource/provider and project store capabilities through named service-root middleware.",
-  "message": "Service databases must retain one closed migrations, schema, and stores boundary.",
+  "forbids": "an open service database interior; database ownership under a module or embedded API service; missing migration or store ownership; malformed optional physical-schema leaves; or generated, memory, repository, session, persistence, helper, index, provider, and alternate source shapes",
+  "why": "A database is an optional service-owned persistence boundary. Requiring closed migrations and stores keeps physical evolution and persistence behavior at the service root. A separately closed schema directory is optional because TypeBox already owns logical record structure and only some database technologies need distinct physical mappings.",
+  "remediate": "Keep an optional standalone database at services/<service>/src/service/db with required migrations/*.sql and stores/*.store.ts. Add only schema/*.schema.ts when the selected database technology needs separate physical mappings. Move external acquisition to a resource/provider and project store capabilities through named service-root middleware.",
+  "message": "Service databases must retain closed migration and store ownership, with only an optional closed physical-schema boundary.",
   "pathCoverage": [
     {
       "kind": "exact-path",
