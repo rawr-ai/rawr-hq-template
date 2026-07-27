@@ -1,15 +1,15 @@
 import type { Static } from "typebox";
 
 import {
-  createDistributionOwnershipIndex,
   type DeclaredOwnershipClaim,
   DeclaredOwnershipClaimSchema,
   type DistributionOwnershipIndex,
   type DistributionOwnershipIndexRecord,
   type OwnershipClaim,
   OwnershipClaimSchema,
-} from "../../../src/service/shared/release/ownership";
-import type { OwnershipIdentity, PluginId } from "../../../src/service/shared/release/primitives";
+} from "../../src/service/model/dto/distribution-ownership";
+import { createDistributionOwnershipIndex } from "../../src/service/model/policy/distribution-ownership";
+import type { OwnershipIdentity, PluginId } from "../../src/service/shared/release/primitives";
 
 declare const identity: OwnershipIdentity;
 declare const pluginId: PluginId;

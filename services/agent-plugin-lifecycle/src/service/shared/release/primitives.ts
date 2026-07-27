@@ -49,10 +49,12 @@ export const PAYLOAD_PROTOCOL_VERSION = 1 as const;
 export const AGENT_PLUGIN_RELEASE_SCHEMA_VERSION = 1 as const;
 export const ARTIFACT_PROTOCOL_VERSION = 1 as const;
 export const AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION = 1 as const;
+/** Pins the wire version carried by every admitted distribution ownership index. */
 export const OWNERSHIP_INDEX_SCHEMA_VERSION = 1 as const;
 export const BUILDER_PROTOCOL_VERSION = 1 as const;
 
 export const MAX_RELEASE_MEMBERS = 1_024;
+/** Bounds declared plus service-derived claims before ownership semantics run. */
 export const MAX_OWNERSHIP_CLAIMS = 16_384;
 export const MAX_PAYLOAD_ENTRIES_PER_MEMBER = 16_384;
 export const MAX_PAYLOAD_BYTES_PER_MEMBER = 64 * 1024 * 1024;

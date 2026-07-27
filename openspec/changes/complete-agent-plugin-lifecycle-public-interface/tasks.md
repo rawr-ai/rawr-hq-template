@@ -977,6 +977,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `shared/release/payload.ts` file and barrel exports without an alias, facade,
   schema-admission redesign, digest, resource, provider, runtime, oRPC, or
   public-contract change.
+- [x] 5.7e2y Give service-wide distribution ownership structure and semantics
+  direct root-model owners. Move the existing closed TypeBox schemas, generated
+  types, and admitted brand into one DTO leaf; move synthesis, admission,
+  bounds, canonical ordering and projection, immutability, member coverage,
+  conflict classification, and owner-local selection into one policy leaf;
+  move owner-local tests; and delete `shared/release/ownership.ts` without a
+  barrel, alias, facade, parser redesign, primitive or digest move, resource,
+  provider, runtime, router, oRPC, or public-contract change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -33,6 +33,11 @@
   packaging. Agent-plugin payload structure, manifest semantics, canonical
   encoding, and admitted construction have direct service-root DTO and policy
   owners; modules consume those leaves without a `shared` payload face.
+  Distribution ownership structure and its admitted brand have one direct
+  service-root DTO owner; synthesis, admission, bounds, canonical ordering and
+  projection, immutability, member coverage, conflict classification, and
+  owner-local selection have one direct policy owner. Release records consume
+  those exact leaves without a `shared` ownership face.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

@@ -2049,6 +2049,31 @@ in 37.1 seconds, including all 17 enforced Habitat laws with zero findings. No
 digest implementation, resource, provider, router, oRPC surface, Personal
 repository, native command, or live lifecycle state changed.
 
+The distribution-ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2y]]. The closed
+TypeBox schemas and admitted index brand now have one direct service-root DTO
+owner. Claim synthesis, admission, bounds, canonical ordering and projection,
+immutability, member coverage, conflict classification, and owner-local
+selection now have one direct policy owner. Release-input, release, and
+release-set records import those exact leaves; the old
+`shared/release/ownership.ts` owner and owner-local test paths are deleted
+without a compatibility face.
+
+Owner-local behavior proves deterministic mixed-conflict diagnostics,
+same-owner plugin and alias collisions, seeded diagnostic preservation,
+exact-limit admission, one-over-limit refusal without tail traversal, canonical
+ordering, defensive copying, and deep freezing. The focused ownership corpus
+passes 32 cases across three files, and the complete lifecycle suite passes
+319 cases across 36 files. Production and test TypeScript checks, targeted
+Biome, strict OpenSpec validation, diff hygiene, and standing architecture,
+behavior-first testing, and TypeScript/structural reviews pass without an
+unresolved P0, P1, P2, or P3 finding. The repository check passed 39 projects
+and 76 dependency tasks in 34.8 seconds, including all 17 enforced Habitat laws
+with zero findings.
+Primitive identity, parsing, and digest mechanics remain separate. No resource,
+provider, runtime, router, oRPC surface, Personal repository, native command,
+or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:
