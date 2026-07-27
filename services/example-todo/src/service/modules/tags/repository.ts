@@ -12,19 +12,20 @@
  * Keep procedure boundary concerns out of this file.
  */
 import type { Sql } from "@rawr/hq-sdk";
-import { UnexpectedInternalError } from "../../common/internal-errors";
+import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
+import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
 import type { Tag } from "./schemas";
 
-export function createRepository(sql: Sql, workspaceId: string) {
+export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
   return {
-    async findById(id: string): Promise<Tag | null> {
+    async findById(id: TodoIdentifierType): Promise<Tag | null> {
       return await sql.queryOne<Tag>("SELECT * FROM tags WHERE id = $1 AND workspace_id = $2", [
         id,
         workspaceId,
       ]);
     },
 
-    async findByIds(ids: string[]): Promise<Tag[]> {
+    async findByIds(ids: TodoIdentifierType[]): Promise<Tag[]> {
       return await sql.query<Tag>(
         "SELECT * FROM tags WHERE id = ANY($1) AND workspace_id = $2 ORDER BY name ASC",
         [ids, workspaceId]
@@ -53,7 +54,7 @@ export function createRepository(sql: Sql, workspaceId: string) {
       );
 
       if (!row) {
-        throw new UnexpectedInternalError("tags.insert returned no row");
+        throw new Error("tags.insert returned no row");
       }
 
       return row;

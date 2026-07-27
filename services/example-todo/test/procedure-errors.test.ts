@@ -50,6 +50,31 @@ describe("example-todo typed procedure errors", () => {
       {
         code: "READ_ONLY_MODE",
         status: 409,
+        data: { path: "tasks.create" },
+      }
+    );
+
+    await expectOrpcError(
+      client.tags.create({ name: "blocked", color: "#123456" }, invocation("trace-read-only-tag")),
+      {
+        code: "READ_ONLY_MODE",
+        status: 409,
+        data: { path: "tags.create" },
+      }
+    );
+
+    await expectOrpcError(
+      client.assignments.assign(
+        {
+          taskId: "00000000-0000-0000-0000-000000000001",
+          tagId: "00000000-0000-0000-0000-000000000002",
+        },
+        invocation("trace-read-only-assignment")
+      ),
+      {
+        code: "READ_ONLY_MODE",
+        status: 409,
+        data: { path: "assignments.assign" },
       }
     );
   });

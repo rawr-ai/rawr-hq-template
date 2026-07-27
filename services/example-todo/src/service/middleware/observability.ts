@@ -16,7 +16,7 @@
  * `service/base.ts`. If observability logic depends on `provided.*`, it does
  * not belong here and should move to lower-scope additive middleware instead.
  */
-import { createRequiredServiceObservabilityMiddleware, policy } from "../base";
+import { createRequiredServiceObservabilityMiddleware } from "../base";
 
 export const observability = createRequiredServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({
@@ -38,9 +38,8 @@ export const observability = createRequiredServiceObservabilityMiddleware({
     workspaceId: context.scope.workspaceId,
   }),
   onError: ({ span, context, pathLabel, error, policyEvents }) => {
-    const readOnlyRejected = policyEvents?.readOnlyRejected ?? policy.events.readOnlyRejected;
-    const assignmentLimitReached =
-      policyEvents?.assignmentLimitReached ?? policy.events.assignmentLimitReached;
+    const readOnlyRejected = policyEvents?.readOnlyRejected;
+    const assignmentLimitReached = policyEvents?.assignmentLimitReached;
 
     if (error.code === "READ_ONLY_MODE" && readOnlyRejected) {
       span?.addEvent(readOnlyRejected, {

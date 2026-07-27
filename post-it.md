@@ -6,6 +6,33 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Service Root Owns Service-Wide Meaning
+
+Example Todo's root model owns meaning that remains true for the whole
+capability suite: todo identity, workspace scope, and the pure clock and
+identifier-generator ports admitted at the service boundary. Multiple module
+consumers are evidence to inspect, not ownership authority. Module entity
+schemas reuse the service-wide DTOs, while each module contract owns its
+caller-visible errors even when another contract declares the same error code.
+
+Modules reach exact root-model leaves through the owner-private service alias.
+Root-model leaves and the service base keep their direct relative edges. The
+service context carries ready host capabilities downward; it does not turn a
+port into construction mechanics or move operation transitions out of their
+handlers. The unowned `service/common` aggregate and its internal error wrapper
+are deleted without a barrel, facade, replacement abstraction, or public
+package export.
+
+See [[services/example-todo/AGENTS|the Example Todo service router]],
+[[services/example-todo/src/service/model/dto/workspace-id|the workspace DTO]],
+[[services/example-todo/src/service/model/ports/clock|the clock port]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Root Model|the active checkpoint record]].
+
+### Bag Of Keywords
+
+service, model, owner, module, contract, identity, scope, port, context,
+deletion.
+
 ## 2026-07-27 - Persistence Narrows Through The Service Root
 
 A database is an optional persistence interior owned by one standalone

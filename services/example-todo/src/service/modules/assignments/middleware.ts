@@ -14,6 +14,7 @@
  */
 
 import type { Sql } from "@rawr/hq-sdk";
+import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
 import {
   createServiceAnalyticsMiddleware,
   createServiceObservabilityMiddleware,
@@ -31,7 +32,7 @@ export {
 /** Composite repository provider attached at module scope in `module.ts`. */
 export const repositories = createServiceProvider<{
   scope: {
-    workspaceId: string;
+    workspaceId: WorkspaceIdType;
   };
   provided: {
     sql: Sql;

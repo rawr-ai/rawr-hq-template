@@ -6,19 +6,20 @@
  * - `findById` returns `null` when missing.
  *
  * Unexpected/internal failures bubble via thrown exceptions from the adapter.
- * We only wrap impossible local invariants with `UnexpectedInternalError`.
+ * An impossible missing insert row fails with a native `Error` at this boundary.
  *
  * @agents
  * Keep boundary concerns out of this file. Procedure routers decide caller
  * actionable errors from returned values.
  */
 import type { Sql } from "@rawr/hq-sdk";
-import { UnexpectedInternalError } from "../../common/internal-errors";
+import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
+import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
 import type { Task } from "./schemas";
 
-export function createRepository(sql: Sql, workspaceId: string) {
+export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
   return {
-    async findById(id: string): Promise<Task | null> {
+    async findById(id: TodoIdentifierType): Promise<Task | null> {
       return await sql.queryOne<Task>("SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2", [
         id,
         workspaceId,
@@ -41,13 +42,13 @@ export function createRepository(sql: Sql, workspaceId: string) {
       );
 
       if (!row) {
-        throw new UnexpectedInternalError("tasks.insert returned no row");
+        throw new Error("tasks.insert returned no row");
       }
 
       return row;
     },
 
-    async findByIds(ids: string[]): Promise<Task[]> {
+    async findByIds(ids: TodoIdentifierType[]): Promise<Task[]> {
       return await sql.query<Task>(
         "SELECT * FROM tasks WHERE id = ANY($1) AND workspace_id = $2 ORDER BY created_at DESC",
         [ids, workspaceId]

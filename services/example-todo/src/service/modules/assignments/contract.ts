@@ -9,14 +9,95 @@
  * Keep this contract focused on caller-visible shape. Cross-module access
  * patterns belong in `router.ts`, not here.
  */
+import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
+import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { ocBase } from "../../base";
-import { ASSIGNMENT_LIMIT_REACHED, READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../common/errors";
-import { TodoIdentifierSchema } from "../../model/dto/identifier";
 import { TagSchema } from "../tags/schemas";
 import { TaskSchema } from "../tasks/schemas";
 import { AssignmentSchema } from "./schemas";
+
+const ResourceNotFoundData = schema(
+  Type.Object(
+    {
+      entity: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Entity name that was not found (for example Task or Tag).",
+        })
+      ),
+      id: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Identifier associated with the missing entity.",
+        })
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for RESOURCE_NOT_FOUND boundary errors.",
+    }
+  )
+);
+
+const ReadOnlyModeData = schema(
+  Type.Object(
+    {
+      path: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Procedure path that was blocked while read-only mode was enabled.",
+        })
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for READ_ONLY_MODE boundary errors.",
+    }
+  )
+);
+
+const AssignmentLimitReachedData = schema(
+  Type.Object(
+    {
+      taskId: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Task id that hit the configured assignment limit.",
+        })
+      ),
+      maxAssignmentsPerTask: Type.Optional(
+        Type.Number({
+          minimum: 1,
+          description: "Configured per-task assignment ceiling.",
+        })
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for ASSIGNMENT_LIMIT_REACHED boundary errors.",
+    }
+  )
+);
+
+const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {
+  status: 404,
+  message: "Resource not found",
+  data: ResourceNotFoundData,
+} as const;
+
+const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
+  status: 409,
+  message: "Write operations are blocked while read-only mode is enabled",
+  data: ReadOnlyModeData,
+} as const;
+
+const ASSIGNMENT_LIMIT_REACHED: ErrorMapItem<typeof AssignmentLimitReachedData> = {
+  status: 409,
+  message: "Task reached the configured assignment limit",
+  data: AssignmentLimitReachedData,
+} as const;
 
 export const contract = {
   assign: ocBase

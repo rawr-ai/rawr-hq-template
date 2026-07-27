@@ -34,8 +34,8 @@
 
 ## Interfaces
 
-- `create` and `list` are the caller operations. The tag repository and common
-  service support capabilities enter through module context.
+- `create` and `list` are the caller operations. The tag repository and
+  host-supplied service capabilities enter through module context.
 
 ## Routing
 

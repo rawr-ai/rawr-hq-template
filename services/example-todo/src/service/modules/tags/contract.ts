@@ -9,11 +9,34 @@
  * Add/modify procedures here first. Module composition lives in `module.ts`, and
  * handler behavior lives in `router.ts`.
  */
+import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { ocBase } from "../../base";
-import { READ_ONLY_MODE } from "../../common/errors";
 import { TagSchema } from "./schemas";
+
+const ReadOnlyModeData = schema(
+  Type.Object(
+    {
+      path: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Procedure path that was blocked while read-only mode was enabled.",
+        })
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for READ_ONLY_MODE boundary errors.",
+    }
+  )
+);
+
+const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
+  status: 409,
+  message: "Write operations are blocked while read-only mode is enabled",
+  data: ReadOnlyModeData,
+} as const;
 
 export const contract = {
   create: ocBase

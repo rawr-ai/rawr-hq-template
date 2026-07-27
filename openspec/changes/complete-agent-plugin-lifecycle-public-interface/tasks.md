@@ -1177,6 +1177,23 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and behavior. Bind positive lane, exact runtime-value, and negative private
   router/service/context package-surface proof in the existing Server test
   project; add no project, checker, target, dependency, or compatibility face.
+- [x] 5.7e12 Normalize Example Todo service-root meaning without changing
+  operation handlers or module topology. Add the owner-private
+  `#example-todo-service/*` import map and reserve it in modules for direct
+  `service/model/**` leaves while root-to-root edges remain relative. Keep todo
+  identifier structure and admission in their direct DTO and policy owners,
+  name the inferred type `TodoIdentifierType`, and give workspace scope one
+  direct TypeBox DTO. Move only the pure clock and identifier-generator port
+  declarations out of `base.ts`; keep initial, invocation, metadata, scope,
+  configuration, and policy-event vocabulary private there. Make observability
+  consume injected policy events without importing policy. Delete
+  `service/common`, localize `RESOURCE_NOT_FOUND`, `READ_ONLY_MODE`, and
+  `ASSIGNMENT_LIMIT_REACHED` in the exact module contracts that expose them,
+  and replace the three impossible-row wrappers with native `Error`. Preserve
+  the `/client` lane types and exact public error codes, statuses, messages,
+  data, and read-only paths. Add no model barrel, error facade, context or
+  dependency registry, shared/internal area, handler extraction, Effect or
+  persistence move, provider change, SDK change, or public export.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

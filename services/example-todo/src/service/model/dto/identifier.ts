@@ -7,4 +7,4 @@ export const TodoIdentifierSchema = Type.String({
 });
 
 /** UUID-shaped identifier shared by task, tag, and assignment records. */
-export type TodoIdentifier = Static<typeof TodoIdentifierSchema>;
+export type TodoIdentifierType = Static<typeof TodoIdentifierSchema>;
