@@ -258,7 +258,7 @@ closure-gate ownership. Template PR #605 landed the checkpoint on canonical
 
 ## Example Todo Root Model
 
-The active bounded checkpoint is
+The preceding bounded checkpoint was
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e12]]. Example Todo's
 service root now owns only the identity, scope, and host-capability meanings
 that survive the complete capability suite. Direct TypeBox DTO leaves own todo
@@ -296,7 +296,37 @@ seconds, with 62 cache hits. Standing architecture/Habitat/oRPC and
 TypeScript/structural/testing reviews report no unresolved P0, P1, P2, or P3
 finding. No operation-handler body, module topology, provider, database/store
 boundary, Effect integration, HQ SDK surface, or public package export changes.
-Graphite landing remains open.
+Template PR #606 landed the checkpoint on canonical `main` at
+`339979f59d2b8267ad1f67c24569c766d7332c58`.
+
+### Example Todo Record Model
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e13]]. Task, tag,
+and assignment records are stable inert vocabulary shared by module contracts
+and the planned service-owned persistence boundary. Their TypeBox schemas and
+generated types therefore move into direct `service/model/dto/**` leaves.
+This ownership does not move operation policy, normalization, sequencing,
+errors, or handlers out of Tasks, Tags, or Assignments.
+
+Every current contract, handler, and persistence adapter imports the exact
+root-model leaf through the owner-private service alias. The three loose
+module `schemas.ts` files are deleted without an index barrel, compatibility
+export, schema clone, or alternate type authority. The public `/client` face,
+context lanes, runtime result shapes, database queries, and provider wiring
+remain unchanged. Persistence extraction, router authorship, middleware,
+Effect integration, and HQ SDK changes remain later independent checkpoints.
+
+Example Todo passes its focused typecheck and build plus all 6 files and 36
+behavior tests. The private service-model alias Habitat rule, strict OpenSpec,
+Biome, residual old-path and duplicate-authority searches, and diff hygiene
+pass. The full repository gate passes all 115 Nx tasks in 1 minute 5 seconds,
+with 63 cache hits. Standing architecture/Habitat/oRPC and
+TypeScript/TypeBox/structural/testing reviews report no unresolved P0, P1, P2,
+or P3 finding. The service's construction-time `Deps`, `Scope`, and `Config`
+lanes and per-call `Invocation` lane remain implemented and documented by the
+unchanged `base.ts`, `/client` boundary, and context-typing proof. Graphite
+landing remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`

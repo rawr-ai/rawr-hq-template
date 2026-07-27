@@ -12,11 +12,11 @@
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
+import { AssignmentSchema } from "#example-todo-service/model/dto/assignment";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
+import { TagSchema } from "#example-todo-service/model/dto/tag";
+import { TaskSchema } from "#example-todo-service/model/dto/task";
 import { ocBase } from "../../base";
-import { TagSchema } from "../tags/schemas";
-import { TaskSchema } from "../tasks/schemas";
-import { AssignmentSchema } from "./schemas";
 
 const ResourceNotFoundData = schema(
   Type.Object(

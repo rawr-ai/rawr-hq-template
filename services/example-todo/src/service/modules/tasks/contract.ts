@@ -17,8 +17,8 @@ import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
+import { TaskSchema } from "#example-todo-service/model/dto/task";
 import { ocBase } from "../../base";
-import { TaskSchema } from "./schemas";
 
 const ResourceNotFoundData = schema(
   Type.Object(

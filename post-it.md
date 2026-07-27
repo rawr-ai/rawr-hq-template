@@ -6,6 +6,33 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Records Cross Boundaries Without Moving Behavior
+
+The Todo service root owns the inert task, tag, and assignment record
+vocabulary because those records cross module contracts and the service-owned
+persistence boundary. This is not promotion for convenience. The schemas name
+stable service facts that remain meaningful to more than one module and to the
+database boundary that will store them.
+
+Each module still owns its operations, policy, normalization, sequencing, and
+declared failures. A root record schema does not authorize root logic or a
+sibling reach. TypeBox remains the one structural authority; each generated
+record type stays beside its schema, and modules import the exact service-model
+leaf through the owner-private alias. The former loose module `schemas.ts`
+files disappear without barrels or compatibility exports.
+
+See [[services/example-todo/AGENTS|the Example Todo service router]],
+[[services/example-todo/src/service/model/dto/task|the task record]],
+[[services/example-todo/src/service/model/dto/tag|the tag record]],
+[[services/example-todo/src/service/model/dto/assignment|the assignment record]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Record Model|the active checkpoint record]].
+
+### Bag Of Keywords
+
+record, schema, service, module, contract, database, owner, TypeBox, context,
+boundary.
+
 ## 2026-07-27 - Service Root Owns Service-Wide Meaning
 
 Example Todo's root model owns meaning that remains true for the whole

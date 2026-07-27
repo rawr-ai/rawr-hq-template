@@ -1194,6 +1194,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   data, and read-only paths. Add no model barrel, error facade, context or
   dependency registry, shared/internal area, handler extraction, Effect or
   persistence move, provider change, SDK change, or public export.
+- [x] 5.7e13 Give Example Todo's shared task, tag, and assignment records one
+  direct service-root TypeBox DTO owner. Move each schema and its generated
+  type from the loose module `schemas.ts` file to the exact root-model leaf,
+  rewire module contracts, handlers, and current persistence adapters through
+  the owner-private model alias, and delete the old files without barrels or
+  compatibility exports. Preserve every operation, error, database query,
+  public client type, and runtime result. Keep operation policy and behavior in
+  the owning module; root ownership is limited to inert record vocabulary that
+  crosses module contracts and the separately planned service database
+  boundary. Do not move persistence, router authorship, middleware, Effect
+  integration, SDK code, providers, or public package exports in this cut.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

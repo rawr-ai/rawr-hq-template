@@ -1,19 +1,16 @@
 /**
- * @fileoverview Task entity schema and inferred type.
+ * @fileoverview Canonical task record shared across the Todo capability suite.
  *
  * @remarks
- * This module defines the canonical runtime shape for task data in this domain module.
- * Procedure inputs/outputs can be smaller than this shape; entity schema models
- * persisted row shape.
- *
- * @agents
- * Keep schema and type co-located. If you evolve storage fields, update both the
- * schema and all module procedures that expose this entity.
+ * Tasks owns task operations and policy. The service root owns this inert
+ * record vocabulary because task records cross the Tasks, Assignments, and
+ * persistence boundaries without transferring operation ownership.
  */
 import { type Static, Type } from "typebox";
-import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
-import { WorkspaceIdSchema } from "#example-todo-service/model/dto/workspace-id";
+import { TodoIdentifierSchema } from "./identifier";
+import { WorkspaceIdSchema } from "./workspace-id";
 
+/** Structural authority for a persisted task record. */
 export const TaskSchema = Type.Object(
   {
     id: TodoIdentifierSchema,
@@ -53,4 +50,5 @@ export const TaskSchema = Type.Object(
   }
 );
 
+/** Task record type generated from the canonical TypeBox schema. */
 export type Task = Static<typeof TaskSchema>;

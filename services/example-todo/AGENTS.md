@@ -17,10 +17,10 @@
   `src/client.ts` exposes the callable client, deliberate contract, and the
   named construction and invocation lanes callers must satisfy;
   `src/service/**` remains private implementation owned by this package.
-- Tasks, tags, and assignments own their operation behavior and declared
-  errors. The service-root model owns only suite-wide identity, scope, and
-  host capability contracts; multiple consumers alone do not assign root
-  ownership.
+- Tasks, tags, and assignments own their operation behavior, policy, and
+  declared errors. The service-root model owns suite-wide identity, scope,
+  host capability contracts, and inert record schemas that cross module
+  contracts and persistence. Mere access does not assign root ownership.
 - Hosts provide database, clock, identifier, logging, and analytics
   capabilities; this package does not own runtime mounting or transport
   presentation.
@@ -59,10 +59,10 @@
   and the deliberate `Deps`, `Scope`, `Config`, `Invocation`, and
   `CreateClientOptions` lane vocabulary. The executable router, service
   authoring surface, and composed execution context stay private.
-  The service-root model declares workspace and record identity plus the clock
-  and identifier-generator ports. Ready database, clock, identifier, logging,
-  and analytics capabilities enter through host context; API and CLI
-  projections consume the sealed client.
+  The service-root model declares workspace and record identity, canonical
+  task/tag/assignment records, and the clock and identifier-generator ports.
+  Ready database, clock, identifier, logging, and analytics capabilities enter
+  through host context; API and CLI projections consume the sealed client.
 
 ## Routing
 
@@ -71,6 +71,9 @@
 - [[src/service/contract|Private service contract]]
 - [[src/service/model/dto/identifier|Todo identifier DTO]]
 - [[src/service/model/dto/workspace-id|Workspace identity DTO]]
+- [[src/service/model/dto/task|Task record DTO]]
+- [[src/service/model/dto/tag|Tag record DTO]]
+- [[src/service/model/dto/assignment|Assignment record DTO]]
 - [[src/service/model/ports/clock|Clock port]]
 - [[src/service/model/ports/identifier-generator|Identifier generator port]]
 

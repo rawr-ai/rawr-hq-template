@@ -13,8 +13,8 @@
  */
 import type { Sql } from "@rawr/hq-sdk";
 import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
+import type { Tag } from "#example-todo-service/model/dto/tag";
 import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
-import type { Tag } from "./schemas";
 
 export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
   return {

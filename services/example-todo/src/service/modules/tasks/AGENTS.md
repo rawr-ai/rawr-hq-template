@@ -11,8 +11,10 @@
 
 ## Boundaries
 
-- Tasks owns title normalization, task identity, persistence, and task-specific
-  failures; tag creation and task-tag relationships belong to sibling modules.
+- Tasks owns title normalization, task creation/retrieval policy, and
+  task-specific failures; the inert task record schema belongs to the service
+  model because persistence and Assignments share it. Tag creation and
+  task-tag relationships belong to sibling modules.
 - Database, clock, identifier, logging, and analytics mechanics enter through
   service context rather than becoming task policy.
 
@@ -42,6 +44,7 @@
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
+- [[../../model/dto/task|Task record DTO]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation
