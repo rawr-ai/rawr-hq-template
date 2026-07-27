@@ -6,6 +6,41 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Identity Structure And Admission Have Direct Owners
+
+Release identities and release-relative paths are inert service-wide meaning
+used across release, packaging, provider, vendor, and governance capabilities.
+Their TypeBox schemas, generated branded types, and structural bounds belong to
+one direct service-root DTO. Their diagnostic admission belongs to one direct
+policy. Consumers import those qualified owners rather than a transitional
+primitive aggregate.
+
+Current-main Git refs and blob identities remain current-main meaning. Their
+shapes stay with the current-main Git DTO, while live parsing and construction
+belong to the matching policy. The mixed `current-main-primitives` facade, its
+renamed parser aliases, and an unused comparison are deleted. Digest meaning
+remains in the transitional primitive leaf for the next complete cut; this
+checkpoint does not create a general identity library or move native
+mechanics.
+
+Vendor workspace authority uses the same service-wide repository and content
+identities. A Vendor upstream value that tells the versioned-content resource
+where to fetch is instead a qualified locator; it must not inherit repository
+identity merely because the first protocol named its field that way.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-identity|the release-identity DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-identity|the release-identity policy]],
+[[services/agent-plugin-lifecycle/src/service/model/dto/current-main-git|the current-main Git DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/current-main-git|the current-main Git policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+identity, path, schema, type, policy, admission, owner, locality, directness,
+facade, deletion, digest.
+
 ## 2026-07-27 - Contract Constants Follow Their Structure
 
 Protocol versions and structural bounds belong beside the TypeBox DTO whose

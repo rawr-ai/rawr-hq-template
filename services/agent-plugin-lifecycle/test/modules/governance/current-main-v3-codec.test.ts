@@ -2,18 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import { MAX_CURRENT_MAIN_V3_RECORD_BYTES } from "../../../src/service/model/dto/current-main-record";
 import type { CanonicalChannelSelection } from "../../../src/service/model/dto/current-main-selection";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseRepositoryIdentity,
+} from "../../../src/service/model/policy/release-identity";
 import { CURRENT_MAIN_V3_PROTOCOL } from "../../../src/service/modules/governance/model/dto/current-main-record";
 import {
   encodeCurrentMainBodyV3,
   validateCurrentMainRecordV3,
 } from "../../../src/service/modules/governance/model/policy/current-main-record";
-import {
-  parseContentAuthority,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseInputDigest,
-  parseRepositoryIdentity,
-} from "../../../src/service/shared/release/primitives";
+import { parseReleaseInputDigest } from "../../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

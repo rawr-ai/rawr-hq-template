@@ -8,8 +8,8 @@ import {
   type OwnershipClaim,
   OwnershipClaimSchema,
 } from "../../src/service/model/dto/distribution-ownership";
+import type { OwnershipIdentity, PluginId } from "../../src/service/model/dto/release-identity";
 import { createDistributionOwnershipIndex } from "../../src/service/model/policy/distribution-ownership";
-import type { OwnershipIdentity, PluginId } from "../../src/service/shared/release/primitives";
 
 declare const identity: OwnershipIdentity;
 declare const pluginId: PluginId;

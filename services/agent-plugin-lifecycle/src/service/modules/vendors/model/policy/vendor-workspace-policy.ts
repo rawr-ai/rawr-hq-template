@@ -149,9 +149,9 @@ export function createVendorWorkspaceObservation(input: {
     contentWorkspace: Object.freeze({
       repositoryIdentity: input.requested.repositoryIdentity,
       contentAuthority: input.requested.contentAuthority,
-      refName: input.identity.refName,
-      sourceCommit: input.identity.commit,
-      sourceTree: input.identity.tree,
+      refName: input.requested.refName,
+      sourceCommit: input.requested.sourceCommit,
+      sourceTree: input.requested.sourceTree,
       releaseInputPath: input.requested.releaseInputPath,
     }),
     workspaceIdentity: freezeIdentity(input.identity),

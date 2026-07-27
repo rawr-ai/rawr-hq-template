@@ -3,23 +3,25 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import type { Client } from "../../src/client";
+import type {
+  ContentAuthority,
+  GitCommitId,
+  GitTreeId,
+  PluginId,
+  ReleaseRelativePath,
+  RepositoryIdentity,
+} from "../../src/service/model/dto/release-identity";
 import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
-import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
-import { canonicalSerializeAgentPluginReleaseInput } from "../../src/service/model/policy/release-input-codec";
 import {
-  type ContentAuthority,
-  type GitCommitId,
-  type GitTreeId,
-  type PluginId,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  type ReleaseRelativePath,
-  type RepositoryIdentity,
-} from "../../src/service/shared/release/primitives";
+} from "../../src/service/model/policy/release-identity";
+import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../src/service/model/policy/release-input-codec";
 
 type ContentWorkspacePolicy = Parameters<Client["releases"]["check"]>[0]["contentWorkspace"];
 type GitRepositoryFixtureRoot = Readonly<{ path: string }>;

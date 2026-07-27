@@ -4,7 +4,6 @@ import {
   contentDigest,
   type PayloadDigest,
   parsePayloadDigest,
-  parseReleaseRelativePath,
   payloadDigest,
 } from "../../shared/release/primitives";
 import {
@@ -29,6 +28,7 @@ import {
   reportDuplicatePayloadPaths,
   samePayloadManifest,
 } from "./payload-manifest";
+import { parseReleaseRelativePath } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
 import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";

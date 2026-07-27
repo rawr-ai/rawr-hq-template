@@ -1,14 +1,16 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import { isCanonicalAbsolutePath } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
+  RepositoryIdentitySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+import { isCanonicalAbsolutePath } from "#agent-plugin-lifecycle-service/model/dto/structural";
+import {
   ReleaseDigestSchema,
   ReleaseSetDigestSchema,
-  RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 /** Identifies the only package format accepted and emitted by this module. */

@@ -1,15 +1,9 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
-  ContentAuthoritySchema,
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-  OwnershipIdentitySchema,
   PayloadDigestSchema,
-  PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
-  RepositoryIdentitySchema,
 } from "../../shared/release/primitives";
 import {
   type AgentPluginPayload,
@@ -19,6 +13,14 @@ import {
   PayloadManifestEntrySchema,
 } from "./agent-plugin-payload";
 import { MAX_OWNERSHIP_CLAIMS } from "./distribution-ownership";
+import {
+  ContentAuthoritySchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  OwnershipIdentitySchema,
+  PluginIdSchema,
+  RepositoryIdentitySchema,
+} from "./release-identity";
 import {
   MAX_PROVENANCE_BINDINGS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,

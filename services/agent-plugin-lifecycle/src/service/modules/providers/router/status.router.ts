@@ -11,7 +11,7 @@ import {
 } from "@rawr/resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
-import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/current-main-primitives";
+import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { decodeGitLocator } from "#agent-plugin-lifecycle-service/model/policy/current-main-locator";
 import {
   CURRENT_MAIN_SELECTION_REF,

@@ -2,14 +2,13 @@ import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
-import { parseRepository } from "../../../src/service/model/dto/current-main-primitives";
 import { CURRENT_MAIN_V3_RECORD_PATH } from "../../../src/service/model/dto/current-main-record";
-import { decodeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 import {
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release/primitives";
+} from "../../../src/service/model/policy/release-identity";
+import { decodeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import { createGeneratedGitRepository, GIT_EXECUTABLE, git } from "../../support/git-repository";
@@ -39,7 +38,10 @@ describe("governance exact-Git resource selection", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
-    const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
+    const repositoryIdentity = parseRepositoryIdentity(
+      REPOSITORY_IDENTITY,
+      "fixture.repositoryIdentity"
+    );
     if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
     await git(repository.root, ["update-ref", SOURCE_REF, repository.policy.sourceCommit]);
     await commitCurrentMainRecord({
@@ -83,7 +85,10 @@ describe("governance exact-Git resource selection", () => {
     fixture = await createOwnedFixtureRoot();
     const repository = await createGeneratedGitRepository(fixture);
     await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
-    const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
+    const repositoryIdentity = parseRepositoryIdentity(
+      REPOSITORY_IDENTITY,
+      "fixture.repositoryIdentity"
+    );
     if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
     await git(repository.root, ["update-ref", SOURCE_REF, repository.policy.sourceCommit]);
     await commitCurrentMainRecord({
@@ -124,7 +129,10 @@ describe("governance exact-Git resource selection", () => {
     const repository = await createGeneratedGitRepository(fixture);
     await git(repository.root, ["remote", "set-url", "origin", REMOTE_URL]);
     await git(repository.root, ["update-ref", SOURCE_REF, repository.policy.sourceCommit]);
-    const repositoryIdentity = parseRepository(REPOSITORY_IDENTITY, "fixture.repositoryIdentity");
+    const repositoryIdentity = parseRepositoryIdentity(
+      REPOSITORY_IDENTITY,
+      "fixture.repositoryIdentity"
+    );
     if (!repositoryIdentity.ok) throw new Error(repositoryIdentity.issues[0].message);
     await commitCurrentMainRecord({
       repositoryRoot: repository.root,

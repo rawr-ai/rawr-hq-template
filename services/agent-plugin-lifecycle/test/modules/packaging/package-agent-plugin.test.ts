@@ -23,6 +23,7 @@ import {
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
   MAX_CLEAN_RELEASE_INPUT_BYTES,
 } from "../../../src/service/model/policy/clean-content-workspace";
+import { parsePluginId } from "../../../src/service/model/policy/release-identity";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   COWORK_PACKAGE_FORMAT,
@@ -32,7 +33,6 @@ import {
   PackageAgentPluginResultSchema,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import { priorOutputObservationLimit } from "../../../src/service/modules/packaging/model/policy/package-output";
-import { parsePluginId } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

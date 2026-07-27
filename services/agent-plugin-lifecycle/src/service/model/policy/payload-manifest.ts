@@ -1,10 +1,6 @@
 import { Value } from "typebox/value";
 
-import {
-  parseContentDigest,
-  parseReleaseRelativePath,
-  type ReleaseRelativePath,
-} from "../../shared/release/primitives";
+import { parseContentDigest } from "../../shared/release/primitives";
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
@@ -14,9 +10,11 @@ import {
   type PayloadManifestEntry,
 } from "../dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
+import type { ReleaseRelativePath } from "../dto/release-identity";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
+import { parseReleaseRelativePath } from "./release-identity";
 import { releaseIssue } from "./release-issue";
 import { collectReleaseResult, failure, success } from "./release-result";
 import {

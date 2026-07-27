@@ -7,10 +7,8 @@ import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/mo
 import { payloadEntryBytes } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { verifyCompleteReleaseSet } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-release-set";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
-import {
-  contentDigest,
-  parseReleaseRelativePath,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
+import { parseReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/policy/release-identity";
+import { contentDigest } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { PackageDigest } from "../dto/packaging-lifecycle";
 
 /** Stable archive comment that identifies RAWR's Cowork v1 package profile. */

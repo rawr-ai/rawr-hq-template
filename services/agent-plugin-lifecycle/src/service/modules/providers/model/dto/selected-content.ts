@@ -6,20 +6,22 @@ import {
   PayloadManifestEntrySchema,
 } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import { MAX_OWNERSHIP_CLAIMS } from "#agent-plugin-lifecycle-service/model/dto/distribution-ownership";
-import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
-import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
   type OwnershipIdentity,
   OwnershipIdentitySchema,
-  PayloadDigestSchema,
   PluginIdSchema,
+  RepositoryIdentitySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
+import {
+  PayloadDigestSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-  RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 const MAX_SELECTED_ISSUES = 256;

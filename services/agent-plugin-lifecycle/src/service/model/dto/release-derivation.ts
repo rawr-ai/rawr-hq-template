@@ -1,14 +1,14 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import type { AgentPluginPayload } from "./agent-plugin-payload";
+import type { AgentPluginRelease } from "./agent-plugin-release";
+import type { AgentPluginReleaseSet } from "./agent-plugin-release-set";
 import {
   type GitCommitId,
   type GitTreeId,
   type PluginId,
   PluginIdSchema,
   type RepositoryIdentity,
-} from "../../shared/release/primitives";
-import type { AgentPluginPayload } from "./agent-plugin-payload";
-import type { AgentPluginRelease } from "./agent-plugin-release";
-import type { AgentPluginReleaseSet } from "./agent-plugin-release-set";
+} from "./release-identity";
 import { type AgentPluginReleaseInput, MAX_RELEASE_MEMBERS } from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 

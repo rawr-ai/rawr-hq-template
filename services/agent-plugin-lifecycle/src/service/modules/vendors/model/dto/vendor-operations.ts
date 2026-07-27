@@ -1,13 +1,16 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
+import {
+  ContentAuthoritySchema,
+  GitCommitIdSchema,
+  GitTreeIdSchema,
+  RepositoryIdentitySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   CanonicalAbsolutePathSchema,
-  ContentAuthoritySchema,
-  GitObjectIdSchema,
   NormalizedRelativePathSchema,
   QualifiedHeadRefSchema,
-  RepositoryIdentitySchema,
   SourceIdSchema,
   VendorSourceIdentitySchema,
 } from "./vendor-records";
@@ -26,8 +29,8 @@ export const VendorContentWorkspaceRefSchema = ReadonlyObject(
     repositoryIdentity: RepositoryIdentitySchema,
     contentAuthority: ContentAuthoritySchema,
     refName: QualifiedHeadRefSchema,
-    sourceCommit: GitObjectIdSchema,
-    sourceTree: GitObjectIdSchema,
+    sourceCommit: GitCommitIdSchema,
+    sourceTree: GitTreeIdSchema,
     releaseInputPath: NormalizedRelativePathSchema,
   }),
   { additionalProperties: false }

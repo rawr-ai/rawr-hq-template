@@ -1,7 +1,7 @@
 import type { GitLocator } from "../dto/current-main-git";
-import { parseRepository } from "../dto/current-main-primitives";
 import type { CurrentMainSelectionLocator } from "../dto/current-main-selection";
 import { isCanonicalAbsolutePath } from "../dto/structural";
+import { parseRepositoryIdentity } from "./release-identity";
 
 export type GovernanceBoundaryResult<T> =
   | { readonly ok: true; readonly value: T }
@@ -16,7 +16,7 @@ export function decodeGitLocator(
       reason: "locator.workspacePath must be a canonical non-root absolute path",
     };
   }
-  const repository = parseRepository(
+  const repository = parseRepositoryIdentity(
     input.expectedRepositoryIdentity,
     "locator.expectedRepositoryIdentity"
   );

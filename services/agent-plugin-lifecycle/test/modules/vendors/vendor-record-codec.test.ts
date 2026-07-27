@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-
+import {
+  parseGitCommitId,
+  parseGitTreeId,
+} from "../../../src/service/model/policy/release-identity";
 import type {
   VendorLockRecord,
   VendorProvenanceRecord,
@@ -24,8 +27,8 @@ const decoder = new TextDecoder();
 const identity: VendorSourceIdentity = Object.freeze({
   repositoryIdentity: "git:vendor/example",
   refName: "refs/heads/main",
-  sourceCommit: "a".repeat(40),
-  sourceTree: "b".repeat(40),
+  sourceCommit: parsed(parseGitCommitId("a".repeat(40))),
+  sourceTree: parsed(parseGitTreeId("b".repeat(40))),
   payloadDigest: `sha256_${"c".repeat(64)}`,
 });
 
@@ -60,6 +63,11 @@ const lock: VendorLockRecord = Object.freeze({
   sourceId: "example",
   admitted: identity,
 });
+
+function parsed<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {
+  if (!result.ok) throw new Error("Expected a valid vendor record fixture identity");
+  return result.value;
+}
 
 describe("vendor record codec", () => {
   it.each([

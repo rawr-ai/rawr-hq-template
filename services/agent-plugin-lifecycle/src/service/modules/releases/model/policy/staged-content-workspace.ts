@@ -13,6 +13,10 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type {
+  PluginId,
+  ReleaseRelativePath,
+} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import {
   type AgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -21,21 +25,19 @@ import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
-import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 import {
-  addReleaseSetPayloadBytes,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
-} from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
-import {
-  type PluginId,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  type ReleaseRelativePath,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
+} from "#agent-plugin-lifecycle-service/model/policy/release-identity";
+import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
+import {
+  addReleaseSetPayloadBytes,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+} from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
   normalizeReleaseSourceChangedDetail,
   type ReleaseInputRefreshRequest,

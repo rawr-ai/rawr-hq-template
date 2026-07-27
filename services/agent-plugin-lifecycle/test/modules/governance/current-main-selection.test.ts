@@ -17,15 +17,15 @@ import type { AgentPluginReleaseInput } from "../../../src/service/model/dto/rel
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
-import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
-import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import {
-  contentDigest,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release/primitives";
+} from "../../../src/service/model/policy/release-identity";
+import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
+import { contentDigest } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

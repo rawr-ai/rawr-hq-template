@@ -1,12 +1,8 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 import {
-  ContentAuthoritySchema,
   ContentDigestSchema,
-  OwnershipIdentitySchema,
   PayloadDigestSchema,
-  PluginIdSchema,
   ReleaseInputDigestSchema,
-  ReleaseRelativePathSchema,
 } from "../../shared/release/primitives";
 import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
@@ -18,6 +14,12 @@ import {
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
 } from "./distribution-ownership";
+import {
+  ContentAuthoritySchema,
+  OwnershipIdentitySchema,
+  PluginIdSchema,
+  ReleaseRelativePathSchema,
+} from "./release-identity";
 
 declare const agentPluginReleaseInputBrand: unique symbol;
 declare const completenessWitnessBrand: unique symbol;

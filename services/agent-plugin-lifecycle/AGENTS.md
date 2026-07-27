@@ -66,9 +66,17 @@
   identity. Protocol versions and structural bounds live beside the TypeBox DTO
   they constrain; normalized file-mode structure belongs to the payload DTO
   while payload-manifest policy owns its diagnostic admission. Consumers
-  import those exact leaves. The residual transitional `shared/release` leaf
-  contains only release identity and digest meanings awaiting their complete
-  owner-sized cuts.
+  import those exact leaves. Service-wide release identity and
+  release-relative-path structure, generated branded types, and bounds have
+  one direct TypeBox DTO owner; one matching policy owns exact diagnostic
+  admission. Current-main Git structure remains with its qualified DTO while
+  its parsing and construction belong to the matching policy. The identity
+  alias facade is deleted. The residual transitional `shared/release` leaf
+  contains digest meaning only, awaiting its complete owner-sized cut.
+  Vendor workspace requests consume those service-wide identities. Vendor
+  upstream records instead carry a qualified versioned-content repository
+  locator plus the service-wide exact commit and tree identities; a locator is
+  not promoted into repository identity.
   Provenance-binding policy owns bounded admission, canonical ordering,
   duplicate-identity refusal, defensive freezing, and canonical projection
   across release input, individual release, and complete-set records. Its

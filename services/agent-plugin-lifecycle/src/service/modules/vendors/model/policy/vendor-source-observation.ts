@@ -9,6 +9,10 @@ import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
 } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
+import {
+  parseGitCommitId,
+  parseGitTreeId,
+} from "#agent-plugin-lifecycle-service/model/policy/release-identity";
 import type { VendorUpdateIssue } from "../dto/vendor-operations";
 import type {
   VendorDeclaredSourceObservation,
@@ -63,14 +67,25 @@ export function validateVendorRemote(
   }
   const invalid = remoteIssue(source, remote);
   if (invalid !== undefined) return policyFailure(invalid);
+  const sourceCommit = parseGitCommitId(remote.commit);
+  const sourceTree = parseGitTreeId(remote.tree);
+  if (!sourceCommit.ok || !sourceTree.ok) {
+    return policyFailure(
+      vendorIssue(
+        "UnsupportedLayout",
+        "Observed upstream Git identity is not canonical.",
+        source.declaration.sourceId
+      )
+    );
+  }
   return policySuccess(
     Object.freeze({
       remote: freezeRemote(remote),
       identity: Object.freeze({
         repositoryIdentity: remote.repositoryIdentity,
         refName: remote.refName,
-        sourceCommit: remote.commit,
-        sourceTree: remote.tree,
+        sourceCommit: sourceCommit.value,
+        sourceTree: sourceTree.value,
         payloadDigest: vendorPayloadDigest(remote.entries),
       }),
     })
