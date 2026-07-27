@@ -567,6 +567,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   classification pure; let module middleware project the exact ready resource
   capabilities. Delete the effectful policy facade rather than adding an
   adapter or helper.
+- [x] 5.4c1 Prove the Vendor transaction boundaries omitted from the first
+  authorship checkpoint. Refuse an undeclared source before remote access;
+  cancel preflight before capture; defer cancellation after capture through
+  apply, verification, and settlement; restore and settle when the first
+  post-apply settlement fails; and prove the converged retry performs no
+  mutation. Change no production owner or runtime path.
 - [x] 5.4d Delete the package-output Promise mirror and detached Node runner.
   Let the Cowork Effect Platform provider attach `NodeServices.layer` to each
   returned operation behind one ready `AgentPluginPackageOutputResource<never>`;
