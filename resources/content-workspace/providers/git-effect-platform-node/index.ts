@@ -28,20 +28,25 @@ import type {
   GitWorkspaceEvidence,
   GitWorktreeObjectId,
   MaterializedContentTreeEntry,
+  MaterializedTemporaryTree,
+  MaterializeTemporaryTreeInput,
 } from "@rawr/resource-content-workspace";
 import {
   ContentTreeEntrySchema,
   GitStagedIndexEntrySchema,
   GitTrackedPathFlagSchema,
+  MaterializeTemporaryTreeInputSchema,
 } from "@rawr/resource-content-workspace";
-import { Effect, Equal, FileSystem, Option, PlatformError } from "effect";
+import { Effect, Equal, FileSystem, Option, PlatformError, type Scope } from "effect";
 import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const contentTreeEntryValidator = Schema.Compile(ContentTreeEntrySchema);
 const gitStagedIndexEntryValidator = Schema.Compile(GitStagedIndexEntrySchema);
 const gitTrackedPathFlagValidator = Schema.Compile(GitTrackedPathFlagSchema);
+const materializeTemporaryTreeInputValidator = Schema.Compile(MaterializeTemporaryTreeInputSchema);
 const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
+const TEMPORARY_TREE_PREFIX = ".rawr-content-tree-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
 
@@ -609,6 +614,52 @@ export function makeContentWorkspaceResource(
     );
   });
 
+  const materializeTemporaryTree = Effect.fn("contentWorkspace.materializeTemporaryTree")(
+    function* (input: MaterializeTemporaryTreeInput) {
+      const fs = yield* FileSystem.FileSystem;
+      if (!materializeTemporaryTreeInputValidator.Check(input)) {
+        return yield* fail(
+          "materialize-temporary-tree",
+          "InvalidInput",
+          undefined,
+          "Temporary tree input does not match the bounded resource contract"
+        );
+      }
+      yield* checked("materialize-temporary-tree", () => validateTemporaryTreeInput(input));
+      const parent = yield* requireTemporaryTreeParent(fs, input.parentRoot);
+      const root = yield* fs
+        .makeTempDirectoryScoped({ directory: parent, prefix: TEMPORARY_TREE_PREFIX })
+        .pipe(mapPlatform("materialize-temporary-tree", parent));
+
+      const createdDirectories = new Set<string>([""]);
+      for (const entry of input.entries) {
+        const segments = entry.path.split("/");
+        for (let index = 1; index < segments.length; index += 1) {
+          const relativeDirectory = segments.slice(0, index).join("/");
+          if (createdDirectories.has(relativeDirectory)) continue;
+          const directory = path.join(root, ...relativeDirectory.split("/"));
+          yield* fs
+            .makeDirectory(directory, { recursive: false, mode: 0o700 })
+            .pipe(mapPlatform("materialize-temporary-tree", directory));
+          yield* fs
+            .chmod(directory, 0o700)
+            .pipe(mapPlatform("materialize-temporary-tree", directory));
+          createdDirectories.add(relativeDirectory);
+        }
+        const destination = path.join(root, ...segments);
+        const mode = fileMode(entry.mode);
+        yield* fs
+          .writeFile(destination, entry.bytes, { flag: "wx", mode })
+          .pipe(mapPlatform("materialize-temporary-tree", destination));
+        yield* fs
+          .chmod(destination, mode)
+          .pipe(mapPlatform("materialize-temporary-tree", destination));
+      }
+
+      return Object.freeze({ root }) satisfies MaterializedTemporaryTree;
+    }
+  );
+
   const capture = Effect.fn("contentWorkspace.capture")(function* (
     input: Readonly<{
       root: string;
@@ -1053,6 +1104,7 @@ export function makeContentWorkspaceResource(
     listGitChangedPaths,
     readFile,
     readTree,
+    materializeTemporaryTree,
     capture,
     apply,
     restore,
@@ -1100,6 +1152,8 @@ export function makeNodeContentWorkspaceResource(
       provideNodeFileSystem(resource.readFile(input)),
     readTree: (input: Parameters<typeof resource.readTree>[0]) =>
       provideNodeFileSystem(resource.readTree(input)),
+    materializeTemporaryTree: (input: Parameters<typeof resource.materializeTemporaryTree>[0]) =>
+      provideNodeFileSystemScoped(resource.materializeTemporaryTree(input)),
     capture: (input: Parameters<typeof resource.capture>[0]) =>
       provideNodeFileSystem(resource.capture(input)),
     apply: (input: Parameters<typeof resource.apply>[0]) =>
@@ -1116,6 +1170,12 @@ export function makeNodeContentWorkspaceResource(
 function provideNodeFileSystem<A>(
   operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
 ): Effect.Effect<A, ContentWorkspaceFailure> {
+  return operation.pipe(Effect.provide(NodeFileSystem.layer));
+}
+
+function provideNodeFileSystemScoped<A>(
+  operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements | Scope.Scope>
+): Effect.Effect<A, ContentWorkspaceFailure, Scope.Scope> {
   return operation.pipe(Effect.provide(NodeFileSystem.layer));
 }
 
@@ -1386,6 +1446,75 @@ function validateDistinctPaths(paths: readonly string[], operation: "capture"): 
     }
     seen.add(relative);
   }
+}
+
+function validateTemporaryTreeInput(input: MaterializeTemporaryTreeInput): void {
+  const operation = "materialize-temporary-tree" as const;
+  if (input.entries.length > input.maxEntries) {
+    throw invalidInput(operation, undefined, "Temporary tree entries exceed maxEntries");
+  }
+
+  let previousPath: string | undefined;
+  let totalBytes = 0;
+  const exactPaths = new Set<string>();
+  for (const entry of input.entries) {
+    if (previousPath !== undefined && compareText(previousPath, entry.path) >= 0) {
+      throw invalidInput(
+        operation,
+        entry.path,
+        "Temporary tree entries must be in strict canonical path order"
+      );
+    }
+    previousPath = entry.path;
+    exactPaths.add(entry.path);
+
+    totalBytes += entry.bytes.byteLength;
+    if (!Number.isSafeInteger(totalBytes) || totalBytes > input.maxBytes) {
+      throw invalidInput(operation, entry.path, "Temporary tree bytes exceed maxBytes");
+    }
+  }
+
+  for (const exactPath of exactPaths) {
+    const segments = exactPath.split("/");
+    for (let index = 1; index < segments.length; index += 1) {
+      const ancestor = segments.slice(0, index).join("/");
+      if (exactPaths.has(ancestor)) {
+        throw invalidInput(
+          operation,
+          exactPath,
+          `Temporary tree file descends from file ${ancestor}`
+        );
+      }
+    }
+  }
+}
+
+function requireTemporaryTreeParent(fs: FileSystem.FileSystem, candidate: string) {
+  const operation = "materialize-temporary-tree" as const;
+  return Effect.gen(function* () {
+    if (
+      !path.isAbsolute(candidate) ||
+      path.normalize(candidate) !== candidate ||
+      candidate === path.parse(candidate).root
+    ) {
+      return yield* fail(
+        operation,
+        "InvalidInput",
+        candidate,
+        "Temporary tree parent must be a normalized non-root absolute path"
+      );
+    }
+    const info = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
+    if (info.type !== "Directory") {
+      return yield* fail(
+        operation,
+        "UnsupportedEntry",
+        candidate,
+        "Temporary tree parent must be a directory"
+      );
+    }
+    return candidate;
+  });
 }
 
 function validateGitTreePaths(paths: readonly string[]): void {

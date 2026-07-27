@@ -5,6 +5,7 @@ import {
   lstat,
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
   realpath,
   rename,
@@ -81,6 +82,253 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(entries[0]?.path).toBe("tool.sh");
     expect(entries[0]?.mode).toBe("100755");
     expect(entries[0]?.blob).toMatch(/^[0-9a-f]{40}$/u);
+  });
+
+  test("materializes exact bytes and modes in one fresh scoped direct child", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const sibling = path.join(parentRoot, "sibling.txt");
+    await writeFile(sibling, "preserved\n");
+    const resource = makeNodeContentWorkspaceResource();
+    const binary = new Uint8Array([0x00, 0xff, 0x01, 0x80, 0x0a]);
+    let firstRoot: string | undefined;
+
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const materialized = yield* resource.materializeTemporaryTree({
+            parentRoot,
+            entries: [
+              { path: "README.md", mode: "100644", bytes: bytes("read me\n") },
+              { path: "bin/run.sh", mode: "100755", bytes: bytes("#!/bin/sh\nexit 0\n") },
+              { path: "payload.bin", mode: "100644", bytes: binary },
+            ],
+            maxEntries: 3,
+            maxBytes: 1_024,
+          });
+          firstRoot = materialized.root;
+          expect(path.dirname(materialized.root)).toBe(parentRoot);
+          expect(path.basename(materialized.root).startsWith(".rawr-content-tree-")).toBe(true);
+          const readme = yield* Effect.promise(() =>
+            readFile(path.join(materialized.root, "README.md"), "utf8")
+          );
+          const executable = yield* Effect.promise(() =>
+            readFile(path.join(materialized.root, "bin", "run.sh"), "utf8")
+          );
+          const materializedBinary = yield* Effect.promise(() =>
+            readFile(path.join(materialized.root, "payload.bin"))
+          );
+          const readmeInfo = yield* Effect.promise(() =>
+            lstat(path.join(materialized.root, "README.md"))
+          );
+          const executableInfo = yield* Effect.promise(() =>
+            lstat(path.join(materialized.root, "bin", "run.sh"))
+          );
+          expect(readme).toBe("read me\n");
+          expect(executable).toBe("#!/bin/sh\nexit 0\n");
+          expect([...materializedBinary]).toEqual([...binary]);
+          expect(readmeInfo.mode & 0o777).toBe(0o644);
+          expect(executableInfo.mode & 0o777).toBe(0o755);
+        })
+      )
+    );
+
+    expect(firstRoot).toBeDefined();
+    expect(await pathExists(firstRoot ?? "")).toBe(false);
+    expect(await readFile(sibling, "utf8")).toBe("preserved\n");
+
+    let secondRoot: string | undefined;
+    await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          secondRoot = (yield* resource.materializeTemporaryTree({
+            parentRoot,
+            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("second\n") }],
+            maxEntries: 1,
+            maxBytes: 16,
+          })).root;
+        })
+      )
+    );
+    expect(secondRoot).toBeDefined();
+    expect(secondRoot).not.toBe(firstRoot);
+    expect(await pathExists(secondRoot ?? "")).toBe(false);
+  });
+
+  test("closes a materialized tree after typed failure, defect, and interruption", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const resource = makeNodeContentWorkspaceResource();
+    const endings = ["failure", "defect", "interrupt"] as const;
+
+    for (const ending of endings) {
+      let root: string | undefined;
+      const exit = await Effect.runPromiseExit(
+        Effect.scoped(
+          Effect.gen(function* () {
+            root = (yield* resource.materializeTemporaryTree({
+              parentRoot,
+              entries: [{ path: `${ending}.txt`, mode: "100644", bytes: bytes(ending) }],
+              maxEntries: 1,
+              maxBytes: 32,
+            })).root;
+            if (ending === "failure") return yield* Effect.fail("typed-use-failure" as const);
+            if (ending === "defect") return yield* Effect.die("use-defect");
+            return yield* Effect.interrupt;
+          })
+        )
+      );
+      expect(exit._tag).toBe("Failure");
+      expect(root).toBeDefined();
+      expect(await pathExists(root ?? "")).toBe(false);
+    }
+  });
+
+  test("cleans an allocated tree when exact-byte population fails", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const sibling = path.join(parentRoot, "sibling.txt");
+    await writeFile(sibling, "preserved\n");
+    const before = (await readdir(parentRoot)).sort();
+
+    const result = await Effect.runPromise(
+      Effect.scoped(
+        Effect.result(
+          makeNodeContentWorkspaceResource().materializeTemporaryTree({
+            parentRoot,
+            entries: [{ path: "x".repeat(300), mode: "100644", bytes: bytes("cannot-populate") }],
+            maxEntries: 1,
+            maxBytes: 32,
+          })
+        )
+      )
+    );
+
+    expect(result).toMatchObject({
+      _tag: "Failure",
+      failure: { operation: "materialize-temporary-tree", reason: "FilesystemFailed" },
+    });
+    expect((await readdir(parentRoot)).sort()).toEqual(before);
+    expect(await readFile(sibling, "utf8")).toBe("preserved\n");
+  });
+
+  test("rejects invalid parents, paths, collisions, and bounds before allocation", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const sibling = path.join(parentRoot, "sibling.txt");
+    await writeFile(sibling, "preserved\n");
+    const resource = makeNodeContentWorkspaceResource();
+    const entry = { path: "value.txt", mode: "100644" as const, bytes: bytes("value") };
+    const cases = [
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot: path.join(parentRoot, "missing-invalid-bound"),
+          entries: [entry],
+          maxEntries: 0,
+          maxBytes: 16,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot: `${parentRoot}${path.sep}.`,
+          entries: [entry],
+          maxEntries: 1,
+          maxBytes: 16,
+        },
+      },
+      {
+        expectedReason: "UnsupportedEntry",
+        request: { parentRoot: sibling, entries: [entry], maxEntries: 1, maxBytes: 16 },
+      },
+      {
+        expectedReason: "Missing",
+        request: {
+          parentRoot: path.join(parentRoot, "missing"),
+          entries: [entry],
+          maxEntries: 1,
+          maxBytes: 16,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          entries: [{ ...entry, path: "../escape.txt" }],
+          maxEntries: 1,
+          maxBytes: 16,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          entries: [
+            { ...entry, path: "b.txt" },
+            { ...entry, path: "a.txt" },
+          ],
+          maxEntries: 2,
+          maxBytes: 32,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          entries: [
+            { ...entry, path: "a.txt" },
+            { ...entry, path: "a.txt" },
+          ],
+          maxEntries: 2,
+          maxBytes: 32,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          entries: [
+            { ...entry, path: "tree" },
+            { ...entry, path: "tree/value.txt" },
+          ],
+          maxEntries: 2,
+          maxBytes: 32,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          entries: [
+            { ...entry, path: "a.txt" },
+            { ...entry, path: "b.txt" },
+          ],
+          maxEntries: 1,
+          maxBytes: 32,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          entries: [{ ...entry, bytes: bytes("too-large") }],
+          maxEntries: 1,
+          maxBytes: 1,
+        },
+      },
+    ];
+
+    for (const { expectedReason, request } of cases) {
+      const before = (await readdir(parentRoot)).sort();
+      const result = await Effect.runPromise(
+        Effect.scoped(Effect.result(resource.materializeTemporaryTree(request)))
+      );
+      expect(result._tag).toBe("Failure");
+      if (result._tag !== "Failure") throw new Error("Expected materialization to fail");
+      expect(result.failure).toMatchObject({
+        operation: "materialize-temporary-tree",
+        reason: expectedReason,
+      });
+      expect((await readdir(parentRoot)).sort()).toEqual(before);
+      expect(await readFile(sibling, "utf8")).toBe("preserved\n");
+    }
   });
 
   test("applies an exact ordered write plan and restores captured preimages", async () => {
@@ -2070,6 +2318,15 @@ function unwrap<A>(result: NodeContentWorkspaceResult<A>): A {
 
 function bytes(value: string): Uint8Array {
   return new TextEncoder().encode(value);
+}
+
+async function pathExists(candidate: string): Promise<boolean> {
+  try {
+    await lstat(candidate);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function testGitBlobId(value: Uint8Array, objectFormat: "sha1" | "sha256"): string {

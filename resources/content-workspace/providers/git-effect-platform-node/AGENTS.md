@@ -30,7 +30,9 @@
 
 - The provider opens a caller-selected local workspace, performs exact object
   or workspace mechanics, rechecks identity around mutation, and reports raw
-  results or bounded typed tree and staged-index facts.
+  results or bounded typed tree and staged-index facts. Temporary exact-byte
+  trees are fresh direct children of a validated caller parent and are removed
+  by Effect scope finalization.
 
 ## Concepts
 
