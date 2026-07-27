@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Module Context Curation Is Additive
+
+Module projection is a real service-authoring boundary. A `module.ts` may end
+its service branch with one inline curation that selects direct noncomputed
+member paths rooted below `deps`, `scope`, `config`, `invocation`, or
+`provided` and exposes them under explicit handler-facing names. This gives the
+module a precise vocabulary without acquiring resources, constructing
+dependencies, or restating the service context type.
+
+Native oRPC context composition remains additive. The four input lanes and the
+`provided` bucket are still present after curation, so a smaller returned
+object is not evidence that they were removed. Actual removal belongs to the
+capability's source and owner. Named middleware still owns guards and
+enrichment. In standalone services, only named root middleware uses the sole
+provider author specialized once in `base.ts`; embedded API provider authorship
+is outside this law.
+
+See [[.habitat/blueprints/service/skill#Context|the service context frame]],
+[[.habitat/blueprints/service/require_service_context_boundaries/pattern|the executable law]],
+and [[scripts/habitat/service-blueprint.test|the executable structural fixture]].
+
+### Bag Of Keywords
+
+service, context, curation, provider, author, middleware, owner, closure.
+
 ## 2026-07-27 - Database Shape Separates Logical And Physical Authority
 
 A service database always owns migrations and stores. Migrations describe how

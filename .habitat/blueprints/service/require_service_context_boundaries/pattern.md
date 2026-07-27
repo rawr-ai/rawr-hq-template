@@ -20,16 +20,33 @@ Native middleware contributions merge with inherited context. An explicit
 Composition stays inferred. No adapter, witness, shadow context, raw vendor
 builder, or configured service/module branch creates another middleware root.
 This law owns middleware provenance and attachment, not semantic handler-context
-closure; owner-local capability and resource cuts remove the remaining raw
-lanes rather than hiding them behind a spelling blacklist.
+closure; owner-local capability and resource cuts remove raw lanes rather than
+hiding them behind a spelling blacklist.
 
 Every middleware file exports only documented named `const` middleware values.
 Every `.use(...)` attachment names a completed external middleware value
-imported from the matching middleware boundary. Root SDK baselines may instead
-come directly from `base.ts`. An attachment does not contain an inline
-expression, a local callback, an arbitrary helper import, or explicit type
-arguments. TypeScript proves inferred composition and assignability. Behavior
-tests own ordering, request isolation, and once-only root execution.
+imported from the matching middleware boundary, except that `module.ts` may end
+with exactly one inline additive context curation. That curation returns a
+nonempty object of explicit non-reserved fields whose values are direct,
+noncomputed member paths below `context.deps`, `context.scope`,
+`context.config`, `context.invocation`, or `context.provided`. It contains no
+guard, control flow, construction, spread, shorthand, computed access, whole
+lane copy, foreign root, literal, call, `new`, or `await`. Root SDK baselines
+may instead come directly from `base.ts`.
+
+For standalone services, the sole provider author is specialized to
+`Service["ExecutionContext"]` once in `base.ts` and exported as
+`createServiceProvider`. Only documented named root service middleware may
+import it from `../base` and call
+`createServiceProvider().middleware<ProvidedCapabilities>(handler)`. Modules
+and other service source cannot import or use the provider author, and
+middleware cannot specialize it again. Embedded API provider authorship is not
+admitted by this law. TypeScript proves inferred composition and assignability.
+Behavior tests own ordering, request isolation, and once-only root execution.
+The source matcher closes ordinary direct member forms only: qualified or
+computed `createServiceProvider` calls and bracket or destructured
+`createProvider` access remain red. It does not trace arbitrary assignment or
+alias flow.
 
 ```grit
 language js(typescript)
@@ -57,6 +74,12 @@ predicate require_service_context_boundaries_is_middleware_source() {
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
+// Selects standalone service-root middleware, the only provider consumer.
+predicate require_service_context_boundaries_is_root_middleware_source() {
+  $filename <: r".*services/[^/]+/src/service/middleware/[^/]+\.middleware\.ts$",
+  ! $filename <: r".*/(?:test|tests|__tests__)/.*"
+}
+
 // Detects current-owner root context and dependency surfaces reached from a module.
 predicate require_service_context_boundaries_is_current_root_context_alias($source) {
   or {
@@ -76,7 +99,16 @@ predicate require_service_context_boundaries_is_current_root_context_alias($sour
 // Requires a runtime named import from the exact relative base boundary.
 predicate require_service_context_boundaries_imports_base_name($body, $name) {
   $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"'](?:\.\./|\.\./\.\./\.\./)base[\"']$",
+    or {
+      and {
+        $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/middleware/[^/]+\.middleware\.ts$",
+        $source <: r"^[\"']\.\./base[\"']$"
+      },
+      and {
+        $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/middleware/[^/]+\.middleware\.ts$",
+        $source <: r"^[\"']\.\./\.\./\.\./base[\"']$"
+      }
+    },
     not { $import <: import_statement(type=type()) },
     $import <: contains import_specifier(name=$name) as $specifier where {
       not { $specifier <: r"^type\s+.*$" }
@@ -91,6 +123,18 @@ predicate require_service_context_boundaries_is_context_factory_middleware($body
     name=`createMiddleware`
   ),
   $value <: `createMiddleware().middleware($handler)`
+}
+
+// Recognizes a named provider contribution from the base-specialized root author.
+predicate require_service_context_boundaries_is_root_provider_middleware($body, $value) {
+  require_service_context_boundaries_is_root_middleware_source(),
+  require_service_context_boundaries_imports_base_name(
+    body=$body,
+    name=`createServiceProvider`
+  ),
+  $value <: `createServiceProvider().middleware<$provided>($handler)`,
+  $provided <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+  not { $value <: contains `createServiceProvider<$types>()` }
 }
 
 // Recognizes the two SDK-owned required telemetry extension builders.
@@ -108,6 +152,10 @@ predicate require_service_context_boundaries_is_named_middleware_export($body, $
   },
   or {
     require_service_context_boundaries_is_context_factory_middleware(
+      body=$body,
+      value=$value
+    ),
+    require_service_context_boundaries_is_root_provider_middleware(
       body=$body,
       value=$value
     ),
@@ -178,6 +226,122 @@ predicate require_service_context_boundaries_is_admitted_attachment_import($midd
         $source <: r"^[\"']\.\./middleware/[^/]+\.middleware[\"']$"
       }
     }
+  }
+}
+
+// Admits only explicit, non-reserved handler-facing names.
+predicate require_service_context_boundaries_is_curation_key($key) {
+  $key <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+  ! $key <: r"^(?:deps|scope|config|invocation|provided)$"
+}
+
+// Admits only direct noncomputed member paths rooted below one semantic lane.
+predicate require_service_context_boundaries_is_curation_value($value) {
+  $value <: r"^context\.(?:deps|scope|config|invocation|provided)\.[A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*$"
+}
+
+// Proves one explicit context selection and rejects every other property form.
+predicate require_service_context_boundaries_is_curation_property($property) {
+  $property <: `$key: $value`,
+  require_service_context_boundaries_is_curation_key(key=$key),
+  require_service_context_boundaries_is_curation_value(value=$value)
+}
+
+// Requires at least one selection and requires every selection to be canonical.
+predicate require_service_context_boundaries_is_curation_properties($properties) {
+  $properties <: some $property where {
+    require_service_context_boundaries_is_curation_property(property=$property)
+  },
+  not {
+    $properties <: some $property where {
+      not {
+        require_service_context_boundaries_is_curation_property(property=$property)
+      }
+    }
+  }
+}
+
+// Recognizes the exact inline callback shape; the property predicate closes its body.
+predicate require_service_context_boundaries_is_curation_callback($callback) {
+  $callback <: `async ({ context, next }) => next({ context: { $properties } })`,
+  require_service_context_boundaries_is_curation_properties(properties=$properties)
+}
+
+// Curation is optional, singular by terminality, and owned only by module.ts.
+predicate require_service_context_boundaries_is_terminal_module_curation($attachment) {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$",
+  $attachment <: `$receiver.use($callback)`,
+  require_service_context_boundaries_is_curation_callback(callback=$callback),
+  $program <: contains or {
+    `export const module = $attachment`,
+    `export const module: $type = $attachment`
+  }
+}
+
+// Proves the sole standalone provider author and its exact public local name.
+predicate require_service_context_boundaries_has_canonical_provider_author($body) {
+  $provider_authors = [],
+  $body <: contains bubble($provider_authors) `service.createProvider` as $author where {
+    $provider_authors += $author
+  },
+  $provider_author_count = length(target=$provider_authors),
+  $provider_author_count <: 1,
+  $body <: contains
+    `export const createServiceProvider = service.createProvider<Service["ExecutionContext"]>`
+}
+
+// Detects any attempt to publish the canonical provider-author name from base.ts.
+predicate require_service_context_boundaries_exports_provider_author_name($body) {
+  $body <: contains or {
+    `export const createServiceProvider = $value`,
+    `export const createServiceProvider: $type = $value`,
+    `export { $..., createServiceProvider, $... }`,
+    `export { $..., createServiceProvider, $... } from $source`,
+    `export { $..., $local as createServiceProvider, $... }`,
+    `export { $..., $local as createServiceProvider, $... } from $source`
+  }
+}
+
+// Requires one provider import to retain its canonical name and exact owner edge.
+predicate require_service_context_boundaries_is_canonical_provider_import($import, $source) {
+  require_service_context_boundaries_is_root_middleware_source(),
+  $source <: r"^[\"']\.\./base[\"']$",
+  not { $import <: import_statement(type=type()) },
+  $import <: contains import_specifier(name=`createServiceProvider`) as $specifier where {
+    not { $specifier <: r"\s+as\s+" }
+  }
+}
+
+// Proves a documented named root provider middleware export.
+predicate require_service_context_boundaries_has_canonical_provider_export($body) {
+  require_service_context_boundaries_is_root_middleware_source(),
+  $body <: contains export_statement() as $export where {
+    or {
+      $export <: `export const $name = $value`,
+      $export <: `export const $name: $type = $value`
+    },
+    require_service_context_boundaries_is_root_provider_middleware(
+      body=$body,
+      value=$value
+    ),
+    not { require_service_context_boundaries_lacks_jsdoc(export=$export) }
+  }
+}
+
+// Relates a provider call to the documented named provider export that owns it.
+predicate require_service_context_boundaries_is_exported_provider_call($body, $call) {
+  require_service_context_boundaries_is_root_middleware_source(),
+  $body <: contains export_statement() as $export where {
+    or {
+      $export <: `export const $name = $value`,
+      $export <: `export const $name: $type = $value`
+    },
+    require_service_context_boundaries_is_root_provider_middleware(
+      body=$body,
+      value=$value
+    ),
+    not { require_service_context_boundaries_lacks_jsdoc(export=$export) },
+    $call <: within $export
   }
 }
 
@@ -271,8 +435,46 @@ or {
   `$receiver.use<$types>($middleware, $...)` where {
     require_service_context_boundaries_is_governed_source()
   },
-  `$receiver.use($middleware, $...)` where {
+  `createServiceProvider<$types>()` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `$receiver.createServiceProvider()` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `$receiver.createServiceProvider<$types>()` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `$receiver["createServiceProvider"]()` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `$receiver["createServiceProvider"]<$types>()` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `service["createProvider"]` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `const { createProvider: $name } = service` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  `const { createProvider } = service` where {
+    require_service_context_boundaries_is_governed_source()
+  },
+  import_statement(source=$source) as $import where {
     require_service_context_boundaries_is_governed_source(),
+    $import <: r"(?s).*\bcreateServiceProvider\b.*",
+    or {
+      not { require_service_context_boundaries_is_root_middleware_source() },
+      ! $source <: r"^[\"']\.\./base[\"']$",
+      $import <: r"(?s).*\bcreateServiceProvider\s+as\s+.*"
+    }
+  },
+  `$receiver.use($middleware, $...)` as $attachment where {
+    require_service_context_boundaries_is_governed_source(),
+    not {
+      require_service_context_boundaries_is_terminal_module_curation(
+        attachment=$attachment
+      )
+    },
     or {
       not { $middleware <: identifier() },
       require_service_context_boundaries_is_local_attachment(
@@ -283,6 +485,44 @@ or {
           middleware=$middleware
         )
       }
+    }
+  },
+  program(statements=$body) where {
+    require_service_context_boundaries_is_governed_source(),
+    $body <: contains import_statement(source=$source) as $import where {
+      $import <: r"(?s).*\bcreateServiceProvider\b.*"
+    },
+    not {
+      require_service_context_boundaries_is_canonical_provider_import(
+        import=$import,
+        source=$source
+      ),
+      require_service_context_boundaries_has_canonical_provider_export(body=$body)
+    }
+  },
+  `createServiceProvider()` as $call where {
+    require_service_context_boundaries_is_governed_source(),
+    not {
+      require_service_context_boundaries_is_exported_provider_call(
+        body=$program,
+        call=$call
+      )
+    }
+  },
+  program(statements=$body) where {
+    require_service_context_boundaries_is_governed_source(),
+    $body <: contains `service.createProvider`,
+    not {
+      require_service_context_boundaries_is_standalone_base_source(),
+      require_service_context_boundaries_has_canonical_provider_author(body=$body)
+    }
+  },
+  program(statements=$body) where {
+    require_service_context_boundaries_is_governed_source(),
+    require_service_context_boundaries_exports_provider_author_name(body=$body),
+    not {
+      require_service_context_boundaries_is_standalone_base_source(),
+      require_service_context_boundaries_has_canonical_provider_author(body=$body)
     }
   },
   program(statements=$body) where {

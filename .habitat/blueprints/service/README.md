@@ -60,9 +60,17 @@ and directly checks the plain
 object against `Router<typeof contract, never>`. Each `module.ts` derives its
 matching `service.<module>` branch. A bare branch inherits service context;
 module capability middleware is authored from the one complete-context native
-author in `base.ts` and attached without explicit type arguments. The
-contribution is additive and inferred; the elected author is separate from the
-contract implementer and does not claim subtractive handler context. SDK-owned
+author in `base.ts` and attached without explicit type arguments. A module may
+then add one terminal inline curation whose nonempty explicit fields select
+direct noncomputed member paths rooted below the four input lanes or the
+`provided` bucket. Named middleware and module
+curation are additive and inferred; neither claims subtractive handler
+context. A standalone service provider author is specialized once in
+`base.ts`, exported under the canonical `createServiceProvider` name, and used
+only by named root service middleware through `../base`. Modules and other
+service source cannot consume it, and this packet does not admit embedded API
+provider authorship. Root and module middleware otherwise reach `base.ts`
+through `../base` and `../../../base` respectively. SDK-owned
 required observability and analytics builders remain distinct baseline
 extensions, not alternate context factories. The pinned oRPC 1.x lane cannot
 close this heterogeneous-context router with native `.router(...)` without

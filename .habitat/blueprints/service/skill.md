@@ -165,7 +165,7 @@ host binding
   -> base execution context
   -> service middleware
   -> provided capabilities
-  -> module projection
+  -> module curation
   -> handler
 ```
 
@@ -173,10 +173,10 @@ host binding
 author once. The public client binds the construction lanes. The caller
 supplies invocation facts per call. Provider middleware adds execution
 capabilities under `provided`; it does not rename, flatten, or reconstruct the
-four semantic input lanes. A module
-inherits the service context through its exact service branch, attaches its
-named capability middleware in `module.ts`, and lets handlers consume the
-resulting context directly.
+four semantic input lanes. A module inherits the service context through its
+exact service branch, attaches any named capability middleware, and may finish
+with one inline curation that exposes selected descendant capabilities as
+additive handler fields.
 
 Reading an inherited lane in a handler is not an upward reach. Importing root
 runtime assembly to obtain it, restating the whole service context in a module,
@@ -184,20 +184,19 @@ or manually rebuilding the lanes is. Module boundaries narrow which
 capabilities an operation authors against; they do not pretend inherited
 runtime context disappeared.
 
-Example Todo currently retains transitional module projections that copy
-selected lane values into flat handler fields. They are migration evidence,
-not an alternate lane model or a pattern to reproduce. A later runtime cut may
-move those capabilities under the qualified `provided` surface; this frame
-does not claim that cut has already happened.
+The admitted curation shape lets each `module.ts` finish its service branch
+with one `async ({ context, next }) => next({ context: { ... } })` attachment. The
+object is nonempty, uses explicit non-reserved keys, and maps each value from a
+direct noncomputed member path below `deps`, `scope`, `config`, `invocation`, or
+`provided`. The projection is additive: inherited lanes remain present in the
+native runtime context even when handlers author against the curated fields.
 
-The canonical worked reference is
-[[services/example-todo/AGENTS|Example Todo]]. The reusable type and client
-boundary are
+The reusable type and client boundary are
 [[packages/hq-sdk/src/orpc/context/types|the HQ SDK context model]] and
 [[packages/hq-sdk/src/orpc/boundary/service-package|the service-package boundary]].
-Their executable oracles are
-[[services/example-todo/test/context-typing|Example Todo context typing]] and
-[[apps/server/test/example-todo-package-surface.typecheck|the public package-surface proof]].
+Until the runtime slice lands its owning service guidance, the executable
+structural reference is
+[[scripts/habitat/service-blueprint.test|the service-blueprint fixture]].
 
 Middleware is valid when it guards or enriches a real capability.
 It is not a second place to assemble service or module context. Root context
@@ -211,18 +210,25 @@ in `base.ts`; service-wide SDK telemetry extensions remain separately named
 framework values.
 A middleware never originates from the already-derived `service` or `module`
 implementer and then feeds back into that branch. Native `.use` attachments
-name the completed middleware in their first argument instead of hiding a
-guard or projection in an inline or local plain callback. A later input
-selector remains an ordinary callback.
+name the completed middleware in their first argument. The only inline
+middleware is the optional terminal `module.ts` curation described above; it
+cannot contain guards, control flow, capability construction, calls other than
+the terminal `next`, or indirect/computed values. A later input selector on an
+imported named middleware remains an ordinary callback.
 
 Native oRPC middleware contributions merge with the current context. Returning
-a smaller object or passing an explicit `.use<Context>(...)` argument does not
+a curated object or passing an explicit `.use<Context>(...)` argument does not
 remove inherited lanes and is not a narrowing proof. The standalone base
 establishes initial context and implementation once; each `module.ts` derives
-the matching service branch and attaches named middleware without explicit type
-arguments. TypeScript infers the contribution. Owner-local resource and handler
-cuts remove broad lanes at their source; no wrapper, witness, source-spelling
-blacklist, or shadow context pretends the runtime object became subtractive.
+the matching service branch, attaches named middleware without explicit type
+arguments, and may append one inferred curation. Named standalone root
+middleware alone may use the canonical provider author specialized once in
+`base.ts`; modules and other service source cannot acquire or construct
+dependencies through it. Embedded API provider authorship requires separate
+authority and is not admitted here. TypeScript infers each contribution.
+Owner-local resource and handler cuts remove broad lanes at their source; no
+wrapper, witness, source-spelling blacklist, or shadow context pretends the
+runtime object became subtractive.
 
 ## Native Authorities
 
