@@ -1,4 +1,16 @@
-import { Effect } from "effect";
+import type {
+  NativeAgentProviderFailure,
+  NativeAgentProviderSession,
+  NativeProviderCapabilities,
+  NativeProviderInventory,
+} from "@rawr/resource-native-agent-provider";
+import {
+  NativeProviderCapabilitiesSchema,
+  NativeProviderInventorySchema,
+  NativeProviderPluginFilesSchema,
+} from "@rawr/resource-native-agent-provider";
+import { Effect, Result } from "effect";
+import { Value } from "typebox/value";
 
 import {
   classifyCleanContentWorkspaceAnchor,
@@ -19,22 +31,57 @@ import {
   validateCleanContentWorkspacePolicy,
 } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
-import type { ProviderTestResult } from "../model/dto/provider-lifecycle";
+import type {
+  ConfirmedNativeOperation,
+  ProviderIssue,
+  ProviderMutationTargetResult,
+  ProviderTarget,
+  ProviderTestResult,
+  VerificationFact,
+} from "../model/dto/provider-lifecycle";
 import type { SelectedContent } from "../model/dto/selected-content";
 import {
+  classifyNativeMutationStep,
+  completedMutationTarget,
+  failedMutationTarget,
+  finalNativeAssessmentIssue,
+  marketplaceRemovalIssue,
+  nativeCommandIsRequired,
+  notAttemptedAfterMutation,
+  planNativeTargetMutation,
+  uncertainMutationTarget,
+} from "../model/policy/native-mutation";
+import {
+  allTargetsConverged,
+  assessNativePluginFiles,
+  assessNativeTarget,
+  blockedTargetResults,
+  convergedMutationTargetResult,
+  failedNativePluginFiles,
+  hasBlockingAssessment,
+  type NativeAvailableTargetAssessment,
+  type NativePluginFileAssessment,
+  type NativePluginFileReadPlan,
+  type NativeReconciliationPolicy,
+  type NativeTargetAssessment,
+  type NativeUnavailableTargetAssessment,
+  planNativePluginFileReads,
+  unavailableNativeTarget,
+} from "../model/policy/native-state";
+import {
+  blockedProviderTestResult,
   canonicalProviderTargets,
-  collectTargetIssues,
-  mutationClassification,
+  completedProviderTestResult,
   rejectedTargets,
   sourceChangedTargets,
 } from "../model/policy/operation-result";
 import {
   constructSelectedContent,
+  providerIssue,
   providerSelectionResolution,
   sameSelectedContent,
   selectedContentFromReleaseDerivationFailure,
   selectedContentFromSourceIssues,
-  selectedContentObservation,
   selectedContentRejected,
 } from "../model/policy/selected-content";
 import {
@@ -48,14 +95,6 @@ import {
   validateSelectedNativeMarketplaces,
 } from "../model/policy/source-interface";
 import { module } from "../module";
-import {
-  allTargetsConverged,
-  blockedTargetResults,
-  convergedMutationTargetResult,
-  hasBlockingAssessment,
-  inspectProviderTargets,
-  reconcileProviderTargets,
-} from "./reconcile.router";
 
 /**
  * Authors disposable Provider convergence from exact local Git content.
@@ -71,6 +110,7 @@ export const test = module.test.effect(function* ({ context, input: request }) {
     targets: canonicalProviderTargets(request.targets),
   });
   const policy = canonicalRequest.contentWorkspace;
+  const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: false });
 
   /**
    * Executes one complete clean-content observation lazily for each call.
@@ -304,6 +344,423 @@ export const test = module.test.effect(function* ({ context, input: request }) {
       return constructed;
     });
 
+  type NativeTargetObservation =
+    | Readonly<{
+        kind: "Available";
+        assessment: NativeAvailableTargetAssessment;
+        session: NativeAgentProviderSession;
+      }>
+    | Readonly<{
+        kind: "Unavailable";
+        assessment: NativeUnavailableTargetAssessment;
+      }>;
+
+  /**
+   * Reads and structurally admits one native inventory observation.
+   *
+   * Typed provider failures remain ordinary facts. Defects and interruption
+   * continue through the Effect cause channel.
+   */
+  const observeInventory = (
+    session: NativeAgentProviderSession,
+    target: ProviderTarget
+  ): Effect.Effect<
+    | Readonly<{ kind: "Observed"; inventory: NativeProviderInventory }>
+    | Readonly<{ kind: "Failed"; detail: string }>
+  > =>
+    Effect.result(session.inventory()).pipe(
+      Effect.map((attempt) => {
+        if (Result.isFailure(attempt)) {
+          return Object.freeze({
+            kind: "Failed" as const,
+            detail: attempt.failure.detail,
+          });
+        }
+        return !Value.Check(NativeProviderInventorySchema, attempt.success) ||
+          attempt.success.provider !== target.provider
+          ? Object.freeze({
+              kind: "Failed" as const,
+              detail: "Native provider returned an invalid inventory.",
+            })
+          : Object.freeze({ kind: "Observed" as const, inventory: attempt.success });
+      })
+    );
+
+  /**
+   * Reads one selected plugin file batch and admits the provider response.
+   *
+   * The resource owns the read. TypeBox owns the returned structure, and
+   * Provider policy owns exact byte identity.
+   */
+  const assessPluginFilePlan = (
+    session: NativeAgentProviderSession,
+    plan: NativePluginFileReadPlan
+  ): Effect.Effect<NativePluginFileAssessment> =>
+    Effect.gen(function* () {
+      const attempt = yield* Effect.result(
+        session.readPluginFiles({
+          selector: plan.selector,
+          files: plan.files.map((file) =>
+            Object.freeze({ relativePath: file.path, maxBytes: file.byteLength })
+          ),
+        })
+      );
+      return Result.isFailure(attempt)
+        ? failedNativePluginFiles(
+            plan,
+            `Could not read the selected files for ${plan.selector}: ${attempt.failure.detail}`
+          )
+        : !Value.Check(NativeProviderPluginFilesSchema, attempt.success)
+          ? failedNativePluginFiles(
+              plan,
+              `Native provider returned an invalid file batch for ${plan.selector}.`
+            )
+          : assessNativePluginFiles(plan, attempt.success);
+    });
+
+  /**
+   * Reads selected plugin files and reduces them to pure assessment facts.
+   *
+   * File mechanics stay on the acquired session while byte identity and
+   * selected-member semantics remain in Provider policy.
+   *
+   * @param content - Exact selected content whose member files are observed.
+   * @param target - Disposable provider target associated with the inventory.
+   * @param session - Invocation-local native session that owns file mechanics.
+   * @param inventory - TypeBox-admitted inventory used to plan bounded reads.
+   */
+  const assessPluginFiles = (
+    content: SelectedContent,
+    target: ProviderTarget,
+    session: NativeAgentProviderSession,
+    inventory: NativeProviderInventory
+  ): Effect.Effect<readonly NativePluginFileAssessment[]> =>
+    Effect.gen(function* () {
+      const assessments: NativePluginFileAssessment[] = [];
+      for (const plan of planNativePluginFileReads(content, target, inventory)) {
+        assessments.push(yield* assessPluginFilePlan(session, plan));
+      }
+      return Object.freeze(assessments);
+    });
+
+  /**
+   * Reduces one admitted session observation to effect-free Provider policy.
+   *
+   * @param content - Exact selected content used as native desired state.
+   * @param target - Disposable provider target associated with the session.
+   * @param session - Invocation-local native session used for selected file reads.
+   * @param capabilities - TypeBox-admitted commands exposed by the session.
+   * @param inventory - TypeBox-admitted live provider inventory.
+   * @param mutationIntent - Whether this observation must admit planned commands.
+   */
+  const assessInventory = (
+    content: SelectedContent,
+    target: ProviderTarget,
+    session: NativeAgentProviderSession,
+    capabilities: NativeProviderCapabilities,
+    inventory: NativeProviderInventory,
+    mutationIntent: boolean
+  ): Effect.Effect<NativeAvailableTargetAssessment> =>
+    assessPluginFiles(content, target, session, inventory).pipe(
+      Effect.map((fileAssessments) =>
+        assessNativeTarget(
+          content,
+          target,
+          capabilities,
+          inventory,
+          fileAssessments,
+          nativePolicy,
+          mutationIntent
+        )
+      )
+    );
+
+  /**
+   * Acquires and completely observes one disposable provider target.
+   *
+   * Probe and inventory run concurrently inside the target. Targets themselves
+   * remain sequential so a full preflight has one deterministic order.
+   */
+  const observeTarget = (
+    content: SelectedContent,
+    target: ProviderTarget,
+    mutationIntent: boolean
+  ): Effect.Effect<NativeTargetObservation> =>
+    Effect.gen(function* () {
+      const acquire: Effect.Effect<NativeAgentProviderSession, NativeAgentProviderFailure> =
+        target.provider === "codex"
+          ? context.nativeProviders.codex
+              .acquire({ home: target.home })
+              .pipe(Effect.map((session): NativeAgentProviderSession => session))
+          : context.nativeProviders.claude
+              .acquire({ home: target.home })
+              .pipe(Effect.map((session): NativeAgentProviderSession => session));
+      const acquisition = yield* Effect.result(acquire);
+      if (Result.isFailure(acquisition)) {
+        return Object.freeze({
+          kind: "Unavailable" as const,
+          assessment: unavailableNativeTarget(
+            target,
+            `Native provider acquisition failed: ${acquisition.failure.detail}`
+          ),
+        });
+      }
+      const session: NativeAgentProviderSession = acquisition.success;
+      if (
+        session.provider !== target.provider ||
+        session.home !== target.home ||
+        session.executablePath.length === 0
+      ) {
+        return Object.freeze({
+          kind: "Unavailable" as const,
+          assessment: unavailableNativeTarget(
+            target,
+            "Native provider acquisition returned a session for a different target."
+          ),
+        });
+      }
+
+      const inspection: Effect.Effect<
+        readonly [NativeProviderCapabilities, NativeProviderInventory],
+        NativeAgentProviderFailure
+      > = Effect.all([session.probe(), session.inventory()] as const, { concurrency: 2 });
+      const observed = yield* Effect.result(inspection);
+      if (Result.isFailure(observed)) {
+        return Object.freeze({
+          kind: "Unavailable" as const,
+          assessment: unavailableNativeTarget(
+            target,
+            `Native provider inspection failed: ${observed.failure.detail}`
+          ),
+        });
+      }
+      const [capabilities, inventory] = observed.success;
+      if (
+        !Value.Check(NativeProviderCapabilitiesSchema, capabilities) ||
+        !Value.Check(NativeProviderInventorySchema, inventory) ||
+        capabilities.provider !== target.provider ||
+        inventory.provider !== target.provider ||
+        capabilities.home !== target.home ||
+        capabilities.executablePath !== session.executablePath ||
+        (session.provider === "claude" &&
+          (typeof session.enablePlugin !== "function" ||
+            !new Set<string>(capabilities.capabilities).has("plugin-enable")))
+      ) {
+        return Object.freeze({
+          kind: "Unavailable" as const,
+          assessment: unavailableNativeTarget(
+            target,
+            "Native provider inspection returned facts for a different target."
+          ),
+        });
+      }
+
+      const assessment = yield* assessInventory(
+        content,
+        target,
+        session,
+        capabilities,
+        inventory,
+        mutationIntent
+      );
+      return Object.freeze({ kind: "Available" as const, assessment, session });
+    });
+
+  /** Observes all targets sequentially while retaining only invocation-local sessions. */
+  const observeTargets = (
+    content: SelectedContent,
+    targets: readonly ProviderTarget[],
+    mutationIntent: boolean
+  ) =>
+    Effect.forEach(targets, (target) => observeTarget(content, target, mutationIntent), {
+      concurrency: 1,
+    }).pipe(Effect.map((observations) => Object.freeze(observations)));
+
+  /** Best-effort terminal observation for public failure diagnostics. */
+  const observeTerminalFacts = (
+    content: SelectedContent,
+    observation: Extract<NativeTargetObservation, { kind: "Available" }>
+  ): Effect.Effect<readonly VerificationFact[]> =>
+    Effect.gen(function* () {
+      const inventory = yield* observeInventory(observation.session, observation.assessment.target);
+      if (inventory.kind === "Failed") return Object.freeze([]);
+      const assessment = yield* assessInventory(
+        content,
+        observation.assessment.target,
+        observation.session,
+        observation.assessment.capabilities,
+        inventory.inventory,
+        false
+      );
+      return assessment.facts;
+    });
+
+  /**
+   * Applies one final-preflight mutation plan through the retained session.
+   *
+   * Every command is immediately reobserved. Confirmed operations form an
+   * exact prefix; an uncertain command remains outside that prefix.
+   */
+  const mutateTarget = (
+    content: SelectedContent,
+    observation: Extract<NativeTargetObservation, { kind: "Available" }>
+  ): Effect.Effect<ProviderMutationTargetResult> =>
+    Effect.gen(function* () {
+      const { assessment, session } = observation;
+      let inventory = assessment.inventory;
+      const operations: ConfirmedNativeOperation[] = [];
+      const issues: ProviderIssue[] = [];
+
+      const executeCommand = (
+        operation: ConfirmedNativeOperation
+      ): Effect.Effect<ReturnType<typeof classifyNativeMutationStep>, never> =>
+        Effect.gen(function* () {
+          let mutation: Effect.Effect<unknown, NativeAgentProviderFailure>;
+          switch (operation.kind) {
+            case "marketplace-added":
+              mutation = session.addMarketplace(content.marketplace.source);
+              break;
+            case "marketplace-removed":
+              mutation = session.removeMarketplace({ identity: operation.identity });
+              break;
+            case "plugin-installed":
+              mutation = session.installPlugin({ selector: operation.selector });
+              break;
+            case "plugin-removed":
+              mutation = session.removePlugin({ selector: operation.selector });
+              break;
+            case "plugin-enabled":
+              if (session.provider !== "claude") {
+                return {
+                  kind: "Failed" as const,
+                  issue: providerIssue(
+                    "CapabilityMissing",
+                    "Codex did not expose plugin enablement."
+                  ),
+                };
+              }
+              mutation = session.enablePlugin({ selector: operation.selector });
+              break;
+          }
+          const command = yield* Effect.result(mutation);
+          const observed = yield* observeInventory(session, assessment.target);
+          return classifyNativeMutationStep(
+            content,
+            operation,
+            Result.isFailure(command)
+              ? {
+                  kind: "Failed",
+                  commandPhase: command.failure.commandPhase,
+                  detail: command.failure.detail,
+                }
+              : { kind: "Returned" },
+            observed
+          );
+        });
+
+      for (const plan of planNativeTargetMutation(content, assessment, nativePolicy)) {
+        switch (plan.kind) {
+          case "GuardMarketplaceRemoval": {
+            const observed = yield* observeInventory(session, assessment.target);
+            if (observed.kind === "Failed") {
+              return failedMutationTarget(assessment, operations, Object.freeze([]), [
+                ...issues,
+                providerIssue(
+                  "NativeObservationFailed",
+                  `Marketplace could not be reobserved before removal: ${observed.detail}`
+                ),
+              ]);
+            }
+            inventory = observed.inventory;
+            const ownershipIssue = marketplaceRemovalIssue(content, inventory);
+            if (ownershipIssue !== undefined) {
+              return failedMutationTarget(assessment, operations, Object.freeze([]), [
+                ...issues,
+                ownershipIssue,
+              ]);
+            }
+            break;
+          }
+          case "VerifyMember": {
+            const verified = yield* assessPluginFilePlan(session, plan.plan);
+            if (!verified.matches) {
+              return failedMutationTarget(
+                assessment,
+                operations,
+                yield* observeTerminalFacts(content, observation),
+                [...issues, ...verified.issues]
+              );
+            }
+            break;
+          }
+          case "RetireOmitted":
+            return failedMutationTarget(
+              assessment,
+              operations,
+              yield* observeTerminalFacts(content, observation),
+              [
+                ...issues,
+                providerIssue(
+                  "DesiredContentInvalid",
+                  "Disposable provider testing cannot retire omitted plugins."
+                ),
+              ]
+            );
+          case "Command": {
+            if (!nativeCommandIsRequired(plan, inventory)) break;
+            const step = yield* executeCommand(plan.operation);
+            if (step.kind === "Failed") {
+              return failedMutationTarget(
+                assessment,
+                operations,
+                yield* observeTerminalFacts(content, observation),
+                [...issues, step.issue]
+              );
+            }
+            if (step.kind === "Uncertain") {
+              return uncertainMutationTarget(
+                assessment,
+                operations,
+                step.attempted,
+                yield* observeTerminalFacts(content, observation),
+                [...issues, step.issue]
+              );
+            }
+            inventory = step.inventory;
+            if (step.kind === "Confirmed") operations.push(plan.operation);
+            break;
+          }
+        }
+      }
+
+      const finalInventory = yield* observeInventory(session, assessment.target);
+      if (finalInventory.kind === "Failed") {
+        return failedMutationTarget(assessment, operations, Object.freeze([]), [
+          ...issues,
+          providerIssue(
+            "NativeObservationFailed",
+            `Final provider state could not be observed: ${finalInventory.detail}`
+          ),
+        ]);
+      }
+      const finalAssessment = yield* assessInventory(
+        content,
+        assessment.target,
+        session,
+        assessment.capabilities,
+        finalInventory.inventory,
+        false
+      );
+      const finalIssue = finalNativeAssessmentIssue(finalAssessment);
+      return finalIssue === undefined
+        ? completedMutationTarget(assessment, operations, finalAssessment.facts, issues)
+        : failedMutationTarget(assessment, operations, finalAssessment.facts, [
+            ...issues,
+            ...finalAssessment.issues,
+            finalIssue,
+          ]);
+    });
+
   const selected = yield* selectWorkspace();
   if (selected.kind === "Rejected") {
     return {
@@ -314,23 +771,15 @@ export const test = module.test.effect(function* ({ context, input: request }) {
       issues: selected.issues,
     } satisfies ProviderTestResult;
   }
-  // Disposable testing may replace selected members, but it never retires
-  // other provider state. Canonical complete-set retirement belongs to sync.
-  const retireOmitted = false;
-  const initial = yield* inspectProviderTargets(
-    selected.content,
-    canonicalRequest.targets,
-    context.nativeProviders,
-    { retireOmitted },
-    true
-  );
-  if (hasBlockingAssessment(initial)) {
-    return completeResult(selected.content, blockedTargetResults(initial));
+  const initial = yield* observeTargets(selected.content, canonicalRequest.targets, true);
+  const initialAssessments = Object.freeze(initial.map(({ assessment }) => assessment));
+  if (hasBlockingAssessment(initialAssessments)) {
+    return completedProviderTestResult(selected.content, blockedTargetResults(initialAssessments));
   }
-  if (allTargetsConverged(initial)) {
-    return completeResult(
+  if (allTargetsConverged(initialAssessments)) {
+    return completedProviderTestResult(
       selected.content,
-      Object.freeze(initial.map(convergedMutationTargetResult))
+      Object.freeze(initialAssessments.map(convergedMutationTargetResult))
     );
   }
 
@@ -339,46 +788,40 @@ export const test = module.test.effect(function* ({ context, input: request }) {
     revalidated.kind === "Rejected" ||
     !sameSelectedContent(selected.content, revalidated.content)
   ) {
-    return blockedResult(selected.content, sourceChangedTargets(canonicalRequest.targets));
+    return blockedProviderTestResult(
+      selected.content,
+      sourceChangedTargets(canonicalRequest.targets)
+    );
   }
-  const finalPreflight = yield* inspectProviderTargets(
-    revalidated.content,
-    canonicalRequest.targets,
-    context.nativeProviders,
-    { retireOmitted },
-    true
-  );
-  if (hasBlockingAssessment(finalPreflight)) {
-    return completeResult(revalidated.content, blockedTargetResults(finalPreflight));
+  const finalPreflight = yield* observeTargets(revalidated.content, canonicalRequest.targets, true);
+  const finalAssessments = Object.freeze(finalPreflight.map(({ assessment }) => assessment));
+  if (hasBlockingAssessment(finalAssessments)) {
+    return completedProviderTestResult(revalidated.content, blockedTargetResults(finalAssessments));
   }
-  const targets = allTargetsConverged(finalPreflight)
-    ? Object.freeze(finalPreflight.map(convergedMutationTargetResult))
-    : yield* reconcileProviderTargets(revalidated.content, finalPreflight, { retireOmitted });
-  return completeResult(revalidated.content, targets);
+  if (allTargetsConverged(finalAssessments)) {
+    return completedProviderTestResult(
+      revalidated.content,
+      Object.freeze(finalAssessments.map(convergedMutationTargetResult))
+    );
+  }
+
+  const targets: ProviderMutationTargetResult[] = [];
+  for (const [index, observation] of finalPreflight.entries()) {
+    if (observation.kind === "Unavailable") {
+      targets.push(
+        failedMutationTarget(observation.assessment, [], [], observation.assessment.issues)
+      );
+      targets.push(...notAttemptedAfterMutation(finalAssessments.slice(index + 1)));
+      break;
+    }
+    const target = observation.assessment.needsMutation
+      ? yield* mutateTarget(revalidated.content, observation)
+      : convergedMutationTargetResult(observation.assessment);
+    targets.push(target);
+    if (target.classification === "Failed" || target.classification === "Uncertain") {
+      targets.push(...notAttemptedAfterMutation(finalAssessments.slice(index + 1)));
+      break;
+    }
+  }
+  return completedProviderTestResult(revalidated.content, Object.freeze(targets));
 });
-
-function completeResult(
-  content: SelectedContent,
-  targets: ProviderTestResult["targets"]
-): ProviderTestResult {
-  return {
-    operation: "test",
-    classification: mutationClassification(targets),
-    selection: selectedContentObservation(content),
-    targets,
-    issues: collectTargetIssues(targets),
-  };
-}
-
-function blockedResult(
-  content: SelectedContent,
-  targets: ProviderTestResult["targets"]
-): ProviderTestResult {
-  return {
-    operation: "test",
-    classification: "Blocked",
-    selection: selectedContentObservation(content),
-    targets,
-    issues: collectTargetIssues(targets),
-  };
-}

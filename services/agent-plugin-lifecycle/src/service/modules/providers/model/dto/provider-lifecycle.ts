@@ -25,8 +25,10 @@ import { hasStrictDescendantHomes } from "../policy/disposable-root";
 const MAX_TARGETS = 16;
 export const MAX_CONFIRMED_NATIVE_OPERATIONS =
   MAX_NATIVE_PROVIDER_PLUGINS + 3 * MAX_RELEASE_MEMBERS + 2;
-const MAX_ISSUES = 256;
-const MAX_FACTS = 4_096;
+/** Maximum public verification facts returned for one Provider target. */
+export const MAX_PROVIDER_FACTS = 4_096;
+/** Maximum public issues returned by one Provider operation or target. */
+export const MAX_PROVIDER_ISSUES = 256;
 const MAX_DETAIL_LENGTH = 4_096;
 
 export const ProviderIdSchema = NativeAgentProviderIdSchema;
@@ -181,8 +183,8 @@ export const VerificationFactSchema = ReadonlyObject(
 
 const targetObservationProperties = {
   target: ProviderTargetSchema,
-  facts: BoundedReadonlyArray(VerificationFactSchema, { maxItems: MAX_FACTS }),
-  issues: BoundedReadonlyArray(ProviderIssueSchema, { maxItems: MAX_ISSUES }),
+  facts: BoundedReadonlyArray(VerificationFactSchema, { maxItems: MAX_PROVIDER_FACTS }),
+  issues: BoundedReadonlyArray(ProviderIssueSchema, { maxItems: MAX_PROVIDER_ISSUES }),
 } as const;
 
 const boundedNativeOperations = () =>
@@ -276,7 +278,7 @@ export const SelectedContentObservationSchema = ReadonlyObject(
 
 const resultProperties = {
   selection: Type.Union([SelectedContentObservationSchema, Type.Null()]),
-  issues: BoundedReadonlyArray(ProviderIssueSchema, { maxItems: MAX_ISSUES }),
+  issues: BoundedReadonlyArray(ProviderIssueSchema, { maxItems: MAX_PROVIDER_ISSUES }),
 } as const;
 
 export const ProviderStatusResultSchema = ReadonlyObject(

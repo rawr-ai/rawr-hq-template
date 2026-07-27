@@ -20,11 +20,14 @@
   native-state policy, provider operation DTOs, handlers, results, issues, and
   admitted mutation policy.
 - Status, sync, and disposable test directly consume the ready
-  content-workspace resource in their oRPC handlers. They do not delegate
-  source selection to an exported runner, resolver, narrowed port, dependency
-  bag, or workspace branch. Native observation and mutation still use the
-  module's existing reconciliation functions until their separate
-  operation-authorship cut.
+  content-workspace and native-provider resources in their oRPC handlers. They
+  do not delegate selection, observation, or mutation to an exported runner,
+  resolver, engine, narrowed port, dependency bag, or workspace branch.
+- A native-provider session remains local to the operation that acquired it.
+  Pure module policy receives TypeBox-admitted capabilities, inventory, file
+  observations, and command outcomes; it returns assessments, bounded plans,
+  postconditions, and public result classifications without retaining a
+  session or performing an Effect.
 - Aggregate result classification, rejected-target projection, issue
   collection, and target ordering are module policy. A router leaf authors an
   oRPC operation; it is not a destination for detached result helpers.
@@ -36,9 +39,9 @@
 ## Behavior
 
 - The module resolves and canonicalizes its invocation-local desired content,
-  revalidates exact Git content, inspects native inventory, classifies drift
-  or blockers, and optionally reconciles each target before returning an
-  aggregate result.
+  revalidates exact Git content, directly inspects native inventory, classifies
+  drift or blockers, and performs an admitted bounded transition before
+  returning an aggregate result.
 
 ## Concepts
 
@@ -52,7 +55,10 @@
 - Status performs one complete governed channel selection from the ready
   content-workspace resource. Sync repeats that complete selection only when
   mutation may be required. Test performs complete local source selection,
-  repeats it before mutation, and preserves omitted members.
+  repeats it before mutation, and preserves omitted members. A mutating
+  operation reacquires every target for one final all-target preflight, then
+  reuses only that final session for ordered mutation and immediate
+  confirmation.
 
 ## Interfaces
 
@@ -70,4 +76,4 @@
 
 - Run `bunx nx run @rawr/agent-plugin-lifecycle:typecheck`.
 - Run `bunx nx run @rawr/agent-plugin-lifecycle:test` for selection, status,
-  disposable test, sync, revalidation, and target reconciliation behavior.
+  disposable test, sync, revalidation, and native convergence behavior.

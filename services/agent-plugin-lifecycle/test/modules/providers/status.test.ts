@@ -19,11 +19,13 @@ describe("provider status and preflight", () => {
       content,
       marketplace: "absent",
     });
-    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const nativeProviders = new FakeNativeProviders([session]);
+    const { client } = createProviderLifecycleClient(content, nativeProviders);
     const result = await client.providers.status(channelRequest, testInvocation);
     expect(result.classification).toBe("Drifted");
     expect(result.targets[0]?.classification).toBe("Drifted");
     expect(result.targets[0]?.operations).toEqual([]);
+    expect(nativeProviders.acquisitionCalls).toEqual(["codex:/tmp/codex-home"]);
     expect(session.mutationCalls()).toEqual([]);
   });
 
@@ -147,6 +149,60 @@ describe("provider status and preflight", () => {
     expect(resourceCalls.filter((call) => call === "read-tree")).toHaveLength(1);
     expect(codex.mutationCalls()).toEqual([]);
     expect(claude.mutationCalls()).toEqual([]);
+  });
+
+  it("classifies a typed capability probe failure without mutating", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    session.probeFailure = true;
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.status(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Failed");
+    expect(result.targets[0]).toMatchObject({
+      classification: "Failed",
+      issues: [expect.objectContaining({ code: "TargetUnavailable" })],
+    });
+    expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it.each([
+    { kind: "capabilities" as const, issue: "TargetUnavailable" },
+    { kind: "inventory" as const, issue: "TargetUnavailable" },
+    { kind: "files" as const, issue: "NativeObservationFailed" },
+  ])("rejects malformed native $kind facts through TypeBox", async ({ kind, issue }) => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      installed: ["cognition"],
+    });
+    switch (kind) {
+      case "capabilities":
+        session.malformedCapabilities = true;
+        break;
+      case "inventory":
+        session.malformedInventory = true;
+        break;
+      case "files":
+        session.malformedFileBatch = true;
+        break;
+    }
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.status(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Failed");
+    expect(result.targets[0]).toMatchObject({
+      classification: "Failed",
+      issues: expect.arrayContaining([expect.objectContaining({ code: issue })]),
+    });
+    expect(session.mutationCalls()).toEqual([]);
   });
 
   it("refuses a known disabled Codex member before another target mutates", async () => {

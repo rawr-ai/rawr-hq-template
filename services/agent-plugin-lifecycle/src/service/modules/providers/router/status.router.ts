@@ -1,4 +1,16 @@
-import { Effect } from "effect";
+import type {
+  NativeAgentProviderFailure,
+  NativeAgentProviderSession,
+  NativeProviderCapabilities,
+  NativeProviderInventory,
+} from "@rawr/resource-native-agent-provider";
+import {
+  NativeProviderCapabilitiesSchema,
+  NativeProviderInventorySchema,
+  NativeProviderPluginFilesSchema,
+} from "@rawr/resource-native-agent-provider";
+import { Effect, Result } from "effect";
+import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/current-main-primitives";
 import { decodeGitLocator } from "#agent-plugin-lifecycle-service/model/policy/current-main-locator";
 import {
@@ -15,7 +27,19 @@ import {
   MAX_CURRENT_MAIN_GIT_BLOB_BYTES,
 } from "#agent-plugin-lifecycle-service/model/policy/current-main-selection";
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
-import type { ProviderStatusResult } from "../model/dto/provider-lifecycle";
+import type { ProviderStatusResult, ProviderTarget } from "../model/dto/provider-lifecycle";
+import type { SelectedContent } from "../model/dto/selected-content";
+import {
+  assessNativePluginFiles,
+  assessNativeTarget,
+  failedNativePluginFiles,
+  type NativePluginFileAssessment,
+  type NativeReconciliationPolicy,
+  type NativeTargetAssessment,
+  planNativePluginFileReads,
+  statusTargetResult,
+  unavailableNativeTarget,
+} from "../model/policy/native-state";
 import {
   canonicalProviderTargets,
   collectTargetIssues,
@@ -50,7 +74,6 @@ import {
   validateSelectedNativeMarketplaces,
 } from "../model/policy/source-interface";
 import { module } from "../module";
-import { inspectProviderTargets, statusTargetResult } from "./reconcile.router";
 
 /**
  * Authors read-only Provider status from one complete governed channel
@@ -58,6 +81,120 @@ import { inspectProviderTargets, statusTargetResult } from "./reconcile.router";
  */
 export const status = module.status.effect(function* ({ context, input }) {
   const locator = decodeGitLocator(input.locator);
+  const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: true });
+
+  /**
+   * Acquires and observes one target through its ready native resource.
+   *
+   * Probe and inventory remain concurrent within the target. File batches run
+   * sequentially after TypeBox admits the provider observation.
+   */
+  const observeTarget = (
+    content: SelectedContent,
+    target: ProviderTarget,
+    mutationIntent: boolean
+  ): Effect.Effect<NativeTargetAssessment> =>
+    Effect.gen(function* () {
+      const acquire: Effect.Effect<NativeAgentProviderSession, NativeAgentProviderFailure> =
+        target.provider === "codex"
+          ? context.nativeProviders.codex
+              .acquire({ home: target.home })
+              .pipe(Effect.map((session): NativeAgentProviderSession => session))
+          : context.nativeProviders.claude
+              .acquire({ home: target.home })
+              .pipe(Effect.map((session): NativeAgentProviderSession => session));
+      const acquisition = yield* Effect.result(acquire);
+      if (Result.isFailure(acquisition)) {
+        return unavailableNativeTarget(
+          target,
+          `Native provider acquisition failed: ${acquisition.failure.detail}`
+        );
+      }
+      const session: NativeAgentProviderSession = acquisition.success;
+      if (
+        session.provider !== target.provider ||
+        session.home !== target.home ||
+        session.executablePath.length === 0
+      ) {
+        return unavailableNativeTarget(
+          target,
+          "Native provider acquisition returned a session for a different target."
+        );
+      }
+
+      const observation: Effect.Effect<
+        readonly [NativeProviderCapabilities, NativeProviderInventory],
+        NativeAgentProviderFailure
+      > = Effect.all([session.probe(), session.inventory()] as const, { concurrency: 2 });
+      const observed = yield* Effect.result(observation);
+      if (Result.isFailure(observed)) {
+        return unavailableNativeTarget(
+          target,
+          `Native provider inspection failed: ${observed.failure.detail}`
+        );
+      }
+      const [capabilities, inventory] = observed.success;
+      if (
+        !Value.Check(NativeProviderCapabilitiesSchema, capabilities) ||
+        !Value.Check(NativeProviderInventorySchema, inventory) ||
+        capabilities.provider !== target.provider ||
+        inventory.provider !== target.provider ||
+        capabilities.home !== target.home ||
+        capabilities.executablePath !== session.executablePath ||
+        (session.provider === "claude" &&
+          (typeof session.enablePlugin !== "function" ||
+            !new Set<string>(capabilities.capabilities).has("plugin-enable")))
+      ) {
+        return unavailableNativeTarget(
+          target,
+          "Native provider inspection returned facts for a different target."
+        );
+      }
+
+      const fileAssessments: NativePluginFileAssessment[] = [];
+      for (const plan of planNativePluginFileReads(content, target, inventory)) {
+        const attempt = yield* Effect.result(
+          session.readPluginFiles({
+            selector: plan.selector,
+            files: plan.files.map((file) =>
+              Object.freeze({ relativePath: file.path, maxBytes: file.byteLength })
+            ),
+          })
+        );
+        fileAssessments.push(
+          Result.isFailure(attempt)
+            ? failedNativePluginFiles(
+                plan,
+                `Could not read the selected files for ${plan.selector}: ${attempt.failure.detail}`
+              )
+            : !Value.Check(NativeProviderPluginFilesSchema, attempt.success)
+              ? failedNativePluginFiles(
+                  plan,
+                  `Native provider returned an invalid file batch for ${plan.selector}.`
+                )
+              : assessNativePluginFiles(plan, attempt.success)
+        );
+      }
+      return assessNativeTarget(
+        content,
+        target,
+        capabilities,
+        inventory,
+        fileAssessments,
+        nativePolicy,
+        mutationIntent
+      );
+    });
+
+  /** Observes targets in canonical order without inter-target concurrency. */
+  const observeTargets = (
+    content: SelectedContent,
+    targets: readonly ProviderTarget[],
+    mutationIntent: boolean
+  ) =>
+    Effect.forEach(targets, (target) => observeTarget(content, target, mutationIntent), {
+      concurrency: 1,
+    }).pipe(Effect.map((assessments) => Object.freeze(assessments)));
   const currentMain = !locator.ok
     ? Object.freeze({
         kind: "WRONG_REPOSITORY" as const,
@@ -313,13 +450,7 @@ export const status = module.status.effect(function* ({ context, input }) {
       issues: selected.issues,
     } satisfies ProviderStatusResult;
   }
-  const assessments = yield* inspectProviderTargets(
-    selected.content,
-    canonicalRequest.targets,
-    context.nativeProviders,
-    { retireOmitted: true },
-    false
-  );
+  const assessments = yield* observeTargets(selected.content, canonicalRequest.targets, false);
   const targets = Object.freeze(assessments.map(statusTargetResult));
   const classification = targets.some((target) => target.classification === "Blocked")
     ? "Blocked"

@@ -900,6 +900,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   result without changing source selection or native observation/mutation.
   Keep the detached native reconciliation engine open for its atomic
   operation-authorship checkpoint.
+- [x] 5.7e2o Author native Provider observation and mutation directly in the
+  `status`, `sync`, and `test` oRPC handlers. Keep acquired sessions and every
+  Effectful resource transition procedure-local; pass only typed facts into
+  Effect-free Provider policy for assessment, bounded plans, postconditions,
+  and public result classification. Delete the detached reconciliation engine
+  without adding a runner, resolver, adapter, facade, dependency bag,
+  compatibility path, or new state owner. Preserve selection-before-acquisition,
+  sequential whole-target preflight, per-target probe/inventory concurrency,
+  final-preflight session reuse, mutation-time reselection, exact marketplace,
+  member, enablement, verification, and omitted-member order, test-local
+  preservation, sync retirement authority, immediate postcondition
+  observation, failure-phase uncertainty, applied prefix, later-target
+  refusal, final verification, TypeBox validation, interruption, defects,
+  finalizers, and every public result.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

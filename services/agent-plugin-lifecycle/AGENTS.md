@@ -24,7 +24,8 @@
   structure, source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module
   consumes those meanings. Provider status, sync, and disposable test handlers
-  directly sequence the ready content-workspace resource.
+  directly sequence the ready content-workspace and native-provider resources;
+  sessions stay operation-local and pure policy sees only admitted facts.
 - The Releases module owns clean and staged eligibility operations and directly
   consumes one ready content-workspace resource. Its handlers own observation
   order and final revalidation; pure shared policy classifies the resulting Git

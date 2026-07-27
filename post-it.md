@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Provider Handlers Author Native Operations
+
+The native-provider resource owns command mechanics and live provider state.
+Provider policy owns typed assessment, plans, bounds, and public
+classification. The `status`, `sync`, and `test` oRPC handlers own the temporal
+sequence that joins them. A detached reconciliation engine obscures that
+ownership even when its behavior is correct.
+
+Keep acquired sessions and other state-owning resource values local to the
+procedure. Let each handler visibly acquire, observe, revalidate, mutate, and
+settle. Give only inert facts to model policy. Delete the engine rather than
+renaming it, and preserve the exact failure phase, applied prefix, target
+ordering, final verification, and cancellation behavior that callers already
+observe.
+
+See
+[[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Provider, resource, session, context, router, operation, policy, fact,
+transition, failure, settle, delete, narrow.
+
 ## 2026-07-26 - Provider Results Are Policy
 
 A Provider router leaf exists only when it authors an oRPC operation. Aggregate

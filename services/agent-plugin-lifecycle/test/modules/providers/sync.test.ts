@@ -73,6 +73,80 @@ describe("provider sync", () => {
     expect(countCompleteChannelSelections(resourceCalls)).toBe(2);
   });
 
+  it("acquires once per target when the initial native preflight is converged", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      installed: ["cognition"],
+    });
+    const nativeProviders = new FakeNativeProviders([session]);
+    const { client } = createProviderLifecycleClient(content, nativeProviders);
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Converged");
+    expect(nativeProviders.acquisitionCalls).toEqual(["codex:/tmp/codex-home"]);
+    expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it("preflights every target again and mutates only through the retained final session", async () => {
+    const content = selectedContent();
+    const targets = [
+      channelRequest.targets[0],
+      { provider: "claude" as const, home: "/tmp/claude-home" },
+    ] as const;
+    const initialCodex = fakeNativeSession({
+      target: targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const initialClaude = fakeNativeSession({
+      target: targets[1],
+      content,
+      marketplace: "absent",
+    });
+    let acquisitionsAtFirstMutation: readonly string[] = [];
+    let finalCodexCallsAtFirstMutation: readonly string[] = [];
+    const finalClaude = fakeNativeSession({
+      target: targets[1],
+      content,
+      marketplace: "absent",
+      onMutation: () => {
+        if (acquisitionsAtFirstMutation.length > 0) return;
+        acquisitionsAtFirstMutation = [...nativeProviders.acquisitionCalls];
+        finalCodexCallsAtFirstMutation = [...finalCodex.calls];
+      },
+    });
+    const finalCodex = fakeNativeSession({
+      target: targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const nativeProviders = new FakeNativeProviders([
+      initialCodex,
+      finalCodex,
+      initialClaude,
+      finalClaude,
+    ]);
+    const { client } = createProviderLifecycleClient(content, nativeProviders);
+
+    const result = await client.providers.sync({ ...channelRequest, targets }, testInvocation);
+
+    expect(result.classification).toBe("Changed");
+    expect(acquisitionsAtFirstMutation).toEqual([
+      "claude:/tmp/claude-home",
+      "codex:/tmp/codex-home",
+      "claude:/tmp/claude-home",
+      "codex:/tmp/codex-home",
+    ]);
+    expect(finalCodexCallsAtFirstMutation).toEqual(expect.arrayContaining(["probe", "inventory"]));
+    expect(initialClaude.mutationCalls()).toEqual([]);
+    expect(initialCodex.mutationCalls()).toEqual([]);
+    expect(finalClaude.mutationCalls()).not.toEqual([]);
+    expect(finalCodex.mutationCalls()).not.toEqual([]);
+  });
+
   it("refreshes an exact Codex marketplace with an unobservable revision before installing a missing selected member", async () => {
     const content = selectedContent();
     const session = fakeNativeSession({
@@ -303,6 +377,7 @@ describe("provider sync", () => {
       staleFiles: ["cognition"],
     });
     second.installFailure = "after";
+    second.inventoryFailureAfterInstall = true;
     const { client } = createProviderLifecycleClient(
       content,
       new FakeNativeProviders([first, second])
@@ -358,6 +433,7 @@ describe("provider sync", () => {
       omitted: ["docs"],
     });
     session.marketplaceRemoveFailure = "after";
+    session.inventoryFailureAfterMarketplaceRemove = true;
     const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
     const result = await client.providers.sync(channelRequest, testInvocation);
     expect(result.classification).toBe("Uncertain");
@@ -370,6 +446,92 @@ describe("provider sync", () => {
       },
     });
     expect(session.mutationCalls()).not.toContain("mutate:marketplace-add");
+  });
+
+  it("classifies a not-started plugin install failure without continuing", async () => {
+    const content = selectedContent();
+    const target = { provider: "claude" as const, home: "/tmp/claude-home" };
+    const session = fakeNativeSession({
+      target,
+      content,
+      installed: ["cognition"],
+      staleFiles: ["cognition"],
+    });
+    session.installFailure = "before";
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.sync(
+      { ...channelRequest, targets: [target] },
+      testInvocation
+    );
+
+    expect(result.classification).toBe("Partial");
+    expect(result.targets[0]).toMatchObject({
+      classification: "Failed",
+      operations: [{ kind: "plugin-removed", selector: "cognition@rawr-hq" }],
+      issues: [expect.objectContaining({ code: "NativeCommandFailed" })],
+    });
+    expect(result.targets[0]).not.toHaveProperty("attempted");
+    expect(session.mutationCalls()).not.toContain("mutate:plugin-enable:cognition@rawr-hq");
+  });
+
+  it("confirms a failed plugin install when observation satisfies its postcondition", async () => {
+    const content = selectedContent();
+    const target = { provider: "claude" as const, home: "/tmp/claude-home" };
+    const session = fakeNativeSession({
+      target,
+      content,
+      installed: ["cognition"],
+      staleFiles: ["cognition"],
+    });
+    session.installFailure = "after";
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.sync(
+      { ...channelRequest, targets: [target] },
+      testInvocation
+    );
+
+    expect(result.classification).toBe("Changed");
+    expect(result.targets[0]).toMatchObject({
+      classification: "Changed",
+      operations: [
+        { kind: "plugin-removed", selector: "cognition@rawr-hq" },
+        { kind: "plugin-installed", selector: "cognition@rawr-hq" },
+        { kind: "plugin-enabled", selector: "cognition@rawr-hq" },
+      ],
+    });
+    expect(result.targets[0]).not.toHaveProperty("attempted");
+  });
+
+  it("marks a successful plugin install uncertain when confirmation cannot be observed", async () => {
+    const content = selectedContent();
+    const target = { provider: "claude" as const, home: "/tmp/claude-home" };
+    const session = fakeNativeSession({
+      target,
+      content,
+      installed: ["cognition"],
+      staleFiles: ["cognition"],
+    });
+    session.inventoryFailureAfterInstall = true;
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.sync(
+      { ...channelRequest, targets: [target] },
+      testInvocation
+    );
+
+    expect(result.classification).toBe("Uncertain");
+    expect(result.targets[0]).toMatchObject({
+      classification: "Uncertain",
+      operations: [{ kind: "plugin-removed", selector: "cognition@rawr-hq" }],
+      attempted: {
+        operation: { kind: "plugin-installed", selector: "cognition@rawr-hq" },
+        commandPhase: "command-returned",
+      },
+      issues: [expect.objectContaining({ code: "NativeObservationFailed" })],
+    });
+    expect(session.mutationCalls()).not.toContain("mutate:plugin-enable:cognition@rawr-hq");
   });
 
   it("does not retire identity-matched plugins until the selected marketplace is observed", async () => {

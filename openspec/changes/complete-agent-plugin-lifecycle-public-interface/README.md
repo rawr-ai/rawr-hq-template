@@ -1830,6 +1830,34 @@ Architecture, behavior-first testing, and TypeScript/structural standing
 reviews passed with no findings. No Personal repository, provider home, Oclif
 surface, Nx graph, Habitat policy, or live lifecycle state changed.
 
+The native Provider operation-authorship checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2o]]. Provider
+`status`, `sync`, and disposable `test` now acquire and retain native sessions
+inside their own oRPC handlers. Those handlers visibly sequence TypeBox
+admission, native observation, whole-target preflight, source revalidation,
+ordered mutation, immediate postcondition observation, and final verification.
+Pure Provider policy receives only typed facts and returns assessments, bounded
+plans, postconditions, issues, and public result projections.
+
+The detached reconciliation engine is deleted rather than renamed or wrapped.
+No runner, resolver, facade, compatibility path, state store, or resource
+failure surrogate replaces it. The retained behavior includes sequential
+all-target preflight, concurrent probe and inventory within each target,
+final-preflight session reuse, exact marketplace and member ordering,
+Claude-only enablement, test-local omitted-member preservation, sync retirement,
+command-phase uncertainty, exact confirmed prefixes, later-target refusal,
+interruption, defects, and scoped finalization. An unavailable target cannot be
+classified as converged, and an impossible provider command becomes a typed
+Provider refusal rather than a fabricated native-resource failure.
+
+The focused Provider suite passes 79 cases and the complete lifecycle service
+passes 289 cases across 31 files. Uncached production and test typechecks,
+Biome, the Provider-owned Habitat law, strict OpenSpec validation, and diff
+hygiene pass. Architecture, behavior-first testing, and
+TypeScript/Effect/structural standing reviews closed with no unresolved P0 or
+P1 findings. No Personal repository, provider home, Oclif surface, Nx graph,
+Habitat policy, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:
