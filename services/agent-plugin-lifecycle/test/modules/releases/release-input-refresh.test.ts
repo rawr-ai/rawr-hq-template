@@ -10,10 +10,12 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 
 import {
-  canonicalSerializeAgentPluginReleaseInput,
-  contentDigest,
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
+} from "../../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
+import {
+  contentDigest,
   parseContentAuthority,
   parsePluginId,
   parseReleaseRelativePath,

@@ -16,7 +16,6 @@ import type {
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
-  decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   type PluginId,
@@ -34,6 +33,7 @@ import { createAgentPluginPayload } from "./agent-plugin-payload";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 import { samePayloadManifest } from "./payload-manifest";
+import { decodeAgentPluginReleaseInput } from "./release-input";
 import {
   addReleaseSetPayloadBytes,
   MAX_RELEASE_SET_PAYLOAD_BYTES,

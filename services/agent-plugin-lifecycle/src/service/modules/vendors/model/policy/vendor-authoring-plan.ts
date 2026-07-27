@@ -4,11 +4,9 @@ import type {
 } from "@rawr/resource-content-workspace";
 import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
 import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
-import {
-  canonicalSerializeAgentPluginReleaseInput,
-  contentDigest,
-  createAgentPluginReleaseInput,
-} from "../../../../shared/release";
+import { createAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
+import { contentDigest } from "../../../../shared/release";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,

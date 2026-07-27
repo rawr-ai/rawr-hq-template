@@ -12,6 +12,7 @@ import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/content-workspace";
 import { payloadEntryBytes } from "../../../src/service/model/policy/agent-plugin-payload";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   addStagedObservationByteLimits,
@@ -21,7 +22,6 @@ import {
   MAX_STAGED_MATERIALIZED_BLOB_BYTES,
 } from "../../../src/service/modules/releases/model/policy/staged-content-workspace";
 import {
-  canonicalSerializeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   parseContentAuthority,
   parseGitCommitId,

@@ -22,6 +22,8 @@ import {
   parseProvenanceBindings,
   provenanceBindingValue,
 } from "../../model/policy/provenance-binding";
+import { verifyAgentPluginReleaseInput } from "../../model/policy/release-input";
+import { releaseInputValue } from "../../model/policy/release-input-codec";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import {
   asNonEmpty,
@@ -65,7 +67,6 @@ import {
   type RepositoryIdentity,
   releaseDigest,
 } from "./primitives";
-import { releaseInputBodyValue, verifyAgentPluginReleaseInput } from "./release-input";
 
 declare const agentPluginReleaseBrand: unique symbol;
 
@@ -701,7 +702,7 @@ function verifyEmbeddedReleaseInput(
   }
   let candidate: unknown;
   try {
-    candidate = agentPluginReleaseInputValue(input as AgentPluginReleaseInput);
+    candidate = releaseInputValue(input as AgentPluginReleaseInput);
   } catch {
     candidate = input;
   }
@@ -756,13 +757,4 @@ function freezeRelease(
     artifactDigest: ad,
     artifactBody,
   }) as AgentPluginRelease;
-}
-
-// Keep the input projection explicit so branded construction never depends on private symbol fields.
-export function agentPluginReleaseInputValue(input: AgentPluginReleaseInput): CanonicalJsonValue {
-  return {
-    schemaVersion: input.schemaVersion,
-    releaseInputDigest: input.releaseInputDigest,
-    body: releaseInputBodyValue(input.body),
-  };
 }

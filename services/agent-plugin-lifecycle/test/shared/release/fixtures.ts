@@ -2,12 +2,12 @@ import type { AgentPluginPayload } from "../../../src/service/model/dto/agent-pl
 import type { AgentPluginReleaseInput } from "../../../src/service/model/dto/release-input";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
+import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 import {
   type AgentPluginRelease,
   type AgentPluginReleaseSet,
   contentDigest,
   createAgentPluginRelease,
-  createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
 } from "../../../src/service/shared/release";
 

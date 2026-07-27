@@ -7,16 +7,19 @@ import {
   verifyAgentPluginPayload,
 } from "../../../src/service/model/policy/agent-plugin-payload";
 import {
+  createAgentPluginReleaseInput,
+  decodeAgentPluginReleaseInput,
+  verifyAgentPluginReleaseInput,
+} from "../../../src/service/model/policy/release-input";
+import {
   canonicalSerializeAgentPluginArtifactBody,
   canonicalSerializeAgentPluginRelease,
   canonicalSerializeAgentPluginReleaseBody,
   canonicalSerializeAgentPluginReleaseSet,
   canonicalSerializeAgentPluginReleaseSetBody,
   createAgentPluginRelease,
-  createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
   decodeAgentPluginRelease,
-  decodeAgentPluginReleaseInput,
   decodeAgentPluginReleaseSet,
   parseArtifactDigest,
   parsePayloadDigest,
@@ -24,7 +27,6 @@ import {
   parseReleaseInputDigest,
   parseReleaseSetDigest,
   verifyAgentPluginRelease,
-  verifyAgentPluginReleaseInput,
   verifyAgentPluginReleaseSet,
   verifyCompleteReleaseSet,
 } from "../../../src/service/shared/release";

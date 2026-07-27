@@ -4,10 +4,10 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import type { Client } from "../../src/client";
 import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
+import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../src/service/model/policy/release-input-codec";
 import {
   type ContentAuthority,
-  canonicalSerializeAgentPluginReleaseInput,
-  createAgentPluginReleaseInput,
   type GitCommitId,
   type GitTreeId,
   type PluginId,

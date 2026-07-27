@@ -6,13 +6,15 @@ import {
 import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
+import {
+  createAgentPluginReleaseInput,
+  decodeAgentPluginReleaseInput,
+} from "#agent-plugin-lifecycle-service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
 import { releaseIssue } from "#agent-plugin-lifecycle-service/model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
   type ContentAuthority,
-  canonicalSerializeAgentPluginReleaseInput,
-  createAgentPluginReleaseInput,
-  decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   type PluginId,

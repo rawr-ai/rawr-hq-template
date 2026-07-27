@@ -2181,6 +2181,30 @@ canonical byte, digest, diagnostic vocabulary, bound, primitive, resource,
 provider, runtime, router, oRPC surface, public package contract, Personal
 repository, native command, or live lifecycle state changed.
 
+The release-input-policy checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e6]]. The existing
+TypeBox DTO remains the structural authority. One direct service-root policy
+owns construction, verification, decoding, bounded admission, defensive
+freezing, and diagnostics; one direct codec owns canonical body and envelope
+projection and bytes. Consumers name those exact leaves, while
+`shared/release/release-input.ts` and its release-barrel exports are deleted.
+
+The checkpoint preserves canonical bytes and digests, issue codes and order,
+bounds, and public oRPC behavior. It does not move primitives, resources,
+providers, routers, or native state. The new owner corpus passes six cases; the
+focused release-input corpus passes 42 cases across five files in 13.61
+seconds; and the complete lifecycle suite passes 340 cases across 40 files in
+64.49 seconds. Nx completed the uncached lifecycle test and its five
+dependencies in 69 seconds.
+
+Production and test TypeScript, targeted Biome, strict OpenSpec, Oclif
+source/compiled command parity, and diff hygiene pass. The source import graph
+contains 116 files and no cycle. Standing architecture/Habitat,
+behavior/TypeBox/testing, and TypeScript/refactor/structural reviews report no
+P0, P1, P2, or P3 finding. The required repository check passed 39 projects
+and 76 dependency tasks in 33.4 seconds, including all 17 enforced Habitat laws
+with zero findings.
+
 ## Settlement Oracles
 
 The final product must prove:

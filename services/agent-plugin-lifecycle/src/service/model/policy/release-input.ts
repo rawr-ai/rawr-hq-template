@@ -1,48 +1,4 @@
 import { Value } from "typebox/value";
-
-import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
-import {
-  type DeclaredOwnershipClaim,
-  type DistributionOwnershipIndex,
-} from "../../model/dto/distribution-ownership";
-import {
-  type AgentPluginReleaseInput,
-  type DeclaredPayload,
-  type ReleaseInputBody,
-  ReleaseInputBodySchema,
-  type ReleaseInputEnvelope,
-  ReleaseInputEnvelopeSchema,
-  type ReleaseMemberDeclaration,
-  type SkillInventoryEntry,
-} from "../../model/dto/release-input";
-import type { ReleaseIssue } from "../../model/dto/release-issue";
-import type { ReleaseResult } from "../../model/dto/release-result";
-import { equalBytes } from "../../model/helpers/byte-equality";
-import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
-import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
-import { createCompletenessWitness } from "../../model/policy/completeness-witness";
-import {
-  createDistributionOwnershipIndex,
-  ownershipClaimValue,
-  parseDeclaredOwnershipClaims,
-} from "../../model/policy/distribution-ownership";
-import { parsePayloadManifest, payloadManifestValue } from "../../model/policy/payload-manifest";
-import {
-  parseProvenanceBindings,
-  provenanceBindingValue,
-} from "../../model/policy/provenance-binding";
-import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
-import {
-  asNonEmpty,
-  collectReleaseResult,
-  failure,
-  success,
-} from "../../model/policy/release-result";
-import {
-  admitClosedRecordForTraversal,
-  parseBoundedArray,
-} from "../../model/policy/release-value-admission";
 import {
   type ContentAuthority,
   MAX_OWNERSHIP_CLAIMS,
@@ -63,8 +19,49 @@ import {
   type ReleaseInputDigest,
   type ReleaseRelativePath,
   releaseInputDigest,
-} from "./primitives";
+} from "../../shared/release/primitives";
+import {
+  type DeclaredOwnershipClaim,
+  type DistributionOwnershipIndex,
+} from "../dto/distribution-ownership";
+import {
+  type AgentPluginReleaseInput,
+  type DeclaredPayload,
+  type ReleaseInputBody,
+  ReleaseInputBodySchema,
+  type ReleaseInputEnvelope,
+  ReleaseInputEnvelopeSchema,
+  type ReleaseMemberDeclaration,
+  type SkillInventoryEntry,
+} from "../dto/release-input";
+import type { ReleaseIssue } from "../dto/release-issue";
+import type { ReleaseResult } from "../dto/release-result";
+import { equalBytes } from "../helpers/byte-equality";
+import { decodeCanonicalJson } from "./canonical-json";
+import { compareCanonicalText } from "./canonical-text-ordering";
+import { createCompletenessWitness } from "./completeness-witness";
+import {
+  createDistributionOwnershipIndex,
+  parseDeclaredOwnershipClaims,
+} from "./distribution-ownership";
+import { parsePayloadManifest } from "./payload-manifest";
+import { parseProvenanceBindings } from "./provenance-binding";
+import {
+  canonicalSerializeAgentPluginReleaseInput,
+  canonicalSerializeReleaseInputBody,
+} from "./release-input-codec";
+import { releaseIssue, sortReleaseIssues } from "./release-issue";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "./release-payload-accounting";
+import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
+import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
+/**
+ * Admits one reviewed release-input body and derives its immutable identity.
+ *
+ * This is the construction boundary shared by release authoring, packaging,
+ * providers, vendors, and governance. It keeps granular diagnostics and
+ * release-wide ordering with the service model rather than a capability module.
+ */
 export function createAgentPluginReleaseInput(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
@@ -91,6 +88,13 @@ export function createAgentPluginReleaseInput(
   return success(releaseInput);
 }
 
+/**
+ * Re-admits a release-input envelope and verifies its claimed canonical digest.
+ *
+ * Callers use this when an already-authored record crosses back into the
+ * service. The returned brand therefore means both structure and identity were
+ * checked against the same policy used for construction.
+ */
 export function verifyAgentPluginReleaseInput(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
@@ -195,6 +199,12 @@ export function verifyAgentPluginReleaseInput(
   return success(releaseInput);
 }
 
+/**
+ * Decodes the unique canonical wire form of a release-input envelope.
+ *
+ * Byte equality is checked after semantic verification so alternate JSON
+ * representations cannot acquire the same admitted release-input identity.
+ */
 export function decodeAgentPluginReleaseInput(
   bytes: unknown
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
@@ -215,27 +225,6 @@ export function decodeAgentPluginReleaseInput(
     ]);
   }
   return verified;
-}
-
-function canonicalSerializeReleaseInputBody(body: ReleaseInputBody): Uint8Array {
-  return canonicalJsonLine(releaseInputBodyValue(body));
-}
-
-export function canonicalSerializeAgentPluginReleaseInput(
-  input: AgentPluginReleaseInput
-): Uint8Array {
-  return canonicalJsonLine(releaseInputEnvelopeValue(input));
-}
-
-export function releaseInputBodyValue(body: ReleaseInputBody): CanonicalJsonValue {
-  return {
-    schemaVersion: body.schemaVersion,
-    contentAuthority: body.contentAuthority,
-    members: body.members.map(releaseMemberValue),
-    ownershipClaims: body.ownershipClaims.map(ownershipClaimValue),
-    locks: body.locks.map(provenanceBindingValue),
-    qualityPolicies: body.qualityPolicies.map(provenanceBindingValue),
-  };
 }
 
 function parseReleaseInputBody(
@@ -746,32 +735,6 @@ function freezeReleaseInput(
       completenessWitness: witness.value,
     }) as AgentPluginReleaseInput
   );
-}
-
-function releaseInputEnvelopeValue(input: AgentPluginReleaseInput): CanonicalJsonValue {
-  return {
-    schemaVersion: input.schemaVersion,
-    releaseInputDigest: input.releaseInputDigest,
-    body: releaseInputBodyValue(input.body),
-  };
-}
-
-function releaseMemberValue(member: ReleaseMemberDeclaration): CanonicalJsonValue {
-  return {
-    kind: member.kind,
-    pluginId: member.pluginId,
-    skillInventory: member.skillInventory.map((entry) => ({
-      identity: entry.identity,
-      manifestPath: entry.manifestPath,
-    })),
-    payload: {
-      protocolVersion: member.payload.protocolVersion,
-      manifest: payloadManifestValue(member.payload.manifest),
-      payloadDigest: member.payload.payloadDigest,
-    },
-    vendor: member.vendor.map(provenanceBindingValue),
-    curation: member.curation.map(provenanceBindingValue),
-  };
 }
 
 function compareSkillInventoryEntries(

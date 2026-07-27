@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Release Input Has Direct Policy And Codec Owners
+
+Release input has three adjacent, nonoverlapping owners. The existing TypeBox
+DTO remains structural authority for body and envelope schemas, generated
+types, and the admitted brand. One direct service-root policy owns construction,
+verification, decoding, bounded admission, defensive freezing, and diagnostics.
+One direct codec owns canonical body and envelope projection and bytes.
+
+Consumers import the exact policy or codec leaf directly. The transitional
+`shared/release/release-input.ts` implementation and its release-barrel exports
+are deleted without an alias or facade. Canonical bytes and digests, issue codes
+and order, bounds, and public oRPC behavior remain unchanged. Primitives,
+resources, providers, routers, and native state stay outside this checkpoint.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-input|the release-input policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-input-codec|the release-input codec]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+input, schema, policy, codec, identity, bounds, order, diagnostics, freeze,
+direct, delete.
+
 ## 2026-07-27 - Completeness Witness Is One Policy
 
 A completeness witness is inert release meaning shared by release-input

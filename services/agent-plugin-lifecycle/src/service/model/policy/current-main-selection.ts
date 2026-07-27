@@ -5,12 +5,7 @@ import type {
 } from "@rawr/resource-content-workspace";
 import type { Result } from "effect";
 
-import {
-  decodeAgentPluginReleaseInput,
-  parseGitCommitId,
-  parseGitTreeId,
-  parseReleaseRelativePath,
-} from "../../shared/release";
+import { parseGitCommitId, parseGitTreeId, parseReleaseRelativePath } from "../../shared/release";
 import {
   createExactGitBlobPointer,
   type ExactGitBlobObservation,
@@ -40,6 +35,7 @@ import {
   decodeCurrentMainRecord,
   describeCurrentMainRecordValidation,
 } from "./current-main-record";
+import { decodeAgentPluginReleaseInput } from "./release-input";
 
 /** Maximum bytes admitted for either exact Git blob used by current-main selection. */
 export const MAX_CURRENT_MAIN_GIT_BLOB_BYTES = 128 * 1024 * 1024;

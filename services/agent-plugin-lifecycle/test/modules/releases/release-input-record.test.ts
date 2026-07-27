@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/shared/release";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import { productFixture } from "../../shared/release/fixtures";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
