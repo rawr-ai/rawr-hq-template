@@ -204,7 +204,7 @@ describe("example-todo typed procedure errors", () => {
     expect(result.error).toBeTruthy();
   });
 
-  it("rejects schema-invalid input before repository execution", async () => {
+  it("rejects schema-invalid input before store execution", async () => {
     const client = createClient(
       createClientOptions({
         failIfQueryIncludes: ["SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2"],

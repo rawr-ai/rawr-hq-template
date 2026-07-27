@@ -464,6 +464,27 @@ const additiveProcedureBranch = additiveService
   .use(additiveAnalytics);
 void additiveProcedureBranch;
 
+const curatedAdditiveProcedure = additiveService
+  .createImplementer(additiveContract, requiredExtensions)
+  .assign.use(async ({ context, next }) =>
+    next({
+      context: {
+        workspaceId: context.scope.workspaceId,
+      },
+    })
+  );
+
+const curatedAdditiveHandler = curatedAdditiveProcedure.handler(async ({ context }) => {
+  void context.deps.dbPool;
+  void context.scope.workspaceId;
+  void context.config.readOnly;
+  void context.invocation.traceId;
+  void context.provided;
+  void context.workspaceId;
+  return { ok: true };
+});
+void curatedAdditiveHandler;
+
 const invalidRequiredExtensions = {
   observability: additiveObservability,
   analytics: additiveAnalytics,
@@ -535,27 +556,6 @@ createServiceProvider().middleware<{
   // @ts-expect-error service-local providers must not write to the shared bucket.
   return next({
     provided: {},
-  });
-});
-
-createServiceProvider<{
-  provided: {
-    repo: {
-      find(): null;
-    };
-  };
-}>().middleware<{
-  repo: {
-    save(): null;
-  };
-}>(async ({ next }) => {
-  // @ts-expect-error providers must not overwrite an existing provided key.
-  return next({
-    repo: {
-      save() {
-        return null;
-      },
-    },
   });
 });
 

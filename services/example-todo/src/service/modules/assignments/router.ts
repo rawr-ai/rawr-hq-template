@@ -33,7 +33,7 @@ const assign = module.assign
     })
   )
   .handler(async ({ context, input, errors }) => {
-    const task = await context.tasks.findById(input.taskId);
+    const task = await context.tasksStore.findById(input.taskId);
     if (!task) {
       throw errors.RESOURCE_NOT_FOUND({
         message: `Task '${input.taskId}' not found`,
@@ -41,7 +41,7 @@ const assign = module.assign
       });
     }
 
-    const tag = await context.tags.findById(input.tagId);
+    const tag = await context.tagsStore.findById(input.tagId);
     if (!tag) {
       throw errors.RESOURCE_NOT_FOUND({
         message: `Tag '${input.tagId}' not found`,
@@ -49,14 +49,14 @@ const assign = module.assign
       });
     }
 
-    if (await context.repo.exists(input.taskId, input.tagId)) {
+    if (await context.assignmentsStore.exists(input.taskId, input.tagId)) {
       throw errors.ALREADY_ASSIGNED({
         message: `Task '${input.taskId}' already has tag '${input.tagId}'`,
         data: { taskId: input.taskId, tagId: input.tagId },
       });
     }
 
-    const existingAssignments = await context.repo.countByTask(input.taskId);
+    const existingAssignments = await context.assignmentsStore.countByTask(input.taskId);
     if (existingAssignments >= context.maxAssignmentsPerTask) {
       throw errors.ASSIGNMENT_LIMIT_REACHED({
         message: `Task '${input.taskId}' already has the maximum number of tag assignments`,
@@ -75,11 +75,11 @@ const assign = module.assign
       createdAt: context.clock.now(),
     };
 
-    return await context.repo.insert(assignment);
+    return await context.assignmentsStore.insert(assignment);
   });
 
 const listForTask = module.listForTask.handler(async ({ context, input, errors }) => {
-  const task = await context.tasks.findById(input.taskId);
+  const task = await context.tasksStore.findById(input.taskId);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
       message: `Task '${input.taskId}' not found`,
@@ -87,12 +87,12 @@ const listForTask = module.listForTask.handler(async ({ context, input, errors }
     });
   }
 
-  const assignments = await context.repo.findByTask(input.taskId);
+  const assignments = await context.assignmentsStore.findByTask(input.taskId);
   if (assignments.length === 0) {
     return { task, tags: [] };
   }
 
-  const tags = await context.tags.findByIds(assignments.map((assignment) => assignment.tagId));
+  const tags = await context.tagsStore.findByIds(assignments.map((assignment) => assignment.tagId));
   return { task, tags };
 });
 

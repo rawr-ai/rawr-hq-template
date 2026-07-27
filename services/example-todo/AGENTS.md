@@ -31,7 +31,7 @@
   read-only policy, persists through the supplied database, and returns
   declared domain failures.
 - Host-generated identity candidates pass service-owned TypeBox admission
-  before any task, tag, or assignment repository mutation.
+  before any task, tag, or assignment store mutation.
 
 ## Concepts
 
@@ -48,19 +48,17 @@
 | `Scope` | host binding | client | Workspace identity shared by every operation on that client. |
 | `Config` | host binding | client | Read-only policy and assignment limits selected from outside the service. |
 | `Invocation` | caller | call | Request facts; the current client requires a trace id, while request and idempotency identities belong here when a capability needs them. |
-| `provided` | middleware | execution | SQL and module repository capabilities acquired or derived for downstream handlers. |
+| `provided` | middleware | execution | Workspace-bound task, tag, and assignment stores acquired once for the operation. |
 
 Procedure metadata is static service-authored meaning, not another execution
 lane. The four input lanes are service-declared; the SDK seeds an empty
-`provided` bucket and middleware populates it during execution. The lane model
-entered the sealed public face at Template commit
+`provided` bucket and root middleware populates it during execution. The lane
+model entered the sealed public face at Template commit
 `07ff505ff781ee2f27af700e25beb1032cb53d37` and remains the canonical worked
-reference for construction and invocation. Current module composition also
-projects selected values into flat handler fields; that transitional wiring is
-retained here as implementation evidence, not as a fifth input lane or a
-pattern to copy. Preserve the named lanes through service refactors: change a
-lane only when its owner or lifetime changes, never to make local wiring
-convenient.
+reference for construction and invocation. Each module then curates the
+smallest handler vocabulary from inherited lane descendants and provided
+stores. That additive projection is the intended module boundary: it creates
+no fifth input lane and does not remove the inherited service context.
 
 ## Flow
 
@@ -70,9 +68,10 @@ convenient.
   router without exposing it.
 - A host constructs the service client through the public client face with
   public `CreateClientOptions`: stable `Deps`, `Scope`, and `Config` lanes.
-  Per-call `Invocation` facts enter through client call options; middleware
-  establishes private execution context; the owning module applies todo policy
-  and persists through the supplied database capability.
+  Per-call `Invocation` facts enter through client call options; root middleware
+  acquires one SQL capability and contributes workspace-bound stores; each
+  module curates its route context; handlers apply todo policy and persist
+  through those stores.
 
 ## Interfaces
 
@@ -82,9 +81,11 @@ convenient.
   `CreateClientOptions` lane vocabulary. The executable router, service
   authoring surface, and composed execution context stay private.
   The service-root model declares workspace and record identity, canonical
-  task/tag/assignment records, and the clock and identifier-generator ports.
-  Ready database, clock, identifier, logging, and analytics capabilities enter
-  through host context; API and CLI projections consume the sealed client.
+  task/tag/assignment records, store contracts, and the clock and
+  identifier-generator ports. The service database owns SQL migrations and
+  store implementations. Ready database, clock, identifier, logging, and
+  analytics capabilities enter through host context; API and CLI projections
+  consume the sealed client.
 
 ## Routing
 
@@ -101,6 +102,11 @@ convenient.
 - [[src/service/model/dto/assignment|Assignment record DTO]]
 - [[src/service/model/ports/clock|Clock port]]
 - [[src/service/model/ports/identifier-generator|Identifier generator port]]
+- [[src/service/middleware/stores.middleware|Store capability middleware]]
+- [[src/service/db/migrations/0001_create_example_todo.sql|Database migration]]
+- [[src/service/db/stores/tasks.store|Task store]]
+- [[src/service/db/stores/tags.store|Tag store]]
+- [[src/service/db/stores/assignments.store|Assignment store]]
 
 ## Validation
 

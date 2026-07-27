@@ -36,13 +36,15 @@
 
 ## Interfaces
 
-- `create` and `list` are the caller operations. The tag repository and
-  host-supplied service capabilities enter through module context.
+- `create` and `list` are the caller operations. `module.ts` curates the clock,
+  identifier, logger, workspace, trace, and tag-store capabilities that their
+  handlers need from inherited service context.
 
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/tag|Tag record DTO]]
+- [[../../model/ports/tags-store|Tag store contract]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

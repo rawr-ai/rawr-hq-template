@@ -219,9 +219,11 @@ export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAn
  * @remarks
  * Use this when service-authored middleware needs to add downstream execution
  * context. Service-local providers write into `context.provided.*`; they do
- * not mutate or shadow the reserved semantic lanes.
+ * not mutate or shadow the reserved semantic lanes. The author is specialized
+ * to the complete service context here once so middleware files never restate
+ * or reconstruct that context.
  */
-export const createServiceProvider = service.createProvider;
+export const createServiceProvider = service.createProvider<Service["ExecutionContext"]>;
 
 /**
  * Service-local implementer factory.

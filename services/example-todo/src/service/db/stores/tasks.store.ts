@@ -1,23 +1,14 @@
-/**
- * @fileoverview Task repository (data access only).
- *
- * @remarks
- * Expected business states are returned as values:
- * - `findById` returns `null` when missing.
- *
- * Unexpected/internal failures bubble via thrown exceptions from the adapter.
- * An impossible missing insert row fails with a native `Error` at this boundary.
- *
- * @agents
- * Keep boundary concerns out of this file. Procedure routers decide caller
- * actionable errors from returned values.
- */
 import type { Sql } from "@rawr/hq-sdk";
-import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
-import type { Task } from "#example-todo-service/model/dto/task";
-import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
+import type { TodoIdentifierType } from "../../model/dto/identifier";
+import type { Task } from "../../model/dto/task";
+import type { WorkspaceIdType } from "../../model/dto/workspace-id";
+import type { TasksStore } from "../../model/ports/tasks-store";
 
-export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
+/**
+ * Binds task persistence to the SQL capability and workspace selected by the
+ * service so task routes never issue raw queries or supply scope ad hoc.
+ */
+export function createTasksStore(sql: Sql, workspaceId: WorkspaceIdType): TasksStore {
   return {
     async findById(id: TodoIdentifierType): Promise<Task | null> {
       return await sql.queryOne<Task>("SELECT * FROM tasks WHERE id = $1 AND workspace_id = $2", [

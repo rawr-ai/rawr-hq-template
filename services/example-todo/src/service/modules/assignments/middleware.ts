@@ -6,48 +6,17 @@
  * import generic names:
  * - `observability`
  * - `analytics`
- * - `repositories`
  *
- * This module is composite, so its repository provider injects assignment,
- * task, and tag repositories together. These exports are module-owned generic
- * middleware names attached at module scope in `module.ts`.
+ * These exports are module-owned generic middleware names attached at module
+ * scope in `module.ts`.
  */
 
-import type { Sql } from "@rawr/hq-sdk";
-import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-  createServiceProvider,
-} from "../../base";
-import { createRepository as createTagRepository } from "../tags/repository";
-import { createRepository as createTaskRepository } from "../tasks/repository";
-import { createRepository as createAssignmentRepository } from "./repository";
+import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
 
 export {
   createServiceAnalyticsMiddleware as createProcedureAnalytics,
   createServiceObservabilityMiddleware as createProcedureObservability,
 } from "../../base";
-
-/** Composite repository provider attached at module scope in `module.ts`. */
-export const repositories = createServiceProvider<{
-  scope: {
-    workspaceId: WorkspaceIdType;
-  };
-  provided: {
-    sql: Sql;
-  };
-}>().middleware<{
-  repo: ReturnType<typeof createAssignmentRepository>;
-  tasks: ReturnType<typeof createTaskRepository>;
-  tags: ReturnType<typeof createTagRepository>;
-}>(async ({ context, next }) => {
-  return next({
-    repo: createAssignmentRepository(context.provided.sql, context.scope.workspaceId),
-    tasks: createTaskRepository(context.provided.sql, context.scope.workspaceId),
-    tags: createTagRepository(context.provided.sql, context.scope.workspaceId),
-  });
-});
 
 /** Module-local observability middleware attached by `assignments/module.ts`. */
 export const observability = createServiceObservabilityMiddleware({

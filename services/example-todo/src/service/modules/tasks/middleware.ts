@@ -6,7 +6,6 @@
  * import generic names:
  * - `observability`
  * - `analytics`
- * - `repository`
  *
  * This module currently has no standalone additive observability or analytics
  * behavior, so those exports are intentional no-op additive middleware
@@ -14,14 +13,7 @@
  * same generic middleware surface through `middleware.ts`.
  */
 
-import type { Sql } from "@rawr/hq-sdk";
-import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-  createServiceProvider,
-} from "../../base";
-import { createRepository } from "./repository";
+import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
 
 export {
   createServiceAnalyticsMiddleware as createProcedureAnalytics,
@@ -33,19 +25,3 @@ export const observability = createServiceObservabilityMiddleware({});
 
 /** Intentional scaffold placeholder for the module's generic analytics export. */
 export const analytics = createServiceAnalyticsMiddleware({});
-
-/** Standalone repository provider attached at module scope in `module.ts`. */
-export const repository = createServiceProvider<{
-  scope: {
-    workspaceId: WorkspaceIdType;
-  };
-  provided: {
-    sql: Sql;
-  };
-}>().middleware<{
-  repo: ReturnType<typeof createRepository>;
-}>(async ({ context, next }) => {
-  return next({
-    repo: createRepository(context.provided.sql, context.scope.workspaceId),
-  });
-});

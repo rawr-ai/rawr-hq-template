@@ -5,11 +5,11 @@
  * This file owns module composition only:
  * - start from the package-level implementer base
  * - compose standalone module middleware from `./middleware`
- * - inject tag module dependencies/context
+ * - curate the tag route context from inherited service capabilities
  * - export configured `module` for handler implementations
  */
 import { impl } from "../../impl";
-import { analytics, observability, repository } from "./middleware";
+import { analytics, observability } from "./middleware";
 
 /**
  * SECTION: Module Composition (Always Present)
@@ -17,6 +17,8 @@ import { analytics, observability, repository } from "./middleware";
  * Keep module-wide composition here so procedure handlers can stay focused on business logic.
  */
 export const module = impl.tags
+  .use(observability)
+  .use(analytics)
   .use(async ({ context, next }) =>
     next({
       context: {
@@ -25,16 +27,7 @@ export const module = impl.tags
         logger: context.deps.logger,
         workspaceId: context.scope.workspaceId,
         traceId: context.invocation.traceId,
-      },
-    })
-  )
-  .use(observability)
-  .use(analytics)
-  .use(repository)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        repo: context.provided.repo,
+        tagsStore: context.provided.tagsStore,
       },
     })
   );

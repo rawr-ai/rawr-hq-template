@@ -15,7 +15,7 @@
   and tag entity creation remain with their modules. The inert assignment,
   task, and tag record schemas belong to the service model because the
   composite contract and persistence share them.
-- Cross-entity reads use admitted repositories through module context rather
+- Cross-entity reads use service-provided stores through curated module context rather
   than invoking sibling operation implementations.
 - Identifier generation enters through service context; assignment policy
   decides when a relation receives an identity without acquiring a runtime.
@@ -40,13 +40,17 @@
 
 ## Interfaces
 
-- `assign` and `listForTask` are the composite caller boundary. Task, tag, and
-  assignment repositories supply entity and relation facts through context.
+- `assign` and `listForTask` are the composite caller boundary. `module.ts`
+  curates the clock, identifier, workspace, assignment limit, and three stores
+  that their handlers need from inherited service context.
 
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/assignment|Assignment record DTO]]
+- [[../../model/ports/assignments-store|Assignment store contract]]
+- [[../../model/ports/tasks-store|Task store contract]]
+- [[../../model/ports/tags-store|Tag store contract]]
 - [Tasks module](../tasks/AGENTS.md)
 - [Tags module](../tags/AGENTS.md)
 

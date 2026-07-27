@@ -7,7 +7,7 @@ import { TodoIdentifierSchema, type TodoIdentifierType } from "../dto/identifier
  * @remarks
  * Identifier generation is a host capability, but the service retains
  * structural authority over identities entering its domain. A host contract
- * violation is an unexpected defect and must fail before repository mutation.
+ * violation is an unexpected defect and must fail before store mutation.
  */
 export function admitGeneratedIdentifier(value: unknown): TodoIdentifierType {
   if (Value.Check(TodoIdentifierSchema, value)) return value;

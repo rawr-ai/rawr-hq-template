@@ -33,18 +33,20 @@
 ## Flow
 
 - Create admits task input and returns the persisted entity. Get resolves a
-  task id through the repository and returns the entity or a typed domain
-  failure.
+  task id through the workspace-bound task store and returns the entity or a
+  typed domain failure.
 
 ## Interfaces
 
-- `create` and `get` form the caller-visible task contract. The task repository
-  and service support capabilities are the module's host handoffs.
+- `create` and `get` form the caller-visible task contract. `module.ts` curates
+  the clock, identifier, logger, workspace, and task-store capabilities that
+  their handlers need from inherited service context.
 
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/task|Task record DTO]]
+- [[../../model/ports/tasks-store|Task store contract]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

@@ -91,7 +91,7 @@ describe("example-todo service", () => {
     expect(identifiers).toEqual([]);
   });
 
-  it("refuses an invalid host identifier before repository mutation", async () => {
+  it("refuses an invalid host identifier before store mutation", async () => {
     const deps = createDeps();
     const client = createClient(
       createClientOptions({

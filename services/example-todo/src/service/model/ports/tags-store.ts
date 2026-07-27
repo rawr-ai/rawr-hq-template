@@ -1,0 +1,20 @@
+import type { TodoIdentifierType } from "../dto/identifier";
+import type { Tag } from "../dto/tag";
+
+/** Workspace-bound persistence contract for tag records. */
+export interface TagsStore {
+  /** Finds one tag by identifier, returning `null` when it is absent. */
+  findById(id: TodoIdentifierType): Promise<Tag | null>;
+
+  /** Finds matching tags ordered by name. */
+  findByIds(ids: TodoIdentifierType[]): Promise<Tag[]>;
+
+  /** Lists every tag in the bound workspace ordered by name. */
+  findAll(): Promise<Tag[]>;
+
+  /** Reports whether the bound workspace already contains a tag name. */
+  existsByName(name: string): Promise<boolean>;
+
+  /** Persists a tag and returns the stored record. */
+  insert(tag: Tag): Promise<Tag>;
+}
