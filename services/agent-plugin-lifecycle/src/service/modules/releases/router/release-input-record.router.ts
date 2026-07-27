@@ -1,8 +1,8 @@
 import {
-  canonicalSerializeAgentPluginReleaseInput,
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
-} from "../../../shared/release";
+} from "#agent-plugin-lifecycle-service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
 import { module } from "../module";
 
 export const releaseInputRecord = module.releaseInputRecord.effect(function* ({ input }) {

@@ -27,6 +27,8 @@ import {
 import type { CurrentMainSelectionResult } from "../../../src/service/model/dto/current-main-selection";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
+import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import type {
   ProviderStatusRequest,
   ProviderSyncRequest,
@@ -36,10 +38,8 @@ import type {
 import type { SelectedContent } from "../../../src/service/modules/providers/model/dto/selected-content";
 import type { PluginId } from "../../../src/service/shared/release";
 import {
-  canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
   createAgentPluginRelease,
-  createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
   parseContentAuthority,
   parseGitCommitId,

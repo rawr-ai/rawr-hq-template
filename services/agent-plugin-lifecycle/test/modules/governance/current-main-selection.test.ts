@@ -17,10 +17,10 @@ import type { AgentPluginReleaseInput } from "../../../src/service/model/dto/rel
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
+import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import {
-  canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
-  createAgentPluginReleaseInput,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,

@@ -43,9 +43,12 @@
   those exact leaves without a `shared` ownership face. Release-input body and
   envelope structure, member declarations, provenance bindings, completeness
   witness, and admitted brand have one direct service-root TypeBox DTO owner.
-  Construction, verification, canonical encoding, diagnostics, ordering, and
-  digest policy remain outside that DTO; modules name the structural owner
-  directly rather than reaching through the transitional release barrel.
+  One direct service-root release-input policy owns construction,
+  verification, decoding, bounded admission, defensive freezing, and
+  diagnostics. One direct codec owns canonical body and envelope projection
+  and bytes. Consumers import those exact leaves directly; the transitional
+  release-input implementation and its release-barrel exports are deleted.
+  Primitive and digest mechanics remain separate owners.
   Provenance-binding policy owns bounded admission, canonical ordering,
   duplicate-identity refusal, defensive freezing, and canonical projection
   across release input, individual release, and complete-set records. Its

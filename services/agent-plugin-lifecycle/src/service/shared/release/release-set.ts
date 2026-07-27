@@ -17,6 +17,8 @@ import {
 } from "../../model/policy/distribution-ownership";
 import { samePayloadManifest } from "../../model/policy/payload-manifest";
 import { provenanceBindingValue } from "../../model/policy/provenance-binding";
+import { verifyAgentPluginReleaseInput } from "../../model/policy/release-input";
+import { releaseInputValue } from "../../model/policy/release-input-codec";
 import {
   prefixReleaseIssuePath,
   releaseIssue,
@@ -61,11 +63,9 @@ import {
 } from "./primitives";
 import {
   type AgentPluginRelease,
-  agentPluginReleaseInputValue,
   agentPluginReleaseValue,
   verifyAgentPluginRelease,
 } from "./release";
-import { verifyAgentPluginReleaseInput } from "./release-input";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
 
@@ -608,7 +608,7 @@ function verifyEmbeddedReleaseInput(
   }
   let candidate: unknown;
   try {
-    candidate = agentPluginReleaseInputValue(input as AgentPluginReleaseInput);
+    candidate = releaseInputValue(input as AgentPluginReleaseInput);
   } catch {
     candidate = input;
   }

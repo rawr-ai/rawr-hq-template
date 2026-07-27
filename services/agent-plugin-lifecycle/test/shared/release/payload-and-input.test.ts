@@ -11,13 +11,15 @@ import {
   ReleaseInputEnvelopeSchema,
 } from "../../../src/service/model/dto/release-input";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
+import {
+  createAgentPluginReleaseInput,
+  decodeAgentPluginReleaseInput,
+} from "../../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
-  canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
-  createAgentPluginReleaseInput,
   decodeAgentPluginRelease,
-  decodeAgentPluginReleaseInput,
   decodeAgentPluginReleaseSet,
   MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,

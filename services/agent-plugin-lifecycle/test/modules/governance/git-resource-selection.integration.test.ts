@@ -4,8 +4,8 @@ import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspa
 import { afterEach, describe, expect, it } from "vitest";
 import { parseRepository } from "../../../src/service/model/dto/current-main-primitives";
 import { CURRENT_MAIN_V3_RECORD_PATH } from "../../../src/service/model/dto/current-main-record";
+import { decodeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 import {
-  decodeAgentPluginReleaseInput,
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,

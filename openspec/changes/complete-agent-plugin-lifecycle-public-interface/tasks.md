@@ -1023,6 +1023,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   diagnostic, byte, digest, bound, and public contract without a barrel, alias,
   facade, generic relationship engine, primitive, resource, provider, router,
   or oRPC change.
+- [x] 5.7e6 Give service-wide release-input behavior and canonical encoding
+  direct root-model owners while retaining the existing TypeBox DTO as
+  structural authority. Move construction, verification, decoding, bounded
+  admission, defensive freezing, and diagnostics into one direct release-input
+  policy; move canonical body and envelope projection and bytes into one direct
+  codec. Rewire root, module, transitional release, and test consumers directly;
+  delete `shared/release/release-input.ts` and its barrel exports without an
+  alias or facade. Preserve canonical bytes and digests, issue codes and order,
+  bounds, and public oRPC behavior without moving primitives, resources,
+  providers, routers, or native state.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

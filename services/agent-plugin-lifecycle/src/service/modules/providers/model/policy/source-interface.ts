@@ -21,8 +21,8 @@ import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
+import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 import {
-  decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
 } from "../../../../shared/release/index";

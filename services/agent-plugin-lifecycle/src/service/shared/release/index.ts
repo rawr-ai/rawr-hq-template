@@ -77,13 +77,6 @@ export {
   verifyAgentPluginRelease,
 } from "./release";
 export {
-  canonicalSerializeAgentPluginReleaseInput,
-  createAgentPluginReleaseInput,
-  decodeAgentPluginReleaseInput,
-  verifyAgentPluginReleaseInput,
-} from "./release-input";
-
-export {
   type AgentPluginReleaseSet,
   type AgentPluginReleaseSetBody,
   type AgentPluginReleaseSetMember,

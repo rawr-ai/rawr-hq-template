@@ -20,6 +20,11 @@ import { describe, expect, it } from "vitest";
 import type { Client } from "../../../src/client";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import {
+  createAgentPluginReleaseInput,
+  decodeAgentPluginReleaseInput,
+} from "../../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input-codec";
+import {
   VendorStatusResultSchema,
   VendorUpdateResultSchema,
 } from "../../../src/service/modules/vendors/model/dto/vendor-operations";
@@ -40,12 +45,7 @@ import {
   encodeVendorSourceDeclaration,
   vendorPayloadDigest,
 } from "../../../src/service/modules/vendors/model/policy/vendor-record-codec";
-import {
-  canonicalSerializeAgentPluginReleaseInput,
-  contentDigest,
-  createAgentPluginReleaseInput,
-  decodeAgentPluginReleaseInput,
-} from "../../../src/service/shared/release";
+import { contentDigest } from "../../../src/service/shared/release";
 import {
   createLifecycleTestClient,
   testInvocation,
