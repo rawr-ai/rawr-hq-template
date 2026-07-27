@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Provider Channels Author Selection
+
+Provider status and sync own governed channel selection. The host supplies one
+ready content-workspace resource; Provider middleware passes that resource
+downward without wrapping it; each oRPC handler sequences the external reads
+and gives typed facts to inert policy. Status performs one complete selection.
+Sync defines one lazy, procedure-local selection and repeats it only before a
+required mutation.
+
+The channel resolver, narrowed read port, and caller-facing selection helper
+are false intermediate owners. They hide the resource calls without adding a
+capability. Delete them rather than renaming them. Current-main and release
+derivation remain service-root collaborations because multiple modules consume
+their inert meanings. Provider source-interface and selected-content policy
+remain module-owned because only Provider interprets those facts.
+
+This checkpoint does not move native observation or mutation out of the
+existing reconciliation functions. That is the next operation-authorship cut,
+not a reason to mix two semantic stories.
+
+See
+[[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Provider, channel, resource, context, router, operation, policy, fact,
+selection, repeat, mutation, delete, narrow.
+
 ## 2026-07-26 - Provider Tests Author Selection
 
 The disposable Provider test operation owns exact local-content selection. The

@@ -1785,6 +1785,35 @@ green; the repository gate completed in 44.4 seconds. No Personal repository,
 provider home, Oclif surface, Nx graph, Habitat policy, or live lifecycle state
 changes in this checkpoint.
 
+The governed Provider-channel authorship checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2m]]. Provider status
+and sync consume the same ready content-workspace resource as disposable test,
+but each operation owns its channel-specific sequencing. Status performs one
+complete current-main and selected-content observation before native
+acquisition. Sync performs the same selection lazily, repeats it only when a
+mutation may be required, and refuses a rejected or changed second selection
+before any native command.
+
+This cut deletes the selected-content resolver, its narrowed read port, the
+selection router, resolver context contribution, and resolver-only input
+schema. Separate named Provider middleware values pass the ready
+content-workspace and native-provider resources downward without adapting
+them. Provider policy retains only typed source-interface classification and
+selected-content projection. Native observation and mutation remain in the
+existing reconciliation functions for the next operation-authorship
+checkpoint, so this record does not yet claim the complete Providers shell is
+sealed.
+
+Proof is 280 lifecycle tests, production and test TypeScript checks, the
+Provider-owned Habitat law, strict OpenSpec validation, and the uncached
+repository check across 39 projects and 76 dependency tasks. The repository
+check completed in 1 minute 50 seconds. Architecture, behavior-first testing,
+and TypeScript/TypeBox/structural standing reviews passed after repairing
+release-input/manifest failure precedence and strengthening the cross-resource
+ordering and fast-path oracles. No Personal repository, provider home, Oclif
+surface, Nx graph, Habitat policy, or live lifecycle state changed in this
+checkpoint.
+
 ## Settlement Oracles
 
 The final product must prove:

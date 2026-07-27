@@ -1,3 +1,7 @@
+import type {
+  ContentWorkspaceFailure,
+  ContentWorkspaceResource,
+} from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
@@ -24,15 +28,14 @@ describe("provider sync", () => {
       content,
       marketplace: "absent",
     });
-    const { client, resourceCalls } = createProviderLifecycleClient(
-      content,
-      new FakeNativeProviders([session])
-    );
+    const nativeProviders = new FakeNativeProviders([session]);
+    const { client, resourceCalls } = createProviderLifecycleClient(content, nativeProviders);
 
     const result = await client.providers.sync(wrongRepositoryChannelRequest, testInvocation);
 
     expect(result.classification).toBe("Blocked");
     expect(resourceCalls).toEqual(["inspect:refs/heads/main"]);
+    expect(nativeProviders.acquisitionCalls).toEqual([]);
     expect(session.calls).toEqual([]);
   });
 
@@ -50,9 +53,13 @@ describe("provider sync", () => {
     if (session.provider !== "codex") throw new Error("Expected a Codex session fixture");
     const originalAddMarketplace = session.addMarketplace.bind(session);
     let selectionsAtFirstMutation = -1;
+    let channelSelectionsAtFirstMutation = -1;
+    let resourceCallsAtFirstMutation = -1;
     session.addMarketplace = (source) =>
       Effect.suspend(() => {
         selectionsAtFirstMutation = countCompleteCurrentMainSelections(resourceCalls);
+        channelSelectionsAtFirstMutation = countCompleteChannelSelections(resourceCalls);
+        resourceCallsAtFirstMutation = resourceCalls.length;
         return originalAddMarketplace(source);
       });
 
@@ -60,7 +67,10 @@ describe("provider sync", () => {
 
     expect(result.classification).toBe("Changed");
     expect(selectionsAtFirstMutation).toBe(2);
+    expect(channelSelectionsAtFirstMutation).toBe(2);
+    expect(resourceCallsAtFirstMutation).toBe(COMPLETE_CHANNEL_SELECTION_CALLS.length * 2);
     expect(countCompleteCurrentMainSelections(resourceCalls)).toBe(2);
+    expect(countCompleteChannelSelections(resourceCalls)).toBe(2);
   });
 
   it("refreshes an exact Codex marketplace with an unobservable revision before installing a missing selected member", async () => {
@@ -70,7 +80,10 @@ describe("provider sync", () => {
       content,
       marketplace: "exact",
     });
-    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
 
     const result = await client.providers.sync(channelRequest, testInvocation);
 
@@ -83,8 +96,10 @@ describe("provider sync", () => {
     expect(session.hasPlugin("cognition")).toBe(true);
 
     const mutationCount = session.mutationCalls().length;
+    const selectionCount = countCompleteChannelSelections(resourceCalls);
     const repeat = await client.providers.sync(channelRequest, testInvocation);
     expect(repeat.classification).toBe("Converged");
+    expect(countCompleteChannelSelections(resourceCalls)).toBe(selectionCount + 1);
     expect(session.mutationCalls()).toHaveLength(mutationCount);
   });
 
@@ -385,11 +400,15 @@ describe("provider sync", () => {
       marketplace: "ambiguous",
       omitted: ["docs"],
     });
-    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
     const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Blocked");
     expect(result.issues.some((issue) => issue.code === "MarketplaceCollision")).toBe(true);
+    expect(resourceCalls.filter((call) => call === "read-tree")).toHaveLength(1);
     expect(session.mutationCalls()).toEqual([]);
     expect(session.hasPlugin("docs")).toBe(true);
   });
@@ -417,12 +436,16 @@ describe("provider sync", () => {
       installed: ["cognition"],
     });
     session.setPluginEnabled("cognition", false);
-    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session])
+    );
     const result = await client.providers.sync(channelRequest, testInvocation);
 
     expect(result.classification).toBe("Failed");
     expect(result.issues.some((issue) => issue.code === "CapabilityMissing")).toBe(true);
     expect(result.targets[0]?.facts.some((fact) => fact.kind === "plugin-enabled")).toBe(false);
+    expect(resourceCalls.filter((call) => call === "read-tree")).toHaveLength(1);
     expect(session.mutationCalls()).toEqual([]);
   });
 
@@ -440,6 +463,110 @@ describe("provider sync", () => {
     expect(result.issues.some((issue) => issue.code === "SourceChanged")).toBe(true);
     expect(session.mutationCalls()).toEqual([]);
   });
+
+  it("maps a rejected second channel read to SourceChanged and retains the first selection", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    let treeReads = 0;
+    const failure: ContentWorkspaceFailure = {
+      _tag: "ContentWorkspaceFailure",
+      operation: "read-git-tree",
+      reason: "GitFailed",
+      detail: "Second selected tree is unavailable",
+    };
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          readGitTree: (input: Parameters<ContentWorkspaceResource<never>["readGitTree"]>[0]) => {
+            treeReads += 1;
+            return treeReads === 2 ? Effect.fail(failure) : delegate.readGitTree(input);
+          },
+        }),
+    });
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result).toMatchObject({
+      classification: "Blocked",
+      selection: {
+        sourceCommit: content.sourceCommit,
+        sourceTree: content.sourceTree,
+        pluginIds: ["cognition"],
+      },
+      issues: [expect.objectContaining({ code: "SourceChanged" })],
+    });
+    expect(treeReads).toBe(2);
+    expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it("refuses a changed second channel observation before native mutation", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    let sourceInspections = 0;
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          inspectGitRef: (input: Parameters<ContentWorkspaceResource<never>["inspectGitRef"]>[0]) =>
+            Effect.map(delegate.inspectGitRef(input), (observation) => {
+              if (input.refName !== "refs/tags/agent-plugins-v1") return observation;
+              sourceInspections += 1;
+              return sourceInspections === 6
+                ? Object.freeze({ ...observation, tree: "9".repeat(40) })
+                : observation;
+            }),
+        }),
+    });
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result).toMatchObject({
+      classification: "Blocked",
+      selection: {
+        sourceCommit: content.sourceCommit,
+        sourceTree: content.sourceTree,
+        pluginIds: ["cognition"],
+      },
+      issues: [expect.objectContaining({ code: "SourceChanged" })],
+    });
+    expect(sourceInspections).toBe(6);
+    expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it("refuses an unequal second selected-content result and retains the first observation", async () => {
+    const content = selectedContent();
+    const changedContent = selectedContent(["cognition", "docs"]);
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      secondSelectionContent: changedContent,
+    });
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result).toMatchObject({
+      classification: "Blocked",
+      selection: {
+        releaseInputDigest: content.releaseInputDigest,
+        pluginIds: ["cognition"],
+      },
+      issues: [expect.objectContaining({ code: "SourceChanged" })],
+    });
+    expect(result.selection?.releaseInputDigest).not.toBe(changedContent.releaseInputDigest);
+    expect(session.mutationCalls()).toEqual([]);
+  });
 });
 
 const CURRENT_MAIN_SELECTION_CALLS = [
@@ -452,12 +579,35 @@ const CURRENT_MAIN_SELECTION_CALLS = [
   `inspect:${CURRENT_MAIN_V3_CANONICAL_REF}`,
 ] as const;
 
+const COMPLETE_CHANNEL_SELECTION_CALLS = [
+  ...CURRENT_MAIN_SELECTION_CALLS,
+  "inspect:refs/tags/agent-plugins-v1",
+  "read-tree",
+  "read-blob",
+  "read-blob",
+  "read-blob",
+  "read-blobs",
+  "inspect:refs/tags/agent-plugins-v1",
+] as const;
+
 function countCompleteCurrentMainSelections(calls: readonly string[]): number {
+  return countOrderedSelections(calls, CURRENT_MAIN_SELECTION_CALLS);
+}
+
+function countCompleteChannelSelections(calls: readonly string[]): number {
+  return countOrderedSelections(
+    calls.map((call) => (call.startsWith("read-blob:") ? "read-blob" : call)),
+    COMPLETE_CHANNEL_SELECTION_CALLS
+  );
+}
+
+function countOrderedSelections(
+  calls: readonly string[],
+  expectedCalls: readonly string[]
+): number {
   let count = 0;
-  for (let index = 0; index <= calls.length - CURRENT_MAIN_SELECTION_CALLS.length; index += 1) {
-    if (
-      CURRENT_MAIN_SELECTION_CALLS.every((expected, offset) => calls[index + offset] === expected)
-    ) {
+  for (let index = 0; index <= calls.length - expectedCalls.length; index += 1) {
+    if (expectedCalls.every((expected, offset) => calls[index + offset] === expected)) {
       count += 1;
     }
   }

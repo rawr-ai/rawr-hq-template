@@ -34,15 +34,14 @@ describe("provider status and preflight", () => {
       content,
       marketplace: "absent",
     });
-    const { client, resourceCalls } = createProviderLifecycleClient(
-      content,
-      new FakeNativeProviders([session])
-    );
+    const nativeProviders = new FakeNativeProviders([session]);
+    const { client, resourceCalls } = createProviderLifecycleClient(content, nativeProviders);
 
     const result = await client.providers.status(wrongRepositoryChannelRequest, testInvocation);
 
     expect(result.classification).toBe("Blocked");
     expect(resourceCalls).toEqual(["inspect:refs/heads/main"]);
+    expect(nativeProviders.acquisitionCalls).toEqual([]);
     expect(session.calls).toEqual([]);
   });
 
@@ -78,7 +77,7 @@ describe("provider status and preflight", () => {
       content,
       marketplace: "unrelated",
     });
-    const { client } = createProviderLifecycleClient(
+    const { client, resourceCalls } = createProviderLifecycleClient(
       content,
       new FakeNativeProviders([first, second])
     );
@@ -86,6 +85,7 @@ describe("provider status and preflight", () => {
     expect(result.classification).toBe("Blocked");
     expect(result.targets.map((target) => target.classification)).toEqual(["Blocked", "Blocked"]);
     expect(result.issues.some((issue) => issue.code === "MarketplaceCollision")).toBe(true);
+    expect(resourceCalls.filter((call) => call === "read-tree")).toHaveLength(1);
     expect(first.mutationCalls()).toEqual([]);
     expect(second.mutationCalls()).toEqual([]);
   });
@@ -132,7 +132,7 @@ describe("provider status and preflight", () => {
     const codex = fakeNativeSession({ target: targets[0], content });
     const claude = fakeNativeSession({ target: targets[1], content });
     codex.inventoryFailureCount = 1;
-    const { client } = createProviderLifecycleClient(
+    const { client, resourceCalls } = createProviderLifecycleClient(
       content,
       new FakeNativeProviders([codex, claude])
     );
@@ -144,6 +144,7 @@ describe("provider status and preflight", () => {
       "Failed",
     ]);
     expect(result.issues.some((issue) => issue.code === "TargetUnavailable")).toBe(true);
+    expect(resourceCalls.filter((call) => call === "read-tree")).toHaveLength(1);
     expect(codex.mutationCalls()).toEqual([]);
     expect(claude.mutationCalls()).toEqual([]);
   });
