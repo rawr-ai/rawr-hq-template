@@ -612,15 +612,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   contracts, refusal mapping, bounded diagnostics, source revalidation,
   interruption, defects, and finalizers without adding a replacement reader,
   repository, helper, port, resource, or compatibility path.
-- [ ] 5.5 Delete the persistent agent release/set repository, projection store,
+- [x] 5.5 Delete the persistent agent release/set repository, projection store,
   publication index, retention planner, digest-addressed handles, provider
   target receipts/identity sidecars, and custom evidence store. Canonical
   operations read exact selected Git objects and derive the release model,
   native marketplace source, and declared provider-visible files in memory.
   Canonical mutation uses the provider's native Git marketplace
   source at the selected immutable Personal revision; a disposable local source
-  must share one bounded lifetime with its disposable home. Test returns inline
-  results and ordinary CI may retain them externally.
+  remains scoped to the test operation while the caller retains ownership of
+  the disposable home. Test returns inline results and ordinary CI may retain
+  them externally.
 - [x] 5.5a Remove packaging's artifact-store reader and digest-addressed handle.
   `rawr agent plugins package` now accepts one exact Git selection plus a
   targeted or complete-set member selection, derives releases in memory,
@@ -640,7 +641,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   bounded in-memory derivation facts. Regenerate the workspace lockfile, update
   active contracts and operator guidance, and prove no tracked executable
   reader or writer remains before closing the subtask.
-- [ ] 5.5d Materialize the exact selected provider-test marketplace below the
+- [x] 5.5d Materialize the exact selected provider-test marketplace below the
   explicit disposable root, keep it alive through final provider observation,
   and retire the exact scoped child before the operation returns. The caller
   owns the disposable parent and provider homes; the service MUST NOT infer

@@ -15,29 +15,21 @@ const DEFAULT_PUBLIC_ISSUE_DETAIL = "Vendor lifecycle operation failed.";
 type ResourceFailure = ContentWorkspaceFailure | VersionedContentFailure;
 type ResourceFailureReason = ContentWorkspaceFailureReason | VersionedContentFailureReason;
 
-const operationLabels: Readonly<Record<ResourceFailure["operation"], string>> = Object.freeze({
-  inspect: "Content workspace inspection",
-  "inspect-git-ref": "Read-only exact Git ref inspection",
-  "inspect-git-workspace": "Read-only Git workspace inspection",
-  "read-git-tree": "Read-only Git tree observation",
-  "read-git-blob": "Read-only Git blob observation",
-  "capture-git-evidence": "Read-only Git workspace evidence capture",
-  "observe-git-staged-index": "Read-only staged Git index observation",
-  "read-git-blob-at-path": "Read-only exact Git object observation",
-  "local-git-ancestry": "Read-only local Git ancestry verification",
-  "list-git-changed-paths": "Read-only Git changed-path observation",
-  "read-file": "Content file observation",
-  "read-tree": "Content tree observation",
-  "observe-remote": "Remote content observation",
-  "materialize-remote": "Remote content materialization",
-  ancestry: "Remote ancestry verification",
-  capture: "Repository preimage capture",
-  apply: "Repository authoring",
-  restore: "Repository restoration",
-  settle: "Repository settlement",
-  release: "Capture authority release",
-  cleanup: "Resource cleanup",
-});
+const operationLabels: Readonly<Partial<Record<ResourceFailure["operation"], string>>> =
+  Object.freeze({
+    inspect: "Content workspace inspection",
+    "read-file": "Content file observation",
+    "read-tree": "Content tree observation",
+    "observe-remote": "Remote content observation",
+    "materialize-remote": "Remote content materialization",
+    ancestry: "Remote ancestry verification",
+    capture: "Repository preimage capture",
+    apply: "Repository authoring",
+    restore: "Repository restoration",
+    settle: "Repository settlement",
+    release: "Capture authority release",
+    cleanup: "Resource cleanup",
+  });
 
 const reasonClauses: Readonly<Record<ResourceFailureReason, string>> = Object.freeze({
   InvalidInput: "the provider rejected the bounded input",
@@ -115,7 +107,8 @@ export function resourceFailureReason(error: ResourceFailure): ResourceFailureRe
  * provider paths, commands, exceptions, or other private diagnostics.
  */
 export function resourceFailureDetail(error: ResourceFailure): string {
-  return `${operationLabels[error.operation]} failed because ${reasonClauses[error.reason]}.`;
+  const operation = operationLabels[error.operation] ?? "Vendor resource operation";
+  return `${operation} failed because ${reasonClauses[error.reason]}.`;
 }
 
 function normalizePublicDetail(detail: string): string {

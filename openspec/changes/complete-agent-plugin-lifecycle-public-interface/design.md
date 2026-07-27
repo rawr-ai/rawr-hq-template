@@ -311,7 +311,8 @@ Status does not materialize provider package bytes. Sync first compares derived
 identity with live provider provenance. Canonical mutation passes the selected
 immutable Personal Git marketplace to the provider's native command, and the
 provider owns its snapshot below the explicit home. A local marketplace is
-test-only and shares one bounded lifetime with its disposable home. No
+test-only, remains scoped through the operation, and is retired independently
+of the caller-owned disposable home. No
 Template-owned persistent release/set store, projection store, publication
 index, or retention planner participates in the next invocation.
 
@@ -321,8 +322,9 @@ have a concrete product consumer. Their classification is explicit:
 - a release-set digest is an invocation-local derived verification value, not
   channel authority;
 - a native-provider snapshot is provider-owned installed support state;
-- a disposable local marketplace is transient test material with the same
-  lifetime as its disposable home;
+- a disposable local marketplace is transient test material scoped through the
+  test operation; its child lifetime does not confer ownership of the caller's
+  disposable home;
 - a test result retained by the caller or ordinary CI/release tooling is
   external evidence, never lifecycle state;
 - a publication index or cache is recomputable mechanics;

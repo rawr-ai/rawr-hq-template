@@ -38,6 +38,10 @@
   not a competing authority.
 - Disposable test convergence never retires unrelated installed content;
   canonical sync may retire omitted targets according to its declared policy.
+- Disposable tests materialize one complete provider-native marketplace from
+  exact Git bytes below the caller's disposable root. The content-workspace
+  resource owns that scoped filesystem lifetime; no checkout path, receipt,
+  handle, or persisted projection becomes native desired state.
 
 ## Behavior
 
@@ -57,10 +61,12 @@
 
 - Status performs one complete governed channel selection from the ready
   content-workspace resource. Sync repeats that complete selection only when
-  mutation may be required. Test performs complete local source selection,
-  repeats it before mutation, and preserves omitted members. A mutating
-  operation reacquires every target for one final all-target preflight, then
-  reuses only that final session for ordered mutation and immediate
+  mutation may be required. Test selects exact local Git bytes, materializes
+  one full marketplace closure for the surrounding Effect scope, and repeats
+  selection against the same scoped root before mutation. Targeted mode narrows
+  native actions, not the catalog bytes named by its exact manifests. A
+  mutating operation reacquires every target for one final all-target preflight,
+  then reuses only that final session for ordered mutation and immediate
   confirmation.
 
 ## Interfaces

@@ -3,6 +3,8 @@ import type {
   ContentWorkspaceFailure,
   GitBlobObservation,
   GitRefObservation,
+  MaterializedTemporaryTree,
+  TemporaryContentTreeEntry,
 } from "@rawr/resource-content-workspace";
 import type { Result } from "effect";
 import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
@@ -14,8 +16,10 @@ import type {
 import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
 import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "#agent-plugin-lifecycle-service/model/dto/release-input";
-import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
-import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
+import {
+  createAgentPluginPayload,
+  payloadEntryBytes,
+} from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
@@ -89,6 +93,7 @@ interface SelectedContentTreeEntry {
 }
 
 interface SelectedContentInterfaceEntry {
+  readonly mode: 0o644 | 0o755;
   readonly objectId: string;
   readonly path: ReleaseRelativePath;
 }
@@ -464,7 +469,9 @@ export function classifySelectedContentInterfaceTree(
     ? admitted(
         Object.freeze({
           manifestEntries: Object.freeze(
-            manifestEntries.value.map(({ objectId, path }) => Object.freeze({ objectId, path }))
+            manifestEntries.value.map(({ mode, objectId, path }) =>
+              Object.freeze({ mode, objectId, path })
+            )
           ),
         })
       )
@@ -512,24 +519,96 @@ export function validateSelectedNativeMarketplaces(
   return validated.ok ? undefined : selectedContentRejected("SourceIneligible", validated.detail);
 }
 
-/** Classifies one local manifest reread against its selected Git bytes. */
-export function classifyLocalSelectedContentManifest(
-  path: ReleaseRelativePath,
-  expected: Uint8Array,
-  attempt: Result.Result<Uint8Array, ContentWorkspaceFailure>
-): SelectedContentDecision<true> {
-  if (attempt._tag === "Failure") {
-    return declined(selectedContentResourceFailure(attempt.failure));
-  }
-  if (!equalBytes(attempt.success, expected)) {
-    return declined(
-      selectedContentRejected(
-        "SourceIneligible",
-        `Local native marketplace manifest differs from Git: ${path}.`
-      )
+/**
+ * Builds the exact invocation-local marketplace tree from selected Git facts.
+ *
+ * @remarks
+ * Both native manifests describe the complete catalog, so targeted tests still
+ * materialize every declared payload root. The selected subset remains a
+ * native-operation concern and cannot make the marketplace internally partial.
+ */
+export function planTemporarySelectedContentMarketplace(
+  snapshot: ContentWorkspaceSnapshot,
+  selectedInterface: SelectedContentInterfaceFacts,
+  manifests: ReadonlyMap<ReleaseRelativePath, Uint8Array>
+): SelectedContentDecision<readonly TemporaryContentTreeEntry[]> {
+  const entries: TemporaryContentTreeEntry[] = [];
+  for (const manifest of selectedInterface.manifestEntries) {
+    const bytes = manifests.get(manifest.path);
+    if (bytes === undefined) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Selected content is missing native marketplace bytes for ${manifest.path}.`
+        )
+      );
+    }
+    entries.push(
+      Object.freeze({
+        path: manifest.path,
+        mode: temporaryContentMode(manifest.mode),
+        bytes: new Uint8Array(bytes),
+      })
     );
   }
-  return admitted(true);
+
+  const bindingByPath = new Map(snapshot.objectBindings.map((binding) => [binding.path, binding]));
+  for (const declared of snapshot.payloads) {
+    for (const payloadEntry of declared.payload.entries) {
+      const path = requireReleasePath(
+        `${SELECTED_CONTENT_PLUGIN_ROOT}/${declared.pluginId}/${payloadEntry.path}`
+      );
+      const binding = bindingByPath.get(path);
+      if (binding === undefined || binding.mode !== payloadEntry.mode) {
+        return declined(
+          selectedContentRejected(
+            "SourceIneligible",
+            `Selected payload does not retain an exact Git object binding for ${path}.`
+          )
+        );
+      }
+      entries.push(
+        Object.freeze({
+          path,
+          mode: temporaryContentMode(payloadEntry.mode),
+          bytes: payloadEntryBytes(payloadEntry),
+        })
+      );
+    }
+  }
+
+  return admitted(
+    Object.freeze(entries.sort((left, right) => compareCanonicalText(left.path, right.path)))
+  );
+}
+
+/** Compares two ordered temporary marketplace plans by exact path, mode, and bytes. */
+export function sameTemporarySelectedContentMarketplace(
+  left: readonly TemporaryContentTreeEntry[],
+  right: readonly TemporaryContentTreeEntry[]
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((entry, index) => {
+      const candidate = right[index];
+      return (
+        candidate !== undefined &&
+        entry.path === candidate.path &&
+        entry.mode === candidate.mode &&
+        entry.bytes.byteLength === candidate.bytes.byteLength &&
+        entry.bytes.every((byte, byteIndex) => byte === candidate.bytes[byteIndex])
+      );
+    })
+  );
+}
+
+/** Classifies invocation-scoped marketplace materialization without adding state authority. */
+export function classifyTemporarySelectedContentMarketplace(
+  attempt: Result.Result<MaterializedTemporaryTree, ContentWorkspaceFailure>
+): SelectedContentDecision<MaterializedTemporaryTree> {
+  return attempt._tag === "Failure"
+    ? declined(selectedContentResourceFailure(attempt.failure))
+    : admitted(attempt.success);
 }
 
 function classifySelectedContentTree(
@@ -629,4 +708,8 @@ function requireReleasePath(value: string): ReleaseRelativePath {
   const parsed = parseReleaseRelativePath(value, "selectedContent.path");
   if (!parsed.ok) throw new Error(`Compiled selected-content path is invalid: ${value}`);
   return parsed.value;
+}
+
+function temporaryContentMode(mode: 0o644 | 0o755): TemporaryContentTreeEntry["mode"] {
+  return mode === 0o755 ? "100755" : "100644";
 }

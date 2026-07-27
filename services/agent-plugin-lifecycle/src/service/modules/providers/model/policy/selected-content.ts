@@ -145,6 +145,12 @@ export function selectedContentFromSourceIssues(
 
 /** Closes selected-content resolution into the public Provider issue vocabulary. */
 export function providerSelectionResolution(
+  resolved: Extract<SelectedContentResolution, { kind: "Rejected" }>
+): Extract<ProviderSelectionResolution, { kind: "Rejected" }>;
+export function providerSelectionResolution(
+  resolved: SelectedContentResolution
+): ProviderSelectionResolution;
+export function providerSelectionResolution(
   resolved: SelectedContentResolution
 ): ProviderSelectionResolution {
   if (resolved.kind === "Rejected") {

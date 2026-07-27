@@ -2,6 +2,8 @@ import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
+  MaterializeTemporaryTreeInput,
+  TemporaryContentTreeEntry,
 } from "@rawr/resource-content-workspace";
 import type {
   ClaudeNativeAgentProviderSession,
@@ -74,6 +76,9 @@ const SOURCE_REF = "refs/tags/agent-plugins-v1";
 const NATIVE_SOURCE_REVISION = COMMIT;
 const workspaceFixtures = new WeakMap<SelectedContent, ProviderWorkspaceFixture>();
 
+/** Deterministic scoped root returned by the owner-local content-workspace fake. */
+export const TEMPORARY_MARKETPLACE_ROOT = "/tmp/rawr-provider-test/marketplace-fixture";
+
 export const channelRequest: ProviderSyncRequest & ProviderStatusRequest = {
   channel: "current-main",
   locator: {
@@ -124,6 +129,15 @@ export function selectedContent(
   return buildSelectedContent(pluginIds, {}, source, selectionKind);
 }
 
+/** Builds selected content whose first member includes one executable setup script. */
+export function selectedContentWithExecutableScript(
+  pluginIds: readonly string[],
+  source: NativeMarketplaceSource,
+  selectionKind: SelectedContent["selectionKind"]
+): SelectedContent {
+  return buildSelectedContent(pluginIds, {}, source, selectionKind, pluginIds[0]);
+}
+
 export function selectedContentWithAliases(
   pluginIds: readonly string[],
   aliasesByPlugin: Readonly<Record<string, readonly string[]>>,
@@ -142,10 +156,11 @@ function buildSelectedContent(
   pluginNames: readonly string[],
   aliasesByPlugin: Readonly<Record<string, readonly string[]>>,
   source: NativeMarketplaceSource,
-  selectionKind: SelectedContent["selectionKind"]
+  selectionKind: SelectedContent["selectionKind"],
+  executableScriptPlugin?: string
 ): SelectedContent {
   const members = pluginNames.map((pluginName) =>
-    member(pluginName, aliasesByPlugin[pluginName] ?? [])
+    member(pluginName, aliasesByPlugin[pluginName] ?? [], pluginName === executableScriptPlugin)
   );
   const payloads = members.map((entry) => {
     const payload = requireParsed(
@@ -247,12 +262,20 @@ function buildSelectedContent(
   return content;
 }
 
-export function member(pluginName: string, aliases: readonly string[] = []) {
+export function member(
+  pluginName: string,
+  aliases: readonly string[] = [],
+  includeExecutableScript = false
+) {
   const pluginId = requirePluginId(pluginName);
   const codexManifest = encoder.encode(`{"name":"${pluginId}","provider":"codex"}\n`);
   const claudeManifest = encoder.encode(`{"name":"${pluginId}","provider":"claude"}\n`);
   const skill = encoder.encode(`# ${pluginId}\n`);
   const reference = encoder.encode(`Reference for ${pluginId}\n`);
+  const setupScript = encoder.encode("#!/bin/sh\nset -eu\n");
+  const executableEntries = includeExecutableScript
+    ? [{ path: "scripts/setup.sh", mode: 0o755 as const, bytes: setupScript }]
+    : [];
   const payload = requireParsed(
     createAgentPluginPayload([
       { path: ".claude-plugin/plugin.json", mode: 0o644, bytes: claudeManifest },
@@ -263,6 +286,7 @@ export function member(pluginName: string, aliases: readonly string[] = []) {
         mode: 0o644,
         bytes: reference,
       },
+      ...executableEntries,
     ])
   );
   return Object.freeze({
@@ -277,6 +301,7 @@ export function member(pluginName: string, aliases: readonly string[] = []) {
       file(".codex-plugin/plugin.json", codexManifest),
       file(`skills/${pluginId}/SKILL.md`, skill),
       file(`skills/${pluginId}/references/guide.md`, reference),
+      ...executableEntries.map((entry) => file(entry.path, entry.bytes, entry.mode)),
     ]),
   });
 }
@@ -307,18 +332,24 @@ export function createCurrentMainSelection(
 export interface ProviderLifecycleClientFixture {
   readonly client: Client;
   readonly resourceCalls: string[];
+  readonly gitMarketplaceEntries: readonly TemporaryContentTreeEntry[];
+  readonly materializationCalls: MaterializeTemporaryTreeInput[];
+  readonly finalizedTemporaryRoots: string[];
+}
+
+interface ProviderLifecycleFixtureOptions {
+  readonly failSecondCurrentMainOpening?: boolean;
+  readonly secondSelectionContent?: SelectedContent;
+  readonly transformContentWorkspace?: (
+    resource: ContentWorkspaceResource<never>
+  ) => ContentWorkspaceResource<never>;
+  readonly onTemporaryTreeEvent?: (event: "materialized" | "finalized", root: string) => void;
 }
 
 export function createProviderLifecycleClient(
   content: SelectedContent,
   nativeProviders: NativeAgentProviderResources,
-  options: Readonly<{
-    failSecondCurrentMainOpening?: boolean;
-    secondSelectionContent?: SelectedContent;
-    transformContentWorkspace?: (
-      resource: ContentWorkspaceResource<never>
-    ) => ContentWorkspaceResource<never>;
-  }> = {}
+  options: ProviderLifecycleFixtureOptions = {}
 ): ProviderLifecycleClientFixture {
   const fixture = workspaceFixtures.get(content);
   if (fixture === undefined) {
@@ -332,10 +363,14 @@ export function createProviderLifecycleClient(
     throw new Error("Second Provider content was not created by the owner-local fixture");
   }
   const resourceCalls: string[] = [];
+  const materializationCalls: MaterializeTemporaryTreeInput[] = [];
+  const finalizedTemporaryRoots: string[] = [];
   const baseContentWorkspace = providerContentWorkspace(
     fixture,
     secondFixture,
     resourceCalls,
+    materializationCalls,
+    finalizedTemporaryRoots,
     options
   );
   const contentWorkspace =
@@ -343,6 +378,9 @@ export function createProviderLifecycleClient(
   return {
     client: createLifecycleTestClient({ contentWorkspace, nativeProviders }),
     resourceCalls,
+    gitMarketplaceEntries: fixture.marketplaceEntries,
+    materializationCalls,
+    finalizedTemporaryRoots,
   };
 }
 
@@ -351,6 +389,7 @@ interface ProviderWorkspaceFixture {
   readonly releaseInputBytes: Uint8Array;
   readonly treeEntries: readonly ContentTreeEntry[];
   readonly bytesByBlob: ReadonlyMap<string, Uint8Array>;
+  readonly marketplaceEntries: readonly TemporaryContentTreeEntry[];
 }
 
 function createProviderWorkspaceFixture(
@@ -360,6 +399,7 @@ function createProviderWorkspaceFixture(
   members: readonly ReturnType<typeof member>[]
 ): ProviderWorkspaceFixture {
   const bytesByPath = new Map<string, Uint8Array>();
+  const modeByPath = new Map<string, TemporaryContentTreeEntry["mode"]>();
   const releaseInputBytes = canonicalSerializeAgentPluginReleaseInput(releaseInput);
   bytesByPath.set(CURRENT_MAIN_V3_RELEASE_INPUT_PATH, releaseInputBytes);
   bytesByPath.set(
@@ -405,6 +445,10 @@ function createProviderWorkspaceFixture(
         `plugins/agents/${pluginId}/${entry.path}`,
         expectedBytes(pluginId, entry.path)
       );
+      modeByPath.set(
+        `plugins/agents/${pluginId}/${entry.path}`,
+        entry.mode === 0o755 ? "100755" : "100644"
+      );
     }
   }
   const bytesByBlob = new Map<string, Uint8Array>();
@@ -413,7 +457,18 @@ function createProviderWorkspaceFixture(
     .map(([path, bytes], index) => {
       const blob = (index + 10).toString(16).padStart(40, "0");
       bytesByBlob.set(blob, bytes);
-      return Object.freeze({ path, mode: "100644" as const, blob });
+      return Object.freeze({ path, mode: modeByPath.get(path) ?? "100644", blob });
+    });
+  const marketplaceEntries = treeEntries
+    .filter(({ path }) => path !== CURRENT_MAIN_V3_RELEASE_INPUT_PATH)
+    .map(({ path, mode, blob }) => {
+      const bytes = bytesByBlob.get(blob);
+      if (bytes === undefined) throw new Error(`Missing provider fixture blob ${blob}`);
+      return Object.freeze({
+        path,
+        mode: mode === "100755" ? "100755" : "100644",
+        bytes: new Uint8Array(bytes),
+      });
     });
   const selection = createCurrentMainSelection({
     kind: "CURRENT_ELIGIBLE",
@@ -435,6 +490,7 @@ function createProviderWorkspaceFixture(
     releaseInputBytes,
     treeEntries: Object.freeze(treeEntries),
     bytesByBlob,
+    marketplaceEntries: Object.freeze(marketplaceEntries),
   });
 }
 
@@ -442,7 +498,9 @@ function providerContentWorkspace(
   fixture: ProviderWorkspaceFixture,
   secondFixture: ProviderWorkspaceFixture | undefined,
   calls: string[],
-  options: Readonly<{ failSecondCurrentMainOpening?: boolean }>
+  materializations: MaterializeTemporaryTreeInput[],
+  finalizedRoots: string[],
+  options: ProviderLifecycleFixtureOptions
 ): ContentWorkspaceResource<never> {
   let activeFixture = fixture;
   let mainInspections = 0;
@@ -580,6 +638,25 @@ function providerContentWorkspace(
         if (bytes === undefined) throw new Error(`Missing provider fixture file ${input.path}`);
         return bytes;
       }),
+    materializeTemporaryTree: (
+      input: Parameters<ContentWorkspaceResource<never>["materializeTemporaryTree"]>[0]
+    ) => {
+      const root = `${input.parentRoot}/marketplace-fixture`;
+      return Effect.acquireRelease(
+        Effect.sync(() => {
+          calls.push("materialize-tree");
+          materializations.push(input);
+          options.onTemporaryTreeEvent?.("materialized", root);
+          return Object.freeze({ root });
+        }),
+        () =>
+          Effect.sync(() => {
+            calls.push("finalize-tree");
+            finalizedRoots.push(root);
+            options.onTemporaryTreeEvent?.("finalized", root);
+          })
+      );
+    },
   });
 }
 
@@ -604,6 +681,7 @@ interface FakeNativeSessionInput {
     NativeAgentProviderFailure
   >;
   readonly onMutation?: () => void;
+  readonly onInventory?: () => void;
 }
 
 class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
@@ -629,6 +707,8 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
     NativeAgentProviderFailure
   >;
   protected readonly onMutation?: () => void;
+  private readonly onInventory?: () => void;
+  private readonly addedMarketplaceSources: NativeMarketplaceSource[] = [];
 
   constructor(provider: Provider, input: FakeNativeSessionInput) {
     if (input.target.provider !== provider) {
@@ -639,6 +719,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
     this.content = input.content;
     this.probeOverride = input.probeOverride;
     this.onMutation = input.onMutation;
+    this.onInventory = input.onInventory;
     const marketplaces =
       input.marketplace === "absent"
         ? []
@@ -708,6 +789,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
 
   inventory(): Effect.Effect<NativeProviderInventory, NativeAgentProviderFailure> {
     return Effect.suspend(() => {
+      this.onInventory?.();
       this.calls.push("inventory");
       if (this.inventoryFailureCount > 0) {
         this.inventoryFailureCount -= 1;
@@ -758,6 +840,7 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
   addMarketplace(source: NativeMarketplaceSource) {
     return Effect.sync(() => {
       this.onMutation?.();
+      this.addedMarketplaceSources.push(source);
       this.calls.push("mutate:marketplace-add");
       this.inventoryValue = {
         ...this.inventoryValue,
@@ -875,6 +958,10 @@ class FakeNativeSessionBase<const Provider extends ProviderTarget["provider"]> {
 
   mutationCalls(): readonly string[] {
     return this.calls.filter((call) => call.startsWith("mutate:"));
+  }
+
+  marketplaceAddSources(): readonly NativeMarketplaceSource[] {
+    return Object.freeze([...this.addedMarketplaceSources]);
   }
 
   hasPlugin(name: string): boolean {
@@ -1107,11 +1194,11 @@ function plugin(name: string, provider: ProviderTarget["provider"], enabled: boo
   });
 }
 
-function file(path: string, bytes: Uint8Array) {
+function file(path: string, bytes: Uint8Array, mode: 0o644 | 0o755 = 0o644) {
   const relativePath = requireParsed(parseReleaseRelativePath(path));
   return Object.freeze({
     path: relativePath,
-    mode: 0o644,
+    mode,
     contentDigest: contentDigest(bytes),
     byteLength: bytes.byteLength,
   });
@@ -1126,6 +1213,9 @@ function expectedBytes(pluginId: PluginId, path: string): Uint8Array {
   }
   if (path === `skills/${pluginId}/references/guide.md`) {
     return encoder.encode(`Reference for ${pluginId}\n`);
+  }
+  if (path === "scripts/setup.sh") {
+    return encoder.encode("#!/bin/sh\nset -eu\n");
   }
   return encoder.encode(`# ${pluginId}\n`);
 }
