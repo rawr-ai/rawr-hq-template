@@ -12,6 +12,7 @@ import {
   parseDistributionOwnershipIndex,
 } from "../../model/policy/distribution-ownership";
 import { samePayloadManifest } from "../../model/policy/payload-manifest";
+import { provenanceBindingValue } from "../../model/policy/provenance-binding";
 import {
   prefixReleaseIssuePath,
   releaseIssue,
@@ -63,7 +64,6 @@ import {
 import {
   completenessWitnessValue,
   parseCompletenessWitness,
-  provenanceBindingValue,
   verifyAgentPluginReleaseInput,
 } from "./release-input";
 

@@ -1004,6 +1004,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   prove exact-bound parity. Do not move or change parsing, construction,
   canonicalization, diagnostics, ordering, digests, primitives, resources,
   providers, routers, oRPC, or public package contracts.
+- [x] 5.7e4 Give service-wide provenance-binding semantics one direct
+  root-model policy owner. Move bounded admission, canonical ordering,
+  duplicate-identity refusal, defensive freezing, and canonical projection
+  together; rewire release-input, release, and release-set consumers directly;
+  and delete the old definitions without a barrel, alias, facade, or duplicate
+  policy. Keep the TypeBox schema and generated type in the release-input DTO.
+  Preserve every bound, diagnostic, byte, digest, and public contract without
+  moving completeness-witness policy, primitives, resources, providers,
+  routers, or oRPC behavior.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

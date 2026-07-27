@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Provenance Binding Is One Policy
+
+A provenance binding is inert release meaning carried by release inputs,
+individual releases, complete sets, and Vendor-authored content. TypeBox owns
+its closed structure in the release-input DTO. One direct service-root policy
+now owns bounded admission, canonical ordering, duplicate-identity refusal,
+defensive freezing, and canonical projection.
+
+Those behaviors move together because splitting projection, ordering, or
+admission would create several owners for the same binding identity. Release
+input, release, and release-set policy import the exact owner directly. The
+transitional release-input file no longer defines or exports that policy, and
+no barrel, alias, facade, resource, provider, or alternate format replaces it.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/policy/provenance-binding|the provenance-binding policy]],
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+provenance, binding, schema, policy, order, bound, duplicate, freeze,
+projection, direct, delete.
+
 ## 2026-07-27 - Release Input Structure Is Cross-Module Meaning
 
 A release input is selected in Releases but its admitted structure is consumed
