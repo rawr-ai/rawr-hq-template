@@ -14,8 +14,9 @@
 
 ## Boundaries
 
-- Consumers cross through declared package exports; `src/service/**` remains
-  owned by this package.
+- Consumers cross only through the declared `/client` package export.
+  `src/client.ts` admits the callable client surface; `src/service/**` remains
+  private implementation owned by this package.
 - Personal's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes; native provider inventory owns installed state.
 - The service model owns pure current-main selection, clean-content
@@ -141,14 +142,17 @@
 
 ## Interfaces
 
-- The public oRPC contract is the caller boundary. Content workspace, versioned
-  content, lifecycle clock, package output, and ready native provider resources are
-  the host-supplied dependencies.
+- The public client is the sole caller boundary. It deliberately exposes the
+  service contract and bounded input admission without exposing the private
+  router, host context lanes, schemas, model, or modules. Content workspace,
+  versioned content, lifecycle clock, package output, and ready native provider
+  resources are host-supplied dependencies.
 
 ## Routing
 
 - [Repository router](../../AGENTS.md)
-- [Public service contract](src/service/contract.ts)
+- [Public client](src/client.ts)
+- [Private service contract](src/service/contract.ts)
 - [Service dependency boundary](src/service/base.ts)
 - [Native-provider resource contract](../../resources/native-agent-provider/contract.ts)
 

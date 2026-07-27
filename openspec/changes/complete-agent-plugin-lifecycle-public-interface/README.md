@@ -2517,6 +2517,36 @@ validation and diff hygiene pass. Standing architecture, behavior/testing, and
 TypeScript/structural reviews report no unresolved P0, P1, or P2 finding.
 Repository landing remains open.
 
+## Lifecycle Public Face
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e10]]. The package
+source root now contains only `client.ts` and the private `service/` spine, and
+the manifest exposes only `@rawr/agent-plugin-lifecycle/client`. The client face
+constructs the typed local client and deliberately exposes the service contract,
+the two existing release-input bounds, and the six existing TypeBox-backed
+input admissions. It does not expose the executable router, host context lanes,
+schemas, model, modules, or concrete providers.
+
+The former bare root, input, router, and contract subpaths are deleted without
+aliases or forwarding files. Callers derive the one required dependency shape
+from `CreateClientOptions` rather than importing `Deps`, `Scope`, or `Config`.
+Positive and independent negative type assertions bind that package surface;
+the finite CLI and test consumers now cross the same `/client` boundary.
+
+The uncached lifecycle-and-CLI typecheck graph passes 19 tasks in 37.5 seconds.
+Their uncached builds pass with sixteen dependency tasks in 26.6 seconds. The
+TypeBox input suite passes 12 cases, and the three focused CLI suites pass 20
+cases. Strict OpenSpec validation, touched Biome formatting, and diff hygiene
+pass. The service-spine topology law reports no lifecycle finding; its known
+violations in other service packages remain advisory and are not claimed
+repaired by this cut.
+
+The full repository gate passes all 115 tasks in 37.3 seconds, including all 20
+enforced source laws with zero findings and all 33 Habitat owner tests. Standing
+TypeScript/refactor, architecture/Habitat, and behavior/oRPC/testing reviews
+report no unresolved P0, P1, P2, or P3 finding. Graphite landing remains open.
+
 ## Habitat Source-Law Scheduling Boundary
 
 The required Habitat source-law batch retains one Nx task, one native Habitat

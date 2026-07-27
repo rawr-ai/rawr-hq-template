@@ -32,17 +32,20 @@ consume the same service-owned policy; governance-only operation requests and
 results remain in the governance module. The shared release-derivation
 capability MAY expose the minimum closed release observation needed by releases,
 packaging, and providers, while operator requests, results, and issues remain
-under the releases module. The
-package root MUST expose only client construction, named construction-boundary
-types, the router, and specifically required contracts. Module-local handlers,
-ports, database stores, concrete providers, and broad DTO barrels MUST remain
-private.
+under the releases module. The package source root MUST contain exactly
+`client.ts` and the private `service/` spine, and the package MUST expose only
+the `/client` specifier. That client face MAY expose client construction, its
+single construction-options type, the service contract, and bounded input
+admission required by callers. The router, host context lanes, schemas, model,
+modules, module-local handlers, ports, database stores, concrete providers, and
+broad DTO barrels MUST remain private.
 
 #### Scenario: Structural inventory is exact
 - **WHEN** Habitat and package export inventories run
 - **THEN** the root and each module match their closed positive topology
-- **AND** owner-local release/governance requests under root model, a sixth
-module, or a public concrete provider fails the ratchet
+- **AND** a root facade, second package specifier, owner-local
+  release/governance request under root model, sixth module, or public concrete
+  provider fails the ratchet
 
 Operation handlers MUST be authored directly in named
 `router/*.router.ts` leaves or semantic groups and composed as a plain router

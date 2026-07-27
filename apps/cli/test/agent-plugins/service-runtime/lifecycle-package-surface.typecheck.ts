@@ -1,53 +1,82 @@
+// @ts-expect-error The package has no bare-root public face.
+import * as retiredRootSurface from "@rawr/agent-plugin-lifecycle";
 // @ts-expect-error Retired export host bindings cannot remain package-reachable.
 import * as retiredExportBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/exports";
 // @ts-expect-error Lifecycle host bindings are not a public package axis.
 import * as retiredBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/providers";
-import type { Config, CreateClientOptions, Deps, Scope } from "@rawr/agent-plugin-lifecycle/client";
+import {
+  type Client,
+  type Contract,
+  type CreateClientOptions,
+  contract,
+  createClient,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parsePluginId,
+  parseReleaseRelativePath,
+  parseRepositoryIdentity,
+} from "@rawr/agent-plugin-lifecycle/client";
 // @ts-expect-error Lifecycle host bindings are not a public package axis.
 import * as retiredHostSurface from "@rawr/agent-plugin-lifecycle/host";
-import {
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  parsePluginId,
-} from "@rawr/agent-plugin-lifecycle/input";
+// @ts-expect-error Raw input parsing belongs to the client face, not a parallel facade.
+import * as retiredInputSurface from "@rawr/agent-plugin-lifecycle/input";
 // @ts-expect-error Retired export module ports cannot remain package-reachable.
 import * as retiredExportPortSurface from "@rawr/agent-plugin-lifecycle/ports/exports";
 // @ts-expect-error Lifecycle module ports are not a public package axis.
 import * as retiredPortSurface from "@rawr/agent-plugin-lifecycle/ports/providers";
 // @ts-expect-error Release construction is private to the lifecycle service.
 import * as retiredReleaseSurface from "@rawr/agent-plugin-lifecycle/release";
-import { type Router, router } from "@rawr/agent-plugin-lifecycle/router";
-import { type Contract, contract } from "@rawr/agent-plugin-lifecycle/service/contract";
-// @ts-expect-error Contract types are exposed only through the owner-qualified contract subpath.
+// @ts-expect-error The executable router stays private behind client construction.
+import * as retiredRouterSurface from "@rawr/agent-plugin-lifecycle/router";
+// @ts-expect-error The contract is re-exported only through the client face.
+import * as retiredContractSurface from "@rawr/agent-plugin-lifecycle/service/contract";
+// @ts-expect-error Contract types are exposed only through the public client face.
 import * as retiredTypesSurface from "@rawr/agent-plugin-lifecycle/types";
 import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 
 const lifecycleContract: Contract = contract;
 void lifecycleContract;
-void retiredTypesSurface;
-const lifecycleRouter: Router = router;
-void lifecycleRouter;
-declare const lifecycleConfig: Config;
-declare const lifecycleBoundary: CreateClientOptions;
-declare const lifecycleScope: Scope;
-void lifecycleConfig;
-void lifecycleBoundary;
-void lifecycleScope;
+const constructLifecycleClient: (options: CreateClientOptions) => Client = createClient;
+void constructLifecycleClient;
+void MAX_RELEASE_INPUT_ENVELOPE_BYTES;
+void MAX_RELEASE_MEMBERS;
+void parseContentAuthority;
+void parseGitCommitId;
+void parseGitTreeId;
+void parsePluginId;
+void parseReleaseRelativePath;
+void parseRepositoryIdentity;
+
+type LifecycleClientSurface = typeof import("@rawr/agent-plugin-lifecycle/client");
+type RetiredContextAliasesAreAbsent =
+  Extract<keyof LifecycleClientSurface, "Config" | "Deps" | "Scope"> extends never ? true : never;
+const retiredContextAliasesAreAbsent: RetiredContextAliasesAreAbsent = true;
+void retiredContextAliasesAreAbsent;
+
 void retiredBindingSurface;
 void retiredPortSurface;
 void retiredHostSurface;
+void retiredRootSurface;
+void retiredInputSurface;
+void retiredRouterSurface;
+void retiredContractSurface;
 void retiredExportBindingSurface;
 void retiredExportPortSurface;
 void retiredReleaseSurface;
-void MAX_RELEASE_INPUT_ENVELOPE_BYTES;
-void parsePluginId;
+void retiredTypesSurface;
 
-type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof Deps ? never : true;
+type LifecycleDeps = CreateClientOptions["deps"];
+
+type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof LifecycleDeps ? never : true;
 const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;
 void providerCurrentMainIsAbsent;
 
 type CallerSemanticArtifactDepsAreAbsent =
   Extract<
-    keyof Deps,
+    keyof LifecycleDeps,
     "releaseArtifacts" | "releaseEvidence" | "providerArtifactRepository" | "providerEvidenceStore"
   > extends never
     ? true
@@ -55,10 +84,11 @@ type CallerSemanticArtifactDepsAreAbsent =
 const callerSemanticArtifactDepsAreAbsent: CallerSemanticArtifactDepsAreAbsent = true;
 void callerSemanticArtifactDepsAreAbsent;
 
-type NativeProviderResourcesAreExact = Deps["nativeProviders"] extends NativeAgentProviderResources
-  ? NativeAgentProviderResources extends Deps["nativeProviders"]
-    ? true
-    : never
-  : never;
+type NativeProviderResourcesAreExact =
+  LifecycleDeps["nativeProviders"] extends NativeAgentProviderResources
+    ? NativeAgentProviderResources extends LifecycleDeps["nativeProviders"]
+      ? true
+      : never
+    : never;
 const nativeProviderResourcesAreExact: NativeProviderResourcesAreExact = true;
 void nativeProviderResourcesAreExact;
