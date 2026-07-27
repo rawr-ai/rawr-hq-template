@@ -348,13 +348,16 @@ handler`. The public client, private base, HQ SDK context types, service-package
 boundary, Example Todo context-typing fixture, and Server package-surface proof
 already implement and verify the construction and invocation lanes. Current
 module composition still copies selected lane and provided values into flat
-handler fields. This checkpoint records that projection as transitional wiring,
-not as another lane or a destination to reproduce. It records the owners,
-lifetimes, and rationale in the Example Todo and HQ SDK routers and the Habitat
-service frame, and corrects an overbroad sentence that treated legitimate
-handler access to inherited context as an upward reach. No runtime, SDK,
-service, module, middleware, provider, schema, export, or test changes enter
-this checkpoint. The public lane surface remains anchored to Template commit
+handler fields. The later explicit correction in task 5.7e16 establishes that
+selection as module-owned context curation: it is a pattern to reproduce when
+the selected fields form the module's smallest useful router vocabulary. It
+does not create another lane, construct dependencies, or remove the inherited
+context. This checkpoint records the lane owners, lifetimes, and rationale in
+the Example Todo and HQ SDK routers and the Habitat service frame, and corrects
+an overbroad sentence that treated legitimate handler access to inherited
+context as an upward reach. No runtime, SDK, service, module, middleware,
+provider, schema, export, or test changes enter this checkpoint. The public
+lane surface remains anchored to Template commit
 `07ff505ff781ee2f27af700e25beb1032cb53d37`.
 
 Noncached HQ SDK, Example Todo, and Server typechecks pass as one Nx invocation
@@ -368,7 +371,7 @@ on canonical `main` at merge commit
 
 ### Schema-Optional Service Database
 
-The active bounded checkpoint is
+The preceding bounded checkpoint was
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e15]]. A standalone
 service database still has one positively closed service-root interior. When
 that interior exists, owner-issued SQL migrations and named store
@@ -395,8 +398,51 @@ and 3,133 milliseconds respectively. Strict OpenSpec, touched Biome, and diff
 hygiene pass. Standing Habitat/architecture and structural/testing reviews
 report no unresolved P0, P1, P2, or P3 finding. No source or import-funnel rule
 changes, red-corpus suppressions, compatibility shapes, new scripts, runners,
-runtime code, or generated artifacts enter the checkpoint. Graphite landing
-remains open.
+runtime code, or generated artifacts enter the checkpoint. PR #609 landed this
+checkpoint on canonical `main` at merge commit
+`56cb5bfaeff7f7a39e040ff3b1185aa67d247fd8`.
+
+### Module Context Curation
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e16]]. The service
+context law now admits one optional terminal curation in `module.ts`. Its
+nonempty explicit fields select direct noncomputed member paths rooted below
+`deps`, `scope`, `config`, `invocation`, or `provided`; reserved lane keys, whole-lane
+copies, literals, spreads, shorthand, calls, construction, guards, control
+flow, and nonterminal or repeated curation remain red. Native oRPC composition
+is additive, so curation gives handlers a module-owned vocabulary without
+claiming the inherited lanes disappeared.
+
+This checkpoint proves source shape only. The immediately following Example
+Todo runtime slice owns TypeScript and behavior proof that native context
+composition remains additive at the realized service boundary.
+
+For standalone services, the same correction permits one exact provider author:
+`base.ts` exports
+`service.createProvider<Service["ExecutionContext"]>` as
+`createServiceProvider`. Duplicate or renamed authors remain red. Only
+documented named root service middleware may import it from `../base` and call
+its zero-generic builder to add qualified `provided` capabilities; `impl.ts`,
+routers, helpers, modules, wrong-depth imports, and local generic restatement
+remain red. Direct qualified or computed `createServiceProvider` calls and
+bracket or destructured `createProvider` access are also red. This structural
+checkpoint intentionally does not trace arbitrary assignment or alias flow.
+Embedded API provider authorship is not admitted by this slice.
+Imported named middleware remains the owner of guards and capability
+enrichment.
+
+The existing Habitat service-blueprint suite structurally proves the admitted
+curation and standalone provider shapes plus the exact rejected curation and
+provider-owner classes: all 24 cases and 275 expectations pass. Targeted
+context and native-composition rules pass with zero failures; their broader
+pre-existing advisory corpus remains outside this slice. Touched Biome, strict
+OpenSpec, and diff hygiene pass. Standing architecture and structural-quality
+review report no unresolved P0, P1, or P2 finding. Only Habitat service
+authority, its existing executable fixture, HQ SDK routing guidance, the
+rolling mental model, and this execution record change. Service runtime,
+providers, apps, plugins, Nx wiring, and research paths do not. Graphite
+landing remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`

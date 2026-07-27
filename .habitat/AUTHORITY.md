@@ -8,7 +8,7 @@ This tree narrows reusable package kinds through positive structure and source
 relationships:
 
 1. A `service` has one contract-first oRPC spine, module-owned domain matter,
-   native context projection, and one router lineage.
+   native additive context curation, and one router lineage.
 2. An optional service-owned `database` has closed migrations and stores, plus
    an optional closed physical-schema boundary when its technology needs one.
    TypeBox owns logical record structure; migrations own physical evolution.
@@ -42,18 +42,25 @@ independently owned topology and source axes:
    exports the generic anchor for its role.
 3. Standalone base, service, boundary, and module construction use direct
    native oRPC and Effect-oRPC authoring views.
-4. `base.ts` seeds complete host context once and may expose one separate native
-   middleware author when host projection is needed. Module capability
-   contributions remain additive and inferred; owner-local resource cuts remove
-   raw lanes instead of hiding them behind a shadow context type.
+4. `base.ts` seeds complete host context once and may expose a native middleware
+   author. A standalone service may additionally export the sole provider
+   author as `createServiceProvider`, specialized there to
+   `Service["ExecutionContext"]`; only named root service middleware imports it
+   from `../base`. Embedded API provider authorship is not admitted by this
+   service law.
 5. Database source is closed to owner-issued migrations and stores, with named
    physical schemas admitted only when required by the database technology.
    TypeBox retains logical DTO-schema authority. Only database-owned source and
    named service-root middleware import database leaves; modules and handlers
    receive projected store capabilities through inherited oRPC context.
 6. Qualified middleware is one documented named native value authored from the
-   base factory and attached through a native middleware operator rather than
-   an inline callback or explicit context type argument.
+   base factory and attached through a native middleware operator without an
+   explicit context type argument. As its optional terminal step, `module.ts`
+   may attach one inline additive curation that exposes nonempty fields selected
+   by direct member paths below `context.deps`, `context.scope`,
+   `context.config`, `context.invocation`, or `context.provided`. It does not
+   replace those lanes, construct capabilities, or prove inherited context was
+   removed.
 7. Root composition uses exact relative imports of module contracts and
    completed routers. A module reaches root only through its exact
    `module.ts`-to-`impl.ts` branch edge and

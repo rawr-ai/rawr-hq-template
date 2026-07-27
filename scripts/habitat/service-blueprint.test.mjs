@@ -1184,6 +1184,425 @@ describe("service blueprint authority", () => {
     }
   });
 
+  it("admits terminal module curation and one base-specialized root provider", async () => {
+    const rule = "require_service_context_boundaries";
+    const root = await createFixture(
+      {
+        "services/valid/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const createServiceProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "services/valid/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Acquires the service-owned stores. */
+          export const stores = createServiceProvider().middleware<ProvidedStores>(
+            async ({ context, next }) => {
+              const store = await makeStore(context.deps.db);
+              return next({ tasksStore: store });
+            }
+          );
+        `,
+        "services/valid/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          import { capabilities } from "./middleware/catalog.middleware";
+          export const module = service.catalog
+            .use(capabilities)
+            .use(async ({ context, next }) =>
+              next({
+                context: {
+                  database: context.deps.db,
+                  workspaceId: context.scope.workspace.id,
+                  retryLimit: context.config.retry.limit,
+                  traceId: context.invocation.traceId,
+                  tasksStore: context.provided.tasksStore,
+                },
+              })
+            );
+        `,
+        "services/valid/src/service/modules/catalog/middleware/catalog.middleware.ts": `
+          import { createMiddleware } from "../../../base";
+          /** Contributes Catalog's reader capability. */
+          export const capabilities = createMiddleware().middleware(projectCatalog);
+        `,
+      },
+      [rule]
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(0);
+    expect(diagnostics(result.report, rule)).toEqual([]);
+  });
+
+  it("closes standalone provider authorship and consumption to its exact owners", async () => {
+    const rule = "require_service_context_boundaries";
+    const root = await createFixture(
+      {
+        "services/duplicate-author/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const createServiceProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+          export const createOtherProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "services/renamed-author/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const makeProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "services/indirect-author/src/service/base.ts": `
+          export const createServiceProvider = getProviderAuthor();
+        `,
+        "services/reexported-author/src/service/base.ts": `
+          export { providerAuthor as createServiceProvider } from "./provider-author";
+        `,
+        "services/destructured-author/src/service/base.ts": `
+          const { createProvider: createServiceProvider } = service;
+          export { createServiceProvider };
+        `,
+        "services/impl-provider/src/service/impl.ts": `
+          import { createServiceProvider } from "./base";
+          export const provider =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/router-provider/src/service/router.ts": `
+          import { createServiceProvider } from "./base";
+          export const provider =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/qualified-provider-call/src/service/impl.ts": `
+          declare const providerFactory: {
+            createServiceProvider(): unknown;
+          };
+          export const provider = providerFactory.createServiceProvider();
+        `,
+        "services/computed-provider-call/src/service/impl.ts": `
+          declare const providerFactory: {
+            createServiceProvider(): unknown;
+          };
+          export const provider = providerFactory["createServiceProvider"]();
+        `,
+        "services/qualified-generic-provider/src/service/impl.ts": `
+          import * as providerFactory from "./base";
+          export const provider =
+            providerFactory.createServiceProvider<Service["ExecutionContext"]>();
+        `,
+        "services/computed-generic-provider/src/service/impl.ts": `
+          import * as providerFactory from "./base";
+          export const provider =
+            providerFactory["createServiceProvider"]<Service["ExecutionContext"]>();
+        `,
+        "services/helper-provider/src/service/model/helpers/provider.ts": `
+          import { createServiceProvider } from "../../base";
+          export const provider =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/module-provider-use/src/service/modules/catalog/module.ts": `
+          import { createServiceProvider } from "../../base";
+          export const provider =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/wrong-root-depth/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Acquires stores through the wrong owner edge. */
+          export const stores =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/wrong-root-middleware-depth/src/service/middleware/access.middleware.ts": `
+          import { createMiddleware } from "../../../base";
+          /** Contributes access through the wrong owner edge. */
+          export const access = createMiddleware().middleware(handler);
+        `,
+        "services/wrong-module-middleware-depth/src/service/modules/catalog/middleware/access.middleware.ts": `
+          import { createMiddleware } from "../base";
+          /** Contributes access through the wrong owner edge. */
+          export const access = createMiddleware().middleware(handler);
+        `,
+        "services/aliased-provider-import/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider as makeProvider } from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Acquires stores through a renamed author. */
+          export const stores = makeProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/namespace-provider/src/service/middleware/stores.middleware.ts": `
+          import * as base from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Attempts provider access through a namespace. */
+          export const stores =
+            base.createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/arbitrary-namespace-provider/src/service/middleware/stores.middleware.ts": `
+          import * as providerFactory from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Attempts provider access through an arbitrary namespace. */
+          export const stores =
+            providerFactory.createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/computed-namespace-provider/src/service/middleware/stores.middleware.ts": `
+          import * as providerFactory from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Attempts computed provider access through an arbitrary namespace. */
+          export const stores =
+            providerFactory["createServiceProvider"]().middleware<ProvidedStores>(handler);
+        `,
+        "services/bracket-provider-author/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const makeProvider =
+            service["createProvider"]<Service["ExecutionContext"]>;
+        `,
+        "services/destructured-provider-author/src/service/base.ts": `
+          const { createProvider: makeProvider } = service;
+          export const createServiceProvider = makeProvider;
+        `,
+        "services/shorthand-provider-author/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          const { createProvider } = service;
+          export const makeProvider =
+            createProvider<Service["ExecutionContext"]>;
+        `,
+        "services/duplicate-provider-call/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          const extra = createServiceProvider();
+          /** Acquires the service-owned stores. */
+          export const stores =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "services/stray-provider-call/src/service/middleware/access.middleware.ts": `
+          import { createMiddleware, createServiceProvider } from "../base";
+          const author = createServiceProvider();
+          /** Contributes access middleware, not provider middleware. */
+          export const access = createMiddleware().middleware(handler);
+        `,
+        "services/duplicate-provider-import/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../base";
+          import { createServiceProvider as otherProvider } from "../../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Acquires the service-owned stores. */
+          export const stores =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+        "plugins/server/api/catalog/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const createServiceProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "plugins/server/api/indirect/src/service/base.ts": `
+          export const createServiceProvider = getProviderAuthor();
+        `,
+        "plugins/server/api/catalog/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Attempts to introduce unapproved API provider authority. */
+          export const stores =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+      },
+      [rule]
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(0);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "services/duplicate-author/src/service/base.ts",
+      "services/renamed-author/src/service/base.ts",
+      "services/indirect-author/src/service/base.ts",
+      "services/reexported-author/src/service/base.ts",
+      "services/destructured-author/src/service/base.ts",
+      "services/impl-provider/src/service/impl.ts",
+      "services/router-provider/src/service/router.ts",
+      "services/qualified-provider-call/src/service/impl.ts",
+      "services/computed-provider-call/src/service/impl.ts",
+      "services/qualified-generic-provider/src/service/impl.ts",
+      "services/computed-generic-provider/src/service/impl.ts",
+      "services/helper-provider/src/service/model/helpers/provider.ts",
+      "services/module-provider-use/src/service/modules/catalog/module.ts",
+      "services/wrong-root-depth/src/service/middleware/stores.middleware.ts",
+      "services/wrong-root-middleware-depth/src/service/middleware/access.middleware.ts",
+      "services/wrong-module-middleware-depth/src/service/modules/catalog/middleware/access.middleware.ts",
+      "services/aliased-provider-import/src/service/middleware/stores.middleware.ts",
+      "services/namespace-provider/src/service/middleware/stores.middleware.ts",
+      "services/arbitrary-namespace-provider/src/service/middleware/stores.middleware.ts",
+      "services/computed-namespace-provider/src/service/middleware/stores.middleware.ts",
+      "services/bracket-provider-author/src/service/base.ts",
+      "services/destructured-provider-author/src/service/base.ts",
+      "services/shorthand-provider-author/src/service/base.ts",
+      "services/duplicate-provider-call/src/service/middleware/stores.middleware.ts",
+      "services/stray-provider-call/src/service/middleware/access.middleware.ts",
+      "services/duplicate-provider-import/src/service/middleware/stores.middleware.ts",
+      "plugins/server/api/catalog/src/service/base.ts",
+      "plugins/server/api/indirect/src/service/base.ts",
+      "plugins/server/api/catalog/src/service/middleware/stores.middleware.ts",
+    ]) {
+      expect(paths).toContain(path);
+    }
+  });
+
+  it("rejects every noncanonical module curation and provider authorship class", async () => {
+    const rule = "require_service_context_boundaries";
+    const root = await createFixture(
+      {
+        "services/nonterminal/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          import { capabilities } from "./middleware/catalog.middleware";
+          export const module = service.catalog
+            .use(async ({ context, next }) =>
+              next({ context: { reader: context.deps.reader } })
+            )
+            .use(capabilities);
+        `,
+        "services/multiple/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog
+            .use(async ({ context, next }) =>
+              next({ context: { reader: context.deps.reader } })
+            )
+            .use(async ({ context, next }) =>
+              next({ context: { traceId: context.invocation.traceId } })
+            );
+        `,
+        "services/empty/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: {} })
+          );
+        `,
+        "services/reserved/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { deps: context.deps.reader } })
+          );
+        `,
+        "services/guard/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) => {
+            if (!context.scope.workspaceId) throw new Error("missing workspace");
+            return next({ context: { reader: context.deps.reader } });
+          });
+        `,
+        "services/call/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { reader: select(context.deps.reader) } })
+          );
+        `,
+        "services/new/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { reader: new Reader(context.deps.reader) } })
+          );
+        `,
+        "services/await/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { reader: await context.deps.reader } })
+          );
+        `,
+        "services/literal/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { mode: "reader" } })
+          );
+        `,
+        "services/spread/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { ...context.provided } })
+          );
+        `,
+        "services/shorthand/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          const reader = service;
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { reader } })
+          );
+        `,
+        "services/computed-key/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { [context.config.key]: context.deps.reader } })
+          );
+        `,
+        "services/computed-value/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { reader: context.deps[context.config.key] } })
+          );
+        `,
+        "services/whole-lane/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { allDependencies: context.deps } })
+          );
+        `,
+        "services/foreign-root/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog.use(async ({ context, next }) =>
+            next({ context: { reader: registry.reader } })
+          );
+        `,
+        "services/unspecialized-provider/src/service/base.ts": `
+          export const createServiceProvider = service.createProvider;
+        `,
+        "services/local-provider-generic/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const createServiceProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "services/local-provider-generic/src/service/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Acquires the service-owned stores. */
+          export const stores =
+            createServiceProvider<Service["ExecutionContext"]>()
+              .middleware<ProvidedStores>(handler);
+        `,
+        "services/module-provider/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const createServiceProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "services/module-provider/src/service/modules/catalog/middleware/stores.middleware.ts": `
+          import { createServiceProvider } from "../../../base";
+          type ProvidedStores = { readonly tasksStore: TasksStore };
+          /** Acquires the service-owned stores. */
+          export const stores =
+            createServiceProvider().middleware<ProvidedStores>(handler);
+        `,
+      },
+      [rule]
+    );
+
+    const result = await check(root, [rule]);
+    expect(result.exitCode).toBe(0);
+    const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "services/nonterminal/src/service/modules/catalog/module.ts",
+      "services/multiple/src/service/modules/catalog/module.ts",
+      "services/empty/src/service/modules/catalog/module.ts",
+      "services/reserved/src/service/modules/catalog/module.ts",
+      "services/guard/src/service/modules/catalog/module.ts",
+      "services/call/src/service/modules/catalog/module.ts",
+      "services/new/src/service/modules/catalog/module.ts",
+      "services/await/src/service/modules/catalog/module.ts",
+      "services/literal/src/service/modules/catalog/module.ts",
+      "services/spread/src/service/modules/catalog/module.ts",
+      "services/shorthand/src/service/modules/catalog/module.ts",
+      "services/computed-key/src/service/modules/catalog/module.ts",
+      "services/computed-value/src/service/modules/catalog/module.ts",
+      "services/whole-lane/src/service/modules/catalog/module.ts",
+      "services/foreign-root/src/service/modules/catalog/module.ts",
+      "services/unspecialized-provider/src/service/base.ts",
+      "services/local-provider-generic/src/service/middleware/stores.middleware.ts",
+      "services/module-provider/src/service/modules/catalog/middleware/stores.middleware.ts",
+    ]) {
+      expect(paths).toContain(path);
+    }
+  });
+
   it("keeps standalone service proof imports downstream from production source", async () => {
     const rule = "require_service_proof_isolation";
     const root = await createFixture(

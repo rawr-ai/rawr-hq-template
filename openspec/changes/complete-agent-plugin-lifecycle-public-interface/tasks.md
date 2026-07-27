@@ -1225,6 +1225,25 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   records, and this execution record. Do not change Example Todo source,
   service import law, runtime, SDK, resources, providers, or Nx wiring, and do
   not add another script or runner.
+- [x] 5.7e16 Correct the service context law so each `module.ts` may finish its
+  native service branch with one additive curation of direct noncomputed member
+  paths rooted below the four input lanes or the SDK-owned `provided` bucket.
+  Keep the curation nonempty, terminal, direct, noncomputed, and free of guards, construction,
+  calls, reserved-lane replacement, context aliases, or explicit `.use` type
+  arguments. For standalone services, admit only the sole
+  `createServiceProvider` author specialized in `base.ts` to
+  `Service["ExecutionContext"]`, and admit its zero-generic use only from
+  documented named root service middleware imported through `../base`.
+  Reject duplicate or renamed authors, provider use from impl/router/helper/
+  module source, wrong-depth base imports, local generic restatement, and
+  embedded API provider authority. Preserve imported named middleware and
+  prove those exact classes plus the curation classes through the existing
+  Habitat service-blueprint suite. Treat that fixture as structural proof only;
+  the immediately following Example Todo runtime slice owns additive runtime
+  and TypeScript proof. Update only Habitat
+  service authority, its existing proof, HQ SDK routing guidance, the rolling
+  mental model, and this execution record; do not change service runtime,
+  providers, apps, plugins, Nx wiring, or research paths.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

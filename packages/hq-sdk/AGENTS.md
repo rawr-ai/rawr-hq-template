@@ -41,8 +41,10 @@
 - A service declares contracts and routers with the SDK's stable builders.
 - The service-package boundary binds `deps`, `scope`, and `config` once; each
   call supplies `invocation`; the SDK seeds `provided: {}`. Provider middleware
-  grows that bucket while retaining the named semantic lanes. Existing flat
-  module projections are consumer migration evidence, not another SDK lane.
+  grows that bucket while retaining the named semantic lanes. A module may
+  curate direct noncomputed member paths rooted below those lanes into additive
+  handler fields; the projection does not create another SDK lane or remove
+  inherited context.
 - An application declares selected surfaces, then a host supplies concrete
   ports and composes the declared trees.
 - The host projects the composed internal and published surfaces to its
@@ -61,7 +63,6 @@
 - [Server host](../../apps/server/AGENTS.md)
 - [[src/orpc/context/types|Context lane model]]
 - [[src/orpc/boundary/service-package|Service-package client boundary]]
-- [[../../services/example-todo/AGENTS|Example Todo worked reference]]
 
 ## Validation
 
