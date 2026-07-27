@@ -3,6 +3,7 @@ import {
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import { releaseIssue } from "#agent-plugin-lifecycle-service/model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
@@ -210,16 +211,4 @@ function preflightReleaseInputPayloadBounds(
 
 function addLogicalBytes(total: number, next: number): number {
   return total > Number.MAX_SAFE_INTEGER - next ? Number.MAX_SAFE_INTEGER : total + next;
-}
-
-function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  if (left.byteLength !== right.byteLength) return false;
-  let difference = 0;
-  for (let index = 0; index < left.byteLength; index += 1) {
-    const leftByte = left[index];
-    const rightByte = right[index];
-    if (leftByte === undefined || rightByte === undefined) return false;
-    difference |= leftByte ^ rightByte;
-  }
-  return difference === 0;
 }

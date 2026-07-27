@@ -6,6 +6,35 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Canonical Encoding Has Exact Model Owners
+
+Canonical encoding is service-wide release meaning, but it is not one generic
+codec boundary. The recursive JSON type describes what pure serializers may
+accept. JSON and Base64 policy own their distinct byte conventions and bounded
+decoding diagnostics. Byte equality is one small subordinate mechanic used by
+record policies after decoding. Each meaning therefore has one direct leaf.
+
+Concrete persisted records still own their TypeBox schemas and runtime
+validation. The JSON type does not become a second schema, and decoding returns
+`unknown` for the owning record policy to admit. Modules reach service-wide
+leaves through the private alias; root model and transitional release sources
+use direct relative paths. Deleting the old `shared` file also exposes and
+removes three duplicate byte comparators rather than merely relocating one
+copy.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/canonical-json|the canonical JSON DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/canonical-json|the canonical JSON policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/canonical-base64|the canonical Base64 policy]],
+[[services/agent-plugin-lifecycle/src/service/model/helpers/byte-equality|the byte comparison mechanic]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+JSON, Base64, bytes, encoding, decoding, bound, diagnostic, DTO, policy,
+helper, owner, direct, delete.
+
 ## 2026-07-26 - Internal Results Are Not Transport Contracts
 
 The generic release result is an internal computational algebra shared across

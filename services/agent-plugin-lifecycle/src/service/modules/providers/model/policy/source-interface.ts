@@ -16,6 +16,7 @@ import type {
   CurrentMainSelectionLocator,
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
   compareCanonicalText,
@@ -661,13 +662,4 @@ function requireReleasePath(value: string): ReleaseRelativePath {
   const parsed = parseRelativePath(value, "selectedContent.path");
   if (!parsed.ok) throw new Error(`Compiled selected-content path is invalid: ${value}`);
   return parsed.value;
-}
-
-function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  if (left.byteLength !== right.byteLength) return false;
-  let difference = 0;
-  for (let index = 0; index < left.byteLength; index += 1) {
-    difference |= left[index]! ^ right[index]!;
-  }
-  return difference === 0;
 }

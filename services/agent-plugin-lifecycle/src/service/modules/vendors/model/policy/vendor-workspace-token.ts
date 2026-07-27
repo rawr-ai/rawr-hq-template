@@ -1,6 +1,7 @@
 import type { ContentWorkspaceIdentity } from "@rawr/resource-content-workspace";
 
-import { type CanonicalJsonValue, canonicalJsonLine } from "../../../../shared/release/canonical";
+import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
+import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
 import { contentDigest } from "../../../../shared/release/primitives";
 import type {
   VendorDeclaredSourceObservation,

@@ -31,6 +31,7 @@ import {
   parseRepositoryIdentity,
   type ReleaseRelativePath,
 } from "../../shared/release";
+import { equalBytes } from "../helpers/byte-equality";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 import {
   addReleaseSetPayloadBytes,
@@ -691,14 +692,6 @@ function sameTrackedPathFlags(
       );
     })
   );
-}
-
-function equalBytes(left: Uint8Array, right: Uint8Array): boolean {
-  if (left.byteLength !== right.byteLength) return false;
-  let difference = 0;
-  for (let index = 0; index < left.byteLength; index += 1)
-    difference |= left[index]! ^ right[index]!;
-  return difference === 0;
 }
 
 function interpretTreeEntries(

@@ -25,6 +25,10 @@
   canonical ordering. Its generic release-result DTO and policy own only the
   internal computation discriminant, construction, and nonempty narrowing;
   concrete caller-facing result schemas remain with their operation modules.
+  Its canonical JSON DTO constrains pure serializer input; separate JSON and
+  Base64 policy leaves own established encoding, while one byte-equality
+  mechanic supports canonical record checks. Concrete record TypeBox schemas
+  remain with their owning DTOs.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

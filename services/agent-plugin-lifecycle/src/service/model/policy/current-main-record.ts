@@ -1,10 +1,5 @@
 import { Value } from "typebox/value";
-import {
-  type CanonicalJsonValue,
-  canonicalJsonLine,
-  decodeCanonicalJson,
-  equalBytes,
-} from "../../shared/release/canonical";
+import type { CanonicalJsonValue } from "../dto/canonical-json";
 import {
   type CurrentMainRecordValidationCode,
   MAX_CURRENT_MAIN_V3_RECORD_BYTES,
@@ -13,6 +8,8 @@ import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
 } from "../dto/current-main-selection";
+import { equalBytes } from "../helpers/byte-equality";
+import { canonicalJsonLine, decodeCanonicalJson } from "./canonical-json";
 
 /** Validates and freezes the shared current-main record structure. */
 export function normalizeCurrentMainRecord(input: unknown): CanonicalChannelSelection | undefined {

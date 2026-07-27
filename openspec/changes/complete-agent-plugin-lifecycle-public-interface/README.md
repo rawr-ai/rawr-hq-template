@@ -1987,6 +1987,27 @@ projects and 76 dependency tasks, including all 17 enforced Habitat laws with
 zero findings. No public result, resource, provider, parser, Oclif surface,
 Personal repository, native command, or live lifecycle state changed.
 
+The canonical-encoding ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2v]]. Serializer
+admissibility, canonical JSON, canonical Base64, and byte equality now have
+four exact service-root model leaves. Concrete persisted records retain their
+TypeBox schemas and runtime validation; decoding still returns `unknown` for
+the owning policy to admit. Every consumer imports its direct owner, the old
+`shared/release/canonical.ts` file is deleted, and three private byte-comparison
+copies are removed without a compatibility face.
+
+Owner-local tests lock exact JSON bytes, envelope bounds and diagnostics,
+fatal UTF-8 handling, byte comparison, empty and tail-length Base64 roundtrips,
+padding and alphabet refusal, and noncanonical trailing-bit refusal. The
+complete lifecycle suite passes 310 cases across 34 files. Production and test
+TypeScript checks, Biome, strict OpenSpec validation, diff hygiene, and
+standing architecture/oRPC, behavior-first testing, and
+TypeScript/TypeBox/structural reviews pass without an unresolved P0, P1, P2,
+or P3 finding. The repository check passed 39 projects and 76 dependency
+tasks, including all 17 enforced Habitat laws with zero findings. No public
+result, resource, provider, parser, Oclif surface, Personal repository, native
+command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

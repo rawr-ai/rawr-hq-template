@@ -956,6 +956,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `never` branch inference. Delete `shared/release/result.ts`, its barrel
   exports, and the redundant exported tuple name without an alias,
   compatibility face, schema factory, resource, provider, or runtime change.
+- [x] 5.7e2v Give service-wide canonical JSON, canonical Base64, and byte
+  equality exact root-model owners. Keep the recursive JSON type
+  compile-time-only while concrete persisted records retain TypeBox runtime
+  authority. Preserve every byte, bound, diagnostic, padding rule, and caller
+  path; delete `shared/release/canonical.ts` and all private byte-comparison
+  copies without a barrel, alias, facade, schema, resource, provider, or
+  runtime change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
