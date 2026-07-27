@@ -12,7 +12,6 @@
  */
 import { ORPCError } from "@orpc/server";
 import { createServiceMiddleware } from "../base";
-import { READ_ONLY_MODE } from "../common/errors";
 
 /**
  * Zero-config service guard.
@@ -34,7 +33,7 @@ export const readOnlyMode = createServiceMiddleware<{
 
   throw new ORPCError("READ_ONLY_MODE", {
     defined: true,
-    status: READ_ONLY_MODE.status,
+    status: 409,
     message: "Write operation blocked: service is in read-only mode",
     data: { path: path.join(".") },
   });

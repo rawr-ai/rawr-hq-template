@@ -4,7 +4,7 @@
  * @remarks
  * Author the todo service boundary and its declarative service-wide concerns once
  * in this file:
- * - support types like `Clock`
+ * - private initial, invocation, and procedure-metadata context shapes
  * - the canonical service declaration
  * - service-wide metadata defaults and policy vocabulary
  * - the bound service authoring surfaces exported to the rest of the package
@@ -23,25 +23,9 @@
  * `src/service/middleware/*`.
  */
 import { type DbPool, defineService, type ServiceOf } from "@rawr/hq-sdk";
-
-/**
- * Host-owned time source used by task/tag creation and similar flows.
- */
-export interface Clock {
-  now(): string;
-}
-
-/**
- * Host-owned source of stable identifiers for newly created domain records.
- *
- * @remarks
- * The service decides when an identity is required; the host supplies the
- * concrete runtime mechanism so procedure handlers remain platform-neutral.
- */
-export interface IdentifierGenerator {
-  /** Produces one identifier candidate for service-owned admission. */
-  generate(): unknown;
-}
+import type { WorkspaceIdType } from "./model/dto/workspace-id";
+import type { Clock } from "./model/ports/clock";
+import type { IdentifierGenerator } from "./model/ports/identifier-generator";
 
 /**
  * Construction-time context supplied when the in-process client is created.
@@ -63,7 +47,7 @@ type InitialContext = {
     identifierGenerator: IdentifierGenerator;
   };
   scope: {
-    workspaceId: string;
+    workspaceId: WorkspaceIdType;
   };
   config: {
     readOnly: boolean;
@@ -102,7 +86,7 @@ type ProcedureMetadata = {
  * consume. They are distinct from caller-facing errors and from telemetry
  * behavior itself.
  */
-export const policy = {
+const policy = {
   events: {
     readOnlyRejected: "todo.policy.read_only_rejected",
     assignmentLimitReached: "todo.policy.assignment_limit_reached",

@@ -11,7 +11,7 @@
  * This file owns handler behavior and router composition.
  */
 
-import { admitGeneratedIdentifier } from "../../model/policy/identifier";
+import { admitGeneratedIdentifier } from "#example-todo-service/model/policy/identifier";
 import { module } from "./module";
 import { type Task } from "./schemas";
 

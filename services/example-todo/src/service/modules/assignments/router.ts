@@ -12,7 +12,7 @@
  * Do not route through client-to-client calls inside the same domain package.
  */
 
-import { admitGeneratedIdentifier } from "../../model/policy/identifier";
+import { admitGeneratedIdentifier } from "#example-todo-service/model/policy/identifier";
 import { createProcedureObservability } from "./middleware";
 import { module } from "./module";
 import { type Assignment } from "./schemas";

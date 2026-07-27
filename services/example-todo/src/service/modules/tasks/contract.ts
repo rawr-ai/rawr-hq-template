@@ -13,12 +13,64 @@
  * Extend task capability by updating this contract first, then implement handlers
  * in `router.ts`. Keep this file free of execution logic and dependencies.
  */
+import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
+import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { ocBase } from "../../base";
-import { READ_ONLY_MODE, RESOURCE_NOT_FOUND } from "../../common/errors";
-import { TodoIdentifierSchema } from "../../model/dto/identifier";
 import { TaskSchema } from "./schemas";
+
+const ResourceNotFoundData = schema(
+  Type.Object(
+    {
+      entity: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Entity name that was not found (for example Task or Tag).",
+        })
+      ),
+      id: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Identifier associated with the missing entity.",
+        })
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for RESOURCE_NOT_FOUND boundary errors.",
+    }
+  )
+);
+
+const ReadOnlyModeData = schema(
+  Type.Object(
+    {
+      path: Type.Optional(
+        Type.String({
+          minLength: 1,
+          description: "Procedure path that was blocked while read-only mode was enabled.",
+        })
+      ),
+    },
+    {
+      additionalProperties: false,
+      description: "Context payload for READ_ONLY_MODE boundary errors.",
+    }
+  )
+);
+
+const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {
+  status: 404,
+  message: "Resource not found",
+  data: ResourceNotFoundData,
+} as const;
+
+const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
+  status: 409,
+  message: "Write operations are blocked while read-only mode is enabled",
+  data: ReadOnlyModeData,
+} as const;
 
 export const contract = {
   create: ocBase

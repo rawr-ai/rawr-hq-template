@@ -18,8 +18,9 @@
   named construction and invocation lanes callers must satisfy;
   `src/service/**` remains private implementation owned by this package.
 - Tasks, tags, and assignments own their operation behavior and declared
-  errors. Cross-module primitives belong in `service/common` only when they
-  are genuinely shared.
+  errors. The service-root model owns only suite-wide identity, scope, and
+  host capability contracts; multiple consumers alone do not assign root
+  ownership.
 - Hosts provide database, clock, identifier, logging, and analytics
   capabilities; this package does not own runtime mounting or transport
   presentation.
@@ -36,7 +37,8 @@
 
 - A **task** is actionable work, a **tag** is reusable classification, and an
   **assignment** is the constrained relation between them. **Read-only mode**
-  is service policy, not a database feature.
+  is service policy, not a database feature. A **workspace id** scopes every
+  record in the capability suite.
 
 ## Flow
 
@@ -57,15 +59,20 @@
   and the deliberate `Deps`, `Scope`, `Config`, `Invocation`, and
   `CreateClientOptions` lane vocabulary. The executable router, service
   authoring surface, and composed execution context stay private.
-  Database, clock, identifier, logging, and analytics capabilities enter
-  through host context; API and CLI projections consume the sealed client.
+  The service-root model declares workspace and record identity plus the clock
+  and identifier-generator ports. Ready database, clock, identifier, logging,
+  and analytics capabilities enter through host context; API and CLI
+  projections consume the sealed client.
 
 ## Routing
 
 - [Repository router](../../AGENTS.md)
-- [Public client](src/client.ts)
-- [Private service contract](src/service/contract.ts)
-- [Common-area boundary](src/service/common/README.md)
+- [[src/client|Public client]]
+- [[src/service/contract|Private service contract]]
+- [[src/service/model/dto/identifier|Todo identifier DTO]]
+- [[src/service/model/dto/workspace-id|Workspace identity DTO]]
+- [[src/service/model/ports/clock|Clock port]]
+- [[src/service/model/ports/identifier-generator|Identifier generator port]]
 
 ## Validation
 

@@ -6,19 +6,20 @@
  * handlers can decide caller-actionable boundary errors explicitly.
  */
 import type { Sql } from "@rawr/hq-sdk";
-import { UnexpectedInternalError } from "../../common/internal-errors";
+import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
+import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
 import type { Assignment } from "./schemas";
 
-export function createRepository(sql: Sql, workspaceId: string) {
+export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
   return {
-    async findByTask(taskId: string): Promise<Assignment[]> {
+    async findByTask(taskId: TodoIdentifierType): Promise<Assignment[]> {
       return await sql.query<Assignment>(
         "SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC",
         [taskId, workspaceId]
       );
     },
 
-    async exists(taskId: string, tagId: string): Promise<boolean> {
+    async exists(taskId: TodoIdentifierType, tagId: TodoIdentifierType): Promise<boolean> {
       const row = await sql.queryOne<{ id: string }>(
         "SELECT id FROM task_tags WHERE task_id = $1 AND tag_id = $2 AND workspace_id = $3",
         [taskId, tagId, workspaceId]
@@ -40,13 +41,13 @@ export function createRepository(sql: Sql, workspaceId: string) {
       );
 
       if (!row) {
-        throw new UnexpectedInternalError("task_tags.insert returned no row");
+        throw new Error("task_tags.insert returned no row");
       }
 
       return row;
     },
 
-    async countByTask(taskId: string): Promise<number> {
+    async countByTask(taskId: TodoIdentifierType): Promise<number> {
       const rows = await sql.query<Assignment>(
         "SELECT * FROM task_tags WHERE task_id = $1 AND workspace_id = $2 ORDER BY created_at DESC",
         [taskId, workspaceId]

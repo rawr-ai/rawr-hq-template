@@ -221,7 +221,7 @@ canonical `main` at `861e7337`.
 
 ## Example Todo Public Face
 
-The active bounded checkpoint is
+The preceding bounded checkpoint was
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e11]]. Example Todo's
 source root now contains only `client.ts` and the private `service/` spine, and
 the package manifest exposes only `@rawr/example-todo/client`. That face exports
@@ -253,7 +253,50 @@ touched Biome, and diff hygiene pass. The full repository gate passes all 115
 Nx tasks in 52.9 seconds, with 63 cache hits. Standing
 architecture/Habitat/oRPC and TypeScript/structural/testing reviews report no
 unresolved P0, P1, P2, or P3 finding. The parent workstream retains final
-closure-gate ownership. Graphite landing remains open.
+closure-gate ownership. Template PR #605 landed the checkpoint on canonical
+`main` at `07ff505ff781ee2f27af700e25beb1032cb53d37`.
+
+## Example Todo Root Model
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e12]]. Example Todo's
+service root now owns only the identity, scope, and host-capability meanings
+that survive the complete capability suite. Direct TypeBox DTO leaves own todo
+identifier and workspace-id structure; the identifier policy retains candidate
+admission; and direct port leaves declare only the clock and identifier
+generator capabilities. `base.ts` keeps its initial, invocation, metadata,
+scope, configuration, and policy-event shapes private. Observability consumes
+the policy events injected by that base and no longer imports their vocabulary.
+
+The package import map now declares
+`#example-todo-service/* -> ./src/service/*.ts`. Modules use that private alias
+only for exact `service/model/**` leaves, while root-to-root and module-local
+edges remain relative. Task, tag, and assignment schemas reuse the workspace
+and todo-identifier DTOs without promoting their module-owned entity schemas.
+The existing public `/client` face and its `Deps`, `Scope`, `Config`,
+`Invocation`, and `CreateClientOptions` lanes remain unchanged.
+
+The unowned `service/common` area is deleted. Tasks and Assignments each own
+their exact `RESOURCE_NOT_FOUND` declaration; all three module contracts own
+their exact `READ_ONLY_MODE` declaration; and Assignments alone owns
+`ASSIGNMENT_LIMIT_REACHED`. Root read-only middleware emits the same defined
+409 failure and compatible path data without importing contract or error
+authority. The three impossible missing-row states now throw native `Error`
+directly, and no error map, facade, wrapper, barrel, shared/internal area, or
+replacement abstraction takes the deleted aggregate's place.
+
+Example Todo passes its focused typecheck and build plus all 6 files and 36
+behavior tests. The read-only proof exercises Tasks create, Tags create, and
+Assignments assign independently and binds defined `READ_ONLY_MODE`, status
+409, and each exact operation path. The enforced private-alias configuration,
+private-alias ownership, and platform-independence Habitat rules pass with zero
+findings. Strict OpenSpec, touched Biome, exact residual-import searches, and
+diff hygiene pass. The full repository gate passes all 115 Nx tasks in 50.8
+seconds, with 62 cache hits. Standing architecture/Habitat/oRPC and
+TypeScript/structural/testing reviews report no unresolved P0, P1, P2, or P3
+finding. No operation-handler body, module topology, provider, database/store
+boundary, Effect integration, HQ SDK surface, or public package export changes.
+Graphite landing remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
