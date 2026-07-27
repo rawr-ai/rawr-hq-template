@@ -143,6 +143,30 @@ describe("vendor lifecycle applications", () => {
     expect(held.counters.apply).toBe(0);
   });
 
+  it("rejects an undeclared source before upstream observation or mutation", async () => {
+    const harness = new VendorHarness();
+    const undeclaredSourceId = "missing";
+
+    const result = await createVendorUpdate(harness)({
+      contentWorkspace,
+      sourceIds: [undeclaredSourceId],
+    });
+
+    expect(result).toMatchObject({
+      kind: "Rejected",
+      sourceIds: [undeclaredSourceId],
+      issues: [{ code: "UndeclaredSource", sourceId: undeclaredSourceId }],
+    });
+    expect(harness.counters).toMatchObject({
+      observeRemote: 0,
+      materializeRemote: 0,
+      capture: 0,
+      apply: 0,
+      restore: 0,
+      settle: 0,
+    });
+  });
+
   it("rejects non-fast-forward ancestry in status and update without mutation", async () => {
     const harness = new VendorHarness();
     harness.setRemote("diverged payload\n", "7");
@@ -395,6 +419,119 @@ describe("vendor lifecycle applications", () => {
     expect(harness.counters.settle).toBe(1);
   });
 
+  it("restores and settles after the first post-apply settlement fails", async () => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    harness.failFirstSettlement = true;
+
+    const result = await createVendorUpdate(harness)({ contentWorkspace, sourceIds: [sourceId] });
+
+    expect(result).toMatchObject({
+      kind: "FailedRestored",
+      sourceIds: [sourceId],
+      issues: [{ code: "CleanupFailed" }],
+    });
+    if (result.kind !== "FailedRestored") {
+      throw new Error("Settlement failure fixture did not restore the authored workspace");
+    }
+    expect(result.restoredPaths).toEqual(
+      [releaseInputPath, destinationPath, lockPath, provenancePath, declarationPath].sort(
+        compareText
+      )
+    );
+    expect(harness.events).toEqual([
+      "capture",
+      "revalidate",
+      "apply",
+      "verify",
+      "settle",
+      "restore",
+      "settle",
+    ]);
+    expect(harness.destinationText()).toBe("current payload\n");
+    expect(harness.hasOpenCapture()).toBe(false);
+  });
+
+  it("does not enter mutation when cancellation arrives during preflight", async () => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    const preflight = harness.deferRemoteObservation();
+    const client = createLifecycleTestClient({
+      contentWorkspace: harness.contentWorkspace,
+      clock: harness.clock,
+      versionedContent: harness.versionedContent,
+    });
+    const controller = new AbortController();
+    const update = client.vendors.update(
+      { contentWorkspace, sourceIds: [sourceId] },
+      { ...testInvocation, signal: controller.signal }
+    );
+
+    await preflight.started;
+    controller.abort(new Error("Vendor update cancelled during preflight"));
+    preflight.resume();
+
+    await expect(update).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
+  });
+
+  it("settles before surfacing cancellation after capture begins, then stutters", async () => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    const capture = harness.deferCapture();
+    const client = createLifecycleTestClient({
+      contentWorkspace: harness.contentWorkspace,
+      clock: harness.clock,
+      versionedContent: harness.versionedContent,
+    });
+    const controller = new AbortController();
+    let settled = false;
+    const update = client.vendors
+      .update(
+        { contentWorkspace, sourceIds: [sourceId] },
+        { ...testInvocation, signal: controller.signal }
+      )
+      .then(
+        (value) => {
+          settled = true;
+          return { kind: "Fulfilled" as const, value };
+        },
+        (error: unknown) => {
+          settled = true;
+          return { kind: "Rejected" as const, error };
+        }
+      );
+
+    await capture.started;
+    controller.abort(new Error("Vendor update cancelled after capture began"));
+    await Promise.resolve();
+
+    expect(settled).toBe(false);
+    expect(harness.events).toEqual(["capture"]);
+
+    capture.resume();
+    const outcome = await update;
+
+    expect(outcome).toMatchObject({
+      kind: "Rejected",
+      error: { code: "INTERNAL_SERVER_ERROR" },
+    });
+    expect(harness.events).toEqual(["capture", "revalidate", "apply", "verify", "settle"]);
+    expect(harness.counters.restore).toBe(0);
+    expect(harness.counters.release).toBe(0);
+
+    harness.resetMutationCounters();
+    const repeated = await createVendorUpdate(harness)({
+      contentWorkspace,
+      sourceIds: [sourceId],
+    });
+    expect(repeated).toEqual({ kind: "ReadOnlyConverged", sourceIds: [sourceId] });
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
+    expect(harness.counters.settle).toBe(0);
+  });
+
   it("defensively normalizes public issue details to the output contract", () => {
     const empty = vendorIssue("RuntimeFailure", " \n\t ");
     const oversized = vendorIssue("RuntimeFailure", "x".repeat(8_192));
@@ -509,6 +646,7 @@ type UpstreamFailureStage = "observe" | "materialize" | "ancestry";
 
 class VendorHarness {
   readonly clock: Readonly<{ now: () => Date }>;
+  readonly events: string[] = [];
   readonly counters = {
     inspectWorkspace: 0,
     readFile: 0,
@@ -532,6 +670,7 @@ class VendorHarness {
   failApplyAfterFirstWrite = false;
   pauseAfterPartialApply = false;
   failRestore = false;
+  failFirstSettlement = false;
   corruptAfterApply = false;
   readonly partialApplyPaused = Promise.withResolvers<void>();
   readonly continuePartialApply = Promise.withResolvers<void>();
@@ -548,6 +687,10 @@ class VendorHarness {
   private readonly trees = new Map<string, readonly MaterializedContentTreeEntry[]>();
   private readonly upstreamFailures = new Map<UpstreamFailureStage, VersionedContentFailure>();
   private remote: MaterializedRemoteContentTree;
+  private remoteObservationGate:
+    | Readonly<{ started: () => void; resume: Promise<void> }>
+    | undefined;
+  private captureGate: Readonly<{ started: () => void; resume: Promise<void> }> | undefined;
   private captureImages = new Map<string, PathImage>();
   private captureLifecycle: CaptureLifecycle | undefined;
   private ancestor = true;
@@ -600,6 +743,8 @@ class VendorHarness {
       inspectWorkspace: () =>
         Effect.sync(() => {
           harness.counters.inspectWorkspace += 1;
+          if (harness.captureLifecycle === "Captured") harness.events.push("revalidate");
+          if (harness.captureLifecycle === "Applied") harness.events.push("verify");
           return harness.identity;
         }),
       readFile: ({ path }) =>
@@ -623,8 +768,15 @@ class VendorHarness {
           );
         }),
       capture: ({ readToken, paths }) =>
-        Effect.sync(() => {
+        Effect.gen(function* () {
           harness.counters.capture += 1;
+          harness.events.push("capture");
+          const gate = harness.captureGate;
+          if (gate !== undefined) {
+            gate.started();
+            yield* Effect.promise(() => gate.resume);
+            harness.captureGate = undefined;
+          }
           harness.captureImages = new Map(paths.map((path) => [path, harness.snapshot(path)]));
           harness.captureLifecycle = "Captured";
           if (harness.driftAfterCapture) harness.corruptFile(declarationPath);
@@ -637,6 +789,7 @@ class VendorHarness {
       apply: ({ planDigest, readToken, writes }) =>
         Effect.gen(function* () {
           harness.counters.apply += 1;
+          harness.events.push("apply");
           harness.lastPlanDigest = planDigest;
           harness.lastWrites = cloneWrites(writes);
           if (harness.failApplyAfterFirstWrite) {
@@ -663,6 +816,7 @@ class VendorHarness {
       restore: ({ planDigest, readToken }) =>
         Effect.gen(function* () {
           harness.counters.restore += 1;
+          harness.events.push("restore");
           if (harness.failRestore) {
             harness.captureLifecycle = "Partial";
             return yield* Effect.fail(resourceFailure("restore", "FilesystemFailed"));
@@ -677,8 +831,13 @@ class VendorHarness {
           });
         }),
       settle: ({ planDigest, readToken, captureHandle }) =>
-        Effect.sync(() => {
+        Effect.gen(function* () {
           harness.counters.settle += 1;
+          harness.events.push("settle");
+          if (harness.failFirstSettlement) {
+            harness.failFirstSettlement = false;
+            return yield* Effect.fail(resourceFailure("settle", "FilesystemFailed"));
+          }
           harness.captureLifecycle = undefined;
           return Object.freeze({
             planDigest,
@@ -716,6 +875,12 @@ class VendorHarness {
       observeRemote: () =>
         Effect.gen(function* () {
           harness.counters.observeRemote += 1;
+          const gate = harness.remoteObservationGate;
+          if (gate !== undefined) {
+            gate.started();
+            yield* Effect.promise(() => gate.resume);
+            harness.remoteObservationGate = undefined;
+          }
           const failure = harness.upstreamFailures.get("observe");
           if (failure !== undefined) return yield* Effect.fail(failure);
           return remoteMetadata(harness.remote);
@@ -765,6 +930,26 @@ class VendorHarness {
     this.ancestor = isAncestor;
   }
 
+  deferRemoteObservation(): Readonly<{ started: Promise<void>; resume: () => void }> {
+    const started = Promise.withResolvers<void>();
+    const resume = Promise.withResolvers<void>();
+    this.remoteObservationGate = Object.freeze({
+      started: started.resolve,
+      resume: resume.promise,
+    });
+    return Object.freeze({ started: started.promise, resume: resume.resolve });
+  }
+
+  deferCapture(): Readonly<{ started: Promise<void>; resume: () => void }> {
+    const started = Promise.withResolvers<void>();
+    const resume = Promise.withResolvers<void>();
+    this.captureGate = Object.freeze({
+      started: started.resolve,
+      resume: resume.promise,
+    });
+    return Object.freeze({ started: started.promise, resume: resume.resolve });
+  }
+
   failUpstream(stage: UpstreamFailureStage, detail: string): void {
     const operation =
       stage === "observe"
@@ -789,6 +974,7 @@ class VendorHarness {
   }
 
   resetMutationCounters(): void {
+    this.events.length = 0;
     this.counters.materializeRemote = 0;
     this.counters.capture = 0;
     this.counters.apply = 0;

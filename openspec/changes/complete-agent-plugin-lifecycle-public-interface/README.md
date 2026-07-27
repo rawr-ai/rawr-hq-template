@@ -481,6 +481,16 @@ behavior-first testing reviews report no unresolved P0/P1/P2 finding. This
 checkpoint changes no provider home, Personal repository, Oclif surface, or
 live lifecycle state.
 
+A bounded follow-up closes four transaction-test gaps without changing
+production. Vendor update now explicitly proves that an undeclared source
+cannot reach remote observation, cancellation during preflight cannot open a
+capture, cancellation after capture waits for terminal apply/verification/
+settlement before reaching the caller, and a failed first settlement restores
+the prior workspace and settles the restored state. The post-capture retry is
+read-only and performs no mutation. The focused 26-case suite and lifecycle
+source/test typecheck pass on the current resource-owned implementation; no
+helper facade or predecessor production code is carried forward.
+
 The import-law checkpoint completes
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2h]]. Every
 same-module lifecycle edge now uses a normalized relative path, while upward
