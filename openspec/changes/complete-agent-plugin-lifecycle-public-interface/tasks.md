@@ -1244,6 +1244,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   service authority, its existing proof, HQ SDK routing guidance, the rolling
   mental model, and this execution record; do not change service runtime,
   providers, apps, plugins, Nx wiring, or research paths.
+- [x] 5.7e17 Move Example Todo persistence into the optional service-root
+  database boundary. Add the owner-issued SQL migration, workspace-bound task,
+  tag, and assignment store implementations, and their service-model ports.
+  Replace the generic SQL middleware plus module-local repository providers
+  with one documented root `stores` middleware that connects once per operation
+  and contributes all three stores under `provided`. Keep policy and decisions
+  in router handlers; let each `module.ts` curate only the inherited values its
+  routes author against. Delete the displaced module repositories and provider
+  assembly without a compatibility path. Prove exact connection count,
+  workspace binding, retained inherited lanes after curation, existing todo
+  behavior, type safety, database topology/import direction, and imported-export
+  documentation. Do not add a migration runner, concrete production database
+  provider, second context type, or persistence framework.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

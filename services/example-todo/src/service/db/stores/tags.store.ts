@@ -1,22 +1,14 @@
-/**
- * @fileoverview Tag repository (data access only).
- *
- * @remarks
- * Expected duplicate/missing states are represented as values:
- * - `existsByName` returns a boolean.
- * - `findById` returns `null` when missing.
- *
- * Unexpected/internal failures bubble via thrown adapter exceptions.
- *
- * @agents
- * Keep procedure boundary concerns out of this file.
- */
 import type { Sql } from "@rawr/hq-sdk";
-import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
-import type { Tag } from "#example-todo-service/model/dto/tag";
-import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
+import type { TodoIdentifierType } from "../../model/dto/identifier";
+import type { Tag } from "../../model/dto/tag";
+import type { WorkspaceIdType } from "../../model/dto/workspace-id";
+import type { TagsStore } from "../../model/ports/tags-store";
 
-export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
+/**
+ * Binds tag persistence to the SQL capability and workspace selected by the
+ * service so tag routes consume one scoped store instead of raw database access.
+ */
+export function createTagsStore(sql: Sql, workspaceId: WorkspaceIdType): TagsStore {
   return {
     async findById(id: TodoIdentifierType): Promise<Tag | null> {
       return await sql.queryOne<Tag>("SELECT * FROM tags WHERE id = $1 AND workspace_id = $2", [

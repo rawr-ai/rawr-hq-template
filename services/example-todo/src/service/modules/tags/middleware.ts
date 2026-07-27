@@ -6,37 +6,14 @@
  * import generic names:
  * - `observability`
  * - `analytics`
- * - `repository`
  */
 
-import type { Sql } from "@rawr/hq-sdk";
-import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-  createServiceProvider,
-} from "../../base";
-import { createRepository } from "./repository";
+import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
 
 export {
   createServiceAnalyticsMiddleware as createProcedureAnalytics,
   createServiceObservabilityMiddleware as createProcedureObservability,
 } from "../../base";
-
-export const repository = createServiceProvider<{
-  scope: {
-    workspaceId: WorkspaceIdType;
-  };
-  provided: {
-    sql: Sql;
-  };
-}>().middleware<{
-  repo: ReturnType<typeof createRepository>;
-}>(async ({ context, next }) => {
-  return next({
-    repo: createRepository(context.provided.sql, context.scope.workspaceId),
-  });
-});
 
 export const observability = createServiceObservabilityMiddleware({
   spanAttributes: ({ context }) => ({

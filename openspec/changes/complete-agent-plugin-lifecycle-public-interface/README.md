@@ -404,7 +404,7 @@ checkpoint on canonical `main` at merge commit
 
 ### Module Context Curation
 
-The active bounded checkpoint is
+The preceding bounded checkpoint is
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e16]]. The service
 context law now admits one optional terminal curation in `module.ts`. Its
 nonempty explicit fields select direct noncomputed member paths rooted below
@@ -441,8 +441,50 @@ OpenSpec, and diff hygiene pass. Standing architecture and structural-quality
 review report no unresolved P0, P1, or P2 finding. Only Habitat service
 authority, its existing executable fixture, HQ SDK routing guidance, the
 rolling mental model, and this execution record change. Service runtime,
-providers, apps, plugins, Nx wiring, and research paths do not. Graphite
-landing remains open.
+providers, apps, plugins, Nx wiring, and research paths do not. The checkpoint
+is committed locally at `70cab16b`; Graphite submission and landing remain
+open.
+
+### Example Todo Service Database
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e17]]. Example Todo
+now owns persistence inside its optional service-root `db` boundary. One SQL
+migration declares the physical tables. Three workspace-bound stores implement
+the task, tag, and assignment ports declared by the service-root model. A
+single documented `stores` middleware acquires the host `DbPool` once per
+operation, binds the client workspace, constructs all three stores, and adds
+them under `provided` through the provider author specialized in `base.ts`.
+
+Each module removes its repository provider and ends with one deliberate
+context curation. The selected handler vocabulary contains only the inherited
+clock, identity, logging, scope, invocation, policy, and store capabilities the
+module's routes use. Routers remain the authoring site for validation, policy,
+failure decisions, sequencing, and persistence calls. The deleted repository
+files and generic SQL middleware attachment have no compatibility reader,
+alias, or fallback.
+
+The additive-context type fixture observes both a curated field and the
+retained `deps`, `scope`, `config`, `invocation`, and `provided` lanes after
+native `.use(...)` composition. Database behavior records the workspace in
+every query and observes exactly four pool connections for four operations,
+which pins one root acquisition per operation rather than one per store. The
+existing task, tag, and assignment behavior remains unchanged. The migration
+is declared but not executed here: a concrete provider and migration runner
+belong to a qualified host, not this reference service slice.
+
+One uncached Nx graph completes Example Todo build, typecheck, and all seven
+files and 37 behavior tests in 6.3 seconds. The two enforced Habitat database
+rules pass with zero findings in 3.1 seconds, and workspace Biome lint completes
+in 525 milliseconds. The underlying imported-export documentation check and
+strict OpenSpec validation pass.
+
+The `habitat:check:documentation` Nx target currently fails before execution
+because Nx cannot parse its legacy composite-brace input glob. That pre-existing
+foundation defect is not a service behavior failure, but it blocks claiming the
+documentation ratchet is operational through Nx; the next separate checkpoint
+owns that wiring repair. Standing architecture and structural-quality review
+report no unresolved P0, P1, or P2 finding. Graphite landing remains open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`

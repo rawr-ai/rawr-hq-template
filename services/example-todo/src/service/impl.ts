@@ -12,12 +12,12 @@
  * layered here after that.
  */
 
-import { sqlProvider } from "@rawr/hq-sdk";
 import { createServiceImplementer } from "./base";
 import { contract } from "./contract";
 import { analytics } from "./middleware/analytics";
 import { observability } from "./middleware/observability";
 import { readOnlyMode } from "./middleware/read-only-mode";
+import { stores } from "./middleware/stores.middleware";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -37,5 +37,5 @@ export const impl = createServiceImplementer(contract, {
   observability,
   analytics,
 })
-  .use(sqlProvider)
+  .use(stores)
   .use(readOnlyMode);

@@ -194,9 +194,10 @@ native runtime context even when handlers author against the curated fields.
 The reusable type and client boundary are
 [[packages/hq-sdk/src/orpc/context/types|the HQ SDK context model]] and
 [[packages/hq-sdk/src/orpc/boundary/service-package|the service-package boundary]].
-Until the runtime slice lands its owning service guidance, the executable
-structural reference is
-[[scripts/habitat/service-blueprint.test|the service-blueprint fixture]].
+The canonical worked runtime reference is
+[[services/example-todo/AGENTS|Example Todo]], while
+[[scripts/habitat/service-blueprint.test|the service-blueprint fixture]] owns
+structural admission and rejection cases.
 
 Middleware is valid when it guards or enriches a real capability.
 It is not a second place to assemble service or module context. Root context

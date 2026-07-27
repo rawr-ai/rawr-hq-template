@@ -69,7 +69,7 @@ const create = module.create
     const normalizedName = input.name.trim();
     const normalizedColor = input.color.toLowerCase();
 
-    if (await context.repo.existsByName(normalizedName)) {
+    if (await context.tagsStore.existsByName(normalizedName)) {
       throw errors.DUPLICATE_TAG({
         message: `Tag '${normalizedName}' already exists`,
         data: { name: normalizedName },
@@ -85,11 +85,11 @@ const create = module.create
     };
 
     context.logger.info("todo.tags.create", { tagId: tag.id, name: tag.name });
-    return await context.repo.insert(tag);
+    return await context.tagsStore.insert(tag);
   });
 
 const list = module.list.handler(async ({ context }) => {
-  return await context.repo.findAll();
+  return await context.tagsStore.findAll();
 });
 
 /** Contract-enforced module router (fails typecheck if contract and router drift). */

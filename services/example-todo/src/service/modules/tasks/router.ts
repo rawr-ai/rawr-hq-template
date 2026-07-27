@@ -41,11 +41,11 @@ const create = module.create.handler(async ({ context, input, errors }) => {
   };
 
   context.logger.info("todo.tasks.create", { taskId: task.id });
-  return await context.repo.insert(task);
+  return await context.tasksStore.insert(task);
 });
 
 const get = module.get.handler(async ({ context, input, errors }) => {
-  const task = await context.repo.findById(input.id);
+  const task = await context.tasksStore.findById(input.id);
   if (!task) {
     throw errors.RESOURCE_NOT_FOUND({
       message: `Task '${input.id}' not found`,

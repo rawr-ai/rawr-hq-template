@@ -5,10 +5,11 @@
  * This file owns module composition only:
  * - start from the package-level implementer base
  * - compose standalone module middleware from `./middleware`
+ * - curate the assignment route context from inherited service capabilities
  * - export configured `module` for handler implementations
  */
 import { impl } from "../../impl";
-import { analytics, observability, repositories } from "./middleware";
+import { analytics, observability } from "./middleware";
 
 /**
  * SECTION: Module Composition (Always Present)
@@ -16,27 +17,18 @@ import { analytics, observability, repositories } from "./middleware";
  * Keep module-wide composition here so procedure handlers can stay focused on business logic.
  */
 export const module = impl.assignments
+  .use(observability)
+  .use(analytics)
   .use(async ({ context, next }) =>
     next({
       context: {
         clock: context.deps.clock,
         identifierGenerator: context.deps.identifierGenerator,
-        logger: context.deps.logger,
         workspaceId: context.scope.workspaceId,
-        traceId: context.invocation.traceId,
         maxAssignmentsPerTask: context.config.limits.maxAssignmentsPerTask,
-      },
-    })
-  )
-  .use(observability)
-  .use(analytics)
-  .use(repositories)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        repo: context.provided.repo,
-        tasks: context.provided.tasks,
-        tags: context.provided.tags,
+        assignmentsStore: context.provided.assignmentsStore,
+        tasksStore: context.provided.tasksStore,
+        tagsStore: context.provided.tagsStore,
       },
     })
   );

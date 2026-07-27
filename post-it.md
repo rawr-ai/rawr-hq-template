@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Service Persistence Enters Once
+
+Example Todo now demonstrates the full downward flow. The host supplies one
+database pool through `deps`. Root middleware acquires one SQL capability for
+the operation, binds the service scope, and contributes three workspace-bound
+stores under `provided`. Each module curates only the store and inherited
+values its routers need. Handlers retain validation, policy, sequencing, and
+failure decisions.
+
+The service-root database owns migrations and store implementations. The
+service-root model owns store contracts because multiple modules and
+persistence share them. Modules neither connect to the database nor construct
+stores. Context curation is additive: the type fixture observes the curated
+field and every inherited lane together after native oRPC composition.
+
+See [[services/example-todo/AGENTS|the worked service]],
+[[services/example-todo/src/service/middleware/stores.middleware|the root store middleware]],
+and [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Service Database|the execution record]].
+
+### Bag Of Keywords
+
+service, database, store, migration, provider, context, curation, module,
+handler, scope, owner, flow.
+
 ## 2026-07-27 - Module Context Curation Is Additive
 
 Module projection is a real service-authoring boundary. A `module.ts` may end

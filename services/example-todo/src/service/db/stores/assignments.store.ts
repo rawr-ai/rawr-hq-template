@@ -1,16 +1,14 @@
-/**
- * @fileoverview Assignment repository with local persistence behavior.
- *
- * @remarks
- * Expected duplicate checks are returned as values (`exists`) so procedure
- * handlers can decide caller-actionable boundary errors explicitly.
- */
 import type { Sql } from "@rawr/hq-sdk";
-import type { Assignment } from "#example-todo-service/model/dto/assignment";
-import type { TodoIdentifierType } from "#example-todo-service/model/dto/identifier";
-import type { WorkspaceIdType } from "#example-todo-service/model/dto/workspace-id";
+import type { Assignment } from "../../model/dto/assignment";
+import type { TodoIdentifierType } from "../../model/dto/identifier";
+import type { WorkspaceIdType } from "../../model/dto/workspace-id";
+import type { AssignmentsStore } from "../../model/ports/assignments-store";
 
-export function createRepository(sql: Sql, workspaceId: WorkspaceIdType) {
+/**
+ * Binds assignment persistence to the SQL capability and workspace selected by
+ * the service so relationship routes share one scoped persistence owner.
+ */
+export function createAssignmentsStore(sql: Sql, workspaceId: WorkspaceIdType): AssignmentsStore {
   return {
     async findByTask(taskId: TodoIdentifierType): Promise<Assignment[]> {
       return await sql.query<Assignment>(
