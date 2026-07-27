@@ -181,7 +181,9 @@ immutable Personal revision, and the provider MUST own its resulting snapshot
 inside the explicit native home. A local content workspace remains only a Git
 object locator and MUST NOT become package, provider, cache, or next-invocation
 identity. Local marketplace paths are test-only and MUST share the bounded
-lifetime of their disposable home.
+lifetime of their test operation. The service MUST retire only the temporary
+source it allocated and MUST NOT infer deletion authority over the caller-owned
+disposable parent or provider home.
 
 #### Scenario: Mutable worktree differs from selected objects
 - **WHEN** worktree bytes differ from the reviewed selected commit and tree

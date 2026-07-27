@@ -21,17 +21,20 @@
   belong to the consuming service.
 - A repository path is a locator, not executable identity or code-sharing
   authority.
-- Remote repository acquisition, materialization, and ancestry belong to the
-  versioned-content resource.
+- Remote repository acquisition, source materialization, and ancestry belong
+  to the versioned-content resource. This resource may materialize
+  caller-supplied exact bytes only as a fresh child of a caller-owned local
+  parent whose lifetime is bound to the surrounding Effect scope.
 - Git subprocess and filesystem implementation details stay in concrete
   providers.
 
 ## Behavior
 
-- The resource observes caller-selected refs, trees, blobs, indexes, and paths
-  or performs a specifically requested workspace transition while preserving
-  bounds and identity. Tree and staged-index observations return closed typed
-  facts; providers own their native Git protocol decoding.
+- The resource observes caller-selected refs, trees, blobs, indexes, and paths,
+  performs a specifically requested workspace transition, or creates a bounded
+  invocation-scoped local tree from exact bytes. Tree and staged-index
+  observations return closed typed facts; providers own their native Git
+  protocol decoding and scoped filesystem cleanup.
 
 ## Concepts
 
@@ -41,9 +44,9 @@
 
 ## Flow
 
-- A semantic owner supplies a locator, refs, admitted paths, and bounds; a
-  provider returns exact observations or performs an explicitly requested
-  capture and write transition with typed failures.
+- A semantic owner supplies a locator or parent, refs, admitted paths, exact
+  bytes, and bounds; a provider returns exact observations or performs an
+  explicitly requested bounded transition with typed failures.
 
 ## Interfaces
 

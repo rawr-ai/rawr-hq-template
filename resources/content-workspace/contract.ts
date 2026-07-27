@@ -1,5 +1,18 @@
-import type { Effect } from "effect";
+import type { Effect, Scope } from "effect";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+
+/** Maximum regular-file entries admitted by one temporary tree materialization. */
+export const MAX_TEMPORARY_CONTENT_TREE_ENTRIES = 262_144;
+
+/** Maximum aggregate bytes admitted by one temporary tree materialization. */
+export const MAX_TEMPORARY_CONTENT_TREE_BYTES = 128 * 1_024 * 1_024;
+
+/** Maximum parent-root length admitted by temporary tree materialization. */
+export const MAX_TEMPORARY_CONTENT_TREE_PARENT_LENGTH = 16_384;
+
+/** Maximum allocated root length after the provider appends its private child name. */
+export const MAX_TEMPORARY_CONTENT_TREE_ROOT_LENGTH =
+  MAX_TEMPORARY_CONTENT_TREE_PARENT_LENGTH + 256;
 
 export type GitObjectFormat = "sha1" | "sha256";
 
@@ -45,6 +58,78 @@ export type ContentFileMode = Static<typeof ContentFileModeSchema>;
 
 /** Provider-neutral regular Git tree fact derived from the resource-owned schema authority. */
 export type ContentTreeEntry = Static<typeof ContentTreeEntrySchema>;
+
+const TemporaryContentTreeBytesSchema = Refine(
+  Type.Unsafe<Uint8Array>(
+    Type.Unknown({
+      description: "Exact bytes for one temporary regular file",
+    })
+  ),
+  (value) => value instanceof Uint8Array && value.byteLength <= MAX_TEMPORARY_CONTENT_TREE_BYTES,
+  () => "Expected a Uint8Array within the temporary tree byte bound"
+);
+
+const TemporaryContentTreeMaxEntriesSchema = Type.Integer({
+  minimum: 1,
+  maximum: MAX_TEMPORARY_CONTENT_TREE_ENTRIES,
+  description: "Maximum regular files the caller permits in the temporary tree",
+});
+
+const TemporaryContentTreeMaxBytesSchema = Type.Integer({
+  minimum: 1,
+  maximum: MAX_TEMPORARY_CONTENT_TREE_BYTES,
+  description: "Maximum aggregate bytes the caller permits in the temporary tree",
+});
+
+/** Structural schema for one exact temporary regular-file entry. */
+export const TemporaryContentTreeEntrySchema = ReadonlyObject(
+  Type.Object({
+    path: ContentRelativePathSchema,
+    mode: ContentFileModeSchema,
+    bytes: TemporaryContentTreeBytesSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** Structural schema for one bounded caller-owned temporary tree request. */
+export const MaterializeTemporaryTreeInputSchema = ReadonlyObject(
+  Type.Object({
+    parentRoot: Type.String({
+      minLength: 1,
+      maxLength: MAX_TEMPORARY_CONTENT_TREE_PARENT_LENGTH,
+      description:
+        "Normalized non-root absolute directory below which the temporary tree is allocated",
+    }),
+    entries: ReadonlyObject(Type.Array(TemporaryContentTreeEntrySchema), {
+      maxItems: MAX_TEMPORARY_CONTENT_TREE_ENTRIES,
+      description: "Exact regular-file entries in canonical path order",
+    }),
+    maxEntries: TemporaryContentTreeMaxEntriesSchema,
+    maxBytes: TemporaryContentTreeMaxBytesSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** Structural schema for the invocation-scoped temporary tree root. */
+export const MaterializedTemporaryTreeSchema = ReadonlyObject(
+  Type.Object({
+    root: Type.String({
+      minLength: 1,
+      maxLength: MAX_TEMPORARY_CONTENT_TREE_ROOT_LENGTH,
+      description: "Fresh direct child retained only for the surrounding Effect scope",
+    }),
+  }),
+  { additionalProperties: false }
+);
+
+/** Exact regular-file entry derived from the temporary-tree schema authority. */
+export type TemporaryContentTreeEntry = Static<typeof TemporaryContentTreeEntrySchema>;
+
+/** Bounded temporary-tree request derived from the resource schema authority. */
+export type MaterializeTemporaryTreeInput = Static<typeof MaterializeTemporaryTreeInputSchema>;
+
+/** Invocation-scoped temporary-tree result derived from the resource schema authority. */
+export type MaterializedTemporaryTree = Static<typeof MaterializedTemporaryTreeSchema>;
 
 /** Six-octal-digit mode reported by Git for one staged index entry. */
 export const GitStagedIndexModeSchema = Type.String({
@@ -273,6 +358,7 @@ export interface ContentWorkspaceFailure {
     | "list-git-changed-paths"
     | "read-file"
     | "read-tree"
+    | "materialize-temporary-tree"
     | "capture"
     | "apply"
     | "restore"
@@ -419,6 +505,14 @@ export interface ContentWorkspaceResource<R = never> {
       maxBytes: number;
     }>
   ) => Effect.Effect<readonly ContentTreeEntry[], ContentWorkspaceFailure, R>;
+
+  /**
+   * Materializes exact regular-file bytes below a fresh direct child of the
+   * caller-owned parent. The surrounding Effect scope owns the child lifetime.
+   */
+  readonly materializeTemporaryTree: (
+    input: MaterializeTemporaryTreeInput
+  ) => Effect.Effect<MaterializedTemporaryTree, ContentWorkspaceFailure, R | Scope.Scope>;
 
   readonly capture: (
     input: Readonly<{

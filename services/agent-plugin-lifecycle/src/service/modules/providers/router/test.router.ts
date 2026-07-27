@@ -1,3 +1,4 @@
+import type { TemporaryContentTreeEntry } from "@rawr/resource-content-workspace";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
@@ -11,7 +12,8 @@ import {
 } from "@rawr/resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
-
+import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -39,7 +41,7 @@ import type {
   ProviderTestResult,
   VerificationFact,
 } from "../model/dto/provider-lifecycle";
-import type { SelectedContent } from "../model/dto/selected-content";
+import type { SelectedContent, SelectedContentResolution } from "../model/dto/selected-content";
 import {
   classifyNativeMutationStep,
   completedMutationTarget,
@@ -85,13 +87,15 @@ import {
   selectedContentRejected,
 } from "../model/policy/selected-content";
 import {
-  classifyLocalSelectedContentManifest,
   classifySelectedContentInterfaceTree,
   classifySelectedContentManifestBlob,
+  classifyTemporarySelectedContentMarketplace,
   MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
   NATIVE_MARKETPLACE_INTERFACE_PATHS,
+  planTemporarySelectedContentMarketplace,
   SELECTED_CONTENT_PLUGIN_ROOT,
   SELECTED_CONTENT_RELEASE_INPUT_PATH,
+  sameTemporarySelectedContentMarketplace,
   validateSelectedNativeMarketplaces,
 } from "../model/policy/source-interface";
 import { module } from "../module";
@@ -111,6 +115,20 @@ export const test = module.test.effect(function* ({ context, input: request }) {
   });
   const policy = canonicalRequest.contentWorkspace;
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: false });
+
+  type PreparedWorkspaceSelection =
+    | Readonly<{
+        kind: "Prepared";
+        eligibilityBinding: ContentWorkspaceSnapshot["eligibilityBinding"];
+        derivation: DerivedReleaseSelection;
+        marketplaceEntries: readonly TemporaryContentTreeEntry[];
+      }>
+    | Readonly<{ kind: "Rejected"; issues: readonly ProviderIssue[] }>;
+
+  const preparedRejection = (
+    rejected: Extract<SelectedContentResolution, { kind: "Rejected" }>
+  ): Extract<PreparedWorkspaceSelection, { kind: "Rejected" }> =>
+    providerSelectionResolution(rejected);
 
   /**
    * Executes one complete clean-content observation lazily for each call.
@@ -215,18 +233,19 @@ export const test = module.test.effect(function* ({ context, input: request }) {
     });
 
   /**
-   * Resolves one complete disposable-test selection from current resource facts.
+   * Prepares one complete disposable-test selection from current Git facts.
    *
-   * Each call performs fresh clean inspection, interface reads, local manifest
-   * checks, clean revalidation, and final manifest rereads. Nothing is memoized.
+   * Each call performs one fresh clean inspection, reads both exact native
+   * manifests, and builds the full marketplace closure. It does not materialize
+   * bytes or construct provider desired state.
    */
-  const selectWorkspace = () =>
+  const selectWorkspace = (): Effect.Effect<PreparedWorkspaceSelection> =>
     Effect.gen(function* () {
       if (
         policy.releaseInputPath !== SELECTED_CONTENT_RELEASE_INPUT_PATH ||
         policy.pluginRoot !== SELECTED_CONTENT_PLUGIN_ROOT
       ) {
-        return providerSelectionResolution(
+        return preparedRejection(
           selectedContentRejected(
             "SourceIneligible",
             `Local provider content must use ${SELECTED_CONTENT_RELEASE_INPUT_PATH} and ${SELECTED_CONTENT_PLUGIN_ROOT}.`
@@ -236,7 +255,7 @@ export const test = module.test.effect(function* ({ context, input: request }) {
 
       const inspected = yield* inspectCleanWorkspace();
       if (inspected.kind === "Ineligible") {
-        return providerSelectionResolution(selectedContentFromSourceIssues(inspected.issues));
+        return preparedRejection(selectedContentFromSourceIssues(inspected.issues));
       }
 
       const objectFormat = inspected.snapshot.sourceCommit.length === 40 ? "sha1" : "sha256";
@@ -251,7 +270,7 @@ export const test = module.test.effect(function* ({ context, input: request }) {
         })
       );
       const interfaceTree = classifySelectedContentInterfaceTree(interfaceTreeAttempt);
-      if (!interfaceTree.ok) return providerSelectionResolution(interfaceTree.result);
+      if (!interfaceTree.ok) return preparedRejection(interfaceTree.result);
 
       const manifestBytes = new Map<
         (typeof interfaceTree.value.manifestEntries)[number]["path"],
@@ -267,7 +286,7 @@ export const test = module.test.effect(function* ({ context, input: request }) {
           })
         );
         const manifest = classifySelectedContentManifestBlob(entry.path, manifestAttempt);
-        if (!manifest.ok) return providerSelectionResolution(manifest.result);
+        if (!manifest.ok) return preparedRejection(manifest.result);
         manifestBytes.set(entry.path, manifest.value);
       }
 
@@ -276,19 +295,16 @@ export const test = module.test.effect(function* ({ context, input: request }) {
         manifestBytes
       );
       if (marketplaceIssue !== undefined) {
-        return providerSelectionResolution(marketplaceIssue);
+        return preparedRejection(marketplaceIssue);
       }
 
-      for (const [path, expected] of manifestBytes) {
-        const localAttempt = yield* Effect.result(
-          context.contentWorkspace.readFile({
-            root: policy.locator,
-            path,
-            maxBytes: MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
-          })
-        );
-        const local = classifyLocalSelectedContentManifest(path, expected, localAttempt);
-        if (!local.ok) return providerSelectionResolution(local.result);
+      const marketplaceEntries = planTemporarySelectedContentMarketplace(
+        inspected.snapshot,
+        interfaceTree.value,
+        manifestBytes
+      );
+      if (!marketplaceEntries.ok) {
+        return preparedRejection(marketplaceEntries.result);
       }
 
       const derivation = deriveReleaseSelection(
@@ -301,48 +317,30 @@ export const test = module.test.effect(function* ({ context, input: request }) {
           : canonicalRequest.mode
       );
       if (!derivation.ok) {
-        return providerSelectionResolution(
-          selectedContentFromReleaseDerivationFailure(derivation.failure)
-        );
+        return preparedRejection(selectedContentFromReleaseDerivationFailure(derivation.failure));
       }
-      const constructed = providerSelectionResolution(
-        constructSelectedContent({
-          derivation: derivation.value,
-          selectionKind: canonicalRequest.mode.kind,
-          marketplace: Object.freeze({
-            identity: policy.contentAuthority,
-            source: Object.freeze({ kind: "local", root: policy.locator }),
-          }),
-        })
-      );
-      if (constructed.kind === "Rejected") return constructed;
-
-      const revalidated = yield* inspectCleanWorkspace();
-      if (revalidated.kind === "Ineligible") {
-        return providerSelectionResolution(selectedContentFromSourceIssues(revalidated.issues));
-      }
-      if (revalidated.snapshot.eligibilityBinding !== inspected.snapshot.eligibilityBinding) {
-        return providerSelectionResolution(
-          selectedContentRejected(
-            "SelectionMismatch",
-            "Local content changed before provider testing."
-          )
-        );
-      }
-
-      for (const [path, expected] of manifestBytes) {
-        const localAttempt = yield* Effect.result(
-          context.contentWorkspace.readFile({
-            root: policy.locator,
-            path,
-            maxBytes: MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
-          })
-        );
-        const local = classifyLocalSelectedContentManifest(path, expected, localAttempt);
-        if (!local.ok) return providerSelectionResolution(local.result);
-      }
-      return constructed;
+      return Object.freeze({
+        kind: "Prepared",
+        eligibilityBinding: inspected.snapshot.eligibilityBinding,
+        derivation: derivation.value,
+        marketplaceEntries: marketplaceEntries.value,
+      });
     });
+
+  /** Constructs Provider desired state over the one scoped marketplace root. */
+  const constructPreparedContent = (prepared: PreparedWorkspaceSelection, root: string) => {
+    if (prepared.kind === "Rejected") return prepared;
+    return providerSelectionResolution(
+      constructSelectedContent({
+        derivation: prepared.derivation,
+        selectionKind: canonicalRequest.mode.kind,
+        marketplace: Object.freeze({
+          identity: policy.contentAuthority,
+          source: Object.freeze({ kind: "local", root }),
+        }),
+      })
+    );
+  };
 
   type NativeTargetObservation =
     | Readonly<{
@@ -756,67 +754,135 @@ export const test = module.test.effect(function* ({ context, input: request }) {
           ]);
     });
 
-  const selected = yield* selectWorkspace();
-  if (selected.kind === "Rejected") {
+  const prepared = yield* selectWorkspace();
+  if (prepared.kind === "Rejected") {
     return {
       operation: "test",
       classification: "Blocked",
       selection: null,
-      targets: rejectedTargets(canonicalRequest.targets, selected.issues),
-      issues: selected.issues,
+      targets: rejectedTargets(canonicalRequest.targets, prepared.issues),
+      issues: prepared.issues,
     } satisfies ProviderTestResult;
   }
-  const initial = yield* observeTargets(selected.content, canonicalRequest.targets, true);
-  const initialAssessments = Object.freeze(initial.map(({ assessment }) => assessment));
-  if (hasBlockingAssessment(initialAssessments)) {
-    return completedProviderTestResult(selected.content, blockedTargetResults(initialAssessments));
-  }
-  if (allTargetsConverged(initialAssessments)) {
-    return completedProviderTestResult(
-      selected.content,
-      Object.freeze(initialAssessments.map(convergedMutationTargetResult))
-    );
-  }
 
-  const revalidated = yield* selectWorkspace();
-  if (
-    revalidated.kind === "Rejected" ||
-    !sameSelectedContent(selected.content, revalidated.content)
-  ) {
-    return blockedProviderTestResult(
-      selected.content,
-      sourceChangedTargets(canonicalRequest.targets)
-    );
-  }
-  const finalPreflight = yield* observeTargets(revalidated.content, canonicalRequest.targets, true);
-  const finalAssessments = Object.freeze(finalPreflight.map(({ assessment }) => assessment));
-  if (hasBlockingAssessment(finalAssessments)) {
-    return completedProviderTestResult(revalidated.content, blockedTargetResults(finalAssessments));
-  }
-  if (allTargetsConverged(finalAssessments)) {
-    return completedProviderTestResult(
-      revalidated.content,
-      Object.freeze(finalAssessments.map(convergedMutationTargetResult))
-    );
-  }
-
-  const targets: ProviderMutationTargetResult[] = [];
-  for (const [index, observation] of finalPreflight.entries()) {
-    if (observation.kind === "Unavailable") {
-      targets.push(
-        failedMutationTarget(observation.assessment, [], [], observation.assessment.issues)
+  return yield* Effect.scoped(
+    Effect.gen(function* () {
+      const materializationAttempt = yield* Effect.result(
+        context.contentWorkspace.materializeTemporaryTree({
+          parentRoot: canonicalRequest.disposableRoot,
+          entries: prepared.marketplaceEntries,
+          maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES + NATIVE_MARKETPLACE_INTERFACE_PATHS.length,
+          maxBytes:
+            MAX_RELEASE_SET_PAYLOAD_BYTES +
+            NATIVE_MARKETPLACE_INTERFACE_PATHS.length * MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
+        })
       );
-      targets.push(...notAttemptedAfterMutation(finalAssessments.slice(index + 1)));
-      break;
-    }
-    const target = observation.assessment.needsMutation
-      ? yield* mutateTarget(revalidated.content, observation)
-      : convergedMutationTargetResult(observation.assessment);
-    targets.push(target);
-    if (target.classification === "Failed" || target.classification === "Uncertain") {
-      targets.push(...notAttemptedAfterMutation(finalAssessments.slice(index + 1)));
-      break;
-    }
-  }
-  return completedProviderTestResult(revalidated.content, Object.freeze(targets));
+      const materialized = classifyTemporarySelectedContentMarketplace(materializationAttempt);
+      if (!materialized.ok) {
+        const rejected = preparedRejection(materialized.result);
+        return {
+          operation: "test",
+          classification: "Blocked",
+          selection: null,
+          targets: rejectedTargets(canonicalRequest.targets, rejected.issues),
+          issues: rejected.issues,
+        } satisfies ProviderTestResult;
+      }
+
+      const selected = constructPreparedContent(prepared, materialized.value.root);
+      if (selected.kind === "Rejected") {
+        return {
+          operation: "test",
+          classification: "Blocked",
+          selection: null,
+          targets: rejectedTargets(canonicalRequest.targets, selected.issues),
+          issues: selected.issues,
+        } satisfies ProviderTestResult;
+      }
+
+      const initial = yield* observeTargets(selected.content, canonicalRequest.targets, true);
+      const initialAssessments = Object.freeze(initial.map(({ assessment }) => assessment));
+      if (hasBlockingAssessment(initialAssessments)) {
+        return completedProviderTestResult(
+          selected.content,
+          blockedTargetResults(initialAssessments)
+        );
+      }
+      if (allTargetsConverged(initialAssessments)) {
+        return completedProviderTestResult(
+          selected.content,
+          Object.freeze(initialAssessments.map(convergedMutationTargetResult))
+        );
+      }
+
+      const revalidated = yield* selectWorkspace();
+      if (revalidated.kind === "Rejected") {
+        return blockedProviderTestResult(
+          selected.content,
+          rejectedTargets(canonicalRequest.targets, revalidated.issues)
+        );
+      }
+      if (
+        revalidated.eligibilityBinding !== prepared.eligibilityBinding ||
+        !sameTemporarySelectedContentMarketplace(
+          prepared.marketplaceEntries,
+          revalidated.marketplaceEntries
+        )
+      ) {
+        return blockedProviderTestResult(
+          selected.content,
+          sourceChangedTargets(canonicalRequest.targets)
+        );
+      }
+      const revalidatedContent = constructPreparedContent(revalidated, materialized.value.root);
+      if (
+        revalidatedContent.kind === "Rejected" ||
+        !sameSelectedContent(selected.content, revalidatedContent.content)
+      ) {
+        return blockedProviderTestResult(
+          selected.content,
+          sourceChangedTargets(canonicalRequest.targets)
+        );
+      }
+
+      const finalPreflight = yield* observeTargets(
+        revalidatedContent.content,
+        canonicalRequest.targets,
+        true
+      );
+      const finalAssessments = Object.freeze(finalPreflight.map(({ assessment }) => assessment));
+      if (hasBlockingAssessment(finalAssessments)) {
+        return completedProviderTestResult(
+          revalidatedContent.content,
+          blockedTargetResults(finalAssessments)
+        );
+      }
+      if (allTargetsConverged(finalAssessments)) {
+        return completedProviderTestResult(
+          revalidatedContent.content,
+          Object.freeze(finalAssessments.map(convergedMutationTargetResult))
+        );
+      }
+
+      const targets: ProviderMutationTargetResult[] = [];
+      for (const [index, observation] of finalPreflight.entries()) {
+        if (observation.kind === "Unavailable") {
+          targets.push(
+            failedMutationTarget(observation.assessment, [], [], observation.assessment.issues)
+          );
+          targets.push(...notAttemptedAfterMutation(finalAssessments.slice(index + 1)));
+          break;
+        }
+        const target = observation.assessment.needsMutation
+          ? yield* mutateTarget(revalidatedContent.content, observation)
+          : convergedMutationTargetResult(observation.assessment);
+        targets.push(target);
+        if (target.classification === "Failed" || target.classification === "Uncertain") {
+          targets.push(...notAttemptedAfterMutation(finalAssessments.slice(index + 1)));
+          break;
+        }
+      }
+      return completedProviderTestResult(revalidatedContent.content, Object.freeze(targets));
+    })
+  );
 });

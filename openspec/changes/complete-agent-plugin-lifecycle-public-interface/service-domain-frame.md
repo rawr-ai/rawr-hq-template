@@ -312,14 +312,16 @@ explicit exact Git selection
   -> materialize one transient marketplace below the disposable root
   -> reconcile explicit descendant homes without omitted-member retirement
   -> inspect final state
-  -> retire marketplace and homes as one invocation-owned lifetime
+  -> retire the scoped marketplace before returning
 ```
 
 Test does not select a channel, mutate an approved home, persist a receipt, or
 leave a marketplace backed by a mutable content checkout.
-Cleanup verifies exact invocation ownership and containment before removal.
-Unsafe cleanup refuses rather than deleting; the result reports bounded
-remaining paths and cleanup failures without inventing a lifecycle record.
+Effect scope owns the one temporary child it allocated. The caller owns the
+disposable parent and provider homes, so the service neither deletes nor claims
+recovery authority over those paths. Allocation failure remains a typed
+resource failure; a scoped cleanup failure remains an Effect finalizer failure
+and cannot be reported as successful completion or invent a lifecycle record.
 
 ### Package
 
