@@ -993,6 +993,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `shared/release/parse.ts` without a barrel, alias, facade, compatibility
   path, schema, primitive, digest, resource, provider, runtime, router, oRPC,
   or public-contract change.
+- [x] 5.7e3 Give service-wide release-input structure one direct root-model
+  TypeBox DTO owner. Move the closed body and envelope schemas, generated
+  declaration types, member expectation, completeness witness, and admitted
+  release-input brand together; rewire exact root, module, transitional
+  release, and test consumers; and remove their barrel exports without a
+  facade or compatibility path. Delete the unused builder-version alias and
+  make the body serializer private. Replace only the redundant parser-backed
+  provenance refinement with its equivalent bounded ASCII TypeBox schema and
+  prove exact-bound parity. Do not move or change parsing, construction,
+  canonicalization, diagnostics, ordering, digests, primitives, resources,
+  providers, routers, oRPC, or public package contracts.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

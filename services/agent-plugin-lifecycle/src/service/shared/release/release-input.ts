@@ -1,13 +1,23 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
-import { PayloadManifestEntrySchema } from "../../model/dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import {
   type DeclaredOwnershipClaim,
-  DeclaredOwnershipClaimsSchema,
   type DistributionOwnershipIndex,
 } from "../../model/dto/distribution-ownership";
+import {
+  type AgentPluginReleaseInput,
+  type CompletenessWitness,
+  type DeclaredPayload,
+  type ExpectedReleaseMember,
+  type ProvenanceBinding,
+  type ReleaseInputBody,
+  ReleaseInputBodySchema,
+  type ReleaseInputEnvelope,
+  ReleaseInputEnvelopeSchema,
+  type ReleaseMemberDeclaration,
+  type SkillInventoryEntry,
+} from "../../model/dto/release-input";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
@@ -35,11 +45,7 @@ import {
   parseCanonicalString,
 } from "../../model/policy/release-value-admission";
 import {
-  BUILDER_PROTOCOL_VERSION,
-  type BuilderProtocolVersion,
   type ContentAuthority,
-  ContentAuthoritySchema,
-  ContentDigestSchema,
   MAX_CANONICAL_ID_BYTES,
   MAX_OWNERSHIP_CLAIMS,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -48,12 +54,8 @@ import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   type OwnershipIdentity,
-  OwnershipIdentitySchema,
   PAYLOAD_PROTOCOL_VERSION,
-  type PayloadDigest,
-  PayloadDigestSchema,
   type PluginId,
-  PluginIdSchema,
   parseContentAuthority,
   parseContentDigest,
   parseOwnershipIdentity,
@@ -63,125 +65,9 @@ import {
   parseReleaseRelativePath,
   RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseInputDigest,
-  ReleaseInputDigestSchema,
   type ReleaseRelativePath,
-  ReleaseRelativePathSchema,
   releaseInputDigest,
 } from "./primitives";
-
-declare const agentPluginReleaseInputBrand: unique symbol;
-declare const completenessWitnessBrand: unique symbol;
-
-const ProvenanceProtocolSchema = Refine(
-  Type.String({
-    minLength: 1,
-    maxLength: MAX_CANONICAL_ID_BYTES,
-    pattern: "^[a-z0-9][a-z0-9._:@/-]*$",
-  }),
-  isCanonicalProvenanceProtocol,
-  () => "Expected a canonical provenance protocol"
-);
-
-export const ProvenanceBindingSchema = ReadonlyObject(
-  Type.Object({
-    id: OwnershipIdentitySchema,
-    protocol: ProvenanceProtocolSchema,
-    contentDigest: ContentDigestSchema,
-  }),
-  { additionalProperties: false }
-);
-
-export const DeclaredPayloadSchema = ReadonlyObject(
-  Type.Object({
-    protocolVersion: Type.Literal(PAYLOAD_PROTOCOL_VERSION),
-    manifest: ReadonlyObject(Type.Array(PayloadManifestEntrySchema), {
-      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-    }),
-    payloadDigest: PayloadDigestSchema,
-  }),
-  { additionalProperties: false }
-);
-
-export const SkillInventoryEntrySchema = ReadonlyObject(
-  Type.Object({
-    identity: OwnershipIdentitySchema,
-    manifestPath: ReleaseRelativePathSchema,
-  }),
-  { additionalProperties: false }
-);
-
-export const ReleaseMemberDeclarationSchema = ReadonlyObject(
-  Type.Object({
-    kind: Type.Literal("agent-plugin"),
-    pluginId: PluginIdSchema,
-    skillInventory: ReadonlyObject(Type.Array(SkillInventoryEntrySchema), {
-      maxItems: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-    }),
-    payload: DeclaredPayloadSchema,
-    vendor: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
-      maxItems: MAX_PROVENANCE_BINDINGS,
-    }),
-    curation: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
-      maxItems: MAX_PROVENANCE_BINDINGS,
-    }),
-  }),
-  { additionalProperties: false }
-);
-
-export const ReleaseInputBodySchema = ReadonlyObject(
-  Type.Object({
-    schemaVersion: Type.Literal(RELEASE_INPUT_SCHEMA_VERSION),
-    contentAuthority: ContentAuthoritySchema,
-    members: ReadonlyObject(Type.Array(ReleaseMemberDeclarationSchema), {
-      minItems: 1,
-      maxItems: MAX_RELEASE_MEMBERS,
-    }),
-    ownershipClaims: DeclaredOwnershipClaimsSchema,
-    locks: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
-      maxItems: MAX_PROVENANCE_BINDINGS,
-    }),
-    qualityPolicies: ReadonlyObject(Type.Array(ProvenanceBindingSchema), {
-      maxItems: MAX_PROVENANCE_BINDINGS,
-    }),
-  }),
-  { additionalProperties: false }
-);
-
-export const ReleaseInputEnvelopeSchema = ReadonlyObject(
-  Type.Object({
-    schemaVersion: Type.Literal(RELEASE_INPUT_SCHEMA_VERSION),
-    releaseInputDigest: ReleaseInputDigestSchema,
-    body: ReleaseInputBodySchema,
-  }),
-  { additionalProperties: false }
-);
-
-export type ProvenanceBinding = Static<typeof ProvenanceBindingSchema>;
-export type DeclaredPayload = Static<typeof DeclaredPayloadSchema>;
-export type SkillInventoryEntry = Static<typeof SkillInventoryEntrySchema>;
-export type ReleaseMemberDeclaration = Static<typeof ReleaseMemberDeclarationSchema>;
-export type ReleaseInputBody = Static<typeof ReleaseInputBodySchema>;
-export type ReleaseInputEnvelope = Static<typeof ReleaseInputEnvelopeSchema>;
-
-export interface ExpectedReleaseMember {
-  readonly pluginId: PluginId;
-  readonly payloadDigest: PayloadDigest;
-}
-
-export type CompletenessWitness = Readonly<{
-  releaseInputDigest: ReleaseInputDigest;
-  expectedMembers: readonly ExpectedReleaseMember[];
-  ownershipIndex: DistributionOwnershipIndex;
-  [completenessWitnessBrand]: "CompletenessWitness";
-}>;
-
-export type AgentPluginReleaseInput = Readonly<
-  ReleaseInputEnvelope & {
-    ownershipIndex: DistributionOwnershipIndex;
-    completenessWitness: CompletenessWitness;
-    [agentPluginReleaseInputBrand]: "AgentPluginReleaseInput";
-  }
->;
 
 export function createAgentPluginReleaseInput(
   input: unknown
@@ -331,7 +217,7 @@ export function decodeAgentPluginReleaseInput(
   return verified;
 }
 
-export function canonicalSerializeReleaseInputBody(body: ReleaseInputBody): Uint8Array {
+function canonicalSerializeReleaseInputBody(body: ReleaseInputBody): Uint8Array {
   return canonicalJsonLine(releaseInputBodyValue(body));
 }
 
@@ -1008,16 +894,6 @@ function releaseInputEnvelopeValue(input: AgentPluginReleaseInput): CanonicalJso
   };
 }
 
-function isCanonicalProvenanceProtocol(value: string): boolean {
-  const issues: ReleaseIssue[] = [];
-  return (
-    parseCanonicalString(value, "provenance.protocol", issues, {
-      maxBytes: MAX_CANONICAL_ID_BYTES,
-      pattern: /^[a-z0-9][a-z0-9._:@/-]*$/u,
-    }) !== undefined
-  );
-}
-
 function releaseMemberValue(member: ReleaseMemberDeclaration): CanonicalJsonValue {
   return {
     kind: member.kind,
@@ -1075,6 +951,3 @@ function reportDuplicateMembers(
     }
   }
 }
-
-export const AGENT_PLUGIN_BUILDER_PROTOCOL_VERSION: BuilderProtocolVersion =
-  BUILDER_PROTOCOL_VERSION;

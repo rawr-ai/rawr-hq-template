@@ -13,11 +13,11 @@ import {
   type CanonicalChannelSelection,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../../../src/service/model/dto/current-main-selection";
+import type { AgentPluginReleaseInput } from "../../../src/service/model/dto/release-input";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import {
-  type AgentPluginReleaseInput,
   canonicalSerializeAgentPluginReleaseInput,
   contentDigest,
   createAgentPluginReleaseInput,

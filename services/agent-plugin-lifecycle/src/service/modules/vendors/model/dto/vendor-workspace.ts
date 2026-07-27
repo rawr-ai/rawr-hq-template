@@ -5,8 +5,8 @@ import type {
   MaterializedContentTreeEntry,
 } from "@rawr/resource-content-workspace";
 import type { RemoteContentTree } from "@rawr/resource-versioned-content";
+import type { AgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 
-import type { AgentPluginReleaseInput } from "../../../../shared/release";
 import type { VendorContentWorkspaceRef } from "./vendor-operations";
 import type {
   VendorLockRecord,

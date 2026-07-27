@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Release Input Structure Is Cross-Module Meaning
+
+A release input is selected in Releases but its admitted structure is consumed
+by release construction, complete-set verification, Packaging, Providers,
+Vendors, and Governance. That inert contract therefore belongs to one
+service-root TypeBox DTO, not to a module and not to the transitional
+`shared/release` aggregate.
+
+The DTO owns the closed body and envelope schemas, generated declaration types,
+member expectation, completeness witness, and admitted release-input brand.
+Construction, verification, canonical encoding, diagnostics, ordering, and
+digest policy remain in their existing implementation owner until a later
+complete cut can give them qualified destinations. Consumers name the DTO
+directly; the old barrel exports and dead builder-version alias are deleted
+without a replacement face.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
+[[services/agent-plugin-lifecycle/AGENTS|the lifecycle service router]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+input, contract, schema, type, brand, owner, boundary, funnel, direct, delete.
+
 ## 2026-07-27 - Raw Value Admission Is Not A Schema
 
 TypeBox remains the structural authority for release contracts. Before those
