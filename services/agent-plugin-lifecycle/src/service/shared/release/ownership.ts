@@ -1,8 +1,10 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
+import type { ReleaseIssue } from "../../model/dto/release-issue";
+import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
+
 import type { CanonicalJsonValue } from "./canonical";
-import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { parseBoundedArray } from "./parse";
 import {
   compareCanonicalText,
@@ -95,7 +97,7 @@ export function createDistributionOwnershipIndex(
   for (const memberId of memberIds) {
     if (!Value.Check(OwnershipIdentitySchema, memberId)) {
       issues.push(
-        issue(
+        releaseIssue(
           "INVALID_OWNERSHIP_IDENTITY",
           `ownership.members.${memberId}`,
           "Plugin identity cannot enter the ownership namespace"
@@ -108,7 +110,7 @@ export function createDistributionOwnershipIndex(
   claims.push(...declaredClaims);
   if (claims.length > MAX_OWNERSHIP_CLAIMS) {
     issues.push(
-      issue(
+      releaseIssue(
         "COUNT_LIMIT_EXCEEDED",
         "ownership.claims",
         "Ownership claims exceed the protocol limit",
@@ -134,7 +136,7 @@ export function parseDeclaredOwnershipClaims(
   if (values === undefined) return undefined;
   if (!Value.Check(DeclaredOwnershipClaimsSchema, values)) {
     issues.push(
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         path,
         "Declared ownership claims must match the closed TypeBox schema"
@@ -152,7 +154,7 @@ export function parseDistributionOwnershipIndex(
 ): DistributionOwnershipIndex | undefined {
   const initialIssueCount = issues.length;
   if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    issues.push(issue("EXPECTED_OBJECT", path, "Ownership index must be an object"));
+    issues.push(releaseIssue("EXPECTED_OBJECT", path, "Ownership index must be an object"));
     return undefined;
   }
   const record = input as Record<string, unknown>;
@@ -161,7 +163,7 @@ export function parseDistributionOwnershipIndex(
   const boundedRecord = { ...record, claims };
   if (!Value.Check(DistributionOwnershipIndexRecordSchema, boundedRecord)) {
     issues.push(
-      issue("EXPECTED_OBJECT", path, "Ownership index must match the closed TypeBox schema")
+      releaseIssue("EXPECTED_OBJECT", path, "Ownership index must match the closed TypeBox schema")
     );
     return undefined;
   }
@@ -212,7 +214,7 @@ function validateClaims(
   for (const claim of claims) {
     if (!memberSet.has(claim.ownerPluginId)) {
       issues.push(
-        issue(
+        releaseIssue(
           "MISSING_OWNER",
           `ownership.claims.${claim.kind}.${claim.identity}`,
           "Claim owner is not a declared release member",
@@ -227,7 +229,7 @@ function validateClaims(
     if (claim.kind === "plugin") {
       if (compareCanonicalText(claim.identity, claim.ownerPluginId) !== 0) {
         issues.push(
-          issue(
+          releaseIssue(
             "OWNERSHIP_INDEX_MISMATCH",
             `ownership.claims.plugin.${claim.identity}`,
             "Plugin ownership identity must equal its curated member identity",
@@ -240,7 +242,7 @@ function validateClaims(
       }
       if (pluginOwners.has(claim.ownerPluginId)) {
         issues.push(
-          issue(
+          releaseIssue(
             "OWNERSHIP_INDEX_MISMATCH",
             `ownership.claims.plugin.${claim.ownerPluginId}`,
             "A curated member must have exactly one plugin ownership claim",
@@ -254,7 +256,7 @@ function validateClaims(
   for (const memberId of memberSet) {
     if (!pluginOwners.has(memberId)) {
       issues.push(
-        issue(
+        releaseIssue(
           "OWNERSHIP_INDEX_MISMATCH",
           `ownership.claims.plugin.${memberId}`,
           "A curated member is missing its plugin ownership claim",
@@ -283,7 +285,7 @@ function validateClaims(
     const owners = uniqueOwners(group);
     if (owners.length > 1 || new Set(group.map((entry) => entry.kind)).size > 1) {
       issues.push(
-        issue(
+        releaseIssue(
           "OWNERSHIP_CONFLICT",
           `ownership.routing.${identity}`,
           "Plugin identity and alias namespace is ambiguous",
@@ -303,7 +305,7 @@ function reportClaimGroup(group: readonly OwnershipClaim[], issues: ReleaseIssue
   const first = group[0]!;
   const owners = uniqueOwners(group);
   issues.push(
-    issue(
+    releaseIssue(
       owners.length === 1 ? "DUPLICATE_OWNERSHIP_CLAIM" : "OWNERSHIP_CONFLICT",
       `ownership.claims.${first.kind}.${first.identity}`,
       owners.length === 1 ? "Ownership claim is duplicated" : "Ownership claim has multiple owners",

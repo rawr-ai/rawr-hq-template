@@ -1,4 +1,6 @@
-import { issue, type ReleaseIssue } from "./issues";
+import type { ReleaseIssue } from "../../model/dto/release-issue";
+import { releaseIssue } from "../../model/policy/release-issue";
+
 import { failure, type ReleaseResult, success } from "./result";
 
 export type CanonicalJsonValue =
@@ -29,11 +31,13 @@ export function decodeCanonicalJson(
   maxBytes: number
 ): ReleaseResult<unknown, ReleaseIssue> {
   if (!(bytes instanceof Uint8Array)) {
-    return failure([issue("EXPECTED_BYTES", path, "Canonical envelope must be a Uint8Array")]);
+    return failure([
+      releaseIssue("EXPECTED_BYTES", path, "Canonical envelope must be a Uint8Array"),
+    ]);
   }
   if (bytes.byteLength > maxBytes) {
     return failure([
-      issue("ENVELOPE_TOO_LARGE", path, "Canonical envelope exceeds its protocol bound", {
+      releaseIssue("ENVELOPE_TOO_LARGE", path, "Canonical envelope exceeds its protocol bound", {
         expected: maxBytes,
         actual: bytes.byteLength,
       }),
@@ -43,13 +47,13 @@ export function decodeCanonicalJson(
   try {
     text = decoder.decode(bytes);
   } catch {
-    return failure([issue("INVALID_UTF8", path, "Canonical envelope is not valid UTF-8")]);
+    return failure([releaseIssue("INVALID_UTF8", path, "Canonical envelope is not valid UTF-8")]);
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
   } catch {
-    return failure([issue("INVALID_JSON", path, "Canonical envelope is not valid JSON")]);
+    return failure([releaseIssue("INVALID_JSON", path, "Canonical envelope is not valid JSON")]);
   }
   return success(parsed);
 }
@@ -90,10 +94,12 @@ export function decodeBase64(
   path: string
 ): ReleaseResult<Uint8Array, ReleaseIssue> {
   if (typeof value !== "string") {
-    return failure([issue("EXPECTED_STRING", path, "Base64 value must be a string")]);
+    return failure([releaseIssue("EXPECTED_STRING", path, "Base64 value must be a string")]);
   }
   if (!BASE64_PATTERN.test(value)) {
-    return failure([issue("INVALID_BASE64", path, "Value must use canonical padded base64")]);
+    return failure([
+      releaseIssue("INVALID_BASE64", path, "Value must use canonical padded base64"),
+    ]);
   }
   const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
   const bytes = new Uint8Array((value.length / 4) * 3 - padding);
@@ -116,7 +122,7 @@ export function decodeBase64(
   }
   if (encodeBase64(bytes) !== value) {
     return failure([
-      issue("INVALID_BASE64", path, "Value is not the canonical base64 representation"),
+      releaseIssue("INVALID_BASE64", path, "Value is not the canonical base64 representation"),
     ]);
   }
   return success(bytes);

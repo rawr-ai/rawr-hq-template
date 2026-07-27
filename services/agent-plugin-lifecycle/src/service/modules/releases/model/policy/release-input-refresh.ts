@@ -2,6 +2,8 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
+import { releaseIssue } from "#agent-plugin-lifecycle-service/model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
   type ContentAuthority,
@@ -14,7 +16,6 @@ import {
   type PayloadEntryInput,
   type PluginId,
   RELEASE_INPUT_SCHEMA_VERSION,
-  type ReleaseIssue,
 } from "../../../../shared/release";
 import type { ReleaseInputRefreshResult } from "../dto/release-lifecycle";
 
@@ -153,12 +154,14 @@ function preflightReleaseInputPayloadBounds(
     const path = `releaseInputRefresh.members[${memberIndex}].payloadEntries`;
     if (member.payloadEntries.length > MAX_PAYLOAD_ENTRIES_PER_MEMBER) {
       issues.push(
-        limitIssue(
+        releaseIssue(
           "COUNT_LIMIT_EXCEEDED",
           path,
           "Payload entry count exceeds its protocol limit",
-          MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-          member.payloadEntries.length
+          {
+            expected: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+            actual: member.payloadEntries.length,
+          }
         )
       );
     }
@@ -170,12 +173,14 @@ function preflightReleaseInputPayloadBounds(
     }
     if (memberBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
       issues.push(
-        limitIssue(
+        releaseIssue(
           "PAYLOAD_BYTES_LIMIT_EXCEEDED",
           path,
           "Payload exceeds its decoded-byte limit",
-          MAX_PAYLOAD_BYTES_PER_MEMBER,
-          memberBytes
+          {
+            expected: MAX_PAYLOAD_BYTES_PER_MEMBER,
+            actual: memberBytes,
+          }
         )
       );
     }
@@ -183,12 +188,14 @@ function preflightReleaseInputPayloadBounds(
 
   if (aggregateBytes > MAX_RELEASE_SET_PAYLOAD_BYTES) {
     issues.push(
-      limitIssue(
+      releaseIssue(
         "PAYLOAD_BYTES_LIMIT_EXCEEDED",
         "releaseInputRefresh.members",
         "Complete release-input payloads exceed their decoded-byte limit",
-        MAX_RELEASE_SET_PAYLOAD_BYTES,
-        aggregateBytes
+        {
+          expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
+          actual: aggregateBytes,
+        }
       )
     );
   }
@@ -203,16 +210,6 @@ function preflightReleaseInputPayloadBounds(
 
 function addLogicalBytes(total: number, next: number): number {
   return total > Number.MAX_SAFE_INTEGER - next ? Number.MAX_SAFE_INTEGER : total + next;
-}
-
-function limitIssue(
-  code: "COUNT_LIMIT_EXCEEDED" | "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-  path: string,
-  message: string,
-  expected: number,
-  actual: number
-): ReleaseIssue {
-  return Object.freeze({ code, path, message, expected, actual });
 }
 
 function equalBytes(left: Uint8Array, right: Uint8Array): boolean {

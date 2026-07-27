@@ -3,7 +3,9 @@ import { createHash } from "node:crypto";
 import { Refine, type Static, type TSchema, Type } from "typebox";
 import { Value } from "typebox/value";
 
-import { issue, type ReleaseIssue, type ReleaseIssueCode } from "./issues";
+import type { ReleaseIssue, ReleaseIssueCode } from "../../model/dto/release-issue";
+import { releaseIssue } from "../../model/policy/release-issue";
+
 import { failure, type ReleaseResult, success } from "./result";
 
 declare const contentAuthorityBrand: unique symbol;
@@ -280,11 +282,11 @@ export function parseNormalizedFileMode(
   if (!Value.Check(NormalizedFileModeSchema, value)) {
     return failure([
       typeof value === "number" && Number.isSafeInteger(value)
-        ? issue("INVALID_MODE", path, "File mode must be normalized to 0644 or 0755", {
+        ? releaseIssue("INVALID_MODE", path, "File mode must be normalized to 0644 or 0755", {
             expected: "0644|0755",
             actual: value,
           })
-        : issue("EXPECTED_INTEGER", path, "Value must be a safe integer"),
+        : releaseIssue("EXPECTED_INTEGER", path, "Value must be a safe integer"),
     ]);
   }
   return success(value);
@@ -377,8 +379,8 @@ function parseStringSchema<T extends TSchema>(
   if (Value.Check(schema, value)) return success(value);
   return failure([
     typeof value === "string"
-      ? issue(invalidCode, path, invalidMessage)
-      : issue("EXPECTED_STRING", path, "Value must be a string"),
+      ? releaseIssue(invalidCode, path, invalidMessage)
+      : releaseIssue("EXPECTED_STRING", path, "Value must be a string"),
   ]);
 }
 

@@ -1,6 +1,8 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
+import type { ReleaseIssue } from "../../model/dto/release-issue";
+import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
 import {
   type CanonicalJsonValue,
@@ -8,7 +10,6 @@ import {
   decodeCanonicalJson,
   equalBytes,
 } from "./canonical";
-import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import {
   createDistributionOwnershipIndex,
   type DeclaredOwnershipClaim,
@@ -182,7 +183,7 @@ export function createAgentPluginReleaseInput(
   const byteLength = canonicalSerializeAgentPluginReleaseInput(releaseInput).byteLength;
   if (byteLength > MAX_RELEASE_INPUT_ENVELOPE_BYTES) {
     return failure([
-      issue(
+      releaseIssue(
         "ENVELOPE_TOO_LARGE",
         "releaseInput",
         "Release-input envelope exceeds its protocol bound",
@@ -204,12 +205,13 @@ export function verifyAgentPluginReleaseInput(
     !isExactRecord(input, ["body", "releaseInputDigest", "schemaVersion"], "releaseInput", issues)
   ) {
     return failure([
-      issues[0] ?? issue("EXPECTED_OBJECT", "releaseInput", "Release input must be an object"),
+      issues[0] ??
+        releaseIssue("EXPECTED_OBJECT", "releaseInput", "Release input must be an object"),
     ]);
   }
   if (input.schemaVersion !== RELEASE_INPUT_SCHEMA_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         "releaseInput.schemaVersion",
         "Unsupported release-input envelope version",
@@ -233,7 +235,7 @@ export function verifyAgentPluginReleaseInput(
     const computed = releaseInputDigest(canonicalSerializeReleaseInputBody(parsedBody.value.body));
     if (computed !== claimedDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_INPUT_DIGEST_MISMATCH",
           "releaseInput.releaseInputDigest",
           "Claimed digest differs from the release-input body",
@@ -249,7 +251,7 @@ export function verifyAgentPluginReleaseInput(
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (claimedDigest === undefined || !parsedBody.ok) {
     return failure([
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         "releaseInput",
         "Release-input validation did not produce a complete value"
@@ -263,7 +265,7 @@ export function verifyAgentPluginReleaseInput(
   });
   if (!Value.Check(ReleaseInputEnvelopeSchema, envelope)) {
     return failure([
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         "releaseInput",
         "Release-input validation did not produce a TypeBox-valid envelope"
@@ -278,7 +280,7 @@ export function verifyAgentPluginReleaseInput(
   const byteLength = canonicalSerializeAgentPluginReleaseInput(releaseInput).byteLength;
   if (byteLength > MAX_RELEASE_INPUT_ENVELOPE_BYTES) {
     return failure([
-      issue(
+      releaseIssue(
         "ENVELOPE_TOO_LARGE",
         "releaseInput",
         "Release-input envelope exceeds its protocol bound",
@@ -304,7 +306,7 @@ export function decodeAgentPluginReleaseInput(
     !equalBytes(bytes, canonicalSerializeAgentPluginReleaseInput(verified.value))
   ) {
     return failure([
-      issue(
+      releaseIssue(
         "NON_CANONICAL_ENVELOPE",
         "releaseInput",
         "Release-input bytes are not the unique canonical representation"
@@ -399,7 +401,7 @@ export function parseCompletenessWitness(
       expectedIds.some((pluginId, index) => pluginId !== ownedIds[index])
     ) {
       issues.push(
-        issue(
+        releaseIssue(
           "OWNERSHIP_INDEX_MISMATCH",
           `${path}.ownershipIndex`,
           "Completeness members and ownership members differ"
@@ -440,12 +442,12 @@ function parseReleaseInputBody(
     )
   ) {
     return failure([
-      issues[0] ?? issue("EXPECTED_OBJECT", path, "Release-input body must be an object"),
+      issues[0] ?? releaseIssue("EXPECTED_OBJECT", path, "Release-input body must be an object"),
     ]);
   }
   if (input.schemaVersion !== RELEASE_INPUT_SCHEMA_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.schemaVersion`,
         "Unsupported release-input body version",
@@ -503,7 +505,7 @@ function parseReleaseInputBody(
     ownershipIndex === undefined
   ) {
     return failure([
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         path,
         "Release-input body validation did not produce a complete value"
@@ -520,7 +522,7 @@ function parseReleaseInputBody(
   });
   if (validateSchema && !Value.Check(ReleaseInputBodySchema, body)) {
     return failure([
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         path,
         "Release-input body validation did not produce a TypeBox-valid value"
@@ -548,7 +550,7 @@ function parseMembers(
   }, 0);
   if (aggregateSkillInventory > MAX_OWNERSHIP_CLAIMS) {
     issues.push(
-      issue(
+      releaseIssue(
         "COUNT_LIMIT_EXCEEDED",
         `${path}.skillInventory`,
         "Complete release-set skill inventory exceeds the ownership protocol limit",
@@ -608,7 +610,7 @@ function parseMembers(
   );
   if (aggregatePayloadBytes > MAX_RELEASE_SET_PAYLOAD_BYTES) {
     issues.push(
-      issue(
+      releaseIssue(
         "PAYLOAD_BYTES_LIMIT_EXCEEDED",
         path,
         "Complete release-set payload exceeds its aggregate byte limit",
@@ -621,7 +623,7 @@ function parseMembers(
   }
   if (members.length === 0) {
     issues.push(
-      issue(
+      releaseIssue(
         "COUNT_LIMIT_EXCEEDED",
         path,
         "A curated release input must declare at least one member",
@@ -699,7 +701,7 @@ function validateSkillOwnershipClosure(
         inventoryByMemberPath.get(memberSkillKey(member.pluginId, manifestPath)) ?? 0;
       if (rowCount !== 1) {
         issues.push(
-          issue(
+          releaseIssue(
             "SKILL_INVENTORY_MISMATCH",
             `${path}.skills.${member.pluginId}.${manifestPath}`,
             "A canonical skill manifest must have exactly one inventory row",
@@ -715,7 +717,7 @@ function validateSkillOwnershipClosure(
         !manifestPathSet.has(entry.manifestPath)
       ) {
         issues.push(
-          issue(
+          releaseIssue(
             "SKILL_INVENTORY_MISMATCH",
             entryPath,
             "Skill inventory path must name a present skills/<one-unit>/SKILL.md payload entry",
@@ -727,7 +729,7 @@ function validateSkillOwnershipClosure(
         claimsByMemberIdentity.get(memberSkillKey(member.pluginId, entry.identity)) ?? 0;
       if (claimCount !== 1) {
         issues.push(
-          issue(
+          releaseIssue(
             "SKILL_OWNERSHIP_MISMATCH",
             `${entryPath}.${entry.identity}`,
             "A skill inventory row must have exactly one same-member skill ownership claim",
@@ -750,7 +752,7 @@ function validateSkillOwnershipClosure(
       inventoryByMemberIdentity.get(memberSkillKey(claim.ownerPluginId, claim.identity)) ?? 0;
     if (rowCount !== 1) {
       issues.push(
-        issue(
+        releaseIssue(
           "SKILL_OWNERSHIP_MISMATCH",
           `${path}.skillClaims.${claim.ownerPluginId}.${claim.identity}`,
           "A skill ownership claim must name exactly one inventory row owned by its member",
@@ -780,7 +782,7 @@ function reportForbiddenDistributionSources(
     const entryPath = `${path}[${index}].path`;
     if (entry.path === "agent-pack" || entry.path.startsWith("agent-pack/")) {
       issues.push(
-        issue(
+        releaseIssue(
           "FORBIDDEN_UNIT_KIND",
           entryPath,
           "Top-level toolkit agent-pack content cannot become an agent-plugin release member",
@@ -790,7 +792,7 @@ function reportForbiddenDistributionSources(
     }
     if (entry.path === "plugin.yaml") {
       issues.push(
-        issue(
+        releaseIssue(
           "FORBIDDEN_UNIT_KIND",
           entryPath,
           "The legacy root plugin.yaml toolkit-composition marker cannot become an agent-plugin release member",
@@ -817,11 +819,15 @@ function parseUnitKind(
   if (value === "agent-plugin") return value;
   if (value === "toolkit" || value === "agent-pack" || value === "composition") {
     issues.push(
-      issue("FORBIDDEN_UNIT_KIND", path, `${value} cannot become an agent-plugin release member`)
+      releaseIssue(
+        "FORBIDDEN_UNIT_KIND",
+        path,
+        `${value} cannot become an agent-plugin release member`
+      )
     );
     return undefined;
   }
-  issues.push(issue("INVALID_STRING", path, "Unit kind must be agent-plugin"));
+  issues.push(releaseIssue("INVALID_STRING", path, "Unit kind must be agent-plugin"));
   return undefined;
 }
 
@@ -834,7 +840,7 @@ function parseDeclaredPayload(
     return undefined;
   if (input.protocolVersion !== PAYLOAD_PROTOCOL_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.protocolVersion`,
         "Unsupported payload protocol version",
@@ -853,7 +859,7 @@ function parseDeclaredPayload(
   const totalBytes = manifest?.reduce((total, entry) => total + entry.byteLength, 0) ?? 0;
   if (totalBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
     issues.push(
-      issue(
+      releaseIssue(
         "PAYLOAD_BYTES_LIMIT_EXCEEDED",
         `${path}.manifest`,
         "Declared payload exceeds its byte limit",
@@ -905,7 +911,11 @@ export function parseProvenanceBindings(
   for (let index = 1; index < bindings.length; index += 1) {
     if (bindings[index - 1]!.id === bindings[index]!.id) {
       issues.push(
-        issue("DUPLICATE_VALUE", path, `Duplicate provenance binding: ${bindings[index]!.id}`)
+        releaseIssue(
+          "DUPLICATE_VALUE",
+          path,
+          `Duplicate provenance binding: ${bindings[index]!.id}`
+        )
       );
     }
   }
@@ -1009,7 +1019,7 @@ function reportDuplicateMembers(
   for (let index = 1; index < memberIds.length; index += 1) {
     if (memberIds[index - 1] === memberIds[index]) {
       issues.push(
-        issue("DUPLICATE_PLUGIN_ID", path, `Duplicate plugin identity: ${memberIds[index]}`)
+        releaseIssue("DUPLICATE_PLUGIN_ID", path, `Duplicate plugin identity: ${memberIds[index]}`)
       );
     }
   }

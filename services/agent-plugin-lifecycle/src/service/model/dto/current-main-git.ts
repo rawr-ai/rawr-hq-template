@@ -1,5 +1,5 @@
-import type { ReleaseIssue, ReleaseResult } from "../../shared/release";
-
+import type { ReleaseResult } from "../../shared/release";
+import { releaseIssue } from "../policy/release-issue";
 import {
   type CanonicalRef,
   type GitBlobId,
@@ -14,6 +14,7 @@ import {
   type ReleaseRelativePath,
   type RepositoryIdentity,
 } from "./current-main-primitives";
+import type { ReleaseIssue } from "./release-issue";
 
 export interface GitLocator {
   readonly workspacePath: string;
@@ -134,16 +135,12 @@ function exactRecord(
 }
 
 function invalid(path: string, message: string): ReleaseResult<never, ReleaseIssue> {
-  return failed([Object.freeze({ code: "UNKNOWN_FIELD", path, message })]);
+  return failed([releaseIssue("UNKNOWN_FIELD", path, message)]);
 }
 
 function failed(issues: readonly ReleaseIssue[]): ReleaseResult<never, ReleaseIssue> {
   const first =
     issues[0] ??
-    Object.freeze({
-      code: "UNKNOWN_FIELD" as const,
-      path: "gitObject",
-      message: "Git pointer validation did not produce a value",
-    });
+    releaseIssue("UNKNOWN_FIELD", "gitObject", "Git pointer validation did not produce a value");
   return { ok: false, issues: [first, ...issues.slice(1)] };
 }

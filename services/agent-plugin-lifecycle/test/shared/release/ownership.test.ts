@@ -1,6 +1,6 @@
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
-import type { ReleaseIssue } from "../../../src/service/shared/release/issues";
+import type { ReleaseIssue } from "../../../src/service/model/dto/release-issue";
 import {
   createDistributionOwnershipIndex,
   type DeclaredOwnershipClaim,

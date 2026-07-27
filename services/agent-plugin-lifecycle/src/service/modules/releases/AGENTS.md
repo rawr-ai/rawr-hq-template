@@ -16,10 +16,12 @@
   selected bytes. The service model owns release derivation shared with
   Packaging; Providers owns its provider-specific selected-content resolution.
 - The service model owns clean-content eligibility and declared-tree policy
-  because packaging and provider testing consume the same meanings. This
+  because packaging and provider testing consume the same meanings. It also
+  owns the cross-module release diagnostic schema, construction policy, and
+  canonical ordering used by release codecs and ownership validation. This
   module owns staged eligibility, refresh policy, operation DTOs, handlers,
-  results, and issues; it does not publish packages, update vendor content, or
-  mutate native provider state.
+  results, and operation-specific issues; it does not publish packages, update
+  vendor content, or mutate native provider state.
 - The module receives one ready content-workspace resource through its named
   middleware. Operation handlers directly sequence clean and staged
   observations, while the service model classifies only the cross-module clean

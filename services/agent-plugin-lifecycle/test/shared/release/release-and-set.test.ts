@@ -1,5 +1,7 @@
+import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 
+import { ReleaseIssueSchema } from "../../../src/service/model/dto/release-issue";
 import {
   canonicalSerializeAgentPluginArtifactBody,
   canonicalSerializeAgentPluginRelease,
@@ -100,6 +102,26 @@ describe("release and complete-set integrity", () => {
       const candidate = wire(canonicalSerializeAgentPluginRelease(fixture.alphaRelease));
       mutate(candidate);
       expect(verifyAgentPluginRelease(candidate).ok).toBe(false);
+    }
+  });
+
+  it("keeps nested release diagnostics inside their public schema", () => {
+    const longKey = "x".repeat(5_000);
+    const candidates = [
+      createAgentPluginReleaseSet({
+        releaseInput: {},
+        releases: [{ [longKey]: true }],
+      }),
+      verifyCompleteReleaseSet({}, [{ [longKey]: true }]),
+    ];
+
+    for (const candidate of candidates) {
+      expect(candidate.ok).toBe(false);
+      if (!candidate.ok) {
+        expect(candidate.issues.every((issue) => Value.Check(ReleaseIssueSchema, issue))).toBe(
+          true
+        );
+      }
     }
   });
 

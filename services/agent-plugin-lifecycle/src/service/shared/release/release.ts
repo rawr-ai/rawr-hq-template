@@ -1,10 +1,12 @@
+import type { ReleaseIssue } from "../../model/dto/release-issue";
+import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
+
 import {
   type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
 } from "./canonical";
-import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { ownershipClaimsFor } from "./ownership";
 import { collect, isExactRecord, parseBoundedArray } from "./parse";
 import {
@@ -111,7 +113,7 @@ export function createAgentPluginRelease(
   if (!isExactRecord(input, ["payload", "pluginId", "releaseInput", "source"], "release", issues)) {
     return failure([
       issues[0] ??
-        issue("EXPECTED_OBJECT", "release", "Release construction input must be an object"),
+        releaseIssue("EXPECTED_OBJECT", "release", "Release construction input must be an object"),
     ]);
   }
 
@@ -126,7 +128,7 @@ export function createAgentPluginRelease(
       : undefined;
   if (verifiedInput !== undefined && pluginId !== undefined && member === undefined) {
     issues.push(
-      issue(
+      releaseIssue(
         "MEMBER_NOT_DECLARED",
         "release.pluginId",
         "Plugin is not declared by the verified release input",
@@ -139,7 +141,7 @@ export function createAgentPluginRelease(
   if (member !== undefined && payload !== undefined) {
     if (member.payload.payloadDigest !== payload.payloadDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_DIGEST_MISMATCH",
           "release.payload.payloadDigest",
           "Payload differs from the member declaration",
@@ -152,7 +154,7 @@ export function createAgentPluginRelease(
     }
     if (!sameManifest(member.payload.manifest, payload.manifest)) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_MANIFEST_MISMATCH",
           "release.payload.manifest",
           "Payload manifest differs from the member declaration"
@@ -171,7 +173,11 @@ export function createAgentPluginRelease(
     member === undefined
   ) {
     return failure([
-      issue("EXPECTED_OBJECT", "release", "Release validation did not produce a complete value"),
+      releaseIssue(
+        "EXPECTED_OBJECT",
+        "release",
+        "Release validation did not produce a complete value"
+      ),
     ]);
   }
 
@@ -199,7 +205,7 @@ export function createAgentPluginRelease(
   const byteLength = canonicalSerializeAgentPluginRelease(release).byteLength;
   if (byteLength > MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES) {
     return failure([
-      issue(
+      releaseIssue(
         "ENVELOPE_TOO_LARGE",
         "release",
         "Release envelope exceeds its derived protocol bound",
@@ -226,12 +232,12 @@ export function verifyAgentPluginRelease(
     )
   ) {
     return failure([
-      issues[0] ?? issue("EXPECTED_OBJECT", "release", "Release envelope must be an object"),
+      issues[0] ?? releaseIssue("EXPECTED_OBJECT", "release", "Release envelope must be an object"),
     ]);
   }
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         "release.schemaVersion",
         "Unsupported release envelope version",
@@ -261,7 +267,7 @@ export function verifyAgentPluginRelease(
     );
     if (computed !== claimedReleaseDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_DIGEST_MISMATCH",
           "release.releaseDigest",
           "Claimed release digest differs from the release body",
@@ -274,7 +280,7 @@ export function verifyAgentPluginRelease(
     }
     if (artifactBody.releaseDigest !== claimedReleaseDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_DIGEST_MISMATCH",
           "release.artifactBody.releaseDigest",
           "Artifact body binds a different release digest",
@@ -290,7 +296,7 @@ export function verifyAgentPluginRelease(
     const computed = artifactDigest(canonicalSerializeAgentPluginArtifactBody(artifactBody));
     if (computed !== claimedArtifactDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "ARTIFACT_DIGEST_MISMATCH",
           "release.artifactDigest",
           "Claimed artifact digest differs from the exact artifact body",
@@ -311,7 +317,11 @@ export function verifyAgentPluginRelease(
     artifactBody === undefined
   ) {
     return failure([
-      issue("EXPECTED_OBJECT", "release", "Release validation did not produce a complete value"),
+      releaseIssue(
+        "EXPECTED_OBJECT",
+        "release",
+        "Release validation did not produce a complete value"
+      ),
     ]);
   }
   const release = Object.freeze({
@@ -323,7 +333,7 @@ export function verifyAgentPluginRelease(
   const byteLength = canonicalSerializeAgentPluginRelease(release).byteLength;
   if (byteLength > MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES) {
     return failure([
-      issue(
+      releaseIssue(
         "ENVELOPE_TOO_LARGE",
         "release",
         "Release envelope exceeds its derived protocol bound",
@@ -349,7 +359,7 @@ export function decodeAgentPluginRelease(
     !equalBytes(bytes, canonicalSerializeAgentPluginRelease(verified.value))
   ) {
     return failure([
-      issue(
+      releaseIssue(
         "NON_CANONICAL_ENVELOPE",
         "release",
         "Release bytes are not the unique canonical representation"
@@ -426,7 +436,7 @@ function parseArtifactBody(
     return undefined;
   if (input.protocolVersion !== ARTIFACT_PROTOCOL_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.protocolVersion`,
         "Unsupported artifact protocol version",
@@ -470,7 +480,7 @@ function parseArtifactBody(
     !sameManifest(body.payloadManifest, storageManifest)
   ) {
     issues.push(
-      issue(
+      releaseIssue(
         "PAYLOAD_MANIFEST_MISMATCH",
         `${path}.storageManifest`,
         "Storage manifest differs from the release payload manifest"
@@ -525,7 +535,7 @@ function parseReleaseBody(
     return undefined;
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.schemaVersion`,
         "Unsupported release-body schema version",
@@ -541,7 +551,7 @@ function parseReleaseBody(
   }
   if (input.builderProtocolVersion !== BUILDER_PROTOCOL_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.builderProtocolVersion`,
         "Unsupported builder protocol version",
@@ -639,7 +649,9 @@ function parseAliases(
   aliases.sort(compareCanonicalText);
   for (let index = 1; index < aliases.length; index += 1) {
     if (aliases[index - 1] === aliases[index]) {
-      issues.push(issue("DUPLICATE_VALUE", path, `Duplicate release alias: ${aliases[index]}`));
+      issues.push(
+        releaseIssue("DUPLICATE_VALUE", path, `Duplicate release alias: ${aliases[index]}`)
+      );
     }
   }
   return Object.freeze(aliases);
@@ -651,7 +663,11 @@ function verifyEmbeddedReleaseInput(
 ): AgentPluginReleaseInput | undefined {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     issues.push(
-      issue("EXPECTED_OBJECT", "release.releaseInput", "Release input must be a verified value")
+      releaseIssue(
+        "EXPECTED_OBJECT",
+        "release.releaseInput",
+        "Release input must be a verified value"
+      )
     );
     return undefined;
   }
@@ -674,7 +690,9 @@ function verifyEmbeddedPayload(
   issues: ReleaseIssue[]
 ): AgentPluginPayload | undefined {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
-    issues.push(issue("EXPECTED_OBJECT", "release.payload", "Payload must be a verified value"));
+    issues.push(
+      releaseIssue("EXPECTED_OBJECT", "release.payload", "Payload must be a verified value")
+    );
     return undefined;
   }
   let candidate: unknown;

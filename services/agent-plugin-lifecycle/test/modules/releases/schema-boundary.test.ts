@@ -44,19 +44,7 @@ import {
   ReleaseInputBodySchema,
   type ReleaseInputEnvelope,
   ReleaseInputEnvelopeSchema,
-  type ReleaseIssue,
-  ReleaseIssueSchema,
 } from "../../../src/service/shared/release";
-import {
-  issue,
-  MAX_RELEASE_ISSUE_ACTUAL_LENGTH,
-  MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH,
-  MAX_RELEASE_ISSUE_CLAIM_LENGTH,
-  MAX_RELEASE_ISSUE_CLAIMANT_LENGTH,
-  MAX_RELEASE_ISSUE_EXPECTED_LENGTH,
-  MAX_RELEASE_ISSUE_MESSAGE_LENGTH,
-  MAX_RELEASE_ISSUE_PATH_LENGTH,
-} from "../../../src/service/shared/release/issues";
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
@@ -105,7 +93,6 @@ describe("release procedure schema boundary", () => {
     expectTypeOf<ReleaseInputRefreshResult>().toEqualTypeOf<
       Static<typeof ReleaseInputRefreshResultSchema>
     >();
-    expectTypeOf<ReleaseIssue>().toEqualTypeOf<Static<typeof ReleaseIssueSchema>>();
     expectTypeOf<ReleaseInputBody>().toEqualTypeOf<Static<typeof ReleaseInputBodySchema>>();
     expectTypeOf<ReleaseInputEnvelope>().toEqualTypeOf<Static<typeof ReleaseInputEnvelopeSchema>>();
     expectTypeOf<ContractInputs["releaseInputRecord"]>().toEqualTypeOf<
@@ -633,45 +620,18 @@ describe("release procedure schema boundary", () => {
     }
   });
 
-  it("bounds externally influenced release diagnostics at owner constructors", () => {
+  it("bounds module-owned externally influenced diagnostics at their constructors", () => {
     const oversized = "x".repeat(8_192);
-    const releaseIssue = issue("INVALID_STRING", oversized, oversized, {
-      expected: oversized,
-      actual: oversized,
-      claimKind: oversized,
-      claim: oversized,
-      claimants: [oversized],
-    });
     const sourceIssue = sourceEligibilityIssue("GitFailure", oversized);
     const constructionIssue = releaseConstructionIssue(oversized);
     const sourceChangedDetail = normalizeReleaseSourceChangedDetail(oversized);
 
-    expect(releaseIssue.path).toHaveLength(MAX_RELEASE_ISSUE_PATH_LENGTH);
-    expect(releaseIssue.message).toHaveLength(MAX_RELEASE_ISSUE_MESSAGE_LENGTH);
-    expect(releaseIssue.expected).toHaveLength(MAX_RELEASE_ISSUE_EXPECTED_LENGTH);
-    expect(releaseIssue.actual).toHaveLength(MAX_RELEASE_ISSUE_ACTUAL_LENGTH);
-    expect(releaseIssue.claimKind).toHaveLength(MAX_RELEASE_ISSUE_CLAIM_KIND_LENGTH);
-    expect(releaseIssue.claim).toHaveLength(MAX_RELEASE_ISSUE_CLAIM_LENGTH);
-    expect(releaseIssue.claimants?.[0]).toHaveLength(MAX_RELEASE_ISSUE_CLAIMANT_LENGTH);
-    expect(Value.Check(ReleaseIssueSchema, releaseIssue)).toBe(true);
     expect(sourceIssue.detail).toHaveLength(MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH);
     expect(Value.Check(SourceEligibilityIssueSchema, sourceIssue)).toBe(true);
     expect(constructionIssue.detail).toHaveLength(MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH);
     expect(Value.Check(ReleaseCheckIssueSchema, constructionIssue)).toBe(true);
     expect(sourceChangedDetail).toHaveLength(MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH);
 
-    expect(
-      Value.Check(ReleaseIssueSchema, {
-        code: "INVALID_STRING",
-        path: oversized,
-        message: oversized,
-        expected: oversized,
-        actual: oversized,
-        claimKind: oversized,
-        claim: oversized,
-        claimants: [oversized],
-      })
-    ).toBe(false);
     expect(
       Value.Check(SourceEligibilityIssueSchema, {
         code: "GitFailure",

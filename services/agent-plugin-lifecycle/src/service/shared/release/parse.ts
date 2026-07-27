@@ -1,4 +1,6 @@
-import { issue, type ReleaseIssue, type ReleaseIssueCode } from "./issues";
+import type { ReleaseIssue, ReleaseIssueCode } from "../../model/dto/release-issue";
+import { releaseIssue } from "../../model/policy/release-issue";
+
 import type { ReleaseResult } from "./result";
 
 const encoder = new TextEncoder();
@@ -11,19 +13,19 @@ export function isExactRecord(
   issues: ReleaseIssue[]
 ): value is Record<string, unknown> {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    issues.push(issue("EXPECTED_OBJECT", path, "Value must be an object"));
+    issues.push(releaseIssue("EXPECTED_OBJECT", path, "Value must be an object"));
     return false;
   }
   const expected = new Set(keys);
   for (const key of Object.keys(value)) {
     if (!expected.has(key))
       issues.push(
-        issue("UNKNOWN_FIELD", `${path}.${key}`, "Field is not part of the closed schema")
+        releaseIssue("UNKNOWN_FIELD", `${path}.${key}`, "Field is not part of the closed schema")
       );
   }
   for (const key of keys) {
     if (!Object.hasOwn(value, key))
-      issues.push(issue("UNKNOWN_FIELD", `${path}.${key}`, "Required field is missing"));
+      issues.push(releaseIssue("UNKNOWN_FIELD", `${path}.${key}`, "Required field is missing"));
   }
   return true;
 }
@@ -35,12 +37,12 @@ export function parseBoundedArray(
   issues: ReleaseIssue[]
 ): readonly unknown[] | undefined {
   if (!Array.isArray(value)) {
-    issues.push(issue("EXPECTED_ARRAY", path, "Value must be an array"));
+    issues.push(releaseIssue("EXPECTED_ARRAY", path, "Value must be an array"));
     return undefined;
   }
   if (value.length > limit) {
     issues.push(
-      issue("COUNT_LIMIT_EXCEEDED", path, `Array exceeds protocol limit ${limit}`, {
+      releaseIssue("COUNT_LIMIT_EXCEEDED", path, `Array exceeds protocol limit ${limit}`, {
         expected: limit,
         actual: value.length,
       })
@@ -61,7 +63,7 @@ export function parseCanonicalString(
   }
 ): string | undefined {
   if (typeof value !== "string") {
-    issues.push(issue("EXPECTED_STRING", path, "Value must be a string"));
+    issues.push(releaseIssue("EXPECTED_STRING", path, "Value must be a string"));
     return undefined;
   }
   const byteLength = encoder.encode(value).byteLength;
@@ -74,7 +76,7 @@ export function parseCanonicalString(
     (options.pattern !== undefined && !options.pattern.test(value))
   ) {
     issues.push(
-      issue(
+      releaseIssue(
         options.code ?? "INVALID_STRING",
         path,
         `Value must be canonical UTF-8 between ${minBytes} and ${options.maxBytes} bytes`
@@ -91,7 +93,7 @@ export function parseInteger(
   issues: ReleaseIssue[]
 ): number | undefined {
   if (typeof value !== "number" || !Number.isSafeInteger(value)) {
-    issues.push(issue("EXPECTED_INTEGER", path, "Value must be a safe integer"));
+    issues.push(releaseIssue("EXPECTED_INTEGER", path, "Value must be a safe integer"));
     return undefined;
   }
   return value;
