@@ -1,12 +1,14 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
+import type { ReleaseIssue } from "../../model/dto/release-issue";
+import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
+
 import {
   type CanonicalJsonValue,
   canonicalJsonLine,
   decodeBase64,
   encodeBase64,
 } from "./canonical";
-import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import { collect, isExactRecord, parseBoundedArray, parseInteger } from "./parse";
 import {
   type ContentDigest,
@@ -85,7 +87,9 @@ export function createAgentPluginPayload(
     const parsedPath = collect(parseReleaseRelativePath(candidate.path, `${path}.path`), issues);
     const mode = collect(parseNormalizedFileMode(candidate.mode, `${path}.mode`), issues);
     if (!(candidate.bytes instanceof Uint8Array)) {
-      issues.push(issue("EXPECTED_BYTES", `${path}.bytes`, "Payload bytes must be a Uint8Array"));
+      issues.push(
+        releaseIssue("EXPECTED_BYTES", `${path}.bytes`, "Payload bytes must be a Uint8Array")
+      );
       return;
     }
     const ownedBytes = new Uint8Array(candidate.bytes);
@@ -113,11 +117,13 @@ export function verifyAgentPluginPayload(
   if (
     !isExactRecord(input, ["entries", "manifest", "payloadDigest", "protocolVersion"], path, issues)
   ) {
-    return failure([issues[0] ?? issue("EXPECTED_OBJECT", path, "Payload must be an object")]);
+    return failure([
+      issues[0] ?? releaseIssue("EXPECTED_OBJECT", path, "Payload must be an object"),
+    ]);
   }
   if (input.protocolVersion !== PAYLOAD_PROTOCOL_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.protocolVersion`,
         "Unsupported payload protocol version",
@@ -141,7 +147,7 @@ export function verifyAgentPluginPayload(
 
   if (totalBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
     issues.push(
-      issue(
+      releaseIssue(
         "PAYLOAD_BYTES_LIMIT_EXCEEDED",
         `${path}.entries`,
         "Payload exceeds its decoded-byte limit",
@@ -158,7 +164,7 @@ export function verifyAgentPluginPayload(
     !sameManifest(manifest, manifestFromEntries(entries))
   ) {
     issues.push(
-      issue(
+      releaseIssue(
         "PAYLOAD_MANIFEST_MISMATCH",
         `${path}.manifest`,
         "Payload manifest differs from exact entries"
@@ -169,7 +175,7 @@ export function verifyAgentPluginPayload(
     const computed = payloadDigest(canonicalSerializePayloadEntries(entries));
     if (computed !== claimedDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_DIGEST_MISMATCH",
           `${path}.payloadDigest`,
           "Claimed payload digest differs from exact entries",
@@ -186,7 +192,7 @@ export function verifyAgentPluginPayload(
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (entries === undefined || manifest === undefined || claimedDigest === undefined) {
     return failure([
-      issue("EXPECTED_OBJECT", path, "Payload validation did not produce a complete value"),
+      releaseIssue("EXPECTED_OBJECT", path, "Payload validation did not produce a complete value"),
     ]);
   }
   return success(freezePayload(entries, manifest, claimedDigest));
@@ -260,7 +266,7 @@ export function parsePayloadManifest(
     );
     if (byteLength !== undefined && (byteLength < 0 || byteLength > MAX_PAYLOAD_BYTES_PER_MEMBER)) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_BYTES_LIMIT_EXCEEDED",
           `${entryPath}.byteLength`,
           "Entry byte length exceeds payload bound",
@@ -328,7 +334,7 @@ function finishPayload(
   reportDuplicatePaths(entries, "payload.entries", issues);
   if (totalBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
     issues.push(
-      issue(
+      releaseIssue(
         "PAYLOAD_BYTES_LIMIT_EXCEEDED",
         "payload.entries",
         "Payload exceeds its decoded-byte limit",
@@ -398,7 +404,11 @@ function reportDuplicatePaths(
   for (let index = 1; index < entries.length; index += 1) {
     if (entries[index - 1]!.path === entries[index]!.path) {
       issues.push(
-        issue("DUPLICATE_PAYLOAD_PATH", path, `Duplicate payload path: ${entries[index]!.path}`)
+        releaseIssue(
+          "DUPLICATE_PAYLOAD_PATH",
+          path,
+          `Duplicate payload path: ${entries[index]!.path}`
+        )
       );
     }
   }

@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Diagnostics Are Boundary Data
+
+A release diagnostic is structured validation data returned inside ordinary
+operation results. It is not an Effect failure or an oRPC error. Because
+Releases, Packaging, Providers, Vendors, and Governance consume the same
+meaning, its closed TypeBox DTO belongs at the service root. Operation-specific
+issues remain inside their owning modules.
+
+The DTO owns vocabulary and structure. Policy owns bounded construction,
+immutability, and canonical ordering. Readers import those leaves directly;
+there is no barrel, compatibility alias, or generic `issue` destination. This
+separates description from decision while leaving external mechanics and
+operation sequence untouched.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-issue|the release diagnostic DTO]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-issue|the release diagnostic policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Diagnostic, schema, code, bound, order, DTO, policy, owner, module, service,
+direct, delete.
+
 ## 2026-07-26 - Invocation Snapshots Belong To Operations
 
 A request snapshot taken before the first resource yield is part of an

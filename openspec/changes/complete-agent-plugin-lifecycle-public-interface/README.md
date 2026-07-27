@@ -1941,6 +1941,30 @@ testing, and TypeScript/structural standing reviews found no P0, P1, or P2
 issues. No resource, provider, schema, public result, Personal repository,
 native command, or live lifecycle state changed.
 
+The release-diagnostic ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2t]]. The stable
+code vocabulary, closed TypeBox schema, inferred types, bounds, construction,
+and canonical ordering now have direct service-root DTO and policy owners.
+Release codecs and every touched remap or legacy reader construct through that
+policy, including empty or oversized paths, nested paths, non-finite numbers,
+and sparse claimant arrays. The old `shared/release/issues.ts` owner, its
+barrel exports, its generic `issue` name, and the release-refresh duplicate
+constructor are deleted without an alias or compatibility face.
+
+The exact vocabulary and numeric bounds are locked by owner-local contract
+oracles. Canonical ordering covers every schema field and precomputes each key
+once without mutating the caller. The final focused model, release-set,
+ownership, and refresh suites pass 37 cases; the complete lifecycle suite
+passes 298 cases across 32 files. Production and test TypeScript checks,
+Biome on all 19 affected TypeScript files, strict OpenSpec validation, and
+diff hygiene pass. Architecture/oRPC, behavior-first testing, and
+TypeScript/TypeBox/structural standing reviews closed without unresolved P0,
+P1, or P2 findings. The repository check passed 39 projects and 76 dependency
+tasks in 38.5 seconds, including all 17 enforced Habitat laws with zero
+findings. No resource, provider, result algebra, parser authority, Habitat law,
+Oclif surface, Personal repository, native command, or live lifecycle state
+changed.
+
 ## Settlement Oracles
 
 The final product must prove:

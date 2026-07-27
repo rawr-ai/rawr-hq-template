@@ -941,6 +941,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   compatibility face. Preserve caller-mutation isolation, staged observation,
   source-change classification, interruption, defects, and every public
   result.
+- [x] 5.7e2t Give cross-module release diagnostics one service-root TypeBox
+  DTO and policy owner. Move the stable code vocabulary, closed schema, inferred
+  types, bounds, construction, and canonical ordering together; delete the
+  `shared/release/issues.ts` owner, barrel exports, and generic `issue` name
+  without an alias or compatibility face. Preserve public diagnostic structure
+  and vocabulary while making construction schema-total, immutable, bounded,
+  and traversal-independent. Keep module-specific issues in their modules and
+  add no result, parser, resource, provider, Habitat-law, or runtime change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -1,10 +1,16 @@
+import type { ReleaseIssue } from "../../model/dto/release-issue";
+import {
+  prefixReleaseIssuePath,
+  releaseIssue,
+  sortReleaseIssues,
+} from "../../model/policy/release-issue";
+
 import {
   type CanonicalJsonValue,
   canonicalJsonLine,
   decodeCanonicalJson,
   equalBytes,
 } from "./canonical";
-import { issue, type ReleaseIssue, sortReleaseIssues } from "./issues";
 import {
   type DistributionOwnershipIndex,
   ownershipClaimsFor,
@@ -97,7 +103,11 @@ export function createAgentPluginReleaseSet(
   if (!isExactRecord(input, ["releaseInput", "releases"], "releaseSet", issues)) {
     return failure([
       issues[0] ??
-        issue("EXPECTED_OBJECT", "releaseSet", "Release-set construction input must be an object"),
+        releaseIssue(
+          "EXPECTED_OBJECT",
+          "releaseSet",
+          "Release-set construction input must be an object"
+        ),
     ]);
   }
   const releaseInput = verifyEmbeddedReleaseInput(input.releaseInput, issues);
@@ -114,10 +124,7 @@ export function createAgentPluginReleaseSet(
     else
       issues.push(
         ...verified.issues.map((entry) =>
-          Object.freeze({
-            ...entry,
-            path: `releaseSet.releases[${index}].${entry.path}`,
-          })
+          prefixReleaseIssuePath(`releaseSet.releases[${index}]`, entry)
         )
       );
   });
@@ -133,7 +140,7 @@ export function createAgentPluginReleaseSet(
   const first = releases[0];
   if (first === undefined) {
     issues.push(
-      issue(
+      releaseIssue(
         "MISSING_EXPECTED_MEMBER",
         "releaseSet.releases",
         "A complete release set must contain its declared members",
@@ -152,7 +159,7 @@ export function createAgentPluginReleaseSet(
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (releaseInput === undefined || first === undefined) {
     return failure([
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         "releaseSet",
         "Release-set validation did not produce a complete value"
@@ -184,10 +191,15 @@ export function createAgentPluginReleaseSet(
   const byteLength = canonicalSerializeAgentPluginReleaseSet(releaseSet).byteLength;
   if (byteLength > MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES) {
     return failure([
-      issue("ENVELOPE_TOO_LARGE", "releaseSet", "Release-set envelope exceeds its protocol bound", {
-        expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-        actual: byteLength,
-      }),
+      releaseIssue(
+        "ENVELOPE_TOO_LARGE",
+        "releaseSet",
+        "Release-set envelope exceeds its protocol bound",
+        {
+          expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
+          actual: byteLength,
+        }
+      ),
     ]);
   }
   return success(releaseSet);
@@ -199,12 +211,13 @@ export function verifyAgentPluginReleaseSet(
   const issues: ReleaseIssue[] = [];
   if (!isExactRecord(input, ["body", "releaseSetDigest", "schemaVersion"], "releaseSet", issues)) {
     return failure([
-      issues[0] ?? issue("EXPECTED_OBJECT", "releaseSet", "Release-set envelope must be an object"),
+      issues[0] ??
+        releaseIssue("EXPECTED_OBJECT", "releaseSet", "Release-set envelope must be an object"),
     ]);
   }
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         "releaseSet.schemaVersion",
         "Unsupported release-set envelope version",
@@ -227,7 +240,7 @@ export function verifyAgentPluginReleaseSet(
     const computed = releaseSetDigest(canonicalSerializeAgentPluginReleaseSetBody(body));
     if (computed !== claimedDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_SET_DIGEST_MISMATCH",
           "releaseSet.releaseSetDigest",
           "Claimed set digest differs from the complete set body",
@@ -243,7 +256,7 @@ export function verifyAgentPluginReleaseSet(
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (claimedDigest === undefined || body === undefined) {
     return failure([
-      issue(
+      releaseIssue(
         "EXPECTED_OBJECT",
         "releaseSet",
         "Release-set validation did not produce a complete value"
@@ -258,10 +271,15 @@ export function verifyAgentPluginReleaseSet(
   const byteLength = canonicalSerializeAgentPluginReleaseSet(releaseSet).byteLength;
   if (byteLength > MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES) {
     return failure([
-      issue("ENVELOPE_TOO_LARGE", "releaseSet", "Release-set envelope exceeds its protocol bound", {
-        expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-        actual: byteLength,
-      }),
+      releaseIssue(
+        "ENVELOPE_TOO_LARGE",
+        "releaseSet",
+        "Release-set envelope exceeds its protocol bound",
+        {
+          expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
+          actual: byteLength,
+        }
+      ),
     ]);
   }
   return success(releaseSet);
@@ -281,12 +299,7 @@ export function verifyCompleteReleaseSet(
     if (verified.ok) releases.push(verified.value);
     else
       issues.push(
-        ...verified.issues.map((entry) =>
-          Object.freeze({
-            ...entry,
-            path: `releases[${index}].${entry.path}`,
-          })
-        )
+        ...verified.issues.map((entry) => prefixReleaseIssuePath(`releases[${index}]`, entry))
       );
   });
   reportDuplicateReleaseMembers(releases, issues);
@@ -314,7 +327,7 @@ export function decodeAgentPluginReleaseSet(
     !equalBytes(bytes, canonicalSerializeAgentPluginReleaseSet(verified.value))
   ) {
     return failure([
-      issue(
+      releaseIssue(
         "NON_CANONICAL_ENVELOPE",
         "releaseSet",
         "Release-set bytes are not the unique canonical representation"
@@ -392,7 +405,7 @@ function parseReleaseSetBody(
     return undefined;
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.schemaVersion`,
         "Unsupported release-set schema version",
@@ -408,7 +421,7 @@ function parseReleaseSetBody(
   }
   if (input.builderProtocolVersion !== BUILDER_PROTOCOL_VERSION) {
     issues.push(
-      issue(
+      releaseIssue(
         "INVALID_SCHEMA_VERSION",
         `${path}.builderProtocolVersion`,
         "Unsupported builder protocol version",
@@ -454,7 +467,7 @@ function parseReleaseSetBody(
     witness.releaseInputDigest !== inputDigest
   ) {
     issues.push(
-      issue(
+      releaseIssue(
         "RELEASE_INPUT_IDENTITY_MISMATCH",
         `${path}.completenessWitness.releaseInputDigest`,
         "Completeness witness belongs to another release input",
@@ -474,7 +487,7 @@ function parseReleaseSetBody(
     )
   ) {
     issues.push(
-      issue(
+      releaseIssue(
         "OWNERSHIP_INDEX_MISMATCH",
         `${path}.ownershipIndex`,
         "Set ownership index differs from its completeness witness"
@@ -541,12 +554,18 @@ function parseSetMembers(
   for (let index = 1; index < members.length; index += 1) {
     if (members[index - 1]!.pluginId === members[index]!.pluginId) {
       issues.push(
-        issue("DUPLICATE_PLUGIN_ID", path, `Duplicate set member: ${members[index]!.pluginId}`)
+        releaseIssue(
+          "DUPLICATE_PLUGIN_ID",
+          path,
+          `Duplicate set member: ${members[index]!.pluginId}`
+        )
       );
     }
   }
   if (members.length === 0) {
-    issues.push(issue("MISSING_EXPECTED_MEMBER", path, "A complete release set cannot be empty"));
+    issues.push(
+      releaseIssue("MISSING_EXPECTED_MEMBER", path, "A complete release set cannot be empty")
+    );
   }
   return Object.freeze(members);
 }
@@ -557,7 +576,11 @@ function verifyEmbeddedReleaseInput(
 ): AgentPluginReleaseInput | undefined {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     issues.push(
-      issue("EXPECTED_OBJECT", "releaseSet.releaseInput", "Release input must be a verified value")
+      releaseIssue(
+        "EXPECTED_OBJECT",
+        "releaseSet.releaseInput",
+        "Release input must be a verified value"
+      )
     );
     return undefined;
   }
@@ -606,7 +629,7 @@ function validateExpectedMembership(
     const release = actual.get(pluginId);
     if (release === undefined) {
       issues.push(
-        issue(
+        releaseIssue(
           "MISSING_EXPECTED_MEMBER",
           `releaseSet.members.${pluginId}`,
           "Expected member is absent",
@@ -615,7 +638,7 @@ function validateExpectedMembership(
       );
     } else if (release.artifactBody.releaseBody.payloadDigest !== payloadDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_DIGEST_MISMATCH",
           `releaseSet.members.${pluginId}.payloadDigest`,
           "Member payload differs from the completeness witness",
@@ -630,7 +653,7 @@ function validateExpectedMembership(
   for (const pluginId of [...actual.keys()].sort(compareCanonicalText)) {
     if (!expected.has(pluginId)) {
       issues.push(
-        issue(
+        releaseIssue(
           "EXTRA_MEMBER",
           `releaseSet.members.${pluginId}`,
           "Release is not declared by the completeness witness",
@@ -651,7 +674,7 @@ function validateReleaseIdentity(
   const firstBody = first?.artifactBody.releaseBody;
   if (body.contentAuthority !== input.body.contentAuthority) {
     issues.push(
-      issue(
+      releaseIssue(
         "SOURCE_IDENTITY_MISMATCH",
         `releaseSet.members.${body.pluginId}.contentAuthority`,
         "Release has another content authority",
@@ -664,7 +687,7 @@ function validateReleaseIdentity(
   }
   if (body.releaseInputDigest !== input.releaseInputDigest) {
     issues.push(
-      issue(
+      releaseIssue(
         "RELEASE_INPUT_IDENTITY_MISMATCH",
         `releaseSet.members.${body.pluginId}.releaseInputDigest`,
         "Release belongs to another release input",
@@ -678,7 +701,7 @@ function validateReleaseIdentity(
   const declaration = input.body.members.find((member) => member.pluginId === body.pluginId);
   if (declaration === undefined) {
     issues.push(
-      issue(
+      releaseIssue(
         "MEMBER_NOT_DECLARED",
         `releaseSet.members.${body.pluginId}`,
         "Release is not declared by the verified release input",
@@ -696,7 +719,7 @@ function validateReleaseIdentity(
       expectedAliases.some((alias, index) => alias !== body.aliases[index])
     ) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_INPUT_IDENTITY_MISMATCH",
           `releaseSet.members.${body.pluginId}.aliases`,
           "Release aliases differ from the verified release input"
@@ -710,7 +733,7 @@ function validateReleaseIdentity(
       )
     ) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_MANIFEST_MISMATCH",
           `releaseSet.members.${body.pluginId}.payloadManifest`,
           "Release manifest differs from the verified release input"
@@ -725,7 +748,7 @@ function validateReleaseIdentity(
         )
       ) {
         issues.push(
-          issue(
+          releaseIssue(
             "RELEASE_INPUT_IDENTITY_MISMATCH",
             `releaseSet.members.${body.pluginId}.${field}`,
             `Release ${field} bindings differ from the verified release input`
@@ -739,7 +762,7 @@ function validateReleaseIdentity(
     for (const field of fields) {
       if (body[field] !== firstBody[field]) {
         issues.push(
-          issue(
+          releaseIssue(
             "SOURCE_IDENTITY_MISMATCH",
             `releaseSet.members.${body.pluginId}.${field}`,
             "Release belongs to another source snapshot",
@@ -765,7 +788,7 @@ function validateWitnessMemberIds(
   for (const pluginId of [...expected].sort(compareCanonicalText)) {
     if (!actual.has(pluginId)) {
       issues.push(
-        issue(
+        releaseIssue(
           "MISSING_EXPECTED_MEMBER",
           `${path}.members.${pluginId}`,
           "Set omits a completeness-witness member",
@@ -777,7 +800,7 @@ function validateWitnessMemberIds(
   for (const pluginId of [...actual].sort(compareCanonicalText)) {
     if (!expected.has(pluginId)) {
       issues.push(
-        issue(
+        releaseIssue(
           "EXTRA_MEMBER",
           `${path}.members.${pluginId}`,
           "Set contains a member absent from its completeness witness",
@@ -800,7 +823,7 @@ function validateReleaseSetMembers(
     const actualPluginId = actualRelease?.artifactBody.releaseBody.pluginId;
     if (expectedMember?.pluginId !== actualPluginId) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_SET_DIGEST_MISMATCH",
           `releases[${index}]`,
           "Release order differs from the canonical set order",
@@ -820,15 +843,20 @@ function validateReleaseSetMembers(
     const release = actual.get(pluginId);
     if (release === undefined) {
       issues.push(
-        issue("MISSING_EXPECTED_MEMBER", `releases.${pluginId}`, "Set member artifact is absent", {
-          actual: pluginId,
-        })
+        releaseIssue(
+          "MISSING_EXPECTED_MEMBER",
+          `releases.${pluginId}`,
+          "Set member artifact is absent",
+          {
+            actual: pluginId,
+          }
+        )
       );
       continue;
     }
     if (release.releaseDigest !== member.releaseDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "RELEASE_DIGEST_MISMATCH",
           `releases.${pluginId}.releaseDigest`,
           "Member release digest differs from the set",
@@ -841,7 +869,7 @@ function validateReleaseSetMembers(
     }
     if (release.artifactDigest !== member.artifactDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "ARTIFACT_DIGEST_MISMATCH",
           `releases.${pluginId}.artifactDigest`,
           "Member artifact digest differs from the set",
@@ -863,7 +891,7 @@ function validateReleaseSetMembers(
     for (const field of sourceFields) {
       if (releaseBody[field] !== body[field]) {
         issues.push(
-          issue(
+          releaseIssue(
             field === "releaseInputDigest"
               ? "RELEASE_INPUT_IDENTITY_MISMATCH"
               : "SOURCE_IDENTITY_MISMATCH",
@@ -882,7 +910,7 @@ function validateReleaseSetMembers(
       expectedAliases.some((alias, index) => alias !== releaseBody.aliases[index])
     ) {
       issues.push(
-        issue(
+        releaseIssue(
           "OWNERSHIP_INDEX_MISMATCH",
           `releases.${pluginId}.aliases`,
           "Member aliases differ from the complete ownership index"
@@ -894,7 +922,7 @@ function validateReleaseSetMembers(
     );
     if (witness !== undefined && witness.payloadDigest !== releaseBody.payloadDigest) {
       issues.push(
-        issue(
+        releaseIssue(
           "PAYLOAD_DIGEST_MISMATCH",
           `releases.${pluginId}.payloadDigest`,
           "Member payload differs from the completeness witness",
@@ -909,9 +937,14 @@ function validateReleaseSetMembers(
   for (const pluginId of [...actual.keys()].sort(compareCanonicalText)) {
     if (!expected.has(pluginId)) {
       issues.push(
-        issue("EXTRA_MEMBER", `releases.${pluginId}`, "Release list contains an extra member", {
-          actual: pluginId,
-        })
+        releaseIssue(
+          "EXTRA_MEMBER",
+          `releases.${pluginId}`,
+          "Release list contains an extra member",
+          {
+            actual: pluginId,
+          }
+        )
       );
     }
   }
@@ -931,7 +964,11 @@ function reportDuplicateReleaseMembers(
   )) {
     if (count > 1) {
       issues.push(
-        issue("DUPLICATE_PLUGIN_ID", "releaseSet.releases", `Duplicate release member: ${pluginId}`)
+        releaseIssue(
+          "DUPLICATE_PLUGIN_ID",
+          "releaseSet.releases",
+          `Duplicate release member: ${pluginId}`
+        )
       );
     }
   }

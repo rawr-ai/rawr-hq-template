@@ -18,10 +18,12 @@
   owned by this package.
 - Personal's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes; native provider inventory owns installed state.
-- The shared service model owns pure current-main selection, clean-content
-  classification, declared-tree validation, and release derivation only where
-  those meanings span capability modules. Providers owns selected-content
-  structure, source-interface classification, native marketplace validation,
+- The service model owns pure current-main selection, clean-content
+  classification, declared-tree validation, release derivation, and release
+  diagnostics only where those meanings span capability modules. Its TypeBox
+  DTOs define diagnostic structure; its policy bounds construction and
+  canonical ordering. Providers owns selected-content structure,
+  source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module
   consumes those meanings. Provider status, sync, and disposable test handlers
   directly sequence the ready content-workspace and native-provider resources;

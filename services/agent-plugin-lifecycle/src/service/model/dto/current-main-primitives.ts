@@ -5,11 +5,12 @@ import {
   parseGitTreeId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-  type ReleaseIssue,
   type ReleaseRelativePath,
   type ReleaseResult,
   type RepositoryIdentity,
 } from "../../shared/release";
+import { releaseIssue } from "../policy/release-issue";
+import type { ReleaseIssue } from "./release-issue";
 
 declare const canonicalRefBrand: unique symbol;
 declare const gitBlobIdBrand: unique symbol;
@@ -59,6 +60,6 @@ export const parseRelativePath = parseReleaseRelativePath;
 function invalidGitIdentity(path: string, message: string): ReleaseResult<never, ReleaseIssue> {
   return {
     ok: false,
-    issues: [Object.freeze({ code: "INVALID_GIT_OBJECT_ID", path, message })],
+    issues: [releaseIssue("INVALID_GIT_OBJECT_ID", path, message)],
   };
 }

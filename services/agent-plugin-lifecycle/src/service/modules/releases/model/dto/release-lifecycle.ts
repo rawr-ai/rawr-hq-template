@@ -5,6 +5,7 @@ import {
   SourceEligibilityIssueSchema,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ArtifactDigestSchema,
@@ -15,7 +16,6 @@ import {
   PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
-  ReleaseIssueSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
 } from "../../../../shared/release";
