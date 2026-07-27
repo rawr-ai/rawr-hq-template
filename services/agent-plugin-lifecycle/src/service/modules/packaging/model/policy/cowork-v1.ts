@@ -5,12 +5,12 @@ import type {
 import type { AgentPluginRelease } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-release";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import { payloadEntryBytes } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
+import { verifyCompleteReleaseSet } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-release-set";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import {
   contentDigest,
   parseReleaseRelativePath,
 } from "#agent-plugin-lifecycle-service/shared/release/primitives";
-import { verifyCompleteReleaseSet } from "#agent-plugin-lifecycle-service/shared/release/release-set";
 import type { PackageDigest } from "../dto/packaging-lifecycle";
 
 /** Stable archive comment that identifies RAWR's Cowork v1 package profile. */

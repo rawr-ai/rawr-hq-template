@@ -7,7 +7,7 @@ import {
 import {
   ContentAuthoritySchema,
   PluginIdSchema,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 const ProviderTextSchema = Type.String({
   minLength: 1,

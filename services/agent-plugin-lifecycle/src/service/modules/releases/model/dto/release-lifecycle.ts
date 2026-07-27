@@ -17,7 +17,7 @@ import {
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
-} from "../../../../shared/release";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
 export const CheckInputSchema = ReadonlyObject(

@@ -17,7 +17,7 @@ import {
   ReleaseRelativePathSchema,
   type RepositoryIdentity,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 export const StagedContentWorkspacePolicySchema = ReadonlyObject(
   Type.Object({

@@ -13,7 +13,7 @@ import {
   parseGitTreeId,
   parseReleaseInputDigest,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

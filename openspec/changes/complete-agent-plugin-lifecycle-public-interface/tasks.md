@@ -1050,6 +1050,21 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   refusal, defensive immutability, deterministic diagnostics, direct consumer
   imports, and the full lifecycle behavior without moving the release-set
   owner, resources, providers, routers, or native state.
+- [x] 5.7e8 Give the complete in-memory release set direct service-root
+  TypeBox DTO, policy, and codec owners. Derive closed member, body, and
+  envelope types from their schemas; keep construction, admission,
+  cross-member relationships, deterministic diagnostics, bounds, and
+  immutability in one policy; and keep the digest-free body preimage plus
+  envelope bytes in one codec. Delete `shared/release/release-set.ts` and the
+  release barrel, then rewire remaining primitive consumers directly to the
+  transitional primitive leaf without an alias, facade, compatibility path,
+  store, address, lookup, or persistence mechanism. Preserve exact
+  completeness-witness membership, ownership, provenance, canonical order,
+  release-input identity, release-digest binding, byte ceilings, and public
+  behavior. Prove TypeBox closure and generated types, canonical identity,
+  defensive immutability, deterministic diagnostics, direct imports, and
+  focused Releases, Packaging, and Providers behavior without moving
+  primitives, resources, providers, routers, or native state.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

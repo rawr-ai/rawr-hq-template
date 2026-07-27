@@ -20,7 +20,7 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

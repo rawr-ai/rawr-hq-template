@@ -19,7 +19,7 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   type PluginId,
   RELEASE_INPUT_SCHEMA_VERSION,
-} from "../../../../shared/release";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { ReleaseInputRefreshResult } from "../dto/release-lifecycle";
 
 export interface ReleaseInputRefreshMemberSource {

@@ -19,7 +19,7 @@ import {
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
-} from "../../../../shared/release";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import { hasStrictDescendantHomes } from "../policy/disposable-root";
 
 const MAX_TARGETS = 16;

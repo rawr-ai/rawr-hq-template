@@ -9,7 +9,7 @@ import {
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
 
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 import { createGeneratedGitRepository, GIT_EXECUTABLE, git } from "../../support/git-repository";

@@ -25,7 +25,7 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
   type ReleaseRelativePath,
-} from "../../shared/release";
+} from "../../shared/release/primitives";
 import type { AgentPluginPayload } from "../dto/agent-plugin-payload";
 import type { AgentPluginReleaseInput } from "../dto/release-input";
 import { equalBytes } from "../helpers/byte-equality";

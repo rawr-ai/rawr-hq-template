@@ -1,15 +1,13 @@
 import type { AgentPluginPayload } from "../../../src/service/model/dto/agent-plugin-payload";
 import type { AgentPluginRelease } from "../../../src/service/model/dto/agent-plugin-release";
+import type { AgentPluginReleaseSet } from "../../../src/service/model/dto/agent-plugin-release-set";
 import type { AgentPluginReleaseInput } from "../../../src/service/model/dto/release-input";
 import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { createAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
+import { createAgentPluginReleaseSet } from "../../../src/service/model/policy/agent-plugin-release-set";
 import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
 import { contentDigest } from "../../../src/service/shared/release/primitives";
-import {
-  type AgentPluginReleaseSet,
-  createAgentPluginReleaseSet,
-} from "../../../src/service/shared/release/release-set";
 
 const encoder = new TextEncoder();
 

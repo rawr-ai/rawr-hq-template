@@ -7,7 +7,7 @@ import {
   parseGitTreeId,
   parseReleaseInputDigest,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
 import { createLifecycleTestClient, testInvocation } from "../../support/client";
 
 describe("current-main record procedure", () => {

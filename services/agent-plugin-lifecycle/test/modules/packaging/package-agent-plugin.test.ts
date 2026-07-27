@@ -32,7 +32,7 @@ import {
   PackageAgentPluginResultSchema,
 } from "../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
 import { priorOutputObservationLimit } from "../../../src/service/modules/packaging/model/policy/package-output";
-import { parsePluginId } from "../../../src/service/shared/release";
+import { parsePluginId } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

@@ -5,7 +5,7 @@ import {
   GitTreeIdSchema,
   ReleaseInputDigestSchema,
   RepositoryIdentitySchema,
-} from "../../shared/release";
+} from "../../shared/release/primitives";
 import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
 
 export const CURRENT_MAIN_V3_SCHEMA_VERSION = 3 as const;

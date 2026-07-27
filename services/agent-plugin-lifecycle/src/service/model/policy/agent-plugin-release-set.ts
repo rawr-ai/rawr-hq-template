@@ -1,59 +1,7 @@
 import { Value } from "typebox/value";
-
-import {
-  type AgentPluginRelease,
-  AgentPluginReleaseSchema,
-} from "../../model/dto/agent-plugin-release";
-import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
-import type { DistributionOwnershipIndex } from "../../model/dto/distribution-ownership";
-import {
-  type AgentPluginReleaseInput,
-  AgentPluginReleaseInputSchema,
-  type CompletenessWitness,
-} from "../../model/dto/release-input";
-import type { ReleaseIssue } from "../../model/dto/release-issue";
-import type { ReleaseResult } from "../../model/dto/release-result";
-import { equalBytes } from "../../model/helpers/byte-equality";
-import { verifyAgentPluginRelease } from "../../model/policy/agent-plugin-release";
-import { agentPluginReleaseValue } from "../../model/policy/agent-plugin-release-codec";
-import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
-import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
-import {
-  completenessWitnessValue,
-  parseCompletenessWitness,
-} from "../../model/policy/completeness-witness";
-import {
-  ownershipClaimsFor,
-  ownershipIndexValue,
-  parseDistributionOwnershipIndex,
-} from "../../model/policy/distribution-ownership";
-import { samePayloadManifest } from "../../model/policy/payload-manifest";
-import { provenanceBindingValue } from "../../model/policy/provenance-binding";
-import { verifyAgentPluginReleaseInput } from "../../model/policy/release-input";
-import { releaseInputValue } from "../../model/policy/release-input-codec";
-import {
-  prefixReleaseIssuePath,
-  releaseIssue,
-  sortReleaseIssues,
-} from "../../model/policy/release-issue";
-import {
-  asNonEmpty,
-  collectReleaseResult,
-  failure,
-  success,
-} from "../../model/policy/release-result";
-import {
-  admitClosedRecordForTraversal,
-  parseBoundedArray,
-} from "../../model/policy/release-value-admission";
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
-  type AgentPluginReleaseSetSchemaVersion,
   BUILDER_PROTOCOL_VERSION,
-  type BuilderProtocolVersion,
-  type ContentAuthority,
-  type GitCommitId,
-  type GitTreeId,
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   type PluginId,
@@ -65,45 +13,58 @@ import {
   parseReleaseInputDigest,
   parseReleaseSetDigest,
   parseRepositoryIdentity,
-  type ReleaseDigest,
-  type ReleaseInputDigest,
-  type ReleaseSetDigest,
-  type RepositoryIdentity,
   releaseSetDigest,
-} from "./primitives";
+} from "../../shared/release/primitives";
+import { type AgentPluginRelease, AgentPluginReleaseSchema } from "../dto/agent-plugin-release";
+import type {
+  AgentPluginReleaseSet,
+  AgentPluginReleaseSetMember,
+} from "../dto/agent-plugin-release-set";
+import {
+  AgentPluginReleaseSetBodySchema,
+  AgentPluginReleaseSetSchema,
+} from "../dto/agent-plugin-release-set";
+import type { CanonicalJsonValue } from "../dto/canonical-json";
+import {
+  type AgentPluginReleaseInput,
+  AgentPluginReleaseInputSchema,
+  type CompletenessWitness,
+} from "../dto/release-input";
+import type { ReleaseIssue } from "../dto/release-issue";
+import type { ReleaseResult } from "../dto/release-result";
+import { equalBytes } from "../helpers/byte-equality";
+import { verifyAgentPluginRelease } from "./agent-plugin-release";
+import { agentPluginReleaseValue } from "./agent-plugin-release-codec";
+import {
+  canonicalSerializeAgentPluginReleaseSet,
+  canonicalSerializeAgentPluginReleaseSetBody,
+} from "./agent-plugin-release-set-codec";
+import { canonicalJsonLine, decodeCanonicalJson } from "./canonical-json";
+import { compareCanonicalText } from "./canonical-text-ordering";
+import { completenessWitnessValue, parseCompletenessWitness } from "./completeness-witness";
+import {
+  ownershipClaimsFor,
+  ownershipIndexValue,
+  parseDistributionOwnershipIndex,
+} from "./distribution-ownership";
+import { samePayloadManifest } from "./payload-manifest";
+import { provenanceBindingValue } from "./provenance-binding";
+import { verifyAgentPluginReleaseInput } from "./release-input";
+import { releaseInputValue } from "./release-input-codec";
+import { prefixReleaseIssuePath, releaseIssue, sortReleaseIssues } from "./release-issue";
+import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
+import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
-declare const agentPluginReleaseSetBrand: unique symbol;
+type AgentPluginReleaseSetBodyCandidate = Parameters<
+  typeof canonicalSerializeAgentPluginReleaseSetBody
+>[0];
 
-export interface AgentPluginReleaseSetMember {
-  readonly pluginId: PluginId;
-  readonly releaseDigest: ReleaseDigest;
+interface ParsedAgentPluginReleaseSetBody {
+  readonly candidate: AgentPluginReleaseSetBodyCandidate;
+  readonly admitted: AgentPluginReleaseSet["body"] | undefined;
 }
 
-export interface AgentPluginReleaseSetBody {
-  readonly schemaVersion: AgentPluginReleaseSetSchemaVersion;
-  readonly builderProtocolVersion: BuilderProtocolVersion;
-  readonly contentAuthority: ContentAuthority;
-  readonly sourceRepository: RepositoryIdentity;
-  readonly sourceCommit: GitCommitId;
-  readonly sourceTree: GitTreeId;
-  readonly releaseInputDigest: ReleaseInputDigest;
-  readonly completenessWitness: CompletenessWitness;
-  readonly ownershipIndex: DistributionOwnershipIndex;
-  readonly members: readonly AgentPluginReleaseSetMember[];
-}
-
-export type AgentPluginReleaseSet = Readonly<{
-  schemaVersion: AgentPluginReleaseSetSchemaVersion;
-  releaseSetDigest: ReleaseSetDigest;
-  body: AgentPluginReleaseSetBody;
-  [agentPluginReleaseSetBrand]: "AgentPluginReleaseSet";
-}>;
-
-export interface CreateAgentPluginReleaseSetInput {
-  readonly releaseInput: AgentPluginReleaseInput;
-  readonly releases: readonly AgentPluginRelease[];
-}
-
+/** Constructs one complete set from an admitted release input and its exact derived releases. */
 export function createAgentPluginReleaseSet(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
@@ -169,8 +130,25 @@ export function createAgentPluginReleaseSet(
       ),
     ]);
   }
+  const members = asNonEmpty(
+    releases.map((release) =>
+      Object.freeze({
+        pluginId: release.body.pluginId,
+        releaseDigest: release.releaseDigest,
+      })
+    )
+  );
+  if (members === undefined) {
+    return failure([
+      releaseIssue(
+        "MISSING_EXPECTED_MEMBER",
+        "releaseSet.releases",
+        "A complete release set cannot be empty"
+      ),
+    ]);
+  }
   const firstBody = first.body;
-  const body: AgentPluginReleaseSetBody = Object.freeze({
+  const body: AgentPluginReleaseSet["body"] = Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
     builderProtocolVersion: BUILDER_PROTOCOL_VERSION,
     contentAuthority: releaseInput.body.contentAuthority,
@@ -180,33 +158,21 @@ export function createAgentPluginReleaseSet(
     releaseInputDigest: releaseInput.releaseInputDigest,
     completenessWitness: releaseInput.completenessWitness,
     ownershipIndex: releaseInput.ownershipIndex,
-    members: Object.freeze(
-      releases.map((release) =>
-        Object.freeze({
-          pluginId: release.body.pluginId,
-          releaseDigest: release.releaseDigest,
-        })
-      )
-    ),
+    members: Object.freeze(members),
   });
-  const releaseSet = freezeReleaseSet(body);
-  const byteLength = canonicalSerializeAgentPluginReleaseSet(releaseSet).byteLength;
-  if (byteLength > MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES) {
+  if (!Value.Check(AgentPluginReleaseSetBodySchema, body)) {
     return failure([
       releaseIssue(
-        "ENVELOPE_TOO_LARGE",
-        "releaseSet",
-        "Release-set envelope exceeds its protocol bound",
-        {
-          expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-          actual: byteLength,
-        }
+        "EXPECTED_OBJECT",
+        "releaseSet.body",
+        "Release-set construction did not produce a TypeBox-valid body"
       ),
     ]);
   }
-  return success(releaseSet);
+  return finishReleaseSet(freezeReleaseSet(body));
 }
 
+/** Admits and verifies one closed complete-set envelope without granting persistence authority. */
 export function verifyAgentPluginReleaseSet(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
@@ -244,9 +210,11 @@ export function verifyAgentPluginReleaseSet(
     parseReleaseSetDigest(input.releaseSetDigest, "releaseSet.releaseSetDigest"),
     issues
   );
-  const body = parseReleaseSetBody(input.body, "releaseSet.body", issues);
-  if (body !== undefined && claimedDigest !== undefined) {
-    const computed = releaseSetDigest(canonicalSerializeAgentPluginReleaseSetBody(body));
+  const parsedBody = parseReleaseSetBody(input.body, "releaseSet.body", issues);
+  if (parsedBody !== undefined && claimedDigest !== undefined) {
+    const computed = releaseSetDigest(
+      canonicalSerializeAgentPluginReleaseSetBody(parsedBody.candidate)
+    );
     if (computed !== claimedDigest) {
       issues.push(
         releaseIssue(
@@ -263,6 +231,7 @@ export function verifyAgentPluginReleaseSet(
   }
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
+  const body = parsedBody?.admitted;
   if (claimedDigest === undefined || body === undefined) {
     return failure([
       releaseIssue(
@@ -272,28 +241,16 @@ export function verifyAgentPluginReleaseSet(
       ),
     ]);
   }
-  const releaseSet = Object.freeze({
-    schemaVersion: AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
-    releaseSetDigest: claimedDigest,
-    body,
-  }) as AgentPluginReleaseSet;
-  const byteLength = canonicalSerializeAgentPluginReleaseSet(releaseSet).byteLength;
-  if (byteLength > MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES) {
-    return failure([
-      releaseIssue(
-        "ENVELOPE_TOO_LARGE",
-        "releaseSet",
-        "Release-set envelope exceeds its protocol bound",
-        {
-          expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
-          actual: byteLength,
-        }
-      ),
-    ]);
-  }
-  return success(releaseSet);
+  return finishReleaseSet(
+    Object.freeze({
+      schemaVersion: AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
+      releaseSetDigest: claimedDigest,
+      body,
+    })
+  );
 }
 
+/** Verifies that exact release values completely realize one admitted release-set envelope. */
 export function verifyCompleteReleaseSet(
   releaseSetInput: unknown,
   releaseInputs: unknown
@@ -320,6 +277,7 @@ export function verifyCompleteReleaseSet(
   return success(verifiedSet.value);
 }
 
+/** Decodes the unique canonical bytes for one admitted complete release set. */
 export function decodeAgentPluginReleaseSet(
   bytes: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
@@ -346,51 +304,11 @@ export function decodeAgentPluginReleaseSet(
   return verified;
 }
 
-export function canonicalSerializeAgentPluginReleaseSetBody(
-  body: AgentPluginReleaseSetBody
-): Uint8Array {
-  return canonicalJsonLine(agentPluginReleaseSetBodyValue(body));
-}
-
-export function canonicalSerializeAgentPluginReleaseSet(
-  releaseSet: AgentPluginReleaseSet
-): Uint8Array {
-  return canonicalJsonLine(agentPluginReleaseSetValue(releaseSet));
-}
-
-export function agentPluginReleaseSetBodyValue(
-  body: AgentPluginReleaseSetBody
-): CanonicalJsonValue {
-  return {
-    schemaVersion: body.schemaVersion,
-    builderProtocolVersion: body.builderProtocolVersion,
-    contentAuthority: body.contentAuthority,
-    sourceRepository: body.sourceRepository,
-    sourceCommit: body.sourceCommit,
-    sourceTree: body.sourceTree,
-    releaseInputDigest: body.releaseInputDigest,
-    completenessWitness: completenessWitnessValue(body.completenessWitness),
-    ownershipIndex: ownershipIndexValue(body.ownershipIndex),
-    members: body.members.map((member) => ({
-      pluginId: member.pluginId,
-      releaseDigest: member.releaseDigest,
-    })),
-  };
-}
-
-export function agentPluginReleaseSetValue(releaseSet: AgentPluginReleaseSet): CanonicalJsonValue {
-  return {
-    schemaVersion: releaseSet.schemaVersion,
-    releaseSetDigest: releaseSet.releaseSetDigest,
-    body: agentPluginReleaseSetBodyValue(releaseSet.body),
-  };
-}
-
 function parseReleaseSetBody(
   input: unknown,
   path: string,
   issues: ReleaseIssue[]
-): AgentPluginReleaseSetBody | undefined {
+): ParsedAgentPluginReleaseSetBody | undefined {
   if (
     !admitClosedRecordForTraversal(
       input,
@@ -520,7 +438,7 @@ function parseReleaseSetBody(
     members === undefined
   )
     return undefined;
-  return Object.freeze({
+  const candidate: AgentPluginReleaseSetBodyCandidate = Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
     builderProtocolVersion: BUILDER_PROTOCOL_VERSION,
     contentAuthority: authority,
@@ -530,8 +448,27 @@ function parseReleaseSetBody(
     releaseInputDigest: inputDigest,
     completenessWitness: witness,
     ownershipIndex,
-    members,
+    members: Object.freeze(members),
   });
+  const nonEmptyMembers = asNonEmpty(members);
+  if (nonEmptyMembers === undefined) {
+    return Object.freeze({ candidate, admitted: undefined });
+  }
+  const body = Object.freeze({
+    ...candidate,
+    members: Object.freeze(nonEmptyMembers),
+  });
+  if (Value.Check(AgentPluginReleaseSetBodySchema, body)) {
+    return Object.freeze({ candidate, admitted: body });
+  }
+  issues.push(
+    releaseIssue(
+      "EXPECTED_OBJECT",
+      path,
+      "Release-set body does not match its closed TypeBox structure"
+    )
+  );
+  return Object.freeze({ candidate, admitted: undefined });
 }
 
 function parseSetMembers(
@@ -956,13 +893,41 @@ function reportDuplicateReleaseMembers(
   }
 }
 
-function freezeReleaseSet(body: AgentPluginReleaseSetBody): AgentPluginReleaseSet {
+function freezeReleaseSet(body: AgentPluginReleaseSet["body"]) {
   const digest = releaseSetDigest(canonicalSerializeAgentPluginReleaseSetBody(body));
   return Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
     releaseSetDigest: digest,
     body,
-  }) as AgentPluginReleaseSet;
+  });
+}
+
+function finishReleaseSet(releaseSet: unknown): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
+  if (!Value.Check(AgentPluginReleaseSetSchema, releaseSet)) {
+    return failure([
+      releaseIssue(
+        "EXPECTED_OBJECT",
+        "releaseSet",
+        "Release-set validation did not produce a TypeBox-valid envelope"
+      ),
+    ]);
+  }
+  const admitted = releaseSet as AgentPluginReleaseSet;
+  const byteLength = canonicalSerializeAgentPluginReleaseSet(admitted).byteLength;
+  if (byteLength > MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES) {
+    return failure([
+      releaseIssue(
+        "ENVELOPE_TOO_LARGE",
+        "releaseSet",
+        "Release-set envelope exceeds its protocol bound",
+        {
+          expected: MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
+          actual: byteLength,
+        }
+      ),
+    ]);
+  }
+  return success(admitted);
 }
 
 function sameCanonicalValue(left: CanonicalJsonValue, right: CanonicalJsonValue): boolean {

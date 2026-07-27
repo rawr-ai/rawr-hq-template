@@ -18,7 +18,7 @@ import {
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/shared/release/index";
+} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 
 const MAX_SELECTED_ISSUES = 256;
 const MAX_SELECTED_ISSUE_DETAIL = 4_096;

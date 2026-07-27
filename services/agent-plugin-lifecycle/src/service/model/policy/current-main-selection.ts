@@ -5,7 +5,11 @@ import type {
 } from "@rawr/resource-content-workspace";
 import type { Result } from "effect";
 
-import { parseGitCommitId, parseGitTreeId, parseReleaseRelativePath } from "../../shared/release";
+import {
+  parseGitCommitId,
+  parseGitTreeId,
+  parseReleaseRelativePath,
+} from "../../shared/release/primitives";
 import {
   createExactGitBlobPointer,
   type ExactGitBlobObservation,

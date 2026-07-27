@@ -2,7 +2,7 @@ import type { ContentTreeEntry, ContentWorkspaceIdentity } from "@rawr/resource-
 import type { ProvenanceBinding } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 
-import { contentDigest } from "../../../../shared/release";
+import { contentDigest } from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import type { VendorContentWorkspaceRef, VendorUpdateIssue } from "../dto/vendor-operations";
 import type {
   VendorLockRecord,

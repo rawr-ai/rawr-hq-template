@@ -27,7 +27,7 @@ import {
   parseGitTreeId,
   parseReleaseInputDigest,
   parseRepositoryIdentity,
-} from "../../../src/service/shared/release";
+} from "../../../src/service/shared/release/primitives";
 
 describe("governance procedure schema boundary", () => {
   it("derives the public selection and result types from TypeBox", () => {
