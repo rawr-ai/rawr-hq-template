@@ -7,8 +7,8 @@ import {
   RemoteUrlSchema,
   type SourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { AgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import {
-  type AgentPluginReleaseInput,
   ContentAuthoritySchema,
   type GitCommitId,
   type GitTreeId,

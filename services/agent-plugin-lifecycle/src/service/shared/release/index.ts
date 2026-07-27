@@ -77,22 +77,9 @@ export {
   verifyAgentPluginRelease,
 } from "./release";
 export {
-  AGENT_PLUGIN_BUILDER_PROTOCOL_VERSION,
-  type AgentPluginReleaseInput,
-  type CompletenessWitness,
   canonicalSerializeAgentPluginReleaseInput,
-  canonicalSerializeReleaseInputBody,
   createAgentPluginReleaseInput,
-  type DeclaredPayload,
   decodeAgentPluginReleaseInput,
-  type ExpectedReleaseMember,
-  type ProvenanceBinding,
-  type ReleaseInputBody,
-  ReleaseInputBodySchema,
-  type ReleaseInputEnvelope,
-  ReleaseInputEnvelopeSchema,
-  type ReleaseMemberDeclaration,
-  type SkillInventoryEntry,
   verifyAgentPluginReleaseInput,
 } from "./release-input";
 

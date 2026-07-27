@@ -40,7 +40,12 @@
   service-root DTO owner; synthesis, admission, bounds, canonical ordering and
   projection, immutability, member coverage, conflict classification, and
   owner-local selection have one direct policy owner. Release records consume
-  those exact leaves without a `shared` ownership face.
+  those exact leaves without a `shared` ownership face. Release-input body and
+  envelope structure, member declarations, provenance bindings, completeness
+  witness, and admitted brand have one direct service-root TypeBox DTO owner.
+  Construction, verification, canonical encoding, diagnostics, ordering, and
+  digest policy remain outside that DTO; modules name the structural owner
+  directly rather than reaching through the transitional release barrel.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module

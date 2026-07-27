@@ -12,6 +12,12 @@ import {
   type ReleaseSelection,
   ReleaseSelectionSchema,
 } from "../../../src/service/model/dto/release-derivation";
+import {
+  type ReleaseInputBody,
+  ReleaseInputBodySchema,
+  type ReleaseInputEnvelope,
+  ReleaseInputEnvelopeSchema,
+} from "../../../src/service/model/dto/release-input";
 import { contract } from "../../../src/service/modules/releases/contract";
 import {
   type AgentPluginCheckRequest,
@@ -39,12 +45,6 @@ import {
   RepositoryCheckResultSchema,
   releaseConstructionIssue,
 } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
-import {
-  type ReleaseInputBody,
-  ReleaseInputBodySchema,
-  type ReleaseInputEnvelope,
-  ReleaseInputEnvelopeSchema,
-} from "../../../src/service/shared/release";
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",

@@ -1,5 +1,6 @@
 import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { DistributionOwnershipIndex } from "../../model/dto/distribution-ownership";
+import type { AgentPluginReleaseInput, CompletenessWitness } from "../../model/dto/release-input";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
@@ -60,8 +61,6 @@ import {
   verifyAgentPluginRelease,
 } from "./release";
 import {
-  type AgentPluginReleaseInput,
-  type CompletenessWitness,
   completenessWitnessValue,
   parseCompletenessWitness,
   provenanceBindingValue,

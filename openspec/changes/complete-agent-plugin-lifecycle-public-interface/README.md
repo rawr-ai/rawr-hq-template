@@ -2097,6 +2097,30 @@ Personal repository, native command, or live lifecycle state changed.
 The required repository check passed 39 projects and 76 dependency tasks in
 35.3 seconds, including all 17 enforced Habitat laws with zero findings.
 
+The release-input-model checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e3]]. The closed
+release-input body and envelope schemas, generated declaration types, member
+expectation, completeness witness, and admitted release-input brand now have
+one direct service-root DTO owner. Root model, capability modules,
+transitional release records, and tests name that owner directly. The
+transitional barrel no longer exports those identities, the unused
+builder-version alias is deleted, and the body serializer is private.
+
+The parser-backed provenance refinement was redundant with its bounded ASCII
+TypeBox schema. Focused parity covers accepted 512-byte and refused 513-byte
+protocol values through both structural checking and release-input admission.
+The focused release-input corpus passes 36 cases across four files, and the
+complete lifecycle suite passes 324 cases across 37 files. Production and test
+TypeScript checks, targeted Biome, diff hygiene, and standing architecture,
+behavior-first testing, and TypeScript/structural reviews pass without an
+unresolved P0, P1, P2, or P3 finding. The import graph contains 113 source
+files, 450 internal edges, and no cycle. Parsing, construction,
+canonicalization, diagnostics, ordering, digests, primitives, resources,
+providers, routers, oRPC, the public package surface, Personal, native
+commands, and live lifecycle state are unchanged.
+The required repository check passed 39 projects and 76 dependency tasks in
+37.6 seconds, including all 17 enforced Habitat laws with zero findings.
+
 ## Settlement Oracles
 
 The final product must prove:

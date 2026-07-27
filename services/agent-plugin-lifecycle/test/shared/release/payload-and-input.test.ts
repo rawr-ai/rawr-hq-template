@@ -6,6 +6,10 @@ import {
   type PayloadManifestEntry,
   PayloadManifestEntrySchema,
 } from "../../../src/service/model/dto/agent-plugin-payload";
+import {
+  ReleaseInputBodySchema,
+  ReleaseInputEnvelopeSchema,
+} from "../../../src/service/model/dto/release-input";
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
@@ -22,8 +26,6 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  ReleaseInputBodySchema,
-  ReleaseInputEnvelopeSchema,
 } from "../../../src/service/shared/release";
 import { binding, member, must, productFixture, releaseInputBody, wire } from "./fixtures";
 
@@ -263,6 +265,26 @@ describe("canonical payload and release input", () => {
         completenessWitness: fixture.releaseInput.completenessWitness,
       })
     ).toBe(false);
+  });
+
+  it("keeps provenance protocol schema and release-input admission at the same ASCII bound", () => {
+    const fixture = productFixture();
+    const body = releaseInputBody(fixture.alphaPayload, fixture.betaPayload);
+    const maximumProtocol = "a".repeat(512);
+    const oversizedProtocol = "a".repeat(513);
+    const maximumBody = withMutation(body, (candidate) => {
+      candidate.locks[0].protocol = maximumProtocol;
+    });
+    const oversizedBody = withMutation(body, (candidate) => {
+      candidate.locks[0].protocol = oversizedProtocol;
+    });
+
+    expect(encoder.encode(maximumProtocol)).toHaveLength(512);
+    expect(Value.Check(ReleaseInputBodySchema, maximumBody)).toBe(true);
+    expect(createAgentPluginReleaseInput(maximumBody).ok).toBe(true);
+    expect(encoder.encode(oversizedProtocol)).toHaveLength(513);
+    expect(Value.Check(ReleaseInputBodySchema, oversizedBody)).toBe(false);
+    expect(createAgentPluginReleaseInput(oversizedBody).ok).toBe(false);
   });
 
   it("closes every skill manifest over one inventory row and one same-member ownership claim", () => {

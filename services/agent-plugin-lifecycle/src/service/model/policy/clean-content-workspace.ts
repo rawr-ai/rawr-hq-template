@@ -16,7 +16,6 @@ import type {
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
-  type AgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -29,6 +28,7 @@ import {
   type ReleaseRelativePath,
 } from "../../shared/release";
 import type { AgentPluginPayload } from "../dto/agent-plugin-payload";
+import type { AgentPluginReleaseInput } from "../dto/release-input";
 import { equalBytes } from "../helpers/byte-equality";
 import { createAgentPluginPayload } from "./agent-plugin-payload";
 import { compareCanonicalText } from "./canonical-text-ordering";
