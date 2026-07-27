@@ -1257,6 +1257,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   behavior, type safety, database topology/import direction, and imported-export
   documentation. Do not add a migration runner, concrete production database
   provider, second context type, or persistence framework.
+- [x] 5.7e18 Repair the cacheable `habitat:check:documentation` Nx input with
+  one parser-supported extglob that preserves the exact seven-root TypeScript
+  source set. Prove the replacement matches the prior explicit root union and
+  that the target reaches the existing imported-export documentation checker.
+  Keep the target manual while its existing repository corpus is red; do not
+  add a wrapper, baseline, second checker, or `check:policy` dependency until a
+  later documentation burn-down makes the direct target green.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

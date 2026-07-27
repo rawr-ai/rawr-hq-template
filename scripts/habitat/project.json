@@ -84,7 +84,7 @@
         "{workspaceRoot}/.habitat/blueprints/typescript-source/require_imported_exports_have_jsdoc/**/*",
         "{workspaceRoot}/nx.json",
         "{projectRoot}/project.json",
-        "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
+        "{workspaceRoot}/@(apps|packages|plugins|resources|scripts|services|tools)/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
         "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/tsconfig.json",
         "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/package.json",
         "typescriptRuntime",
