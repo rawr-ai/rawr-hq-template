@@ -15,14 +15,17 @@
   authority; upstream repositories are observations, not automatic inputs.
 - The module does not select releases, package outputs, or converge native
   provider state.
-- Remote versioned-content observation remains behind its read-only resource;
-  local Git and filesystem transitions remain behind content-workspace.
+- Remote versioned-content facts, including exact materialized blob bytes,
+  remain behind their resource; local Git and filesystem transitions remain
+  behind content-workspace. Vendor policy does not reconstruct either
+  resource's mechanical validation.
 
 ## Behavior
 
 - The module compares admitted and upstream identities, honors held sources,
   rejects divergence or payload mismatch, materializes valid candidates, and
-  executes a bounded authoring transaction.
+  executes a bounded authoring transaction. It rejects an upstream that changes
+  between observation and materialization before authoring begins.
 
 ## Concepts
 

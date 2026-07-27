@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Resources Return Admitted Facts
+
+A ready resource owns the mechanical meaning of the facts it returns. For
+versioned content, a reported blob identifier and its materialized bytes are one
+resource fact. Recomputing that Git identity inside Vendor policy duplicates the
+provider and turns a contract-breaking test double into an admitted product
+state.
+
+Vendor still owns the semantic join between two independent resource calls. A
+ref can advance after observation and before materialization, so Vendor compares
+repository, ref, path, commit, tree, object format, and ordered entries before
+authoring. It also owns the root `SKILL.md` requirement, payload identity,
+provenance, and defensive byte cloning. Resource mechanics flow down once;
+module policy does not rebuild them.
+
+See
+[[resources/versioned-content/AGENTS|the versioned-content resource]],
+[[services/agent-plugin-lifecycle/src/service/modules/vendors/AGENTS|the Vendor module]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Resource, provider, fact, context, Vendor, policy, observe, materialize,
+identity, drift, payload, delete, narrow.
+
 ## 2026-07-26 - Provider Handlers Author Native Operations
 
 The native-provider resource owns command mechanics and live provider state.

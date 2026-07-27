@@ -302,6 +302,10 @@ export interface VersionedContentResource<R = never> {
     input: ObserveRemoteInput
   ) => Effect.Effect<RemoteContentTree, VersionedContentFailure, R>;
 
+  /**
+   * Materializes the selected tree with the exact bytes named by each reported
+   * blob identifier.
+   */
   readonly materializeRemote: (
     input: MaterializeRemoteInput
   ) => Effect.Effect<MaterializedRemoteContentTree, VersionedContentFailure, R>;
