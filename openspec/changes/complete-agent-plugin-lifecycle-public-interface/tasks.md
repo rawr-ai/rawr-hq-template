@@ -153,6 +153,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   canonical TypeBox syntax, empty baselines, and one Habitat-native runner.
   Burn the complete admitted corpus to green without adding a script, fork,
   exception, or compatibility grammar.
+- [x] 1.5k Keep the selected Habitat source-law batch one uncached,
+  independently schedulable Nx task. Preserve its twenty rules, one Habitat
+  acquisition, hooks, and public task graph. Do not invent a second file
+  enumerator or ignore synchronizer to bridge Nx and Habitat visibility. Prove
+  `.nxignore` cannot produce stale reuse, independent repository checks may run
+  beside the batch, and the 39-project/115-task check graph is unchanged.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation
