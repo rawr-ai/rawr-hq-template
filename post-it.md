@@ -6,6 +6,28 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-26 - Provider Results Are Policy
+
+A Provider router leaf exists only when it authors an oRPC operation. Aggregate
+classification, rejected-target projection, issue collection, and target
+ordering are inert module policy. Housing those decisions in a file named
+`result.router.ts` falsely suggests another operation surface and obscures the
+actual handlers.
+
+Move those decisions into the Provider model and delete the false router.
+Selected-content observation already has one policy owner, so callers use that
+owner directly rather than retaining a pass-through wrapper. Native observation
+and mutation remain the next separate operation-authorship cut.
+
+See
+[[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+Provider, router, operation, result, policy, projection, order, delete, narrow.
+
 ## 2026-07-26 - Provider Channels Author Selection
 
 Provider status and sync own governed channel selection. The host supplies one

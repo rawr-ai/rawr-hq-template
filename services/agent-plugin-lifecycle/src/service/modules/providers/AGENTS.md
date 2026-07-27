@@ -25,6 +25,9 @@
   bag, or workspace branch. Native observation and mutation still use the
   module's existing reconciliation functions until their separate
   operation-authorship cut.
+- Aggregate result classification, rejected-target projection, issue
+  collection, and target ordering are module policy. A router leaf authors an
+  oRPC operation; it is not a destination for detached result helpers.
 - Native-provider sessions supply observation and mutation mechanics; they are
   not a competing authority.
 - Disposable test convergence never retires unrelated installed content;

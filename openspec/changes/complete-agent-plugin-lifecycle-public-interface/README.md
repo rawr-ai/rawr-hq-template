@@ -1814,6 +1814,22 @@ ordering and fast-path oracles. No Personal repository, provider home, Oclif
 surface, Nx graph, Habitat policy, or live lifecycle state changed in this
 checkpoint.
 
+The Provider result-policy checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2n]]. A router leaf
+must author an oRPC operation. Target ordering, rejected-target projection,
+bounded issue collection, and aggregate classification are inert Provider
+policy, so this cut moves them into `model/policy/operation-result.ts` and
+deletes `router/result.router.ts`. It also deletes the pass-through selection
+observation wrapper and calls the existing selected-content policy directly.
+Native observation and mutation remain unchanged for the next atomic
+operation-authorship checkpoint.
+
+Proof is 280 lifecycle tests, production and test TypeScript checks, the
+Provider Habitat law, strict OpenSpec validation, Biome, and diff hygiene.
+Architecture, behavior-first testing, and TypeScript/structural standing
+reviews passed with no findings. No Personal repository, provider home, Oclif
+surface, Nx graph, Habitat policy, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

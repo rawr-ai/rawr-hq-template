@@ -20,12 +20,21 @@ import {
 } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
 import type { ProviderTestResult } from "../model/dto/provider-lifecycle";
+import type { SelectedContent } from "../model/dto/selected-content";
+import {
+  canonicalProviderTargets,
+  collectTargetIssues,
+  mutationClassification,
+  rejectedTargets,
+  sourceChangedTargets,
+} from "../model/policy/operation-result";
 import {
   constructSelectedContent,
   providerSelectionResolution,
   sameSelectedContent,
   selectedContentFromReleaseDerivationFailure,
   selectedContentFromSourceIssues,
+  selectedContentObservation,
   selectedContentRejected,
 } from "../model/policy/selected-content";
 import {
@@ -47,14 +56,6 @@ import {
   inspectProviderTargets,
   reconcileProviderTargets,
 } from "./reconcile.router";
-import {
-  canonicalProviderTargets,
-  collectTargetIssues,
-  mutationClassification,
-  rejectedTargets,
-  selectionObservation,
-  sourceChangedTargets,
-} from "./result.router";
 
 /**
  * Authors disposable Provider convergence from exact local Git content.
@@ -357,26 +358,26 @@ export const test = module.test.effect(function* ({ context, input: request }) {
 });
 
 function completeResult(
-  content: Parameters<typeof selectionObservation>[0],
+  content: SelectedContent,
   targets: ProviderTestResult["targets"]
 ): ProviderTestResult {
   return {
     operation: "test",
     classification: mutationClassification(targets),
-    selection: selectionObservation(content),
+    selection: selectedContentObservation(content),
     targets,
     issues: collectTargetIssues(targets),
   };
 }
 
 function blockedResult(
-  content: Parameters<typeof selectionObservation>[0],
+  content: SelectedContent,
   targets: ProviderTestResult["targets"]
 ): ProviderTestResult {
   return {
     operation: "test",
     classification: "Blocked",
-    selection: selectionObservation(content),
+    selection: selectedContentObservation(content),
     targets,
     issues: collectTargetIssues(targets),
   };

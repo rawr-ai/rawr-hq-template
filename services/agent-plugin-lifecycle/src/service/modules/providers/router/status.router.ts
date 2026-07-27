@@ -17,10 +17,16 @@ import {
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
 import type { ProviderStatusResult } from "../model/dto/provider-lifecycle";
 import {
+  canonicalProviderTargets,
+  collectTargetIssues,
+  rejectedStatusTargets,
+} from "../model/policy/operation-result";
+import {
   constructSelectedContent,
   providerIssue,
   providerSelectionResolution,
   selectedContentFromReleaseDerivationFailure,
+  selectedContentObservation,
 } from "../model/policy/selected-content";
 import {
   CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS,
@@ -45,12 +51,6 @@ import {
 } from "../model/policy/source-interface";
 import { module } from "../module";
 import { inspectProviderTargets, statusTargetResult } from "./reconcile.router";
-import {
-  canonicalProviderTargets,
-  collectTargetIssues,
-  rejectedStatusTargets,
-  selectionObservation,
-} from "./result.router";
 
 /**
  * Authors read-only Provider status from one complete governed channel
@@ -331,7 +331,7 @@ export const status = module.status.effect(function* ({ context, input }) {
   return {
     operation: "status",
     classification,
-    selection: selectionObservation(selected.content),
+    selection: selectedContentObservation(selected.content),
     targets,
     issues: collectTargetIssues(targets),
   } satisfies ProviderStatusResult;

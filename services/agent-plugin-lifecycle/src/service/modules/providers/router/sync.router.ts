@@ -17,11 +17,19 @@ import {
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
 import type { ProviderSyncRequest, ProviderSyncResult } from "../model/dto/provider-lifecycle";
 import {
+  canonicalProviderTargets,
+  collectTargetIssues,
+  mutationClassification,
+  rejectedTargets,
+  sourceChangedTargets,
+} from "../model/policy/operation-result";
+import {
   constructSelectedContent,
   providerIssue,
   providerSelectionResolution,
   sameSelectedContent,
   selectedContentFromReleaseDerivationFailure,
+  selectedContentObservation,
 } from "../model/policy/selected-content";
 import {
   CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS,
@@ -53,14 +61,6 @@ import {
   inspectProviderTargets,
   reconcileProviderTargets,
 } from "./reconcile.router";
-import {
-  canonicalProviderTargets,
-  collectTargetIssues,
-  mutationClassification,
-  rejectedTargets,
-  selectionObservation,
-  sourceChangedTargets,
-} from "./result.router";
 
 /**
  * Authors canonical Provider convergence from a lazily repeated governed
@@ -360,7 +360,7 @@ export const sync = module.sync.effect(function* ({ context, input }) {
     return {
       operation: "sync",
       classification: mutationClassification(targets),
-      selection: selectionObservation(selected.content),
+      selection: selectedContentObservation(selected.content),
       targets,
       issues: collectTargetIssues(targets),
     } satisfies ProviderSyncResult;
@@ -370,7 +370,7 @@ export const sync = module.sync.effect(function* ({ context, input }) {
     return {
       operation: "sync",
       classification: "Converged",
-      selection: selectionObservation(selected.content),
+      selection: selectedContentObservation(selected.content),
       targets,
       issues: collectTargetIssues(targets),
     } satisfies ProviderSyncResult;
@@ -385,7 +385,7 @@ export const sync = module.sync.effect(function* ({ context, input }) {
     return {
       operation: "sync",
       classification: "Blocked",
-      selection: selectionObservation(selected.content),
+      selection: selectedContentObservation(selected.content),
       targets,
       issues: collectTargetIssues(targets),
     } satisfies ProviderSyncResult;
@@ -403,7 +403,7 @@ export const sync = module.sync.effect(function* ({ context, input }) {
     return {
       operation: "sync",
       classification: mutationClassification(targets),
-      selection: selectionObservation(revalidated.content),
+      selection: selectedContentObservation(revalidated.content),
       targets,
       issues: collectTargetIssues(targets),
     } satisfies ProviderSyncResult;
@@ -416,7 +416,7 @@ export const sync = module.sync.effect(function* ({ context, input }) {
   return {
     operation: "sync",
     classification: mutationClassification(targets),
-    selection: selectionObservation(revalidated.content),
+    selection: selectedContentObservation(revalidated.content),
     targets,
     issues: collectTargetIssues(targets),
   } satisfies ProviderSyncResult;
