@@ -1965,6 +1965,28 @@ findings. No resource, provider, result algebra, parser authority, Habitat law,
 Oclif surface, Personal repository, native command, or live lifecycle state
 changed.
 
+The internal release-result ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2u]]. The generic
+success-or-failure algebra now has one service-root DTO leaf, while its plain
+constructors and nonempty narrowing have one service-root policy leaf. Concrete
+caller-facing operation results remain bounded TypeBox contracts in their
+owning modules; no generic transport schema was introduced. Every consumer
+imports the direct owner, and `shared/release/result.ts`, its barrel export,
+and the redundant exported tuple name are deleted without an alias or
+compatibility face.
+
+Owner-local tests lock both discriminants, `never` branch inference, nonempty
+failure typing, diagnostic order, exact object shape, identity preservation,
+and existing unfrozen behavior. The focused release corpus passes 37 cases;
+the complete lifecycle suite passes 302 cases across 33 files. Production and
+test TypeScript checks, Biome on all 18 affected TypeScript files, strict
+OpenSpec validation, diff hygiene, and standing architecture/oRPC,
+behavior-first testing, and TypeScript/TypeBox/structural reviews pass without
+an unresolved P0, P1, P2, or P3 finding. The repository check passed 39
+projects and 76 dependency tasks, including all 17 enforced Habitat laws with
+zero findings. No public result, resource, provider, parser, Oclif surface,
+Personal repository, native command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

@@ -4,9 +4,9 @@ import { Refine, type Static, type TSchema, Type } from "typebox";
 import { Value } from "typebox/value";
 
 import type { ReleaseIssue, ReleaseIssueCode } from "../../model/dto/release-issue";
+import type { ReleaseResult } from "../../model/dto/release-result";
 import { releaseIssue } from "../../model/policy/release-issue";
-
-import { failure, type ReleaseResult, success } from "./result";
+import { failure, success } from "../../model/policy/release-result";
 
 declare const contentAuthorityBrand: unique symbol;
 declare const repositoryIdentityBrand: unique symbol;

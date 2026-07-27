@@ -2,8 +2,10 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
 import type { ReleaseIssue } from "../../model/dto/release-issue";
+import type { ReleaseResult } from "../../model/dto/release-result";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
+import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 import {
   type CanonicalJsonValue,
   canonicalJsonLine,
@@ -57,7 +59,6 @@ import {
   ReleaseRelativePathSchema,
   releaseInputDigest,
 } from "./primitives";
-import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginReleaseInputBrand: unique symbol;
 declare const completenessWitnessBrand: unique symbol;

@@ -6,11 +6,11 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
   type ReleaseRelativePath,
-  type ReleaseResult,
   type RepositoryIdentity,
 } from "../../shared/release";
 import { releaseIssue } from "../policy/release-issue";
 import type { ReleaseIssue } from "./release-issue";
+import type { ReleaseResult } from "./release-result";
 
 declare const canonicalRefBrand: unique symbol;
 declare const gitBlobIdBrand: unique symbol;

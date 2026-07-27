@@ -1,7 +1,9 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import type { ReleaseIssue } from "../../model/dto/release-issue";
+import type { ReleaseResult } from "../../model/dto/release-result";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
+import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 
 import {
   type CanonicalJsonValue,
@@ -30,7 +32,6 @@ import {
   type ReleaseRelativePath,
   ReleaseRelativePathSchema,
 } from "./primitives";
-import { asNonEmpty, failure, type ReleaseResult, success } from "./result";
 
 declare const agentPluginPayloadBrand: unique symbol;
 

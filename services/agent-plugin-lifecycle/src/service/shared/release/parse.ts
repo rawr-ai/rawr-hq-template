@@ -1,7 +1,6 @@
 import type { ReleaseIssue, ReleaseIssueCode } from "../../model/dto/release-issue";
+import type { ReleaseResult } from "../../model/dto/release-result";
 import { releaseIssue } from "../../model/policy/release-issue";
-
-import type { ReleaseResult } from "./result";
 
 const encoder = new TextEncoder();
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;

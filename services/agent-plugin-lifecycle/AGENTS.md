@@ -22,7 +22,10 @@
   classification, declared-tree validation, release derivation, and release
   diagnostics only where those meanings span capability modules. Its TypeBox
   DTOs define diagnostic structure; its policy bounds construction and
-  canonical ordering. Providers owns selected-content structure,
+  canonical ordering. Its generic release-result DTO and policy own only the
+  internal computation discriminant, construction, and nonempty narrowing;
+  concrete caller-facing result schemas remain with their operation modules.
+  Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module
   consumes those meanings. Provider status, sync, and disposable test handlers

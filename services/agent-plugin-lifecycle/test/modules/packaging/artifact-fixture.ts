@@ -1,3 +1,4 @@
+import type { ReleaseResult } from "../../../src/service/model/dto/release-result";
 import {
   type AgentPluginPayload,
   type AgentPluginRelease,
@@ -8,7 +9,6 @@ import {
   createAgentPluginRelease,
   createAgentPluginReleaseInput,
   createAgentPluginReleaseSet,
-  type ReleaseResult,
 } from "../../../src/service/shared/release/index";
 
 const encoder = new TextEncoder();

@@ -1,7 +1,7 @@
 import type { ReleaseIssue } from "../../model/dto/release-issue";
+import type { ReleaseResult } from "../../model/dto/release-result";
 import { releaseIssue } from "../../model/policy/release-issue";
-
-import { failure, type ReleaseResult, success } from "./result";
+import { failure, success } from "../../model/policy/release-result";
 
 export type CanonicalJsonValue =
   | null

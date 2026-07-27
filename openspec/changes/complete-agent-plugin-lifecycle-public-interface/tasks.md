@@ -949,6 +949,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and vocabulary while making construction schema-total, immutable, bounded,
   and traversal-independent. Keep module-specific issues in their modules and
   add no result, parser, resource, provider, Habitat-law, or runtime change.
+- [x] 5.7e2u Give the service-wide internal release-result algebra direct DTO
+  and policy owners. Keep the generic discriminated union separate from every
+  module-owned TypeBox transport result; preserve value and issue identity,
+  diagnostic order, plain-object mutability, nonempty failure typing, and
+  `never` branch inference. Delete `shared/release/result.ts`, its barrel
+  exports, and the redundant exported tuple name without an alias,
+  compatibility face, schema factory, resource, provider, or runtime change.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
