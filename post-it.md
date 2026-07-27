@@ -6,6 +6,35 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Raw Value Admission Is Not A Schema
+
+TypeBox remains the structural authority for release contracts. Before those
+aggregate contracts can be checked, release policy still needs bounded
+traversal and the established field-level diagnostic vocabulary for raw
+JavaScript values. That narrower meaning has one direct value-admission policy
+owner; it is not a second schema, parser framework, or generic validation
+surface.
+
+The successful-or-failed result eliminator belongs with the release-result
+algebra because it preserves a successful value by identity or appends failed
+diagnostics by identity and order. Consumers import both exact owners directly.
+The old `shared/release/parse.ts` grouping is deleted without a barrel, alias,
+facade, or compatibility path.
+
+This checkpoint changes no TypeBox schema, primitive, digest, resource,
+provider, runtime, router, oRPC surface, or public result.
+
+See
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-value-admission|the value-admission policy]],
+[[services/agent-plugin-lifecycle/src/service/model/policy/release-result|the release-result policy]],
+and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+
+### Bag Of Keywords
+
+value, admission, result, bound, diagnostic, schema, policy, identity, order,
+direct, delete.
+
 ## 2026-07-27 - Distribution Ownership Has Direct Owners
 
 Distribution ownership is inert service-wide release meaning used by

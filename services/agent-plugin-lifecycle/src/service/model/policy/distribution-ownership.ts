@@ -1,5 +1,4 @@
 import { Value } from "typebox/value";
-import { parseBoundedArray } from "../../shared/release/parse";
 import {
   MAX_OWNERSHIP_CLAIMS,
   OWNERSHIP_INDEX_SCHEMA_VERSION,
@@ -20,6 +19,7 @@ import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, failure, success } from "./release-result";
+import { parseBoundedArray } from "./release-value-admission";
 
 /** Synthesizes plugin claims and admits one complete, conflict-free ownership index. */
 export function createDistributionOwnershipIndex(

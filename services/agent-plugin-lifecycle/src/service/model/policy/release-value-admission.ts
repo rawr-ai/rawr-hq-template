@@ -1,11 +1,23 @@
-import type { ReleaseIssue, ReleaseIssueCode } from "../../model/dto/release-issue";
-import type { ReleaseResult } from "../../model/dto/release-result";
-import { releaseIssue } from "../../model/policy/release-issue";
+import type { ReleaseIssue, ReleaseIssueCode } from "../dto/release-issue";
+import { releaseIssue } from "./release-issue";
 
 const encoder = new TextEncoder();
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
 
-export function isExactRecord(
+/**
+ * Accumulates closed-record field diagnostics while admitting an object for traversal.
+ *
+ * Unknown fields are reported in object-key order before missing fields in the
+ * supplied key order. Any non-null, non-array object remains traversable even
+ * when those field diagnostics were appended to the caller-owned collection.
+ *
+ * @param value Raw value to inspect.
+ * @param keys Exact field names admitted by the owning record.
+ * @param path Base path used to qualify field diagnostics.
+ * @param issues Ordered destination for admission diagnostics.
+ * @returns Whether the value is a non-null, non-array object.
+ */
+export function admitClosedRecordForTraversal(
   value: unknown,
   keys: readonly string[],
   path: string,
@@ -29,6 +41,18 @@ export function isExactRecord(
   return true;
 }
 
+/**
+ * Admits a raw array for bounded traversal.
+ *
+ * An over-limit array contributes one diagnostic and yields only its bounded
+ * prefix, preserving the established traversal ceiling.
+ *
+ * @param value Raw value to inspect.
+ * @param path Path used for array-shape and count diagnostics.
+ * @param limit Maximum number of values admitted for traversal.
+ * @param issues Ordered destination for admission diagnostics.
+ * @returns The bounded array prefix, or `undefined` when the value is not an array.
+ */
 export function parseBoundedArray(
   value: unknown,
   path: string,
@@ -50,6 +74,19 @@ export function parseBoundedArray(
   return value.slice(0, limit);
 }
 
+/**
+ * Admits a string that satisfies canonical text and caller-owned field policy.
+ *
+ * Admission enforces UTF-8 byte bounds, NFC normalization, control-character
+ * exclusion, and an optional pattern without replacing structural schema
+ * authority.
+ *
+ * @param value Raw value to inspect.
+ * @param path Path used for string-shape and canonicality diagnostics.
+ * @param issues Ordered destination for admission diagnostics.
+ * @param options Byte bounds plus optional diagnostic-code and pattern constraints.
+ * @returns The original admitted string, or `undefined` after a diagnostic.
+ */
 export function parseCanonicalString(
   value: unknown,
   path: string,
@@ -86,6 +123,14 @@ export function parseCanonicalString(
   return value;
 }
 
+/**
+ * Admits a raw value only when it is a JavaScript safe integer.
+ *
+ * @param value Raw value to inspect.
+ * @param path Path used for the integer diagnostic.
+ * @param issues Ordered destination for admission diagnostics.
+ * @returns The admitted number, or `undefined` after a diagnostic.
+ */
 export function parseInteger(
   value: unknown,
   path: string,
@@ -96,12 +141,4 @@ export function parseInteger(
     return undefined;
   }
   return value;
-}
-
-export function collect<T, E>(result: ReleaseResult<T, E>, issues: E[]): T | undefined {
-  if (!result.ok) {
-    issues.push(...result.issues);
-    return undefined;
-  }
-  return result.value;
 }

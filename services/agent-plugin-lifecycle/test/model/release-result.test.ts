@@ -1,7 +1,12 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type { ReleaseResult } from "../../src/service/model/dto/release-result";
-import { asNonEmpty, failure, success } from "../../src/service/model/policy/release-result";
+import {
+  asNonEmpty,
+  collectReleaseResult,
+  failure,
+  success,
+} from "../../src/service/model/policy/release-result";
 
 describe("release result model", () => {
   it("preserves the successful value and the plain discriminated shape", () => {
@@ -36,6 +41,23 @@ describe("release result model", () => {
     expect(asNonEmpty([])).toBeUndefined();
     expect(narrowed).toBe(issues);
     expect(narrowed).toEqual(["first", "second"]);
+  });
+
+  it("collects a successful value or appends failed issues by identity and order", () => {
+    const value = { pluginId: "alpha" };
+    const existing = { code: "existing" };
+    const first = { code: "first" };
+    const second = { code: "second" };
+    const issues = [existing];
+    const succeeded: ReleaseResult<typeof value, { code: string }> = success(value);
+    const failed = failure([first, second] as const);
+
+    expect(collectReleaseResult(succeeded, issues)).toBe(value);
+    expect(issues).toEqual([existing]);
+    expect(collectReleaseResult(failed, issues)).toBeUndefined();
+    expect(issues).toEqual([existing, first, second]);
+    expect(issues[1]).toBe(first);
+    expect(issues[2]).toBe(second);
   });
 
   it("makes empty failure diagnostics unrepresentable", () => {
