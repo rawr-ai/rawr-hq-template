@@ -5,8 +5,8 @@ import {
   parseProvenanceBindings,
   provenanceBindingValue,
 } from "../../src/service/model/policy/provenance-binding";
+import { contentDigest } from "../../src/service/model/policy/release-digest";
 import { releaseIssue } from "../../src/service/model/policy/release-issue";
-import { contentDigest } from "../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 

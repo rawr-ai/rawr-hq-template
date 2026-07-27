@@ -2,12 +2,13 @@ import { type Static, type TSchema } from "typebox";
 import { Value } from "typebox/value";
 
 import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
+import type { ContentDigest } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import {
   canonicalJsonLine,
   decodeCanonicalJson,
 } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
-import { contentDigest } from "#agent-plugin-lifecycle-service/shared/release/primitives";
+import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
 import {
   type VendorLockRecord,
   VendorLockRecordSchema,
@@ -125,7 +126,7 @@ export function encodeVendorLockRecord(value: VendorLockRecord): Uint8Array {
  * Derives the stable payload identity shared by remote observation, local
  * destination verification, provenance, and authoring policy.
  */
-export function vendorPayloadDigest(entries: readonly VendorPayloadDigestEntry[]): string {
+export function vendorPayloadDigest(entries: readonly VendorPayloadDigestEntry[]): ContentDigest {
   return contentDigest(
     canonicalJsonLine(
       entries.map((entry) => ({

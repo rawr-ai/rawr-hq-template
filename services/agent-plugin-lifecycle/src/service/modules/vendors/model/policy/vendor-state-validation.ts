@@ -1,4 +1,5 @@
 import { Value } from "typebox/value";
+import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
@@ -12,7 +13,6 @@ import {
   CANONICAL_ABSOLUTE_PATH_PATTERN,
   NORMALIZED_RELATIVE_PATH_PATTERN,
   QUALIFIED_HEAD_REF_PATTERN,
-  SHA256_DIGEST_PATTERN,
   STRICT_UTC_RFC3339_PATTERN,
   VendorLockRecordSchema,
   VendorProvenanceRecordSchema,
@@ -30,7 +30,8 @@ import { vendorIssue } from "./vendor-policy-result";
 const canonicalAbsolutePath = new RegExp(CANONICAL_ABSOLUTE_PATH_PATTERN, "u");
 const normalizedRelativePath = new RegExp(NORMALIZED_RELATIVE_PATH_PATTERN, "u");
 const qualifiedHeadRef = new RegExp(QUALIFIED_HEAD_REF_PATTERN, "u");
-const sha256Digest = new RegExp(SHA256_DIGEST_PATTERN, "u");
+const VENDOR_WORKSPACE_READ_TOKEN_PATTERN = "^sha256_[0-9a-f]{64}$";
+const vendorWorkspaceReadToken = new RegExp(VENDOR_WORKSPACE_READ_TOKEN_PATTERN, "u");
 const strictUtcRfc3339 = new RegExp(STRICT_UTC_RFC3339_PATTERN, "u");
 
 export function vendorWorkspaceIssue(
@@ -83,7 +84,7 @@ export function vendorWorkspaceIssue(
   if (
     actual.releaseInputPath !== expected.releaseInputPath ||
     observation.workspaceIdentity.root !== expected.locator ||
-    !sha256Digest.test(observation.readToken)
+    !vendorWorkspaceReadToken.test(observation.readToken)
   ) {
     return vendorIssue(
       "UnsupportedLayout",
@@ -319,7 +320,7 @@ export function validVendorIdentity(identity: VendorSourceIdentity): boolean {
     qualifiedHeadRef.test(identity.refName) &&
     Value.Check(GitCommitIdSchema, identity.sourceCommit) &&
     Value.Check(GitTreeIdSchema, identity.sourceTree) &&
-    sha256Digest.test(identity.payloadDigest)
+    Value.Check(ContentDigestSchema, identity.payloadDigest)
   );
 }
 

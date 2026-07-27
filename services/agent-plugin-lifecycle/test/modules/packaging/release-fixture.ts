@@ -6,8 +6,8 @@ import type { ReleaseResult } from "../../../src/service/model/dto/release-resul
 import { createAgentPluginPayload } from "../../../src/service/model/policy/agent-plugin-payload";
 import { createAgentPluginRelease } from "../../../src/service/model/policy/agent-plugin-release";
 import { createAgentPluginReleaseSet } from "../../../src/service/model/policy/agent-plugin-release-set";
+import { contentDigest } from "../../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../../src/service/model/policy/release-input";
-import { contentDigest } from "../../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 const SOURCE = Object.freeze({

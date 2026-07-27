@@ -1,10 +1,5 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 import {
-  ContentDigestSchema,
-  PayloadDigestSchema,
-  ReleaseInputDigestSchema,
-} from "../../shared/release/primitives";
-import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   PAYLOAD_PROTOCOL_VERSION,
   PayloadManifestEntrySchema,
@@ -14,6 +9,11 @@ import {
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
 } from "./distribution-ownership";
+import {
+  ContentDigestSchema,
+  PayloadDigestSchema,
+  ReleaseInputDigestSchema,
+} from "./release-digest";
 import {
   ContentAuthoritySchema,
   OwnershipIdentitySchema,

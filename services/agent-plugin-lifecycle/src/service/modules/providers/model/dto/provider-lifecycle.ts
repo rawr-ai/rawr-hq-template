@@ -7,6 +7,10 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
 import {
+  ReleaseInputDigestSchema,
+  ReleaseSetDigestSchema,
+} from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
@@ -18,10 +22,6 @@ import {
   EmptyReadonlyArray,
   NonEmptyReadonlyArray,
 } from "#agent-plugin-lifecycle-service/model/dto/structural";
-import {
-  ReleaseInputDigestSchema,
-  ReleaseSetDigestSchema,
-} from "#agent-plugin-lifecycle-service/shared/release/primitives";
 import { hasStrictDescendantHomes } from "../policy/disposable-root";
 
 const MAX_TARGETS = 16;

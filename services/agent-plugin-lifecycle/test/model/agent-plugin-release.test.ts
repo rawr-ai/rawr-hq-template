@@ -20,8 +20,8 @@ import {
   canonicalSerializeAgentPluginRelease,
   canonicalSerializeAgentPluginReleaseBody,
 } from "../../src/service/model/policy/agent-plugin-release-codec";
+import { releaseDigest } from "../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
-import { releaseDigest } from "../../src/service/shared/release/primitives";
 import { must, productFixture, releaseInputBody, SOURCE } from "../shared/release/fixtures";
 
 const encoder = new TextEncoder();

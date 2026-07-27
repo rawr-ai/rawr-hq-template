@@ -1,6 +1,6 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import { ReleaseInputDigestSchema } from "../../shared/release/primitives";
 import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
+import { ReleaseInputDigestSchema } from "./release-digest";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,

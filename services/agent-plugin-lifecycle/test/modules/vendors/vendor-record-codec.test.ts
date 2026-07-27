@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseContentDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseGitCommitId,
   parseGitTreeId,
@@ -29,7 +30,7 @@ const identity: VendorSourceIdentity = Object.freeze({
   refName: "refs/heads/main",
   sourceCommit: parsed(parseGitCommitId("a".repeat(40))),
   sourceTree: parsed(parseGitTreeId("b".repeat(40))),
-  payloadDigest: `sha256_${"c".repeat(64)}`,
+  payloadDigest: parsed(parseContentDigest(`sha256_${"c".repeat(64)}`)),
 });
 
 const declaration: VendorSourceDeclaration = Object.freeze({

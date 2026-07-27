@@ -1,5 +1,6 @@
 import { type Static, Type } from "typebox";
 
+import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
@@ -9,7 +10,6 @@ export const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1" as const;
 export const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1" as const;
 export const VENDOR_LOCK_PROTOCOL = "rawr-vendor-lock@v1" as const;
 
-export const SHA256_DIGEST_PATTERN = "^sha256_[0-9a-f]{64}$";
 export const SOURCE_ID_PATTERN = "^[a-z0-9](?:[a-z0-9-]{0,126}[a-z0-9])?$";
 const VENDOR_REPOSITORY_LOCATOR_PATTERN = "^[A-Za-z0-9][A-Za-z0-9._:@/+\\-]{0,511}$";
 export const QUALIFIED_HEAD_REF_PATTERN =
@@ -48,7 +48,6 @@ export const SourceIdSchema = Type.String({
   maxLength: 128,
   pattern: SOURCE_ID_PATTERN,
 });
-export const Sha256DigestSchema = Type.String({ pattern: SHA256_DIGEST_PATTERN });
 export const PositiveCurationRevisionSchema = Type.Integer({
   minimum: 1,
   maximum: Number.MAX_SAFE_INTEGER,
@@ -70,7 +69,7 @@ export const VendorSourceIdentitySchema = Type.Object(
     refName: QualifiedHeadRefSchema,
     sourceCommit: GitCommitIdSchema,
     sourceTree: GitTreeIdSchema,
-    payloadDigest: Sha256DigestSchema,
+    payloadDigest: ContentDigestSchema,
   },
   { additionalProperties: false }
 );
@@ -83,7 +82,7 @@ export const VendorRecordBindingSchema = Type.Object(
       Type.Literal(VENDOR_PROVENANCE_PROTOCOL),
       Type.Literal(VENDOR_LOCK_PROTOCOL),
     ]),
-    contentDigest: Sha256DigestSchema,
+    contentDigest: ContentDigestSchema,
   },
   { additionalProperties: false }
 );
@@ -119,7 +118,7 @@ export const VendorProvenanceRecordSchema = Type.Object(
     schemaVersion: Type.Literal(1),
     sourceId: SourceIdSchema,
     admitted: VendorSourceIdentitySchema,
-    importedPayloadDigest: Sha256DigestSchema,
+    importedPayloadDigest: ContentDigestSchema,
     curationRevision: PositiveCurationRevisionSchema,
     supportedBaseline: SupportedBaselineSchema,
     observedLatest: VendorSourceIdentitySchema,

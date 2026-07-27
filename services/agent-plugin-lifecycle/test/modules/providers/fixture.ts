@@ -31,6 +31,10 @@ import { createAgentPluginRelease } from "../../../src/service/model/policy/agen
 import { createAgentPluginReleaseSet } from "../../../src/service/model/policy/agent-plugin-release-set";
 import { canonicalSerializeCurrentMainRecord } from "../../../src/service/model/policy/current-main-record";
 import {
+  contentDigest,
+  parseReleaseDigest,
+} from "../../../src/service/model/policy/release-digest";
+import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
@@ -48,7 +52,6 @@ import type {
   ProviderTestRequest,
 } from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
 import type { SelectedContent } from "../../../src/service/modules/providers/model/dto/selected-content";
-import { contentDigest, parseReleaseDigest } from "../../../src/service/shared/release/primitives";
 import {
   createLifecycleTestClient,
   testInvocation,

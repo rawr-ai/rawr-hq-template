@@ -9,6 +9,7 @@ import {
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../../../src/service/model/dto/current-main-selection";
+import { parseReleaseInputDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -27,7 +28,6 @@ import {
   CurrentMainSelectionResultSchema,
 } from "../../../src/service/modules/governance/model/dto/current-main-selection";
 import { encodeCurrentMainBodyV3 } from "../../../src/service/modules/governance/model/policy/current-main-record";
-import { parseReleaseInputDigest } from "../../../src/service/shared/release/primitives";
 
 describe("governance procedure schema boundary", () => {
   it("derives the public selection and result types from TypeBox", () => {

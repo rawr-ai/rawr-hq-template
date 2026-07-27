@@ -1,11 +1,7 @@
 import { Value } from "typebox/value";
-import {
-  parsePayloadDigest,
-  parseReleaseInputDigest,
-  type ReleaseInputDigest,
-} from "../../shared/release/primitives";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import type { DistributionOwnershipIndex } from "../dto/distribution-ownership";
+import type { ReleaseInputDigest } from "../dto/release-digest";
 import {
   type CompletenessWitness,
   CompletenessWitnessRecordSchema,
@@ -16,6 +12,7 @@ import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { ownershipIndexValue, parseDistributionOwnershipIndex } from "./distribution-ownership";
+import { parsePayloadDigest, parseReleaseInputDigest } from "./release-digest";
 import { parsePluginId } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";

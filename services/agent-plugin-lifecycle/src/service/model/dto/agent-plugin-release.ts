@@ -1,10 +1,4 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
-
-import {
-  PayloadDigestSchema,
-  ReleaseDigestSchema,
-  ReleaseInputDigestSchema,
-} from "../../shared/release/primitives";
 import {
   type AgentPluginPayload,
   AgentPluginPayloadRecordSchema,
@@ -13,6 +7,11 @@ import {
   PayloadManifestEntrySchema,
 } from "./agent-plugin-payload";
 import { MAX_OWNERSHIP_CLAIMS } from "./distribution-ownership";
+import {
+  PayloadDigestSchema,
+  ReleaseDigestSchema,
+  ReleaseInputDigestSchema,
+} from "./release-digest";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,

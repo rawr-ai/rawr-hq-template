@@ -71,8 +71,12 @@
   one direct TypeBox DTO owner; one matching policy owns exact diagnostic
   admission. Current-main Git structure remains with its qualified DTO while
   its parsing and construction belong to the matching policy. The identity
-  alias facade is deleted. The residual transitional `shared/release` leaf
-  contains digest meaning only, awaiting its complete owner-sized cut.
+  alias facade is deleted. Content, release-input, payload, individual-release,
+  and complete-set digest structure and generated branded types have one direct
+  TypeBox DTO owner; one matching policy owns exact diagnostic admission and
+  deterministic byte construction. Consumers import those exact leaves.
+  Production `service/shared` is deleted rather than preserved as a barrel,
+  facade, generic digest framework, persistence owner, or lookup boundary.
   Vendor workspace requests consume those service-wide identities. Vendor
   upstream records instead carry a qualified versioned-content repository
   locator plus the service-wide exact commit and tree identities; a locator is
