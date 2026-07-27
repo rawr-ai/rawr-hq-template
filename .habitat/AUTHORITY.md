@@ -49,10 +49,10 @@ thirteen independent source axes:
    `module.ts`-to-`impl.ts` branch edge and
    named-middleware-to-base-factory edge; it does not reach upward or sideways
    for other implementation.
-7. Module router handlers remain operation authoring sites; a router index
-   only composes completed operation leaves and semantic groups.
-8. Every model kind has one private index of explicit direct-sibling exports;
-   model leaves keep concrete same-owner dependencies visible.
+7. Named module router files remain operation authoring sites; module
+   `router.ts` only composes completed operation leaves and semantic groups.
+8. Every model fact has one direct semantic leaf. Model indexes are
+   inadmissible so concrete same-owner dependencies remain visible.
 9. Every private service or API alias maps to its owner's `src/service`
    interior rather than creating another public package surface.
 10. Module-local imports use normalized relative paths. Module code reserves
