@@ -6,6 +6,7 @@ import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
 import { equalBytes } from "../../model/helpers/byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "../../model/policy/canonical-json";
+import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
@@ -27,7 +28,6 @@ import {
   type ContentAuthority,
   ContentAuthoritySchema,
   ContentDigestSchema,
-  compareCanonicalText,
   MAX_CANONICAL_ID_BYTES,
   MAX_OWNERSHIP_CLAIMS,
   MAX_PAYLOAD_BYTES_PER_MEMBER,

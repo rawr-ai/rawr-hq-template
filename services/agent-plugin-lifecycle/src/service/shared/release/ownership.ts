@@ -3,11 +3,11 @@ import { Value } from "typebox/value";
 import type { CanonicalJsonValue } from "../../model/dto/canonical-json";
 import type { ReleaseIssue } from "../../model/dto/release-issue";
 import type { ReleaseResult } from "../../model/dto/release-result";
+import { compareCanonicalText } from "../../model/policy/canonical-text-ordering";
 import { releaseIssue, sortReleaseIssues } from "../../model/policy/release-issue";
 import { asNonEmpty, failure, success } from "../../model/policy/release-result";
 import { parseBoundedArray } from "./parse";
 import {
-  compareCanonicalText,
   MAX_OWNERSHIP_CLAIMS,
   OWNERSHIP_INDEX_SCHEMA_VERSION,
   OwnershipIdentitySchema,

@@ -3,6 +3,7 @@ import type {
   PackageArchiveEntry,
 } from "@rawr/resource-agent-plugin-package-output";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import {
   type AgentPluginRelease,
   contentDigest,
@@ -70,7 +71,7 @@ function collectCoworkEntries(selection: DerivedReleaseSelection): readonly Pack
         : `plugins/${release.artifactBody.releaseBody.pluginId}/`
     )
   );
-  entries.sort((left, right) => compareUtf8(left.path, right.path));
+  entries.sort((left, right) => compareCanonicalText(left.path, right.path));
   for (let index = 1; index < entries.length; index += 1) {
     if (entries[index - 1]?.path === entries[index]?.path) {
       throw new Error(`Cowork package contains duplicate entry ${entries[index]?.path ?? ""}`);
@@ -151,7 +152,10 @@ function verifiedSelectionReleases(
     throw new Error("Targeted packaging requires exactly one release");
   }
   const releases = [...selection.releases].sort((left, right) =>
-    compareUtf8(left.artifactBody.releaseBody.pluginId, right.artifactBody.releaseBody.pluginId)
+    compareCanonicalText(
+      left.artifactBody.releaseBody.pluginId,
+      right.artifactBody.releaseBody.pluginId
+    )
   );
   if (selection.releaseSet !== undefined) {
     const verification = verifyCompleteReleaseSet(selection.releaseSet, releases);
@@ -181,17 +185,6 @@ function assertPayloadEntry(
   if (bytes.byteLength !== expectedByteLength || contentDigest(bytes) !== expectedDigest) {
     throw new Error(`Release contains mismatched bytes for ${path}`);
   }
-}
-
-function compareUtf8(left: string, right: string): number {
-  const leftBytes = utf8Bytes(left);
-  const rightBytes = utf8Bytes(right);
-  const length = Math.min(leftBytes.byteLength, rightBytes.byteLength);
-  for (let index = 0; index < length; index += 1) {
-    const difference = leftBytes[index]! - rightBytes[index]!;
-    if (difference !== 0) return difference;
-  }
-  return leftBytes.byteLength - rightBytes.byteLength;
 }
 
 function utf8Bytes(value: string): Uint8Array {

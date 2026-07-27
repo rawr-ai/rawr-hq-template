@@ -2,12 +2,8 @@ import {
   type SourceEligibilityIssue,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import {
-  compareCanonicalText,
-  type PluginId,
-  parsePluginId,
-  type ReleaseRelativePath,
-} from "../../shared/release";
+import { type PluginId, parsePluginId, type ReleaseRelativePath } from "../../shared/release";
+import { compareCanonicalText } from "./canonical-text-ordering";
 
 /**
  * Rejects undeclared or noncanonical direct children beneath the declared

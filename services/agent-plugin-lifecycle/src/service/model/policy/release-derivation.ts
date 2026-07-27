@@ -1,4 +1,3 @@
-import { compareCanonicalText } from "../../shared/release/primitives";
 import { type AgentPluginRelease, createAgentPluginRelease } from "../../shared/release/release";
 import { createAgentPluginReleaseSet } from "../../shared/release/release-set";
 import type {
@@ -7,6 +6,7 @@ import type {
   ReleaseDerivationSelection,
   ReleaseDerivationSource,
 } from "../dto/release-derivation";
+import { compareCanonicalText } from "./canonical-text-ordering";
 
 /**
  * Constructs the selected in-memory release artifacts from one exact content

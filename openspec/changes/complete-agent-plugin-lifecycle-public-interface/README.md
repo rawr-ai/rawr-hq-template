@@ -2008,6 +2008,25 @@ tasks, including all 17 enforced Habitat laws with zero findings. No public
 result, resource, provider, parser, Oclif surface, Personal repository, native
 command, or live lifecycle state changed.
 
+The canonical-text-ordering ownership checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e2w]]. Release-wide
+UTF-8 byte ordering now has one service-root policy leaf. Root model,
+Releases, Providers, Packaging, and transitional release records import it
+directly; the old primitive/barrel export and Cowork duplicate are deleted
+without a compatibility face.
+
+Owner-local tests distinguish UTF-8 from JavaScript UTF-16 ordering with
+U+E000 and U+10000 and lock equality, prefix, ASCII, and multibyte direction.
+The complete lifecycle suite passes 314 cases across 35 files. Production and
+test TypeScript checks, repository Biome, strict OpenSpec validation, diff
+hygiene, and standing architecture/oRPC,
+behavior-first testing, and TypeScript/TypeBox/structural reviews pass without
+an unresolved P0, P1, P2, or P3 finding. The repository check passed 39
+projects and 76 dependency tasks in 54.6 seconds, including all 17 enforced
+Habitat laws with zero findings. No TypeBox schema, digest implementation,
+`node:crypto` use, resource, provider, oRPC surface, Personal repository,
+native command, or live lifecycle state changed.
+
 ## Settlement Oracles
 
 The final product must prove:

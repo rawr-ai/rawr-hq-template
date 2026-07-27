@@ -358,17 +358,6 @@ export function releaseSetDigest(bytes: Uint8Array): ReleaseSetDigest {
   return `rs1_${sha256Hex(bytes)}` as ReleaseSetDigest;
 }
 
-export function compareCanonicalText(left: string, right: string): number {
-  const leftBytes = encoder.encode(left);
-  const rightBytes = encoder.encode(right);
-  const length = Math.min(leftBytes.length, rightBytes.length);
-  for (let index = 0; index < length; index += 1) {
-    const difference = leftBytes[index]! - rightBytes[index]!;
-    if (difference !== 0) return difference;
-  }
-  return leftBytes.length - rightBytes.length;
-}
-
 function parseStringSchema<T extends TSchema>(
   schema: T,
   value: unknown,
