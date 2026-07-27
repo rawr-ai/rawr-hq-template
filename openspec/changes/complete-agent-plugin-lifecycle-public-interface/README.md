@@ -301,7 +301,7 @@ Template PR #606 landed the checkpoint on canonical `main` at
 
 ### Example Todo Record Model
 
-The active bounded checkpoint is
+The preceding bounded checkpoint was
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e13]]. Task, tag,
 and assignment records are stable inert vocabulary shared by module contracts
 and the planned service-owned persistence boundary. Their TypeBox schemas and
@@ -326,7 +326,44 @@ TypeScript/TypeBox/structural/testing reviews report no unresolved P0, P1, P2,
 or P3 finding. The service's construction-time `Deps`, `Scope`, and `Config`
 lanes and per-call `Invocation` lane remain implemented and documented by the
 unchanged `base.ts`, `/client` boundary, and context-typing proof. Graphite
-landing remains open.
+landing completed through Template PR #607 on canonical `main` at
+`ce7540939680a5bacf82c1ecd41dedadcde01614`.
+
+### Example Todo Context Lanes
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e14]]. Example Todo
+remains the canonical worked construction and invocation reference. `Deps` carries stable
+host capabilities, `Scope` carries stable binding identity, and `Config`
+carries stable externally selected behavior for the lifetime of a client.
+`Invocation` carries per-call request facts. Those are the four
+service-declared input lanes. The HQ SDK seeds an empty execution-local
+`provided` bucket, and provider middleware grows its qualified capabilities for
+downstream modules and handlers.
+Static procedure metadata remains outside execution context.
+
+The exact flow remains `host binding -> client construction -> invocation ->
+base context -> service middleware -> provided capabilities -> module ->
+handler`. The public client, private base, HQ SDK context types, service-package
+boundary, Example Todo context-typing fixture, and Server package-surface proof
+already implement and verify the construction and invocation lanes. Current
+module composition still copies selected lane and provided values into flat
+handler fields. This checkpoint records that projection as transitional wiring,
+not as another lane or a destination to reproduce. It records the owners,
+lifetimes, and rationale in the Example Todo and HQ SDK routers and the Habitat
+service frame, and corrects an overbroad sentence that treated legitimate
+handler access to inherited context as an upward reach. No runtime, SDK,
+service, module, middleware, provider, schema, export, or test changes enter
+this checkpoint. The public lane surface remains anchored to Template commit
+`07ff505ff781ee2f27af700e25beb1032cb53d37`.
+
+Noncached HQ SDK, Example Todo, and Server typechecks pass as one Nx invocation
+in 12.6 seconds, including their required build dependencies. Strict OpenSpec,
+link-target validation, and diff hygiene pass. Standing Habitat/architecture
+and oRPC/TypeScript reviews report no unresolved P0, P1, P2, or P3 finding.
+Only the Habitat service frame, Example Todo and HQ SDK context routers, active
+OpenSpec record, and rolling mental model change. Graphite landing remains
+open.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`

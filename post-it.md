@@ -6,6 +6,33 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Context Is Organized By Owner And Lifetime
+
+Example Todo's context lanes are a retained service-design asset, not temporary
+wiring. `Deps`, `Scope`, and `Config` bind once for a client. `Invocation`
+arrives with each call. The SDK seeds an empty `provided` bucket and provider
+middleware grows its capabilities for the remaining execution. Static metadata
+is not context.
+
+The funnel preserves these names while narrowing authorship. Modules inherit
+context through their service branch; handlers consume the capabilities they
+need. They do not import runtime assembly, redeclare the complete context, or
+manually rebuild the lanes. The HQ SDK already realizes this model, so the
+correct move is to preserve and document it rather than replace it.
+
+Example Todo still flattens selected values during module projection. That is
+retained migration evidence, not another lane and not a pattern to propagate.
+
+See [[services/example-todo/AGENTS#Context Lanes|the worked service]],
+[[.habitat/blueprints/service/skill#Context|the service frame]],
+[[packages/hq-sdk/src/orpc/context/types|the reusable context model]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Context Lanes|the checkpoint record]].
+
+### Bag Of Keywords
+
+context, owner, lifetime, deps, scope, config, invocation, provided, metadata,
+host, binding, caller, middleware, module, handler, funnel.
+
 ## 2026-07-27 - Records Cross Boundaries Without Moving Behavior
 
 The Todo service root owns the inert task, tag, and assignment record

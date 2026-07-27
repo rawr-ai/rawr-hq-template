@@ -1205,6 +1205,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   crosses module contracts and the separately planned service database
   boundary. Do not move persistence, router authorship, middleware, Effect
   integration, SDK code, providers, or public package exports in this cut.
+- [x] 5.7e14 Preserve Example Todo's context-lane model as the canonical worked
+  service reference before any later module rewiring. Document the exact
+  `Deps`, `Scope`, `Config`, `Invocation`, and `provided` owners, lifetimes,
+  meanings, and downward flow in the Example Todo router, HQ SDK router, and
+  service blueprint frame. Anchor the record to the public-face landing commit
+  and the existing compile-time oracles. Correct the frame so inherited lane
+  use in handlers is distinguished from forbidden context reconstruction. Do
+  not change runtime code, HQ SDK behavior, public exports, module wiring,
+  middleware, providers, schemas, or tests.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.
