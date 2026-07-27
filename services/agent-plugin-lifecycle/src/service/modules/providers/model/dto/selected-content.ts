@@ -1,15 +1,17 @@
 import { NativeMarketplaceSourceSchema } from "@rawr/resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
-import { PayloadManifestEntrySchema } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
+import {
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  PayloadManifestEntrySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
+import { MAX_OWNERSHIP_CLAIMS } from "#agent-plugin-lifecycle-service/model/dto/distribution-ownership";
+import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
-  MAX_OWNERSHIP_CLAIMS,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_MEMBERS,
   type OwnershipIdentity,
   OwnershipIdentitySchema,
   PayloadDigestSchema,

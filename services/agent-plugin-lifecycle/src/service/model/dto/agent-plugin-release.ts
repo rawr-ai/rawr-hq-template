@@ -1,14 +1,9 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
-  AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
-  BUILDER_PROTOCOL_VERSION,
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
-  MAX_OWNERSHIP_CLAIMS,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_PROVENANCE_BINDINGS,
   OwnershipIdentitySchema,
   PayloadDigestSchema,
   PluginIdSchema,
@@ -20,11 +15,26 @@ import {
   type AgentPluginPayload,
   AgentPluginPayloadRecordSchema,
   AgentPluginPayloadSchema,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   PayloadManifestEntrySchema,
 } from "./agent-plugin-payload";
-import { ProvenanceBindingSchema } from "./release-input";
+import { MAX_OWNERSHIP_CLAIMS } from "./distribution-ownership";
+import {
+  MAX_PROVENANCE_BINDINGS,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  ProvenanceBindingSchema,
+} from "./release-input";
 
 declare const agentPluginReleaseBrand: unique symbol;
+
+/** Identifies the individual-release envelope schema admitted by lifecycle policy. */
+export const AGENT_PLUGIN_RELEASE_SCHEMA_VERSION = 1 as const;
+
+/** Identifies the builder protocol shared by individual and complete releases. */
+export const BUILDER_PROTOCOL_VERSION = 1 as const;
+
+/** Bounds one canonical individual-release envelope before decoding. */
+export const MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES = 3 * MAX_RELEASE_INPUT_ENVELOPE_BYTES;
 
 /** Defines the exact source snapshot selected for one in-memory release. */
 export const ReleaseSourceIdentitySchema = ReadonlyObject(

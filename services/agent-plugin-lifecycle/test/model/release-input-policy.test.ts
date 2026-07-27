@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { ReleaseInputBody } from "../../src/service/model/dto/release-input";
+import {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+  type ReleaseInputBody,
+} from "../../src/service/model/dto/release-input";
 import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
 import {
   createAgentPluginReleaseInput,
@@ -12,11 +16,7 @@ import {
   canonicalSerializeReleaseInputBody,
   releaseInputValue,
 } from "../../src/service/model/policy/release-input-codec";
-import {
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
-  releaseInputDigest,
-} from "../../src/service/shared/release/primitives";
+import { releaseInputDigest } from "../../src/service/shared/release/primitives";
 import { member, must, productFixture, releaseInputBody } from "../shared/release/fixtures";
 
 const encoder = new TextEncoder();

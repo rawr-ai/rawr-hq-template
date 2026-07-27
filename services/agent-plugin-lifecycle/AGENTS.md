@@ -63,8 +63,12 @@
   deterministic diagnostics, bounds, and immutability. One direct codec owns
   the digest-free canonical body preimage and envelope bytes. The release-set
   digest is an invocation-local verification value, never storage or provider
-  identity. Consumers import those exact leaves; the only transitional
-  `shared/release` owner is the qualified primitive leaf.
+  identity. Protocol versions and structural bounds live beside the TypeBox DTO
+  they constrain; normalized file-mode structure belongs to the payload DTO
+  while payload-manifest policy owns its diagnostic admission. Consumers
+  import those exact leaves. The residual transitional `shared/release` leaf
+  contains only release identity and digest meanings awaiting their complete
+  owner-sized cuts.
   Provenance-binding policy owns bounded admission, canonical ordering,
   duplicate-identity refusal, defensive freezing, and canonical projection
   across release input, individual release, and complete-set records. Its

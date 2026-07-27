@@ -5,13 +5,15 @@ import {
   SourceEligibilityIssueSchema,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import {
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+} from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
   PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,

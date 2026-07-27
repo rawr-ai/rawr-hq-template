@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
-
+import { MAX_PROVENANCE_BINDINGS } from "../../src/service/model/dto/release-input";
 import type { ReleaseIssue, ReleaseIssueCode } from "../../src/service/model/dto/release-issue";
 import {
   parseProvenanceBindings,
   provenanceBindingValue,
 } from "../../src/service/model/policy/provenance-binding";
 import { releaseIssue } from "../../src/service/model/policy/release-issue";
-import {
-  contentDigest,
-  MAX_PROVENANCE_BINDINGS,
-} from "../../src/service/shared/release/primitives";
+import { contentDigest } from "../../src/service/shared/release/primitives";
 
 const encoder = new TextEncoder();
 

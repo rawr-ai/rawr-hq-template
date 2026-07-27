@@ -1,22 +1,47 @@
+import { Value } from "typebox/value";
+
 import {
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   parseContentDigest,
-  parseNormalizedFileMode,
   parseReleaseRelativePath,
   type ReleaseRelativePath,
 } from "../../shared/release/primitives";
-import type { PayloadEntry, PayloadManifestEntry } from "../dto/agent-plugin-payload";
+import {
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  type NormalizedFileMode,
+  NormalizedFileModeSchema,
+  type PayloadEntry,
+  type PayloadManifestEntry,
+} from "../dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import type { ReleaseIssue } from "../dto/release-issue";
+import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { releaseIssue } from "./release-issue";
-import { collectReleaseResult } from "./release-result";
+import { collectReleaseResult, failure, success } from "./release-result";
 import {
   admitClosedRecordForTraversal,
   parseBoundedArray,
   parseInteger,
 } from "./release-value-admission";
+
+/** Admits one normalized payload file mode with stable lifecycle diagnostics. */
+export function parseNormalizedFileMode(
+  value: unknown,
+  path = "mode"
+): ReleaseResult<NormalizedFileMode, ReleaseIssue> {
+  if (!Value.Check(NormalizedFileModeSchema, value)) {
+    return failure([
+      typeof value === "number" && Number.isSafeInteger(value)
+        ? releaseIssue("INVALID_MODE", path, "File mode must be normalized to 0644 or 0755", {
+            expected: "0644|0755",
+            actual: value,
+          })
+        : releaseIssue("EXPECTED_INTEGER", path, "Value must be a safe integer"),
+    ]);
+  }
+  return success(value);
+}
 
 /**
  * Parses, canonically orders, freezes, and diagnoses one untrusted payload

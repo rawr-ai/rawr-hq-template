@@ -2,19 +2,17 @@ import { ReadonlyObject, type Static, Type } from "typebox";
 import {
   ContentAuthoritySchema,
   ContentDigestSchema,
-  MAX_CANONICAL_ID_BYTES,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_PROVENANCE_BINDINGS,
-  MAX_RELEASE_MEMBERS,
   OwnershipIdentitySchema,
-  PAYLOAD_PROTOCOL_VERSION,
   PayloadDigestSchema,
   PluginIdSchema,
-  RELEASE_INPUT_SCHEMA_VERSION,
   ReleaseInputDigestSchema,
   ReleaseRelativePathSchema,
 } from "../../shared/release/primitives";
-import { PayloadManifestEntrySchema } from "./agent-plugin-payload";
+import {
+  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+  PAYLOAD_PROTOCOL_VERSION,
+  PayloadManifestEntrySchema,
+} from "./agent-plugin-payload";
 import {
   DeclaredOwnershipClaimsSchema,
   type DistributionOwnershipIndex,
@@ -24,9 +22,23 @@ import {
 declare const agentPluginReleaseInputBrand: unique symbol;
 declare const completenessWitnessBrand: unique symbol;
 
+/** Identifies the release-input envelope schema admitted by lifecycle policy. */
+export const RELEASE_INPUT_SCHEMA_VERSION = 1 as const;
+
+/** Bounds the curated member inventory admitted by one release input. */
+export const MAX_RELEASE_MEMBERS = 1_024;
+
+/** Bounds canonical release-input bytes before decoding or operation dispatch. */
+export const MAX_RELEASE_INPUT_ENVELOPE_BYTES = 96 * 1024 * 1024;
+
+/** Bounds provenance records before identity and ordering policy runs. */
+export const MAX_PROVENANCE_BINDINGS = 16_384;
+
+const MAX_PROVENANCE_PROTOCOL_LENGTH = 512;
+
 const ProvenanceProtocolSchema = Type.String({
   minLength: 1,
-  maxLength: MAX_CANONICAL_ID_BYTES,
+  maxLength: MAX_PROVENANCE_PROTOCOL_LENGTH,
   pattern: "^[a-z0-9][a-z0-9._:@/-]*$",
 });
 

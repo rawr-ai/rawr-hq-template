@@ -1,26 +1,35 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
-  AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
-  BUILDER_PROTOCOL_VERSION,
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
-  MAX_RELEASE_MEMBERS,
   PluginIdSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
   RepositoryIdentitySchema,
 } from "../../shared/release/primitives";
+import { BUILDER_PROTOCOL_VERSION } from "./agent-plugin-release";
 import {
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
 } from "./distribution-ownership";
-import { type CompletenessWitness, CompletenessWitnessRecordSchema } from "./release-input";
+import {
+  type CompletenessWitness,
+  CompletenessWitnessRecordSchema,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+} from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
+
+/** Identifies the complete release-set schema admitted by lifecycle policy. */
+export const AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION = 1 as const;
+
+/** Bounds one canonical complete release-set envelope before decoding. */
+export const MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES = MAX_RELEASE_INPUT_ENVELOPE_BYTES;
 
 /** Defines one plugin release identity carried by a complete release set. */
 export const AgentPluginReleaseSetMemberSchema = ReadonlyObject(

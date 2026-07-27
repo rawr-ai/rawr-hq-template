@@ -6,6 +6,7 @@ import {
   DeclaredOwnershipClaimsSchema,
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
+  MAX_OWNERSHIP_CLAIMS,
   type OwnershipClaim,
   OwnershipClaimSchema,
 } from "../../src/service/model/dto/distribution-ownership";
@@ -19,7 +20,6 @@ import {
 } from "../../src/service/model/policy/distribution-ownership";
 import { releaseIssue } from "../../src/service/model/policy/release-issue";
 import {
-  MAX_OWNERSHIP_CLAIMS,
   type OwnershipIdentity,
   type PluginId,
   parseOwnershipIdentity,

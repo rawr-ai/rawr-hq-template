@@ -1,6 +1,5 @@
 import { Value } from "typebox/value";
 import {
-  MAX_RELEASE_MEMBERS,
   parsePayloadDigest,
   parsePluginId,
   parseReleaseInputDigest,
@@ -12,6 +11,7 @@ import {
   type CompletenessWitness,
   CompletenessWitnessRecordSchema,
   type ExpectedReleaseMember,
+  MAX_RELEASE_MEMBERS,
 } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";

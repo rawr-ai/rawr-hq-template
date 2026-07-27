@@ -1,9 +1,5 @@
 import { Value } from "typebox/value";
 import {
-  AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
-  BUILDER_PROTOCOL_VERSION,
-  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
-  MAX_OWNERSHIP_CLAIMS,
   type OwnershipIdentity,
   type PayloadDigest,
   parseContentAuthority,
@@ -19,14 +15,18 @@ import {
 } from "../../shared/release/primitives";
 import { type AgentPluginPayload, AgentPluginPayloadSchema } from "../dto/agent-plugin-payload";
 import {
+  AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
   type AgentPluginRelease,
   type AgentPluginReleaseBody,
   AgentPluginReleaseBodySchema,
   AgentPluginReleaseEnvelopeSchema,
   AgentPluginReleaseSchema,
+  BUILDER_PROTOCOL_VERSION,
+  MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
   type ReleaseSourceIdentity,
   ReleaseSourceIdentitySchema,
 } from "../dto/agent-plugin-release";
+import { MAX_OWNERSHIP_CLAIMS } from "../dto/distribution-ownership";
 import { type AgentPluginReleaseInput, AgentPluginReleaseInputSchema } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";

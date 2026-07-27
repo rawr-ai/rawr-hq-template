@@ -2,7 +2,6 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import {
   type GitCommitId,
   type GitTreeId,
-  MAX_RELEASE_MEMBERS,
   type PluginId,
   PluginIdSchema,
   type RepositoryIdentity,
@@ -10,7 +9,7 @@ import {
 import type { AgentPluginPayload } from "./agent-plugin-payload";
 import type { AgentPluginRelease } from "./agent-plugin-release";
 import type { AgentPluginReleaseSet } from "./agent-plugin-release-set";
-import type { AgentPluginReleaseInput } from "./release-input";
+import { type AgentPluginReleaseInput, MAX_RELEASE_MEMBERS } from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 
 /**
