@@ -2,6 +2,7 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
   type ContentAuthority,
   canonicalSerializeAgentPluginReleaseInput,
@@ -10,7 +11,6 @@ import {
   decodeAgentPluginReleaseInput,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type PayloadEntryInput,
   type PluginId,
   RELEASE_INPUT_SCHEMA_VERSION,

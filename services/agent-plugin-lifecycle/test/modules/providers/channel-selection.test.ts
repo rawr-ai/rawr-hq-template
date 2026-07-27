@@ -11,12 +11,12 @@ import {
   CURRENT_MAIN_V3_RECORD_PATH,
   CURRENT_MAIN_V3_RELEASE_INPUT_PATH,
 } from "../../../src/service/model/dto/current-main-record";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   CHANNEL_SELECTED_CONTENT_PATHS,
   MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
   MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES,
   MAX_SELECTED_CONTENT_RELEASE_INPUT_BYTES,
-  MAX_SELECTED_CONTENT_RELEASE_SET_PAYLOAD_BYTES,
   MAX_SELECTED_CONTENT_TREE_BYTES,
   MAX_SELECTED_CONTENT_TREE_ENTRIES,
   NATIVE_MARKETPLACE_MANIFESTS,
@@ -154,7 +154,7 @@ describe("provider channel selected content", () => {
       objectFormat: "sha1",
       maxBlobs: MAX_SELECTED_CONTENT_TREE_ENTRIES,
       maxBlobBytes: MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES,
-      maxTotalBytes: MAX_SELECTED_CONTENT_RELEASE_SET_PAYLOAD_BYTES,
+      maxTotalBytes: MAX_RELEASE_SET_PAYLOAD_BYTES,
     });
     const lastChannelInspection = events.lastIndexOf(
       "workspace:inspect:refs/tags/agent-plugins-v1"

@@ -14,14 +14,16 @@ import {
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
 import {
+  addReleaseSetPayloadBytes,
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+} from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
+import {
   type AgentPluginPayload,
   type AgentPluginReleaseInput,
-  addReleaseSetPayloadBytes,
   compareCanonicalText,
   createAgentPluginPayload,
   decodeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type PluginId,
   parseContentAuthority,
   parseGitCommitId,

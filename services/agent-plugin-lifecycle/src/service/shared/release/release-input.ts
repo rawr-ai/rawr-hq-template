@@ -1,6 +1,7 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { Value } from "typebox/value";
 
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../model/policy/release-payload-accounting";
 import {
   type CanonicalJsonValue,
   canonicalJsonLine,
@@ -34,7 +35,6 @@ import {
   MAX_PROVENANCE_BINDINGS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type OwnershipIdentity,
   OwnershipIdentitySchema,
   PAYLOAD_PROTOCOL_VERSION,

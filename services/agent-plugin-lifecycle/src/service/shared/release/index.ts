@@ -17,7 +17,6 @@ export {
   payloadEntryBytes,
   verifyAgentPluginPayload,
 } from "./payload";
-export { addReleaseSetPayloadBytes, type PayloadByteTotal } from "./payload-bounds";
 export {
   AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
@@ -46,7 +45,6 @@ export {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type NormalizedFileMode,
   NormalizedFileModeSchema,
   OWNERSHIP_INDEX_SCHEMA_VERSION,

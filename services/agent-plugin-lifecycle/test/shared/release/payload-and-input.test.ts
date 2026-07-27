@@ -2,6 +2,7 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   canonicalSerializeAgentPluginPayload,
   canonicalSerializeAgentPluginReleaseInput,
@@ -18,7 +19,6 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   type PayloadManifestEntry,
   PayloadManifestEntrySchema,
   payloadEntryBytes,

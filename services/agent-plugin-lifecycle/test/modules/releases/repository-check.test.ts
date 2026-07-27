@@ -11,6 +11,7 @@ import type {
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import type { ContentWorkspaceInspection } from "../../../src/service/model/dto/content-workspace";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../src/service/model/policy/release-payload-accounting";
 import {
   addStagedObservationByteLimits,
   classifyStagedObservationFailure,
@@ -21,7 +22,6 @@ import {
 import {
   canonicalSerializeAgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_SET_PAYLOAD_BYTES,
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
