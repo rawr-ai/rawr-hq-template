@@ -13,8 +13,8 @@
 
 - Tasks owns title normalization, task identity, persistence, and task-specific
   failures; tag creation and task-tag relationships belong to sibling modules.
-- Database, clock, logging, and analytics mechanics enter through service
-  context rather than becoming task policy.
+- Database, clock, identifier, logging, and analytics mechanics enter through
+  service context rather than becoming task policy.
 
 ## Behavior
 

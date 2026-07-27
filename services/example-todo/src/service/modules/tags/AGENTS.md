@@ -13,7 +13,7 @@
 - Tags owns label identity, display color, uniqueness, and persistence; the
   relation between a tag and a task belongs to assignments.
 - Read-only policy is enforced at the service boundary, while database,
-  logging, and analytics mechanics remain host-supplied.
+  identifier, logging, and analytics mechanics remain host-supplied.
 
 ## Behavior
 

@@ -24,6 +24,7 @@ export const module = impl.tasks
     next({
       context: {
         clock: context.deps.clock,
+        identifierGenerator: context.deps.identifierGenerator,
         logger: context.deps.logger,
         workspaceId: context.scope.workspaceId,
         repo: context.provided.repo,

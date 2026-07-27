@@ -62,7 +62,7 @@
   policy owns construction, admission, cross-member relationships,
   deterministic diagnostics, bounds, and immutability. One direct codec owns
   the digest-free canonical body preimage and envelope bytes. The release-set
-  digest is an invocation-local verification value, never storage or provider
+  digest is a verification value, never storage or provider
   identity. Protocol versions and structural bounds live beside the TypeBox DTO
   they constrain; normalized file-mode structure belongs to the payload DTO
   while payload-manifest policy owns its diagnostic admission. Consumers
@@ -107,6 +107,9 @@
   typed facts and public results.
 - Content-workspace, versioned-content, clock, package-output, and
   native-provider mechanics remain behind host-supplied dependencies.
+- Pure deterministic byte policy may use a portable implementation directly;
+  it must not create a resource or provider facade for computation without a
+  runtime acquisition or lifecycle protocol.
 - It does not own the Oclif installation, Personal repository contents, app
   composition, or provider-home state. Native provider inventory is the live
   installed-state authority.

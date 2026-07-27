@@ -18,14 +18,17 @@
 - Tasks, tags, and assignments own their operation behavior and declared
   errors. Cross-module primitives belong in `service/common` only when they
   are genuinely shared.
-- Hosts provide database, clock, logging, and analytics capabilities; this
-  package does not own runtime mounting or transport presentation.
+- Hosts provide database, clock, identifier, logging, and analytics
+  capabilities; this package does not own runtime mounting or transport
+  presentation.
 
 ## Behavior
 
 - The service validates caller intent, enforces task, tag, assignment, and
   read-only policy, persists through the supplied database, and returns
   declared domain failures.
+- Host-generated identity candidates pass service-owned TypeBox admission
+  before any task, tag, or assignment repository mutation.
 
 ## Concepts
 
@@ -42,8 +45,8 @@
 ## Interfaces
 
 - Module contracts compose the public oRPC service face; database, clock,
-  logging, and analytics capabilities enter through host context; API and CLI
-  projections consume the sealed client.
+  identifier, logging, and analytics capabilities enter through host context;
+  API and CLI projections consume the sealed client.
 
 ## Routing
 

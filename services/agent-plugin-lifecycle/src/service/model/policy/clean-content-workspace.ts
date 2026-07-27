@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
@@ -779,11 +780,11 @@ function preflightAggregatePayloadBytes(releaseInput: AgentPluginReleaseInput): 
 }
 
 function digestBinding(value: unknown): string {
-  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  return hashBytes(encoder.encode(JSON.stringify(value)));
 }
 
 function hashBytes(bytes: Uint8Array): string {
-  return createHash("sha256").update(bytes).digest("hex");
+  return bytesToHex(sha256(bytes));
 }
 
 function ineligible(

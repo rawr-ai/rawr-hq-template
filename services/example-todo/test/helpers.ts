@@ -38,6 +38,7 @@ export type AnalyticsEntry = EmbeddedPlaceholderAnalyticsEntry;
 
 export function createDeps(options: DepsOptions = {}): Service["Deps"] {
   let tick = 0;
+  let identifier = 0;
   const dbPool: DbPool = createEmbeddedInMemoryDbPoolAdapter(options);
 
   return {
@@ -46,6 +47,12 @@ export function createDeps(options: DepsOptions = {}): Service["Deps"] {
       now: () => {
         tick += 1;
         return new Date(Date.UTC(2026, 1, 25, 0, 0, tick)).toISOString();
+      },
+    },
+    identifierGenerator: {
+      generate: () => {
+        identifier += 1;
+        return `00000000-0000-4000-8000-${identifier.toString().padStart(12, "0")}`;
       },
     },
     logger: createEmbeddedPlaceholderLoggerAdapter({ sink: options.logs }),

@@ -11,10 +11,10 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "advisory",
+  "lane": "enforced",
   "forbids": "production service source that directly acquires a Node or Bun platform module",
-  "why": "Services own domain behavior over ready context capabilities; concrete platform acquisition belongs to resources and providers.",
-  "remediate": "Move filesystem, process, storage, or runtime acquisition behind an explicit resource/provider and pass its ready capability through service context.",
+  "why": "Services own domain behavior over ready context capabilities; concrete platform acquisition belongs to a qualified host, resource, or provider.",
+  "remediate": "Move filesystem, process, storage, or runtime acquisition to a qualified host, resource, or provider and pass its ready capability through service context.",
   "message": "Production service source must not import concrete Node or Bun platform modules.",
   "pathCoverage": [
     {

@@ -945,7 +945,7 @@ describe("service blueprint authority", () => {
     }
   });
 
-  it("keeps concrete platform acquisition behind resources and providers", async () => {
+  it("keeps concrete platform acquisition behind qualified hosts, resources, and providers", async () => {
     const rule = "require_service_boundary_platform_independence";
     const root = await createFixture(
       {
@@ -986,7 +986,8 @@ describe("service blueprint authority", () => {
     );
 
     const result = await check(root, [rule]);
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.report.ok).toBe(false);
     const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
     for (const path of [
       "services/jobs/src/service/router.ts",

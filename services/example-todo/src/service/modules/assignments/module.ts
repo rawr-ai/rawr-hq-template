@@ -20,6 +20,7 @@ export const module = impl.assignments
     next({
       context: {
         clock: context.deps.clock,
+        identifierGenerator: context.deps.identifierGenerator,
         logger: context.deps.logger,
         workspaceId: context.scope.workspaceId,
         traceId: context.invocation.traceId,

@@ -11,13 +11,11 @@
  * schema and all module procedures that expose this entity.
  */
 import { type Static, Type } from "typebox";
+import { TodoIdentifierSchema } from "../../model/dto/identifier";
 
 export const TaskSchema = Type.Object(
   {
-    id: Type.String({
-      format: "uuid",
-      description: "Stable unique identifier for the task.",
-    }),
+    id: TodoIdentifierSchema,
     workspaceId: Type.String({
       minLength: 1,
       description: "Workspace scope that owns this task record.",

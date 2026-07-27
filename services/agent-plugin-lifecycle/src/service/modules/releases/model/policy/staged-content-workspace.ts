@@ -1,4 +1,5 @@
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
@@ -48,6 +49,8 @@ import type {
   StagedContentWorkspacePolicy,
 } from "../dto/staged-content-workspace";
 import { authorReleaseInputRefresh, releaseInputRefreshIneligible } from "./release-input-refresh";
+
+const encoder = new TextEncoder();
 
 export const MAX_STAGED_INDEX_ENTRIES = 200_000;
 export const MAX_STAGED_INDEX_BYTES = 100 * 1024 * 1024;
@@ -715,11 +718,11 @@ function refreshMemberRoots(
 }
 
 function digestBinding(value: unknown): string {
-  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+  return hashBytes(encoder.encode(JSON.stringify(value)));
 }
 
 function hashBytes(bytes: Uint8Array): string {
-  return createHash("sha256").update(bytes).digest("hex");
+  return bytesToHex(sha256(bytes));
 }
 
 function classificationFailure(
