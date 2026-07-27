@@ -11,8 +11,7 @@ import {
 } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 
-import { createClient } from "../src";
-import type { CreateClientOptions } from "../src/client";
+import { type CreateClientOptions, createClient } from "../src/client";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 import { contract } from "../src/service/contract";
 

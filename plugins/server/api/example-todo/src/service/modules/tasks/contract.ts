@@ -1,4 +1,4 @@
-import { contract as exampleTodoContract } from "@rawr/example-todo/service/contract";
+import { contract as exampleTodoContract } from "@rawr/example-todo/client";
 
 /** HTTP operation contract projected from the sealed Example Todo task boundary. */
 export const contract = {

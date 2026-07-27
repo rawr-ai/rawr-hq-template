@@ -1,4 +1,4 @@
-import type { Client as ExampleTodoClient } from "@rawr/example-todo";
+import type { Client as ExampleTodoClient } from "@rawr/example-todo/client";
 import { createTestingRawrHqLegacyHostSeam } from "@rawr/hq-app/legacy-cutover";
 
 /**

@@ -11,8 +11,7 @@ import {
   createEmbeddedInMemoryDbPoolAdapter,
   type EmbeddedInMemorySqlOptions,
 } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
-import type { CreateClientOptions } from "../src/client";
-import type { Service } from "../src/service/base";
+import type { CreateClientOptions, Deps, Invocation } from "../src/client";
 
 type DepsOptions = EmbeddedInMemorySqlOptions & {
   logs?: LogEntry[];
@@ -20,7 +19,7 @@ type DepsOptions = EmbeddedInMemorySqlOptions & {
 };
 
 type ClientOptions = DepsOptions & {
-  deps?: Service["Deps"];
+  deps?: Deps;
   readOnly?: boolean;
   maxAssignmentsPerTask?: number;
   workspaceId?: string;
@@ -36,7 +35,7 @@ export type OrpcErrorShape = {
 export type LogEntry = EmbeddedPlaceholderLogEntry;
 export type AnalyticsEntry = EmbeddedPlaceholderAnalyticsEntry;
 
-export function createDeps(options: DepsOptions = {}): Service["Deps"] {
+export function createDeps(options: DepsOptions = {}): Deps {
   let tick = 0;
   let identifier = 0;
   const dbPool: DbPool = createEmbeddedInMemoryDbPoolAdapter(options);
@@ -76,11 +75,11 @@ export function createClientOptions(options: ClientOptions = {}): CreateClientOp
 }
 
 export function createInvocation(traceId = "trace-default") {
+  const invocation: Invocation = { traceId };
+
   return {
     context: {
-      invocation: {
-        traceId,
-      },
+      invocation,
     },
   } as const;
 }

@@ -1,4 +1,4 @@
-import type { Client as ExampleTodoClient } from "@rawr/example-todo";
+import type { Client as ExampleTodoClient } from "@rawr/example-todo/client";
 import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
 
 /** Request facts consumed by Example Todo API operations. */
