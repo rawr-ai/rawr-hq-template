@@ -128,6 +128,10 @@ project-quality admission. Grit owns the scheduler source law. The pinned
 standalone consumer cannot execute Habitat's native Nx runner, so the project
 rule keeps one bounded `check.mjs` adapter beside its manifest until project
 metadata has one directly checkable owner or the consumer gains that runner.
+The selected local policy CLI leaf and the independent Stop-time structure CLI
+leaf remain intentionally uncached until an upstream distributable Habitat Nx
+boundary owns registry discovery, exact Nx cache inputs, caching, and one
+acquisition. The selected rule scopes themselves remain exact.
 No equivalent policy belongs in ESLint or `scripts/**`.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],

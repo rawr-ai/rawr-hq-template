@@ -162,10 +162,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [x] 1.5i Install the RAWR-adapted Habitat Designer and Habitat Engineer as
   standing Codex roles. Make checked-in `.codex/hooks.json` the single
   repository hook-composition owner: retain the canonical workstream startup
-  and closure guards by direct source reference, add Stop-time workspace lint
-  plus the selected Habitat source laws as fast feedback, and remove hook
-  config/source projection from the workstream installer. Keep full lint,
-  typecheck, behavior, and Habitat admission in pre-push and protected CI.
+  and closure guards by direct source reference, keep full lint, typecheck,
+  behavior, and Habitat admission in pre-push and protected CI, and remove hook
+  config/source projection from the workstream installer. The later 1.5l
+  checkpoint narrows Stop feedback to Habitat structure only.
 - [x] 1.5j Adopt Magic Migration commit
   `fb91606db1c63dad92d3d4945bbb21bc92f9d1c3` as one shared TypeBox/oRPC
   contract-property-description pattern with bounded standalone-service and
@@ -181,6 +181,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   graph is unchanged. This historical checkpoint is superseded for destination
   execution by task 5.7e22; do not preserve its hand-maintained selection as
   steady-state authority.
+- [x] 1.5l Rename the complete selected 22-rule CLI leaf to
+  `check:policy:local`, keep it as the only CLI dependency of `check:policy`,
+  and add one independent uncached `check:structure` leaf selecting exactly the
+  nine native Habitat-structure rules needed for fast Codex Stop feedback.
+  Keep both CLI leaves uncached until task 5.7e22 can install an upstream
+  distributable Nx boundary. Do not add lint, Grit, complete policy, another
+  runner, a cache scheme, or a policy dependency to the Stop hook.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation
@@ -1373,15 +1380,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   implementation paths, land the common Magic/Template pattern rather than a
   RAWR-only fork, and keep its empty baseline plus advisory lane until the
   focused allow/reject cases and live corpus are green.
-- [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
-  upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
-  distributable. Let registry discovery and owner-local inferred targets own
-  inputs, caching, and one Habitat acquisition. Add no local SDK fork, manifest
-  generator, wrapper, raw Grit invocation, or alternate runner. Only after tasks
-  5.7e19 through 5.7e21 are green, task 5.7e2 proves the complete six-law live
-  corpus, and this execution boundary is installed, promote the staged service
-  topology, anchor, isolation, context, composition, and router authorship laws
-  to enforced and include them in the required repository gate.
+- [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
+  distributable to Template, replace the interim hand-maintained
+  `check:policy:local` and `check:structure` CLI leaves with that execution
+  boundary. No such distributable boundary is installed by task 1.5l. Let its
+  registry discovery and owner-local inferred targets own inputs, caching, and
+  one Habitat acquisition. Add no local SDK fork, manifest generator, wrapper,
+  raw Grit invocation, or alternate runner. Only after tasks 5.7e19 through
+  5.7e21 are green, task 5.7e2 proves the complete six-law live corpus, and this
+  future execution boundary is installed, promote the staged service topology,
+  anchor, isolation, context, composition, and router authorship laws to
+  enforced and include them in the required repository gate.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

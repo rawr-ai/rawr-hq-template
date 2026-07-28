@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Structure Feedback Is Not Admission
+
+One task name should express one scheduler purpose. `check:policy:local` is the
+complete selected local Habitat policy leaf under repository admission.
+`check:structure` is a smaller independent Habitat-structure leaf for Codex Stop
+feedback. Stop does not become a second admission graph: it runs neither lint,
+Grit, complete policy, nor project admission. Pre-push and protected CI retain
+the complete Nx graph.
+
+Both leaves call the pinned Habitat CLI directly and remain uncached. That is
+an explicit interim boundary, not a new registry, runner, or cache model. A
+future upstream distributable Habitat Nx integration may own discovery, exact
+Nx cache inputs, caching, and one acquisition; the current rule scopes remain
+exact. Task 5.7e22 remains open until that boundary actually exists for
+Template.
+
+See [[scripts/habitat/project.json|the Habitat Nx owner]],
+[[.codex/hooks.json|the Codex hook composition]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Interim Habitat Structure Feedback Boundary|the execution record]].
+
+### Bag Of Keywords
+
+structure, policy, scheduler, owner, hook, graph, cache, boundary, proof,
+closure.
+
 ## 2026-07-28 - Authority Precedes Migration
 
 The service container is now fixed before another production file moves. A

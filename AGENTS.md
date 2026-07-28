@@ -93,14 +93,20 @@
   optional owner verification, Habitat policy, and dependency checks. The
   repository, Habitat, and CLI each retain their qualified work. Oclif
   structure laws, the workspace scheduler law, and the lifecycle
-  command-channel law run inside Habitat's selected policy batch.
+  command-channel law run inside Habitat's selected local policy batch. Codex
+  Stop runs only an independent nine-rule Habitat-structure subset for fast
+  feedback; it does not schedule lint, Grit, or the complete policy graph.
 - `verify` is the optional owner-local extension for deterministic checks that
   do not reduce to lint, typecheck, or Habitat policy. It is not release,
   deployment, or acceptance authority and has no root aggregate.
 - `habitat:check` composes the workspace lint owner, Habitat typecheck and
-  tests, and `check:policy`. The policy target composes one selected green
-  source-law batch with the rule-owned Nx project admission adapter; it does
-  not claim that every registered Habitat rule is active.
+  tests, and `check:policy`. The policy target composes the selected green
+  `check:policy:local` CLI leaf with the rule-owned Nx project admission
+  adapter; it does not depend on the Stop-only `check:structure` leaf or claim
+  that every registered Habitat rule is active. Both CLI leaves are
+  intentionally uncached until the upstream distributable Habitat Nx boundary
+  can own discovery, exact Nx cache inputs, caching, and acquisition; their
+  selected rule scopes remain exact.
 - The ordinary `pull_request`, `merge_group`, and `push`-to-`main` workflow
   named `Repository Ratchet` publishes the job context
   `Required lint, typecheck, and topology` for the candidate SHA. Remote branch

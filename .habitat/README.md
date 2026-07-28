@@ -62,10 +62,15 @@ in a second filename convention. Grit rules own source relationships. A
 must remain inside its rule packet. Behavioral semantics stay in TypeScript
 tests and owner review rather than being approximated as source shape.
 
-`habitat:check:policy` composes one pinned-binary source-law invocation with the
-one rule-owned Nx graph adapter. The published binary exposes neither its
-native Nx runner nor a packet-fixture runner, so the repository does not add a
-second Markdown parser or duplicate pattern inventory to simulate either one.
+`habitat:check:policy` composes the pinned-binary 22-rule local policy batch at
+`habitat:check:policy:local` with the one rule-owned Nx graph adapter. The
+independent `habitat:check:structure` leaf selects exactly nine Habitat
+structure rules for Stop feedback and is not a policy dependency. Both CLI
+leaves are intentionally uncached: their rule scopes are exact, while exact Nx
+cache inputs remain owned by the future upstream distributable Habitat Nx
+boundary. The published binary exposes neither its native Nx runner nor a
+packet-fixture runner, so the repository does not add a second Markdown parser
+or duplicate pattern inventory to simulate either one.
 The TypeScript source adapter is exposed separately as the cacheable
 `habitat:check:documentation` target. It remains a red manual target until the
 existing corpus is documented; activation is then one dependency edge into

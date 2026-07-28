@@ -183,11 +183,12 @@ project's plain public check. Shared defaults connect those checks to one
 workspace-owned `habitat:lint`, project-owned typecheck, optional owner
 verification, Habitat policy, and dependency checks.
 Repository separation, CLI Oclif parity, and Habitat project/source policy
-remain qualified owner work. The selected source-law batch contains the
+remain qualified owner work. The selected local policy batch contains the
 required Oclif structure laws and lifecycle command-channel law; the sibling
-Habitat graph rule owns project admission. The required CI job publishes one
-stable status. Local hooks provide fast feedback; remote branch protection
-remains merge authority.
+Habitat graph rule owns project admission. The independent nine-rule structure
+leaf supplies Stop feedback and is not a policy dependency. The required CI job
+publishes one stable status. Local hooks provide fast feedback; remote branch
+protection remains merge authority.
 
 Every non-root project owns a public check. The current packet-local project
 admission bridge is transitional because the pinned standalone consumer does
