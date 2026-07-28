@@ -4,19 +4,19 @@
  * @remarks
  * This file owns module composition only:
  * - start from the package-level implementer base
- * - compose standalone module middleware from `./middleware`
+ * - compose qualified module telemetry middleware
  * - curate the assignment route context from inherited service capabilities
  * - export configured `module` for handler implementations
  */
-import { impl } from "../../impl";
-import { analytics, observability } from "./middleware";
+import { service } from "../../impl";
+import { analytics, observability } from "./middleware/telemetry.middleware";
 
 /**
  * SECTION: Module Composition (Always Present)
  *
  * Keep module-wide composition here so procedure handlers can stay focused on business logic.
  */
-export const module = impl.assignments
+export const module = service.assignments
   .use(observability)
   .use(analytics)
   .use(async ({ context, next }) =>

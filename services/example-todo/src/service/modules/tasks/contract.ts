@@ -7,11 +7,12 @@
  * - input/output schemas,
  * - caller-actionable ORPC errors.
  *
- * Module composition belongs in `module.ts`; handler implementation belongs in `router.ts`.
+ * Module composition belongs in `module.ts`; handler implementation belongs in
+ * `router/tasks.router.ts`.
  *
  * @agents
  * Extend task capability by updating this contract first, then implement handlers
- * in `router.ts`. Keep this file free of execution logic and dependencies.
+ * in `router/tasks.router.ts`. Keep this file free of execution logic and dependencies.
  */
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";

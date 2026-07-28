@@ -7,7 +7,7 @@
  *
  * @agents
  * Add/modify procedures here first. Module composition lives in `module.ts`, and
- * handler behavior lives in `router.ts`.
+ * handler behavior lives in `router/tags.router.ts`.
  */
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";

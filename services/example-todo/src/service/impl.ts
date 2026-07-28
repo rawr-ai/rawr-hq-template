@@ -4,7 +4,7 @@
  * @remarks
  * This is the single package-wide middleware composition point.
  * Import the root contract here, derive the central implementer once, and let
- * modules consume `impl.<module>` subtrees from there.
+ * modules consume `service.<module>` subtrees from there.
  *
  * @agents
  * This file is the only package-wide runtime assembly seam. Required service
@@ -14,9 +14,9 @@
 
 import { createServiceImplementer } from "./base";
 import { contract } from "./contract";
-import { analytics } from "./middleware/analytics";
-import { observability } from "./middleware/observability";
-import { readOnlyMode } from "./middleware/read-only-mode";
+import { analytics } from "./middleware/analytics.middleware";
+import { observability } from "./middleware/observability.middleware";
+import { readOnlyMode } from "./middleware/read-only-mode.middleware";
 import { stores } from "./middleware/stores.middleware";
 
 /**
@@ -33,7 +33,7 @@ import { stores } from "./middleware/stores.middleware";
  * service middleware extension slots. Module/procedure-local additive
  * middleware belongs in module `module.ts` and `router.ts` files.
  */
-export const impl = createServiceImplementer(contract, {
+export const service = createServiceImplementer(contract, {
   observability,
   analytics,
 })

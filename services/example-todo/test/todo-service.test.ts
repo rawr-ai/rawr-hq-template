@@ -271,7 +271,17 @@ describe("example-todo service", () => {
   });
 
   it("allows reads but blocks writes in read-only mode", async () => {
-    const deps = createDeps();
+    const baseDeps = createDeps();
+    let connectionCount = 0;
+    const deps = {
+      ...baseDeps,
+      dbPool: {
+        connect() {
+          connectionCount += 1;
+          return baseDeps.dbPool.connect();
+        },
+      },
+    };
     const writableClient = createClient({
       deps,
       scope: { workspaceId: "workspace-read-only" },
@@ -309,6 +319,7 @@ describe("example-todo service", () => {
       expect(typed.code).toBe("READ_ONLY_MODE");
       expect(typed.status).toBe(409);
     }
+    expect(connectionCount).toBe(3);
   });
 
   it("keeps baseline and package observability logs plus analytics working without an active span", async () => {

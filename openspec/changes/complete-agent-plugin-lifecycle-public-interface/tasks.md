@@ -785,8 +785,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `router.ts` over named `router/*.router.ts` authoring leaves; admit no
   `router/index.ts`; qualify every rule-private Grit helper; expand platform
   independence to the complete production service surface; and preserve the
-  direct local `Router<typeof contract, never>` root relation from Magic
-  `52873620ffe0b8b6e60527cd399076fc13ab86a7`. Keep the topology, anchor,
+  module topology and qualified-helper law from Magic
+  `52873620ffe0b8b6e60527cd399076fc13ab86a7`. Record that the initially adopted
+  local `Router<typeof contract, never>` root relation was later superseded by
+  the pinned-N1 runtime oracle and exact configured `service.router(...)`
+  completion. Keep the topology, anchor,
   isolation, context, composition, authorship, and platform-independence rules
   explicitly advisory while their known live-corpus diagnostics remain. Prove
   the packet through
@@ -1314,12 +1317,25 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   projection. Resolve the repository-scoped Todo client once per request in
   base-authored middleware, then let the `example-todo` module terminally
   curate only that client and correlation identity for its task handlers.
-  Compose completed module and root routers as plain objects with the exact
-  contract relation, and keep plugin registration static so it captures no
-  resolver. Prove RPC and OpenAPI resolver lifetime, repository isolation,
+  At this checkpoint, compose completed module and root routers as plain objects
+  with the then-current contract check; keep that root visible as a parent-task
+  residual after the pinned-N1 law requires configured native completion. Keep
+  plugin registration static so it captures no resolver. Prove RPC and OpenAPI
+  resolver lifetime, repository isolation,
   correlation, middleware multiplicity, typed failure, success, focused types,
   and the staged service laws. Do not add an Effect bridge, provider author,
   flat compatibility context, or live provider mutation.
+- [x] 5.7e21e Seal Example Todo's three standalone module shells without
+  changing their context lanes or behavior. Keep terminal context curation in
+  each `module.ts`; delete Tasks' empty telemetry placeholders; move real Tags
+  and Assignments telemetry into qualified named middleware leaves; author
+  operations in one named `router/*.router.ts` group per module; and make each
+  module `router.ts` a plain composition face while the contract-first service
+  root closes the completed modules through native `service.router(...)`.
+  Normalize the three noncanonical root middleware filenames to the closed
+  middleware topology. Prove exact Todo behavior, focused types, and no
+  Example Todo topology finding. Do not change the HQ SDK, public contract,
+  database, provider, resource, host, or runtime lane semantics.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own

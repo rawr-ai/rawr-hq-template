@@ -40,13 +40,15 @@
 
 - `create` and `get` form the caller-visible task contract. `module.ts` curates
   the clock, identifier, logger, workspace, and task-store capabilities that
-  their handlers need from inherited service context.
+  their handlers need from inherited service context. The named task router
+  leaf authors both operations; the module `router.ts` only composes them.
 
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/task|Task record DTO]]
 - [[../../model/ports/tasks-store|Task store contract]]
+- [[router/tasks.router|Task operation group]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

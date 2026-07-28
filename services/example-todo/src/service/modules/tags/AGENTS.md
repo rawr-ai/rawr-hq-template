@@ -38,13 +38,16 @@
 
 - `create` and `list` are the caller operations. `module.ts` curates the clock,
   identifier, logger, workspace, trace, and tag-store capabilities that their
-  handlers need from inherited service context.
+  handlers need from inherited service context. Qualified telemetry observes
+  the inherited lanes before curation; the named tag router leaf owns behavior.
 
 ## Routing
 
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/tag|Tag record DTO]]
 - [[../../model/ports/tags-store|Tag store contract]]
+- [[middleware/telemetry.middleware|Tag telemetry]]
+- [[router/tags.router|Tag operation group]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

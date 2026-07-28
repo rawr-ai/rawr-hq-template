@@ -63,7 +63,10 @@ independently owned topology and source axes:
    removed. Router handlers author against the curated names and do not reopen
    the raw lanes.
 7. Root composition uses exact relative imports of module contracts and
-   completed routers. A module reaches root only through its exact
+   completed routers. Root `router.ts` imports the exact runtime `service`
+   binding from `./impl` and completes the module branches through the
+   configured implementer's native `service.router(...)`, which retains the
+   hidden contract relation. A module reaches root only through its exact
    `module.ts`-to-`impl.ts` branch edge and
    named-middleware-to-base-factory edge; it does not reach upward or sideways
    for other implementation.

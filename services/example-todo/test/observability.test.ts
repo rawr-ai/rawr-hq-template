@@ -117,15 +117,13 @@ describe("example-todo observability", () => {
       expect(span.attributes["rawr.orpc.audience"]).toBe("internal");
       expect(span.attributes["rawr.todo.workspace_id"]).toBe("workspace-default");
       expect(span.attributes["rawr.todo.invocation_trace_id"]).toBe("trace-observability");
-      expect(span.events.map((event) => event.name)).toEqual(
-        expect.arrayContaining([
-          "rawr.orpc.procedure.started",
-          "rawr.orpc.procedure.succeeded",
-          "todo.procedure.started",
-          "todo.procedure.succeeded",
-          "todo.tags.module.observed",
-        ])
-      );
+      expect(span.events.map((event) => event.name)).toEqual([
+        "rawr.orpc.procedure.started",
+        "todo.procedure.started",
+        "todo.tags.module.observed",
+        "todo.procedure.succeeded",
+        "rawr.orpc.procedure.succeeded",
+      ]);
     });
 
     expect(
@@ -203,10 +201,35 @@ describe("example-todo observability", () => {
       { title: "Procedure-local example" },
       invocation("trace-seed-task")
     );
-    const tag = await client.tags.create(
-      { name: "proc-local", color: "#336699" },
-      invocation("trace-seed-tag")
-    );
+    const tag = await withRecordingSpan(async (span) => {
+      const created = await client.tags.create(
+        { name: "proc-local", color: "#336699" },
+        invocation("trace-seed-tag")
+      );
+
+      expect(span.events.map((event) => event.name)).toEqual([
+        "rawr.orpc.procedure.started",
+        "todo.procedure.started",
+        "todo.tags.module.observed",
+        "todo.tags.create.normalization.started",
+        "todo.tags.create.normalization.succeeded",
+        "todo.procedure.succeeded",
+        "rawr.orpc.procedure.succeeded",
+      ]);
+
+      return created;
+    });
+
+    expect(
+      analytics.some(
+        (entry) =>
+          entry.event === "orpc.procedure" &&
+          entry.payload.path === "tags.create" &&
+          entry.payload.analytics_layer === "procedure" &&
+          entry.payload.analytics_procedure === "tags.create" &&
+          entry.payload.analytics_outcome === "success"
+      )
+    ).toBe(true);
 
     await withRecordingSpan(async (span) => {
       await client.assignments.assign(
@@ -214,13 +237,14 @@ describe("example-todo observability", () => {
         invocation("trace-procedure-local")
       );
 
-      expect(span.events.map((event) => event.name)).toEqual(
-        expect.arrayContaining([
-          "todo.procedure.started",
-          "todo.procedure.succeeded",
-          "todo.assignments.module.observed",
-        ])
-      );
+      expect(span.events.map((event) => event.name)).toEqual([
+        "rawr.orpc.procedure.started",
+        "todo.procedure.started",
+        "todo.assignments.module.observed",
+        "todo.assignments.assign.completed",
+        "todo.procedure.succeeded",
+        "rawr.orpc.procedure.succeeded",
+      ]);
     });
 
     expect(

@@ -6,6 +6,62 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Contract Roots Close Through Native Authority
+
+A module router and a contract-first service root are different kinds of
+composition. Module `router.ts` aggregates completed operation groups as a
+plain object because it owns no additional contract boundary. The service root
+must close those modules through its native implementer so oRPC attaches the
+root contract relation used by runtime tooling. A TypeScript `satisfies` check
+cannot substitute for that native behavior.
+
+This correction preserves the funnel. Handler authorship remains in named
+router leaves, module aggregation remains plain, and the service root performs
+only native contract completion. It adds no policy, middleware, or alternate
+context author.
+
+For the pinned N1 lane, the configured owner is the `service` exported by
+`impl.ts`, so root completion is `service.router(...)`. oRPC 2 examples that
+name a different configured implementer do not supersede this lane's exact
+runtime and source authority.
+
+This entry supersedes the older API-module sentences that described the
+service root as plain composition with only a type check. Module aggregation
+stays plain; contract-first service-root completion does not.
+
+See [[services/example-todo/src/service/router|the worked root]],
+[[services/example-todo/src/service/impl|the implementer]], and
+[[services/example-todo/test/procedure-meta.test|the runtime contract oracle]].
+
+### Bag Of Keywords
+
+contract, service, root, module, router, handler, completion, authority,
+runtime, composition, flow.
+
+## 2026-07-28 - Module Shells Separate Curation From Authorship
+
+The service funnel narrows through distinct authoring sites. `module.ts`
+inherits the service branch, attaches only qualified middleware, and curates
+the smallest vocabulary its handlers may use. Named `router/*.router.ts`
+leaves author operation behavior against that vocabulary. Module `router.ts`
+then composes completed operation groups as a plain object; it does not reopen
+the native builder or become another behavior site.
+
+Empty middleware placeholders are not uniformity. They create false extension
+points and hide the fact that a module has no additional concern. Real
+middleware receives a qualified filename and observes or enriches inherited
+context before terminal curation. The hierarchy is therefore closed by what
+each layer owns, not padded until every directory looks alike.
+
+See [[services/example-todo/AGENTS|the worked service]],
+[[.habitat/blueprints/service/require_service_spine_topology/structure|the closed topology]],
+and [[.habitat/blueprints/service/require_service_router_authorship/pattern|the authorship law]].
+
+### Bag Of Keywords
+
+service, context, module, curation, middleware, router, handler, composition,
+closure, locality, flow.
+
 ## 2026-07-28 - API Modules Follow Contract Branches
 
 A module is the owner of one service capability branch, not whichever nested

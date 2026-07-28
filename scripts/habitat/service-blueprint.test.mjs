@@ -877,6 +877,16 @@ describe("service blueprint authority", () => {
           import "./router/find.router";
           export const router = {};
         `,
+        "services/service-completion/src/service/modules/catalog/router.ts": `
+          import { service } from "../../impl";
+          import { find } from "./router/find.router";
+          export const router = service.router({ find });
+        `,
+        "services/module-completion/src/service/modules/catalog/router.ts": `
+          import { module } from "./module";
+          import { find } from "./router/find.router";
+          export const router = module.router({ find });
+        `,
         "services/alias/src/service/modules/catalog/router.ts": `
           import { find } from "./router/find.router";
           export const router = { lookup: find };
@@ -1035,6 +1045,8 @@ describe("service blueprint authority", () => {
       "services/default/src/service/modules/catalog/router.ts",
       "services/namespace/src/service/modules/catalog/router.ts",
       "services/side-effect/src/service/modules/catalog/router.ts",
+      "services/service-completion/src/service/modules/catalog/router.ts",
+      "services/module-completion/src/service/modules/catalog/router.ts",
       "services/alias/src/service/modules/catalog/router.ts",
       "services/arrow/src/service/modules/catalog/router.ts",
       "services/detached/src/service/modules/catalog/router/sync.router.ts",
@@ -2097,11 +2109,8 @@ describe("service blueprint authority", () => {
     }
   });
 
-  it("keeps runtime authority singular while preserving mixed named imports", async () => {
+  it("requires configured native root completion while preserving other composition owners", async () => {
     const composition = "require_service_orpc_composition";
-    const context = "require_service_context_boundaries";
-    const isolation = "require_service_module_isolation";
-    const authorship = "require_service_router_authorship";
     const root = await createFixture(
       {
         "services/type-only/src/service/base.ts": `
@@ -2150,78 +2159,177 @@ describe("service blueprint authority", () => {
           import { service, type ServiceContext } from "../../impl";
           export const module = service.catalog;
         `,
-        "services/root-invalid/src/service/router.ts": `
-          import { service } from "./impl";
-          export const router = service.catalog.handler(handler);
-        `,
         "services/root-valid/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
+        `,
+        "plugins/server/api/root-valid/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
+        `,
+        "plugins/server/api/root-valid-empty/src/service/router.ts": `
+          import { service } from "./impl";
+          export const router = service.router({});
+        `,
+        "services/root-valid-multi/src/service/router.ts": `
+          import { service, type ServiceContext } from "./impl";
+          import { router as tags } from "./modules/tags/router";
+          import { router as tasks, type TasksRouter } from "./modules/tasks/router";
+          export const router = service.router({ tasks, ...tags });
+        `,
+        "services/root-old-plain/src/service/router.ts": `
           import type { Router } from "@orpc/server";
           import type { contract } from "./contract";
-          import {
-            router as catalog,
-            type CatalogRouter,
-          } from "./modules/catalog/router";
-          export const router = { catalog } satisfies Router<typeof contract, never>;
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = { tasks } satisfies Router<typeof contract, never>;
         `,
-        "services/root-invalid-context/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import type { contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = { catalog } satisfies Router<typeof contract, Context>;
+        "services/root-missing-service/src/service/router.ts": `
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-invalid-foreign-contract/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import { contract } from "./foreign-contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = { catalog } satisfies Router<typeof contract, never>;
+        "services/root-type-only-service/src/service/router.ts": `
+          import type { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-invalid-decoy/src/service/router.ts": `
-          import type { Router as NativeRouter } from "@orpc/server";
-          import type { Router } from "./decoy";
-          import type { contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = { catalog } satisfies Router<typeof contract, never>;
+        "services/root-type-only-module-import/src/service/router.ts": `
+          import { service } from "./impl";
+          import type { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-invalid-default-contract/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import extra, { type contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = { catalog } satisfies Router<typeof contract, never>;
+        "services/root-inline-type-module-import/src/service/router.ts": `
+          import { service } from "./impl";
+          import { type router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-invalid-default-router/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import type { contract } from "./contract";
-          import extra, { router as catalog } from "./modules/catalog/router";
-          export const router = { catalog } satisfies Router<typeof contract, never>;
+        "services/root-foreign-type-import/src/service/router.ts": `
+          import type { ForeignContext } from "foreign-context";
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-invalid-helper/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import type { contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          const select = () => catalog;
-          export const router = { catalog } satisfies Router<typeof contract, never>;
+        "services/root-local-type-import/src/service/router.ts": `
+          import { service } from "./impl";
+          import type { LocalContext } from "./types";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-invalid-call/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import type { contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = {
-            catalog: select(catalog),
-          } satisfies Router<typeof contract, never>;
+        "services/root-aliased-service/src/service/router.ts": `
+          import { service as configured } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = configured.router({ tasks });
         `,
-        "services/root-invalid-alias/src/service/router.ts": `
-          import type { Router } from "@orpc/server";
-          import type { contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = {
-            catalog: catalog,
-          } satisfies Router<typeof contract, never>;
+        "services/root-default-service/src/service/router.ts": `
+          import service from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
         `,
-        "services/root-valid-alias/src/service/router.ts": `
-          import type { Router as ORPCRouter } from "@orpc/server";
-          import type { contract } from "./contract";
-          import { router as catalog } from "./modules/catalog/router";
-          export const router = { catalog } satisfies ORPCRouter<typeof contract, never>;
+        "services/root-namespace-service/src/service/router.ts": `
+          import * as implementation from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = implementation.service.router({ tasks });
+        `,
+        "services/root-wrong-service-source/src/service/router.ts": `
+          import { service } from "./configured";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
+        `,
+        "services/root-computed-router/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service["router"]({ tasks });
+        `,
+        "services/root-detached-builder/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          const complete = service.router;
+          export const router = complete({ tasks });
+        `,
+        "services/root-detached-result/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          const completed = service.router({ tasks });
+          export const router = completed;
+        `,
+        "services/root-chained-service/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.use(middleware).router({ tasks });
+        `,
+        "services/root-nested-handler/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ ...tasks.handler(handler) });
+        `,
+        "services/root-nested-middleware/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ ...tasks.use(middleware) });
+        `,
+        "services/root-nested-context/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ ...context(tasks) });
+        `,
+        "services/root-nested-other-call/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ ...select(tasks) });
+        `,
+        "services/root-explicit-remap/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks: tasks });
+        `,
+        "services/root-typed-export/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router: RootRouter = service.router({ tasks });
+        `,
+        "services/root-extra-helper/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          const selected = tasks;
+          export const router = service.router({ tasks });
+        `,
+        "services/root-extra-export/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
+          export type Router = typeof router;
+        `,
+        "services/root-non-module-runtime/src/service/router.ts": `
+          import { service } from "./impl";
+          import { helper } from "./helper";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks });
+        `,
+        "services/root-wrong-module-path/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "#tasks-service/modules/tasks/router";
+          export const router = service.router({ tasks });
+        `,
+        "services/root-unimported-branch/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks, tags });
+        `,
+        "services/root-unimported-spread/src/service/router.ts": `
+          import { service } from "./impl";
+          import { router as tasks } from "./modules/tasks/router";
+          export const router = service.router({ tasks, ...tags });
+        `,
+        "services/module-service-call/src/service/modules/tasks/router.ts": `
+          import { service } from "../../impl";
+          import { tasks } from "./router/tasks.router";
+          export const router = service.router({ tasks });
+        `,
+        "services/module-module-call/src/service/modules/tasks/router.ts": `
+          import { module } from "./module";
+          import { tasks } from "./router/tasks.router";
+          export const router = module.router({ tasks });
         `,
         "plugins/server/api/type-only/src/service/impl.ts": `
           import type { implement } from "@orpc/server";
@@ -2236,12 +2344,15 @@ describe("service blueprint authority", () => {
           export const second = implement(contract).$context<Context>();
         `,
       },
-      [composition, context, isolation, authorship]
+      [composition]
     );
 
-    const compositionResult = await check(root, [composition]);
-    expect(compositionResult.exitCode).toBe(0);
-    const compositionPaths = diagnostics(compositionResult.report, composition).map(
+    const result = await check(root, [composition]);
+    expect(result.exitCode).toBe(0);
+    expect(result.report.rules.map((rule) => rule.disposition.kind)).not.toContain(
+      "execution-failed"
+    );
+    const compositionPaths = diagnostics(result.report, composition).map(
       (diagnostic) => diagnostic.path
     );
     for (const path of [
@@ -2249,15 +2360,33 @@ describe("service blueprint authority", () => {
       "services/duplicate/src/service/base.ts",
       "services/mixed/src/service/modules/catalog/model/helpers/second.ts",
       "services/module-type/src/service/modules/catalog/module.ts",
-      "services/root-invalid/src/service/router.ts",
-      "services/root-invalid-context/src/service/router.ts",
-      "services/root-invalid-foreign-contract/src/service/router.ts",
-      "services/root-invalid-decoy/src/service/router.ts",
-      "services/root-invalid-default-contract/src/service/router.ts",
-      "services/root-invalid-default-router/src/service/router.ts",
-      "services/root-invalid-helper/src/service/router.ts",
-      "services/root-invalid-call/src/service/router.ts",
-      "services/root-invalid-alias/src/service/router.ts",
+      "services/root-old-plain/src/service/router.ts",
+      "services/root-missing-service/src/service/router.ts",
+      "services/root-type-only-service/src/service/router.ts",
+      "services/root-type-only-module-import/src/service/router.ts",
+      "services/root-inline-type-module-import/src/service/router.ts",
+      "services/root-foreign-type-import/src/service/router.ts",
+      "services/root-local-type-import/src/service/router.ts",
+      "services/root-aliased-service/src/service/router.ts",
+      "services/root-default-service/src/service/router.ts",
+      "services/root-namespace-service/src/service/router.ts",
+      "services/root-wrong-service-source/src/service/router.ts",
+      "services/root-computed-router/src/service/router.ts",
+      "services/root-detached-builder/src/service/router.ts",
+      "services/root-detached-result/src/service/router.ts",
+      "services/root-chained-service/src/service/router.ts",
+      "services/root-nested-handler/src/service/router.ts",
+      "services/root-nested-middleware/src/service/router.ts",
+      "services/root-nested-context/src/service/router.ts",
+      "services/root-nested-other-call/src/service/router.ts",
+      "services/root-explicit-remap/src/service/router.ts",
+      "services/root-typed-export/src/service/router.ts",
+      "services/root-extra-helper/src/service/router.ts",
+      "services/root-extra-export/src/service/router.ts",
+      "services/root-non-module-runtime/src/service/router.ts",
+      "services/root-wrong-module-path/src/service/router.ts",
+      "services/root-unimported-branch/src/service/router.ts",
+      "services/root-unimported-spread/src/service/router.ts",
       "plugins/server/api/type-only/src/service/impl.ts",
       "plugins/server/api/mixed/src/service/modules/catalog/model/helpers/second.ts",
     ]) {
@@ -2267,33 +2396,15 @@ describe("service blueprint authority", () => {
       "services/mixed/src/service/base.ts",
       "services/module-mixed/src/service/modules/catalog/module.ts",
       "services/root-valid/src/service/router.ts",
-      "services/root-valid-alias/src/service/router.ts",
+      "plugins/server/api/root-valid/src/service/router.ts",
+      "plugins/server/api/root-valid-empty/src/service/router.ts",
+      "services/root-valid-multi/src/service/router.ts",
+      "services/module-service-call/src/service/modules/tasks/router.ts",
+      "services/module-module-call/src/service/modules/tasks/router.ts",
       "plugins/server/api/mixed/src/service/impl.ts",
     ]) {
       expect(compositionPaths).not.toContain(path);
     }
-
-    const contextResult = await check(root, [context]);
-    expect(contextResult.exitCode).toBe(0);
-    const contextPaths = diagnostics(contextResult.report, context).map(
-      (diagnostic) => diagnostic.path
-    );
-    expect(contextPaths).toContain("services/mixed/src/service/middleware/type-only.middleware.ts");
-    expect(contextPaths).not.toContain("services/mixed/src/service/middleware/mixed.middleware.ts");
-
-    const isolationResult = await check(root, [isolation]);
-    const isolationPaths = diagnostics(isolationResult.report, isolation).map(
-      (diagnostic) => diagnostic.path
-    );
-    expect(isolationPaths).not.toContain(
-      "services/module-mixed/src/service/modules/catalog/module.ts"
-    );
-    expect(isolationPaths).not.toContain("services/root-valid/src/service/router.ts");
-
-    const combinedResult = await check(root, [composition, context, isolation, authorship]);
-    expect(combinedResult.report.rules.map((rule) => rule.disposition.kind)).not.toContain(
-      "execution-failed"
-    );
   }, 15_000);
 
   it("rejects undocumented contract properties in standalone and API services", async () => {
