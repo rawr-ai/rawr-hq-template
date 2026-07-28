@@ -38,7 +38,7 @@ export type RawrHostSatisfiers = Readonly<{
  *
  * Owns:
  * - capability-specific process-scoped satisfier construction
- * - cache lifetimes for host-owned clients/adapters used during binding
+ * - cache lifetimes for clients and adapters resolved from request context
  * - logger/adaptor injection needed before request materialization exists
  *
  * Must not own:
@@ -48,7 +48,7 @@ export type RawrHostSatisfiers = Readonly<{
  * - request context hydration
  *
  * Canonical:
- * - explicit capability-shaped satisfiers consumed by `host-seam.ts`
+ * - explicit capability-shaped satisfiers projected through request `deps`
  *
  * Must stay non-generic:
  * - no DI container

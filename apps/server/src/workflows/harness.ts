@@ -8,7 +8,7 @@ import {
   withHostLoggingContext,
   withHostLoggingSpanContext,
 } from "../logging";
-import type { RawrBoundaryContextDeps } from "./context";
+import type { RawrBoundaryContext, RawrInitialContext } from "../request-context";
 
 export const WORKFLOW_BASE_PATH = "/api/workflows" as const;
 
@@ -98,28 +98,23 @@ async function withWorkflowRouteSpan(
  * - workflow declaration/binding
  * - alternate published route assembly outside host realization
  */
-export function createWorkflowRouteHarness<
-  TContext extends {
-    requestId: string;
-    correlationId: string;
-  } & Context,
->(input: {
+export function createWorkflowRouteHarness<TContext extends RawrBoundaryContext & Context>(input: {
   workflows: WorkflowRouteSurface<TContext>;
-  contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TContext;
+  contextFactory: (request: Request, initial: RawrInitialContext) => TContext;
 }) {
   const workflowOpenApiHandler = new OpenAPIHandler<TContext>(input.workflows.publishedRouter);
   const hostLogger = createHostLoggerAdapter();
 
   return {
-    async handle(request: Request, deps: RawrBoundaryContextDeps): Promise<Response> {
+    async handle(request: Request, initial: RawrInitialContext): Promise<Response> {
       const startedAt = Date.now();
       return withWorkflowRouteSpan(request, async () => {
-        const context = input.contextFactory(request, deps);
+        const context = input.contextFactory(request, initial);
         const loggingContext = createHostLoggingContext({
           request,
-          repoRoot: deps.repoRoot,
-          requestId: context.requestId,
-          correlationId: context.correlationId,
+          repoRoot: context.scope.repoRoot,
+          requestId: context.invocation.requestId,
+          correlationId: context.invocation.correlationId,
           surface: "workflow",
         });
 

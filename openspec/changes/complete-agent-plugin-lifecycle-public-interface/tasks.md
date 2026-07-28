@@ -1309,6 +1309,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `os` imports outside `base.ts` red. Prove the exact green and red classes in
   the existing service-blueprint fixture; change no runtime source, SDK,
   provider, app composition, Nx wiring, or Habitat runner in this checkpoint.
+- [x] 5.7e21d Replace the server's flat embedded-API request context with the
+  canonical `deps`, `scope`, `config`, `invocation`, and empty `provided`
+  projection. Resolve the repository-scoped Todo client once per request in
+  base-authored middleware, then let the `example-todo` module terminally
+  curate only that client and correlation identity for its task handlers.
+  Compose completed module and root routers as plain objects with the exact
+  contract relation, and keep plugin registration static so it captures no
+  resolver. Prove RPC and OpenAPI resolver lifetime, repository isolation,
+  correlation, middleware multiplicity, typed failure, success, focused types,
+  and the staged service laws. Do not add an Effect bridge, provider author,
+  flat compatibility context, or live provider mutation.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own

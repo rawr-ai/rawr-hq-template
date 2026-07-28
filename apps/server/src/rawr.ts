@@ -5,13 +5,8 @@ import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import type { RawrServerApp } from "./app";
-import { createHostLoggerAdapter } from "./logging";
 import { registerOrpcRoutes } from "./orpc";
-import {
-  createRequestScopedBoundaryContext,
-  createWorkflowBoundaryContext,
-  type RawrBoundaryContextDeps,
-} from "./workflows/context";
+import { createRequestScopedBoundaryContext, type RawrInitialContext } from "./request-context";
 import { createWorkflowRouteHarness } from "./workflows/harness";
 import { createRawrWorkflowRuntime } from "./workflows/runtime";
 
@@ -208,24 +203,29 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(
   opts: RawrRoutesOptions
 ): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
-  const hostLogger = createHostLoggerAdapter();
   const rawrHostSeam = rawrHostAuthority.realization;
 
   const hostInngest = createHostInngestBundle({
     repoRoot: authorityRepoRoot,
   });
-  const boundaryContextDeps: RawrBoundaryContextDeps = {
-    repoRoot: authorityRepoRoot,
-    baseUrl: opts.baseUrl ?? "http://localhost:3000",
-    runtime: hostInngest.runtime,
-    inngestClient: hostInngest.client,
-    hostLogger,
+  const initialContext: RawrInitialContext = {
+    deps: {
+      runtime: hostInngest.runtime,
+      inngestClient: hostInngest.client,
+      exampleTodo: rawrHostAuthority.satisfiers.exampleTodo,
+    },
+    scope: {
+      repoRoot: authorityRepoRoot,
+    },
+    config: {
+      baseUrl: opts.baseUrl ?? "http://localhost:3000",
+    },
   };
   const workflowRoutes = createWorkflowRouteHarness({
     workflows: {
       publishedRouter: rawrHostSeam.workflows.published.router,
     },
-    contextFactory: (request, deps) => createWorkflowBoundaryContext(request, deps),
+    contextFactory: createRequestScopedBoundaryContext,
   });
 
   app.all(
@@ -243,13 +243,13 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(
   app.all(
     "/api/workflows/*",
     async ({ request }) => {
-      return workflowRoutes.handle(request as Request, boundaryContextDeps);
+      return workflowRoutes.handle(request as Request, initialContext);
     },
     { parse: "none" }
   );
 
   registerOrpcRoutes(app, {
-    ...boundaryContextDeps,
+    ...initialContext,
     router: rawrHostSeam.orpc.router,
     openApiRouter: rawrHostSeam.orpc.published.router,
     contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps),

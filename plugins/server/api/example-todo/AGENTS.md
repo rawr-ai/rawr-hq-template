@@ -20,7 +20,7 @@
 - Derive API operations from the public service contract. Do not copy service
   schemas, import service implementation paths, or introduce a second DTO
   authority.
-- The host supplies `ExampleTodoClientResolver`; this package must not
+- The host supplies a ready Todo client resolver under `deps`; this package must not
   construct concrete repositories, providers, Elysia handlers, or application
   runtime state.
 - Router handlers forward trace context and delegate directly to the sealed
@@ -28,9 +28,10 @@
 
 ## Behavior
 
-- The plugin derives transport metadata from the service contract, resolves
-  the repository-scoped client supplied by the host, and forwards each request
-  with trace context.
+- The plugin derives transport metadata from the service contract. Root
+  middleware resolves one repository-scoped client per request, and the
+  Example Todo module curates only that client and correlation identity for
+  its task handlers.
 
 ## Concepts
 
@@ -40,9 +41,10 @@
 
 ## Flow
 
-- The app host binds a Todo client resolver, the plugin contributes its
-  contract and router, request context supplies `repoRoot` and trace data, and
-  the selected handler invokes the corresponding public Todo operation.
+- The app host contributes `deps`, `scope`, `config`, and `invocation`. The
+  plugin starts with an empty `provided` lane; root middleware contributes the
+  resolved client; module composition narrows the context; task handlers invoke
+  the corresponding public Todo operation.
 
 ## Interfaces
 
@@ -56,6 +58,7 @@
 - [Caller-facing client](src/client.ts)
 - [API contribution boundary](src/api.ts)
 - [Embedded service contract](src/service/contract.ts)
+- [Example Todo API module](src/service/modules/example-todo/AGENTS.md)
 
 ## Validation
 

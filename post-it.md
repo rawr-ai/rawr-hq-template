@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - API Modules Follow Contract Branches
+
+A module is the owner of one service capability branch, not whichever nested
+operation group happened to need more files. The embedded Todo module is
+therefore `example-todo`, matching `service.exampleTodo`; `tasks` remains a
+router group inside that module. This preserves one downward identity from
+contract to implementer to module to handler.
+
+Named router files author operations and intentional groups. `router.ts` at
+the module boundary composes those completed groups as a plain object, and the
+service `router.ts` composes completed modules the same way. Neither boundary
+re-enters the native builder or authors behavior. The root retains the exact
+contract relation as a type check rather than reconstructing execution.
+
+See [[plugins/server/api/example-todo/src/service/modules/example-todo/AGENTS|the API module]],
+[[.habitat/blueprints/service/require_service_orpc_composition/pattern|the composition law]],
+and [[.habitat/blueprints/service/require_service_router_authorship/pattern|the authorship law]].
+
+### Bag Of Keywords
+
+contract, service, branch, module, router, group, handler, composition,
+identity, boundary, flow.
+
 ## 2026-07-28 - Embedded API Context Is A Host Projection
 
 An embedded API service receives one service-shaped projection from its host.

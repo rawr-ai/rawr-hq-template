@@ -1,5 +1,3 @@
-import type { Inngest } from "inngest";
-
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
  * @agents-canonical type-only support seam package
@@ -27,22 +25,39 @@ export type WorkflowRuntimeSupportSeam<
   inngestBaseUrl?: string;
 }>;
 
-export type BoundaryMiddlewareSupportState<TMarker extends string = string> = {
-  markerCache: Map<TMarker, unknown>;
+/** Request-local memoization state carried inside the invocation lane. */
+export type BoundaryMiddlewareSupportState<TMarker extends string = string, TValue = unknown> = {
+  markerCache: Map<TMarker, TValue>;
 };
 
-export type HostRuntimeSupportContext<TRuntime = unknown> = {
-  repoRoot: string;
-  baseUrl: string;
-  runtime: TRuntime;
-  inngestClient: Inngest;
+/**
+ * Host-owned stable context lanes supplied before request middleware runs.
+ *
+ * Capability-specific hosts specialize these lanes without moving their
+ * construction or policy into this type-only package.
+ */
+export type HostRuntimeSupportContext<
+  TDeps extends object = Record<never, never>,
+  TScope extends object = Record<never, never>,
+  TConfig extends object = Record<never, never>,
+> = {
+  deps: TDeps;
+  scope: TScope;
+  config: TConfig;
 };
 
+/**
+ * Request context after invocation facts and the empty `provided` lane enter.
+ *
+ * Native oRPC middleware may widen `provided`; the four owner/lifetime lanes
+ * remain stable throughout the request.
+ */
 export type BoundaryRequestSupportContext<
-  TRuntime = unknown,
-  TMarker extends string = string,
-> = HostRuntimeSupportContext<TRuntime> & {
-  requestId: string;
-  correlationId: string;
-  middlewareState: BoundaryMiddlewareSupportState<TMarker>;
+  TDeps extends object = Record<never, never>,
+  TScope extends object = Record<never, never>,
+  TConfig extends object = Record<never, never>,
+  TInvocation extends object = Record<never, never>,
+> = HostRuntimeSupportContext<TDeps, TScope, TConfig> & {
+  invocation: TInvocation;
+  provided: Record<never, never>;
 };

@@ -1,22 +1,22 @@
 import { createRawrHqManifest, type RawrHqManifest } from "@rawr/hq-app/manifest";
-import { materializeRawrHostBoundRolePlan } from "./host-realization";
+import { materializeRawrHostRolePlan } from "./host-realization";
 import {
   createRawrHostSatisfiers,
   type HostServiceLogger,
   type RawrHostSatisfiers,
 } from "./host-satisfiers";
 import {
-  createRawrHostBoundRolePlan,
-  type RawrHostBoundRolePlan,
+  createRawrHostRolePlan,
   type RawrHostDeclarations,
+  type RawrHostRolePlan,
 } from "./host-seam";
 
 export type RawrHostComposition = Readonly<{
   manifest: RawrHqManifest;
   declarations: RawrHostDeclarations;
   satisfiers: RawrHostSatisfiers;
-  boundRolePlan: RawrHostBoundRolePlan;
-  realization: ReturnType<typeof materializeRawrHostBoundRolePlan>;
+  rolePlan: RawrHostRolePlan;
+  realization: ReturnType<typeof materializeRawrHostRolePlan>;
 }>;
 
 function selectRawrHostDeclarations(manifest: RawrHqManifest): RawrHostDeclarations {
@@ -35,7 +35,7 @@ function selectRawrHostDeclarations(manifest: RawrHqManifest): RawrHostDeclarati
  * Owns:
  * - the only sanctioned server-side intake of HQ app declaration authority
  *   while split-project topology still exists
- * - host satisfier construction, bound role-plan creation, and realized host
+ * - host satisfier construction, role-plan creation, and realized host
  *   surface materialization as one executable composition story
  *
  * Must not own:
@@ -52,17 +52,16 @@ export function createRawrHostComposition(input: {
   const satisfiers = createRawrHostSatisfiers({
     hostLogger: input.hostLogger,
   });
-  const boundRolePlan = createRawrHostBoundRolePlan({
+  const rolePlan = createRawrHostRolePlan({
     declarations,
-    satisfiers,
   });
-  const realization = materializeRawrHostBoundRolePlan(boundRolePlan);
+  const realization = materializeRawrHostRolePlan(rolePlan);
 
   return {
     manifest,
     declarations,
     satisfiers,
-    boundRolePlan,
+    rolePlan,
     realization,
   } as const;
 }

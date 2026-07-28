@@ -11,9 +11,10 @@ import {
   hasRequestScopedMiddlewareMarker,
   RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY,
   RAWR_MIDDLEWARE_DEDUPE_MARKERS,
-  type RawrBoundaryContextDeps,
-  resolveRequestScopedMiddlewareValue,
-} from "../src/workflows/context";
+  type RawrInitialContext,
+  resolveRequestScopedMiddlewareDecision,
+} from "../src/request-context";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -21,59 +22,74 @@ const FIRST_PARTY_RPC_HEADERS = {
   "x-rawr-session-auth": "verified",
 } as const;
 
-const TEST_DEPS: RawrBoundaryContextDeps = {
-  repoRoot: "/tmp/rawr-d1-dedupe",
-  baseUrl: "http://localhost:3000",
-  runtime: {} as RawrBoundaryContextDeps["runtime"],
-  inngestClient: {} as Inngest,
+const TEST_INITIAL: RawrInitialContext = {
+  deps: {
+    runtime: {},
+    inngestClient: {} as Inngest,
+    exampleTodo: createTestingRawrHostSeam().satisfiers.exampleTodo,
+  },
+  scope: {
+    repoRoot: "/tmp/rawr-d1-dedupe",
+  },
+  config: {
+    baseUrl: "http://localhost:3000",
+  },
 };
 
 const RPC_AUTH_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 
-async function createRouteRuntimeDeps() {
+async function createRouteInitialContext(): Promise<RawrInitialContext> {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-d1-dedupe-"));
   const runtime = { repoRoot, inngestBaseUrl: "http://localhost:8288" };
   const inngestClient = {
     send: async () => ({ ids: ["evt-d1-dedupe"] }),
   } as unknown as Inngest;
 
-  return { repoRoot, runtime, inngestClient };
+  return {
+    deps: {
+      runtime,
+      inngestClient,
+      exampleTodo: createTestingRawrHostSeam().satisfiers.exampleTodo,
+    },
+    scope: { repoRoot },
+    config: { baseUrl: "http://localhost:3000" },
+  };
 }
 
 describe("middleware dedupe", () => {
-  it("caches heavy middleware marker values per request", () => {
+  it("caches a heavy middleware decision per request", () => {
     const request = new Request("http://localhost/rpc/exampleTodo/tasks/create");
     let evaluationCount = 0;
 
-    const first = resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => {
+    const first = resolveRequestScopedMiddlewareDecision(request, RPC_AUTH_MARKER, () => {
       evaluationCount += 1;
-      return { allowed: true };
+      return true;
     });
-    const second = resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => {
+    const second = resolveRequestScopedMiddlewareDecision(request, RPC_AUTH_MARKER, () => {
       evaluationCount += 1;
-      return { allowed: false };
+      return false;
     });
 
-    expect(first).toEqual({ allowed: true });
+    expect(first).toBe(true);
     expect(second).toBe(first);
     expect(evaluationCount).toBe(1);
   });
 
   it("shares marker cache across contexts for the same request", () => {
     const request = new Request("http://localhost/rpc/exampleTodo/tasks/get");
-    const contextA = createRequestScopedBoundaryContext(request, TEST_DEPS);
-    const contextB = createRequestScopedBoundaryContext(request, TEST_DEPS);
+    const contextA = createRequestScopedBoundaryContext(request, TEST_INITIAL);
+    const contextB = createRequestScopedBoundaryContext(request, TEST_INITIAL);
 
-    resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => true);
+    resolveRequestScopedMiddlewareDecision(request, RPC_AUTH_MARKER, () => true);
 
-    expect(contextA.middlewareState).toBe(contextB.middlewareState);
+    expect(contextA.invocation.middlewareState).toBe(contextB.invocation.middlewareState);
     expect(hasRequestScopedMiddlewareMarker(contextA, RPC_AUTH_MARKER)).toBe(true);
     expect(hasRequestScopedMiddlewareMarker(contextB, RPC_AUTH_MARKER)).toBe(true);
   });
 
   it("enforces heavy middleware marker policy for request contexts", () => {
     const request = new Request("http://localhost/rpc/exampleTodo/tasks/get");
-    const context = createRequestScopedBoundaryContext(request, TEST_DEPS);
+    const context = createRequestScopedBoundaryContext(request, TEST_INITIAL);
 
     expect(() =>
       assertHeavyMiddlewareDedupeMarkers(
@@ -82,7 +98,7 @@ describe("middleware dedupe", () => {
       )
     ).toThrowError(/missing required heavy middleware dedupe marker/);
 
-    resolveRequestScopedMiddlewareValue(request, RPC_AUTH_MARKER, () => true);
+    resolveRequestScopedMiddlewareDecision(request, RPC_AUTH_MARKER, () => true);
     expect(() =>
       assertHeavyMiddlewareDedupeMarkers(
         context,
@@ -92,11 +108,10 @@ describe("middleware dedupe", () => {
   });
 
   it("marks RPC auth dedupe marker before handler dispatch", async () => {
-    const deps = await createRouteRuntimeDeps();
+    const initial = await createRouteInitialContext();
     const markerSnapshots: boolean[] = [];
     const app = registerOrpcRoutes(createServerApp(), {
-      ...deps,
-      baseUrl: "http://localhost:3000",
+      ...initial,
       onContextCreated: (context) => {
         markerSnapshots.push(hasRequestScopedMiddlewareMarker(context, RPC_AUTH_MARKER));
       },
@@ -115,16 +130,21 @@ describe("middleware dedupe", () => {
   });
 
   it("hard-fails when context factory drifts from request-scoped marker cache", async () => {
-    const deps = await createRouteRuntimeDeps();
+    const initial = await createRouteInitialContext();
     const app = registerOrpcRoutes(createServerApp(), {
-      ...deps,
-      baseUrl: "http://localhost:3000",
-      contextFactory: (request, contextDeps) => ({
-        ...createRequestScopedBoundaryContext(request, contextDeps),
-        middlewareState: {
-          markerCache: new Map(),
-        },
-      }),
+      ...initial,
+      contextFactory: (request, stableContext) => {
+        const context = createRequestScopedBoundaryContext(request, stableContext);
+        return {
+          ...context,
+          invocation: {
+            ...context.invocation,
+            middlewareState: {
+              markerCache: new Map(),
+            },
+          },
+        };
+      },
     });
 
     const res = await app.handle(

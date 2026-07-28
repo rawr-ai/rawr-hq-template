@@ -1,34 +1,69 @@
-import type { Logger } from "@rawr/hq-sdk";
 import type {
   BoundaryMiddlewareSupportState,
   BoundaryRequestSupportContext,
   HostRuntimeSupportContext,
 } from "@rawr/runtime-context";
+import type { Inngest } from "inngest";
+import type { ExampleTodoApiContext } from "../../../plugins/server/api/example-todo/src/api";
 
+/** Stable markers whose expensive request policy result may be reused. */
 export const RAWR_MIDDLEWARE_DEDUPE_MARKERS = {
   RPC_AUTHORIZATION_DECISION: "rpc.authorization.decision",
 } as const;
 
+/** Marker names accepted by the server request boundary. */
 export type RawrMiddlewareDedupeMarker =
   (typeof RAWR_MIDDLEWARE_DEDUPE_MARKERS)[keyof typeof RAWR_MIDDLEWARE_DEDUPE_MARKERS];
 
+/** Required heavy-policy markers that must exist before RPC dispatch. */
 export const RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY = {
   requiredMarkers: [RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION] as const,
 } as const;
 
-export type RawrBoundaryMiddlewareState =
-  BoundaryMiddlewareSupportState<RawrMiddlewareDedupeMarker>;
+/** Request-local cache used to deduplicate qualified host middleware work. */
+export type RawrBoundaryMiddlewareState = BoundaryMiddlewareSupportState<
+  RawrMiddlewareDedupeMarker,
+  boolean
+>;
 
-export type RawrBoundaryContextDeps<TRuntime = unknown> = HostRuntimeSupportContext<TRuntime> & {
-  hostLogger?: Logger;
+type RawrHostDependencies<TRuntime> = {
+  runtime: TRuntime;
+  inngestClient: Inngest;
+  exampleTodo: ExampleTodoApiContext["deps"]["exampleTodo"];
 };
 
-export type RawrBoundaryContext<TRuntime = unknown> = BoundaryRequestSupportContext<
-  TRuntime,
-  RawrMiddlewareDedupeMarker
-> & {
-  hostLogger?: Logger;
+type RawrHostScope = {
+  repoRoot: string;
 };
+
+type RawrHostConfig = {
+  baseUrl: string;
+};
+
+type RawrInvocation = {
+  requestId: string;
+  correlationId: string;
+  middlewareState: RawrBoundaryMiddlewareState;
+};
+
+/** Stable server-host lanes supplied to every request materializer. */
+export type RawrInitialContext<TRuntime = unknown> = HostRuntimeSupportContext<
+  RawrHostDependencies<TRuntime>,
+  RawrHostScope,
+  RawrHostConfig
+>;
+
+type ExampleTodoCompatibleContext<TContext extends ExampleTodoApiContext> = TContext;
+
+/** Complete request context handed to realized RPC, OpenAPI, and workflow routers. */
+export type RawrBoundaryContext<TRuntime = unknown> = ExampleTodoCompatibleContext<
+  BoundaryRequestSupportContext<
+    RawrHostDependencies<TRuntime>,
+    RawrHostScope,
+    RawrHostConfig,
+    RawrInvocation
+  >
+>;
 
 const requestScopedMiddlewareStateCache = new WeakMap<Request, RawrBoundaryMiddlewareState>();
 
@@ -50,6 +85,7 @@ function resolveCorrelationId(request: Request, requestId: string): string {
   return requestId;
 }
 
+/** Returns the one middleware-state cache associated with a Request object. */
 export function getRequestScopedBoundaryMiddlewareState(
   request: Request
 ): RawrBoundaryMiddlewareState {
@@ -61,30 +97,32 @@ export function getRequestScopedBoundaryMiddlewareState(
   return state;
 }
 
-export function resolveRequestScopedMiddlewareValue<T>(
+/** Evaluates a qualified middleware decision at most once per Request object. */
+export function resolveRequestScopedMiddlewareDecision(
   request: Request,
   marker: RawrMiddlewareDedupeMarker,
-  evaluate: () => T
-): T {
+  evaluate: () => boolean
+): boolean {
   const state = getRequestScopedBoundaryMiddlewareState(request);
-  if (state.markerCache.has(marker)) {
-    return state.markerCache.get(marker) as T;
-  }
+  const cached = state.markerCache.get(marker);
+  if (cached !== undefined) return cached;
 
   const value = evaluate();
   state.markerCache.set(marker, value);
   return value;
 }
 
+/** Reports whether a request invocation contains a completed middleware marker. */
 export function hasRequestScopedMiddlewareMarker(
-  context: Pick<RawrBoundaryContext, "middlewareState">,
+  context: Pick<RawrBoundaryContext, "invocation">,
   marker: RawrMiddlewareDedupeMarker
 ): boolean {
-  return context.middlewareState.markerCache.has(marker);
+  return context.invocation.middlewareState.markerCache.has(marker);
 }
 
+/** Refuses dispatch when a required request middleware marker is absent. */
 export function assertRequestScopedMiddlewareMarker(
-  context: Pick<RawrBoundaryContext, "middlewareState">,
+  context: Pick<RawrBoundaryContext, "invocation">,
   marker: RawrMiddlewareDedupeMarker
 ): void {
   if (hasRequestScopedMiddlewareMarker(context, marker)) {
@@ -94,8 +132,9 @@ export function assertRequestScopedMiddlewareMarker(
   throw new Error(`missing request-scoped middleware dedupe marker: ${marker}`);
 }
 
+/** Refuses dispatch until every named heavy middleware decision has completed. */
 export function assertHeavyMiddlewareDedupeMarkers(
-  context: Pick<RawrBoundaryContext, "middlewareState">,
+  context: Pick<RawrBoundaryContext, "invocation">,
   markers: readonly RawrMiddlewareDedupeMarker[]
 ): void {
   const missing = markers.filter((marker) => !hasRequestScopedMiddlewareMarker(context, marker));
@@ -107,41 +146,23 @@ export function assertHeavyMiddlewareDedupeMarkers(
 }
 
 /**
- * @agents-style seam-law declaration -> host binding -> request/process materialization
- * @agents-canonical host-owned request boundary context materializer
- * @agents-must-not plugin-owned request context construction
- *
- * Owns:
- * - request-scoped correlation IDs and middleware dedupe state
- * - hydration of request boundary context from already-bound host deps
- *
- * Must not own:
- * - plugin declaration or host binding
- * - app-manifest executable runtime assembly
+ * Materializes the invocation lane for one request without rebuilding stable
+ * host dependencies, scope, or configuration.
  */
 export function createRequestScopedBoundaryContext<TRuntime>(
   request: Request,
-  deps: RawrBoundaryContextDeps<TRuntime>
+  initial: RawrInitialContext<TRuntime>
 ): RawrBoundaryContext<TRuntime> {
   const requestId = resolveRequestId(request);
   const correlationId = resolveCorrelationId(request, requestId);
 
   return {
-    ...deps,
-    requestId,
-    correlationId,
-    middlewareState: getRequestScopedBoundaryMiddlewareState(request),
+    ...initial,
+    invocation: {
+      requestId,
+      correlationId,
+      middlewareState: getRequestScopedBoundaryMiddlewareState(request),
+    },
+    provided: {},
   };
-}
-
-/**
- * @agents-style seam-law declaration -> host binding -> request/process materialization
- * @agents-canonical workflow request boundary alias
- * @agents-must-not separate workflow-only context authority
- */
-export function createWorkflowBoundaryContext<TRuntime>(
-  request: Request,
-  deps: RawrBoundaryContextDeps<TRuntime>
-): RawrBoundaryContext<TRuntime> {
-  return createRequestScopedBoundaryContext(request, deps);
 }

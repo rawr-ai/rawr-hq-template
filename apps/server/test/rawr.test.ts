@@ -7,6 +7,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
+import { createRequestScopedBoundaryContext } from "../src/request-context";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
 
 afterAll(() => resetTestingRawrHostSeam());
@@ -135,10 +136,10 @@ describe("rawr server routes", () => {
     }
   });
 
-  it("no-legacy-composition-authority: host seam binds every selected plugin through host-owned satisfiers", () => {
-    const { boundRolePlan, realization } = createTestingRawrHostSeam();
-    expect(boundRolePlan.apiPlugins).toHaveLength(1);
-    expect(boundRolePlan.workflowPlugins).toHaveLength(0);
+  it("no-legacy-composition-authority: host seam composes complete static API contributions", () => {
+    const { rolePlan, realization } = createTestingRawrHostSeam();
+    expect(rolePlan.apiPlugins).toHaveLength(1);
+    expect(rolePlan.workflowPlugins).toHaveLength(0);
     expect(Object.keys(realization.orpc.router)).toEqual(["exampleTodo"]);
     expect(Object.keys(realization.orpc.published.router)).toEqual(["exampleTodo"]);
     expect(Object.keys(realization.workflows.published.router)).toEqual([]);
@@ -154,37 +155,97 @@ describe("rawr server routes", () => {
     ]);
   });
 
-  it("no-legacy-composition-authority: request scoped context factory runs per ORPC request", async () => {
+  it("resolves one repository-scoped Example Todo client per RPC and OpenAPI request", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-context-"));
+    const primaryRepoRoot = path.join(tempRoot, "primary");
+    const alternateRepoRoot = path.join(tempRoot, "alternate");
     const hostInngest = createHostInngestBundle({ repoRoot: tempRoot });
-    const requestIds: string[] = [];
+    const host = createTestingRawrHostSeam();
+    const resolveClient = vi.fn(host.satisfiers.exampleTodo.resolveClient);
+    const invocations: Array<{ requestId: string; correlationId: string }> = [];
     const app = registerOrpcRoutes(createServerApp(), {
-      repoRoot: tempRoot,
-      baseUrl: "http://localhost:3000",
-      runtime: hostInngest.runtime,
-      inngestClient: hostInngest.client,
-      router: createTestingRawrHostSeam().realization.orpc.router as never,
+      deps: {
+        runtime: hostInngest.runtime,
+        inngestClient: hostInngest.client,
+        exampleTodo: { resolveClient },
+      },
+      scope: { repoRoot: primaryRepoRoot },
+      config: { baseUrl: "http://localhost:3000" },
+      router: host.realization.orpc.router,
+      openApiRouter: host.realization.orpc.published.router,
+      contextFactory: (request, initial) =>
+        createRequestScopedBoundaryContext(request, {
+          ...initial,
+          scope: {
+            repoRoot:
+              request.headers.get("x-test-repo-scope") === "alternate"
+                ? alternateRepoRoot
+                : primaryRepoRoot,
+          },
+        }),
       onContextCreated: (context) => {
-        requestIds.push(context.requestId);
+        invocations.push({
+          requestId: context.invocation.requestId,
+          correlationId: context.invocation.correlationId,
+        });
       },
     });
 
-    await app.handle(
-      new Request("http://localhost/rpc/exampleTodo/tasks/get", {
+    expect(resolveClient).not.toHaveBeenCalled();
+
+    const createResponse = await app.handle(
+      new Request("http://localhost/rpc/exampleTodo/tasks/create", {
         method: "POST",
-        headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-a" },
-        body: JSON.stringify({ json: { id: "task-a" } }),
+        headers: {
+          ...FIRST_PARTY_RPC_HEADERS,
+          "x-request-id": "req-a",
+          "x-correlation-id": "correlation-a",
+        },
+        body: JSON.stringify({ json: { title: "Request-scoped client" } }),
       })
     );
-    await app.handle(
+    expect(createResponse.status).toBe(200);
+    const created = (await createResponse.json()) as { json?: { id?: string } };
+    const taskId = created.json?.id ?? "";
+    expect(taskId).not.toBe("");
+
+    const isolatedGetResponse = await app.handle(
       new Request("http://localhost/rpc/exampleTodo/tasks/get", {
         method: "POST",
-        headers: { ...FIRST_PARTY_RPC_HEADERS, "x-request-id": "req-b" },
-        body: JSON.stringify({ json: { id: "task-b" } }),
+        headers: {
+          ...FIRST_PARTY_RPC_HEADERS,
+          "x-request-id": "req-b",
+          "x-correlation-id": "correlation-b",
+          "x-test-repo-scope": "alternate",
+        },
+        body: JSON.stringify({ json: { id: taskId } }),
+      })
+    );
+    expect(isolatedGetResponse.status).toBe(404);
+
+    const openApiGetResponse = await app.handle(
+      new Request(`http://localhost/api/orpc/exampleTodo/tasks/${taskId}`, {
+        method: "GET",
+        headers: {
+          "x-request-id": "req-c",
+          "x-correlation-id": "correlation-c",
+          "x-rawr-caller-surface": "external",
+        },
       })
     );
 
-    expect(requestIds).toEqual(["req-a", "req-b"]);
+    expect(openApiGetResponse.status).toBe(200);
+    expect(invocations).toEqual([
+      { requestId: "req-a", correlationId: "correlation-a" },
+      { requestId: "req-b", correlationId: "correlation-b" },
+      { requestId: "req-c", correlationId: "correlation-c" },
+    ]);
+    expect(resolveClient.mock.calls).toEqual([
+      [primaryRepoRoot],
+      [alternateRepoRoot],
+      [primaryRepoRoot],
+    ]);
+    await fs.rmdir(tempRoot);
   });
 
   it("no-legacy-composition-authority: enforces ingress -> workflows -> rpc/openapi mount order contract", () => {

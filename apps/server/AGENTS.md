@@ -27,8 +27,8 @@
 ## Concepts
 
 - **Host composition** is the resolved set of declarations, resources, and
-  route contributions. **Request context** carries per-request identity,
-  authentication, tracing, and repository scope.
+  route contributions. **Request context** projects ready dependencies,
+  repository scope, host configuration, and invocation identity into services.
 
 ## Flow
 
@@ -36,8 +36,8 @@
   application.
 - Host composition consumes the HQ manifest, binds satisfiers, and materializes
   declared service surfaces.
-- Route handlers create request context, enforce host policy, and delegate to
-  the realized oRPC or OpenAPI router.
+- RPC, OpenAPI, and workflow adapters create the same canonical context lanes.
+  Service middleware enriches those lanes before module-curated handlers run.
 
 ## Interfaces
 

@@ -4,7 +4,11 @@ import path from "node:path";
 import * as otelApi from "@opentelemetry/api";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createServerApp } from "../src/app";
-import { __resetOrpcRouteTelemetryForTests, registerOrpcRoutes } from "../src/orpc";
+import {
+  __resetOrpcRouteTelemetryForTests,
+  type RegisterOrpcRoutesOptions,
+  registerOrpcRoutes,
+} from "../src/orpc";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
 
 afterAll(() => resetTestingRawrHostSeam());
@@ -26,18 +30,21 @@ const startActiveSpan = vi.fn();
 const rawrHqHostSeam = createTestingRawrHostSeam();
 
 async function createTestApp(args: {
-  contextFactory?: (request: Request, deps: unknown) => unknown;
+  contextFactory?: NonNullable<RegisterOrpcRoutesOptions["contextFactory"]>;
 }) {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-orpc-metrics-"));
   const runtime = { repoRoot: tempRoot, inngestBaseUrl: "http://localhost:8288" };
 
   const app = registerOrpcRoutes(createServerApp(), {
-    repoRoot: tempRoot,
-    baseUrl: "http://localhost:3100",
-    runtime,
-    inngestClient: { send: vi.fn() } as never,
-    router: rawrHqHostSeam.realization.orpc.router as never,
-    ...(args.contextFactory ? { contextFactory: args.contextFactory as never } : {}),
+    deps: {
+      runtime,
+      inngestClient: { send: vi.fn() } as never,
+      exampleTodo: rawrHqHostSeam.satisfiers.exampleTodo,
+    },
+    scope: { repoRoot: tempRoot },
+    config: { baseUrl: "http://localhost:3100" },
+    router: rawrHqHostSeam.realization.orpc.router,
+    ...(args.contextFactory ? { contextFactory: args.contextFactory } : {}),
   });
 
   return { app, tempRoot };

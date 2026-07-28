@@ -1,7 +1,6 @@
 import { composeApiPlugins, type MaterializedApiPluginRegistration } from "@rawr/hq-sdk/apis";
 import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
 import type { ExampleTodoApiPluginRegistration } from "../../../plugins/server/api/example-todo/src/api";
-import type { RawrHostSatisfiers } from "./host-satisfiers";
 
 export type RawrHostDeclarations = Readonly<{
   api: Readonly<{
@@ -12,54 +11,40 @@ export type RawrHostDeclarations = Readonly<{
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
- * @agents-style canonical host binding seam
+ * @agents-style canonical host role seam
  *
  * Owns:
- * - binding app-selected plugin declarations against host-owned satisfiers
- * - composing bound API/workflow contributions into one bound role plan
+ * - composing app-selected API/workflow contributions into one role plan
  *
  * Must not own:
- * - satisfier construction
+ * - request capability construction
  * - request context creation
  * - ORPC/OpenAPI/Inngest handler materialization
  * - route mounting
  *
  * Canonical:
- * - `createRawrHostBoundRolePlan({ declarations, satisfiers })`
+ * - `createRawrHostRolePlan({ declarations })`
  *
  * Transitional:
  * - app-manifest intake is localized upstream in `host-composition.ts`
  *
  * Must stay strict:
- * - every canonical plugin family binds through `contribute(bound)`
- * - no fallback to pre-materialized or partially bound plugin shapes
+ * - API registrations arrive as complete static contributions
+ * - request capabilities enter only through host request context
  */
 
-function bindRawrHqApiPlugins(input: {
-  declarations: RawrHostDeclarations;
-  satisfiers: RawrHostSatisfiers;
-}) {
+function collectRawrHqApiPlugins(input: { declarations: RawrHostDeclarations }) {
   const exampleTodo = input.declarations.api.exampleTodo;
 
-  return [
-    {
-      ...exampleTodo,
-      ...exampleTodo.contribute!({
-        resolveClient: input.satisfiers.exampleTodo.resolveClient,
-      }),
-    } satisfies MaterializedApiPluginRegistration,
-  ] as const;
+  return [exampleTodo satisfies MaterializedApiPluginRegistration] as const;
 }
 
-function bindRawrHqWorkflowPlugins(input: {
-  declarations: RawrHostDeclarations;
-  satisfiers: RawrHostSatisfiers;
-}) {
+function collectRawrHqWorkflowPlugins(input: { declarations: RawrHostDeclarations }) {
   void input;
   return [] as const satisfies readonly WorkflowPluginRegistration[];
 }
 
-export type RawrHostBoundRolePlan = Readonly<{
+export type RawrHostRolePlan = Readonly<{
   apiPlugins: readonly MaterializedApiPluginRegistration[];
   workflowPlugins: readonly WorkflowPluginRegistration[];
   api: ReturnType<typeof composeApiPlugins>;
@@ -67,15 +52,14 @@ export type RawrHostBoundRolePlan = Readonly<{
 }>;
 
 /**
- * Converts HQ app composition input plus host-owned satisfiers into the bound
- * role plan consumed by host realization.
+ * Converts static HQ app declarations into the role plan consumed by host
+ * realization.
  */
-export function createRawrHostBoundRolePlan(input: {
+export function createRawrHostRolePlan(input: {
   declarations: RawrHostDeclarations;
-  satisfiers: RawrHostSatisfiers;
-}): RawrHostBoundRolePlan {
-  const apiPlugins = bindRawrHqApiPlugins(input);
-  const workflowPlugins = bindRawrHqWorkflowPlugins(input);
+}): RawrHostRolePlan {
+  const apiPlugins = collectRawrHqApiPlugins(input);
+  const workflowPlugins = collectRawrHqWorkflowPlugins(input);
 
   return {
     apiPlugins,

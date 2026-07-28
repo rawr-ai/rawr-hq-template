@@ -4,7 +4,6 @@ import { type ConditionalSchemaConverter, type JSONSchema, OpenAPIGenerator } fr
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { HostRuntimeSupportContext } from "@rawr/runtime-context";
 import type { RawrServerApp } from "./app";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import {
@@ -12,7 +11,6 @@ import {
   withHostLoggingContext,
   withHostLoggingSpanContext,
 } from "./logging";
-import { createTestingRawrHostSeam } from "./testing-host";
 import {
   assertHeavyMiddlewareDedupeMarkers,
   assertRequestScopedMiddlewareMarker,
@@ -20,25 +18,23 @@ import {
   RAWR_HEAVY_MIDDLEWARE_DEDUPE_POLICY,
   RAWR_MIDDLEWARE_DEDUPE_MARKERS,
   type RawrBoundaryContext,
-  type RawrBoundaryContextDeps,
-  resolveRequestScopedMiddlewareValue,
-} from "./workflows/context";
+  type RawrInitialContext,
+  resolveRequestScopedMiddlewareDecision,
+} from "./request-context";
+import { createTestingRawrHostSeam } from "./testing-host";
 
-type RawrOrpcContext = HostRuntimeSupportContext;
+type RawrOrpcContext = RawrBoundaryContext;
 type RawrOrpcRouter = Router<AnyContractRouter, RawrOrpcContext>;
 
 const RPC_AUTH_DEDUPE_MARKER = RAWR_MIDDLEWARE_DEDUPE_MARKERS.RPC_AUTHORIZATION_DECISION;
 let routedRequestsCounter: Counter | undefined;
 let routedRequestDurationHistogram: Histogram | undefined;
 
-export type RegisterOrpcRoutesOptions<
-  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
-  TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
-> = RawrBoundaryContextDeps & {
-  router?: Router<AnyContractRouter, any>;
-  openApiRouter?: Router<AnyContractRouter, any>;
-  contextFactory?: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
-  onContextCreated?: (context: TRequestContext) => void;
+export type RegisterOrpcRoutesOptions = RawrInitialContext & {
+  router?: RawrOrpcRouter;
+  openApiRouter?: RawrOrpcRouter;
+  contextFactory?: (request: Request, initial: RawrInitialContext) => RawrBoundaryContext;
+  onContextCreated?: (context: RawrBoundaryContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
 };
 
@@ -60,13 +56,8 @@ export function __resetOrpcRouteTelemetryForTests() {
  * Canonical:
  * - `testing-host -> host-seam -> host-realization`
  */
-export function createOrpcRouter<
-  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
->() {
-  return createTestingRawrHostSeam().realization.orpc.router as unknown as Router<
-    AnyContractRouter,
-    TContext
-  >;
+export function createOrpcRouter(): RawrOrpcRouter {
+  return createTestingRawrHostSeam().realization.orpc.router;
 }
 
 /**
@@ -82,17 +73,12 @@ export function createOrpcRouter<
  * Canonical:
  * - `testing-host -> host-seam -> host-realization`
  */
-export function createPublishedOpenApiRouter<
-  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
->() {
-  return createTestingRawrHostSeam().realization.orpc.published.router as unknown as Router<
-    AnyContractRouter,
-    TContext
-  >;
+export function createPublishedOpenApiRouter(): RawrOrpcRouter {
+  return createTestingRawrHostSeam().realization.orpc.published.router;
 }
 
 function isRpcRequestAllowedWithDedupe(request: Request, policy: RpcAuthPolicy): boolean {
-  return resolveRequestScopedMiddlewareValue(request, RPC_AUTH_DEDUPE_MARKER, () =>
+  return resolveRequestScopedMiddlewareDecision(request, RPC_AUTH_DEDUPE_MARKER, () =>
     isRpcRequestAllowed(request, policy)
   );
 }
@@ -169,18 +155,15 @@ async function withRouteSpan(
   });
 }
 
-async function handleRpcRoute<
-  TContext extends HostRuntimeSupportContext,
-  TRequestContext extends RawrBoundaryContext & TContext,
->(args: {
+async function handleRpcRoute(args: {
   request: Request;
-  rpcHandler: RPCHandler<TContext>;
-  contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
-  contextDeps: RawrBoundaryContextDeps;
+  rpcHandler: RPCHandler<RawrBoundaryContext>;
+  contextFactory: (request: Request, initial: RawrInitialContext) => RawrBoundaryContext;
+  initialContext: RawrInitialContext;
   rpcAuthPolicy: RpcAuthPolicy;
-  onContextCreated?: (context: TRequestContext) => void;
+  onContextCreated?: (context: RawrBoundaryContext) => void;
 }): Promise<Response> {
-  const { request, rpcHandler, contextFactory, contextDeps, rpcAuthPolicy, onContextCreated } =
+  const { request, rpcHandler, contextFactory, initialContext, rpcAuthPolicy, onContextCreated } =
     args;
   const startedAt = Date.now();
   return withRouteSpan(
@@ -201,7 +184,7 @@ async function handleRpcRoute<
         return response;
       }
 
-      const context = contextFactory(request, contextDeps);
+      const context = contextFactory(request, initialContext);
       assertRpcAuthDedupeMarker(context);
       onContextCreated?.(context);
       // Request-scoped logging context is established at the shared host boundary,
@@ -209,9 +192,9 @@ async function handleRpcRoute<
       // logs with the routed RPC request.
       const loggingContext = createHostLoggingContext({
         request,
-        repoRoot: context.repoRoot,
-        requestId: context.requestId,
-        correlationId: context.correlationId,
+        repoRoot: context.scope.repoRoot,
+        requestId: context.invocation.requestId,
+        correlationId: context.invocation.correlationId,
         surface: "rpc",
       });
 
@@ -239,17 +222,14 @@ async function handleRpcRoute<
   });
 }
 
-async function handleOpenApiRoute<
-  TContext extends HostRuntimeSupportContext,
-  TRequestContext extends RawrBoundaryContext & TContext,
->(args: {
+async function handleOpenApiRoute(args: {
   request: Request;
-  openapiHandler: OpenAPIHandler<TContext>;
-  contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext;
-  contextDeps: RawrBoundaryContextDeps;
-  onContextCreated?: (context: TRequestContext) => void;
+  openapiHandler: OpenAPIHandler<RawrBoundaryContext>;
+  contextFactory: (request: Request, initial: RawrInitialContext) => RawrBoundaryContext;
+  initialContext: RawrInitialContext;
+  onContextCreated?: (context: RawrBoundaryContext) => void;
 }): Promise<Response> {
-  const { request, openapiHandler, contextFactory, contextDeps, onContextCreated } = args;
+  const { request, openapiHandler, contextFactory, initialContext, onContextCreated } = args;
   const startedAt = Date.now();
   return withRouteSpan(
     "rawr.orpc.openapi.request",
@@ -258,15 +238,15 @@ async function handleOpenApiRoute<
       "url.full": request.url,
     },
     async () => {
-      const context = contextFactory(request, contextDeps);
+      const context = contextFactory(request, initialContext);
       onContextCreated?.(context);
       // OpenAPI requests must carry the same host-owned logging correlation model
       // as RPC so the two public surfaces stay observably consistent.
       const loggingContext = createHostLoggingContext({
         request,
-        repoRoot: context.repoRoot,
-        requestId: context.requestId,
-        correlationId: context.correlationId,
+        repoRoot: context.scope.repoRoot,
+        requestId: context.invocation.requestId,
+        correlationId: context.invocation.correlationId,
         surface: "openapi",
       });
 
@@ -293,10 +273,7 @@ async function handleOpenApiRoute<
   });
 }
 
-async function createOpenApiSpec<TContext extends HostRuntimeSupportContext>(
-  router: Router<AnyContractRouter, TContext>,
-  baseUrl: string
-) {
+async function createOpenApiSpec(router: RawrOrpcRouter, baseUrl: string) {
   const typeBoxSchemaConverter: ConditionalSchemaConverter = {
     condition: (schema) => Boolean(schema && typeof schema === "object" && "__typebox" in schema),
     convert: (schema) => {
@@ -322,7 +299,7 @@ async function createOpenApiSpec<TContext extends HostRuntimeSupportContext>(
 
 export async function generateOrpcOpenApiSpec(
   baseUrl: string,
-  router: Router<AnyContractRouter, any> = createPublishedOpenApiRouter()
+  router: RawrOrpcRouter = createPublishedOpenApiRouter()
 ) {
   return createOpenApiSpec(router, baseUrl);
 }
@@ -340,34 +317,27 @@ export async function generateOrpcOpenApiSpec(
  * - declaration inspection or satisfier resolution
  * - alternate runtime/testing assembly paths outside the realized host seam
  */
-export function registerOrpcRoutes<
-  TApp extends RawrServerApp,
-  TContext extends HostRuntimeSupportContext = HostRuntimeSupportContext,
-  TRequestContext extends RawrBoundaryContext & TContext = RawrBoundaryContext & TContext,
->(app: TApp, options: RegisterOrpcRoutesOptions<TContext, TRequestContext>): TApp {
-  const router = (options.router ?? createOrpcRouter<TContext>()) as Router<
-    AnyContractRouter,
-    TContext
-  >;
-  const openApiRouter = (options.openApiRouter ?? router) as Router<AnyContractRouter, TContext>;
-  const rpcHandler = new RPCHandler<TContext>(router);
-  const openapiHandler = new OpenAPIHandler<TContext>(openApiRouter);
-  const rpcAuthPolicy = options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.baseUrl });
-  const contextDeps: RawrBoundaryContextDeps = {
-    repoRoot: options.repoRoot,
-    baseUrl: options.baseUrl,
-    runtime: options.runtime,
-    inngestClient: options.inngestClient,
-    hostLogger: options.hostLogger,
+export function registerOrpcRoutes<TApp extends RawrServerApp>(
+  app: TApp,
+  options: RegisterOrpcRoutesOptions
+): TApp {
+  const router = options.router ?? createOrpcRouter();
+  const openApiRouter = options.openApiRouter ?? router;
+  const rpcHandler = new RPCHandler<RawrBoundaryContext>(router);
+  const openapiHandler = new OpenAPIHandler<RawrBoundaryContext>(openApiRouter);
+  const rpcAuthPolicy =
+    options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.config.baseUrl });
+  const initialContext: RawrInitialContext = {
+    deps: options.deps,
+    scope: options.scope,
+    config: options.config,
   };
-  const contextFactory: (request: Request, deps: RawrBoundaryContextDeps) => TRequestContext =
-    options.contextFactory ??
-    ((request, deps) => createRequestScopedBoundaryContext(request, deps) as TRequestContext);
+  const contextFactory = options.contextFactory ?? createRequestScopedBoundaryContext;
 
   let openapiSpecPromise: Promise<unknown> | undefined;
   const getOpenApiSpec = () => {
     if (!openapiSpecPromise) {
-      openapiSpecPromise = createOpenApiSpec(openApiRouter, options.baseUrl);
+      openapiSpecPromise = createOpenApiSpec(openApiRouter, options.config.baseUrl);
     }
     return openapiSpecPromise;
   };
@@ -390,7 +360,7 @@ export function registerOrpcRoutes<
         request,
         rpcHandler,
         contextFactory,
-        contextDeps,
+        initialContext,
         rpcAuthPolicy,
         onContextCreated: options.onContextCreated,
       });
@@ -406,7 +376,7 @@ export function registerOrpcRoutes<
         request,
         rpcHandler,
         contextFactory,
-        contextDeps,
+        initialContext,
         rpcAuthPolicy,
         onContextCreated: options.onContextCreated,
       });
@@ -422,7 +392,7 @@ export function registerOrpcRoutes<
         request,
         openapiHandler,
         contextFactory,
-        contextDeps,
+        initialContext,
         onContextCreated: options.onContextCreated,
       });
     },
@@ -437,7 +407,7 @@ export function registerOrpcRoutes<
         request,
         openapiHandler,
         contextFactory,
-        contextDeps,
+        initialContext,
         onContextCreated: options.onContextCreated,
       });
     },
