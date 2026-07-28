@@ -37,22 +37,20 @@ async function collectSecurityFindings(
 }
 
 const securityCheck = module.securityCheck.handler(async ({ context, input }) => {
-  const repoRoot =
-    (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
+  const repoRoot = (await getRepoRoot(context.resources, context.repoRoot)) ?? context.repoRoot;
   const timestamp = new Date().toISOString();
-  const findings = await collectSecurityFindings(context.deps.resources, repoRoot, input.mode);
+  const findings = await collectSecurityFindings(context.resources, repoRoot, input.mode);
   const report = securityReport({ findings, mode: input.mode, timestamp, repoRoot });
-  const { reportPath } = await writeSecurityReport(context.deps.resources, { repoRoot, report });
+  const { reportPath } = await writeSecurityReport(context.resources, { repoRoot, report });
   return { ...report, reportPath };
 });
 
 const gateEnable = module.gateEnable.handler(async ({ context, input }) => {
-  const repoRoot =
-    (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
+  const repoRoot = (await getRepoRoot(context.resources, context.repoRoot)) ?? context.repoRoot;
   const timestamp = new Date().toISOString();
-  const findings = await collectSecurityFindings(context.deps.resources, repoRoot, input.mode);
+  const findings = await collectSecurityFindings(context.resources, repoRoot, input.mode);
   const baseReport = securityReport({ findings, mode: input.mode, timestamp, repoRoot });
-  const { reportPath } = await writeSecurityReport(context.deps.resources, {
+  const { reportPath } = await writeSecurityReport(context.resources, {
     repoRoot,
     report: baseReport,
   });
@@ -77,9 +75,8 @@ const gateEnable = module.gateEnable.handler(async ({ context, input }) => {
 });
 
 const getSecurityReport = module.getSecurityReport.handler(async ({ context }) => {
-  const repoRoot =
-    (await getRepoRoot(context.deps.resources, context.scope.repoRoot)) ?? context.scope.repoRoot;
-  return await readLatestSecurityReport(context.deps.resources, repoRoot);
+  const repoRoot = (await getRepoRoot(context.resources, context.repoRoot)) ?? context.repoRoot;
+  return await readLatestSecurityReport(context.resources, repoRoot);
 });
 
 export const router = module.router({

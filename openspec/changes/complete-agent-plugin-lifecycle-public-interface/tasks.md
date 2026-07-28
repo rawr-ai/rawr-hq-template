@@ -1286,6 +1286,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   from all six staged service laws. Keep qualified guard, acquisition, and
   enrichment middleware; remove only projection-only context assembly. Prove
   each owner independently before claiming the admitted service corpus green.
+- [x] 5.7e21a Curate HQ Ops config, journal, and security route context from the
+  inherited resource and repository-scope lanes. Keep observability and
+  analytics ordering unchanged, preserve exact resource identity, and make
+  routers author only against `resources` and `repoRoot`. Prove the owner with
+  its typecheck and behavior suite; do not add a context-shape test or change
+  acquisition, persistence, or public contracts.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own

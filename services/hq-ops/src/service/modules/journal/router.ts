@@ -20,13 +20,12 @@ import {
 import { module } from "./module";
 
 const writeEvent = module.writeEvent.handler(async ({ context, input }) => {
-  const path = await writeEventJson(context.deps.resources, context.scope.repoRoot, input);
+  const path = await writeEventJson(context.resources, context.repoRoot, input);
   return { path };
 });
 
 const writeSnippet = module.writeSnippet.handler(async ({ context, input }) => {
-  const resources = context.deps.resources;
-  const repoRoot = context.scope.repoRoot;
+  const { resources, repoRoot } = context;
   const path = await writeSnippetJson(resources, repoRoot, input);
 
   let db: Awaited<ReturnType<typeof openJournalDb>> | undefined;
@@ -44,12 +43,12 @@ const writeSnippet = module.writeSnippet.handler(async ({ context, input }) => {
 
 const getSnippet = module.getSnippet.handler(async ({ context, input }) => {
   return {
-    snippet: await readSnippetJson(context.deps.resources, context.scope.repoRoot, input.id),
+    snippet: await readSnippetJson(context.resources, context.repoRoot, input.id),
   };
 });
 
 const tailSnippets = module.tailSnippets.handler(async ({ context, input }) => {
-  const db = await openJournalDb(context.deps.resources, context.scope.repoRoot);
+  const db = await openJournalDb(context.resources, context.repoRoot);
   try {
     return { snippets: tailIndexedSnippets(db, input.limit) };
   } finally {
@@ -58,10 +57,10 @@ const tailSnippets = module.tailSnippets.handler(async ({ context, input }) => {
 });
 
 const searchSnippets = module.searchSnippets.handler(async ({ context, input }) => {
-  const db = await openJournalDb(context.deps.resources, context.scope.repoRoot);
+  const db = await openJournalDb(context.resources, context.repoRoot);
   try {
     if (input.mode === "semantic") {
-      const config = context.deps.resources.embeddings.getConfig();
+      const config = context.resources.embeddings.getConfig();
       if (!config) {
         return {
           mode: input.mode,
@@ -73,7 +72,7 @@ const searchSnippets = module.searchSnippets.handler(async ({ context, input }) 
       return {
         mode: input.mode,
         snippets: await searchSnippetsSemantic(
-          context.deps.resources,
+          context.resources,
           db,
           config,
           input.query,

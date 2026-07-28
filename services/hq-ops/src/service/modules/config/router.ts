@@ -14,17 +14,17 @@ import { validateRawrConfig } from "./helpers/validation";
 import { module } from "./module";
 
 const getWorkspaceConfig = module.getWorkspaceConfig.handler(async ({ context }) => {
-  return await loadRawrConfig(context.deps.resources, context.scope.repoRoot);
+  return await loadRawrConfig(context.resources, context.repoRoot);
 });
 
 const getGlobalConfig = module.getGlobalConfig.handler(async ({ context }) => {
-  return await loadGlobalRawrConfig(context.deps.resources);
+  return await loadGlobalRawrConfig(context.resources);
 });
 
 const getLayeredConfig = module.getLayeredConfig.handler(async ({ context }) => {
   const [global, workspace] = await Promise.all([
-    loadGlobalRawrConfig(context.deps.resources),
-    loadRawrConfig(context.deps.resources, context.scope.repoRoot),
+    loadGlobalRawrConfig(context.resources),
+    loadRawrConfig(context.resources, context.repoRoot),
   ]);
   const g = global.config;
   const w = workspace.config;
