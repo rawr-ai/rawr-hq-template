@@ -135,6 +135,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `typescript@6.0.3` as compiler-API authority, and expose the narrow
   `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
   make path mappings explicit. Do not run every check twice.
+- [ ] 1.5d1 Move the repository to the current Node LTS and centralize shared
+  compiler, runtime-type, test, and other major vendor declarations at their
+  actual workspace owner. Keep this a separately reviewed vendor migration;
+  do not mix dependency upgrades into service topology or owner-local target
+  normalization.
 - [ ] 1.5e After every selected service rule passes the admitted Template
   service corpus,
   activate the six staged laws only through the upstream Habitat Nx-plugin
@@ -304,6 +309,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   only for a demonstrated Habitat capability gap, and keep behavior in tests.
   Begin with the active session-intelligence structural verifier rather than
   claiming this ESLint-only checkpoint completed the broader migration.
+- [x] 1.6c10a Normalize the lifecycle service onto the foundational Nx target
+  vocabulary. Keep `build`, `typecheck`, `check:test`, and `test` as inferred
+  package targets, let `project.json` declare only the explicit `check` target,
+  resolve Vitest by its declared package name, and remove
+  the unreachable `sync` and `structural` wrappers plus their dead inventory and
+  suite expectations. Record the package-script versus graph-configuration
+  boundary in the Nx blueprint frame; add no runner or broad repository
+  migration to this bounded checkpoint.
+- [ ] 1.6c10b Complete the repository-wide Nx target normalization before the
+  next production service burn-down. Preserve the small foundational target
+  vocabulary, let package-backed projects expose ordinary commands as inferred
+  targets, and use `project.json` only for graph semantics or projects without
+  package manifests. Retire remaining migration-only `sync` and `structural`
+  wrappers, inventories, and hand-written structural runners as their laws move
+  to Habitat. Keep qualified behavioral targets, and admit a rule-owned script
+  only for a demonstrated native Habitat capability gap.
 - [x] 1.6c11 Admit any still-required resolved project-edge law as one separate
   Habitat graph packet. Grit cannot join Nx-resolved dependency edges to
   project-kind tags, so a rule-owned `.mjs` graph adapter is the allowed narrow

@@ -21,6 +21,13 @@ qualified build, typecheck, test, and optional verification. The workspace owns
 one ordinary lint path through Habitat. A public `check` composes those owners
 through one graph rather than reproducing them in scripts or nested schedulers.
 
+Ordinary package commands remain ordinary package scripts. Nx infers those
+scripts as project targets and adds graph semantics through root target defaults.
+Use `project.json` only when the graph needs information a package command cannot
+express, such as a dependency edge, a composed no-op target, explicit inputs, or
+outputs. Moving the same shell command between those files does not improve the
+execution model.
+
 ## Gradient
 
 Work moves from a small stable vocabulary at the root toward owner-local
@@ -33,6 +40,12 @@ every helper into a project or every aggregate into another graph. Parallelism
 belongs to Nx's scheduler. Structural policy belongs to Habitat. Type authority
 belongs to the compiler. This separation keeps checks fast enough to run
 routinely and clear enough to diagnose locally.
+
+Commands resolve declared workspace dependencies by package name. A project
+that declares Vitest runs `vitest`; it does not encode the repository's current
+`node_modules` layout. Structural checks enter through the one Habitat-owned
+lint path. A project does not add `sync`, `structural`, or another wrapper merely
+to invoke that same authority again.
 
 ## Relations
 

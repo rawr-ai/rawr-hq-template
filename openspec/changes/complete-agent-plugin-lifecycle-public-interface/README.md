@@ -3317,6 +3317,39 @@ diff hygiene pass. The required repository check passes all 40 projects and
 implementation, provider home, Personal repository, Oclif surface, or live
 lifecycle state.
 
+## Nx Target Ownership
+
+The lifecycle service now exposes only its ordinary owner-local package scripts:
+`build`, `typecheck`, `check:test`, and `test`. Nx infers those targets from the
+package manifest, while `project.json` retains only the explicit `check` target;
+root `targetDefaults` supply its graph dependencies. The test command resolves
+its declared Vitest dependency by package name and preserves the existing Bun
+host; it no longer depends on the current workspace `node_modules` layout.
+
+The unreachable `sync` and `structural` aliases, the matching first-cohort
+inventory expectations, and the dead structural-suite registration are removed
+together in the same checkpoint. The retained root Habitat owner gate remains
+the single source and topology authority for this service. This records the
+existing repository execution model rather than introducing a runner or a
+repo-wide target migration.
+The separately owned TypeScript 7, current Node LTS, and centralized vendor
+declaration work remains pending in [[tasks#1. Repository-Native Structural
+Ratchet|tasks 1.5d and 1.5d1]].
+
+The resolved lifecycle project exposes the four inferred targets and the explicit
+`check` target with no `sync` or `structural` target. The generator and
+`nx sync:check` converge; lifecycle typecheck completes in 16 seconds; all 377
+lifecycle cases pass in 44.6 seconds; strict OpenSpec passes; and the repository
+check completes all 40 projects and 118 resolved tasks in 1 minute 43 seconds
+from a reset cache and 46.6 seconds with ordinary cache reuse.
+
+This checkpoint is the first deletion, not the repo-wide target migration. The
+current scheduler is stable enough to land it independently: required admission
+is singular, all 118 resolved tasks pass, and the required graph contains no
+lifecycle `sync` or `structural` task. The remaining repository normalization is
+a hard prerequisite to the next production service burn-down and is tracked in
+[[tasks#1. Repository-Native Structural Ratchet|task 1.6c10b]].
+
 ## Procedure Metadata Ownership
 
 The procedure-metadata checkpoint moves the lifecycle service's shared
