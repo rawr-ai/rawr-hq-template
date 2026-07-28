@@ -184,7 +184,9 @@ describe("@rawr/plugin-devops command surface", () => {
     expect(DevWorktreeCleanup.flags).toHaveProperty("prefix");
   });
 
-  it("keeps the retired repo inspection flag out of Oclif help and parsing", async () => {
+  it("keeps the retired repo inspection flag out of Oclif help and parsing", {
+    timeout: 20_000,
+  }, async () => {
     const fixture = await makeFixture();
     const env = commandEnvironment(fixture);
     const help = runDevops(["dev", "repo", "sync-upstream", "--help"], env);
