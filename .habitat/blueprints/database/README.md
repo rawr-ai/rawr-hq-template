@@ -14,9 +14,12 @@ database content under a standalone module, embedded API service root, or
 embedded API module.
 
 External database acquisition remains resource/provider-owned. Direct named
-service-root middleware translates a ready context dependency into store
-capabilities; production modules and handlers consume those capabilities from
-inherited oRPC context rather than importing database source. Owner-local
+service-root middleware leaves export the generic `middleware` value and
+translate a ready context dependency into store capabilities. `impl.ts`
+imports each required leaf by semantic alias and attaches it to the service
+lineage; there is no root middleware barrel. Production modules and handlers
+consume those capabilities from inherited oRPC context rather than importing
+database source. Owner-local
 package proof may import a private store inside the existing service test
 boundary; that access neither publishes the store nor changes the production
 context funnel.

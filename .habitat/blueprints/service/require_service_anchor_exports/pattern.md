@@ -5,7 +5,8 @@ tags: [orpc, service, positive, anchor]
 # Require Generic Service Anchor Exports
 
 Every service spine file directly exports the generic value for its role.
-`base.ts` exports the sole native context author `base`.
+`base.ts` always exports the service `Context` type and exports the sole native
+context author `base` only when context-authored middleware consumes it.
 `impl.ts` exports the unconfigured contract implementer `impl` and its configured
 `service` stage. The root contract and router files and the matching module
 directory entrypoints export `contract` and `router`; `module.ts` exports
@@ -56,7 +57,7 @@ predicate require_service_anchor_exports_has_native_base($statements) {
   }
 }
 
-// Maps every root base file to the generic base anchor.
+// Maps every root base file to its optional native author boundary.
 predicate require_service_anchor_exports_is_base_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/base\.ts$"
 }
@@ -148,6 +149,9 @@ predicate require_service_anchor_exports_is_module_anchor($export) {
 or {
   program(statements=$statements) where {
     require_service_anchor_exports_is_base_file(),
+    $statements <: contains `os.$context_method<$context_type>()` where {
+      $context_method <: r"^\$context$"
+    },
     not {
       require_service_anchor_exports_has_native_base(statements=$statements)
     }
@@ -228,11 +232,11 @@ or {
 }
 ```
 
-## Matches a missing base anchor
+## Matches a hidden native base author
 
 ```typescript
 // @filename: services/jobs/src/service/base.ts
-export const runtime = os.$context<Context>();
+const runtime = os.$context<Context>();
 ```
 
 ## Matches an implementation hidden in the context declaration
@@ -329,6 +333,14 @@ export type Context = {
   readonly provided: {};
 };
 export const base = os.$context<Context>();
+// @filename: services/discovery/src/service/base.ts
+export type Context = {
+  readonly deps: { readonly listingSearch: ListingSearch };
+  readonly scope: { readonly actor?: Actor };
+  readonly config: {};
+  readonly invocation: {};
+  readonly provided: {};
+};
 // @filename: plugins/server/api/catalog/src/service/base.ts
 import { os } from "@orpc/server";
 export type Context = { readonly request: Request };

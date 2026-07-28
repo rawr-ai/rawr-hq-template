@@ -80,10 +80,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   oRPC context. Keep external acquisition resource/provider-owned, add both
   empty-baseline rules once to the existing source-law batch, and add no Nx
   project, target, scanner, wrapper, or implementation code.
-- [x] 1.2 Adopt one canonical service-module router topology. Keep module
+- [x] 1.2 Record the then-canonical service-module router topology. Keep module
   `router.ts` as the plain public composition face, author operation leaves or
   semantic groups in named `router/*.router.ts`, and do not admit
-  `router/index.ts` or a second public router form.
+  `router/index.ts` or a second public router form. Task 5.7e21k supersedes
+  this historical topology.
 - [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
   Constrain direct entrypoints, app identity/binary/dependency/command discovery,
   TypeScript source-to-output mapping, command-plugin manifest/package roots, no
@@ -465,8 +466,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   machinery.
 - [ ] 5.2 Bring the service onto the positive topology: root
   `base.ts`, `contract.ts`, `impl.ts`, `router.ts`; module
-  `contract.ts`, `module.ts`, composition-only `router.ts`, named
-  `router/*.router.ts` operation authorship, and
+  `contract/index.ts`, `module.ts`, `router/index.ts`, direct semantic contract
+  and router leaves, optional `middleware/index.ts` over named middleware
+  leaves, and
   `model/{dto,policy,ports,...}`, with TypeBox schemas colocated with their DTO
   authorities. Preserve the existing one-service/module-router skeleton. Move
   owner-local release and governance requests, results, issues,
@@ -489,17 +491,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `service` as the embedded API-plugin interior name. Keep the remaining module
   router migration under task 5.2 and owner-local sealing under task 5.7.
 - [ ] 5.2b Supersede the relaxed task 5.2a shape with the committed generic
-  service law: `base.ts` directly owns native `implement(contract)` plus the
-  one admitted official `@orpc/experimental-effect` integration,
-  `impl.ts` directly exports `service` from imported `base`, and each module
-  directly exports its matching `service.<module>` branch. Root code may import
-  module source only at contract and router composition. A module's
-  `module.ts` may import only the matching branch from `../../impl`; one
-  documented named module-middleware leaf may import only `createMiddleware`
-  from `../../../base` to author its capability contribution. Modules may not
-  import siblings, root middleware, the raw base, or any other root runtime
-  authority. Keep ready host capabilities at the service boundary and
-  contribute owner-local capabilities through named middleware.
+  service law: `base.ts` declares `Context` and exports
+  `os.$context<Context>()` only when context-authored middleware consumes it.
+  `impl.ts` owns the sole native `implement(contract).$context<Context>()`, the
+  admitted official Effect extension when the service has Effect procedures,
+  the unconfigured `impl`, and the root-configured `service`. Each module
+  descends from its exact `service.<module>` branch and terminally curates the
+  smallest handler vocabulary. Root code may import module source only at
+  contract and router composition. Modules may not import siblings, root
+  middleware, the raw base, or another runtime authority. Keep ready host
+  capabilities at the service boundary; attach module, group, and operation
+  policy only at their matching native authoring depths.
 - [x] 5.2c Move the releases contract off the root `ocBase` feedback edge.
   Construct all four release operations directly from Effect-oRPC `eoc`, carry
   their existing domain, audience, idempotence, audit, and owner metadata
@@ -1429,6 +1431,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   context cannot override the fixed lanes. Delete the facade export and stale
   source-shape assertions in the same checkpoint, add Hyperresearch's direct
   native dependency, and add no replacement helper or cast.
+- [x] 5.7e21k Refresh Template from Magic Migration's committed and activated
+  service capability law at `2928a2c772edaced527e4cc856d1260c94105456`.
+  Preserve the shared
+  pattern bytes for optional base authorship, root middleware leaves, module,
+  group, validated-input, and operation policy placement, canonical direct leaf
+  acquisition with nested contract/router composition, expression or
+  single-`next(...)` block terminal curation, and the database import funnel.
+  Adapt only the
+  `rawr` niche and Template's stronger entity, metadata, package, and
+  service-module `AGENTS.md` authority. Keep rules with known live findings
+  advisory, add no local Habitat SDK or manual checker, and prove the packet
+  plus exact shared pattern identities before moving service source.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

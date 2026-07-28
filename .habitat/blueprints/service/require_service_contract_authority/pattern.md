@@ -86,15 +86,35 @@ predicate require_service_contract_authority_is_module_contract_leaf() {
   not { require_service_contract_authority_is_module_contract_boundary() }
 }
 
-// Proves that an entrypoint statically imports and registers one direct leaf.
-predicate require_service_contract_authority_has_registered_leaf($body) {
+// Checks that a direct leaf import maps its kebab-case source to one binding.
+function require_service_contract_authority_entrypoint_import_status($source, $name) js {
+  const match = $source.text.match(/^["']\.\/([^/"']+)["']$/);
+  if (!match || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
+    return "noncanonical-source";
+  }
+  const expected = match[1].replace(
+    /-([a-z0-9])/g,
+    (_all, value) => value.toUpperCase(),
+  );
+  return expected === $name.text ? "ok" : "wrong-binding";
+}
+
+// Proves one filename-mapped direct leaf import at the contract access point.
+predicate require_service_contract_authority_is_canonical_leaf_import($statement) {
+  $statement <: `import { $name } from $source`,
+  $status = require_service_contract_authority_entrypoint_import_status(
+    source=$source,
+    name=$name
+  ),
+  $status <: includes "ok"
+}
+
+// Proves that an entrypoint statically acquires at least one canonical leaf.
+predicate require_service_contract_authority_has_canonical_leaf_import($body) {
   $body <: some $statement where {
-    $statement <: import_statement(source=$source) as $import,
-    $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
-    $import <: contains import_specifier(name=$name),
-    $body <: contains `export const contract = $value` where {
-      $value <: contains $name
-    }
+    require_service_contract_authority_is_canonical_leaf_import(
+      statement=$statement
+    )
   }
 }
 
@@ -196,7 +216,9 @@ or {
   program(statements=$statements) where {
     require_service_contract_authority_is_module_contract_entrypoint(),
     not {
-      require_service_contract_authority_has_registered_leaf(body=$statements)
+      require_service_contract_authority_has_canonical_leaf_import(
+        body=$statements
+      )
     }
   },
   program(statements=$statements) where {
@@ -385,11 +407,27 @@ export const contract = oc.input(Type.Object({ query: Type.String() }));
 export const find = oc.input(standard(Type.Object({})));
 ```
 
-## Matches an entrypoint without a direct registered leaf
+## Matches an entrypoint without a canonical direct leaf import
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/contract/index.ts
 export const contract = {};
+```
+
+## Matches an entrypoint whose direct leaf binding does not match its source
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/index.ts
+import { find } from "./find-by-id";
+export const contract = { lookup: find };
+```
+
+## Ignores nested contract composition after canonical direct acquisition
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/index.ts
+import { findById } from "./find-by-id";
+export const contract = { candidateJobs: { findById } };
 ```
 
 ## Matches a second runtime export from a contract leaf
@@ -421,6 +459,25 @@ export const get = oc
 import { get } from "./get";
 export const contract = oc.router({ get });
 ```
+
+## Ignores a nested Pipeline contract access point
+
+```typescript
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/contract/index.ts
+import { status } from "./status";
+import { submit } from "./submit";
+import { submitBatch } from "./submit-batch";
+export const contract = {
+  jobs: {
+    submit,
+    submitBatch,
+    status,
+  },
+};
+```
+
+An unimported sibling leaf is intentionally outside this source relation.
+Knip owns whether such a file is unreachable.
 
 ## Matches executable TypeBox semantics that cannot be published faithfully
 

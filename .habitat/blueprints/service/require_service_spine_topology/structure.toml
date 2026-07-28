@@ -81,6 +81,34 @@ forbidden = [
 ]
 
 [[scopes]]
+name = "standalone-service-root-middleware-interiors"
+root = "services/*/src/service/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+forbidden = [
+  "index.ts",
+  "*.middleware.ts",
+]
+
+[[scopes]]
+name = "api-service-root-middleware-interiors"
+root = "plugins/server/api/*/src/service/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+forbidden = [
+  "index.ts",
+  "*.middleware.ts",
+]
+
+[[scopes]]
 name = "standalone-service-module-shells"
 root = "services/*/src/service/modules/*"
 kind = "directory"

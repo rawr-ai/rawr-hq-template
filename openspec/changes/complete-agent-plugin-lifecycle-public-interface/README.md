@@ -1575,13 +1575,13 @@ skill. It cannot authorize HF01 materialization or release.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
-| Generic Habitat blueprint port | Current Magic service authority is sealed locally as one topology rule plus shared source laws with RAWR's single module `router.ts` composition face, named operation-router leaves, documentation, alias, and platform extensions; complete live-corpus conformance and the upstream Habitat Nx-plugin execution boundary remain open |
+| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's stronger entity, metadata, documentation, alias, and platform extensions; the latest capability-funnel delta is the active authority checkpoint, while complete live-corpus conformance and the upstream Habitat Nx-plugin execution boundary remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, Habitat source-law policy, and Habitat-owned project admission are active; generic service-rule inclusion remains pending |
-| Mandatory module context curation | Law and red fixtures are complete but advisory; lifecycle runtime burn-down is next, followed by HQ Ops/API and the remaining all-six service-law corpus |
+| Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules already curate route vocabulary; the six shared service laws remain advisory until the remaining topology, middleware-authorship, and complete admitted-corpus findings reach zero |
 | Habitat execution normalization | Pending upstream distributable Civ7-style Nx plugin; the handwritten rule selection is interim and no local SDK fork or replacement runner is admitted |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
@@ -1601,11 +1601,13 @@ checkpoint: twenty-six logical files followed Magic Migration commit
 seven historical rule manifests adapt only RAWR identity, formatting, and the
 local canonical `pattern.md` source name. The committed service-law checkpoint
 identified above supersedes both that initial port and the later relaxed
-working-snapshot adaptation. The current packet keeps one module `router.ts`
-composition face over named `router/*.router.ts` authored leaves, puts domain
-matter in direct owner-local model leaves, derives modules from exact service
-branches, and closes alias traversal without baseline entries or compatibility
-paths. The shared current-main checkpoint moved its complete locator, record,
+working-snapshot adaptation. The current packet requires closed module
+`contract/` and `router/` directories with `index.ts` composition faces and
+direct semantic leaves; optional module middleware uses the equivalent indexed
+catalog, while service-root middleware remains a direct leaf set without a
+barrel. It puts domain matter in direct owner-local model leaves, derives
+modules from exact service branches, and closes alias traversal without
+baseline entries or compatibility paths. The shared current-main checkpoint moved its complete locator, record,
 exact-Git, and selection closure into the shared service model. The later
 provider ownership checkpoint removes the remaining release-owned
 selected-content import and root middleware edge without creating a third
@@ -1640,13 +1642,16 @@ module router directories; owner-local lint/typecheck completed through Nx in
 11.8 seconds, and the then-current six service-spine and Effect-oRPC admission
 cases passed in 2.25 seconds. Those observations remain migration evidence, not
 current authority. The corrected service law instead requires `base.ts` to own
-the sole direct `implementEffect(contract, ...)` construction, `impl.ts` to
-export `service` from the imported `base`, each module to export its matching
-`service.<module>` branch with owner-local context enrichment, and the root
-router to import completed module routers only. It also forbids model
-`index.ts` barrels and normalized-looking alias traversal. The lifecycle service does not yet
-conform, so the rules remain outside the selected policy batch until tasks
-5.2b and 5.7 seal the live corpus.
+the complete context declaration and an `os.$context<Context>()` author only
+when context-authored middleware consumes it. `impl.ts` owns the sole native
+`implement(contract).$context<Context>()`, the official Effect extension when
+Effect procedures require it, the unconfigured `impl`, and the configured
+`service`. Each module descends from its exact `service.<module>` branch,
+terminally curates its handler vocabulary, and composes completed operation
+leaves through its router index. The root router imports those completed plain
+module routers and performs the sole aggregate implementation through `impl`.
+The lifecycle service does not yet conform, so the rules remain outside the
+selected policy batch until tasks 5.2b and 5.7 seal the live corpus.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
 interrupted without repository mutation. The current v0.1.6 binary adds a
@@ -3245,6 +3250,43 @@ task 5.7e21i owns the shared correction before enforcement. Activating the
 remaining imported laws waits for the separate Nx/Habitat performance
 correction. This checkpoint moves no service, resource, provider, app, plugin,
 or package implementation.
+
+## Service Capability Funnel Authority Refresh
+
+The current authority checkpoint refreshes the shared service law from Magic
+Migration's committed activation checkpoint
+`2928a2c772edaced527e4cc856d1260c94105456`. Seven service/database Grit
+patterns are byte-identical to that accepted source. Template adapts only its
+`rawr` niche and its stronger entity, metadata, package-manifest, TypeBox, and
+service-module `AGENTS.md` authority; it adds no local Habitat SDK, runner,
+parser, baseline, or implementation path.
+
+The frame now treats a service as a narrowing capability funnel. Awkward
+service composition is specifically a cohesion falsifier: inspect for a hidden
+repository resource, sibling domain service, plugin exposure/orchestration, or
+app runtime/configuration owner. Size alone proves none of those moves. Policy
+attaches at its owned service, module, group, or operation depth. Router/module
+policy remains input-independent; reused validated-input policy attaches at
+each consuming procedure after its schema. Terminal curation stays one inline
+stage and may use either a direct expression or a block with one terminal
+`next(...)` call. Contract leaves retain canonical direct acquisition while
+nested contract/router composition remains ordinary TypeScript, Knip, and
+behavior authority. Router handlers remain the operation-authoring site.
+
+The Habitat owner passed 23 tests with 47 assertions plus typecheck. Strict
+OpenSpec, JSON manifests, exact shared-pattern identity, and diff hygiene pass.
+Focused live scans of the unchanged topology, database, and anchor laws retain
+their advisory evidence: the database import funnel is green, database
+topology reports the three existing store-suffix findings, service topology
+exposes the legacy service/module shapes, and anchor law reports seven
+findings. The refreshed context, contract, and router laws are exact bytes from
+Magic's activated checkpoint; this node makes no separate complete Template
+live-corpus conformance claim for them. The common law remains advisory while
+source conformance and the upstream owner-local Habitat/Nx execution boundary
+are completed. No production source moves in this checkpoint. The required
+repository check passed 40 projects and 118 tasks in 41.5 seconds, with 71
+tasks restored from Nx cache; the 41.4-second Habitat policy target remains the
+critical path rather than another scheduler or duplicate owner process.
 
 ## Effect And TypeBox Vendor Preparation
 

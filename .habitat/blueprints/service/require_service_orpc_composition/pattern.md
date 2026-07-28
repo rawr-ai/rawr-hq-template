@@ -5,7 +5,8 @@ tags: [orpc, effect, service, composition]
 # Require Native Service oRPC Composition
 
 Every service has one visible native implementation lineage. `base.ts`
-declares context, `impl.ts` implements the aggregate contract once and exposes
+declares context and adds a native middleware author only when needed;
+`impl.ts` implements the aggregate contract once and exposes
 the unconfigured and configured stages, modules descend from the matching configured
 branch, module router indexes compose plain operation trees, and the root
 router implements the aggregate contract once through the unconfigured stage.
@@ -268,4 +269,11 @@ export const module = service.catalog.use(provideCatalog).use(curateCatalog);
 export const router = { get };
 // @filename: services/jobs/src/service/router.ts
 export const router = impl.router({ catalog });
+```
+
+## Ignores a context-only base without middleware authorship
+
+```typescript
+// @filename: services/discovery/src/service/base.ts
+export type Context = DiscoveryContext;
 ```

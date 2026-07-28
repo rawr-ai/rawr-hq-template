@@ -79,11 +79,12 @@ existing corpus is documented; activation is then one dependency edge into
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`. The current `service` and
-`database` packets follow the stable Magic authority at commit
-`2374baa937466fe794e424c700fdd9d8ac7d64cd`, service tree
-`53cd340b859e660ad6a0cc1619b283edfb025e13`, and database tree
-`8ec14dbad5244f0725978e31b7e3c53f54b0bdbb`. The same trees remain unchanged
-through reviewed Magic head `01ea4c3ac534dc624bd7f769fc6eee994a38752a`.
+`database` packets follow Magic's committed capability-ratchet activation at
+`2928a2c772edaced527e4cc856d1260c94105456`, service tree
+`7f0df909d5196a628bf53fb2febda46549db7b42`, and database tree
+`c81df2ce845af06343cf2036f1ae29e5645cba8b`. That activation follows the
+reviewed service migrations through
+`f620e041ea1bab9e1f41fe5467ceffb9b313dea6`.
 The imported agent-router placement relation retains that provenance but now
 lives under `rawr/repository`: it relates repository-owned roots and is not a
 constructible document-kind topology.
@@ -105,17 +106,20 @@ before that shared law lands.
 
 Required module `contract/` and `router/` directories expose `index.ts` plus
 semantic leaves; optional `middleware/` uses the same entrypoint shape. Root
-contract and router files remain the service composition spines. The former
-flat module faces and the duplicate private-alias packets are superseded rather
-than preserved as compatibility rules.
+contract and router files remain the service composition spines. Optional
+service-root middleware instead consists of direct kebab-case leaves with no
+barrel; each exports `middleware` for semantic attachment in `impl.ts`. The
+former flat module faces and duplicate private-alias packets are superseded
+rather than preserved as compatibility rules.
 
 The database topology requires closed `migrations/*.sql` and `stores/*.ts`
 interiors when `db` is present and admits optional closed `schema/*.ts` only
 for technology-specific physical mappings. Database-owned source and direct
-named root middleware may import database leaves; modules consume projected
-stores through inherited context. The service and database migration packets
-remain advisory with empty baselines, so current violations stay visible until
-the production burn-down reaches this destination.
+named root middleware leaves may import database source. Those leaves attach
+through `impl.ts` without a root barrel; modules consume projected stores
+through inherited context. The service and database migration packets remain
+advisory with empty baselines, so current violations stay visible until the
+production burn-down reaches this destination.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed

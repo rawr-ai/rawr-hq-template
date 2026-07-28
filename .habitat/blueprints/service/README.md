@@ -4,7 +4,9 @@
 services and API-plugin service interiors.
 
 The topology packet owns the standalone package/public face, its optional
-package-root proof tree, and the root and module interior spines. A module
+package-root proof tree, and the root and module interior spines. Optional
+service-root middleware is closed to direct simple kebab-case `.ts` leaves;
+it has no barrel, nesting, or role suffix. A module
 exposes required closed `contract/` and `router/` directories through
 `index.ts`; an optional closed `middleware/` directory follows the same access
 pattern only when middleware exists. Redundant module-level `contract.ts` and
@@ -81,7 +83,8 @@ owning leaf export or directory contract anchor; imported or dynamic error-map a
 parallel schema, type, envelope, or helper authority remain invalid.
 The kind preserves one implementation lineage across three flows. Module
 contracts compose into the root contract; `base.ts` declares one complete
-native context author; `impl.ts` implements that aggregate contract once and
+context and adds a native author only when context middleware needs it;
+`impl.ts` implements that aggregate contract once and
 configures the root `service`; modules descend through exact configured
 branches; plain module operation trees ascend to the root; and the unconfigured
 root `impl` performs the sole aggregate router implementation. Executable
@@ -89,24 +92,52 @@ interiors do not reconstruct contract or context
 types. TypeScript owns context assignability and router completeness. Behavior
 tests own runtime ordering, request isolation, and once-only root execution.
 
-`base.ts` exports `base = os.$context<Context>()`. It never imports the root
-contract, calls `implement`, or admits the Effect extension. Context-only
-provider/acquisition middleware derives from that author. `impl.ts` owns the sole
+`base.ts` always exports `Context` and exports
+`base = os.$context<Context>()` only when context-authored middleware consumes
+it. It never imports the root contract, calls `implement`, or admits the Effect
+extension. Context-only provider/acquisition middleware derives from that
+author when present. `impl.ts` owns the sole
 `implement(contract).$context<Context>()`, exports the unconfigured `impl`, attaches
 root middleware, and exports the configured `service`. Contract-aware
-root policy derives from the aggregate `impl` and attaches there. Named module
-policy that needs initial context and module errors derives from
-`impl.<module>.middleware(...)` and attaches exactly once to
-`service.<module>`. Policy that also needs root-configured output is an inline
-callback directly in `service.<module>.use(...)`. Neither lane uses
+root policy derives from the aggregate `impl` and attaches there. Policy
+placement follows both ownership and input depth. Input-independent module-wide
+policy attaches in `module.ts`. Input-independent reusable group policy may be
+authored from an unconfigured router descendant rooted at `impl.<module>`,
+imported through the module middleware catalog, and attached across a
+deliberate grouped router leaf. A policy used by one operation stays inline. A
+documented named policy reused by several operations and requiring validated
+input remains in the module middleware catalog and is attached by every
+consuming procedure leaf through native `.use(...)`; reuse does not promote it
+to module-wide or group attachment. Review owns both genuine reuse and exact
+descendant scope. Pinned oRPC 2 beta.20 router implementers expose
+`.middleware(...)`, while procedure implementers expose only `.use(...)` and
+`.handler(...)`; TypeScript proves that native distinction. None of these lanes uses
 `base.<module>`, `decorateMiddleware`, `.use` parameter extraction, or
-configured `.middleware(...)` feedback.
+configured `.middleware(...)` feedback, and no helper or decorator simulates
+an oRPC operation-policy surface. Review owns that semantic simulation check.
+
+On pinned oRPC 2 beta.20, router/module middleware is augmented at
+`inputSchemasLengthAtUse: 0`, while procedure attachment records a point after
+the schemas already present. Any policy that consumes validated input therefore
+attaches through procedure `.use(...)`, whether local to one operation or
+imported as a named reused policy. Because native `disableInputValidation` can
+bypass schema execution, behavior proof must establish that validation is
+enabled and precedes every such policy.
 
 Every `module.ts` starts from its exact `service.<module>` branch, attaches
-named middleware, and ends with one inferred inline curation from the semantic
-context lanes to the smallest handler vocabulary. Ready values are selected
-there directly; middleware remains reserved for a real guard, acquisition, or
-enrichment. A module-local provider remains module-local. No context wrapper,
+input-independent module-wide named middleware, and ends with one inferred
+inline curation from the semantic context lanes to the smallest handler
+vocabulary. Direct selection may use an expression body. Translation or
+synchronous provider construction and failure containment may use a block body;
+it remains the same inline stage and returns through one `next(...)` call. A
+deliberate grouped router leaf may attach genuinely reusable input-independent
+group policy; validated-input policy stays on each consuming procedure before
+its handler. Ready values are selected there directly. An
+acquired or derived capability that must cross a later middleware or branch
+boundary travels under `provided`. Standalone named middleware remains reserved
+for a stage that is independently meaningful, reusable, or order-sensitive,
+including a real guard, acquisition, or enrichment. A module-local dependency
+remains module-local. No context wrapper,
 prepared object, explicit `.use` generic, cast, merge helper, or parallel
 implementer is part of the kind. When no per-call facts are required, public
 call context is optional while the client mapper supplies the required
@@ -119,9 +150,19 @@ contract once through the unconfigured `impl.router(...)` stage. Using the
 configured `service` stage there would replay inherited middleware; `impl` is
 not a second implementation lineage.
 
-Module capability directories are ordinary static TypeScript faces. Contract
-and router indexes compose their direct semantic leaves; middleware indexes
-only catalog documented native middleware under semantic import names.
+Module capability directories are ordinary static TypeScript faces. Each
+contract or router leaf maps its kebab-case filename to one lower-camel export.
+Contract law owns canonical direct import of contract leaves. Router indexes
+are composition-only; TypeScript owns router completeness, Knip owns
+unreachable leaves and import hygiene, and generated-client/API behavior proof
+owns the complete public operation set. Middleware indexes only catalog
+documented native decorated middleware values under semantic import names.
+`module.ts` consumes input-independent module-wide middleware through
+`./middleware`; a router leaf may consume input-independent group policy or a
+named reused validated-input policy through the one additional parent edge
+`../middleware`. Each
+imported name is visibly attached at its consuming destination. Router indexes,
+deep middleware leaves, aliases, siblings, and arbitrary parents remain closed.
 Indexes may import leaves, but leaves never import their own index. Contract
 code never imports implementation, middleware never imports `module.ts`, and
 router leaves never import the router index. No runtime discovery, loader,
@@ -160,13 +201,14 @@ inferred failure channels. Effect diagnostics own catch construction and
 failure composition. Behavior tests own actual adapter translation and
 procedure mapping.
 
-The spine topology, anchor, context, composition, module-isolation,
-public-consumer, and independent router-authorship packets are closed and
-advisory while the module
+The spine topology, anchor, context, composition, module-isolation, and
+independent router-authorship packets are closed and advisory while the module
 entrypoint and service-funnel corpus is migrated. Their empty baselines
 preserve every live finding as visible red rather than accepted debt. The
-seven packets return to enforced together at zero red corpus after their focused
-proofs pass. Habitat structure owns topology, including the package-root proof
+six packets return to enforced together at zero red corpus after their focused
+proofs pass. The independent public-consumer packet remains advisory until its
+owner-local relative-path classifier is corrected under task 5.7e21i, then
+returns to enforcement through its own zero-red proof. Habitat structure owns topology, including the package-root proof
 categories and the absence of source-owned test directories and suite files;
 Grit owns the declared source relations; Nx production inputs exclude
 `{projectRoot}/test/**/*`; and behavior tests remain with the behavior they

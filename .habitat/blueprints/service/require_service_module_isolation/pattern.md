@@ -40,11 +40,11 @@ predicate require_service_module_isolation_is_relative_modules_source($source) {
   $source <: r"^[\"'](?:\.\.?/)+(?:[^/\"']+/)*modules(?:/|[\"'])"
 }
 
-// Admits the router leaf's one exact descent to its module authoring boundary.
+// Admits a router leaf's exact module author and middleware catalog edges.
 predicate require_service_module_isolation_is_leaf_module_import($source) {
   $filename <: r".*/src/service/modules/[^/]+/router/[^/]+\.ts$",
   not { $filename <: r".*/router/index\.ts$" },
-  $source <: r"^[\"']\.\./module[\"']$"
+  $source <: r"^[\"']\.\./(?:module|middleware)[\"']$"
 }
 
 // Admits raw base acquisition only at a module-owned middleware boundary.
@@ -241,8 +241,33 @@ export const middleware = impl.catalog.middleware(({ errors, next }) => {
 });
 // @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { module } from "../module";
+import { requireCatalogAuthority } from "../middleware";
 // @filename: plugins/server/api/pipeline/src/service/modules/jobs/middleware/provider.ts
 import { base } from "#pipeline-api/base";
 // @filename: plugins/server/api/pipeline/src/service/modules/jobs/module.ts
 import { service } from "#pipeline-api/impl";
+```
+
+## Matches middleware catalog acquisition from a router index
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+import { requireCatalogAuthority } from "../middleware";
+export const router = { get };
+```
+
+## Matches a direct middleware leaf route from an operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+import { middleware } from "../middleware/access";
+export const get = module.get.use(middleware).handler(handler);
+```
+
+## Matches a deep middleware catalog route from an operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+import { requireCatalogAuthority } from "../../middleware";
+export const get = module.get.use(requireCatalogAuthority).handler(handler);
 ```

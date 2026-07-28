@@ -129,12 +129,16 @@ historical imports, current Magic service lineage, and queued shared laws:
   relation.
 
 RAWR preserves that positive topology and its owner relationships while
-qualifying packet identity, the canonical TypeBox bridge, and one deliberate
-module-router refinement. RAWR keeps one public module `router.ts` composition
-face and requires named `router/*.router.ts` operation leaves beneath it.
-Operation logic remains in those oRPC router leaves alongside module-owned
-`model/{dto,policy,helpers,ports}` rather than moving into another
-implementation container. `router/index.ts` is not admitted.
+qualifying packet identity, the canonical TypeBox bridge, and Template's
+stronger entity, metadata, package-manifest, and module-router documentation
+law. Each module exposes closed `contract/` and `router/` directories through
+their sole `index.ts` composition faces and authors operations in direct
+semantic leaves. Optional module middleware uses the equivalent indexed
+catalog; root contract and router composition remain in `contract.ts` and
+`router.ts`, while optional service-root middleware remains a direct leaf set
+without a barrel. Operation logic remains in oRPC router leaves alongside
+owner-qualified model categories rather than moving into another
+implementation container.
 
 The generic agent-router blueprint owns document shape. Repository placement
 lives under `rawr/repository` because it relates heterogeneous package and
