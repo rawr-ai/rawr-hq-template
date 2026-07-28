@@ -41,13 +41,18 @@ face; root files compose the suite. Habitat closes those relations while the
 current source remains honestly red.
 
 Domain structure follows meaning rather than transport convenience. An entity
-has identity and lifecycle or persistence meaning. A DTO is a command, query,
-result, or boundary projection. Database schema describes physical mapping,
-and a store privately realizes persistence. Cross-module identity belongs at
-service root; subdomain identity stays with its module. No database DTO mirror
-or compatibility face is needed. The entity destination remains advisory
-until the shared TypeBox and platform-neutral source laws cover it; production
-source does not move under a partial authority.
+has stable domain identity that survives attribute changes and participates in
+domain transitions. Persistence may reveal that meaning, but persistence alone
+does not create it. TypeBox owns the canonical entity schema and generated
+type. DTOs are operation or boundary projections; database schemas describe
+physical mappings; stores privately realize persistence and may map records
+into entities when the domain models continuing identity. Entities never
+import those transport, provider, or persistence interiors.
+Cross-module identity or invariants belong at service root; access alone does
+not promote module meaning. No database DTO mirror or compatibility face is
+needed. The entity destination remains advisory until the shared TypeBox and
+platform-neutral source laws cover it; production source does not move under a
+partial authority.
 
 The stronger public-consumer law is also advisory. Its shared relative-path
 matcher currently mistakes owner-local `../../src/service` test imports for a
@@ -61,8 +66,8 @@ See [[.habitat/blueprints/service/skill|the service frame]],
 
 ### Bag Of Keywords
 
-service, context, contract, middleware, module, router, operation, resource,
-database, store, entity, dto, schema, topology, closure, authority, flow.
+identity, transition, invariant, projection, transport, persistence, mapping,
+store, context, ownership.
 
 ## 2026-07-28 - Contracts Narrow Into Runtime
 

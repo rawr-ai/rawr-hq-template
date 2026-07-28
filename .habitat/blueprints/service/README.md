@@ -14,12 +14,15 @@ service interiors do not contain proof; the independently selected
 `plugin-server-api` kind owns their package-root behavior/support topology.
 Optional model facts live as direct leaves under `actors`, `dto`, `entities`,
 `errors`, `helpers`, `policy`, `ports`, or `prompts`; model `index.ts` files
-and deeper catch-all trees are not part of the kind. An entity is
-identity-bearing domain state with lifecycle or persistence meaning. A DTO is
-a command, query, result, or boundary projection and may compose or refine an
-entity without acquiring its authority. Service-root entities own
-cross-module identity and invariants; module entities remain specific to one
-subdomain. A standalone service spine admits the optional
+and deeper catch-all trees are not part of the kind. An entity has stable
+domain identity that survives attribute changes and participates in domain
+transitions. Persistence may evidence that meaning but cannot establish it by
+itself. TypeBox owns the canonical entity schema and generated type. A DTO is
+an operation or boundary projection and may compose, pick, omit, or refine an
+entity without acquiring its authority. Service-root entities own identity or
+invariants that genuinely span modules; access alone never promotes module
+meaning. Module entities remain specific to one subdomain. A standalone
+service spine admits the optional
 `db` child whose entire topology and import funnel belong to the independent
 [[../database/README|database blueprint]]; modules and embedded API service
 interiors do not own database placement. Entity placement is structurally
@@ -123,10 +126,13 @@ Indexes may import leaves, but leaves never import their own index. Contract
 code never imports implementation, middleware never imports `module.ts`, and
 router leaves never import the router index. No runtime discovery, loader,
 generator, or module SDK is part of the kind. An `entities` category is
-admitted only for identity-bearing domain state, subject to the pending shared
-source law; wire-shaped requests and results remain DTOs, while physical
-mappings and private persistence implementations remain in the database
-boundary.
+admitted only for stable domain identity and transition invariants, subject to
+the pending shared source law. Entity declarations are platform-, transport-,
+provider-, and persistence-neutral. Wire-shaped requests and results remain
+DTOs; physical mappings and private persistence implementations remain in the
+database boundary. DTOs and contracts may depend on entities, and stores may
+map database records to entities when the domain models continuing identity,
+but entities never import from those downstream owners.
 
 Services that author Effect procedures admit the official Effect-oRPC
 `@orpc/experimental-effect/extensions/effect` extension in `impl.ts`. A

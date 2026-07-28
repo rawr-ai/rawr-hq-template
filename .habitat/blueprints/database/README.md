@@ -4,9 +4,12 @@
 service. Its closed topology admits only owner-issued SQL migrations, atomic
 store implementations, and optional atomic physical-schema leaves under
 `src/service/db`. Migrations own physical evolution. Domain entities remain
-in the service or module model; DTOs remain boundary projections. A `schema` directory
-exists only when the selected database technology needs a separate physical
-mapping. The same packet's closed-empty placement scopes reject tracked
+in the service or module model; DTOs remain operation or boundary projections.
+Stores may map persisted records into entities when the domain models
+continuing identity, or return value and snapshot projections. Entity
+declarations never import database types or stores. A `schema` directory exists
+only when the selected database technology needs a separate physical mapping.
+The same packet's closed-empty placement scopes reject tracked
 database content under a standalone module, embedded API service root, or
 embedded API module.
 

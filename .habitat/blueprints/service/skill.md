@@ -134,16 +134,21 @@ currently consume it; the database blueprint owns that placement and import
 funnel. The service otherwise owns facts and capabilities that contextualize or
 serve the suite as a whole.
 
-An entity is identity-bearing domain state whose lifecycle or persistence
-meaning survives one boundary exchange. Put it at service root only when its
-identity or invariants span modules; otherwise keep it in the owning module. A
-DTO is a command, query, result, or boundary projection. It may pick, omit,
-refine, or compose entity schemas without becoming entity authority. Database
-schema files describe physical mappings, and stores are private persistence
-implementations whose types are inferred from those mappings. There is no
-database DTO category. The entity destination remains structural-only until
-the shared TypeBox and platform-neutral source laws cover it; do not move
-production domain schemas there under an incomplete law.
+An entity has stable domain identity that survives attribute changes and
+participates in domain transitions. Persistence may evidence that meaning but
+does not establish it by itself. TypeBox owns the canonical entity schema and
+generated type. Put an entity at service root only when its identity or
+invariants genuinely span modules; access alone never promotes module meaning.
+Otherwise keep it in the owning module. A DTO is an operation or boundary
+projection. It may pick, omit, refine, or compose entity schemas without
+becoming entity authority. Database schema files describe physical mappings,
+and stores are private persistence implementations whose types are inferred
+from those mappings. Stores may map records into entities when the domain
+models continuing identity; they may also return value or snapshot
+projections. Entities never import database, transport, provider, or store
+concerns. There is no database DTO category. The entity destination remains
+structural-only until the shared TypeBox and platform-neutral source laws cover
+it; do not move production domain schemas there under an incomplete law.
 
 No custom implementer helper, provider algebra, context merger, prepared
 context, cast-bearing client framework, or compatibility path belongs in this

@@ -1363,17 +1363,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `rawr` niche, repository JSON formatting, and an advisory migration lane,
   remove the superseded private-alias packets, and register every
   rule once in the existing Habitat Nx owner. Admit optional closed service-
-  and module-level `model/entities` for identity-bearing domain state while
-  keeping DTOs as boundary projections, database schema as physical mapping,
-  and stores as private persistence implementation. Keep the migration laws
-  advisory with empty baselines and expose the current red corpus; move no
-  production source and add no local Habitat SDK, graph owner, or runner.
+  and module-level `model/entities` for stable domain identity and transition
+  invariants while keeping DTOs as boundary projections, database schema as
+  physical mapping, and stores as private persistence implementation. Keep the
+  migration laws advisory with empty baselines and expose the current red
+  corpus; move no production source and add no local Habitat SDK, graph owner,
+  or runner.
 - [ ] 5.7e21h Before moving a production domain schema into `model/entities`,
   extend the shared TypeBox contract and platform-neutral declaration laws to
   service- and module-level entity roots. Preserve the common Magic/Template
-  law rather than adding a RAWR-only fork, and prove TypeBox ownership plus
-  platform independence for the new kind before it becomes an active source
-  destination.
+  law rather than adding a RAWR-only fork. Prove canonical TypeBox schema and
+  generated-type ownership, platform and persistence neutrality, and the
+  one-way DTO/contract/store-to-entity dependency direction before the new
+  kind becomes an active source destination.
 - [ ] 5.7e21i Correct the shared public-consumer law's owner-local relative
   path classification before returning it to enforcement. Preserve owner-local
   `../../src/service` proof imports while rejecting actual sibling-service

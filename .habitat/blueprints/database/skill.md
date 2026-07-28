@@ -24,9 +24,12 @@ directories already carry the database role.
 
 Physical schema describes storage mapping, not domain identity. Stores remain
 private persistence implementations and infer their native record types from
-that mapping. Identity-bearing domain state belongs under service or module
-`model/entities`; command, query, result, and boundary projections belong
-under `model/dto`. The database has no parallel DTO authority.
+that mapping. They may map persisted records into canonical entities when the
+domain models continuing identity, or return value and snapshot projections.
+Entity declarations never import database types or stores. Stable domain
+identity and transition invariants belong under service or module
+`model/entities`; operation and boundary projections belong under `model/dto`.
+The database has no parallel DTO authority.
 
 ## Funnel
 
