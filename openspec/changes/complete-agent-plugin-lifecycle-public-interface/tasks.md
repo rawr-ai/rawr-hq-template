@@ -1336,6 +1336,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   middleware topology. Prove exact Todo behavior, focused types, and no
   Example Todo topology finding. Do not change the HQ SDK, public contract,
   database, provider, resource, host, or runtime lane semantics.
+- [x] 5.7e21f Detach Example Todo's three module contracts from the root
+  runtime `ocBase` feedback edge. Author all six procedures directly from the
+  native `oc` imported from `@orpc/contract`, reproduce their effective domain,
+  audience, audit, entity, and per-operation idempotence metadata exactly, and
+  remove the unused base export. Preserve the full public metadata type through
+  one inert Example Todo policy model extending `BaseMetadata`, and use it at
+  the service declaration and each native `$meta` call. Prove the public
+  metadata type, complete runtime metadata, root contract relation, focused
+  types, and Todo behavior. Leave durable contract source law to the immediately
+  following Magic directory/oRPC2 authority checkpoint rather than adding a
+  transitional flat-contract check. Add no universal SDK metadata model,
+  baseline, compatibility path, alias, or new runner.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own

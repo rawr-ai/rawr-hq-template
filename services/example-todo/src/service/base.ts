@@ -4,7 +4,8 @@
  * @remarks
  * Author the todo service boundary and its declarative service-wide concerns once
  * in this file:
- * - private initial, invocation, and procedure-metadata context shapes
+ * - private initial and invocation context shapes
+ * - the service-owned procedure-metadata policy model
  * - the canonical service declaration
  * - service-wide metadata defaults and policy vocabulary
  * - the bound service authoring surfaces exported to the rest of the package
@@ -24,6 +25,7 @@
  */
 import { type DbPool, defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { WorkspaceIdType } from "./model/dto/workspace-id";
+import type { TodoProcedureMetadata } from "./model/policy/procedure-metadata";
 import type { Clock } from "./model/ports/clock";
 import type { IdentifierGenerator } from "./model/ports/identifier-generator";
 
@@ -68,17 +70,6 @@ type InvocationContext = {
 };
 
 /**
- * Static procedure metadata authored by the service.
- *
- * @remarks
- * This is not execution context.
- */
-type ProcedureMetadata = {
-  audit?: "none" | "basic" | "full";
-  entity?: "service" | "task" | "tag" | "assignment";
-};
-
-/**
  * Declarative service-wide policy vocabulary.
  *
  * @remarks
@@ -109,7 +100,7 @@ const policy = {
 const service = defineService<{
   initialContext: InitialContext;
   invocationContext: InvocationContext;
-  metadata: ProcedureMetadata;
+  metadata: TodoProcedureMetadata;
 }>({
   metadataDefaults: {
     idempotent: true,
@@ -127,11 +118,6 @@ const service = defineService<{
  * Canonical service type projected from the defined service value.
  */
 export type Service = ServiceOf<typeof service>;
-
-/**
- * Contract authoring surface for module contracts.
- */
-export const ocBase = service.oc;
 
 /**
  * Service-local middleware builder.

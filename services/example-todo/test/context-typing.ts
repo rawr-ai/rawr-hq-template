@@ -11,13 +11,33 @@ import {
 } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 
-import { type CreateClientOptions, createClient } from "../src/client";
+import { type CreateClientOptions, createClient, contract as publicContract } from "../src/client";
 import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
 import { contract } from "../src/service/contract";
+import type { TodoProcedureMetadata } from "../src/service/model/policy/procedure-metadata";
 
 declare const dbPool: DbPool;
 declare const deps: CreateClientOptions["deps"];
 declare const sql: Sql;
+
+type Equal<Left, Right> =
+  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
+    ? true
+    : false;
+type Expect<Value extends true> = Value;
+type Normalize<Value> = { [Key in keyof Value]: Value[Key] };
+type PublicTaskGetMetadata = (typeof publicContract.tasks.get)["~orpc"]["meta"];
+type PublicMetadataIsServiceOwned = Expect<
+  Equal<Normalize<PublicTaskGetMetadata>, Normalize<TodoProcedureMetadata>>
+>;
+
+declare const serviceOwnedMetadata: TodoProcedureMetadata;
+const publicTaskGetMetadata: PublicTaskGetMetadata = serviceOwnedMetadata;
+const completeTaskGetMetadata: TodoProcedureMetadata = publicContract.tasks.get["~orpc"].meta;
+const publicMetadataIsServiceOwned: PublicMetadataIsServiceOwned = true;
+void publicTaskGetMetadata;
+void completeTaskGetMetadata;
+void publicMetadataIsServiceOwned;
 
 type DerivedTypingDeclaration = {
   initialContext: {

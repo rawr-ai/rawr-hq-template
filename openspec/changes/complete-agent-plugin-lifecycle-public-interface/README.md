@@ -3123,6 +3123,29 @@ pass. Strict OpenSpec validation passes. Standing oRPC/TypeScript,
 behavior/testing, and Habitat authority reviews report no unresolved P0, P1,
 or P2 finding; repository landing remains open.
 
+## Example Todo Native Contract Detachment
+
+The bounded follow-up completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21f]]. Example Todo's
+six module procedures now originate directly from the runtime `oc` imported
+from `@orpc/contract`. Each procedure carries the previously effective `todo`
+domain, `internal` audience, `basic` audit, `service` entity, and its existing
+idempotence explicitly through native `$meta<TodoProcedureMetadata>`. That one
+service-owned policy model extends the SDK's neutral `BaseMetadata` and remains
+the public procedure metadata type. The three contracts no longer import
+`base.ts`, and the unused `ocBase` runtime export is deleted. Schemas, errors,
+routes, root `service.router(...)` completion, middleware, handlers, and
+observable results remain unchanged.
+
+This checkpoint proves the detachment at the owned code, type, and behavior
+boundaries: the public procedure metadata normalizes to the service-owned type,
+all six runtime metadata values remain exact, and the completed router retains
+its root contract relation. Uncached Example Todo typecheck and all 38 owner
+tests pass, as does its normalized five-dependency `check` graph, strict
+OpenSpec validation, and diff hygiene. It adds no transitional flat-contract
+matcher. The immediately following Magic directory/oRPC2 authority checkpoint
+owns the durable contract source law.
+
 ## Settlement Oracles
 
 The final product must prove:
