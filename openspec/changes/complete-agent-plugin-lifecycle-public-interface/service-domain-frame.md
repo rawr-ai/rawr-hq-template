@@ -122,9 +122,9 @@ The corrected use of Habitat is positive and closed:
   named model layers enumerate the complete set of admitted children;
 - every layer exposes a concrete interface to its parent and owns only the
   decisions that can be made with that layer's local context;
-- dependencies and ready capabilities seed the service boundary; one elected
-  base-owned native middleware author creates each named module capability
-  contribution before the matching module branch uses it;
+- dependencies and ready capabilities seed the service boundary; qualified
+  root middleware may acquire, guard, or enrich execution capabilities, and
+  every module curates its smallest route vocabulary from inherited lanes;
 - root service model matter exists only when it is genuinely used across
   modules; module domain matter remains in the owning module;
 - TypeBox owns structural data contracts, oRPC owns operation boundaries, and
@@ -135,14 +135,16 @@ The corrected use of Habitat is positive and closed:
   weaken the blueprint.
 
 Native oRPC context composition is additive. A `.use<Context>` type argument or
-source-spelling blacklist cannot make it subtractive. Owner-local resource and
-handler cuts remove broad dependency lanes while named middleware makes the
-remaining capability flow visible. Adding a capability may add a named module,
-middleware, or model category through the same hierarchy, but it cannot reopen a generic
-holding area or let an inner layer acquire runtime authority directly. As a
-result, an author working inside one module needs that module's contract,
-capability surface, model, operations, and the public interfaces it consumes,
-not the full service implementation.
+source-spelling blacklist cannot make it subtractive. Terminal module curation
+closes the vocabulary against which handlers author without pretending the
+inherited lanes disappeared. Named middleware exists only for qualified
+acquisition, guards, or enrichment; it is not a projection layer. Adding a
+capability may add a named module, middleware, or model category through the
+same hierarchy, but it cannot reopen a generic holding area or let an inner
+layer acquire runtime authority directly. As a result, an author working inside
+one module needs that module's contract, curated capability surface, model,
+operations, and the public interfaces it consumes, not the full service
+implementation.
 
 The latest committed Magic Migration service blueprint is the structural
 source. Template retains only explicitly independent RAWR extensions that do
@@ -237,7 +239,7 @@ Oclif command
   -> ready host resource capabilities
   -> root context seed and cross-cutting telemetry
   -> one module branch
-  -> owner middleware contributes that module's named capabilities
+  -> module curates its route-facing capabilities
   -> oRPC applies the operation's TypeBox input boundary
   -> direct handler applies canonicalization and domain policy
   -> resource port performs external mechanics
@@ -248,12 +250,13 @@ Oclif command
 
 The root imports module source only in `contract.ts` and `router.ts`. Each
 module's `module.ts` is the sole file allowed to import `service` from
-`../../impl`; it enters through the matching root branch. A documented named
-`middleware/*.middleware.ts` leaf is the sole additional root edge: it imports
-only `createMiddleware` from `../../../base` to author the module's capability
-contribution. Other module source imports only local files, explicit
-owner-local service-model exports, or public resource contracts. Modules never
-import siblings, root middleware, the raw base, or concrete resource providers.
+`../../impl`; it enters through the matching root branch and ends with the
+terminal inline curation. Other module source imports only local files,
+explicit owner-local service-model exports, or public resource contracts.
+Modules never import siblings, root middleware, the raw base, or concrete
+resource providers. A future named middleware boundary must own real
+acquisition, guarding, or enrichment; projection alone does not justify a
+factory or file.
 
 TypeBox schemas own request, result, persisted JSON, and intermodule
 collaboration structure and generate their TypeScript types. Opaque runtime
@@ -408,9 +411,9 @@ in-place and deletion-first:
 | Manual release parsers duplicate TypeBox | TypeBox validates structure once; canonicalization and semantic checks remain | Normalize release model by family |
 | Release derivation has competing check/package paths | One service-owned release-derivation policy over the content-workspace port serves Releases and Packaging | Seal shared derivation |
 | Provider status and sync delegate channel selection to a resolver and narrowed read port | Their oRPC handlers sequence the ready content-workspace resource directly and pass typed facts into Provider policy | Delete the false intermediate owner |
-| Modules import root `base.ts` and siblings | `module.ts` uses only the matching `impl` branch; one named middleware leaf uses only the base `createMiddleware` factory; all other edges stay owner-local or public | Seal each module |
+| Modules import root `base.ts` and siblings | `module.ts` uses only the matching `impl` branch and terminally curates its route vocabulary; all other edges stay owner-local or public | Seal each module |
 | Module operations delegate to parallel business entrypoints | Direct oRPC handlers own sequencing and call only pure policy or ready capabilities | Seal each router |
-| Root requires owner-specific capabilities for every operation | Host seeds ready resources; named module middleware contributes owner capabilities; operation cuts delete broad dependency access instead of masking additive native context | Seal context authoring |
+| Root requires owner-specific capabilities for every operation | Host seeds ready resources; each module curates the exact vocabulary its handlers use; qualified middleware remains only for acquisition, guards, or enrichment | Seal context authoring |
 | CLI requests carry provider executable identities | Native-provider resources resolve ordinary `codex` and `claude` tools from the process environment; tests inject providers at construction | Remove executable binding |
 | Provider tests encode provider-wide target preflight | Only invalid provider selection blocks every target; target-specific preflight and results remain independent | Restore target isolation |
 | Provider test delegates local source selection to a runner and workspace resolver | Its oRPC handler authors source selection over ready context; pure policy alone is extracted. Native reconciliation remains a separately open operation-authorship cut. | Seal disposable source selection |

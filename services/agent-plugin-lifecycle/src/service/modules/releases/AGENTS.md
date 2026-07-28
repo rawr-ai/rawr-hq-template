@@ -22,8 +22,8 @@
   module owns staged eligibility, refresh policy, operation DTOs, handlers,
   results, and operation-specific issues; it does not publish packages, update
   vendor content, or mutate native provider state.
-- The module receives one ready content-workspace resource through its named
-  middleware. Operation handlers directly sequence clean and staged
+- The module curates one ready content-workspace resource from inherited
+  service dependencies. Operation handlers directly sequence clean and staged
   observations, while the service model classifies only the cross-module clean
   facts. Native Git decoding remains in the resource provider; no module DTO,
   reader, or adapter mirrors that boundary.

@@ -18,7 +18,7 @@ import { module } from "../module";
 
 /**
  * @purpose Resolve one reviewed current-main locator against exact Git content.
- * @capability Consume only the module-projected content-workspace resource.
+ * @capability Consume only the module-curated content-workspace resource.
  * @behavior Sequence exact observations while preserving cancellation and typed refusals.
  * @relation Keep resource execution in the procedure and reusable decisions in policy.
  */

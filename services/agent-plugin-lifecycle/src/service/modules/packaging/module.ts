@@ -1,12 +1,14 @@
 import { service } from "../../impl";
-import { contentWorkspace } from "./middleware/content-workspace.middleware";
-import { packageOutput } from "./middleware/package-output.middleware";
 
 /**
- * Packaging implementer composed from base-authored capability middleware.
- *
- * @remarks
- * TypeScript infers the additive capability contribution from the completed
- * middleware values; these attachments do not claim to remove inherited lanes.
+ * Packaging implementer with its route-facing context curated from the
+ * inherited service dependencies.
  */
-export const module = service.packaging.use(contentWorkspace).use(packageOutput);
+export const module = service.packaging.use(async ({ context, next }) =>
+  next({
+    context: {
+      contentWorkspace: context.deps.contentWorkspace,
+      packageOutput: context.deps.packageOutput,
+    },
+  })
+);

@@ -1,5 +1,13 @@
 import { service } from "../../impl";
-import { capabilities } from "./middleware/capabilities.middleware";
 
-/** Governance implementer rooted in the service-owned contract branch. */
-export const module = service.governance.use(capabilities);
+/**
+ * Governance implementer with its route-facing context curated from the
+ * inherited service dependencies.
+ */
+export const module = service.governance.use(async ({ context, next }) =>
+  next({
+    context: {
+      contentWorkspace: context.deps.contentWorkspace,
+    },
+  })
+);

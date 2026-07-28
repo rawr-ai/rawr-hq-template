@@ -2958,10 +2958,30 @@ than becoming another authority surface.
 
 The existing service-blueprint suite passes all 24 cases and 283 assertions,
 including dedicated red fixtures for missing terminal curation and dotted,
-computed, destructured, or renamed raw-lane access from a router source. Strict OpenSpec validation, touched
-Biome checks, and diff hygiene pass. The lifecycle runtime edits remain
+computed, destructured, or renamed raw-lane access from a router source. Strict
+OpenSpec validation, touched Biome checks, and diff hygiene pass. The lifecycle runtime edits remain
 unstaged for task 5.7e20, so this record does not claim their behavior or type
 proof.
+
+## Lifecycle Module Context Curation
+
+The active bounded checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e20]]. Governance,
+Packaging, Providers, Releases, and Vendors now finish their exact service
+branches with one terminal curation of the smallest route vocabulary already
+used by their handlers. Seven projection-only module middleware files are
+deleted together with the now-unreferenced native middleware authoring factory.
+Qualified acquisition, guards, and enrichment remain separate middleware
+concerns when a concrete consumer needs them; no resource is constructed,
+policy moved, public contract changed, or runtime lane removed.
+
+One staged Habitat acquisition runs the six advisory service laws in 2.9
+seconds. The five Grit laws pass, the closed topology reports only the known
+outside-lifecycle corpus, and no rule reports an agent-plugin-lifecycle path.
+Nx runs lifecycle typecheck and all 43 behavior files together with their six
+build prerequisites: all 377 tests pass in 1 minute 26 seconds with the cache
+intentionally disabled. This checkpoint changes no provider home, Personal
+repository, Oclif surface, or live lifecycle state.
 
 ## Settlement Oracles
 
