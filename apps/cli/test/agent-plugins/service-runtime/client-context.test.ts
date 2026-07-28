@@ -77,7 +77,7 @@ afterAll(async () => {
 });
 
 describe("production lifecycle service context", () => {
-  it("assembles root-owned raw resources as cold ordinary data properties", async () => {
+  it("assembles host-bound capabilities as cold ordinary data properties", async () => {
     const root = requireFixture();
     const before = await directoryNames(root.path);
     const deps = createProductionLifecycleDeps();

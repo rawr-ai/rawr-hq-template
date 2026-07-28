@@ -4,14 +4,11 @@ import type { AgentPluginPackageOutputResource } from "@rawr/resource-agent-plug
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
 import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
-
-interface LifecycleClock {
-  readonly now: () => Date;
-}
+import type { VendorClockPort } from "./modules/vendors/model/ports/clock";
 
 type LifecycleDependencies = {
   analytics: AnalyticsClient;
-  clock: LifecycleClock;
+  clock: VendorClockPort;
   contentWorkspace: ContentWorkspaceResource<never>;
   logger: Logger;
   nativeProviders: NativeAgentProviderResources;

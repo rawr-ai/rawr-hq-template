@@ -1443,6 +1443,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   service-module `AGENTS.md` authority. Keep rules with known live findings
   advisory, add no local Habitat SDK or manual checker, and prove the packet
   plus exact shared pattern identities before moving service source.
+- [x] 5.7e21l Localize the Vendors observation-clock contract without changing
+  runtime assembly. Move the inert port type from `base.ts` into the Vendors
+  module model, and let `base.ts` type-import that exact leaf only to declare
+  the capability the host must bind. Preserve the downward host-to-context,
+  module-curation, and handler flow; update routing and proof language that
+  incorrectly describes the capability as service-root-owned. Add no clock
+  resource, sibling service, middleware, provider, adapter, or public export.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution
