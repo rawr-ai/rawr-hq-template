@@ -9,11 +9,12 @@
  * Add/modify procedures here first. Module composition lives in `module.ts`, and
  * handler behavior lives in `router/tags.router.ts`.
  */
+import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { TagSchema } from "#example-todo-service/model/dto/tag";
-import { ocBase } from "../../base";
+import type { TodoProcedureMetadata } from "#example-todo-service/model/policy/procedure-metadata";
 
 const ReadOnlyModeData = schema(
   Type.Object(
@@ -39,8 +40,14 @@ const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
 } as const;
 
 export const contract = {
-  create: ocBase
-    .meta({ idempotent: false })
+  create: oc
+    .$meta<TodoProcedureMetadata>({
+      idempotent: false,
+      domain: "todo",
+      audience: "internal",
+      audit: "basic",
+      entity: "service",
+    })
     .input(
       schema(
         Type.Object(
@@ -86,8 +93,14 @@ export const contract = {
         ),
       },
     }),
-  list: ocBase
-    .meta({ idempotent: true })
+  list: oc
+    .$meta<TodoProcedureMetadata>({
+      idempotent: true,
+      domain: "todo",
+      audience: "internal",
+      audit: "basic",
+      entity: "service",
+    })
     .input(
       schema(
         Type.Object(

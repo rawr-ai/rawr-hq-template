@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Contracts Narrow Into Runtime
+
+Example Todo's module contracts are native oRPC declarations, not projections
+of the service runtime. Each procedure now begins at the runtime `oc` value
+imported directly from `@orpc/contract` and carries its complete static metadata
+through the service-owned `TodoProcedureMetadata` policy model. That inert type
+extends the neutral SDK metadata base and is shared by the service declaration
+and all six public procedure contracts. The contract plane no longer reaches
+upward into `base.ts` for an `ocBase` facade; runtime construction instead
+consumes the completed contract downstream.
+
+This bounded move is proven through the contracts themselves, the public
+metadata type oracle, and runtime behavior. It does not install a temporary
+flat-contract source check. The immediately following Magic directory/oRPC2
+authority checkpoint owns the durable contract source law.
+
+See [[services/example-todo/src/service/modules/tasks/contract|the native task contract]],
+[[services/example-todo/test/procedure-meta.test|the metadata oracle]], and
+[[services/example-todo/test/context-typing|the public metadata type oracle]].
+
+### Bag Of Keywords
+
+contract, authority, native, module, context, runtime, detachment, metadata,
+closure, locality.
+
 ## 2026-07-28 - Contract Roots Close Through Native Authority
 
 A module router and a contract-first service root are different kinds of

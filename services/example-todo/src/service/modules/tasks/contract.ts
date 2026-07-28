@@ -14,12 +14,13 @@
  * Extend task capability by updating this contract first, then implement handlers
  * in `router/tasks.router.ts`. Keep this file free of execution logic and dependencies.
  */
+import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { TaskSchema } from "#example-todo-service/model/dto/task";
-import { ocBase } from "../../base";
+import type { TodoProcedureMetadata } from "#example-todo-service/model/policy/procedure-metadata";
 
 const ResourceNotFoundData = schema(
   Type.Object(
@@ -74,8 +75,14 @@ const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
 } as const;
 
 export const contract = {
-  create: ocBase
-    .meta({ idempotent: false })
+  create: oc
+    .$meta<TodoProcedureMetadata>({
+      idempotent: false,
+      domain: "todo",
+      audience: "internal",
+      audit: "basic",
+      entity: "service",
+    })
     .input(
       schema(
         Type.Object(
@@ -122,8 +129,14 @@ export const contract = {
         ),
       },
     }),
-  get: ocBase
-    .meta({ idempotent: true })
+  get: oc
+    .$meta<TodoProcedureMetadata>({
+      idempotent: true,
+      domain: "todo",
+      audience: "internal",
+      audit: "basic",
+      entity: "service",
+    })
     .input(
       schema(
         Type.Object(

@@ -10,6 +10,7 @@
  * Keep this contract focused on caller-visible shape. Cross-module access
  * patterns belong in `router/assignments.router.ts`, not here.
  */
+import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";
 import { Type } from "typebox";
@@ -17,7 +18,7 @@ import { AssignmentSchema } from "#example-todo-service/model/dto/assignment";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { TagSchema } from "#example-todo-service/model/dto/tag";
 import { TaskSchema } from "#example-todo-service/model/dto/task";
-import { ocBase } from "../../base";
+import type { TodoProcedureMetadata } from "#example-todo-service/model/policy/procedure-metadata";
 
 const ResourceNotFoundData = schema(
   Type.Object(
@@ -101,8 +102,14 @@ const ASSIGNMENT_LIMIT_REACHED: ErrorMapItem<typeof AssignmentLimitReachedData> 
 } as const;
 
 export const contract = {
-  assign: ocBase
-    .meta({ idempotent: false })
+  assign: oc
+    .$meta<TodoProcedureMetadata>({
+      idempotent: false,
+      domain: "todo",
+      audience: "internal",
+      audit: "basic",
+      entity: "service",
+    })
     .input(
       schema(
         Type.Object(
@@ -149,8 +156,14 @@ export const contract = {
         ),
       },
     }),
-  listForTask: ocBase
-    .meta({ idempotent: true })
+  listForTask: oc
+    .$meta<TodoProcedureMetadata>({
+      idempotent: true,
+      domain: "todo",
+      audience: "internal",
+      audit: "basic",
+      entity: "service",
+    })
     .input(
       schema(
         Type.Object(
