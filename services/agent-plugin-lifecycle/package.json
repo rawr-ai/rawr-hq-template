@@ -15,10 +15,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
-    "sync": "bun run --cwd ../.. sync:check --project @rawr/agent-plugin-lifecycle",
-    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/agent-plugin-lifecycle",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "bun --bun ../../node_modules/.bin/vitest run --config vitest.config.ts"
+    "test": "bun --bun vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "@noble/hashes": "2.2.0",

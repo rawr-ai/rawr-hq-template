@@ -47,10 +47,7 @@
         "role:servicepackage",
         "migration-slice:structural-tranche"
       ],
-      "targets": [
-        "sync",
-        "structural"
-      ]
+      "targets": []
     },
     "plugin-server-api-example-todo": {
       "config": "plugins/server/api/example-todo/project.json",
