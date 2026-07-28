@@ -71,12 +71,17 @@ independently owned topology and source axes:
    implements the aggregate tree once through unconfigured `impl.router(...)`
    so root middleware is not replayed.
 9. Every model fact has one direct semantic leaf. Model indexes are
-   inadmissible. `entities` owns identity-bearing domain state; service-root
-   entities span modules, while module entities remain subdomain-specific.
-   DTOs own commands, queries, results, and other boundary projections. The
-   structural entity destination remains advisory until the shared TypeBox and
-   platform-neutral source laws cover it; production entity movement waits for
-   that law rather than creating a RAWR-only fork.
+   inadmissible. `entities` owns stable domain identity that survives attribute
+   changes and participates in transitions. Persistence is evidence, not
+   sufficient classification. TypeBox owns each canonical entity schema and
+   generated type. Service-root entities span modules by identity or invariant,
+   never by access alone; module entities remain subdomain-specific. DTOs own
+   operation and boundary projections. DTOs and contracts may compose
+   entities, and stores may map records to entities when the domain models
+   continuing identity; reverse imports are inadmissible. The structural entity
+   destination remains advisory until the shared TypeBox and platform-neutral
+   source laws cover it; production entity movement waits for that law rather
+   than creating a RAWR-only fork.
 10. Module-local imports use normalized relative paths. A module does not reach
     upward or sideways for another implementation. Foreign, cross-kind, and
     outside-owner imports use public exports.

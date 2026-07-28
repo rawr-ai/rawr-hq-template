@@ -3205,16 +3205,27 @@ the required Nx target retains the previously green selected laws while the
 expanded service batch remains advisory; no SDK fork, raw Grit command, parser,
 or second scheduler is introduced.
 
-RAWR adds one bounded generic ontology extension. An entity is
-identity-bearing domain state with lifecycle or persistence meaning. A
-service-root entity owns identity or invariants shared across modules; a
-module entity remains subdomain-specific. DTOs remain commands, queries,
-results, and other boundary projections. Database schema is physical mapping,
-and a store is a private persistence implementation whose native record type
-is inferred from that mapping. There is no `db/dto` destination. Structural
-entity admission remains advisory: the imported TypeBox and platform-neutral
-patterns do not yet scan entity roots, so no production entity source moves
-until the shared laws are extended without a RAWR-local fork.
+RAWR adds one bounded generic ontology extension. An entity has stable domain
+identity that survives attribute changes and participates in domain
+transitions. Persistence is supporting evidence, never sufficient
+classification. TypeBox owns the canonical entity schema and generated type.
+A service-root entity owns identity or invariants that genuinely span modules;
+access alone never promotes module meaning. A module entity remains
+subdomain-specific. DTOs remain operation and boundary projections and may
+compose entity schemas. Database schema is physical mapping, and a store is a
+private persistence implementation whose native record type is inferred from
+that mapping. Stores may map records into entities when the domain models
+continuing identity, or return value and snapshot projections. Entities never
+import DTO, contract, database, store, transport, provider, or persistence
+concerns. There is no `db/dto` destination.
+
+Structural entity admission remains advisory: the imported TypeBox and
+platform-neutral patterns do not yet scan entity roots, so no production
+entity source moves until the shared laws are extended without a RAWR-local
+fork under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21h]].
+Example Todo's Task, Tag, and Assignment identities are the first future
+migration corpus after that gate closes. `AgentPluginRelease` and
+`AgentPluginReleaseSet` remain immutable values or snapshots, not entities.
 
 Authority lands before source movement on purpose. The native Habitat topology
 fixture admits the new directory entrypoints and entity destinations, then

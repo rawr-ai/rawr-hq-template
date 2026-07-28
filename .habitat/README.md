@@ -92,12 +92,16 @@ their niche (`magic` to `rawr`) and repository formatting; the strengthened
 consumer-sealing law is advisory while its shared owner-local relative-path
 case is corrected. Template otherwise adds only package metadata, module
 `AGENTS.md`, and API paths. RAWR adds one generic model distinction: optional
-closed `entities` directories own identity-bearing domain state, while DTOs
-remain boundary projections and database schema remains physical mapping.
-There is no database DTO category. That structural destination remains
-advisory until the shared TypeBox and platform-neutral source laws cover
-entities; no production
-entity source moves before that shared law lands.
+closed `entities` directories own stable domain identity that survives
+attribute changes and participates in transitions. Persistence alone is
+insufficient. TypeBox owns canonical entity schemas and generated types; DTOs
+remain operation or boundary projections, while database schema remains
+physical mapping. Stores privately realize persistence and may map records
+into entities when the domain models continuing identity. There is no database
+DTO category, and entity declarations do not import those downstream owners.
+That structural destination remains advisory until the shared TypeBox and
+platform-neutral source laws cover entities; no production entity source moves
+before that shared law lands.
 
 Required module `contract/` and `router/` directories expose `index.ts` plus
 semantic leaves; optional `middleware/` uses the same entrypoint shape. Root
