@@ -105,8 +105,9 @@
   resources from inherited service dependencies. Its package handler owns
   source observation, derivation, encoding, revalidation, publication, and
   settlement order; pure policy classifies typed facts and public results.
-- Content-workspace, versioned-content, clock, package-output, and
-  native-provider mechanics remain behind host-supplied dependencies.
+- Content-workspace, versioned-content, package-output, and native-provider
+  mechanics remain behind host-supplied dependencies. Vendors owns the domain
+  meaning of its observation-clock port; the host supplies its implementation.
 - Pure deterministic byte policy may use a portable implementation directly;
   it must not create a resource or provider facade for computation without a
   runtime acquisition or lifecycle protocol.
@@ -146,8 +147,8 @@
 - The public client is the sole caller boundary. It deliberately exposes the
   service contract and bounded input admission without exposing the private
   router, host context lanes, schemas, model, or modules. Content workspace,
-  versioned content, lifecycle clock, package output, and ready native provider
-  resources are host-supplied dependencies.
+  versioned content, the Vendors observation clock, package output, and ready
+  native provider resources are host-supplied dependencies.
 
 ## Routing
 

@@ -3288,6 +3288,35 @@ repository check passed 40 projects and 118 tasks in 41.5 seconds, with 71
 tasks restored from Nx cache; the 41.4-second Habitat policy target remains the
 critical path rather than another scheduler or duplicate owner process.
 
+## Vendor Clock Ownership
+
+The Vendor clock checkpoint moves only the inert clock contract out of
+service-root declaration and into the Vendors module model. `base.ts`
+type-imports that exact port solely because the host must bind it. Runtime
+values still flow from host assembly through `deps`, terminal Vendors curation,
+and the status/update handlers. The public client shape and every host or test
+binding remain structurally unchanged.
+
+Vendors is the clock's sole production consumer and owns the meaning of the
+observation timestamp written during admitted upstream authoring. The clock has
+no independent state, acquisition or release lifecycle, provider selection, or
+repository-wide failure protocol. It therefore does not justify a resource,
+sibling service, plugin concern, or app-owned contract. The app owns only the
+ordinary wall-clock implementation it supplies.
+
+The focused Vendors suite passes 26 cases, including supplied-clock provenance,
+and the focused CLI context suite passes 3 cases. Lifecycle and CLI source/test
+typechecks pass. The selected module-isolation law admits the type-only
+`base.ts` port edge and the closed model topology admits the direct port leaf;
+the remaining topology findings are the already-declared advisory migration
+corpus. The repository-wide imported-export documentation check remains a
+separately owned pre-existing red corpus, while the new cross-file port itself
+has declaration-site ownership and flow documentation. Strict OpenSpec and
+diff hygiene pass. The required repository check passes all 40 projects and
+118 tasks in 47.5 seconds. This checkpoint changes no operation, resource
+implementation, provider home, Personal repository, Oclif surface, or live
+lifecycle state.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect
