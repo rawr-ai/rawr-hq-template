@@ -19,7 +19,7 @@ import { standard } from "@rawr/typebox-adapter";
 import { Effect } from "effect";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
-import { metadataDefaults } from "../../src/service/contract";
+import { metadataDefaults } from "../../src/service/model/policy/procedure-metadata";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const AdmissionInputSchema = Type.Object(

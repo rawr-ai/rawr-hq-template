@@ -1450,6 +1450,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   module-curation, and handler flow; update routing and proof language that
   incorrectly describes the capability as service-root-owned. Add no clock
   resource, sibling service, middleware, provider, adapter, or public export.
+- [x] 5.7e21m Move service-wide procedure metadata policy out of the contract
+  composition anchor. Let the contract and root middleware consume one direct
+  service-model policy leaf while preserving exact metadata values,
+  inheritance, middleware order, public exports, and runtime behavior.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

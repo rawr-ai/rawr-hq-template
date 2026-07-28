@@ -3317,6 +3317,22 @@ diff hygiene pass. The required repository check passes all 40 projects and
 implementation, provider home, Personal repository, Oclif surface, or live
 lifecycle state.
 
+## Procedure Metadata Ownership
+
+The procedure-metadata checkpoint moves the lifecycle service's shared
+metadata defaults out of `contract.ts` and into the service model's policy
+layer. The five metadata values and their `BaseMetadata` constraint remain
+unchanged. `contract.ts` is again only the service contract-composition anchor;
+the contract and the two root middleware leaves now consume the same inert
+policy directly rather than reaching back through that anchor.
+
+This is an ownership-only source move. It changes no contract schema, metadata
+inheritance, middleware order, client shape, operation behavior, provider
+state, or live lifecycle state. Lifecycle typecheck, the service-spine and
+Effect-oRPC admission behavior, the five module schema-boundary suites, the
+selected service-anchor Habitat law, strict OpenSpec, diff hygiene, and the
+required repository check form the checkpoint proof.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect
