@@ -33,7 +33,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "sync": "bun run --cwd ../.. sync:check --project @rawr/dev",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project dev"
   },

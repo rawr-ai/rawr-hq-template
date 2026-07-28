@@ -19,7 +19,7 @@ if (!(pkg.nx?.tags ?? []).includes("migration-slice:structural-tranche")) {
   process.exit(1);
 }
 
-for (const scriptName of ["sync", "structural"]) {
+for (const scriptName of ["structural"]) {
   if (!(scriptName in (pkg.scripts ?? {}))) {
     console.error(`core structural failed: missing ${scriptName} script.`);
     process.exit(1);

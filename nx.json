@@ -18,8 +18,7 @@
       "{workspaceRoot}/scripts/phase-a/**/*.mjs",
       "{workspaceRoot}/scripts/phase-2/**/*.mjs",
       "{workspaceRoot}/scripts/phase-03/**/*.mjs",
-      "{workspaceRoot}/scripts/runtime/**/*.mjs",
-      "{workspaceRoot}/tools/architecture-inventory/**/*.json"
+      "{workspaceRoot}/scripts/runtime/**/*.mjs"
     ],
     "habitatPolicy": ["{workspaceRoot}/.habitat/**/*", "!{workspaceRoot}/.habitat/cache/**"],
     "habitatTypecheckSources": [
@@ -89,17 +88,9 @@
       "cache": false,
       "dependsOn": ["build", "^build"]
     },
-    "sync": {
-      "cache": false,
-      "inputs": ["default", "^default", "architectureGlobals"]
-    },
     "structural": {
       "cache": false,
-      "dependsOn": ["sync"],
       "inputs": ["default", "^default", "architectureGlobals"]
     }
-  },
-  "sync": {
-    "globalGenerators": ["./tools/nx/generators.json:sync-slice-0-inventory"]
   }
 }

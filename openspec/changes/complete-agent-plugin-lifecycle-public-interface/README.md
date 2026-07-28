@@ -3350,6 +3350,30 @@ lifecycle `sync` or `structural` task. The remaining repository normalization is
 a hard prerequisite to the next production service burn-down and is tracked in
 [[tasks#1. Repository-Native Structural Ratchet|task 1.6c10b]].
 
+## Architecture Inventory Sync Retirement
+
+The repository now takes project and target truth directly from Nx's resolved
+graph. This checkpoint removes the custom sync generator, copied architecture
+inventory JSON, parity verifier, and the project-local `sync` aliases that only
+replayed that verifier. Writers and readers leave together rather than keeping a
+generated representation as a second authority.
+
+This retires the redundant architecture-inventory parity gate while preserving
+every remaining Habitat structural and behavioral gate. It does not change
+project tags, alter Habitat policy, or complete the broader repository target
+normalization.
+The runtime-realization lab keeps its qualified gate while dropping only its
+inventory dependency. Edited JSON parses, native `nx sync:check` reports no
+pending generator work, the resolved `sync` target set is empty, all 69 runtime
+lab cases pass, strict OpenSpec and diff hygiene pass, and the required
+repository check passes all 40 projects and 118 resolved tasks in 39.4 seconds
+with ordinary cache reuse. The repository CI graph passes all 155 build,
+check, and test tasks in 1 minute 24 seconds. The optional
+`architecture:gates:permanent`
+aggregate remains pre-existing red on manifest-order and projection-context
+source assertions whose inputs are unchanged from the parent; this checkpoint
+removes only its retired sync tail and does not relabel that aggregate green.
+
 ## Procedure Metadata Ownership
 
 The procedure-metadata checkpoint moves the lifecycle service's shared

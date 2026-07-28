@@ -80,7 +80,7 @@ if (tags.includes("type:package")) {
   fail("coordination must be tagged as a service, not a package.");
 }
 
-for (const scriptName of ["sync", "structural"]) {
+for (const scriptName of ["structural"]) {
   if (!(scriptName in (pkg.scripts ?? {}))) {
     fail(`missing ${scriptName} script.`);
   }

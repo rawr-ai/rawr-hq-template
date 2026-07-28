@@ -8,12 +8,6 @@
     "check": {
       "executor": "nx:noop"
     },
-    "sync": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun run sync:check --project runtime-realization-type-env"
-      }
-    },
     "structural": {
       "executor": "nx:run-commands",
       "options": {
@@ -71,7 +65,6 @@
     "gate": {
       "executor": "nx:noop",
       "dependsOn": [
-        "sync",
         "structural",
         "report",
         {

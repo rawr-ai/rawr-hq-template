@@ -26,12 +26,6 @@
         "command": "tsc -p plugins/server/api/example-todo/tsconfig.json --noEmit"
       }
     },
-    "sync": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun run sync:check --project plugin-server-api-example-todo"
-      }
-    },
     "structural": {
       "executor": "nx:run-commands",
       "cache": true,

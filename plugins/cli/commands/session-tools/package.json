@@ -29,7 +29,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "manifest": "bun --bun oclif manifest",
-    "sync": "bun run --cwd ../../../.. sync:check --project @rawr/plugin-session-tools",
     "structural": "bun ../../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-session-tools",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",

@@ -141,7 +141,6 @@ const requiredPaths = [
   "tools/runtime-realization-type-env/test/conformance/middle-spine-derivation.test.ts",
   "tools/runtime-realization-type-env/test/vendor/boundary-shapes.test.ts",
   "tools/runtime-realization-type-env/test/vendor/effect-runtime.test.ts",
-  "tools/architecture-inventory/runtime-realization-type-env.json",
 ];
 
 for (const requiredPath of requiredPaths) {
@@ -603,7 +602,6 @@ for (const tag of ["type:tool", "migration-slice:runtime-realization", "spec-con
   assert(project.tags.includes(tag), `project missing tag ${tag}`);
 }
 for (const target of [
-  "sync",
   "structural",
   "report",
   "typecheck",
@@ -617,27 +615,6 @@ for (const target of [
 ]) {
   assert(target in project.targets, `project missing target ${target}`);
 }
-
-const architectureInventory = readJson<{
-  projects: Record<
-    string,
-    {
-      config: string;
-      targets: string[];
-    }
-  >;
-}>("tools/architecture-inventory/runtime-realization-type-env.json");
-const inventoryProject = architectureInventory.projects["runtime-realization-type-env"];
-assert(inventoryProject, "architecture inventory missing runtime-realization-type-env");
-assert(
-  inventoryProject.config === "tools/runtime-realization-type-env/project.json",
-  "architecture inventory config drifted for runtime-realization-type-env"
-);
-assertArrayEquals(
-  inventoryProject.targets,
-  projectTargetNames,
-  "architecture inventory targets drifted from project.json"
-);
 
 for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runtime"]) {
   const referenceRuntimePath = `tools/runtime-realization-type-env/${referenceRuntimeDir}`;
@@ -670,7 +647,7 @@ for (const referenceRuntimeDir of ["src/reference-runtime", "test/reference-runt
 }
 
 const gateTargets = new Set(
-  projectTargetNames.filter((target) => !["check", "sync", "gate"].includes(target))
+  projectTargetNames.filter((target) => !["check", "gate"].includes(target))
 );
 const expectedGateTargets = projectTargetNames.filter(
   (target) => !["check", "gate"].includes(target)
