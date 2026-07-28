@@ -26,15 +26,14 @@
     "@orpc/client": "1.14.8",
     "@orpc/contract": "1.14.8",
     "@orpc/server": "1.14.8",
-    "@orpc/shared": "1.14.8",
     "@rawr/hq-sdk": "workspace:*",
     "@rawr/resource-agent-plugin-package-output": "workspace:*",
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
     "@rawr/resource-versioned-content": "workspace:*",
-    "effect": "4.0.0-beta.100",
+    "effect": "4.0.0-beta.101",
     "effect-orpc": "1.0.0-effect-v4.8",
-    "typebox": "1.3.6"
+    "typebox": "1.3.8"
   },
   "devDependencies": {
     "@opentelemetry/context-async-hooks": "^2.6.0",

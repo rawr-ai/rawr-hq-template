@@ -17,9 +17,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@effect/platform-node": "4.0.0-beta.100",
-    "effect": "4.0.0-beta.100",
-    "typebox": "1.3.6"
+    "@effect/platform-node": "4.0.0-beta.101",
+    "effect": "4.0.0-beta.101",
+    "typebox": "1.3.8"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

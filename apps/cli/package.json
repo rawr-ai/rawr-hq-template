@@ -9,7 +9,7 @@
     "node": "^20.19.0 || >=22.9.0"
   },
   "dependencies": {
-    "@effect/platform-node": "4.0.0-beta.100",
+    "@effect/platform-node": "4.0.0-beta.101",
     "@oclif/core": "^4.11.4",
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
@@ -25,7 +25,7 @@
     "@rawr/resource-content-workspace": "workspace:*",
     "@rawr/resource-native-agent-provider": "workspace:*",
     "@rawr/resource-versioned-content": "workspace:*",
-    "effect": "4.0.0-beta.100",
+    "effect": "4.0.0-beta.101",
     "zod": "^3.24.3"
   },
   "devDependencies": {

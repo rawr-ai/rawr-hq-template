@@ -11,7 +11,7 @@
 
 ## Current Vendor Facts
 
-- Installed package: `effect@4.0.0-beta.100`. The runtime-realization tool
+- Installed package: `effect@4.0.0-beta.101`. The runtime-realization tool
   consumes the root development dependency; the lifecycle service and its
   filesystem/process resources consume the same exact package as a production
   dependency. The tool is not a workspace package.

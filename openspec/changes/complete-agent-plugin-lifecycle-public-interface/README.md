@@ -1588,7 +1588,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
-| Effect 4 vendor realm | Exact beta 100 Effect/Platform, stable oRPC 1.14.8, admitted Effect-oRPC v4.8, and TypeBox 1.3.6 are green as one physical realm |
+| Effect 4 vendor realm | Exact beta 101 Effect/Platform and TypeBox 1.3.8 are green as one physical realm; stable oRPC 1.14.8 remains unchanged only until the separate oRPC 2 switch |
 | Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, the context-authoring funnel, and operation-use audit remain |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
@@ -3245,6 +3245,28 @@ task 5.7e21i owns the shared correction before enforcement. Activating the
 remaining imported laws waits for the separate Nx/Habitat performance
 correction. This checkpoint moves no service, resource, provider, app, plugin,
 or package implementation.
+
+## Effect And TypeBox Vendor Preparation
+
+The vendor-preparation checkpoint moves every direct Effect and Effect
+Platform declaration from `4.0.0-beta.100` to the aligned
+`4.0.0-beta.101` realm and every direct TypeBox declaration from `1.3.6` to
+`1.3.8`. The regenerated lock resolves one `effect`, one
+`@effect/platform-node`, one transitive `@effect/platform-node-shared`, and one
+`typebox` version, with no older transitive copy. A categorical source search
+found no lifecycle import of `@orpc/shared`, so its direct manifest declaration
+is deleted; `@orpc/shared@1.14.8` remains only as an ordinary transitive member
+of the unchanged oRPC family.
+
+This is preparation for the separately owned oRPC 2 switch, not that switch
+and not a compatibility layer. The canonical
+[[packages/hq-sdk/src/orpc/schema|TypeBox adapter]] still uses the
+native Validator behavior and returns message-only issues without reconstructing
+paths. Sixteen affected owners typecheck, the twelve affected owner suites pass
+650 tests, the five Effect resources pass 81 provider cases, and the contained
+Effect vendor lane passes five cases. See
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.6e]]. Historical
+sections retain their exact then-current version evidence.
 
 ## Settlement Oracles
 

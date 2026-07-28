@@ -11,7 +11,7 @@ import {
 
 describe("Effect vendor-native runtime lane", () => {
   test("uses the pinned Effect 4 runtime and proves gen plus pipe spelling", async () => {
-    expect(effectVersionProof).toBe("4.0.0-beta.100");
+    expect(effectVersionProof).toBe("4.0.0-beta.101");
 
     const program = Effect.gen(function* () {
       const one = yield* Effect.succeed(1);

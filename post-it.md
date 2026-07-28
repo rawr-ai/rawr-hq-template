@@ -6,6 +6,28 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Vendor Preparation Preserves The Boundary
+
+Version alignment is dependency preparation, not service migration. Every
+direct Effect and Effect Platform declaration now selects one beta 101 realm;
+every direct TypeBox declaration selects 1.3.8. The lifecycle service no longer
+pretends to own `@orpc/shared` directly when only the oRPC packages consume it.
+The lock remains the dependency closure, while native validation and resource
+behavior remain the product proof.
+
+The TypeBox adapter still reports native messages without inventing paths. The
+current oRPC 1.14.8 family remains intact only until the separate oRPC 2 switch;
+this checkpoint adds no wrapper, bridge, pointer model, or compatibility lane.
+Historical version evidence stays attached to the checkpoint that produced it.
+
+See [[package.json|the root vendor selection]],
+[[packages/hq-sdk/src/orpc/schema|the TypeBox adapter]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Effect And TypeBox Vendor Preparation|the execution record]].
+
+### Bag Of Keywords
+
+vendor, realm, version, schema, effect, resource, closure, proof, deletion.
+
 ## 2026-07-28 - Structure Feedback Is Not Admission
 
 One task name should express one scheduler purpose. `check:policy:local` is the
