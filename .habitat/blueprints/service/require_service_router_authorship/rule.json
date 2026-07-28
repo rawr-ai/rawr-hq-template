@@ -12,22 +12,25 @@
   },
   "ownerProject": "habitat",
   "lane": "advisory",
-  "forbids": "a detached function declaration beside a router handler; operation logic, non-router runtime imports, default imports, namespace imports, or side-effect imports in module router.ts; or an explicitly extracted multi-operation group without its purpose, shared capability or guard, behavior, and neighboring relation",
-  "why": "Named router handlers are the operation authoring sites. Keeping transitions in router/*.router.ts, module router.ts limited to named local router values and plain composition, and explicitly extracted semantic groups documented prevents a second hand-built execution layer.",
-  "remediate": "Author complete handlers in named router/*.router.ts files. Move independent decisions to model policy, subordinate stateless mechanics to model helpers, and outside calls behind context-provided ports. Keep module/router.ts to type-only imports, named runtime imports from ./router/<name>.router, and the composed router export. Standalone leaves and flat router objects need no group comment; document each extracted multi-operation subset composed into a router with @purpose, @capability, @behavior, and @relation.",
-  "message": "Service router files must retain operation authorship and compose without displaced logic.",
+  "forbids": "operation authorship outside module router leaves; a leaf whose sole runtime export is not the lower-camel operation or deliberate native group mapped from its kebab-case filename and authored from the matching module branch through effect or handler; a module router index without a directly imported and registered leaf; any extra runtime leaf export; or procedure handlers inside module and root router composition files",
+  "why": "Separating procedure authorship from static module composition keeps behavior module-local while the root composition rule retains sole aggregate router implementation authority.",
+  "remediate": "Author exactly one runtime export in modules/<module>/router/<operation-or-group>.ts. Map its kebab-case filename to a lower-camel operation or deliberate native group, author it through the matching module branch with effect(...) or handler(...), and register that directly imported leaf in router/index.ts. Keep helpers private, module router/index.ts a plain operation tree, and root router.ts the aggregate implementation boundary.",
+  "message": "Service router leaves must author and register one filename-mapped operation or deliberate native group.",
   "pathCoverage": [
     {
       "kind": "exact-path",
       "patterns": [
-        "services/*/src/service/modules/*/router.ts",
-        "services/*/src/service/modules/*/router/**",
-        "plugins/server/api/*/src/service/modules/*/router.ts",
-        "plugins/server/api/*/src/service/modules/*/router/**"
+        "services/*/src/service/router.ts",
+        "services/*/src/service/modules/*/router/index.ts",
+        "services/*/src/service/modules/*/router/*.ts",
+        "plugins/server/api/*/src/service/router.ts",
+        "plugins/server/api/*/src/service/modules/*/router/index.ts",
+        "plugins/server/api/*/src/service/modules/*/router/*.ts"
       ]
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_router_authorship/baseline.json"
   },

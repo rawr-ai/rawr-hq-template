@@ -15,7 +15,7 @@ segment `test`. There is no service-proof alias lane. Embedded API-plugin
 services and package-root test sources remain outside this source selector.
 
 ```grit
-language js
+language js(typescript)
 
 // Selects TypeScript production source owned by an exact top-level standalone service.
 predicate require_service_proof_isolation_is_standalone_production_source() {
@@ -52,7 +52,7 @@ or {
 ## Matches a static import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 import { catalogFixture } from "../../../../test/support/modules/catalog/fixture";
 ```
 
@@ -66,49 +66,49 @@ export { catalogFixture } from "../../../../test/support/modules/catalog/fixture
 ## Matches a dynamic import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const fixtures = await import("../../../../test/support/modules/catalog/fixture");
 ```
 
 ## Matches a CommonJS require
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const fixtures = require("../../../../test/support/modules/catalog/fixture");
 ```
 
 ## Matches CommonJS resolution
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const fixturePath = require.resolve("../../../../test/support/modules/catalog/fixture");
 ```
 
 ## Matches a template dynamic import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const fixtures = await import(`../../../../test/support/modules/catalog/fixture`);
 ```
 
 ## Matches a template CommonJS require
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const fixtures = require(`../../../../test/support/modules/catalog/fixture`);
 ```
 
 ## Matches template CommonJS resolution
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const fixturePath = require.resolve(`../../../../test/support/modules/catalog/fixture`);
 ```
 
 ## Ignores production imports
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 import { catalogPolicy } from "./model/policy/catalog";
 ```
 
@@ -122,21 +122,21 @@ import { createJobsClient } from "../../../../src/client";
 ## Ignores embedded API-plugin services
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/index.ts
 import { jobsFixture } from "../../../../test/support/modules/jobs/fixture";
 ```
 
 ## Ignores a contest path segment
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 import { contestPolicy } from "./contest/policy";
 ```
 
 ## Ignores interpolated template sources
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
 const proofSegment = "test";
 const fixtures = await import(`../../../../${proofSegment}/support/modules/catalog/fixture`);
 ```

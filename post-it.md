@@ -6,6 +6,39 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Authority Precedes Migration
+
+The service container is now fixed before another production file moves. A
+service narrows ready host capabilities through base context, root policy, a
+configured module branch, optional module policy, terminal curation, and an
+operation handler. Contract and router directories ascend through one index
+face; root files compose the suite. Habitat closes those relations while the
+current source remains honestly red.
+
+Domain structure follows meaning rather than transport convenience. An entity
+has identity and lifecycle or persistence meaning. A DTO is a command, query,
+result, or boundary projection. Database schema describes physical mapping,
+and a store privately realizes persistence. Cross-module identity belongs at
+service root; subdomain identity stays with its module. No database DTO mirror
+or compatibility face is needed. The entity destination remains advisory
+until the shared TypeBox and platform-neutral source laws cover it; production
+source does not move under a partial authority.
+
+The stronger public-consumer law is also advisory. Its shared relative-path
+matcher currently mistakes owner-local `../../src/service` test imports for a
+sibling-service reach. That matcher is corrected once in the common law before
+enforcement; local production rewrites will not compensate for a false
+classification.
+
+See [[.habitat/blueprints/service/skill|the service frame]],
+[[.habitat/blueprints/database/skill|the database frame]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Magic Service And Database Authority|the execution record]].
+
+### Bag Of Keywords
+
+service, context, contract, middleware, module, router, operation, resource,
+database, store, entity, dto, schema, topology, closure, authority, flow.
+
 ## 2026-07-28 - Contracts Narrow Into Runtime
 
 Example Todo's module contracts are native oRPC declarations, not projections

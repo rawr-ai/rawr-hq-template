@@ -115,6 +115,8 @@
   `web`).
 - [Packages router](packages/AGENTS.md) for shared libraries and dependency
   direction.
+- [Services router](services/AGENTS.md) for sealed domain capability suites,
+  module ownership, and context flow.
 - [Plugins router](plugins/AGENTS.md) for plugin package contracts and
   enablement.
 - [Scripts router](scripts/AGENTS.md) for hook and script conventions.

@@ -4,139 +4,236 @@ tags: [orpc, service, contract, typebox, error-authority]
 ---
 # Require Service Contract Authority
 
-A module contract is one exported boundary. Its top-level grammar admits
-imports, private contract-attached `ORPCTaggedError` declarations, private
-`const` schema composition, private error maps, bounded shared fragments,
-private helpers, and the single exported `contract` anchor. Every private
-support declaration must be syntactically reachable from that exported
-contract directly or through one private `const` intermediary. Operation input
-and output envelopes adapt TypeBox with `schema(...)` at their contract
-positions.
+A module contract directory exposes one generic `contract` anchor from
+`index.ts`. Direct semantic leaves export one operation contract or deliberate
+native oRPC group for that entrypoint to compose. The entrypoint's top-level
+grammar admits imports, private immutable composition, private helpers, and the
+single exported anchor. Private support inside any one contract source remains
+bounded to that source and reachable from its exported contract value.
+Procedure input and output envelopes adapt TypeBox with `standard(...)` at
+their contract positions.
 
-Reusable domain schemas still belong outside `contract.ts` as `NameSchema`
-authorities. A colocated `NameType` is required to be
-`Static<typeof NameSchema>` when one is actually needed; the rule does not
-manufacture unused aliases. Contract-local support remains private and cannot
-become a parallel exported schema, type, envelope, error map, or helper API.
+Contract and reusable DTO schema owners use TypeBox's native JSON Schema
+builders. Executable refinements, codecs, native-only builders and literals,
+unsafe schemas, and tuple syntax from an older JSON Schema dialect do not enter
+a public contract. TypeBox remains responsible for the schemas its JSON
+builders produce; this law rejects the known non-projectable capability
+families instead of making the adapter traverse and reinterpret arbitrary
+schema graphs at runtime.
 
-The generic service anchor packet owns ordinary anchor export syntax. Reuse
-count is owned by the import graph and review; this source rule does not infer
-it from identifier spelling. Knip and the boundary-crossing JSDoc relation are
-red installation gaps and provide no current evidence.
+Public procedure failures are declared with native `.errors(...)` maps in the
+owning contract. A map may be inline or a private local object literal; it may
+not be imported, computed dynamically, exported, or backed by custom tagged
+error constructors. Procedure implementations receive the corresponding
+constructors from native handler context.
+
+Reusable domain DTO schemas may live in the owning module model as
+`NameSchema` authorities. When a TypeScript alias is actually needed, it is
+`NameType = Static<typeof NameSchema>`. Contract-local request, response,
+envelope, error-map, and helper declarations remain private.
 
 ```grit
 language js(typescript)
 
-// Derives the required Type alias name from its Schema authority.
-function paired_type_name($value) js {
+// Derives the required Type alias name from a reusable Schema authority.
+function require_service_contract_authority_paired_type_name($value) js {
   return `^${$value.text.replace(/Schema$/, "Type")}$`;
 }
 
-// Scopes declarative contract law to exact service module contracts.
-predicate is_module_contract() {
+// Maps a semantic contract leaf filename to its sole lower-camel export.
+function require_service_contract_authority_leaf_status($filename, $name) js {
+  const match = $filename.text.match(/\/contract\/([^/]+)\.ts$/);
+  if (!match || match[1] === "index") return "not-leaf";
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
+    return "noncanonical-filename";
+  }
+  const expected = match[1].replace(
+    /-([a-z0-9])/g,
+    (_all, value) => value.toUpperCase(),
+  );
+  return expected === $name.text ? "ok" : "wrong-export";
+}
+
+// Selects the one generic module contract directory entrypoint.
+predicate require_service_contract_authority_is_module_contract_entrypoint() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract/index\.ts$"
+}
+
+// Keeps the previous single-file contract governed until topology migration closes.
+predicate require_service_contract_authority_is_legacy_module_contract() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
 }
 
-// Connects a support name used directly by the generic contract anchor.
-predicate exported_contract_uses($name) {
-  $program <: contains `export const contract = $value` where {
+// Selects either contract composition boundary during the topology migration.
+predicate require_service_contract_authority_is_module_contract_boundary() {
+  or {
+    require_service_contract_authority_is_module_contract_entrypoint(),
+    require_service_contract_authority_is_legacy_module_contract()
+  }
+}
+
+// Selects every direct source in a closed module contract directory.
+predicate require_service_contract_authority_is_module_contract_source() {
+  or {
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract/[^/]+\.ts$",
+    require_service_contract_authority_is_legacy_module_contract()
+  }
+}
+
+// Selects direct semantic leaves while excluding the directory entrypoint.
+predicate require_service_contract_authority_is_module_contract_leaf() {
+  require_service_contract_authority_is_module_contract_source(),
+  not { require_service_contract_authority_is_module_contract_boundary() }
+}
+
+// Proves that an entrypoint statically imports and registers one direct leaf.
+predicate require_service_contract_authority_has_registered_leaf($body) {
+  $body <: some $statement where {
+    $statement <: import_statement(source=$source) as $import,
+    $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
+    $import <: contains import_specifier(name=$name),
+    $body <: contains `export const contract = $value` where {
+      $value <: contains $name
+    }
+  }
+}
+
+// Recognizes runtime declarations that cross a contract-leaf boundary.
+predicate require_service_contract_authority_is_runtime_export($export) {
+  $export <: export_statement(declaration=$declaration) where {
+    $declaration <: or {
+      lexical_declaration(),
+      variable_declaration(),
+      function_declaration(),
+      class_declaration(),
+      enum_declaration()
+    }
+  }
+}
+
+// Recognizes the one operation or group export mapped from the leaf filename.
+predicate require_service_contract_authority_is_leaf_export($export) {
+  $export <: `export const $name = $value`,
+  $status = require_service_contract_authority_leaf_status(
+    filename=$filename,
+    name=$name
+  ),
+  $status <: includes "ok"
+}
+
+// Scopes TypeBox publication law to contracts and reusable DTO schema owners.
+predicate require_service_contract_authority_is_schema_owner() {
+  or {
+    require_service_contract_authority_is_module_contract_source(),
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/dto/.*\.dto\.ts$"
+  }
+}
+
+// Recognizes TypeBox capabilities with runtime or non-2020-12 semantics.
+predicate require_service_contract_authority_is_non_projectable_constructor($constructor) {
+  $constructor <: r"^[\"']?(?:BigInt|Call|Codec|Constructor|Deferred|Function|Generic|Identifier|Infer|Parameter|Refine|Rest|Symbol|Tuple|Undefined|Unsafe|Void)[\"']?$"
+}
+
+// Recognizes a BigInt literal that JSON Schema cannot represent.
+predicate require_service_contract_authority_is_bigint_literal($value) {
+  $value <: r"^-?(?:0|[1-9][0-9]*)n$"
+}
+
+// Connects support used directly by an entrypoint anchor or semantic leaf export.
+predicate require_service_contract_authority_exported_contract_uses($name) {
+  $program <: contains `export const $exported = $value` where {
     $value <: contains $name
   }
 }
 
 // Connects private support directly or through one immutable intermediary.
-predicate contract_uses_support($name) {
+predicate require_service_contract_authority_contract_uses($name) {
   or {
-    exported_contract_uses(name=$name),
+    require_service_contract_authority_exported_contract_uses(name=$name),
     and {
       $program <: contains `const $parent = $value` where {
         $value <: contains $name
       },
-      exported_contract_uses(name=$parent)
-    }
-  }
-}
-
-// Recognizes a private error map used directly or through one local map spread.
-predicate error_map_reaches_errors($map) {
-  or {
-    $program <: contains `$builder.errors($map)`,
+      require_service_contract_authority_exported_contract_uses(name=$parent)
+    },
     and {
-      $program <: contains `const $parent = { $..., ...$map, $... }`,
-      $program <: contains `$builder.errors($parent)`
+      $program <: contains `function $parent($args) { $body }` where {
+        $body <: contains $name
+      },
+      require_service_contract_authority_exported_contract_uses(name=$parent)
     }
   }
 }
 
-// Recognizes a local private object-literal error map.
-predicate is_local_error_map($map) {
+// Recognizes a private local object-literal error map.
+predicate require_service_contract_authority_is_local_error_map($map) {
   $map <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
-  $program <: contains `const $map = { $properties }`
+  $program <: contains `const $map = { $properties }`,
+  require_service_contract_authority_contract_uses(name=$map)
 }
 
-// Recognizes a private Effect-oRPC error constructor declared in this contract.
-predicate is_local_effect_error($name) {
-  or {
-    and {
-      $program <: contains `import { $..., ORPCTaggedError, $... } from "effect-orpc"`,
-      $program <: contains `class $name extends ORPCTaggedError($args) { $body }`
-    },
-    and {
-      $program <: contains `import { $..., ORPCTaggedError as $tagged, $... } from "effect-orpc"`,
-      $program <: contains `class $name extends $tagged($args) { $body }`
-    }
-  }
-}
-
-// Connects each private Effect error constructor to a reachable errors clause.
-predicate contract_attaches_error($name) {
-  or {
-    $program <: contains `$builder.errors({ $..., $code: $name, $... })`,
-    $program <: contains `$builder.errors({ $..., $name, $... })`,
-    and {
-      $program <: contains `const $map = { $..., $code: $name, $... }`,
-      error_map_reaches_errors(map=$map)
-    },
-    and {
-      $program <: contains `const $map = { $..., $name, $... }`,
-      error_map_reaches_errors(map=$map)
-    }
-  }
-}
-
-// Keeps contract-local support private and syntactically reachable.
-predicate is_allowed_contract_statement($statement) {
+// Keeps contract-local support private and reachable.
+predicate require_service_contract_authority_is_allowed_statement($statement) {
   or {
     $statement <: import_statement(),
     $statement <: `export const contract = $value`,
     and {
       $statement <: `const $name = $value`,
-      contract_uses_support(name=$name)
+      require_service_contract_authority_contract_uses(name=$name)
     },
     and {
       $statement <: `function $name($args) { $body }`,
-      contract_uses_support(name=$name)
-    },
-    and {
-      $statement <: `class $name extends $parent($args) { $body }`,
-      is_local_effect_error(name=$name),
-      contract_attaches_error(name=$name)
+      require_service_contract_authority_contract_uses(name=$name)
     }
   }
 }
 
 or {
   program(statements=$statements) where {
-    is_module_contract(),
+    require_service_contract_authority_is_module_contract_boundary(),
+    not { $statements <: some `export const contract = $value` }
+  },
+  program(statements=$statements) where {
+    require_service_contract_authority_is_module_contract_entrypoint(),
     not {
-      $statements <: some `export const contract = $value`
+      require_service_contract_authority_has_registered_leaf(body=$statements)
     }
   },
   program(statements=$statements) where {
-    is_module_contract(),
+    require_service_contract_authority_is_module_contract_boundary(),
     $statements <: some $statement where {
-      not { is_allowed_contract_statement(statement=$statement) }
+      not {
+        require_service_contract_authority_is_allowed_statement(
+          statement=$statement
+        )
+      }
     }
+  },
+  program(statements=$statements) where {
+    require_service_contract_authority_is_module_contract_leaf(),
+    not {
+      $statements <: contains `export const $name = $value` where {
+        $status = require_service_contract_authority_leaf_status(
+          filename=$filename,
+          name=$name
+        ),
+        $status <: includes "ok"
+      }
+    }
+  },
+  export_statement() as $export where {
+    require_service_contract_authority_is_module_contract_leaf(),
+    require_service_contract_authority_is_runtime_export(export=$export),
+    not {
+      require_service_contract_authority_is_leaf_export(export=$export)
+    }
+  },
+  or {
+    `export { $specifiers }`,
+    `export { $specifiers } from $source`,
+    `export default $value`
+  } where {
+    require_service_contract_authority_is_module_contract_leaf()
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
@@ -144,70 +241,39 @@ or {
     $source <: r"^[\"']typebox[\"']$",
     $import <: `import * as $namespace from $source`
   },
+  import_statement(source=$source) as $import where {
+    require_service_contract_authority_is_schema_owner(),
+    $source <: r"^[\"']typebox[\"']$",
+    $import <: contains import_specifier(name=$name) where {
+      ! $name <: r"^[\"']?(?:Static|Type)[\"']?$"
+    }
+  },
+  variable_declarator(value=$typebox) where {
+    require_service_contract_authority_is_schema_owner(),
+    $typebox <: `Type`,
+    $program <: contains `import { $..., Type, $... } from "typebox"`
+  },
   `$builder.errors($argument)` where {
-    is_module_contract(),
+    require_service_contract_authority_is_module_contract_source(),
     not {
       or {
         $argument <: `{ $properties }`,
-        is_local_error_map(map=$argument)
-      }
-    }
-  },
-  `$builder.errors({ $..., $code: $definition, $... })` where {
-    is_module_contract(),
-    not { is_local_effect_error(name=$definition) }
-  },
-  `$builder.errors({ $..., $definition, $... })` where {
-    is_module_contract(),
-    $definition <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
-    not { is_local_effect_error(name=$definition) }
-  },
-  `const $map = { $..., $code: $definition, $... }` where {
-    is_module_contract(),
-    contract_uses_support(name=$map),
-    error_map_reaches_errors(map=$map),
-    not { is_local_effect_error(name=$definition) }
-  },
-  `const $map = { $..., $definition, $... }` where {
-    is_module_contract(),
-    $definition <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
-    contract_uses_support(name=$map),
-    error_map_reaches_errors(map=$map),
-    not { is_local_effect_error(name=$definition) }
-  },
-  `const $map = { $..., ...$spread, $... }` where {
-    is_module_contract(),
-    contract_uses_support(name=$map),
-    error_map_reaches_errors(map=$map),
-    not {
-      and {
-        is_local_error_map(map=$spread),
-        contract_uses_support(name=$spread),
-        error_map_reaches_errors(map=$spread)
+        require_service_contract_authority_is_local_error_map(map=$argument)
       }
     }
   },
   `$procedure.$direction($schema)` where {
-    is_module_contract(),
+    require_service_contract_authority_is_module_contract_source(),
     $direction <: r"^(?:input|output)$",
     not {
       $schema <: `$adapter($value)` where {
         or {
           and {
-            $adapter <: `schema`,
-            $program <: contains `import { $..., schema, $... } from "@rawr/hq-sdk"`
+            $adapter <: `standard`,
+            $program <: contains `import { $..., standard, $... } from "#adapters/typebox"`
           },
-          $program <: contains `import { $..., schema as $adapter, $... } from "@rawr/hq-sdk"`
+          $program <: contains `import { $..., standard as $adapter, $... } from "#adapters/typebox"`
         }
-      }
-    }
-  },
-  program(statements=$body) where {
-    is_module_contract(),
-    not {
-      or {
-        $body <: contains `import { $..., eoc, $... } from "effect-orpc"`,
-        $body <: contains `import { $..., eoc as $builder, $... } from "effect-orpc"`
       }
     }
   },
@@ -216,10 +282,10 @@ or {
     ! $filename <: r".*/(?:test|tests|__tests__)/.*",
     or {
       and {
-        $adapter <: `schema`,
-        $program <: contains `import { $..., schema, $... } from "@rawr/hq-sdk"`
+        $adapter <: `standard`,
+        $program <: contains `import { $..., standard, $... } from "#adapters/typebox"`
       },
-      $program <: contains `import { $..., schema as $adapter, $... } from "@rawr/hq-sdk"`
+      $program <: contains `import { $..., standard as $adapter, $... } from "#adapters/typebox"`
     },
     not {
       or {
@@ -228,9 +294,35 @@ or {
       }
     }
   },
+  `$typebox.$constructor` where {
+    require_service_contract_authority_is_schema_owner(),
+    or {
+      and {
+        $typebox <: `Type`,
+        $program <: contains `import { $..., Type, $... } from "typebox"`
+      },
+      $program <: contains `import { $..., Type as $typebox, $... } from "typebox"`,
+      $program <: contains `import $typebox from "typebox"`
+    },
+    require_service_contract_authority_is_non_projectable_constructor(
+      constructor=$constructor
+    )
+  },
+  `$typebox.Literal($value, $...)` where {
+    require_service_contract_authority_is_schema_owner(),
+    or {
+      and {
+        $typebox <: `Type`,
+        $program <: contains `import { $..., Type, $... } from "typebox"`
+      },
+      $program <: contains `import { $..., Type as $typebox, $... } from "typebox"`,
+      $program <: contains `import $typebox from "typebox"`
+    },
+    require_service_contract_authority_is_bigint_literal(value=$value)
+  },
   `const $name = $typebox.$constructor($args)` where {
     $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
-    ! $filename <: r".*/modules/[^/]+/contract\.ts$",
+    not { require_service_contract_authority_is_module_contract_source() },
     ! $filename <: r".*/(?:test|tests|__tests__)/.*",
     or {
       and {
@@ -241,181 +333,132 @@ or {
     },
     ! $name <: r".*Schema$"
   },
-  variable_declarator(value=`$typebox.$constructor($args)`) as $declaration where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
-    ! $filename <: r".*/modules/[^/]+/contract\.ts$",
-    ! $filename <: r".*/(?:test|tests|__tests__)/.*",
-    or {
-      and {
-        $typebox <: `Type`,
-        $program <: contains `import { $..., Type, $... } from "typebox"`
-      },
-      $program <: contains `import { $..., Type as $typebox, $... } from "typebox"`
-    },
-    not { $declaration <: within `const $name = $typebox.$constructor($args)` }
-  },
   `type $type_name = $static<$argument>` where {
     $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
-    ! $filename <: r".*/modules/[^/]+/contract\.ts$",
+    not { require_service_contract_authority_is_module_contract_source() },
     ! $filename <: r".*/(?:test|tests|__tests__)/.*",
     $program <: contains import_statement(source=$source) as $import where {
       $source <: r"^[\"']typebox[\"']$",
-      or {
-        and {
-          $static <: `Static`,
-          $import <: contains `Static`
-        },
-        $import <: contains `Static as $static`
-      }
+      $import <: contains import_specifier(name=`Static`)
     },
-    not { $argument <: r"^typeof [A-Za-z_$][A-Za-z0-9_$]*$" }
-  },
-  `type $type_name = $static<$argument>` where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
-    ! $filename <: r".*/modules/[^/]+/contract\.ts$",
-    ! $filename <: r".*/(?:test|tests|__tests__)/.*",
-    $program <: contains import_statement(source=$source) as $import where {
-      $source <: r"^[\"']typebox[\"']$",
-      or {
-        and {
-          $static <: `Static`,
-          $import <: contains `Static`
-        },
-        $import <: contains `Static as $static`
-      }
-    },
-    $argument <: type_query(),
     $argument <: r"^typeof ([A-Za-z_$][A-Za-z0-9_$]*)$"($schema_name),
-    $expected = paired_type_name(value=$schema_name),
+    $expected = require_service_contract_authority_paired_type_name(
+      value=$schema_name
+    ),
     or {
       ! $schema_name <: r".*Schema$",
-      ! $type_name <: r`$expected`,
-      not {
-        $program <: contains `const $schema_name = $typebox.$constructor($args)` where {
-          or {
-            and {
-              $typebox <: `Type`,
-              $program <: contains `import { $..., Type, $... } from "typebox"`
-            },
-            $program <: contains `import { $..., Type as $typebox, $... } from "typebox"`
-          }
-        }
-      }
+      ! $type_name <: r`$expected`
     }
   }
 }
 ```
 
-## Matches exported parallel schema and type authority
+## Matches exported parallel error authority
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-import { schema } from "@rawr/hq-sdk";
-import { eoc } from "effect-orpc";
-import { type Static, Type } from "typebox";
-export const SearchSchema = Type.Object({ query: Type.String() });
-export type SearchType = Static<typeof SearchSchema>;
-export const contract = eoc.input(schema(SearchSchema));
+// @filename: services/jobs/src/service/modules/catalog/contract/index.ts
+export const errors = { SERVICE_UNAVAILABLE: {} };
+export const contract = oc.errors(errors).router({});
+```
+
+## Matches imported error authority
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { errors } from "./errors";
+export const contract = oc.errors(errors).router({});
 ```
 
 ## Matches a raw procedure schema
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-import { eoc } from "effect-orpc";
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-export const contract = eoc.input(Type.Object({ query: Type.String() }));
+export const contract = oc.input(Type.Object({ query: Type.String() }));
 ```
 
-## Matches nonlocal or dynamic error authority
+## Matches a contract leaf whose export does not match its filename
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-import { schema } from "@rawr/hq-sdk";
-import { eoc, ORPCTaggedError } from "effect-orpc";
+// @filename: services/jobs/src/service/modules/catalog/contract/find-by-id.ts
+export const find = oc.input(standard(Type.Object({})));
+```
+
+## Matches an entrypoint without a direct registered leaf
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/index.ts
+export const contract = {};
+```
+
+## Matches a second runtime export from a contract leaf
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+export const get = oc.output(standard(Type.Object({})));
+export const preview = oc.output(standard(Type.Object({})));
+```
+
+## Ignores private native contract composition
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { upstreamErrors } from "./errors";
-class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
-const errors = {
-  ...upstreamErrors,
-  SERVICE_UNAVAILABLE: CatalogUnavailable,
-};
-export const contract = eoc
+import { standard } from "#adapters/typebox";
+const errors = { SERVICE_UNAVAILABLE: {} };
+export const get = oc
   .errors(errors)
-  .input(schema(Type.Object({ id: Type.String() })))
-  .output(schema(Type.Object({ found: Type.Boolean() })));
+  .input(standard(Type.Object({ query: Type.String() })))
+  .output(standard(Type.Object({ found: Type.Boolean() })));
 ```
 
-## Matches a computed errors argument
+## Ignores a canonical contract directory entrypoint
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-import { schema } from "@rawr/hq-sdk";
-import { eoc } from "effect-orpc";
-import { Type } from "typebox";
-const buildErrors = () => ({});
-export const contract = eoc
-  .errors(buildErrors())
-  .input(schema(Type.Object({ id: Type.String() })))
-  .output(schema(Type.Object({ found: Type.Boolean() })));
+// @filename: services/jobs/src/service/modules/catalog/contract/index.ts
+import { get } from "./get";
+export const contract = oc.router({ get });
 ```
 
-## Ignores reachable private contract composition
+## Matches executable TypeBox semantics that cannot be published faithfully
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-import { schema } from "@rawr/hq-sdk";
-import { eoc, ORPCTaggedError } from "effect-orpc";
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
-class CatalogBadRequest extends ORPCTaggedError("CatalogBadRequest") {}
-const accessErrors = { BAD_REQUEST: CatalogBadRequest };
-const errors = {
-  ...accessErrors,
-  SERVICE_UNAVAILABLE: CatalogUnavailable,
-};
-const batchCardinality = { minItems: 1, maxItems: 50 };
-const search = () => eoc
-  .input(schema(Type.Object({
-    queries: Type.Array(Type.String(), batchCardinality),
-  })))
-  .output(schema(Type.Object({ found: Type.Boolean() })));
-export const contract = {
-  search: search(),
-  mutate: eoc
-    .errors(errors)
-    .input(schema(Type.Object({ id: Type.String() })))
-    .output(schema(Type.Object({ updated: Type.Boolean() }))),
-};
+import { standard } from "#adapters/typebox";
+export const contract = oc.input(
+  standard(Type.Refine(Type.String(), (value) => value === "accepted")),
+);
 ```
 
-## Ignores a declarative standalone-service contract
+## Matches native TypeBox syntax outside JSON Schema 2020-12
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
-import { schema } from "@rawr/hq-sdk";
-import { eoc, ORPCTaggedError } from "effect-orpc";
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
-export const contract = eoc
-  .errors({ SERVICE_UNAVAILABLE: CatalogUnavailable })
-  .input(schema(Type.Object({ id: Type.String() })))
-  .output(schema(Type.Object({ found: Type.Boolean() })));
+import { standard } from "#adapters/typebox";
+export const contract = oc.input(
+  standard(Type.Tuple([Type.String(), Type.Number()])),
+);
 ```
 
-## Ignores a declarative API-plugin embedded-service contract
+## Ignores native JSON Schema composition
 
 ```typescript
-// @filename: plugins/server/api/catalog/src/service/modules/search/contract.ts
-import { schema } from "@rawr/hq-sdk";
-import { eoc, ORPCTaggedError } from "effect-orpc";
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-class SearchUnavailable extends ORPCTaggedError("SearchUnavailable", {
-  code: "SERVICE_UNAVAILABLE",
-  status: 503,
-}) {}
-export const contract = eoc
-  .errors({ SERVICE_UNAVAILABLE: SearchUnavailable })
-  .input(schema(Type.Object({ query: Type.String() })))
-  .output(schema(Type.Object({ found: Type.Boolean() })));
+import { standard } from "#adapters/typebox";
+export const contract = oc
+  .input(standard(Type.Object({
+    name: Type.String({ minLength: 1 }),
+    count: Type.Optional(Type.Integer({ minimum: 0 })),
+  }, { additionalProperties: false })))
+  .output(standard(Type.Object({
+    accepted: Type.Boolean(),
+  }, { additionalProperties: false })));
 ```

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "require_service_context_boundaries",
-  "title": "Require Service Context Funnel",
+  "title": "Require Categorical Service Context Boundaries",
   "placement": {
     "niche": "rawr",
     "blueprint": "service",
@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "advisory",
-  "forbids": "a module current-owner alias into root base, context, middleware, or dependency registry; vendor os outside base.ts; a middleware file without a documented named const authored from the elected base factory, the standalone base-specialized root provider author, or an SDK-owned required telemetry builder; a duplicate, renamed, non-base, or embedded-API service.createProvider author; createServiceProvider imports or calls outside one named standalone root middleware; qualified or computed createServiceProvider calls; bracket or destructured access to service.createProvider; provider re-specialization at the middleware call; wrong-depth root or module middleware imports of base.ts; any other middleware export; explicit .use type arguments, inline guards or construction, locally declared callbacks, or arbitrary helper imports at native .use attachments; a module without exactly one terminal curation; a router handler that reaches into deps, scope, config, invocation, or provided instead of its module-curated vocabulary; more than one or nonterminal module curation; empty, reserved, shorthand, spread, computed, indirect, whole-lane, foreign-root, literal, call, new, or await curation fields; middleware authoring from raw base or configured service/module branches; or a shadow Context declaration outside base.ts",
-  "why": "Context flows from the configured Effect-oRPC base through completed named middleware values and one required terminal module curation. Router handlers author against that module-owned vocabulary instead of reopening raw service lanes. In standalone services, named root middleware may construct dependencies through the sole canonical provider author specialized once in base.ts. Embedded API provider authorship is not admitted. All contributions remain inferred and additive; curation does not remove inherited runtime context.",
-  "remediate": "Seed initial context on the sole contract implementer. When host projection is needed, return one private os.$context<CompleteInitialContext>() author from createMiddleware(). In a standalone service, export the sole service.createProvider<Service[\"ExecutionContext\"]> author from base.ts as createServiceProvider and use it only from documented named root middleware imported through ../base as createServiceProvider().middleware<ProvidedCapabilities>(handler). Root and module middleware import base through ../base and ../../../base respectively. Do not introduce embedded API provider authority without a separate accepted decision. Use the exact bare imported provider call and dotted base initializer; remove qualified or computed provider calls and bracket or destructured createProvider access. This source law intentionally does not trace arbitrary assignment or alias flow. Import named middleware from its matching boundary before plain inferred .use(name). End every module with one inline async ({ context, next }) => next({ context: { field: context.lane.member } }) curation using non-reserved explicit keys and direct noncomputed member paths rooted below deps, scope, config, invocation, or provided. Author router handlers against those curated names. Keep SDK telemetry builders distinct. Remove explicit .use generics, duplicate or renamed provider authors, provider re-specialization, non-middleware provider use, guards or construction from curation, context aliases, helper callbacks, and alternate middleware roots.",
-  "message": "Service context must descend through base-owned authors, named middleware, and bounded terminal module curation.",
+  "forbids": "a root base without the deps, scope, config, invocation, and provided lanes; root middleware not authored from base.middleware; a noncanonical module middleware leaf or one authored from neither base.middleware nor the exact lower-camel impl.<module>.middleware branch; a middleware index without only documented semantic aliases to simple leaves; module.ts bypassing that middleware index; explicit .use type arguments; a module without inferred inline terminal curation or one that renames context/next, passes or spreads context, projects whole raw lanes through dot or bracket access, or emits a raw-lane output key; or an operation leaf that reopens a raw context lane through property, bracket, or destructuring access",
+  "why": "One native context author establishes explicit ownership and lifetime lanes. Named middleware enriches that context, while terminal module curation leaves handlers with only their operation vocabulary.",
+  "remediate": "Declare all five lanes and base = os.$context<Context>() in base.ts. Export documented root context middleware only from base.middleware(...). Give every module middleware leaf a simple kebab-case filename and export one documented context middleware from base.middleware(...) or contract-aware policy from its exact impl.<lowerCamelModule>.middleware(...) branch. Keep middleware/index.ts to documented semantic re-exports from those leaves, and import middleware into module.ts only through ./middleware. Attach each named value once through service.<module>.use(...); use a direct inline service.<module>.use(callback) only when policy requires root-configured output. End module.ts with an inferred inline curation whose context/next names stay stable and whose output selects explicit members without passing, spreading, renaming, or emitting whole raw lanes.",
+  "message": "Service context must descend through the native five-lane capability funnel.",
   "pathCoverage": [
     {
       "kind": "exact-path",
@@ -23,6 +23,7 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_context_boundaries/baseline.json"
   },

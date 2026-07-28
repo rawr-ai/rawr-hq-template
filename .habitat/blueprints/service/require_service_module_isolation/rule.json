@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "advisory",
-  "forbids": "a non-test root module edge outside exact relative contract/router imports; a root module re-export; a non-normalized relative source; a relative module edge whose normalized target leaves its closed module outside the exact module.ts-to-impl and middleware-to-base edges; a named operation leaf importing its module router; a current-owner alias containing an empty, dot, parent, or trailing segment; or a module current-owner alias outside service/model, including same-module, sibling-module, root-runtime, and legacy shared paths",
-  "why": "Relative paths keep module-local ownership visible, the service-private model alias identifies genuinely service-wide inert meaning, and exact downward composition edges keep the service funnel closed without changing the Nx project graph.",
-  "remediate": "Use normalized relative paths when the target stays in the current module. Use the current-owner service/model alias only for service-wide model meaning. Keep exact relative root contract/router composition, ../../impl from module.ts, and ../../../base from named module middleware. Move sibling collaboration behind a service-owned capability and move outside-system mechanics behind a resource.",
-  "message": "Service modules use relative local imports, service/model aliases, and exact downward wiring only.",
+  "forbids": "any service-root production file outside modules importing module source except contract-to-contract, router-to-router, or base type-only model/ports declaration; any relative source entering an exact modules segment at any depth outside those root exceptions; service-root module re-exports; module parent traversal outside exact authorship and anchor edges; raw base acquisition outside module middleware; impl acquisition outside module.ts or unconfigured module contract-aware middleware authorship; a module router index acquiring an implementer; or a standalone module entering a sibling through its current-owner private alias",
+  "why": "Service roots compose module contracts and operation trees, while modules retain their own execution, model, and policy authority. The only root model edge is a type-only host-bound module port declared by base context. The database blueprint independently owns database placement and imports.",
+  "remediate": "Keep every root module import to contract composition, operation-tree composition, or a type-only model/ports edge from base.ts. Do not disguise another module edge inside a deeper relative path. Import base from module middleware for context-only capability authoring; import impl from module middleware for unconfigured impl.<module>.middleware policy authorship and from module.ts for configured descent; use ../module only from router leaves. Keep router/index.ts a plain module tree without an implementer import. Remove root execution imports, policy edges, other parent traversal, sibling entry, and root module re-exports.",
+  "message": "Service roots compose modules; modules own their implementation and do not enter siblings.",
   "pathCoverage": [
     {
       "kind": "exact-path",
@@ -23,6 +23,7 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_module_isolation/baseline.json"
   },

@@ -1348,6 +1348,31 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   following Magic directory/oRPC2 authority checkpoint rather than adding a
   transitional flat-contract check. Add no universal SDK metadata model,
   baseline, compatibility path, alias, or new runner.
+- [x] 5.7e21g Install the current Magic service and database authority before
+  the oRPC 2/Effect 4 burn-down. Port service tree
+  `53cd340b859e660ad6a0cc1619b283edfb025e13` and database tree
+  `8ec14dbad5244f0725978e31b7e3c53f54b0bdbb`; preserve every Grit pattern
+  byte-for-byte, adapt only the Template package/module router faces, the
+  `rawr` niche, repository JSON formatting, and an advisory migration lane,
+  remove the superseded private-alias packets, and register every
+  rule once in the existing Habitat Nx owner. Admit optional closed service-
+  and module-level `model/entities` for identity-bearing domain state while
+  keeping DTOs as boundary projections, database schema as physical mapping,
+  and stores as private persistence implementation. Keep the migration laws
+  advisory with empty baselines and expose the current red corpus; move no
+  production source and add no local Habitat SDK, graph owner, or runner.
+- [ ] 5.7e21h Before moving a production domain schema into `model/entities`,
+  extend the shared TypeBox contract and platform-neutral declaration laws to
+  service- and module-level entity roots. Preserve the common Magic/Template
+  law rather than adding a RAWR-only fork, and prove TypeBox ownership plus
+  platform independence for the new kind before it becomes an active source
+  destination.
+- [ ] 5.7e21i Correct the shared public-consumer law's owner-local relative
+  path classification before returning it to enforcement. Preserve owner-local
+  `../../src/service` proof imports while rejecting actual sibling-service
+  implementation paths, land the common Magic/Template pattern rather than a
+  RAWR-only fork, and keep its empty baseline plus advisory lane until the
+  focused allow/reject cases and live corpus are green.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own

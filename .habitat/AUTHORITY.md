@@ -40,59 +40,59 @@ independently owned topology and source axes:
    and middleware directory is positively closed.
 2. Every base, contract, service, module, and router spine file directly
    exports the generic anchor for its role.
-3. Standalone base, service, boundary, and module construction use direct
-   native oRPC and Effect-oRPC authoring views.
-4. `base.ts` seeds complete host context once and may expose a native middleware
-   author. A standalone service may additionally export the sole provider
-   author as `createServiceProvider`, specialized there to
-   `Service["ExecutionContext"]`; only named root service middleware imports it
-   from `../base`. Embedded API provider authorship is not admitted by this
-   service law.
+3. `base.ts` declares one complete native oRPC context author. `impl.ts`
+   implements the aggregate contract once, admits the official Effect-oRPC
+   extension only when used, and exports the unconfigured `impl` plus the
+   root-configured `service` stage.
+4. Context-only provider and acquisition middleware derive from `base`.
+   Contract-aware root and module policy derive from the matching unconfigured
+   implementer branch. No configured-middleware feedback, context wrapper,
+   prepared object, merge helper, or parallel implementer is admitted.
 5. Database source is closed to owner-issued migrations and stores, with named
    physical schemas admitted only when required by the database technology.
-   TypeBox retains logical DTO-schema authority. Only database-owned source and
+   Database schema is physical mapping, not domain identity or boundary data.
+   Only database-owned source and
    named service-root middleware import database leaves; modules and handlers
    receive projected store capabilities through inherited oRPC context.
-6. Qualified middleware is one documented named native value authored from the
-   base factory and attached through a native middleware operator without an
-   explicit context type argument. Every `module.ts` ends with one inline
+6. Every `module.ts` derives its exact configured service branch, attaches only
+   qualified module policy, and ends with one inferred inline
    additive curation that exposes the nonempty route-facing fields selected by
    direct member paths below `context.deps`, `context.scope`,
    `context.config`, `context.invocation`, or `context.provided`. It does not
    replace those lanes, construct capabilities, or prove inherited context was
-   removed. Router handlers author against the curated names and do not reopen
+   removed. Operation handlers author against the curated names and do not reopen
    the raw lanes.
-7. Root composition uses exact relative imports of module contracts and
-   completed routers. Root `router.ts` imports the exact runtime `service`
-   binding from `./impl` and completes the module branches through the
-   configured implementer's native `service.router(...)`, which retains the
-   hidden contract relation. A module reaches root only through its exact
-   `module.ts`-to-`impl.ts` branch edge and
-   named-middleware-to-base-factory edge; it does not reach upward or sideways
-   for other implementation.
-8. Named module router files remain operation authoring sites; module
-   `router.ts` only composes completed operation leaves and semantic groups.
+7. Required module `contract/` and `router/` directories expose only their
+   `index.ts` faces plus semantic leaves. Optional module `middleware/` follows
+   the same shape. Leaves never import their own index, and no runtime loader,
+   generator, or module SDK participates.
+8. Operation leaves author from the configured module branch. Module router
+   indexes compose completed operations as plain trees; root `router.ts`
+   implements the aggregate tree once through unconfigured `impl.router(...)`
+   so root middleware is not replayed.
 9. Every model fact has one direct semantic leaf. Model indexes are
-   inadmissible so concrete same-owner dependencies remain visible.
-10. Every private service or API alias maps to its owner's `src/service`
-   interior rather than creating another public package surface.
-11. Module-local imports use normalized relative paths. Module code reserves
-    its owner-private alias for `service/model/**`; same-module, sibling,
-    runtime, and legacy shared aliases are inadmissible. Foreign, cross-kind,
-    and outside-owner imports use public exports.
-12. Service source remains independent of concrete Node, Bun, and provider
+   inadmissible. `entities` owns identity-bearing domain state; service-root
+   entities span modules, while module entities remain subdomain-specific.
+   DTOs own commands, queries, results, and other boundary projections. The
+   structural entity destination remains advisory until the shared TypeBox and
+   platform-neutral source laws cover it; production entity movement waits for
+   that law rather than creating a RAWR-only fork.
+10. Module-local imports use normalized relative paths. A module does not reach
+    upward or sideways for another implementation. Foreign, cross-kind, and
+    outside-owner imports use public exports.
+11. Service source remains independent of concrete Node, Bun, and provider
    implementations; outside capabilities arrive through context and resource
    contracts, while execution frameworks remain outside model source.
-13. Standalone production service source never imports its package-owned proof
+12. Standalone production service source never imports its package-owned proof
     corpus; tests may consume production behavior, but the dependency never
     reverses.
-14. Foreign consumers cross a standalone service through its public client;
-    literal `src/service` paths remain sealed, while the independent
-    private-alias law keeps aliases owner-local.
-15. TypeBox schemas remain the declarative input and output authority in module
+13. Foreign consumers cross a standalone service through its public client;
+    literal `src/service` paths remain sealed.
+14. TypeBox schemas remain the declarative input and output authority in module
    contracts, adapted through the one canonical RAWR bridge.
-16. Module contracts own attached public oRPC error constructors; routers use
-   injected error constructors rather than importing error authority.
+15. Module contracts own attached public oRPC error constructors; handlers use
+   injected error constructors rather than importing or translating a parallel
+   error authority. Typed capability failures map once at that boundary.
 TypeScript owns inferred types and complete object compatibility. Habitat does
 not simulate module resolution or runtime behavior. Public error declarations
 remain part of the module contract; TypeScript and behavioral tests own their

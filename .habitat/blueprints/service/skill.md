@@ -1,276 +1,170 @@
 ---
 name: service-capability-funnel
-description: Think, author, and review RAWR oRPC services as sealed capability funnels whose handlers own operations and whose models own reusable meaning.
+description: Author and review RAWR oRPC services as sealed capability funnels whose modules expose only the vocabulary their handlers need.
 ---
 
 # Service Capability Funnel
 
-Use this frame when designing, authoring, reviewing, or simplifying a RAWR
-service. It is a judgment aid, not an activation surface and not a substitute
-for the blueprint rules. Habitat catches drift after authorship; this frame
-should make the right destination feel natural before code exists.
-
-Ground the service inside the
-[[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec|canonical system architecture]],
-the
-[[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec|runtime realization architecture]],
-and the [[../skill|blueprint direction]]. Those system specifications establish
-the architectural kinds and their relations. This frame owns the narrower
-service-authoring direction when an older shell example or directory name
-conflicts with the closed service blueprint.
+This frame specializes the RAWR service blueprint for the pinned oRPC 2 and
+official Effect extension lane. It guides authorship; the sibling Habitat
+rules own source enforcement.
 
 ## Center
 
-A service is a sealed domain capability suite. It is not a web of mutually
-reachable helpers and it is not a folder around unrelated operations. Read it
-as a narrowing funnel:
+A service is a sealed domain capability suite. Read it as one narrowing flow:
 
 ```text
 host
+  -> client
   -> base
+  -> implementation
   -> service
   -> module
   -> router
   -> handler
 ```
 
-The host begins with everything needed to run the application. Standalone
-`base.ts` declares initial context, constructs the sole configured oRPC base,
-and may expose one separate context-seeded native middleware author.
-`impl.ts` derives the one service from the
-imported base plus genuine cross-cutting middleware. A module derives its exact
-`service.<module>` branch and attaches completed capability middleware authored
-from that author. TypeScript infers additive composition. The root router
-imports the configured `service`, composes completed module routers as a plain
-branch object, and completes that object directly through native
-`service.router(...)`; an embedded API with no modules uses the same relation
-with an empty object. The handler acts on the resulting capability surface.
+The host binds ready capabilities. `base.ts` declares the service context and
+one native middleware author. `impl.ts` implements the aggregate contract once,
+then attaches service-wide middleware. A module derives its exact configured
+branch, attaches only its owned middleware, and terminally curates the
+vocabulary its handlers may author against. Router files compose completed
+operations. Handlers own operation behavior.
 
-Each descent reduces what source is allowed to know and author. Native oRPC
-runtime context remains additive; an upward import that recovers raw context, a
-sibling reach, or a second middleware factory still widens the authored
-capability surface and therefore changes the architecture.
-
-Import spelling should reveal that descent. Inside one module, relative paths
-make colocality visible. The service-private alias names only genuinely
-service-wide `service/model/**` meaning; it does not disguise a same-module,
-sibling, runtime, or unowned shared edge. Cross-package capabilities arrive
-through public package exports. These spellings do not optimize the Nx graph;
-they make ownership legible inside the project Nx already recognizes.
-
-## Layers
-
-The root owns what is true for the whole service. A module owns what is true
-for its subdomain. A handler owns one operation. The model owns meaning that
-remains meaningful without the handler.
-
-Service-level model matter earns its placement when it expresses meaning for
-the capability suite as a whole or declares a capability admitted at the
-service boundary. Cross-module use is strong evidence, but not the only
-criterion: a boundary port can remain service-owned even when one module is
-its current consumer. Mere access does not promote module domain matter. A
-module does not import a service dependency registry; it receives the
-capability through context. A port may be declared as inert model meaning, but
-its ready implementation still enters through the service boundary.
-
-Module-level model matter belongs to that module's domain. Policies decide.
-DTOs and schemas describe. Errors name admitted failures. Helpers perform
-small subordinate mechanics. Ports describe outside capabilities. Prompts and
-actors retain their domain meanings. Persistent stores require a separately
-owned, positively closed database boundary at the service root; they do not
-enter a module or an unbounded `db` directory merely because a service needs
-persistence. Named root middleware may turn a ready context dependency into
-store capabilities. Modules consume those capabilities through inherited oRPC
-context rather than importing database source.
-
-Every model fact is a direct semantic leaf. Contracts, modules, routers, and
-other model leaves import the concrete leaf they use. A model `index.ts`
-conceals that ownership edge and creates a second aggregation surface, so the
-service structure does not admit it. A module router has one explicit
-aggregation surface instead: module `router.ts` composes named operation values
-from `router/*.router.ts`.
-
-Names such as `shared`, `internal`, and `dependencies` evade ownership rather
-than express it. They widen possibility precisely where the structure should
-narrow it.
-
-## Authorship
-
-The native oRPC handler is the operation authoring site. It receives
-TypeBox-admitted input and the module-admitted capability surface, applies operation guards
-and sequencing, calls policies or ports where their independent meanings
-warrant extraction, and returns the declared result through Effect.
-
-A detached `runOperation(request, dependencies)` function is not a harmless
-organization choice. It recreates input, context, execution, and result
-authority outside oRPC, leaving the handler as ceremony. Extract only a pure
-decision that can be understood and tested without the operation, a small
-stateless mechanic, or an outside-system capability call. Keep the transition
-itself in the handler.
-
-When a Promise-returning port crosses into an Effect handler, use the native
-Effect operation whose failure, interruption, and settlement semantics match
-that operation. A generic dependency adapter invents a second execution policy
-between Effect-oRPC and Effect. Effect owns Promise adaptation and interruption;
-Effect-oRPC owns boundary execution; the operation owns its qualified domain
-failure and mutation-settlement decisions.
-
-The fastest test is conceptual: if the extracted function's name is the
-operation and its parameters reconstruct the handler environment, the
-operation has been moved to the wrong authoring site.
-
-## Router Scale
-
-Every module uses the same router shape. Module `router.ts` imports completed
-operation leaves or groups from `router/*.router.ts` and composes one plain
-router object. It does not contain business transitions. Each named router file
-is an authored boundary with enough room for the operation behavior it owns.
-The service root is a distinct completion boundary: it imports only the
-configured `service` and completed module routers, then calls
-`service.router(...)` directly so oRPC enhances the assembled router and retains
-its hidden contract relation. That native root operation does not move handler,
-middleware, or context authorship into composition.
-
-A named router file may own one standalone leaf. That is not a semantic group
-and needs no group explanation. When several operations share context, a guard,
-or one domain role, the named router file may export their completed plain
-subrouter. That real grouping judgment should be explicit:
-
-```typescript
-/**
- * @purpose What cohesive operation subset this router owns.
- * @capability Which capability, guard, or policy the subset shares.
- * @behavior What transition or observation the subset performs.
- * @relation How the subset differs from neighboring operation groups.
- */
-```
-
-The comment explains why the group exists. It should not narrate syntax or
-repeat operation names.
+Each descent reduces authored knowledge. A module does not recover root
+assembly, reach into a sibling, or construct another implementer merely because
+native oRPC context remains additive at runtime.
 
 ## Context
 
-Context is capability organized by lifetime and owner, not a transport bag.
-The service declares four input lanes once; the SDK reserves one execution
-bucket that middleware populates:
+Context is organized by owner and lifetime:
 
 | Lane | Owner | Lifetime | Meaning |
 | --- | --- | --- | --- |
-| `deps` | host | client | Ready resource or service capabilities supplied from outside the service. |
-| `scope` | binding | client | Stable business identity and metadata for the bound service instance. |
-| `config` | host | client | Stable externally selected service behavior. |
-| `invocation` | caller | call | Request facts such as trace, request, or idempotency identity. |
-| `provided` | SDK and middleware | execution | SDK-seeded empty bucket whose keys are acquired or derived capabilities for downstream middleware and handlers. |
+| `deps` | host | client | Ready outside capabilities. |
+| `scope` | binding | client | Stable business identity and metadata. |
+| `config` | host | client | Stable externally selected behavior. |
+| `invocation` | caller | call | Request facts and correlation identity. |
+| `provided` | middleware | execution | Acquired or derived capabilities. |
 
-Static procedure metadata is not execution context and does not enter these
-lanes. The construction and execution flow is explicit:
+The public client binds `deps`, `scope`, and `config`; each call supplies
+`invocation`. Capability providers extend `provided`; admission and refinement
+middleware may narrow the `scope` or `invocation` lane whose facts it owns.
+When a service has no required per-call facts, the public call context is
+optional and its client mapper supplies the still-required `invocation: {}`
+lane rather than inventing a ceremonial request object. A module's terminal
+curation maps explicit direct paths from those lanes to the smallest handler
+vocabulary. That projection limits authorship, not runtime possession: oRPC
+still merges context additively.
 
-```text
-host binding
-  -> createClient({ deps, scope, config })
-  -> call({ context: { invocation } })
-  -> base execution context
-  -> service middleware
-  -> provided capabilities
-  -> module curation
-  -> handler
-```
+Context-only provider/acquisition middleware derives from the native author in
+`base.ts`. Root contract-aware middleware derives from the unconfigured aggregate
+implementer and attaches in `impl.ts`. Named module policy that needs only
+initial context and module errors derives from `impl.<module>.middleware(...)`
+and attaches once to `service.<module>`. Policy that also needs root-configured
+output is an inline callback directly in `service.<module>.use(...)`. No lane
+uses `base.<module>`, `decorateMiddleware`, `.use` parameter extraction, or
+configured `.middleware(...)` feedback. None needs a context wrapper, prepared
+object, cast, or custom type witness.
 
-`base.ts` declares the stable and per-call shapes and seeds the native oRPC
-author once. The public client binds the construction lanes. The caller
-supplies invocation facts per call. Provider middleware adds execution
-capabilities under `provided`; it does not rename, flatten, or reconstruct the
-four semantic input lanes. A module inherits the service context through its
-exact service branch, attaches any named capability middleware, and finishes
-with one inline curation that names the smallest route-facing vocabulary its
-handlers need.
+The independent authorship relation begins after curation: operation leaves
+author from `module.<operation>` and stop there. The separate composition
+relation owns plain module operation trees and the sole aggregate router
+implementation through the unconfigured root `impl`.
 
-Router handlers author against those curated names. They do not reach back
-into `deps`, `scope`, `config`, `invocation`, or `provided`, import root runtime
-assembly, restate the whole service context, or manually rebuild its lanes.
-This is an authorship boundary, not a claim that native runtime context became
-subtractive.
+Ready dependencies are selected directly during terminal curation. Middleware
+exists only for a real guard, acquisition, or enrichment. A module-local
+provider stays inside its module; service-root middleware owns only a capability
+that is true for the whole service.
 
-The admitted curation shape lets each `module.ts` finish its service branch
-with one `async ({ context, next }) => next({ context: { ... } })` attachment. The
-object is nonempty, uses explicit non-reserved keys, and maps each value from a
-direct noncomputed member path below `deps`, `scope`, `config`, `invocation`, or
-`provided`. The projection is additive: inherited lanes remain present in the
-native runtime context even when handlers author against the curated fields.
+oRPC merges context at top-level keys. A later writer replaces a nested lane;
+it does not recursively merge it. Prefer one writer for a nested lane or a
+flatter native key. When one provider legitimately extends an inherited
+`provided` bucket, it preserves the visible members explicitly. Never introduce
+a merge helper, lineage witness, or cast to make independent nested writers
+appear composable.
 
-The reusable type and client boundary are
-[[packages/hq-sdk/src/orpc/context/types|the HQ SDK context model]] and
-[[packages/hq-sdk/src/orpc/boundary/service-package|the service-package boundary]].
-The canonical worked runtime reference is
-[[services/example-todo/AGENTS|Example Todo]], while
-[[scripts/habitat/service-blueprint.test|the service-blueprint fixture]] owns
-structural admission and rejection cases.
+## Native oRPC 2 Seam
 
-Middleware is valid when it guards or enriches a real capability.
-It is not a second place to assemble service or module context. Root context
-seeding belongs to `base.ts`; a module middleware owns one capability
-contribution and `module.ts` owns its attachment. Middleware names should reveal
-the capability or guard they add, not claim generic context ownership.
+`base.ts` exports one `os.$context<Context>()` author and never imports the root
+contract, `implement`, or the Effect extension. `impl.ts` admits the official
+Effect extension, calls `implement(contract).$context<Context>()` once, and
+exports two stages of that lineage:
 
-Middleware authorship stays visibly base-derived and named. A module
-middleware source exports a named `const` created from the native author bound
-in `base.ts`; service-wide SDK telemetry extensions remain separately named
-framework values.
-A middleware never originates from the already-derived `service` or `module`
-implementer and then feeds back into that branch. Native `.use` attachments
-name the completed middleware in their first argument. The only inline
-middleware is the required terminal `module.ts` curation described above; it
-cannot contain guards, control flow, capability construction, calls other than
-the terminal `next`, or indirect/computed values. A later input selector on an
-imported named middleware remains an ordinary callback.
+- `impl`: the unconfigured contract implementer;
+- `service`: the root-configured stage used for handler authorship.
 
-Native oRPC middleware contributions merge with the current context. Returning
-a curated object or passing an explicit `.use<Context>(...)` argument does not
-remove inherited lanes and is not a narrowing proof. The standalone base
-establishes initial context and implementation once; each `module.ts` derives
-the matching service branch, attaches named middleware without explicit type
-arguments, and ends with one inferred curation. Named standalone root
-middleware alone may use the canonical provider author specialized once in
-`base.ts`; modules and other service source cannot acquire or construct
-dependencies through it. Embedded API provider authorship requires separate
-authority and is not admitted here. TypeScript infers each contribution.
-Owner-local resource and handler cuts remove broad lanes at their source; no
-wrapper, witness, source-spelling blacklist, or shadow context pretends the
-runtime object became subtractive.
+Configured modules author procedures so their middleware applies. Module
+router indexes compose implemented procedures as plain operation trees, and
+the root router implements the aggregate contract once through the
+unconfigured `impl.router(...)` stage. Implementing it through the configured
+stage replays inherited middleware. `impl` is not a second implementer and
+must not become a router SDK or lineage abstraction.
 
-## Native Authorities
+## Authorship
 
-The service owns callable contracts, operation meaning, handler behavior, and
-domain policy. TypeBox owns structural schemas, validation, and generated
-TypeScript types. Model policy owns canonicalization and cross-field decisions
-that structure cannot express.
+Each operation lives in `modules/<module>/router/<operation>.ts`; its
+kebab-case filename maps to the lower-camel contract key. That operation is
+the leaf's sole runtime export, authored from the configured
+`module.<operation>` branch. Module `router/index.ts` composes leaves only. Root
+`router.ts` composes plain module operation trees only.
 
-oRPC owns operation, router, middleware, context, and transport mechanics.
-Effect owns execution, typed failure, interruption, and resource safety.
-Effect-oRPC owns the adaptation between those two systems. Resources declare
-outside capability contracts; providers implement their mechanics; the
-app and runtime profile select providers; runtime realization acquires, binds,
-and releases the selected ready values. A wrapper is useful only when its
-domain meaning is narrower than the native authority it wraps.
+Required module `contract/` and `router/` directories are their own access
+points. Their indexes export the generic `contract` and `router` anchors while
+direct semantic leaves hold operation or deliberate native-group variance. An
+optional `middleware/` directory follows the same shape: native middleware is
+authored in leaves, its index exposes semantic names, and `module.ts` attaches
+them. The directory is absent when unused. Leaves never import their own index,
+and no runtime loader or generator participates.
 
-## Review Lens
+Effect procedures use the official oRPC extension. Contracts own native error
+maps, and handlers fail with their injected constructors in the Effect failure
+channel. Effect owns execution, interruption, and resource safety;
+Effect-oRPC owns only the bridge; oRPC owns contracts, middleware, routers,
+clients, errors, and transports.
 
-Look downward, not sideways:
+## Ownership Test
 
-- Which layer owns this meaning?
-- Which capabilities may the next layer author against?
-- Is the handler still visibly the operation?
-- Does an extraction retain independent meaning without the operation?
-- Does a model placement express shared domain meaning rather than access?
-- Does a router group represent a real semantic subset?
-- Can an author work inside this layer without learning hidden sibling or host
-  machinery?
+Before placing a capability, ask which boundary owns its meaning and lifetime.
+Cross-module use is strong evidence for service ownership, but access alone does
+not promote module meaning. A module owns its policies, genuine host-supplied
+ports, and model when those concepts remain specific to that subdomain. A
+standalone service owns its physical persistence regardless of how many modules
+currently consume it; the database blueprint owns that placement and import
+funnel. The service otherwise owns facts and capabilities that contextualize or
+serve the suite as a whole.
 
-When an answer depends on tracing a web of imports, the funnel has already
-widened.
+An entity is identity-bearing domain state whose lifecycle or persistence
+meaning survives one boundary exchange. Put it at service root only when its
+identity or invariants span modules; otherwise keep it in the owning module. A
+DTO is a command, query, result, or boundary projection. It may pick, omit,
+refine, or compose entity schemas without becoming entity authority. Database
+schema files describe physical mappings, and stores are private persistence
+implementations whose types are inferred from those mappings. There is no
+database DTO category. The entity destination remains structural-only until
+the shared TypeBox and platform-neutral source laws cover it; do not move
+production domain schemas there under an incomplete law.
+
+No custom implementer helper, provider algebra, context merger, prepared
+context, cast-bearing client framework, or compatibility path belongs in this
+kind. If the native vendor surface cannot express a required guarantee, prove
+that exact gap before introducing the smallest adapter.
+
+## Proof Ownership
+
+Habitat owns topology and source relationships. Nx owns project and dependency
+direction. TypeScript owns context inference and router completeness. Behavior
+tests own middleware ordering, once-only execution, product outcomes, and
+resource lifecycle. Structural tests do not duplicate Habitat law.
+
+During the service migration, the closed spine topology, anchor, context,
+composition, module-isolation, public-consumer, and router-authorship rules
+remain advisory with empty baselines. They become enforceable only after the
+complete selected service corpus satisfies the declared destination and its
+focused proofs pass.
 
 ## Vocabulary
 
-authority, boundary, capability, context, contract, decision, dependency,
-effect, failure, handler, host, model, module, operation, policy, port,
-projection, resource, router, schema, service, store
+authority, base, capability, client, configuration, context, contract,
+dependency, effect, failure, handler, host, implementation, invocation,
+middleware, module, operation, policy, port, provision, router, scope, service

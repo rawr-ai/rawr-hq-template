@@ -5,10 +5,12 @@ tags: [service, database, context, middleware, import]
 # Require Service Database Import Funnel
 
 A standalone service owns its optional database interior. Database-owned
-source and named service-root middleware may import that source. Every module,
-handler, model, root anchor, and module middleware consumes projected store
+production source and direct named service-root middleware leaves may import
+that source. Every production module, handler, model, root anchor, module
+middleware, and service-root middleware index consumes projected store
 capabilities through inherited oRPC context instead of importing database
-internals.
+internals. Owner-local package proof remains outside this production-source
+relation and may inspect the private store without publishing it.
 
 This law recognizes literal module-loading edges that visibly name the current
 service's `db` boundary. It does not inspect ordinary path data, resolve
@@ -17,7 +19,7 @@ consumer laws independently seal foreign consumers; the database topology law
 owns the exact admitted source shapes.
 
 ```grit
-language js
+language js(typescript)
 
 // Selects source owned by one exact top-level standalone service interior.
 predicate require_service_database_import_funnel_is_standalone_service_source() {
@@ -51,11 +53,14 @@ predicate require_service_database_import_funnel_is_database_source($source) {
   }
 }
 
-// Admits the only two source owners allowed to depend directly on database source.
+// Admits database-owned source and direct named service-root middleware leaves, but never middleware/index.ts.
 predicate require_service_database_import_funnel_is_admitted_importer() {
   or {
     $filename <: r".*services/[^/]+/src/service/db/.*\.[cm]?[jt]sx?$",
-    $filename <: r".*services/[^/]+/src/service/middleware/[^/]+\.middleware\.[cm]?[jt]sx?$"
+    and {
+      $filename <: r".*services/[^/]+/src/service/middleware/[^/]+\.ts$",
+      not { $filename <: r".*/middleware/index\.ts$" }
+    }
   }
 }
 
@@ -72,24 +77,27 @@ or {
 }
 ```
 
-## Matches module and root reach-ins
+## Matches module, root, and middleware-index reach-ins
 
 ```typescript
 // @filename: services/orders/src/service/base.ts
-import type { OrdersStore } from "#orders-service/db/stores/orders.store";
+import type { OrdersStore } from "#orders-service/db/stores/orders";
 
-// @filename: services/orders/src/service/modules/catalog/router/read.router.ts
-import { ordersStore } from "../../../db/stores/orders.store";
+// @filename: services/orders/src/service/modules/catalog/router/read.ts
+import { ordersStore } from "../../../db/stores/orders";
+
+// @filename: services/orders/src/service/middleware/index.ts
+export { createOrdersStore } from "../db/stores/orders";
 ```
 
-## Ignores admitted database and middleware edges
+## Ignores admitted database and named middleware-leaf edges
 
 ```typescript
-// @filename: services/orders/src/service/db/stores/orders.store.ts
-import { orders } from "#orders-service/db/schema/orders.schema";
+// @filename: services/orders/src/service/db/stores/orders.ts
+import { orders } from "#orders-service/db/schema/orders";
 
-// @filename: services/orders/src/service/middleware/orders.middleware.ts
-import { createOrdersStore } from "../db/stores/orders.store";
+// @filename: services/orders/src/service/middleware/orders.ts
+import { createOrdersStore } from "../db/stores/orders";
 ```
 
 ## Ignores path data and computed imports
@@ -98,5 +106,5 @@ import { createOrdersStore } from "../db/stores/orders.store";
 // @filename: services/orders/src/service/router.ts
 const migrationDirectory = "./db/migrations";
 const owner = "orders";
-const database = import(`#${owner}-service/db/stores/orders.store`);
+const database = import(`#${owner}-service/db/stores/orders`);
 ```

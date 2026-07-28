@@ -4,348 +4,201 @@ tags: [orpc, service, router, authorship]
 ---
 # Require Service Router Authorship
 
-Router handlers are the operation authoring sites. Module `router.ts` only
-imports completed standalone operation leaves or subrouters from `router/` and
-composes the one module `router`; business transitions stay in the named router
-files.
-
-A router file does not declare a detached function beside the handler. A
-`runOperation(request, dependencies)` or similar declaration reconstructs the
-operation environment and turns the native handler into ceremony. Reusable
-decisions move to model policy, subordinate stateless mechanics move to model
-helpers, and outside calls remain context-provided ports. The transition stays
-inside the handler. Native `.effect(...)` receives that handler inline rather
-than an imported or locally named operation function.
-
-A named `*.router.ts` may own one standalone operation leaf or one flat router
-object and needs no group documentation. When a file extracts a
-multi-operation subset and composes it into that router, it documents why those
-operations belong together:
-
-```typescript
-/**
- * @purpose What cohesive operation subset this router owns.
- * @capability Which narrowed context, guard, or policy the subset shares.
- * @behavior What transition or observation the subset performs.
- * @relation How the subset differs from neighboring operation groups.
- */
-```
+Operation leaves author behavior from the matching configured module operation.
+Module and root router spines remain composition-only.
 
 ```grit
 language js(typescript)
 
-// Selects the module's composition-only public router.
-predicate require_service_router_authorship_is_module_router_composition() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$"
+// Checks that a leaf owns one matching operation or native plain-object group.
+function require_service_router_authorship_leaf_status($filename, $operation, $value) js {
+  const match = $filename.text.match(/\/router\/([^/]+)\.ts$/);
+  if (!match) return "wrong-operation";
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
+    return "noncanonical-filename";
+  }
+  const expected = match[1].replace(
+    /-([a-z0-9])/g,
+    (_all, value) => value.toUpperCase(),
+  );
+  if (expected !== $operation.text) return "wrong-operation";
+  const source = $value.text.replace(/\s+/g, "");
+  const prefix = `module.${expected}.`;
+  const hasHandler = source.includes(".effect(") || source.includes(".handler(");
+  if (!hasHandler) return "missing-handler";
+  if (source.startsWith(prefix)) return "ok";
+  return source.startsWith("{") && source.includes(prefix)
+    ? "ok"
+    : "wrong-root";
 }
 
-// Selects a named authored operation leaf or subrouter.
-predicate require_service_router_authorship_is_module_named_router() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
+// Selects operation-authoring router leaves.
+predicate require_service_router_authorship_is_leaf() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.ts$",
+  not { $filename <: r".*/router/index\.ts$" }
 }
 
-// Selects the files where complete native handlers are authored.
-predicate require_service_router_authorship_is_module_authored_router() {
-  require_service_router_authorship_is_module_named_router()
+// Selects composition-only module and root router spines.
+predicate require_service_router_authorship_is_composer() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/(?:router\.ts|router/index\.ts))$"
 }
 
-// Admits whole type-only imports and named values from local router leaves.
-predicate require_service_router_authorship_is_allowed_module_router_import($import, $source) {
-  or {
-    $import <: import_statement(type=type()),
-    and {
-      $import <: `import { $... } from $source`,
-      $source <: r"^[\"']\./router/[^/\"']+\.router[\"']$"
+// Selects the plain module operation-tree entrypoint.
+predicate require_service_router_authorship_is_module_index() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
+}
+
+// Proves that a module index statically imports and registers one direct leaf.
+predicate require_service_router_authorship_has_registered_leaf($body) {
+  $body <: some $statement where {
+    $statement <: import_statement(source=$source) as $import,
+    $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
+    $import <: contains import_specifier(name=$name),
+    $body <: contains `export const router = $value` where {
+      $value <: contains $name
     }
   }
 }
 
-// Unwraps the finite TypeScript-only forms admitted around a composition object.
-predicate require_service_router_authorship_is_plain_router_composition($value) {
-  or {
-    $value <: object(),
-    $value <: `$object satisfies $type` where {
-      $object <: object()
-    },
-    $value <: `$object as const` where {
-      $object <: object()
-    },
-    $value <: `$object as $type` where {
-      $object <: object()
-    }
-  },
-  not { $value <: contains call_expression() },
-  not { $value <: contains `$key: $property` },
-  not { $value <: contains method_definition() },
-  not { $value <: contains arrow_function() }
-}
-
-// Restricts a module router to imports and its one composed router export.
-predicate require_service_router_authorship_is_allowed_module_router_statement($statement) {
-  or {
-    $statement <: import_statement(source=$source) as $import where {
-      require_service_router_authorship_is_allowed_module_router_import(import=$import, source=$source)
-    },
-    $statement <: `export const router = $value` where {
-      require_service_router_authorship_is_plain_router_composition(value=$value)
-    },
-    $statement <: `export const router: $type = $value` where {
-      require_service_router_authorship_is_plain_router_composition(value=$value)
+// Recognizes runtime declarations crossing a router-leaf export boundary.
+predicate require_service_router_authorship_is_runtime_export($export) {
+  $export <: export_statement(declaration=$declaration) where {
+    $declaration <: or {
+      lexical_declaration(),
+      variable_declaration(),
+      function_declaration(),
+      class_declaration(),
+      enum_declaration()
     }
   }
 }
 
-// Recognizes an object-shaped value that may become an explicit operation group.
-predicate require_service_router_authorship_is_operation_group_value($value) {
-  or {
-    $value <: object(),
-    $value <: `$object satisfies $type` where {
-      $object <: object()
-    },
-    $value <: `$object as const` where {
-      $object <: object()
-    },
-    $value <: `$object as $type` where {
-      $object <: object()
-    }
-  }
-}
-
-// Recognizes the finite plain-object forms that attach a group to the final router.
-predicate require_service_router_authorship_is_composed_operation_group($router_value, $group) {
-  or {
-    $router_value <: contains `{ $..., ...$group, $... }`,
-    $router_value <: contains `{ $..., $group, $... }`,
-    $router_value <: contains `{ $..., $branch: $group, $... }`
-  }
-}
-
-// Identifies an extracted object that is composed into the file's final router.
-predicate require_service_router_authorship_is_explicit_operation_group($statements, $declaration) {
-  or {
-    $declaration <: `const $group = $value`,
-    $declaration <: `const $group: $type = $value`,
-    $declaration <: `export const $group = $value`,
-    $declaration <: `export const $group: $type = $value`
-  },
-  require_service_router_authorship_is_operation_group_value(value=$value),
-  $statements <: some $router_declaration where {
-    or {
-      $router_declaration <: `export const router = $router_value`,
-      $router_declaration <: `export const router: $router_type = $router_value`
-    },
-    require_service_router_authorship_is_composed_operation_group(
-      router_value=$router_value,
-      group=$group
-    )
-  }
-}
-
-// Recognizes an adjacent group comment with all four semantic annotations.
-predicate require_service_router_authorship_has_group_router_jsdoc($declaration) {
-  $previous = before $declaration,
-  $previous <: r"(?s)^/\*\*.*\*/$",
-  $previous <: r"(?s).*@purpose\s+\S.*",
-  $previous <: r"(?s).*@capability\s+\S.*",
-  $previous <: r"(?s).*@behavior\s+\S.*",
-  $previous <: r"(?s).*@relation\s+\S.*"
-}
-
-// Recognizes a handler authored directly at the native operation boundary.
-predicate require_service_router_authorship_is_inline_operation_handler($handler) {
-  or {
-    $handler <: arrow_function(),
-    $handler <: r"^\s*(?:async\s+)?function(?:\s*\*)?(?:\s+[A-Za-z_$][A-Za-z0-9_$]*)?\s*\("
-  }
-}
-
-// Unwraps type-only expressions around one named callable declaration.
-predicate require_service_router_authorship_is_detached_callable($value) {
-  or {
-    require_service_router_authorship_is_inline_operation_handler(handler=$value),
-    $value <: `$callable satisfies $type` where {
-      require_service_router_authorship_is_inline_operation_handler(handler=$callable)
-    },
-    $value <: `($callable) satisfies $type` where {
-      require_service_router_authorship_is_inline_operation_handler(handler=$callable)
-    },
-    $value <: `$callable as $type` where {
-      require_service_router_authorship_is_inline_operation_handler(handler=$callable)
-    },
-    $value <: `($callable) as $type` where {
-      require_service_router_authorship_is_inline_operation_handler(handler=$callable)
-    }
-  }
-}
-
-// Recognizes top-level callable declarations that displace operation authorship.
-predicate require_service_router_authorship_is_detached_router_function($statement) {
-  or {
-    $statement <: function_declaration(),
-    $statement <: `export function $name($args) { $body }`,
-    $statement <: `export async function $name($args) { $body }`,
-    $statement <: `const $name = function ($args) { $body }`,
-    $statement <: `const $name = async function ($args) { $body }`,
-    $statement <: `const $name: $type = function ($args) { $body }`,
-    $statement <: `const $name: $type = async function ($args) { $body }`,
-    $statement <: `const $name = $value` where {
-      require_service_router_authorship_is_detached_callable(value=$value)
-    },
-    $statement <: `const $name: $type = $value` where {
-      require_service_router_authorship_is_detached_callable(value=$value)
-    },
-    $statement <: `let $name = $value` where {
-      require_service_router_authorship_is_detached_callable(value=$value)
-    },
-    $statement <: `let $name: $type = $value` where {
-      require_service_router_authorship_is_detached_callable(value=$value)
-    },
-    $statement <: `export const $name = $value` where {
-      require_service_router_authorship_is_detached_callable(value=$value)
-    },
-    $statement <: `export const $name: $type = $value` where {
-      require_service_router_authorship_is_detached_callable(value=$value)
-    }
-  }
+// Recognizes the leaf's one operation export mapped from its kebab-case filename.
+predicate require_service_router_authorship_is_operation_export($export) {
+  $export <: `export const $operation = $value`,
+  $status = require_service_router_authorship_leaf_status(
+    filename=$filename,
+    operation=$operation,
+    value=$value
+  ),
+  $status <: includes "ok"
 }
 
 or {
-  program(statements=$statements) where {
-    require_service_router_authorship_is_module_authored_router(),
-    $statements <: some $statement where {
-      require_service_router_authorship_is_detached_router_function(statement=$statement)
+  program(statements=$body) where {
+    require_service_router_authorship_is_leaf(),
+    not {
+      $body <: contains `export const $operation = $value` where {
+        $status = require_service_router_authorship_leaf_status(
+          filename=$filename,
+          operation=$operation,
+          value=$value
+        ),
+        $status <: includes "ok"
+      }
+    }
+  },
+  export_statement() as $export where {
+    require_service_router_authorship_is_leaf(),
+    require_service_router_authorship_is_runtime_export(export=$export),
+    not {
+      require_service_router_authorship_is_operation_export(export=$export)
     }
   },
   or {
-    `$receiver.effect($handler)`,
-    `$receiver.handler($handler)`
+    `export { $specifiers }`,
+    `export { $specifiers } from $source`,
+    `export default $value`
   } where {
-    require_service_router_authorship_is_module_authored_router(),
-    not { require_service_router_authorship_is_inline_operation_handler(handler=$handler) }
+    require_service_router_authorship_is_leaf()
   },
-  program(statements=$statements) where {
-    require_service_router_authorship_is_module_router_composition(),
-    $statements <: some $statement where {
-      not { require_service_router_authorship_is_allowed_module_router_statement(statement=$statement) }
+  program(statements=$body) where {
+    require_service_router_authorship_is_module_index(),
+    not {
+      require_service_router_authorship_has_registered_leaf(body=$body)
     }
   },
-  program(statements=$statements) where {
-    require_service_router_authorship_is_module_named_router(),
-    $statements <: some $declaration where {
-      require_service_router_authorship_is_explicit_operation_group(
-        statements=$statements,
-        declaration=$declaration
-      ),
-      not { require_service_router_authorship_has_group_router_jsdoc(declaration=$declaration) }
-    }
+  `$receiver.$operation.$method($handler)` where {
+    require_service_router_authorship_is_composer(),
+    $method <: r"^(?:effect|handler)$"
   }
 }
 ```
 
-## Matches handler logic displaced into the module router
+## Matches a leaf authored from the wrong operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { module } from "./module";
-export const router = {
-  find: authoredFind,
-};
-```
-
-## Matches a non-router runtime import in the module router
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { policy } from "./model/policy/catalog";
-import { find } from "./router/find.router";
-export const router = {
-  find,
-  policy,
-};
-```
-
-## Matches a detached operation implementation
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/sync.router.ts
-export const sync = module.sync.effect(({ context, input }) =>
-  runCatalogSync(input, context)
-);
-export async function runCatalogSync(request, dependencies) {
-  return dependencies.catalog.sync(request);
-}
-```
-
-## Matches an undocumented extracted semantic group
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { module } from "../module";
-const catalogReads = {
-  find: module.find.effect(({ context }) => context.catalog.find()),
-  list: module.list.effect(({ context }) => context.catalog.list()),
+export const get = module.list.handler(listJobs);
+```
+
+## Matches a noncanonical leaf filename
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find_by_id.ts
+import { module } from "../module";
+export const find_by_id = module.find_by_id.handler(findJob);
+```
+
+## Matches operation authorship in a composer
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+export const get = module.get.handler(getJob);
+export const router = impl.catalog.router({ get });
+```
+
+## Matches an entrypoint without a direct registered leaf
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+export const router = {};
+```
+
+## Matches an extra runtime export from a leaf
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+import { module } from "../module";
+export const get = module.get.handler(getJob);
+export const preview = module.get.handler(previewJob);
+```
+
+## Matches a runtime export clause from a leaf
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+import { module } from "../module";
+const preview = module.get.handler(previewJob);
+export const get = module.get.handler(getJob);
+export { preview };
+```
+
+## Ignores configured leaf authorship and composition-only routers
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+import { module } from "../module";
+export const get = module.get
+  .use(requireReadAccess)
+  .use(loadJob)
+  .effect(getJob);
+// @filename: services/jobs/src/service/modules/catalog/router/find-by-id.ts
+import { module } from "../module";
+export const findById = module.findById.effect(findJobById);
+// @filename: services/jobs/src/service/modules/catalog/router/search.ts
+import { module } from "../module";
+export const search = {
+  available: module.search.available.effect(searchAvailable),
+  archived: module.search.archived.effect(searchArchived),
 };
-export const router = { ...catalogReads };
-```
-
-The same group is recognized when the final router uses shorthand
-`{ catalogReads }` or an explicit branch `{ reads: catalogReads }`.
-
-## Ignores a standalone operation leaf
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
-import { module } from "../module";
-export const find = module.find.effect(({ context }) => context.catalog.find());
-```
-
-## Ignores an inline complete handler
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/sync.router.ts
-export const sync = module.sync.effect(function* ({ context, input }) {
-  const admitted = yield* context.catalog.admit(input);
-  return yield* context.catalog.sync(admitted);
-});
-```
-
-## Ignores a documented extracted group
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
-import { module } from "../module";
-/**
- * @purpose Own catalog lookup operations.
- * @capability Share the narrowed catalog reader and read policy.
- * @behavior Return matching catalog entries without mutation.
- * @relation Keep lookup separate from catalog mutation operations.
- */
-const catalogReads = {
-  find: module.find.effect(({ context }) => context.catalog.find()),
-  list: module.list.effect(({ context }) => context.catalog.list()),
-};
-export const router = { ...catalogReads };
-```
-
-## Ignores a flat ungrouped router
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
-import { module } from "../module";
-const find = module.find.effect(({ context }) => context.catalog.find());
-const list = module.list.effect(({ context }) => context.catalog.list());
-export const router = { find, list };
-```
-
-## Ignores a composition-only module router
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { catalogReads } from "./router/read.router";
-import { sync } from "./router/sync.router";
-import type { Router } from "./contract";
-export const router = {
-  ...catalogReads,
-  sync,
-} satisfies Router;
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+import { get } from "./get";
+import { search } from "./search";
+export const router = { get, search };
+// @filename: services/jobs/src/service/router.ts
+import { router as catalog } from "#jobs-service/modules/catalog/router";
+import { impl } from "./impl";
+export const router = impl.router({ catalog });
 ```

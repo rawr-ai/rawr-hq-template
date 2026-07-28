@@ -29,6 +29,11 @@ required = [
   "service",
 ]
 allowed = []
+forbidden = [
+  "test",
+  "tests",
+  "__tests__",
+]
 
 [[scopes]]
 name = "standalone-service-spines"
@@ -47,6 +52,11 @@ allowed = [
   "middleware",
   "model",
 ]
+forbidden = [
+  "test",
+  "tests",
+  "__tests__",
+]
 
 [[scopes]]
 name = "api-embedded-service-spines"
@@ -64,59 +74,118 @@ allowed = [
   "middleware",
   "model",
 ]
-
-[[scopes]]
-name = "standalone-service-module-namespaces"
-root = "services/!(*.*)/src/service/modules"
-kind = "directory"
-mode = "closed"
-allowed = [
-  "[a-z]*([a-z0-9])*(-[a-z]*([a-z0-9]))",
-]
-
-[[scopes]]
-name = "api-embedded-service-module-namespaces"
-root = "plugins/server/api/!(*.*)/src/service/modules"
-kind = "directory"
-mode = "closed"
-allowEmpty = true
-allowed = [
-  "[a-z]*([a-z0-9])*(-[a-z]*([a-z0-9]))",
+forbidden = [
+  "test",
+  "tests",
+  "__tests__",
 ]
 
 [[scopes]]
 name = "standalone-service-module-shells"
-root = "services/!(*.*)/src/service/modules/!(*.*)"
+root = "services/*/src/service/modules/*"
 kind = "directory"
 mode = "closed"
 required = [
   "AGENTS.md",
-  "contract.ts",
+  "contract",
   "module.ts",
   "router",
-  "router.ts",
 ]
 allowed = [
   "middleware",
   "model",
+]
+forbidden = [
+  "test",
+  "tests",
+  "__tests__",
 ]
 
 [[scopes]]
-name = "api-embedded-service-module-shells"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)"
+name = "standalone-service-module-contract-interiors"
+root = "services/*/src/service/modules/*/contract"
 kind = "directory"
 mode = "closed"
 required = [
-  "AGENTS.md",
-  "contract.ts",
-  "module.ts",
-  "router",
-  "router.ts",
+  "index.ts",
 ]
 allowed = [
-  "middleware",
-  "model",
+  "*.ts",
 ]
+
+[[scopes]]
+name = "standalone-service-module-router-interiors"
+root = "services/*/src/service/modules/*/router"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "standalone-service-module-middleware-interiors"
+root = "services/*/src/service/modules/*/middleware"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "api-service-module-contract-interiors"
+root = "plugins/server/api/*/src/service/modules/*/contract"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "api-service-module-router-interiors"
+root = "plugins/server/api/*/src/service/modules/*/router"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "api-service-module-middleware-interiors"
+root = "plugins/server/api/*/src/service/modules/*/middleware"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]
+
+[[scopes]]
+name = "standalone-service-source-test-directory-sentinel"
+root = "services/*/src/**/@(test|tests|__tests__)"
+kind = "file"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-source-suite-file-sentinel"
+root = "services/*/src/**/*.@(test|spec).ts"
+kind = "directory"
+mode = "open"
+allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-root-models"
@@ -127,6 +196,24 @@ allowEmpty = true
 allowed = [
   "actors",
   "dto",
+  "entities",
+  "errors",
+  "helpers",
+  "policy",
+  "ports",
+  "prompts",
+]
+
+[[scopes]]
+name = "standalone-service-module-models"
+root = "services/*/src/service/modules/*/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "actors",
+  "dto",
+  "entities",
   "errors",
   "helpers",
   "policy",
@@ -143,22 +230,7 @@ allowEmpty = true
 allowed = [
   "actors",
   "dto",
-  "errors",
-  "helpers",
-  "policy",
-  "ports",
-  "prompts",
-]
-
-[[scopes]]
-name = "standalone-service-module-models"
-root = "services/!(*.*)/src/service/modules/!(*.*)/model"
-kind = "directory"
-mode = "closed"
-allowEmpty = true
-allowed = [
-  "actors",
-  "dto",
+  "entities",
   "errors",
   "helpers",
   "policy",
@@ -168,13 +240,14 @@ allowed = [
 
 [[scopes]]
 name = "api-service-module-models"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model"
+root = "plugins/server/api/*/src/service/modules/*/model"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
 allowed = [
   "actors",
   "dto",
+  "entities",
   "errors",
   "helpers",
   "policy",
@@ -184,142 +257,278 @@ allowed = [
 
 [[scopes]]
 name = "standalone-service-root-model-kinds"
-root = "services/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
+root = "services/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = [
-  "*.ts",
-]
-forbidden = [
-  "index.ts",
-]
+allowed = ["*.ts"]
+forbidden = ["index.ts"]
 
 [[scopes]]
 name = "standalone-service-module-model-kinds"
-root = "services/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
+root = "services/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = [
-  "*.ts",
-]
-forbidden = [
-  "index.ts",
-]
+allowed = ["*.ts"]
+forbidden = ["index.ts"]
 
 [[scopes]]
 name = "api-service-root-model-kinds"
-root = "plugins/server/api/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
+root = "plugins/server/api/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = [
-  "*.ts",
-]
-forbidden = [
-  "index.ts",
-]
+allowed = ["*.ts"]
+forbidden = ["index.ts"]
 
 [[scopes]]
 name = "api-service-module-model-kinds"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)"
+root = "plugins/server/api/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = [
-  "*.ts",
-]
-forbidden = [
-  "index.ts",
-]
+allowed = ["*.ts"]
+forbidden = ["index.ts"]
 
 [[scopes]]
 name = "standalone-service-root-model-leaves"
-root = "services/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+root = "services/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
 kind = "file"
-mode = "closed"
+mode = "open"
 allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-module-model-leaves"
-root = "services/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+root = "services/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
 kind = "file"
-mode = "closed"
+mode = "open"
 allowEmpty = true
 
 [[scopes]]
 name = "api-service-root-model-leaves"
-root = "plugins/server/api/*/src/service/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+root = "plugins/server/api/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
 kind = "file"
-mode = "closed"
+mode = "open"
 allowEmpty = true
 
 [[scopes]]
 name = "api-service-module-model-leaves"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/model/@(actors|dto|errors|helpers|policy|ports|prompts)/*.ts"
+root = "plugins/server/api/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
 kind = "file"
-mode = "closed"
+mode = "open"
 allowEmpty = true
 
 [[scopes]]
-name = "standalone-service-module-router-directories"
-root = "services/!(*.*)/src/service/modules/!(*.*)/router"
+name = "api-embedded-service-module-shells"
+root = "plugins/server/api/*/src/service/modules/*"
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "contract",
+  "module.ts",
+  "router",
+]
+allowed = [
+  "middleware",
+  "model",
+]
+forbidden = [
+  "test",
+  "tests",
+  "__tests__",
+]
+
+[[scopes]]
+name = "standalone-service-test-roots"
+root = "services/*/test"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "*.router.ts",
+  "@(behavior|integration|mechanics|support)",
 ]
-allowed = []
+allowed = [
+  "behavior",
+  "integration",
+  "mechanics",
+  "support",
+]
 
 [[scopes]]
-name = "api-embedded-service-module-router-directories"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/router"
+name = "standalone-service-behavior-roots"
+root = "services/*/test/behavior"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "*.router.ts",
+  "modules",
 ]
-allowed = []
-
-[[scopes]]
-name = "standalone-service-middleware"
-root = "services/*/src/service/middleware"
-kind = "directory"
-mode = "closed"
-allowEmpty = true
 allowed = [
-  "*.middleware.ts",
+  "modules",
 ]
 
 [[scopes]]
-name = "api-embedded-service-middleware"
-root = "plugins/server/api/*/src/service/middleware"
+name = "standalone-service-behavior-module-roots"
+root = "services/*/test/behavior/modules"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
+required = [
+  "*",
+]
 allowed = [
-  "*.middleware.ts",
+  "*",
 ]
 
 [[scopes]]
-name = "standalone-service-module-middleware"
-root = "services/!(*.*)/src/service/modules/!(*.*)/middleware"
+name = "standalone-service-behavior-module-shells"
+root = "services/*/test/behavior/modules/*"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
+required = [
+  "*.test.ts",
+]
 allowed = [
-  "*.middleware.ts",
+  "*.test.ts",
 ]
 
 [[scopes]]
-name = "api-embedded-service-module-middleware"
-root = "plugins/server/api/!(*.*)/src/service/modules/!(*.*)/middleware"
+name = "standalone-service-behavior-module-suites"
+root = "services/*/test/behavior/modules/*/*.test.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-mechanics-roots"
+root = "services/*/test/mechanics"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = [
-  "*.middleware.ts",
+required = [
+  "@(client|contract|db)",
 ]
+allowed = [
+  "client",
+  "contract",
+  "db",
+]
+
+[[scopes]]
+name = "standalone-service-mechanics-categories"
+root = "services/*/test/mechanics/@(client|contract|db)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "standalone-service-mechanics-suites"
+root = "services/*/test/mechanics/@(client|contract|db)/*.test.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-integration-roots"
+root = "services/*/test/integration"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "standalone-service-integration-suites"
+root = "services/*/test/integration/*.test.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-support-roots"
+root = "services/*/test/support"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(db|modules|service)",
+]
+allowed = [
+  "db",
+  "modules",
+  "service",
+]
+
+[[scopes]]
+name = "standalone-service-support-categories"
+root = "services/*/test/support/@(db|service)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.ts",
+]
+allowed = [
+  "*.ts",
+]
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "standalone-service-support-category-files"
+root = "services/*/test/support/@(db|service)/*.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-support-module-roots"
+root = "services/*/test/support/modules"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*",
+]
+allowed = [
+  "*",
+]
+
+[[scopes]]
+name = "standalone-service-support-module-shells"
+root = "services/*/test/support/modules/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.ts",
+]
+allowed = [
+  "*.ts",
+]
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "standalone-service-support-module-files"
+root = "services/*/test/support/modules/*/*.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true

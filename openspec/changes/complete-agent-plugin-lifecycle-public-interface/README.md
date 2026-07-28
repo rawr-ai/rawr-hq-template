@@ -3146,6 +3146,60 @@ OpenSpec validation, and diff hygiene. It adds no transitional flat-contract
 matcher. The immediately following Magic directory/oRPC2 authority checkpoint
 owns the durable contract source law.
 
+## Magic Service And Database Authority
+
+The authority checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21g]] before the
+production oRPC 2/Effect 4 migration begins. It imports the stable Magic
+service tree `53cd340b859e660ad6a0cc1619b283edfb025e13` and database tree
+`8ec14dbad5244f0725978e31b7e3c53f54b0bdbb` from commit
+`2374baa937466fe794e424c700fdd9d8ac7d64cd`; both trees remain unchanged
+through reviewed Magic head `01ea4c3ac534dc624bd7f769fc6eee994a38752a`.
+Every imported `pattern.md` remains byte-identical. Template adapts its
+required package metadata, service-module `AGENTS.md`, existing API path, rule
+niche from `magic` to `rawr`, repository JSON formatting, and the strengthened
+consumer law's temporary advisory lane.
+
+The destination is one closed funnel. Each module exposes `contract/index.ts`
+and `router/index.ts` over semantic leaves, with an optional equivalent
+`middleware/index.ts` face. Root `contract.ts` and `router.ts` remain the sole
+service composition spines. The former flat module contract/router faces and
+the two duplicate private-alias packets have no compatibility owner and are
+removed from authority. The imported packets are registered with Habitat, but
+the required Nx target retains the previously green selected laws while the
+expanded service batch remains advisory; no SDK fork, raw Grit command, parser,
+or second scheduler is introduced.
+
+RAWR adds one bounded generic ontology extension. An entity is
+identity-bearing domain state with lifecycle or persistence meaning. A
+service-root entity owns identity or invariants shared across modules; a
+module entity remains subdomain-specific. DTOs remain commands, queries,
+results, and other boundary projections. Database schema is physical mapping,
+and a store is a private persistence implementation whose native record type
+is inferred from that mapping. There is no `db/dto` destination. Structural
+entity admission remains advisory: the imported TypeBox and platform-neutral
+patterns do not yet scan entity roots, so no production entity source moves
+until the shared laws are extended without a RAWR-local fork.
+
+Authority lands before source movement on purpose. The native Habitat topology
+fixture admits the new directory entrypoints and entity destinations, then
+rejects flat module faces, missing entrypoints, junk model kinds, module
+database ownership, `db/dto`, and role-suffixed store residue. The real
+advisory topology scan exposes 197 service findings across legacy public faces,
+flat module contracts/routers, missing directory indexes, open model
+destinations, and proof placement, plus 3 database findings. Empty baselines
+preserve that complete 200-finding red corpus. Expanding the selected
+source-law batch exceeded five minutes in its single native Grit scan and was
+terminated as a performance failure. Previously green contract-property,
+proof, and platform laws remain enforced.
+Database laws stay selected as advisory migration evidence. The strengthened
+consumer law is also advisory because its imported relative-sibling matcher
+currently classifies owner-local `../../src/service` test imports as foreign;
+task 5.7e21i owns the shared correction before enforcement. Activating the
+remaining imported laws waits for the separate Nx/Habitat performance
+correction. This checkpoint moves no service, resource, provider, app, plugin,
+or package implementation.
+
 ## Settlement Oracles
 
 The final product must prove:
