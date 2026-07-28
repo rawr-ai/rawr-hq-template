@@ -16,7 +16,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "sync": "bun run --cwd ../.. sync:check --project @rawr/runtime-context",
     "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/runtime-context",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests test/**/*.test.ts"

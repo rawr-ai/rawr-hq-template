@@ -28,7 +28,6 @@
     "lint": "nx run habitat:lint",
     "nx:reset": "bunx nx reset",
     "nx:doctor": "bun scripts/dev/nx-doctor.mjs",
-    "sync:check": "bun scripts/phase-03/verify-sync-check.mjs",
     "phase-03:gate:session-intelligence-structural": "bun scripts/phase-03/verify-session-intelligence-structural.mjs",
     "phase-1:gate:no-live-coordination": "bun scripts/phase-1/verify-no-live-coordination.mjs",
     "phase-1:gate:no-live-support-example": "bun scripts/phase-1/verify-no-live-support-example.mjs",
@@ -60,7 +59,7 @@
     "architecture:gate:agent-plugin-lifecycle": "bun run habitat -- --owner @rawr/agent-plugin-lifecycle",
     "architecture:gate:legacy-membership-authoring": "bun scripts/architecture/verify-app-composition-authoring.mjs",
     "architecture:gate:projection-boundaries": "bun scripts/phase-03/verify-projection-boundary-invocation.mjs",
-    "architecture:gates:permanent": "bun run architecture:gate:no-old-operational-packages && bun run architecture:gate:no-legacy-hq-imports && bun run architecture:gate:canonical-plugin-topology && bun run architecture:gate:manifest-purity && bun run architecture:gate:no-official-relink-authority && bun run architecture:gate:repository-separation && bun run architecture:gate:agent-plugin-lifecycle && bun run architecture:gate:legacy-membership-authoring && bun run architecture:gate:projection-boundaries && bun run sync:check",
+    "architecture:gates:permanent": "bun run architecture:gate:no-old-operational-packages && bun run architecture:gate:no-legacy-hq-imports && bun run architecture:gate:canonical-plugin-topology && bun run architecture:gate:manifest-purity && bun run architecture:gate:no-official-relink-authority && bun run architecture:gate:repository-separation && bun run architecture:gate:agent-plugin-lifecycle && bun run architecture:gate:legacy-membership-authoring && bun run architecture:gate:projection-boundaries",
     "observability:gate:telemetry-core": "bun scripts/observability/verify-telemetry-contract.mjs && bunx vitest run --project core packages/core/test/telemetry.test.ts",
     "observability:gate:host-metrics": "bun scripts/observability/verify-host-metrics-contract.mjs && bunx vitest run --project server apps/server/test/orpc-metrics.test.ts apps/server/test/telemetry-bootstrap.test.ts",
     "observability:gate:logging": "bun scripts/observability/verify-logging-boundary.mjs && bunx vitest run --project server apps/server/test/logging-correlation.test.ts && ! rg -n \"from \\\"pino\\\"|from 'pino'\" services/example-todo",
@@ -174,7 +173,6 @@
       "migration-slice:structural-tranche"
     ],
     "includedScripts": [
-      "sync:check",
       "architecture:gates:permanent",
       "architecture:gate:agent-plugin-lifecycle",
       "architecture:gate:legacy-membership-authoring",

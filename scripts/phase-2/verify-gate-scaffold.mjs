@@ -43,10 +43,6 @@ assertCondition(
 );
 
 assertCondition(
-  hqSdkPackage.scripts?.sync === "bun run --cwd ../.. sync:check --project @rawr/hq-sdk",
-  "packages/hq-sdk/package.json must define sync."
-);
-assertCondition(
   hqSdkPackage.scripts?.structural ===
     "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-sdk",
   "packages/hq-sdk/package.json must define structural."

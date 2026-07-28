@@ -325,6 +325,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   wrappers, inventories, and hand-written structural runners as their laws move
   to Habitat. Keep qualified behavioral targets, and admit a rule-owned script
   only for a demonstrated native Habitat capability gap.
+  - [x] 1.6c10b1 Retire the custom architecture-inventory sync generator,
+    copied JSON inventories, parity verifier, and project `sync` aliases
+    together. Preserve the surviving structural and behavioral gates; Nx's
+    resolved project graph remains project and target truth.
 - [x] 1.6c11 Admit any still-required resolved project-edge law as one separate
   Habitat graph packet. Grit cannot join Nx-resolved dependency edges to
   project-kind tags, so a rule-owned `.mjs` graph adapter is the allowed narrow

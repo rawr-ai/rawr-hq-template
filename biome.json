@@ -31,7 +31,6 @@
       "!docs/**/_provenance/**",
       "!openspec/changes/archive/**",
       "!openspec/changes/**/workstream/**",
-      "!tools/architecture-inventory/**",
       "!tools/runtime-realization-type-env/evidence/**",
       "!tools/runtime-realization-type-env/fixtures/**",
       "!tools/semantica-workbench/fixtures/**",
