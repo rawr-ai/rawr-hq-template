@@ -2959,9 +2959,9 @@ than becoming another authority surface.
 The existing service-blueprint suite passes all 24 cases and 283 assertions,
 including dedicated red fixtures for missing terminal curation and dotted,
 computed, destructured, or renamed raw-lane access from a router source. Strict
-OpenSpec validation, touched Biome checks, and diff hygiene pass. The lifecycle runtime edits remain
-unstaged for task 5.7e20, so this record does not claim their behavior or type
-proof.
+OpenSpec validation, touched Biome checks, and diff hygiene pass. That law-only
+checkpoint claimed no runtime behavior; the subsequently landed lifecycle
+runtime and its proof are recorded under task 5.7e20 below.
 
 ## Lifecycle Module Context Curation
 
@@ -2982,6 +2982,26 @@ Nx runs lifecycle typecheck and all 43 behavior files together with their six
 build prerequisites: all 377 tests pass in 1 minute 26 seconds with the cache
 intentionally disabled. This checkpoint changes no provider home, Personal
 repository, Oclif surface, or live lifecycle state.
+
+## HQ Ops Module Context Curation
+
+The bounded HQ Ops checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21a]]. Config,
+journal, and security now finish their existing observability and analytics
+composition with terminal curation of `resources` and `repoRoot`. Their routers
+author only against those module-owned names; the service's inherited lanes,
+resource object identity, middleware order, persistence behavior, and public
+contracts remain unchanged.
+
+Uncached HQ Ops typecheck and all 11 owner behavior tests pass in 5.9 seconds.
+The staged context-law probe reports only the six existing flat middleware-file
+findings, two per module; it reports no missing curation or raw-lane router
+access. Their topology remains a separate owner-local checkpoint rather than
+being folded into this behavior-preserving cut.
+The embedded Example Todo API remains a separate task 5.7e21 checkpoint because
+its host still supplies flat request context and must establish service lanes
+before module curation can honestly consume them. No provider home, Personal
+repository, Oclif surface, or live lifecycle state changes in this checkpoint.
 
 ## Settlement Oracles
 
