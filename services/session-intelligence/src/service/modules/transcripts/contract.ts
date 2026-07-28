@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { type Static, Type } from "typebox";
-import { ocBase } from "../../base";
 import { RoleFilterSchema, SessionMessageSchema, SessionSourceSchema } from "../../common/entities";
 import { UNKNOWN_SESSION_FORMAT } from "../../common/errors";
 
@@ -82,10 +83,10 @@ const ExtractedSessionSchema = Type.Object(
 export type ExtractedSession = Static<typeof ExtractedSessionSchema>;
 
 export const contract = {
-  detect: ocBase
-    .meta({ idempotent: true, entity: "transcript" })
+  detect: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "transcript" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             path: Type.String({
@@ -98,7 +99,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             source: Type.Union([SessionSourceSchema, Type.Literal("unknown")], {
@@ -109,10 +110,10 @@ export const contract = {
         )
       )
     ),
-  extract: ocBase
-    .meta({ idempotent: true, entity: "transcript" })
+  extract: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "transcript" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             path: Type.String({
@@ -125,6 +126,6 @@ export const contract = {
         )
       )
     )
-    .output(schema(ExtractedSessionSchema))
+    .output(standard(ExtractedSessionSchema))
     .errors({ UNKNOWN_SESSION_FORMAT }),
 };

@@ -77,10 +77,10 @@ export interface operations {
                     "application/json": {
                         /**
                          * Format: uuid
-                         * @description Stable unique identifier for the task.
+                         * @description Stable UUID identifying one Example Todo domain entity.
                          */
                         id: string;
-                        /** @description Workspace scope that owns this task record. */
+                        /** @description Stable workspace scope that owns Example Todo records. */
                         workspaceId: string;
                         /** @description Primary task title. */
                         title: string;
@@ -101,7 +101,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description 400 */
+            /** @description Invalid task title */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -110,10 +110,9 @@ export interface operations {
                     "application/json": {
                         /** @constant */
                         defined: true;
+                        inferable: boolean;
                         /** @constant */
                         code: "INVALID_TASK_TITLE";
-                        /** @constant */
-                        status: 400;
                         /** @default Invalid task title */
                         message: string;
                         /** @description Context describing why the task title was rejected. */
@@ -124,14 +123,14 @@ export interface operations {
                     } | {
                         /** @constant */
                         defined: false;
+                        inferable: boolean;
                         code: string;
-                        status: number;
                         message: string;
                         data?: unknown;
                     };
                 };
             };
-            /** @description 409 */
+            /** @description Write operations are blocked while read-only mode is enabled */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -140,10 +139,9 @@ export interface operations {
                     "application/json": {
                         /** @constant */
                         defined: true;
+                        inferable: boolean;
                         /** @constant */
                         code: "READ_ONLY_MODE";
-                        /** @constant */
-                        status: 409;
                         /** @default Write operations are blocked while read-only mode is enabled */
                         message: string;
                         /** @description Context payload for READ_ONLY_MODE boundary errors. */
@@ -154,8 +152,8 @@ export interface operations {
                     } | {
                         /** @constant */
                         defined: false;
+                        inferable: boolean;
                         code: string;
-                        status: number;
                         message: string;
                         data?: unknown;
                     };
@@ -183,10 +181,10 @@ export interface operations {
                     "application/json": {
                         /**
                          * Format: uuid
-                         * @description Stable unique identifier for the task.
+                         * @description Stable UUID identifying one Example Todo domain entity.
                          */
                         id: string;
-                        /** @description Workspace scope that owns this task record. */
+                        /** @description Stable workspace scope that owns Example Todo records. */
                         workspaceId: string;
                         /** @description Primary task title. */
                         title: string;
@@ -207,7 +205,7 @@ export interface operations {
                     };
                 };
             };
-            /** @description 404 */
+            /** @description Resource not found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -216,10 +214,9 @@ export interface operations {
                     "application/json": {
                         /** @constant */
                         defined: true;
+                        inferable: boolean;
                         /** @constant */
                         code: "RESOURCE_NOT_FOUND";
-                        /** @constant */
-                        status: 404;
                         /** @default Resource not found */
                         message: string;
                         /** @description Context payload for RESOURCE_NOT_FOUND boundary errors. */
@@ -232,8 +229,8 @@ export interface operations {
                     } | {
                         /** @constant */
                         defined: false;
+                        inferable: boolean;
                         code: string;
-                        status: number;
                         message: string;
                         data?: unknown;
                     };

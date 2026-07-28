@@ -3,7 +3,7 @@
  *
  * @remarks
  * This file owns module composition only:
- * - start from the package-level implementer base
+ * - start from the configured package-level service branch
  * - curate the task route context from inherited service capabilities
  * - export configured `module` for handler implementations
  */

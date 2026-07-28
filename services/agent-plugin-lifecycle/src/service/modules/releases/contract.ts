@@ -1,5 +1,6 @@
-import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
-import { eoc } from "effect-orpc";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 
 import {
   CheckInputSchema,
@@ -14,44 +15,44 @@ import {
 
 /** Declares the TypeBox-backed release eligibility and release-input operation boundary. */
 export const contract = {
-  check: eoc
-    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "full",
-      entity: "releases",
-    })
-    .input(schema(CheckInputSchema))
-    .output(schema(CheckResultSchema)),
-  releaseInputRecord: eoc
-    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "full",
-      entity: "releases",
-    })
-    .input(schema(ReleaseInputRecordInputSchema))
-    .output(schema(ReleaseInputRecordResultSchema)),
-  refreshReleaseInput: eoc
-    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "full",
-      entity: "releases",
-    })
-    .input(schema(ReleaseInputRefreshInputSchema))
-    .output(schema(ReleaseInputRefreshResultSchema)),
-  checkRepository: eoc
-    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "releases" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "full",
-      entity: "releases",
-    })
-    .input(schema(RepositoryCheckInputSchema))
-    .output(schema(RepositoryCheckResultSchema)),
+  check: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        audit: "full",
+        entity: "releases",
+      })
+    )
+    .input(standard(CheckInputSchema))
+    .output(standard(CheckResultSchema)),
+  releaseInputRecord: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        audit: "full",
+        entity: "releases",
+      })
+    )
+    .input(standard(ReleaseInputRecordInputSchema))
+    .output(standard(ReleaseInputRecordResultSchema)),
+  refreshReleaseInput: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        audit: "full",
+        entity: "releases",
+      })
+    )
+    .input(standard(ReleaseInputRefreshInputSchema))
+    .output(standard(ReleaseInputRefreshResultSchema)),
+  checkRepository: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        audit: "full",
+        entity: "releases",
+      })
+    )
+    .input(standard(RepositoryCheckInputSchema))
+    .output(standard(RepositoryCheckResultSchema)),
 };

@@ -1,39 +1,38 @@
-import type { Context } from "@orpc/server";
+import type { RouterContract } from "@orpc/contract";
+import type { AnyRouter } from "@orpc/server";
 import type { Inngest } from "inngest";
 import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees";
-import { createContextualRouterBuilder } from "../orpc/factory/implementer";
-import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
+
+type ContractTree = { [key: string]: RouterContract };
+type RouterTree = { [key: string]: AnyRouter };
 
 export { createInternalTraceForwardingOptions as createWorkflowTraceForwardingOptions } from "../orpc/boundary/trace-forwarding";
 
 export type WorkflowSurfaceContribution<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
 > = Readonly<{
   contract: TContract;
   router: TRouter;
 }>;
 
-export type WorkflowSurfaceDeclaration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-> = Readonly<{
+export type WorkflowSurfaceDeclaration<TContract extends ContractTree = ContractTree> = Readonly<{
   contract: TContract;
 }>;
 
 export type WorkflowPublishedContribution<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
 > = WorkflowSurfaceContribution<TContract, TRouter> &
   Readonly<{
     routeBase: `/${string}`;
   }>;
 
-export type WorkflowPublishedDeclaration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-> = WorkflowSurfaceDeclaration<TContract> &
-  Readonly<{
-    routeBase: `/${string}`;
-  }>;
+export type WorkflowPublishedDeclaration<TContract extends ContractTree = ContractTree> =
+  WorkflowSurfaceDeclaration<TContract> &
+    Readonly<{
+      routeBase: `/${string}`;
+    }>;
 
 export type WorkflowRuntimeDeclaration = Readonly<{
   kind: "inngest-functions";
@@ -57,7 +56,7 @@ export type WorkflowRuntimeContribution<
 
 export type WorkflowPluginDeclaration<
   TCapability extends string = string,
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TContract extends ContractTree = ContractTree,
 > = Readonly<{
   capability: TCapability;
   namespace: "workflows";
@@ -67,8 +66,8 @@ export type WorkflowPluginDeclaration<
 }>;
 
 export type WorkflowPluginContribution<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
 > = Readonly<{
@@ -79,8 +78,8 @@ export type WorkflowPluginContribution<
 
 export type WorkflowPluginContributionBuilder<
   TBound = never,
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
 > = BivariantRuntimeFactory<
@@ -90,8 +89,8 @@ export type WorkflowPluginContributionBuilder<
 
 export type WorkflowPluginRegistration<
   TCapability extends string = string,
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
   TBound = never,
@@ -141,16 +140,14 @@ type ComposedWorkflowRuntimeInput<TPlugins extends readonly WorkflowPluginRegist
 
 function mergeWorkflowInternalContracts(
   plugins: readonly WorkflowPluginRegistration[]
-): AnyContractRouterObject {
+): ContractTree {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.internal ? [plugin.internal.contract] : [])),
     { kind: "workflow", surface: "contract" }
   );
 }
 
-function mergeWorkflowInternalRouters(
-  plugins: readonly WorkflowPluginRegistration[]
-): AnyProcedureRouterObject {
+function mergeWorkflowInternalRouters(plugins: readonly WorkflowPluginRegistration[]): RouterTree {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.internal ? [plugin.internal.router] : [])),
     { kind: "workflow", surface: "router" }
@@ -159,16 +156,14 @@ function mergeWorkflowInternalRouters(
 
 function mergeWorkflowPublishedContracts(
   plugins: readonly WorkflowPluginRegistration[]
-): AnyContractRouterObject {
+): ContractTree {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.published ? [plugin.published.contract] : [])),
     { kind: "workflow", surface: "contract" }
   );
 }
 
-function mergeWorkflowPublishedRouters(
-  plugins: readonly WorkflowPluginRegistration[]
-): AnyProcedureRouterObject {
+function mergeWorkflowPublishedRouters(plugins: readonly WorkflowPluginRegistration[]): RouterTree {
   return mergeNamedSurfaceTrees(
     plugins.flatMap((plugin) => (plugin.published ? [plugin.published.router] : [])),
     { kind: "workflow", surface: "router" }
@@ -177,8 +172,8 @@ function mergeWorkflowPublishedRouters(
 
 export function defineWorkflowPlugin<
   const TCapability extends string,
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TRuntimeInput = WorkflowRuntimeInput,
   TFunction = unknown,
   TBound = never,
@@ -196,7 +191,7 @@ export function defineWorkflowPlugin<
 
 export function defineWorkflowPluginDeclaration<
   const TCapability extends string,
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
+  TContract extends ContractTree = ContractTree,
 >(
   input: Omit<WorkflowPluginDeclaration<TCapability, TContract>, "namespace">
 ): WorkflowPluginDeclaration<TCapability, TContract> {
@@ -204,13 +199,6 @@ export function defineWorkflowPluginDeclaration<
     namespace: "workflows",
     ...input,
   };
-}
-
-export function createWorkflowRouterBuilder<
-  const TContract extends AnyContractRouterObject,
-  TContext extends Context,
->(contract: TContract) {
-  return createContextualRouterBuilder<TContract, TContext>(contract);
 }
 
 export function composeWorkflowPlugins<
@@ -240,8 +228,3 @@ export function composeWorkflowPlugins<
     },
   } as const;
 }
-
-export type {
-  AnyContractRouterObject,
-  AnyProcedureRouterObject,
-} from "../orpc/router-shapes";

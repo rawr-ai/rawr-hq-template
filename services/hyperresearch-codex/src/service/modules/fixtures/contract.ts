@@ -1,9 +1,11 @@
 /**
  * @fileoverview Synthetic fixture procedure contract for Hyperresearch Codex.
  */
-import { schema } from "@rawr/hq-sdk";
+
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import {
   HyperresearchIntegrityFindingSchema,
   HyperresearchRunLedgerSchema,
@@ -70,8 +72,8 @@ const HyperresearchFixtureResultSchema = Type.Object(
 );
 
 export const contract = {
-  runSyntheticSlice: ocBase
-    .meta({ idempotent: false, entity: "fixtures" })
-    .input(schema(RunSyntheticSliceInputSchema))
-    .output(schema(HyperresearchFixtureResultSchema)),
+  runSyntheticSlice: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "fixtures" }))
+    .input(standard(RunSyntheticSliceInputSchema))
+    .output(standard(HyperresearchFixtureResultSchema)),
 };

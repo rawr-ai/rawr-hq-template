@@ -1,7 +1,9 @@
-import { createRequiredServiceObservabilityMiddleware } from "../base";
+import { createObservabilityMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
 
-/** Adds lifecycle invocation fields to the SDK-owned observability baseline. */
-export const observability = createRequiredServiceObservabilityMiddleware({
+/** Adds lifecycle invocation fields to the native observability boundary. */
+export const observability = createObservabilityMiddleware<Context>(metadataDefaults, {
   spanAttributes: ({ context }) => ({
     invocation_trace_id: context.invocation.traceId,
     invocation_command_id: context.invocation.commandId,

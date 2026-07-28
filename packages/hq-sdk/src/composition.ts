@@ -1,21 +1,25 @@
-import type { AnyContractRouterObject, AnyProcedureRouterObject } from "./orpc/router-shapes";
+import type { RouterContract } from "@orpc/contract";
+import type { AnyRouter } from "@orpc/server";
 import type { WorkflowSurfaceMetadata } from "./workflows";
 
+type ContractTree = { [key: string]: RouterContract };
+type RouterTree = { [key: string]: AnyRouter };
+
 export type ComposedApiPluginSurface = Readonly<{
-  internalContract: AnyContractRouterObject;
-  internalRouter: AnyProcedureRouterObject;
-  publishedContract: AnyContractRouterObject;
-  publishedRouter: AnyProcedureRouterObject;
+  internalContract: ContractTree;
+  internalRouter: RouterTree;
+  publishedContract: ContractTree;
+  publishedRouter: RouterTree;
 }>;
 
 export type ComposedWorkflowPluginSurface<
   TCreateInngestFunctions = (...args: readonly unknown[]) => readonly unknown[],
 > = Readonly<{
   surfaces: readonly WorkflowSurfaceMetadata[];
-  internalContract: AnyContractRouterObject;
-  internalRouter: AnyProcedureRouterObject;
-  publishedContract: AnyContractRouterObject;
-  publishedRouter: AnyProcedureRouterObject;
+  internalContract: ContractTree;
+  internalRouter: RouterTree;
+  publishedContract: ContractTree;
+  publishedRouter: RouterTree;
   createInngestFunctions: TCreateInngestFunctions;
 }>;
 

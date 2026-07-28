@@ -1,16 +1,18 @@
 import type { Attributes, Span } from "@opentelemetry/api";
-import type { MiddlewareResult } from "@orpc/server";
 
-import type { BaseMetadata } from "../../baseline/types";
-import type { createNormalMiddlewareBuilder } from "../../factory/middleware";
-import type { Logger } from "../../ports/logger";
+import type { BaseMetadata } from "../../metadata";
 import type { getErrorDetails } from "./errors";
 
+/** Scalar value accepted by OpenTelemetry procedure attributes. */
 export type ObservabilityScalar = string | number | boolean;
+
+/** Optional service-owned fields added beneath its observability namespace. */
 export type ObservabilityFields = Record<string, ObservabilityScalar | undefined>;
 
+/** Public diagnostic fields retained from a procedure failure. */
 export type ObservabilityErrorDetails = ReturnType<typeof getErrorDetails>;
 
+/** Stable context, metadata, and route facts shared by signal contributors. */
 export type ObservabilityBaseArgs<TMeta extends BaseMetadata, TContext extends object> = {
   context: TContext;
   meta: TMeta;
@@ -18,6 +20,7 @@ export type ObservabilityBaseArgs<TMeta extends BaseMetadata, TContext extends o
   pathLabel: string;
 };
 
+/** Procedure signal facts available after a lifecycle outcome has completed. */
 export type ObservabilityDurationArgs<
   TMeta extends BaseMetadata,
   TContext extends object,
@@ -25,6 +28,7 @@ export type ObservabilityDurationArgs<
   durationMs: number;
 };
 
+/** Procedure signal facts available after a failed lifecycle outcome. */
 export type ObservabilityFailedArgs<
   TMeta extends BaseMetadata,
   TContext extends object,
@@ -32,7 +36,8 @@ export type ObservabilityFailedArgs<
   error: ObservabilityErrorDetails;
 };
 
-export type RequiredServiceObservabilityMiddlewareInput<
+/** Service-owned additions to the native procedure observability middleware. */
+export type ObservabilityMiddlewareInput<
   TMeta extends BaseMetadata,
   TContext extends object,
   TPolicyEvents extends Record<string, string | undefined> | undefined = undefined,
@@ -62,58 +67,8 @@ export type RequiredServiceObservabilityMiddlewareInput<
   onError?(
     args: {
       span: Span | undefined;
-      policyEvents: TPolicyEvents;
+      policyEvents: TPolicyEvents | undefined;
     } & ObservabilityFailedArgs<TMeta, TContext>
   ): void;
+  policyEvents?: TPolicyEvents;
 };
-
-export type ServiceObservabilityMiddlewareInput<
-  TMeta extends BaseMetadata,
-  TContext extends object,
-> = {
-  spanAttributes?: (args: ObservabilityBaseArgs<TMeta, TContext>) => ObservabilityFields;
-  onStart?(
-    args: {
-      span: Span | undefined;
-    } & ObservabilityBaseArgs<TMeta, TContext>
-  ): void;
-  onSuccess?(
-    args: {
-      span: Span | undefined;
-    } & ObservabilityDurationArgs<TMeta, TContext>
-  ): void;
-  onError?(
-    args: {
-      span: Span | undefined;
-    } & ObservabilityFailedArgs<TMeta, TContext>
-  ): void;
-};
-
-export type ObservabilityHandlerArgs<
-  TMeta extends BaseMetadata,
-  TContext extends {
-    deps: {
-      logger: Logger;
-    };
-  },
-> = {
-  context: TContext;
-  path: readonly string[];
-  procedure: unknown;
-  next: () => MiddlewareResult<Record<never, never>, unknown>;
-};
-
-export const requiredObservabilityMiddlewareBrand = Symbol(
-  "rawr.orpc.requiredObservabilityMiddleware"
-);
-
-export type RequiredServiceObservabilityMiddleware<
-  TContext extends object = object,
-  TMeta extends BaseMetadata = BaseMetadata,
-> = ReturnType<typeof createNormalMiddlewareBuilder<TContext, TMeta>>["middleware"] extends (
-  callback: infer _T
-) => infer TMiddleware
-  ? TMiddleware & {
-      readonly [requiredObservabilityMiddlewareBrand]: "observability";
-    }
-  : never;

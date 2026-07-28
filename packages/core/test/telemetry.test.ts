@@ -1,5 +1,6 @@
 import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace-base";
-import { afterEach, describe, expect, it } from "vitest";
+import { ORPCInstrumentation } from "@orpc/opentelemetry";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   __appendOtlpSignalPathForTests,
   __resetRawrOrpcTelemetryForTests,
@@ -23,9 +24,11 @@ describe("oRPC telemetry bootstrap", () => {
     delete process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT;
     delete process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT;
     await __resetRawrOrpcTelemetryForTests();
+    vi.restoreAllMocks();
   });
 
   it("installs telemetry once and reports registered instrumentations", async () => {
+    const enable = vi.spyOn(ORPCInstrumentation.prototype, "enable");
     const exporter = createExporter();
 
     const first = await installRawrOrpcTelemetry({
@@ -46,6 +49,69 @@ describe("oRPC telemetry bootstrap", () => {
     expect(first.options.serviceName).toBe("@rawr/server-test");
     expect(first.options.metrics).toBeDefined();
     expect(first.options.metrics?.exportIntervalMillis).toBe(1000);
+    const instrumentation = enable.mock.instances[0] as ORPCInstrumentation | undefined;
+    expect(instrumentation?.getConfig().propagationEnabled).toBe(false);
+  });
+
+  it("disables oRPC instrumentation before shutting down exporters", async () => {
+    const disable = vi.spyOn(ORPCInstrumentation.prototype, "disable");
+    let exporterShutdowns = 0;
+    const exporter: SpanExporter = {
+      export(_spans, resultCallback) {
+        resultCallback({ code: 0 });
+      },
+      async forceFlush() {},
+      async shutdown() {
+        expect(disable).toHaveBeenCalledTimes(1);
+        exporterShutdowns += 1;
+      },
+    };
+
+    const installed = await installRawrOrpcTelemetry({
+      serviceName: "@rawr/server-test",
+      environment: "test",
+      traceExporter: exporter,
+    });
+
+    await installed.shutdown();
+    await installed.shutdown();
+
+    expect(disable).toHaveBeenCalledTimes(1);
+    expect(exporterShutdowns).toBe(1);
+  });
+
+  it("releases singleton state when exporter shutdown fails", async () => {
+    let exporterShutdowns = 0;
+    const exporter: SpanExporter = {
+      export(_spans, resultCallback) {
+        resultCallback({ code: 0 });
+      },
+      async forceFlush() {},
+      async shutdown() {
+        exporterShutdowns += 1;
+        if (exporterShutdowns === 1) {
+          throw new Error("exporter shutdown failed");
+        }
+      },
+    };
+
+    const first = await installRawrOrpcTelemetry({
+      serviceName: "@rawr/server-test",
+      environment: "test",
+      traceExporter: exporter,
+    });
+
+    await expect(first.shutdown()).rejects.toThrow("exporter shutdown failed");
+
+    const replacement = await installRawrOrpcTelemetry({
+      serviceName: "@rawr/server-test",
+      environment: "test",
+      traceExporter: exporter,
+    });
+    expect(replacement).not.toBe(first);
+
+    await replacement.shutdown();
+    expect(exporterShutdowns).toBe(2);
   });
 
   it("fails loudly when telemetry is re-installed with incompatible options", async () => {

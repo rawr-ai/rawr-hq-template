@@ -1,4 +1,5 @@
 import { oc, type } from "@orpc/contract";
+import { openapi } from "@orpc/openapi";
 import { implement } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import type { AdapterDelegationEvent } from "../../adapters/delegation";
@@ -64,10 +65,12 @@ function record(
 
 const RuntimeOrpcServerContract = oc.router({
   invoke: oc
-    .route({
-      method: "POST",
-      path: "/invoke",
-    })
+    .meta(
+      openapi({
+        method: "POST",
+        path: "/invoke",
+      })
+    )
     .input(type<RuntimeOrpcServerRequest>())
     .output(type<RuntimeOrpcServerResponse>()),
 });

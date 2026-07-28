@@ -12,15 +12,18 @@
  */
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { schema } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 import { AssignmentSchema } from "#example-todo-service/model/dto/assignment";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { TagSchema } from "#example-todo-service/model/dto/tag";
 import { TaskSchema } from "#example-todo-service/model/dto/task";
-import type { TodoProcedureMetadata } from "#example-todo-service/model/policy/procedure-metadata";
+import {
+  type TodoProcedureMetadata,
+  todoProcedureMetadata,
+} from "#example-todo-service/model/policy/procedure-metadata";
 
-const ResourceNotFoundData = schema(
+const ResourceNotFoundData = standard(
   Type.Object(
     {
       entity: Type.Optional(
@@ -43,7 +46,7 @@ const ResourceNotFoundData = schema(
   )
 );
 
-const ReadOnlyModeData = schema(
+const ReadOnlyModeData = standard(
   Type.Object(
     {
       path: Type.Optional(
@@ -60,7 +63,7 @@ const ReadOnlyModeData = schema(
   )
 );
 
-const AssignmentLimitReachedData = schema(
+const AssignmentLimitReachedData = standard(
   Type.Object(
     {
       taskId: Type.Optional(
@@ -84,34 +87,33 @@ const AssignmentLimitReachedData = schema(
 );
 
 const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {
-  status: 404,
   message: "Resource not found",
   data: ResourceNotFoundData,
 } as const;
 
 const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
-  status: 409,
   message: "Write operations are blocked while read-only mode is enabled",
   data: ReadOnlyModeData,
 } as const;
 
 const ASSIGNMENT_LIMIT_REACHED: ErrorMapItem<typeof AssignmentLimitReachedData> = {
-  status: 409,
   message: "Task reached the configured assignment limit",
   data: AssignmentLimitReachedData,
 } as const;
 
 export const contract = {
   assign: oc
-    .$meta<TodoProcedureMetadata>({
-      idempotent: false,
-      domain: "todo",
-      audience: "internal",
-      audit: "basic",
-      entity: "service",
-    })
+    .meta(
+      todoProcedureMetadata({
+        idempotent: false,
+        analytics: {
+          layer: "module",
+          module: "assignments",
+        },
+      } satisfies TodoProcedureMetadata)
+    )
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             taskId: TodoIdentifierSchema,
@@ -124,15 +126,14 @@ export const contract = {
         )
       )
     )
-    .output(schema(AssignmentSchema))
+    .output(standard(AssignmentSchema))
     .errors({
       ASSIGNMENT_LIMIT_REACHED,
       READ_ONLY_MODE,
       RESOURCE_NOT_FOUND,
       ALREADY_ASSIGNED: {
-        status: 409,
         message: "Task/tag assignment already exists",
-        data: schema(
+        data: standard(
           Type.Object(
             {
               taskId: Type.Optional(
@@ -157,15 +158,17 @@ export const contract = {
       },
     }),
   listForTask: oc
-    .$meta<TodoProcedureMetadata>({
-      idempotent: true,
-      domain: "todo",
-      audience: "internal",
-      audit: "basic",
-      entity: "service",
-    })
+    .meta(
+      todoProcedureMetadata({
+        idempotent: true,
+        analytics: {
+          layer: "module",
+          module: "assignments",
+        },
+      } satisfies TodoProcedureMetadata)
+    )
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             taskId: TodoIdentifierSchema,
@@ -178,7 +181,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             task: Type.Object(TaskSchema.properties, {

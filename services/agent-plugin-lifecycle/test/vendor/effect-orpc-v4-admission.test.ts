@@ -1,7 +1,12 @@
+import "@orpc/experimental-effect/extensions/effect";
 import { ORPCError } from "@orpc/client";
-import { ValidationError } from "@orpc/contract";
-import { createRouterClient } from "@orpc/server";
-import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
+import { oc, ValidationError } from "@orpc/contract";
+import { createRouterClient, implement } from "@orpc/server";
+import {
+  createAnalyticsMiddleware,
+  createObservabilityMiddleware,
+  procedureMetadata,
+} from "@rawr/hq-sdk";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
@@ -10,12 +15,11 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { Effect, Layer } from "effect";
-import { eoc, implementEffect } from "effect-orpc";
+import { standard } from "@rawr/typebox-adapter";
+import { Effect } from "effect";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
-
-import { createServiceBaselineMiddlewares } from "../../src/service/base";
+import { metadataDefaults } from "../../src/service/contract";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const AdmissionInputSchema = Type.Object(
@@ -27,17 +31,21 @@ const AdmissionOutputSchema = Type.Object(
   { additionalProperties: false }
 );
 
-const admission = eoc.$meta<ServiceMetadataOf<{ audit: "basic"; entity: "service" }>>({
-  idempotent: true,
-  domain: "agent-plugin-lifecycle",
-  audience: "internal",
-  audit: "basic",
-  entity: "service",
-});
+const admission = oc.meta(
+  procedureMetadata({
+    idempotent: true,
+    domain: "agent-plugin-lifecycle",
+    audience: "internal",
+    audit: "basic",
+    entity: "service",
+  })
+);
 
-const contract = eoc.router({
-  multiply: admission.input(schema(AdmissionInputSchema)).output(schema(AdmissionOutputSchema)),
-  invalidOutput: admission.input(schema(EmptyInputSchema)).output(schema(AdmissionOutputSchema)),
+const contract = oc.router({
+  multiply: admission.input(standard(AdmissionInputSchema)).output(standard(AdmissionOutputSchema)),
+  invalidOutput: admission
+    .input(standard(EmptyInputSchema))
+    .output(standard(AdmissionOutputSchema)),
 });
 
 interface AdmissionContext {
@@ -48,11 +56,10 @@ interface AdmissionContext {
   };
 }
 
-const baseline = createServiceBaselineMiddlewares();
-const impl = implementEffect(contract, Layer.empty)
+const impl = implement(contract)
   .$context<AdmissionContext>()
-  .use(baseline.observability)
-  .use(baseline.analytics);
+  .use(createObservabilityMiddleware<AdmissionContext>(metadataDefaults))
+  .use(createAnalyticsMiddleware<AdmissionContext>(metadataDefaults));
 
 const router = impl.router({
   multiply: impl.multiply.effect(function* ({ context, input }) {
@@ -82,7 +89,7 @@ function createAdmissionClient(
   });
 }
 
-describe("effect-orpc Effect 4 admission", () => {
+describe("official Effect-oRPC admission", () => {
   it("preserves TypeBox input and output validation around an Effect handler", async () => {
     const client = createAdmissionClient();
     const invalidInput = { value: 7, unexpected: true };

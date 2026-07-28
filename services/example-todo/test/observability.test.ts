@@ -8,22 +8,11 @@ import {
   trace,
 } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
-import { createRouterClient, safe } from "@orpc/server";
-import { defineService, schema } from "@rawr/hq-sdk";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import { Type } from "typebox";
+import { safe } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
 import { createClient } from "../src/client";
 import { type AnalyticsEntry, createClientOptions, invocation, type LogEntry } from "./helpers";
-
-function createBaselineDeps(logs: LogEntry[], analytics: AnalyticsEntry[]) {
-  return {
-    logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logs }),
-    analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analytics }),
-  };
-}
 
 class RecordingSpan implements Span {
   readonly attributes: Record<string, string | number | boolean> = {};
@@ -104,7 +93,7 @@ async function withRecordingSpan<T>(callback: (span: RecordingSpan) => Promise<T
 }
 
 describe("example-todo observability", () => {
-  it("enriches the active span and emits package/base observability logs", async () => {
+  it("enriches the active span and emits one service observability lifecycle", async () => {
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
     const client = createClient(createClientOptions({ logs, analytics }));
@@ -115,20 +104,16 @@ describe("example-todo observability", () => {
       expect(span.attributes["rawr.orpc.path"]).toBe("tags.list");
       expect(span.attributes["rawr.orpc.domain"]).toBe("todo");
       expect(span.attributes["rawr.orpc.audience"]).toBe("internal");
+      expect(span.attributes["rawr.todo.module"]).toBe("tags");
       expect(span.attributes["rawr.todo.workspace_id"]).toBe("workspace-default");
       expect(span.attributes["rawr.todo.invocation_trace_id"]).toBe("trace-observability");
       expect(span.events.map((event) => event.name)).toEqual([
-        "rawr.orpc.procedure.started",
         "todo.procedure.started",
         "todo.tags.module.observed",
         "todo.procedure.succeeded",
-        "rawr.orpc.procedure.succeeded",
       ]);
     });
 
-    expect(
-      logs.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "success")
-    ).toBe(true);
     expect(
       logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "success")
     ).toBe(true);
@@ -166,7 +151,6 @@ describe("example-todo observability", () => {
     const client = createClient(createClientOptions({ logs }));
 
     await expect(client.tags.list({}, invocation("trace-no-span"))).resolves.toEqual([]);
-    expect(logs.some((entry) => entry.event === "orpc.procedure")).toBe(true);
     expect(logs.some((entry) => entry.event === "todo.procedure")).toBe(true);
   });
 
@@ -192,7 +176,7 @@ describe("example-todo observability", () => {
     ).toBe(true);
   });
 
-  it("adds module-local observability and analytics on top of the service baseline", async () => {
+  it("folds module and operation signals into the one service lifecycle", async () => {
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
     const client = createClient(createClientOptions({ logs, analytics }));
@@ -208,13 +192,11 @@ describe("example-todo observability", () => {
       );
 
       expect(span.events.map((event) => event.name)).toEqual([
-        "rawr.orpc.procedure.started",
         "todo.procedure.started",
         "todo.tags.module.observed",
         "todo.tags.create.normalization.started",
         "todo.tags.create.normalization.succeeded",
         "todo.procedure.succeeded",
-        "rawr.orpc.procedure.succeeded",
       ]);
 
       return created;
@@ -238,12 +220,10 @@ describe("example-todo observability", () => {
       );
 
       expect(span.events.map((event) => event.name)).toEqual([
-        "rawr.orpc.procedure.started",
         "todo.procedure.started",
         "todo.assignments.module.observed",
         "todo.assignments.assign.completed",
         "todo.procedure.succeeded",
-        "rawr.orpc.procedure.succeeded",
       ]);
     });
 
@@ -271,146 +251,5 @@ describe("example-todo observability", () => {
           entry.payload.analytics_trace_id === "trace-procedure-local"
       )
     ).toBe(true);
-  });
-
-  it("exposes additive service-local builders without duplicating the baseline lifecycle shell", async () => {
-    type TestService = {
-      initialContext: {
-        deps: {
-          logger: {
-            info(message: string, meta?: Record<string, unknown>): void;
-            error(message: string, meta?: Record<string, unknown>): void;
-          };
-          analytics: {
-            track(event: string, payload?: Record<string, unknown>): void | Promise<void>;
-          };
-        };
-        scope: {
-          workspaceId: string;
-        };
-        config: {
-          readOnly: boolean;
-        };
-      };
-      invocationContext: {
-        traceId: string;
-      };
-      metadata: {};
-    };
-
-    const logs: LogEntry[] = [];
-    const analytics: AnalyticsEntry[] = [];
-    const service = defineService<TestService>({
-      metadataDefaults: {
-        idempotent: true,
-        domain: "todo",
-      },
-      baseline: {
-        policy: { events: {} },
-      },
-    });
-
-    const contract = {
-      ping: service.oc.input(schema(Type.Object({}, { additionalProperties: false }))).output(
-        schema(
-          Type.Object(
-            {
-              ok: Type.Boolean(),
-            },
-            { additionalProperties: false }
-          )
-        )
-      ),
-    };
-
-    const requiredExtensions = {
-      observability: service.createRequiredObservabilityMiddleware({}),
-      analytics: service.createRequiredAnalyticsMiddleware({}),
-    };
-    const localObservability = service.createObservabilityMiddleware({
-      spanAttributes: ({ context }) => ({
-        module: "ping",
-        workspace_id: context.scope.workspaceId,
-      }),
-      onStart: ({ span, pathLabel }) => {
-        span?.addEvent("todo.local.started", { path: pathLabel });
-      },
-      onSuccess: ({ span, durationMs }) => {
-        span?.addEvent("todo.local.succeeded", { durationMs });
-      },
-    });
-    const localAnalytics = service.createAnalyticsMiddleware({
-      payload: ({ context }) => ({
-        module: "ping",
-        workspaceId: context.scope.workspaceId,
-        local: true,
-      }),
-    });
-
-    const os = service
-      .createImplementer(contract, requiredExtensions)
-      .use(localObservability)
-      .use(localAnalytics);
-    const ping = os.ping.handler(async () => ({ ok: true }));
-    const router = os.router({ ping });
-    const client = createRouterClient(router, {
-      context: {
-        deps: {
-          ...createBaselineDeps(logs, analytics),
-        },
-        scope: {
-          workspaceId: "workspace-local",
-        },
-        config: {
-          readOnly: false,
-        },
-        invocation: {
-          traceId: "trace-local",
-        },
-        provided: {},
-      },
-    });
-
-    await withRecordingSpan(async (span) => {
-      await client.ping({});
-
-      expect(span.attributes["rawr.todo.module"]).toBe("ping");
-      expect(span.attributes["rawr.todo.workspace_id"]).toBe("workspace-local");
-      expect(span.events.filter((event) => event.name === "todo.procedure.started")).toHaveLength(
-        1
-      );
-      expect(span.events.filter((event) => event.name === "todo.procedure.succeeded")).toHaveLength(
-        1
-      );
-      expect(span.events.map((event) => event.name)).toEqual(
-        expect.arrayContaining([
-          "rawr.orpc.procedure.started",
-          "rawr.orpc.procedure.succeeded",
-          "todo.procedure.started",
-          "todo.procedure.succeeded",
-          "todo.local.started",
-          "todo.local.succeeded",
-        ])
-      );
-    });
-
-    expect(
-      logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "success")
-    ).toBe(true);
-    expect(analytics).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          event: "orpc.procedure",
-          payload: expect.objectContaining({
-            app: "todo",
-            path: "ping",
-            outcome: "success",
-            module: "ping",
-            workspaceId: "workspace-local",
-            local: true,
-          }),
-        }),
-      ])
-    );
   });
 });

@@ -4,7 +4,7 @@ import path from "node:path";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
-import type { Service } from "../src/service/base";
+import type { Context } from "../src/service/base";
 import type {
   HyperresearchCliBackend,
   HyperresearchCodexIO,
@@ -75,7 +75,7 @@ export class RecordingCli implements HyperresearchCliBackend {
 export function createClientOptions(
   input: { repoRoot?: string; io?: HyperresearchCodexIO; cli?: HyperresearchCliBackend } = {}
 ): CreateClientOptions {
-  const deps: Service["Deps"] = {
+  const deps: Context["deps"] = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     io: input.io ?? createNodeTestIO(),

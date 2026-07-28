@@ -3,31 +3,28 @@
  *
  * @remarks
  * This file owns module composition only:
- * - start from the package-level implementer base
- * - compose qualified module telemetry middleware
+ * - start from the configured package-level service branch
+ * - attach qualified Tags telemetry once
  * - curate the tag route context from inherited service capabilities
  * - export configured `module` for handler implementations
  */
 import { service } from "../../impl";
-import { analytics, observability } from "./middleware/telemetry.middleware";
+import { telemetry } from "./middleware/telemetry.middleware";
 
 /**
  * SECTION: Module Composition (Always Present)
  *
  * Keep module-wide composition here so procedure handlers can stay focused on business logic.
  */
-export const module = service.tags
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        clock: context.deps.clock,
-        identifierGenerator: context.deps.identifierGenerator,
-        logger: context.deps.logger,
-        workspaceId: context.scope.workspaceId,
-        traceId: context.invocation.traceId,
-        tagsStore: context.provided.tagsStore,
-      },
-    })
-  );
+export const module = service.tags.use(telemetry).use(async ({ context, next }) =>
+  next({
+    context: {
+      clock: context.deps.clock,
+      identifierGenerator: context.deps.identifierGenerator,
+      logger: context.deps.logger,
+      workspaceId: context.scope.workspaceId,
+      traceId: context.invocation.traceId,
+      tagsStore: context.provided.tagsStore,
+    },
+  })
+);

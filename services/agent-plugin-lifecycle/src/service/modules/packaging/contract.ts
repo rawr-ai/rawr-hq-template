@@ -1,5 +1,6 @@
-import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
-import { eoc } from "effect-orpc";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 
 import {
   PackageAgentPluginRequestSchema,
@@ -8,14 +9,13 @@ import {
 
 /** Declares the TypeBox-backed deterministic packaging operation boundary. */
 export const contract = {
-  package: eoc
-    .$meta<ServiceMetadataOf<{ audit: "basic"; entity: "packaging" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "basic",
-      entity: "packaging",
-    })
-    .input(schema(PackageAgentPluginRequestSchema))
-    .output(schema(PackageAgentPluginResultSchema)),
+  package: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        entity: "packaging",
+      })
+    )
+    .input(standard(PackageAgentPluginRequestSchema))
+    .output(standard(PackageAgentPluginResultSchema)),
 };

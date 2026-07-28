@@ -1588,7 +1588,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
-| Effect 4 vendor realm | Exact beta 101 Effect/Platform and TypeBox 1.3.8 are green as one physical realm; stable oRPC 1.14.8 remains unchanged only until the separate oRPC 2 switch |
+| oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
 | Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, the context-authoring funnel, and operation-use audit remain |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
@@ -3297,6 +3297,45 @@ excluded from evidence. The lifecycle CLI client-context and qualified-command
 suites pass 18 focused cases. Strict OpenSpec, Biome, the categorical live
 facade search, diff hygiene, and the single physical `@orpc/server@1.14.8`
 realm pass. The repository check is green.
+
+## Native oRPC 2 And Effect 4 Runtime Boundary
+
+The atomic runtime checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.6f]]. Every direct
+oRPC declaration now selects `2.0.0-beta.20`; the Effect integration is the
+official `@orpc/experimental-effect@2.0.0-beta.20`; Effect and Platform use
+`4.0.0-beta.101`; TypeBox uses `1.3.8`; and Standard Schema uses `1.1.0`.
+Community `effect-orpc`, the retired OpenAPI-client and telemetry package
+names, and the HQ SDK contract, implementer, context, router, schema, and
+service facades leave in the same checkpoint. The surviving TypeBox adapter is
+product-free and delegates validation and JSON Schema projection to TypeBox.
+
+Contracts, implementers, middleware, routers, and linked clients now use the
+native oRPC 2 APIs. Effect-backed operations alone cross the official Effect
+handler bridge. HTTP status remains native transport policy; local and linked
+errors expose `defined`, `inferable`, code, message, and data without copying
+status into the error object or wire body. Service-owned metadata vocabulary
+is attached and read through typed native `defineMeta` plugins rather than a
+second metadata store. The server's generated OpenAPI document and checked-in
+types match live generation, and real RPC and OpenAPI links preserve declared
+domain failures.
+
+The server extracts inbound W3C context before opening its host span and runs
+the oRPC instrumentation below that span without a second extraction. The
+integrated trace oracle proves one remote-to-host-to-native parent chain.
+Telemetry shutdown disables instrumentation before exporter shutdown and
+releases process-local ownership even when exporter cleanup fails.
+
+The complete repository check passes 40 projects and 118 tasks in 1 minute 29
+seconds. The uncached test graph passes all 32 tested projects in 1 minute 33
+seconds, including 377 lifecycle, 85 CLI, 47 server, 33 Example Todo, and 14
+core cases. A canonical uncached lifecycle repeat also passes all 377 cases;
+the two slow Git/packaging cases remain within the owner-defined 30-second
+budget. Strict OpenSpec, diff hygiene, checked-in OpenAPI drift, and categorical
+old-version and retired-package searches pass. Standing native-authority,
+architecture, TypeScript, structural-quality, and behavior-first testing
+reviews report no P0 or P1 findings. This checkpoint does not mutate Personal,
+a native provider home, or any live release channel.
 
 ## Settlement Oracles
 

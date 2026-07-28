@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../common/errors";
 import { SourceSnapshotSchema } from "./entities";
 
@@ -37,10 +38,10 @@ const ReadSourceSnapshotOutputSchema = Type.Object(
 );
 
 export const contract = {
-  readSnapshot: ocBase
-    .meta({ idempotent: true })
-    .input(schema(EmptyInputSchema))
-    .output(schema(ReadSourceSnapshotOutputSchema))
+  readSnapshot: oc
+    .meta(procedureMetadata({ idempotent: true }))
+    .input(standard(EmptyInputSchema))
+    .output(standard(ReadSourceSnapshotOutputSchema))
     .errors({
       INVALID_CONVERSATION_JSON,
       INVALID_CONVERSATION_EXPORT,

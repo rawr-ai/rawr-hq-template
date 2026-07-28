@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import { WorkspaceManagedFileRefSchema, WorkspaceTemplateSchema } from "./entities";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
@@ -24,12 +25,12 @@ const InitializeWorkspaceOutputSchema = Type.Object(
 );
 
 export const contract = {
-  describeTemplate: ocBase
-    .meta({ idempotent: true })
-    .input(schema(EmptyInputSchema))
-    .output(schema(WorkspaceTemplateSchema)),
-  initialize: ocBase
-    .meta({ idempotent: false })
-    .input(schema(EmptyInputSchema))
-    .output(schema(InitializeWorkspaceOutputSchema)),
+  describeTemplate: oc
+    .meta(procedureMetadata({ idempotent: true }))
+    .input(standard(EmptyInputSchema))
+    .output(standard(WorkspaceTemplateSchema)),
+  initialize: oc
+    .meta(procedureMetadata({ idempotent: false }))
+    .input(standard(EmptyInputSchema))
+    .output(standard(InitializeWorkspaceOutputSchema)),
 };

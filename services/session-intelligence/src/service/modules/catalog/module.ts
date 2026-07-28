@@ -1,14 +1,10 @@
-import { impl } from "../../impl";
-import { analytics, observability } from "./middleware";
+import { service } from "../../impl";
 
-export const module = impl.catalog
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        sourceRuntime: context.deps.sessionSourceRuntime,
-        indexRuntime: context.deps.sessionIndexRuntime,
-      },
-    })
-  );
+export const module = service.catalog.use(async ({ context, next }) =>
+  next({
+    context: {
+      sourceRuntime: context.deps.sessionSourceRuntime,
+      indexRuntime: context.deps.sessionIndexRuntime,
+    },
+  })
+);

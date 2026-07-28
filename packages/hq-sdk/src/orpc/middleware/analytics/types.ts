@@ -1,6 +1,6 @@
-import type { BaseMetadata } from "../../baseline/types";
-import type { createNormalMiddlewareBuilder } from "../../factory/middleware";
+import type { BaseMetadata } from "../../metadata";
 
+/** Procedure facts available when the service enriches its single analytics event. */
 export type AnalyticsPayloadArgs<TMeta extends BaseMetadata, TContext extends object> = {
   context: TContext;
   meta: TMeta;
@@ -9,33 +9,10 @@ export type AnalyticsPayloadArgs<TMeta extends BaseMetadata, TContext extends ob
   outcome: "success" | "error";
 };
 
-export type AnalyticsPayloadContributor<TMeta extends BaseMetadata, TContext extends object> = (
-  args: AnalyticsPayloadArgs<TMeta, TContext>
-) => Record<string, unknown> | undefined;
-
-export type RequiredServiceAnalyticsMiddlewareInput<
+/** Service-owned additions to the one procedure analytics event. */
+export type AnalyticsMiddlewareInput<
   TMeta extends BaseMetadata = BaseMetadata,
   TContext extends object = object,
 > = {
-  payload?: (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown>;
+  payload?: (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown> | undefined;
 };
-
-export type ServiceAnalyticsMiddlewareInput<
-  TMeta extends BaseMetadata = BaseMetadata,
-  TContext extends object = object,
-> = {
-  payload?: (args: AnalyticsPayloadArgs<TMeta, TContext>) => Record<string, unknown>;
-};
-
-export const requiredAnalyticsMiddlewareBrand = Symbol("rawr.orpc.requiredAnalyticsMiddleware");
-
-export type RequiredServiceAnalyticsMiddleware<
-  TContext extends object = object,
-  TMeta extends BaseMetadata = BaseMetadata,
-> = ReturnType<typeof createNormalMiddlewareBuilder<TContext, TMeta>>["middleware"] extends (
-  callback: infer _T
-) => infer TMiddleware
-  ? TMiddleware & {
-      readonly [requiredAnalyticsMiddlewareBrand]: "analytics";
-    }
-  : never;

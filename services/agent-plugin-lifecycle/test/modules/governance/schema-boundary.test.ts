@@ -1,8 +1,10 @@
-import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { schema } from "@rawr/hq-sdk";
+import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
+import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { type Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
+import { contract as serviceContract } from "../../../src/service/contract";
 import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
@@ -31,8 +33,8 @@ import { encodeCurrentMainBodyV3 } from "../../../src/service/modules/governance
 
 describe("governance procedure schema boundary", () => {
   it("derives the public selection and result types from TypeBox", () => {
-    type ContractInputs = InferContractRouterInputs<typeof contract>;
-    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+    type ContractInputs = InferRouterContractInputs<typeof contract>;
+    type ContractOutputs = InferRouterContractOutputs<typeof contract>;
     type SelectionSchema = Readonly<Static<typeof CanonicalChannelSelectionSchema>>;
     type ResultSchema = Readonly<Static<typeof CurrentMainSelectionResultSchema>>;
     type Equal<TLeft, TRight> =
@@ -64,7 +66,7 @@ describe("governance procedure schema boundary", () => {
     expect(Object.keys(contract).sort()).toEqual(["currentMainRecord", "currentMainSelection"]);
   });
 
-  it("declares the complete service metadata on every governance operation", () => {
+  it("inherits service metadata and keeps governance overrides local", () => {
     const expectedMetadata = {
       idempotent: true,
       domain: "agent-plugin-lifecycle",
@@ -74,7 +76,12 @@ describe("governance procedure schema boundary", () => {
     };
 
     for (const operation of ["currentMainRecord", "currentMainSelection"] as const) {
-      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata);
+      expect(getProcedureMetadata(contract[operation])).toEqual({
+        idempotent: true,
+        audit: "full",
+        entity: "governance",
+      });
+      expect(getProcedureMetadata(serviceContract.governance[operation])).toEqual(expectedMetadata);
     }
   });
 
@@ -105,7 +112,7 @@ describe("governance procedure schema boundary", () => {
     ]) {
       expect(Value.Check(CurrentMainRecordInputSchema, invalid)).toBe(false);
       expect(
-        await schema(CurrentMainRecordInputSchema)["~standard"].validate(invalid)
+        await standard(CurrentMainRecordInputSchema)["~standard"].validate(invalid)
       ).toHaveProperty("issues");
     }
 
@@ -137,7 +144,7 @@ describe("governance procedure schema boundary", () => {
     ]) {
       expect(Value.Check(CurrentMainSelectionInputSchema, invalid)).toBe(false);
       expect(
-        await schema(CurrentMainSelectionInputSchema)["~standard"].validate(invalid)
+        await standard(CurrentMainSelectionInputSchema)["~standard"].validate(invalid)
       ).toHaveProperty("issues");
     }
   });

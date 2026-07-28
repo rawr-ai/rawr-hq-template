@@ -272,9 +272,9 @@ describe("example-todo service", () => {
 
     expect(loaded.workspaceId).toBe("workspace-alpha");
     expect(missing.isSuccess).toBe(false);
-    expect(missing.isDefined).toBe(true);
-    if (!missing.isSuccess && missing.isDefined) {
-      const typed = missing.error as OrpcErrorShape;
+    expect(missing.inferableError).not.toBeNull();
+    if (!missing.isSuccess && missing.inferableError !== null) {
+      const typed = missing.inferableError as OrpcErrorShape;
       expect(typed.code).toBe("RESOURCE_NOT_FOUND");
     }
   });
@@ -336,11 +336,10 @@ describe("example-todo service", () => {
     );
 
     expect(result.isSuccess).toBe(false);
-    expect(result.isDefined).toBe(true);
-    if (!result.isSuccess && result.isDefined) {
-      const typed = result.error as OrpcErrorShape;
+    expect(result.inferableError).not.toBeNull();
+    if (!result.isSuccess && result.inferableError !== null) {
+      const typed = result.inferableError as OrpcErrorShape;
       expect(typed.code).toBe("ASSIGNMENT_LIMIT_REACHED");
-      expect(typed.status).toBe(409);
     }
   });
 
@@ -387,16 +386,15 @@ describe("example-todo service", () => {
       readOnlyClient.tasks.create({ title: "blocked write" }, invocation("trace-blocked"))
     );
     expect(writeResult.isSuccess).toBe(false);
-    expect(writeResult.isDefined).toBe(true);
-    if (!writeResult.isSuccess && writeResult.isDefined) {
-      const typed = writeResult.error as OrpcErrorShape;
+    expect(writeResult.inferableError).not.toBeNull();
+    if (!writeResult.isSuccess && writeResult.inferableError !== null) {
+      const typed = writeResult.inferableError as OrpcErrorShape;
       expect(typed.code).toBe("READ_ONLY_MODE");
-      expect(typed.status).toBe(409);
     }
     expect(connectionCount).toBe(3);
   });
 
-  it("keeps baseline and package observability logs plus analytics working without an active span", async () => {
+  it("keeps service observability and analytics working without an active span", async () => {
     const logs: LogEntry[] = [];
     const analytics: AnalyticsEntry[] = [];
     const client = createClient(createClientOptions({ logs, analytics, readOnly: true }));
@@ -404,9 +402,6 @@ describe("example-todo service", () => {
     await safe(client.tasks.create({ title: "blocked write" }, invocation("trace-error")));
     await client.tags.list({}, invocation("trace-success"));
 
-    expect(
-      logs.some((entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "success")
-    ).toBe(true);
     expect(
       logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "error")
     ).toBe(true);

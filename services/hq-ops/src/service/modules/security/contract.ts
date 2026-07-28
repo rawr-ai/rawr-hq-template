@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import {
   RiskToleranceSchema,
   SecurityGateEnableResultSchema,
@@ -9,7 +10,7 @@ import {
   SecurityReportWithPathSchema,
 } from "./entities";
 
-const SecurityCheckInputSchema = schema(
+const SecurityCheckInputSchema = standard(
   Type.Object(
     {
       mode: SecurityModeSchema,
@@ -18,7 +19,7 @@ const SecurityCheckInputSchema = schema(
   )
 );
 
-const GateEnableInputSchema = schema(
+const GateEnableInputSchema = standard(
   Type.Object(
     {
       pluginId: Type.String({
@@ -32,19 +33,19 @@ const GateEnableInputSchema = schema(
   )
 );
 
-const EmptyInputSchema = schema(Type.Object({}, { additionalProperties: false }));
+const EmptyInputSchema = standard(Type.Object({}, { additionalProperties: false }));
 
 export const contract = {
-  securityCheck: ocBase
-    .meta({ idempotent: true, entity: "security" })
+  securityCheck: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "security" }))
     .input(SecurityCheckInputSchema)
-    .output(schema(SecurityReportWithPathSchema)),
-  gateEnable: ocBase
-    .meta({ idempotent: false, entity: "security" })
+    .output(standard(SecurityReportWithPathSchema)),
+  gateEnable: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "security" }))
     .input(GateEnableInputSchema)
-    .output(schema(SecurityGateEnableResultSchema)),
-  getSecurityReport: ocBase
-    .meta({ idempotent: true, entity: "security" })
+    .output(standard(SecurityGateEnableResultSchema)),
+  getSecurityReport: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "security" }))
     .input(EmptyInputSchema)
-    .output(schema(Type.Union([SecurityReportSchema, Type.Null()]))),
+    .output(standard(Type.Union([SecurityReportSchema, Type.Null()]))),
 };

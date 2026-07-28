@@ -21,6 +21,9 @@ describe("orpc openapi", () => {
       paths?: Record<
         string,
         {
+          get?: {
+            responses?: Record<string, unknown>;
+          };
           post?: {
             requestBody?: {
               content?: Record<
@@ -28,6 +31,7 @@ describe("orpc openapi", () => {
                 { schema?: { properties?: Record<string, { description?: string }> } }
               >;
             };
+            responses?: Record<string, unknown>;
           };
         }
       >;
@@ -42,6 +46,9 @@ describe("orpc openapi", () => {
       spec.paths?.["/exampleTodo/tasks/create"]?.post?.requestBody?.content?.["application/json"]
         ?.schema?.properties?.title?.description
     ).toBe("Human-readable task title.");
+    expect(spec.paths?.["/exampleTodo/tasks/create"]?.post?.responses).toHaveProperty("400");
+    expect(spec.paths?.["/exampleTodo/tasks/create"]?.post?.responses).toHaveProperty("409");
+    expect(spec.paths?.["/exampleTodo/tasks/{id}"]?.get?.responses).toHaveProperty("404");
   });
 
   it("serves openapi spec at /api/orpc/openapi.json", async () => {

@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { type Static, Type } from "typebox";
-import { ocBase } from "../../base";
 import { RoleFilterSchema, SessionSourceFilterSchema } from "../../common/entities";
 import { INVALID_REGEX } from "../../common/errors";
 import {
@@ -51,10 +52,10 @@ const CandidateLimitSchema = Type.Optional(
 );
 
 export const contract = {
-  metadata: ocBase
-    .meta({ idempotent: true, entity: "search" })
+  metadata: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "search" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             source: SessionSourceFilterSchema,
@@ -77,7 +78,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             hits: Type.Array(MetadataSearchHitSchema, {
@@ -88,10 +89,10 @@ export const contract = {
         )
       )
     ),
-  content: ocBase
-    .meta({ idempotent: true, entity: "search" })
+  content: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "search" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             source: SessionSourceFilterSchema,
@@ -136,7 +137,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             hits: Type.Array(SearchHitSchema, {
@@ -148,10 +149,10 @@ export const contract = {
       )
     )
     .errors({ INVALID_REGEX }),
-  facets: ocBase
-    .meta({ idempotent: true, entity: "search" })
+  facets: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "search" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             source: SessionSourceFilterSchema,
@@ -171,7 +172,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             hits: Type.Array(FacetSearchHitSchema, {
@@ -182,10 +183,10 @@ export const contract = {
         )
       )
     ),
-  reindex: ocBase
-    .meta({ idempotent: false, entity: "search" })
+  reindex: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "search" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             source: SessionSourceFilterSchema,
@@ -205,11 +206,11 @@ export const contract = {
         )
       )
     )
-    .output(schema(ReindexResultSchema)),
-  clearIndex: ocBase
-    .meta({ idempotent: false, entity: "search" })
+    .output(standard(ReindexResultSchema)),
+  clearIndex: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "search" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             path: Type.Optional(
@@ -225,7 +226,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             cleared: Type.Boolean({

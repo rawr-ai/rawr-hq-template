@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { type Static, Type } from "typebox";
-import { ocBase } from "../../base";
 import {
   SessionListItemSchema,
   SessionMetadataSchema,
@@ -65,10 +66,10 @@ const ResolveResultSchema = Type.Object(
 export type ResolveResult = Static<typeof ResolveResultSchema>;
 
 export const contract = {
-  list: ocBase
-    .meta({ idempotent: true, entity: "catalog" })
+  list: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "catalog" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             source: SessionSourceFilterSchema,
@@ -83,7 +84,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Object(
           {
             sessions: Type.Array(SessionListItemSchema, {
@@ -94,10 +95,10 @@ export const contract = {
         )
       )
     ),
-  resolve: ocBase
-    .meta({ idempotent: true, entity: "catalog" })
+  resolve: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "catalog" }))
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             session: Type.String({
@@ -110,6 +111,6 @@ export const contract = {
         )
       )
     )
-    .output(schema(ResolveResultSchema))
+    .output(standard(ResolveResultSchema))
     .errors({ SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT }),
 };

@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import { ConfigLayeredResultSchema, ConfigLoadResultSchema } from "./entities";
 
 export type {
@@ -9,7 +10,7 @@ export type {
   LoadRawrConfigResult,
 } from "./entities";
 
-const EmptyInputSchema = schema(
+const EmptyInputSchema = standard(
   Type.Object(
     {},
     {
@@ -20,16 +21,16 @@ const EmptyInputSchema = schema(
 );
 
 export const contract = {
-  getWorkspaceConfig: ocBase
-    .meta({ idempotent: true, entity: "config" })
+  getWorkspaceConfig: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "config" }))
     .input(EmptyInputSchema)
-    .output(schema(ConfigLoadResultSchema)),
-  getGlobalConfig: ocBase
-    .meta({ idempotent: true, entity: "config" })
+    .output(standard(ConfigLoadResultSchema)),
+  getGlobalConfig: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "config" }))
     .input(EmptyInputSchema)
-    .output(schema(ConfigLoadResultSchema)),
-  getLayeredConfig: ocBase
-    .meta({ idempotent: true, entity: "config" })
+    .output(standard(ConfigLoadResultSchema)),
+  getLayeredConfig: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "config" }))
     .input(EmptyInputSchema)
-    .output(schema(ConfigLayeredResultSchema)),
+    .output(standard(ConfigLayeredResultSchema)),
 };

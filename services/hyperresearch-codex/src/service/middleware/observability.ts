@@ -1,9 +1,11 @@
 /**
  * @fileoverview Required service-wide observability middleware.
  */
-import { createRequiredServiceObservabilityMiddleware } from "../base";
+import { createObservabilityMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
 
-export const observability = createRequiredServiceObservabilityMiddleware({
+export const observability = createObservabilityMiddleware<Context>(metadataDefaults, {
   spanAttributes: ({ context }) => ({
     repo_root: context.scope.repoRoot,
     invocation_trace_id: context.invocation.traceId,

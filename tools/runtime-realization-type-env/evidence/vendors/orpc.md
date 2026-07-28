@@ -11,9 +11,11 @@
 
 ## Current Vendor Facts
 
-- Installed packages: `@orpc/contract` and `@orpc/server` `1.13.5`.
+- Installed packages: `@orpc/contract`, `@orpc/openapi`, and `@orpc/server`
+  `2.0.0-beta.20`.
 - The vendor boundary probe compiles native `oc.router(...)`,
-  `implement(contract).$context<...>()`, and native `.handler(...)` shapes.
+  `implement(contract).$context<...>()`, `openapi(...)` metadata, and native
+  `.handler(...)` shapes.
 - `.effect(...)` in this lab means the RAWR runtime-realization authoring
   terminal, not native oRPC API surface.
 - The lab does not assert a fake oRPC `.effect(...)` negative because oRPC does

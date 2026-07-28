@@ -2,7 +2,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { minifyContractRouter } from "@orpc/contract";
+import { ProcedureContract } from "@orpc/contract";
+import { getOpenAPIMeta } from "@orpc/openapi";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
@@ -25,16 +26,14 @@ type RouteShape = {
 };
 
 function collectProcedureRoutes(node: unknown, namespace: string[] = []): string[] {
-  if (!node || typeof node !== "object") return [];
-  const asRecord = node as Record<string, unknown>;
-  const maybeOrpc = asRecord["~orpc"];
-  if (maybeOrpc && typeof maybeOrpc === "object") {
-    const route = (maybeOrpc as { route?: RouteShape }).route ?? {};
+  if (node instanceof ProcedureContract) {
+    const route: RouteShape = getOpenAPIMeta(node) ?? {};
     return [`${namespace.join(".")} ${route.method ?? "UNKNOWN"} ${route.path ?? "UNKNOWN"}`];
   }
+  if (!node || typeof node !== "object") return [];
 
   const items: string[] = [];
-  for (const [key, value] of Object.entries(asRecord)) {
+  for (const [key, value] of Object.entries(node)) {
     items.push(...collectProcedureRoutes(value, [...namespace, key]));
   }
   return items;
@@ -147,7 +146,7 @@ describe("rawr server routes", () => {
 
   it("no-legacy-composition-authority: keeps canonical realized procedure routes stable", () => {
     const routes = collectProcedureRoutes(
-      minifyContractRouter(createTestingRawrHostSeam().realization.orpc.contract)
+      createTestingRawrHostSeam().realization.orpc.contract
     ).sort();
     expect(routes).toEqual([
       "exampleTodo.tasks.create POST /exampleTodo/tasks/create",

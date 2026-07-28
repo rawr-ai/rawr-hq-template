@@ -20,8 +20,8 @@
     }
   },
   "dependencies": {
-    "@orpc/contract": "1.14.8",
-    "@orpc/server": "1.14.8",
+    "@orpc/contract": "2.0.0-beta.20",
+    "@orpc/server": "2.0.0-beta.20",
     "@rawr/example-todo": "workspace:*",
     "@rawr/hq-sdk": "workspace:*",
     "@rawr/runtime-context": "workspace:*",

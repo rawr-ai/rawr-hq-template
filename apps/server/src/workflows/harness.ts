@@ -1,5 +1,4 @@
 import { type Counter, type Histogram, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
-import type { AnyContractRouter } from "@orpc/contract";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Context, Router } from "@orpc/server";
 import {
@@ -13,7 +12,7 @@ import type { RawrBoundaryContext, RawrInitialContext } from "../request-context
 export const WORKFLOW_BASE_PATH = "/api/workflows" as const;
 
 export type WorkflowRouteSurface<TContext extends Context> = Readonly<{
-  publishedRouter: Router<AnyContractRouter, TContext>;
+  publishedRouter: Router<TContext>;
 }>;
 
 let workflowRequestsCounter: Counter | undefined;

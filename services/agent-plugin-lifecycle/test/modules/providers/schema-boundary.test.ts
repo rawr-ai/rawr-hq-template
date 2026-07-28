@@ -1,7 +1,9 @@
-import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
+import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
+import { getProcedureMetadata } from "@rawr/hq-sdk";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
+import { contract as serviceContract } from "../../../src/service/contract";
 import { contract } from "../../../src/service/modules/providers/contract";
 import {
   ProviderMutationTargetResultSchema,
@@ -26,8 +28,8 @@ import {
 
 describe("provider public schema boundary", () => {
   it("derives every public provider contract type from its TypeBox schema", () => {
-    type ContractInputs = InferContractRouterInputs<typeof contract>;
-    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+    type ContractInputs = InferRouterContractInputs<typeof contract>;
+    type ContractOutputs = InferRouterContractOutputs<typeof contract>;
 
     expectTypeOf<ContractInputs["test"]>().toEqualTypeOf<
       Static<typeof ProviderTestRequestSchema>
@@ -49,7 +51,7 @@ describe("provider public schema boundary", () => {
     >();
   });
 
-  it("declares the complete service metadata for each provider operation", () => {
+  it("inherits service metadata and keeps provider overrides local", () => {
     const expectedMetadata = {
       test: {
         idempotent: true,
@@ -73,9 +75,17 @@ describe("provider public schema boundary", () => {
         entity: "providers",
       },
     } as const;
+    const expectedOverrides = {
+      test: { idempotent: true, audit: "full", entity: "providers" },
+      status: { idempotent: true, entity: "providers" },
+      sync: { idempotent: true, audit: "full", entity: "providers" },
+    } as const;
 
     for (const operation of ["test", "status", "sync"] as const) {
-      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata[operation]);
+      expect(getProcedureMetadata(contract[operation])).toEqual(expectedOverrides[operation]);
+      expect(getProcedureMetadata(serviceContract.providers[operation])).toEqual(
+        expectedMetadata[operation]
+      );
     }
   });
 

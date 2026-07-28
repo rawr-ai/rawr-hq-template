@@ -4,14 +4,15 @@
  * @remarks
  * This is the single package-wide middleware composition point.
  * Import the root contract here, derive the central implementer once, and let
- * modules consume `impl.<module>` subtrees from there.
+ * modules consume `service.<module>` branches from there.
  *
  * @agents
  * This file is the only package-wide runtime assembly seam. Required service
  * observability semantics are supplied here exactly once.
  */
 
-import { createServiceImplementer } from "./base";
+import { implement } from "@orpc/server";
+import type { Context } from "./base";
 import { contract } from "./contract";
 import { analytics } from "./middleware/analytics";
 import { observability } from "./middleware/observability";
@@ -21,14 +22,14 @@ import { observability } from "./middleware/observability";
  *
  * @remarks
  * Middleware order is authored here:
- * 1) framework baseline middleware from the SDK seam
- * 2) required service middleware extensions supplied here and auto-attached
- *    inside `createServiceImplementer(...)`
+ * 1) service-owned observability
+ * 2) service-owned analytics
  *
  * U02 is reservation-only, so no extra service-wide providers or guards are
  * attached yet.
  */
-export const impl = createServiceImplementer(contract, {
-  observability,
-  analytics,
-});
+/** Unconfigured contract implementer used for aggregate router implementation. */
+export const impl = implement(contract).$context<Context>();
+
+/** Configured service stage inherited by every module branch. */
+export const service = impl.use(observability).use(analytics);

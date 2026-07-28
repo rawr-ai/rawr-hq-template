@@ -10,7 +10,7 @@ import { resourceFromAttributes } from "@opentelemetry/resources";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import type { SpanExporter } from "@opentelemetry/sdk-trace-base";
-import { ORPCInstrumentation } from "@orpc/otel";
+import { ORPCInstrumentation } from "@orpc/opentelemetry";
 
 const TELEMETRY_STATE_KEY = Symbol.for("rawr.orpc.telemetry.state");
 
@@ -222,7 +222,8 @@ export async function installRawrOrpcTelemetry(
 
   state.requestedOptions = resolvedOptions;
   state.installPromise = (async () => {
-    const instrumentations = [new HttpInstrumentation(), new ORPCInstrumentation()];
+    const orpcInstrumentation = new ORPCInstrumentation({ propagationEnabled: false });
+    const instrumentations = [new HttpInstrumentation(), orpcInstrumentation];
 
     const sdk = new NodeSDK({
       resource: resourceFromAttributes({
@@ -257,15 +258,18 @@ export async function installRawrOrpcTelemetry(
         }
 
         shuttingDown = true;
-        await sdk.shutdown();
+        orpcInstrumentation.disable();
+        try {
+          await sdk.shutdown();
+        } finally {
+          if (state.installed === installed) {
+            state.installed = undefined;
+            state.installPromise = undefined;
+          }
 
-        if (state.installed === installed) {
-          state.installed = undefined;
-          state.installPromise = undefined;
+          state.removeProcessHooks?.();
+          state.removeProcessHooks = undefined;
         }
-
-        state.removeProcessHooks?.();
-        state.removeProcessHooks = undefined;
       },
     };
 

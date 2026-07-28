@@ -1,35 +1,33 @@
-import type { Context } from "@orpc/server";
+import type { RouterContract } from "@orpc/contract";
+import type { AnyRouter } from "@orpc/server";
 import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees";
-import { createContextualRouterBuilder } from "../orpc/factory/implementer";
-import type { AnyContractRouterObject, AnyProcedureRouterObject } from "../orpc/router-shapes";
+
+type ContractTree = { [key: string]: RouterContract };
+type RouterTree = { [key: string]: AnyRouter };
 
 export { createInternalTraceForwardingOptions as createApiTraceForwardingOptions } from "../orpc/boundary/trace-forwarding";
 
 export type ApiSurfaceContribution<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
 > = Readonly<{
   contract: TContract;
   router: TRouter;
 }>;
 
-export type ApiSurfaceDeclaration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-> = Readonly<{
+export type ApiSurfaceDeclaration<TContract extends ContractTree = ContractTree> = Readonly<{
   contract: TContract;
 }>;
 
-export type ApiPluginDeclaration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-> = Readonly<{
+export type ApiPluginDeclaration<TContract extends ContractTree = ContractTree> = Readonly<{
   namespace: "orpc";
   internal: ApiSurfaceDeclaration<TContract>;
   published?: ApiSurfaceDeclaration<TContract>;
 }>;
 
 export type ApiPluginContribution<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
 > = Readonly<{
   internal: ApiSurfaceContribution<TContract, TRouter>;
   published?: ApiSurfaceContribution<TContract, TRouter>;
@@ -41,13 +39,13 @@ type BivariantContributionFactory<TInput, TResult> = {
 
 export type ApiPluginContributionBuilder<
   TBound = never,
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
 > = BivariantContributionFactory<TBound, ApiPluginContribution<TContract, TRouter>>;
 
 export type ApiPluginRegistration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TBound = never,
 > = Partial<ApiPluginContribution<TContract, TRouter>> &
   Readonly<{
@@ -57,20 +55,20 @@ export type ApiPluginRegistration<
   }>;
 
 export type MaterializedApiPluginRegistration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TBound = never,
 > = ApiPluginContribution<TContract, TRouter> & ApiPluginRegistration<TContract, TRouter, TBound>;
 
 type DefineApiPluginInput<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TBound = never,
 > = Omit<ApiPluginRegistration<TContract, TRouter, TBound>, "namespace">;
 
-export function defineApiPluginDeclaration<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
->(input: Omit<ApiPluginDeclaration<TContract>, "namespace">): ApiPluginDeclaration<TContract> {
+export function defineApiPluginDeclaration<TContract extends ContractTree = ContractTree>(
+  input: Omit<ApiPluginDeclaration<TContract>, "namespace">
+): ApiPluginDeclaration<TContract> {
   return {
     namespace: "orpc",
     ...input,
@@ -78,8 +76,8 @@ export function defineApiPluginDeclaration<
 }
 
 export function defineApiPlugin<
-  TContract extends AnyContractRouterObject = AnyContractRouterObject,
-  TRouter extends AnyProcedureRouterObject = AnyProcedureRouterObject,
+  TContract extends ContractTree = ContractTree,
+  TRouter extends RouterTree = RouterTree,
   TBound = never,
 >(
   input: DefineApiPluginInput<TContract, TRouter, TBound>
@@ -90,37 +88,25 @@ export function defineApiPlugin<
   };
 }
 
-export function createApiRouterBuilder<
-  const TContract extends AnyContractRouterObject,
-  TContext extends Context,
->(contract: TContract) {
-  return createContextualRouterBuilder<TContract, TContext>(contract);
-}
-
 export function composeApiPlugins<
   const TPlugins extends readonly MaterializedApiPluginRegistration[],
 >(plugins: TPlugins) {
   return {
-    internalContract: mergeNamedSurfaceTrees<AnyContractRouterObject>(
+    internalContract: mergeNamedSurfaceTrees<ContractTree>(
       plugins.map((plugin) => plugin.internal.contract),
       { kind: "api", surface: "contract" }
     ),
-    internalRouter: mergeNamedSurfaceTrees<AnyProcedureRouterObject>(
+    internalRouter: mergeNamedSurfaceTrees<RouterTree>(
       plugins.map((plugin) => plugin.internal.router),
       { kind: "api", surface: "router" }
     ),
-    publishedContract: mergeNamedSurfaceTrees<AnyContractRouterObject>(
+    publishedContract: mergeNamedSurfaceTrees<ContractTree>(
       plugins.flatMap((plugin) => (plugin.published ? [plugin.published.contract] : [])),
       { kind: "api", surface: "contract" }
     ),
-    publishedRouter: mergeNamedSurfaceTrees<AnyProcedureRouterObject>(
+    publishedRouter: mergeNamedSurfaceTrees<RouterTree>(
       plugins.flatMap((plugin) => (plugin.published ? [plugin.published.router] : [])),
       { kind: "api", surface: "router" }
     ),
   } as const;
 }
-
-export type {
-  AnyContractRouterObject,
-  AnyProcedureRouterObject,
-} from "../orpc/router-shapes";

@@ -257,15 +257,27 @@ handlers.
 The surviving filesystem/process resource family and lifecycle service migrate
 coherently to Effect 4 only after controller authority, persistent
 artifact/projection state, target records, and other rejected owners are
-deleted. At migration opening, re-query the official Effect 4 line and pin one
-exact aligned `effect`, `@effect/platform-node`, and Effect-4-compatible
-`effect-orpc` release together with the current coherent `@orpc/*` and
-TypeBox versions; remove `@effect/platform`, whose filesystem, path,
-platform-error, and process capabilities moved in Effect 4. Migrate any active
-root-owned tool that consumes the root Effect version in the same checkpoint so
-the workspace has no hidden Effect 3 consumer. The root-vendor checkpoint must
-leave one Effect realm and one oRPC realm. TypeBox remains the public schema
-authority.
+deleted. The atomic runtime boundary pins exact `effect`,
+`@effect/platform-node`, the complete `@orpc/*` family, official
+`@orpc/experimental-effect`, TypeBox, and Standard Schema versions together.
+Community `effect-orpc`, oRPC 1 compatibility builders, and the old OpenAPI and
+telemetry packages leave in the same checkpoint. Native oRPC owns contract,
+implementer, middleware, and context construction; the official Effect bridge
+adapts only Effect-backed handlers; one product-free TypeBox adapter owns
+Standard Schema validation and Standard JSON Schema projection. Migrate any
+active root-owned tool that consumes the root versions in the same checkpoint
+so the workspace has no hidden older consumer. The boundary must leave one
+Effect realm and one oRPC realm. TypeBox remains the public schema authority.
+
+The oRPC 2 boundary also adopts the vendor's native placement of two semantics
+instead of rebuilding the oRPC 1 representation. HTTP response status is
+transport policy; local and serialized `ORPCError` values contain `defined`,
+`inferable`, code, message, and data without a copied status property. Service
+metadata is authored and read through typed native `defineMeta` plugins.
+Services may narrow the metadata type with their own plugin/accessor pair, but
+the namespaced raw `~orpc.meta` object is vendor storage rather than a public
+domain contract. Linked-client and OpenAPI proof exercises those native shapes
+directly.
 
 The canonical public product operations are:
 

@@ -11,12 +11,15 @@
  */
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { schema } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 import { TagSchema } from "#example-todo-service/model/dto/tag";
-import type { TodoProcedureMetadata } from "#example-todo-service/model/policy/procedure-metadata";
+import {
+  type TodoProcedureMetadata,
+  todoProcedureMetadata,
+} from "#example-todo-service/model/policy/procedure-metadata";
 
-const ReadOnlyModeData = schema(
+const ReadOnlyModeData = standard(
   Type.Object(
     {
       path: Type.Optional(
@@ -34,22 +37,24 @@ const ReadOnlyModeData = schema(
 );
 
 const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
-  status: 409,
   message: "Write operations are blocked while read-only mode is enabled",
   data: ReadOnlyModeData,
 } as const;
 
 export const contract = {
   create: oc
-    .$meta<TodoProcedureMetadata>({
-      idempotent: false,
-      domain: "todo",
-      audience: "internal",
-      audit: "basic",
-      entity: "service",
-    })
+    .meta(
+      todoProcedureMetadata({
+        idempotent: false,
+        analytics: {
+          layer: "procedure",
+          module: "tags",
+          operation: "tags.create",
+        },
+      } satisfies TodoProcedureMetadata)
+    )
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             name: Type.String({
@@ -69,13 +74,12 @@ export const contract = {
         )
       )
     )
-    .output(schema(TagSchema))
+    .output(standard(TagSchema))
     .errors({
       READ_ONLY_MODE,
       DUPLICATE_TAG: {
-        status: 409,
         message: "Tag already exists",
-        data: schema(
+        data: standard(
           Type.Object(
             {
               name: Type.Optional(
@@ -94,15 +98,17 @@ export const contract = {
       },
     }),
   list: oc
-    .$meta<TodoProcedureMetadata>({
-      idempotent: true,
-      domain: "todo",
-      audience: "internal",
-      audit: "basic",
-      entity: "service",
-    })
+    .meta(
+      todoProcedureMetadata({
+        idempotent: true,
+        analytics: {
+          layer: "module",
+          module: "tags",
+        },
+      } satisfies TodoProcedureMetadata)
+    )
     .input(
-      schema(
+      standard(
         Type.Object(
           {},
           {
@@ -113,7 +119,7 @@ export const contract = {
       )
     )
     .output(
-      schema(
+      standard(
         Type.Array(TagSchema, {
           description: "All tags currently available in the todo domain.",
         })

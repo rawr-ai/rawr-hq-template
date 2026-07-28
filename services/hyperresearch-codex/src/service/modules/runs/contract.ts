@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import {
   HyperresearchAgentJobSchema,
   HyperresearchIntegrityFindingSchema,
@@ -129,20 +130,20 @@ const V8ValidationResultSchema = Type.Object(
 );
 
 export const contract = {
-  startV8Run: ocBase
-    .meta({ idempotent: false, entity: "runs" })
-    .input(schema(StartV8RunInputSchema))
-    .output(schema(V8RunnerResultSchema)),
-  advanceV8Run: ocBase
-    .meta({ idempotent: false, entity: "runs" })
-    .input(schema(AdvanceV8RunInputSchema))
-    .output(schema(V8RunnerResultSchema)),
-  inspectV8Run: ocBase
-    .meta({ idempotent: true, entity: "runs" })
-    .input(schema(InspectV8RunInputSchema))
-    .output(schema(V8RunnerResultSchema)),
-  validateV8Run: ocBase
-    .meta({ idempotent: true, entity: "runs" })
-    .input(schema(InspectV8RunInputSchema))
-    .output(schema(V8ValidationResultSchema)),
+  startV8Run: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "runs" }))
+    .input(standard(StartV8RunInputSchema))
+    .output(standard(V8RunnerResultSchema)),
+  advanceV8Run: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "runs" }))
+    .input(standard(AdvanceV8RunInputSchema))
+    .output(standard(V8RunnerResultSchema)),
+  inspectV8Run: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "runs" }))
+    .input(standard(InspectV8RunInputSchema))
+    .output(standard(V8RunnerResultSchema)),
+  validateV8Run: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "runs" }))
+    .input(standard(InspectV8RunInputSchema))
+    .output(standard(V8ValidationResultSchema)),
 };

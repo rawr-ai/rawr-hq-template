@@ -1,5 +1,6 @@
-import { type ServiceMetadataOf, schema } from "@rawr/hq-sdk";
-import { eoc } from "effect-orpc";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 
 import {
   ProviderStatusRequestSchema,
@@ -11,34 +12,33 @@ import {
 } from "./model/dto/provider-lifecycle";
 
 export const contract = {
-  test: eoc
-    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "providers" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "full",
-      entity: "providers",
-    })
-    .input(schema(ProviderTestRequestSchema))
-    .output(schema(ProviderTestResultSchema)),
-  status: eoc
-    .$meta<ServiceMetadataOf<{ audit: "basic"; entity: "providers" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "basic",
-      entity: "providers",
-    })
-    .input(schema(ProviderStatusRequestSchema))
-    .output(schema(ProviderStatusResultSchema)),
-  sync: eoc
-    .$meta<ServiceMetadataOf<{ audit: "full"; entity: "providers" }>>({
-      idempotent: true,
-      domain: "agent-plugin-lifecycle",
-      audience: "internal",
-      audit: "full",
-      entity: "providers",
-    })
-    .input(schema(ProviderSyncRequestSchema))
-    .output(schema(ProviderSyncResultSchema)),
+  test: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        audit: "full",
+        entity: "providers",
+      })
+    )
+    .input(standard(ProviderTestRequestSchema))
+    .output(standard(ProviderTestResultSchema)),
+  status: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        entity: "providers",
+      })
+    )
+    .input(standard(ProviderStatusRequestSchema))
+    .output(standard(ProviderStatusResultSchema)),
+  sync: oc
+    .meta(
+      procedureMetadata({
+        idempotent: true,
+        audit: "full",
+        entity: "providers",
+      })
+    )
+    .input(standard(ProviderSyncRequestSchema))
+    .output(standard(ProviderSyncResultSchema)),
 };

@@ -275,9 +275,7 @@ describe("provider status and preflight", () => {
     });
     const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
-    await expect(client.providers.status(channelRequest, testInvocation)).rejects.toThrow(
-      "Internal Server Error"
-    );
+    await expect(client.providers.status(channelRequest, testInvocation)).rejects.toBe(defect);
     expect(session.mutationCalls()).toEqual([]);
   });
 });
