@@ -49,11 +49,11 @@ afterEach(() => {
 });
 
 describe("host logging correlation", () => {
-  it("writes correlated rpc service logs into .rawr/hq/runtime.log", async () => {
+  it("keeps overlapping RPC correlation pairs request-owned", async () => {
     const { app, repoRoot } = await createTestApp();
 
     try {
-      const response = await app.handle(
+      const requests = [
         new Request("http://localhost/rpc/exampleTodo/tasks/create", {
           method: "POST",
           headers: {
@@ -66,10 +66,24 @@ describe("host logging correlation", () => {
               title: "RPC correlated log",
             },
           }),
-        })
-      );
+        }),
+        new Request("http://localhost/rpc/exampleTodo/tasks/create", {
+          method: "POST",
+          headers: {
+            ...FIRST_PARTY_RPC_HEADERS,
+            "x-request-id": "rpc-request-2",
+            "x-correlation-id": "rpc-correlation-2",
+          },
+          body: JSON.stringify({
+            json: {
+              title: "Second RPC correlated log",
+            },
+          }),
+        }),
+      ];
+      const responses = await Promise.all(requests.map((request) => app.handle(request)));
 
-      expect(response.status).toBe(200);
+      expect(responses.map((response) => response.status)).toEqual([200, 200]);
 
       __flushHostLoggerForTests();
 
@@ -80,6 +94,17 @@ describe("host logging correlation", () => {
             event: "todo.procedure",
             requestId: "rpc-request-1",
             correlationId: "rpc-correlation-1",
+            invocationTraceId: "rpc-correlation-1",
+            requestMethod: "POST",
+            requestPath: "/rpc/exampleTodo/tasks/create",
+            surface: "rpc",
+            callerSurface: "first-party",
+          }),
+          expect.objectContaining({
+            event: "todo.procedure",
+            requestId: "rpc-request-2",
+            correlationId: "rpc-correlation-2",
+            invocationTraceId: "rpc-correlation-2",
             requestMethod: "POST",
             requestPath: "/rpc/exampleTodo/tasks/create",
             surface: "rpc",
@@ -121,6 +146,7 @@ describe("host logging correlation", () => {
             event: "todo.procedure",
             requestId: "openapi-request-1",
             correlationId: "openapi-correlation-1",
+            invocationTraceId: "openapi-correlation-1",
             requestMethod: "POST",
             requestPath: "/api/orpc/exampleTodo/tasks/create",
             surface: "openapi",

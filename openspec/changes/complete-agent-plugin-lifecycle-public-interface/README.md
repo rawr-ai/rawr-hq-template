@@ -3047,6 +3047,39 @@ The following embedded API runtime checkpoint consumes this admission to move
 the host resolver through `deps`, service middleware, `provided`, and terminal
 module curation.
 
+## Embedded API Request Context
+
+The bounded runtime checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21d]]. The server now
+owns one request-context projection with ready capabilities under `deps`,
+repository selection under `scope`, host-selected values under `config`, and
+request identity under `invocation`. Each request starts with an empty
+`provided` lane. The embedded Example Todo service derives one named client
+middleware from its base-owned native oRPC author, resolves the Todo client at
+request time, and contributes it under `provided`.
+
+The `example-todo` API module matches the service's `exampleTodo` contract
+branch and terminally curates only the resolved client and correlation
+identity. Its task operation group authors both handlers in `tasks.router.ts`;
+module and service routers compose completed plain objects upward, with the
+root retaining the exact `Router<typeof contract, never>` relation. Plugin
+registration is static and captures no repository resolver.
+
+Uncached typecheck covers runtime context, the API plugin, the server host, and
+their six build prerequisites. Seven focused server files pass all 29 behavior
+tests for RPC and OpenAPI calls against different repository roots, zero
+pre-request resolution, one resolution per request, cross-root isolation,
+request correlation, middleware multiplicity, typed failure, and success. The
+five staged Grit service laws report zero findings in 2.1 seconds. The staged
+closed topology reports no embedded API finding in 1.5 seconds while retaining
+the known standalone-service corpus. The 25-case Habitat fixture passes all
+305 assertions, and repository Biome lint passes.
+
+An unstaged full-corpus context scan also passed but required 4 minutes 49
+seconds. That disproportional execution is not normalized here; task 5.7e22
+owns the inferred, cacheable Habitat boundary. No provider home, Personal
+repository, Oclif surface, or live lifecycle state changes.
+
 ## Settlement Oracles
 
 The final product must prove:

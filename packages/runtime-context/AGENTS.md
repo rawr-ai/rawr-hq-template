@@ -2,8 +2,8 @@
 
 ## Purpose
 
-- Define the shared type vocabulary for host support and invocation context
-  after runtime capabilities have been bound.
+- Define the shared type vocabulary for host support and request context after
+  runtime capabilities have been selected.
 
 ## Scope
 
@@ -11,36 +11,36 @@
 
 ## Boundaries
 
-- Owns type-only host, request, middleware-state, and workflow support
-  contracts used after host binding.
+- Owns the generic `deps`, `scope`, `config`, `invocation`, and initial
+  `provided` lane contracts used after host binding.
 - Must not own application declarations, resource construction, operation
   policy, executable assembly, or compatibility aliases for domain context.
-- Context fields describe ready host support; domain services narrow them to
-  the capabilities each operation actually consumes.
+- `deps` contains ready host capabilities. The package does not select their
+  providers, acquire them, or prescribe a domain-specific dependency set.
 
 ## Behavior
 
-- Runtime context types carry already-resolved process and request facts across
-  middleware and router boundaries without constructing resources or choosing
-  domain behavior.
+- Runtime context types carry ready support and request facts into service
+  middleware. Middleware enriches `provided`; modules curate the smallest
+  handler vocabulary required by their operations.
 
 ## Concepts
 
-- **Host context** is process-scoped support; **request context** adds
-  invocation identity; **middleware state** is the typed contribution produced
-  while a request crosses host policy.
+- **Deps** are ready capabilities, **scope** selects their operating boundary,
+  **config** carries externally chosen behavior, **invocation** owns request
+  facts, and **provided** is the downstream enrichment lane.
 
 ## Flow
 
-- A host constructs process-scoped support and then adds request identity and
-  middleware state at its transport boundary.
-- Service routers consume the resulting typed context without importing the
-  host implementation.
+- A host projects ready support into the four input lanes and starts each
+  request with an empty `provided` lane.
+- Service middleware enriches the request; module composition narrows its
+  vocabulary; operation handlers consume that curated context.
 
 ## Interfaces
 
-- Hosts construct values conforming to these contracts; middleware extends
-  them; service routers consume narrowed views through type-only imports.
+- Hosts instantiate the generic contracts. Services specialize them locally;
+  no domain context type is exported from this package.
 
 ## Routing
 

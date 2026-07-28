@@ -1,14 +1,14 @@
 import { implement } from "@orpc/server";
-import type { BoundaryRequestSupportContext } from "@rawr/runtime-context";
-import type { RawrHostBoundRolePlan } from "./host-seam";
+import type { RawrHostRolePlan } from "./host-seam";
 import { mergeRawrHostSurfaceTrees } from "./host-surface-merge";
+import type { RawrBoundaryContext } from "./request-context";
 
 /**
  * @agents-style seam-law declaration -> host binding -> request/process materialization
  * @agents-style canonical host realization
  *
  * Owns:
- * - turning one host-bound role plan into executable request/process surfaces
+ * - turning one host role plan into executable request/process surfaces
  *
  * Must not own:
  * - declaration choice
@@ -16,55 +16,55 @@ import { mergeRawrHostSurfaceTrees } from "./host-surface-merge";
  * - fallback interop with shared-package materializers
  */
 
-function materializeRawrHostOrpc(boundRolePlan: RawrHostBoundRolePlan) {
+function materializeRawrHostOrpc(rolePlan: RawrHostRolePlan) {
   const contract = mergeRawrHostSurfaceTrees([
-    boundRolePlan.api.internalContract,
-    boundRolePlan.workflows.internalContract,
+    rolePlan.api.internalContract,
+    rolePlan.workflows.internalContract,
   ]);
   const router = mergeRawrHostSurfaceTrees([
-    boundRolePlan.api.internalRouter,
-    boundRolePlan.workflows.internalRouter,
+    rolePlan.api.internalRouter,
+    rolePlan.workflows.internalRouter,
   ]);
-  const requestScopedOrpc = implement(contract).$context<BoundaryRequestSupportContext>();
+  const requestScopedOrpc = implement(contract).$context<RawrBoundaryContext>();
   const requestScopedPublishedApi = implement(
-    boundRolePlan.api.publishedContract
-  ).$context<BoundaryRequestSupportContext>();
+    rolePlan.api.publishedContract
+  ).$context<RawrBoundaryContext>();
 
   return {
     contract,
     router: requestScopedOrpc.router(router),
     published: {
-      contract: boundRolePlan.api.publishedContract,
-      router: requestScopedPublishedApi.router(boundRolePlan.api.publishedRouter),
+      contract: rolePlan.api.publishedContract,
+      router: requestScopedPublishedApi.router(rolePlan.api.publishedRouter),
     },
   } as const;
 }
 
-function materializeRawrHostWorkflows(boundRolePlan: RawrHostBoundRolePlan) {
+function materializeRawrHostWorkflows(rolePlan: RawrHostRolePlan) {
   const requestScopedPublishedWorkflow = implement(
-    boundRolePlan.workflows.publishedContract
-  ).$context<BoundaryRequestSupportContext>();
+    rolePlan.workflows.publishedContract
+  ).$context<RawrBoundaryContext>();
   const requestScopedInternalWorkflow = implement(
-    boundRolePlan.workflows.internalContract
-  ).$context<BoundaryRequestSupportContext>();
+    rolePlan.workflows.internalContract
+  ).$context<RawrBoundaryContext>();
 
   return {
-    surfaces: boundRolePlan.workflows.surfaces,
+    surfaces: rolePlan.workflows.surfaces,
     internal: {
-      contract: boundRolePlan.workflows.internalContract,
-      router: requestScopedInternalWorkflow.router(boundRolePlan.workflows.internalRouter),
+      contract: rolePlan.workflows.internalContract,
+      router: requestScopedInternalWorkflow.router(rolePlan.workflows.internalRouter),
     },
     published: {
-      contract: boundRolePlan.workflows.publishedContract,
-      router: requestScopedPublishedWorkflow.router(boundRolePlan.workflows.publishedRouter),
+      contract: rolePlan.workflows.publishedContract,
+      router: requestScopedPublishedWorkflow.router(rolePlan.workflows.publishedRouter),
     },
-    createInngestFunctions: boundRolePlan.workflows.createInngestFunctions,
+    createInngestFunctions: rolePlan.workflows.createInngestFunctions,
   } as const;
 }
 
-export function materializeRawrHostBoundRolePlan(boundRolePlan: RawrHostBoundRolePlan) {
+export function materializeRawrHostRolePlan(rolePlan: RawrHostRolePlan) {
   return {
-    orpc: materializeRawrHostOrpc(boundRolePlan),
-    workflows: materializeRawrHostWorkflows(boundRolePlan),
+    orpc: materializeRawrHostOrpc(rolePlan),
+    workflows: materializeRawrHostWorkflows(rolePlan),
   } as const;
 }

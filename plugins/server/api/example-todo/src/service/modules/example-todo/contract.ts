@@ -1,7 +1,12 @@
 import { contract as exampleTodoContract } from "@rawr/example-todo/client";
 
-/** HTTP operation contract projected from the sealed Example Todo task boundary. */
-export const contract = {
+/**
+ * @purpose Project the Todo task capability onto its stable HTTP boundary.
+ * @capability Create and retrieve repository-scoped Todo tasks.
+ * @behavior Preserve the domain schemas while adding HTTP route metadata.
+ * @relation Forms the task branch of the Example Todo API module contract.
+ */
+const tasks = {
   create: exampleTodoContract.tasks.create.route({
     method: "POST",
     path: "/exampleTodo/tasks/create",
@@ -17,3 +22,6 @@ export const contract = {
     operationId: "exampleTodoGetTask",
   }),
 } as const;
+
+/** Public Example Todo API module contract composed from its task capability. */
+export const contract = { tasks } as const;

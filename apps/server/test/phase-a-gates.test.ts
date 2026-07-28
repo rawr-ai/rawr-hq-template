@@ -81,7 +81,7 @@ describe("phase-a gate scaffold (server)", () => {
     expect(legacyCutoverSource).not.toContain("../server/src/host-realization");
     expect(hostCompositionSource).toContain("createRawrHqManifest");
     expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
-    expect(hostCompositionSource).toContain("createRawrHostBoundRolePlan");
+    expect(hostCompositionSource).toContain("createRawrHostRolePlan");
     expect(hostSatisfiersSource).not.toContain(["@rawr", "hq-ops-" + "host"].join("/"));
     expect(hostSatisfiersSource).not.toContain("./hq-ops-resources");
     expect(hqOpsBindingSource).toContain("./hq-ops-resources");
