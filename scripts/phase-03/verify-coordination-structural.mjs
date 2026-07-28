@@ -32,7 +32,6 @@ const [
   serviceContractSource,
   serviceRouterSource,
   serviceImplSource,
-  serviceClientSource,
   serviceObservabilityMiddlewareSource,
   serviceAnalyticsMiddlewareSource,
   workflowsRouterSource,
@@ -54,7 +53,6 @@ const [
   readFile(path.join(coordinationRoot, "src", "service", "contract.ts")),
   readFile(path.join(coordinationRoot, "src", "service", "router.ts")),
   readFile(path.join(coordinationRoot, "src", "service", "impl.ts")),
-  readFile(path.join(coordinationRoot, "src", "client.ts")),
   readFile(path.join(coordinationRoot, "src", "service", "middleware", "observability.ts")),
   readFile(path.join(coordinationRoot, "src", "service", "middleware", "analytics.ts")),
   readFile(path.join(coordinationRoot, "src", "service", "modules", "workflows", "router.ts")),
@@ -159,23 +157,6 @@ if (
   serviceBaseSource.includes("CoordinationRunsRuntime")
 ) {
   fail("service base must not declare run runtime ownership.");
-}
-
-if (!serviceClientSource.includes("const servicePackage = defineServicePackage(router);")) {
-  fail("client must use defineServicePackage(router).");
-}
-
-if (!serviceClientSource.includes("return servicePackage.createClient(boundary);")) {
-  fail("client must delegate to the canonical service package shell.");
-}
-
-if (
-  serviceClientSource.includes("createRouterClient(") ||
-  serviceClientSource.includes("InferInvocation") ||
-  serviceClientSource.includes("runs: {") ||
-  serviceClientSource.includes("provided:")
-) {
-  fail("client must not keep custom runtime projection seams.");
 }
 
 if (serviceRunsExists) {

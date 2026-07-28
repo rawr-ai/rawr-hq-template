@@ -416,6 +416,7 @@
     "services/hyperresearch-codex": {
       "name": "@rawr/hyperresearch-codex",
       "dependencies": {
+        "@orpc/server": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
         "typebox": "1.3.8",
       },

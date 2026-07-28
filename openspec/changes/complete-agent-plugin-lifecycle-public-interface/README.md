@@ -337,9 +337,9 @@ remains the canonical worked construction and invocation reference. `Deps` carri
 host capabilities, `Scope` carries stable binding identity, and `Config`
 carries stable externally selected behavior for the lifetime of a client.
 `Invocation` carries per-call request facts. Those are the four
-service-declared input lanes. The HQ SDK seeds an empty execution-local
-`provided` bucket, and provider middleware grows its qualified capabilities for
-downstream modules and handlers.
+service-declared input lanes. The owner-local native client resolver starts an
+empty execution-local `provided` bucket, and provider middleware grows its
+qualified capabilities for downstream modules and handlers.
 Static procedure metadata remains outside execution context.
 
 The exact flow remains `host binding -> client construction -> invocation ->
@@ -3267,6 +3267,36 @@ paths. Sixteen affected owners typecheck, the twelve affected owner suites pass
 Effect vendor lane passes five cases. See
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.6e]]. Historical
 sections retain their exact then-current version evidence.
+
+## Native Service Client Authority
+
+The seven standalone service clients now use oRPC's native
+`createRouterClient` and `InferRouterInitialContext` directly. Each client
+destructures `deps`, `scope`, and `config` at construction, accepts only
+`invocation` from each call, and explicitly reconstructs a fresh initial
+context with a copied invocation and empty `provided` carrier. Example Todo
+proves that replacing top-level construction options after client creation and
+passing a wider call-context variable cannot override the fixed lanes.
+
+The shared HQ SDK client facade, its package export, and its source-shape
+assertions are deleted in the same checkpoint. Trace-forwarding and the rest of
+the SDK's contract, middleware, and composition ownership remain unchanged.
+Hyperresearch declares the native oRPC dependency it consumes directly. All
+seven public client signatures and lifecycle parsing/contract exports remain
+unchanged. See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task
+5.7e21j]].
+
+The eight owner projects typecheck and build. Their 62 test files pass 511
+tests, including the full 43-file, 377-case lifecycle suite and all Example
+Todo context, concurrency, frozen-invocation, error, and lane-isolation cases.
+The nine dependent CLI, server, API-plugin, command-plugin, application, and
+package owners typecheck; the eight owners with behavior suites pass 46 files
+and 169 tests. Clean isolated repeats of Server's 44 cases and DevOps' five
+cases also pass after one duplicate local test launch was terminated and
+excluded from evidence. The lifecycle CLI client-context and qualified-command
+suites pass 18 focused cases. Strict OpenSpec, Biome, the categorical live
+facade search, diff hygiene, and the single physical `@orpc/server@1.14.8`
+realm pass. The repository check is green.
 
 ## Settlement Oracles
 

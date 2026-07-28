@@ -1,4 +1,4 @@
-import { defineServicePackage, type ServicePackageBoundary } from "@rawr/hq-sdk/boundary";
+import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 
@@ -20,14 +20,24 @@ export {
   MAX_RELEASE_MEMBERS,
 } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 
-const servicePackage = defineServicePackage(router);
+type RouterInitialContext = InferRouterInitialContext<typeof router>;
+type Invocation = RouterInitialContext["invocation"];
 
 /** Host-supplied boundary required to construct one local lifecycle client. */
-export type CreateClientOptions = ServicePackageBoundary<typeof router>;
+export type CreateClientOptions = Pick<RouterInitialContext, "deps" | "scope" | "config">;
 
 /** Constructs the sole public local client over the private lifecycle router. */
-export function createClient(boundary: CreateClientOptions) {
-  return servicePackage.createClient(boundary);
+export function createClient({ deps, scope, config }: CreateClientOptions) {
+  return createRouterClient(router, {
+    context: ({ invocation }: { invocation: Invocation }) =>
+      ({
+        deps,
+        scope,
+        config,
+        invocation: { ...invocation },
+        provided: {},
+      }) satisfies RouterInitialContext,
+  });
 }
 
 /** Typed local caller surface derived from the lifecycle service router. */

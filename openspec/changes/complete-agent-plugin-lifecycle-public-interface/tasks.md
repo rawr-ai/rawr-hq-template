@@ -1391,6 +1391,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   implementation paths, land the common Magic/Template pattern rather than a
   RAWR-only fork, and keep its empty baseline plus advisory lane until the
   focused allow/reject cases and live corpus are green.
+- [x] 5.7e21j Delete the shared service-client facade and restore native oRPC
+  client authority in all seven standalone services. Preserve the public lane
+  types and client signatures; bind `deps`, `scope`, and `config` once; accept
+  only per-call `invocation`; reconstruct a fresh initial context with empty
+  `provided`; and prove construction-option replacement plus wider call
+  context cannot override the fixed lanes. Delete the facade export and stale
+  source-shape assertions in the same checkpoint, add Hyperresearch's direct
+  native dependency, and add no replacement helper or cast.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

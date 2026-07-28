@@ -1,45 +1,47 @@
-import {
-  defineServicePackage,
-  type InferConfig,
-  type InferDeps,
-  type InferInvocation,
-  type InferScope,
-  type ServicePackageBoundary,
-} from "@rawr/hq-sdk/boundary";
+import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
 
 import { router } from "./service/router";
 
 export { type Contract, contract } from "./service/contract";
 
-const servicePackage = defineServicePackage(router);
+type RouterInitialContext = InferRouterInitialContext<typeof router>;
 
 /**
  * Host-supplied resource and service capabilities fixed at client construction.
  */
-export type Deps = InferDeps<typeof router>;
+export type Deps = RouterInitialContext["deps"];
 
 /**
  * Stable binding and business identity metadata fixed at client construction.
  */
-export type Scope = InferScope<typeof router>;
+export type Scope = RouterInitialContext["scope"];
 
 /**
  * Externally supplied stable behavior configuration fixed at client construction.
  */
-export type Config = InferConfig<typeof router>;
+export type Config = RouterInitialContext["config"];
 
 /** Per-call request facts carried in the client call options. */
-export type Invocation = InferInvocation<typeof router>;
+export type Invocation = RouterInitialContext["invocation"];
 
 /**
  * Composed construction boundary containing the public dependency, scope, and
  * configuration lanes.
  */
-export type CreateClientOptions = ServicePackageBoundary<typeof router>;
+export type CreateClientOptions = Pick<RouterInitialContext, "deps" | "scope" | "config">;
 
 /** Constructs the sole public local client over the private todo service router. */
-export function createClient(boundary: CreateClientOptions) {
-  return servicePackage.createClient(boundary);
+export function createClient({ deps, scope, config }: CreateClientOptions) {
+  return createRouterClient(router, {
+    context: ({ invocation }: { invocation: Invocation }) =>
+      ({
+        deps,
+        scope,
+        config,
+        invocation: { ...invocation },
+        provided: {},
+      }) satisfies RouterInitialContext,
+  });
 }
 
 /** Typed local caller surface derived from the todo service router. */

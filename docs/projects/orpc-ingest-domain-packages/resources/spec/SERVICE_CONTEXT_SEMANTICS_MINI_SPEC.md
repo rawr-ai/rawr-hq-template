@@ -261,12 +261,17 @@ Instead:
 
 The coordination cleanup no longer needs a package-edge exception.
 
-The canonical servicepackage boundary remains:
+The canonical service-package boundary remains:
 
-- `defineServicePackage(router)`
+- an owner-local native oRPC client over the service router
 - boundary inputs on `deps`, `scope`, and `config`
 - per-call input on `invocation`
 - execution-time provider/module outputs under `context.provided.*`
+
+The client destructures the three construction lanes once. Its native context
+resolver accepts only the per-call invocation lane, copies that invocation into
+a fresh carrier, and reconstructs the initial context with `provided: {}`.
+This keeps the lane semantics without a shared SDK client facade.
 
 The coordination runs runtime now follows the default rule directly:
 

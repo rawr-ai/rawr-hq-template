@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Native Clients Preserve The Lanes
+
+Client construction is native oRPC ownership, not a shared SDK capability.
+Each service fixes `deps`, `scope`, and `config` once and admits only
+`invocation` from a call. The context resolver reconstructs the initial context
+explicitly, copies invocation into a fresh carrier, and starts `provided`
+empty. Middleware remains the only author of execution-provided capabilities.
+
+Deleting the facade makes the important boundary visible: service-defined
+lane meaning remains stable while native oRPC owns construction and dispatch.
+No helper replaces the helper.
+
+See [[services/example-todo/src/client|the worked native client]],
+[[services/example-todo/test/todo-service.test|the lane isolation oracle]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Native Service Client Authority|the execution record]].
+
+### Bag Of Keywords
+
+native, client, context, lane, fixed, invocation, resolver, deletion, service,
+boundary.
+
 ## 2026-07-28 - Vendor Preparation Preserves The Boundary
 
 Version alignment is dependency preparation, not service migration. Every

@@ -287,57 +287,38 @@ Telemetry is intentionally different from other seams such as SQL:
 Migration should move package observability code toward active-span access and
 remove telemetry from the package dependency model.
 
-## Decision #10 (2026-03-24)
+## Decision #10 (2026-03-24, superseded 2026-07-28)
 
 ### Question
-Can a servicepackage bypass `defineServicePackage(router)` and seed
-`context.provided.*` directly at the package boundary?
+Can a service package seed `context.provided.*` directly at its public client
+boundary?
 
 ### Decision
-The canonical answer is **no**.
-
-`defineServicePackage(router)` remains the default and authoritative
-servicepackage client shell:
+The lane decision remains valid while its former shared client facade is
+retired. Every service now constructs its in-process client directly with
+native oRPC:
 
 - construction-time input stays on `deps`, `scope`, and `config`
 - per-call input still arrives on `invocation`
 - `provided` remains execution context, not a second public boundary bag
+- the owner-local resolver explicitly reconstructs the initial context and
+  starts a fresh empty `provided` carrier for every invocation
 
-There is one narrow allowed exception:
-
-- a package may locally seed `context.provided.*` at the package edge only for
-  a **package-specific runtime capability**
-- that capability must be consumed by a subset of procedures rather than the
-  whole servicepackage
-- it must be immediately normalized by local middleware or module setup
-- it must remain local to that package; do not promote it into HQ SDK or treat
-  it as a new general boundary pattern without a second real consumer and an
-  explicit SDK design slice
-
-Today, `services/coordination/src/client.ts` is the only accepted example of
-that exception.
+The 2026-03-24 decision also admitted one narrow package-edge exception for a
+package-specific runtime capability consumed by only a subset of operations.
+That value had to remain package-local and be normalized immediately by local
+middleware. Coordination was the only recorded example. That allowance is
+historical evidence, not current client authority; the later coordination
+cleanup removed its need before this facade deletion.
 
 ### Why
-The default servicepackage shell has to stay semantically stable across the
-repo so that in-kind packages share one recognizable boundary shape.
-
-At the same time, some runtime-facing packages may need to bridge a
-package-specific execution capability from plugin/host composition into a
-service-local execution lane without lying about the whole service boundary.
-That is a runtime exception, not a new default abstraction.
-
-This preserves both truths:
-
-- golden-example servicepackages still teach the canonical shell
-- a narrow runtime bridge can exist without forcing package-specific execution
-  concerns into HQ SDK prematurely
+The stable boundary is a context invariant, not a reason to create an SDK
+facade around a native oRPC constructor. Owner-local clients keep construction
+lanes fixed for their lifetime and prevent wider per-call context variables
+from replacing `deps`, `scope`, `config`, or `provided`.
 
 ### Guardrails
-If you hit this exception path:
-
-- document it explicitly in the package and in the front-door design docs
-- keep the seeded value package-specific and runtime-specific
-- normalize it under local middleware before handler consumption
-- do not cargo-cult the pattern into other servicepackages
-- do not use it to hide ordinary host dependencies that should just be
-  declared on `deps`
+Do not reintroduce a shared client wrapper. If a capability is stable for the
+client lifetime, declare it on `deps`, `scope`, or `config`. If middleware
+derives it for one execution, publish it under `provided` after the native
+client boundary.

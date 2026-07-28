@@ -10,10 +10,6 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./boundary": {
-      "types": "./src/boundary.ts",
-      "default": "./src/boundary.ts"
-    },
     "./plugins": {
       "types": "./src/plugins.ts",
       "default": "./src/plugins.ts"
