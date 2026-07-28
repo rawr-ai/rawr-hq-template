@@ -234,18 +234,12 @@ async function verifyServiceShape(findings) {
     }
   }
 
-  const [indexSource, clientSource, contractSource, routerSource, baseSource, shapeTestSource] =
+  const [indexSource, contractSource, routerSource, baseSource, shapeTestSource] =
     await Promise.all([
       readFileIfExists(
         `${SERVICE_ROOT}/src/index.ts`,
         findings,
         `${SERVICE_ROOT}/src/index.ts`,
-        false
-      ),
-      readFileIfExists(
-        `${SERVICE_ROOT}/src/client.ts`,
-        findings,
-        `${SERVICE_ROOT}/src/client.ts`,
         false
       ),
       readFileIfExists(
@@ -279,10 +273,6 @@ async function verifyServiceShape(findings) {
       if (!indexSource.includes(token))
         findings.push(`${SERVICE_ROOT}/src/index.ts must keep boundary export ${token}`);
     }
-  }
-
-  if (clientSource && !clientSource.includes("defineServicePackage(router)")) {
-    findings.push("@rawr/session-intelligence client must keep defineServicePackage(router)");
   }
 
   for (const moduleName of SERVICE_MODULES) {

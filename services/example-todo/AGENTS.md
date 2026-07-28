@@ -51,8 +51,9 @@
 | `provided` | middleware | execution | Workspace-bound task, tag, and assignment stores acquired once for the operation. |
 
 Procedure metadata is static service-authored meaning, not another execution
-lane. The four input lanes are service-declared; the SDK seeds an empty
-`provided` bucket and root middleware populates it during execution. The lane
+lane. The four input lanes are service-declared; the owner-local native client
+resolver starts an empty `provided` bucket and root middleware populates it
+during execution. The lane
 model entered the sealed public face at Template commit
 `07ff505ff781ee2f27af700e25beb1032cb53d37` and remains the canonical worked
 reference for construction and invocation. Each module then curates the

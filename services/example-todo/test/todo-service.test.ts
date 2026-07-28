@@ -91,6 +91,80 @@ describe("example-todo service", () => {
     expect(identifiers).toEqual([]);
   });
 
+  it("fixes construction lanes while admitting only invocation context per call", async () => {
+    const fixedId = "11111111-1111-4111-8111-111111111111";
+    const fixedDeps = {
+      ...createDeps(),
+      identifierGenerator: {
+        generate: () => fixedId,
+      },
+    };
+    const replacementDeps = {
+      ...createDeps(),
+      identifierGenerator: {
+        generate() {
+          throw new Error("call-time deps replaced the construction lane");
+        },
+      },
+    };
+    const options = createClientOptions({
+      deps: fixedDeps,
+      workspaceId: "workspace-fixed",
+    });
+    const client = createClient(options);
+
+    options.deps = replacementDeps;
+    options.scope = { workspaceId: "workspace-replaced" };
+    options.config = {
+      readOnly: true,
+      limits: { maxAssignmentsPerTask: 0 },
+    };
+
+    let widerLaneReads = 0;
+    const widerCallOptions = {
+      context: {
+        invocation: { traceId: "trace-fixed-construction" },
+        get deps() {
+          widerLaneReads += 1;
+          return replacementDeps;
+        },
+        get scope() {
+          widerLaneReads += 1;
+          return { workspaceId: "workspace-call-time" };
+        },
+        get config() {
+          widerLaneReads += 1;
+          return {
+            readOnly: true,
+            limits: { maxAssignmentsPerTask: 0 },
+          };
+        },
+        get provided() {
+          widerLaneReads += 1;
+          return {
+            tasksStore: {
+              insert() {
+                throw new Error("call-time provided state entered execution context");
+              },
+            },
+          };
+        },
+      },
+    };
+
+    const created = await client.tasks.create(
+      { title: "Fixed construction lanes" },
+      widerCallOptions
+    );
+
+    expect(created).toMatchObject({
+      id: fixedId,
+      workspaceId: "workspace-fixed",
+      title: "Fixed construction lanes",
+    });
+    expect(widerLaneReads).toBe(0);
+  });
+
   it("refuses an invalid host identifier before store mutation", async () => {
     const deps = createDeps();
     const client = createClient(

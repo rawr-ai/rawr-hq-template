@@ -1,24 +1,39 @@
 /**
  * @fileoverview In-process client factory for the hyperresearch-codex package boundary.
  */
-import {
-  defineServicePackage,
-  type InferConfig,
-  type InferDeps,
-  type InferScope,
-  type ServicePackageBoundary,
-} from "@rawr/hq-sdk/boundary";
+import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
 import { router } from "./router";
 
-const servicePackage = defineServicePackage(router);
+type RouterInitialContext = InferRouterInitialContext<typeof router>;
+type Invocation = RouterInitialContext["invocation"];
 
-export type Deps = InferDeps<typeof router>;
-export type Scope = InferScope<typeof router>;
-export type Config = InferConfig<typeof router>;
-export type CreateClientOptions = ServicePackageBoundary<typeof router>;
+/** Host-supplied hyperresearch capabilities fixed for the lifetime of one client. */
+export type Deps = RouterInitialContext["deps"];
+/** Stable hyperresearch binding identity fixed when the client is constructed. */
+export type Scope = RouterInitialContext["scope"];
+/** Stable hyperresearch behavior configuration fixed when the client is constructed. */
+export type Config = RouterInitialContext["config"];
+/** Construction boundary that fixes the client's dependency, scope, and configuration lanes. */
+export type CreateClientOptions = Pick<RouterInitialContext, "deps" | "scope" | "config">;
 
-export function createClient(boundary: CreateClientOptions) {
-  return servicePackage.createClient(boundary);
+/**
+ * Constructs the native in-process hyperresearch client.
+ *
+ * Each call contributes only invocation facts; construction lanes and the
+ * empty provided context remain owner-controlled.
+ */
+export function createClient({ deps, scope, config }: CreateClientOptions) {
+  return createRouterClient(router, {
+    context: ({ invocation }: { invocation: Invocation }) =>
+      ({
+        deps,
+        scope,
+        config,
+        invocation: { ...invocation },
+        provided: {},
+      }) satisfies RouterInitialContext,
+  });
 }
 
+/** Callable hyperresearch surface derived from the router with per-call invocation context. */
 export type Client = ReturnType<typeof createClient>;
