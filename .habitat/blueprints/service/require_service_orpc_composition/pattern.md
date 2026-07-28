@@ -1,647 +1,271 @@
 ---
 level: error
-tags: [orpc, service, positive, composition]
+tags: [orpc, effect, service, composition]
 ---
 # Require Native Service oRPC Composition
 
-Standalone `base` is directly initialized by the named runtime
-`implementEffect(contract, ...)` import, optionally followed by its native
-`.$context<...>()` seed. Exported standalone `service`,
-API-plugin `service`, and `module` initializers visibly contain their first
-native hop from a named runtime `base` import, named runtime
-`implement(contract).$context<...>()`, or the named runtime `service` branch
-matching the module directory. Those runtime specifiers may share an import
-declaration with other type-only specifiers, but the ownership binding itself
-must be a runtime import. A type-only `implementEffect`, `implement`, `base`, or
-`service` specifier cannot satisfy a runtime ownership hop. Runtime namespaces
-from the oRPC composition vendors are rejected.
+Every service has one visible native implementation lineage. `base.ts`
+declares context, `impl.ts` implements the aggregate contract once and exposes
+the unconfigured and configured stages, modules descend from the matching configured
+branch, module router indexes compose plain operation trees, and the root
+router implements the aggregate contract once through the unconfigured stage.
 
-Standalone runtime `implementEffect` authority exists only in root `base.ts`;
-embedded API `implement(...).$context` authority exists only in root `impl.ts`.
-Any number of native `.use(...)` calls may follow that visible first hop. Grit
-does not prove that an outer wrapper preserves its owner. TypeScript and review
-own that ceiling plus assignability and completeness.
-
-The root router imports the exact runtime `service` binding from `./impl`,
-imports qualified completed module routers through exact relative module-router
-paths, and completes the root contract directly with the configured
-implementer's native `service.router(...)`. The branches argument is a plain
-object whose present properties are shorthand or spread completed-router
-bindings; an embedded API with no modules may complete an empty object. The
-root does not author handlers, attach middleware, reconstruct context, remap
-branches, detach the builder or its result, or expose another kind of
-declaration. Statement closure admits the direct canonical export form;
-TypeScript rejects duplicate declarations. Native oRPC owns the enhanced
-router's hidden contract relation; TypeScript owns inferred context and
-assignability. The module-isolation packet separately owns root-to-module path
-normalization. The router-authorship packet continues to own composition-only
-module `router.ts` files. No finite module-key inventory is encoded.
+Aggregate router implementation through the unconfigured root `impl` is the
+pinned oRPC 2 once-only seam. This packet does not
+model oRPC types or runtime behavior; TypeScript and behavior proof own those
+facts.
 
 ```grit
 language js(typescript)
 
-// Derives the native service branch identifier from its module directory.
-function require_service_orpc_composition_service_branch_name($value) js {
-  const lowerCamel = $value.text.replace(
-    /-([a-z0-9])/g,
-    (_match, segment) => segment.toUpperCase(),
-  );
-  const regexSyntax = "\\^$.|?*+()[]{}";
-  let escaped = "";
-  for (const character of lowerCamel) {
-    escaped += regexSyntax.includes(character) ? "\\" + character : character;
-  }
-  return `^${escaped}$`;
+// Checks that a module initializer descends from its matching configured branch.
+function require_service_orpc_composition_module_status($filename, $value) js {
+  const match = $filename.text.match(/\/modules\/([^/]+)\/module\.ts$/);
+  if (!match) return "not-module-spine";
+  const expected = match[1].replace(/-([a-z0-9])/g, (_all, value) => value.toUpperCase());
+  const descent = $value.text.match(/\bservice\.([A-Za-z_$][\w$]*)/);
+  if (!descent) return "missing-descent";
+  return expected === descent[1] ? "ok" : "wrong-branch";
 }
 
-// Produces an anchored pattern for one imported runtime identifier.
-function require_service_orpc_composition_exact_binding_name($value) js {
-  const regexSyntax = "\\^$.|?*+()[]{}";
-  let escaped = "";
-  for (const character of $value.text) {
-    escaped += regexSyntax.includes(character) ? "\\" + character : character;
-  }
-  return `^${escaped}$`;
+// Recognizes a configured service whose arbitrary native use chain starts at impl.
+function require_service_orpc_composition_service_chain_status($value) js {
+  const source = $value.text.replace(/\s+/g, "");
+  return source === "impl" || source.startsWith("impl.use(") ? "ok" : "wrong-root";
 }
 
-// Requires an exact named import specifier to survive at runtime.
-predicate require_service_orpc_composition_imports_runtime_binding($import, $anchor) {
-  not { $import <: import_statement(type=type()) },
-  $import <: contains import_specifier(name=$anchor) as $specifier where {
-    not { $specifier <: r"^type\s+.*$" }
-  }
+// Identifies calls whose receiver remains rooted in the local impl lineage.
+function require_service_orpc_composition_impl_receiver_status($receiver) js {
+  const source = $receiver.text.replace(/\s+/g, "");
+  return /^(?:impl)(?:\.|$)/.test(source) ? "ok" : "other-root";
 }
 
-// Restricts composition edges to named bindings with optional type companions.
-predicate require_service_orpc_composition_is_named_only_import($import, $source) {
-  or {
-    $import <: `import { $... } from $source`,
-    $import <: `import type { $... } from $source`
-  }
+// Identifies router-capable configured stages without confusing contract routers.
+function require_service_orpc_composition_router_owner_status($receiver) js {
+  const source = $receiver.text.replace(/\s+/g, "");
+  return /^(?:impl|service|module)(?:\.|$)/.test(source)
+    ? "ok"
+    : "other-root";
 }
 
-// Selects governed non-test service source.
-predicate require_service_orpc_composition_is_governed_service_source() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
-  ! $filename <: r".*/(?:test|tests|__tests__)/.*"
+// Selects every governed production service source file.
+predicate require_service_orpc_composition_is_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$"
 }
 
-// Selects the root router, whose only runtime inputs are completed module routers.
-predicate require_service_orpc_composition_is_root_service_router_source() {
+// Selects the declaration-only root base.
+predicate require_service_orpc_composition_is_base() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/base\.ts$"
+}
+
+// Selects the sole contract implementation spine.
+predicate require_service_orpc_composition_is_impl() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/impl\.ts$"
+}
+
+// Selects module wiring spines.
+predicate require_service_orpc_composition_is_module() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
+}
+
+// Selects module router composition spines.
+predicate require_service_orpc_composition_is_module_router() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
+}
+
+// Selects the root router composition spine.
+predicate require_service_orpc_composition_is_root_router() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/router\.ts$"
 }
 
-// Requires standalone base construction to import named Effect-oRPC authority.
-predicate require_service_orpc_composition_imports_exact_implement_effect($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']effect-orpc[\"']$",
-    require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`implementEffect`)
-  }
-}
-
-// Requires embedded API services to import named oRPC server authority.
-predicate require_service_orpc_composition_imports_exact_implement($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']@orpc/server[\"']$",
-    require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`implement`)
-  }
-}
-
-// Connects standalone initialization to a named runtime base import.
-predicate require_service_orpc_composition_imports_exact_base($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    $source <: r"^[\"']\./base[\"']$",
-    require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`base`)
-  }
-}
-
-// Keeps standalone base construction on the direct Effect-oRPC context root.
-predicate require_service_orpc_composition_is_standalone_base_initializer($value) {
-  or {
-    $value <: `implementEffect(contract, $runtime)`,
-    $value <: `implementEffect(contract, $runtime).$context_method<$context>()` where {
-      $context_method <: r"^\$context$"
-    }
-  }
-}
-
-// Keeps a standalone service's first hop on its native base chain.
-predicate require_service_orpc_composition_is_standalone_service_initializer($value) {
-  or {
-    $value <: `base`,
-    $value <: contains or {
-      `base.use($middleware)`,
-      `base.use<$types>($middleware)`
-    }
-  }
-}
-
-// Keeps an API service's first hop on contract implementation and context.
-predicate require_service_orpc_composition_is_api_service_initializer($value) {
-  $value <: contains `implement(contract).$context_method<$context_type>()` where {
-    $context_method <: r"^\$context$"
-  }
-}
-
-// Accepts only same-owner root service sources for module derivation.
-predicate require_service_orpc_composition_is_current_root_service_source($source) {
-  or {
-    $source <: r"^[\"']\.\./\.\./impl[\"']$",
-    and {
-      $filename <: r".*services/([^/]+)/src/service/modules/[^/]+/module\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-service/impl[\"']$"($alias_owner),
-      $alias_owner <: $owner
-    },
-    and {
-      $filename <: r".*plugins/server/api/([^/]+)/src/service/modules/[^/]+/module\.ts$"($owner),
-      $source <: r"^[\"']#([^/]+)-api/(?:service/)?impl[\"']$"($alias_owner),
-      $alias_owner <: $owner
-    }
-  }
-}
-
-// Recognizes an exact relative completed module-router source.
-predicate require_service_orpc_composition_is_current_completed_module_router_source($source) {
-  $source <: r"^[\"']\./modules/[^/\"']+/router[\"']$"
-}
-
-// Detects a runtime binding while preserving whole and mixed type-only imports.
-predicate require_service_orpc_composition_has_runtime_import_binding($import) {
-  not { $import <: import_statement(type=type()) },
-  or {
-    $import <: contains import_specifier() as $specifier where {
-      not { $specifier <: r"^type\s+.*$" }
-    },
-    $import <: `import $default from $source`,
-    $import <: `import * as $namespace from $source`,
-    $import <: `import $source`
-  }
-}
-
-// Admits the exact configured root service binding with optional type companions.
-predicate require_service_orpc_composition_is_exact_root_service_import($import, $source) {
-  $source <: r"^[\"']\./impl[\"']$",
-  require_service_orpc_composition_is_named_only_import(import=$import, source=$source),
-  require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`service`),
-  $import <: contains import_specifier(name=`service`) as $service_specifier where {
-    $service_specifier <: r"^service$"
+// Proves that the implementation spine contains exactly one contract implementation.
+predicate require_service_orpc_composition_has_single_implement($body) {
+  $calls = [],
+  $body <: contains bubble($calls) `implement($contract)` as $call where {
+    $calls += $call
   },
-  not {
-    $import <: contains import_specifier() as $other_specifier where {
-      not { $other_specifier <: r"^type\s+.*$" },
-      not { $other_specifier <: r"^service$" }
-    }
-  }
+  $count = length(target=$calls),
+  $count <: 1
 }
 
-// Admits one qualified completed-router import at the root composition boundary.
-predicate require_service_orpc_composition_is_completed_module_router_import($import, $source) {
-  require_service_orpc_composition_is_current_completed_module_router_source(source=$source),
-  require_service_orpc_composition_is_named_only_import(import=$import, source=$source),
-  require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`router`),
-  $import <: contains import_specifier(name=`router`) as $router_specifier where {
-    not { $router_specifier <: r"^type\s+.*$" },
-    $router_specifier <: `router as $branch`
+// Proves that the root router contains exactly one aggregate impl.router call.
+predicate require_service_orpc_composition_has_single_root_router($body) {
+  $calls = [],
+  $body <: contains bubble($calls) `impl.router($surface)` as $call where {
+    $calls += $call
   },
-  not {
-    $import <: contains import_specifier() as $other_specifier where {
-      not { $other_specifier <: r"^type\s+.*$" },
-      not { $other_specifier <: `router as $other_branch` }
-    }
+  $count = length(target=$calls),
+  $count <: 1
+}
+
+// Recognizes one unconfigured implementer and an arbitrary native use chain.
+predicate require_service_orpc_composition_has_implementation($body) {
+  require_service_orpc_composition_has_single_implement(body=$body),
+  $body <: contains `export const impl = implement(contract).$context<Context>()`,
+  $body <: contains `export const service = $value` where {
+    $status = require_service_orpc_composition_service_chain_status(value=$value),
+    $status <: includes "ok"
   }
 }
 
-// Admits only shorthand and spread completed module-router bindings.
-predicate require_service_orpc_composition_is_root_branch_property($body, $property) {
-  or {
-    and {
-      $property <: shorthand_property_identifier(),
-      $binding_pattern = require_service_orpc_composition_exact_binding_name(
-        value=$property
-      ),
-      $body <: contains import_statement(source=$source) as $import where {
-        require_service_orpc_composition_is_completed_module_router_import(
-          import=$import,
-          source=$source
-        ),
-        $import <: contains import_specifier(name=`router`) as $router_specifier where {
-          $router_specifier <: `router as $imported_binding`,
-          $imported_binding <: r`$binding_pattern`
-        }
-      }
-    },
-    $property <: `...$binding` where {
-      $binding_pattern = require_service_orpc_composition_exact_binding_name(
-        value=$binding
-      ),
-      $body <: contains import_statement(source=$source) as $import where {
-        require_service_orpc_composition_is_completed_module_router_import(
-          import=$import,
-          source=$source
-        ),
-        $import <: contains import_specifier(name=`router`) as $router_specifier where {
-          $router_specifier <: `router as $imported_binding`,
-          $imported_binding <: r`$binding_pattern`
-        }
-      }
-    }
-  }
-}
-
-// Proves every present branch property is canonical while admitting an empty root.
-predicate require_service_orpc_composition_is_root_branch_object($body, $branches) {
-  not {
-    $branches <: some $property where {
-      not {
-        require_service_orpc_composition_is_root_branch_property(body=$body, property=$property)
-      }
-    }
-  }
-}
-
-// Recognizes the direct untyped native root completion export.
-predicate require_service_orpc_composition_is_native_root_router_export($body, $statement) {
-  $statement <: `export const router = service.router({ $branches })`,
-  require_service_orpc_composition_is_root_branch_object(body=$body, branches=$branches)
-}
-
-// Restricts runtime root imports to the configured service and completed modules.
-predicate require_service_orpc_composition_is_allowed_root_runtime_import($import, $source) {
-  or {
-    require_service_orpc_composition_is_exact_root_service_import(import=$import, source=$source),
-    require_service_orpc_composition_is_completed_module_router_import(import=$import, source=$source)
-  }
-}
-
-// Restricts the root router to imports and its native completion export.
-predicate require_service_orpc_composition_is_allowed_root_router_statement($body, $statement) {
-  or {
-    $statement <: import_statement(source=$source) as $import where {
-      require_service_orpc_composition_is_allowed_root_runtime_import(
-        import=$import,
-        source=$source
-      )
-    },
-    require_service_orpc_composition_is_native_root_router_export(
-      body=$body,
-      statement=$statement
-    )
-  }
-}
-
-// Requires the configured service import and direct native root completion.
-predicate require_service_orpc_composition_has_native_root_completion($body) {
-  $body <: contains import_statement(source=$source) as $import where {
-    require_service_orpc_composition_is_exact_root_service_import(import=$import, source=$source)
+or {
+  `implement($contract)` where {
+    require_service_orpc_composition_is_source(),
+    not { require_service_orpc_composition_is_impl() }
   },
-  $body <: some $statement where {
-    require_service_orpc_composition_is_native_root_router_export(
-      body=$body,
-      statement=$statement
-    )
-  }
-}
-
-// Connects a module initializer to its directory's service branch.
-predicate require_service_orpc_composition_is_matching_module_initializer($value, $branch_pattern) {
-  or {
-    $value <: `service.$branch` where {
-      $branch <: r`$branch_pattern`
-    },
-    $value <: contains or {
-      `service.$branch.use($middleware)`,
-      `service.$branch.use<$types>($middleware)`
-    } where {
-      $branch <: r`$branch_pattern`
-    }
-  }
-}
-
-program(statements=$body) where {
-  or {
-    and {
-      $filename <: r".*services/[^/]+/src/service/base\.ts$",
-      not {
-        require_service_orpc_composition_imports_exact_implement_effect(body=$body),
-        $body <: contains or {
-          `export const base = $value`,
-          `export const base: $type = $value`
-        } where {
-          require_service_orpc_composition_is_standalone_base_initializer(value=$value)
-        }
-      }
-    },
-    and {
-      $filename <: r".*services/[^/]+/src/service/impl\.ts$",
-      not {
-        require_service_orpc_composition_imports_exact_base(body=$body),
-        $body <: contains or {
-          `export const service = $value`,
-          `export const service: $type = $value`
-        } where {
-          require_service_orpc_composition_is_standalone_service_initializer(value=$value)
-        }
-      }
-    },
-    and {
-      $filename <: r".*plugins/server/api/[^/]+/src/service/impl\.ts$",
-      not {
-        require_service_orpc_composition_imports_exact_implement(body=$body),
-        $body <: contains or {
-          `export const service = $value`,
-          `export const service: $type = $value`
-        } where {
-          require_service_orpc_composition_is_api_service_initializer(value=$value)
-        }
-      }
-    },
-    and {
-      $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/([^/]+)/module\.ts$"($module_name),
-      $branch_pattern = require_service_orpc_composition_service_branch_name(value=$module_name),
-      not {
-        $body <: contains import_statement(source=$source) as $import where {
-          require_service_orpc_composition_is_current_root_service_source(source=$source),
-          require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`service`)
-        },
-        $body <: contains or {
-          `export const module = $value`,
-          `export const module: $type = $value`
-        } where {
-          require_service_orpc_composition_is_matching_module_initializer(value=$value, branch_pattern=$branch_pattern)
-        }
-      }
-    },
-    and {
-      require_service_orpc_composition_is_governed_service_source(),
-      ! $filename <: r".*services/[^/]+/src/service/base\.ts$",
-      $body <: contains import_statement(source=$source) as $import where {
-        $source <: r"^[\"']effect-orpc[\"']$",
-        require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`implementEffect`)
-      }
-    },
-    and {
-      require_service_orpc_composition_is_governed_service_source(),
-      ! $filename <: r".*plugins/server/api/[^/]+/src/service/impl\.ts$",
-      $body <: contains import_statement(source=$source) as $import where {
-        $source <: r"^[\"']@orpc/server[\"']$",
-        require_service_orpc_composition_imports_runtime_binding(import=$import, anchor=`implement`)
-      }
-    },
-    and {
-      $filename <: r".*services/[^/]+/src/service/base\.ts$",
-      $body <: contains or {
-        `const $name = implementEffect($args)`,
-        `const $name: $type = implementEffect($args)`
-      } where {
-        not { $name <: `base` }
-      }
-    },
-    and {
-      $filename <: r".*plugins/server/api/[^/]+/src/service/impl\.ts$",
-      $body <: contains or {
-        `const $name = implement(contract).$context_method<$context_type>()`,
-        `const $name: $type = implement(contract).$context_method<$context_type>()`
-      } where {
-        $context_method <: r"^\$context$",
-        not { $name <: `service` }
-      }
-    },
-    and {
-      require_service_orpc_composition_is_root_service_router_source(),
-      $body <: contains import_statement(source=$source) as $import where {
-        require_service_orpc_composition_has_runtime_import_binding(import=$import),
-        not {
-          require_service_orpc_composition_is_allowed_root_runtime_import(
-            import=$import,
-            source=$source
-          )
-        }
-      }
-    },
-    and {
-      require_service_orpc_composition_is_root_service_router_source(),
-      not {
-        require_service_orpc_composition_has_native_root_completion(body=$body)
-      }
-    },
-    and {
-      require_service_orpc_composition_is_root_service_router_source(),
-      $body <: some $statement where {
-        not {
-          require_service_orpc_composition_is_allowed_root_router_statement(
-            body=$body,
-            statement=$statement
-          )
-        }
-      }
-    },
-    and {
-      require_service_orpc_composition_is_root_service_router_source(),
-      $body <: contains `export const router = service.router({ $branches })`,
-      $branches <: some $property where {
-        $property <: shorthand_property_identifier(),
-        $binding_pattern = require_service_orpc_composition_exact_binding_name(
-          value=$property
+  import_statement(source=$source) where {
+    require_service_orpc_composition_is_base(),
+    $source <: r"^[\"']@orpc/experimental-effect/extensions/effect[\"']$"
+  },
+  import_statement(source=$source) where {
+    require_service_orpc_composition_is_base(),
+    $source <: r"^[\"'](?:\./contract|#[^/]+-(?:service|api)/contract)[\"']$"
+  },
+  program(statements=$body) where {
+    require_service_orpc_composition_is_impl(),
+    not { require_service_orpc_composition_has_implementation(body=$body) }
+  },
+  `$receiver.$method($arguments)` where {
+    require_service_orpc_composition_is_impl(),
+    $status = require_service_orpc_composition_impl_receiver_status(
+      receiver=$receiver
+    ),
+    $status <: includes "ok",
+    not { $method <: `use` }
+  },
+  program(statements=$body) where {
+    require_service_orpc_composition_is_module(),
+    not {
+      $body <: contains `export const module = $value` where {
+        $status = require_service_orpc_composition_module_status(
+          filename=$filename,
+          value=$value
         ),
-        not {
-          $body <: contains import_statement(source=$source) as $import where {
-            require_service_orpc_composition_is_completed_module_router_import(
-              import=$import,
-              source=$source
-            ),
-            $import <: contains import_specifier(name=`router`) as $router_specifier where {
-              $router_specifier <: `router as $imported_binding`,
-              $imported_binding <: r`$binding_pattern`
-            }
-          }
-        }
-      }
-    },
-    and {
-      require_service_orpc_composition_is_root_service_router_source(),
-      $body <: contains `export const router = service.router({ $branches })`,
-      $branches <: some `...$binding` where {
-        $binding_pattern = require_service_orpc_composition_exact_binding_name(
-          value=$binding
-        ),
-        not {
-          $body <: contains import_statement(source=$source) as $import where {
-            require_service_orpc_composition_is_completed_module_router_import(
-              import=$import,
-              source=$source
-            ),
-            $import <: contains import_specifier(name=`router`) as $router_specifier where {
-              $router_specifier <: `router as $imported_binding`,
-              $imported_binding <: r`$binding_pattern`
-            }
-          }
-        }
-      }
-    },
-    and {
-      require_service_orpc_composition_is_governed_service_source(),
-      $body <: contains import_statement(source=$source) as $import where {
-        $source <: r"^[\"'](?:effect-orpc|@orpc/contract|@orpc/server)[\"']$",
-        $import <: `import * as $namespace from $source`,
-        not { $import <: import_statement(type=type()) }
+        $status <: includes "ok"
       }
     }
+  },
+  program(statements=$body) where {
+    require_service_orpc_composition_is_module_router(),
+    not { $body <: contains `export const router = { $properties }` }
+  },
+  `$receiver.router($surface)` where {
+    require_service_orpc_composition_is_module_router()
+  },
+  `$receiver.router($surface)` where {
+    require_service_orpc_composition_is_source(),
+    not { require_service_orpc_composition_is_root_router() },
+    $status = require_service_orpc_composition_router_owner_status(
+      receiver=$receiver
+    ),
+    $status <: includes "ok"
+  },
+  program(statements=$body) where {
+    require_service_orpc_composition_is_root_router(),
+    not {
+      and {
+        $body <: contains `export const router = impl.router($surface)`,
+        require_service_orpc_composition_has_single_root_router(body=$body)
+      }
+    }
+  },
+  `$receiver.router($surface)` where {
+    require_service_orpc_composition_is_root_router(),
+    not { $receiver <: `impl` }
   }
 }
 ```
 
-## Matches a noncanonical standalone base vendor import
+## Matches implementation from the declaration base
 
 ```typescript
 // @filename: services/jobs/src/service/base.ts
-import { implementEffect as makeBase } from "effect-orpc";
+import { implement } from "@orpc/server";
 import { contract } from "./contract";
-export const base = makeBase(contract, Layer.empty);
+export const base = implement(contract);
 ```
 
-## Matches a type-only standalone base authority
-
-```typescript
-// @filename: services/jobs/src/service/base.ts
-import { type implementEffect } from "effect-orpc";
-import { contract } from "./contract";
-export const base = implementEffect(contract, Layer.empty);
-```
-
-## Matches a disconnected standalone base initializer
-
-```typescript
-// @filename: services/jobs/src/service/base.ts
-import { implementEffect } from "effect-orpc";
-import { contract } from "./contract";
-const configured = implementEffect(contract, Layer.empty);
-export const base = configured;
-```
-
-## Matches a disconnected standalone service
+## Matches a disconnected implementation stage
 
 ```typescript
 // @filename: services/jobs/src/service/impl.ts
-import { base } from "./base";
-const configured = base.use(provider);
-export const service = configured;
-```
-
-## Matches a disconnected API service
-
-```typescript
-// @filename: plugins/server/api/catalog/src/service/impl.ts
 import { implement } from "@orpc/server";
 import { contract } from "./contract";
-const base = implement(contract).$context<Context>();
-export const service = base.use(authentication);
+export const service = implement(contract);
 ```
 
-## Matches a disconnected module branch
+## Matches configured router implementation hidden in the service stage
 
 ```typescript
-// @filename: services/jobs/src/service/modules/job-search/module.ts
-import { service } from "#jobs-service/impl";
-const branch = service.jobSearch;
-export const module = branch.use(provider);
+// @filename: services/jobs/src/service/impl.ts
+export const impl = implement(contract).$context<Context>();
+export const service = impl.use(admitActor).router({ catalog });
 ```
 
-## Matches a prefix-colliding module branch
+## Matches a second implementation call
+
+```typescript
+// @filename: services/jobs/src/service/impl.ts
+import { implement } from "@orpc/server";
+import type { Context } from "./base";
+import { contract } from "./contract";
+export const impl = implement(contract).$context<Context>();
+const preview = implement(contract).$context<Context>();
+export const service = impl.use(admitActor);
+```
+
+## Matches the Effect extension in base
+
+```typescript
+// @filename: services/jobs/src/service/base.ts
+import "@orpc/experimental-effect/extensions/effect";
+import { os } from "@orpc/server";
+export const base = os.$context<Context>();
+```
+
+## Matches a module descending through the wrong branch
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/module.ts
-import { service } from "../../impl";
-export const module = service.catalogAdmin.use(provider);
+export const module = service.queue.use(provideCatalog);
 ```
 
-## Matches a runtime composition namespace
+## Matches module-level router implementation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
-import * as orpc from "@orpc/server";
-export const router = orpc.router({});
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+export const router = impl.catalog.router({ get });
 ```
 
-## Matches a root router without configured service completion
+## Matches a second private root router implementation
 
 ```typescript
 // @filename: services/jobs/src/service/router.ts
-import type { Router } from "@orpc/server";
-import type { contract } from "./contract";
-import { router as catalog } from "./modules/catalog/router";
-export const router = { catalog } satisfies Router<typeof contract, never>;
+export const router = impl.router({ catalog });
+const preview = impl.router({ catalog });
 ```
 
-## Matches a detached native router builder
-
-```typescript
-// @filename: services/jobs/src/service/router.ts
-import { service } from "./impl";
-import { router as catalog } from "./modules/catalog/router";
-const complete = service.router;
-export const router = complete({ catalog });
-```
-
-## Matches explicit branch remapping
-
-```typescript
-// @filename: services/jobs/src/service/router.ts
-import { service } from "./impl";
-import { router as catalog } from "./modules/catalog/router";
-export const router = service.router({ catalog: catalog });
-```
-
-## Ignores an exact kebab-to-camel module branch
-
-```typescript
-// @filename: services/jobs/src/service/modules/corpus-artifacts/module.ts
-import { service } from "../../impl";
-export const module = service.corpusArtifacts.use(provider);
-```
-
-## Ignores configured root router completion and native middleware depths
-
-```typescript
-// @filename: services/jobs/src/service/contract.ts
-import { contract as catalog } from "./modules/catalog/contract";
-export const contract: Contract = { catalog } satisfies Contract;
-// @filename: services/jobs/src/service/router.ts
-import { service, type ServiceContext } from "./impl";
-import { router as catalog } from "./modules/catalog/router";
-export const router = service.router({ catalog });
-// @filename: services/jobs/src/service/impl.ts
-import { base } from "./base";
-export const service = base.use(one).use(two).use(three);
-// @filename: plugins/server/api/pipeline/src/service/impl.ts
-import { implement } from "@orpc/server";
-import { contract } from "./contract";
-export const service = implement(contract)
-  .$context<Context>()
-  .use(one)
-  .use(two);
-// @filename: services/jobs/src/service/modules/job-search/module.ts
-import { service } from "#jobs-service/impl";
-export const module = service.jobSearch.use(one).use(two).use(three);
-// @filename: services/jobs/src/service/modules/job-search/router/find.router.ts
-import { module } from "../module";
-export const find = module.find.use(one).use(two).effect(handler);
-```
-
-## Ignores context-seeded standalone base and combined named imports
+## Ignores one complete native lineage
 
 ```typescript
 // @filename: services/jobs/src/service/base.ts
-import { implementEffect, type EffectHandler } from "effect-orpc";
-import { contract } from "./contract";
-export const base = implementEffect(contract, Layer.empty).$context<InitialContext>();
+import { os } from "@orpc/server";
+export type Context = ServiceContext;
+export const base = os.$context<Context>();
 // @filename: services/jobs/src/service/impl.ts
-import { base, type InitialContext } from "./base";
-export const service = base.use(provideContext);
-// @filename: services/jobs/src/service/modules/job-search/module.ts
-import { service } from "#jobs-service/impl";
-export const module = service.jobSearch.use(provideContext);
-// @filename: plugins/server/api/catalog/src/service/impl.ts
-import { implement, type Middleware } from "@orpc/server";
+import "@orpc/experimental-effect/extensions/effect";
+import { implement } from "@orpc/server";
+import type { Context } from "./base";
 import { contract } from "./contract";
-export const service = implement(contract).$context<Context>().use(authentication);
+export const impl = implement(contract).$context<Context>();
+export const service = impl
+  .use(admitActor)
+  .use(provideClock)
+  .use(provideDatabase);
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+export const module = service.catalog.use(provideCatalog).use(curateCatalog);
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+export const router = { get };
+// @filename: services/jobs/src/service/router.ts
+export const router = impl.router({ catalog });
 ```

@@ -1,59 +1,52 @@
 ---
 level: error
-tags: [orpc, service, error-authority]
+tags: [orpc, effect, service, error-authority]
 ---
-# Require oRPC Error Authority
+# Require Native oRPC Error Authority
 
-An exact module `contract.ts` owns its public oRPC error constructors. Outside
-that file, the rule rejects direct, aliased, and string-named aliased runtime
-`ORPCTaggedError` imports. It also rejects every runtime namespace or default
-`effect-orpc` import declaration, including combined and named `default as`
-forms. Other vendor runtime exports remain available through named imports,
-including beside an inline type-only `ORPCTaggedError` binding.
+Public error vocabulary belongs to the owning oRPC contract. Runtime procedure
+code raises the constructors supplied by native handler context. Middleware
+does not invent a second `.errors(...)` map, executable interiors do not import
+parallel runtime error modules, and local dispatch portals or status tables do
+not translate around the native contract. Executable service interiors never
+construct `ORPCError` directly: declared outcomes use `errors.*`, while an
+undeclared provider or implementation defect remains an ordinary private
+`Error`.
 
-Router and `impl.ts` files also cannot runtime-import conventional contract or
-error modules. The one exception is the embedded API root `impl.ts` using the
-exact runtime declaration `import { contract } from "./contract"`, because
-embedded APIs begin their native implementation there. Standalone services
-implement their contract in `base.ts`. A whole `import type` declaration
-remains available in every supported form. The inline-type exemption applies
-only to a named-only import whose every named specifier is `type`; a runtime
-default or namespace clause is therefore still governed.
+The community `effect-orpc` package and `ORPCTaggedError` have no authority in
+this lane. The composition packet separately owns executable own-contract
+imports and inferred contract-type reconstruction. TypeScript and behavior
+tests own constructor inference, Effect failure channels, payloads, and
+transport projection.
 
 ```grit
 language js(typescript)
 
-// Selects non-test service interiors governed by error import authority.
-predicate is_governed_service_source() {
+// Selects non-test service interiors governed by error authority.
+predicate require_orpc_error_authority_is_governed_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
-// Grants runtime tagged-error ownership only to an exact module contract.
-predicate is_exact_module_contract() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
-}
-
-// Identifies runtime consumers subject to contract and error import limits.
-predicate is_router_or_impl() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl|router|modules/[^/]+/(?:impl|router|router/[^/]+))\.ts$",
+// Selects executable interiors that must not acquire parallel error values.
+predicate require_orpc_error_authority_is_executable_interior() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl\.ts|router\.ts|middleware/[^/]+\.ts|modules/[^/]+/(?:module\.ts|router\.ts|router/[^/]+\.ts|middleware/[^/]+\.ts))$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
-// Preserves the embedded API implementer's one native runtime contract edge.
-predicate is_canonical_root_impl_contract_import($import, $source) {
-  $filename <: r".*plugins/server/api/[^/]+/src/service/impl\.ts$",
-  $source <: r"^[\"']\./contract[\"']$",
-  $import <: `import { contract } from $source`
+// Selects middleware boundaries where a second error vocabulary is forbidden.
+predicate require_orpc_error_authority_is_middleware_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:middleware|modules/[^/]+/middleware)/.*\.ts$",
+  ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
 // Admits declarations whose complete import is erased at runtime.
-predicate is_whole_type_only_import($import) {
+predicate require_orpc_error_authority_is_whole_type_import($import) {
   $import <: import_statement(type=type())
 }
 
 // Admits named imports only when every binding is erased at runtime.
-predicate is_named_all_inline_type_import($import) {
+predicate require_orpc_error_authority_is_named_type_import($import) {
   $import <: `import { $... } from $source`,
   $import <: contains import_specifier() as $type_specifier where {
     $type_specifier <: contains type()
@@ -65,113 +58,114 @@ predicate is_named_all_inline_type_import($import) {
   }
 }
 
-// Unifies the two conventional imports that carry no runtime authority.
-predicate is_permitted_conventional_type_import($import) {
-  or {
-    is_whole_type_only_import(import=$import),
-    is_named_all_inline_type_import(import=$import)
-  }
-}
-
-// Detects runtime acquisition of the module-owned tagged-error constructor.
-predicate imports_runtime_tagged_error_authority($import) {
-  $import <: contains import_specifier(name=$name) as $specifier where {
-    $name <: or { `ORPCTaggedError`, `"ORPCTaggedError"` },
-    $specifier <: not contains type()
-  }
-}
-
-// Rejects runtime vendor forms that obscure canonical named authority.
-predicate imports_noncanonical_runtime_vendor_form($import) {
-  or {
-    $import <: `import * as $namespace from "effect-orpc"`,
-    and {
-      $import <: contains identifier() as $default,
-      $import <: `import $default from "effect-orpc"`
-    },
-    and {
-      $import <: `import $default, { $... } from "effect-orpc"`,
-      $default <: identifier()
-    },
-    and {
-      $import <: `import $default, * as $namespace from "effect-orpc"`,
-      $default <: identifier()
-    },
-    $import <: contains import_specifier(name=$name) as $specifier where {
-      $name <: or { `default`, `"default"` },
-      $specifier <: not contains type()
-    }
-  }
-}
-
-// Identifies contract and error paths that runtime consumers may not acquire.
-predicate is_conventional_contract_or_error_source($source) {
-  $source <: r"^[\"'][^\"']*(?:[/\.](?:contract|errors?))(?:[/\.][^\"']*)?[\"']$"
+// Recognizes a module path that claims parallel error vocabulary.
+predicate require_orpc_error_authority_is_error_source($source) {
+  $source <: r"^[\"'][^\"']*(?:[/\.]errors?)(?:[/\.][^\"']*)?[\"']$"
 }
 
 or {
+  import_statement(source=$source) where {
+    require_orpc_error_authority_is_governed_source(),
+    $source <: r"^[\"']effect-orpc[\"']$"
+  },
   import_statement(source=$source) as $import where {
-    is_governed_service_source(),
-    not { is_exact_module_contract() },
-    $source <: r"^[\"']effect-orpc[\"']$",
-    not { is_whole_type_only_import(import=$import) },
-    or {
-      imports_runtime_tagged_error_authority(import=$import),
-      imports_noncanonical_runtime_vendor_form(import=$import)
+    require_orpc_error_authority_is_governed_source(),
+    $source <: r"^[\"'](?:@orpc/contract|@orpc/server|@orpc/experimental-effect)[\"']$",
+    $import <: contains import_specifier(name=$name) as $specifier where {
+      $name <: or { `ORPCTaggedError`, `"ORPCTaggedError"` },
+      $specifier <: not contains type()
     }
   },
   import_statement(source=$source) as $import where {
-    is_router_or_impl(),
-    is_conventional_contract_or_error_source(source=$source),
+    require_orpc_error_authority_is_executable_interior(),
+    require_orpc_error_authority_is_error_source(source=$source),
     not {
-      is_canonical_root_impl_contract_import(import=$import, source=$source)
+      require_orpc_error_authority_is_whole_type_import(import=$import)
     },
-    not { is_permitted_conventional_type_import(import=$import) }
+    not {
+      require_orpc_error_authority_is_named_type_import(import=$import)
+    }
+  },
+  `$receiver.errors($argument)` where {
+    require_orpc_error_authority_is_middleware_source()
+  },
+  `new ORPCError($arguments)` where {
+    require_orpc_error_authority_is_executable_interior()
+  },
+  or {
+    `const dispatchError = $value`,
+    `function dispatchError($args) { $body }`,
+    `const errorStatusMap = $value`,
+    `const $name = errorStatusMap`,
+    `errorStatusMap[$key]`,
+    `errorStatusMap.$key`
+  } where {
+    require_orpc_error_authority_is_governed_source()
   }
 }
 ```
 
-## Matches a noncanonical runtime vendor import
+## Matches a community tagged-error bridge
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
-import EffectORPC, { type ORPCTaggedError } from "effect-orpc";
-export type Tagged = ORPCTaggedError;
-export const builder = EffectORPC.eoc;
+// @filename: services/jobs/src/service/modules/catalog/contract/list.ts
+import { ORPCTaggedError } from "effect-orpc";
+class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
 ```
 
-## Ignores canonical named vendor imports
+## Matches parallel runtime error vocabulary
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
-import { eoc, type ORPCTaggedError } from "effect-orpc";
-export type Tagged = ORPCTaggedError;
-export const builder = eoc;
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
+import { CatalogUnavailable } from "./model/errors/catalog.errors";
+export const router = base.catalog.router({
+  list: module.list.effect(() => Effect.fail(new CatalogUnavailable())),
+});
 ```
 
-## Matches an aliased root contract import
+## Matches a custom dispatch portal
 
 ```typescript
-// @filename: plugins/server/api/catalog/src/service/impl.ts
-import { implement } from "@orpc/server";
-import { contract as rootContract } from "./contract";
-export const service = implement(rootContract).$context<Context>();
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
+const dispatchError = (error: unknown) => mapError(error);
 ```
 
-## Ignores the canonical root contract import
+## Matches a direct public-error construction
 
 ```typescript
-// @filename: plugins/server/api/catalog/src/service/impl.ts
-import { implement } from "@orpc/server";
-import { contract } from "./contract";
-export const service = implement(contract).$context<Context>();
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
+import { ORPCError } from "@orpc/server";
+export const router = base.catalog.router({
+  list: module.list.effect(function* () {
+    return yield* Effect.fail(
+      new ORPCError("SERVICE_UNAVAILABLE", {
+        message: "Catalog is unavailable",
+      }),
+    );
+  }),
+});
 ```
 
-## Ignores type-only conventional imports
+## Matches parallel middleware error authority
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
-import type { contract } from "../contract";
-import { type CatalogError } from "../model/errors/catalog";
-export const find = {};
+// @filename: services/jobs/src/service/modules/catalog/middleware/access.ts
+import { os } from "@orpc/server";
+/** Admits catalog reads. */
+export const middleware = os
+  .$context<Context>()
+  .errors({ FORBIDDEN: {} })
+  .middleware(admitCatalog);
+```
+
+## Ignores native handler constructors and type-only error facts
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
+import type { CatalogFailure } from "./model/errors/catalog.errors";
+export const router = base.catalog.router({
+  list: module.list.effect(function* ({ errors }) {
+    return yield* Effect.fail(errors.SERVICE_UNAVAILABLE());
+  }),
+});
 ```

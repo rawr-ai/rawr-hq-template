@@ -1,14 +1,17 @@
 ---
 level: error
-tags: [service, api, boundary, platform, host, resource, provider]
+tags: [service, api, boundary, platform, resource]
 ---
-# Require Service Platform Independence
+# Require Service Boundary Platform Independence
 
-Production service source describes and executes domain capabilities over
-context-provided ports. It does not acquire concrete Node or Bun platform
-modules. Filesystem, process, storage, and runtime capabilities terminate in
-a qualified host, resource, or provider and enter service construction as
-ready capabilities.
+Service contracts, schemas, and DTOs describe portable domain boundaries.
+They do not acquire concrete Node or Bun platform modules. Filesystem,
+process, storage, and runtime capabilities enter through service context and
+explicit resource providers instead.
+
+This rule intentionally does not classify router, module, or repository
+implementation files. TypeScript and behavior tests own those executable
+boundaries, while this packet guards the declarations shared across them.
 
 ```grit
 language js(typescript)
@@ -29,18 +32,60 @@ predicate require_service_boundary_platform_independence_belongs_to_exact_api_se
   }
 }
 
-// Defines the complete production service surface protected by this source law.
-predicate require_service_boundary_platform_independence_is_service_source() {
+// Identifies exact standalone-service contract and legacy schema declarations.
+predicate require_service_boundary_platform_independence_is_standalone_service_root_declaration() {
+  require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
+  $filename <: r".*services/[^/]+/src/service/(?:contract|schemas|model|types)\.ts$"
+}
+
+// Identifies exact API-service contract and legacy schema declarations.
+predicate require_service_boundary_platform_independence_is_api_service_root_declaration() {
+  require_service_boundary_platform_independence_belongs_to_exact_api_service(),
+  $filename <: r".*plugins/server/api/[^/]+/src/service/(?:contract|schemas|model|types)\.ts$"
+}
+
+// Identifies direct module contract entrypoints and leaves in both service forms.
+predicate require_service_boundary_platform_independence_is_service_module_contract() {
   or {
-    require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
-    require_service_boundary_platform_independence_belongs_to_exact_api_service()
+    and {
+      require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
+      $filename <: r".*services/[^/]+/src/service/modules/[^/]+/(?:(?:contract|schemas|model|types)\.ts|contract/[^/]+\.ts)$"
+    },
+    and {
+      require_service_boundary_platform_independence_belongs_to_exact_api_service(),
+      $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/(?:(?:contract|schemas|model|types)\.ts|contract/[^/]+\.ts)$"
+    }
+  }
+}
+
+// Identifies DTO and schema declarations owned by a service root or module.
+predicate require_service_boundary_platform_independence_is_service_model_declaration() {
+  or {
+    and {
+      require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
+      $filename <: r".*services/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|schema)/.*\.ts$"
+    },
+    and {
+      require_service_boundary_platform_independence_belongs_to_exact_api_service(),
+      $filename <: r".*plugins/server/api/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|schema)/.*\.ts$"
+    }
+  }
+}
+
+// Defines the complete declaration surface protected by this source law.
+predicate require_service_boundary_platform_independence_is_service_boundary_declaration() {
+  or {
+    require_service_boundary_platform_independence_is_standalone_service_root_declaration(),
+    require_service_boundary_platform_independence_is_api_service_root_declaration(),
+    require_service_boundary_platform_independence_is_service_module_contract(),
+    require_service_boundary_platform_independence_is_service_model_declaration()
   },
   not { $filename <: r".*/(?:test|tests|__tests__)/.*" }
 }
 
-// Recognizes concrete Node/Bun standard-library and Effect provider sources.
+// Recognizes concrete platform module sources without enumerating capabilities.
 predicate require_service_boundary_platform_independence_is_concrete_platform_source($source) {
-  $source <: r"^[\"'](?:(?:node:|bun:)[^\"']+|@effect/platform-(?:node(?:-shared)?|bun)(?:/[^\"']*)?)[\"']$"
+  $source <: r"^[\"'](?:node:|bun:)[^\"']+[\"']$"
 }
 
 or {
@@ -50,7 +95,7 @@ or {
   `require($source)`,
   `require.resolve($source)`
 } where {
-  require_service_boundary_platform_independence_is_service_source(),
+  require_service_boundary_platform_independence_is_service_boundary_declaration(),
   require_service_boundary_platform_independence_is_concrete_platform_source(source=$source)
 }
 ```
@@ -58,7 +103,7 @@ or {
 ## Matches a standalone module contract importing Node filesystem APIs
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
+// @filename: services/jobs/src/service/modules/catalog/contract/list.ts
 import "node:fs";
 export const contract = {};
 ```
@@ -71,20 +116,20 @@ const sqlite = import("bun:sqlite");
 export { sqlite };
 ```
 
-## Matches executable router acquisition
+## Ignores executable router implementation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/create.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
 import { randomUUID } from "node:crypto";
-export const create = { randomUUID };
+export const router = { randomUUID };
 ```
 
 ## Ignores portable boundary dependencies
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract.ts
+// @filename: services/jobs/src/service/modules/catalog/contract/list.ts
 import { Type } from "typebox";
-import { eoc } from "effect-orpc";
-import { ItemSchema } from "./model/schema/item.js";
-export const contract = eoc.input(Type.Object({ item: ItemSchema }));
+import { oc } from "@orpc/contract";
+import { ItemSchema } from "#jobs-service/modules/catalog/model/dto/item.dto";
+export const contract = oc.input(Type.Object({ item: ItemSchema }));
 ```

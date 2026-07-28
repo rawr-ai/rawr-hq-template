@@ -11,11 +11,11 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "enforced",
-  "forbids": "a direct database-source import from a standalone service module, handler, root anchor, model, or module middleware",
-  "why": "Database source realizes service-owned stores. Only database internals and named service-root middleware need that source; modules consume the projected capabilities through inherited oRPC context.",
-  "remediate": "Move the database import to a named service-root middleware file, project a narrow store capability into context, and consume that capability from the module handler. Keep external database acquisition in its resource/provider owner.",
-  "message": "Database source may flow only into service-root middleware or other database-owned source.",
+  "lane": "advisory",
+  "forbids": "a direct database-source import from a standalone service module, handler, root anchor, model, module middleware, middleware index, or any other source outside the database interior and direct named service-root middleware leaves",
+  "why": "Database source realizes service-owned stores. Only database internals and direct named service-root middleware leaves need that source in production; modules consume projected capabilities through inherited oRPC context. Owner-local package proof remains governed by the service test boundary.",
+  "remediate": "Move the database import to a direct named service-root middleware leaf, project a narrow store capability into context, and consume that capability from the module handler. Keep the middleware index as a catalog without database acquisition, and keep external database acquisition in its resource/provider owner.",
+  "message": "Database source may flow only into service-root middleware leaves or other database-owned source.",
   "pathCoverage": [
     {
       "kind": "exact-path",

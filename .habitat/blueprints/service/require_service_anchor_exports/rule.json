@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "advisory",
-  "forbids": "an existing service spine or module composition router without the direct generic const export for its role; an elected createMiddleware factory that returns the contract implementer, constructs a second native context author, or publishes its captured author; direct middleware authorship in base.ts; an aliased runtime os import that creates another authoring name; or an untyped context root",
-  "why": "Direct base, contract, service, module, and router anchors give exact authoring and composition one stable structural name. A standalone or embedded API base may expose one context-seeded native middleware author through a factory without leaking contract, router, provider, or authoring authority.",
-  "remediate": "Directly export base from standalone base.ts; service from root impl.ts; contract from contract.ts; module from module.ts; and router from each root or module router.ts. Name the context type on every context root. When host projection is needed, import os once under its native name in base.ts, construct one private os.$context<CompleteInitialContext>() value, and return only that same value from createMiddleware(). Do not export the captured author or author middleware directly in base.ts. Give named router/*.router.ts leaves and subrouters domain names, then compose them in module/router.ts.",
+  "forbids": "a service base without the sole direct os.$context<Context>() anchor; a root implementation without direct unconfigured impl and configured service stages; a root or module directory entrypoint without its generic contract or router anchor; a module.ts without its generic module anchor; an extra runtime spine export; or any second module export",
+  "why": "Closed generic anchors make declaration, implementation, configuration, module wiring, and router composition visible without qualified aliases or hidden factories.",
+  "remediate": "Export base = os.$context<Context>() from base.ts. Export the unconfigured impl and configured service from impl.ts. Export contract and router from root spine files and module directory index.ts entrypoints, export module from module.ts, and remove alternate runtime anchors, factories, compatibility exports, and module type exports.",
   "message": "Each service spine file must directly export its generic local anchor.",
   "pathCoverage": [
     {
@@ -23,6 +23,7 @@
     }
   ],
   "scanRoots": ["services", "plugins/server/api"],
+  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_anchor_exports/baseline.json"
   },

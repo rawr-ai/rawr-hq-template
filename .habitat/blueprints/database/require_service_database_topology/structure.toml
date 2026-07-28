@@ -56,9 +56,18 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "*.schema.ts",
+  "*.ts",
 ]
 allowed = []
+forbidden = [
+  "index.ts",
+  "generated.ts",
+  "helpers.ts",
+  "*.schema.ts",
+  "*.generated.ts",
+  "*.helper.ts",
+  "*.helpers.ts",
+]
 
 [[scopes]]
 name = "standalone-service-database-stores"
@@ -67,9 +76,26 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "*.store.ts",
+  "*.ts",
 ]
 allowed = []
+forbidden = [
+  "index.ts",
+  "session.ts",
+  "persistence.ts",
+  "repository.ts",
+  "provider.ts",
+  "helpers.ts",
+  "*.store.ts",
+  "*.repository.ts",
+  "*.reader.ts",
+  "*.writer.ts",
+  "*.session.ts",
+  "*.persistence.ts",
+  "*.provider.ts",
+  "*.helper.ts",
+  "*.helpers.ts",
+]
 
 [[scopes]]
 name = "standalone-service-database-migration-leaves"
@@ -80,14 +106,14 @@ allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-database-schema-leaves"
-root = "services/!(*.*)/src/service/db/schema/*.schema.ts"
+root = "services/!(*.*)/src/service/db/schema/*.ts"
 kind = "file"
 mode = "closed"
 allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-database-store-leaves"
-root = "services/!(*.*)/src/service/db/stores/*.store.ts"
+root = "services/!(*.*)/src/service/db/stores/*.ts"
 kind = "file"
 mode = "closed"
 allowEmpty = true

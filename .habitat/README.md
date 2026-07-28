@@ -15,9 +15,9 @@ The current generic kinds are:
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
   laws for generic anchors, native oRPC composition, context boundaries,
-  module isolation, owner-private aliases, standalone production source
+  module isolation, operation authorship, standalone production source
   isolation from proof, public-consumer sealing, platform-independent service
-  implementation, declarative TypeBox contracts, and public error authority.
+  implementation, declarative TypeBox contracts, and typed failure authority.
 - `database`: the optional closed persistence interior at a standalone service
   root, limited to migrations, schema, and stores whose capabilities enter
   modules only through named root middleware and inherited context. Its own
@@ -73,46 +73,40 @@ existing corpus is documented; activation is then one dependency edge into
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
-`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The `service` packet stack follows
-Magic Migration commit `822aa36d3f951a81d94292bcbce5d8fdc38fe1f7`,
-service-blueprint tree `29ec394c81130884a31bb0b73dbc3cb36cf4a3cb`.
+`5a974f0047f0667c2e429fdb4193a0e237b067c4`. The current `service` and
+`database` packets follow the stable Magic authority at commit
+`2374baa937466fe794e424c700fdd9d8ac7d64cd`, service tree
+`53cd340b859e660ad6a0cc1619b283edfb025e13`, and database tree
+`8ec14dbad5244f0725978e31b7e3c53f54b0bdbb`. The same trees remain unchanged
+through reviewed Magic head `01ea4c3ac534dc624bd7f769fc6eee994a38752a`.
 The imported agent-router placement relation retains that provenance but now
 lives under `rawr/repository`: it relates repository-owned roots and is not a
 constructible document-kind topology.
-That tree seeded the closed package, public surface, service spine, module
-shell, contract, and error laws. RAWR now owns explicit amendments for the
-host-to-service-to-module context funnel, native oRPC and Effect-oRPC
-composition, router-handler authorship, kind-local model indices, module
-isolation, owner-private aliases, and platform-independent service source.
-Those amendments retain the canonical `@rawr/hq-sdk` TypeBox Standard Schema
-bridge; they are not represented as unchanged Magic Migration algorithms.
+The port keeps Magic's source patterns byte-identical. Rule manifests adapt
+their niche (`magic` to `rawr`) and repository formatting; the strengthened
+consumer-sealing law is advisory while its shared owner-local relative-path
+case is corrected. Template otherwise adds only package metadata, module
+`AGENTS.md`, and API paths. RAWR adds one generic model distinction: optional
+closed `entities` directories own identity-bearing domain state, while DTOs
+remain boundary projections and database schema remains physical mapping.
+There is no database DTO category. That structural destination remains
+advisory until the shared TypeBox and platform-neutral source laws cover
+entities; no production
+entity source moves before that shared law lands.
 
-Magic Migration commits `21497500629f6b77ccbd6b0e983f2cc7c16ca663` and
-`60320c47ff3b1ca582bf918c35127f7b86b6a847` respectively supply standalone
-production source isolation from proof and public-consumer sealing. RAWR
-composes the second law with the existing private-alias rule rather than
-creating another alias owner: private aliases remain owner-local under that
-rule, while the new law owns literal paths into `src/service`. RAWR also limits
-sibling shortcuts to lowercase-kebab owners named from standalone production
-source and applies literal-path sealing at the workspace gate so root, script,
-and TSX consumers remain covered.
+Required module `contract/` and `router/` directories expose `index.ts` plus
+semantic leaves; optional `middleware/` uses the same entrypoint shape. Root
+contract and router files remain the service composition spines. The former
+flat module faces and the duplicate private-alias packets are superseded rather
+than preserved as compatibility rules.
 
-Template PR #603 landed that preceding source-boundary checkpoint on canonical
-`main` at `396b3214`. The database blueprint is the next RAWR-owned structural
-checkpoint. Current Magic service/database shapes were read only as ownership
-evidence: RAWR deliberately rejects their open root/module interiors and keeps
-one closed standalone service-root destination instead.
-
-The database topology requires closed `migrations/*.sql` and
-`stores/*.store.ts` interiors when `db` is present. It admits an optional closed
-`schema/*.schema.ts` interior only for technology-specific physical mappings;
-TypeBox remains the logical DTO-schema owner and migrations own physical
-evolution. Its source law recognizes only literal module-loading edges that
-visibly name the current service database. Database-owned TypeScript and root
-named middleware may import those leaves; modules and other service-root
-source consume projected capabilities through context. Both empty-baseline
-rules run once in the existing Habitat source-law batch without another target
-or runner.
+The database topology requires closed `migrations/*.sql` and `stores/*.ts`
+interiors when `db` is present and admits optional closed `schema/*.ts` only
+for technology-specific physical mappings. Database-owned source and direct
+named root middleware may import database leaves; modules consume projected
+stores through inherited context. The service and database migration packets
+remain advisory with empty baselines, so current violations stay visible until
+the production burn-down reaches this destination.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed

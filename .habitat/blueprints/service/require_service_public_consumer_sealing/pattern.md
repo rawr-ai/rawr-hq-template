@@ -4,32 +4,63 @@ tags: [service, boundary, consumer, import]
 ---
 # Require Service Public Consumer Sealing
 
-A standalone service exposes deliberate public capabilities from its package
-client. Root source, scripts, apps, packages, plugins, resources, tools, and
-sibling services must not import, re-export, or dynamically load a literal
-path that visibly enters `services/<owner>/src/service`. A standalone service's
-production source also cannot use a relative sibling shortcut into another
-`<owner>/src/service` tree.
+A standalone service exposes deliberate public capability surfaces from its
+package client. Its private `#<owner>-service/*` alias belongs only to source
+and proof inside the matching `services/<owner>` package. Apps, packages,
+plugins, resources, tools, and sibling services must not import, re-export, or
+dynamically load that alias or a direct `services/<owner>/src/service` path.
 
-This law owns literal implementation-tree module sources. The independent
-private-alias law owns every `#<owner>-service/*` edge. This law does not inspect
-ordinary path data or computed module names. Nx independently owns project-kind
-dependency direction, while the service topology packet owns the package's
-public `client.ts` and private `service/` faces.
+This law owns literal module-loading edges. It does not inspect ordinary path
+data or computed module names. Nx independently owns project-kind dependency
+direction, while the service topology packet owns the package's public
+`client.ts` and private `service/` faces.
 
 ```grit
-language js
+language js(typescript)
 
 // Detects a service-shaped source nested beneath an already selected architecture root.
 predicate require_service_public_consumer_sealing_is_nested_service_package_path() {
-  $filename <: r"(?:^|.*/)(?:apps|packages|plugins|resources|scripts|services|tools)/.*services/[^/]+/src/.*\.[cm]?[jt]sx?$"
+  $filename <: r"(?:^|.*/)(?:apps|packages|plugins|resources|services|tools)/.*services/[^/]+/(?:src|test)/.*\.[cm]?[jt]sx?$"
 }
 
-// Selects production source that belongs to one exact top-level standalone service package.
-predicate require_service_public_consumer_sealing_is_standalone_service_production_source() {
-  $filename <: r".*services/[^/]+/src/.*\.[cm]?[jt]sx?$",
+// Selects source and proof that belong to one exact top-level standalone service package.
+predicate require_service_public_consumer_sealing_is_matching_owner_package($alias_owner) {
+  $filename <: r".*services/([^/]+)/(?:src|test)/.*\.[cm]?[jt]sx?$"($source_owner),
   not {
     require_service_public_consumer_sealing_is_nested_service_package_path()
+  },
+  $source_owner <: $alias_owner
+}
+
+// Selects source and proof inside any exact top-level standalone service package.
+predicate require_service_public_consumer_sealing_is_standalone_service_package() {
+  $filename <: r".*services/[^/]+/(?:src|test)/.*\.[cm]?[jt]sx?$",
+  not {
+    require_service_public_consumer_sealing_is_nested_service_package_path()
+  }
+}
+
+// Detects a private service alias used outside the matching standalone service package.
+predicate require_service_public_consumer_sealing_is_foreign_private_alias($source) {
+  or {
+    and {
+      $source <: r"^[\"']#([^/\"']+)-service(?:/[^\"']*)?[\"']$"($alias_owner),
+      not {
+        require_service_public_consumer_sealing_is_matching_owner_package(
+          alias_owner=$alias_owner
+        )
+      }
+    },
+    and {
+      $source <: template_string(),
+      $source <: not contains template_substitution(),
+      $source <: r"^`#([^/`]+)-service(?:/[^`]*)?`$"($alias_owner),
+      not {
+        require_service_public_consumer_sealing_is_matching_owner_package(
+          alias_owner=$alias_owner
+        )
+      }
+    }
   }
 }
 
@@ -45,15 +76,15 @@ predicate require_service_public_consumer_sealing_is_direct_service_tree_source(
   }
 }
 
-// Detects a production service source that names a lowercase-kebab sibling implementation tree.
+// Detects a service-owned relative source with the exact sibling-service implementation shape.
 predicate require_service_public_consumer_sealing_is_relative_sibling_service_tree_source($source) {
-  require_service_public_consumer_sealing_is_standalone_service_production_source(),
+  require_service_public_consumer_sealing_is_standalone_service_package(),
   or {
-    $source <: r"^[\"'](?:\.\./)+[a-z][a-z0-9]*(?:-[a-z0-9]+)*/src/service(?:/[^\"']*)?[\"']$",
+    $source <: r"^[\"'](?:\.\./)+[^/\"']+/src/service(?:/[^\"']*)?[\"']$",
     and {
       $source <: template_string(),
       $source <: not contains template_substitution(),
-      $source <: r"^`(?:\.\./)+[a-z][a-z0-9]*(?:-[a-z0-9]+)*/src/service(?:/[^`]*)?`$"
+      $source <: r"^`(?:\.\./)+[^/`]+/src/service(?:/[^`]*)?`$"
     }
   }
 }
@@ -66,6 +97,7 @@ or {
   `require.resolve($source)`
 } where {
   or {
+    require_service_public_consumer_sealing_is_foreign_private_alias(source=$source),
     require_service_public_consumer_sealing_is_direct_service_tree_source(source=$source),
     require_service_public_consumer_sealing_is_relative_sibling_service_tree_source(
       source=$source
@@ -74,50 +106,50 @@ or {
 }
 ```
 
-## Matches a root consumer
+## Matches foreign private aliases
 
 ```typescript
-// @filename: service-consumer.ts
-import { router } from "./services/jobs/src/service/router";
-```
+// @filename: plugins/server/api/catalog/src/service/modules/jobs/router/index.ts
+import { router } from "#jobs-service/router";
 
-## Matches a direct TSX consumer
+// @filename: services/discovery/src/service/model/ports/jobs.ts
+export type { JobRecord } from "#jobs-service/modules/jobs/model/dto/job";
 
-```tsx
-// @filename: apps/web/src/features/jobs.tsx
-import { router } from "../../../../services/jobs/src/service/router";
-export const Jobs = () => <output>{String(router)}</output>;
+// @filename: apps/server/src/runtime/jobs.ts
+const jobs = await import(`#jobs-service/modules/jobs/router`);
+
+// @filename: plugins/catalog/test/fixtures/services/jobs/src/router.ts
+import { router as privateRouter } from "#jobs-service/router";
+
+// @filename: services/discovery/src/service/db/fixtures/services/jobs/src/client.ts
+import { router as nestedPrivateRouter } from "#jobs-service/router";
 ```
 
 ## Matches direct implementation paths
 
 ```typescript
-// @filename: scripts/ops/jobs.ts
-const jobs = require("../../services/jobs/src/service/router");
+// @filename: tools/ops/src/jobs.ts
+const jobs = require("../../../services/jobs/src/service/router");
 
 // @filename: packages/inspection/src/jobs.ts
-const jobsPath = require.resolve(`../../../services/jobs/src/service/contract`);
+const jobsPath = require.resolve(`../../services/jobs/src/service/contract`);
 
 // @filename: services/discovery/src/service/jobs.ts
-import { router } from "../../../job-search/src/service/router";
+import { router } from "../../../jobs/src/service/router";
 ```
 
-## Ignores owner-local proof and private aliases
+## Ignores owner-local private aliases and public consumers
 
 ```typescript
-// @filename: services/jobs/test/mechanics/client/client.test.ts
-import { router } from "../../../src/service/router";
-
-// @filename: apps/web/src/features/jobs-alias.ts
+// @filename: services/jobs/src/client.ts
 import { router } from "#jobs-service/router";
+
+// @filename: services/jobs/test/mechanics/client/client.test.ts
+import { createJobsStore } from "#jobs-service/db/stores/jobs";
+
+// @filename: plugins/server/api/catalog/src/service/modules/jobs/router/index.ts
+import type { Client as JobsClient } from "#jobs/client";
 
 // @filename: tools/db/src/catalog.ts
 const migrationDirectory = "services/jobs/src/service/db/migrations";
-```
-
-## Ignores nested test fixtures
-
-```typescript
-// @filename: services/discovery/test/fixtures/services/jobs/src/client.test.ts
-import { router } from "../../../../job-search/src/service/router";
 ```

@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "runtime ORPCTaggedError imports and runtime namespace or default effect-orpc imports outside an exact module contract.ts, plus runtime conventional contract or error imports from router or impl files except the embedded API impl.ts declaration import { contract } from './contract'",
-  "why": "A module contract owns its public oRPC error constructors. Canonical named vendor imports keep that authority visible, while the native service composition law separately owns contract-to-implementer lineage.",
-  "remediate": "Define and attach public tagged errors in the owning module contract.ts. Replace runtime namespace/default effect-orpc imports with canonical named imports. For conventional contract or error sources, use type-only imports; only an embedded API impl.ts may use the exact runtime declaration import { contract } from './contract'.",
-  "message": "Public oRPC error constructors belong to the owning module contract.",
+  "forbids": "community effect-orpc or runtime ORPCTaggedError acquisition; executable runtime imports from parallel error modules; direct ORPCError construction in executable service interiors; middleware-owned .errors maps; and custom dispatchError or errorStatusMap portals inside a service",
+  "why": "The owning contract declares public error vocabulary and native oRPC supplies its constructors to handlers and contract-aware middleware. Keeping runtime error authority direct removes tagged bridges, parallel constructors, literal public-error construction, and translation tunnels.",
+  "remediate": "Declare public error maps with native .errors(...) in the owning contract and raise the injected errors.* constructor from procedures or contract-aware middleware. Leave genuinely undeclared implementation defects as ordinary private Error values. Keep error-only imports type-level and remove direct ORPCError construction, middleware-owned maps, community bridges, tagged constructors, dispatch portals, and status tables.",
+  "message": "Public service errors must flow from native contract authority.",
   "pathCoverage": [
     {
       "kind": "exact-path",

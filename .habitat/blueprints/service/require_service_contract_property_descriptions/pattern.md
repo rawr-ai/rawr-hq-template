@@ -28,9 +28,9 @@ are not inferred here.
 ```grit
 language js(typescript)
 
-// Confirms the contract leaf selected by each bounded Habitat application.
+// Confirms a direct contract entrypoint or semantic leaf in the bounded application.
 predicate require_service_contract_property_descriptions_is_module_contract() {
-  $filename <: r"(?:^|.*/)contract\.ts$"
+  $filename <: r".*modules/[^/]+/(?:contract\.ts|contract/[^/]+\.ts)$"
 }
 
 // Confirms that the contract acquires the canonical TypeBox runtime binding.
@@ -147,7 +147,7 @@ or {
 ## Matches undocumented and nonstatic descriptions
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 export const contract = Type.Object({
   missing: Type.String(),
@@ -160,7 +160,7 @@ export const contract = Type.Object({
 ## Matches aliased and noncanonical TypeBox authority
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type as T } from "typebox";
 export const contract = T.Object({
   query: T.String({ description: "Search text." }),
@@ -168,7 +168,7 @@ export const contract = T.Object({
 ```
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "./reexported-typebox";
 export const contract = Type.Object({
   query: Type.String({ description: "Search text." }),
@@ -178,7 +178,7 @@ export const contract = Type.Object({
 ## Matches local TypeBox aliases
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 const T = Type;
 export const contract = T.Object({
@@ -189,7 +189,7 @@ export const contract = T.Object({
 ## Matches one-argument enum data that resembles schema options
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 export const contract = Type.Object({
   state: Type.Enum({ description: "draft" }),
@@ -200,7 +200,7 @@ export const contract = Type.Object({
 ## Matches unsupported property schema authorities
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 const LocalValue = Type.String({ description: "Local value." });
 const localSchemas = { value: LocalValue };
@@ -216,7 +216,7 @@ export const contract = Type.Object({
 ## Matches shorthand, method, and noncanonical spread authority
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 const JobSchema = Type.String({ description: "Job identifier." });
 export const contract = Type.Object({
@@ -231,7 +231,7 @@ export const contract = Type.Object({
 ## Ignores canonical direct and delegated schemas
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 import { JobSchema } from "./model/dto/job.dto";
 export const contract = Type.Object({
@@ -248,7 +248,7 @@ export const contract = Type.Object({
 ## Ignores schema-valued options and nested expression spreads
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 const AlternativeSchemas = [
   Type.String({ description: "Text alternative." }),
@@ -270,7 +270,7 @@ export const contract = Type.Object({
 ## Ignores empty object declarations
 
 ```typescript
-// @filename: services/jobs/src/service/modules/search/contract.ts
+// @filename: services/jobs/src/service/modules/search/contract/search.ts
 import { Type } from "typebox";
 export const contract = Type.Object({});
 ```
