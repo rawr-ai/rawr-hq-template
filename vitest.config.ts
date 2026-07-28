@@ -27,7 +27,7 @@ export default defineConfig({
           name: "cli",
           environment: "node",
           exclude: ["test/native-oclif-extension-roundtrip.test.ts"],
-          fileParallelism: false,
+          maxWorkers: 2,
           include: [...includes],
           env: { NODE_ENV: "production" },
           testTimeout: 60_000,

@@ -10,7 +10,7 @@ export default defineConfig({
     environment: "node",
     include: ["test/**/*.test.ts"],
     exclude: ["dist/**", "node_modules/**"],
-    fileParallelism: false,
+    maxWorkers: 2,
     testTimeout: 30_000,
   },
 });
