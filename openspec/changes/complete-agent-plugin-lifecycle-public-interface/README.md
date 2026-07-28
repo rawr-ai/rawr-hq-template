@@ -2994,14 +2994,33 @@ resource object identity, middleware order, persistence behavior, and public
 contracts remain unchanged.
 
 Uncached HQ Ops typecheck and all 11 owner behavior tests pass in 5.9 seconds.
-The staged context-law probe reports only the six existing flat middleware-file
-findings, two per module; it reports no missing curation or raw-lane router
-access. Their topology remains a separate owner-local checkpoint rather than
-being folded into this behavior-preserving cut.
+At that checkpoint, the staged context-law probe reported only six existing
+flat middleware-file findings, two per module; it reported no missing curation
+or raw-lane router access. Task 5.7e21b below resolves those placeholders as a
+separate owner-local cut rather than folding them into the curation change.
 The embedded Example Todo API remains a separate task 5.7e21 checkpoint because
 its host still supplies flat request context and must establish service lanes
 before module curation can honestly consume them. No provider home, Personal
 repository, Oclif surface, or live lifecycle state changes in this checkpoint.
+
+## HQ Ops Empty Middleware Retirement
+
+The follow-up checkpoint completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21b]]. The config,
+journal, and security `middleware.ts` files exported only empty module-level
+observability and analytics middleware plus unused factory aliases. They are
+deleted rather than relocated. Each module now proceeds directly from its root
+implementer branch to terminal context curation, while the real required
+observability and analytics behavior remains attached once at the service root.
+Removing the six empty middleware attachments also intentionally removes their
+framework-generated wrapper spans; those wrappers contributed no RAWR span
+attributes, lifecycle events, analytics payload, or capability.
+
+The staged context law now reports no HQ Ops finding. Owner typecheck and all
+11 behavior tests pass without a new source-shape test or replacement
+abstraction. Public contracts, resource identity, repository scope, persistence,
+and required service telemetry remain unchanged; only those redundant wrapper
+spans are gone.
 
 ## Settlement Oracles
 

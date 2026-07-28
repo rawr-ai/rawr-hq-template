@@ -1292,6 +1292,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   routers author only against `resources` and `repoRoot`. Prove the owner with
   its typecheck and behavior suite; do not add a context-shape test or change
   acquisition, persistence, or public contracts.
+- [x] 5.7e21b Delete HQ Ops' three flat module-middleware facades. They contain
+  only empty observability and analytics placeholders plus unused factory
+  re-exports, so retain the actual required telemetry once at the service root
+  and attach terminal curation directly to each module branch. Prove unchanged
+  operation results, retained required service telemetry, the intentional
+  removal of redundant wrapper spans, and a clean staged context law; do not
+  replace the deleted facades with empty named middleware files or another
+  abstraction.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own
