@@ -16,19 +16,19 @@
         "@rawr/runtime-context": "workspace:*",
         "elysia": "^1.3.12",
         "inngest": "3.51.0",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.3",
         "@catenarycloud/linteffect": "0.0.6",
-        "@effect/platform-node": "4.0.0-beta.100",
+        "@effect/platform-node": "4.0.0-beta.101",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
         "@rawr/agent-plugin-lifecycle": "workspace:*",
         "@types/node": "^22.14.0",
         "@vitest/ui": "^4.0.18",
         "bun-types": "1.3.14",
         "cytoscape": "^3.33.2",
-        "effect": "4.0.0-beta.100",
+        "effect": "4.0.0-beta.101",
         "nx": "23.1.0",
         "tar": "7.5.7",
         "typescript": "^5.9.3",
@@ -42,7 +42,7 @@
         "rawr": "./bin/run.js",
       },
       "dependencies": {
-        "@effect/platform-node": "4.0.0-beta.100",
+        "@effect/platform-node": "4.0.0-beta.101",
         "@oclif/core": "^4.11.4",
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
@@ -58,7 +58,7 @@
         "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
         "@rawr/resource-versioned-content": "workspace:*",
-        "effect": "4.0.0-beta.100",
+        "effect": "4.0.0-beta.101",
         "zod": "^3.24.3",
       },
       "devDependencies": {
@@ -99,7 +99,7 @@
         "elysia": "^1.3.12",
         "inngest": "3.51.0",
         "pino": "^10.3.1",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@types/node": "^22.14.0",
@@ -175,7 +175,7 @@
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
         "inngest": "3.51.0",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -183,9 +183,6 @@
     },
     "packages/runtime-context": {
       "name": "@rawr/runtime-context",
-      "dependencies": {
-        "inngest": "3.51.0",
-      },
       "devDependencies": {
         "typescript": "^5.9.3",
       },
@@ -276,8 +273,8 @@
     "resources/agent-plugin-export-destination": {
       "name": "@rawr/resource-agent-plugin-export-destination",
       "dependencies": {
-        "@effect/platform-node": "4.0.0-beta.100",
-        "effect": "4.0.0-beta.100",
+        "@effect/platform-node": "4.0.0-beta.101",
+        "effect": "4.0.0-beta.101",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -287,8 +284,8 @@
     "resources/agent-plugin-package-output": {
       "name": "@rawr/resource-agent-plugin-package-output",
       "dependencies": {
-        "@effect/platform-node": "4.0.0-beta.100",
-        "effect": "4.0.0-beta.100",
+        "@effect/platform-node": "4.0.0-beta.101",
+        "effect": "4.0.0-beta.101",
         "yazl": "^3.3.1",
       },
       "devDependencies": {
@@ -299,9 +296,9 @@
     "resources/content-workspace": {
       "name": "@rawr/resource-content-workspace",
       "dependencies": {
-        "@effect/platform-node": "4.0.0-beta.100",
-        "effect": "4.0.0-beta.100",
-        "typebox": "1.3.6",
+        "@effect/platform-node": "4.0.0-beta.101",
+        "effect": "4.0.0-beta.101",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -310,9 +307,9 @@
     "resources/native-agent-provider": {
       "name": "@rawr/resource-native-agent-provider",
       "dependencies": {
-        "@effect/platform-node": "4.0.0-beta.100",
-        "effect": "4.0.0-beta.100",
-        "typebox": "1.3.6",
+        "@effect/platform-node": "4.0.0-beta.101",
+        "effect": "4.0.0-beta.101",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -321,9 +318,9 @@
     "resources/versioned-content": {
       "name": "@rawr/resource-versioned-content",
       "dependencies": {
-        "@effect/platform-node": "4.0.0-beta.100",
-        "effect": "4.0.0-beta.100",
-        "typebox": "1.3.6",
+        "@effect/platform-node": "4.0.0-beta.101",
+        "effect": "4.0.0-beta.101",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -337,15 +334,14 @@
         "@orpc/client": "1.14.8",
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
-        "@orpc/shared": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
         "@rawr/resource-agent-plugin-package-output": "workspace:*",
         "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
         "@rawr/resource-versioned-content": "workspace:*",
-        "effect": "4.0.0-beta.100",
+        "effect": "4.0.0-beta.101",
         "effect-orpc": "1.0.0-effect-v4.8",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
@@ -362,7 +358,7 @@
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@types/bun": "^1.2.10",
@@ -377,7 +373,7 @@
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
@@ -393,7 +389,7 @@
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
@@ -408,7 +404,7 @@
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
@@ -421,7 +417,7 @@
       "name": "@rawr/hyperresearch-codex",
       "dependencies": {
         "@rawr/hq-sdk": "workspace:*",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "typescript": "^5.9.3",
@@ -434,7 +430,7 @@
         "@orpc/contract": "1.14.8",
         "@orpc/server": "1.14.8",
         "@rawr/hq-sdk": "workspace:*",
-        "typebox": "1.3.6",
+        "typebox": "1.3.8",
       },
       "devDependencies": {
         "@opentelemetry/context-async-hooks": "^2.6.0",
@@ -575,9 +571,9 @@
 
     "@dagrejs/graphlib": ["@dagrejs/graphlib@2.2.4", "", {}, "sha512-mepCf/e9+SKYy1d02/UkvSy6+6MoyXhVxP8lLDfA7BPE1X1d4dR0sZznmbM8/XVJ1GPM+Svnx7Xj6ZweByWUkw=="],
 
-    "@effect/platform-node": ["@effect/platform-node@4.0.0-beta.100", "", { "dependencies": { "@effect/platform-node-shared": "^4.0.0-beta.100", "mime": "^4.1.0", "undici": "^8.7.0" }, "peerDependencies": { "effect": "^4.0.0-beta.100", "ioredis": "^5.7.0" } }, "sha512-nH5xgxOLfPj5Bi0/o4OaDsR98Z59lHKGty+TDqckg7zRz6jry82hGW982NRPduzX0MJloDsGp/3rfeN4Hu7Keg=="],
+    "@effect/platform-node": ["@effect/platform-node@4.0.0-beta.101", "", { "dependencies": { "@effect/platform-node-shared": "^4.0.0-beta.101", "mime": "^4.1.0", "undici": "^8.7.0" }, "peerDependencies": { "effect": "^4.0.0-beta.101", "ioredis": "^5.7.0" } }, "sha512-pClk7dmMtHgM6Byu7CzGfrPvZ1/4BwmrRlCg2Op+iJozMkwVUxq8v4beK8b9SvxsliJjHZFznjvkVLX7LQjBqw=="],
 
-    "@effect/platform-node-shared": ["@effect/platform-node-shared@4.0.0-beta.100", "", { "dependencies": { "@types/ws": "^8.18.1", "ws": "^8.21.0" }, "peerDependencies": { "effect": "^4.0.0-beta.100" } }, "sha512-PMsCXQeK2wnlmnqGCc79oqK9CX8ipZvoHxAy/CRojMF+zHIluxh61L3pzWAYEbMb19Be4Bxgqs7gK2hiV8H8Pg=="],
+    "@effect/platform-node-shared": ["@effect/platform-node-shared@4.0.0-beta.101", "", { "dependencies": { "@types/ws": "^8.18.1", "ws": "^8.21.0" }, "peerDependencies": { "effect": "^4.0.0-beta.101" } }, "sha512-g4L7XiyJSNJLJVhlslyg2zBCQsoKQf1y1gd+Yfd+3wD9ymC+m7ymbd/5FGqnT1aXV6E2AwRr4D/R1eyRUikvWQ=="],
 
     "@emnapi/core": ["@emnapi/core@1.4.5", "", { "dependencies": { "@emnapi/wasi-threads": "1.0.4", "tslib": "^2.4.0" } }, "sha512-XsLw1dEOpkSX/WucdqUhPWP7hDxSvZiY+fsUC14h+FtQ2Ifni4znbBt8punRX+Uj2JG/uDb8nEHVKvrVlvdZ5Q=="],
 
@@ -1525,7 +1521,7 @@
 
     "easy-table": ["easy-table@1.1.0", "", { "optionalDependencies": { "wcwidth": ">=1.0.1" } }, "sha512-oq33hWOSSnl2Hoh00tZWaIPi1ievrD9aFG82/IgjlycAnW9hHx5PkJiXpxPsgEE+H7BsbVQXFVFST8TEXS6/pA=="],
 
-    "effect": ["effect@4.0.0-beta.100", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "fast-check": "^4.9.0", "find-my-way-ts": "^0.1.6", "ini": "^7.0.0", "kubernetes-types": "^1.30.0", "msgpackr": "^2.0.4", "multipasta": "^0.2.8", "toml": "^4.1.2", "uuid": "^14.0.1", "yaml": "^2.9.0" } }, "sha512-K4ed+BS3HyE+NoAZ8pJss2DpuK41mb856IO7ZlPfnwBXbq8oTtAAurrsVnwe2hzPamIuaZp/Pq4/xp9qORYv8Q=="],
+    "effect": ["effect@4.0.0-beta.101", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "fast-check": "^4.9.0", "find-my-way-ts": "^0.1.6", "ini": "^7.0.0", "kubernetes-types": "^1.30.0", "msgpackr": "^2.0.4", "multipasta": "^0.2.8", "toml": "^4.1.2", "uuid": "^14.0.1", "yaml": "^2.9.0" } }, "sha512-HjowumlIo+orthn4jMlEJPuzIYPBV+uq/XiciHWhiedLsXQpWHdNJHO5d59BVDP5s1LPuvERcktwFqRXnJqnhA=="],
 
     "effect-orpc": ["effect-orpc@1.0.0-effect-v4.8", "", { "peerDependencies": { "@orpc/client": ">=1.13.0", "@orpc/contract": ">=1.13.0", "@orpc/server": ">=1.13.0", "@orpc/shared": ">=1.13.0", "effect": ">=4.0.0-beta.98", "typescript": "^5" } }, "sha512-HwF4U0rtpGoVKnu+05j/vgcc7xcJaxCFhDtdpW3Czoq73zV8crpn16Il3913GF8SI/7TEBG6HJhIKX/Em2qwDA=="],
 
@@ -2179,7 +2175,7 @@
 
     "type-fest": ["type-fest@5.4.4", "", { "dependencies": { "tagged-tag": "^1.0.0" } }, "sha512-JnTrzGu+zPV3aXIUhnyWJj4z/wigMsdYajGLIYakqyOW1nPllzXEJee0QQbHj+CTIQtXGlAjuK0UY+2xTyjVAw=="],
 
-    "typebox": ["typebox@1.3.6", "", {}, "sha512-Sc8RA0NCMEFmApHNU9ZMzqcpQj46She44J8ffpLM/bdhLNUZKq7DJumcLcsFx1gRmDfQPgCgOmFFJ7rcnfWNyA=="],
+    "typebox": ["typebox@1.3.8", "", {}, "sha512-xYaJgF0KMvBViKWRaKTAtfR6sDt/yH6xAjGAHXYJxKxUF4pVyPXZZhIlwOg6cDIE81N7L0pyIHs136RHBm6rLQ=="],
 
     "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

@@ -735,6 +735,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   validation, and help-probe admission. Keep an optional provider-construction
   seam for focused tests, preserve explicit provider homes and native
   capability/inventory observation, and add no ambient home discovery.
+- [x] 5.6e Prepare the surviving vendor realm for the separate oRPC 2 switch.
+  Pin every direct Effect and Effect Platform declaration to aligned
+  `4.0.0-beta.101`, pin every direct TypeBox declaration to `1.3.8`, and remove
+  the lifecycle service's unused direct `@orpc/shared` declaration after a
+  complete source search. Regenerate the lockfile and prove one Effect realm,
+  one TypeBox version, unchanged message-only TypeBox validation, affected
+  owner types, and version-sensitive resource behavior. Keep oRPC at `1.14.8`
+  in this checkpoint; add no bridge, wrapper, pointer reconstruction, or API
+  migration. Historical exact-version observations remain historical.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
   typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
