@@ -362,7 +362,7 @@ Treat middleware categories as behavioral roles, not just naming conventions:
 - **Guard/policy middleware** consumes context and metadata to allow/block/shape execution, but does not add execution context.
   - Example: `readOnlyMode`
 - **Observer/instrumentation middleware** consumes context and metadata to emit side effects, but does not add execution context.
-  - Examples: `createBaseObservabilityMiddleware`, `createAnalyticsMiddleware`, `readOnlyMode`
+  - Examples: `createObservabilityMiddlewareCallback`, `createAnalyticsMiddlewareCallback`
 
 The semantic line is simple:
 
@@ -560,7 +560,9 @@ Do **not** use non-provider builders to add context; they intentionally expose o
 Name middleware by what it is:
 
 - zero-config middleware exports a ready-to-use value (`sqlProvider`, `feedbackProvider`, `readOnlyMode`)
-- configurable middleware exports an explicit constructor (`createAnalyticsMiddleware`)
+- configurable middleware exports an explicit callback factory
+  (`createAnalyticsMiddlewareCallback`); the owning service decorates the
+  callback through its local `base`
 
 Keep middleware filenames short and semantic:
 

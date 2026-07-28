@@ -1,22 +1,23 @@
 import { createObservabilityMiddlewareCallback } from "@rawr/hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy/procedure-metadata";
 
-/** Authors corpus lifecycle signals through the service's complete context. */
+/** Adds lifecycle invocation fields to the native observability boundary. */
 export const middleware = base.middleware(
   createObservabilityMiddlewareCallback(metadataDefaults, {
     spanAttributes: ({ context }) => ({
       invocation_trace_id: context.invocation.traceId,
+      invocation_command_id: context.invocation.commandId,
     }),
     logFields: ({ context, spanTraceId }) => ({
-      invocationTraceId: context.invocation.traceId,
       spanTraceId,
+      invocationTraceId: context.invocation.traceId,
+      invocationCommandId: context.invocation.commandId,
     }),
     startEventAttributes: ({ context }) => ({
       traceId: context.invocation.traceId,
+      commandId: context.invocation.commandId,
     }),
-    successEventAttributes: ({ context }) => ({
-      traceId: context.invocation.traceId,
-    }),
+    successEventAttributes: () => ({}),
   })
 );

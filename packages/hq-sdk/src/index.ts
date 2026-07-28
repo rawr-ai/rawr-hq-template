@@ -15,8 +15,8 @@ export type {
   ObservabilityMiddlewareInput,
 } from "./orpc/middleware";
 export {
-  createAnalyticsMiddleware,
-  createObservabilityMiddleware,
+  createAnalyticsMiddlewareCallback,
+  createObservabilityMiddlewareCallback,
 } from "./orpc/middleware";
 export type { AnalyticsClient } from "./orpc/ports/analytics";
 export type { DbPool, Sql } from "./orpc/ports/db";

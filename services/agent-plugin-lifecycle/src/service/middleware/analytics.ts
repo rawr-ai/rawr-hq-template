@@ -1,13 +1,13 @@
 import { createAnalyticsMiddlewareCallback } from "@rawr/hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy/procedure-metadata";
 
-/** Authors workspace analytics through the Dev service context. */
+/** Adds lifecycle invocation fields to the native analytics boundary. */
 export const middleware = base.middleware(
   createAnalyticsMiddlewareCallback(metadataDefaults, {
     payload: ({ context }) => ({
-      analytics_workspace_root: context.scope.workspaceRoot,
       analytics_trace_id: context.invocation.traceId,
+      analytics_command_id: context.invocation.commandId,
     }),
   })
 );
