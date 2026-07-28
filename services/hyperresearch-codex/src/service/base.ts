@@ -1,58 +1,25 @@
-/**
- * @fileoverview Single service definition seam for the hyperresearch-codex package.
- */
-import { defineService, type ServiceOf } from "@rawr/hq-sdk";
+import { os } from "@orpc/server";
+import type { AnalyticsClient, Logger } from "@rawr/hq-sdk";
 import type { HyperresearchCliBackend, HyperresearchCodexIO } from "./common/resources";
 
-type InitialContext = {
-  deps: {
-    io: HyperresearchCodexIO;
-    cli: HyperresearchCliBackend;
-  };
-  scope: {
-    repoRoot: string;
-  };
-  config: {};
+type Deps = {
+  analytics: AnalyticsClient;
+  cli: HyperresearchCliBackend;
+  io: HyperresearchCodexIO;
+  logger: Logger;
 };
 
-type InvocationContext = {
-  traceId: string;
+type Scope = { repoRoot: string };
+type Config = Record<never, never>;
+type Invocation = { traceId: string };
+/** Complete host and invocation context admitted at the service boundary. */
+export type Context = {
+  deps: Deps;
+  scope: Scope;
+  config: Config;
+  invocation: Invocation;
+  provided: Record<never, never>;
 };
 
-type ProcedureMetadata = {
-  audit?: "none" | "basic" | "full";
-  entity?: "service" | "fixtures" | "runs";
-};
-
-export const policy = {
-  events: {},
-} as const;
-
-const service = defineService<{
-  initialContext: InitialContext;
-  invocationContext: InvocationContext;
-  metadata: ProcedureMetadata;
-}>({
-  metadataDefaults: {
-    idempotent: true,
-    domain: "hyperresearch-codex",
-    audience: "internal",
-    audit: "basic",
-    entity: "service",
-  },
-  baseline: {
-    policy,
-  },
-});
-
-export type Service = ServiceOf<typeof service>;
-
-export const ocBase = service.oc;
-export const createServiceMiddleware = service.createMiddleware;
-export const createServiceObservabilityMiddleware = service.createObservabilityMiddleware;
-export const createRequiredServiceObservabilityMiddleware =
-  service.createRequiredObservabilityMiddleware;
-export const createServiceAnalyticsMiddleware = service.createAnalyticsMiddleware;
-export const createRequiredServiceAnalyticsMiddleware = service.createRequiredAnalyticsMiddleware;
-export const createServiceProvider = service.createProvider;
-export const createServiceImplementer = service.createImplementer;
+/** Native middleware author rooted in the complete service context. */
+export const base = os.$context<Context>();

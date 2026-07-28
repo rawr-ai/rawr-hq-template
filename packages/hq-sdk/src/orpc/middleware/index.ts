@@ -1,14 +1,10 @@
 export type {
-  RequiredServiceAnalyticsMiddleware,
-  RequiredServiceAnalyticsMiddlewareInput,
-  ServiceAnalyticsMiddlewareInput,
+  AnalyticsMiddlewareInput,
+  AnalyticsPayloadArgs,
 } from "./analytics";
-export { feedbackProvider } from "./feedback-provider";
+export { createAnalyticsMiddleware } from "./analytics";
 export type {
   ObservabilityErrorDetails,
-  RequiredServiceObservabilityMiddleware,
-  RequiredServiceObservabilityMiddlewareInput,
-  ServiceObservabilityMiddlewareInput,
+  ObservabilityMiddlewareInput,
 } from "./observability";
-export type { BasePolicyProfile } from "./policy";
-export { sqlProvider } from "./sql-provider";
+export { createObservabilityMiddleware } from "./observability";

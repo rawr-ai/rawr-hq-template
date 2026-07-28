@@ -1,24 +1,19 @@
-/**
- * @fileoverview Required service-wide observability middleware.
- *
- * @remarks
- * This file is the canonical example of a required service middleware
- * extension.
- *
- * It is supplied to `createServiceImplementer(...)` in `src/service/impl.ts`
- * and runs on top of the SDK-owned framework observability wrapper. It exists
- * because the framework baseline cannot infer this service's global runtime
- * observability behavior on its own, especially policy-aware error handling.
- *
- * @agents
- * Put service-global observability behavior here to illustrate the required
- * service middleware extension pattern. Do not move runtime hooks back into
- * `service/base.ts`. If observability logic depends on `provided.*`, it does
- * not belong here and should move to lower-scope additive middleware instead.
- */
-import { createRequiredServiceObservabilityMiddleware } from "../base";
+import { createObservabilityMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
 
-export const observability = createRequiredServiceObservabilityMiddleware({
+const policyEvents = {
+  readOnlyRejected: "todo.policy.read_only_rejected",
+  assignmentLimitReached: "todo.policy.assignment_limit_reached",
+} as const;
+
+/** Owns the single Todo procedure observability lifecycle. */
+export const observability = createObservabilityMiddleware<
+  Context,
+  typeof metadataDefaults,
+  typeof policyEvents
+>(metadataDefaults, {
+  policyEvents,
   spanAttributes: ({ context }) => ({
     workspace_id: context.scope.workspaceId,
     read_only: context.config.readOnly,
@@ -37,19 +32,15 @@ export const observability = createRequiredServiceObservabilityMiddleware({
   successEventAttributes: ({ context }) => ({
     workspaceId: context.scope.workspaceId,
   }),
-  onError: ({ span, context, pathLabel, error, policyEvents }) => {
-    const readOnlyRejected = policyEvents?.readOnlyRejected;
-    const assignmentLimitReached = policyEvents?.assignmentLimitReached;
-
-    if (error.code === "READ_ONLY_MODE" && readOnlyRejected) {
-      span?.addEvent(readOnlyRejected, {
+  onError: ({ span, context, pathLabel, error, policyEvents: events }) => {
+    if (error.code === "READ_ONLY_MODE") {
+      span?.addEvent(events?.readOnlyRejected ?? policyEvents.readOnlyRejected, {
         path: pathLabel,
         workspaceId: context.scope.workspaceId,
       });
     }
-
-    if (error.code === "ASSIGNMENT_LIMIT_REACHED" && assignmentLimitReached) {
-      span?.addEvent(assignmentLimitReached, {
+    if (error.code === "ASSIGNMENT_LIMIT_REACHED") {
+      span?.addEvent(events?.assignmentLimitReached ?? policyEvents.assignmentLimitReached, {
         path: pathLabel,
         workspaceId: context.scope.workspaceId,
       });

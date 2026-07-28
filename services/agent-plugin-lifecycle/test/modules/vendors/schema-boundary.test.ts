@@ -1,9 +1,11 @@
-import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { schema } from "@rawr/hq-sdk";
+import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
+import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { contract as serviceContract } from "../../../src/service/contract";
 import { contract } from "../../../src/service/modules/vendors/contract";
 import type {
   VendorContentWorkspaceRef,
@@ -90,8 +92,8 @@ const provenance = Object.freeze({
 
 describe("vendor procedure schema boundary", () => {
   it("derives public vendor request and result types from the contract schemas", () => {
-    type ContractInputs = InferContractRouterInputs<typeof contract>;
-    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+    type ContractInputs = InferRouterContractInputs<typeof contract>;
+    type ContractOutputs = InferRouterContractOutputs<typeof contract>;
 
     expectTypeOf<VendorContentWorkspaceRef>().toEqualTypeOf<
       Static<typeof VendorContentWorkspaceRefSchema>
@@ -116,7 +118,7 @@ describe("vendor procedure schema boundary", () => {
     >();
   });
 
-  it("declares the complete service metadata on every vendor operation", () => {
+  it("inherits service metadata and keeps vendor overrides local", () => {
     const expectedMetadata = {
       idempotent: true,
       domain: "agent-plugin-lifecycle",
@@ -126,7 +128,12 @@ describe("vendor procedure schema boundary", () => {
     };
 
     for (const operation of ["status", "update"] as const) {
-      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata);
+      expect(getProcedureMetadata(contract[operation])).toEqual({
+        idempotent: true,
+        audit: "full",
+        entity: "vendors",
+      });
+      expect(getProcedureMetadata(serviceContract.vendors[operation])).toEqual(expectedMetadata);
     }
   });
 
@@ -179,12 +186,12 @@ describe("vendor procedure schema boundary", () => {
 
     for (const request of invalidStatusRequests) {
       expect(Value.Check(VendorStatusInputSchema, request)).toBe(false);
-      const validated = await schema(VendorStatusInputSchema)["~standard"].validate(request);
+      const validated = await standard(VendorStatusInputSchema)["~standard"].validate(request);
       expect("issues" in validated).toBe(true);
     }
     for (const request of invalidUpdateRequests) {
       expect(Value.Check(VendorUpdateInputSchema, request)).toBe(false);
-      const validated = await schema(VendorUpdateInputSchema)["~standard"].validate(request);
+      const validated = await standard(VendorUpdateInputSchema)["~standard"].validate(request);
       expect("issues" in validated).toBe(true);
     }
   });

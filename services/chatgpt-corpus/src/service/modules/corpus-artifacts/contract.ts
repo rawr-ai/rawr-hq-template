@@ -1,7 +1,8 @@
+import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { schema } from "@rawr/hq-sdk";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../common/errors";
 import { SourceSnapshotSchema } from "../source-materials/entities";
 import {
@@ -19,7 +20,7 @@ import {
   ValidationReportSchema,
 } from "./entities";
 
-const ValidationFailedData = schema(
+const ValidationFailedData = standard(
   Type.Object(
     {
       reason: Type.String({
@@ -32,7 +33,6 @@ const ValidationFailedData = schema(
 );
 
 const CORPUS_ARTIFACT_VALIDATION_FAILED: ErrorMapItem<typeof ValidationFailedData> = {
-  status: 422,
   message: "Corpus artifact validation failed",
   data: ValidationFailedData,
 } as const;
@@ -138,14 +138,14 @@ const MaterializeArtifactsOutputSchema = Type.Object(
 );
 
 export const contract = {
-  build: ocBase
-    .meta({ idempotent: true })
-    .input(schema(BuildArtifactsInputSchema))
-    .output(schema(BuildArtifactsOutputSchema)),
-  materialize: ocBase
-    .meta({ idempotent: false })
-    .input(schema(EmptyInputSchema))
-    .output(schema(MaterializeArtifactsOutputSchema))
+  build: oc
+    .meta(procedureMetadata({ idempotent: true }))
+    .input(standard(BuildArtifactsInputSchema))
+    .output(standard(BuildArtifactsOutputSchema)),
+  materialize: oc
+    .meta(procedureMetadata({ idempotent: false }))
+    .input(standard(EmptyInputSchema))
+    .output(standard(MaterializeArtifactsOutputSchema))
     .errors({
       CORPUS_ARTIFACT_VALIDATION_FAILED,
       INVALID_CONVERSATION_JSON,

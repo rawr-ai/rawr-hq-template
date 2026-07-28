@@ -6,6 +6,53 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Native Semantics Stay At Their Boundary
+
+A vendor-major boundary is an opportunity to delete representation debt, not
+an excuse to rebuild the predecessor inside a facade. In oRPC 2, HTTP response
+status belongs to transport while local and linked error values carry
+`defined`, `inferable`, code, message, and data. Keeping the same domain error
+codes, payloads, messages, and HTTP outcomes does not require copying transport
+status into local objects or wire bodies.
+
+Procedure metadata follows the same rule. A service owns the meaning and the
+typed vocabulary, while native `defineMeta` owns attachment, inheritance, and
+storage. A service-local plugin and accessor can narrow that vocabulary without
+claiming the raw namespaced `~orpc.meta` object as a public domain face. Tests
+therefore prove semantic values through the typed accessor and transport
+behavior through real linked clients.
+
+See [[services/example-todo/src/service/model/policy/procedure-metadata|the typed service policy]],
+[[apps/server/src/orpc|the HTTP boundary]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/design|the runtime decision]].
+
+### Bag Of Keywords
+
+native, error, status, transport, metadata, policy, accessor, storage,
+boundary, deletion.
+
+## 2026-07-28 - Cohesion Tests The Service Boundary
+
+The practical "break your ankles" test is a service-cohesion falsifier. A
+service should feel like one domain capability suite whose ready resources
+descend through one context funnel and whose modules own coherent subdomains.
+Awkward acquisition, branching, or assembly is evidence that the service may
+be hiding a repository-wide resource, a sibling domain service, plugin
+exposure or orchestration, or app-owned runtime configuration.
+
+The test does not reward fragmentation. Size alone proves nothing, and a
+reusable helper is not automatically a resource. Reclassify only when the
+candidate has its own lifecycle or repository-wide utility, owns a distinct
+domain truth, exposes another capability, or realizes runtime configuration.
+After those concerns move to their qualified owners, the service should retain
+the domain decisions, transitions, and operation authorship that make it one
+capability suite.
+
+### Bag Of Keywords
+
+service, cohesion, domain, resource, sibling, plugin, app, context, lifecycle,
+owner, awkward, falsifier.
+
 ## 2026-07-28 - Native Clients Preserve The Lanes
 
 Client construction is native oRPC ownership, not a shared SDK capability.

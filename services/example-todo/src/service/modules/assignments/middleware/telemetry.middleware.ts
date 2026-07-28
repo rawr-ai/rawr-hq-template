@@ -1,28 +1,46 @@
 /**
- * @fileoverview Qualified Assignments module telemetry middleware.
+ * @fileoverview Qualified Assignments telemetry for module and operation behavior.
  *
  * @remarks
- * These module-wide signals observe the inherited service lanes before the
- * module curates its smaller handler vocabulary.
+ * This native oRPC middleware observes the inherited service context before
+ * Assignments terminally curates its handler vocabulary. The service root owns
+ * the single procedure lifecycle; this leaf contributes only
+ * Assignments-specific span events, attributes, and structured logging.
  */
 
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-} from "../../../base";
+import { trace } from "@opentelemetry/api";
+import { base } from "../../../base";
 
-/** Module-local observability middleware attached by `assignments/module.ts`. */
-export const observability = createServiceObservabilityMiddleware({
-  spanAttributes: ({ context }) => ({
-    module: "assignments",
-    workspace_id: context.scope.workspaceId,
-    invocation_trace_id: context.invocation.traceId,
-  }),
-  onStart: ({ span, context, pathLabel }) => {
+function observe(action: () => void): void {
+  try {
+    action();
+  } catch {
+    // Telemetry never replaces the operation outcome.
+  }
+}
+
+/**
+ * Observes Assignments operations and successful assignment creation.
+ *
+ * @remarks
+ * Attach this once to the `service.assignments` branch before context
+ * curation. Completion remains nested inside the service-wide lifecycle so
+ * the qualified event precedes the root success event.
+ */
+export const telemetry = base.middleware(async ({ context, path, next }) => {
+  const span = trace.getActiveSpan();
+  const pathLabel = path.join(".");
+
+  observe(() => {
+    span?.setAttributes({
+      "rawr.todo.module": "assignments",
+      "rawr.todo.workspace_id": context.scope.workspaceId,
+      "rawr.todo.invocation_trace_id": context.invocation.traceId,
+    });
     span?.addEvent("todo.assignments.module.observed", {
       module: "assignments",
-      workspace_id: context.scope.workspaceId,
       path: pathLabel,
+      workspace_id: context.scope.workspaceId,
     });
     context.deps.logger.info("todo.assignments.module", {
       layer: "module",
@@ -31,26 +49,17 @@ export const observability = createServiceObservabilityMiddleware({
       workspaceId: context.scope.workspaceId,
       invocationTraceId: context.invocation.traceId,
     });
-  },
-});
+  });
 
-/** Module-local analytics middleware attached by `assignments/module.ts`. */
-export const analytics = createServiceAnalyticsMiddleware({
-  payload: ({ context, pathLabel, outcome }) => ({
-    analytics_layer: "module",
-    analytics_module: "assignments",
-    analytics_path: pathLabel,
-    analytics_outcome: outcome,
-    analytics_workspace_id: context.scope.workspaceId,
-    analytics_trace_id: context.invocation.traceId,
-  }),
-});
+  const result = await next();
 
-/** Observes successful assignment creation at the procedure boundary. */
-export const observeAssignmentCreation = createServiceObservabilityMiddleware({
-  onSuccess: ({ span, context }) => {
-    span?.addEvent("todo.assignments.assign.completed", {
-      workspace_id: context.scope.workspaceId,
+  if (pathLabel === "assignments.assign") {
+    observe(() => {
+      span?.addEvent("todo.assignments.assign.completed", {
+        workspace_id: context.scope.workspaceId,
+      });
     });
-  },
+  }
+
+  return result;
 });

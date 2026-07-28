@@ -1,15 +1,16 @@
 /**
- * @fileoverview Required service-wide analytics middleware.
+ * @fileoverview Service-root analytics profile for HQ Ops.
  *
  * @remarks
- * This file is a required service middleware extension. It is supplied to
- * `createServiceImplementer(...)` in `src/service/impl.ts` and enriches the
- * canonical SDK-owned analytics emission path with the reserved HQ Ops shell
- * metadata.
+ * `src/service/impl.ts` attaches this middleware once through native
+ * `impl.use(...)`. It enriches the service analytics event with the HQ Ops
+ * repository scope and invocation identity.
  */
-import { createRequiredServiceAnalyticsMiddleware } from "../base";
+import { createAnalyticsMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
 
-export const analytics = createRequiredServiceAnalyticsMiddleware({
+export const analytics = createAnalyticsMiddleware<Context>(metadataDefaults, {
   payload: ({ context }) => ({
     analytics_repo_root: context.scope.repoRoot,
     analytics_trace_id: context.invocation.traceId,

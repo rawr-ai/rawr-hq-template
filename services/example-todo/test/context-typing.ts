@@ -1,24 +1,14 @@
-import { implement } from "@orpc/server";
-import {
-  createBaseProvider,
-  type DbPool,
-  defineService,
-  type ServiceOf,
-  type ServiceTypesOf,
-  type Sql,
-  schema,
-  sqlProvider,
-} from "@rawr/hq-sdk";
-import { Type } from "typebox";
+import type { InferRouterInitialContext } from "@orpc/server";
 
-import { type CreateClientOptions, createClient, contract as publicContract } from "../src/client";
-import { createServiceMiddleware, createServiceProvider } from "../src/service/base";
+import { type CreateClientOptions, createClient, type Invocation } from "../src/client";
+import type { Context } from "../src/service/base";
 import { contract } from "../src/service/contract";
-import type { TodoProcedureMetadata } from "../src/service/model/policy/procedure-metadata";
-
-declare const dbPool: DbPool;
-declare const deps: CreateClientOptions["deps"];
-declare const sql: Sql;
+import {
+  getTodoProcedureMetadata,
+  type TodoProcedureMetadata,
+} from "../src/service/model/policy/procedure-metadata";
+import { router } from "../src/service/router";
+import { createClientOptions, invocation } from "./helpers";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
@@ -26,558 +16,59 @@ type Equal<Left, Right> =
     : false;
 type Expect<Value extends true> = Value;
 type Normalize<Value> = { [Key in keyof Value]: Value[Key] };
-type PublicTaskGetMetadata = (typeof publicContract.tasks.get)["~orpc"]["meta"];
-type PublicMetadataIsServiceOwned = Expect<
-  Equal<Normalize<PublicTaskGetMetadata>, Normalize<TodoProcedureMetadata>>
+
+type RouterContext = InferRouterInitialContext<typeof router>;
+type ClientBoundary = Pick<Context, "deps" | "scope" | "config">;
+
+type RouterUsesServiceContext = Expect<Equal<Normalize<RouterContext>, Normalize<Context>>>;
+type ClientUsesStableLanes = Expect<
+  Equal<Normalize<CreateClientOptions>, Normalize<ClientBoundary>>
+>;
+type MetadataReaderPreservesDomainPolicy = Expect<
+  Equal<ReturnType<typeof getTodoProcedureMetadata>, TodoProcedureMetadata | undefined>
 >;
 
-declare const serviceOwnedMetadata: TodoProcedureMetadata;
-const publicTaskGetMetadata: PublicTaskGetMetadata = serviceOwnedMetadata;
-const completeTaskGetMetadata: TodoProcedureMetadata = publicContract.tasks.get["~orpc"].meta;
-const publicMetadataIsServiceOwned: PublicMetadataIsServiceOwned = true;
-void publicTaskGetMetadata;
-void completeTaskGetMetadata;
-void publicMetadataIsServiceOwned;
+const routerUsesServiceContext: RouterUsesServiceContext = true;
+const clientUsesStableLanes: ClientUsesStableLanes = true;
+const metadataReaderPreservesDomainPolicy: MetadataReaderPreservesDomainPolicy = true;
+void routerUsesServiceContext;
+void clientUsesStableLanes;
+void metadataReaderPreservesDomainPolicy;
 
-type DerivedTypingDeclaration = {
-  initialContext: {
-    deps: {
-      dbPool: DbPool;
-    };
-    scope: {
-      workspaceId: string;
-    };
-    config: CreateClientOptions["config"];
-  };
-  invocationContext: {
-    traceId: string;
-  };
-  metadata: {
-    audit?: "basic" | "full";
-  };
+const createTaskMetadata = getTodoProcedureMetadata(contract.tasks.create);
+if (createTaskMetadata) {
+  const audit: "none" | "basic" | "full" | undefined = createTaskMetadata.audit;
+  const entity: "service" | "task" | "tag" | "assignment" | undefined = createTaskMetadata.entity;
+  void audit;
+  void entity;
+}
+
+const options = createClientOptions();
+const boundary: CreateClientOptions = {
+  deps: options.deps,
+  scope: options.scope,
+  config: options.config,
 };
+const client = createClient(boundary);
 
-type DerivedTypingService = ServiceTypesOf<DerivedTypingDeclaration>;
-
-const derivedService = defineService<DerivedTypingDeclaration>({
-  metadataDefaults: {
-    idempotent: true,
-    audit: "basic",
-  },
-  baseline: {
-    policy: { events: {} },
-  },
-});
-
-type DerivedTypingServiceFromDefinition = ServiceOf<typeof derivedService>;
-
-const derivedTypingDeps: DerivedTypingService["Deps"] = deps;
-void derivedTypingDeps;
-
-const derivedTypingDepsFromDefinition: DerivedTypingServiceFromDefinition["Deps"] = deps;
-void derivedTypingDepsFromDefinition;
-
-const derivedTypingMetadata: DerivedTypingService["Metadata"] = {
-  idempotent: true,
-  audit: "basic",
-};
-void derivedTypingMetadata;
-
-const declaredContext: DerivedTypingService["DeclaredContext"] = {
-  deps,
-  scope: {
-    workspaceId: "workspace-typing",
-  },
-  config: {
-    readOnly: false,
-    limits: {
-      maxAssignmentsPerTask: 2,
-    },
-  },
-};
-void declaredContext;
-
-const orpcInitialContext: DerivedTypingService["ORPCInitialContext"] = {
-  ...declaredContext,
-  invocation: {
-    traceId: "trace-typing",
-  },
-  provided: {},
-};
-void orpcInitialContext;
-
-const executionContext: DerivedTypingService["ExecutionContext"] = {
-  ...declaredContext,
-  invocation: {
-    traceId: "trace-typing",
-  },
-  provided: {},
-};
-void executionContext;
-
-const requiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] =
-  {
-    ...declaredContext,
-    invocation: {
-      traceId: "trace-typing",
-    },
-  };
-void requiredExtensionExecutionContext;
-
-const derivedTypingExecutionContextAlias: DerivedTypingService["ExecutionContext"] = {
-  deps,
-  scope: {
-    workspaceId: "workspace-typing",
-  },
-  config: {
-    readOnly: false,
-    limits: {
-      maxAssignmentsPerTask: 2,
-    },
-  },
-  invocation: {
-    traceId: "trace-typing",
-  },
-  provided: {},
-};
-void derivedTypingExecutionContextAlias;
-
-const invalidDeclaredContext: DerivedTypingService["DeclaredContext"] = {
-  ...declaredContext,
-  // @ts-expect-error DeclaredContext does not include invocation.
-  invocation: {
-    traceId: "trace-typing",
-  },
-};
-void invalidDeclaredContext;
-
-const invalidRequiredExtensionExecutionContext: DerivedTypingService["RequiredExtensionExecutionContext"] =
-  {
-    ...requiredExtensionExecutionContext,
-    // @ts-expect-error Required service extension execution context excludes provided.
-    provided: {},
-  };
-void invalidRequiredExtensionExecutionContext;
-
-// @ts-expect-error initialContext must include deps, scope, and config lanes.
-defineService<{
-  initialContext: {
-    deps: {};
-    scope: {};
-  };
-  invocationContext: {};
-  metadata: {};
-}>({
-  metadataDefaults: {
-    idempotent: true,
-  },
-  baseline: {
-    policy: { events: {} },
-  },
-});
-
-defineService<{
-  initialContext: {
-    deps: CreateClientOptions["deps"];
-    scope: { workspaceId: string };
-    config: CreateClientOptions["config"];
-  };
-  invocationContext: { traceId: string };
-  metadata: {};
-}>({
-  metadataDefaults: {
-    idempotent: true,
-  },
-  baseline: {
-    policy: { events: {} },
-    // @ts-expect-error telemetry config no longer belongs in defineService baseline.
-    observability: {},
-  },
-});
-
-defineService<{
-  initialContext: {
-    deps: CreateClientOptions["deps"];
-    scope: { workspaceId: string };
-    config: CreateClientOptions["config"];
-  };
-  invocationContext: { traceId: string };
-  metadata: {};
-}>({
-  metadataDefaults: {
-    idempotent: true,
-  },
-  baseline: {
-    policy: { events: {} },
-    // @ts-expect-error telemetry config no longer belongs in defineService baseline.
-    analytics: {},
-  },
-});
-
-// Missing nested dependency fragment should fail at `.use(...)`.
-const missingSqlDeps = implement(contract)
-  .$context<{
-    deps: {};
-    scope: { workspaceId: string };
-    config: { readOnly: boolean; limits: { maxAssignmentsPerTask: number } };
-    invocation: { traceId: string };
-  }>()
-  // @ts-expect-error dbPool is required by the SQL provider.
-  .use(sqlProvider);
-void missingSqlDeps;
-
-// Exact match should pass.
-const exactSqlDeps = implement(contract)
-  .$context<{
-    deps: { dbPool: DbPool };
-    scope: { workspaceId: string };
-    config: { readOnly: boolean; limits: { maxAssignmentsPerTask: number } };
-    invocation: { traceId: string };
-  }>()
-  .use(sqlProvider);
-void exactSqlDeps;
-
-// Structural superset should also pass.
-const extendedSqlDeps = implement(contract)
-  .$context<{
-    deps: { dbPool: DbPool; featureFlag: boolean };
-    scope: { workspaceId: string; tenantId?: string };
-    config: { readOnly: boolean; limits: { maxAssignmentsPerTask: number }; previewMode?: boolean };
-    invocation: { traceId: string; spanId?: string };
-  }>()
-  .use(sqlProvider);
-void extendedSqlDeps;
-
-const validBoundary: CreateClientOptions = {
-  deps,
-  scope: {
-    workspaceId: "workspace-typing",
-  },
-  config: {
-    readOnly: false,
-    limits: {
-      maxAssignmentsPerTask: 2,
-    },
-  },
-};
-void validBoundary;
-
-const invalidBoundaryDeps: CreateClientOptions["deps"] = {
-  ...deps,
-  // @ts-expect-error telemetry no longer belongs in CreateClientOptions["deps"].
-  telemetry: {
-    getActiveSpan() {
-      return undefined;
-    },
-  },
-};
-void invalidBoundaryDeps;
-
-const invalidBoundary: CreateClientOptions = {
-  deps,
-  scope: {
-    workspaceId: "workspace-typing",
-  },
-  config: {
-    readOnly: false,
-    limits: {
-      maxAssignmentsPerTask: 2,
-    },
-  },
-  // @ts-expect-error requestId no longer belongs at top level.
-  requestId: "req-42",
-};
-void invalidBoundary;
-
-const typedClient = createClient(validBoundary);
-void typedClient;
-
-// @ts-expect-error invocation context is required at the callsite.
-typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" });
-
-typedClient.tasks.get(
-  { id: "00000000-0000-0000-0000-000000000001" },
-  { context: { invocation: { traceId: "trace-123" } } }
+const callContext: Invocation = { traceId: "trace-typing" };
+void client.tasks.get(
+  { id: "00000000-0000-4000-8000-000000000001" },
+  { context: { invocation: callContext } }
 );
 
-type TaskGetOptions = NonNullable<Parameters<typeof typedClient.tasks.get>[1]>;
+// @ts-expect-error Invocation context is a per-call lane and cannot be omitted.
+void client.tasks.get({ id: "00000000-0000-4000-8000-000000000001" });
 
-const typedTaskGetOptions = {
-  context: {
-    invocation: {
-      traceId: "trace-typed-options",
-    },
-  },
-} satisfies TaskGetOptions;
-
-typedClient.tasks.get({ id: "00000000-0000-0000-0000-000000000001" }, typedTaskGetOptions);
-
-const invalidTaskGetOptions = {
-  context: {
-    invocation: {
-      // @ts-expect-error service client call options are typed from the service's invocation context.
-      requestId: "request-not-trace",
-    },
-  },
-} satisfies TaskGetOptions;
-void invalidTaskGetOptions;
-
-const alternateInvocationService = defineService<{
-  initialContext: {
-    deps: CreateClientOptions["deps"];
-    scope: { workspaceId: string };
-    config: CreateClientOptions["config"];
-  };
-  invocationContext: { requestId: string };
-  metadata: {};
-}>({
-  metadataDefaults: {
-    idempotent: true,
-  },
-  baseline: {
-    policy: { events: {} },
-  },
-});
-void alternateInvocationService;
-
-const localObservability = alternateInvocationService.createObservabilityMiddleware({
-  spanAttributes({ context }) {
-    return {
-      workspace_id: context.scope.workspaceId,
-      request_id: context.invocation.requestId,
-    };
-  },
-  onError({ error }) {
-    void error.code;
-  },
-});
-void localObservability;
-
-const localAnalytics = alternateInvocationService.createAnalyticsMiddleware({
-  payload: ({ context, outcome }) => ({
-    requestId: context.invocation.requestId,
-    workspaceId: context.scope.workspaceId,
-    outcome,
-  }),
-});
-void localAnalytics;
-
-alternateInvocationService.createRequiredObservabilityMiddleware({
-  spanAttributes: ({ context }) => ({
-    workspace_id: context.scope.workspaceId,
-    request_id: context.invocation.requestId,
-    has_logger: typeof context.deps.logger.info === "function",
-  }),
-});
-
-alternateInvocationService.createRequiredAnalyticsMiddleware({
-  payload: ({ context }) => ({
-    requestId: context.invocation.requestId,
-    has_analytics: typeof context.deps.analytics.track === "function",
-  }),
-});
-
-alternateInvocationService.createRequiredObservabilityMiddleware({
-  spanAttributes: ({ context }) => ({
-    // @ts-expect-error required service middleware extensions must not depend on provided context.
-    repo_id: context.provided.repo.id,
-  }),
-});
-
-alternateInvocationService.createRequiredAnalyticsMiddleware({
-  payload: ({ context }) => ({
-    // @ts-expect-error required service middleware extensions must not depend on provided context.
-    repoId: context.provided.repo.id,
-  }),
-});
-
-alternateInvocationService.createObservabilityMiddleware({
-  // @ts-expect-error additive observability middleware must not redefine the baseline log shell.
-  logFields() {
-    return {};
-  },
-});
-
-alternateInvocationService.createObservabilityMiddleware({
-  // @ts-expect-error additive observability hooks do not receive service baseline policy events.
-  onError({ policyEvents }) {
-    void policyEvents;
-  },
-});
-
-alternateInvocationService.createAnalyticsMiddleware({
-  // @ts-expect-error additive analytics middleware must not rename the baseline event stream.
-  event: "alternate.procedure",
-});
-
-const additiveService = defineService<{
-  initialContext: {
-    deps: CreateClientOptions["deps"];
-    scope: { workspaceId: string };
-    config: CreateClientOptions["config"];
-  };
-  invocationContext: { traceId: string };
-  metadata: {};
-}>({
-  metadataDefaults: {
-    idempotent: true,
-    domain: "todo",
-  },
-  baseline: {
-    policy: { events: {} },
-  },
-});
-
-const additiveContract = {
-  assign: additiveService.oc
-    .input(
-      schema(
-        Type.Object(
-          {
-            taskId: Type.String(),
-            tagId: Type.String(),
-          },
-          { additionalProperties: false }
-        )
-      )
-    )
-    .output(
-      schema(
-        Type.Object(
-          {
-            ok: Type.Boolean(),
-          },
-          { additionalProperties: false }
-        )
-      )
-    ),
+const widerCallOptions = {
+  ...invocation("trace-wider"),
+  signal: new AbortController().signal,
 };
+void client.tags.list({}, widerCallOptions);
 
-const additiveObservability = additiveService.createObservabilityMiddleware({
-  spanAttributes: ({ context }) => ({
-    workspace_id: context.scope.workspaceId,
-  }),
-});
-const additiveAnalytics = additiveService.createAnalyticsMiddleware({
-  payload: ({ context }) => ({
-    workspaceId: context.scope.workspaceId,
-  }),
-});
-
-const requiredExtensions = {
-  observability: additiveService.createRequiredObservabilityMiddleware({}),
-  analytics: additiveService.createRequiredAnalyticsMiddleware({}),
+const invalidBoundary: CreateClientOptions = {
+  ...boundary,
+  // @ts-expect-error Invocation facts do not belong to the stable client boundary.
+  invocation: callContext,
 };
-
-const additiveModuleBranch = additiveService
-  .createImplementer(additiveContract, requiredExtensions)
-  .use(additiveObservability)
-  .use(additiveAnalytics);
-void additiveModuleBranch;
-
-// @ts-expect-error required service middleware extensions must be supplied at implementer creation.
-additiveService.createImplementer(additiveContract);
-
-const additiveProcedureBranch = additiveService
-  .createImplementer(additiveContract, requiredExtensions)
-  .assign.use(additiveObservability)
-  .use(additiveAnalytics);
-void additiveProcedureBranch;
-
-const curatedAdditiveProcedure = additiveService
-  .createImplementer(additiveContract, requiredExtensions)
-  .assign.use(async ({ context, next }) =>
-    next({
-      context: {
-        workspaceId: context.scope.workspaceId,
-      },
-    })
-  );
-
-const curatedAdditiveHandler = curatedAdditiveProcedure.handler(async ({ context }) => {
-  void context.deps.dbPool;
-  void context.scope.workspaceId;
-  void context.config.readOnly;
-  void context.invocation.traceId;
-  void context.provided;
-  void context.workspaceId;
-  return { ok: true };
-});
-void curatedAdditiveHandler;
-
-const invalidRequiredExtensions = {
-  observability: additiveObservability,
-  analytics: additiveAnalytics,
-};
-
-// @ts-expect-error required extension slots must reject additive middleware.
-additiveService.createImplementer(additiveContract, invalidRequiredExtensions);
-
-const baseProvider = createBaseProvider().middleware<{
-  sql: Sql;
-}>(async ({ next }) => {
-  return next({
-    sql,
-  });
-});
-void baseProvider;
-
-const serviceProvider = createServiceProvider().middleware<{
-  repo: {
-    find(): null;
-  };
-}>(async ({ next }) => {
-  return next({
-    repo: {
-      find() {
-        return null;
-      },
-    },
-  });
-});
-void serviceProvider;
-
-createServiceMiddleware().middleware(async ({ next }) => {
-  // @ts-expect-error normal middleware must not add execution context.
-  return next({
-    repo: {
-      find() {
-        return null;
-      },
-    },
-  });
-});
-
-createBaseProvider().middleware<{
-  deps: {};
-}>(async ({ next }) => {
-  // @ts-expect-error shared providers must not write reserved lane names.
-  return next({
-    deps: {},
-  });
-});
-
-createServiceProvider().middleware<{
-  scope: {
-    workspaceId: string;
-  };
-}>(async ({ next }) => {
-  // @ts-expect-error service-local providers must not write reserved lane names.
-  return next({
-    scope: {
-      workspaceId: "workspace-typing",
-    },
-  });
-});
-
-createServiceProvider().middleware<{
-  provided: {};
-}>(async ({ next }) => {
-  // @ts-expect-error service-local providers must not write to the shared bucket.
-  return next({
-    provided: {},
-  });
-});
-
-void dbPool;
-void sql;
+void invalidBoundary;

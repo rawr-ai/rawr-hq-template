@@ -295,10 +295,7 @@ describe("provider channel selected content", () => {
         Object.freeze({ ...delegate, readGitTree: () => Effect.die(defect) }),
     }).client;
 
-    await expect(defective.providers.status(channelRequest, testInvocation)).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: defect,
-    });
+    await expect(defective.providers.status(channelRequest, testInvocation)).rejects.toBe(defect);
 
     const started = Promise.withResolvers<void>();
     let finalized = 0;

@@ -16,13 +16,16 @@
  */
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { schema } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { TaskSchema } from "#example-todo-service/model/dto/task";
-import type { TodoProcedureMetadata } from "#example-todo-service/model/policy/procedure-metadata";
+import {
+  type TodoProcedureMetadata,
+  todoProcedureMetadata,
+} from "#example-todo-service/model/policy/procedure-metadata";
 
-const ResourceNotFoundData = schema(
+const ResourceNotFoundData = standard(
   Type.Object(
     {
       entity: Type.Optional(
@@ -45,7 +48,7 @@ const ResourceNotFoundData = schema(
   )
 );
 
-const ReadOnlyModeData = schema(
+const ReadOnlyModeData = standard(
   Type.Object(
     {
       path: Type.Optional(
@@ -63,28 +66,24 @@ const ReadOnlyModeData = schema(
 );
 
 const RESOURCE_NOT_FOUND: ErrorMapItem<typeof ResourceNotFoundData> = {
-  status: 404,
   message: "Resource not found",
   data: ResourceNotFoundData,
 } as const;
 
 const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
-  status: 409,
   message: "Write operations are blocked while read-only mode is enabled",
   data: ReadOnlyModeData,
 } as const;
 
 export const contract = {
   create: oc
-    .$meta<TodoProcedureMetadata>({
-      idempotent: false,
-      domain: "todo",
-      audience: "internal",
-      audit: "basic",
-      entity: "service",
-    })
+    .meta(
+      todoProcedureMetadata({
+        idempotent: false,
+      } satisfies TodoProcedureMetadata)
+    )
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             title: Type.String({
@@ -106,13 +105,12 @@ export const contract = {
         )
       )
     )
-    .output(schema(TaskSchema))
+    .output(standard(TaskSchema))
     .errors({
       READ_ONLY_MODE,
       INVALID_TASK_TITLE: {
-        status: 400,
         message: "Invalid task title",
-        data: schema(
+        data: standard(
           Type.Object(
             {
               title: Type.Optional(
@@ -130,15 +128,13 @@ export const contract = {
       },
     }),
   get: oc
-    .$meta<TodoProcedureMetadata>({
-      idempotent: true,
-      domain: "todo",
-      audience: "internal",
-      audit: "basic",
-      entity: "service",
-    })
+    .meta(
+      todoProcedureMetadata({
+        idempotent: true,
+      } satisfies TodoProcedureMetadata)
+    )
     .input(
-      schema(
+      standard(
         Type.Object(
           {
             id: TodoIdentifierSchema,
@@ -150,6 +146,6 @@ export const contract = {
         )
       )
     )
-    .output(schema(TaskSchema))
+    .output(standard(TaskSchema))
     .errors({ RESOURCE_NOT_FOUND }),
 };

@@ -2,7 +2,7 @@ import path from "node:path";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
-import type { Service } from "../src/service/base";
+import type { Context } from "../src/service/base";
 import type { DevResources } from "../src/service/common/resources";
 
 const encoder = new TextEncoder();
@@ -70,7 +70,7 @@ export function createFakeResources(
 export function createClientOptions(
   input: { workspaceRoot?: string; resources?: DevResources } = {}
 ): CreateClientOptions {
-  const deps: Service["Deps"] = {
+  const deps: Context["deps"] = {
     logger: createEmbeddedPlaceholderLoggerAdapter(),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
     resources: input.resources ?? createFakeResources().resources,

@@ -231,17 +231,18 @@ describe("observed-Git current-main v3 selection", () => {
 
   it("does not convert a resource defect and runs its finalizer", async () => {
     let finalized = 0;
+    const defect = new Error("resource defect");
     const fixture = selectionFixture({
       openingEffect: Effect.scoped(
         Effect.acquireRelease(Effect.void, () =>
           Effect.sync(() => {
             finalized += 1;
           })
-        ).pipe(Effect.flatMap(() => Effect.die(new Error("resource defect"))))
+        ).pipe(Effect.flatMap(() => Effect.die(defect)))
       ),
     });
 
-    await expect(select(fixture.resource)).rejects.toThrow("Internal Server Error");
+    await expect(select(fixture.resource)).rejects.toBe(defect);
     expect(finalized).toBe(1);
   });
 

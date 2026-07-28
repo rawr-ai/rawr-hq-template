@@ -3,8 +3,8 @@
 ## Purpose
 
 - Give services, plugins, workflows, applications, and hosts a shared
-  vocabulary for declaring and composing capabilities without coupling them
-  to one runtime.
+  vocabulary for metadata, operational middleware, ports, and declared-surface
+  composition without replacing native framework authoring.
 
 ## Scope
 
@@ -13,13 +13,17 @@
 
 ## Boundaries
 
-- Owns reusable oRPC contract construction, TypeBox schema adapters, service
-  declarations, middleware contracts, capability ports, and declared-surface
-  composition.
+- Owns RAWR's stable procedure metadata plugin, one-shot analytics and
+  observability middleware, capability ports, host adapters, and
+  declared-surface composition.
+- Native oRPC owns contracts, service context, middleware construction,
+  implementers, routers, and clients. `@rawr/typebox-adapter` owns the
+  product-free TypeBox standards bridge.
 - Must not own a domain service's operations, application plugin selection,
   concrete host resources, route mounting, or process and provider state.
-- Context flows through declared service dependencies and invocation context;
-  SDK helpers must not seed ambient runtime authority.
+- SDK middleware declares only the minimum context it consumes and contributes
+  no parallel context lane. Service bases own their complete context and native
+  oRPC owns composition.
 
 ## Behavior
 
@@ -28,25 +32,18 @@
 
 ## Concepts
 
-- A **service declaration** names caller-visible capability. A **capability
-  port** names a required host satisfier. A **declared surface** is a composed
-  tree awaiting host realization.
-- A service declares four input lanes: host-supplied `deps`, stable binding
-  `scope`, stable behavior `config`, and per-call `invocation`. Each service's
-  native client resolver starts the execution bucket as `provided: {}`;
-  provider middleware populates its qualified keys. Procedure metadata remains
-  outside execution context.
+- A **capability port** names a required host satisfier. A **declared surface**
+  is a composed tree awaiting host realization. Procedure metadata remains
+  outside execution context and flows through oRPC's native metadata plugin.
 
 ## Flow
 
-- A service declares contracts and routers with the SDK's stable builders.
-- Each service's owner-local native oRPC client binds `deps`, `scope`, and
-  `config` once; each call supplies only `invocation`; the context resolver
-  starts `provided: {}`. Provider middleware grows that bucket while retaining
-  the named semantic lanes. A module may
-  curate direct noncomputed member paths rooted below those lanes into additive
-  handler fields; the projection does not create another SDK lane or remove
-  inherited context.
+- A service declares contracts, context, middleware, routers, and clients with
+  native oRPC. It attaches its service-wide analytics and observability
+  lifecycle once at the service root, where that single analytics event may be
+  classified by the native operation path. Qualified module or operation
+  branches may attach owner-local runtime signals through middleware derived
+  from the same base; they must not recreate the service lifecycle.
 - An application declares selected surfaces, then a host supplies concrete
   ports and composes the declared trees.
 - The host projects the composed internal and published surfaces to its
@@ -54,16 +51,15 @@
 
 ## Interfaces
 
-- Contract builders and TypeBox adapters face service authors; declaration and
-  composition APIs face apps and plugins; capability ports and realized trees
-  face hosts.
+- Native oRPC and `@rawr/typebox-adapter` face service authors; composition APIs
+  face apps and plugins; capability ports and realized trees face hosts.
 
 ## Routing
 
 - [Packages router](../AGENTS.md)
 - [HQ application declarations](../../apps/hq/AGENTS.md)
 - [Server host](../../apps/server/AGENTS.md)
-- [[src/orpc/context/types|Context lane model]]
+- [[../typebox-adapter/AGENTS|TypeBox adapter]]
 
 ## Validation
 

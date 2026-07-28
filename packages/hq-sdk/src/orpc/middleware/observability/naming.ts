@@ -1,7 +1,8 @@
 import type { Attributes } from "@opentelemetry/api";
-import type { BaseMetadata } from "../../baseline/types";
+import type { BaseMetadata } from "../../metadata";
 import type { ObservabilityFields } from "./types";
 
+/** Qualifies service-owned observability fields beneath their stable namespace. */
 export function prefixAttributes(
   prefix: string,
   fields: ObservabilityFields | undefined
@@ -21,6 +22,7 @@ export function prefixAttributes(
   return attributes;
 }
 
+/** Derives stable signal names from the service metadata domain. */
 export function deriveServiceNames(baseMetadata: BaseMetadata) {
   const domain = baseMetadata.domain ?? "service";
 
@@ -42,12 +44,14 @@ function inferEntity(segment?: string) {
   return segment.endsWith("s") ? segment.slice(0, -1) : segment;
 }
 
+/** Returns the service's explicit audit classification when one is declared. */
 export function getMetadataAudit(meta: BaseMetadata) {
-  const candidate = (meta as BaseMetadata & { audit?: unknown }).audit;
+  const candidate = meta.audit;
   return typeof candidate === "string" ? candidate : undefined;
 }
 
+/** Resolves the operation entity from metadata, falling back to its router path. */
 export function getMetadataEntity(meta: BaseMetadata, path: readonly string[]) {
-  const candidate = (meta as BaseMetadata & { entity?: unknown }).entity;
+  const candidate = meta.entity;
   return typeof candidate === "string" ? candidate : inferEntity(path[0]);
 }

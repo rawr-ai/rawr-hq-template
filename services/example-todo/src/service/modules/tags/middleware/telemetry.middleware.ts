@@ -1,24 +1,42 @@
 /**
- * @fileoverview Qualified Tag module telemetry middleware.
+ * @fileoverview Qualified Tags telemetry for module and operation behavior.
  *
  * @remarks
- * These module-wide signals observe the inherited service lanes before the
- * module curates its smaller handler vocabulary.
+ * This native oRPC middleware observes the inherited service context before
+ * Tags terminally curates its handler vocabulary. The service root owns the
+ * single procedure lifecycle; this leaf contributes only Tags-specific span
+ * events, attributes, and structured logging.
  */
 
-import {
-  createServiceAnalyticsMiddleware,
-  createServiceObservabilityMiddleware,
-} from "../../../base";
+import { trace } from "@opentelemetry/api";
+import { base } from "../../../base";
 
-/** Observes every Tags operation before the module narrows handler context. */
-export const observability = createServiceObservabilityMiddleware({
-  spanAttributes: ({ context }) => ({
-    module: "tags",
-    workspace_id: context.scope.workspaceId,
-    invocation_trace_id: context.invocation.traceId,
-  }),
-  onStart: ({ span, context, pathLabel }) => {
+function observe(action: () => void): void {
+  try {
+    action();
+  } catch {
+    // Telemetry never replaces the operation outcome.
+  }
+}
+
+/**
+ * Observes Tags operations and the tag-creation normalization phase.
+ *
+ * @remarks
+ * Attach this once to the `service.tags` branch before context curation. Its
+ * success event runs inside the root service lifecycle, preserving qualified
+ * completion before the service-wide success event.
+ */
+export const telemetry = base.middleware(async ({ context, path, next }) => {
+  const span = trace.getActiveSpan();
+  const pathLabel = path.join(".");
+
+  observe(() => {
+    span?.setAttributes({
+      "rawr.todo.module": "tags",
+      "rawr.todo.workspace_id": context.scope.workspaceId,
+      "rawr.todo.invocation_trace_id": context.invocation.traceId,
+    });
     span?.addEvent("todo.tags.module.observed", {
       module: "tags",
       path: pathLabel,
@@ -31,42 +49,23 @@ export const observability = createServiceObservabilityMiddleware({
       workspaceId: context.scope.workspaceId,
       invocationTraceId: context.invocation.traceId,
     });
-  },
-});
 
-/** Adds module identity to the canonical service analytics event. */
-export const analytics = createServiceAnalyticsMiddleware({
-  payload: ({ context, pathLabel, outcome }) => ({
-    analytics_layer: "module",
-    analytics_module: "tags",
-    analytics_path: pathLabel,
-    analytics_outcome: outcome,
-    analytics_workspace_id: context.scope.workspaceId,
-    analytics_trace_id: context.invocation.traceId,
-  }),
-});
+    if (pathLabel === "tags.create") {
+      span?.addEvent("todo.tags.create.normalization.started", {
+        workspace_id: context.scope.workspaceId,
+      });
+    }
+  });
 
-/** Observes the normalization phase that is unique to tag creation. */
-export const observeTagCreation = createServiceObservabilityMiddleware({
-  onStart: ({ span, context }) => {
-    span?.addEvent("todo.tags.create.normalization.started", {
-      workspace_id: context.scope.workspaceId,
+  const result = await next();
+
+  if (pathLabel === "tags.create") {
+    observe(() => {
+      span?.addEvent("todo.tags.create.normalization.succeeded", {
+        workspace_id: context.scope.workspaceId,
+      });
     });
-  },
-  onSuccess: ({ span, context }) => {
-    span?.addEvent("todo.tags.create.normalization.succeeded", {
-      workspace_id: context.scope.workspaceId,
-    });
-  },
-});
+  }
 
-/** Adds tag-creation identity to the canonical service analytics event. */
-export const analyzeTagCreation = createServiceAnalyticsMiddleware({
-  payload: ({ context, outcome }) => ({
-    analytics_layer: "procedure",
-    analytics_procedure: "tags.create",
-    analytics_outcome: outcome,
-    analytics_workspace_id: context.scope.workspaceId,
-    analytics_trace_id: context.invocation.traceId,
-  }),
+  return result;
 });

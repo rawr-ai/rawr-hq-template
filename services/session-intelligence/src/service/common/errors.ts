@@ -1,4 +1,4 @@
-import { schema } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 
 export const ErrorMessageSchema = Type.Object(
@@ -9,19 +9,16 @@ export const ErrorMessageSchema = Type.Object(
 );
 
 export const SESSION_NOT_FOUND = {
-  status: 404,
   message: "Session not found",
-  data: schema(ErrorMessageSchema),
+  data: standard(ErrorMessageSchema),
 } as const;
 
 export const UNKNOWN_SESSION_FORMAT = {
-  status: 422,
   message: "Unknown session format",
-  data: schema(ErrorMessageSchema),
+  data: standard(ErrorMessageSchema),
 } as const;
 
 export const INVALID_REGEX = {
-  status: 400,
   message: "Invalid search regex",
-  data: schema(ErrorMessageSchema),
+  data: standard(ErrorMessageSchema),
 } as const;

@@ -339,10 +339,7 @@ describe("releases.refreshReleaseInput", () => {
 
     await expect(
       defectiveClient.releases.refreshReleaseInput(refreshRequest(["cognition"]), testInvocation)
-    ).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: defect,
-    });
+    ).rejects.toBe(defect);
 
     const interruptedClient = createLifecycleTestClient({
       contentWorkspace: {

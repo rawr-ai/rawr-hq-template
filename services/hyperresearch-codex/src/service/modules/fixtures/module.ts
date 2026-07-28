@@ -1,18 +1,14 @@
 /**
  * @fileoverview Fixture module composition for synthetic Hyperresearch proofs.
  */
-import { impl } from "../../impl";
-import { analytics, observability } from "./middleware";
+import { service } from "../../impl";
 
-export const module = impl.fixtures
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        repoRoot: context.scope.repoRoot,
-        io: context.deps.io,
-        cli: context.deps.cli,
-      },
-    })
-  );
+export const module = service.fixtures.use(async ({ context, next }) =>
+  next({
+    context: {
+      repoRoot: context.scope.repoRoot,
+      io: context.deps.io,
+      cli: context.deps.cli,
+    },
+  })
+);

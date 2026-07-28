@@ -1,7 +1,9 @@
-import { createRequiredServiceAnalyticsMiddleware } from "../base";
+import { createAnalyticsMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
 
-/** Adds lifecycle invocation fields to the SDK-owned analytics baseline. */
-export const analytics = createRequiredServiceAnalyticsMiddleware({
+/** Adds lifecycle invocation fields to the native analytics boundary. */
+export const analytics = createAnalyticsMiddleware<Context>(metadataDefaults, {
   payload: ({ context }) => ({
     analytics_trace_id: context.invocation.traceId,
     analytics_command_id: context.invocation.commandId,

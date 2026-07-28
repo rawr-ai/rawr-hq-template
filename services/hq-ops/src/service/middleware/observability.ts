@@ -1,15 +1,16 @@
 /**
- * @fileoverview Required service-wide observability middleware.
+ * @fileoverview Service-root observability profile for HQ Ops.
  *
  * @remarks
- * This file is the canonical required service middleware extension for the HQ
- * Ops package. It is supplied to `createServiceImplementer(...)` in
- * `src/service/impl.ts` and enriches service-global observability with the
- * reserved stable scope and invocation lanes.
+ * `src/service/impl.ts` attaches this middleware once through native
+ * `impl.use(...)`. It enriches service spans, logs, and lifecycle events with
+ * the stable HQ Ops scope and invocation identity.
  */
-import { createRequiredServiceObservabilityMiddleware } from "../base";
+import { createObservabilityMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
 
-export const observability = createRequiredServiceObservabilityMiddleware({
+export const observability = createObservabilityMiddleware<Context>(metadataDefaults, {
   spanAttributes: ({ context }) => ({
     repo_root: context.scope.repoRoot,
     invocation_trace_id: context.invocation.traceId,

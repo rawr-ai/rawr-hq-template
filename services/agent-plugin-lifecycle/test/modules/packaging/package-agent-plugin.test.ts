@@ -361,10 +361,7 @@ describe("package agent plugin application", () => {
       packageOutput: output,
     });
 
-    await expect(defective.packaging.package(request, testInvocation)).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: defect,
-    });
+    await expect(defective.packaging.package(request, testInvocation)).rejects.toBe(defect);
 
     let acquired = false;
     let finalized = false;
@@ -612,7 +609,8 @@ describe("package agent plugin application", () => {
       });
 
     await publicationAdmitted.promise;
-    controller.abort(new Error("Packaging request cancelled"));
+    const cancellation = new Error("Packaging request cancelled");
+    controller.abort(cancellation);
     const stateBeforeSettlement = await Promise.race([
       observed.then(() => "settled" as const),
       new Promise<"pending">((resolve) => setTimeout(() => resolve("pending"), 20)),
@@ -629,9 +627,9 @@ describe("package agent plugin application", () => {
     const terminal = await observed;
     expect(publicationSettled).toBe(true);
     expect(order).toEqual(["publication", "caller"]);
-    expect(terminal).toMatchObject({
+    expect(terminal).toEqual({
       kind: "failure",
-      error: { code: "INTERNAL_SERVER_ERROR" },
+      error: cancellation,
     });
   });
 

@@ -26,9 +26,10 @@ type ClientOptions = DepsOptions & {
 };
 
 export type OrpcErrorShape = {
-  defined?: boolean;
-  code?: string;
-  status?: number;
+  defined: boolean;
+  inferable: boolean;
+  code: string;
+  message: string;
   data?: Record<string, unknown>;
 };
 

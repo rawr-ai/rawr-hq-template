@@ -13,9 +13,5 @@ export type Context = BoundaryRequestSupportContext<
   { correlationId: string }
 >;
 
-const middleware = os.$context<Context>();
-
-/** Returns the sole context-seeded middleware author for this API service. */
-export function createMiddleware() {
-  return middleware;
-}
+/** Native middleware author rooted in the complete API service context. */
+export const base = os.$context<Context>();

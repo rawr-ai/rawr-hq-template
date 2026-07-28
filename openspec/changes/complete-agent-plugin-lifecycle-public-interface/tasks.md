@@ -489,7 +489,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `service` as the embedded API-plugin interior name. Keep the remaining module
   router migration under task 5.2 and owner-local sealing under task 5.7.
 - [ ] 5.2b Supersede the relaxed task 5.2a shape with the committed generic
-  service law: `base.ts` directly owns `implementEffect(contract, ...)`,
+  service law: `base.ts` directly owns native `implement(contract)` plus the
+  one admitted official `@orpc/experimental-effect` integration,
   `impl.ts` directly exports `service` from imported `base`, and each module
   directly exports its matching `service.<module>` branch. Root code may import
   module source only at contract and router composition. A module's
@@ -554,7 +555,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   requests, results, persisted JSON, and intermodule domain collaborations.
   Remove manual closed-object parsing while retaining canonical order, digest,
   uniqueness, and cross-field domain checks. Use the coherent current
-  oRPC family pinned by task 5.6a and run the exact source, type, and behavior
+  oRPC family pinned by task 5.6f and run the exact source, type, and behavior
   review required by the current oRPC skill; do not infer compatibility from
   version proximity or mix family versions.
 - [ ] 5.4 Seed the native Effect-oRPC root once with the complete ready host
@@ -744,6 +745,27 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   owner types, and version-sensitive resource behavior. Keep oRPC at `1.14.8`
   in this checkpoint; add no bridge, wrapper, pointer reconstruction, or API
   migration. Historical exact-version observations remain historical.
+- [x] 5.6f Replace the surviving oRPC 1 realm and community Effect bridge as
+  one atomic vendor and runtime boundary. Pin every direct `@orpc/*`
+  declaration to `2.0.0-beta.20`, replace `effect-orpc` with the official
+  `@orpc/experimental-effect@2.0.0-beta.20`, replace the retired OpenAPI-client
+  and telemetry package names with their oRPC 2 owners, and keep Effect
+  `4.0.0-beta.101` plus TypeBox `1.3.8`. Adapt each current consumer to the
+  exact published APIs without a compatibility package, version selector, or
+  mixed mergeable checkpoint. Preserve public service behavior, context-lane
+  ownership, declared failures, TypeBox validation, native clients, transport
+  behavior, cancellation, and telemetry shutdown, subject to two explicit
+  oRPC 2 authority corrections. HTTP response status remains transport policy
+  and is not copied onto local `ORPCError` instances or serialized error
+  bodies; local and linked clients preserve native `defined`, `inferable`,
+  code, message, and data. Procedure metadata is authored and read through
+  typed native `defineMeta` plugins; vendor-owned raw `~orpc.meta` storage is
+  not a public service contract. Delete wrappers whose only
+  purpose is to reproduce a native oRPC surface; leave service-domain topology
+  migration to task 5.7. Prove one physical oRPC realm, no community bridge,
+  affected builds and types, focused native/Effect/schema/transport/telemetry
+  behavior, workspace lint, Habitat, and standing native-authority,
+  TypeScript, architecture, structural-quality, and testing reviews.
 - [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
   typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
@@ -1214,6 +1236,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   data, and read-only paths. Add no model barrel, error facade, context or
   dependency registry, shared/internal area, handler extraction, Effect or
   persistence move, provider change, SDK change, or public export.
+  Task 5.6f later supersedes only local/body `status` placement: the same
+  declared error codes, messages, data, and HTTP response statuses remain,
+  while native oRPC 2 error objects expose `defined` and `inferable` instead of
+  a synthetic local status field.
 - [x] 5.7e13 Give Example Todo's shared task, tag, and assignment records one
   direct service-root TypeBox DTO owner. Move each schema and its generated
   type from the loose module `schemas.ts` file to the exact root-model leaf,
@@ -1364,6 +1390,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   following Magic directory/oRPC2 authority checkpoint rather than adding a
   transitional flat-contract check. Add no universal SDK metadata model,
   baseline, compatibility path, alias, or new runner.
+  Task 5.6f later supersedes raw metadata storage as a supported surface:
+  Example Todo retains its complete typed policy through a service-owned native
+  `defineMeta` plugin and accessor, while the raw namespaced `~orpc.meta` object
+  remains vendor implementation detail.
 - [x] 5.7e21g Install the current Magic service and database authority before
   the oRPC 2/Effect 4 burn-down. Port service tree
   `53cd340b859e660ad6a0cc1619b283edfb025e13` and database tree

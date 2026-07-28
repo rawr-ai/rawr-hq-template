@@ -12,7 +12,8 @@
  * layered here after that.
  */
 
-import { createServiceImplementer } from "./base";
+import { implement } from "@orpc/server";
+import type { Context } from "./base";
 import { contract } from "./contract";
 import { analytics } from "./middleware/analytics.middleware";
 import { observability } from "./middleware/observability.middleware";
@@ -24,18 +25,14 @@ import { stores } from "./middleware/stores.middleware";
  *
  * @remarks
  * Middleware order is authored here:
- * 1) framework baseline middleware from the SDK seam
- * 2) required service middleware extensions supplied here and auto-attached
- *    inside `createServiceImplementer(...)`
- * 3) extra service-wide providers/guards authored here
+ * 1) service-owned observability and analytics
+ * 2) service-owned store projection
+ * 3) the read-only policy guard
  *
- * Do not attach additive observability middleware here to satisfy the required
- * service middleware extension slots. Module/procedure-local additive
- * middleware belongs in module `module.ts` and `router.ts` files.
+ * Do not attach another generic observability or analytics lifecycle here.
+ * Qualified module telemetry belongs on the corresponding module branch.
  */
-export const service = createServiceImplementer(contract, {
-  observability,
-  analytics,
-})
-  .use(stores)
-  .use(readOnlyMode);
+/** Unconfigured contract implementer used for aggregate router implementation. */
+export const impl = implement(contract).$context<Context>();
+
+export const service = impl.use(observability).use(analytics).use(stores).use(readOnlyMode);

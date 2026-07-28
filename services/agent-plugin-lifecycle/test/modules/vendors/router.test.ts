@@ -365,7 +365,8 @@ describe("vendor lifecycle applications", () => {
     );
 
     await harness.partialApplyPaused.promise;
-    controller.abort(new Error("Vendor update cancelled"));
+    const cancellation = new Error("Vendor update cancelled");
+    controller.abort(cancellation);
     const beforeResume = await Promise.race([
       completed.then(() => "settled" as const),
       Promise.resolve("pending" as const),
@@ -380,9 +381,9 @@ describe("vendor lifecycle applications", () => {
     }
 
     const completion = await completed;
-    expect(completion).toMatchObject({
+    expect(completion).toEqual({
       kind: "Failure",
-      error: { code: "INTERNAL_SERVER_ERROR" },
+      error: cancellation,
     });
     expect(harness.counters.restore).toBe(1);
     expect(harness.counters.settle).toBe(1);
@@ -468,10 +469,11 @@ describe("vendor lifecycle applications", () => {
     );
 
     await preflight.started;
-    controller.abort(new Error("Vendor update cancelled during preflight"));
+    const cancellation = new Error("Vendor update cancelled during preflight");
+    controller.abort(cancellation);
     preflight.resume();
 
-    await expect(update).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    await expect(update).rejects.toBe(cancellation);
     expect(harness.counters.capture).toBe(0);
     expect(harness.counters.apply).toBe(0);
   });
@@ -504,7 +506,8 @@ describe("vendor lifecycle applications", () => {
       );
 
     await capture.started;
-    controller.abort(new Error("Vendor update cancelled after capture began"));
+    const cancellation = new Error("Vendor update cancelled after capture began");
+    controller.abort(cancellation);
     await Promise.resolve();
 
     expect(settled).toBe(false);
@@ -513,9 +516,9 @@ describe("vendor lifecycle applications", () => {
     capture.resume();
     const outcome = await update;
 
-    expect(outcome).toMatchObject({
+    expect(outcome).toEqual({
       kind: "Rejected",
-      error: { code: "INTERNAL_SERVER_ERROR" },
+      error: cancellation,
     });
     expect(harness.events).toEqual(["capture", "revalidate", "apply", "verify", "settle"]);
     expect(harness.counters.restore).toBe(0);

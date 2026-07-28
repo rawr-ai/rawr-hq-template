@@ -284,10 +284,7 @@ describe("release check", () => {
         inspectGitWorkspace: () => Effect.die(defect),
       },
     });
-    await expect(defectiveClient.releases.check(request, testInvocation)).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: defect,
-    });
+    await expect(defectiveClient.releases.check(request, testInvocation)).rejects.toBe(defect);
 
     const classifierDefect = new Error("clean policy classifier defect");
     const delegate = makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE });
@@ -311,12 +308,9 @@ describe("release check", () => {
           ),
       },
     });
-    await expect(
-      classifierDefectClient.releases.check(request, testInvocation)
-    ).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: classifierDefect,
-    });
+    await expect(classifierDefectClient.releases.check(request, testInvocation)).rejects.toBe(
+      classifierDefect
+    );
 
     let finalized = 0;
     const interruptedClient = createLifecycleTestClient({

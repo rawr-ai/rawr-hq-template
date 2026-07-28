@@ -11,7 +11,8 @@
  * handlers when this middleware is active.
  */
 import { ORPCError } from "@orpc/server";
-import { createServiceMiddleware } from "../base";
+import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { base } from "../base";
 
 /**
  * Zero-config service guard.
@@ -20,20 +21,14 @@ import { createServiceMiddleware } from "../base";
  * Export this as a ready-to-use middleware value. It consumes stable package
  * configuration (`config.readOnly`) and does not add any execution context.
  */
-export const readOnlyMode = createServiceMiddleware<{
-  config: {
-    readOnly: boolean;
-  };
-}>().middleware(async ({ context, procedure, path, next }) => {
-  const isMutatingProcedure = procedure["~orpc"].meta.idempotent === false;
+export const readOnlyMode = base.middleware(async ({ context, procedure, path, next }) => {
+  const isMutatingProcedure = getProcedureMetadata(procedure)?.idempotent === false;
 
   if (!context.config.readOnly || !isMutatingProcedure) {
     return await next();
   }
 
   throw new ORPCError("READ_ONLY_MODE", {
-    defined: true,
-    status: 409,
     message: "Write operation blocked: service is in read-only mode",
     data: { path: path.join(".") },
   });

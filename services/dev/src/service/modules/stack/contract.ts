@@ -1,5 +1,6 @@
-import { schema } from "@rawr/hq-sdk";
-import { ocBase } from "../../base";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import {
   StackDoctorInputSchema,
   StackDoctorResultSchema,
@@ -8,12 +9,12 @@ import {
 } from "../../common/entities";
 
 export const contract = {
-  doctor: ocBase
-    .meta({ idempotent: true, entity: "stack" })
-    .input(schema(StackDoctorInputSchema))
-    .output(schema(StackDoctorResultSchema)),
-  drain: ocBase
-    .meta({ idempotent: false, entity: "stack", audit: "full" })
-    .input(schema(StackDrainInputSchema))
-    .output(schema(StackDrainResultSchema)),
+  doctor: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "stack" }))
+    .input(standard(StackDoctorInputSchema))
+    .output(standard(StackDoctorResultSchema)),
+  drain: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "stack", audit: "full" }))
+    .input(standard(StackDrainInputSchema))
+    .output(standard(StackDrainResultSchema)),
 };

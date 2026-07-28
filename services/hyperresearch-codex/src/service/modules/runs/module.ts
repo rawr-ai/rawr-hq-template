@@ -1,18 +1,14 @@
 /**
  * @fileoverview Run-lifecycle module composition for Hyperresearch Codex.
  */
-import { impl } from "../../impl";
-import { analytics, observability } from "./middleware";
+import { service } from "../../impl";
 
-export const module = impl.runs
-  .use(observability)
-  .use(analytics)
-  .use(async ({ context, next }) =>
-    next({
-      context: {
-        repoRoot: context.scope.repoRoot,
-        io: context.deps.io,
-        cli: context.deps.cli,
-      },
-    })
-  );
+export const module = service.runs.use(async ({ context, next }) =>
+  next({
+    context: {
+      repoRoot: context.scope.repoRoot,
+      io: context.deps.io,
+      cli: context.deps.cli,
+    },
+  })
+);

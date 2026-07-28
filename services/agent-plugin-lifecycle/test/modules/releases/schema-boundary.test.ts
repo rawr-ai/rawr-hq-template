@@ -1,8 +1,10 @@
-import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { schema } from "@rawr/hq-sdk";
+import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
+import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
+import { contract as serviceContract } from "../../../src/service/contract";
 import {
   MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
   SourceEligibilityIssueSchema,
@@ -64,8 +66,8 @@ const workspaceBinding = "f".repeat(64);
 
 describe("release procedure schema boundary", () => {
   it("derives every public release contract type from its TypeBox schema", () => {
-    type ContractInputs = InferContractRouterInputs<typeof contract>;
-    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+    type ContractInputs = InferRouterContractInputs<typeof contract>;
+    type ContractOutputs = InferRouterContractOutputs<typeof contract>;
 
     expectTypeOf<ReleaseSelection>().toEqualTypeOf<Static<typeof ReleaseSelectionSchema>>();
     expectTypeOf<AgentPluginCheckRequest>().toEqualTypeOf<Static<typeof CheckInputSchema>>();
@@ -116,7 +118,7 @@ describe("release procedure schema boundary", () => {
     >();
   });
 
-  it("declares the complete service metadata on every release operation", () => {
+  it("inherits service metadata and keeps release overrides local", () => {
     const expectedMetadata = {
       idempotent: true,
       domain: "agent-plugin-lifecycle",
@@ -131,7 +133,12 @@ describe("release procedure schema boundary", () => {
       "refreshReleaseInput",
       "checkRepository",
     ] as const) {
-      expect(contract[operation]["~orpc"].meta).toEqual(expectedMetadata);
+      expect(getProcedureMetadata(contract[operation])).toEqual({
+        idempotent: true,
+        audit: "full",
+        entity: "releases",
+      });
+      expect(getProcedureMetadata(serviceContract.releases[operation])).toEqual(expectedMetadata);
     }
   });
 
@@ -200,7 +207,7 @@ describe("release procedure schema boundary", () => {
     for (const invalid of invalidWorkspaces) {
       const request = { contentWorkspace: invalid, mode: { kind: "complete-set" } };
       expect(Value.Check(CheckInputSchema, request)).toBe(false);
-      const validated = await schema(CheckInputSchema)["~standard"].validate(request);
+      const validated = await standard(CheckInputSchema)["~standard"].validate(request);
       expect("issues" in validated).toBe(true);
     }
 
@@ -311,7 +318,7 @@ describe("release procedure schema boundary", () => {
     ];
     for (const candidate of invalidCheckResults) {
       expect(Value.Check(CheckResultSchema, candidate)).toBe(false);
-      const validated = await schema(CheckResultSchema)["~standard"].validate(candidate);
+      const validated = await standard(CheckResultSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
   });
@@ -383,7 +390,7 @@ describe("release procedure schema boundary", () => {
       { kind: "validate-envelope", bytes: "{}\n" },
     ];
     for (const candidate of invalidInputs) {
-      const validated = await schema(ReleaseInputRecordInputSchema)["~standard"].validate(
+      const validated = await standard(ReleaseInputRecordInputSchema)["~standard"].validate(
         candidate
       );
       expect("issues" in validated).toBe(true);
@@ -412,7 +419,7 @@ describe("release procedure schema boundary", () => {
       },
     ];
     for (const candidate of invalidResults) {
-      const validated = await schema(ReleaseInputRecordResultSchema)["~standard"].validate(
+      const validated = await standard(ReleaseInputRecordResultSchema)["~standard"].validate(
         candidate
       );
       expect("issues" in validated).toBe(true);
@@ -485,7 +492,7 @@ describe("release procedure schema boundary", () => {
       { ...request, memberIds: ["cognition"], write: true },
       { ...request, memberIds: ["cognition", "cognition"] },
     ]) {
-      const validated = await schema(ReleaseInputRefreshInputSchema)["~standard"].validate(
+      const validated = await standard(ReleaseInputRefreshInputSchema)["~standard"].validate(
         candidate
       );
       expect("issues" in validated).toBe(true);

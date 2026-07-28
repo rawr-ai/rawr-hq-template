@@ -1,26 +1,30 @@
-/**
- * @fileoverview Required service-wide analytics middleware.
- *
- * @remarks
- * This file is a required service middleware extension, specifically the
- * contributor-style example.
- *
- * It is supplied to `createServiceImplementer(...)` in `src/service/impl.ts`
- * and enriches the canonical SDK-owned analytics emission path. Unlike the
- * observability example, it demonstrates a required service-global payload
- * contributor rather than a richer lifecycle wrapper.
- *
- * @agents
- * Put service-global analytics behavior here. Do not move analytics runtime
- * logic back into `service/base.ts`, and do not create a second service-wide
- * analytics emitter.
- */
-import { createRequiredServiceAnalyticsMiddleware } from "../base";
+import { createAnalyticsMiddleware } from "@rawr/hq-sdk";
+import type { Context } from "../base";
+import { metadataDefaults } from "../contract";
+import type { TodoProcedureMetadata } from "../model/policy/procedure-metadata";
 
-export const analytics = createRequiredServiceAnalyticsMiddleware({
-  payload: ({ context }) => ({
-    analytics_workspace_id: context.scope.workspaceId,
-    analytics_trace_id: context.invocation.traceId,
-    analytics_read_only: context.config.readOnly,
-  }),
-});
+/** Emits one service-owned analytics event with its qualified operation identity. */
+export const analytics = createAnalyticsMiddleware<Context, TodoProcedureMetadata>(
+  metadataDefaults,
+  {
+    payload: ({ context, meta, pathLabel, outcome }) => {
+      const classification = meta.analytics;
+      return {
+        analytics_workspace_id: context.scope.workspaceId,
+        analytics_trace_id: context.invocation.traceId,
+        analytics_read_only: context.config.readOnly,
+        ...(classification
+          ? {
+              analytics_layer: classification.layer,
+              ...(classification.module ? { analytics_module: classification.module } : {}),
+              ...(classification.operation
+                ? { analytics_procedure: classification.operation }
+                : {}),
+              analytics_path: pathLabel,
+              analytics_outcome: outcome,
+            }
+          : {}),
+      };
+    },
+  }
+);

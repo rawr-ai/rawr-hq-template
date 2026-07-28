@@ -1,4 +1,4 @@
-import { implement } from "@orpc/server";
+import { type Router, withHiddenRouterContract } from "@orpc/server";
 import type { RawrHostRolePlan } from "./host-seam";
 import { mergeRawrHostSurfaceTrees } from "./host-surface-merge";
 import type { RawrBoundaryContext } from "./request-context";
@@ -25,38 +25,44 @@ function materializeRawrHostOrpc(rolePlan: RawrHostRolePlan) {
     rolePlan.api.internalRouter,
     rolePlan.workflows.internalRouter,
   ]);
-  const requestScopedOrpc = implement(contract).$context<RawrBoundaryContext>();
-  const requestScopedPublishedApi = implement(
-    rolePlan.api.publishedContract
-  ).$context<RawrBoundaryContext>();
+  const contextCompatibleRouter: Router<RawrBoundaryContext> = router;
+  const contextCompatiblePublishedRouter: Router<RawrBoundaryContext> =
+    rolePlan.api.publishedRouter;
 
   return {
     contract,
-    router: requestScopedOrpc.router(router),
+    router: withHiddenRouterContract(contextCompatibleRouter, contract),
     published: {
       contract: rolePlan.api.publishedContract,
-      router: requestScopedPublishedApi.router(rolePlan.api.publishedRouter),
+      router: withHiddenRouterContract(
+        contextCompatiblePublishedRouter,
+        rolePlan.api.publishedContract
+      ),
     },
   } as const;
 }
 
 function materializeRawrHostWorkflows(rolePlan: RawrHostRolePlan) {
-  const requestScopedPublishedWorkflow = implement(
-    rolePlan.workflows.publishedContract
-  ).$context<RawrBoundaryContext>();
-  const requestScopedInternalWorkflow = implement(
-    rolePlan.workflows.internalContract
-  ).$context<RawrBoundaryContext>();
+  const contextCompatibleInternalRouter: Router<RawrBoundaryContext> =
+    rolePlan.workflows.internalRouter;
+  const contextCompatiblePublishedRouter: Router<RawrBoundaryContext> =
+    rolePlan.workflows.publishedRouter;
 
   return {
     surfaces: rolePlan.workflows.surfaces,
     internal: {
       contract: rolePlan.workflows.internalContract,
-      router: requestScopedInternalWorkflow.router(rolePlan.workflows.internalRouter),
+      router: withHiddenRouterContract(
+        contextCompatibleInternalRouter,
+        rolePlan.workflows.internalContract
+      ),
     },
     published: {
       contract: rolePlan.workflows.publishedContract,
-      router: requestScopedPublishedWorkflow.router(rolePlan.workflows.publishedRouter),
+      router: withHiddenRouterContract(
+        contextCompatiblePublishedRouter,
+        rolePlan.workflows.publishedContract
+      ),
     },
     createInngestFunctions: rolePlan.workflows.createInngestFunctions,
   } as const;

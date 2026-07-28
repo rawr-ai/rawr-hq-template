@@ -1,8 +1,8 @@
 import type { ErrorMapItem } from "@orpc/server";
-import { schema } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 
-const CorpusErrorData = schema(
+const CorpusErrorData = standard(
   Type.Object(
     {
       path: Type.String({ minLength: 1 }),
@@ -13,13 +13,11 @@ const CorpusErrorData = schema(
 );
 
 export const INVALID_CONVERSATION_JSON: ErrorMapItem<typeof CorpusErrorData> = {
-  status: 400,
   message: "Conversation JSON could not be parsed",
   data: CorpusErrorData,
 } as const;
 
 export const INVALID_CONVERSATION_EXPORT: ErrorMapItem<typeof CorpusErrorData> = {
-  status: 400,
   message: "Conversation export shape is invalid",
   data: CorpusErrorData,
 } as const;

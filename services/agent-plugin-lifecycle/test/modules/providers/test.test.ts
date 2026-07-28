@@ -464,10 +464,7 @@ describe("provider disposable-home test", () => {
       transformContentWorkspace: (delegate) =>
         Object.freeze({ ...delegate, inspectGitWorkspace: () => Effect.die(defect) }),
     }).client;
-    await expect(defective.providers.test(testRequest, testInvocation)).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: defect,
-    });
+    await expect(defective.providers.test(testRequest, testInvocation)).rejects.toBe(defect);
 
     const started = Promise.withResolvers<void>();
     let finalized = 0;
@@ -514,12 +511,7 @@ describe("provider disposable-home test", () => {
       new FakeNativeProviders([defectiveSession])
     );
 
-    await expect(
-      defective.client.providers.test(testRequest, testInvocation)
-    ).rejects.toMatchObject({
-      code: "INTERNAL_SERVER_ERROR",
-      cause: defect,
-    });
+    await expect(defective.client.providers.test(testRequest, testInvocation)).rejects.toBe(defect);
     expect(defective.finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
 
     const started = Promise.withResolvers<void>();

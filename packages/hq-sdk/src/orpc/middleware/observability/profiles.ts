@@ -1,6 +1,6 @@
 import type { Attributes, Span } from "@opentelemetry/api";
 
-import type { BaseMetadata } from "../../baseline/types";
+import type { BaseMetadata } from "../../metadata";
 import type { Logger } from "../../ports/logger";
 import {
   deriveServiceNames,
@@ -12,9 +12,10 @@ import type {
   ObservabilityBaseArgs,
   ObservabilityDurationArgs,
   ObservabilityFailedArgs,
-  RequiredServiceObservabilityMiddlewareInput,
+  ObservabilityMiddlewareInput,
 } from "./types";
 
+/** Fully resolved signal vocabulary consumed by the one procedure lifecycle wrapper. */
 export type ResolvedObservabilityProfile<
   TMeta extends BaseMetadata,
   TContext extends {
@@ -53,42 +54,13 @@ export type ResolvedObservabilityProfile<
   onError?(
     args: {
       span: Span | undefined;
-      policyEvents: TPolicyEvents;
+      policyEvents: TPolicyEvents | undefined;
     } & ObservabilityFailedArgs<TMeta, TContext>
   ): void;
 };
 
-export function createBaseObservabilityProfile(): ResolvedObservabilityProfile<
-  BaseMetadata,
-  {
-    deps: {
-      logger: Logger;
-    };
-  }
-> {
-  return {
-    loggerEvent: "orpc.procedure",
-    startedEvent: "rawr.orpc.procedure.started",
-    succeededEvent: "rawr.orpc.procedure.succeeded",
-    failedEvent: "rawr.orpc.procedure.failed",
-    getSpanAttributes: ({ meta, pathLabel }) => ({
-      "rawr.orpc.path": pathLabel,
-      "rawr.orpc.idempotent": meta.idempotent,
-      ...(meta.domain ? { "rawr.orpc.domain": meta.domain } : {}),
-      ...(meta.audience ? { "rawr.orpc.audience": meta.audience } : {}),
-    }),
-    getLogFields: ({ meta, durationMs, pathLabel, spanTraceId }) => ({
-      path: pathLabel,
-      durationMs,
-      spanTraceId,
-      domain: meta.domain,
-      audience: meta.audience,
-      idempotent: meta.idempotent,
-    }),
-  };
-}
-
-export function resolveRequiredServiceObservabilityProfile<
+/** Resolves one service profile over the generic procedure signal vocabulary. */
+export function resolveObservabilityProfile<
   TMeta extends BaseMetadata,
   TContext extends {
     deps: {
@@ -98,7 +70,7 @@ export function resolveRequiredServiceObservabilityProfile<
   TPolicyEvents extends Record<string, string | undefined> | undefined,
 >(
   baseMetadata: TMeta,
-  input: RequiredServiceObservabilityMiddlewareInput<TMeta, TContext, TPolicyEvents>
+  input: ObservabilityMiddlewareInput<TMeta, TContext, TPolicyEvents>
 ): ResolvedObservabilityProfile<TMeta, TContext, TPolicyEvents> {
   const names = deriveServiceNames(baseMetadata);
 
@@ -107,8 +79,12 @@ export function resolveRequiredServiceObservabilityProfile<
     startedEvent: names.startedEvent,
     succeededEvent: names.succeededEvent,
     failedEvent: names.failedEvent,
-    getSpanAttributes: ({ context, meta, path, pathLabel }) =>
-      prefixAttributes(names.attributePrefix, {
+    getSpanAttributes: ({ context, meta, path, pathLabel }) => ({
+      "rawr.orpc.path": pathLabel,
+      "rawr.orpc.idempotent": meta.idempotent,
+      ...(meta.domain ? { "rawr.orpc.domain": meta.domain } : {}),
+      ...(meta.audience ? { "rawr.orpc.audience": meta.audience } : {}),
+      ...prefixAttributes(names.attributePrefix, {
         ...(getMetadataAudit(meta) ? { audit: getMetadataAudit(meta) } : {}),
         ...(getMetadataEntity(meta, path) ? { entity: getMetadataEntity(meta, path) } : {}),
         ...input.spanAttributes?.({
@@ -118,7 +94,11 @@ export function resolveRequiredServiceObservabilityProfile<
           pathLabel,
         }),
       }),
+    }),
     getLogFields: ({ context, meta, path, pathLabel, durationMs, spanTraceId }) => ({
+      domain: meta.domain,
+      audience: meta.audience,
+      idempotent: meta.idempotent,
       ...(getMetadataEntity(meta, path) ? { entity: getMetadataEntity(meta, path) } : {}),
       ...(getMetadataAudit(meta) ? { audit: getMetadataAudit(meta) } : {}),
       ...(input.logFields?.({

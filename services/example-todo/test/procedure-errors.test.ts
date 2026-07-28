@@ -6,25 +6,26 @@ import { contract as tagsContract } from "../src/service/modules/tags/contract";
 import { contract as tasksContract } from "../src/service/modules/tasks/contract";
 import { createClientOptions, invocation, type OrpcErrorShape } from "./helpers";
 
-async function expectOrpcError(
-  promise: Promise<unknown>,
+async function expectOrpcError<PromiseType extends Promise<unknown>>(
+  promise: PromiseType,
   expected: {
     code: string;
-    status: number;
     data?: Record<string, unknown>;
   }
 ) {
-  const result = await safe(promise);
-  expect(result.isSuccess).toBe(false);
-  expect(result.isDefined).toBe(true);
-
-  if (result.isSuccess || !result.isDefined) {
-    throw new Error(`expected defined ORPC error ${expected.code}`);
+  let captured: unknown;
+  try {
+    await promise;
+  } catch (error) {
+    captured = error;
   }
 
-  const typed = result.error as OrpcErrorShape;
+  expect(captured).toBeTruthy();
+  const typed = captured as OrpcErrorShape;
+  expect(typed.defined).toBe(true);
+  expect(typed.inferable).toBe(true);
   expect(typed.code).toBe(expected.code);
-  expect(typed.status).toBe(expected.status);
+  expect("status" in typed).toBe(false);
 
   if (expected.data) {
     expect(typed.data).toMatchObject(expected.data);
@@ -49,7 +50,6 @@ describe("example-todo typed procedure errors", () => {
       client.tasks.create({ title: "blocked write" }, invocation("trace-read-only")),
       {
         code: "READ_ONLY_MODE",
-        status: 409,
         data: { path: "tasks.create" },
       }
     );
@@ -58,7 +58,6 @@ describe("example-todo typed procedure errors", () => {
       client.tags.create({ name: "blocked", color: "#123456" }, invocation("trace-read-only-tag")),
       {
         code: "READ_ONLY_MODE",
-        status: 409,
         data: { path: "tags.create" },
       }
     );
@@ -73,7 +72,6 @@ describe("example-todo typed procedure errors", () => {
       ),
       {
         code: "READ_ONLY_MODE",
-        status: 409,
         data: { path: "assignments.assign" },
       }
     );
@@ -86,7 +84,6 @@ describe("example-todo typed procedure errors", () => {
       client.tasks.create({ title: "   " }, invocation("trace-invalid-title")),
       {
         code: "INVALID_TASK_TITLE",
-        status: 400,
         data: { title: "   " },
       }
     );
@@ -101,7 +98,6 @@ describe("example-todo typed procedure errors", () => {
       client.tags.create({ name: "infra", color: "#654321" }, invocation("trace-tag-2")),
       {
         code: "DUPLICATE_TAG",
-        status: 409,
         data: { name: "infra" },
       }
     );
@@ -124,7 +120,6 @@ describe("example-todo typed procedure errors", () => {
       ),
       {
         code: "RESOURCE_NOT_FOUND",
-        status: 404,
         data: { entity: "Task", id: "00000000-0000-0000-0000-000000000001" },
       }
     );
@@ -144,7 +139,6 @@ describe("example-todo typed procedure errors", () => {
       client.assignments.assign({ taskId: task.id, tagId: tag.id }, invocation("trace-duplicate")),
       {
         code: "ALREADY_ASSIGNED",
-        status: 409,
         data: { taskId: task.id, tagId: tag.id },
       }
     );
@@ -177,7 +171,6 @@ describe("example-todo typed procedure errors", () => {
       ),
       {
         code: "ASSIGNMENT_LIMIT_REACHED",
-        status: 409,
         data: {
           taskId: task.id,
           maxAssignmentsPerTask: 1,
@@ -200,7 +193,7 @@ describe("example-todo typed procedure errors", () => {
       )
     );
     expect(result.isSuccess).toBe(false);
-    expect(result.isDefined).toBe(false);
+    expect(result.inferableError).toBeNull();
     expect(result.error).toBeTruthy();
   });
 

@@ -3,5 +3,8 @@ import type { Context } from "./base";
 import { contract } from "./contract";
 import { client } from "./middleware/client.middleware";
 
-/** Native oRPC implementer for the embedded Example Todo API service. */
-export const service = implement(contract).$context<Context>().use(client);
+/** Unconfigured implementer used for aggregate router implementation. */
+export const impl = implement(contract).$context<Context>();
+
+/** Configured implementer used by module operation authors. */
+export const service = impl.use(client);

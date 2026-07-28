@@ -8,7 +8,7 @@
       "url": "http://localhost:3000"
     }
   ],
-  "openapi": "3.1.1",
+  "openapi": "3.1.2",
   "paths": {
     "/exampleTodo/tasks/create": {
       "post": {
@@ -65,12 +65,12 @@
                     "id": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "Stable unique identifier for the task."
+                      "description": "Stable UUID identifying one Example Todo domain entity."
                     },
                     "workspaceId": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "Workspace scope that owns this task record."
+                      "description": "Stable workspace scope that owns Example Todo records."
                     },
                     "title": {
                       "type": "string",
@@ -114,7 +114,7 @@
             }
           },
           "400": {
-            "description": "400",
+            "description": "Invalid task title",
             "content": {
               "application/json": {
                 "schema": {
@@ -125,11 +125,11 @@
                         "defined": {
                           "const": true
                         },
+                        "inferable": {
+                          "type": "boolean"
+                        },
                         "code": {
                           "const": "INVALID_TASK_TITLE"
-                        },
-                        "status": {
-                          "const": 400
                         },
                         "message": {
                           "type": "string",
@@ -149,11 +149,12 @@
                       },
                       "required": [
                         "defined",
+                        "inferable",
                         "code",
-                        "status",
                         "message",
                         "data"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -161,11 +162,11 @@
                         "defined": {
                           "const": false
                         },
+                        "inferable": {
+                          "type": "boolean"
+                        },
                         "code": {
                           "type": "string"
-                        },
-                        "status": {
-                          "type": "number"
                         },
                         "message": {
                           "type": "string"
@@ -174,10 +175,11 @@
                       },
                       "required": [
                         "defined",
+                        "inferable",
                         "code",
-                        "status",
                         "message"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 }
@@ -185,7 +187,7 @@
             }
           },
           "409": {
-            "description": "409",
+            "description": "Write operations are blocked while read-only mode is enabled",
             "content": {
               "application/json": {
                 "schema": {
@@ -196,11 +198,11 @@
                         "defined": {
                           "const": true
                         },
+                        "inferable": {
+                          "type": "boolean"
+                        },
                         "code": {
                           "const": "READ_ONLY_MODE"
-                        },
-                        "status": {
-                          "const": 409
                         },
                         "message": {
                           "type": "string",
@@ -221,11 +223,12 @@
                       },
                       "required": [
                         "defined",
+                        "inferable",
                         "code",
-                        "status",
                         "message",
                         "data"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -233,11 +236,11 @@
                         "defined": {
                           "const": false
                         },
+                        "inferable": {
+                          "type": "boolean"
+                        },
                         "code": {
                           "type": "string"
-                        },
-                        "status": {
-                          "type": "number"
                         },
                         "message": {
                           "type": "string"
@@ -246,10 +249,11 @@
                       },
                       "required": [
                         "defined",
+                        "inferable",
                         "code",
-                        "status",
                         "message"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 }
@@ -268,13 +272,13 @@
         ],
         "parameters": [
           {
-            "name": "id",
             "in": "path",
             "required": true,
+            "name": "id",
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Unique task identifier."
+              "description": "Stable UUID identifying one Example Todo domain entity."
             }
           }
         ],
@@ -298,12 +302,12 @@
                     "id": {
                       "type": "string",
                       "format": "uuid",
-                      "description": "Stable unique identifier for the task."
+                      "description": "Stable UUID identifying one Example Todo domain entity."
                     },
                     "workspaceId": {
                       "type": "string",
                       "minLength": 1,
-                      "description": "Workspace scope that owns this task record."
+                      "description": "Stable workspace scope that owns Example Todo records."
                     },
                     "title": {
                       "type": "string",
@@ -347,7 +351,7 @@
             }
           },
           "404": {
-            "description": "404",
+            "description": "Resource not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -358,11 +362,11 @@
                         "defined": {
                           "const": true
                         },
+                        "inferable": {
+                          "type": "boolean"
+                        },
                         "code": {
                           "const": "RESOURCE_NOT_FOUND"
-                        },
-                        "status": {
-                          "const": 404
                         },
                         "message": {
                           "type": "string",
@@ -388,11 +392,12 @@
                       },
                       "required": [
                         "defined",
+                        "inferable",
                         "code",
-                        "status",
                         "message",
                         "data"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -400,11 +405,11 @@
                         "defined": {
                           "const": false
                         },
+                        "inferable": {
+                          "type": "boolean"
+                        },
                         "code": {
                           "type": "string"
-                        },
-                        "status": {
-                          "type": "number"
                         },
                         "message": {
                           "type": "string"
@@ -413,10 +418,11 @@
                       },
                       "required": [
                         "defined",
+                        "inferable",
                         "code",
-                        "status",
                         "message"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 }

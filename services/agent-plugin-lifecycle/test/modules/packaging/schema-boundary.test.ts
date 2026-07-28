@@ -1,9 +1,11 @@
-import type { InferContractRouterInputs, InferContractRouterOutputs } from "@orpc/contract";
-import { schema } from "@rawr/hq-sdk";
+import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
+import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
+import { contract as serviceContract } from "../../../src/service/contract";
 import { contract } from "../../../src/service/modules/packaging/contract";
 import {
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
@@ -56,8 +58,8 @@ const failure = Object.freeze({
 
 describe("packaging procedure result schema boundary", () => {
   it("derives the callable request and result types from TypeBox", () => {
-    type ContractInputs = InferContractRouterInputs<typeof contract>;
-    type ContractOutputs = InferContractRouterOutputs<typeof contract>;
+    type ContractInputs = InferRouterContractInputs<typeof contract>;
+    type ContractOutputs = InferRouterContractOutputs<typeof contract>;
 
     expectTypeOf<PackageAgentPluginRequest>().toEqualTypeOf<
       Static<typeof PackageAgentPluginRequestSchema>
@@ -71,8 +73,12 @@ describe("packaging procedure result schema boundary", () => {
     expect(Value.Check(PackagedReleaseIdentitySchema, release)).toBe(true);
   });
 
-  it("declares the complete packaging service metadata", () => {
-    expect(contract.package["~orpc"].meta).toEqual({
+  it("inherits service metadata and keeps packaging overrides local", () => {
+    expect(getProcedureMetadata(contract.package)).toEqual({
+      idempotent: true,
+      entity: "packaging",
+    });
+    expect(getProcedureMetadata(serviceContract.packaging.package)).toEqual({
       idempotent: true,
       domain: "agent-plugin-lifecycle",
       audience: "internal",
@@ -97,7 +103,7 @@ describe("packaging procedure result schema boundary", () => {
     ];
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginRequestSchema, candidate)).toBe(false);
-      const validated = await schema(PackageAgentPluginRequestSchema)["~standard"].validate(
+      const validated = await standard(PackageAgentPluginRequestSchema)["~standard"].validate(
         candidate
       );
       expect("issues" in validated).toBe(true);
@@ -145,7 +151,7 @@ describe("packaging procedure result schema boundary", () => {
 
     for (const candidate of invalid) {
       expect(Value.Check(PackageAgentPluginResultSchema, candidate)).toBe(false);
-      const validated = await schema(PackageAgentPluginResultSchema)["~standard"].validate(
+      const validated = await standard(PackageAgentPluginResultSchema)["~standard"].validate(
         candidate
       );
       expect("issues" in validated).toBe(true);
@@ -185,7 +191,7 @@ describe("packaging procedure result schema boundary", () => {
       const candidateSchema =
         "kind" in candidate ? PackageAgentPluginResultSchema : PackageAgentPluginRequestSchema;
       expect(Value.Check(candidateSchema, candidate)).toBe(false);
-      const validated = await schema(candidateSchema)["~standard"].validate(candidate);
+      const validated = await standard(candidateSchema)["~standard"].validate(candidate);
       expect("issues" in validated).toBe(true);
     }
   });

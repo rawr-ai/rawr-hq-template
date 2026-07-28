@@ -1,6 +1,7 @@
-import { schema } from "@rawr/hq-sdk";
+import { oc } from "@orpc/contract";
+import { procedureMetadata } from "@rawr/hq-sdk";
+import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
-import { ocBase } from "../../base";
 import { JournalEventSchema, JournalSearchRowSchema, JournalSnippetSchema } from "./entities";
 
 const JournalWriteResultSchema = Type.Object(
@@ -50,7 +51,7 @@ const JournalTailResultSchema = Type.Object(
   { additionalProperties: false }
 );
 
-const SnippetIdInputSchema = schema(
+const SnippetIdInputSchema = standard(
   Type.Object(
     {
       id: Type.String({
@@ -62,7 +63,7 @@ const SnippetIdInputSchema = schema(
   )
 );
 
-const TailInputSchema = schema(
+const TailInputSchema = standard(
   Type.Object(
     {
       limit: Type.Integer({
@@ -75,7 +76,7 @@ const TailInputSchema = schema(
   )
 );
 
-const SearchInputSchema = schema(
+const SearchInputSchema = standard(
   Type.Object(
     {
       query: Type.String({
@@ -96,24 +97,24 @@ const SearchInputSchema = schema(
 );
 
 export const contract = {
-  writeEvent: ocBase
-    .meta({ idempotent: false, entity: "journal" })
-    .input(schema(JournalEventSchema))
-    .output(schema(JournalWriteResultSchema)),
-  writeSnippet: ocBase
-    .meta({ idempotent: false, entity: "journal" })
-    .input(schema(JournalSnippetSchema))
-    .output(schema(JournalWriteResultSchema)),
-  getSnippet: ocBase
-    .meta({ idempotent: true, entity: "journal" })
+  writeEvent: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "journal" }))
+    .input(standard(JournalEventSchema))
+    .output(standard(JournalWriteResultSchema)),
+  writeSnippet: oc
+    .meta(procedureMetadata({ idempotent: false, entity: "journal" }))
+    .input(standard(JournalSnippetSchema))
+    .output(standard(JournalWriteResultSchema)),
+  getSnippet: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "journal" }))
     .input(SnippetIdInputSchema)
-    .output(schema(JournalGetSnippetResultSchema)),
-  tailSnippets: ocBase
-    .meta({ idempotent: true, entity: "journal" })
+    .output(standard(JournalGetSnippetResultSchema)),
+  tailSnippets: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "journal" }))
     .input(TailInputSchema)
-    .output(schema(JournalTailResultSchema)),
-  searchSnippets: ocBase
-    .meta({ idempotent: true, entity: "journal" })
+    .output(standard(JournalTailResultSchema)),
+  searchSnippets: oc
+    .meta(procedureMetadata({ idempotent: true, entity: "journal" }))
     .input(SearchInputSchema)
-    .output(schema(JournalSearchResultSchema)),
+    .output(standard(JournalSearchResultSchema)),
 };

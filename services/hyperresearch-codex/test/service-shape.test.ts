@@ -47,14 +47,7 @@ describe("hyperresearch-codex service shell", () => {
 
     for (const moduleName of moduleNames) {
       const entries = (await fs.readdir(path.join(moduleDir, moduleName))).sort();
-      expect(entries).toEqual([
-        "AGENTS.md",
-        "contract.ts",
-        "helpers",
-        "middleware.ts",
-        "module.ts",
-        "router.ts",
-      ]);
+      expect(entries).toEqual(["AGENTS.md", "contract.ts", "helpers", "module.ts", "router.ts"]);
       expect(entries).not.toContain("services");
       expect(entries).not.toContain("runner.ts");
       expect(entries).not.toContain("v8-runner.ts");

@@ -11,7 +11,7 @@ import {
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
-import type { Service } from "../src/service/base";
+import type { Context } from "../src/service/base";
 import type {
   ExecResult,
   HqOpsResources,
@@ -20,7 +20,7 @@ import type {
 import type { RawrConfig } from "../src/service/modules/config/entities";
 
 type ClientOptions = {
-  deps?: Partial<Service["Deps"]>;
+  deps?: Partial<Context["deps"]>;
   repoRoot?: string;
   homeDir?: string;
   resources?: HqOpsResources;
@@ -214,7 +214,7 @@ export function createTestHqOpsResources(
   };
 }
 
-export function createDeps(options: ClientOptions = {}): Service["Deps"] {
+export function createDeps(options: ClientOptions = {}): Context["deps"] {
   return {
     logger: createEmbeddedPlaceholderLoggerAdapter({ sink: options.logs }),
     analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: options.analytics }),
