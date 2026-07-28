@@ -667,6 +667,189 @@ describe("service blueprint authority", () => {
     }
   });
 
+  it("admits one embedded API context author and rejects alternate middleware roots", async () => {
+    const anchor = "require_service_anchor_exports";
+    const context = "require_service_context_boundaries";
+    const root = await createFixture(
+      {
+        "services/reference/src/service/base.ts": `
+          export const base = implementEffect(contract, layer);
+        `,
+        "plugins/server/api/valid/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          export type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/valid/src/service/middleware/client.middleware.ts": `
+          import { createMiddleware } from "../base";
+          /** Resolves the host-owned domain client for one API request. */
+          export const client = createMiddleware().middleware(handler);
+        `,
+        "plugins/server/api/type-only/src/service/base.ts": `
+          export type Context = { readonly repoRoot: string };
+        `,
+        "plugins/server/api/missing-factory/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+        `,
+        "plugins/server/api/aliased-author/src/service/base.ts": `
+          import { os as native } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = native.$context<Context>();
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/untyped-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          const other = os.$context();
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/fresh-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          export function createMiddleware() {
+            return os.$context<Context>();
+          }
+        `,
+        "plugins/server/api/disconnected-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          export function createMiddleware() {
+            return service;
+          }
+        `,
+        "plugins/server/api/duplicate-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          const other = os.$context<Context>();
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/public-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          export const middleware = os.$context<Context>();
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/exported-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          export { middleware };
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/default-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          export default middleware;
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/aliased-export-author/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          export const publicAuthor = middleware;
+          export function createMiddleware() {
+            return middleware;
+          }
+        `,
+        "plugins/server/api/direct-base-middleware/src/service/base.ts": `
+          import { os } from "@orpc/server";
+          type Context = { readonly repoRoot: string };
+          const middleware = os.$context<Context>();
+          export function createMiddleware() {
+            return middleware;
+          }
+          export const rogue = os.middleware(handler);
+        `,
+        "plugins/server/api/outside-base/src/service/impl.ts": `
+          import { os } from "@orpc/server";
+          export const service = os.$context<Context>();
+        `,
+        "plugins/server/api/direct-middleware/src/service/middleware/client.middleware.ts": `
+          import { os } from "@orpc/server";
+          /** Bypasses the API service's context author. */
+          export const client = os.middleware(handler);
+        `,
+        "plugins/server/api/provider-author/src/service/base.ts": `
+          export type Service = { ExecutionContext: {} };
+          export const createServiceProvider =
+            service.createProvider<Service["ExecutionContext"]>;
+        `,
+        "plugins/server/api/provider-middleware/src/service/middleware/client.middleware.ts": `
+          import { createServiceProvider } from "../base";
+          type ProvidedClient = { readonly client: Client };
+          /** Attempts to make the embedded API a provider owner. */
+          export const client =
+            createServiceProvider().middleware<ProvidedClient>(handler);
+        `,
+      },
+      [anchor, context]
+    );
+
+    const result = await check(root, [anchor, context]);
+    expect(result.exitCode).toBe(0);
+    const anchorPaths = diagnostics(result.report, anchor).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "plugins/server/api/missing-factory/src/service/base.ts",
+      "plugins/server/api/aliased-author/src/service/base.ts",
+      "plugins/server/api/untyped-author/src/service/base.ts",
+      "plugins/server/api/fresh-author/src/service/base.ts",
+      "plugins/server/api/disconnected-author/src/service/base.ts",
+      "plugins/server/api/duplicate-author/src/service/base.ts",
+      "plugins/server/api/public-author/src/service/base.ts",
+      "plugins/server/api/exported-author/src/service/base.ts",
+      "plugins/server/api/default-author/src/service/base.ts",
+      "plugins/server/api/aliased-export-author/src/service/base.ts",
+      "plugins/server/api/direct-base-middleware/src/service/base.ts",
+    ]) {
+      expect(anchorPaths).toContain(path);
+    }
+    for (const path of [
+      "services/reference/src/service/base.ts",
+      "plugins/server/api/valid/src/service/base.ts",
+      "plugins/server/api/type-only/src/service/base.ts",
+    ]) {
+      expect(anchorPaths).not.toContain(path);
+    }
+
+    const contextPaths = diagnostics(result.report, context).map((diagnostic) => diagnostic.path);
+    for (const path of [
+      "plugins/server/api/outside-base/src/service/impl.ts",
+      "plugins/server/api/direct-middleware/src/service/middleware/client.middleware.ts",
+      "plugins/server/api/provider-author/src/service/base.ts",
+      "plugins/server/api/provider-middleware/src/service/middleware/client.middleware.ts",
+    ]) {
+      expect(contextPaths).toContain(path);
+    }
+    for (const path of [
+      "plugins/server/api/valid/src/service/base.ts",
+      "plugins/server/api/valid/src/service/middleware/client.middleware.ts",
+      "plugins/server/api/type-only/src/service/base.ts",
+    ]) {
+      expect(contextPaths).not.toContain(path);
+    }
+  });
+
   it("keeps operation authorship in named routers and module router composition plain", async () => {
     const rule = "require_service_router_authorship";
     const root = await createFixture(

@@ -3022,6 +3022,31 @@ abstraction. Public contracts, resource identity, repository scope, persistence,
 and required service telemetry remain unchanged; only those redundant wrapper
 spans are gone.
 
+## Embedded API Middleware Authority
+
+The bounded structural checkpoint advances
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21c]]. An embedded
+API service may now elect the same single base-owned native middleware author
+as a standalone service: one private `os.$context<NamedContext>()` value in
+`base.ts`, exposed only through `createMiddleware()`. This is ordinary native
+oRPC middleware provenance. It does not add embedded
+`createServiceProvider`, another implementer, or another context authority.
+
+The focused Habitat fixture proves the admitted embedded factory and keeps
+aliased `os`, untyped context roots, fresh authors per factory call,
+disconnected returns, non-base `os` imports, and embedded provider authorship
+red. The complete service-blueprint suite passes all 25 cases and 305
+assertions, and the Habitat project typecheck passes uncached in 1.3 seconds.
+A full-repository two-rule scan was canceled after two minutes without a
+result; it is not claimed as proof, and task 5.7e22 remains the owner of that
+slow transitional execution boundary.
+
+Runtime source, the HQ SDK, provider selection, application composition, Nx
+wiring, the pinned Habitat executable, and live provider state do not change.
+The following embedded API runtime checkpoint consumes this admission to move
+the host resolver through `deps`, service middleware, `provided`, and terminal
+module curation.
+
 ## Settlement Oracles
 
 The final product must prove:

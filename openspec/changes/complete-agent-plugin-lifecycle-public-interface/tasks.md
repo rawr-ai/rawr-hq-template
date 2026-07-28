@@ -1300,6 +1300,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   removal of redundant wrapper spans, and a clean staged context law; do not
   replace the deleted facades with empty named middleware files or another
   abstraction.
+- [x] 5.7e21c Admit one base-owned native middleware author for embedded API
+  services. Let an API `base.ts` elect one private
+  `os.$context<NamedContext>()` value and expose only `createMiddleware()` for
+  documented named middleware, matching the existing standalone provenance
+  law without adding embedded `createServiceProvider` authority. Keep aliases,
+  untyped context roots, fresh authors per call, disconnected returns, and
+  `os` imports outside `base.ts` red. Prove the exact green and red classes in
+  the existing service-blueprint fixture; change no runtime source, SDK,
+  provider, app composition, Nx wiring, or Habitat runner in this checkpoint.
 - [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
   upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
   distributable. Let registry discovery and owner-local inferred targets own

@@ -6,6 +6,34 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Embedded API Context Is A Host Projection
+
+An embedded API service receives one service-shaped projection from its host.
+The host supplies ready dependencies under `deps`, stable request scope under
+`scope`, externally selected behavior under `config`, per-request facts under
+`invocation`, and an empty `provided` bucket. The API does not invent a second
+request context or reconstruct those lanes inside a module.
+
+`base.ts` owns one native context author. Named middleware derived from that
+author may use a ready host resolver and request scope to contribute the
+qualified client under `provided`. `module.ts` then curates only the client and
+invocation facts its routers need. Handlers remain the operation-authoring
+site and see the module vocabulary rather than the host context or raw lanes.
+
+The resolver is already a host capability, so this flow needs no new resource,
+provider registry, or embedded `createServiceProvider` authority. Habitat
+admits only the base-owned native middleware author and keeps every alternate
+authoring root closed.
+
+See [[plugins/server/api/example-todo/AGENTS|the embedded API boundary]],
+[[.habitat/blueprints/service/skill#Context|the service context frame]], and
+[[.habitat/blueprints/service/require_service_context_boundaries/pattern|the executable law]].
+
+### Bag Of Keywords
+
+host, service, context, lane, resolver, middleware, client, module, curation,
+handler, flow, boundary.
+
 ## 2026-07-27 - Modules Curate Route Context
 
 Example Todo's flattened module projection is the reference pattern, not
