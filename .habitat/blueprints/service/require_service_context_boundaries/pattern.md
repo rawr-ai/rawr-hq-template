@@ -19,14 +19,16 @@ Native middleware contributions merge with inherited context. An explicit
 `.use<Context>(...)` argument does not prove narrowing and is rejected.
 Composition stays inferred. No adapter, witness, shadow context, raw vendor
 builder, or configured service/module branch creates another middleware root.
-This law owns middleware provenance and attachment, not semantic handler-context
-closure; owner-local capability and resource cuts remove raw lanes rather than
-hiding them behind a spelling blacklist.
+Every module closes handler authorship around one terminal curation, and router
+handlers consume those curated names rather than reaching back into the raw
+service lanes. Owner-local capability and resource cuts still remove broad
+capabilities at their source rather than pretending native context is
+subtractive.
 
 Every middleware file exports only documented named `const` middleware values.
 Every `.use(...)` attachment names a completed external middleware value
-imported from the matching middleware boundary, except that `module.ts` may end
-with exactly one inline additive context curation. That curation returns a
+imported from the matching middleware boundary, except that every `module.ts`
+ends with exactly one inline additive context curation. That curation returns a
 nonempty object of explicit non-reserved fields whose values are direct,
 noncomputed member paths below `context.deps`, `context.scope`,
 `context.config`, `context.invocation`, or `context.provided`. It contains no
@@ -66,6 +68,32 @@ predicate require_service_context_boundaries_is_governed_source() {
 predicate require_service_context_boundaries_is_module_source() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/.*\.ts$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
+}
+
+// Selects the one composition face that curates context for a module's routers.
+predicate require_service_context_boundaries_is_module_composition_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
+}
+
+// Selects current and destination router faces, where raw service lanes are no longer public vocabulary.
+predicate require_service_context_boundaries_is_router_leaf_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/(?:router\.ts|router/[^/]+\.router\.ts)$"
+}
+
+// Names the raw service lanes that terminal module curation makes private.
+predicate require_service_context_boundaries_is_raw_context_lane($lane) {
+  $lane <: r"^(?:deps|scope|config|invocation|provided)$"
+}
+
+// Detects a raw lane selected from a direct context destructure.
+predicate require_service_context_boundaries_has_raw_context_destructure($properties) {
+  $properties <: some $property where {
+    or {
+      $property <: $lane,
+      $property <: `$lane: $local`
+    },
+    require_service_context_boundaries_is_raw_context_lane(lane=$lane)
+  }
 }
 
 // Selects root and module middleware authority files.
@@ -267,7 +295,7 @@ predicate require_service_context_boundaries_is_curation_callback($callback) {
   require_service_context_boundaries_is_curation_properties(properties=$properties)
 }
 
-// Curation is optional, singular by terminality, and owned only by module.ts.
+// Curation is required, singular by terminality, and owned only by module.ts.
 predicate require_service_context_boundaries_is_terminal_module_curation($attachment) {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$",
   $attachment <: `$receiver.use($callback)`,
@@ -275,6 +303,15 @@ predicate require_service_context_boundaries_is_terminal_module_curation($attach
   $program <: contains or {
     `export const module = $attachment`,
     `export const module: $type = $attachment`
+  }
+}
+
+// Proves that the module's exported branch ends in the one canonical curation.
+predicate require_service_context_boundaries_has_terminal_module_curation($body) {
+  $body <: contains `$receiver.use($callback)` as $attachment where {
+    require_service_context_boundaries_is_terminal_module_curation(
+      attachment=$attachment
+    )
   }
 }
 
@@ -414,6 +451,65 @@ or {
   program(statements=$body) where {
     require_service_context_boundaries_is_middleware_source(),
     not { require_service_context_boundaries_has_documented_middleware(body=$body) }
+  },
+  program(statements=$body) where {
+    require_service_context_boundaries_is_module_composition_source(),
+    not {
+      require_service_context_boundaries_has_terminal_module_curation(body=$body)
+    }
+  },
+  `context.$lane` where {
+    require_service_context_boundaries_is_router_leaf_source(),
+    require_service_context_boundaries_is_raw_context_lane(lane=$lane)
+  },
+  `context[$lane]` where {
+    require_service_context_boundaries_is_router_leaf_source(),
+    $lane <: string(),
+    $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
+  },
+  or {
+    `const { $properties } = context`,
+    `let { $properties } = context`,
+    `var { $properties } = context`
+  } where {
+    require_service_context_boundaries_is_router_leaf_source(),
+    require_service_context_boundaries_has_raw_context_destructure(
+      properties=$properties
+    )
+  },
+  or {
+    `({ context: $raw }) => $body`,
+    `async ({ context: $raw }) => $body`,
+    `({ $..., context: $raw, $... }) => $body`,
+    `async ({ $..., context: $raw, $... }) => $body`
+  } where {
+    require_service_context_boundaries_is_router_leaf_source(),
+    $raw <: identifier(),
+    $body <: contains `$raw.$lane`,
+    require_service_context_boundaries_is_raw_context_lane(lane=$lane)
+  },
+  or {
+    `({ context: $raw }) => $body`,
+    `async ({ context: $raw }) => $body`,
+    `({ $..., context: $raw, $... }) => $body`,
+    `async ({ $..., context: $raw, $... }) => $body`
+  } where {
+    require_service_context_boundaries_is_router_leaf_source(),
+    $raw <: identifier(),
+    $body <: contains `$raw[$lane]`,
+    $lane <: string(),
+    $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
+  },
+  or {
+    `({ context: { $properties } }) => $body`,
+    `async ({ context: { $properties } }) => $body`,
+    `({ $..., context: { $properties }, $... }) => $body`,
+    `async ({ $..., context: { $properties }, $... }) => $body`
+  } where {
+    require_service_context_boundaries_is_router_leaf_source(),
+    require_service_context_boundaries_has_raw_context_destructure(
+      properties=$properties
+    )
   },
   export_statement() as $export where {
     require_service_context_boundaries_is_middleware_source(),
@@ -557,7 +653,7 @@ type Context = { readonly catalog: CatalogReader };
 export const module = service.catalog.use<Context>(capabilities);
 ```
 
-## Ignores one context-seeded factory and inferred module composition
+## Ignores one context-seeded factory and terminal module curation
 
 ```typescript
 // @filename: services/jobs/src/service/base.ts
@@ -576,7 +672,11 @@ export const capabilities = createMiddleware().middleware(projectCatalog);
 // @filename: services/jobs/src/service/modules/catalog/module.ts
 import { service } from "../../impl";
 import { capabilities } from "./middleware/catalog.middleware";
-export const module = service.catalog.use(capabilities);
+export const module = service.catalog
+  .use(capabilities)
+  .use(async ({ context, next }) =>
+    next({ context: { reader: context.deps.reader } })
+  );
 ```
 
 ## Ignores SDK-owned required telemetry extensions

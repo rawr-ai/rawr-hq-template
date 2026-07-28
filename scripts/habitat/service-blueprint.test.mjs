@@ -1127,7 +1127,11 @@ describe("service blueprint authority", () => {
         "services/valid/src/service/modules/catalog/module.ts": `
           import { service } from "../../impl";
           import { capabilities } from "./middleware/catalog.middleware";
-          export const module = service.catalog.use(capabilities);
+          export const module = service.catalog
+            .use(capabilities)
+            .use(async ({ context, next }) =>
+              next({ context: { reader: context.deps.reader } })
+            );
         `,
         "services/valid/src/service/modules/catalog/middleware/catalog.middleware.ts": `
           import { createMiddleware } from "../../../base";
@@ -1149,7 +1153,7 @@ describe("service blueprint authority", () => {
           import { requireRead } from "../middleware/access.middleware";
           export const find = module.find
             .use(requireRead, ({ jobId }) => jobId)
-            .effect(({ context }) => context.catalog.find());
+            .effect(({ context }) => context.reader.find());
         `,
       },
       [rule]
@@ -1454,6 +1458,45 @@ describe("service blueprint authority", () => {
             )
             .use(capabilities);
         `,
+        "services/missing-curation/src/service/modules/catalog/module.ts": `
+          import { service } from "../../impl";
+          export const module = service.catalog;
+        `,
+        "services/raw-lane/src/service/modules/catalog/router/read.router.ts": `
+          import { module } from "../module";
+          export const read = module.read.effect(({ context }) => context.deps.reader.read());
+        `,
+        "services/raw-lane-flat/src/service/modules/catalog/router.ts": `
+          import { module } from "./module";
+          export const read = module.read.effect(({ context }) => context.scope.catalogId);
+        `,
+        "services/destructured-raw-lane/src/service/modules/catalog/router/read.router.ts": `
+          import { module } from "../module";
+          export const read = module.read.effect(({ context }) => {
+            const { deps } = context;
+            return deps.reader.read();
+          });
+        `,
+        "services/computed-raw-lane/src/service/modules/catalog/router/read.router.ts": `
+          import { module } from "../module";
+          export const read = module.read.effect(({ context }) => context["deps"].reader.read());
+        `,
+        "services/renamed-context/src/service/modules/catalog/router/read.router.ts": `
+          import { module } from "../module";
+          export const read = module.read.effect(({ context: raw }) => raw.deps.reader.read());
+        `,
+        "services/nested-destructured-context/src/service/modules/catalog/router/read.router.ts": `
+          import { module } from "../module";
+          export const read = module.read.effect(({ context: { deps } }) =>
+            deps.reader.read()
+          );
+        `,
+        "services/renamed-computed-context/src/service/modules/catalog/router/read.router.ts": `
+          import { module } from "../module";
+          export const read = module.read.effect(({ context: raw }) =>
+            raw["deps"].reader.read()
+          );
+        `,
         "services/multiple/src/service/modules/catalog/module.ts": `
           import { service } from "../../impl";
           export const module = service.catalog
@@ -1581,6 +1624,14 @@ describe("service blueprint authority", () => {
     const paths = diagnostics(result.report, rule).map((diagnostic) => diagnostic.path);
     for (const path of [
       "services/nonterminal/src/service/modules/catalog/module.ts",
+      "services/missing-curation/src/service/modules/catalog/module.ts",
+      "services/raw-lane/src/service/modules/catalog/router/read.router.ts",
+      "services/raw-lane-flat/src/service/modules/catalog/router.ts",
+      "services/destructured-raw-lane/src/service/modules/catalog/router/read.router.ts",
+      "services/computed-raw-lane/src/service/modules/catalog/router/read.router.ts",
+      "services/renamed-context/src/service/modules/catalog/router/read.router.ts",
+      "services/nested-destructured-context/src/service/modules/catalog/router/read.router.ts",
+      "services/renamed-computed-context/src/service/modules/catalog/router/read.router.ts",
       "services/multiple/src/service/modules/catalog/module.ts",
       "services/empty/src/service/modules/catalog/module.ts",
       "services/reserved/src/service/modules/catalog/module.ts",

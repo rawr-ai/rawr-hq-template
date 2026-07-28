@@ -55,12 +55,13 @@ independently owned topology and source axes:
    receive projected store capabilities through inherited oRPC context.
 6. Qualified middleware is one documented named native value authored from the
    base factory and attached through a native middleware operator without an
-   explicit context type argument. As its optional terminal step, `module.ts`
-   may attach one inline additive curation that exposes nonempty fields selected
-   by direct member paths below `context.deps`, `context.scope`,
+   explicit context type argument. Every `module.ts` ends with one inline
+   additive curation that exposes the nonempty route-facing fields selected by
+   direct member paths below `context.deps`, `context.scope`,
    `context.config`, `context.invocation`, or `context.provided`. It does not
    replace those lanes, construct capabilities, or prove inherited context was
-   removed.
+   removed. Router handlers author against the curated names and do not reopen
+   the raw lanes.
 7. Root composition uses exact relative imports of module contracts and
    completed routers. A module reaches root only through its exact
    `module.ts`-to-`impl.ts` branch edge and

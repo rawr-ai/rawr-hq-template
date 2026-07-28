@@ -445,6 +445,11 @@ providers, apps, plugins, Nx wiring, and research paths do not. The checkpoint
 is committed locally at `70cab16b`; Graphite submission and landing remain
 open.
 
+That checkpoint admitted curation but did not yet make it mandatory. Task
+5.7e19 supersedes only that optionality after Example Todo established terminal
+module curation as the canonical route-authorship boundary; the earlier
+provider-author and additive-runtime observations remain historical evidence.
+
 ### Example Todo Service Database
 
 The active bounded checkpoint is
@@ -516,8 +521,10 @@ context-assembly destinations, document router groups and module boundaries,
 preserve platform independence and exact private aliases, require `AGENTS.md`
 at every service-module boundary, admit only the separately closed optional
 root database boundary, and close junk-drawer destinations. The
-seven staged rules remain outside repository admission until the admitted
-service corpus conforms and the owner-local Nx check activates them together.
+six staged topology, anchor, isolation, context, composition, and
+router-authorship rules remain outside repository admission until the admitted
+service corpus conforms and task 5.7e22 installs the upstream owner-local Nx
+execution boundary.
 The generic agent-router packet retains the imported document source law. Its
 cross-kind placement relation is reclassified under `rawr/repository` because
 it inspects package and module roots without defining their topology; the rule
@@ -600,9 +607,9 @@ categorical service-law repair. Every module has one public composition face at
 and model barrels are outside the positive shape. Magic Migration
 `52873620ffe0b8b6e60527cd399076fc13ab86a7` supplies the direct local
 `Router<typeof contract, never>` root relation and rule-qualified Grit helpers.
-The seven service laws remain advisory until [[tasks#5. Bounded Agent-Plugin
-Lifecycle Service|task 5.7e2]] burns the live service corpus to green and
-activates them together. Their disposable fixture suite already proves the
+The six staged service laws remain advisory until [[tasks#5. Bounded Agent-Plugin
+Lifecycle Service|task 5.7e2]] burns the live service corpus to green and task
+5.7e22 installs their upstream Nx execution boundary. Their disposable fixture suite already proves the
 combined rule catalog, so this staging checkpoint creates no alternate
 repository checker or local Habitat SDK fork.
 
@@ -1565,12 +1572,14 @@ skill. It cannot authorize HF01 materialization or release.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
-| Generic Habitat blueprint port | Current Magic service authority is sealed locally as one topology rule plus shared source laws with RAWR's single module `router.ts` composition face, named operation-router leaves, documentation, alias, and platform extensions; lifecycle conformance and owner-local Nx activation remain open |
+| Generic Habitat blueprint port | Current Magic service authority is sealed locally as one topology rule plus shared source laws with RAWR's single module `router.ts` composition face, named operation-router leaves, documentation, alias, and platform extensions; complete live-corpus conformance and the upstream Habitat Nx-plugin execution boundary remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
 | Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
 | Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, Habitat source-law policy, and Habitat-owned project admission are active; generic service-rule inclusion remains pending |
+| Mandatory module context curation | Law and red fixtures are complete but advisory; lifecycle runtime burn-down is next, followed by HQ Ops/API and the remaining all-six service-law corpus |
+| Habitat execution normalization | Pending upstream distributable Civ7-style Nx plugin; the handwritten rule selection is interim and no local SDK fork or replacement runner is admitted |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
@@ -1601,8 +1610,8 @@ shared collaboration. Three sibling-module
 imports, other module-to-root domain leakage, and a public root release surface
 remain migration inputs, not accepted debt or baseline entries.
 Central activation remains governed by
-[[tasks#1. Positive Habitat And Nx Checks]] task 1.5e and cannot precede a green
-live corpus.
+[[tasks#1. Positive Habitat And Nx Checks]] task 1.5e, the complete task 5.7e2
+live-corpus burn-down, and task 5.7e22's upstream Habitat Nx-plugin boundary.
 
 [[tasks#1. Positive Habitat And Nx Checks|Task 1.1d]] refreshes the three
 shared laws without changing that activation gate. `base.ts` remains a required
@@ -2886,9 +2895,9 @@ enforced source laws with zero findings and all 33 Habitat owner tests. Standing
 TypeScript/refactor, architecture/Habitat, and behavior/oRPC/testing reviews
 report no unresolved P0, P1, P2, or P3 finding. Graphite landing remains open.
 
-## Habitat Source-Law Scheduling Boundary
+## Historical Interim Habitat Scheduling Boundary
 
-The required Habitat source-law batch retains one Nx task, one native Habitat
+The interim Habitat source-law batch retained one Nx task, one native Habitat
 acquisition, and the same twenty selected rules. Nx constructs task inputs from
 a file inventory filtered through optional `.nxignore`; Habitat structure and
 Grit evaluation retain their own native Git/Grit visibility. A cacheable Nx
@@ -2898,13 +2907,13 @@ The task is intentionally uncached rather than introducing a second file
 enumerator, digest, ignore synchronizer, or root-file exception. Its former
 target-wide `parallelism: false` declaration is also gone: Nx may schedule
 independent repository work beside the task while Habitat keeps bounded rule
-execution inside one process. This follows the scheduling direction proven by
+execution inside one process. This followed the scheduling direction proven by
 Civ7 commits
 `b2cefe47f98d482f8514adb5d34f282a347b1412` and
-`9544e538b8937604a8f76e58b555e05c00170e7e` without copying Civ7's Nx plugin
-or changing Template's curated activation owner. The pinned Habitat `v0.1.6`
-consumer already owns bounded internal rule execution; Template continues to
-own which green rules are required.
+`9544e538b8937604a8f76e58b555e05c00170e7e`. It did not copy Civ7's Nx plugin
+at that historical checkpoint. Task 5.7e22 now supersedes the hand-maintained
+selection by consuming the upstream distributable plugin without a local SDK
+fork or changing which green laws Template requires.
 
 A foreign private service alias under `docs`, hidden only from Nx by a temporary
 `.nxignore`, must still execute and fail the owning Habitat rule. The public
@@ -2919,6 +2928,40 @@ repository check then passed all 115 tasks in 1 minute 38 seconds; Nx reported
 a 42.3-second critical path and 57% recoverable time, confirming that the
 source-law task no longer serializes independent graph work. The probe and
 temporary ignore file were removed after proof.
+
+## Mandatory Module Context Curation
+
+The active bounded checkpoint is
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e19]]. Example Todo's
+terminal module projection is the canonical curation pattern to propagate, not
+migration residue. Each `module.ts` must select the smallest route-facing
+vocabulary from direct descendants of `deps`, `scope`, `config`, `invocation`,
+or `provided`; router leaves must use those curated names rather than reopen a
+raw service lane. Native oRPC composition remains additive at runtime. Curation
+therefore closes authorship without claiming that inherited context was removed.
+
+The Habitat context-boundary law and its existing service fixture own this
+source contract. The law stays advisory during burn-down: this checkpoint does
+not change service runtime, the selected repository rule batch, hooks, Nx
+wiring, or the pinned Habitat SDK. Lifecycle modules are the next independent
+runtime checkpoint, followed by the remaining HQ Ops and embedded API modules.
+The six staged service laws become required only after that corpus is green and
+Template consumes the upstream Civ7-style Habitat Nx-plugin execution boundary.
+No local Habitat fork, rule-list generator, wrapper, or raw Grit runner is an
+admitted substitute.
+
+The temporary emergency note and sentinel file flagged handwritten `--rule`
+enumeration and unbounded raw-Grit fan-out as an execution-design failure and
+directed comparison with the active Magic Migration and Civ7 stacks. Task
+5.7e22 is their durable disposition; the transient files are deleted rather
+than becoming another authority surface.
+
+The existing service-blueprint suite passes all 24 cases and 283 assertions,
+including dedicated red fixtures for missing terminal curation and dotted,
+computed, destructured, or renamed raw-lane access from a router source. Strict OpenSpec validation, touched
+Biome checks, and diff hygiene pass. The lifecycle runtime edits remain
+unstaged for task 5.7e20, so this record does not claim their behavior or type
+proof.
 
 ## Settlement Oracles
 
