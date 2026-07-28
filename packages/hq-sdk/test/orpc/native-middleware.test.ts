@@ -3,8 +3,8 @@ import { createRouterClient, os } from "@orpc/server";
 import { describe, expect, test } from "vitest";
 import * as hqSdk from "../../src";
 import {
-  createAnalyticsMiddleware,
-  createObservabilityMiddleware,
+  createAnalyticsMiddlewareCallback,
+  createObservabilityMiddlewareCallback,
   procedureMetadata,
 } from "../../src";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "../../src/host-adapters/analytics/embedded-placeholder";
@@ -25,13 +25,17 @@ const metadataDefaults = {
   entity: "service",
 } satisfies Parameters<typeof procedureMetadata>[0];
 
+const middlewareBase = os.$context<TestContext>();
+
 describe("native oRPC middleware", () => {
   test("does not republish deleted framework facades", () => {
     expect(hqSdk).toHaveProperty("procedureMetadata");
-    expect(hqSdk).toHaveProperty("createAnalyticsMiddleware");
-    expect(hqSdk).toHaveProperty("createObservabilityMiddleware");
+    expect(hqSdk).toHaveProperty("createAnalyticsMiddlewareCallback");
+    expect(hqSdk).toHaveProperty("createObservabilityMiddlewareCallback");
 
     for (const deletedExport of [
+      "createAnalyticsMiddleware",
+      "createObservabilityMiddleware",
       "defineService",
       "schema",
       "createContractBuilder",
@@ -55,13 +59,14 @@ describe("native oRPC middleware", () => {
         logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
       },
     };
-    const base = os
-      .$context<TestContext>()
-      .use(createObservabilityMiddleware<TestContext>(metadataDefaults))
+    const base = middlewareBase
+      .use(middlewareBase.middleware(createObservabilityMiddlewareCallback(metadataDefaults)))
       .use(
-        createAnalyticsMiddleware<TestContext>(metadataDefaults, {
-          payload: ({ meta }) => ({ entity: meta.entity }),
-        })
+        middlewareBase.middleware(
+          createAnalyticsMiddlewareCallback(metadataDefaults, {
+            payload: ({ meta }) => ({ entity: meta.entity }),
+          })
+        )
       );
     const router = {
       nested: {
@@ -116,9 +121,8 @@ describe("native oRPC middleware", () => {
       },
     };
     const router = {
-      execute: os
-        .$context<TestContext>()
-        .use(createAnalyticsMiddleware<TestContext>(metadataDefaults))
+      execute: middlewareBase
+        .use(middlewareBase.middleware(createAnalyticsMiddlewareCallback(metadataDefaults)))
         .handler(() => "ready"),
     };
 
@@ -155,9 +159,9 @@ describe("native oRPC middleware", () => {
         },
       },
     };
-    const base = os
-      .$context<TestContext>()
-      .use(createAnalyticsMiddleware<TestContext>(metadataDefaults));
+    const base = middlewareBase.use(
+      middlewareBase.middleware(createAnalyticsMiddlewareCallback(metadataDefaults))
+    );
     const client = createRouterClient(
       {
         succeed: base.handler(() => "ready"),
@@ -187,12 +191,14 @@ describe("native oRPC middleware", () => {
         },
       },
     };
-    const base = os.$context<TestContext>().use(
-      createObservabilityMiddleware<TestContext>(metadataDefaults, {
-        logFields() {
-          throw new Error("profile unavailable");
-        },
-      })
+    const base = middlewareBase.use(
+      middlewareBase.middleware(
+        createObservabilityMiddlewareCallback(metadataDefaults, {
+          logFields() {
+            throw new Error("profile unavailable");
+          },
+        })
+      )
     );
     const client = createRouterClient(
       {
@@ -216,9 +222,9 @@ describe("native oRPC middleware", () => {
         logger: createEmbeddedPlaceholderLoggerAdapter(),
       },
     };
-    const base = os
-      .$context<TestContext>()
-      .use(createObservabilityMiddleware<TestContext>(metadataDefaults));
+    const base = middlewareBase.use(
+      middlewareBase.middleware(createObservabilityMiddlewareCallback(metadataDefaults))
+    );
     const client = createRouterClient(
       {
         succeed: base.handler(() => "ready"),

@@ -1,12 +1,10 @@
-import { createAnalyticsMiddleware } from "@rawr/hq-sdk";
-import type { Context } from "../base";
+import { createAnalyticsMiddlewareCallback } from "@rawr/hq-sdk";
+import { base } from "../base";
 import { metadataDefaults } from "../contract";
-import type { TodoProcedureMetadata } from "../model/policy/procedure-metadata";
 
 /** Emits one service-owned analytics event with its qualified operation identity. */
-export const analytics = createAnalyticsMiddleware<Context, TodoProcedureMetadata>(
-  metadataDefaults,
-  {
+export const middleware = base.middleware(
+  createAnalyticsMiddlewareCallback(metadataDefaults, {
     payload: ({ context, meta, pathLabel, outcome }) => {
       const classification = meta.analytics;
       return {
@@ -26,5 +24,5 @@ export const analytics = createAnalyticsMiddleware<Context, TodoProcedureMetadat
           : {}),
       };
     },
-  }
+  })
 );

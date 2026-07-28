@@ -1,8 +1,8 @@
 import { implement } from "@orpc/server";
 import type { Context } from "./base";
 import { contract } from "./contract";
-import { analytics } from "./middleware/analytics";
-import { observability } from "./middleware/observability";
+import { middleware as analytics } from "./middleware/analytics";
+import { middleware as observability } from "./middleware/observability";
 
 /** Unconfigured contract implementer used for aggregate router implementation. */
 export const impl = implement(contract).$context<Context>();

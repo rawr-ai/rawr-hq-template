@@ -1,4 +1,4 @@
-import { os } from "@orpc/server";
+import type { Middleware } from "@orpc/server";
 import type { BaseMetadata } from "../../metadata";
 import { getProcedureMetadata } from "../../metadata";
 import type { AnalyticsClient } from "../../ports/analytics";
@@ -18,18 +18,21 @@ type AnalyticsContext = {
 };
 
 /**
- * Creates one native oRPC middleware that emits the procedure analytics event.
+ * Creates the callback a service base authors as its analytics middleware.
  *
  * @remarks
- * The service supplies its complete context type and metadata defaults. oRPC
- * owns context compatibility and middleware composition; this function adds no
- * context and maintains no parallel provider state.
+ * The callback consumes only the analytics and logger capabilities it needs.
+ * Each service's native oRPC base owns context compatibility and middleware
+ * construction; this function adds no context and maintains no provider state.
  */
-export function createAnalyticsMiddleware<
+export function createAnalyticsMiddlewareCallback<
   TContext extends AnalyticsContext,
   TMeta extends BaseMetadata = BaseMetadata,
->(metadataDefaults: TMeta, input: AnalyticsMiddlewareInput<TMeta, TContext> = {}) {
-  return os.$context<TContext>().middleware(async ({ context, path, procedure, next }) => {
+>(
+  metadataDefaults: TMeta,
+  input: AnalyticsMiddlewareInput<TMeta, TContext> = {}
+): Middleware<TContext, object, unknown, unknown, Record<never, never>> {
+  return async ({ context, path, procedure, next }) => {
     let outcome: "success" | "error" = "success";
     const pathLabel = path.join(".");
     const meta = {
@@ -70,5 +73,5 @@ export function createAnalyticsMiddleware<
         }
       }
     }
-  });
+  };
 }

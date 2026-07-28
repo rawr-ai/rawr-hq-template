@@ -15,8 +15,8 @@
 import { implement } from "@orpc/server";
 import type { Context } from "./base";
 import { contract } from "./contract";
-import { analytics } from "./middleware/analytics.middleware";
-import { observability } from "./middleware/observability.middleware";
+import { middleware as analytics } from "./middleware/analytics";
+import { middleware as observability } from "./middleware/observability";
 import { readOnlyMode } from "./middleware/read-only-mode.middleware";
 import { stores } from "./middleware/stores.middleware";
 

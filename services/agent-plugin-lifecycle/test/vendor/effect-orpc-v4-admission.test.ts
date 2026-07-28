@@ -2,24 +2,11 @@ import "@orpc/experimental-effect/extensions/effect";
 import { ORPCError } from "@orpc/client";
 import { oc, ValidationError } from "@orpc/contract";
 import { createRouterClient, implement } from "@orpc/server";
-import {
-  createAnalyticsMiddleware,
-  createObservabilityMiddleware,
-  procedureMetadata,
-} from "@rawr/hq-sdk";
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-  type EmbeddedPlaceholderAnalyticsEntry,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-  type EmbeddedPlaceholderLogEntry,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { procedureMetadata } from "@rawr/hq-sdk";
 import { standard } from "@rawr/typebox-adapter";
 import { Effect } from "effect";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
-import { metadataDefaults } from "../../src/service/model/policy/procedure-metadata";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const AdmissionInputSchema = Type.Object(
@@ -50,16 +37,9 @@ const contract = oc.router({
 
 interface AdmissionContext {
   readonly multiplier: number;
-  readonly deps: {
-    readonly analytics: ReturnType<typeof createEmbeddedPlaceholderAnalyticsAdapter>;
-    readonly logger: ReturnType<typeof createEmbeddedPlaceholderLoggerAdapter>;
-  };
 }
 
-const impl = implement(contract)
-  .$context<AdmissionContext>()
-  .use(createObservabilityMiddleware<AdmissionContext>(metadataDefaults))
-  .use(createAnalyticsMiddleware<AdmissionContext>(metadataDefaults));
+const impl = implement(contract).$context<AdmissionContext>();
 
 const router = impl.router({
   multiply: impl.multiply.effect(function* ({ context, input }) {
@@ -70,21 +50,10 @@ const router = impl.router({
   }),
 });
 
-function createAdmissionClient(
-  options: {
-    analyticsEntries?: EmbeddedPlaceholderAnalyticsEntry[];
-    logEntries?: EmbeddedPlaceholderLogEntry[];
-  } = {}
-) {
+function createAdmissionClient() {
   return createRouterClient(router, {
     context: () => ({
       multiplier: 3,
-      deps: {
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({
-          sink: options.analyticsEntries,
-        }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: options.logEntries }),
-      },
     }),
   });
 }

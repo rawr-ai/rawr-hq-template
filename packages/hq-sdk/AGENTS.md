@@ -14,16 +14,17 @@
 ## Boundaries
 
 - Owns RAWR's stable procedure metadata plugin, one-shot analytics and
-  observability middleware, capability ports, host adapters, and
+  observability middleware callbacks, capability ports, host adapters, and
   declared-surface composition.
 - Native oRPC owns contracts, service context, middleware construction,
   implementers, routers, and clients. `@rawr/typebox-adapter` owns the
   product-free TypeBox standards bridge.
 - Must not own a domain service's operations, application plugin selection,
   concrete host resources, route mounting, or process and provider state.
-- SDK middleware declares only the minimum context it consumes and contributes
-  no parallel context lane. Service bases own their complete context and native
-  oRPC owns composition.
+- SDK middleware callbacks declare only the minimum context they consume and
+  contribute no parallel context lane. Service bases own their complete
+  context, decorate those callbacks, and retain native oRPC composition
+  authority.
 
 ## Behavior
 

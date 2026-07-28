@@ -1454,6 +1454,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   composition anchor. Let the contract and root middleware consume one direct
   service-model policy leaf while preserving exact metadata values,
   inheritance, middleware order, public exports, and runtime behavior.
+- [x] 5.7e21n Restore service-owned native middleware authorship. Replace the
+  HQ SDK analytics and observability constructors with plain native middleware
+  callbacks, delete the old exports without aliases, and make every consuming
+  service decorate those callbacks through its one local `base`. Normalize
+  each root middleware leaf and `impl.ts` alias in the same atomic cut while
+  preserving signal behavior, metadata, middleware order, and public service
+  contracts.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

@@ -3333,6 +3333,38 @@ Effect-oRPC admission behavior, the five module schema-boundary suites, the
 selected service-anchor Habitat law, strict OpenSpec, diff hygiene, and the
 required repository check form the checkpoint proof.
 
+## Native Middleware Authorship
+
+The middleware-authorship checkpoint removes the HQ SDK's hidden oRPC context
+builders. The SDK now supplies only stateless analytics and observability
+middleware callbacks. Each consuming service decorates those callbacks through
+its one local `base`, exposes each direct middleware leaf through the generic
+`middleware` anchor, and imports that value into `impl.ts` by its semantic
+role. The old constructor names are deleted rather than retained as aliases.
+
+This preserves the useful shared analytics and observability behavior while
+making context ownership visible and singular:
+
+```text
+service base -> service middleware -> service impl -> module curation -> operation
+```
+
+The cut changes no metadata values, middleware order, signal payload, failure
+authority, service contract, client shape, resource binding, provider state,
+or live lifecycle state. HQ SDK behavior covers once-only signals and failure
+non-interference; Lifecycle and Example Todo cover real service composition,
+Effect-backed execution, metadata inheritance, and service-specific signal
+fields. TypeScript covers every consuming service, Habitat owns the root
+middleware source shape, and the required repository check remains the final
+landing gate.
+
+Final proof is green: the eight-owner Nx typecheck completed in 12 seconds;
+the HQ SDK, Lifecycle, and Example Todo boundary suites passed 6, 4, and 19
+tests respectively; the selected service-context Habitat rule reported zero
+failures; and `bun run check` completed all 40 project checks and 118 resolved
+tasks in 1 minute 2 seconds. The architecture, TypeScript/oRPC, and behavioral
+standing reviews accepted the checkpoint without P0 or P1 findings.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect
