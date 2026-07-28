@@ -55,9 +55,14 @@ parallel schema, type, envelope, or helper authority remain invalid.
 RAWR-owned amendments keep private import aliases owner-local, keep module
 colocality visible through relative imports, and keep service
 implementation independent of concrete platform and provider code. Root
-`router.ts` imports completed module routers through exact relative paths only
-and directly checks the plain
-object against `Router<typeof contract, never>`. Each `module.ts` derives its
+`router.ts` imports the exact runtime `service` binding from `./impl`, imports
+completed module routers through exact relative paths, and completes their
+plain branch object directly through native `service.router(...)`. An embedded
+API with no modules completes an empty branch object. Statement closure admits
+only that canonical export form and its runtime service/module imports;
+TypeScript rejects duplicate declarations. That configured
+implementer operation enhances the router and attaches oRPC's hidden contract
+relation. Each `module.ts` derives its
 matching `service.<module>` branch. Module capability middleware is authored
 from the one complete-context native author in `base.ts` and attached without
 explicit type arguments. Every module then ends with one terminal inline
@@ -73,15 +78,12 @@ service source cannot consume it, and this packet does not admit embedded API
 provider authorship. Root and module middleware otherwise reach `base.ts`
 through `../base` and `../../../base` respectively. SDK-owned
 required observability and analytics builders remain distinct baseline
-extensions, not alternate context factories. The pinned oRPC 1.x lane cannot
-close this heterogeneous-context router with native `.router(...)` without
-centralizing module dependencies, so the public host boundary infers the
-completed router's actual context. TypeScript
-owns context assignability. Source law keeps native ownership hops
-and root contract completeness visible without simulating path resolution,
-inferred types, expression purity, or runtime behavior. This root composition
-law adopts Magic Migration `52873620ffe0b8b6e60527cd399076fc13ab86a7`
-(PR #109) without changing RAWR's named module-router authorship shape.
+extensions, not alternate context factories. TypeScript owns context
+assignability and the enhanced router's inferred surface. Source law keeps
+native ownership hops and configured root completion visible without
+simulating path resolution, inferred types, or runtime behavior. Module
+`router.ts` remains plain composition under the independent router-authorship
+law; only the service root performs configured native completion.
 
 Empty baselines keep current product disagreements visible. Habitat structure
 owns topology, Grit owns the declared source relations, and behavior tests

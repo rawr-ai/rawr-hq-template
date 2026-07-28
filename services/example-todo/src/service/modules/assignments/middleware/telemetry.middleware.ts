@@ -1,22 +1,15 @@
 /**
- * @fileoverview Assignments module middleware exports.
+ * @fileoverview Qualified Assignments module telemetry middleware.
  *
  * @remarks
- * Keep standalone module middleware here so `module.ts` and `router.ts` can
- * import generic names:
- * - `observability`
- * - `analytics`
- *
- * These exports are module-owned generic middleware names attached at module
- * scope in `module.ts`.
+ * These module-wide signals observe the inherited service lanes before the
+ * module curates its smaller handler vocabulary.
  */
 
-import { createServiceAnalyticsMiddleware, createServiceObservabilityMiddleware } from "../../base";
-
-export {
-  createServiceAnalyticsMiddleware as createProcedureAnalytics,
-  createServiceObservabilityMiddleware as createProcedureObservability,
-} from "../../base";
+import {
+  createServiceAnalyticsMiddleware,
+  createServiceObservabilityMiddleware,
+} from "../../../base";
 
 /** Module-local observability middleware attached by `assignments/module.ts`. */
 export const observability = createServiceObservabilityMiddleware({
@@ -51,4 +44,13 @@ export const analytics = createServiceAnalyticsMiddleware({
     analytics_workspace_id: context.scope.workspaceId,
     analytics_trace_id: context.invocation.traceId,
   }),
+});
+
+/** Observes successful assignment creation at the procedure boundary. */
+export const observeAssignmentCreation = createServiceObservabilityMiddleware({
+  onSuccess: ({ span, context }) => {
+    span?.addEvent("todo.assignments.assign.completed", {
+      workspace_id: context.scope.workspaceId,
+    });
+  },
 });

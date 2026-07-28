@@ -3,11 +3,12 @@
  *
  * @remarks
  * Assignment is a composite module. This contract declares multi-entity
- * boundary behavior; module composition is in `module.ts` and implementation in `router.ts`.
+ * boundary behavior; module composition is in `module.ts` and implementation
+ * is in `router/assignments.router.ts`.
  *
  * @agents
  * Keep this contract focused on caller-visible shape. Cross-module access
- * patterns belong in `router.ts`, not here.
+ * patterns belong in `router/assignments.router.ts`, not here.
  */
 import type { ErrorMapItem } from "@orpc/server";
 import { schema } from "@rawr/hq-sdk";

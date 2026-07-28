@@ -4,16 +4,18 @@
  * @remarks
  * This file only composes module contracts into the root contract object.
  * `src/service/impl.ts` implements that root contract once; modules then derive
- * their implementer subtrees from `impl.<module>`.
+ * their implementer subtrees from `service.<module>`.
  */
 import { contract as assignments } from "./modules/assignments/contract";
 import { contract as tags } from "./modules/tags/contract";
 import { contract as tasks } from "./modules/tasks/contract";
 
+/** Composes the three module contracts into the service's caller boundary. */
 export const contract = {
   tasks,
   tags,
   assignments,
 };
 
+/** Caller contract type re-exported by the public client face. */
 export type Contract = typeof contract;

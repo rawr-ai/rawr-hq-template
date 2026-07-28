@@ -605,8 +605,11 @@ categorical service-law repair. Every module has one public composition face at
 `router.ts` and named operation-authoring leaves under `router/*.router.ts`;
 `router/index.ts`, `shared`, `internal`, `dependencies`, loose `schemas.ts`,
 and model barrels are outside the positive shape. Magic Migration
-`52873620ffe0b8b6e60527cd399076fc13ab86a7` supplies the direct local
+`52873620ffe0b8b6e60527cd399076fc13ab86a7` initially supplied the direct local
 `Router<typeof contract, never>` root relation and rule-qualified Grit helpers.
+The later pinned-N1 runtime oracle supersedes that root-specific relation with
+exact configured `service.router(...)` completion while retaining Magic's
+module topology and qualified-helper law.
 The six staged service laws remain advisory until [[tasks#5. Bounded Agent-Plugin
 Lifecycle Service|task 5.7e2]] burns the live service corpus to green and task
 5.7e22 installs their upstream Nx execution boundary. Their disposable fixture suite already proves the
@@ -3061,8 +3064,11 @@ request time, and contributes it under `provided`.
 The `example-todo` API module matches the service's `exampleTodo` contract
 branch and terminally curates only the resolved client and correlation
 identity. Its task operation group authors both handlers in `tasks.router.ts`;
-module and service routers compose completed plain objects upward, with the
-root retaining the exact `Router<typeof contract, never>` relation. Plugin
+module and service routers composed completed plain objects upward at this
+checkpoint, with the root carrying the then-current
+`Router<typeof contract, never>` check. The later pinned-N1 root correction
+requires configured native completion instead, so this embedded root remains a
+visible parent-task residual rather than a compatibility form. Plugin
 registration is static and captures no repository resolver.
 
 Uncached typecheck covers runtime context, the API plugin, the server host, and
@@ -3079,6 +3085,43 @@ An unstaged full-corpus context scan also passed but required 4 minutes 49
 seconds. That disproportional execution is not normalized here; task 5.7e22
 owns the inferred, cacheable Habitat boundary. No provider home, Personal
 repository, Oclif surface, or live lifecycle state changes.
+
+## Example Todo Module Shells
+
+The bounded follow-up completes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21e]]. Example
+Todo's three modules retain the canonical downward lane flow and terminal
+context curation in `module.ts`. Tasks deletes its empty observability and
+analytics placeholders rather than preserving a false middleware surface.
+Tags and Assignments keep their real module telemetry in qualified
+`middleware/telemetry.middleware.ts` leaves, observing inherited context before
+curation.
+
+Each module now authors behavior in one named `router/*.router.ts` group and
+uses `router.ts` only to compose that completed group. The contract-first
+service root closes those completed module routers through the native
+`service.router(...)` operation, preserving oRPC's runtime contract attachment
+without authoring behavior there. The owning Habitat composition law now
+admits only that exact configured root completion and rejects detached,
+chained, computed, remapped, or unimported branches. Existing root middleware
+uses the closed `*.middleware.ts` naming law. The public `/client` face,
+contract, database, stores, context lanes, middleware order, procedure-local
+telemetry, operation results, and host responsibilities do not change.
+
+Uncached Example Todo typecheck and all seven owner test files pass 38 cases;
+the normalized owner `check` target and repository Biome lint also pass. The
+25-case service-blueprint fixture passes all 324 assertions, and the closed
+service topology reports no Example Todo finding. Focused staged
+source-law execution with deleted predecessor paths excluded passes the
+anchor-export and router-authorship laws. Its remaining advisory context,
+isolation, and composition findings identify the existing HQ SDK/native-
+middleware boundary and are not disguised as shell failures or widened into
+this checkpoint. The canonical staged runner still dependency-refuses deleted
+paths instead of ignoring them; task 5.7e22 owns that upstream
+execution-boundary repair, so this record does not claim a canonical staged
+pass. Strict OpenSpec validation passes. Standing oRPC/TypeScript,
+behavior/testing, and Habitat authority reviews report no unresolved P0, P1,
+or P2 finding; repository landing remains open.
 
 ## Settlement Oracles
 

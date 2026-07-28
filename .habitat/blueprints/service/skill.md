@@ -41,8 +41,10 @@ and may expose one separate context-seeded native middleware author.
 imported base plus genuine cross-cutting middleware. A module derives its exact
 `service.<module>` branch and attaches completed capability middleware authored
 from that author. TypeScript infers additive composition. The root router
-composes completed module routers; the handler acts on the resulting capability
-surface.
+imports the configured `service`, composes completed module routers as a plain
+branch object, and completes that object directly through native
+`service.router(...)`; an embedded API with no modules uses the same relation
+with an empty object. The handler acts on the resulting capability surface.
 
 Each descent reduces what source is allowed to know and author. Native oRPC
 runtime context remains additive; an upward import that recovers raw context, a
@@ -123,6 +125,11 @@ Every module uses the same router shape. Module `router.ts` imports completed
 operation leaves or groups from `router/*.router.ts` and composes one plain
 router object. It does not contain business transitions. Each named router file
 is an authored boundary with enough room for the operation behavior it owns.
+The service root is a distinct completion boundary: it imports only the
+configured `service` and completed module routers, then calls
+`service.router(...)` directly so oRPC enhances the assembled router and retains
+its hidden contract relation. That native root operation does not move handler,
+middleware, or context authorship into composition.
 
 A named router file may own one standalone leaf. That is not a semantic group
 and needs no group explanation. When several operations share context, a guard,
