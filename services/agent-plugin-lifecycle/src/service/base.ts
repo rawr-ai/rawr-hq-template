@@ -1,4 +1,3 @@
-import { os } from "@orpc/server";
 import { defineService, type ServiceOf } from "@rawr/hq-sdk";
 import type { AgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
@@ -63,23 +62,10 @@ export type InitialLifecycleContext = Service["ORPCInitialContext"];
  *
  * @remarks
  * This is the service's sole Effect-oRPC implementation lineage. Downstream
- * service and module implementers only attach completed middleware values.
+ * service composition attaches completed named middleware; every module then
+ * closes its branch with the bounded terminal context curation.
  */
 export const base = implementEffect(contract, Layer.empty).$context<InitialLifecycleContext>();
-
-const middleware = os.$context<InitialLifecycleContext>();
-
-/**
- * Returns the one native middleware authoring surface seeded with the complete
- * lifecycle service context.
- *
- * @remarks
- * This surface can author middleware but cannot expose the contract implementer,
- * router composition, or Effect execution authority carried by `base`.
- */
-export function createMiddleware() {
-  return middleware;
-}
 
 /** SDK-owned baseline builder, separate from native context middleware authorship. */
 export const createServiceBaselineMiddlewares = definition.createBaselineMiddlewares;

@@ -16,7 +16,7 @@
 - The service model owns shared selection representation and policy. This
   module owns its operation DTOs, handlers, results, issues, and operation
   policy.
-- Exact-content mechanics enter through the module-projected content-workspace
+- Exact-content mechanics enter through the module-curated content-workspace
   resource. The selection handler sequences that resource directly rather than
   receiving a reader or repository facade.
 
@@ -42,7 +42,7 @@
 ## Interfaces
 
 - `currentMainRecord` and `currentMainSelection` are the operation boundaries.
-  Module middleware contributes only the ready content-workspace resource;
+  `module.ts` curates only the ready content-workspace resource for its routes;
   the selection handler owns observation order and policy application.
 
 ## Routing

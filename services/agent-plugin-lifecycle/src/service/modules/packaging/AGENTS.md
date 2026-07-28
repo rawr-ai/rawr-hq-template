@@ -14,9 +14,9 @@
 - Packaging consumes release-derivation policy and clean content facts; it
   does not choose channel authority, author source content, or converge native
   providers.
-- Packaging receives one ready content-workspace resource and one ready
-  package-output resource through separate named middleware contributions. It
-  does not construct a source reader, resource adapter, or dependency bag.
+- Packaging curates one ready content-workspace resource and one ready
+  package-output resource from inherited service dependencies. It does not
+  construct a source reader, resource adapter, or dependency bag.
 - Cowork v1 archive projection and digest rules are Packaging-owned protocol
   policy; only byte encoding and output publication cross the package-output
   resource boundary.

@@ -101,11 +101,10 @@
   consumes one ready content-workspace resource. Its handlers own observation
   order and final revalidation; pure shared policy classifies the resulting Git
   facts. Native Git protocol remains in the resource provider.
-- The Packaging module directly consumes ready content-workspace and
-  package-output resources through separate named middleware contributions.
-  Its package handler owns source observation, derivation, encoding,
-  revalidation, publication, and settlement order; pure policy classifies
-  typed facts and public results.
+- The Packaging module curates ready content-workspace and package-output
+  resources from inherited service dependencies. Its package handler owns
+  source observation, derivation, encoding, revalidation, publication, and
+  settlement order; pure policy classifies typed facts and public results.
 - Content-workspace, versioned-content, clock, package-output, and
   native-provider mechanics remain behind host-supplied dependencies.
 - Pure deterministic byte policy may use a portable implementation directly;
@@ -132,13 +131,15 @@
 
 ## Flow
 
-- The host supplies ready capabilities to the context-seeded base boundary.
-  The base exposes one separate native middleware author; each documented named
-  module middleware contributes one owner capability, and `module.ts`
-  attaches that middleware through inferred `.use(middleware)` composition.
-  Operation handlers sequence ready resources and pass only typed facts into
-  pure policy. Native context remains additive; owner-local cuts remove broad
-  dependency access rather than hiding it behind a shadow `Context` type.
+- The host supplies ready capabilities through the service's `deps`, `scope`,
+  `config`, and per-call `invocation` lanes. Root middleware uses the
+  context-seeded base only for qualified acquisition, guards, or enrichment and
+  contributes execution capabilities through `provided`. Every `module.ts`
+  then terminally curates the smallest route-facing vocabulary from inherited
+  lane descendants. Operation handlers author against those curated names,
+  sequence ready resources, and pass only typed facts into pure policy. Native
+  context remains additive; curation is an authorship boundary rather than a
+  claim that inherited lanes disappeared.
 
 ## Interfaces
 

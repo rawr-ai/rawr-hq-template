@@ -1274,9 +1274,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   the existing Habitat service fixture. Keep the law advisory until the live
   standalone and embedded-API service corpus is green; change no runtime source
   or Habitat execution wiring in this checkpoint.
-- [ ] 5.7e20 Burn the strengthened curation law through all five lifecycle
+- [x] 5.7e20 Burn the strengthened curation law through all five lifecycle
   modules. Curate the smallest existing route vocabulary directly in each
-  `module.ts`, delete projection-only module middleware, preserve operation
+  `module.ts`, delete projection-only module middleware and its orphaned native
+  authoring factory, preserve operation
   behavior, and close every lifecycle diagnostic from the six staged service
   laws. Prove lifecycle type and behavior boundaries. Do not acquire a resource,
   move policy, or change public contracts in this checkpoint.

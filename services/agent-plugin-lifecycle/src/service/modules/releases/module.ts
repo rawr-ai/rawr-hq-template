@@ -1,11 +1,13 @@
 import { service } from "../../impl";
-import { contentWorkspace } from "./middleware/content-workspace.middleware";
 
 /**
- * Releases implementer composed from base-authored capability middleware.
- *
- * @remarks
- * TypeScript infers the additive capability contribution from the completed
- * middleware value; this attachment does not claim to remove inherited lanes.
+ * Releases implementer with its route-facing context curated from the
+ * inherited service dependencies.
  */
-export const module = service.releases.use(contentWorkspace);
+export const module = service.releases.use(async ({ context, next }) =>
+  next({
+    context: {
+      contentWorkspace: context.deps.contentWorkspace,
+    },
+  })
+);
