@@ -7,7 +7,9 @@ tags: [orpc, service, categorical, context, middleware]
 Capabilities descend through one Effect-oRPC implementer lineage. Standalone
 `base.ts` seeds complete initial context on the contract implementer. When host
 projection is needed, it separately exposes one context-seeded native
-`createMiddleware` authoring factory. Root and module middleware publish
+`createMiddleware` authoring factory. Embedded API-plugin `base.ts` may expose
+the same native factory without becoming a provider owner; its contract
+implementation remains in `impl.ts`. Root and module middleware publish
 documented named values; `impl.ts` configures the root and `module.ts` attaches
 module capability middleware to its matching `service.<module>` branch.
 
@@ -53,9 +55,14 @@ alias flow.
 ```grit
 language js(typescript)
 
-// Selects each standalone base that owns native context and middleware provenance.
+// Selects each standalone base that owns contract implementation and provider provenance.
 predicate require_service_context_boundaries_is_standalone_base_source() {
   $filename <: r".*services/[^/]+/src/service/base\.ts$"
+}
+
+// Selects either base kind, the only location allowed to import the native author.
+predicate require_service_context_boundaries_is_base_source() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/base\.ts$"
 }
 
 // Selects governed non-test service source.
@@ -433,7 +440,7 @@ predicate require_service_context_boundaries_declares_shadow_context($body) {
 or {
   import_statement(source=$source) as $import where {
     require_service_context_boundaries_is_governed_source(),
-    not { require_service_context_boundaries_is_standalone_base_source() },
+    not { require_service_context_boundaries_is_base_source() },
     $source <: r"^[\"']@orpc/server[\"']$",
     $import <: contains import_specifier(name=`os`) as $specifier where {
       $specifier <: not contains type()
@@ -623,12 +630,12 @@ or {
   },
   program(statements=$body) where {
     require_service_context_boundaries_is_governed_source(),
-    not { require_service_context_boundaries_is_standalone_base_source() },
+    not { require_service_context_boundaries_is_base_source() },
     require_service_context_boundaries_contains_alternate_factory(body=$body)
   },
   program(statements=$body) where {
     require_service_context_boundaries_is_governed_source(),
-    not { require_service_context_boundaries_is_standalone_base_source() },
+    not { require_service_context_boundaries_is_base_source() },
     require_service_context_boundaries_declares_shadow_context(body=$body)
   }
 }
