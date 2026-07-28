@@ -87,10 +87,13 @@
   that do not reduce to lint, typecheck, or Habitat policy. It is owner-local,
   has no root aggregate, and grants no release or deployment authority.
 - `habitat:check` composes workspace lint, owner typecheck and tests, and
-  `check:policy`. `check:policy` composes the selected green source-law batch
-  and the rule-owned Nx project admission adapter. The registered rules have
-  exact inputs and empty baselines; this is not an assertion that every
-  registered Habitat rule is active.
+  `check:policy`. `check:policy` composes the selected green local policy batch
+  and the rule-owned Nx project admission adapter; the independent nine-rule
+  `check:structure` leaf is Stop feedback, not an admission dependency. The
+  selected rule scopes are exact and their baselines are empty, but both CLI
+  leaves remain uncached while exact Nx cache inputs are future upstream
+  Habitat Nx-boundary work. This is not an assertion that every registered
+  Habitat rule is active.
 - Habitat checks are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests and complete owner
   checks remain explicit owner commands; they are not hidden inside merge

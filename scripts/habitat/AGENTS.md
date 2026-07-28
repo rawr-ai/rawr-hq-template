@@ -35,8 +35,9 @@
 ## Concepts
 
 - The **release manifest** is executable identity. A **verified cache entry**
-  is a byte-exact local copy; a **source-law batch** is the explicitly selected
-  set of active Habitat rules.
+  is a byte-exact local copy; the **local policy batch** is the explicitly
+  selected mixed 22-rule Habitat CLI leaf. The independent **structure leaf**
+  is the nine-rule Habitat-only subset used for fast Stop feedback.
 
 ## Flow
 
@@ -54,17 +55,22 @@
   structural checker.
 - `habitat:check` composes the workspace lint owner, this project's typecheck
   and tests, and `check:policy`.
-- `check:policy` composes `check:source-law` with the rule-owned Nx project
-  admission adapter. The source-law leaf acquires the selected green Grit and
+- `check:policy` composes `check:policy:local` with the rule-owned Nx project
+  admission adapter. The local policy leaf acquires the selected green Grit and
   structure rules once, including the workspace scheduler law, admitted Oclif
   structure laws, resource and provider package boundaries, and agent-plugin
   command-channel law. Rules with known live-corpus violations remain outside
   the required batch until their owning migration burns them down; direct rule
   selection is diagnostic, not a second required surface.
-- The selected source-law batch is intentionally uncached because Nx and
-  Habitat do not share one ignore model. Nx may schedule independent graph work
-  beside it; Habitat owns bounded execution of the selected rules inside its
-  one process.
+- `check:structure` is an independent nine-rule Habitat-structure leaf for
+  fast Codex Stop feedback. It does not depend on or replace policy, lint, or
+  the complete repository graph.
+- Both CLI leaves are intentionally uncached because Nx and Habitat do not
+  share one ignore model. Nx may schedule independent graph work beside them;
+  Habitat owns bounded execution inside each native process. Rule selection and
+  scopes are exact; upstream task 5.7e22 remains the future owner of
+  distributable registry discovery, exact Nx cache inputs, caching, and one
+  acquisition.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
 
@@ -85,6 +91,7 @@
 - `bunx nx run habitat:typecheck`
 - `bunx nx run habitat:test`
 - `bunx nx run habitat:check:project-admission`
-- `bunx nx run habitat:check:source-law`
+- `bunx nx run habitat:check:policy:local`
+- `bunx nx run habitat:check:structure`
 - `bunx nx run habitat:check:policy`
 - `bunx nx run habitat:check`

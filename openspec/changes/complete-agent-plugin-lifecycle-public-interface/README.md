@@ -1297,7 +1297,7 @@ non-root projects expose a public check, and shared target defaults connect
 those checks to one workspace-owned `habitat:lint`, project-owned typecheck,
 optional owner verification, Habitat `check:policy`, and dependency checks.
 Habitat composes workspace lint, its own typecheck and tests, the selected
-source-law batch, and one rule-owned Nx project admission adapter. CLI adds
+local policy batch, and one rule-owned Nx project admission adapter. CLI adds
 Oclif source/build parity through its own `verify` target. The repository
 project no longer schedules either owner; it retains repository separation.
 TypeBox-validated project-graph admission requires exactly one `type:*` kind
@@ -1333,7 +1333,7 @@ an explicit later burn-down surface.
 
 This completes the Civ-style scheduler cutover without importing Civ's
 repo-local Habitat Nx plugin. Root `lint` now routes directly to the one
-workspace lint owner, and the selected Habitat source-law batch enforces that
+workspace lint owner, and the selected Habitat local policy batch enforces that
 exact scheduler surface. The selected batch still does not imply that every
 registered rule is active. Project admission is now a separate Habitat packet;
 its `check.mjs` remains the explicit narrow bridge until the pinned consumer
@@ -2914,9 +2914,10 @@ execution inside one process. This followed the scheduling direction proven by
 Civ7 commits
 `b2cefe47f98d482f8514adb5d34f282a347b1412` and
 `9544e538b8937604a8f76e58b555e05c00170e7e`. It did not copy Civ7's Nx plugin
-at that historical checkpoint. Task 5.7e22 now supersedes the hand-maintained
-selection by consuming the upstream distributable plugin without a local SDK
-fork or changing which green laws Template requires.
+at that historical checkpoint. Task 5.7e22 remains open to supersede the
+hand-maintained selection only after an upstream Nx-plugin package is actually
+distributable to Template, without a local SDK fork or a change to which green
+laws Template requires.
 
 A foreign private service alias under `docs`, hidden only from Nx by a temporary
 `.nxignore`, must still execute and fail the owning Habitat rule. The public
@@ -2931,6 +2932,40 @@ repository check then passed all 115 tasks in 1 minute 38 seconds; Nx reported
 a 42.3-second critical path and 57% recoverable time, confirming that the
 source-law task no longer serializes independent graph work. The probe and
 temporary ignore file were removed after proof.
+
+## Interim Habitat Structure Feedback Boundary
+
+The bounded [[tasks#1. Positive Habitat And Nx Checks|task 1.5l]] checkpoint
+separates task identity without changing evaluation authority. The existing
+22-rule native Habitat command is renamed `check:policy:local` and remains the
+only CLI leaf under `check:policy`, beside the rule-owned project-admission
+adapter. A new independent `check:structure` leaf asks the same pinned Habitat
+CLI to evaluate exactly nine green structure rules: blueprint packets, agent
+router placement, API-server plugins, the lifecycle command channel, Oclif app
+and command-plugin topology, service databases, resources, and providers.
+
+Codex Stop now runs only `habitat:check:structure` after the workstream closure
+guard. It does not run lint, Grit, the complete local policy batch, or the
+repository scheduler graph. Pre-push and protected CI retain the complete
+graph. Both direct CLI leaves remain intentionally uncached: the standalone
+consumer still has no distributable Habitat Nx-plugin boundary that can own
+registry discovery, exact Nx cache inputs, caching, and one acquisition. The
+selected rule scopes are exact. Task 5.7e22 is that future upstream integration,
+not a boundary claimed by this checkpoint.
+
+No production source, blueprint pattern, release manifest, provider, Personal
+repository, Habitat SDK source, custom runner, or cache scheme changes here.
+
+Resolved Nx project and task-graph inspection show exactly one
+`habitat:check:policy:local` task, with `check:policy` depending only on it and
+`check:project-admission`; `check:structure` has no policy dependency. After an
+Nx reset, cold and immediate repeat structure runs pass all nine selected rules
+in 2.4 and 2.1 seconds with zero cache hits. Both retain the same three existing
+advisory database-store topology findings and no failing rule; that red corpus
+is not production movement or deletion authority for this scheduling cut. Hook
+inspection excludes lint, Grit, complete policy, the retired source-law target,
+the root check command, and `run-many`. Strict OpenSpec validation, focused
+Biome, and diff hygiene pass.
 
 ## Mandatory Module Context Curation
 

@@ -28,9 +28,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -lc 'repo=\"$(git rev-parse --show-toplevel 2>/dev/null)\" && cd \"$repo\" 2>/dev/null || { printf \"%s\\n\" \"RAWR quality hook must run inside the repo worktree.\" >&2; exit 2; }; out=$({ bun run lint && bunx nx run habitat:check:source-law; } 2>&1); status=$?; if [ \"$status\" -eq 0 ]; then exit 0; fi; printf \"%s\\n\" \"$out\" >&2; exit 2'",
+            "command": "bash -lc 'repo=\"$(git rev-parse --show-toplevel 2>/dev/null)\" && cd \"$repo\" 2>/dev/null || { printf \"%s\\n\" \"RAWR quality hook must run inside the repo worktree.\" >&2; exit 2; }; out=$(bunx nx run habitat:check:structure --outputStyle=static 2>&1); status=$?; if [ \"$status\" -eq 0 ]; then exit 0; fi; printf \"%s\\n\" \"$out\" >&2; exit 2'",
             "timeout": 180,
-            "statusMessage": "Running RAWR lint and Habitat source law"
+            "statusMessage": "Checking RAWR Habitat structure"
           }
         ]
       }
