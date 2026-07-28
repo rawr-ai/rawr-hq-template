@@ -174,15 +174,15 @@ author once. The public client binds the construction lanes. The caller
 supplies invocation facts per call. Provider middleware adds execution
 capabilities under `provided`; it does not rename, flatten, or reconstruct the
 four semantic input lanes. A module inherits the service context through its
-exact service branch, attaches any named capability middleware, and may finish
-with one inline curation that exposes selected descendant capabilities as
-additive handler fields.
+exact service branch, attaches any named capability middleware, and finishes
+with one inline curation that names the smallest route-facing vocabulary its
+handlers need.
 
-Reading an inherited lane in a handler is not an upward reach. Importing root
-runtime assembly to obtain it, restating the whole service context in a module,
-or manually rebuilding the lanes is. Module boundaries narrow which
-capabilities an operation authors against; they do not pretend inherited
-runtime context disappeared.
+Router handlers author against those curated names. They do not reach back
+into `deps`, `scope`, `config`, `invocation`, or `provided`, import root runtime
+assembly, restate the whole service context, or manually rebuild its lanes.
+This is an authorship boundary, not a claim that native runtime context became
+subtractive.
 
 The admitted curation shape lets each `module.ts` finish its service branch
 with one `async ({ context, next }) => next({ context: { ... } })` attachment. The
@@ -212,7 +212,7 @@ framework values.
 A middleware never originates from the already-derived `service` or `module`
 implementer and then feeds back into that branch. Native `.use` attachments
 name the completed middleware in their first argument. The only inline
-middleware is the optional terminal `module.ts` curation described above; it
+middleware is the required terminal `module.ts` curation described above; it
 cannot contain guards, control flow, capability construction, calls other than
 the terminal `next`, or indirect/computed values. A later input selector on an
 imported named middleware remains an ordinary callback.
@@ -222,7 +222,7 @@ a curated object or passing an explicit `.use<Context>(...)` argument does not
 remove inherited lanes and is not a narrowing proof. The standalone base
 establishes initial context and implementation once; each `module.ts` derives
 the matching service branch, attaches named middleware without explicit type
-arguments, and may append one inferred curation. Named standalone root
+arguments, and ends with one inferred curation. Named standalone root
 middleware alone may use the canonical provider author specialized once in
 `base.ts`; modules and other service source cannot acquire or construct
 dependencies through it. Embedded API provider authorship requires separate

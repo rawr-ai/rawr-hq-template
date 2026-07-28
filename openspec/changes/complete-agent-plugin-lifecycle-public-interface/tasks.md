@@ -115,8 +115,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   packet-fixture runner and known corpus violations remain. Do not hide that
   limitation behind another parser or runner. Keep the compiled Bun 1.4 artifact
   consumer and reproducible update recipe; the current temporary release and
-  required check are Darwin arm64 until Habitat moves into this repository as an
-  npm package and proper binary.
+  required check are Darwin arm64 until the upstream Habitat distribution
+  exposes its Nx-plugin package and proper multi-platform binary.
 - [x] 1.5a Give every admitted code project an Nx lint and typecheck target.
   Keep content and fixture projects explicitly classified outside that law.
   Typecheck the Habitat project against `bun-types@1.3.14`; derive its release
@@ -136,12 +136,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   make path mappings explicit. Do not run every check twice.
 - [ ] 1.5e After every selected service rule passes the admitted Template
   service corpus,
-  extend the one `check:policy` batch with exact service-source,
-  service-packet, provisioner, release-manifest, and Bun-toolchain inputs.
-  Invoke the one topology rule and the complete service source-rule set through
-  one owner-local Habitat acquisition.
+  activate the six staged laws only through the upstream Habitat Nx-plugin
+  boundary in task 5.7e22. Let inferred owner-local targets provide exact
+  service-source, service-packet, provisioner, release-manifest, and
+  Bun-toolchain inputs and one Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
-  rule, or duplicate rule discovery in a script.
+  rule, hand-maintain rule selection, or duplicate rule discovery in a script.
 - [ ] 1.5g Use the pinned TypeScript compiler API to identify authored
   production symbols consumed from another source file, then add one Habitat
   source law for useful declaration-site JSDoc on that exact relation. Preserve
@@ -174,12 +174,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   canonical TypeBox syntax, empty baselines, and one Habitat-native runner.
   Burn the complete admitted corpus to green without adding a script, fork,
   exception, or compatibility grammar.
-- [x] 1.5k Keep the selected Habitat source-law batch one uncached,
-  independently schedulable Nx task. Preserve its twenty rules, one Habitat
-  acquisition, hooks, and public task graph. Do not invent a second file
-  enumerator or ignore synchronizer to bridge Nx and Habitat visibility. Prove
-  `.nxignore` cannot produce stale reuse, independent repository checks may run
-  beside the batch, and the 39-project/115-task check graph is unchanged.
+- [x] 1.5k Record the interim selected Habitat source-law batch as one uncached,
+  independently schedulable Nx task with twenty rules and one Habitat
+  acquisition. Prove `.nxignore` cannot produce stale reuse, independent
+  repository checks may run beside the batch, and the 39-project/115-task check
+  graph is unchanged. This historical checkpoint is superseded for destination
+  execution by task 5.7e22; do not preserve its hand-maintained selection as
+  steady-state authority.
 - [x] 1.5f Activate the closed API-plugin public-face topology and the
   Grit-helper documentation law in the selected green local batch behind
   `habitat:check`. Rename the public server face to `api.ts`, use API-operation
@@ -800,9 +801,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   layers, keep operation-specific matter in its owning module, and pass ready
   capabilities through service and module context. Prove each semantic
   checkpoint with owner-local behavior and typecheck. Only after the complete
-  admitted corpus is green, change the six staged topology and authorship
-  rules to enforced, select the source laws in the Habitat-owned repository
-  gate, and run normalized workspace lint plus standing architecture,
+  admitted corpus is green and task 5.7e22 installs the upstream Habitat Nx
+  execution boundary, change the six staged topology and authorship rules to
+  enforced, admit them through inferred owner-local targets, and run normalized workspace lint plus standing architecture,
   oRPC/Effect-oRPC, TypeScript, testing, and structural-quality reviews. The
   independent production platform-import law may activate as soon as its
   complete admitted service corpus is green.
@@ -1244,6 +1245,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   service authority, its existing proof, HQ SDK routing guidance, the rolling
   mental model, and this execution record; do not change service runtime,
   providers, apps, plugins, Nx wiring, or research paths.
+  This is the historical optional-admission checkpoint; task 5.7e19 supersedes
+  that optionality after Example Todo proves terminal module curation in runtime.
 - [x] 5.7e17 Move Example Todo persistence into the optional service-root
   database boundary. Add the owner-issued SQL migration, workspace-bound task,
   tag, and assignment store implementations, and their service-model ports.
@@ -1264,6 +1267,33 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Keep the target manual while its existing repository corpus is red; do not
   add a wrapper, baseline, second checker, or `check:policy` dependency until a
   later documentation burn-down makes the direct target green.
+- [x] 5.7e19 Strengthen the service context law from optional projection to one
+  required terminal module curation. Require router leaves to author only
+  against that module-owned vocabulary while preserving native oRPC's additive
+  runtime context. Prove missing curation and raw-lane router access red through
+  the existing Habitat service fixture. Keep the law advisory until the live
+  standalone and embedded-API service corpus is green; change no runtime source
+  or Habitat execution wiring in this checkpoint.
+- [ ] 5.7e20 Burn the strengthened curation law through all five lifecycle
+  modules. Curate the smallest existing route vocabulary directly in each
+  `module.ts`, delete projection-only module middleware, preserve operation
+  behavior, and close every lifecycle diagnostic from the six staged service
+  laws. Prove lifecycle type and behavior boundaries. Do not acquire a resource,
+  move policy, or change public contracts in this checkpoint.
+- [ ] 5.7e21 Burn the same law through the remaining HQ Ops and embedded API
+  service modules, then close every remaining live standalone/API diagnostic
+  from all six staged service laws. Keep qualified guard, acquisition, and
+  enrichment middleware; remove only projection-only context assembly. Prove
+  each owner independently before claiming the admitted service corpus green.
+- [ ] 5.7e22 Replace Template's hand-maintained Habitat rule selection with the
+  upstream Civ7-style Habitat Nx-plugin execution boundary once that package is
+  distributable. Let registry discovery and owner-local inferred targets own
+  inputs, caching, and one Habitat acquisition. Add no local SDK fork, manifest
+  generator, wrapper, raw Grit invocation, or alternate runner. Only after tasks
+  5.7e19 through 5.7e21 are green, task 5.7e2 proves the complete six-law live
+  corpus, and this execution boundary is installed, promote the staged service
+  topology, anchor, isolation, context, composition, and router authorship laws
+  to enforced and include them in the required repository gate.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-27 - Modules Curate Route Context
+
+Example Todo's flattened module projection is the reference pattern, not
+migration residue. Service context flows downward into each `module.ts`, and
+the module names the smallest capability vocabulary its routers need. That
+curation keeps route authors inside their subdomain without creating another
+lane, acquiring resources, or moving policy out of handlers and model.
+
+Native oRPC composition remains additive: the inherited lanes still exist at
+runtime. The design boundary is authorship. Routers author against the
+module-curated names, while capability construction stays with qualified
+middleware and outside mechanics stay with resources and providers. This
+entry supersedes the contrary sentence in the earlier context-lane note.
+
+See [[services/example-todo/AGENTS#Context Lanes|the worked context flow]],
+[[.habitat/blueprints/service/skill#Context|the service frame]], and
+[[.habitat/blueprints/service/require_service_context_boundaries/pattern|the executable law]].
+
+### Bag Of Keywords
+
+service, lane, context, curation, module, router, handler, provider, boundary,
+flow.
+
 ## 2026-07-27 - Service Persistence Enters Once
 
 Example Todo now demonstrates the full downward flow. The host supplies one

@@ -57,7 +57,7 @@ model entered the sealed public face at Template commit
 `07ff505ff781ee2f27af700e25beb1032cb53d37` and remains the canonical worked
 reference for construction and invocation. Each module then curates the
 smallest handler vocabulary from inherited lane descendants and provided
-stores. That additive projection is the intended module boundary: it creates
+stores. That additive curation is the intended module boundary: it creates
 no fifth input lane and does not remove the inherited service context.
 
 ## Flow

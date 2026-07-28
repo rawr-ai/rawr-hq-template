@@ -156,9 +156,10 @@ green local Habitat batch behind `check:policy`, with empty baselines.
 tests. The one root Nx scheduler graph reaches repository admission and separation,
 Habitat policy, and CLI Oclif parity through their qualified owners. The
 selected Habitat batch owns the required Oclif structure laws and lifecycle
-command-channel law. The seven staged service rules remain governed by
-[[tasks]] 1.5e and must not join the selected batch while their known
-live-corpus violations remain.
+command-channel law. The six staged service rules remain governed by
+[[tasks]] 1.5e, 5.7e2, and 5.7e22 and must not join required admission while
+their known live-corpus violations or the hand-maintained execution boundary
+remain.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
@@ -167,8 +168,9 @@ rule is not invented without a stable common corpus.
 The compiled Habitat binary is pinned to Civ7 `habitat-sdk-v0.1.6`, source
 `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4. The
 temporary release is Darwin arm64 only, matching the active development and
-required-check host; a later in-repository npm package and binary will own
-multi-platform distribution. SDK source is not vendored here.
+required-check host. Template will consume the upstream distributable Habitat
+Nx-plugin package when available; it will not fork, vendor, or modify the SDK
+locally.
 
 ### Required checks follow the Nx graph
 
@@ -187,12 +189,13 @@ Habitat graph rule owns project admission. The required CI job publishes one
 stable status. Local hooks provide fast feedback; remote branch protection
 remains merge authority.
 
-Every non-root project owns a public check, and the Habitat-owned TypeBox graph
-rule rejects a new project without one. The rule's packet-local `check.mjs` is
-the bounded bridge to resolved Nx facts because the pinned standalone consumer
-does not expose Habitat's native Nx runner. The current selected source-law
-batch still does not activate registered rules with known live-corpus
-violations.
+Every non-root project owns a public check. The current packet-local project
+admission bridge is transitional because the pinned standalone consumer does
+not expose Habitat's native Nx runner; it is not a pattern to extend. Task
+5.7e22 replaces hand-maintained rule selection and structural bridge ownership
+with the upstream Habitat Nx plugin. Registered rules with known live-corpus
+violations remain outside required admission until that cut and their
+owner-local burn-down are complete.
 
 Foundational project-local target names are uniform across project kinds:
 `build`, `typecheck`, `test`, and `check`; `lint` is workspace-owned.
@@ -232,16 +235,18 @@ canonicalize ordering, compute digests, and enforce cross-field domain rules
 after structural validation. They do not manually recreate closed-object
 parsing.
 
-Root context is seeded once with the complete ready host dependency context,
-and the base exposes a separate complete context-seeded native middleware
-factory when host projection is needed.
-Documented named module middleware uses that factory to contribute
-owner-specific capabilities; the matching module branch attaches it through
-inferred `.use(middleware)` composition. Native oRPC context merging is
-additive, so no `.use<Context>` claim, shadow context type, adapter, or witness
-pretends to remove inherited lanes. Owner-local resource and handler cuts remove
-broad dependency access rather than hiding it behind a spelling law. Leaf
-modules do not import sibling internals or concrete resource providers.
+Root context is seeded once through the complete `deps`, `scope`, and `config`
+construction lanes plus the per-call `invocation` lane. The base exposes a
+separate complete context-seeded native middleware factory only for qualified
+acquisition, guards, or enrichment; execution capabilities contributed there
+enter through `provided`. Every module branch ends with one terminal curation
+that selects the smallest route-facing vocabulary from direct descendants of
+those inherited lanes. Router handlers author against the curated names rather
+than reopening raw lanes. Native oRPC context merging remains additive, so the
+curation is an authorship boundary and no `.use<Context>` claim, shadow context
+type, adapter, or witness pretends inherited context disappeared. Projection-only
+module middleware is not another capability owner. Leaf modules do not import
+sibling internals or concrete resource providers.
 Effect/Platform filesystem
 and process programs terminate inside resource adapters and expose ready
 capabilities. This is the generic Magic Migration service shape, not a

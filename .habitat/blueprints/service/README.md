@@ -58,14 +58,15 @@ implementation independent of concrete platform and provider code. Root
 `router.ts` imports completed module routers through exact relative paths only
 and directly checks the plain
 object against `Router<typeof contract, never>`. Each `module.ts` derives its
-matching `service.<module>` branch. A bare branch inherits service context;
-module capability middleware is authored from the one complete-context native
-author in `base.ts` and attached without explicit type arguments. A module may
-then add one terminal inline curation whose nonempty explicit fields select
+matching `service.<module>` branch. Module capability middleware is authored
+from the one complete-context native author in `base.ts` and attached without
+explicit type arguments. Every module then ends with one terminal inline
+curation whose nonempty explicit fields select
 direct noncomputed member paths rooted below the four input lanes or the
 `provided` bucket. Named middleware and module
 curation are additive and inferred; neither claims subtractive handler
-context. A standalone service provider author is specialized once in
+context. Router handlers author against the curated names rather than reopening
+the raw lanes. A standalone service provider author is specialized once in
 `base.ts`, exported under the canonical `createServiceProvider` name, and used
 only by named root service middleware through `../base`. Modules and other
 service source cannot consume it, and this packet does not admit embedded API
@@ -89,10 +90,9 @@ loose `schemas.ts`, model `index.ts` barrels, context assembly files, and
 detached operation buckets are not service destinations.
 
 The topology, anchor, module-isolation, context, composition, and
-router-authorship rules remain advisory while the lifecycle service is being
-moved into this shape. Their fixture contracts are sealed now; the burn-down
-must make the live corpus conform before a later activation checkpoint changes
-them to enforced rules and adds them to the Habitat-owned repository gate.
+router-authorship rules remain advisory while the strengthened module-curation
+law is burned through the live service corpus. Their fixture contracts stay
+sealed; activation follows only after every module and router is green.
 
 Production platform independence is enforced across the complete admitted
 service corpus. Concrete Node and Bun runtime acquisition must terminate at a
