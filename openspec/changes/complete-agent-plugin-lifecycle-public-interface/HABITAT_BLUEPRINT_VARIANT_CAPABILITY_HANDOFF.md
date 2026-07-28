@@ -60,17 +60,22 @@ canonical module shape:
 
 ```text
 module/
+├── contract/
+│   ├── index.ts
+│   ├── inspect.ts
+│   └── mutate.ts
 ├── module.ts
-├── router.ts
 └── router/
-    ├── inspect.router.ts
-    └── mutate.router.ts
+    ├── index.ts
+    ├── inspect.ts
+    └── mutate.ts
 ```
 
-Named `router/*.router.ts` leaves author individual operations or cohesive
-operation groups. The module-level `router.ts` imports those completed leaves
-or groups and composes the module's one plain router object. `router/index.ts`
-is not admitted.
+Named router leaves author individual operations or cohesive operation groups.
+`router/index.ts` imports those completed leaves and composes the module's one
+plain router object. `contract/index.ts` owns the matching declarative contract
+composition. Flat module `contract.ts` and `router.ts` alternatives are not
+admitted.
 
 This single positive shape eliminates the local router XOR. The upstream
 variant capability remains useful only for future kinds that deliberately need

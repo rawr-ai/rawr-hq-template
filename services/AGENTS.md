@@ -20,8 +20,11 @@
 - A service owns domain decisions and state transitions, not transport,
   workflow identity, provider construction, or runtime mounting.
 - Ready outside capabilities enter through root context. Named middleware may
-  derive, guard, enrich, or project from them. Each module terminally curates the
-  smallest operation vocabulary it needs.
+  derive, guard, enrich, or project from them. Root middleware is a direct leaf
+  set attached in `impl.ts`; input-independent module policy attaches in
+  `module.ts`, input-independent group policy at its grouped router leaf, and
+  validated-input policy at each consuming procedure after its schema. Each
+  module terminally curates the smallest operation vocabulary it needs.
 - Service-root entities own cross-module identity and invariants. Module
   entities remain subdomain-specific. DTOs project boundary exchanges; the
   optional root database owns migrations, physical mappings, and private
@@ -39,6 +42,9 @@
 - A **service** owns one capability suite. A **module** owns one subdomain. An
   **entity** carries domain identity and lifecycle. A **DTO** projects a
   boundary exchange. A **store** privately realizes persistence.
+- Awkward service composition triggers an ownership check for a hidden neutral
+  resource, sibling domain service, exposure plugin, or runtime application
+  concern. Size alone does not trigger extraction.
 
 ## Flow
 

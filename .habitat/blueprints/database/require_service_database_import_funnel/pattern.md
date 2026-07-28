@@ -6,10 +6,12 @@ tags: [service, database, context, middleware, import]
 
 A standalone service owns its optional database interior. Database-owned
 production source and direct named service-root middleware leaves may import
-that source. Every production module, handler, model, root anchor, module
-middleware, and service-root middleware index consumes projected store
-capabilities through inherited oRPC context instead of importing database
-internals. Owner-local package proof remains outside this production-source
+that source. Production modules, handlers, models, root anchors, and module
+middleware consume projected store capabilities through inherited oRPC
+context instead of importing database internals. A service-root middleware
+barrel is not admitted. Root middleware leaves export generic `middleware` values for
+`impl.ts` to import by semantic alias; the service blueprint owns that
+attachment relation. Owner-local package proof remains outside this production-source
 relation and may inspect the private store without publishing it.
 
 This law recognizes literal module-loading edges that visibly name the current
@@ -77,7 +79,7 @@ or {
 }
 ```
 
-## Matches module, root, and middleware-index reach-ins
+## Matches module, root, and root-middleware-barrel reach-ins
 
 ```typescript
 // @filename: services/orders/src/service/base.ts

@@ -6,6 +6,34 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Capability Depth Owns Policy
+
+A service is a narrowing capability funnel, not a web of convenient imports.
+The base declares context and authors native context middleware only when such
+middleware exists. The implementation binds the aggregate contract once and
+attaches direct service-root middleware leaves. Modules descend from their
+exact configured branch. Module-wide policy attaches at the module, deliberate
+group policy at the matching router group, and exact policy at the operation.
+Module and group distribution stays independent of validated input; named
+validated-input policy remains attached at every consuming procedure after its
+schema. Handlers remain the authorship site for decisions and transitions.
+
+The file shape follows those semantic depths. Root middleware has direct leaves
+and no barrel. Module contract, middleware, and router directories use one
+indexed access face over semantic leaves. That closure does not replace
+judgment: awkward service composition still triggers the ownership test for a
+hidden resource, sibling service, plugin, or app concern. The structure merely
+makes the answer visible and keeps an invalid destination unavailable.
+
+See [[.habitat/blueprints/service/skill|the service capability frame]],
+[[.habitat/AUTHORITY#Service Source Law|the source-law summary]], and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/tasks#5. Bounded Agent-Plugin Lifecycle Service|the active burn-down]].
+
+### Bag Of Keywords
+
+service, funnel, context, depth, policy, module, group, operation, handler,
+resource, plugin, app, closure.
+
 ## 2026-07-28 - Native Semantics Stay At Their Boundary
 
 A vendor-major boundary is an opportunity to delete representation debt, not

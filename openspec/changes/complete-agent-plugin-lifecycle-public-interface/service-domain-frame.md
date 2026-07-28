@@ -167,13 +167,14 @@ Only two domain collaborations cross module boundaries:
    or the complete set. Release and packaging operations call the same
    service-owned model function.
 
-These collaborations belong to the service model because multiple modules
-consume them. Each consists of TypeBox-owned domain structure plus one
+These collaborations belong to the service model because their meaning and
+invariants span the service capability suite, not merely because multiple
+modules consume them. Each consists of TypeBox-owned domain structure plus one
 service-owned policy over explicit public resource ports. Module requests,
 results, issues, router handlers, and mutation policy remain with the owning
-module. No service `db` boundary is admitted until a dedicated database
-blueprint closes its topology; concrete acquisition and mechanics remain in
-resources and providers. A shared collaboration is not a sixth module,
+module. The optional service `db` boundary owns only service persistence under
+its separately closed database blueprint; concrete outside acquisition and
+mechanics remain in resources and providers. A shared collaboration is not an
 injected host-domain
 implementation, nested router call, persistent repository, root-to-child
 import, or permission for siblings to import one another.
@@ -197,34 +198,42 @@ src/service/
   impl.ts
   router.ts
   middleware/
+    <capability>.ts
   model/
     dto/
+    entities/
     helpers/
     policy/
     ports/
   modules/
     <module>/
-      contract.ts
+      contract/
+        index.ts
+        <operation>.ts
       module.ts
-      router.ts
       router/
-        <operation>.router.ts
+        index.ts
+        <operation>.ts
       middleware/
+        index.ts
+        <capability>.ts
       model/
         dto/
+        entities/
         helpers/
         policy/
         ports/
 ```
 
 Each directory below `model/` exists only when its owner has corresponding
-domain matter. A module has one `router.ts` composition boundary plus named
-`router/*.router.ts` operation leaves or semantic groups. It has no
-`router/index.ts`. Module middleware is a directory of named middleware files,
-not a top-level `middleware.ts`; TypeBox schemas are colocated with their DTOs,
-and outside capabilities are declared as model ports. Concrete acquisition and
-mechanics remain in resources/providers. The service root has no `shared/`
-directory:
+domain matter. A module exposes one `contract/index.ts` and one
+`router/index.ts` composition face over direct semantic leaves. Optional module
+middleware uses the same indexed catalog shape. Service-root middleware is the
+intentional exception: it consists only of direct kebab-case leaves exporting
+`middleware`, imported by semantic alias and attached in `impl.ts`, with no
+barrel. TypeBox schemas are colocated with their DTOs or entities, and outside
+capabilities are declared as model ports. Concrete acquisition and mechanics
+remain in resources/providers. The service root has no `shared/` directory:
 genuinely cross-module release and current-main concepts live in the root model,
 while operation requests, results, issues, and policy stay in their module.
 Root model policy may coordinate only the two service-owned collaborations over
@@ -488,7 +497,8 @@ Effect, or resource structure. See
 - custom controller distribution, selector, release store, and launcher;
 - external Oclif extension mechanics;
 - app, web, and runtime composition;
-- destination/export realization;
+- legacy destination realization inside the lifecycle owner; export remains a
+  retained capability under the dedicated destination architecture;
 - promotion, undo, hosted approval, and provider-wide coordination;
 - Personal executable implementation or Template/Personal tree equivalence;
 - adversarial local-tamper machinery;
@@ -496,16 +506,18 @@ Effect, or resource structure. See
 
 ## Falsifiers
 
-Stop the affected checkpoint if it requires a sixth lifecycle module, another
-service identity, durable lifecycle storage, a sibling-module import, a
-root-to-child implementation import, direct provider-home writes, an Oclif
-mutation, a second schema authority, Personal executable code, export
-implementation, app/runtime composition, or a changed public terminal
-classification without an explicit product decision.
+Stop the affected checkpoint if it requires another service identity without
+independent domain truth, a module without a coherent subdomain, durable
+lifecycle storage, a sibling-module import, a root-to-child implementation
+import, direct provider-home writes, an Oclif mutation, a second schema
+authority, Personal executable code, legacy destination implementation inside
+this service, app/runtime composition, or a changed public terminal
+classification without an explicit product decision. A sixth module or a
+large handler is not itself a falsifier.
 
 ## Completion
 
-The service slice is complete when all five modules satisfy the admitted
+The service slice is complete when every admitted module satisfies the
 Habitat service law, TypeBox is the sole structural authority, each operation
 authors only against its named capability surface after broad dependency lanes
 are removed at their resource and handler owners, the twelve qualified

@@ -23,11 +23,25 @@ function require_service_router_authorship_leaf_status($filename, $operation, $v
   );
   if (expected !== $operation.text) return "wrong-operation";
   const source = $value.text.replace(/\s+/g, "");
-  const prefix = `module.${expected}.`;
   const hasHandler = source.includes(".effect(") || source.includes(".handler(");
   if (!hasHandler) return "missing-handler";
-  if (source.startsWith(prefix)) return "ok";
-  return source.startsWith("{") && source.includes(prefix)
+  const direct = source.match(
+    /^module((?:\.[A-Za-z_$][A-Za-z0-9_$]*)+)\.(?:use|effect|handler)\(/,
+  );
+  if (direct) {
+    const properties = direct[1].split(".");
+    const finalProperty = properties[properties.length - 1];
+    return finalProperty === expected ? "ok" : "wrong-operation";
+  }
+  const groupRoots = [
+    ...source.matchAll(
+      /module((?:\.[A-Za-z_$][A-Za-z0-9_$]*)+)\.(?:use|effect|handler)\(/g,
+    ),
+  ].map((match) => match[1]);
+  const prefix = `.${expected}.`;
+  return source.startsWith("{") &&
+    groupRoots.length > 0 &&
+    groupRoots.every((root) => root.startsWith(prefix))
     ? "ok"
     : "wrong-root";
 }
@@ -41,23 +55,6 @@ predicate require_service_router_authorship_is_leaf() {
 // Selects composition-only module and root router spines.
 predicate require_service_router_authorship_is_composer() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/(?:router\.ts|router/index\.ts))$"
-}
-
-// Selects the plain module operation-tree entrypoint.
-predicate require_service_router_authorship_is_module_index() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
-}
-
-// Proves that a module index statically imports and registers one direct leaf.
-predicate require_service_router_authorship_has_registered_leaf($body) {
-  $body <: some $statement where {
-    $statement <: import_statement(source=$source) as $import,
-    $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
-    $import <: contains import_specifier(name=$name),
-    $body <: contains `export const router = $value` where {
-      $value <: contains $name
-    }
-  }
 }
 
 // Recognizes runtime declarations crossing a router-leaf export boundary.
@@ -112,12 +109,6 @@ or {
   } where {
     require_service_router_authorship_is_leaf()
   },
-  program(statements=$body) where {
-    require_service_router_authorship_is_module_index(),
-    not {
-      require_service_router_authorship_has_registered_leaf(body=$body)
-    }
-  },
   `$receiver.$operation.$method($handler)` where {
     require_service_router_authorship_is_composer(),
     $method <: r"^(?:effect|handler)$"
@@ -141,19 +132,20 @@ import { module } from "../module";
 export const find_by_id = module.find_by_id.handler(findJob);
 ```
 
+## Matches a nested atomic leaf authored from the wrong terminal operation
+
+```typescript
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.ts
+import { module } from "../module";
+export const submit = module.jobs.status.handler(submitJob);
+```
+
 ## Matches operation authorship in a composer
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router/index.ts
 export const get = module.get.handler(getJob);
 export const router = impl.catalog.router({ get });
-```
-
-## Matches an entrypoint without a direct registered leaf
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-export const router = {};
 ```
 
 ## Matches an extra runtime export from a leaf
@@ -173,6 +165,17 @@ import { module } from "../module";
 const preview = module.get.handler(previewJob);
 export const get = module.get.handler(getJob);
 export { preview };
+```
+
+## Matches a deliberate native group rooted outside its filename-mapped group
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/search.ts
+import { module } from "../module";
+export const search = {
+  available: module.search.available.effect(searchAvailable),
+  archived: module.catalog.archived.effect(searchArchived),
+};
 ```
 
 ## Ignores configured leaf authorship and composition-only routers
@@ -201,4 +204,31 @@ export const router = { get, search };
 import { router as catalog } from "#jobs-service/modules/catalog/router";
 import { impl } from "./impl";
 export const router = impl.router({ catalog });
+```
+
+## Ignores a nested module router access point
+
+```typescript
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/index.ts
+import { status } from "./status";
+import { submit } from "./submit";
+import { submitBatch } from "./submit-batch";
+export const router = {
+  jobs: {
+    submit,
+    submitBatch,
+    status,
+  },
+};
+```
+
+An unimported sibling leaf is intentionally outside this source relation.
+Knip owns whether such a file is unreachable.
+
+## Ignores a nested one-operation leaf
+
+```typescript
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.ts
+import { module } from "../module";
+export const submit = module.jobs.submit.handler(submitJob);
 ```

@@ -47,9 +47,10 @@ broad DTO barrels MUST remain private.
   release/governance request under root model, sixth module, or public concrete
   provider fails the ratchet
 
-Operation handlers MUST be authored directly in named
-`router/*.router.ts` leaves or semantic groups and composed as a plain router
-object by module `router.ts`. A handler MAY call module-owned pure policy or
+Each module MUST expose closed `contract/` and `router/` directories through
+their sole `index.ts` composition faces. Operation handlers MUST be authored
+directly in named `router/<operation>.ts` leaves or deliberate semantic groups
+and composed as a plain router object by `router/index.ts`. A handler MAY call module-owned pure policy or
 ready resource capabilities, but MUST NOT delegate its operation to a parallel
 business entrypoint or acquire an ornamental `*Procedure` export name merely
 for composition. Router files MUST consume the inferred module capability
@@ -58,30 +59,39 @@ context. The completed service MUST remove operation dependencies on broad
 `deps`, `scope`, `config`, `invocation`, or `provided` lanes through
 owner-qualified resource and middleware boundaries rather than claim those
 additive native fields were subtracted.
-Each module MUST retain one `router.ts` as its public composition boundary and
-one `router/` directory for named authored files; `router/index.ts` MUST NOT
-exist.
+Flat module `contract.ts` and `router.ts` alternatives MUST NOT exist. Optional
+module middleware MUST use the equivalent closed `middleware/` catalog with one
+`index.ts` and direct semantic leaves.
 
 #### Scenario: Operation composition is direct
 - **WHEN** module router exports and operation handler call sites are inspected
-- **THEN** module `router.ts` composes the directly authored named router values
+- **THEN** module `router/index.ts` composes the directly authored named router values
 - **AND** no parallel operation function or individually named procedure wrapper
   or router-local dependency bag impersonates the oRPC composition boundary
 
 ### Requirement: Runtime authorities are explicit and transport-neutral
 
-`base.ts` MUST seed the complete ready host dependency context exactly once and
-MAY expose one separate complete context-seeded native middleware factory. A
-documented named module-middleware leaf MAY import only that factory from
-`../../../base`; it MUST contribute owner-specific capabilities, and the
-matching `module.ts` MUST attach the completed value through inferred
-`.use(middleware)` composition. Native oRPC context merging is additive, so an
+`base.ts` MUST declare the complete ready host dependency context exactly once
+and MAY export `os.$context<Context>()` only when context-authored middleware
+consumes that native author. Service-root middleware MUST live in direct
+semantic leaves without a barrel, export the generic `middleware` value, and be
+imported by semantic alias for attachment only in `impl.ts`. Module-wide policy
+MUST be independent of validated input and attach in `module.ts`; reusable group policy MAY be authored from an
+unconfigured router descendant rooted at `impl.<module>` and attach only in its
+matching grouped router leaf when it is input-independent. A named policy
+reused by several operations and requiring validated input MAY cross the module
+middleware catalog only when each consuming procedure attaches it through
+native `.use(...)`; operation-only policy MUST remain inline. Any policy that
+relies on validated input MUST attach after the procedure's schema and retain a
+behavior proof that validation is enabled. Module terminal curation MAY use an
+expression body or a block body whose direct terminal return is its sole
+`next(...)` call. Native oRPC context merging is additive, so an
 explicit `.use<Context>` argument, shadow context type, adapter, or witness MUST
 NOT be treated as removal of inherited lanes. Owner-local resource and handler
 cuts MUST remove broad dependency access at its source; a source-spelling
 blacklist MUST NOT impersonate subtractive context.
-SDK-owned baseline observability and analytics builders MUST remain distinct
-from the native context factory. A Personal workspace, provider home, package
+SDK-owned baseline observability and analytics mechanics MUST remain distinct
+from service-owned middleware authorship. A Personal workspace, provider home, package
 output, or governed Git ref that selects semantic authority MUST remain
 explicit validated input. Provider command names MUST resolve through the
 ordinary process environment at the owning native-provider resource;

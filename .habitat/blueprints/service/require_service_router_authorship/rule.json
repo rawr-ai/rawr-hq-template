@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "advisory",
-  "forbids": "operation authorship outside module router leaves; a leaf whose sole runtime export is not the lower-camel operation or deliberate native group mapped from its kebab-case filename and authored from the matching module branch through effect or handler; a module router index without a directly imported and registered leaf; any extra runtime leaf export; or procedure handlers inside module and root router composition files",
+  "forbids": "operation authorship outside module router leaves; a leaf whose sole runtime export is not the lower-camel operation or deliberate native group mapped from its kebab-case filename and authored from the matching direct or nested module operation through effect or handler; any extra runtime leaf export; or procedure handlers inside root, module-index, and legacy module router composition files",
   "why": "Separating procedure authorship from static module composition keeps behavior module-local while the root composition rule retains sole aggregate router implementation authority.",
-  "remediate": "Author exactly one runtime export in modules/<module>/router/<operation-or-group>.ts. Map its kebab-case filename to a lower-camel operation or deliberate native group, author it through the matching module branch with effect(...) or handler(...), and register that directly imported leaf in router/index.ts. Keep helpers private, module router/index.ts a plain operation tree, and root router.ts the aggregate implementation boundary.",
-  "message": "Service router leaves must author and register one filename-mapped operation or deliberate native group.",
+  "remediate": "Author exactly one runtime export in modules/<module>/router/<operation-or-group>.ts. Map its kebab-case filename to a lower-camel operation or deliberate native group and author it through the matching direct or nested module operation with effect(...) or handler(...). Keep deliberate grouped files rooted at the matching module group. Keep helpers private, use module router/index.ts only as the required access point, and leave complete import reachability to Knip and complete public operation coverage to generated client and API behavior proof. Keep root router.ts as the aggregate implementation boundary.",
+  "message": "Service router leaves must author one filename-mapped operation or deliberate native group.",
   "pathCoverage": [
     {
       "kind": "exact-path",

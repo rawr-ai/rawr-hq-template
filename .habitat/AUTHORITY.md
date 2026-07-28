@@ -38,38 +38,56 @@ independently owned topology and source axes:
 
 1. Every package, public surface, service, module, model kind, database, router,
    and middleware directory is positively closed.
-2. Every base, contract, service, module, and router spine file directly
-   exports the generic anchor for its role.
-3. `base.ts` declares one complete native oRPC context author. `impl.ts`
-   implements the aggregate contract once, admits the official Effect-oRPC
-   extension only when used, and exports the unconfigured `impl` plus the
-   root-configured `service` stage.
+2. Every contract, implementation, module, and router spine directly exports
+   the generic anchor for its role. `base.ts` always exports `Context`; it
+   exports the native `base` anchor only when context-authored middleware uses
+   it.
+3. `base.ts` declares the complete native oRPC context lanes and remains
+   contract-free. `impl.ts` implements the aggregate contract once, admits the
+   official Effect-oRPC extension only when used, and exports the unconfigured
+   `impl` plus the root-configured `service` stage.
 4. Context-only provider and acquisition middleware derive from `base`.
-   Contract-aware root and module policy derive from the matching unconfigured
-   implementer branch. No configured-middleware feedback, context wrapper,
-   prepared object, merge helper, or parallel implementer is admitted.
+   Service-root middleware is a closed set of direct kebab-case leaves that
+   export `middleware`; `impl.ts` imports those leaves by semantic aliases and
+   attaches them without a root barrel. Input-independent module-wide policy
+   attaches in `module.ts`; input-independent group policy derives from the
+   matching unconfigured router descendant and attaches in its grouped router
+   leaf. A named policy reused across operations and requiring validated input
+   stays procedure-attached through every consumer; exact operation policy stays
+   inline. No configured-
+   middleware feedback, context wrapper, prepared object, merge helper,
+   decorator, simulated procedure author, or parallel implementer is admitted.
 5. Database source is closed to owner-issued migrations and stores, with named
    physical schemas admitted only when required by the database technology.
    Database schema is physical mapping, not domain identity or boundary data.
-   Only database-owned source and
-   named service-root middleware import database leaves; modules and handlers
-   receive projected store capabilities through inherited oRPC context.
+   Only database-owned source and direct named service-root middleware leaves
+   import database source. Those leaves export the generic `middleware` value
+   for semantic attachment in `impl.ts`; no root middleware barrel is admitted.
+   Modules and handlers receive projected store capabilities through inherited
+   oRPC context.
 6. Every `module.ts` derives its exact configured service branch, attaches only
-   qualified module policy, and ends with one inferred inline
-   additive curation that exposes the nonempty route-facing fields selected by
-   direct member paths below `context.deps`, `context.scope`,
-   `context.config`, `context.invocation`, or `context.provided`. It does not
-   replace those lanes, construct capabilities, or prove inherited context was
-   removed. Operation handlers author against the curated names and do not reopen
-   the raw lanes.
+   qualified module policy, and ends with one inferred inline additive curation
+   that exposes the nonempty route-facing fields selected below the five context
+   lanes. Direct selection may use an expression body; bounded synchronous
+   adaptation or client construction may use a block body with exactly one
+   terminal `next(...)` call. Curation does not acquire a resource lifecycle,
+   replace the raw lanes, or prove inherited context was removed. Operation
+   handlers author against the curated names and do not reopen the raw lanes.
 7. Required module `contract/` and `router/` directories expose only their
    `index.ts` faces plus semantic leaves. Optional module `middleware/` follows
-   the same shape. Leaves never import their own index, and no runtime loader,
-   generator, or module SDK participates.
-8. Operation leaves author from the configured module branch. Module router
-   indexes compose completed operations as plain trees; root `router.ts`
-   implements the aggregate tree once through unconfigured `impl.router(...)`
-   so root middleware is not replayed.
+   the same shape. Each contract or router leaf maps its kebab-case filename to
+   one lower-camel export. Contract indexes prove canonical direct acquisition;
+   router indexes remain composition-only. TypeScript, Knip, and generated
+   client/API behavior own completeness and reachability. Leaves never import
+   their own index, and no runtime loader, generator, or module SDK participates.
+8. Operation leaves author from the matching configured module descendant.
+   Deliberate grouped leaves may share only input-independent policy owned by
+   that same group; named validated-input policy may cross leaves only through
+   the module catalog and remains attached at each consuming procedure.
+   Module router indexes compose completed operations as plain trees; root
+   `router.ts` implements the aggregate tree once through unconfigured
+   `impl.router(...)` so root middleware is not replayed. Knip owns unreachable
+   leaves; generated clients and API behavior prove the complete public set.
 9. Every model fact has one direct semantic leaf. Model indexes are
    inadmissible. `entities` owns stable domain identity that survives attribute
    changes and participates in transitions. Persistence is evidence, not
