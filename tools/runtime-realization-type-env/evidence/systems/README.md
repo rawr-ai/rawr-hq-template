@@ -13,5 +13,5 @@ what it impacts, and where the proof ceiling remains.
 | Telemetry, diagnostics, OTLP/HyperDX, catalog, and migration/control-plane observation evidence | `telemetry-observation-map.md` |
 
 System maps are not proof authority. Promote or demote proof only through
-`../proof-manifest.json`, source/fixture/test gates, and the structural/report
-verification loop.
+`../proof-manifest.json`, source/fixture/test gates, the repository Habitat
+policy, and the report loop.

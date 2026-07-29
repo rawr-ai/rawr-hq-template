@@ -5,6 +5,11 @@ import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands
 import { providerTargetFlag } from "../../../lib/agent-plugins/commands/flags";
 import { parseSyncRequest } from "../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins sync` into native-provider convergence.
+ * It selects explicit provider homes and leaves desired-state calculation and mutation policy to
+ * the lifecycle service.
+ */
 export default class AgentPluginsSync extends AgentPluginLifecycleCommand {
   static description = "Converge governed current-main into explicit native provider homes";
 

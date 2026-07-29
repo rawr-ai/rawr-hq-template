@@ -344,11 +344,33 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
     deletion-safety assertion with a bounded Workstream Plugin Pack behavior
     test reached through its normalized Nx `check`; add no generic deletion or
     source-scanning framework.
-- [x] 1.6c11 Admit any still-required resolved project-edge law as one separate
-  Habitat graph packet. Grit cannot join Nx-resolved dependency edges to
-  project-kind tags, so a rule-owned `.mjs` graph adapter is the allowed narrow
-  escape hatch if the positive package-kind model still requires this axis.
-  Do not restore ESLint, copy the retired matrix, or hide the decision in lint.
+  - [x] 1.6c10b4 Remove the remaining Runtime Realization lab source walker and
+    its public `structural` target. Preserve only stable lab container axes as
+    one closed owner-qualified `structure.toml` rule and parser-visible plane
+    containment as one owner-qualified Grit rule. Keep behavior and evidence
+    reporting in ordinary owner targets. Preserve fail-closed manifest
+    semantics at the report boundary with TypeBox and focused corrupted-input
+    tests; delete fixed implementation inventories, retired-name checks, phase
+    bookkeeping, structural target self-checks, and regex import parsing rather
+    than translating them into permanent law. Add no replacement script or
+    local structural wrapper.
+  - [x] 1.6c10b5 Remove both direct script-rule bypasses left by the pinned
+    standalone Habitat consumer. Retire the resolved Nx project-quality
+    adapter rather than preserving its coarse project-kind matrix, because the
+    native workspace scheduler rule already owns the durable root and lint
+    relationship. Replace the TypeScript imported-export scanner with Magic's
+    shared Grit exported-value JSDoc law, apply it only to the active public
+    lifecycle boundary, burn its admitted corpus to an empty baseline, and run
+    it in the selected native Habitat policy batch. Do not wait for or locally
+    modify the upstream private Habitat SDK.
+- [x] 1.6c11 Determine whether any resolved project-edge law remains after the
+  normalized Nx scheduler cut. The initial checkpoint admitted a packet-local
+  graph adapter because Grit cannot join Nx-resolved edges to project-kind
+  tags. Task 1.6c10b5 supersedes that mechanism: the coarse project-kind matrix
+  is not durable product law, so delete the adapter rather than invoking a
+  manual rule outside Habitat. Keep true module dependency chains in Nx's
+  ESLint boundary rule and defer native Habitat graph admission to the
+  upstream distributable integration.
 - [x] 1.7 Run Habitat fixtures, affected lint/typecheck twice to demonstrate
   cache reuse, the required-check target, and standing Habitat/Nx/architecture
   reviews. Land architecture patterns and task wiring as separately reviewable

@@ -42,23 +42,21 @@ fallbacks.
   project. Shared defaults connect each plain public check to one
   workspace-owned `habitat:lint`, project-owned typecheck, optional owner
   verification, Habitat policy, and dependency checks.
-- Repository separation, Habitat project admission and source law, and CLI
-  Oclif parity remain qualified owner work. Habitat's selected source-law batch
+- Repository separation, Habitat topology and source law, and CLI Oclif parity
+  remain qualified owner work. Habitat's selected source-law batch
   owns the required Oclif structure laws and lifecycle command-channel law.
 - `habitat:check` composes workspace lint, Habitat-owner typecheck and tests,
-  and `check:policy`. The policy target composes one selected green source-law
-  batch with the rule-owned Nx project admission adapter. Registered rules with
-  known live-corpus failures are not yet part of the required batch.
+  and `check:policy`. The policy target resolves to one selected green
+  source-law batch.
 - Habitat targets are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests remain explicit
   owner verification. See [[NX_AGENT_WORKFLOW]].
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through a
   checksum-pinned standalone Civ7 release compiled with Bun 1.4. The SDK source
   is not vendored here.
-- Every non-root project now owns a public check, and the Habitat-owned graph
-  rule rejects a new project without one. Its bounded `check.mjs` is the
-  explicit standalone-consumer escape hatch until Habitat's native Nx runner
-  is available here.
+- Every current non-root project owns a public check. The pinned consumer does
+  not expose Habitat's native Nx runner, so Template does not register or call
+  a script-backed graph rule around Habitat.
 - Foundational project targets use `build`, `typecheck`, `test`, and `check`;
   ordinary lint has one workspace owner. Separately compiled test and tool
   sources use internal `check:test`

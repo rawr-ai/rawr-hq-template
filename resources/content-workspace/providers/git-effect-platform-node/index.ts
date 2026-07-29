@@ -135,6 +135,14 @@ function makeCaptureBudget(
   return { entries: 0, bytes: 0, maxEntries: limits.maxEntries, maxBytes: limits.maxBytes };
 }
 
+/**
+ * Builds the Git-backed content-workspace resource with resource-instance capture authority.
+ * The returned operations expose bounded repository facts and mutations while this provider owns
+ * Git execution, identity rechecks, and temporary-tree cleanup.
+ *
+ * @param options - Provider command configuration, primarily for controlled test runtimes.
+ * @returns The platform-requiring resource consumed by lifecycle service composition.
+ */
 export function makeContentWorkspaceResource(
   options: GitEffectPlatformNodeOptions = {}
 ): ContentWorkspaceResource<ProviderRequirements> {

@@ -34,12 +34,8 @@ The current generic kinds are:
   discovery configuration, and generated command-manifest relationship.
 - `oclif-command-plugin`: one host-composed command package, command root,
   discovery configuration, and public dependency boundary.
-- `nx-workspace`: the exact root scheduler surface and resolved project-quality
-  admission, including one workspace lint owner and one multi-project
-  build/check/test graph.
-- `typescript-source`: TypeScript-resolved JavaScript and TypeScript
-  owner-consumer relations that require exact project module resolution rather
-  than filename approximation.
+- `nx-workspace`: the exact root scheduler surface, including one workspace
+  lint owner and one multi-project build/check/test graph.
 - `plugin` and `plugin-server`: documented parent kinds whose universal shape
   remains intentionally unconstrained.
 
@@ -47,37 +43,36 @@ The `rawr/` tree carries owner-qualified constraints that are not generic
 package laws. Its repository niche owns the cross-kind `AGENTS.md` placement
 relation without acquiring the topology of the heterogeneous package and
 module roots it inspects, plus the positively closed root for repository
-scripts. Its agent-plugin lifecycle niche closes the curated command channel
-and keeps curated command source independent from the native external-plugin
-package. Its web-host niche admits public environment fields only through the
-web-owned projection funnel. Generic service and Oclif packets own their
-admitted source relationships, and TypeScript package exports own public
-compatibility. These qualified niches do not duplicate generic laws as
-package-name or path blacklists. Resolved project admission is a separate
-Habitat rule, not an ESLint rule.
+scripts and the exported-value documentation contract on the admitted public
+lifecycle boundary. Its Runtime Realization lab niche owns that tool's closed
+container axes and parser-visible plane containment. Its agent-plugin
+lifecycle niche closes the curated command channel and keeps curated command
+source independent from the native external-plugin package. Its web-host niche
+admits public environment fields only through the web-owned projection funnel.
+Generic service and Oclif packets own their admitted source relationships, and
+TypeScript package exports own public compatibility. These qualified niches do
+not duplicate generic laws as package-name or path blacklists.
 
 Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
 topology. Every Grit packet exposes its executable source as `pattern.md`;
 rule-specific semantics belong in the packet directory and rule metadata, not
-in a second filename convention. Grit rules own source relationships. A
-`check.mjs` is the closed exception for a demonstrated native runner gap and
-must remain inside its rule packet. Behavioral semantics stay in TypeScript
-tests and owner review rather than being approximated as source shape.
+in a second filename convention. Grit rules own source relationships. Template
+currently admits no script-backed Habitat rule. A future native capability gap
+requires a named authority decision before the packet topology can change.
+Behavioral semantics stay in TypeScript tests and owner review rather than
+being approximated as source shape.
 
-`habitat:check:policy` composes the pinned-binary 26-rule local policy batch at
-`habitat:check:policy:local` with the one rule-owned Nx graph adapter. The
-independent `habitat:check:structure` leaf selects exactly ten Habitat
-structure rules for Stop feedback and is not a policy dependency. Both CLI
+`habitat:check:policy` resolves to the selected pinned-binary native policy
+batch at `habitat:check:policy:local`. The independent
+`habitat:check:structure` leaf selects the structure-only subset for Stop
+feedback and is not a policy dependency. Both CLI
 leaves are intentionally uncached: their rule scopes are exact, while exact Nx
 cache inputs remain owned by the future upstream distributable Habitat Nx
 boundary. The published binary exposes neither its native Nx runner nor a
-packet-fixture runner, so the repository does not add a second Markdown parser
-or duplicate pattern inventory to simulate either one.
-The TypeScript source adapter is exposed separately as the cacheable
-`habitat:check:documentation` target. It remains a red manual target until the
-existing corpus is documented; activation is then one dependency edge into
-`check:policy`, not a baseline or second policy surface.
+packet-fixture runner. Template therefore deletes rules that depended on those
+unsupported modes instead of invoking their implementation scripts outside
+Habitat.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit

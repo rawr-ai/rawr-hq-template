@@ -67,4 +67,3 @@ None may impersonate another.
 - [[provider/skill|Providers]]
 - [[resource/skill|Resources]]
 - [[service/skill|Services]]
-- [[typescript-source/skill|TypeScript source relations]]

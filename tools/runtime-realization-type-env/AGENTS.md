@@ -25,8 +25,9 @@ implementation.
   silently implement Parent-Repo Migration.
 - Canonical-looking `@rawr/sdk/*` imports are local TypeScript aliases. They do
   not establish a workspace package or public runtime surface.
-- Proof strength is owned by named gates and the evidence manifest, not by a
-  document, vendor-shape probe, or constructibility test alone.
+- Proof strength is owned by named behavior gates and the evidence manifest,
+  not by a document, topology check, vendor-shape probe, or constructibility
+  test alone.
 
 ## Behavior
 
@@ -225,10 +226,11 @@ Keep vendor probes only when they protect a RAWR adaptation boundary, and label 
 For meaningful lab changes, run the focused target first, then:
 
 ```bash
+bunx nx run habitat:check:policy:local
 bunx nx run runtime-realization-type-env:gate
 ```
 
-The root convenience equivalent is:
+The root convenience command runs the behavior gate only:
 
 ```bash
 bun run runtime-realization:type-env

@@ -49,6 +49,10 @@ const NullablePluginVersionSchema = Type.Union([
   Type.Null(),
 ]);
 
+/**
+ * Admits credential-free HTTPS Git locators that native marketplace adapters can reproduce exactly.
+ * The canonical form prevents provider-specific URL normalization from changing source identity.
+ */
 export const CanonicalGitRepositoryUrlSchema = Refine(
   Type.String({ minLength: 14, maxLength: 2_048 }),
   isCanonicalHttpsGitUrl,
@@ -63,6 +67,10 @@ export const NativeAgentProviderIdSchema = Type.Union(
   }
 );
 
+/**
+ * Defines the closed operation vocabulary carried through provider execution and diagnostics.
+ * Provider kernels and lifecycle consumers use these identifiers to preserve operation ownership.
+ */
 export const NativeAgentProviderOperationSchema = Type.Union([
   Type.Literal("acquire"),
   Type.Literal("probe"),
@@ -75,12 +83,22 @@ export const NativeAgentProviderOperationSchema = Type.Union([
   Type.Literal("plugin-remove"),
 ]);
 
+/**
+ * Records how far a native command progressed when an operation fails.
+ * Lifecycle policy uses this evidence to distinguish safe preflight failures from uncertain
+ * mutation outcomes.
+ */
 export const NativeProviderCommandPhaseSchema = Type.Union([
   Type.Literal("not-started"),
   Type.Literal("started"),
   Type.Literal("command-returned"),
 ]);
 
+/**
+ * Defines provider-neutral mechanical failure categories for native operations.
+ * Concrete adapters translate CLI and filesystem errors into this vocabulary before failures
+ * cross into the lifecycle service.
+ */
 export const NativeAgentProviderFailureReasonSchema = Type.Union([
   Type.Literal("InvalidInput"),
   Type.Literal("Missing"),
@@ -94,6 +112,11 @@ export const NativeAgentProviderFailureReasonSchema = Type.Union([
   Type.Literal("FilesystemFailed"),
 ]);
 
+/**
+ * Validates the typed failure envelope shared by native adapters and lifecycle operations.
+ * Provider, operation, and command-phase evidence preserve enough context for service-owned
+ * classification without leaking vendor exceptions.
+ */
 export const NativeAgentProviderFailureSchema = Type.Readonly(
   Type.Object(
     {
@@ -122,6 +145,11 @@ export const NativeProviderSessionInputSchema = Type.Readonly(
   )
 );
 
+/**
+ * Admits an explicit Git or local source for a native marketplace-add operation.
+ * Provider adapters consume this neutral request and own its translation to vendor command
+ * arguments.
+ */
 export const NativeMarketplaceSourceSchema = Type.Union([
   Type.Readonly(
     Type.Object(
@@ -145,6 +173,10 @@ export const NativeMarketplaceSourceSchema = Type.Union([
   ),
 ]);
 
+/**
+ * Names the native marketplace and plugin operations a provider may report.
+ * The lifecycle service gates optional mutations against this advertised capability vocabulary.
+ */
 export const NativeProviderCapabilitySchema = Type.Union([
   Type.Literal("marketplace-list"),
   Type.Literal("marketplace-add"),
@@ -174,6 +206,11 @@ const nativeCapabilityProperties = {
   version: BoundedTextSchema,
 } as const;
 
+/**
+ * Validates provider-discriminated capability evidence returned by session probing.
+ * Provider-specific constraints keep lifecycle orchestration from assuming operations an adapter
+ * cannot implement.
+ */
 export const NativeProviderCapabilitiesSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
@@ -203,6 +240,11 @@ export const NativeProviderCapabilitiesSchema = Type.Union([
   ),
 ]);
 
+/**
+ * Describes the source evidence a native provider actually reports for an installed marketplace.
+ * Inventory consumers compare these observations with curated intent without treating them as
+ * release authority.
+ */
 export const NativeProviderMarketplaceSourceObservationSchema = Type.Union([
   ReadonlyObject(
     Type.Object(
@@ -227,6 +269,10 @@ export const NativeProviderMarketplaceSourceObservationSchema = Type.Union([
   ),
 ]);
 
+/**
+ * Validates one marketplace entry from live native-provider inventory.
+ * Its source and installed root remain observations for lifecycle convergence, not desired state.
+ */
 export const NativeProviderMarketplaceObservationSchema = Type.Readonly(
   Type.Object(
     {
@@ -238,6 +284,11 @@ export const NativeProviderMarketplaceObservationSchema = Type.Readonly(
   )
 );
 
+/**
+ * Validates one plugin entry from live native-provider inventory.
+ * Installation, enablement, version, and root evidence feed status, sync, and disposable test
+ * decisions owned by the lifecycle service.
+ */
 export const NativeProviderPluginObservationSchema = Type.Readonly(
   Type.Object(
     {
@@ -253,9 +304,16 @@ export const NativeProviderPluginObservationSchema = Type.Readonly(
   )
 );
 
+/** Caps marketplace inventory accepted from one native provider command. */
 export const MAX_NATIVE_PROVIDER_MARKETPLACES = 1_024;
+/** Caps plugin inventory accepted from one native provider command. */
 export const MAX_NATIVE_PROVIDER_PLUGINS = 4_096;
 
+/**
+ * Validates a complete, canonically ordered native-provider inventory snapshot.
+ * Stable ordering and distinct identities make provider observations deterministic for lifecycle
+ * comparison and diagnostics.
+ */
 export const NativeProviderInventorySchema = Refine(
   Type.Readonly(
     Type.Object(
@@ -281,20 +339,36 @@ export const NativeProviderInventorySchema = Refine(
   () => "Expected canonical distinct marketplace identities and plugin selectors"
 );
 
+/**
+ * Admits the marketplace identity for one explicit native removal.
+ * The narrow request prevents mutation adapters from receiving unrelated lifecycle state.
+ */
 export const NativeProviderMarketplaceIdentityInputSchema = Type.Readonly(
   Type.Object({ identity: MarketplaceIdentitySchema }, { additionalProperties: false })
 );
 
+/**
+ * Admits the canonical plugin selector used by native install, enable, and removal operations.
+ * Provider adapters translate this shared selector into their vendor-specific commands.
+ */
 export const NativeProviderPluginSelectorInputSchema = Type.Readonly(
   Type.Object({ selector: PluginSelectorSchema }, { additionalProperties: false })
 );
 
+/** Caps the number of installed plugin files observed in one provider request. */
 export const MAX_NATIVE_PROVIDER_PLUGIN_FILES = 16_384;
+/** Caps the bytes admitted for any single installed plugin file. */
 export const MAX_NATIVE_PROVIDER_PLUGIN_FILE_BYTES = 64 * 1_024 * 1_024;
+/** Caps aggregate requested plugin-file bytes to bound one provider observation. */
 export const MAX_NATIVE_PROVIDER_PLUGIN_FILES_TOTAL_BYTES = 64 * 1_024 * 1_024;
 const MAX_NATIVE_PROVIDER_PLUGIN_FILE_BASE64_LENGTH =
   4 * Math.ceil(MAX_NATIVE_PROVIDER_PLUGIN_FILE_BYTES / 3);
 
+/**
+ * Admits one canonical relative file path and caller-selected byte ceiling.
+ * Native sessions use this request to inspect installed content without granting unbounded
+ * filesystem reads.
+ */
 export const NativeProviderPluginFileRequestSchema = Type.Readonly(
   Type.Object(
     {
@@ -312,6 +386,11 @@ export const NativeProviderPluginFileRequestSchema = Type.Readonly(
   )
 );
 
+/**
+ * Validates a deterministic, aggregate-bounded batch of installed plugin file reads.
+ * Canonical ordering lets providers return results that lifecycle comparison can match by
+ * position without reinterpreting paths.
+ */
 export const NativeProviderPluginFilesReadInputSchema = Refine(
   Type.Readonly(
     Type.Object(
@@ -331,6 +410,10 @@ export const NativeProviderPluginFilesReadInputSchema = Refine(
   () => "Expected distinct plugin files in canonical order within the batch byte limit"
 );
 
+/**
+ * Carries one successfully read installed plugin file across the resource boundary.
+ * Base64 content preserves exact bytes for lifecycle verification while remaining schema-safe.
+ */
 export const NativeProviderPluginFileReadSchema = Type.Readonly(
   Type.Object(
     {
@@ -346,6 +429,10 @@ export const NativeProviderPluginFileReadSchema = Type.Readonly(
   )
 );
 
+/**
+ * Reports that an explicitly requested installed plugin file was absent.
+ * Missing files remain ordinary observation results so lifecycle policy can classify drift.
+ */
 export const NativeProviderPluginFileMissingSchema = Type.Readonly(
   Type.Object(
     {
@@ -356,6 +443,10 @@ export const NativeProviderPluginFileMissingSchema = Type.Readonly(
   )
 );
 
+/**
+ * Reports that an installed plugin file exceeded its caller-selected read bound.
+ * The provider preserves this evidence without allocating or returning the oversized content.
+ */
 export const NativeProviderPluginFileTooLargeSchema = Type.Readonly(
   Type.Object(
     {
@@ -366,12 +457,20 @@ export const NativeProviderPluginFileTooLargeSchema = Type.Readonly(
   )
 );
 
+/**
+ * Unifies read, missing, and bounded-too-large outcomes for one requested plugin file.
+ * Native sessions return this closed result set to lifecycle verification.
+ */
 export const NativeProviderPluginFileObservationSchema = Type.Union([
   NativeProviderPluginFileReadSchema,
   NativeProviderPluginFileMissingSchema,
   NativeProviderPluginFileTooLargeSchema,
 ]);
 
+/**
+ * Validates a bounded, canonically ordered set of distinct file observations for one plugin.
+ * Service policy separately correlates the observations with the requested paths.
+ */
 export const NativeProviderPluginFilesSchema = Refine(
   Type.Readonly(
     Type.Object(
@@ -391,6 +490,10 @@ export const NativeProviderPluginFilesSchema = Refine(
   () => "Expected one canonical observation per plugin file"
 );
 
+/**
+ * Records that a native provider command returned for a specific operation.
+ * Lifecycle policy interprets the operation and combines this result with fresh inventory.
+ */
 export const NativeProviderMutationResultSchema = Type.Readonly(
   Type.Object(
     {
@@ -478,6 +581,14 @@ function isCanonicalHttpsGitUrl(value: string): boolean {
   );
 }
 
+/**
+ * Narrows an unknown provider error to the resource's canonical failure envelope.
+ * Provider tests and boundary adapters use this guard before relying on operation and
+ * command-phase evidence.
+ *
+ * @param input - The unknown value crossing the native-provider boundary.
+ * @returns Whether the value satisfies the complete failure contract.
+ */
 export function isNativeAgentProviderFailure(input: unknown): input is NativeAgentProviderFailure {
   return Value.Check(NativeAgentProviderFailureSchema, input);
 }

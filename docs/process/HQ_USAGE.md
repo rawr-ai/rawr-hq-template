@@ -78,10 +78,10 @@ Habitat targets are cacheable only when their Nx inputs cover every Git-visible
 tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
 owner-local verification rather than hidden merge-admission work.
 
-Every non-root project now owns a public check, and Habitat's bounded graph rule
-rejects a new project without one. Do not claim that every registered Habitat
-rule is active; the graph rule uses its packet-local `check.mjs` only because
-the pinned standalone consumer does not expose the native Nx runner.
+Every current non-root project owns a public check. Do not add a script-backed
+Habitat graph rule merely because the pinned standalone consumer does not
+expose the native Nx runner; the upstream distributable integration owns that
+future capability.
 
 Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
 release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its

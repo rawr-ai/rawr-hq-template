@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "require_blueprint_packet_topology",
-  "title": "Require Blueprint Packet Topology",
+  "title": "Require Habitat Rule Packet Topology",
   "placement": {
     "niche": "rawr",
     "blueprint": "blueprint-packet",
@@ -12,14 +12,18 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an open blueprint packet, a missing rule or baseline, or a runner source outside the canonical pattern.md, structure.toml, and exceptional check.mjs names",
-  "why": "Every generic blueprint rule is one closed policy packet. Stable packet names let Habitat validate topology and keep any demonstrated native capability-gap adapter beside the rule it implements.",
-  "remediate": "Keep rule.json and baseline.json in every blueprint packet, add only the selected pattern.md or structure.toml source, use check.mjs only for a documented Habitat capability gap, and remove unrelated files from the packet.",
-  "message": "Blueprint packets must retain one closed canonical policy surface.",
+  "forbids": "an open blueprint or repository-niche rule packet, a missing rule or baseline, or an executable source outside the canonical pattern.md and structure.toml names",
+  "why": "Every reusable blueprint rule and repository-local niche rule is one closed policy packet. Stable packet names keep source and topology authority inside Habitat's native rule forms.",
+  "remediate": "Keep rule.json and baseline.json in every blueprint or repository-niche rule packet, add only the selected pattern.md or structure.toml source, and remove unrelated files from the packet.",
+  "message": "Habitat rule packets must retain one closed canonical policy surface.",
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [".habitat/blueprints/*/*/**"]
+      "patterns": [
+        ".habitat/blueprints/*/*/**",
+        ".habitat/*/*/rules/*/**",
+        ".habitat/*/*/*/rules/*/**"
+      ]
     }
   ],
   "supportFiles": {

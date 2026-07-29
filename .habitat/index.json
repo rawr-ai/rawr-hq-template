@@ -5,6 +5,7 @@
     "habitat": "scripts/habitat",
     "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle",
     "@rawr/hq-app": "apps/hq",
-    "@rawr/web": "apps/web"
+    "@rawr/web": "apps/web",
+    "runtime-realization-type-env": "tools/runtime-realization-type-env"
   }
 }

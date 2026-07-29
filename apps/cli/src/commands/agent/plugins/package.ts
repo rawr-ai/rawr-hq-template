@@ -5,6 +5,11 @@ import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands
 import { releaseWorkspaceFlags } from "../../../lib/agent-plugins/commands/flags";
 import { parsePackageRequest } from "../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins package` into deterministic lifecycle packaging.
+ * The command normalizes output controls, then delegates content selection and encoding policy to
+ * the lifecycle service.
+ */
 export default class AgentPluginsPackage extends AgentPluginLifecycleCommand {
   static description = "Render a deterministic package from exact selected Git content";
 

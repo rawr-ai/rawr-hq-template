@@ -44,7 +44,7 @@ These are the recurring failure modes this lab must catch.
 | Raw vendor primitive proof | Direct `Queue`, `PubSub`, `Ref`, `Deferred`, `Schedule`, or `Stream` demos are counted as spine proof. | Route through a RAWR-owned process-local wrapper, or keep as vendor notes only. |
 | Hidden design decision | A fixture chooses unresolved API shape without naming the issue. | Fence as `xfail` or add an explicit design decision packet before proving. |
 | Optional proof without test oracle | A test passes but does not state what failing would mean. | Add or sharpen the test oracle before keeping the test. |
-| Scope leak | Lab imports parent repo production code, joins root gates, becomes a workspace package, or exports public SDK surfaces. | Reject in structural guard; Parent-Repo Migration belongs to explicit Parent-Repo Migration slices. |
+| Scope leak | Lab imports parent repo production code, joins root gates, becomes a workspace package, or exports public SDK surfaces. | Reject through Habitat topology/source law and the Nx project boundary; Parent-Repo Migration belongs to explicit Parent-Repo Migration slices. |
 | Stale authority drift | Quarantined or older specs override the current runtime realization spec. | Treat older docs as provenance only and cite the current authority path/hash. |
 | Runtime path collapse | Derivation, compilation, provisioning, invocation, adapter lowering, and harness mounting are blurred. | Split the claim by lifecycle phase and prove each boundary separately. |
 

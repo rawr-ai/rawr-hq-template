@@ -139,27 +139,30 @@ realization; the application retains selection while runtime owns scope.
 Rules under `.habitat/rawr` remain qualified repository, lifecycle, or host
 constraints rather than generic blueprints. The repository niche owns the
 cross-kind `AGENTS.md` placement relation and the closed repository-script
-root while leaving package topology with each package blueprint. The
+root while leaving package topology with each package blueprint. Its contracts
+subniche applies the shared exported-value JSDoc law to the admitted public
+lifecycle boundary. The Runtime Realization lab niche owns that contained
+tool's closed top-level planes and parser-visible containment relations. The
 agent-plugin lifecycle niche closes the curated command channel and keeps its
 source independent from the native external-plugin package. The web-host niche
 admits public environment fields only through the web-owned projection funnel.
 Reusable service source and topology relationships belong to their generic
-Habitat blueprints, while TypeScript package exports own public compatibility.
-The former coarse project-kind matrix is retired, not represented as another
-source pattern. Nx observes and schedules the graph; any still-required
-resolved-edge constraint must enter later as its own Habitat graph packet,
-never as ESLint architecture.
+Habitat blueprints, while TypeScript owns type and package compatibility. The
+former coarse project-kind matrix is retired, not represented as another
+source pattern. Nx observes and schedules the graph.
 
-The `nx-workspace` blueprint owns the root scheduler contract and resolved
-project-quality admission. Grit owns the scheduler source law. The pinned
-standalone consumer cannot execute Habitat's native Nx runner, so the project
-rule keeps one bounded `check.mjs` adapter beside its manifest until project
-metadata has one directly checkable owner or the consumer gains that runner.
+The `nx-workspace` blueprint owns the root scheduler contract and the single
+workspace lint relationship. Grit owns that scheduler source law. The former
+resolved-project adapter is deleted because the pinned standalone consumer
+cannot execute Habitat's native Nx runner; Template does not bypass Habitat by
+calling its implementation script directly.
 The selected local policy CLI leaf and the independent Stop-time structure CLI
 leaf remain intentionally uncached until an upstream distributable Habitat Nx
 boundary owns registry discovery, exact Nx cache inputs, caching, and one
 acquisition. The selected rule scopes themselves remain exact.
-No equivalent policy belongs in ESLint or a hand-written script.
+No equivalent structural or source policy belongs in ESLint or a hand-written
+script. Nx module dependency edges may use the Nx ESLint boundary rule when
+that separate graph law is admitted.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
 and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

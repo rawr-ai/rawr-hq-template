@@ -37,10 +37,6 @@
       "!{projectRoot}/**/*.spec.*"
     ],
     "habitatPolicy": ["{workspaceRoot}/.habitat/**/*", "!{workspaceRoot}/.habitat/cache/**"],
-    "habitatTypecheckSources": [
-      "{workspaceRoot}/.habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs",
-      "{workspaceRoot}/.habitat/blueprints/typescript-source/require_imported_exports_have_jsdoc/check.mjs"
-    ],
     "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
   },

@@ -19,7 +19,7 @@ Use these names consistently:
 Pinned authority for the current lab:
 
 - `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
-- The SHA-256 is recorded in `evidence/proof-manifest.json` and verified by the structural guard.
+- The SHA-256 is recorded in `evidence/proof-manifest.json`.
 
 The SDK facade in `src/sdk/**` exists only to make the spec authoring model executable by TypeScript. Canonical-looking imports such as `@rawr/sdk/effect` are local `tsconfig` aliases and must not be treated as production package exports.
 
@@ -75,9 +75,14 @@ bunx nx run runtime-realization-type-env:vendor-effect
 bunx nx run runtime-realization-type-env:vendor-boundaries
 bunx nx run runtime-realization-type-env:oracle
 bunx nx run runtime-realization-type-env:simulate
-bunx nx run runtime-realization-type-env:structural
 bunx nx run runtime-realization-type-env:gate
 ```
+
+Repository topology and parser-visible source relationships are owned by the
+enforced Habitat rules
+`require_runtime_realization_lab_topology` and
+`require_runtime_realization_lab_source_relationships`. They run through the
+repository Habitat policy graph rather than a lab-local structural command.
 
 ## Iteration Rule
 

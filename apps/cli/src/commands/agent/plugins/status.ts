@@ -5,6 +5,10 @@ import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands
 import { providerTargetFlag } from "../../../lib/agent-plugins/commands/flags";
 import { parseStatusRequest } from "../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins status` into provider convergence observation.
+ * It binds explicit provider homes from CLI input without interpreting installed-state truth.
+ */
 export default class AgentPluginsStatus extends AgentPluginLifecycleCommand {
   static description = "Inspect governed convergence for explicit native provider homes";
 

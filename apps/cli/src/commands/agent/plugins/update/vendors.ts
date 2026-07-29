@@ -5,6 +5,10 @@ import { AgentPluginLifecycleCommand } from "../../../../lib/agent-plugins/comma
 import { contentWorkspaceFlags } from "../../../../lib/agent-plugins/commands/flags";
 import { parseVendorUpdateRequest } from "../../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins update vendors` into reviewable vendor content authoring.
+ * The command selects requested sources; lifecycle policy decides what may be fetched and written.
+ */
 export default class AgentPluginsUpdateVendors extends AgentPluginLifecycleCommand {
   static description = "Author reviewable updates for explicitly selected tracked vendor sources";
 

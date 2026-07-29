@@ -68,6 +68,14 @@ type CapturedOutput =
   | Readonly<{ kind: "Absent" }>
   | Readonly<{ kind: "Present"; file: CapturedFile }>;
 
+/**
+ * Builds the Cowork v1 package-output resource while retaining Node platform requirements.
+ * A provider-local semaphore serializes publication so staging, replacement, and verification
+ * cannot overlap within one resource instance.
+ *
+ * @param options - Provider test hooks; production callers normally use the default mechanics.
+ * @returns The archive encoder and serialized publisher consumed by lifecycle packaging.
+ */
 export function makeAgentPluginPackageOutputResource(
   options: CoworkV1EffectPlatformNodeOptions = {}
 ): AgentPluginPackageOutputResource<ProviderRequirements> {

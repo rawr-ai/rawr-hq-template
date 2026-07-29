@@ -7,6 +7,11 @@ import {
 } from "../../../lib/authoring/agent-plugin";
 import { authoringResultView } from "../../../lib/authoring/shared";
 
+/**
+ * Owns the `agent plugins create` projection for authoring curated plugin content.
+ * It admits operator input and renders authoring outcomes while filesystem policy stays in the
+ * authoring capability.
+ */
 export default class AgentPluginsCreate extends RawrCommand {
   static description = "Create curated agent-plugin content in an explicit content workspace";
 

@@ -17,9 +17,10 @@
 - `release.json` is the sole accepted release identity. A caller-supplied
   binary must be absolute, executable, and match its selected asset exactly.
 - Habitat blueprint structure and source-pattern policy belong in `.habitat/**`;
-  the native Habitat CLI owns evaluation. A rule-owned `check.mjs` is allowed
-  only for a demonstrated native capability gap and must disappear when the
-  consumer exposes that runner; do not place structural policy in `scripts/**`.
+  the native Habitat CLI owns evaluation. Template admits no script-backed
+  Habitat rule; do not invoke a rule implementation around Habitat or place
+  structural policy in `scripts/**`. A future native capability gap requires a
+  named authority decision before packet topology changes.
 - Fixture cleanup must stay limited to a canonical temporary parent, an exact
   owned prefix, a real directory, and a non-symlink path before recursive
   removal.
@@ -36,8 +37,8 @@
 
 - The **release manifest** is executable identity. A **verified cache entry**
   is a byte-exact local copy; the **local policy batch** is the explicitly
-  selected mixed 26-rule Habitat CLI leaf. The independent **structure leaf**
-  is the ten-rule Habitat-only subset used for fast Stop feedback.
+  selected native Habitat CLI leaf. The independent **structure leaf** is its
+  structure-only subset used for fast Stop feedback.
 
 ## Flow
 
@@ -55,16 +56,14 @@
   structural checker.
 - `habitat:check` composes the workspace lint owner, this project's typecheck
   and tests, and `check:policy`.
-- `check:policy` composes `check:policy:local` with the rule-owned Nx project
-  admission adapter. The local policy leaf acquires the selected green Grit and
+- `check:policy` resolves to `check:policy:local`. The local policy leaf
+  acquires the selected green Grit and
   structure rules once, including the workspace scheduler law, admitted Oclif
   structure laws, resource and provider package boundaries, the closed
-  repository-script root, agent-plugin command-channel topology and source
-  separation, and the web public-environment funnel. Rules with known live-
-  corpus violations remain outside the required batch until their owning
-  migration burns them down; direct rule selection is diagnostic, not a
-  second required surface.
-- `check:structure` is an independent ten-rule Habitat-structure leaf for
+  repository-script root, exported-value documentation law, Runtime
+  Realization lab boundaries, agent-plugin command-channel topology and source
+  separation, and the web public-environment funnel.
+- `check:structure` is an independent Habitat-structure leaf for
   fast Codex Stop feedback. It does not depend on or replace policy, lint, or
   the complete repository graph.
 - Both CLI leaves are intentionally uncached because Nx and Habitat do not
@@ -92,7 +91,6 @@
 - `bunx nx run habitat:lint`
 - `bunx nx run habitat:typecheck`
 - `bunx nx run habitat:test`
-- `bunx nx run habitat:check:project-admission`
 - `bunx nx run habitat:check:policy:local`
 - `bunx nx run habitat:check:structure`
 - `bunx nx run habitat:check:policy`

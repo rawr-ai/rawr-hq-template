@@ -10,7 +10,34 @@ required = [
   "rule.json",
 ]
 allowed = [
-  "check.mjs",
+  "pattern.md",
+  "structure.toml",
+]
+
+[[scopes]]
+name = "repository-niche-rule-packets"
+root = ".habitat/!(*.*)/!(*.*)/rules/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = [
+  "baseline.json",
+  "rule.json",
+]
+allowed = [
+  "pattern.md",
+  "structure.toml",
+]
+
+[[scopes]]
+name = "nested-repository-niche-rule-packets"
+root = ".habitat/!(*.*)/!(*.*)/!(*.*)/rules/!(*.*)"
+kind = "directory"
+mode = "closed"
+required = [
+  "baseline.json",
+  "rule.json",
+]
+allowed = [
   "pattern.md",
   "structure.toml",
 ]
