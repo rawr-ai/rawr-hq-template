@@ -118,6 +118,7 @@ required = [
   "contract",
   "module.ts",
   "router",
+  "router.ts",
 ]
 allowed = [
   "middleware",
@@ -147,11 +148,9 @@ root = "services/*/src/service/modules/*/router"
 kind = "directory"
 mode = "closed"
 required = [
-  "index.ts",
+  "*.router.ts",
 ]
-allowed = [
-  "*.ts",
-]
+allowed = []
 
 [[scopes]]
 name = "standalone-service-module-middleware-interiors"
@@ -183,11 +182,9 @@ root = "plugins/server/api/*/src/service/modules/*/router"
 kind = "directory"
 mode = "closed"
 required = [
-  "index.ts",
+  "*.router.ts",
 ]
-allowed = [
-  "*.ts",
-]
+allowed = []
 
 [[scopes]]
 name = "api-service-module-middleware-interiors"
@@ -357,6 +354,7 @@ required = [
   "contract",
   "module.ts",
   "router",
+  "router.ts",
 ]
 allowed = [
   "middleware",

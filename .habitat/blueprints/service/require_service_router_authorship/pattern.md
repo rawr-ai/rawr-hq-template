@@ -4,54 +4,68 @@ tags: [orpc, service, router, authorship]
 ---
 # Require Service Router Authorship
 
-Operation leaves author behavior from the matching configured module operation.
-Module and root router spines remain composition-only.
-When an operation name is an ECMAScript reserved word, the leaf uses the exact
-language-required `<name>Operation` local binding and aliases only that binding
-to the filename-mapped public export; its index imports the same public name
-into the same local binding. This is not a general alias form.
+Named router leaves author operations from their matching configured module
+descendant. Module-root routers compose those completed values; the service-root
+router composes the completed module routers.
+
+The oRPC handler is the operation authoring site. It receives the curated
+context and owns the transition directly rather than delegating to a parallel
+callable that reconstructs the request and dependencies.
 
 ```grit
 language js(typescript)
 
-// Checks that a leaf owns one matching operation or native plain-object group.
-function require_service_router_authorship_leaf_status($filename, $operation, $value) js {
-  const match = $filename.text.match(/\/router\/([^/]+)\.ts$/);
-  if (!match) return "wrong-operation";
-  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
+// Selects a named module operation leaf or cohesive subrouter.
+predicate require_service_router_authorship_is_named_router() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
+}
+
+// Selects the service and module router composition faces.
+predicate require_service_router_authorship_is_composer() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/router\.ts)$"
+}
+
+// Selects the module's composition-only router face.
+predicate require_service_router_authorship_is_module_composer() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$"
+}
+
+// Checks that a named router's public export matches its filename.
+function require_service_router_authorship_leaf_name_status($filename, $name) js {
+  const match = $filename.text.match(/\/router\/([^/]+)\.router\.ts$/);
+  if (!match || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
     return "noncanonical-filename";
   }
   const expected = match[1].replace(
     /-([a-z0-9])/g,
     (_all, value) => value.toUpperCase(),
   );
-  if (expected !== $operation.text) return "wrong-operation";
-  const source = $value.text.replace(/\s+/g, "");
-  const hasHandler = source.includes(".effect(") || source.includes(".handler(");
-  if (!hasHandler) return "missing-handler";
-  const direct = source.match(
-    /^module((?:\.[A-Za-z_$][A-Za-z0-9_$]*)+)\.(?:use|effect|handler)\(/,
+  return expected === $name.text ? "ok" : "wrong-export";
+}
+
+// Checks that every authored operation descends from the filename-mapped branch.
+function require_service_router_authorship_leaf_root_status($filename, $body) js {
+  const match = $filename.text.match(/\/router\/([^/]+)\.router\.ts$/);
+  if (!match) return "noncanonical-filename";
+  const expected = match[1].replace(
+    /-([a-z0-9])/g,
+    (_all, value) => value.toUpperCase(),
   );
-  if (direct) {
-    const properties = direct[1].split(".");
-    const finalProperty = properties[properties.length - 1];
-    return finalProperty === expected ? "ok" : "wrong-operation";
-  }
-  const groupRoots = [
+  const source = $body.text.replace(/\s+/g, "");
+  const roots = [
     ...source.matchAll(
       /module((?:\.[A-Za-z_$][A-Za-z0-9_$]*)+)\.(?:use|effect|handler)\(/g,
     ),
-  ].map((match) => match[1]);
-  const prefix = `.${expected}.`;
-  return source.startsWith("{") &&
-    groupRoots.length > 0 &&
-    groupRoots.every((root) => root.startsWith(prefix))
+  ].map((entry) => entry[1].slice(1).split("."));
+  if (roots.length === 0) return "missing-handler";
+
+  return roots.every((properties) => properties[0] === expected)
     ? "ok"
     : "wrong-root";
 }
 
-// Admits one exact local binding for an ECMAScript-reserved public operation.
-function require_service_router_authorship_reserved_binding_status($local, $operation) js {
+// Admits the one local binding required by an ECMAScript-reserved public name.
+function require_service_router_authorship_reserved_binding_status($local, $name) js {
   const reserved = new Set([
     "await", "break", "case", "catch", "class", "const", "continue",
     "debugger", "default", "delete", "do", "else", "enum", "export",
@@ -61,106 +75,36 @@ function require_service_router_authorship_reserved_binding_status($local, $oper
     "switch", "this", "throw", "true", "try", "typeof", "var", "void",
     "while", "with", "yield",
   ]);
-  return reserved.has($operation.text) &&
-    $local.text === `${$operation.text}Operation`
+  return reserved.has($name.text) &&
+    $local.text === `${$name.text}Operation`
     ? "ok"
-    : "wrong-operation";
+    : "wrong-binding";
 }
 
-// Selects operation-authoring router leaves.
-predicate require_service_router_authorship_is_leaf() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.ts$",
-  not { $filename <: r".*/router/index\.ts$" }
-}
-
-// Selects composition-only module and root router spines.
-predicate require_service_router_authorship_is_composer() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/router/index\.ts)$"
-}
-
-// Selects the module access point that composes local operation leaves.
-predicate require_service_router_authorship_is_module_composer() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
-}
-
-// Recognizes a direct semantic leaf source from its module router access point.
-predicate require_service_router_authorship_is_leaf_source($source) {
-  $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
-  not { $source <: r"^[\"']\./index[\"']$" }
-}
-
-// Checks that a direct leaf import maps its kebab-case source to one binding.
-function require_service_router_authorship_entrypoint_import_status($source, $operation) js {
-  const match = $source.text.match(/^["']\.\/([^/"']+)["']$/);
-  if (!match || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
-    return "noncanonical-source";
-  }
-  const expected = match[1].replace(
-    /-([a-z0-9])/g,
-    (_all, value) => value.toUpperCase(),
-  );
-  return expected === $operation.text ? "ok" : "wrong-binding";
-}
-
-// Proves one filename-mapped direct leaf import at the router access point.
-predicate require_service_router_authorship_is_canonical_leaf_import($statement) {
+// Recognizes the leaf's sole filename-mapped runtime export.
+predicate require_service_router_authorship_is_canonical_export($export) {
   or {
-    and {
-      $statement <: `import { $operation } from $source`,
-      $status = require_service_router_authorship_entrypoint_import_status(
-        source=$source,
-        operation=$operation
-      ),
-      $status <: includes "ok"
+    $export <: or {
+      `export const $name = $value`,
+      `export const $name: $type = $value`
     },
     and {
-      $statement <: `import { $operation as $local } from $source`,
-      $source_status = require_service_router_authorship_entrypoint_import_status(
-        source=$source,
-        operation=$operation
-      ),
-      $source_status <: includes "ok",
+      $export <: `export { $local as $name }`,
       $binding_status = require_service_router_authorship_reserved_binding_status(
         local=$local,
-        operation=$operation
+        name=$name
       ),
       $binding_status <: includes "ok"
     }
-  }
+  },
+  $status = require_service_router_authorship_leaf_name_status(
+    filename=$filename,
+    name=$name
+  ),
+  $status <: includes "ok"
 }
 
-// Matches a source alias kind to the importing service lane.
-predicate require_service_router_authorship_is_same_kind($lane, $alias_kind) {
-  or {
-    and {
-      $lane <: r"^services$",
-      $alias_kind <: r"^service$"
-    },
-    and {
-      $lane <: r"^plugins/server/api$",
-      $alias_kind <: r"^api$"
-    }
-  }
-}
-
-// Recognizes an operation leaf cycling through its own router access point.
-predicate require_service_router_authorship_is_own_index_source($source) {
-  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/router/[^/]+\.ts$"($lane, $owner, $module),
-  or {
-    $source <: r"^[\"'](?:\.|\./|\./index(?:\.[cm]?[jt]s)?|\.\./router(?:/|/index(?:\.[cm]?[jt]s)?)?)[\"']$",
-    and {
-      $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)/router(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"($alias_owner, $alias_kind, $target),
-      $alias_owner <: $owner,
-      require_service_router_authorship_is_same_kind(
-        lane=$lane,
-        alias_kind=$alias_kind
-      ),
-      $target <: $module
-    }
-  }
-}
-
-// Recognizes runtime declarations crossing a router-leaf export boundary.
+// Recognizes runtime declarations crossing a named router boundary.
 predicate require_service_router_authorship_is_runtime_export($export) {
   $export <: export_statement(declaration=$declaration) where {
     $declaration <: or {
@@ -173,95 +117,150 @@ predicate require_service_router_authorship_is_runtime_export($export) {
   }
 }
 
-// Recognizes the leaf's one operation export mapped from its kebab-case filename.
-predicate require_service_router_authorship_is_operation_export($export) {
-  $export <: `export const $operation = $value`,
-  $status = require_service_router_authorship_leaf_status(
-    filename=$filename,
-    operation=$operation,
-    value=$value
-  ),
-  $status <: includes "ok"
+// Recognizes a handler authored directly at the native operation boundary.
+predicate require_service_router_authorship_is_inline_handler($handler) {
+  or {
+    $handler <: arrow_function(),
+    $handler <: r"^\s*(?:async\s+)?function(?:\s*\*)?(?:\s+[A-Za-z_$][A-Za-z0-9_$]*)?\s*\("
+  }
+}
+
+// Recognizes a top-level callable that displaces operation authorship.
+predicate require_service_router_authorship_is_detached_callable($statement) {
+  or {
+    $statement <: function_declaration(),
+    $statement <: `const $name = $handler` where {
+      require_service_router_authorship_is_inline_handler(handler=$handler)
+    },
+    $statement <: `const $name: $type = $handler` where {
+      require_service_router_authorship_is_inline_handler(handler=$handler)
+    },
+    $statement <: `export const $name = $handler` where {
+      require_service_router_authorship_is_inline_handler(handler=$handler)
+    },
+    $statement <: `export const $name: $type = $handler` where {
+      require_service_router_authorship_is_inline_handler(handler=$handler)
+    }
+  }
+}
+
+// Admits type-only imports and values from direct local named router leaves.
+predicate require_service_router_authorship_is_module_router_import($import, $source) {
+  or {
+    $import <: import_statement(type=type()),
+    and {
+      $import <: `import { $... } from $source`,
+      $source <: r"^[\"']\./router/[^/\"']+\.router[\"']$"
+    }
+  }
+}
+
+// Admits the finite TypeScript wrappers around a plain composition object.
+predicate require_service_router_authorship_is_plain_router($value) {
+  or {
+    $value <: object(),
+    $value <: `$object satisfies $type` where {
+      $object <: object()
+    },
+    $value <: `$object as const` where {
+      $object <: object()
+    },
+    $value <: `$object as $type` where {
+      $object <: object()
+    }
+  },
+  not { $value <: contains call_expression() },
+  not { $value <: contains method_definition() },
+  not { $value <: contains arrow_function() }
+}
+
+// Restricts a module router to local leaf imports and one plain router export.
+predicate require_service_router_authorship_is_module_router_statement($statement) {
+  or {
+    $statement <: import_statement(source=$source) as $import where {
+      require_service_router_authorship_is_module_router_import(
+        import=$import,
+        source=$source
+      )
+    },
+    $statement <: `export const router = $value` where {
+      require_service_router_authorship_is_plain_router(value=$value)
+    },
+    $statement <: `export const router: $type = $value` where {
+      require_service_router_authorship_is_plain_router(value=$value)
+    }
+  }
 }
 
 or {
-  program(statements=$body) where {
-    require_service_router_authorship_is_leaf(),
+  program(statements=$statements) as $body where {
+    require_service_router_authorship_is_named_router(),
     not {
-      or {
-        $body <: contains `export const $operation = $value` where {
-          $status = require_service_router_authorship_leaf_status(
-            filename=$filename,
-            operation=$operation,
-            value=$value
-          ),
-          $status <: includes "ok"
-        },
-        and {
-          $body <: contains `const $local = $value`,
-          $body <: contains `export { $local as $operation }`,
-          $operation_status = require_service_router_authorship_leaf_status(
-            filename=$filename,
-            operation=$operation,
-            value=$value
-          ),
-          $operation_status <: includes "ok",
-          $binding_status = require_service_router_authorship_reserved_binding_status(
-            local=$local,
-            operation=$operation
-          ),
-          $binding_status <: includes "ok"
-        }
+      $statements <: some $export where {
+        require_service_router_authorship_is_canonical_export(export=$export)
       }
     }
   },
+  program() as $body where {
+    require_service_router_authorship_is_named_router(),
+    $status = require_service_router_authorship_leaf_root_status(
+      filename=$filename,
+      body=$body
+    ),
+    not { $status <: includes "ok" }
+  },
   export_statement() as $export where {
-    require_service_router_authorship_is_leaf(),
+    require_service_router_authorship_is_named_router(),
     require_service_router_authorship_is_runtime_export(export=$export),
     not {
-      require_service_router_authorship_is_operation_export(export=$export)
+      require_service_router_authorship_is_canonical_export(export=$export)
     }
   },
   `export { $specifiers }` as $export where {
-    require_service_router_authorship_is_leaf(),
+    require_service_router_authorship_is_named_router(),
     not {
-      $export <: `export { $local as $operation }`,
-      $program <: contains `const $local = $value`,
-      $operation_status = require_service_router_authorship_leaf_status(
-        filename=$filename,
-        operation=$operation,
-        value=$value
-      ),
-      $operation_status <: includes "ok",
-      $binding_status = require_service_router_authorship_reserved_binding_status(
-        local=$local,
-        operation=$operation
-      ),
-      $binding_status <: includes "ok"
+      require_service_router_authorship_is_canonical_export(export=$export)
     }
   },
   export_statement(source=$source) where {
-    require_service_router_authorship_is_leaf(),
+    require_service_router_authorship_is_named_router(),
     $source <: string()
   },
   `export default $value` where {
-    require_service_router_authorship_is_leaf()
+    require_service_router_authorship_is_named_router()
   },
-  `$receiver.$operation.$method($handler)` where {
-    require_service_router_authorship_is_composer(),
-    $method <: r"^(?:effect|handler)$"
-  },
-  import_statement() as $statement where {
-    require_service_router_authorship_is_module_composer(),
-    not {
-      require_service_router_authorship_is_canonical_leaf_import(
+  program(statements=$statements) where {
+    require_service_router_authorship_is_named_router(),
+    $statements <: some $statement where {
+      require_service_router_authorship_is_detached_callable(
         statement=$statement
       )
     }
   },
-  import_statement(source=$source) where {
-    require_service_router_authorship_is_leaf(),
-    require_service_router_authorship_is_own_index_source(source=$source)
+  or {
+    `$receiver.effect($handler)`,
+    `$receiver.handler($handler)`
+  } where {
+    require_service_router_authorship_is_named_router(),
+    not {
+      require_service_router_authorship_is_inline_handler(handler=$handler)
+    }
+  },
+  or {
+    `$receiver.effect($handler)`,
+    `$receiver.handler($handler)`
+  } where {
+    require_service_router_authorship_is_composer()
+  },
+  program(statements=$statements) where {
+    require_service_router_authorship_is_module_composer(),
+    $statements <: some $statement where {
+      not {
+        require_service_router_authorship_is_module_router_statement(
+          statement=$statement
+        )
+      }
+    }
   }
 }
 ```
@@ -269,134 +268,78 @@ or {
 ## Matches a leaf authored from the wrong operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
 import { module } from "../module";
-export const get = module.list.handler(listJobs);
+export const find = module.list.effect(({ context }) => context.catalog.list());
 ```
 
-## Matches a noncanonical leaf filename
+## Matches a grouped leaf rooted outside its filename
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find_by_id.ts
+// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
 import { module } from "../module";
-export const find_by_id = module.find_by_id.handler(findJob);
+const find = module.catalog.find.effect(({ context }) => context.catalog.find());
+const list = module.catalog.list.effect(({ context }) => context.catalog.list());
+export const read = { find, list };
 ```
 
-## Matches a nested atomic leaf authored from the wrong terminal operation
+## Matches a detached operation implementation
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.ts
+// @filename: services/jobs/src/service/modules/catalog/router/sync.router.ts
 import { module } from "../module";
-export const submit = module.jobs.status.handler(submitJob);
+const runSync = ({ context, input }) => context.catalog.sync(input);
+export const sync = module.sync.effect(runSync);
 ```
 
-## Matches operation authorship in a composer
+## Matches operation authorship in a module composer
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-export const get = module.get.handler(getJob);
-export const router = impl.catalog.router({ get });
-```
-
-## Matches implementation acquisition from a module router access point
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-import { module } from "../module";
-import { get } from "./get";
-export const router = { get };
-```
-
-## Matches an operation leaf cycling through its router access point
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
-import { router } from ".";
-import { module } from "../module";
-export const get = module.get.handler(getJob);
-```
-
-## Matches an extra runtime export from a leaf
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
-import { module } from "../module";
-export const get = module.get.handler(getJob);
-export const preview = module.get.handler(previewJob);
-```
-
-## Matches a runtime export clause from a leaf
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
-import { module } from "../module";
-const preview = module.get.handler(previewJob);
-export const get = module.get.handler(getJob);
-export { preview };
-```
-
-## Matches a deliberate native group rooted outside its filename-mapped group
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/search.ts
-import { module } from "../module";
-export const search = {
-  available: module.search.available.effect(searchAvailable),
-  archived: module.catalog.archived.effect(searchArchived),
-};
-```
-
-## Ignores configured leaf authorship and composition-only routers
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
-import { module } from "../module";
-export const get = module.get
-  .use(requireReadAccess)
-  .use(loadJob)
-  .effect(getJob);
-// @filename: services/jobs/src/service/modules/catalog/router/find-by-id.ts
-import { module } from "../module";
-export const findById = module.findById.effect(findJobById);
-// @filename: services/jobs/src/service/modules/catalog/router/search.ts
-import { module } from "../module";
-export const search = {
-  available: module.search.available.effect(searchAvailable),
-  archived: module.search.archived.effect(searchArchived),
-};
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-import { get } from "./get";
-import { search } from "./search";
-export const router = { get, search };
-// @filename: services/jobs/src/service/router.ts
-import { router as catalog } from "#jobs-service/modules/catalog/router";
-import { impl } from "./impl";
-export const router = impl.router({ catalog });
-```
-
-## Ignores a nested module router access point
-
-```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/index.ts
-import { status } from "./status";
-import { submit } from "./submit";
-import { submitBatch } from "./submit-batch";
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { module } from "./module";
 export const router = {
-  jobs: {
-    submit,
-    submitBatch,
-    status,
-  },
+  find: module.find.effect(({ context }) => context.catalog.find()),
 };
 ```
 
-An unimported sibling leaf is intentionally outside this source relation.
-Knip owns whether such a file is unreachable.
-
-## Ignores a nested one-operation leaf
+## Ignores a standalone inline operation
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
 import { module } from "../module";
-export const submit = module.jobs.submit.handler(submitJob);
+export const find = module.find.effect(({ context }) => context.catalog.find());
+```
+
+## Ignores a cohesive grouped router
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
+import { module } from "../module";
+const find = module.read.find.effect(({ context }) => context.catalog.find());
+const list = module.read.list.effect(({ context }) => context.catalog.list());
+export const read = { find, list };
+```
+
+## Ignores the language-required reserved binding
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/package.router.ts
+import { module } from "../module";
+const packageOperation = module.package.effect(
+  ({ context, input }) => context.catalog.package(input),
+);
+export { packageOperation as package };
+```
+
+## Ignores a composition-only module router
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { read } from "./router/read.router";
+import { package as packageOperation } from "./router/package.router";
+import type { Router } from "./contract";
+export const router = {
+  ...read,
+  package: packageOperation,
+} satisfies Router;
 ```

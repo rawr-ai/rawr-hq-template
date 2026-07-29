@@ -109,7 +109,7 @@ or {
 ## Matches foreign private aliases
 
 ```typescript
-// @filename: plugins/server/api/catalog/src/service/modules/jobs/router/index.ts
+// @filename: plugins/server/api/catalog/src/service/modules/jobs/router.ts
 import { router } from "#jobs-service/router";
 
 // @filename: services/discovery/src/service/model/ports/jobs.ts
@@ -147,7 +147,7 @@ import { router } from "#jobs-service/router";
 // @filename: services/jobs/test/mechanics/client/client.test.ts
 import { createJobsStore } from "#jobs-service/db/stores/jobs";
 
-// @filename: plugins/server/api/catalog/src/service/modules/jobs/router/index.ts
+// @filename: plugins/server/api/catalog/src/service/modules/jobs/router.ts
 import type { Client as JobsClient } from "#jobs/client";
 
 // @filename: tools/db/src/catalog.ts

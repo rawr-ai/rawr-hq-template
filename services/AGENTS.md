@@ -50,14 +50,15 @@
 
 - Host resources descend through base context, root middleware, a configured
   module branch, optional module middleware, terminal curation, and the
-  operation handler. Contract and router directories ascend only through their
-  index faces to the service composition spines.
+  operation handler. Contract leaves ascend through their directory index.
+  Router leaves ascend through the module-root `router.ts`, which is the
+  module's sole router composition face.
 
 ## Interfaces
 
 - Public clients and contracts are consumer interfaces. Host context is the
-  capability input. Module contract and router indexes are private composition
-  interfaces inside the service.
+  capability input. Module contract indexes and module-root routers are private
+  composition interfaces inside the service.
 
 ## Routing
 

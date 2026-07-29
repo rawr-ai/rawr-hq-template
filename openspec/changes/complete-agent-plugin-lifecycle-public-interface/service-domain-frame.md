@@ -211,9 +211,9 @@ src/service/
         index.ts
         <operation>.ts
       module.ts
+      router.ts
       router/
-        index.ts
-        <operation>.ts
+        <operation>.router.ts
       middleware/
         index.ts
         <capability>.ts
@@ -226,9 +226,10 @@ src/service/
 ```
 
 Each directory below `model/` exists only when its owner has corresponding
-domain matter. A module exposes one `contract/index.ts` and one
-`router/index.ts` composition face over direct semantic leaves. Optional module
-middleware uses the same indexed catalog shape. Service-root middleware is the
+domain matter. A module exposes one `contract/index.ts`, authors operations in
+named `router/*.router.ts` leaves, and composes them through one module-root
+`router.ts`. Optional module middleware uses its indexed catalog shape.
+Service-root middleware is the
 intentional exception: it consists only of direct kebab-case leaves exporting
 `middleware`, imported by semantic alias and attached in `impl.ts`, with no
 barrel. TypeBox schemas are colocated with their DTOs or entities, and outside

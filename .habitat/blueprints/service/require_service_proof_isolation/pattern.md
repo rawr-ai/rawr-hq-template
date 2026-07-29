@@ -104,8 +104,8 @@ or {
 ## Matches a static import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-import { catalogFixture } from "../../../../../test/support/modules/catalog/fixture";
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { catalogFixture } from "../../../../test/support/modules/catalog/fixture";
 ```
 
 ## Matches a re-export
@@ -118,49 +118,49 @@ export { catalogFixture } from "../../../../test/support/modules/catalog/fixture
 ## Matches a dynamic import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-const fixtures = await import("../../../../../test/support/modules/catalog/fixture");
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+const fixtures = await import("../../../../test/support/modules/catalog/fixture");
 ```
 
 ## Matches a CommonJS require
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-const fixtures = require("../../../../../test/support/modules/catalog/fixture");
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+const fixtures = require("../../../../test/support/modules/catalog/fixture");
 ```
 
 ## Matches CommonJS resolution
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-const fixturePath = require.resolve("../../../../../test/support/modules/catalog/fixture");
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+const fixturePath = require.resolve("../../../../test/support/modules/catalog/fixture");
 ```
 
 ## Matches a template dynamic import
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-const fixtures = await import(`../../../../../test/support/modules/catalog/fixture`);
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+const fixtures = await import(`../../../../test/support/modules/catalog/fixture`);
 ```
 
 ## Matches a template CommonJS require
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-const fixtures = require(`../../../../../test/support/modules/catalog/fixture`);
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+const fixtures = require(`../../../../test/support/modules/catalog/fixture`);
 ```
 
 ## Matches template CommonJS resolution
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-const fixturePath = require.resolve(`../../../../../test/support/modules/catalog/fixture`);
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+const fixturePath = require.resolve(`../../../../test/support/modules/catalog/fixture`);
 ```
 
 ## Ignores production imports
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 import { catalogPolicy } from "./model/policy/catalog";
 ```
 
@@ -174,21 +174,21 @@ import { createJobsClient } from "../../../../src/client";
 ## Ignores embedded API-plugin services
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/index.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router.ts
 import { jobsFixture } from "../../../../test/support/modules/jobs/fixture";
 ```
 
 ## Ignores a contest path segment
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 import { contestPolicy } from "./contest/policy";
 ```
 
 ## Ignores a production operation named test
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 import { test } from "./test";
 ```
 
@@ -198,14 +198,14 @@ The closed service topology rejects source-owned test directories separately.
 This relation remains exact to package-root proof.
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 import { sourceTest } from "../../../../test/source-test";
 ```
 
 ## Ignores interpolated template sources
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 const proofSegment = "test";
-const fixtures = await import(`../../../../../${proofSegment}/support/modules/catalog/fixture`);
+const fixtures = await import(`../../../../${proofSegment}/support/modules/catalog/fixture`);
 ```

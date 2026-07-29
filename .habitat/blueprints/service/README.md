@@ -6,12 +6,13 @@ services and API-plugin service interiors.
 The topology packet owns the standalone package/public face, its optional
 package-root proof tree, and the root and module interior spines. Optional
 service-root middleware is closed to direct simple kebab-case `.ts` leaves;
-it has no barrel, nesting, or role suffix. A module
-exposes required closed `contract/` and `router/` directories through
-`index.ts`; an optional closed `middleware/` directory follows the same access
-pattern only when middleware exists. Redundant module-level `contract.ts` and
-`router.ts` files are not part of the kind. Root service `contract.ts` and
-`router.ts` remain because they compose modules. Embedded API
+it has no barrel, nesting, or role suffix. A module exposes its required closed
+`contract/` directory through `contract/index.ts`, authors operations in a
+closed `router/` directory of named `*.router.ts` leaves, and composes them
+through one module-root `router.ts`. An optional closed `middleware/` directory
+retains its indexed catalog only when middleware exists. A module-level
+`contract.ts` and `router/index.ts` are not part of the kind. Root service
+`contract.ts` and `router.ts` remain because they compose modules. Embedded API
 service interiors do not contain proof; the independently selected
 `plugin-server-api` kind owns their package-root behavior/support topology.
 Optional model facts live as direct leaves under `actors`, `dto`, `entities`,
@@ -147,20 +148,20 @@ implementer is part of the kind. When no per-call facts are required, public
 call context is optional while the client mapper supplies the required
 `invocation: {}` lane.
 
-Operation leaves author procedures from the configured module. Module
-`router/index.ts` composes those leaves as a plain operation tree; root
+Operation leaves author procedures from the configured module. Module-root
+`router.ts` composes those leaves as a plain operation tree; root
 `router.ts` composes the module operation trees and implements the aggregate
 contract once through the unconfigured `impl.router(...)` stage. Using the
 configured `service` stage there would replay inherited middleware; `impl` is
 not a second implementation lineage.
 
-Module capability directories are ordinary static TypeScript faces. Each
+Module capability directories are ordinary static TypeScript interiors. Each
 contract or router leaf maps its kebab-case filename to one lower-camel export.
 An ECMAScript-reserved operation name keeps that exact public export through
 the sole language-required `<name>Contract` or `<name>Operation` local binding;
 the laws admit no general leaf alias form.
-Contract law owns canonical direct import of contract leaves. Router indexes
-are composition-only; TypeScript owns router completeness, Knip owns
+Contract law owns canonical direct import of contract leaves. Module-root
+routers are composition-only; TypeScript owns router completeness, Knip owns
 unreachable leaves and import hygiene, and generated-client/API behavior proof
 owns the complete public operation set. Middleware indexes only catalog
 documented native decorated middleware values under semantic import names.
@@ -168,13 +169,14 @@ documented native decorated middleware values under semantic import names.
 `./middleware`; a router leaf may consume input-independent group policy or a
 named reused validated-input policy through the one additional parent edge
 `../middleware`. Each
-imported name is visibly attached at its consuming destination. Router indexes
-remain closed to middleware and implementation acquisition. Ordinary
+imported name is visibly attached at its consuming destination. Module-root
+routers remain closed to middleware and implementation acquisition. Ordinary
 collaboration may range anywhere inside one sealed module; crossing the module
-root or entering a sibling remains closed. Indexes may import leaves, but leaves
-never import their own index. Contract code never imports implementation,
-middleware never imports `module.ts`, and router indexes only import their
-operation leaves. No runtime discovery, loader, generator, or module SDK is
+root or entering a sibling remains closed. Contract and middleware indexes may
+import leaves, but leaves never import their own index. Contract code never
+imports implementation, middleware never imports `module.ts`, and module-root
+routers only import their operation leaves. No runtime discovery, loader,
+generator, or module SDK is
 part of the kind. An `entities` category is
 admitted only for stable domain identity and transition invariants, subject to
 the pending shared source law. Entity declarations are platform-, transport-,

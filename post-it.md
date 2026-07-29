@@ -6,6 +6,28 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-29 - One Router Face
+
+A service narrows from host context into one configured service, then into one
+module branch, then into authored operations. The file shape should make that
+descent obvious without explanation. A named `router/*.router.ts` leaf is where
+an operation consumes curated context and performs its transition. The
+module-root `router.ts` only composes completed values. A `router/index.ts`
+would create a second reachable face and restore ambiguity about where
+authorship belongs.
+
+Habitat closes this shape before production moves. Contract and optional
+middleware catalogs retain their own indexed roles because they are different
+kinds: declarative composition and qualified middleware access. The router is
+executable authorship, so its leaf and composition destinations remain visibly
+separate. oRPC owns the boundary and context descent; Effect owns execution;
+TypeScript owns inference; Habitat owns the possible shape.
+
+### Bag Of Keywords
+
+service, context, module, router, leaf, handler, contract, middleware,
+composition, authorship, descent, closure.
+
 ## 2026-07-29 - Git Closes Content
 
 The release input declares desired content, not a second copy of content

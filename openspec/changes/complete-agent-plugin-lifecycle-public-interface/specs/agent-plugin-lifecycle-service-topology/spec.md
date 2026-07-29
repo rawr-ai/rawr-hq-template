@@ -47,10 +47,12 @@ broad DTO barrels MUST remain private.
   release/governance request under root model, sixth module, or public concrete
   provider fails the ratchet
 
-Each module MUST expose closed `contract/` and `router/` directories through
-their sole `index.ts` composition faces. Operation handlers MUST be authored
-directly in named `router/<operation>.ts` leaves or deliberate semantic groups
-and composed as a plain router object by `router/index.ts`. A handler MAY call module-owned pure policy or
+Each module MUST expose a closed `contract/` directory through
+`contract/index.ts`, a closed `router/` authorship directory, and one
+module-root `router.ts` composition face. Operation handlers MUST be authored
+directly in named `router/<operation>.router.ts` leaves or deliberate semantic
+groups and composed as a plain router object by module-root `router.ts`. A
+handler MAY call module-owned pure policy or
 ready resource capabilities, but MUST NOT delegate its operation to a parallel
 business entrypoint or acquire an ornamental `*Procedure` export name merely
 for composition. Router files MUST consume the inferred module capability
@@ -59,13 +61,13 @@ context. The completed service MUST remove operation dependencies on broad
 `deps`, `scope`, `config`, `invocation`, or `provided` lanes through
 owner-qualified resource and middleware boundaries rather than claim those
 additive native fields were subtracted.
-Flat module `contract.ts` and `router.ts` alternatives MUST NOT exist. Optional
+Module `contract.ts` and `router/index.ts` alternatives MUST NOT exist. Optional
 module middleware MUST use the equivalent closed `middleware/` catalog with one
 `index.ts` and direct semantic leaves.
 
 #### Scenario: Operation composition is direct
 - **WHEN** module router exports and operation handler call sites are inspected
-- **THEN** module `router/index.ts` composes the directly authored named router values
+- **THEN** module-root `router.ts` composes the directly authored named router values
 - **AND** no parallel operation function or individually named procedure wrapper
   or router-local dependency bag impersonates the oRPC composition boundary
 

@@ -119,8 +119,7 @@ predicate require_service_context_boundaries_is_middleware_catalog_entry($statem
 
 // Selects operation leaves, whose vocabulary must already be curated.
 predicate require_service_context_boundaries_is_router_leaf() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.ts$",
-  not { $filename <: r".*/router/index\.ts$" }
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
 }
 
 // Selects the module spine that owns terminal handler-context curation.
@@ -153,7 +152,7 @@ predicate require_service_context_boundaries_is_canonical_middleware_catalog_sou
 // Checks that a configured module branch matches its module filename.
 function require_service_context_boundaries_attachment_branch_status($filename, $branch) js {
   const match = $filename.text.match(
-    /\/modules\/([^/]+)\/(?:module|router\/([^/]+))\.ts$/,
+    /\/modules\/([^/]+)\/(?:module|router\/([^/]+)\.router)\.ts$/,
   );
   if (!match) return "wrong-destination";
   const segment = match[2] ?? match[1];
@@ -546,8 +545,7 @@ or {
     require_service_context_boundaries_is_raw_destructure(binding=$binding)
   },
   `$receiver.use<$types>($middleware, $...)` where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl|modules/[^/]+/(?:module|router/[^/]+))\.ts$",
-    not { $filename <: r".*/router/index\.ts$" }
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl|modules/[^/]+/(?:module|router/[^/]+\.router))\.ts$"
   }
 }
 ```
@@ -602,7 +600,7 @@ export const middleware = os.middleware(({ next }) => next());
 ## Matches a handler that reopens raw context
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
 import { module } from "../module";
 export const get = module.get.handler(({ context }) => context.deps.jobs.get());
 ```
@@ -610,7 +608,7 @@ export const get = module.get.handler(({ context }) => context.deps.jobs.get());
 ## Matches raw lane destructuring and bracket access
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
 import { module } from "../module";
 export const get = module.get.handler(({ context }) => {
   const { scope } = context;
@@ -653,7 +651,7 @@ export const module = service.catalog.use(middleware);
 ## Matches a reusable group policy imported without operation attachment
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
 import { admitCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit.handler(submit),
@@ -673,7 +671,7 @@ export const module = service.queue
 ## Matches middleware nested inside another operation attachment
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
 import { authorizeCatalogUpdate } from "../middleware";
 export const update = module.update
   .use(other.use(authorizeCatalogUpdate))
@@ -683,7 +681,7 @@ export const update = module.update
 ## Matches a middleware catalog alias from an operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
 import { authorizeCatalogUpdate } from "#jobs-service/modules/catalog/middleware";
 export const update = module.update.use(authorizeCatalogUpdate).handler(handler);
 ```
@@ -769,7 +767,7 @@ export const module = service.catalog.use<CatalogContext>(provideCatalog);
 ## Matches explicit middleware composition types on an operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
 export const update = module.update
   .use<ValidatedCatalogInput>(authorizeCatalogUpdate)
   .handler(handler);
@@ -785,7 +783,7 @@ export const middleware = impl.collect.jobs.middleware(({ errors, next }) => {
   if (!mayCollect()) throw errors.FORBIDDEN();
   return next();
 });
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
 import { admitCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit.use(admitCollectJobs).handler(submit),
@@ -796,7 +794,7 @@ export const jobs = {
 ## Ignores combined group policies attached below the filename-owned router
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
 import { auditCollectJobs, authorizeCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit
@@ -813,7 +811,7 @@ export const jobs = {
 ## Matches a combined group import with one unattached binding
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
 import { auditCollectJobs, authorizeCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit.use(authorizeCollectJobs).handler(submit),
@@ -824,7 +822,7 @@ export const jobs = {
 ## Ignores catalog policy attached at the post-schema procedure point
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.router.ts
 import { admitCollectJobs } from "../middleware";
 export const submit = module.jobs.submit
   .use(admitCollectJobs)
@@ -834,7 +832,7 @@ export const submit = module.jobs.submit
 ## Ignores catalog policy attached to a deliberate native operation group
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/search.ts
+// @filename: services/jobs/src/service/modules/catalog/router/search.router.ts
 import { authorizeCatalogSearch } from "../middleware";
 export const search = {
   available: module.search.available.use(authorizeCatalogSearch).handler(searchAvailable),
@@ -845,7 +843,7 @@ export const search = {
 ## Ignores inline validated-input policy that uses curated context
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
 export const update = module.update
   .use(({ context, errors, next }, input) => {
     if (!mayUpdate(context.actor, input.id)) throw errors.FORBIDDEN();
@@ -856,7 +854,7 @@ export const update = module.update
 ## Ignores exact-leaf policy kept inline on the native procedure
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
 export const update = module.catalog.update
   .use(({ context, errors, next }, input) => {
     if (!mayUpdate(context.actor, input.id)) throw errors.FORBIDDEN();
@@ -994,7 +992,7 @@ export const module = service.catalog
       jobs: context.provided.jobs,
     },
   }));
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
 import { module } from "../module";
 export const get = module.get.handler(({ context }) => context.jobs.get());
 ```

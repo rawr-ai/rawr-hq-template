@@ -8,7 +8,7 @@ Every service has one visible native implementation lineage. `base.ts`
 declares context and adds a native middleware author only when needed;
 `impl.ts` implements the aggregate contract once and exposes
 the unconfigured and configured stages, modules descend from the matching configured
-branch, module router indexes compose plain operation trees, and the root
+branch, module-root router faces compose plain operation trees, and the root
 router implements the aggregate contract once through the unconfigured stage.
 
 Aggregate router implementation through the unconfigured root `impl` is the
@@ -71,7 +71,7 @@ predicate require_service_orpc_composition_is_module() {
 
 // Selects module router composition spines.
 predicate require_service_orpc_composition_is_module_router() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$"
 }
 
 // Selects the root router composition spine.
@@ -234,7 +234,7 @@ export const module = service.queue.use(provideCatalog);
 ## Matches module-level router implementation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 export const router = impl.catalog.router({ get });
 ```
 
@@ -265,7 +265,7 @@ export const service = impl
   .use(provideDatabase);
 // @filename: services/jobs/src/service/modules/catalog/module.ts
 export const module = service.catalog.use(provideCatalog).use(curateCatalog);
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 export const router = { get };
 // @filename: services/jobs/src/service/router.ts
 export const router = impl.router({ catalog });
