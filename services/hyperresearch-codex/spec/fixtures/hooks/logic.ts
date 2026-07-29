@@ -95,8 +95,12 @@ function isLikelySourceBypass(command: string): boolean {
 }
 
 function isHyperresearchServiceCommand(command: string): boolean {
-  return /\b(?:rawr|bun\s+run\s+(?:--cwd\s+\S+\s+)?rawr)\s+hyperresearch\s+codex\b/.test(command)
-    || /\b(?:rawr|bun\s+run\s+(?:--cwd\s+\S+\s+)?rawr)\s+plugins\s+sync\s+hyperresearch\b/.test(command);
+  const normalized = command.trim();
+  if (/[\r\n;&|]/u.test(normalized)) return false;
+
+  return /^(?:rawr|bun\s+run\s+(?:--cwd\s+\S+\s+)?rawr)\s+hyperresearch\s+codex\b/u.test(
+    normalized
+  );
 }
 
 function isExplicitHyperresearchCaptureCommand(command: string): boolean {
