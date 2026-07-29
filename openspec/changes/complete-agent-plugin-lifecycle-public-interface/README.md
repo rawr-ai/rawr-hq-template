@@ -3465,6 +3465,22 @@ files pass all 38 behavior cases. The native Habitat topology scan reports no
 Governance finding; no runtime, resource, provider, Personal content, or live
 provider state changes.
 
+## Releases Module Burn-Down
+
+Releases now follows the same indexed module law under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21q]]. Four
+TypeBox-backed contract leaves and four authored operation leaves retain the
+existing `check`, `releaseInputRecord`, `refreshReleaseInput`, and
+`checkRepository` surface. The two indexes only compose those leaves; the flat
+faces and `.router.ts` names leave in the same cut.
+
+The move preserves module-curated content-workspace context, clean and staged
+observation order, final revalidation, canonical release-input encoding,
+result variants, and typed failures. No model, policy, resource, provider,
+public key, or live state changes. The module typecheck passes, and the six
+Releases files plus the service-spine proof pass all 63 focused cases. The
+complete service suite passes all 377 cases across 43 files.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect

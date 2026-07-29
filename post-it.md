@@ -1135,7 +1135,7 @@ inventing a model export. Caller mutation remains unable to change the
 in-flight request, and the module retains one obvious execution sequence.
 
 See
-[[services/agent-plugin-lifecycle/src/service/modules/releases/router/refresh-release-input.router|the refresh operation]]
+[[services/agent-plugin-lifecycle/src/service/modules/releases/router/refresh-release-input|the refresh operation]]
 and
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 

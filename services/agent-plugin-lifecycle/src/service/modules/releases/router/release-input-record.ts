@@ -5,6 +5,7 @@ import {
 import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
 import { module } from "../module";
 
+/** Encodes or validates the canonical release-input record without acquiring resources. */
 export const releaseInputRecord = module.releaseInputRecord.effect(function* ({ input }) {
   const result =
     input.kind === "encode-body"
