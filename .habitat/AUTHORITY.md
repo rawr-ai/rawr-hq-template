@@ -143,9 +143,12 @@ root while leaving package topology with each package blueprint. Its contracts
 subniche applies the shared exported-value JSDoc law to the admitted public
 lifecycle boundary. The Runtime Realization lab niche owns that contained
 tool's closed top-level planes and parser-visible containment relations. The
-agent-plugin lifecycle niche closes the curated command channel and keeps its
-source independent from the native external-plugin package. The web-host niche
-admits public environment fields only through the web-owned projection funnel.
+workstream-plugin-pack niche owns that tool's closed asset roots and the
+parser-visible relationship from checked-in SessionStart and Stop
+configuration to its canonical hook sources. The agent-plugin lifecycle niche
+closes the curated command channel and keeps its source independent from the
+native external-plugin package. The web-host niche admits public environment
+fields only through the web-owned projection funnel.
 Reusable service source and topology relationships belong to their generic
 Habitat blueprints, while TypeScript owns type and package compatibility. The
 former coarse project-kind matrix is retired, not represented as another

@@ -18,7 +18,6 @@ resources, but they do not own continuity by themselves.
 | Reusable hook scripts | `hooks/` | Generic Template tool |
 | Local install script | `scripts/` | Template-local projection helper |
 | Copy-forward scaffolds | `skills/workstream-runner/assets/` | Generic Template tool |
-| Immediate follow-up | `notes/next-work.md` | Current review notes |
 
 ## Local Activation
 
@@ -37,6 +36,12 @@ to use or test Workstream material in Codex.
 Hook event availability is provider/runtime-specific. This pack currently
 activates only `SessionStart` and `Stop`; unavailable events such as
 `PreCompact` are portability notes, not guard failures.
+
+The owner-qualified Habitat rules close the pack's stable asset roots and
+require both checked-in hook configurations to target these canonical hook
+sources. Runtime hooks keep operational changed-file, continuation, and diff
+checks only; they do not duplicate topology or configuration policy. See
+[[../../.habitat/README|the Habitat authority index]].
 
 Do not keep checked-in placeholder projections for workstream skills or
 workstream agents. The checked-in hook composition and standing Habitat roles

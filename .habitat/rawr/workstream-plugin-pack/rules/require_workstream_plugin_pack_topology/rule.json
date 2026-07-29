@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "require_workstream_plugin_pack_topology",
+  "title": "Require Workstream Plugin Pack Topology",
+  "placement": {
+    "niche": "rawr/workstream-plugin-pack",
+    "blueprint": "_self",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "workstream-plugin-pack",
+  "lane": "enforced",
+  "forbids": "an open workstream-plugin-pack root, an unowned root kind, or an alternate agent, hook, installer, or skill owner",
+  "why": "The workstream plugin pack is one bounded Template-owned tool. Positively closing its stable roots and executable owner inventories prevents alternate authorities without freezing evolving skill content or behavioral tests.",
+  "remediate": "Keep the admitted pack roots, agents, hooks, installer, and skill owners. Place evolving skill content and behavioral tests beneath their qualified roots.",
+  "message": "The workstream plugin pack must retain its closed owner-qualified topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["tools/workstream-plugin-pack/**"]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/workstream-plugin-pack/rules/require_workstream_plugin_pack_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/rawr/workstream-plugin-pack/rules/require_workstream_plugin_pack_topology/structure.toml"
+    }
+  }
+}

@@ -20,6 +20,10 @@
 - Generated workstream activation files are not source assets and must not be
   checked in. The repository-owned `.codex/hooks.json` composes these canonical
   hook sources directly and is outside installer ownership.
+- The owner-qualified Habitat niche closes the pack's stable asset roots and
+  requires checked-in SessionStart and Stop configuration to target the
+  canonical hook sources. Hook runtime code retains only operational behavior;
+  it does not re-evaluate that structural policy.
 - This pack is not a curated-content plugin, a program authority, or the owner
   of Runtime Realization Lab evidence and gates.
 
@@ -60,5 +64,7 @@
 ## Validation
 
 - `bun tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts --dry-run`
+- `bun run habitat -- --rule require_workstream_plugin_pack_topology`
+- `bun run habitat -- --rule require_workstream_plugin_pack_hook_configuration`
 - `bunx nx run workstream-plugin-pack:test`
 - `bunx nx run workstream-plugin-pack:check`

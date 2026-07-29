@@ -439,9 +439,8 @@ enrichment. In standalone services, only named root middleware uses the sole
 provider author specialized once in `base.ts`; embedded API provider authorship
 is outside this law.
 
-See [[.habitat/blueprints/service/skill#Context|the service context frame]],
-[[.habitat/blueprints/service/require_service_context_boundaries/pattern|the executable law]],
-and [[scripts/habitat/service-blueprint.test|the executable structural fixture]].
+See [[.habitat/blueprints/service/skill#Context|the service context frame]] and
+[[.habitat/blueprints/service/require_service_context_boundaries/pattern|the native context law]].
 
 ### Bag Of Keywords
 
