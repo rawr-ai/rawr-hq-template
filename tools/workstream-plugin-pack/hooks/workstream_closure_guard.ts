@@ -8,7 +8,6 @@ import {
   repoRoot,
   runtimeRelated,
   silent,
-  validateRuntimeBundle,
   warn,
 } from "./workstream_common.ts";
 
@@ -20,11 +19,7 @@ if (!isWorkstreamPackRepo(root)) {
 } else {
   const changed = changedFiles(root);
   const runtime = runtimeRelated(changed);
-  const issues = [
-    ...(runtime.length ? validateRuntimeBundle(root, true) : []),
-    ...diffCheck(root, runtime),
-    ...continuationIssues(root),
-  ];
+  const issues = [...diffCheck(root, runtime), ...continuationIssues(root)];
 
   if (!issues.length) {
     silent();

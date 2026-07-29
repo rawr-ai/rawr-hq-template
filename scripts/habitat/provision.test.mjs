@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { access, symlink, unlink, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import {
   parseReleaseManifest,
   selectReleaseAsset,
@@ -11,8 +11,12 @@ import { createHabitatTestRoot, removeHabitatTestRoot } from "./test-fixture.mjs
 
 const TEMP_PREFIX = "rawr-habitat-provision-test-";
 const roots = /** @type {string[]} */ ([]);
+const looseEntries = /** @type {string[]} */ ([]);
 
 afterEach(async () => {
+  for (const path of looseEntries.splice(0)) {
+    await unlink(path);
+  }
   for (const root of roots.splice(0)) {
     await removeHabitatTestRoot(root, TEMP_PREFIX);
   }
@@ -75,5 +79,57 @@ describe("Habitat standalone release consumer", () => {
     await expect(verifyReleaseAsset(filename, asset)).resolves.toBe(filename);
     await writeFile(filename, "wrong");
     await expect(verifyReleaseAsset(filename, asset)).rejects.toThrow("digest mismatch");
+  });
+});
+
+describe("Habitat fixture cleanup boundary", () => {
+  it("refuses invalid or mismatched ownership prefixes without deleting the fixture", async () => {
+    const root = await createHabitatTestRoot(TEMP_PREFIX);
+    roots.push(root);
+
+    await expect(removeHabitatTestRoot(root, "habitat-test-")).rejects.toThrow(
+      "invalid Habitat fixture prefix"
+    );
+    await expect(removeHabitatTestRoot(root, "rawr-habitat-other-test-")).rejects.toThrow(
+      "unsafe Habitat fixture cleanup"
+    );
+    await expect(access(root)).resolves.toBeNull();
+  });
+
+  it("refuses files and symlinks without deleting either target", async () => {
+    const root = await createHabitatTestRoot(TEMP_PREFIX);
+    roots.push(root);
+    const file = `${root}-file`;
+    const link = `${root}-link`;
+    await writeFile(file, "keep");
+    await symlink(root, link, "dir");
+    looseEntries.push(file, link);
+
+    await expect(removeHabitatTestRoot(file, TEMP_PREFIX)).rejects.toThrow(
+      "non-directory Habitat fixture cleanup"
+    );
+    await expect(removeHabitatTestRoot(link, TEMP_PREFIX)).rejects.toThrow(
+      "non-directory Habitat fixture cleanup"
+    );
+    await expect(access(file)).resolves.toBeNull();
+    await expect(access(root)).resolves.toBeNull();
+  });
+
+  it("refuses parent aliases and directories outside the canonical temporary root", async () => {
+    const root = await createHabitatTestRoot(TEMP_PREFIX);
+    roots.push(root);
+    const aliasParent = `${root}-parent-alias`;
+    await symlink(dirname(root), aliasParent, "dir");
+    looseEntries.push(aliasParent);
+    const aliasedRoot = join(aliasParent, basename(root));
+
+    await expect(removeHabitatTestRoot(aliasedRoot, TEMP_PREFIX)).rejects.toThrow(
+      "unsafe Habitat fixture cleanup"
+    );
+    await expect(removeHabitatTestRoot(process.cwd(), TEMP_PREFIX)).rejects.toThrow(
+      "unsafe Habitat fixture cleanup"
+    );
+    await expect(access(root)).resolves.toBeNull();
+    await expect(access(join(process.cwd(), "package.json"))).resolves.toBeNull();
   });
 });

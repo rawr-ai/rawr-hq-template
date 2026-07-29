@@ -62,7 +62,8 @@
   structure laws, resource and provider package boundaries, the closed
   repository-script root, exported-value documentation law, Runtime
   Realization lab boundaries, agent-plugin command-channel topology and source
-  separation, and the web public-environment funnel.
+  separation, workstream-plugin-pack topology and canonical hook
+  configuration, and the web public-environment funnel.
 - `check:structure` is an independent Habitat-structure leaf for
   fast Codex Stop feedback. It does not depend on or replace policy, lint, or
   the complete repository graph.
@@ -74,6 +75,9 @@
   acquisition.
 - Package scripts invoke the provisioned executable directly. Do not restore a
   JavaScript check wrapper or move pattern logic out of Habitat.
+- Consumer tests prove manifest admission, platform selection, direct asset
+  verification, and bounded fixture cleanup. They do not restate Habitat
+  topology or source policy.
 
 ## Interfaces
 

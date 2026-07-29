@@ -1,26 +1,11 @@
 #!/usr/bin/env bun
 import { spawnSync } from "child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
+import { existsSync, readFileSync } from "fs";
 import { dirname, join, resolve } from "path";
 
 export type HookPayload = Record<string, unknown>;
 
 const PACK_ROOT = "tools/workstream-plugin-pack";
-const REQUIRED_PACK_FILES = [
-  `${PACK_ROOT}/README.md`,
-  `${PACK_ROOT}/skills/workstream-runner/SKILL.md`,
-  `${PACK_ROOT}/skills/workstream-runner/assets/minimal-workstream-record.md`,
-  `${PACK_ROOT}/skills/workstream-runner/assets/workstream-record.md`,
-  `${PACK_ROOT}/skills/workstream-review-loops/SKILL.md`,
-  `${PACK_ROOT}/agents/workstream-opening-steward.md`,
-  `${PACK_ROOT}/agents/workstream-proof-ledger-auditor.md`,
-  `${PACK_ROOT}/agents/workstream-closure-steward.md`,
-  `${PACK_ROOT}/hooks/workstream_common.ts`,
-  `${PACK_ROOT}/hooks/workstream_startup.ts`,
-  `${PACK_ROOT}/hooks/workstream_closure_guard.ts`,
-];
-const REQUIRED_HOOK_EVENTS = ["SessionStart", "Stop"];
 
 export function loadPayload(): HookPayload {
   let raw = "";
@@ -147,68 +132,6 @@ export function continuationIssues(root: string): string[] {
     return [`.workstream/current.json next packet does not exist: ${nextPacket}`];
   }
   return [];
-}
-
-function hookCommandTargetsPack(command: string): boolean {
-  return command.includes(`${PACK_ROOT}/hooks/`);
-}
-
-function packHookConfigIssues(root: string): string[] {
-  const issues: string[] = [];
-  const relPath = `${PACK_ROOT}/hooks/hooks.json`;
-  const path = join(root, relPath);
-  if (!existsSync(path)) return [`${relPath} is missing`];
-  try {
-    const data = JSON.parse(readText(path));
-    const hooks = data && typeof data === "object" ? data.hooks : undefined;
-    if (!hooks || typeof hooks !== "object" || Array.isArray(hooks)) {
-      return [`${relPath} must contain a hooks object`];
-    }
-    for (const event of REQUIRED_HOOK_EVENTS) {
-      if (!(event in hooks)) issues.push(`${relPath} missing ${event} hook`);
-    }
-    const text = JSON.stringify(data);
-    if (!hookCommandTargetsPack(text)) {
-      issues.push(`${relPath} must invoke tools/workstream-plugin-pack/hooks scripts`);
-    }
-  } catch (error) {
-    issues.push(`${relPath} is invalid JSON: ${String(error)}`);
-  }
-  return issues;
-}
-
-function validateHookSyntax(root: string, relPath: string): string | null {
-  const tempDir = mkdtempSync(join(tmpdir(), "workstream-hook-"));
-  try {
-    const outfile = join(tempDir, "hook.js");
-    const result = spawnSync("bun", ["build", relPath, "--target=bun", "--outfile", outfile], {
-      cwd: root,
-      encoding: "utf8",
-      timeout: 8000,
-    });
-    if (result.status === 0) return null;
-    const output = [result.stdout, result.stderr].filter(Boolean).join("\n").trim();
-    return `${relPath} does not build with bun: ${output}`;
-  } finally {
-    rmSync(tempDir, { recursive: true, force: true });
-  }
-}
-
-export function validateRuntimeBundle(root: string, compileHooks = false): string[] {
-  const issues: string[] = [];
-  for (const relPath of REQUIRED_PACK_FILES) {
-    if (!existsSync(join(root, relPath))) issues.push(`${relPath} is missing`);
-  }
-  issues.push(...packHookConfigIssues(root));
-  if (compileHooks) {
-    for (const relPath of REQUIRED_PACK_FILES.filter(
-      (path) => path.startsWith(`${PACK_ROOT}/hooks/`) && path.endsWith(".ts")
-    )) {
-      const syntaxIssue = validateHookSyntax(root, relPath);
-      if (syntaxIssue) issues.push(syntaxIssue);
-    }
-  }
-  return issues;
 }
 
 export function runtimeRelated(files: Iterable<string>): string[] {

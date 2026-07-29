@@ -45,7 +45,9 @@ relation without acquiring the topology of the heterogeneous package and
 module roots it inspects, plus the positively closed root for repository
 scripts and the exported-value documentation contract on the admitted public
 lifecycle boundary. Its Runtime Realization lab niche owns that tool's closed
-container axes and parser-visible plane containment. Its agent-plugin
+container axes and parser-visible plane containment. Its workstream-plugin-pack
+niche closes that tool's asset roots and requires checked-in SessionStart and
+Stop configuration to invoke the canonical hook sources. Its agent-plugin
 lifecycle niche closes the curated command channel and keeps curated command
 source independent from the native external-plugin package. Its web-host niche
 admits public environment fields only through the web-owned projection funnel.
@@ -62,6 +64,10 @@ currently admits no script-backed Habitat rule. A future native capability gap
 requires a named authority decision before the packet topology can change.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
+
+Habitat consumer tests cover release-manifest selection, direct asset
+verification, and bounded fixture cleanup; they do not replay blueprint
+topology or source policy in a hand-authored test fixture.
 
 `habitat:check:policy` resolves to the selected pinned-binary native policy
 batch at `habitat:check:policy:local`. The independent

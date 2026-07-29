@@ -1,0 +1,65 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "workstream-plugin-pack-root"
+root = "tools/workstream-plugin-pack"
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "README.md",
+  "agents",
+  "hooks",
+  "project.json",
+  "scripts",
+  "skills",
+  "test",
+  "tsconfig.json",
+]
+allowed = []
+
+[[scopes]]
+name = "workstream-plugin-pack-agents"
+root = "tools/workstream-plugin-pack/agents"
+kind = "directory"
+mode = "closed"
+required = [
+  "workstream-closure-steward.md",
+  "workstream-opening-steward.md",
+  "workstream-proof-ledger-auditor.md",
+]
+allowed = []
+
+[[scopes]]
+name = "workstream-plugin-pack-hooks"
+root = "tools/workstream-plugin-pack/hooks"
+kind = "directory"
+mode = "closed"
+required = [
+  "hooks.json",
+  "workstream_closure_guard.ts",
+  "workstream_common.ts",
+  "workstream_startup.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "workstream-plugin-pack-scripts"
+root = "tools/workstream-plugin-pack/scripts"
+kind = "directory"
+mode = "closed"
+required = [
+  "install-local-codex-pack.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "workstream-plugin-pack-skills"
+root = "tools/workstream-plugin-pack/skills"
+kind = "directory"
+mode = "closed"
+required = [
+  "workstream-review-loops",
+  "workstream-runner",
+]
+allowed = []
