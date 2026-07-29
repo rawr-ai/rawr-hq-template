@@ -41,10 +41,13 @@ Effect failure slots at service capability boundaries. The
 [[skill|service capability funnel]] is the authoring frame for these rules.
 
 Standalone service proof lives only under optional package-root `test/`.
-Behavior suites follow their production owner at
-`behavior/modules/<module>/*.test.ts`; client, contract, and database mechanics
-live at `mechanics/{client,contract,db}/*.test.ts`; integration suites live at
-`integration/*.test.ts`; and reusable non-suite assets live at
+Behavior suites follow their production owner: service-root behavior lives at
+`behavior/*.test.ts`, while module behavior lives at
+`behavior/modules/<module>/*.test.ts`. Client and database mechanics live at
+`mechanics/{client,db}/*.test.ts`; contract mechanics additionally admit
+compile-only `mechanics/contract/*.typecheck.ts` beside runtime
+`*.test.ts` suites. Integration suites live at `integration/*.test.ts`, and
+reusable non-suite assets live at
 `support/{db,service,modules/<module>}/*.ts`. Categories remain optional and
 need not exist when a service has no proof of that kind. `test`, `tests`, and
 `__tests__` directories do not live under standalone or API-embedded service
