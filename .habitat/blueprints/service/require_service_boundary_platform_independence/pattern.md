@@ -49,11 +49,11 @@ predicate require_service_boundary_platform_independence_is_service_module_contr
   or {
     and {
       require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
-      $filename <: r".*services/[^/]+/src/service/modules/[^/]+/(?:(?:contract|schemas|model|types)\.ts|contract/[^/]+\.ts)$"
+      $filename <: r".*services/[^/]+/src/service/modules/[^/]+/contract/[^/]+\.ts$"
     },
     and {
       require_service_boundary_platform_independence_belongs_to_exact_api_service(),
-      $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/(?:(?:contract|schemas|model|types)\.ts|contract/[^/]+\.ts)$"
+      $filename <: r".*plugins/server/api/[^/]+/src/service/modules/[^/]+/contract/[^/]+\.ts$"
     }
   }
 }

@@ -4,11 +4,12 @@ tags: [service, module, ownership, imports]
 ---
 # Require Service Module Isolation
 
-A module may use its own implementation interior and the service's declared
-anchors. It may not enter a sibling module. Service roots compose module
-contracts and operation trees, and may name a module port only as a type in
-`base.ts` when the host must bind that dependency. The database blueprint
-independently owns database placement and the database import funnel.
+A module may collaborate anywhere inside its own sealed interior and use the
+service's declared anchors. It may not escape into a sibling module. Service
+roots compose module contracts and operation trees, and may name a module port
+only as a type in `base.ts` when the host must bind that dependency. The
+database blueprint independently owns database placement and the database
+import funnel.
 
 This rule owns static import and re-export relationships only. Nx owns package
 edges, TypeScript owns type use, and service behavior tests own collaboration.
@@ -27,31 +28,73 @@ predicate require_service_module_isolation_is_root_source() {
   not { require_service_module_isolation_is_module_source() }
 }
 
-// Selects every governed service source file.
-predicate require_service_module_isolation_is_governed_source() {
+// Detects a relative source that enters an exact modules path segment.
+predicate require_service_module_isolation_is_relative_modules_source($source) {
+  $source <: r"^[\"'](?:\.\.?/)+(?:[^/\"']+/)*modules(?:/[^\"']*)?[\"']$"
+}
+
+// Detects only the first relative edge that crosses a closed module root.
+predicate require_service_module_isolation_is_relative_escape($source) {
   or {
-    require_service_module_isolation_is_root_source(),
-    require_service_module_isolation_is_module_source()
+    and {
+      $filename <: r".*/src/service/modules/[^/]+/[^/]+\.ts$",
+      $source <: r"^[\"']\.\./[^\"']+[\"']$"
+    },
+    and {
+      $filename <: r".*/src/service/modules/[^/]+/[^/]+/[^/]+\.ts$",
+      $source <: r"^[\"']\.\./\.\./[^\"']+[\"']$"
+    },
+    and {
+      $filename <: r".*/src/service/modules/[^/]+/[^/]+/[^/]+/[^/]+\.ts$",
+      $source <: r"^[\"']\.\./\.\./\.\./[^\"']+[\"']$"
+    }
   }
 }
 
-// Detects a relative source that enters an exact modules path segment.
-predicate require_service_module_isolation_is_relative_modules_source($source) {
-  $source <: r"^[\"'](?:\.\.?/)+(?:[^/\"']+/)*modules(?:/|[\"'])"
+// Matches a source alias kind to the importing service lane.
+predicate require_service_module_isolation_is_same_kind($lane, $alias_kind) {
+  or {
+    and {
+      $lane <: r"^services$",
+      $alias_kind <: r"^service$"
+    },
+    and {
+      $lane <: r"^plugins/server/api$",
+      $alias_kind <: r"^api$"
+    }
+  }
 }
 
-// Admits a router leaf's exact module author and middleware catalog edges.
-predicate require_service_module_isolation_is_leaf_module_import($source) {
-  $filename <: r".*/src/service/modules/[^/]+/router/[^/]+\.ts$",
-  not { $filename <: r".*/router/index\.ts$" },
-  $source <: r"^[\"']\.\./(?:module|middleware)[\"']$"
+// Recognizes the importing service's own raw base alias.
+predicate require_service_module_isolation_is_owner_base_alias($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($lane, $owner),
+  $source <: r"^[\"']#([^/]+)-(service|api)/base(?:\.[cm]?[jt]s)?[\"']$"($alias_owner, $alias_kind),
+  $alias_owner <: $owner,
+  require_service_module_isolation_is_same_kind(
+    lane=$lane,
+    alias_kind=$alias_kind
+  )
+}
+
+// Recognizes the importing service's own configured implementation alias.
+predicate require_service_module_isolation_is_owner_impl_alias($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($lane, $owner),
+  $source <: r"^[\"']#([^/]+)-(service|api)/impl(?:\.[cm]?[jt]s)?[\"']$"($alias_owner, $alias_kind),
+  $alias_owner <: $owner,
+  require_service_module_isolation_is_same_kind(
+    lane=$lane,
+    alias_kind=$alias_kind
+  )
 }
 
 // Admits raw base acquisition only at a module-owned middleware boundary.
 predicate require_service_module_isolation_is_allowed_base_import($source) {
   $filename <: r".*/src/service/modules/[^/]+/middleware/[^/]+\.ts$",
   not { $filename <: r".*/middleware/index\.ts$" },
-  $source <: r"^[\"'](?:#[^/]+-(?:service|api)/base|\.\./\.\./\.\./base)[\"']$"
+  or {
+    $source <: r"^[\"']\.\./\.\./\.\./base(?:\.[cm]?[jt]s)?[\"']$",
+    require_service_module_isolation_is_owner_base_alias(source=$source)
+  }
 }
 
 // Admits configured descent at module.ts and unconfigured contract-policy authorship.
@@ -59,22 +102,54 @@ predicate require_service_module_isolation_is_allowed_impl_import($source) {
   or {
     and {
       $filename <: r".*/src/service/modules/[^/]+/module\.ts$",
-      $source <: r"^[\"'](?:#[^/]+-(?:service|api)/impl|\.\./\.\./impl)[\"']$"
+      or {
+        $source <: r"^[\"']\.\./\.\./impl(?:\.[cm]?[jt]s)?[\"']$",
+        require_service_module_isolation_is_owner_impl_alias(source=$source)
+      }
     },
     and {
       $filename <: r".*/src/service/modules/[^/]+/middleware/[^/]+\.ts$",
       not { $filename <: r".*/middleware/index\.ts$" },
-      $source <: r"^[\"'](?:#[^/]+-(?:service|api)/impl|\.\./\.\./\.\./impl)[\"']$"
+      or {
+        $source <: r"^[\"']\.\./\.\./\.\./impl(?:\.[cm]?[jt]s)?[\"']$",
+        require_service_module_isolation_is_owner_impl_alias(source=$source)
+      }
     }
   }
 }
 
 // Detects a standalone module alias that enters a sibling of the current module.
 predicate require_service_module_isolation_is_sibling_alias($source) {
-  $filename <: r".*(?:services/|plugins/server/api/)([^/]+)/src/service/modules/([^/]+)/.*\.ts$"($owner, $module),
-  $source <: r"^[\"']#([^/]+)-(?:service|api)/modules/([^/]+)(?:/|[\"'])"($alias_owner, $target),
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/.*\.ts$"($lane, $owner, $module),
+  $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)(?:/[^\"']*)?[\"']$"($alias_owner, $alias_kind, $target),
   $alias_owner <: $owner,
+  require_service_module_isolation_is_same_kind(
+    lane=$lane,
+    alias_kind=$alias_kind
+  ),
   not { $target <: $module }
+}
+
+// Detects a module that reaches back into a service-root execution face.
+predicate require_service_module_isolation_is_root_boundary_alias($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/[^/]+/.*\.ts$"($lane, $owner),
+  $source <: r"^[\"']#([^/]+)-(service|api)/(?:contract(?:\.[cm]?[jt]s)?|router(?:\.[cm]?[jt]s)?|middleware(?:/[^\"']*)?)[\"']$"($alias_owner, $alias_kind),
+  $alias_owner <: $owner,
+  require_service_module_isolation_is_same_kind(
+    lane=$lane,
+    alias_kind=$alias_kind
+  )
+}
+
+// Recognizes the importing service root's own private module alias.
+predicate require_service_module_isolation_is_owner_module_alias($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/.*\.ts$"($lane, $owner),
+  $source <: r"^[\"']#([^/]+)-(service|api)/modules/[^\"']+[\"']$"($alias_owner, $alias_kind),
+  $alias_owner <: $owner,
+  require_service_module_isolation_is_same_kind(
+    lane=$lane,
+    alias_kind=$alias_kind
+  )
 }
 
 // Admits contract ascent, router ascent, and type-only host port declaration.
@@ -82,11 +157,11 @@ predicate require_service_module_isolation_is_allowed_root_import($import, $sour
   or {
     and {
       $filename <: r".*/src/service/contract\.ts$",
-      $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/contract[\"']$"
+      $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/contract(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"
     },
     and {
       $filename <: r".*/src/service/router\.ts$",
-      $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/router[\"']$"
+      $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/router(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"
     },
     and {
       $filename <: r".*/src/service/base\.ts$",
@@ -99,7 +174,7 @@ predicate require_service_module_isolation_is_allowed_root_import($import, $sour
 or {
   import_statement(source=$source) as $import where {
     require_service_module_isolation_is_root_source(),
-    $source <: r"^[\"']#(?:[^/]+)-(?:service|api)/modules/",
+    require_service_module_isolation_is_owner_module_alias(source=$source),
     not {
       require_service_module_isolation_is_allowed_root_import(
         import=$import,
@@ -109,55 +184,53 @@ or {
   },
   export_statement(source=$source) where {
     require_service_module_isolation_is_root_source(),
-    $source <: r"^[\"']#(?:[^/]+)-(?:service|api)/modules/"
+    require_service_module_isolation_is_owner_module_alias(source=$source)
   },
   import_statement(source=$source) as $import where {
-    require_service_module_isolation_is_governed_source(),
+    require_service_module_isolation_is_root_source(),
     require_service_module_isolation_is_relative_modules_source(source=$source),
     not {
-      and {
-        require_service_module_isolation_is_root_source(),
-        require_service_module_isolation_is_allowed_root_import(
-          import=$import,
-          source=$source
-        )
-      }
+      require_service_module_isolation_is_allowed_root_import(
+        import=$import,
+        source=$source
+      )
     }
   },
   export_statement(source=$source) where {
-    require_service_module_isolation_is_governed_source(),
+    require_service_module_isolation_is_root_source(),
     require_service_module_isolation_is_relative_modules_source(source=$source)
   },
   import_statement(source=$source) as $import where {
     require_service_module_isolation_is_module_source(),
-    $source <: r"^[\"']\.\./",
-    not {
-      require_service_module_isolation_is_leaf_module_import(source=$source)
-    },
+    require_service_module_isolation_is_relative_escape(source=$source),
+    not { require_service_module_isolation_is_allowed_base_import(source=$source) },
+    not { require_service_module_isolation_is_allowed_impl_import(source=$source) }
+  },
+  export_statement(source=$source) where {
+    require_service_module_isolation_is_module_source(),
+    require_service_module_isolation_is_relative_escape(source=$source)
+  },
+  import_statement(source=$source) where {
+    require_service_module_isolation_is_module_source(),
+    require_service_module_isolation_is_owner_base_alias(source=$source),
     not {
       require_service_module_isolation_is_allowed_base_import(source=$source)
-    },
+    }
+  },
+  import_statement(source=$source) where {
+    require_service_module_isolation_is_module_source(),
+    require_service_module_isolation_is_owner_impl_alias(source=$source),
     not {
       require_service_module_isolation_is_allowed_impl_import(source=$source)
     }
   },
   export_statement(source=$source) where {
     require_service_module_isolation_is_module_source(),
-    $source <: r"^[\"']\.\./"
+    require_service_module_isolation_is_owner_base_alias(source=$source)
   },
-  import_statement(source=$source) where {
+  export_statement(source=$source) where {
     require_service_module_isolation_is_module_source(),
-    $source <: r"^[\"']#[^/]+-(?:service|api)/base[\"']$",
-    not {
-      require_service_module_isolation_is_allowed_base_import(source=$source)
-    }
-  },
-  import_statement(source=$source) where {
-    require_service_module_isolation_is_module_source(),
-    $source <: r"^[\"']#[^/]+-(?:service|api)/impl[\"']$",
-    not {
-      require_service_module_isolation_is_allowed_impl_import(source=$source)
-    }
+    require_service_module_isolation_is_owner_impl_alias(source=$source)
   },
   import_statement(source=$source) where {
     require_service_module_isolation_is_module_source(),
@@ -166,6 +239,14 @@ or {
   export_statement(source=$source) where {
     require_service_module_isolation_is_module_source(),
     require_service_module_isolation_is_sibling_alias(source=$source)
+  },
+  import_statement(source=$source) where {
+    require_service_module_isolation_is_module_source(),
+    require_service_module_isolation_is_root_boundary_alias(source=$source)
+  },
+  export_statement(source=$source) where {
+    require_service_module_isolation_is_module_source(),
+    require_service_module_isolation_is_root_boundary_alias(source=$source)
   }
 }
 ```
@@ -205,11 +286,24 @@ import { queuePolicy } from "#jobs-service/modules/queue/model/policy/queue-poli
 import { collectPolicy } from "#pipeline-api/modules/collect/model/policy/collect-policy";
 ```
 
-## Matches parent traversal from a module
+## Ignores collaboration inside one sealed module
 
 ```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { publicJobFacts } from "../model/dto/job-facts.dto";
+// @filename: services/jobs/src/service/modules/catalog/model/policy/catalog.ts
+import type { CatalogQuery } from "../dto/catalog-query";
+```
+
+## Matches traversal that escapes a module
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { queue } from "../queue/module";
 // @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.ts
 import { service } from "../../../impl";
+// @filename: services/jobs/src/service/modules/catalog/model/policy/catalog.ts
+import { queuePolicy } from "../../../queue/model/policy/queue-policy";
 ```
 
 ## Matches raw base acquisition from a router
@@ -246,22 +340,6 @@ import { requireCatalogAuthority } from "../middleware";
 import { base } from "#pipeline-api/base";
 // @filename: plugins/server/api/pipeline/src/service/modules/jobs/module.ts
 import { service } from "#pipeline-api/impl";
-```
-
-## Matches middleware catalog acquisition from a router index
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
-import { requireCatalogAuthority } from "../middleware";
-export const router = { get };
-```
-
-## Matches a direct middleware leaf route from an operation
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
-import { middleware } from "../middleware/access";
-export const get = module.get.use(middleware).handler(handler);
 ```
 
 ## Matches a deep middleware catalog route from an operation

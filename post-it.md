@@ -6,6 +6,22 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Ratchet The Known Service
+
+The service kind is already settled in Magic's Jobs and Candidates services.
+Template adopts that one positive shape rather than cataloging alternate source
+programs. Habitat closes the service and module containers. oRPC owns context
+descent, middleware, procedures, routers, and clients. Effect owns execution,
+failure, interruption, and resource safety. TypeScript owns inference and
+router completeness. Nx owns project edges. Behavior tests own outcomes and
+ordering. A module may collaborate freely inside its sealed interior; crossing
+the module root is the categorical boundary.
+
+### Bag Of Keywords
+
+service, capability, context, module, contract, middleware, router, operation,
+model, resource, provider, plugin, app, descent, ownership, closure.
+
 ## 2026-07-28 - Capability Depth Owns Policy
 
 A service is a narrowing capability funnel, not a web of convenient imports.

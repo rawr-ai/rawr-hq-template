@@ -30,7 +30,7 @@ predicate require_orpc_error_authority_is_governed_source() {
 
 // Selects executable interiors that must not acquire parallel error values.
 predicate require_orpc_error_authority_is_executable_interior() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl\.ts|router\.ts|middleware/[^/]+\.ts|modules/[^/]+/(?:module\.ts|router\.ts|router/[^/]+\.ts|middleware/[^/]+\.ts))$",
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl\.ts|router\.ts|middleware/[^/]+\.ts|modules/[^/]+/(?:module\.ts|router/[^/]+\.ts|middleware/[^/]+\.ts))$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 

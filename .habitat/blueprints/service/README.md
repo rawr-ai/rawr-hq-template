@@ -161,12 +161,14 @@ documented native decorated middleware values under semantic import names.
 `./middleware`; a router leaf may consume input-independent group policy or a
 named reused validated-input policy through the one additional parent edge
 `../middleware`. Each
-imported name is visibly attached at its consuming destination. Router indexes,
-deep middleware leaves, aliases, siblings, and arbitrary parents remain closed.
-Indexes may import leaves, but leaves never import their own index. Contract
-code never imports implementation, middleware never imports `module.ts`, and
-router leaves never import the router index. No runtime discovery, loader,
-generator, or module SDK is part of the kind. An `entities` category is
+imported name is visibly attached at its consuming destination. Router indexes
+remain closed to middleware and implementation acquisition. Ordinary
+collaboration may range anywhere inside one sealed module; crossing the module
+root or entering a sibling remains closed. Indexes may import leaves, but leaves
+never import their own index. Contract code never imports implementation,
+middleware never imports `module.ts`, and router indexes only import their
+operation leaves. No runtime discovery, loader, generator, or module SDK is
+part of the kind. An `entities` category is
 admitted only for stable domain identity and transition invariants, subject to
 the pending shared source law. Entity declarations are platform-, transport-,
 provider-, and persistence-neutral. Wire-shaped requests and results remain

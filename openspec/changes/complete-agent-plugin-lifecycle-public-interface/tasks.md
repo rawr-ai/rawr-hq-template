@@ -1486,6 +1486,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   each root middleware leaf and `impl.ts` alias in the same atomic cut while
   preserving signal behavior, metadata, middleware order, and public service
   contracts.
+- [x] 5.7e21o Reground the service ratchet on the current Magic Jobs/Candidates
+  shape without moving production source. Assert closed indexed `contract/`,
+  `router/`, and optional `middleware/` module faces as the one target while
+  leaving the current flat production corpus visibly red for the next
+  container. Remove stale flat `contract.ts` and `router.ts` selections from
+  the generic contract, boundary, anchor, authorship, schema, and error laws.
+  Make module isolation own only service-root composition, sibling entry,
+  declared base/impl
+  crossings, and relative escape from the closed module. Let contract, context,
+  and router laws own executable direction inside it. Add no topology variant,
+  source parser, compatibility face, runtime change, or provider mutation.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

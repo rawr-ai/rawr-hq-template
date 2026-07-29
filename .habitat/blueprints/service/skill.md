@@ -154,7 +154,10 @@ middleware through `./middleware`; an operation leaf imports input-independent
 group policy or named reused validated-input policy through `../middleware`.
 Each imported name is attached at that destination. The directory is absent
 when unused. Leaves never import their own index, router indexes do not consume
-middleware, and no runtime loader or generator participates.
+middleware, and no runtime loader or generator participates. Ordinary
+collaboration may range anywhere inside one sealed module; the module root is
+the containment boundary. Contract, context, and router laws own executable
+direction inside that boundary.
 
 Effect procedures use the official oRPC extension. Contracts own native error
 maps, and handlers fail with their injected constructors in the Effect failure
