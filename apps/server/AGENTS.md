@@ -13,6 +13,8 @@
 
 - Owns process bootstrap, host resource binding, route mounting,
   request-scoped context, host authentication, and host observability.
+- Owns the executable process host exposed through `./host`; the HQ app owns
+  declaration and process-role selection.
 - Consumes application and plugin declarations; it must not choose domain
   policy, implement service operations, or become an agent-plugin state owner.
 - Internal RPC and published OpenAPI surfaces must derive from the same
@@ -34,8 +36,10 @@
 
 - Bootstrap resolves configuration and telemetry, then creates the host
   application.
-- Host composition consumes the HQ manifest, binds satisfiers, and materializes
-  declared service surfaces.
+- Host composition consumes app-selected declarations, binds satisfiers, and
+  materializes declared service surfaces.
+- Process start listens only after bootstrap has returned the fully composed
+  server.
 - RPC, OpenAPI, and workflow adapters create the same canonical context lanes.
   Service middleware enriches those lanes before module-curated handlers run.
 

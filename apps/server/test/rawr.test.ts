@@ -41,7 +41,10 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
 
 describe("rawr server routes", () => {
   it("does not expose retired web modules or an interim composition endpoint", async () => {
-    const app = registerRawrRoutes(createServerApp(), { repoRoot });
+    const app = registerRawrRoutes(createServerApp(), {
+      repoRoot,
+      hostComposition: createTestingRawrHostSeam(),
+    });
     const retiredWeb = await app.handle(
       new Request("http://localhost/rawr/plugins/web/fixture-web")
     );
@@ -85,7 +88,10 @@ describe("rawr server routes", () => {
 
       const response = await (async () => {
         try {
-          const app = registerRawrRoutes(createServerApp(), { repoRoot: tempRoot });
+          const app = registerRawrRoutes(createServerApp(), {
+            repoRoot: tempRoot,
+            hostComposition: createTestingRawrHostSeam(),
+          });
           return await app.handle(new Request("http://localhost/rawr/plugins/web/foreign-web"));
         } finally {
           readFileSpy.mockRestore();
@@ -106,7 +112,10 @@ describe("rawr server routes", () => {
   });
 
   it("no-legacy-composition-authority: rejects unsigned ingress before runtime dispatch", async () => {
-    const app = registerRawrRoutes(createServerApp(), { repoRoot });
+    const app = registerRawrRoutes(createServerApp(), {
+      repoRoot,
+      hostComposition: createTestingRawrHostSeam(),
+    });
     const res = await app.handle(
       new Request("http://localhost/api/inngest", { method: "GET", headers: { host: "localhost" } })
     );
@@ -117,7 +126,10 @@ describe("rawr server routes", () => {
     const previousSigningKey = process.env.INNGEST_SIGNING_KEY;
     process.env.INNGEST_SIGNING_KEY = "signkey-test-rawr-ingress";
     try {
-      const app = registerRawrRoutes(createServerApp(), { repoRoot });
+      const app = registerRawrRoutes(createServerApp(), {
+        repoRoot,
+        hostComposition: createTestingRawrHostSeam(),
+      });
       const res = await app.handle(
         new Request("http://localhost/api/inngest", {
           method: "POST",
@@ -158,8 +170,11 @@ describe("rawr server routes", () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-context-"));
     const primaryRepoRoot = path.join(tempRoot, "primary");
     const alternateRepoRoot = path.join(tempRoot, "alternate");
-    const hostInngest = createHostInngestBundle({ repoRoot: tempRoot });
     const host = createTestingRawrHostSeam();
+    const hostInngest = createHostInngestBundle({
+      repoRoot: tempRoot,
+      hostComposition: host,
+    });
     const resolveClient = vi.fn(host.satisfiers.exampleTodo.resolveClient);
     const invocations: Array<{ requestId: string; correlationId: string }> = [];
     const app = registerOrpcRoutes(createServerApp(), {

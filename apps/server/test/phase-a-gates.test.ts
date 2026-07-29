@@ -24,17 +24,17 @@ function hasStringLiteral(sourceFile: ts.SourceFile, value: string): boolean {
 }
 
 describe("phase-a gate scaffold (server)", () => {
-  it("no legacy composition authority gate scaffold verifies the explicit HQ composition bridge and quarantines legacy host seams", async () => {
+  it("keeps executable host composition inside the server application", async () => {
     const rawrSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "src", "rawr.ts"),
       "utf8"
     );
-    const legacyCutoverSource = await fs.readFile(
-      path.join(repoRoot, "apps", "hq", "legacy-cutover.ts"),
-      "utf8"
-    );
     const hostCompositionSource = await fs.readFile(
       path.join(repoRoot, "apps", "server", "src", "host-composition.ts"),
+      "utf8"
+    );
+    const hostSource = await fs.readFile(
+      path.join(repoRoot, "apps", "server", "src", "host.ts"),
       "utf8"
     );
     const hostSatisfiersSource = await fs.readFile(
@@ -66,29 +66,29 @@ describe("phase-a gate scaffold (server)", () => {
       routeMatrixSource
     );
 
-    expect(rawrSource).toContain('from "@rawr/hq-app/legacy-cutover"');
+    expect(rawrSource).toContain('from "./host-composition"');
+    expect(rawrSource).not.toContain("@rawr/hq-app/legacy-cutover");
     expect(rawrSource).toContain('from "./workflows/runtime"');
     expect(rawrSource).toContain("/api/inngest");
     expect(rawrSource).toContain("/api/workflows/*");
     expect(rawrSource).toContain("registerOrpcRoutes");
-    expect(rawrSource).not.toContain('from "./host-composition"');
     expect(rawrSource).not.toContain('from "./host-seam"');
     expect(rawrSource).not.toContain('from "./host-realization"');
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-coordination/server");
     expect(rawrSource).not.toContain("@rawr/plugin-workflows-support-example/server");
-    expect(legacyCutoverSource).toContain("../server/src/host-composition");
-    expect(legacyCutoverSource).not.toContain("../server/src/host-seam");
-    expect(legacyCutoverSource).not.toContain("../server/src/host-realization");
-    expect(hostCompositionSource).toContain("createRawrHqManifest");
+    expect(hostCompositionSource).not.toContain("@rawr/hq-app");
     expect(hostCompositionSource).toContain("createRawrHostSatisfiers");
     expect(hostCompositionSource).toContain("createRawrHostRolePlan");
+    expect(hostSource).toContain("createRawrHostComposition");
+    expect(hostSource).toContain("input.declarations");
     expect(hostSatisfiersSource).not.toContain(["@rawr", "hq-ops-" + "host"].join("/"));
     expect(hostSatisfiersSource).not.toContain("./hq-ops-resources");
     expect(hqOpsBindingSource).toContain("./hq-ops-resources");
     expect(hqOpsBindingSource).toContain('roleId: "hq-ops-config"');
     expect(hostSeamSource).toContain("workflows: Readonly<Record<string, never>>");
-    expect(testingHostSource).toContain("@rawr/hq-app/legacy-cutover");
-    expect(testingHostSource).not.toContain("createRawrHostComposition");
+    expect(testingHostSource).toContain('from "./host-composition"');
+    expect(testingHostSource).toContain("createRawrHostComposition");
+    expect(testingHostSource).not.toContain("@rawr/hq-app/legacy-cutover");
     expect(testingHostSource).not.toContain("manifest.fixtures");
     expect(workflowRuntimeSource).toContain("resolveRawrWorkflowInngestBaseUrl");
     expect(workflowRuntimeSource).not.toContain("createCoordinationWorkflowRuntimeAdapter");

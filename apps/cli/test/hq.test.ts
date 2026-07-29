@@ -133,6 +133,9 @@ describe("hq runtime commands", () => {
     expect(hqScript).not.toContain("inngest-cli@latest");
     expect(hqScript).toContain("resolve_hq_async_enabled");
     expect(hqScript).toContain("async: disabled (no HQ workflows or schedules configured)");
+    expect(hqScript).toContain("cd apps/hq");
+    expect(hqScript).toContain("bun --hot server.ts");
+    expect(hqScript).not.toContain("bun --hot src/index.ts");
   });
 
   it("plans hq graph as an on-demand Nx graph launch", () => {

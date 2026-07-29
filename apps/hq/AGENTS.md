@@ -2,8 +2,7 @@
 
 ## Purpose
 
-- Declare which roles and plugins make up the HQ application and expose thin
-  process entrypoints for realizing that declaration.
+- Declare which roles and plugins make up the HQ application.
 
 ## Scope
 
@@ -14,37 +13,36 @@
 
 - Owns HQ application identity and the declaration of role and plugin
   membership in `rawr.hq.ts`.
-- `server.ts`, `async.ts`, and `dev.ts` are thin process entrypoints; they do
-  not own service or provider policy.
-- `legacy-cutover.ts` adapts those entrypoints to the server host. Host
-  construction stays within that adapter and must not leak into the
-  declaration surface.
+- Owns process-role selection and the thin application entrypoints in
+  `server.ts`, `async.ts`, and `dev.ts`.
+- May call the server's public host interface. It must not construct server
+  resources, reach into server internals, or expose a reverse compatibility
+  bridge.
 
 ## Behavior
 
-- The application records membership and selects a host adapter; the host then
-  realizes the declaration with concrete runtime capabilities.
+- The application records membership and selects a role. The server host
+  realizes that selection with concrete runtime capabilities.
 
 ## Concepts
 
 - An **HQ manifest** is the declarative membership record for application
-  roles and plugins. A **process entrypoint** selects how that manifest is
-  realized, not what its services mean.
+  roles and plugins.
 
 ## Flow
 
 - `createRawrHqManifest` declares the application roles and selected plugin
   registrations.
-- A process entrypoint creates the manifest and delegates through the named
-  host adapter.
-- The server host supplies concrete resources and materializes executable
-  routes without moving that policy into the manifest.
+- An app-owned entrypoint projects the selected declarations into the public
+  server host.
+- The server supplies concrete resources and materializes executable routes
+  without moving app policy into host composition.
 
 ## Interfaces
 
-- The manifest is consumed through HQ SDK declarations; process entrypoints
-  hand it to the server host; realized routes and workflows are supplied back
-  by that host boundary.
+- The manifest is consumed through the package's `./manifest` export.
+  Entrypoints consume `@rawr/server/host`; realized routes and workflows remain
+  server-owned.
 
 ## Routing
 

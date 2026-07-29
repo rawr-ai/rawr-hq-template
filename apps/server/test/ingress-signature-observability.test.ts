@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes, verifyInngestIngressRequest } from "../src/rawr";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
@@ -66,7 +67,10 @@ describe("ingress signature observability", () => {
     delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
 
     try {
-      const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot });
+      const app = registerRawrRoutes(createServerApp(), {
+        repoRoot: fixtureRoot,
+        hostComposition: createTestingRawrHostSeam(),
+      });
       const response = await app.handle(
         new Request("http://localhost/api/inngest", {
           method: "POST",
@@ -101,7 +105,10 @@ describe("ingress signature observability", () => {
     delete process.env.INNGEST_SIGNING_KEY_FALLBACK;
 
     try {
-      const app = registerRawrRoutes(createServerApp(), { repoRoot: fixtureRoot });
+      const app = registerRawrRoutes(createServerApp(), {
+        repoRoot: fixtureRoot,
+        hostComposition: createTestingRawrHostSeam(),
+      });
       const response = await app.handle(
         new Request("http://localhost/api/inngest", {
           method: "POST",

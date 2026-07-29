@@ -1,10 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import fsSync from "node:fs";
 import path from "node:path";
-import { createRawrHqLegacyRouteAuthority } from "@rawr/hq-app/legacy-cutover";
 import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import type { RawrServerApp } from "./app";
+import type { RawrHostComposition } from "./host-composition";
 import { registerOrpcRoutes } from "./orpc";
 import { createRequestScopedBoundaryContext, type RawrInitialContext } from "./request-context";
 import { createWorkflowRouteHarness } from "./workflows/harness";
@@ -12,6 +12,7 @@ import { createRawrWorkflowRuntime } from "./workflows/runtime";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
+  hostComposition: RawrHostComposition;
   baseUrl?: string;
 };
 
@@ -21,9 +22,8 @@ export const PHASE_A_HOST_MOUNT_ORDER = [
   "/rpc + /api/orpc/*",
 ] as const;
 
-const rawrHostAuthority = createRawrHqLegacyRouteAuthority();
 type HostWorkflowRuntimeInput = Parameters<
-  typeof rawrHostAuthority.realization.workflows.createInngestFunctions
+  RawrHostComposition["realization"]["workflows"]["createInngestFunctions"]
 >[0];
 
 export type HostInngestBundle = Readonly<{
@@ -153,21 +153,24 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
  *
  * Owns:
  * - process-scoped Inngest client/runtime creation for the server role
- * - materializing workflow durable functions from the HQ-shell-owned legacy bridge plan
+ * - materializing workflow durable functions from the server-owned host composition
  *
  * Must not own:
  * - plugin declaration selection
- * - host satisfier construction outside the sanctioned HQ bridge
- * - alternate executable composition entrypoints outside `@rawr/hq-app/legacy-cutover`
+ * - host satisfier construction outside the canonical host composition
+ * - alternate executable composition entrypoints
  */
-export function createHostInngestBundle(input: { repoRoot: string }): HostInngestBundle {
+export function createHostInngestBundle(input: {
+  repoRoot: string;
+  hostComposition: RawrHostComposition;
+}): HostInngestBundle {
   const client = new Inngest({ id: "rawr-hq" });
   const runtime = createRawrWorkflowRuntime({
     repoRoot: input.repoRoot,
   });
   // The app manifest owns which registrations exist. The host binds them into
   // an executable role plan, then materializes runtime surfaces explicitly.
-  const functions = rawrHostAuthority.realization.workflows.createInngestFunctions({
+  const functions = input.hostComposition.realization.workflows.createInngestFunctions({
     client,
     runtime,
   });
@@ -191,28 +194,29 @@ export function createHostInngestBundle(input: { repoRoot: string }): HostInnges
  *
  * Owns:
  * - process mount order for Inngest, workflow, and oRPC surfaces
- * - routing HQ-bridge-owned realization outputs onto the live Elysia app
+ * - routing host-composed realization outputs onto the live Elysia app
  *
  * Must not own:
  * - capability-local client construction in the manifest
  * - request/process materialization outside host-owned server surfaces
- * - restart authority outside `@rawr/hq-app/legacy-cutover`
+ * - process restart authority
  */
 export function registerRawrRoutes<TApp extends RawrServerApp>(
   app: TApp,
   opts: RawrRoutesOptions
 ): TApp {
   const authorityRepoRoot = resolveAuthorityRepoRoot(opts.repoRoot);
-  const rawrHostSeam = rawrHostAuthority.realization;
+  const rawrHostSeam = opts.hostComposition.realization;
 
   const hostInngest = createHostInngestBundle({
     repoRoot: authorityRepoRoot,
+    hostComposition: opts.hostComposition,
   });
   const initialContext: RawrInitialContext = {
     deps: {
       runtime: hostInngest.runtime,
       inngestClient: hostInngest.client,
-      exampleTodo: rawrHostAuthority.satisfiers.exampleTodo,
+      exampleTodo: opts.hostComposition.satisfiers.exampleTodo,
     },
     scope: {
       repoRoot: authorityRepoRoot,

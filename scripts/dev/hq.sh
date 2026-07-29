@@ -1292,7 +1292,7 @@ if [[ -n "$otlp_endpoint" ]]; then
 fi
 
 (
-  cd apps/server
+  cd apps/hq
   server_env=(env)
   if [[ -n "$otlp_endpoint" ]]; then
     server_env+=(OTEL_EXPORTER_OTLP_ENDPOINT="$otlp_endpoint")
@@ -1303,7 +1303,7 @@ fi
     # production ingress verification.
     server_env+=(INNGEST_DEV="http://localhost:${INNGEST_PORT}")
   fi
-  exec "${server_env[@]}" bun --hot src/index.ts > >(tee -a "$LOG_FILE") 2>&1
+  exec "${server_env[@]}" bun --hot server.ts > >(tee -a "$LOG_FILE") 2>&1
 ) &
 hq_server_pid="$!"
 

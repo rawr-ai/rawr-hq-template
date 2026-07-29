@@ -10,8 +10,6 @@ import {
 
 await Promise.all([
   mustExist("apps/hq/rawr.hq.ts"),
-  mustExist("apps/hq/src/manifest.ts"),
-  mustExist("apps/hq/legacy-cutover.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
   mustExist("apps/hq/test/runtime-router.test.ts"),
@@ -31,8 +29,6 @@ for (const relPath of [
 
 const [
   shellSource,
-  manifestCompatSource,
-  legacyCutoverSource,
   hqDriftTestSource,
   triggerDriftTestSource,
   runtimeRouterTestSource,
@@ -40,8 +36,6 @@ const [
   scripts,
 ] = await Promise.all([
   readFile("apps/hq/rawr.hq.ts"),
-  readFile("apps/hq/src/manifest.ts"),
-  readFile("apps/hq/legacy-cutover.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
   readFile("apps/hq/test/runtime-router.test.ts"),
@@ -69,20 +63,13 @@ assertScriptEquals(scripts, "phase-f:f2:full", "bun run phase-f:f2:quick && bun 
 assertCondition(
   shellSource.includes("registerExampleTodoApiPlugin") &&
     !shellSource.includes("registerStateApiPlugin") &&
-    shellSource.includes("workflows: {} as const") &&
-    manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
+    shellSource.includes("workflows: {} as const"),
   "HQ manifest must retain only the surviving exampleTodo declaration and empty async role"
 );
 assertCondition(
   !hqOpsContractSource.includes("repoState") &&
     !hqOpsContractSource.includes("./modules/repo-state/contract"),
   "HQ Ops public contract must not retain repo-state membership authority"
-);
-assertCondition(
-  legacyCutoverSource.includes("../server/src/host-composition") &&
-    !legacyCutoverSource.includes("../server/src/host-seam") &&
-    !legacyCutoverSource.includes("../server/src/host-realization"),
-  "the existing bridge must remain localized until the canonical runtime migration replaces it"
 );
 assertCondition(
   runtimeRouterTestSource.includes(

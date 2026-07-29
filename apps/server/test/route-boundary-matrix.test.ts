@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -131,6 +132,7 @@ function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
     baseUrl: "http://localhost:3000",
+    hostComposition: createTestingRawrHostSeam(),
   });
 }
 

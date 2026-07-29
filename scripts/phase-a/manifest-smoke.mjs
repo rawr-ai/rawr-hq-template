@@ -26,6 +26,7 @@ if (mode !== "baseline" && mode !== "completion") {
 
 const root = process.cwd();
 const rawrFile = path.join(root, "apps", "server", "src", "rawr.ts");
+const hostFile = path.join(root, "apps", "server", "src", "host.ts");
 const orpcFile = path.join(root, "apps", "server", "src", "orpc.ts");
 const openApiFile = path.join(root, "apps", "server", "scripts", "write-orpc-openapi.ts");
 const testingHostFile = path.join(root, "apps", "server", "src", "testing-host.ts");
@@ -37,25 +38,18 @@ const supportProofFile = path.join(
   "support",
   "example-todo-proof-clients.ts"
 );
-const manifestFile = path.join(root, "apps", "hq", "src", "manifest.ts");
-const rawrHqManifestFile = path.join(root, "apps", "hq", "rawr.hq.ts");
-const legacyCutoverFile = path.join(root, "apps", "hq", "legacy-cutover.ts");
+const manifestFile = path.join(root, "apps", "hq", "rawr.hq.ts");
 
 const rawrSource = await fs.readFile(rawrFile, "utf8");
+const hostSource = await fs.readFile(hostFile, "utf8");
 const orpcSource = await fs.readFile(orpcFile, "utf8");
 const openApiSource = await fs.readFile(openApiFile, "utf8");
 const testingHostSource = await fs.readFile(testingHostFile, "utf8");
 const supportProofSource = await fs.readFile(supportProofFile, "utf8");
-const legacyCutoverSource =
-  mode === "completion" ? await fs.readFile(legacyCutoverFile, "utf8") : "";
-const manifestEntrySource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
-const manifestSource =
-  mode === "completion" && manifestEntrySource.includes("../rawr.hq")
-    ? `${manifestEntrySource}\n${await fs.readFile(rawrHqManifestFile, "utf8")}`
-    : manifestEntrySource;
+const manifestSource = mode === "completion" ? await fs.readFile(manifestFile, "utf8") : "";
 const rawrAst = parseTypeScript(rawrFile, rawrSource);
+const hostAst = parseTypeScript(hostFile, hostSource);
 const orpcAst = parseTypeScript(orpcFile, orpcSource);
-const manifestAst = mode === "completion" ? parseTypeScript(manifestFile, manifestSource) : null;
 
 const hasPackageOwnedPluginDeclarations =
   (manifestSource.includes("plugins: {") &&
@@ -108,8 +102,8 @@ if (mode === "completion") {
       !manifestSource.includes("createWorkflowRouteHarness"),
   });
   requiredChecks.push({
-    label: "host consumes HQ-owned legacy cutover composition bridge",
-    ok: hasNamedImport(rawrAst, "@rawr/hq-app/legacy-cutover", "createRawrHqLegacyRouteAuthority"),
+    label: "server owns executable host composition",
+    ok: hasNamedImport(hostAst, "./host-composition", "createRawrHostComposition"),
   });
   requiredChecks.push({
     label: "host wires /api/workflows capability-family routing",
@@ -133,7 +127,8 @@ if (mode === "completion") {
       "host composes workflow runtime from host-owned realization shells instead of host-local capability imports",
     ok:
       hasPropertyAccessChain(rawrAst, [
-        "rawrHostAuthority",
+        "input",
+        "hostComposition",
         "realization",
         "workflows",
         "createInngestFunctions",
@@ -145,8 +140,7 @@ if (mode === "completion") {
     label: "host consumes manifest-owned ORPC router seam",
     ok:
       hasRegisterOrpcRoutesHostSeamRouter(rawrAst) &&
-      hasIdentifierCall(rawrAst, "createRawrHqLegacyRouteAuthority") &&
-      legacyCutoverSource.includes("../server/src/host-composition"),
+      hasIdentifierCall(hostAst, "createRawrHostComposition"),
   });
   requiredChecks.push({
     label: "host avoids bypassing manifest orpc authority while owning runtime ingress composition",

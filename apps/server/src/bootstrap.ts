@@ -2,15 +2,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type InstalledTelemetry, installRawrOrpcTelemetry } from "@rawr/core/telemetry";
 import type { Client as HqOpsClient } from "@rawr/hq-ops";
-import { createServerApp } from "./app";
+import { createServerApp, type RawrServerApp } from "./app";
 import { getServerConfig } from "./config";
 import { resolveServerHqOpsClient } from "./hq-ops-binding";
-import { registerRawrRoutes } from "./rawr";
 
 function defaultRepoRoot() {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 }
 
+/**
+ * The fully composed server process returned before any listening socket is
+ * opened. Process hosts use this boundary to decide when startup is complete.
+ */
 export type BootstrappedServer = {
   app: ReturnType<typeof createServerApp>;
   config: {
@@ -23,14 +26,34 @@ export type BootstrappedServer = {
 type LoadConfig = (
   repoRoot: string
 ) => Promise<Awaited<ReturnType<typeof loadWorkspaceConfigFromHost>>>;
+
+/**
+ * Mounts all server-owned routes after configuration and resources are ready.
+ * The public host derives this registrar from app-selected declarations.
+ */
+export type ServerRouteRegistrar = (
+  app: RawrServerApp,
+  options: { repoRoot: string; baseUrl?: string }
+) => RawrServerApp;
+
+/**
+ * Host-owned capabilities needed to assemble the server process. Tests may
+ * replace these ports without moving runtime ownership into the HQ manifest.
+ */
 type BootstrapServerDependencies = {
   env: NodeJS.ProcessEnv;
   resolveRepoRoot(): string;
   installTelemetry: typeof installRawrOrpcTelemetry;
   createApp: typeof createServerApp;
   loadConfig: LoadConfig;
-  registerRoutes: typeof registerRawrRoutes;
+  registerRoutes: ServerRouteRegistrar;
 };
+
+/** Internal test seam for replacing bootstrap resources without exposing them to app callers. */
+export type BootstrapServerInput = Readonly<{
+  registerRoutes: ServerRouteRegistrar;
+  overrides?: Partial<Omit<BootstrapServerDependencies, "registerRoutes">>;
+}>;
 
 type LoadWorkspaceConfigOptions = NonNullable<
   Parameters<HqOpsClient["config"]["getWorkspaceConfig"]>[1]
@@ -44,17 +67,19 @@ async function loadWorkspaceConfigFromHost(repoRoot: string) {
   return await client.config.getWorkspaceConfig({}, options);
 }
 
-export async function bootstrapServer(
-  overrides: Partial<BootstrapServerDependencies> = {}
-): Promise<BootstrappedServer> {
+/**
+ * Resolves configuration, telemetry, and routes into a ready server without
+ * binding a port.
+ */
+export async function bootstrapServer(input: BootstrapServerInput): Promise<BootstrappedServer> {
   const deps: BootstrapServerDependencies = {
     env: process.env,
     resolveRepoRoot: defaultRepoRoot,
     installTelemetry: installRawrOrpcTelemetry,
     createApp: createServerApp,
     loadConfig: loadWorkspaceConfigFromHost,
-    registerRoutes: registerRawrRoutes,
-    ...overrides,
+    ...input.overrides,
+    registerRoutes: input.registerRoutes,
   };
 
   const repoRoot = deps.resolveRepoRoot();
@@ -83,15 +108,36 @@ export async function bootstrapServer(
     serviceVersion: deps.env.RAWR_SERVER_VERSION,
   });
 
-  let app = deps.createApp();
-  app = deps.registerRoutes(app, {
-    repoRoot,
-    baseUrl: config.baseUrl,
-  });
+  try {
+    let app = deps.createApp();
+    app = deps.registerRoutes(app, {
+      repoRoot,
+      baseUrl: config.baseUrl,
+    });
 
-  return {
-    app,
-    config,
-    telemetry,
-  };
+    return {
+      app,
+      config,
+      telemetry,
+    };
+  } catch (error) {
+    await telemetry.shutdown().catch(() => undefined);
+    throw error;
+  }
+}
+
+/**
+ * Opens the server socket only after the complete host has bootstrapped.
+ * Startup failure releases the telemetry resource acquired during bootstrap.
+ */
+export async function startServer(input: BootstrapServerInput): Promise<BootstrappedServer> {
+  const server = await bootstrapServer(input);
+
+  try {
+    server.app.listen(server.config.port);
+    return server;
+  } catch (error) {
+    await server.telemetry.shutdown().catch(() => undefined);
+    throw error;
+  }
 }

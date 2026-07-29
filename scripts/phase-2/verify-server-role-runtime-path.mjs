@@ -1,64 +1,50 @@
 #!/usr/bin/env bun
-import {
-  finishVerification,
-  parseAllowFindings,
-  pathExists,
-  readFile,
-  readJson,
-} from "./_verify-utils.mjs";
+import { finishVerification, parseAllowFindings, readFile, readJson } from "./_verify-utils.mjs";
 
 const allowFindings = parseAllowFindings();
 const failures = [];
 
-const rootPackage = await readJson("package.json");
-const workspaceGlobs = new Set(rootPackage.workspaces ?? []);
-for (const requiredWorkspace of ["packages/runtime/*", "packages/runtime/harnesses/*"]) {
-  if (!workspaceGlobs.has(requiredWorkspace)) {
-    failures.push(`package.json workspaces must include ${requiredWorkspace}.`);
-  }
-}
+const [serverEntrypoint, serverHost, rawrSource, bootstrapSource, hqPackage, serverPackage] =
+  await Promise.all([
+    readFile("apps/hq/server.ts"),
+    readFile("apps/server/src/host.ts"),
+    readFile("apps/server/src/rawr.ts"),
+    readFile("apps/server/src/bootstrap.ts"),
+    readJson("apps/hq/package.json"),
+    readJson("apps/server/package.json"),
+  ]);
 
-const serverEntrypoint = await readFile("apps/hq/server.ts");
-if (!serverEntrypoint.includes("@rawr/hq-sdk")) {
-  failures.push("apps/hq/server.ts must boot through @rawr/hq-sdk.");
+if (!serverEntrypoint.includes("@rawr/server/host")) {
+  failures.push("apps/hq/server.ts must realize its selected role through @rawr/server/host.");
 }
-if (serverEntrypoint.includes("./legacy-cutover")) {
-  failures.push("apps/hq/server.ts must not import ./legacy-cutover.");
+if (serverEntrypoint.includes("legacy-cutover")) {
+  failures.push("apps/hq/server.ts must not import the retired legacy cutover.");
 }
-if (
-  serverEntrypoint.includes("@rawr/runtime/") ||
-  serverEntrypoint.includes("../server/src/bootstrap")
-) {
-  failures.push(
-    "apps/hq/server.ts must not reach into runtime internals or legacy server bootstrap directly."
-  );
-}
-if (
-  !/role:\s*["']server["']/u.test(serverEntrypoint) &&
-  !/roles:\s*\[[^\]]*["']server["']/u.test(serverEntrypoint)
-) {
+if (!/role:\s*["']server["']/u.test(serverEntrypoint)) {
   failures.push("apps/hq/server.ts must select the server role explicitly.");
 }
+if (!serverHost.includes("createRawrHostComposition")) {
+  failures.push("apps/server/src/host.ts must realize app-selected declarations.");
+}
 
-for (const requiredPath of [
-  "packages/runtime/substrate/package.json",
-  "packages/runtime/bootgraph/package.json",
-  "packages/runtime/harnesses/elysia/package.json",
+for (const [relPath, source] of [
+  ["apps/server/src/host.ts", serverHost],
+  ["apps/server/src/rawr.ts", rawrSource],
+  ["apps/server/src/bootstrap.ts", bootstrapSource],
 ]) {
-  if (!(await pathExists(requiredPath))) {
-    failures.push(`${requiredPath} must exist for the canonical server runtime path.`);
+  if (source.includes("@rawr/hq-app")) {
+    failures.push(`${relPath} must not reach back into @rawr/hq-app.`);
+  }
+  if (source.includes("legacy-cutover")) {
+    failures.push(`${relPath} must not retain the legacy cutover.`);
   }
 }
 
-for (const relPath of ["apps/server/src/rawr.ts", "apps/server/src/bootstrap.ts"]) {
-  if (!(await pathExists(relPath))) continue;
-  const source = await readFile(relPath);
-  if (source.includes("@rawr/hq-app/legacy-cutover")) {
-    failures.push(`${relPath} must not import @rawr/hq-app/legacy-cutover.`);
-  }
-  if (source.includes("./host-composition") || source.includes("../server/src/host-composition")) {
-    failures.push(`${relPath} must not depend on host-composition as live runtime authority.`);
-  }
+if (hqPackage.dependencies?.["@rawr/server"] !== "workspace:*") {
+  failures.push("apps/hq/package.json must declare the public server host dependency.");
+}
+if (serverPackage.dependencies?.["@rawr/hq-app"] !== undefined) {
+  failures.push("apps/server/package.json must not depend on @rawr/hq-app.");
 }
 
 finishVerification({

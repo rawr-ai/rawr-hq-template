@@ -13,19 +13,16 @@ await Promise.all([
   mustExist("apps/server/test/logging-correlation.test.ts"),
   mustExist("scripts/observability/verify-logging-boundary.mjs"),
   mustExist("apps/hq/rawr.hq.ts"),
-  mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/server/package.json"),
 ]);
 
-const [scripts, loggingSource, orpcSource, shellSource, manifestCompatSource, serverPackageRaw] =
-  await Promise.all([
-    readPackageScripts(),
-    readFile("apps/server/src/logging.ts"),
-    readFile("apps/server/src/orpc.ts"),
-    readFile("apps/hq/rawr.hq.ts"),
-    readFile("apps/hq/src/manifest.ts"),
-    readFile("apps/server/package.json"),
-  ]);
+const [scripts, loggingSource, orpcSource, shellSource, serverPackageRaw] = await Promise.all([
+  readPackageScripts(),
+  readFile("apps/server/src/logging.ts"),
+  readFile("apps/server/src/orpc.ts"),
+  readFile("apps/hq/rawr.hq.ts"),
+  readFile("apps/server/package.json"),
+]);
 
 const serverPackage = JSON.parse(serverPackageRaw);
 
@@ -57,14 +54,13 @@ assertCondition(
     orpcSource.includes("withHostLoggingContext") &&
     orpcSource.includes('surface: "rpc"') &&
     orpcSource.includes('surface: "openapi"') &&
-    orpcSource.includes("repoRoot: context.repoRoot"),
+    orpcSource.includes("repoRoot: context.scope.repoRoot"),
   "apps/server/src/orpc.ts must bind host logging correlation at both routed ingress surfaces"
 );
 assertCondition(
   !shellSource.includes("hostLogger") &&
     !shellSource.includes("apps/server/src/logging") &&
-    !shellSource.includes("host-adapters/logger/embedded-placeholder") &&
-    manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
+    !shellSource.includes("host-adapters/logger/embedded-placeholder"),
   "apps/hq manifest must stay declaration-only and avoid server logging adapter construction"
 );
 assertCondition(

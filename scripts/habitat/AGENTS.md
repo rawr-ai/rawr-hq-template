@@ -36,7 +36,7 @@
 
 - The **release manifest** is executable identity. A **verified cache entry**
   is a byte-exact local copy; the **local policy batch** is the explicitly
-  selected mixed 22-rule Habitat CLI leaf. The independent **structure leaf**
+  selected mixed 23-rule Habitat CLI leaf. The independent **structure leaf**
   is the nine-rule Habitat-only subset used for fast Stop feedback.
 
 ## Flow
