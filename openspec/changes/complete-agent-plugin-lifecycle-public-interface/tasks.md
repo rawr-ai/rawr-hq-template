@@ -474,8 +474,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   retained release store.
 - [x] 3.6 Run workspace lint, package-owner typecheck and behavior, Habitat, and
   standing Oclif/Nx/release reviews.
-- [ ] 3.6a Land this node after the rejected distribution, persistent lifecycle
+- [x] 3.6a Land this node after the rejected distribution, persistent lifecycle
   stores, and obsolete Effect 3 family are absent from the packed closure.
+  Canonical Template `main` merge `b0a975727c618d007ac4be7003e7a4379106dcbd`
+  passed required push run `30477436378`.
 - [ ] 3.7 Only after the package source lands on canonical `main` and its required
   release gate passes, publish the versioned registry package and repeat the
   version/help/command-inventory smoke from a registry-installed disposable

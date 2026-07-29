@@ -20,7 +20,7 @@ repository release, or HF01 candidate was mutated by this correction.
 
 | Repository | Checkpoint base identity | Role |
 | --- | --- | --- |
-| RAWR HQ-Template | `main` / `f979e1746b48101483c080e6692d23ead65e3aa7` | Executable code, Oclif CLI, services, resources, generic tooling |
+| RAWR HQ-Template | `main` / `b0a975727c618d007ac4be7003e7a4379106dcbd` | Executable code, Oclif CLI, services, resources, generic tooling |
 | Personal RAWR HQ | `main` / `1e7f346b9b0fb7b356675d3e837295256bda7d0d` | Curated agent content, provenance, policy/evaluation, governed records |
 
 Active Template execution uses isolated Graphite worktrees descended from
@@ -1620,7 +1620,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Habitat execution normalization | Pending upstream distributable Civ7-style Nx plugin; the handwritten rule selection is interim and no local SDK fork or replacement runner is admitted |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | Bun-installed registry package selected; the exact nineteen-package fixed Nx Release group, package versions, inferred publishers, and production Oclif manifests are green; packed-install acceptance remains pending |
+| Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, and packed-install acceptance are landed and green; public registry publication and registry-installed smoke remain pending npm scope authorization |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -3870,6 +3870,24 @@ policy batch and 35 behavior cases; its only findings are the already-recorded
 advisory service migration corpus. Strict OpenSpec, Biome, and diff hygiene
 pass. Standing behavioral, native-authority, and TypeScript/structural reviews
 report no unresolved P0, P1, or P2 finding.
+
+## Canonical Release Readiness
+
+Template merge `b0a975727c618d007ac4be7003e7a4379106dcbd` contains the
+ordinary fixed Nx Release group, its complete packed-install acceptance, the
+retired custom distribution, and the Habitat-only structural policy boundary.
+Required canonical-main push run `30477436378` passed. This closes
+[[tasks#3. Conventional CLI Package And Release|task 3.6a]].
+
+Task 3.7 remains a real release operation rather than another implementation
+slice. The npm registry currently reports no authenticated operator and
+`@rawr/cli@0.1.0` is not published. No repository publish workflow or npm token
+is configured. Publication therefore remains blocked on `@rawr` scope
+authorization and any required 2FA credential; it is not repaired with a local
+registry, package rewrite, custom installer, or release store. Once authorized,
+the unfiltered Nx publish graph owns all nineteen packages and a guarded
+disposable prefix owns the registry-installed version, help, and command
+inventory smoke.
 
 ## Manual Phase-Gate Retirement
 

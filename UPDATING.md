@@ -6,8 +6,8 @@ canonical `main` branches. There is no Template-to-personal Git sync workflow.
 ## Template Repository
 
 Update this checkout from its own `origin`, install the locked dependencies, and
-run the repository-owned Nx gates. During the CLI distribution transition, use
-the repository-local Oclif development command:
+run the repository-owned Nx gates. Use the repository-local Oclif development
+command when working from source:
 
 ```bash
 git pull --ff-only origin main
@@ -17,12 +17,15 @@ bun run test
 bun run rawr -- --version
 ```
 
-The conventional fixed Nx Release package group and ordinary package
-installation are still pending. Do not publish the current predecessor closure,
-invent a package version, or restore the removed custom installer, selector,
-release store, or launcher. A previously installed custom distribution may remain
-executable on a workstation, but it is obsolete, is not updated, and is not
-authority for development or acceptance.
+The fixed nineteen-package Nx Release group and ordinary packed-package
+installation acceptance are landed on Template `main`. Registry publication
+remains an explicit post-landing release operation and requires npm scope
+authorization; until version `0.1.0` is published and smoke-tested from the
+registry, use the repository-local command above. Do not invent another package
+version or restore the removed custom installer, selector, release store, or
+launcher. A previously installed custom distribution may remain executable on a
+workstation, but it is obsolete, is not updated, and is not authority for
+development or acceptance.
 
 ## Personal Repository
 
