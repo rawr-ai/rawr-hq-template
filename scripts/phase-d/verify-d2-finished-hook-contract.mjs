@@ -3,7 +3,6 @@ import { assertCondition, mustExist, readFile, readPackageScripts } from "./_ver
 
 await Promise.all([
   mustExist("apps/hq/rawr.hq.ts"),
-  mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/hq/test/runtime-router.test.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -13,7 +12,6 @@ await Promise.all([
 
 const [
   shellSource,
-  manifestCompatSource,
   runtimeRouterTestSource,
   contractDriftTestSource,
   workflowDriftTestSource,
@@ -22,7 +20,6 @@ const [
   scripts,
 ] = await Promise.all([
   readFile("apps/hq/rawr.hq.ts"),
-  readFile("apps/hq/src/manifest.ts"),
   readFile("apps/hq/test/runtime-router.test.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -35,18 +32,18 @@ assertCondition(
   shellSource.includes("workflows: {} as const") &&
     !shellSource.includes("registerCoordinationApiPlugin") &&
     !shellSource.includes("registerSupportExampleWorkflowPlugin") &&
-    !shellSource.includes("createHqRuntimeRouter") &&
-    manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
-  "apps/hq/rawr.hq.ts must keep the workflow publication lane empty after U01 while src/manifest.ts stays a thin forwarder"
+    !shellSource.includes("createHqRuntimeRouter"),
+  "apps/hq/rawr.hq.ts must keep the workflow publication lane empty after U01"
 );
 assertCondition(
   runtimeRouterTestSource.includes(
     "keeps the canonical app shell cold and explicit about role/surface membership"
   ) &&
-    runtimeRouterTestSource.includes("keeps src/manifest.ts as a thin compatibility forwarder") &&
-    runtimeRouterTestSource.includes("keeps entrypoints thin and shell-owned") &&
-    runtimeRouterTestSource.includes('expect(packageJson.exports?.["./testing"]).toBeUndefined()'),
-  "runtime-router.test.ts must guard the canonical shell seam and compatibility forwarder"
+    runtimeRouterTestSource.includes(
+      "keeps app-owned entrypoints and removes the legacy cutover"
+    ) &&
+    runtimeRouterTestSource.includes('expect(hqPackage.exports?.["./testing"]).toBeUndefined()'),
+  "runtime-router.test.ts must guard the canonical shell and app-owned entrypoint seam"
 );
 assertCondition(
   contractDriftTestSource.includes(

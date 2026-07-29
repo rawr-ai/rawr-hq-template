@@ -62,7 +62,7 @@ in a second filename convention. Grit rules own source relationships. A
 must remain inside its rule packet. Behavioral semantics stay in TypeScript
 tests and owner review rather than being approximated as source shape.
 
-`habitat:check:policy` composes the pinned-binary 22-rule local policy batch at
+`habitat:check:policy` composes the pinned-binary 23-rule local policy batch at
 `habitat:check:policy:local` with the one rule-owned Nx graph adapter. The
 independent `habitat:check:structure` leaf selects exactly nine Habitat
 structure rules for Stop feedback and is not a policy dependency. Both CLI
@@ -88,6 +88,9 @@ reviewed service migrations through
 The imported agent-router placement relation retains that provenance but now
 lives under `rawr/repository`: it relates repository-owned roots and is not a
 constructible document-kind topology.
+The `rawr/app-host` niche keeps the HQ application-to-server dependency
+directional: the declaration manifest stays cold, and only the app-owned
+server entrypoint crosses through the server's public host export.
 The port keeps Magic's source patterns byte-identical. Rule manifests adapt
 their niche (`magic` to `rawr`) and repository formatting; the strengthened
 consumer-sealing law is advisory while its shared owner-local relative-path

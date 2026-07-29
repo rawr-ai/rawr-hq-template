@@ -1,16 +1,29 @@
-import { startRawrHqAsyncViaLegacyCutover } from "./legacy-cutover";
-import { createRawrHqManifest } from "./rawr.hq";
+import { createRawrHqManifest, type RawrHqManifest } from "./rawr.hq";
 
-export const rawrHqAsyncProcessShape = ["async"] as const;
+/** The app-owned selection record for the intentionally unhosted async role. */
+export type RawrHqAsyncReservation = Readonly<{
+  manifest: RawrHqManifest;
+  role: "async";
+  status: "reserved";
+  workflows: readonly string[];
+  schedules: readonly string[];
+}>;
 
-export async function startRawrHqAsync(input: { log?: (message: string) => void } = {}) {
+/**
+ * Selects the reserved HQ async role without constructing a runtime host.
+ */
+export function selectRawrHqAsyncRole(): RawrHqAsyncReservation {
   const manifest = createRawrHqManifest();
-  return await startRawrHqAsyncViaLegacyCutover({
+
+  return {
     manifest,
-    log: input.log,
-  });
+    role: "async",
+    status: "reserved",
+    workflows: Object.keys(manifest.roles.async.workflows),
+    schedules: Object.keys(manifest.roles.async.schedules),
+  };
 }
 
 if (import.meta.main) {
-  await startRawrHqAsync();
+  console.log("@rawr/hq-app async role remains reserved");
 }

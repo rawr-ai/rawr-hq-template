@@ -3,8 +3,14 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
-import { __flushHostLoggerForTests, __resetHostLoggerForTests } from "../src/logging";
+import { createRawrHostComposition } from "../src/host-composition";
+import {
+  __flushHostLoggerForTests,
+  __resetHostLoggerForTests,
+  createHostLoggerAdapter,
+} from "../src/logging";
 import { registerRawrRoutes } from "../src/rawr";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -24,6 +30,10 @@ async function createTestApp() {
   const app = registerRawrRoutes(createServerApp(), {
     repoRoot,
     baseUrl: "http://localhost:3000",
+    hostComposition: createRawrHostComposition({
+      declarations: createTestingRawrHostSeam().declarations,
+      hostLogger: createHostLoggerAdapter(),
+    }),
   });
 
   return { app, repoRoot };

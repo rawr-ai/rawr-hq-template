@@ -1,23 +1,39 @@
 import type { Client as ExampleTodoClient } from "@rawr/example-todo/client";
-import { createTestingRawrHqLegacyHostSeam } from "@rawr/hq-app/legacy-cutover";
+import { registerExampleTodoApiPlugin } from "../../../plugins/server/api/example-todo/src/api";
+import { createRawrHostComposition } from "./host-composition";
+
+const testingHostLogger = {
+  info() {},
+  error() {},
+} as const;
 
 /**
- * @agents-style canonical HQ-shell-owned proof seam
+ * @agents-style canonical server-owned proof seam
  *
  * Owns:
- * - test-only realization of the sanctioned HQ legacy bridge seam
+ * - test-only realization of the canonical host composition
  *
  * Must not own:
- * - app-side executable bridge compatibility
+ * - app-side executable host compatibility
  * - alternate binding rules
  *
  * Canonical:
- * - `legacy-cutover -> host-composition -> host-seam -> host-realization`
+ * - `host-composition -> host-seam -> host-realization`
  */
-let cachedSeam: ReturnType<typeof createTestingRawrHqLegacyHostSeam> | null = null;
+let cachedSeam: ReturnType<typeof createRawrHostComposition> | null = null;
 
 export function createTestingRawrHostSeam() {
-  if (!cachedSeam) cachedSeam = createTestingRawrHqLegacyHostSeam();
+  if (!cachedSeam) {
+    cachedSeam = createRawrHostComposition({
+      declarations: {
+        api: {
+          exampleTodo: registerExampleTodoApiPlugin(),
+        },
+        workflows: {},
+      },
+      hostLogger: testingHostLogger,
+    });
+  }
   return cachedSeam;
 }
 

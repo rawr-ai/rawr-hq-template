@@ -26,20 +26,22 @@ describe("server telemetry bootstrap", () => {
     };
 
     const bootstrapped = await bootstrapServer({
-      env: { NODE_ENV: "test" } as NodeJS.ProcessEnv,
-      resolveRepoRoot: () => "/tmp/rawr-test-repo",
-      installTelemetry: async () => {
-        order.push("telemetry");
-        return telemetry;
-      },
-      createApp: () => {
-        order.push("create-app");
-        return app;
-      },
-      loadConfig: async () => ({ config: {} }) as never,
       registerRoutes: (currentApp) => {
         order.push("register-routes");
         return currentApp;
+      },
+      overrides: {
+        env: { NODE_ENV: "test" } as NodeJS.ProcessEnv,
+        resolveRepoRoot: () => "/tmp/rawr-test-repo",
+        installTelemetry: async () => {
+          order.push("telemetry");
+          return telemetry;
+        },
+        createApp: () => {
+          order.push("create-app");
+          return app;
+        },
+        loadConfig: async () => ({ config: {} }) as never,
       },
     });
 

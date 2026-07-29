@@ -87,12 +87,11 @@ function hasRegisterOrpcRoutesManifestRouter(sourceFile) {
 
 async function verifyHostCompositionGuard() {
   const { source, ast: rawrAst } = await readTypeScriptFile("apps/server/src/rawr.ts");
+  const { source: hostSource, ast: hostAst } = await readTypeScriptFile("apps/server/src/host.ts");
   const { source: hostCompositionSource, ast: hostCompositionAst } = await readTypeScriptFile(
     "apps/server/src/host-composition.ts"
   );
-  const { source: hostSeamSource, ast: hostSeamAst } = await readTypeScriptFile(
-    "apps/server/src/host-seam.ts"
-  );
+  const { source: hostSeamSource } = await readTypeScriptFile("apps/server/src/host-seam.ts");
   const { source: testingHostSource, ast: testingHostAst } = await readTypeScriptFile(
     "apps/server/src/testing-host.ts"
   );
@@ -111,24 +110,21 @@ async function verifyHostCompositionGuard() {
   );
 
   assertCondition(
-    hasNamedImport(rawrAst, "./host-composition", "createRawrHostComposition"),
-    "rawr host must consume one server-owned executable composition entrypoint"
+    hasNamedImport(hostAst, "./host-composition", "createRawrHostComposition") &&
+      !hostSource.includes("@rawr/hq-app"),
+    "public server host must realize app-selected declarations without importing the HQ app"
   );
   assertCondition(
     hasNamedImport(testingHostAst, "./host-composition", "createRawrHostComposition") &&
-      hasNamedImport(hostCompositionAst, "@rawr/hq-app/manifest", "createRawrHqManifest") &&
       hasNamedImport(hostCompositionAst, "./host-satisfiers", "createRawrHostSatisfiers") &&
-      hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostBoundRolePlan") &&
-      hasNamedImport(
-        hostCompositionAst,
-        "./host-realization",
-        "materializeRawrHostBoundRolePlan"
-      ) &&
+      hasNamedImport(hostCompositionAst, "./host-seam", "createRawrHostRolePlan") &&
+      hasNamedImport(hostCompositionAst, "./host-realization", "materializeRawrHostRolePlan") &&
       !hostSeamSource.includes('from "../../../rawr.hq"') &&
       !testingHostSource.includes('from "../../../rawr.hq"') &&
-      !hostSeamSource.includes("@rawr/hq-app/manifest") &&
-      !testingHostSource.includes("@rawr/hq-app/manifest"),
-    "host composition must localize the narrow @rawr/hq-app/manifest input instead of letting rawr, host-seam, and testing-host each consume it directly"
+      !hostCompositionSource.includes("@rawr/hq-app") &&
+      !hostSeamSource.includes("@rawr/hq-app") &&
+      !testingHostSource.includes("@rawr/hq-app"),
+    "server composition must consume declarations without reaching back into the HQ app"
   );
   assertCondition(
     hasRouteRegistration(rawrAst, "/api/inngest"),
@@ -147,24 +143,22 @@ async function verifyHostCompositionGuard() {
     "rawr host must pass host-materialized ORPC seam to registerOrpcRoutes"
   );
   assertCondition(
-    hasIdentifierCall(rawrAst, "createRawrHostComposition") &&
-      hasIdentifierCall(hostCompositionAst, "createRawrHqManifest") &&
+    hasIdentifierCall(hostAst, "createRawrHostComposition") &&
       hasIdentifierCall(hostCompositionAst, "createRawrHostSatisfiers") &&
-      hasIdentifierCall(hostCompositionAst, "createRawrHostBoundRolePlan") &&
-      hasIdentifierCall(hostCompositionAst, "materializeRawrHostBoundRolePlan"),
+      hasIdentifierCall(hostCompositionAst, "createRawrHostRolePlan") &&
+      hasIdentifierCall(hostCompositionAst, "materializeRawrHostRolePlan"),
     "host composition must be the only place that consumes declarations, constructs satisfiers, binds registrations, and materializes realized host surfaces"
   );
   assertCondition(
     hasIdentifierCall(rawrAst, "createWorkflowRouteHarness") &&
       /publishedRouter:\s*rawrHostSeam\.workflows\.published\.router/s.test(source) &&
-      /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createWorkflowBoundaryContext\(request,\s*deps\)/s.test(
-        source
-      ),
+      /contextFactory:\s*createRequestScopedBoundaryContext/s.test(source),
     "rawr host must consume host-materialized published workflow router seam through createWorkflowRouteHarness"
   );
   assertCondition(
     hasPropertyAccessChain(rawrAst, [
-      "rawrHostComposition",
+      "input",
+      "hostComposition",
       "realization",
       "workflows",
       "createInngestFunctions",
@@ -174,7 +168,8 @@ async function verifyHostCompositionGuard() {
   assertCondition(
     hasNamedImport(rawrAst, "inngest/bun", "serve") &&
       hasPropertyAccessChain(rawrAst, [
-        "rawrHostComposition",
+        "input",
+        "hostComposition",
         "realization",
         "workflows",
         "createInngestFunctions",
@@ -187,9 +182,11 @@ async function verifyHostCompositionGuard() {
     "rawr host must compose the runtime-owned inngest bundle through host-materialized workflow seams"
   );
   assertCondition(
-    /contextFactory:\s*\(request,\s*deps\)\s*=>\s*createRequestScopedBoundaryContext\(request,\s*deps\)/s.test(
-      source
-    ) && !source.includes("rawrHqManifest.orpc.enrichContext"),
+    source.includes("contextFactory: createRequestScopedBoundaryContext") &&
+      source.includes(
+        "contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps)"
+      ) &&
+      !source.includes("rawrHqManifest.orpc.enrichContext"),
     "rawr host must keep workflow context enrichment out of canonical ORPC registration"
   );
   assertCondition(
@@ -210,9 +207,8 @@ async function verifyHostCompositionGuard() {
   assertCondition(
     hasNamedImport(hostRealizationAst, "./host-surface-merge", "mergeRawrHostSurfaceTrees") &&
       !hasImport(hostRealizationAst, "@rawr/hq-sdk/composition") &&
-      hostRealizationSource.includes(
-        "implement(contract).$context<BoundaryRequestSupportContext>()"
-      ),
+      hasNamedImport(hostRealizationAst, "@orpc/server", "withHiddenRouterContract") &&
+      hostRealizationSource.includes("Router<RawrBoundaryContext>"),
     "host realization must own executable surface merging instead of reaching through @rawr/hq-sdk/composition"
   );
   assertCondition(

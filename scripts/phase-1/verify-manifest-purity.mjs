@@ -1,19 +1,11 @@
 #!/usr/bin/env bun
 import { assertCondition, pathExists, readFile, readPackageJson } from "./_verify-utils.mjs";
 
-function normalizeSemanticSource(source) {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\/\/.*$/gm, "")
-    .replace(/\s+/g, "");
-}
-
 assertCondition(await pathExists("apps/hq/rawr.hq.ts"), "apps/hq/rawr.hq.ts must exist");
 
-const [pkg, manifestSource, manifestCompatSource] = await Promise.all([
+const [pkg, manifestSource] = await Promise.all([
   readPackageJson("apps/hq/package.json"),
   readFile("apps/hq/rawr.hq.ts"),
-  readFile("apps/hq/src/manifest.ts"),
 ]);
 
 assertCondition(
@@ -57,9 +49,8 @@ assertCondition(
   "rawr.hq.ts must not own workflow route harnesses"
 );
 assertCondition(
-  normalizeSemanticSource(manifestCompatSource) ===
-    'export{createRawrHqManifest}from"../rawr.hq";exporttype{RawrHqManifest}from"../rawr.hq";',
-  "apps/hq/src/manifest.ts must remain a thin compatibility forwarder to rawr.hq.ts"
+  !(await pathExists("apps/hq/src/manifest.ts")),
+  "apps/hq/src/manifest.ts must remain retired; package exports resolve directly to rawr.hq.ts"
 );
 
 console.log("manifest purity verified");

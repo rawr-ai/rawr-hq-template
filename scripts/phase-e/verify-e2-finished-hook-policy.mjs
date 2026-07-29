@@ -3,7 +3,6 @@ import { assertCondition, mustExist, readFile, readPackageScripts } from "./_ver
 
 await Promise.all([
   mustExist("apps/hq/rawr.hq.ts"),
-  mustExist("apps/hq/src/manifest.ts"),
   mustExist("apps/hq/test/runtime-router.test.ts"),
   mustExist("apps/hq/test/orpc-contract-drift.test.ts"),
   mustExist("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -12,7 +11,6 @@ await Promise.all([
 
 const [
   shellSource,
-  manifestCompatSource,
   runtimeRouterTestSource,
   contractDriftTestSource,
   workflowDriftTestSource,
@@ -20,7 +18,6 @@ const [
   scripts,
 ] = await Promise.all([
   readFile("apps/hq/rawr.hq.ts"),
-  readFile("apps/hq/src/manifest.ts"),
   readFile("apps/hq/test/runtime-router.test.ts"),
   readFile("apps/hq/test/orpc-contract-drift.test.ts"),
   readFile("apps/hq/test/workflow-trigger-contract-drift.test.ts"),
@@ -31,9 +28,8 @@ const [
 assertCondition(
   shellSource.includes("workflows: {} as const") &&
     !shellSource.includes("registerCoordinationApiPlugin") &&
-    !shellSource.includes("registerSupportExampleWorkflowPlugin") &&
-    manifestCompatSource.includes('export { createRawrHqManifest } from "../rawr.hq";'),
-  "apps/hq/rawr.hq.ts must keep archived workflow families out of live publication while src/manifest.ts stays a thin forwarder"
+    !shellSource.includes("registerSupportExampleWorkflowPlugin"),
+  "apps/hq/rawr.hq.ts must keep archived workflow families out of live publication"
 );
 assertCondition(
   !runtimeRouterTestSource.includes("finished-hook") &&

@@ -3,6 +3,7 @@
   "schemaVersion": 2,
   "ownerRoots": {
     "habitat": "scripts/habitat",
-    "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle"
+    "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle",
+    "@rawr/hq-app": "apps/hq"
   }
 }

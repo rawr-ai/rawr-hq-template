@@ -12,6 +12,7 @@ import { contract, createClient } from "../../../plugins/server/api/example-todo
 import { createServerApp } from "../src/app";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";
+import { createTestingRawrHostSeam } from "../src/testing-host";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -30,6 +31,7 @@ function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
     baseUrl: "http://localhost:3000",
+    hostComposition: createTestingRawrHostSeam(),
   });
 }
 

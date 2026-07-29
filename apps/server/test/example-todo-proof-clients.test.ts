@@ -5,7 +5,7 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
-import { resetTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
 import {
   createExampleTodoInvocation,
   createExampleTodoProofClients,
@@ -19,6 +19,7 @@ function createApp() {
   return registerRawrRoutes(createServerApp(), {
     repoRoot,
     baseUrl: "http://localhost:3000",
+    hostComposition: createTestingRawrHostSeam(),
   });
 }
 
