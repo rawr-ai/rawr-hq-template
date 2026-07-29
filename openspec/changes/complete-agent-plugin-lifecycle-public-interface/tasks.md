@@ -1663,15 +1663,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and synchronization process from Personal once unique useful content and
   governed records are accounted for. Preserve repository-local process config
   needed by the content repository itself.
-- [ ] 6.6 Include landed `cognition:state-machine-design` in the closed release
-  set. While HF01 is pending, prove the selected release input excludes skill
-  identities `inngest`, `effect-inngest`, and `inngest-orpc`; prove selected
-  `dev` payloads exclude `skills/inngest/**`, `skills/effect-inngest/**`, and
-  `skills/inngest-orpc/**`; and prove canonical Personal source excludes the
-  repository-level roots `docs/projects/inngest-event-driven-skillset/**`,
+- [ ] 6.6 Include landed `cognition:state-machine-design`, `dev:inngest`, and
+  `dev:effect-inngest` in the closed release set. Bind the accepted subject
+  trees `93f614be74f1e1fae3c59d2f95137f9388f4bbf9` and
+  `033f3fb6ef53ff3f6501ad3b0e723681b7b23c14` through the normal Personal
+  `dev` member; do not create a separate member or release path. Prove the
+  selected release input excludes `inngest-orpc` and the repository-level
+  research/candidate roots `docs/projects/inngest-event-driven-skillset/**`,
   `candidate/native-inngest/**`, `candidate/effect-inngest/**`,
   `candidate/quality/**`, and `tools/inngest-skill-quality/**`. Do not create a
-  Template runtime mode for this Personal-owned content gate.
+  Template runtime mode for this Personal-owned content.
 - [ ] 6.7 Run Personal content topology, lint/typecheck units, release-input
   validation, and required CI through its working external gate. Do not bypass
   repository billing or branch protection. Land Personal independently.
@@ -1704,8 +1705,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   OpenSpec, package/install smoke, lifecycle service behavior, and native
   disposable-home acceptance from landed revisions.
 - [ ] 8.2 Close every standing review with no unresolved finding that threatens
-  an invariant. The newest Personal-worktree Inngest review must confirm HF01
-  exclusion; it does not authorize release.
+  an invariant. The Personal-main Inngest review must confirm normal inclusion
+  of the two accepted skill trees and exclusion of `inngest-orpc` plus
+  research/candidate roots; it does not authorize a separate release path.
 - [ ] 8.3 Archive this change so its canonical deltas atomically delete the
   six capabilities, rewrite the ten capabilities, retain vendor management, and
   add the three capabilities recorded exactly in

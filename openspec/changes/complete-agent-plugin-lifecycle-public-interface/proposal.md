@@ -56,7 +56,8 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - CLI release identity as an input to desired agent-plugin membership.
 - App/runtime composition and legacy destination/export work.
 - Personal/Template executable equivalence or ancestry.
-- HF01/Inngest candidate materialization or release.
+- One-off Inngest candidate materialization or release outside the governed
+  Personal closed release set.
 - New receipts, ledgers, aggregates, launchers, compatibility readers, and
   adversarial local-tamper machinery.
 
@@ -87,8 +88,9 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - Existing controller installations become obsolete local bytes. The corrected
   product does not scan or mutate them after conventional CLI installation is
   verified.
-- Inngest remains `HF01_PENDING` and is excluded from this workstream's selected
-  Personal release input and every initiative provider mutation while pending.
+- Accepted `dev:inngest` and `dev:effect-inngest` content enters through the
+  ordinary Personal closed release set; `inngest-orpc` and research/candidate
+  roots remain excluded, with no protected-lane release exception.
 - The dedicated architecture migration retains ownership of application/runtime
   composition and destination realization.
 

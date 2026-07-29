@@ -107,7 +107,7 @@ another standard term that names the actual thing.
 | Codex installed state | Native Codex marketplace/plugin commands and live inventory |
 | Claude installed state | Native Claude marketplace/plugin commands and live inventory |
 | Operational evidence | Caller or ordinary CI/release tooling; never a lifecycle store or selector |
-| Inngest candidate | `HF01_PENDING`; excluded from this workstream's selected Personal release input and every initiative mutation path while pending |
+| Inngest skills | `accepted-landed-read-only` on Personal `main`; `dev:inngest` and `dev:effect-inngest` enter only through the normal closed release set, while `inngest-orpc` and research/candidate roots remain excluded |
 
 A repository path is a content locator. It is never CLI identity, provider
 identity, release identity, or Git ancestry between repositories.
@@ -235,8 +235,9 @@ the slice touches their boundary:
 - protected-lane/Inngest for release-input, dependency-closure, or provider
   settlement changes.
 
-The Inngest role is compatibility-only. It cannot materialize, package, export,
-release, or mutate HF01 candidate bytes.
+The Inngest role remains a subject compatibility reviewer. It does not create a
+one-off materialization, package, export, release, or provider path; the accepted
+Personal skill bytes move only through the governed closed release set.
 
 ## Execution Rule
 

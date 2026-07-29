@@ -15,8 +15,9 @@ materialization or native mutation.
 ### Requirement: C2 proof isolates protected lanes
 **Reason**: A phase-specific implementation record is not a lasting product
 requirement and still mentions retired export work.
-**Migration**: Personal content policy excludes the exact HF01 identities and
-paths for this workstream while Template remains content-neutral.
+**Migration**: Personal content policy admits accepted subject skills only
+through the normal closed release set and excludes unaccepted identities plus
+research/candidate roots while Template remains content-neutral.
 
 ### Requirement: Stable exact artifact storage
 **Reason**: A branded persistent local release/set store recreates the rejected
