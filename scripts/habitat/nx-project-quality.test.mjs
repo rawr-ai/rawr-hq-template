@@ -40,7 +40,7 @@ describe("quality target admission", () => {
     const value = graph({
       root: project(".", {}),
       service: project("services/example", codeTargets(), ["type:service"]),
-      content: project("plugins/agents/example", contentTargets(), ["type:content"]),
+      content: project("content/example", contentTargets(), ["type:content"]),
       fixture: project("tools/example-fixture", contentTargets(), ["type:fixture"]),
     });
 
@@ -78,10 +78,10 @@ describe("quality target admission", () => {
   });
 
   test("refuses an exempt project without a public check", () => {
-    const value = graph({ content: project("plugins/agents/example", {}, ["type:content"]) });
+    const value = graph({ content: project("content/example", {}, ["type:content"]) });
 
     expect(() => assertQualityTargetAdmission(value)).toThrow(
-      "content (plugins/agents/example) is missing check"
+      "content (content/example) is missing check"
     );
   });
 
