@@ -92,7 +92,7 @@ for (const relRoot of activeRuntimeRoots) {
   }
 }
 
-const activeToolAndGuidanceRoots = ["apps/cli/src", "plugins/agents/hq/skills", "docs"];
+const activeToolAndGuidanceRoots = ["apps/cli/src", "docs"];
 const retiredActiveGuidance = [
   ["legacy web-membership command", /\b(?:rawr\s+)?plugins\s+web\b/u],
   ["legacy scaffold command", /\b(?:rawr\s+)?plugins\s+scaffold\b/u],

@@ -16,22 +16,21 @@
 
 ## Purpose
 
-- Extend RAWR through explicitly classified command, agent, web, API,
-  workflow, and schedule capabilities without collapsing their distinct
+- Extend RAWR through explicitly classified command, web, API, workflow, and
+  schedule capabilities without collapsing their distinct
   composition or lifecycle models.
 
 ## Scope
 - Applies to everything under `plugins/**`.
-- This repo uses **six plugin roots**:
+- This repo uses **five plugin roots**:
   - `plugins/cli/commands/*` for host-composed Oclif command capabilities
-  - `plugins/agents/*` for agent offices (`rawr.kind=agent`)
   - `plugins/web/*` for runtime/web plugins (`rawr.kind=web`)
   - `plugins/server/api/*` for server/API runtime adapters (`rawr.kind=api`)
   - `plugins/async/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
   - `plugins/async/schedules/*` for recurring trigger runtime adapters (`rawr.kind=schedules`)
-- Command and agent-plugin leaves are workspace packages. API server plugins
-  are package-less Nx projects composed from source through their public
-  `api.ts` and `client.ts` faces.
+- Command-plugin leaves are workspace packages. API server plugins are
+  package-less Nx projects composed from source through their public `api.ts`
+  and `client.ts` faces.
 
 ## Nx First Hop
 
@@ -42,22 +41,22 @@
 
 ## Plugin Roots
 - Leaf directory names must be **globally unique** across all roots.
-  - Do not create both `plugins/cli/commands/foo` and `plugins/agents/foo`.
 - Root placement is authoritative for Oclif command-plugin classification. Do
   not add a second metadata identity for packages under `plugins/cli/commands`.
 - Other plugin families use the metadata declared by their owning plugin kind;
   no cross-family metadata field may create a second identity.
 
 ## Plugin Ids
-- A command or agent plugin's id is `package.json#name`.
+- A command plugin's id is `package.json#name`.
 - A package-less API plugin's Nx project name is its repository identity; its
   leaf directory names the capability.
-- Package identity does not grant lifecycle authority. External Oclif extensions
-  and curated agent plugins are separate closed channels.
+- Package identity does not grant lifecycle authority. External Oclif
+  extensions and the curated agent-plugin lifecycle are separate closed
+  channels.
 
 ## Manifest Conventions
-- Oclif command and agent plugin packages include `package.json`. Package-less
-  API server plugins do not.
+- Oclif command-plugin packages include `package.json`. Package-less API server
+  plugins do not.
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
   - `commands`: `./dist/commands`
   - `typescript.commands`: `./src/commands`
@@ -68,9 +67,11 @@
 ## Boundaries
 
 - External Oclif extensions use `rawr plugins ...` and native Oclif state only.
-- Curated agent plugins use `rawr agent plugins ...`; one reviewed Personal
-  Git channel record selects exact Git objects, while native provider inventory
-  is installed-state truth.
+- The curated agent-plugin lifecycle uses `rawr agent plugins ...`; one
+  reviewed Personal Git channel record selects exact Git objects, while native
+  provider inventory is installed-state truth.
+- Personal alone owns curated agent-plugin content. Template owns the generic
+  lifecycle mechanics behind the qualified command.
 - Template owns no persistent agent-plugin release store or competing provider
   state.
 - Authoring changes source only. It never triggers build, export, provider
@@ -97,19 +98,15 @@
 - Nx checks that project; Oclif composes command plugins through package
   manifests while app hosts compose package-less API plugins through their
   public source faces.
-- Curated agent content reaches its lifecycle only through the qualified agent
-  plugin surface; authoring never performs provider mutation.
 
 ## Interfaces
 
-- Oclif manifests expose command plugins; agent-plugin packages expose
-  authored content to the curated lifecycle; API, workflow, schedule, and web
+- Oclif manifests expose command plugins; API, workflow, schedule, and web
   plugins expose declared host contribution faces.
 
 ## Routing
 
 - [Repository router](../AGENTS.md)
-- [HQ agent plugin](agents/hq/AGENTS.md)
 - [ChatGPT Corpus command plugin](cli/commands/chatgpt-corpus/AGENTS.md)
 - [DevOps command plugin](cli/commands/devops/AGENTS.md)
 - [Hello command plugin](cli/commands/hello/AGENTS.md)

@@ -213,9 +213,6 @@
         "typescript": "^5.9.3",
       },
     },
-    "plugins/agents/hq": {
-      "name": "@rawr/plugin-hq",
-    },
     "plugins/cli/commands/chatgpt-corpus": {
       "name": "@rawr/plugin-chatgpt-corpus",
       "version": "0.1.0",
@@ -1064,8 +1061,6 @@
     "@rawr/plugin-devops": ["@rawr/plugin-devops@workspace:plugins/cli/commands/devops"],
 
     "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/cli/commands/hello"],
-
-    "@rawr/plugin-hq": ["@rawr/plugin-hq@workspace:plugins/agents/hq"],
 
     "@rawr/plugin-hyperresearch": ["@rawr/plugin-hyperresearch@workspace:plugins/cli/commands/hyperresearch"],
 
