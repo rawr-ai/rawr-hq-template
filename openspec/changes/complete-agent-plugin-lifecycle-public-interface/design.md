@@ -131,12 +131,13 @@ historical imports, current Magic service lineage, and queued shared laws:
 RAWR preserves that positive topology and its owner relationships while
 qualifying packet identity, the canonical TypeBox bridge, and Template's
 stronger entity, metadata, package-manifest, and module-router documentation
-law. Each module exposes closed `contract/` and `router/` directories through
-their sole `index.ts` composition faces and authors operations in direct
-semantic leaves. Optional module middleware uses the equivalent indexed
-catalog; root contract and router composition remain in `contract.ts` and
-`router.ts`, while optional service-root middleware remains a direct leaf set
-without a barrel. Operation logic remains in oRPC router leaves alongside
+law. Each module exposes a closed `contract/` catalog through its sole
+`index.ts` composition face, authors operations in named
+`router/*.router.ts` leaves, and composes those operations through one
+module-root `router.ts` face. Optional module middleware uses the equivalent
+indexed catalog; root contract and router composition remain in `contract.ts`
+and `router.ts`, while optional service-root middleware remains a direct leaf
+set without a barrel. Operation logic remains in oRPC router leaves alongside
 owner-qualified model categories rather than moving into another
 implementation container.
 
