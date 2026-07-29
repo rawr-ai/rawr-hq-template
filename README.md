@@ -1,7 +1,7 @@
 # RAWR HQ-Template
 
-`RAWR HQ-Template` owns the executable `rawr` controller and generic lifecycle
-tooling for local-first AI headquarters.
+`RAWR HQ-Template` owns the executable Oclif `rawr` application and generic
+lifecycle tooling for local-first AI headquarters.
 
 Personal `RAWR HQ` is a separate curated-content repository. It owns agent-plugin
 source, provenance, policy/evaluation inputs, and governed content lifecycle
@@ -57,12 +57,12 @@ bunx nx graph
 
 ## Authority Boundaries
 
-- The controller, official commands, provider adapters, generic lifecycle services,
+- The Oclif application, official commands, provider adapters, generic lifecycle services,
   schemas/tooling implementations, and generic validators live here.
 - External Oclif extensions are managed only by `rawr plugins ...`.
 - Curated agent-plugin lifecycle is managed only by `rawr agent plugins ...`.
-- Personal curated content enters through explicit versioned data or immutable
-  artifact interfaces. A repository path is only a locator.
+- Personal curated content enters through explicit versioned data or ordinary
+  package/artifact interfaces. A repository path is only a locator.
 - App composition consumes declared outputs; it does not own lifecycle state.
 
 ## Contribution Boundaries
@@ -76,7 +76,7 @@ bunx nx graph
 
 - If you are deciding where to implement a change, use [`AGENTS_SPLIT.md`](AGENTS_SPLIT.md).
 - Template-side contribution rules are defined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
-- Controller and interface update rules are defined in [`UPDATING.md`](UPDATING.md).
+- CLI and interface update rules are defined in [`UPDATING.md`](UPDATING.md).
 
 ## Operational Runbooks
 

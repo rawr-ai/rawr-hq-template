@@ -1,5 +1,5 @@
 /**
- * @fileoverview Pre-Effect service binding seam for controller projections.
+ * @fileoverview Pre-Effect service binding seam for host projections.
  *
  * @remarks
  * Projections own concrete process resources today, but the service boundary

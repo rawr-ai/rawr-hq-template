@@ -22,7 +22,7 @@ gt log --all
 gt sync --no-restack
 ```
 3. Apply repository boundary policy from `docs/process/HQ_OPERATIONS.md`:
-- Do not run controller or content lifecycle mutation as part of stack mechanics.
+- Do not run CLI publication, content lifecycle, or provider mutation as part of stack mechanics.
 - Keep stack mutation Graphite-first (`gt`), not ad-hoc `git rebase`.
 - Promote Template and personal independently; never merge one repository into the other.
 

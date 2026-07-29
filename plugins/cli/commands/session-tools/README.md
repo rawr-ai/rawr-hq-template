@@ -17,7 +17,7 @@ Session listing/search/extraction commands for the RAWR CLI.
 Session Tools is a core Oclif command plugin composed by `@rawr/cli`. Do not
 install or link it through the native external-extension channel
 `rawr plugins ...`. The ordinary CLI release package is pending; do not restore
-the removed controller installer to test this module.
+the retired custom distribution to test this module.
 
 ## Structured facet filters
 
