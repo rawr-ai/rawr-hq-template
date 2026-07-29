@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "manifest": "bun --bun oclif manifest",
+    "manifest": "NODE_ENV=production bun --bun oclif manifest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-hello"

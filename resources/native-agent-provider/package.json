@@ -1,6 +1,7 @@
 {
   "name": "@rawr/resource-native-agent-provider",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
   "imports": {
     "#native-agent-provider-effect-platform-node": "./providers/effect-platform-node-shared.ts"
@@ -38,5 +39,8 @@
       "layer:resource-contract",
       "resource:native-agent-provider"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

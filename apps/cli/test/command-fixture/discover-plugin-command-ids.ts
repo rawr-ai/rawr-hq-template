@@ -2,10 +2,14 @@ import { Plugin } from "@oclif/core";
 
 const root = process.argv[2];
 if (!root) throw new Error("Oclif plugin root argument is required");
+const mode = process.argv[3] ?? "live";
+if (mode !== "live" && mode !== "manifest") {
+  throw new Error(`unsupported Oclif plugin inventory mode: ${mode}`);
+}
 
 const plugin = new Plugin({
   errorOnManifestCreate: true,
-  ignoreManifest: true,
+  ignoreManifest: mode === "live",
   respectNoCacheDefault: true,
   root,
   type: "core",

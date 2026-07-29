@@ -1,6 +1,7 @@
 {
   "name": "@rawr/resource-agent-plugin-package-output",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
   "exports": {
     ".": {
@@ -31,5 +32,8 @@
       "layer:resource-contract",
       "resource:agent-plugin-package-output"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

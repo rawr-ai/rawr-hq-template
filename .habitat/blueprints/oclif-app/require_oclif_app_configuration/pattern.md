@@ -5,8 +5,8 @@ level: error
 
 The package describes one conventional Oclif application. This ratchet locks
 the installed identity, binary, Oclif dependency and native extension
-composition, compiled command root, and TypeScript source-to-output mapping.
-The generated release manifest tightens this same rule when packaging lands.
+composition, compiled command root, package-owned manifest command, published
+files, and TypeScript source-to-output mapping.
 
 ```grit
 language json
@@ -20,8 +20,22 @@ or {
       not { $properties <: some pair(key=`"version"`, value=string()) },
       not { $properties <: some pair(key=`"type"`, value=`"module"`) },
       not {
+        $properties <: some pair(key=`"scripts"`, value=`{ $scripts }`),
+        $scripts <: some pair(key=`"manifest"`, value=`"NODE_ENV=production bun --bun oclif manifest"`)
+      },
+      not {
+        $properties <: some pair(key=`"files"`, value=$files),
+        $files <: contains `"bin"`,
+        $files <: contains `"dist"`,
+        $files <: contains `"oclif.manifest.json"`
+      },
+      not {
         $properties <: some pair(key=`"dependencies"`, value=`{ $dependencies }`),
         $dependencies <: some pair(key=`"@oclif/plugin-plugins"`, value=string())
+      },
+      not {
+        $properties <: some pair(key=`"devDependencies"`, value=`{ $dev_dependencies }`),
+        $dev_dependencies <: some pair(key=`"oclif"`, value=string())
       },
       not {
         $properties <: some pair(key=`"bin"`, value=`{ $bin }`),
@@ -58,8 +72,9 @@ or {
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/core": "4.11.14" },
+  "devDependencies": { "oclif": "4.23.27" },
   "bin": { "rawr": "./bin/run.js" },
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
   "oclif": {
     "bin": "rawr",
@@ -79,6 +94,7 @@ or {
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "devDependencies": { "oclif": "4.23.27" },
   "bin": { "other": "./bin/run.js" },
   "oclif": {
     "bin": "rawr",
@@ -108,8 +124,9 @@ or {
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "devDependencies": { "oclif": "4.23.27" },
   "bin": { "rawr": "./bin/run.js" },
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
   "oclif": {
     "bin": "rawr",
@@ -127,8 +144,9 @@ or {
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "devDependencies": { "oclif": "4.23.27" },
   "bin": { "rawr": "./bin/run.js" },
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "files": ["bin", "dist", "oclif.manifest.json"],
   "oclif": {
     "bin": "rawr",
@@ -148,6 +166,7 @@ or {
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
+  "devDependencies": { "oclif": "4.23.27" },
   "bin": { "rawr": "./bin/run.js" },
   "oclif": {
     "bin": "rawr",

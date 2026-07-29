@@ -1,7 +1,7 @@
 {
   "name": "@rawr/plugin-devops",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "RAWR DevOps command projections for Graphite, repo, and worktree workflows",
   "license": "MIT",
   "type": "module",
@@ -35,7 +35,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "manifest": "bun --bun oclif manifest",
+    "manifest": "NODE_ENV=production bun --bun oclif manifest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-devops"
@@ -52,5 +52,8 @@
         ]
       }
     }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

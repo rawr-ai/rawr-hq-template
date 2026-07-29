@@ -20,7 +20,7 @@ repository release, or HF01 candidate was mutated by this correction.
 
 | Repository | Checkpoint base identity | Role |
 | --- | --- | --- |
-| RAWR HQ-Template | `main` / `b9c6c185642da9922bcc70492ca7167da9a2926f` | Executable code, Oclif CLI, services, resources, generic tooling |
+| RAWR HQ-Template | `main` / `5f9de703f5ecfcf322bd1e31af6721a6ad8ebd81` | Executable code, Oclif CLI, services, resources, generic tooling |
 | Personal RAWR HQ | `main` / `1e7f346b9b0fb7b356675d3e837295256bda7d0d` | Curated agent content, provenance, policy/evaluation, governed records |
 
 Active Template execution uses isolated Graphite worktrees descended from
@@ -105,10 +105,10 @@ the server host retains concrete Inngest ownership, so the CLI closure no
 longer installs Inngest for a type-only edge. `@rawr/plugin-hello` remains
 outside as the native external-install fixture. Archived architecture records
 retain their historical package claims as provenance rather than live
-guidance. `bun pm pack --dry-run` still fails honestly because
-`@rawr/agent-plugin-lifecycle` and the other surviving workspace owners are not
-yet versioned for publication. The next checkpoint declares the exact fixed Nx
-Release group; it does not manufacture an early package acceptance result.
+guidance. The fixed Nx Release group now gives all nineteen runtime members
+ordinary version and publication metadata. Installed tarball acceptance remains
+separately owned by task 3.4; this metadata checkpoint does not manufacture
+that result.
 
 The pre-landing installed-package acceptance uses local packed tarballs in one
 guarded disposable prefix. An acceptance-only package manifest binds every
@@ -1590,7 +1590,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Habitat execution normalization | Pending upstream distributable Civ7-style Nx plugin; the handwritten rule selection is interim and no local SDK fork or replacement runner is admitted |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | Bun-installed registry package selected; the exact nineteen-package runtime closure is explicit and the fixed Nx Release group plus package-version metadata remain pending |
+| Conventional CLI package/release | Bun-installed registry package selected; the exact nineteen-package fixed Nx Release group, package versions, inferred publishers, and production Oclif manifests are green; packed-install acceptance remains pending |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -3761,6 +3761,47 @@ complete 85-case CLI suite, 47 server cases, seven HQ SDK cases, and both
 targeted command-plugin suites. Frozen lock resolution and diff hygiene pass.
 This checkpoint adds no version, package archive, publish target, installer,
 retained store, provider mutation, or protected content change.
+
+## Ordinary Nx Release Group
+
+The nineteen-package CLI runtime closure is now one fixed `rawr-cli` Nx Release
+group at version `0.1.0`. Every member is public, carries ordinary registry
+metadata, owns a build target, and receives the native
+`@nx/js:release-publish` target inferred by Nx 23.1. The CLI and four composed
+first-party command plugins additionally own production-fixed Oclif manifest
+targets. Shared target defaults order build and manifest work before the
+publisher without adding a RAWR package, archive, or publication executor.
+
+`@rawr/test-utils` remains private and outside the release group. Its local
+`0.1.0` version lets Bun resolve the CLI's semver-qualified development-only
+test dependency while Nx continues to expose no publisher for it. It is not a
+twentieth runtime or release member.
+
+The one-group repository uses unfiltered `nx release publish`. Nx 23
+intentionally prunes task dependencies when a publish is filtered by project or
+group, so `--group rawr-cli` is not the repository release invocation. The
+unfiltered task graph contains exactly nineteen builds, five production
+manifests, and nineteen inferred publishers. The dry version operation moves
+all fixed members from `0.1.0` to `0.1.1` together and preserves workspace
+protocols without changing source.
+
+The uncached manifest graph completes twenty-four tasks in 20.8 seconds. Every
+generated command path begins at `dist`. The native dry publication passes for
+all nineteen packages, and `bun pm pack --dry-run` produces the CLI's ordinary
+69-file, 231 KiB package including `bin`, `dist`, and
+`oclif.manifest.json`. Frozen lock resolution, the two locked Oclif Habitat
+rules, strict OpenSpec validation, and diff hygiene pass. Generated manifests
+remain ignored build outputs. No registry publication, release dispatch,
+Personal repository, provider home, or protected content state is mutated.
+
+The first clean CI run exposed one missing test prerequisite rather than a
+release defect: manifest-free parity inspected the external Hello fixture before
+its compiled output existed. The acceptance target now depends explicitly on
+that fixture's ordinary build. An uncached rerun executes the complete
+twenty-five-task prerequisite graph and passes all three Oclif inventory
+oracles. Both CLI behavior targets also hash the fixture's project-scoped
+production input, so cache correctness does not require a false CLI runtime
+dependency.
 
 ## Settlement Oracles
 

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { lstatSync, mkdtempSync, realpathSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,13 +21,23 @@ const pluginInventoryEntrypoint = path.join(
   "command-fixture",
   "discover-plugin-command-ids.ts"
 );
-const commandPluginRoots = [
+const firstPartyCommandPluginRoots = [
   "chatgpt-corpus",
   "devops",
-  "hello",
   "hyperresearch",
   "session-tools",
 ].map((name) => path.resolve(cliRoot, "..", "..", "plugins", "cli", "commands", name));
+const externalFixtureRoot = path.resolve(
+  cliRoot,
+  "..",
+  "..",
+  "plugins",
+  "cli",
+  "commands",
+  "hello"
+);
+const commandPluginRoots = [cliRoot, ...firstPartyCommandPluginRoots, externalFixtureRoot];
+const releaseManifestRoots = [cliRoot, ...firstPartyCommandPluginRoots];
 
 afterAll(() => {
   const canonicalRoot = realpathSync(isolatedStateRoot);
@@ -93,9 +103,10 @@ function discoverCommandInventory(nodeEnv: "development" | "production"): Comman
 
 function discoverPluginCommands(
   root: string,
-  nodeEnv: "development" | "production"
+  nodeEnv: "development" | "production",
+  mode: "live" | "manifest" = "live"
 ): { commandIds: string[]; hasManifest: boolean; relativePaths: string[][] } {
-  const result = spawnSync("bun", [pluginInventoryEntrypoint, root], {
+  const result = spawnSync("bun", [pluginInventoryEntrypoint, root, mode], {
     cwd: cliRoot,
     encoding: "utf8",
     env: childEnvironment(nodeEnv),
@@ -136,9 +147,7 @@ describe("bin/run.js", () => {
     }
   });
 
-  it("discovers the same commands from source and compiled output", () => {
-    expect(existsSync(path.join(cliRoot, "oclif.manifest.json"))).toBe(false);
-
+  it("loads the same manifest-backed application inventory from source and compiled entrypoints", () => {
     const source = runCli("src/index.ts", ["--help"]);
     const built = runCli("bin/run.js", ["--help"]);
     const sourceInventory = discoverCommandInventory("development");
@@ -172,7 +181,7 @@ describe("bin/run.js", () => {
     expect(external.every(({ pluginName }) => pluginName === "@oclif/plugin-plugins")).toBe(true);
   });
 
-  it("discovers every command plugin from source and compiled output without a manifest", () => {
+  it("discovers the CLI and every command plugin from source and compiled output without manifests", () => {
     for (const pluginRoot of commandPluginRoots) {
       const source = discoverPluginCommands(pluginRoot, "development");
       const built = discoverPluginCommands(pluginRoot, "production");
@@ -182,6 +191,18 @@ describe("bin/run.js", () => {
       expect(source.commandIds).toEqual(built.commandIds);
       expect(source.relativePaths.every(([root]) => root === "src")).toBe(true);
       expect(built.relativePaths.every(([root]) => root === "dist")).toBe(true);
+    }
+  });
+
+  it("uses generated manifests for the same compiled command inventory", () => {
+    for (const releaseRoot of releaseManifestRoots) {
+      const built = discoverPluginCommands(releaseRoot, "production");
+      const manifest = discoverPluginCommands(releaseRoot, "production", "manifest");
+
+      expect(manifest.hasManifest).toBe(true);
+      expect(manifest.commandIds).toEqual(built.commandIds);
+      expect(manifest.relativePaths).toEqual(built.relativePaths);
+      expect(manifest.relativePaths.every(([root]) => root === "dist")).toBe(true);
     }
   });
 

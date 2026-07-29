@@ -46,11 +46,15 @@ or {
       },
       not {
         $properties <: some pair(key=`"scripts"`, value=`{ $scripts }`),
-        $scripts <: some pair(key=`"manifest"`, value=`"bun --bun oclif manifest"`)
+        $scripts <: some pair(key=`"manifest"`, value=`"NODE_ENV=production bun --bun oclif manifest"`)
       },
       not {
         $properties <: some pair(key=`"dependencies"`, value=`{ $dependencies }`),
         $dependencies <: some pair(key=`"@oclif/core"`, value=string())
+      },
+      not {
+        $properties <: some pair(key=`"devDependencies"`, value=`{ $dev_dependencies }`),
+        $dev_dependencies <: some pair(key=`"oclif"`, value=string())
       },
       not {
         $properties <: some pair(key=`"files"`, value=$files),
@@ -85,7 +89,7 @@ or {
   "version": "1.0.0",
   "type": "module",
   "bin": { "example": "./bin/run.js" },
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
@@ -103,8 +107,9 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
+  "devDependencies": { "oclif": "4.23.27" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
     "commands": "./dist/src/commands",
@@ -131,7 +136,7 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": {
     "@oclif/core": "4.11.14",
     "@rawr/plugin-other": "1.0.0"
@@ -149,7 +154,7 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "devDependencies": { "@rawr/plugin-other": "1.0.0" },
   "files": ["dist", "oclif.manifest.json"],
@@ -165,7 +170,7 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "peerDependencies": { "@rawr/plugin-other": "1.0.0" },
   "files": ["dist", "oclif.manifest.json"],
@@ -181,7 +186,7 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
   "optionalDependencies": { "@rawr/plugin-other": "1.0.0" },
   "files": ["dist", "oclif.manifest.json"],
@@ -197,8 +202,9 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
+  "devDependencies": { "oclif": "4.23.27" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
     "commands": "./dist/commands",
@@ -213,8 +219,9 @@ or {
   "name": "@rawr/plugin-example",
   "version": "1.0.0",
   "type": "module",
-  "scripts": { "manifest": "bun --bun oclif manifest" },
+  "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": { "@oclif/core": "4.11.14" },
+  "devDependencies": { "oclif": "4.23.27" },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": {
     "commands": "./dist/commands",

@@ -1,7 +1,7 @@
 {
   "name": "@rawr/plugin-hyperresearch",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "files": [
     "dist",
@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "manifest": "bun --bun oclif manifest",
+    "manifest": "NODE_ENV=production bun --bun oclif manifest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-hyperresearch"
@@ -39,5 +39,8 @@
       "type:plugin",
       "migration-slice:structural-tranche"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "@rawr/plugin-chatgpt-corpus",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "files": [
     "dist",
@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "manifest": "bun --bun oclif manifest",
+    "manifest": "NODE_ENV=production bun --bun oclif manifest",
     "structural": "bun ../../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-chatgpt-corpus",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
@@ -39,5 +39,8 @@
     "tags": [
       "type:plugin"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
