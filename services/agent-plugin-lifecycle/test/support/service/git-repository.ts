@@ -82,12 +82,6 @@ export async function createGeneratedGitRepository(
         {
           kind: "agent-plugin",
           pluginId,
-          skillInventory: [{ identity: "example", manifestPath: payloadRelativePath }],
-          payload: {
-            protocolVersion: 1,
-            manifest: payload.manifest,
-            payloadDigest: payload.payloadDigest,
-          },
           vendor: [],
           curation: [],
         },
@@ -153,8 +147,9 @@ export async function createGeneratedMultiMemberGitRepository(
 ): Promise<GeneratedMultiMemberGitRepository> {
   const repository = await createGeneratedGitRepository(fixture, "fixture-alpha");
   const secondPluginId = must(parsePluginId("fixture-beta"));
-  const payloadRelativePath = must(parseReleaseRelativePath("skills/example/SKILL.md"));
-  const members = [repository.pluginId, secondPluginId].map((pluginId) => {
+  const members = [repository.pluginId, secondPluginId].map((pluginId, index) => {
+    const skillIdentity = index === 0 ? "example" : `${pluginId}-example`;
+    const payloadRelativePath = must(parseReleaseRelativePath(`skills/${skillIdentity}/SKILL.md`));
     const payload = must(
       createAgentPluginPayload([
         {
@@ -164,27 +159,21 @@ export async function createGeneratedMultiMemberGitRepository(
         },
       ])
     );
-    return { pluginId, payload };
+    return { pluginId, payload, skillIdentity };
   });
   const releaseInput = must(
     createAgentPluginReleaseInput({
       schemaVersion: 1,
       contentAuthority: repository.policy.contentAuthority,
-      members: members.map(({ pluginId, payload }) => ({
+      members: members.map(({ pluginId }) => ({
         kind: "agent-plugin",
         pluginId,
-        skillInventory: [{ identity: `${pluginId}-example`, manifestPath: payloadRelativePath }],
-        payload: {
-          protocolVersion: 1,
-          manifest: payload.manifest,
-          payloadDigest: payload.payloadDigest,
-        },
         vendor: [],
         curation: [],
       })),
-      ownershipClaims: members.map(({ pluginId }) => ({
+      ownershipClaims: members.map(({ pluginId, skillIdentity }) => ({
         kind: "skill",
-        identity: `${pluginId}-example`,
+        identity: skillIdentity,
         ownerPluginId: pluginId,
       })),
       locks: [],
@@ -197,7 +186,7 @@ export async function createGeneratedMultiMemberGitRepository(
     ...repository.policy.pluginRoot.split("/"),
     secondPluginId,
     "skills",
-    "example"
+    `${secondPluginId}-example`
   );
   await mkdir(secondSkillDirectory, { recursive: true, mode: 0o700 });
   const secondPayloadFile = join(secondSkillDirectory, "SKILL.md");

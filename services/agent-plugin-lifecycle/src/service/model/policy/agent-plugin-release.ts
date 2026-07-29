@@ -28,7 +28,7 @@ import {
 } from "./agent-plugin-release-codec";
 import { decodeCanonicalJson } from "./canonical-json";
 import { compareCanonicalText } from "./canonical-text-ordering";
-import { ownershipClaimsFor } from "./distribution-ownership";
+import { ownershipClaimsFor, validateAgentPluginPayloadOwnership } from "./distribution-ownership";
 import { parsePayloadManifest, samePayloadManifest } from "./payload-manifest";
 import { parseProvenanceBindings } from "./provenance-binding";
 import {
@@ -94,17 +94,20 @@ export function createAgentPluginRelease(
       )
     );
   }
-  if (member !== undefined && payload !== undefined) {
-    validatePayloadBinding(
-      member.payload.payloadDigest,
-      member.payload.manifest,
-      payload,
-      "release.payload",
-      issues,
-      "Payload differs from the member declaration"
+  if (
+    verifiedInput !== undefined &&
+    pluginId !== undefined &&
+    member !== undefined &&
+    payload !== undefined
+  ) {
+    issues.push(
+      ...validateAgentPluginPayloadOwnership(
+        verifiedInput.ownershipIndex,
+        pluginId,
+        payload.manifest
+      )
     );
   }
-
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
   if (
@@ -583,7 +586,10 @@ function finishRelease(
         "ENVELOPE_TOO_LARGE",
         "release",
         "Release envelope exceeds its derived protocol bound",
-        { expected: MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES, actual: byteLength }
+        {
+          expected: MAX_AGENT_PLUGIN_RELEASE_ENVELOPE_BYTES,
+          actual: byteLength,
+        }
       ),
     ]);
   }

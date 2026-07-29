@@ -22,9 +22,12 @@ import {
 } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
-import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
 import { parseReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/policy/release-identity";
 import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
+import {
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  totalReleaseSetPayloadBytes,
+} from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import type { SelectedContentResolution } from "../dto/selected-content";
 import { validateNativeMarketplaces } from "./native-marketplace";
 import { selectedContentRejected } from "./selected-content";
@@ -118,9 +121,8 @@ interface ChannelReleaseInputFacts extends ChannelTreeFacts {
 
 interface ChannelPayloadReadPlan extends ChannelReleaseInputFacts {
   readonly blobs: readonly string[];
-  readonly declaredPayloads: readonly Readonly<{
+  readonly memberPayloads: readonly Readonly<{
     pluginId: PluginId;
-    expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
     entries: readonly Readonly<{
       relativePath: ReleaseRelativePath;
       entry: SelectedContentTreeEntry;
@@ -129,7 +131,10 @@ interface ChannelPayloadReadPlan extends ChannelReleaseInputFacts {
 }
 
 interface ChannelPayloadFacts extends ChannelPayloadReadPlan {
-  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
+  readonly payloads: readonly Readonly<{
+    pluginId: PluginId;
+    payload: AgentPluginPayload;
+  }>[];
 }
 
 type SelectedContentDecision<T> =
@@ -315,47 +320,34 @@ export function planSelectedContentChannelPayloadRead(
   }
 
   const uniqueBlobs = new Set<string>();
-  const declaredPayloads: ChannelPayloadReadPlan["declaredPayloads"][number][] = [];
+  const memberPayloads: ChannelPayloadReadPlan["memberPayloads"][number][] = [];
   for (const member of source.releaseInput.body.members) {
-    if (member.payload.manifest.length === 0) {
-      return declined(
-        selectedContentRejected(
-          "SourceIneligible",
-          `Declared payload is empty for ${member.pluginId}.`
-        )
-      );
-    }
     const memberRoot = requireReleasePath(`${SELECTED_CONTENT_PLUGIN_ROOT}/${member.pluginId}`);
-    const entries: Array<
-      Readonly<{ relativePath: ReleaseRelativePath; entry: SelectedContentTreeEntry }>
-    > = [];
-    for (const manifestEntry of member.payload.manifest) {
-      const repositoryPath = requireReleasePath(`${memberRoot}/${manifestEntry.path}`);
-      const entry = source.entryByPath.get(repositoryPath);
-      if (entry === undefined) {
-        return declined(
-          selectedContentRejected("SourceIneligible", `Selected tree is missing ${repositoryPath}.`)
-        );
-      }
-      uniqueBlobs.add(entry.objectId);
-      entries.push(Object.freeze({ relativePath: manifestEntry.path, entry }));
-    }
-    const expectedPaths = new Set(entries.map(({ entry }) => entry.path));
-    const undeclared = source.treeEntries.find(
-      (entry) => entry.path.startsWith(`${memberRoot}/`) && !expectedPaths.has(entry.path)
-    );
-    if (undeclared !== undefined) {
+    const entriesUnderRoot = source.treeEntries
+      .filter((entry) => entry.path.startsWith(`${memberRoot}/`))
+      .sort((left, right) => compareCanonicalText(left.path, right.path));
+    if (entriesUnderRoot.length === 0) {
       return declined(
         selectedContentRejected(
           "SourceIneligible",
-          `Declared payload root contains an undeclared file: ${undeclared.path}.`
+          `Declared payload root is empty for ${member.pluginId}.`
         )
       );
     }
-    declaredPayloads.push(
+    const entries: Array<
+      Readonly<{
+        relativePath: ReleaseRelativePath;
+        entry: SelectedContentTreeEntry;
+      }>
+    > = [];
+    for (const entry of entriesUnderRoot) {
+      const relativePath = requireReleasePath(entry.path.slice(memberRoot.length + 1));
+      uniqueBlobs.add(entry.objectId);
+      entries.push(Object.freeze({ relativePath, entry }));
+    }
+    memberPayloads.push(
       Object.freeze({
         pluginId: member.pluginId,
-        expected: member.payload,
         entries: Object.freeze(entries),
       })
     );
@@ -365,7 +357,7 @@ export function planSelectedContentChannelPayloadRead(
     Object.freeze({
       ...source,
       blobs: Object.freeze([...uniqueBlobs].sort(compareCanonicalText)),
-      declaredPayloads: Object.freeze(declaredPayloads),
+      memberPayloads: Object.freeze(memberPayloads),
     })
   );
 }
@@ -385,13 +377,13 @@ export function classifySelectedContentChannelPayloads(
     return declined(
       selectedContentRejected(
         "SourceReadFailed",
-        "Git batch omitted or duplicated a declared payload blob."
+        "Git batch omitted or duplicated a selected payload blob."
       )
     );
   }
 
   const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
-  for (const member of plan.declaredPayloads) {
+  for (const member of plan.memberPayloads) {
     const payloadEntries: Array<{
       path: ReleaseRelativePath;
       mode: SelectedContentTreeEntry["mode"];
@@ -417,18 +409,15 @@ export function classifySelectedContentChannelPayloads(
         )
       );
     }
-    if (
-      created.value.payloadDigest !== member.expected.payloadDigest ||
-      !samePayloadManifest(created.value.manifest, member.expected.manifest)
-    ) {
-      return declined(
-        selectedContentRejected(
-          "SourceIneligible",
-          `Selected payload differs from its declaration for ${member.pluginId}.`
-        )
-      );
-    }
     payloads.push(Object.freeze({ pluginId: member.pluginId, payload: created.value }));
+  }
+  if (!totalReleaseSetPayloadBytes(payloads).ok) {
+    return declined(
+      selectedContentRejected(
+        "SourceIneligible",
+        `Selected payloads exceed ${MAX_RELEASE_SET_PAYLOAD_BYTES} decoded bytes.`
+      )
+    );
   }
   return admitted(Object.freeze({ ...plan, payloads: Object.freeze(payloads) }));
 }
@@ -515,7 +504,11 @@ export function validateSelectedNativeMarketplaces(
       "Selected content does not contain both native marketplace manifests."
     );
   }
-  const validated = validateNativeMarketplaces({ releaseInput, codexBytes, claudeBytes });
+  const validated = validateNativeMarketplaces({
+    releaseInput,
+    codexBytes,
+    claudeBytes,
+  });
   return validated.ok ? undefined : selectedContentRejected("SourceIneligible", validated.detail);
 }
 

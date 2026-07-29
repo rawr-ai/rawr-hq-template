@@ -38,7 +38,8 @@
 
 ## Concepts
 
-- A **release input** records the exact selected source. An **eligibility
+- A **release input** declares members, ownership, provenance, locks, and
+  quality policy. Exact Git objects close the selected bytes. An **eligibility
   binding** pins clean Git content; a **staged binding** pins an index
   observation; a shared **release derivation** identifies a targeted release or
   complete set.

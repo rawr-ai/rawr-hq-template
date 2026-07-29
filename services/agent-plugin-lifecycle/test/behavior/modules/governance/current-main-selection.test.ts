@@ -15,7 +15,6 @@ import {
 } from "../../../../src/service/model/dto/current-main-selection";
 import type { AgentPluginReleaseInput } from "../../../../src/service/model/dto/release-input";
 import type { ReleaseResult } from "../../../../src/service/model/dto/release-result";
-import { createAgentPluginPayload } from "../../../../src/service/model/policy/agent-plugin-payload";
 import { canonicalSerializeCurrentMainRecord } from "../../../../src/service/model/policy/current-main-record";
 import { contentDigest } from "../../../../src/service/model/policy/release-digest";
 import {
@@ -375,16 +374,7 @@ function select(resource: ContentWorkspaceResource<never>, signal?: AbortSignal)
   );
 }
 
-function releaseInputFixture(payloadText = "selected\n"): AgentPluginReleaseInput {
-  const payload = mustRelease(
-    createAgentPluginPayload([
-      {
-        path: "skills/alpha/SKILL.md",
-        mode: 0o644,
-        bytes: encoder.encode(payloadText),
-      },
-    ])
-  );
+function releaseInputFixture(declarativeText = "selected\n"): AgentPluginReleaseInput {
   return mustRelease(
     createAgentPluginReleaseInput({
       schemaVersion: 1,
@@ -393,23 +383,17 @@ function releaseInputFixture(payloadText = "selected\n"): AgentPluginReleaseInpu
         {
           kind: "agent-plugin",
           pluginId: "alpha",
-          skillInventory: [{ identity: "alpha-skill", manifestPath: "skills/alpha/SKILL.md" }],
-          payload: {
-            protocolVersion: payload.protocolVersion,
-            manifest: payload.manifest,
-            payloadDigest: payload.payloadDigest,
-          },
           vendor: [
             {
               id: "vendor-alpha",
               protocol: "vendor-v1",
-              contentDigest: contentDigest(encoder.encode("vendor\n")),
+              contentDigest: contentDigest(encoder.encode(declarativeText)),
             },
           ],
           curation: [],
         },
       ],
-      ownershipClaims: [{ kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" }],
+      ownershipClaims: [{ kind: "skill", identity: "alpha", ownerPluginId: "alpha" }],
       locks: [],
       qualityPolicies: [],
     })

@@ -1,7 +1,8 @@
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { beforeAll, describe, expect, expectTypeOf, it } from "vitest";
 
+import type { AgentPluginReleaseBody } from "../../src/service/model/dto/agent-plugin-release";
 import {
   type AgentPluginReleaseSet,
   type AgentPluginReleaseSetBody,
@@ -11,6 +12,8 @@ import {
   AgentPluginReleaseSetSchema,
 } from "../../src/service/model/dto/agent-plugin-release-set";
 import { ReleaseIssueSchema } from "../../src/service/model/dto/release-issue";
+import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
+import { payloadValue } from "../../src/service/model/policy/agent-plugin-payload-codec";
 import {
   createAgentPluginRelease,
   verifyAgentPluginRelease,
@@ -31,6 +34,7 @@ import {
 } from "../../src/service/model/policy/agent-plugin-release-set-codec";
 import { releaseDigest, releaseSetDigest } from "../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../src/service/model/policy/release-payload-accounting";
 import {
   member,
   must,
@@ -55,6 +59,81 @@ interface MutableInMemoryRelease {
     [key: string]: unknown;
     entries: Array<Record<string, unknown>>;
   };
+}
+
+function aggregatePayloadLimitFixture() {
+  const entryBytes = new Uint8Array(3 * 1024 * 1024);
+  const sharedPayload = must(
+    createAgentPluginPayload(
+      Array.from({ length: 11 }, (_, index) => ({
+        path: `content-${String(index).padStart(2, "0")}.bin`,
+        mode: 0o644,
+        bytes: entryBytes,
+      }))
+    )
+  );
+  const releaseInput = must(
+    createAgentPluginReleaseInput(releaseInputBody(sharedPayload, sharedPayload))
+  );
+  const source = productFixture().alphaRelease.body;
+  const releases = releaseInput.body.members.map((memberDeclaration) => {
+    const body: AgentPluginReleaseBody = {
+      schemaVersion: 1 as const,
+      builderProtocolVersion: 1 as const,
+      contentAuthority: releaseInput.body.contentAuthority,
+      sourceRepository: source.sourceRepository,
+      sourceCommit: source.sourceCommit,
+      sourceTree: source.sourceTree,
+      releaseInputDigest: releaseInput.releaseInputDigest,
+      pluginId: memberDeclaration.pluginId,
+      aliases: releaseInput.ownershipIndex.claims
+        .filter(
+          (claim) => claim.kind === "alias" && claim.ownerPluginId === memberDeclaration.pluginId
+        )
+        .map((claim) => claim.identity),
+      payloadManifest: sharedPayload.manifest,
+      payloadDigest: sharedPayload.payloadDigest,
+      vendor: memberDeclaration.vendor,
+      curation: memberDeclaration.curation,
+    };
+    return {
+      schemaVersion: 1 as const,
+      releaseDigest: releaseDigest(canonicalSerializeAgentPluginReleaseBody(body)),
+      body,
+      payload: sharedPayload,
+    };
+  });
+  const alphaRelease = releases[0];
+  const betaRelease = releases[1];
+  if (alphaRelease === undefined || betaRelease === undefined) {
+    throw new Error("Aggregate release fixture requires two members");
+  }
+  const setBody: AgentPluginReleaseSet["body"] = {
+    schemaVersion: 1,
+    builderProtocolVersion: 1,
+    contentAuthority: releaseInput.body.contentAuthority,
+    sourceRepository: source.sourceRepository,
+    sourceCommit: source.sourceCommit,
+    sourceTree: source.sourceTree,
+    releaseInputDigest: releaseInput.releaseInputDigest,
+    ownershipIndex: releaseInput.ownershipIndex,
+    members: [
+      {
+        pluginId: alphaRelease.body.pluginId,
+        releaseDigest: alphaRelease.releaseDigest,
+      },
+      {
+        pluginId: betaRelease.body.pluginId,
+        releaseDigest: betaRelease.releaseDigest,
+      },
+    ],
+  };
+  const releaseSet = {
+    schemaVersion: 1,
+    releaseSetDigest: releaseSetDigest(canonicalSerializeAgentPluginReleaseSetBody(setBody)),
+    body: setBody,
+  };
+  return { releaseInput, releases, releaseSet };
 }
 
 describe("complete release-set integrity", () => {
@@ -106,7 +185,6 @@ describe("complete release-set integrity", () => {
       sourceCommit: SOURCE.sourceCommit,
       sourceTree: SOURCE.sourceTree,
       releaseInputDigest: fixture.releaseInput.releaseInputDigest,
-      completenessWitness: fixture.releaseInput.completenessWitness,
       ownershipIndex: fixture.releaseInput.ownershipIndex,
       members: [
         { pluginId: "alpha", releaseDigest: fixture.alphaRelease.releaseDigest },
@@ -181,6 +259,47 @@ describe("complete release-set integrity", () => {
     ]);
   });
 
+  it("binds changed payload identity through the exact member release digest", () => {
+    const fixture = productFixture();
+    const changedPayload = must(
+      createAgentPluginPayload([
+        {
+          path: "skills/alpha/SKILL.md",
+          mode: 0o644,
+          bytes: encoder.encode("changed alpha\n"),
+        },
+        {
+          path: "agents/alpha.md",
+          mode: 0o644,
+          bytes: encoder.encode("agent alpha\n"),
+        },
+      ])
+    );
+    const changedRelease = must(
+      createAgentPluginRelease({
+        releaseInput: fixture.releaseInput,
+        pluginId: "alpha",
+        source: SOURCE,
+        payload: changedPayload,
+      })
+    );
+    const changedSet = must(
+      createAgentPluginReleaseSet({
+        releaseInput: fixture.releaseInput,
+        releases: [changedRelease, fixture.betaRelease],
+      })
+    );
+
+    expect(changedSet.body.releaseInputDigest).toBe(fixture.releaseInput.releaseInputDigest);
+    expect(changedSet.body.members).toContainEqual({
+      pluginId: "alpha",
+      releaseDigest: changedRelease.releaseDigest,
+    });
+    expect(changedRelease.body.payloadManifest).toEqual(changedPayload.manifest);
+    expect(changedRelease.body.payloadDigest).toBe(changedPayload.payloadDigest);
+    expect(changedSet.releaseSetDigest).not.toBe(fixture.releaseSet.releaseSetDigest);
+  });
+
   it("rejects targeted, extra, and mixed-source construction", () => {
     const fixture = productFixture();
     const targeted = createAgentPluginReleaseSet({
@@ -191,11 +310,20 @@ describe("complete release-set integrity", () => {
     if (!targeted.ok)
       expect(targeted.issues.map((entry) => entry.code)).toContain("MISSING_EXPECTED_MEMBER");
 
+    const gammaPayload = must(
+      createAgentPluginPayload([
+        {
+          path: "skills/gamma/SKILL.md",
+          mode: 0o644,
+          bytes: encoder.encode("gamma\n"),
+        },
+      ])
+    );
     const gammaInputBody = releaseInputBody(fixture.alphaPayload, fixture.betaPayload) as any;
-    gammaInputBody.members.push(member("gamma", fixture.alphaPayload));
+    gammaInputBody.members.push(member("gamma", gammaPayload));
     gammaInputBody.ownershipClaims.push({
       kind: "skill",
-      identity: "gamma-skill",
+      identity: "gamma",
       ownerPluginId: "gamma",
     });
     const gammaInput = must(createAgentPluginReleaseInput(gammaInputBody));
@@ -204,7 +332,7 @@ describe("complete release-set integrity", () => {
         releaseInput: gammaInput,
         pluginId: "gamma",
         source: SOURCE,
-        payload: fixture.alphaPayload,
+        payload: gammaPayload,
       })
     );
     const extra = createAgentPluginReleaseSet({
@@ -229,6 +357,47 @@ describe("complete release-set integrity", () => {
     expect(mixed.ok).toBe(false);
     if (!mixed.ok)
       expect(mixed.issues.map((entry) => entry.code)).toContain("SOURCE_IDENTITY_MISMATCH");
+  });
+
+  describe("aggregate payload bound", () => {
+    let fixture: ReturnType<typeof aggregatePayloadLimitFixture>;
+
+    beforeAll(() => {
+      fixture = aggregatePayloadLimitFixture();
+    });
+
+    it("rejects overflow during release-set construction", () => {
+      const created = createAgentPluginReleaseSet({
+        releaseInput: fixture.releaseInput,
+        releases: fixture.releases,
+      });
+      expect(created).toMatchObject({
+        ok: false,
+        issues: [
+          expect.objectContaining({
+            code: "PAYLOAD_BYTES_LIMIT_EXCEEDED",
+            path: "releaseSet.releases",
+            expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
+          }),
+        ],
+      });
+    });
+
+    it("rejects overflow during complete-set verification", () => {
+      expect(verifyAgentPluginReleaseSet(fixture.releaseSet).ok).toBe(true);
+
+      const verified = verifyCompleteReleaseSet(fixture.releaseSet, fixture.releases);
+      expect(verified).toMatchObject({
+        ok: false,
+        issues: [
+          expect.objectContaining({
+            code: "PAYLOAD_BYTES_LIMIT_EXCEEDED",
+            path: "releases",
+            expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
+          }),
+        ],
+      });
+    });
   });
 
   it("rejects a self-consistent release whose body disagrees with its release input", () => {
@@ -295,8 +464,10 @@ describe("complete release-set integrity", () => {
     bodyUnknown.body.unknown = true;
     const memberUnknown = wire(bytes);
     memberUnknown.body.members[0].unknown = true;
+    const obsoleteWitness = wire(bytes);
+    obsoleteWitness.body.completenessWitness = {};
 
-    for (const candidate of [envelopeUnknown, bodyUnknown, memberUnknown]) {
+    for (const candidate of [envelopeUnknown, bodyUnknown, memberUnknown, obsoleteWitness]) {
       const result = verifyAgentPluginReleaseSet(candidate);
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.issues.map((issue) => issue.code)).toContain("UNKNOWN_FIELD");
@@ -354,13 +525,13 @@ describe("complete release-set integrity", () => {
       {
         code: "MISSING_EXPECTED_MEMBER",
         path: "releaseSet.body.members.alpha",
-        message: "Set omits a completeness-witness member",
+        message: "Set omits an ownership-index member",
         actual: "alpha",
       },
       {
         code: "MISSING_EXPECTED_MEMBER",
         path: "releaseSet.body.members.beta",
-        message: "Set omits a completeness-witness member",
+        message: "Set omits an ownership-index member",
         actual: "beta",
       },
       {
@@ -414,15 +585,10 @@ describe("complete release-set integrity", () => {
   it("rejects a self-consistent set whose plugin ownership identity differs from its member", () => {
     const fixture = productFixture();
     const forged = wire(canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet));
-    for (const ownershipIndex of [
-      forged.body.ownershipIndex,
-      forged.body.completenessWitness.ownershipIndex,
-    ]) {
-      const claim = ownershipIndex.claims.find(
-        (candidate: any) => candidate.kind === "plugin" && candidate.ownerPluginId === "alpha"
-      );
-      claim.identity = "not-alpha";
-    }
+    const claim = forged.body.ownershipIndex.claims.find(
+      (candidate: any) => candidate.kind === "plugin" && candidate.ownerPluginId === "alpha"
+    );
+    claim.identity = "alpha-wrong";
     forged.releaseSetDigest = releaseSetDigest(
       canonicalSerializeAgentPluginReleaseSetBody(forged.body)
     );
@@ -440,6 +606,56 @@ describe("complete release-set integrity", () => {
       expect(verification.issues.map((entry) => entry.code)).toContain("OWNERSHIP_INDEX_MISMATCH");
   });
 
+  it("checks a self-consistent set ownership index against the exact supplied releases", () => {
+    const fixture = productFixture();
+    const forged = wire(canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet));
+    const claim = forged.body.ownershipIndex.claims.find(
+      (candidate: any) => candidate.kind === "skill" && candidate.ownerPluginId === "alpha"
+    );
+    claim.identity = "alpha-stale";
+    forged.releaseSetDigest = releaseSetDigest(
+      canonicalSerializeAgentPluginReleaseSetBody(forged.body)
+    );
+
+    expect(verifyAgentPluginReleaseSet(forged).ok).toBe(true);
+    const result = verifyCompleteReleaseSet(forged, [fixture.alphaRelease, fixture.betaRelease]);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.map((entry) => entry.code)).toContain("SKILL_OWNERSHIP_MISMATCH");
+    }
+  });
+
+  it("checks exact release skill manifests against set ownership during complete verification", () => {
+    const fixture = productFixture();
+    const changedPayload = must(
+      createAgentPluginPayload([
+        {
+          path: "skills/rogue-alpha/SKILL.md",
+          mode: 0o644,
+          bytes: encoder.encode("rogue alpha\n"),
+        },
+        {
+          path: "agents/alpha.md",
+          mode: 0o644,
+          bytes: encoder.encode("agent alpha\n"),
+        },
+      ])
+    );
+    const forged = structuredClone(fixture.alphaRelease) as any;
+    forged.payload = payloadValue(changedPayload);
+    forged.body.payloadManifest = changedPayload.manifest;
+    forged.body.payloadDigest = changedPayload.payloadDigest;
+    forged.releaseDigest = releaseDigest(canonicalSerializeAgentPluginReleaseBody(forged.body));
+    expect(verifyAgentPluginRelease(forged).ok).toBe(true);
+
+    const result = verifyCompleteReleaseSet(fixture.releaseSet, [forged, fixture.betaRelease]);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.map((entry) => entry.code)).toContain("SKILL_OWNERSHIP_MISMATCH");
+    }
+  });
+
   it("defensively copies and deeply freezes every set-owned value", () => {
     const candidate = wire(canonicalSerializeAgentPluginReleaseSet(productFixture().releaseSet));
     const verified = verifyAgentPluginReleaseSet(candidate);
@@ -449,9 +665,6 @@ describe("complete release-set integrity", () => {
 
     candidate.body.members[0].pluginId = "changed-member";
     candidate.body.members.reverse();
-    candidate.body.completenessWitness.expectedMembers[0].pluginId = "changed-witness";
-    candidate.body.completenessWitness.expectedMembers.reverse();
-    candidate.body.completenessWitness.ownershipIndex.claims[0].identity = "changed-witness-claim";
     candidate.body.ownershipIndex.claims[0].identity = "changed-set-claim";
 
     expect(canonicalSerializeAgentPluginReleaseSet(verified.value)).toEqual(canonical);
@@ -461,12 +674,6 @@ describe("complete release-set integrity", () => {
       verified.value.body,
       verified.value.body.members,
       verified.value.body.members[0],
-      verified.value.body.completenessWitness,
-      verified.value.body.completenessWitness.expectedMembers,
-      verified.value.body.completenessWitness.expectedMembers[0],
-      verified.value.body.completenessWitness.ownershipIndex,
-      verified.value.body.completenessWitness.ownershipIndex.claims,
-      verified.value.body.completenessWitness.ownershipIndex.claims[0],
       verified.value.body.ownershipIndex,
       verified.value.body.ownershipIndex.claims,
       verified.value.body.ownershipIndex.claims[0],

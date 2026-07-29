@@ -79,7 +79,6 @@ describe("release issue model", () => {
       "DUPLICATE_OWNERSHIP_CLAIM",
       "OWNERSHIP_CONFLICT",
       "MISSING_OWNER",
-      "SKILL_INVENTORY_MISMATCH",
       "SKILL_OWNERSHIP_MISMATCH",
       "FORBIDDEN_UNIT_KIND",
       "COUNT_LIMIT_EXCEEDED",

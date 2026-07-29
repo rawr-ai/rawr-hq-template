@@ -1,24 +1,9 @@
 import { Value } from "typebox/value";
-import {
-  MAX_PAYLOAD_BYTES_PER_MEMBER,
-  MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-  PAYLOAD_PROTOCOL_VERSION,
-} from "../dto/agent-plugin-payload";
-import {
-  type DeclaredOwnershipClaim,
-  type DistributionOwnershipIndex,
-  MAX_OWNERSHIP_CLAIMS,
-} from "../dto/distribution-ownership";
+import type { DistributionOwnershipIndex } from "../dto/distribution-ownership";
 import type { ReleaseInputDigest } from "../dto/release-digest";
-import type {
-  ContentAuthority,
-  OwnershipIdentity,
-  PluginId,
-  ReleaseRelativePath,
-} from "../dto/release-identity";
+import type { PluginId } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
-  type DeclaredPayload,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   RELEASE_INPUT_SCHEMA_VERSION,
@@ -27,33 +12,24 @@ import {
   type ReleaseInputEnvelope,
   ReleaseInputEnvelopeSchema,
   type ReleaseMemberDeclaration,
-  type SkillInventoryEntry,
 } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { equalBytes } from "../helpers/byte-equality";
 import { decodeCanonicalJson } from "./canonical-json";
 import { compareCanonicalText } from "./canonical-text-ordering";
-import { createCompletenessWitness } from "./completeness-witness";
 import {
   createDistributionOwnershipIndex,
   parseDeclaredOwnershipClaims,
 } from "./distribution-ownership";
-import { parsePayloadManifest } from "./payload-manifest";
 import { parseProvenanceBindings } from "./provenance-binding";
-import { parsePayloadDigest, parseReleaseInputDigest, releaseInputDigest } from "./release-digest";
-import {
-  parseContentAuthority,
-  parseOwnershipIdentity,
-  parsePluginId,
-  parseReleaseRelativePath,
-} from "./release-identity";
+import { parseReleaseInputDigest, releaseInputDigest } from "./release-digest";
+import { parseContentAuthority, parsePluginId } from "./release-identity";
 import {
   canonicalSerializeAgentPluginReleaseInput,
   canonicalSerializeReleaseInputBody,
 } from "./release-input-codec";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "./release-payload-accounting";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
 import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
@@ -234,7 +210,10 @@ function parseReleaseInputBody(
   path: string,
   validateSchema = true
 ): ReleaseResult<
-  { readonly body: ReleaseInputBody; readonly ownershipIndex: DistributionOwnershipIndex },
+  {
+    readonly body: ReleaseInputBody;
+    readonly ownershipIndex: DistributionOwnershipIndex;
+  },
   ReleaseIssue
 > {
   const issues: ReleaseIssue[] = [];
@@ -292,13 +271,6 @@ function parseReleaseInputBody(
   );
   let ownershipIndex: DistributionOwnershipIndex | undefined;
   if (members !== undefined && ownershipClaims !== undefined) {
-    const inventoryOverflow = issues.some(
-      (entry) =>
-        entry.code === "COUNT_LIMIT_EXCEEDED" && entry.path === `${path}.members.skillInventory`
-    );
-    if (!inventoryOverflow) {
-      validateSkillOwnershipClosure(members, ownershipClaims, path, issues);
-    }
     const index = createDistributionOwnershipIndex(
       members.map((member) => member.pluginId),
       ownershipClaims
@@ -354,30 +326,13 @@ function parseMembers(
 ): readonly ReleaseMemberDeclaration[] | undefined {
   const values = parseBoundedArray(input, path, MAX_RELEASE_MEMBERS, issues);
   if (values === undefined) return undefined;
-  const aggregateSkillInventory = values.reduce<number>((total, candidate) => {
-    if (candidate === null || typeof candidate !== "object" || Array.isArray(candidate))
-      return total;
-    const inventory = (candidate as Record<string, unknown>).skillInventory;
-    return total + (Array.isArray(inventory) ? inventory.length : 0);
-  }, 0);
-  if (aggregateSkillInventory > MAX_OWNERSHIP_CLAIMS) {
-    issues.push(
-      releaseIssue(
-        "COUNT_LIMIT_EXCEEDED",
-        `${path}.skillInventory`,
-        "Complete release-set skill inventory exceeds the ownership protocol limit",
-        { expected: MAX_OWNERSHIP_CLAIMS, actual: aggregateSkillInventory }
-      )
-    );
-  }
-  const skillBudget = { remaining: MAX_OWNERSHIP_CLAIMS };
   const members: ReleaseMemberDeclaration[] = [];
   values.forEach((candidate, index) => {
     const memberPath = `${path}[${index}]`;
     if (
       !admitClosedRecordForTraversal(
         candidate,
-        ["curation", "kind", "payload", "pluginId", "skillInventory", "vendor"],
+        ["curation", "kind", "pluginId", "vendor"],
         memberPath,
         issues
       )
@@ -388,27 +343,15 @@ function parseMembers(
       parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
       issues
     );
-    const skillInventory = parseSkillInventory(
-      candidate.skillInventory,
-      `${memberPath}.skillInventory`,
-      skillBudget,
-      issues
-    );
-    const payload = parseDeclaredPayload(candidate.payload, `${memberPath}.payload`, issues);
-    if (payload !== undefined) {
-      reportForbiddenDistributionSources(payload, `${memberPath}.payload.manifest`, issues);
-    }
     const vendor = parseProvenanceBindings(candidate.vendor, `${memberPath}.vendor`, issues);
     const curation = parseProvenanceBindings(candidate.curation, `${memberPath}.curation`, issues);
     if (
       kind === "agent-plugin" &&
       pluginId !== undefined &&
-      skillInventory !== undefined &&
-      payload !== undefined &&
       vendor !== undefined &&
       curation !== undefined
     ) {
-      members.push(Object.freeze({ kind, pluginId, skillInventory, payload, vendor, curation }));
+      members.push(Object.freeze({ kind, pluginId, vendor, curation }));
     }
   });
   members.sort((left, right) => compareCanonicalText(left.pluginId, right.pluginId));
@@ -417,25 +360,6 @@ function parseMembers(
     path,
     issues
   );
-  const aggregatePayloadBytes = members.reduce(
-    (memberTotal, member) =>
-      memberTotal +
-      member.payload.manifest.reduce((entryTotal, entry) => entryTotal + entry.byteLength, 0),
-    0
-  );
-  if (aggregatePayloadBytes > MAX_RELEASE_SET_PAYLOAD_BYTES) {
-    issues.push(
-      releaseIssue(
-        "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-        path,
-        "Complete release-set payload exceeds its aggregate byte limit",
-        {
-          expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
-          actual: aggregatePayloadBytes,
-        }
-      )
-    );
-  }
   if (members.length === 0) {
     issues.push(
       releaseIssue(
@@ -450,181 +374,6 @@ function parseMembers(
     );
   }
   return Object.freeze(members);
-}
-
-function parseSkillInventory(
-  input: unknown,
-  path: string,
-  budget: { remaining: number },
-  issues: ReleaseIssue[]
-): readonly SkillInventoryEntry[] | undefined {
-  const values = parseBoundedArray(input, path, MAX_PAYLOAD_ENTRIES_PER_MEMBER, issues);
-  if (values === undefined) return undefined;
-  const inventory: SkillInventoryEntry[] = [];
-  const admitted = values.slice(0, budget.remaining);
-  budget.remaining -= admitted.length;
-  admitted.forEach((candidate, index) => {
-    const entryPath = `${path}[${index}]`;
-    if (!admitClosedRecordForTraversal(candidate, ["identity", "manifestPath"], entryPath, issues))
-      return;
-    const identity = collectReleaseResult(
-      parseOwnershipIdentity(candidate.identity, `${entryPath}.identity`),
-      issues
-    );
-    const manifestPath = collectReleaseResult(
-      parseReleaseRelativePath(candidate.manifestPath, `${entryPath}.manifestPath`),
-      issues
-    );
-    if (identity !== undefined && manifestPath !== undefined) {
-      inventory.push(Object.freeze({ identity, manifestPath }));
-    }
-  });
-  inventory.sort(compareSkillInventoryEntries);
-  return Object.freeze(inventory);
-}
-
-function validateSkillOwnershipClosure(
-  members: readonly ReleaseMemberDeclaration[],
-  ownershipClaims: readonly DeclaredOwnershipClaim[],
-  path: string,
-  issues: ReleaseIssue[]
-): void {
-  const skillClaims = ownershipClaims.filter((claim) => claim.kind === "skill");
-  const inventoryByMemberPath = new Map<string, number>();
-  const inventoryByMemberIdentity = new Map<string, number>();
-  const claimsByMemberIdentity = new Map<string, number>();
-  const claimOwnersByIdentity = new Map<OwnershipIdentity, Set<PluginId>>();
-  for (const member of members) {
-    for (const entry of member.skillInventory) {
-      incrementCount(inventoryByMemberPath, memberSkillKey(member.pluginId, entry.manifestPath));
-      incrementCount(inventoryByMemberIdentity, memberSkillKey(member.pluginId, entry.identity));
-    }
-  }
-  for (const claim of skillClaims) {
-    incrementCount(claimsByMemberIdentity, memberSkillKey(claim.ownerPluginId, claim.identity));
-    const owners = claimOwnersByIdentity.get(claim.identity) ?? new Set<PluginId>();
-    owners.add(claim.ownerPluginId);
-    claimOwnersByIdentity.set(claim.identity, owners);
-  }
-
-  for (const member of members) {
-    const skillManifestPaths = member.payload.manifest
-      .map((entry) => entry.path)
-      .filter(isCanonicalSkillManifestPath);
-    const manifestPathSet = new Set(skillManifestPaths);
-    for (const manifestPath of skillManifestPaths) {
-      const rowCount =
-        inventoryByMemberPath.get(memberSkillKey(member.pluginId, manifestPath)) ?? 0;
-      if (rowCount !== 1) {
-        issues.push(
-          releaseIssue(
-            "SKILL_INVENTORY_MISMATCH",
-            `${path}.skills.${member.pluginId}.${manifestPath}`,
-            "A canonical skill manifest must have exactly one inventory row",
-            { expected: 1, actual: rowCount }
-          )
-        );
-      }
-    }
-    for (const entry of member.skillInventory) {
-      const entryPath = `${path}.skills.${member.pluginId}.${entry.manifestPath}`;
-      if (
-        !isCanonicalSkillManifestPath(entry.manifestPath) ||
-        !manifestPathSet.has(entry.manifestPath)
-      ) {
-        issues.push(
-          releaseIssue(
-            "SKILL_INVENTORY_MISMATCH",
-            entryPath,
-            "Skill inventory path must name a present skills/<one-unit>/SKILL.md payload entry",
-            { expected: "skills/<one-unit>/SKILL.md", actual: entry.manifestPath }
-          )
-        );
-      }
-      const claimCount =
-        claimsByMemberIdentity.get(memberSkillKey(member.pluginId, entry.identity)) ?? 0;
-      if (claimCount !== 1) {
-        issues.push(
-          releaseIssue(
-            "SKILL_OWNERSHIP_MISMATCH",
-            `${entryPath}.${entry.identity}`,
-            "A skill inventory row must have exactly one same-member skill ownership claim",
-            {
-              expected: 1,
-              actual: claimCount,
-              claimKind: "skill",
-              claim: entry.identity,
-              claimants: Object.freeze(
-                [...(claimOwnersByIdentity.get(entry.identity) ?? [])].sort(compareCanonicalText)
-              ),
-            }
-          )
-        );
-      }
-    }
-  }
-  for (const claim of skillClaims) {
-    const rowCount =
-      inventoryByMemberIdentity.get(memberSkillKey(claim.ownerPluginId, claim.identity)) ?? 0;
-    if (rowCount !== 1) {
-      issues.push(
-        releaseIssue(
-          "SKILL_OWNERSHIP_MISMATCH",
-          `${path}.skillClaims.${claim.ownerPluginId}.${claim.identity}`,
-          "A skill ownership claim must name exactly one inventory row owned by its member",
-          {
-            expected: 1,
-            actual: rowCount,
-            claimKind: "skill",
-            claim: claim.identity,
-            claimants: [claim.ownerPluginId],
-          }
-        )
-      );
-    }
-  }
-}
-
-function isCanonicalSkillManifestPath(path: ReleaseRelativePath): boolean {
-  return /^skills\/[^/]+\/SKILL\.md$/u.test(path);
-}
-
-function reportForbiddenDistributionSources(
-  payload: DeclaredPayload,
-  path: string,
-  issues: ReleaseIssue[]
-): void {
-  payload.manifest.forEach((entry, index) => {
-    const entryPath = `${path}[${index}].path`;
-    if (entry.path === "agent-pack" || entry.path.startsWith("agent-pack/")) {
-      issues.push(
-        releaseIssue(
-          "FORBIDDEN_UNIT_KIND",
-          entryPath,
-          "Top-level toolkit agent-pack content cannot become an agent-plugin release member",
-          { actual: entry.path }
-        )
-      );
-    }
-    if (entry.path === "plugin.yaml") {
-      issues.push(
-        releaseIssue(
-          "FORBIDDEN_UNIT_KIND",
-          entryPath,
-          "The legacy root plugin.yaml toolkit-composition marker cannot become an agent-plugin release member",
-          { actual: entry.path }
-        )
-      );
-    }
-  });
-}
-
-function memberSkillKey(pluginId: PluginId, identityOrPath: string): string {
-  return `${pluginId}\u0000${identityOrPath}`;
-}
-
-function incrementCount(counts: Map<string, number>, key: string): void {
-  counts.set(key, (counts.get(key) ?? 0) + 1);
 }
 
 function parseUnitKind(
@@ -647,105 +396,18 @@ function parseUnitKind(
   return undefined;
 }
 
-function parseDeclaredPayload(
-  input: unknown,
-  path: string,
-  issues: ReleaseIssue[]
-): DeclaredPayload | undefined {
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["manifest", "payloadDigest", "protocolVersion"],
-      path,
-      issues
-    )
-  )
-    return undefined;
-  if (input.protocolVersion !== PAYLOAD_PROTOCOL_VERSION) {
-    issues.push(
-      releaseIssue(
-        "INVALID_SCHEMA_VERSION",
-        `${path}.protocolVersion`,
-        "Unsupported payload protocol version",
-        {
-          expected: PAYLOAD_PROTOCOL_VERSION,
-          actual:
-            typeof input.protocolVersion === "number"
-              ? input.protocolVersion
-              : String(input.protocolVersion),
-        }
-      )
-    );
-  }
-  const manifest = parsePayloadManifest(input.manifest, `${path}.manifest`, issues);
-  const digest = collectReleaseResult(
-    parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`),
-    issues
-  );
-  const totalBytes = manifest?.reduce((total, entry) => total + entry.byteLength, 0) ?? 0;
-  if (totalBytes > MAX_PAYLOAD_BYTES_PER_MEMBER) {
-    issues.push(
-      releaseIssue(
-        "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-        `${path}.manifest`,
-        "Declared payload exceeds its byte limit",
-        {
-          expected: MAX_PAYLOAD_BYTES_PER_MEMBER,
-          actual: totalBytes,
-        }
-      )
-    );
-  }
-  if (
-    manifest === undefined ||
-    digest === undefined ||
-    input.protocolVersion !== PAYLOAD_PROTOCOL_VERSION
-  )
-    return undefined;
-  return Object.freeze({
-    protocolVersion: PAYLOAD_PROTOCOL_VERSION,
-    manifest,
-    payloadDigest: digest,
-  });
-}
-
 function freezeReleaseInput(
   body: ReleaseInputBody,
   digest: ReleaseInputDigest,
   ownershipIndex: DistributionOwnershipIndex
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
-  const expectedMembers = Object.freeze(
-    body.members.map((member) =>
-      Object.freeze({
-        pluginId: member.pluginId,
-        payloadDigest: member.payload.payloadDigest,
-      })
-    )
-  );
-  const witness = createCompletenessWitness({
-    releaseInputDigest: digest,
-    expectedMembers,
-    ownershipIndex,
-  });
-  if (!witness.ok) return witness;
   return success(
     Object.freeze({
       schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
       releaseInputDigest: digest,
       body,
       ownershipIndex,
-      completenessWitness: witness.value,
     }) as AgentPluginReleaseInput
-  );
-}
-
-function compareSkillInventoryEntries(
-  left: SkillInventoryEntry,
-  right: SkillInventoryEntry
-): number {
-  return (
-    compareCanonicalText(left.manifestPath, right.manifestPath) ||
-    compareCanonicalText(left.identity, right.identity)
   );
 }
 

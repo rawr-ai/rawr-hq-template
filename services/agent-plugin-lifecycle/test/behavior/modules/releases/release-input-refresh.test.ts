@@ -8,7 +8,6 @@ import type {
 } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
-import { contentDigest } from "../../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
   parsePluginId,
@@ -75,36 +74,19 @@ describe("releases.refreshReleaseInput", () => {
     expect(decoded.ok).toBe(true);
     if (!decoded.ok) throw new Error("Generated refresh bytes did not decode");
     expect(decoded.value.body.members.map((member) => member.pluginId)).toEqual(memberIds);
-    expect(
-      decoded.value.body.members.flatMap((member) =>
-        member.payload.manifest.map((entry) => ({
-          pluginId: member.pluginId,
-          path: entry.path,
-          mode: entry.mode,
-          byteLength: entry.byteLength,
-          contentDigest: entry.contentDigest,
-        }))
-      )
-    ).toEqual(
-      entries
-        .map((entry) => {
-          const [pluginId, ...relativePath] = entry.path.slice("plugins/agents/".length).split("/");
-          return {
-            pluginId,
-            path: relativePath.join("/"),
-            mode: entry.mode,
-            byteLength: entry.bytes.byteLength,
-            contentDigest: contentDigest(entry.bytes),
-          };
-        })
-        .sort(compareManifestRows)
+    expect(decoded.value.body.members).toEqual(
+      memberIds.map((pluginId) => ({
+        kind: "agent-plugin",
+        pluginId,
+        vendor: [],
+        curation: [],
+      }))
     );
     expect(
       decoded.value.body.members.every(
         (member) => member.vendor.length === 0 && member.curation.length === 0
       )
     ).toBe(true);
-    expect(decoded.value.body.members.flatMap((member) => member.skillInventory)).toHaveLength(100);
     expect(decoded.value.body.ownershipClaims).toHaveLength(100);
     expect(decoded.value.body.ownershipClaims.every((claim) => claim.kind === "skill")).toBe(true);
     expect(decoded.value.body.locks).toEqual([]);
@@ -183,6 +165,56 @@ describe("releases.refreshReleaseInput", () => {
     });
     expect(result.value.body.locks).toEqual([binding]);
     expect(result.value.body.qualityPolicies).toEqual([binding]);
+  });
+
+  it("keeps authored bytes stable across nondeclarative path and byte changes", async () => {
+    const initialEntries = oneMemberEntries("cognition");
+    const fresh = await refreshWith(initialEntries, ["cognition"]);
+    if (fresh.kind !== "ReleaseInputCandidateReady")
+      throw new Error("Fresh fixture did not produce a candidate");
+    const changedEntries = [
+      stagedEntry(
+        "plugins/agents/cognition/skills/cognition/SKILL.md",
+        encoder.encode("---\nname: cognition\nchanged: true\n---\n")
+      ),
+      stagedEntry("plugins/agents/cognition/README.md", encoder.encode("renamed and changed\n")),
+      stagedEntry(releaseInputPath, fresh.bytes),
+    ];
+
+    const repeated = await refreshWith(changedEntries, ["cognition"]);
+
+    expect(repeated).toEqual({
+      kind: "ReleaseInputReadOnlyConverged",
+      releaseInputDigest: fresh.releaseInputDigest,
+      byteLength: fresh.byteLength,
+      bytes: fresh.bytes,
+    });
+  });
+
+  it.each([
+    {
+      name: "toolkit agent-pack content",
+      path: "plugins/agents/cognition/agent-pack/agents/legacy.md",
+    },
+    {
+      name: "a legacy root plugin manifest",
+      path: "plugins/agents/cognition/plugin.yaml",
+    },
+  ])("rejects $name at the authoring boundary", async ({ path }) => {
+    const result = await refreshWith(
+      [...oneMemberEntries("cognition"), stagedEntry(path, encoder.encode("forbidden\n"))],
+      ["cognition"]
+    );
+
+    expect(result).toMatchObject({
+      kind: "ReleaseInputRejected",
+      issues: [
+        {
+          code: "FORBIDDEN_UNIT_KIND",
+          actual: path.slice("plugins/agents/cognition/".length),
+        },
+      ],
+    });
   });
 
   it("refuses malformed existing release-input bytes instead of bootstrapping around them", async () => {
@@ -621,13 +653,6 @@ function contentWorkspaceFailure(
 
 function codeUnitCompare(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
-}
-
-function compareManifestRows(
-  left: Readonly<{ pluginId: string; path: string }>,
-  right: Readonly<{ pluginId: string; path: string }>
-): number {
-  return codeUnitCompare(left.pluginId, right.pluginId) || codeUnitCompare(left.path, right.path);
 }
 
 function parsed<T>(result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false }>): T {

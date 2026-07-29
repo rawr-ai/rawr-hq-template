@@ -12,11 +12,15 @@ schemas whose TypeBox parsers reject unknown fields and path-unsafe values and
 whose canonical serialization is independent of checkout path, traversal order,
 map insertion order, mtime, and ambient process state. Digests MUST be computed
 over digest-free canonical bodies and carried in separately validated envelopes.
-Release input identity MUST cover every admitted payload, membership, vendor,
-lock, alias, provenance, and declarative quality-policy value while excluding
-records that select an already-derived identity. `AgentPluginRelease` MUST bind
-content authority, repository identity, selected commit/tree, release-input
-digest, curated plugin ID and aliases, canonical payload manifest/digest,
+Release input identity MUST cover declared membership, ownership, vendor, lock,
+provenance, and declarative quality-policy values while excluding selected
+content bytes and records that select an already-derived identity. The exact
+selected Git commit and tree close those bytes. A release input MUST NOT persist
+`skillInventory`, a payload or per-file manifest, payload or per-file digests,
+file path/mode/length rows, or a completeness witness. `AgentPluginRelease`
+MUST bind content authority, repository identity, selected commit/tree,
+release-input digest, curated plugin ID and aliases, the payload manifest and
+digest derived from every selected file below that member root,
 vendor/curation provenance, schema protocol, builder protocol, and release
 digest. It MUST NOT contain an artifact-store digest or local storage handle.
 
@@ -28,10 +32,16 @@ digest. It MUST NOT contain an artifact-store digest or local storage handle.
 - **AND** neither locator path nor ambient process state appears in release
   identity
 
-#### Scenario: Every admitted payload input affects identity
-- **WHEN** one admitted content byte, manifest field, vendor binding, lock,
-  alias, or declarative quality input changes
-- **THEN** the release-input and resulting release identities change
+#### Scenario: Content and declarations affect their owning identities
+- **WHEN** one selected content byte changes without changing membership,
+  ownership, provenance, locks, or declarative quality policy
+- **THEN** canonical release-input bytes and `ReleaseInputDigest` remain
+  unchanged
+- **AND** the selected tree plus each applicable payload, release, and
+  release-set identity changes
+- **WHEN** a release-input declaration changes
+- **THEN** `ReleaseInputDigest` and every resulting identity that binds it
+  change
 
 #### Scenario: Selection records do not rewrite derived identity
 - **WHEN** only the reviewed current-main record changes without changing its
@@ -50,11 +60,11 @@ digest. It MUST NOT contain an artifact-store digest or local storage handle.
 The release protocol MUST define distinct opaque `ReleaseInputDigest`,
 `PayloadDigest`, `ReleaseDigest`, and `ReleaseSetDigest` brands with exact
 digest-free canonical preimages. `ReleaseSetDigest` MUST cover content
-authority/provenance, release-input identity, the completeness witness, the
-ownership index, and each ordered member's `ReleaseDigest`. Every digest is a
-deterministic verification value; none addresses a local store, selects a
-package path, or serves as a lookup handle. Brands MUST NOT be assignable across
-domains, and no digest field may enter its own direct or transitive preimage.
+authority/provenance, release-input identity, the ownership index, and each
+ordered member's plugin ID and `ReleaseDigest`. Every digest is a deterministic
+verification value; none addresses a local store, selects a package path, or
+serves as a lookup handle. Brands MUST NOT be assignable across domains, and no
+digest field may enter its own direct or transitive preimage.
 
 #### Scenario: Digest brands cannot be substituted
 - **WHEN** a valid digest from one domain is supplied in another digest domain
@@ -74,9 +84,12 @@ the complete desired-content model. It MUST bind one content authority,
 repository identity, selected commit/tree, release-input digest, canonical
 ordered member IDs and release digests, complete skill/distribution ownership,
 schema/builder protocols, and set digest. Construction MUST verify that supplied
-members exactly equal the completeness witness from the same selected input,
-share its authority, and remain within the protocol byte bounds. A targeted
-subset MUST NOT claim completeness or authorize retirement of omitted members.
+members exactly equal the member declarations in the selected input, bind those
+exact releases through one ordered plugin-ID/release-digest list, share one
+authority, and remain within the protocol byte bounds. That ordered member list
+is the complete-set witness; the set MUST NOT carry a second member or content
+graph. A targeted subset MUST NOT claim completeness or authorize retirement of
+omitted members.
 
 #### Scenario: Complete derivation returns one closed set
 - **WHEN** exact selected Git objects contain the complete valid membership

@@ -163,8 +163,9 @@ mixed opening/closing Git bindings, and invalid existing release-input bytes.
 An existing record for another content authority MUST refuse rather than seed a
 new record.
 It MUST derive each selected member's payload from every regular staged file
-under that root and derive inventory plus skill ownership only from exact
-`skills/<identity>/SKILL.md` paths.
+under that root and validate skill ownership only from exact
+`skills/<identity>/SKILL.md` paths. Toolkit `agent-pack/**` content and a root
+`plugin.yaml` composition marker MUST reject rather than enter a member.
 The handler MUST own one flat frozen copy of the validated workspace policy and
 member list before its first await. Before payload construction it MUST enforce
 the protocol entry count, per-member logical byte total, and complete-set
@@ -183,9 +184,12 @@ package, export, mutate providers, or create a store, receipt, or ledger.
 - **WHEN** an explicit member list exactly equals the canonical immediate
   children and no release-input record is staged
 - **THEN** one releases-owned procedure emits `ReleaseInputCandidateReady` with
-  canonical bytes derived from the selected roots
+  canonical bytes declaring those selected members and their explicit
+  repository-owned metadata
 - **AND** every ancillary array is empty unless supplied by valid existing
   repository-owned state
+- **AND** no selected payload byte, file row, payload digest, skill inventory,
+  or completeness witness is copied into the release input
 
 #### Scenario: Exact refresh repeat is read-only
 - **WHEN** the emitted canonical bytes are staged with unchanged selected roots
@@ -204,8 +208,10 @@ package, export, mutate providers, or create a store, receipt, or ledger.
 
 Staged mode MUST observe one exact Git index/blob snapshot without authoring Git
 objects and MUST revalidate that binding before success. Clean mode MUST bind one
-exact repository/ref/commit/tree and read only immutable Git objects declared by
-the release input. Staged mode MUST NOT authorize build or release.
+exact repository/ref/commit/tree and read only immutable Git objects below the
+member roots declared by the release input. Both modes MUST derive and validate
+the complete payload, skill ownership, and forbidden-unit policy from those
+selected bytes. Staged mode MUST NOT authorize build or release.
 
 #### Scenario: Index changes during staged validation
 - **WHEN** a failpoint changes the index after opening observation and before

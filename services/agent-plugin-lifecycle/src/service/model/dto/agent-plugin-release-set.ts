@@ -16,12 +16,7 @@ import {
   PluginIdSchema,
   RepositoryIdentitySchema,
 } from "./release-identity";
-import {
-  type CompletenessWitness,
-  CompletenessWitnessRecordSchema,
-  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
-  MAX_RELEASE_MEMBERS,
-} from "./release-input";
+import { MAX_RELEASE_INPUT_ENVELOPE_BYTES, MAX_RELEASE_MEMBERS } from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
@@ -55,7 +50,6 @@ export const AgentPluginReleaseSetBodySchema = ReadonlyObject(
     sourceCommit: GitCommitIdSchema,
     sourceTree: GitTreeIdSchema,
     releaseInputDigest: ReleaseInputDigestSchema,
-    completenessWitness: CompletenessWitnessRecordSchema,
     ownershipIndex: DistributionOwnershipIndexRecordSchema,
     members: NonEmptyReadonlyArray(AgentPluginReleaseSetMemberSchema, {
       maxItems: MAX_RELEASE_MEMBERS,
@@ -93,7 +87,6 @@ export type AgentPluginReleaseSet = Static<typeof AgentPluginReleaseSetSchema> &
   Readonly<{
     body: AgentPluginReleaseSetBody &
       Readonly<{
-        completenessWitness: CompletenessWitness;
         ownershipIndex: DistributionOwnershipIndex;
       }>;
     [agentPluginReleaseSetBrand]: "AgentPluginReleaseSet";

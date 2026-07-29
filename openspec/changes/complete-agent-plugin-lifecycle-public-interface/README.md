@@ -3938,6 +3938,37 @@ categorical live-tree audit finds no active hand-written repository source,
 structure, or topology authority outside Habitat. No provider, Personal
 repository, channel, release, or live installation state is touched.
 
+## Git-Backed Declarative Release Input
+
+The unpublished version-1 release input is recut in place as a declaration
+rather than a second content index. Its canonical bytes contain members,
+ownership claims, provenance, locks, and `qualityPolicies`. They contain no
+skill inventory, payload or per-file manifest, payload or per-file digest,
+path/mode/length row, or completeness witness. The reviewed Git commit and tree
+close selected bytes.
+
+Clean, staged, package, test, status, and sync paths enumerate every regular
+file below each declared member root from the exact selected Git objects. They
+derive payload manifests and digests, skill inventory, ownership completeness,
+release identity, and complete-set identity during the invocation. An
+additional ordinary file becomes content and changes the applicable derived
+identity. A toolkit `agent-pack/**` unit, root `plugin.yaml`, missing skill
+claim, or stale skill claim rejects before package output or provider mutation.
+
+The release-input parser rejects the removed fields rather than admitting a
+compatibility shape. A payload-only byte change preserves release-input bytes
+and `ReleaseInputDigest` while changing the selected tree and applicable
+payload, release, and release-set digests. The release set uses its one ordered
+plugin-ID/release-digest member list as its completeness witness; it does not
+serialize a second content or member graph. No persistent artifact store,
+projection store, migration reader, alias, or retained local copy is added.
+This supersedes the historical completeness-witness extraction recorded in
+tasks 5.7e5 and 5.7e6 without rewriting those landed checkpoints.
+The complete lifecycle suite passes 42 files and 384 tests uncached; lifecycle
+and test typechecks plus diff hygiene pass. Personal content and native provider
+settlement remain unopened until this Template checkpoint lands through the
+required repository gate.
+
 ## Settlement Oracles
 
 The final product must prove:

@@ -1,4 +1,5 @@
 import { Value } from "typebox/value";
+import type { PayloadManifestEntry } from "../dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import {
   type DeclaredOwnershipClaim,
@@ -10,13 +11,25 @@ import {
   type OwnershipClaim,
   type OwnershipClaimKind,
 } from "../dto/distribution-ownership";
-import { OwnershipIdentitySchema, type PluginId } from "../dto/release-identity";
+import {
+  type OwnershipIdentity,
+  OwnershipIdentitySchema,
+  type PluginId,
+} from "../dto/release-identity";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
+import { parseOwnershipIdentity } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, failure, success } from "./release-result";
 import { parseBoundedArray } from "./release-value-admission";
+
+const SKILL_MANIFEST_PATH = /^skills\/([^/]+)\/SKILL\.md$/u;
+
+/** Byte-derived distribution units discovered in one exact member payload manifest. */
+export interface AgentPluginPayloadInventory {
+  readonly skillIdentities: readonly OwnershipIdentity[];
+}
 
 /** Synthesizes plugin claims and admits one complete, conflict-free ownership index. */
 export function createDistributionOwnershipIndex(
@@ -36,7 +49,13 @@ export function createDistributionOwnershipIndex(
       );
       continue;
     }
-    claims.push(Object.freeze({ kind: "plugin", identity: memberId, ownerPluginId: memberId }));
+    claims.push(
+      Object.freeze({
+        kind: "plugin",
+        identity: memberId,
+        ownerPluginId: memberId,
+      })
+    );
   }
   claims.push(...declaredClaims);
   if (claims.length > MAX_OWNERSHIP_CLAIMS) {
@@ -137,6 +156,111 @@ export function ownershipClaimsFor(
         claim.ownerPluginId === ownerPluginId && (kind === undefined || claim.kind === kind)
     )
   );
+}
+
+/** Derives the admitted distribution-unit inventory from one exact payload manifest. */
+export function deriveAgentPluginPayloadInventory(
+  manifest: readonly PayloadManifestEntry[],
+  path = "release.payload.manifest"
+): ReleaseResult<AgentPluginPayloadInventory, ReleaseIssue> {
+  const issues: ReleaseIssue[] = [];
+  const skillIdentities: OwnershipIdentity[] = [];
+  manifest.forEach((entry, index) => {
+    const entryPath = `${path}[${index}].path`;
+    if (entry.path === "agent-pack" || entry.path.startsWith("agent-pack/")) {
+      issues.push(
+        releaseIssue(
+          "FORBIDDEN_UNIT_KIND",
+          entryPath,
+          "Top-level toolkit agent-pack content cannot become an agent-plugin release member",
+          { actual: entry.path }
+        )
+      );
+    }
+    if (entry.path === "plugin.yaml") {
+      issues.push(
+        releaseIssue(
+          "FORBIDDEN_UNIT_KIND",
+          entryPath,
+          "The legacy root plugin.yaml toolkit-composition marker cannot become an agent-plugin release member",
+          { actual: entry.path }
+        )
+      );
+    }
+    const match = SKILL_MANIFEST_PATH.exec(entry.path);
+    const identity = match?.[1];
+    if (identity !== undefined) {
+      const parsed = parseOwnershipIdentity(identity, entryPath);
+      if (parsed.ok) skillIdentities.push(parsed.value);
+      else issues.push(...parsed.issues);
+    }
+  });
+  const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
+  if (nonEmpty !== undefined) return failure(nonEmpty);
+  return success(
+    Object.freeze({
+      skillIdentities: Object.freeze(skillIdentities.sort(compareCanonicalText)),
+    })
+  );
+}
+
+/**
+ * Validates byte-derived plugin content against its explicit skill ownership claims.
+ *
+ * Every canonical `skills/<id>/SKILL.md` path must have exactly one matching
+ * same-member claim, and every same-member skill claim must resolve to exactly
+ * one discovered manifest.
+ */
+export function validateAgentPluginPayloadOwnership(
+  ownershipIndex: DistributionOwnershipIndex,
+  pluginId: PluginId,
+  manifest: readonly PayloadManifestEntry[],
+  path = "release.payload.manifest"
+): readonly ReleaseIssue[] {
+  const inventory = deriveAgentPluginPayloadInventory(manifest, path);
+  if (!inventory.ok) return inventory.issues;
+
+  const issues: ReleaseIssue[] = [];
+  const discovered = new Set(inventory.value.skillIdentities);
+  const claims = ownershipClaimsFor(ownershipIndex, pluginId, "skill");
+  const claimed = new Set(claims.map((claim) => claim.identity));
+  for (const identity of discovered) {
+    if (!claimed.has(identity)) {
+      issues.push(
+        releaseIssue(
+          "SKILL_OWNERSHIP_MISMATCH",
+          `${path}.skills.${pluginId}.${identity}`,
+          "A discovered skill manifest must have exactly one same-member ownership claim",
+          {
+            expected: 1,
+            actual: 0,
+            claimKind: "skill",
+            claim: identity,
+            claimants: [],
+          }
+        )
+      );
+    }
+  }
+  for (const claim of claims) {
+    if (!discovered.has(claim.identity)) {
+      issues.push(
+        releaseIssue(
+          "SKILL_OWNERSHIP_MISMATCH",
+          `${path}.skillClaims.${pluginId}.${claim.identity}`,
+          "A skill ownership claim must name exactly one discovered skills/<id>/SKILL.md manifest",
+          {
+            expected: 1,
+            actual: 0,
+            claimKind: "skill",
+            claim: claim.identity,
+            claimants: [pluginId],
+          }
+        )
+      );
+    }
+  }
+  return Object.freeze(sortReleaseIssues(issues));
 }
 
 function validateClaims(

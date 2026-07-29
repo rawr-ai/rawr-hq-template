@@ -1648,9 +1648,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   cherry-pick, import, or establish ancestry with Template.
 - [ ] 6.2 Recut or close Personal PRs #182 and #183. Remove custom controller
   artifact pins and CLI-install identity from channel records and CI.
-- [ ] 6.3 Simplify the release input to closed content membership, ownership,
-  provenance, and declared policy/evaluation inputs. Remove the per-file runtime
-  envelope without weakening content-set closure.
+- [x] 6.3 Simplify the persisted release input to canonical declarative
+  members, ownership, provenance, locks, and `qualityPolicies`. Remove
+  `skillInventory`, payload/per-file manifests and digests, path/mode/length
+  rows, and the release-input-owned completeness witness. Delete the later
+  duplicate completeness-witness record as well; the complete set's one ordered
+  plugin-ID/release-digest member list witnesses completeness. Let selected Git
+  commit/tree close bytes and derive payload manifests/digests, skill inventory,
+  ownership closure, and release/set identity per invocation. Prove payload-only
+  changes preserve unchanged release-input bytes/digest while changing the
+  selected tree and applicable derived identities.
 - [ ] 6.3a Add the minimal declarative Codex and Claude marketplace/plugin
   metadata to Personal content, validate it against the closed release input,
   and prove each native source resolves to the selected immutable commit or
@@ -1668,14 +1675,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   trees `93f614be74f1e1fae3c59d2f95137f9388f4bbf9` and
   `033f3fb6ef53ff3f6501ad3b0e723681b7b23c14` through the normal Personal
   `dev` member; do not create a separate member or release path. Prove the
-  selected release input excludes `inngest-orpc` and the repository-level
+  selected member roots exclude `inngest-orpc` and the repository-level
   research/candidate roots `docs/projects/inngest-event-driven-skillset/**`,
   `candidate/native-inngest/**`, `candidate/effect-inngest/**`,
   `candidate/quality/**`, and `tools/inngest-skill-quality/**`. Do not create a
   Template runtime mode for this Personal-owned content.
 - [ ] 6.7 Run Personal content topology, lint/typecheck units, release-input
-  validation, and required CI through its working external gate. Do not bypass
-  repository billing or branch protection. Land Personal independently.
+  declaration validation, selected-tree payload derivation, and required CI
+  through its working external gate. Do not bypass repository billing or branch
+  protection. Land Personal independently.
 
 ## 7. Native Provider Acceptance And Settlement
 

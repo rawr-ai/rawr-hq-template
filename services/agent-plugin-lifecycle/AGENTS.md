@@ -42,8 +42,8 @@
   projection, immutability, member coverage, conflict classification, and
   owner-local selection have one direct policy owner. Release records consume
   those exact leaves without a `shared` ownership face. Release-input body and
-  envelope structure, member declarations, provenance bindings, completeness
-  witness, and admitted brand have one direct service-root TypeBox DTO owner.
+  envelope structure, member declarations, provenance bindings, and admitted
+  brand have one direct service-root TypeBox DTO owner.
   One direct service-root release-input policy owns construction,
   verification, decoding, bounded admission, defensive freezing, and
   diagnostics. One direct codec owns canonical body and envelope projection
@@ -86,11 +86,11 @@
   duplicate-identity refusal, defensive freezing, and canonical projection
   across release input, individual release, and complete-set records. Its
   closed TypeBox structure remains owned by the release-input DTO.
-  Completeness-witness structure and generated types also remain in that DTO.
-  Witness construction, admission, ordering, duplicate refusal, ownership
-  closure, freezing, and canonical projection have one direct service-root
-  policy owner. Release-set policy owns the relationships between that witness,
-  the containing set, and the derived releases.
+  The complete release set's one ordered plugin-ID/release-digest member list is
+  its completeness witness. Release-set policy owns member admission, ordering,
+  duplicate refusal, ownership closure, freezing, canonical projection, and
+  verification against the exact supplied releases; no second member or content
+  graph exists.
   Providers owns selected-content structure,
   source-interface classification, native marketplace validation,
   selected-content projection, and native-state policy because no other module
@@ -125,10 +125,11 @@
 
 ## Concepts
 
-- A **reviewed channel record** declares desired membership; exact Git objects
-  supply its selected bytes. A **release input** is the validated source set; a
-  **package** is deterministic output; native **inventory** is the independent
-  installed-state observation.
+- A **reviewed channel record** selects exact Git objects and one release-input
+  declaration. A **release input** declares members, ownership, provenance,
+  locks, and quality policy; the selected Git tree supplies and closes content
+  bytes. A **package** is deterministic output; native **inventory** is the
+  independent installed-state observation.
 
 ## Flow
 

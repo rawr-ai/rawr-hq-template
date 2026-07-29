@@ -10,9 +10,14 @@ import type {
 } from "@rawr/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
+import type { AgentPluginPayload } from "../../../../src/service/model/dto/agent-plugin-payload";
 import type { ContentWorkspaceInspection } from "../../../../src/service/model/dto/content-workspace";
+import type { AgentPluginReleaseInput } from "../../../../src/service/model/dto/release-input";
 import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "../../../../src/service/model/dto/release-input";
-import { payloadEntryBytes } from "../../../../src/service/model/policy/agent-plugin-payload";
+import {
+  createAgentPluginPayload,
+  payloadEntryBytes,
+} from "../../../../src/service/model/policy/agent-plugin-payload";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -20,6 +25,7 @@ import {
   parseReleaseRelativePath,
   parseRepositoryIdentity,
 } from "../../../../src/service/model/policy/release-identity";
+import { createAgentPluginReleaseInput } from "../../../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../../src/service/model/policy/release-payload-accounting";
 import {
@@ -43,6 +49,28 @@ const headTree = parsed(parseGitTreeId("b".repeat(40)));
 const releaseInputPath = parsed(parseReleaseRelativePath(".rawr/release-input.json"));
 const pluginRoot = parsed(parseReleaseRelativePath("plugins/agent"));
 const remoteUrl = "https://example.invalid/rawr-hq.git";
+const derivedPayloadPolicyCases = [
+  {
+    name: "a missing skill claim",
+    kind: "missing-skill-claim",
+    issueCode: "SKILL_OWNERSHIP_MISMATCH",
+  },
+  {
+    name: "a stale skill claim",
+    kind: "stale-skill-claim",
+    issueCode: "SKILL_OWNERSHIP_MISMATCH",
+  },
+  {
+    name: "toolkit agent-pack content",
+    kind: "agent-pack",
+    issueCode: "FORBIDDEN_UNIT_KIND",
+  },
+  {
+    name: "a legacy root plugin manifest",
+    kind: "plugin-yaml",
+    issueCode: "FORBIDDEN_UNIT_KIND",
+  },
+] as const;
 
 describe("releases.checkRepository", () => {
   it("binds and revalidates one exact staged index and selected blob snapshot", async () => {
@@ -127,7 +155,7 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       headCommit,
       headTree,
-      stagedBinding: "4a4d21e4ac6583e825f0eb4821872c9d5b376a0362ce98daabc255e59abf7e75",
+      stagedBinding: "a21eb32989f7b0d3c31b3f1d3130a72637b59638026e7586e29aeae279865dd0",
     });
     expect(selections).toEqual([
       { paths: [releaseInputPath], roots: [] },
@@ -154,6 +182,61 @@ describe("releases.checkRepository", () => {
       MAX_RELEASE_INPUT_ENVELOPE_BYTES,
       MAX_STAGED_MATERIALIZED_BLOB_BYTES,
     ]);
+  });
+
+  it.each(
+    derivedPayloadPolicyCases
+  )("rejects staged eligibility when the selected tree contains $name", async ({
+    kind,
+    issueCode,
+  }) => {
+    const observations = stagedObservationResults(releasePolicyViolationInspection(kind));
+    let observationIndex = 0;
+    const client = createLifecycleTestClient({
+      contentWorkspace: {
+        ...unavailableContentWorkspace(),
+        observeGitStagedIndex: () =>
+          Effect.sync(() => {
+            const observation = observations[observationIndex % observations.length];
+            observationIndex += 1;
+            if (observation === undefined) throw new Error("Missing staged policy fixture");
+            return observation;
+          }),
+      },
+    });
+
+    await expect(
+      client.releases.checkRepository(
+        { kind: "staged", contentWorkspace: stagedPolicy() },
+        testInvocation
+      )
+    ).resolves.toMatchObject({
+      kind: "RepositoryIneligible",
+      mode: "staged",
+      issues: [{ code: "PayloadMismatch", detail: expect.stringContaining(issueCode) }],
+    });
+  });
+
+  it.each(
+    derivedPayloadPolicyCases
+  )("rejects clean eligibility when the selected tree contains $name", async ({
+    kind,
+    issueCode,
+  }) => {
+    const client = createLifecycleTestClient({
+      contentWorkspace: cleanContentWorkspace(releasePolicyViolationInspection(kind)),
+    });
+
+    await expect(
+      client.releases.checkRepository(
+        { kind: "clean", contentWorkspace: cleanPolicy() },
+        testInvocation
+      )
+    ).resolves.toMatchObject({
+      kind: "RepositoryIneligible",
+      mode: "clean",
+      issues: [{ code: "PayloadMismatch", detail: expect.stringContaining(issueCode) }],
+    });
   });
 
   it("rejects the first canonical undeclared staged plugin after one read and zero writes", async () => {
@@ -598,7 +681,7 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       sourceCommit: headCommit,
       sourceTree: headTree,
-      eligibilityBinding: "9101b1506c82dd7015cc631cf0ae1ed6be8310e9d61d1a632dc72b68d076e02a",
+      eligibilityBinding: "550e725dfc307135fd1828e62ef41a3137f2765fa5688d0a321d4b9dfd67d0da",
     });
     expect(cleanReads).toBe(2);
     expect(stagedReads).toBe(0);
@@ -714,6 +797,115 @@ describe("releases.checkRepository", () => {
     expect(observations).toBe(4);
   });
 });
+
+type DerivedPayloadPolicyCase = (typeof derivedPayloadPolicyCases)[number]["kind"];
+
+function releasePolicyViolationInspection(
+  kind: DerivedPayloadPolicyCase
+): Extract<ContentWorkspaceInspection, { kind: "Eligible" }> {
+  const fixture = productFixture();
+  let releaseInput: AgentPluginReleaseInput = fixture.releaseInput;
+  let alphaPayload: AgentPluginPayload = fixture.alphaPayload;
+
+  if (kind === "missing-skill-claim" || kind === "stale-skill-claim") {
+    const ownershipClaims = fixture.releaseInput.body.ownershipClaims.filter(
+      (claim) => !(claim.kind === "skill" && claim.ownerPluginId === "alpha")
+    );
+    releaseInput = mustReleaseResult(
+      createAgentPluginReleaseInput({
+        ...fixture.releaseInput.body,
+        ownershipClaims:
+          kind === "missing-skill-claim"
+            ? ownershipClaims
+            : [
+                ...ownershipClaims,
+                {
+                  kind: "skill",
+                  identity: "stale-alpha",
+                  ownerPluginId: "alpha",
+                },
+              ],
+      })
+    );
+  } else {
+    alphaPayload = mustReleaseResult(
+      createAgentPluginPayload([
+        ...fixture.alphaPayload.entries.map((entry) => ({
+          path: entry.path,
+          mode: entry.mode,
+          bytes: payloadEntryBytes(entry),
+        })),
+        {
+          path: kind === "agent-pack" ? "agent-pack/legacy.md" : "plugin.yaml",
+          mode: 0o644,
+          bytes: bytes("forbidden\n"),
+        },
+      ])
+    );
+  }
+
+  return {
+    kind: "Eligible",
+    snapshot: {
+      repositoryIdentity,
+      sourceCommit: headCommit,
+      sourceTree: headTree,
+      releaseInput,
+      payloads: [
+        {
+          pluginId: fixture.alphaRelease.body.pluginId,
+          payload: alphaPayload,
+        },
+        {
+          pluginId: fixture.betaRelease.body.pluginId,
+          payload: fixture.betaPayload,
+        },
+      ],
+      objectBindings: [],
+      eligibilityBinding: "clean-binding-v1",
+    },
+  };
+}
+
+function stagedObservationResults(
+  eligible: Extract<ContentWorkspaceInspection, { kind: "Eligible" }>
+): readonly [GitStagedIndexObservation, GitStagedIndexObservation] {
+  const releaseInputBytes = canonicalSerializeAgentPluginReleaseInput(
+    eligible.snapshot.releaseInput
+  );
+  const entries = [
+    stagedEntry(releaseInputPath, gitBlobId(releaseInputBytes), 0o644, releaseInputBytes),
+    ...eligible.snapshot.payloads.flatMap((member) =>
+      member.payload.entries.map((entry) => {
+        const entryBytes = payloadEntryBytes(entry);
+        return stagedEntry(
+          `${pluginRoot}/${member.pluginId}/${entry.path}`,
+          gitBlobId(entryBytes),
+          entry.mode,
+          entryBytes
+        );
+      })
+    ),
+  ].sort((left, right) => left.path.localeCompare(right.path));
+  const binding = Object.freeze({
+    anchor: stagedAnchor(),
+    entries: stagedIndexEntries(entries),
+  });
+  const observe = (selected: readonly (typeof entries)[number][]): GitStagedIndexObservation => {
+    const blobs = new Map<string, Readonly<{ objectId: string; bytes: Uint8Array }>>();
+    for (const entry of selected) {
+      blobs.set(entry.objectId, Object.freeze({ objectId: entry.objectId, bytes: entry.bytes }));
+    }
+    return Object.freeze({
+      opening: binding,
+      blobs: Object.freeze([...blobs.values()]),
+      closing: binding,
+    });
+  };
+  const releaseInputEntry = entries.find((entry) => entry.path === releaseInputPath);
+  if (releaseInputEntry === undefined) throw new Error("Missing staged release-input fixture");
+  return Object.freeze([observe([releaseInputEntry]), observe(entries)]);
+}
 
 async function expectStagedTreeClosureRefusal(
   treeEntries: readonly ReturnType<typeof stagedEntry>[],
@@ -1126,6 +1318,14 @@ function gitBlobId(value: Uint8Array): string {
 
 function parsed<T>(result: { readonly ok: true; readonly value: T } | { readonly ok: false }): T {
   if (!result.ok) throw new Error("Invalid repository-check fixture");
+  return result.value;
+}
+
+function mustReleaseResult<T>(
+  result: Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; issues: readonly unknown[] }>
+): T {
+  if (!result.ok)
+    throw new Error(`Invalid release-policy fixture: ${JSON.stringify(result.issues)}`);
   return result.value;
 }
 
