@@ -1,6 +1,5 @@
 import type { RouterContract } from "@orpc/contract";
 import type { AnyRouter } from "@orpc/server";
-import type { Inngest } from "inngest";
 import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees";
 
 type ContractTree = { [key: string]: RouterContract };
@@ -38,8 +37,13 @@ export type WorkflowRuntimeDeclaration = Readonly<{
   kind: "inngest-functions";
 }>;
 
-export type WorkflowRuntimeInput<TRuntime = unknown> = Readonly<{
-  client: Inngest;
+/**
+ * Carries the host-owned workflow client and runtime into contributed function
+ * factories. Plugins specialize `TClient`; the SDK only composes that contract
+ * and does not acquire or depend on the provider client itself.
+ */
+export type WorkflowRuntimeInput<TRuntime = unknown, TClient extends object = object> = Readonly<{
+  client: TClient;
   runtime: TRuntime;
 }>;
 

@@ -95,15 +95,20 @@ one remaining false edge: `@rawr/cli` declared `@rawr/orpc-client` despite no
 tracked source consumer. The deletion checkpoint removes that dependency, the
 unused package, root build references, and lockfile entries together. It also
 removes duplicate direct CLI dependencies on `@rawr/dev` and `@rawr/dev-node`;
-the DevOps command plugin remains their qualified consumer. The CLI plus its
-four first-party Oclif plugin roots now close over exactly seventeen
-source-reachable projects; `@rawr/plugin-hello` remains outside as the native
-external-install fixture. Archived architecture records retain their historical
-package claims as provenance rather than live guidance. `bun pm pack --dry-run`
-still fails honestly because `@rawr/agent-plugin-lifecycle` and the other
-surviving workspace owners are not yet versioned for publication. The next
-checkpoint declares the exact fixed Nx Release group; it does not manufacture
-an early package acceptance result.
+the DevOps command plugin remains their qualified consumer. That historical
+source-reachability result contained seventeen projects. The package-manifest
+runtime closure is the release authority and contains exactly nineteen package
+roots: the CLI, four first-party Oclif plugins, six services, four support
+packages, and four resources. Three consumers now declare their direct
+`@rawr/hq-sdk` dependency. The SDK's workflow client is vendor-neutral, while
+the server host retains concrete Inngest ownership, so the CLI closure no
+longer installs Inngest for a type-only edge. `@rawr/plugin-hello` remains
+outside as the native external-install fixture. Archived architecture records
+retain their historical package claims as provenance rather than live
+guidance. `bun pm pack --dry-run` still fails honestly because
+`@rawr/agent-plugin-lifecycle` and the other surviving workspace owners are not
+yet versioned for publication. The next checkpoint declares the exact fixed Nx
+Release group; it does not manufacture an early package acceptance result.
 
 The pre-landing installed-package acceptance uses local packed tarballs in one
 guarded disposable prefix. An acceptance-only package manifest binds every
@@ -1585,7 +1590,7 @@ skill. It cannot authorize HF01 materialization or release.
 | Habitat execution normalization | Pending upstream distributable Civ7-style Nx plugin; the handwritten rule selection is interim and no local SDK fork or replacement runner is admitted |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | Bun-installed registry package selected; fixed Nx Release group derivation waits for package-version metadata and closure of tasks 4 and 5.5 |
+| Conventional CLI package/release | Bun-installed registry package selected; the exact nineteen-package runtime closure is explicit and the fixed Nx Release group plus package-version metadata remain pending |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -3738,6 +3743,24 @@ non-lifecycle findings owned by later app/runtime containers:
 `apps/hq/src/manifest.ts` and `apps/server/src/request-context.ts`. This
 checkpoint neither masks nor repairs them. No Personal repository, provider
 home, release channel, or app/runtime composition state is mutated.
+
+## Explicit CLI Runtime Closure
+
+The ordinary package release now starts from one truthful package dependency
+graph. `@rawr/cli`, `@rawr/plugin-hyperresearch`, and
+`@rawr/plugin-session-tools` declare their direct `@rawr/hq-sdk` use instead of
+relying on workspace hoisting. The SDK no longer imports Inngest merely to type
+an opaque workflow client: `WorkflowRuntimeInput` is vendor-neutral and the
+server host names its concrete `Inngest` client at the owning application
+boundary.
+
+Manifest traversal from the CLI and its four first-party Oclif plugins yields
+exactly nineteen workspace packages and no Inngest runtime dependency. The
+uncached targeted typecheck and behavior graph passes 26 tasks, including the
+complete 85-case CLI suite, 47 server cases, seven HQ SDK cases, and both
+targeted command-plugin suites. Frozen lock resolution and diff hygiene pass.
+This checkpoint adds no version, package archive, publish target, installer,
+retained store, provider mutation, or protected content change.
 
 ## Settlement Oracles
 

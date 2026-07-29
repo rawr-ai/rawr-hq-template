@@ -398,20 +398,30 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   dependency, root build references, and lockfile entries without an alias or
   replacement. Remove the CLI's duplicate `@rawr/dev` and `@rawr/dev-node`
   dependencies; the DevOps command plugin remains their qualified consumer.
-  Recompute the CLI plus four first-party Oclif plugin roots as an exact
-  seventeen-project source closure; keep `@rawr/plugin-hello` outside as the
-  external-install acceptance fixture.
+  At that checkpoint, record the CLI plus four first-party Oclif plugin roots
+  as a seventeen-project source-reachability result; task 3.1c supersedes that
+  historical count with the package-manifest runtime closure. Keep
+  `@rawr/plugin-hello` outside as the external-install acceptance fixture.
+- [x] 3.1c Recompute the package-manifest runtime closure after controller,
+  persistent lifecycle-state, and Template content retirement. Make the three
+  direct `@rawr/hq-sdk` consumers declare that dependency, remove the SDK's
+  type-only Inngest runtime dependency by making its opaque workflow client
+  type vendor-neutral, and keep the concrete `Inngest` type at the server host.
+  Record the exact nineteen-package closure without versioning, packing,
+  publishing, provider mutation, or protected-lane content changes.
 - [ ] 3.2 Give `@rawr/cli` a real version and release metadata. Configure the
   coherent publishable runtime group under top-level `nx.json#release`; private
   workspace dependencies must be versioned, bundled by a standard tool, or
   removed from the published closure. Derive this group only after tasks 4,
   5.5, 5.6, and 5.6a; do not version or publish predecessor machinery merely to
   unblock packing.
-- [ ] 3.3 Add owner-local Oclif generated-manifest and package project targets
-  with declared Nx inputs and outputs. Use `nx release` for version/changelog
-  and configure the selected standard publish command without dispatching a
-  release from unlanded source. Produce ordinary artifact-level checksums and
-  release provenance, not a per-file runtime envelope.
+- [ ] 3.3 Add owner-local Oclif generated-manifest project targets with
+  declared Nx inputs and outputs. Install the matching `@nx/js` plugin and use
+  its inferred `nx-release-publish` target for every public, versioned member
+  rather than adding a custom package or publish target. Use `nx release` for
+  version/changelog/publication without dispatching a release from unlanded
+  source. Produce ordinary artifact-level checksums and release provenance, not
+  a per-file runtime envelope.
 - [ ] 3.3a Inspect the packed and installed dependency closure. It must exclude
   unused app-server, workflow, async-runtime, and Inngest packages without
   post-pack manifest rewriting. If `@rawr/hq-sdk` dependency metadata changes,

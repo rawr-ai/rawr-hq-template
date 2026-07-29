@@ -27,7 +27,7 @@ type HostWorkflowRuntimeInput = Parameters<
 >[0];
 
 export type HostInngestBundle = Readonly<{
-  client: HostWorkflowRuntimeInput["client"];
+  client: Inngest;
   runtime: HostWorkflowRuntimeInput["runtime"];
   functions: readonly unknown[];
   handler: ReturnType<typeof inngestServe>;
