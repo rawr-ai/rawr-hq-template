@@ -30,7 +30,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-ops",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --project hq-ops"
   },

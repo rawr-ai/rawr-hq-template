@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const cliRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const workspaceRoot = path.resolve(cliRoot, "..", "..");
 
 function runRawr(args: string[]) {
   return spawnSync("bun", ["test/command-fixture/command-test-cli.ts", ...args], {
@@ -36,16 +35,5 @@ describe("legacy managed runtime surfaces", () => {
     expect(commands).toContain("hq status");
     expect(commands).not.toContain("dev up");
     expect(commands).not.toContain("routine start");
-  });
-
-  it("removes bun run dev:up from package scripts", () => {
-    const proc = spawnSync("bun", ["run", "dev:up"], {
-      cwd: workspaceRoot,
-      encoding: "utf8",
-      env: { ...process.env },
-    });
-
-    expect(proc.status).not.toBe(0);
-    expect(`${proc.stdout}\n${proc.stderr}`).toContain("dev:up");
   });
 });

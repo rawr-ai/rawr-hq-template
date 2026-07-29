@@ -35,8 +35,7 @@
         "resources/*/AGENTS.md",
         "resources/*/providers/*/AGENTS.md",
         "tools/*/AGENTS.md",
-        "scripts/habitat/AGENTS.md",
-        "scripts/nx/AGENTS.md"
+        "scripts/habitat/AGENTS.md"
       ]
     }
   ],

@@ -80,15 +80,15 @@
   workspace-owned `habitat:lint`, project-owned typecheck, optional owner
   `verify`, Habitat `check:policy`, and dependency checks.
   Individual owners add only their qualified prerequisites: CLI owns Oclif
-  source/build parity, Habitat owns structural and project-admission policy,
-  and the repository project owns repository separation. `check:policy` is
-  reserved for Habitat policy rather than behavioral aliases.
+  source/build parity, while Habitat owns structural, repository-script, and
+  project-admission policy. `check:policy` is reserved for Habitat policy
+  rather than behavioral aliases.
 - `verify` is a narrow optional extension for deterministic required checks
   that do not reduce to lint, typecheck, or Habitat policy. It is owner-local,
   has no root aggregate, and grants no release or deployment authority.
 - `habitat:check` composes workspace lint, owner typecheck and tests, and
   `check:policy`. `check:policy` composes the selected green local policy batch
-  and the rule-owned Nx project admission adapter; the independent nine-rule
+  and the rule-owned Nx project admission adapter; the independent ten-rule
   `check:structure` leaf is Stop feedback, not an admission dependency. The
   selected rule scopes are exact and their baselines are empty, but both CLI
   leaves remain uncached while exact Nx cache inputs are future upstream
@@ -103,9 +103,10 @@
   `check` on every non-root project, then requires `typecheck` on every code
   project. Only `type:content` and `type:fixture` are exempt from that
   project-local target; the root command maintains no project-name list.
-- `.habitat/**` is RAWR HQ-Template's small, positive structural authority tree.
-  It constrains declared architectural kinds and relations without expanding
-  into app composition or content-repository governance.
+- `.habitat/**` is RAWR HQ-Template's small, positive structural authority
+  tree. It constrains declared architectural kinds and relations, including
+  the closed `scripts/` mechanics root, without expanding into app composition
+  or content-repository governance.
 - The root `lint` script routes directly to `habitat:lint`. That target owns
   ordinary repository-wide source lint once. It does not encode topology or
   source relationships; those remain native Habitat `structure.toml` and
@@ -131,7 +132,6 @@
 
 - [Repository router](../AGENTS.md)
 - [Habitat scripts router](habitat/AGENTS.md)
-- [Nx scripts router](nx/AGENTS.md)
 - [Docs router](../docs/AGENTS.md)
 
 ## Validation

@@ -105,7 +105,17 @@ function assertOwnedProjectionTarget(
   }
 }
 
-function copyTree(
+/**
+ * Copies a pack tree only after proving its allowlisted target stays inside the
+ * checkout and no existing target path segment is a symbolic link.
+ *
+ * @param root Checkout root that must contain the target.
+ * @param source Existing pack tree to copy.
+ * @param target Destination considered for replacement.
+ * @param allowedTargets Exact normalized destinations owned by the installer.
+ * @param dryRun Whether to report the copy without changing the filesystem.
+ */
+export function copyTree(
   root: string,
   source: string,
   target: string,
@@ -183,11 +193,13 @@ function projectLocal(root: string, packRoot: string, dryRun: boolean): void {
   }
 }
 
-const { dryRun } = parseArgs(process.argv.slice(2));
-const root = repoRoot();
-const packRoot = join(root, ...PACK_ROOT);
-projectLocal(root, packRoot, dryRun);
+if (import.meta.main) {
+  const { dryRun } = parseArgs(process.argv.slice(2));
+  const root = repoRoot();
+  const packRoot = join(root, ...PACK_ROOT);
+  projectLocal(root, packRoot, dryRun);
 
-if (!dryRun) {
-  console.log("Workstream Plugin Pack local projection complete.");
+  if (!dryRun) {
+    console.log("Workstream Plugin Pack local projection complete.");
+  }
 }

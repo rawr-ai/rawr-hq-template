@@ -17,16 +17,6 @@ const REQUIRED_SUITE_IDS = [
   "suite:cross-surface:metadata-import-boundary",
 ] as const;
 
-const REQUIRED_NEGATIVE_ASSERTION_KEYS = [
-  "assertion:reject-api-inngest-from-caller-paths",
-  "assertion:reject-ingress-spoofed-caller-headers",
-  "assertion:reject-rpc-from-external-callers",
-  "assertion:reject-rpc-from-runtime-ingress",
-  "assertion:reject-rpc-workflows-route-family",
-  "assertion:runtime-ingress-no-caller-boundary-semantics",
-  "assertion:in-process-no-local-http-self-call",
-] as const;
-
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
   "x-rawr-caller-surface": "first-party",
@@ -137,27 +127,6 @@ function createApp() {
 }
 
 describe("route boundary matrix", () => {
-  it("declares the required suite IDs and negative assertion keys", () => {
-    expect(REQUIRED_SUITE_IDS).toEqual([
-      "suite:web:first-party-rpc",
-      "suite:web:published-openapi",
-      "suite:cli:in-process",
-      "suite:api:boundary",
-      "suite:workflow:trigger-status",
-      "suite:runtime:ingress",
-      "suite:cross-surface:metadata-import-boundary",
-    ]);
-    expect(REQUIRED_NEGATIVE_ASSERTION_KEYS).toEqual(
-      expect.arrayContaining([
-        "assertion:reject-api-inngest-from-caller-paths",
-        "assertion:reject-rpc-from-external-callers",
-        "assertion:reject-rpc-workflows-route-family",
-        "assertion:runtime-ingress-no-caller-boundary-semantics",
-        "assertion:in-process-no-local-http-self-call",
-      ])
-    );
-  });
-
   it("keeps the positive route families on their canonical surfaces", async () => {
     const app = createApp();
     const positiveCases = MATRIX_CASES.filter((testCase) => testCase.expectedStatus === 200);

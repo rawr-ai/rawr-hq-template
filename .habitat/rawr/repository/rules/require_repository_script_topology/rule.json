@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "require_repository_script_topology",
+  "title": "Require Repository Script Topology",
+  "placement": {
+    "niche": "rawr/repository",
+    "blueprint": "_self",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a repository scripts root outside its closed mechanics and content topology, or a missing admitted script owner",
+  "why": "Repository scripts are bounded mechanics and content assets with explicit owners. Closing their root prevents orchestration, policy, and product concerns from accumulating in an unowned script namespace.",
+  "remediate": "Keep only AGENTS.md and the chatgpt-corpus-template, dev, githooks, and habitat roots directly under scripts. Move other concerns to their declared product, policy, or tool owner.",
+  "message": "Repository scripts must retain their closed mechanics and content topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["scripts/**"]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/repository/rules/require_repository_script_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/rawr/repository/rules/require_repository_script_topology/structure.toml"
+    }
+  }
+}

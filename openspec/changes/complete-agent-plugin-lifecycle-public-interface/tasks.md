@@ -303,7 +303,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   claiming it was migrated. Keep positive topology in `structure.toml`, exact
   source relationships in Habitat `pattern.md`, and behavioral contracts in
   owner tests; do not recreate the removed matrix behind another lint wrapper.
-- [ ] 1.6c10 Retire hand-written structural source scanners where Habitat can
+- [x] 1.6c10 Retire hand-written structural source scanners where Habitat can
   express the same law. Move filesystem topology to `structure.toml` and source
   analysis or rewrites to `pattern.md`; retain an owner-local `.mjs` verifier
   only for a demonstrated Habitat capability gap, and keep behavior in tests.
@@ -317,7 +317,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   suite expectations. Record the package-script versus graph-configuration
   boundary in the Nx blueprint frame; add no runner or broad repository
   migration to this bounded checkpoint.
-- [ ] 1.6c10b Complete the repository-wide Nx target normalization before the
+- [x] 1.6c10b Complete the repository-wide Nx target normalization before the
   next production service burn-down. Preserve the small foundational target
   vocabulary, let package-backed projects expose ordinary commands as inferred
   targets, and use `project.json` only for graph semantics or projects without
@@ -329,6 +329,21 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
     copied JSON inventories, parity verifier, and project `sync` aliases
     together. Preserve the surviving structural and behavioral gates; Nx's
     resolved project graph remains project and target truth.
+  - [x] 1.6c10b2 Retire the 61 hand-written phase, architecture,
+    observability, runtime, and repository-separation source scanners together
+    with their root aliases, twelve package-local `structural` wrappers, stale
+    Nx inputs, and the script-backed repository project. Positively close the
+    remaining `scripts/` root through an enforced Habitat structure rule,
+    retain behavior in owner tests, and keep only the qualified Habitat-backed
+    API-plugin target and Runtime Realization lab target.
+  - [x] 1.6c10b3 Move the last active parser-visible command-channel and web
+    environment relations from source-reading tests into two owner-qualified,
+    empty-baseline Habitat Grit rules. Delete the superseded test scanners and
+    retain Oclif discovery, route, public-boundary, and filesystem behavior in
+    executable owner tests. Replace the deleted repository scanner's one real
+    deletion-safety assertion with a bounded Workstream Plugin Pack behavior
+    test reached through its normalized Nx `check`; add no generic deletion or
+    source-scanning framework.
 - [x] 1.6c11 Admit any still-required resolved project-edge law as one separate
   Habitat graph packet. Grit cannot join Nx-resolved dependency edges to
   project-kind tags, so a rule-owned `.mjs` graph adapter is the allowed narrow

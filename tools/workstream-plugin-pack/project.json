@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "workstream-plugin-pack",
+  "root": "tools/workstream-plugin-pack",
+  "sourceRoot": "tools/workstream-plugin-pack",
+  "tags": ["type:tool"],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "verify": {
+      "executor": "nx:noop",
+      "dependsOn": ["test"]
+    }
+  }
+}

@@ -20,8 +20,8 @@
 - Generated workstream activation files are not source assets and must not be
   checked in. The repository-owned `.codex/hooks.json` composes these canonical
   hook sources directly and is outside installer ownership.
-- This pack is not an Nx project, a curated-content plugin, a program
-  authority, or the owner of Runtime Realization Lab evidence and gates.
+- This pack is not a curated-content plugin, a program authority, or the owner
+  of Runtime Realization Lab evidence and gates.
 
 ## Behavior
 
@@ -60,4 +60,5 @@
 ## Validation
 
 - `bun tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts --dry-run`
-- `bun run architecture:gate:repository-separation`
+- `bunx nx run workstream-plugin-pack:test`
+- `bunx nx run workstream-plugin-pack:check`

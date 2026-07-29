@@ -116,10 +116,3 @@ root = "scripts/habitat"
 kind = "directory"
 mode = "open"
 required = ["AGENTS.md"]
-
-[[scopes]]
-name = "nx-admission-router"
-root = "scripts/nx"
-kind = "directory"
-mode = "open"
-required = ["AGENTS.md"]

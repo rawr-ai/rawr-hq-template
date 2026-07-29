@@ -36,8 +36,8 @@
 
 - The **release manifest** is executable identity. A **verified cache entry**
   is a byte-exact local copy; the **local policy batch** is the explicitly
-  selected mixed 23-rule Habitat CLI leaf. The independent **structure leaf**
-  is the nine-rule Habitat-only subset used for fast Stop feedback.
+  selected mixed 26-rule Habitat CLI leaf. The independent **structure leaf**
+  is the ten-rule Habitat-only subset used for fast Stop feedback.
 
 ## Flow
 
@@ -58,11 +58,13 @@
 - `check:policy` composes `check:policy:local` with the rule-owned Nx project
   admission adapter. The local policy leaf acquires the selected green Grit and
   structure rules once, including the workspace scheduler law, admitted Oclif
-  structure laws, resource and provider package boundaries, and agent-plugin
-  command-channel law. Rules with known live-corpus violations remain outside
-  the required batch until their owning migration burns them down; direct rule
-  selection is diagnostic, not a second required surface.
-- `check:structure` is an independent nine-rule Habitat-structure leaf for
+  structure laws, resource and provider package boundaries, the closed
+  repository-script root, agent-plugin command-channel topology and source
+  separation, and the web public-environment funnel. Rules with known live-
+  corpus violations remain outside the required batch until their owning
+  migration burns them down; direct rule selection is diagnostic, not a
+  second required surface.
+- `check:structure` is an independent ten-rule Habitat-structure leaf for
   fast Codex Stop feedback. It does not depend on or replace policy, lint, or
   the complete repository graph.
 - Both CLI leaves are intentionally uncached because Nx and Habitat do not

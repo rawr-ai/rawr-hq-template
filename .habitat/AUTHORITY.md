@@ -136,11 +136,13 @@ realization around one typed public index while admitting vendor-specific
 TypeScript decomposition. Provider lifecycle mechanics remain inside that
 realization; the application retains selection while runtime owns scope.
 
-Rules under `.habitat/rawr` remain qualified repository or lifecycle
+Rules under `.habitat/rawr` remain qualified repository, lifecycle, or host
 constraints rather than generic blueprints. The repository niche owns the
-cross-kind `AGENTS.md` placement relation while leaving each inspected root's
-topology with its package blueprint. The lifecycle niche's remaining rule
-closes the curated command channel and will shrink with the implementation.
+cross-kind `AGENTS.md` placement relation and the closed repository-script
+root while leaving package topology with each package blueprint. The
+agent-plugin lifecycle niche closes the curated command channel and keeps its
+source independent from the native external-plugin package. The web-host niche
+admits public environment fields only through the web-owned projection funnel.
 Reusable service source and topology relationships belong to their generic
 Habitat blueprints, while TypeScript package exports own public compatibility.
 The former coarse project-kind matrix is retired, not represented as another
@@ -157,7 +159,7 @@ The selected local policy CLI leaf and the independent Stop-time structure CLI
 leaf remain intentionally uncached until an upstream distributable Habitat Nx
 boundary owns registry discovery, exact Nx cache inputs, caching, and one
 acquisition. The selected rule scopes themselves remain exact.
-No equivalent policy belongs in ESLint or `scripts/**`.
+No equivalent policy belongs in ESLint or a hand-written script.
 
 See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
 and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].
