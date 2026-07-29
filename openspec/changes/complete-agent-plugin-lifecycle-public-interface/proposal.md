@@ -14,11 +14,12 @@ and keeps the lifecycle behavior that solves the actual product problem.
 
 - Make `@rawr/cli` an ordinary Oclif application for development and release.
 - Restore `@oclif/plugin-plugins` as the direct owner of `rawr plugins`.
-- Add Nx project targets for build, generated Oclif manifests, and packaging;
-  use top-level Nx Release configuration for version/changelog/publication of
-  the CLI's actual runtime closure. Use a registry-published Oclif package whose
-  executable requires installed Bun while Bun-only first-party commands remain;
-  adopt Oclif standalone archives only after Node compatibility is proven.
+- Add Nx project targets for build and generated Oclif manifests; use top-level
+  Nx Release configuration and its inferred publish targets for
+  version/changelog/publication of the CLI's actual runtime closure. Use a
+  registry-published Oclif package whose executable requires installed Bun
+  while Bun-only first-party commands remain; adopt Oclif standalone archives
+  only after Node compatibility is proven.
 - Delete the custom controller builder, archive format, release store, selector,
   launcher, installer, per-file runtime envelope, controller diagnostics, and
   release workflow.

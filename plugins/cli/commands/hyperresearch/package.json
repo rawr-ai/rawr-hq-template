@@ -19,6 +19,7 @@
   "dependencies": {
     "@oclif/core": "^4.8.0",
     "@rawr/core": "workspace:*",
+    "@rawr/hq-sdk": "workspace:*",
     "@rawr/hyperresearch-codex": "workspace:*"
   },
   "devDependencies": {

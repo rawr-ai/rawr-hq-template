@@ -12,6 +12,7 @@
   "dependencies": {
     "@oclif/core": "^4.2.10",
     "@rawr/core": "workspace:*",
+    "@rawr/hq-sdk": "workspace:*",
     "@rawr/session-intelligence": "workspace:*"
   },
   "oclif": {

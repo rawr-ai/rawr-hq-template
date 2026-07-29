@@ -17,6 +17,7 @@
     "@rawr/agent-plugin-lifecycle": "workspace:*",
     "@rawr/core": "workspace:*",
     "@rawr/hq-ops": "workspace:*",
+    "@rawr/hq-sdk": "workspace:*",
     "@rawr/plugin-chatgpt-corpus": "workspace:*",
     "@rawr/plugin-devops": "workspace:*",
     "@rawr/plugin-hyperresearch": "workspace:*",
