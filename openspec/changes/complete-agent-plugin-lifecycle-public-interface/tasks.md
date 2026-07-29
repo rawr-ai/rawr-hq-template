@@ -83,8 +83,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [x] 1.2 Record the then-canonical service-module router topology. Keep module
   `router.ts` as the plain public composition face, author operation leaves or
   semantic groups in named `router/*.router.ts`, and do not admit
-  `router/index.ts` or a second public router form. Task 5.7e21k supersedes
-  this historical topology.
+  `router/index.ts` or a second public router form. Task 5.7e21k temporarily
+  superseded this topology; task 5.7e21x restores it as current authority.
 - [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
   Constrain direct entrypoints, app identity/binary/dependency/command discovery,
   TypeScript source-to-output mapping, command-plugin manifest/package roots, no
@@ -547,9 +547,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   machinery.
 - [ ] 5.2 Bring the service onto the positive topology: root
   `base.ts`, `contract.ts`, `impl.ts`, `router.ts`; module
-  `contract/index.ts`, `module.ts`, `router/index.ts`, direct semantic contract
-  and router leaves, optional `middleware/index.ts` over named middleware
-  leaves, and
+  `contract/index.ts`, `module.ts`, module-root `router.ts`, direct semantic
+  contract leaves, named `router/*.router.ts` authoring leaves, optional
+  `middleware/index.ts` over named middleware leaves, and
   `model/{dto,policy,ports,...}`, with TypeBox schemas colocated with their DTO
   authorities. Preserve the existing one-service/module-router skeleton. Move
   owner-local release and governance requests, results, issues,
@@ -1627,6 +1627,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   vendor, module, and support-root test shapes in the same cut. Add no runtime
   helper, alias, compatibility path, resource, provider, policy, or new proof
   framework.
+- [x] 5.7e21x Restore the one public module router face before further
+  production movement. Require one module-root `router.ts` plain composition
+  face over closed named `router/*.router.ts` authoring leaves; reject
+  `router/index.ts`; and align the topology, anchor, context, isolation, native
+  oRPC composition, and router-authorship packets plus their mental-model
+  documents. Preserve indexed `contract/` and optional `middleware/` catalogs,
+  the current five-lane context funnel, the sole native implementer, TypeBox
+  contracts, Effect handlers, and all runtime behavior. Keep the six laws
+  advisory while the production corpus is red. Add no production move, SDK
+  change, variant system, script, runner, helper, alias, provider mutation, or
+  second router form.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

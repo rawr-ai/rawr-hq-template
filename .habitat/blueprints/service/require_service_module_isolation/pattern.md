@@ -161,7 +161,7 @@ predicate require_service_module_isolation_is_allowed_root_import($import, $sour
     },
     and {
       $filename <: r".*/src/service/router\.ts$",
-      $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/router(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"
+      $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/router(?:\.[cm]?[jt]s)?[\"']$"
     },
     and {
       $filename <: r".*/src/service/base\.ts$",
@@ -275,14 +275,14 @@ import { publicJobFacts } from "../../legacy/modules/catalog/model/dto/job-facts
 ## Matches sibling module entry
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
 import { queuePolicy } from "#jobs-service/modules/queue/model/policy/queue-policy";
 ```
 
 ## Matches embedded API sibling module entry
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.router.ts
 import { collectPolicy } from "#pipeline-api/modules/collect/model/policy/collect-policy";
 ```
 
@@ -300,7 +300,7 @@ import type { CatalogQuery } from "../dto/catalog-query";
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/module.ts
 import { queue } from "../queue/module";
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.router.ts
 import { service } from "../../../impl";
 // @filename: services/jobs/src/service/modules/catalog/model/policy/catalog.ts
 import { queuePolicy } from "../../../queue/model/policy/queue-policy";
@@ -309,7 +309,7 @@ import { queuePolicy } from "../../../queue/model/policy/queue-policy";
 ## Matches raw base acquisition from a router
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 import { base } from "#jobs-service/base";
 ```
 
@@ -333,7 +333,7 @@ export const middleware = impl.catalog.middleware(({ errors, next }) => {
   if (!mayRead()) throw errors.FORBIDDEN();
   return next();
 });
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
 import { module } from "../module";
 import { requireCatalogAuthority } from "../middleware";
 // @filename: plugins/server/api/pipeline/src/service/modules/jobs/middleware/provider.ts
@@ -345,7 +345,7 @@ import { service } from "#pipeline-api/impl";
 ## Matches a deep middleware catalog route from an operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
 import { requireCatalogAuthority } from "../../middleware";
 export const get = module.get.use(requireCatalogAuthority).handler(handler);
 ```

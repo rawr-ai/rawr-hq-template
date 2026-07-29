@@ -8,9 +8,9 @@ Every service spine file directly exports the generic value for its role.
 `base.ts` always exports the service `Context` type and exports the sole native
 context author `base` only when context-authored middleware consumes it.
 `impl.ts` exports the unconfigured contract implementer `impl` and its configured
-`service` stage. The root contract and router files and the matching module
-directory entrypoints export `contract` and `router`; `module.ts` exports
-`module`. Product qualification belongs at the import site.
+`service` stage. The root contract, module contract entrypoint, root router,
+and module-root router composition face export `contract` or `router`;
+`module.ts` exports `module`. Product qualification belongs at the import site.
 
 `module.ts` is a wiring boundary, not a type or helper boundary. Its complete
 export surface is the single `module` const; supporting types and values remain
@@ -77,9 +77,9 @@ predicate require_service_anchor_exports_is_module_file() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/module\.ts$"
 }
 
-// Maps the root router and module router entrypoints to the generic anchor.
+// Maps the root router and module-root composition faces to the generic anchor.
 predicate require_service_anchor_exports_is_router_file() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/router/index\.ts)$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/router\.ts)$"
 }
 
 // Recognizes authored runtime declarations and runtime export forwarding.
@@ -316,7 +316,7 @@ export function createPreviewRouter() {
 ## Matches a missing router anchor
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 export const catalogRouter = { find: module.find.effect(handler) };
 ```
 
@@ -362,6 +362,6 @@ type Context = { readonly actor: Actor };
 export const contract = oc.router({});
 type CatalogContract = typeof contract;
 
-// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+// @filename: services/jobs/src/service/modules/catalog/router.ts
 export const router: Router = { find: module.find.effect(handler) };
 ```

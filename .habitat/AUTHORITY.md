@@ -73,18 +73,21 @@ independently owned topology and source axes:
    terminal `next(...)` call. Curation does not acquire a resource lifecycle,
    replace the raw lanes, or prove inherited context was removed. Operation
    handlers author against the curated names and do not reopen the raw lanes.
-7. Required module `contract/` and `router/` directories expose only their
-   `index.ts` faces plus semantic leaves. Optional module `middleware/` follows
-   the same shape. Each contract or router leaf maps its kebab-case filename to
-   one lower-camel export. Contract indexes prove canonical direct acquisition;
-   router indexes remain composition-only. TypeScript, Knip, and generated
-   client/API behavior own completeness and reachability. Leaves never import
-   their own index, and no runtime loader, generator, or module SDK participates.
+7. Required module `contract/` and `router/` directories expose declarative
+   and executable semantic leaves. `contract/index.ts` is the contract
+   composition face; module-root `router.ts` is the sole router composition
+   face over named `router/*.router.ts` leaves. Optional module `middleware/`
+   retains its indexed catalog. Each contract or router leaf maps its
+   kebab-case filename to one lower-camel export. Contract indexes prove
+   canonical direct acquisition; module-root routers remain composition-only.
+   TypeScript, Knip, and generated client/API behavior own completeness and
+   reachability. Leaves never import their own index, and no runtime loader,
+   generator, or module SDK participates.
 8. Operation leaves author from the matching configured module descendant.
    Deliberate grouped leaves may share only input-independent policy owned by
    that same group; named validated-input policy may cross leaves only through
    the module catalog and remains attached at each consuming procedure.
-   Module router indexes compose completed operations as plain trees; root
+   Module-root routers compose completed operations as plain trees; root
    `router.ts` implements the aggregate tree once through unconfigured
    `impl.router(...)` so root middleware is not replayed. Knip owns unreachable
    leaves; generated clients and API behavior prove the complete public set.

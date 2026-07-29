@@ -124,8 +124,8 @@ exports two stages of that lineage:
 - `impl`: the unconfigured contract implementer;
 - `service`: the root-configured stage used for handler authorship.
 
-Configured modules author procedures so their middleware applies. Module
-router indexes compose implemented procedures as plain operation trees, and
+Configured modules author procedures so their middleware applies. Module-root
+routers compose implemented procedures as plain operation trees, and
 the root router implements the aggregate contract once through the
 unconfigured `impl.router(...)` stage. Implementing it through the configured
 stage replays inherited middleware. `impl` is not a second implementer and
@@ -133,18 +133,24 @@ must not become a router SDK or lineage abstraction.
 
 ## Authorship
 
-Each operation lives in `modules/<module>/router/<operation>.ts`; its
+Each operation lives in `modules/<module>/router/<operation>.router.ts`; its
 kebab-case filename maps to the lower-camel contract key. That operation is
 the leaf's sole runtime export, authored from the matching configured
-`module.<contract path>.<operation>` descendant. Module `router/index.ts`
+`module.<contract path>.<operation>` descendant. Module-root `router.ts`
 composes leaves only. Root
 `router.ts` composes plain module operation trees only.
 
-Required module `contract/` and `router/` directories are their own access
-points. Their indexes export the generic `contract` and `router` anchors while
-direct semantic leaves hold operation or deliberate native-group variance.
+Required module `contract/` and `router/` directories own declarative and
+executable leaves. `contract/index.ts` exports the generic `contract` anchor;
+module-root `router.ts` exports the generic `router` anchor over direct named
+`router/*.router.ts` leaves. Those leaves hold operation or deliberate
+native-group variance.
+When a leaf groups several operations, a section JSDoc explains the group's
+purpose, shared capability, behavior, and relation to neighboring groups.
+Habitat proves the parser-visible filename and configured-branch alignment;
+review owns whether that prose and grouping are semantically true.
 Each leaf maps its kebab-case filename to one lower-camel export. Contract law
-owns canonical direct import of contract leaves. Router indexes are
+owns canonical direct import of contract leaves. Module-root routers are
 composition-only; TypeScript owns router completeness, Knip owns unreachable
 leaves and import hygiene, and generated-client/API behavior proof owns the
 complete public operation set. An optional `middleware/` directory follows the
@@ -153,8 +159,9 @@ index exposes semantic names. `module.ts` imports input-independent module-wide
 middleware through `./middleware`; an operation leaf imports input-independent
 group policy or named reused validated-input policy through `../middleware`.
 Each imported name is attached at that destination. The directory is absent
-when unused. Leaves never import their own index, router indexes do not consume
-middleware, and no runtime loader or generator participates. Ordinary
+when unused. Leaves never import an indexed contract or middleware catalog,
+module-root routers do not consume middleware, and no runtime loader or
+generator participates. Ordinary
 collaboration may range anywhere inside one sealed module; the module root is
 the containment boundary. Contract, context, and router laws own executable
 direction inside that boundary.

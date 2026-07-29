@@ -65,17 +65,17 @@ module/
 │   ├── inspect.ts
 │   └── mutate.ts
 ├── module.ts
+├── router.ts
 └── router/
-    ├── index.ts
-    ├── inspect.ts
-    └── mutate.ts
+    ├── inspect.router.ts
+    └── mutate.router.ts
 ```
 
 Named router leaves author individual operations or cohesive operation groups.
-`router/index.ts` imports those completed leaves and composes the module's one
-plain router object. `contract/index.ts` owns the matching declarative contract
-composition. Flat module `contract.ts` and `router.ts` alternatives are not
-admitted.
+Module-root `router.ts` imports those completed leaves and composes the
+module's one plain router object. `contract/index.ts` owns the matching
+declarative contract composition. Module `contract.ts` and `router/index.ts`
+alternatives are not admitted.
 
 This single positive shape eliminates the local router XOR. The upstream
 variant capability remains useful only for future kinds that deliberately need

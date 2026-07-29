@@ -111,13 +111,16 @@ That structural destination remains advisory until the shared TypeBox and
 platform-neutral source laws cover entities; no production entity source moves
 before that shared law lands.
 
-Required module `contract/` and `router/` directories expose `index.ts` plus
-semantic leaves; optional `middleware/` uses the same entrypoint shape. Root
-contract and router files remain the service composition spines. Optional
-service-root middleware instead consists of direct kebab-case leaves with no
-barrel; each exports `middleware` for semantic attachment in `impl.ts`. The
-former flat module faces and duplicate private-alias packets are superseded
-rather than preserved as compatibility rules.
+Required module `contract/` and `router/` directories have distinct faces.
+`contract/` exposes `index.ts` plus semantic leaves. `router/` contains named
+`*.router.ts` operation-authoring leaves without a barrel; the module-root
+`router.ts` composes them as the module's sole router face. Optional
+`middleware/` exposes `index.ts` plus semantic leaves. Service-root contract
+and router files remain the service composition spines. Optional service-root
+middleware instead consists of direct kebab-case leaves with no barrel; each
+exports `middleware` for semantic attachment in `impl.ts`. The former module
+`contract.ts`, router barrel, and duplicate private-alias packets are
+superseded rather than preserved as compatibility rules.
 
 The database topology requires closed `migrations/*.sql` and `stores/*.ts`
 interiors when `db` is present and admits optional closed `schema/*.ts` only

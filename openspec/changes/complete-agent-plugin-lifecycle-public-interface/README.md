@@ -1685,8 +1685,9 @@ when context-authored middleware consumes it. `impl.ts` owns the sole native
 Effect procedures require it, the unconfigured `impl`, and the configured
 `service`. Each module descends from its exact `service.<module>` branch,
 terminally curates its handler vocabulary, and composes completed operation
-leaves through its router index. The root router imports those completed plain
-module routers and performs the sole aggregate implementation through `impl`.
+leaves through its module-root `router.ts`. The root router imports those
+completed plain module routers and performs the sole aggregate implementation
+through `impl`.
 The lifecycle service does not yet conform, so the rules remain outside the
 selected policy batch until tasks 5.2b and 5.7 seal the live corpus.
 
@@ -3937,6 +3938,23 @@ inventory acceptance, and retained owner behavior suites are green. A
 categorical live-tree audit finds no active hand-written repository source,
 structure, or topology authority outside Habitat. No provider, Personal
 repository, channel, release, or live installation state is touched.
+
+## Module Router Authority Restoration
+
+The service blueprint again has one module router face. Named
+`router/*.router.ts` leaves author native oRPC operations and cohesive groups;
+module-root `router.ts` imports those completed values and exports one plain
+router object. `router/index.ts` is structurally inadmissible. Contract and
+optional middleware catalogs retain their qualified `index.ts` faces.
+
+This checkpoint corrects Habitat authority before moving production source. It
+updates only `structure.toml`, parser-visible Grit laws, the service frame, and
+this execution record. The six service laws remain advisory with empty
+baselines so the current production corpus stays visibly red until migrated.
+The native Habitat invocation parsed and evaluated all six laws successfully;
+its findings are the expected predecessor topology, not accepted debt. No
+manual checker, local SDK change, runtime helper, compatibility face, provider
+mutation, or production service edit is part of this checkpoint.
 
 ## Git-Backed Declarative Release Input
 

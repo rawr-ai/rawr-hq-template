@@ -89,7 +89,7 @@ export type JobsStore = {
 ## Matches a same-source Error subclass in a three-argument channel
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/submit.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/submit.router.ts
 import type { Effect } from "effect";
 class JobsFailure extends Error {}
 export declare const submit: Effect.Effect<unknown, JobsFailure, object>;
@@ -153,7 +153,7 @@ export const find = query.pipe(
 ## Ignores procedure mapping through contract-declared errors
 
 ```typescript
-// @filename: services/discovery/src/service/modules/source-acquisition/router/search.ts
+// @filename: services/discovery/src/service/modules/source-acquisition/router/search.router.ts
 import { Effect } from "effect";
 export const search = module.search.effect(function* ({ errors }) {
   return yield* Effect.fail(
@@ -165,7 +165,7 @@ export const search = module.search.effect(function* ({ errors }) {
 ## Ignores catch construction owned by native Effect diagnostics
 
 ```typescript
-// @filename: services/discovery/src/service/modules/source-acquisition/router/search.ts
+// @filename: services/discovery/src/service/modules/source-acquisition/router/search.router.ts
 import { Effect } from "effect";
 export const search = () =>
   Effect.tryPromise({
