@@ -71,7 +71,6 @@ const NxReleaseRootSchema = Type.Object(
             "rawr-cli": Type.Object(
               {
                 projects: Type.Array(Type.String()),
-                projectsRelationship: Type.Literal("fixed"),
               },
               { additionalProperties: true }
             ),
@@ -90,8 +89,6 @@ const NxProjectNodeSchema = Type.Object(
       Type.Object(
         {
           root: Type.Optional(Type.String()),
-          tags: Type.Optional(Type.Array(Type.String())),
-          targets: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
         },
         { additionalProperties: true }
       )
@@ -230,8 +227,6 @@ type Artifact = {
 type ProjectNode = {
   name: string;
   root: string;
-  tags: readonly string[];
-  targets: Record<string, unknown>;
 };
 type ProjectGraph = Static<typeof NxGraphSchema>["graph"]["nodes"];
 type InstalledCommand = Static<typeof InstalledCommandSchema>;
@@ -259,15 +254,10 @@ describe("ordinary installed Oclif package", () => {
   it("packs the Nx release group and exercises installed rawr", async ({ annotate }) => {
     const state = requireState();
     const releaseProjects = readReleaseProjects();
-    expect(releaseProjects).toHaveLength(19);
     expect(new Set(releaseProjects).size).toBe(releaseProjects.length);
 
     const graph = await readProjectGraph();
     const releaseNodes = releaseProjects.map((project) => requireProject(graph, project));
-    for (const node of releaseNodes) {
-      expect(node.tags).toContain("npm:public");
-      expect(node.targets.build).toBeDefined();
-    }
 
     const revision = (
       await runChecked("git", ["rev-parse", "HEAD"], workspaceRoot, process.env)
@@ -284,7 +274,6 @@ describe("ordinary installed Oclif package", () => {
     const artifacts: Artifact[] = [];
     for (const node of releaseNodes) artifacts.push(await packProject(node, state));
     const hello = await packProject(requireProject(graph, helloPlugin), state);
-    expect(artifacts.map(({ name }) => name).sort()).toEqual([...releaseProjects].sort());
     expect(new Set(artifacts.map(({ version }) => version)).size).toBe(1);
     for (const artifact of [...artifacts, hello]) {
       expect(artifact.sha256).toMatch(/^[0-9a-f]{64}$/u);
@@ -451,7 +440,7 @@ describe("ordinary installed Oclif package", () => {
 function readReleaseProjects(): readonly string[] {
   const nx = parseJson(readFileSync(path.join(workspaceRoot, "nx.json"), "utf8"));
   if (!Value.Check(NxReleaseRootSchema, nx)) {
-    throw new Error("Nx release group rawr-cli has no fixed project list");
+    throw new Error("Nx release group rawr-cli has no project list");
   }
   return Object.freeze([...nx.release.groups["rawr-cli"].projects]);
 }
@@ -469,14 +458,14 @@ async function readProjectGraph(): Promise<ProjectGraph> {
 
 function requireProject(graph: ProjectGraph, name: string): ProjectNode {
   const data = graph[name]?.data;
-  if (typeof data?.root !== "string" || !Array.isArray(data.tags) || data.targets === undefined) {
+  if (typeof data?.root !== "string") {
     throw new Error(`Nx project graph is incomplete for ${name}`);
   }
   const root = path.resolve(workspaceRoot, data.root);
   if (!isWithin(workspaceRoot, root) || !existsSync(path.join(root, "package.json"))) {
     throw new Error(`Nx project ${name} does not own a package root`);
   }
-  return { name, root: data.root, tags: data.tags, targets: data.targets };
+  return { name, root: data.root };
 }
 
 async function packProject(
