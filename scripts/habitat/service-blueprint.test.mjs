@@ -278,7 +278,7 @@ describe("service module source direction", () => {
         [path]: `
           import { oc } from "@orpc/contract";
           import { Type } from "typebox";
-          import { standard } from "#adapters/typebox";
+          import { standard } from "@rawr/typebox-adapter";
           import { module } from "../module.js";
           export const get = oc.input(standard(Type.Object({
             id: Type.String({ description: "Order identity." }),
@@ -359,7 +359,7 @@ describe("service module source direction", () => {
         "services/orders/src/service/modules/catalog/contract/get.ts": `
           import { oc } from "@orpc/contract";
           import { Type } from "typebox";
-          import { standard } from "#adapters/typebox";
+          import { standard } from "@rawr/typebox-adapter";
           import { OrderIdSchema } from "#orders-service/modules/catalog/model/dto/order";
           export const get = oc.input(standard(Type.Object({
             id: OrderIdSchema,
@@ -415,19 +415,19 @@ describe("service module source direction", () => {
       {
         [contractPaths[0]]: `
           import { oc } from "@orpc/contract";
-          import { standard } from "#adapters/typebox";
+          import { standard } from "@rawr/typebox-adapter";
           import { contract } from "./";
           export const get = oc.input(standard(OrderRequestSchema));
         `,
         [contractPaths[1]]: `
           import { oc } from "@orpc/contract";
-          import { standard } from "#adapters/typebox";
+          import { standard } from "@rawr/typebox-adapter";
           import { contract } from "../contract/";
           export const list = oc.input(standard(OrderRequestSchema));
         `,
         [contractPaths[2]]: `
           import { oc } from "@orpc/contract";
-          import { standard } from "#adapters/typebox";
+          import { standard } from "@rawr/typebox-adapter";
           import { contract } from "#orders-service/modules/catalog/contract";
           export const byId = oc.input(standard(OrderRequestSchema));
         `,
@@ -498,5 +498,100 @@ describe("service module source direction", () => {
     for (const path of routerPaths) {
       expect(routerDiagnostics).toContain(path);
     }
+  });
+
+  it("admits only the exact language-required binding for a reserved operation name", async () => {
+    const rules = [contractAuthority, routerAuthorship];
+    const root = await createFixture(
+      {
+        "services/orders/src/service/modules/catalog/contract/package.ts": `
+          import { oc } from "@orpc/contract";
+          import { standard } from "@rawr/typebox-adapter";
+          const packageContract = oc
+            .input(standard(PackageRequestSchema))
+            .output(standard(PackageResultSchema));
+          export { packageContract as package };
+        `,
+        "services/orders/src/service/modules/catalog/contract/index.ts": `
+          import { package as packageContract } from "./package";
+          export const contract = { package: packageContract };
+        `,
+        "services/orders/src/service/modules/catalog/router/package.ts": `
+          import { module } from "../module";
+          const packageOperation = module.package.effect(packageContent);
+          export { packageOperation as package };
+        `,
+        "services/orders/src/service/modules/catalog/router/index.ts": `
+          import { package as packageOperation } from "./package";
+          export const router = { package: packageOperation };
+        `,
+      },
+      rules
+    );
+    const result = await check(root, rules);
+
+    for (const rule of rules) {
+      expect(diagnostics(result.report, rule)).toEqual([]);
+    }
+  });
+
+  it("rejects a loose alias around a reserved operation name", async () => {
+    const contractGetPath = "services/orders/src/service/modules/catalog/contract/get.ts";
+    const contractPath = "services/orders/src/service/modules/catalog/contract/package.ts";
+    const contractIndexPath = "services/orders/src/service/modules/catalog/contract/index.ts";
+    const routerGetPath = "services/orders/src/service/modules/catalog/router/get.ts";
+    const routerPath = "services/orders/src/service/modules/catalog/router/package.ts";
+    const routerIndexPath = "services/orders/src/service/modules/catalog/router/index.ts";
+    const rules = [contractAuthority, routerAuthorship];
+    const root = await createFixture(
+      {
+        [contractGetPath]: `
+          import { oc } from "@orpc/contract";
+          import { standard } from "@rawr/typebox-adapter";
+          export const get = oc
+            .input(standard(GetRequestSchema))
+            .output(standard(GetResultSchema));
+        `,
+        [contractPath]: `
+          import { oc } from "@orpc/contract";
+          import { standard } from "@rawr/typebox-adapter";
+          const packageDefinition = oc
+            .input(standard(PackageRequestSchema))
+            .output(standard(PackageResultSchema));
+          export { packageDefinition as package };
+        `,
+        [contractIndexPath]: `
+          import { get } from "./get";
+          import { package as packageDefinition } from "./package";
+          export const contract = { get, package: packageDefinition };
+        `,
+        [routerGetPath]: `
+          import { module } from "../module";
+          export const get = module.get.effect(getContent);
+          const packageOperation = module.package.effect(packageContent);
+          export { packageOperation as package };
+        `,
+        [routerPath]: `
+          import { module } from "../module";
+          const packageHandler = module.package.effect(packageContent);
+          export { packageHandler as package };
+        `,
+        [routerIndexPath]: `
+          import { get } from "./get";
+          import { package as packageHandler } from "./package";
+          export const router = { get, package: packageHandler };
+        `,
+      },
+      rules
+    );
+    const result = await check(root, rules);
+
+    const contractPaths = diagnostics(result.report, contractAuthority).map(({ path }) => path);
+    const routerPaths = diagnostics(result.report, routerAuthorship).map(({ path }) => path);
+    expect(contractPaths).toContain(contractPath);
+    expect(contractPaths).toContain(contractIndexPath);
+    expect(routerPaths).toContain(routerGetPath);
+    expect(routerPaths).toContain(routerPath);
+    expect(routerPaths).toContain(routerIndexPath);
   });
 });

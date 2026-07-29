@@ -10,6 +10,10 @@ native oRPC group for that entrypoint to compose. The entrypoint's top-level
 grammar admits imports, private immutable composition, private helpers, and the
 single exported anchor. Private support inside any one contract source remains
 bounded to that source and reachable from its exported contract value.
+When an operation name is an ECMAScript reserved word, the leaf uses the exact
+language-required `<name>Contract` local binding and aliases only that binding
+to the filename-mapped public export; its index imports the same public name
+into the same local binding. This is not a general alias form.
 Procedure input and output envelopes adapt TypeBox with `standard(...)` at
 their contract positions.
 
@@ -52,6 +56,23 @@ function require_service_contract_authority_leaf_status($filename, $name) js {
     (_all, value) => value.toUpperCase(),
   );
   return expected === $name.text ? "ok" : "wrong-export";
+}
+
+// Admits one exact local binding for an ECMAScript-reserved public operation.
+function require_service_contract_authority_reserved_binding_status($local, $name) js {
+  const reserved = new Set([
+    "await", "break", "case", "catch", "class", "const", "continue",
+    "debugger", "default", "delete", "do", "else", "enum", "export",
+    "extends", "false", "finally", "for", "function", "if", "implements",
+    "import", "in", "instanceof", "interface", "let", "new", "null",
+    "package", "private", "protected", "public", "return", "static", "super",
+    "switch", "this", "throw", "true", "try", "typeof", "var", "void",
+    "while", "with", "yield",
+  ]);
+  return reserved.has($name.text) &&
+    $local.text === `${$name.text}Contract`
+    ? "ok"
+    : "wrong-export";
 }
 
 // Selects the one generic module contract directory entrypoint.
@@ -138,12 +159,29 @@ function require_service_contract_authority_entrypoint_import_status($source, $n
 
 // Proves one filename-mapped direct leaf import at the contract access point.
 predicate require_service_contract_authority_is_canonical_leaf_import($statement) {
-  $statement <: `import { $name } from $source`,
-  $status = require_service_contract_authority_entrypoint_import_status(
-    source=$source,
-    name=$name
-  ),
-  $status <: includes "ok"
+  or {
+    and {
+      $statement <: `import { $name } from $source`,
+      $status = require_service_contract_authority_entrypoint_import_status(
+        source=$source,
+        name=$name
+      ),
+      $status <: includes "ok"
+    },
+    and {
+      $statement <: `import { $name as $local } from $source`,
+      $source_status = require_service_contract_authority_entrypoint_import_status(
+        source=$source,
+        name=$name
+      ),
+      $source_status <: includes "ok",
+      $binding_status = require_service_contract_authority_reserved_binding_status(
+        local=$local,
+        name=$name
+      ),
+      $binding_status <: includes "ok"
+    }
+  }
 }
 
 // Proves that an entrypoint statically acquires at least one canonical leaf.
@@ -198,8 +236,26 @@ predicate require_service_contract_authority_is_bigint_literal($value) {
 
 // Connects support used directly by an entrypoint anchor or semantic leaf export.
 predicate require_service_contract_authority_exported_contract_uses($name) {
-  $program <: contains `export const $exported = $value` where {
-    $value <: contains $name
+  or {
+    $program <: contains `export const $exported = $value` where {
+      $value <: contains $name
+    },
+    and {
+      $program <: contains `const $local = $value` where {
+        $value <: contains $name
+      },
+      $program <: contains `export { $local as $exported }`,
+      $filename_status = require_service_contract_authority_leaf_status(
+        filename=$filename,
+        name=$exported
+      ),
+      $filename_status <: includes "ok",
+      $binding_status = require_service_contract_authority_reserved_binding_status(
+        local=$local,
+        name=$exported
+      ),
+      $binding_status <: includes "ok"
+    }
   }
 }
 
@@ -271,12 +327,28 @@ or {
   program(statements=$statements) where {
     require_service_contract_authority_is_module_contract_leaf(),
     not {
-      $statements <: contains `export const $name = $value` where {
-        $status = require_service_contract_authority_leaf_status(
-          filename=$filename,
-          name=$name
-        ),
-        $status <: includes "ok"
+      or {
+        $statements <: contains `export const $name = $value` where {
+          $status = require_service_contract_authority_leaf_status(
+            filename=$filename,
+            name=$name
+          ),
+          $status <: includes "ok"
+        },
+        and {
+          $statements <: contains `const $local = $value`,
+          $statements <: contains `export { $local as $name }`,
+          $filename_status = require_service_contract_authority_leaf_status(
+            filename=$filename,
+            name=$name
+          ),
+          $filename_status <: includes "ok",
+          $binding_status = require_service_contract_authority_reserved_binding_status(
+            local=$local,
+            name=$name
+          ),
+          $binding_status <: includes "ok"
+        }
       }
     }
   },
@@ -287,11 +359,27 @@ or {
       require_service_contract_authority_is_leaf_export(export=$export)
     }
   },
-  or {
-    `export { $specifiers }`,
-    `export { $specifiers } from $source`,
-    `export default $value`
-  } where {
+  `export { $specifiers }` as $export where {
+    require_service_contract_authority_is_module_contract_leaf(),
+    not {
+      $export <: `export { $local as $name }`,
+      $filename_status = require_service_contract_authority_leaf_status(
+        filename=$filename,
+        name=$name
+      ),
+      $filename_status <: includes "ok",
+      $binding_status = require_service_contract_authority_reserved_binding_status(
+        local=$local,
+        name=$name
+      ),
+      $binding_status <: includes "ok"
+    }
+  },
+  export_statement(source=$source) where {
+    require_service_contract_authority_is_module_contract_leaf(),
+    $source <: string()
+  },
+  `export default $value` where {
     require_service_contract_authority_is_module_contract_leaf()
   },
   import_statement(source=$source) where {
@@ -301,6 +389,15 @@ or {
   import_statement(source=$source) where {
     require_service_contract_authority_is_module_contract_leaf(),
     require_service_contract_authority_is_own_index_source(source=$source)
+  },
+  import_statement(source=$source) as $statement where {
+    require_service_contract_authority_is_module_contract_entrypoint(),
+    $source <: r"^[\"']\./[^/\"']+[\"']$",
+    not {
+      require_service_contract_authority_is_canonical_leaf_import(
+        statement=$statement
+      )
+    }
   },
   import_statement(source=$source) as $import where {
     $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
@@ -337,9 +434,9 @@ or {
         or {
           and {
             $adapter <: `standard`,
-            $program <: contains `import { $..., standard, $... } from "#adapters/typebox"`
+            $program <: contains `import { $..., standard, $... } from "@rawr/typebox-adapter"`
           },
-          $program <: contains `import { $..., standard as $adapter, $... } from "#adapters/typebox"`
+          $program <: contains `import { $..., standard as $adapter, $... } from "@rawr/typebox-adapter"`
         }
       }
     }
@@ -350,9 +447,9 @@ or {
     or {
       and {
         $adapter <: `standard`,
-        $program <: contains `import { $..., standard, $... } from "#adapters/typebox"`
+        $program <: contains `import { $..., standard, $... } from "@rawr/typebox-adapter"`
       },
-      $program <: contains `import { $..., standard as $adapter, $... } from "#adapters/typebox"`
+      $program <: contains `import { $..., standard as $adapter, $... } from "@rawr/typebox-adapter"`
     },
     not {
       or {
@@ -505,7 +602,7 @@ export const preview = oc.output(standard(Type.Object({})));
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "#adapters/typebox";
+import { standard } from "@rawr/typebox-adapter";
 const errors = { SERVICE_UNAVAILABLE: {} };
 export const get = oc
   .errors(errors)
@@ -546,7 +643,7 @@ Knip owns whether such a file is unreachable.
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "#adapters/typebox";
+import { standard } from "@rawr/typebox-adapter";
 export const contract = oc.input(
   standard(Type.Refine(Type.String(), (value) => value === "accepted")),
 );
@@ -558,7 +655,7 @@ export const contract = oc.input(
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "#adapters/typebox";
+import { standard } from "@rawr/typebox-adapter";
 export const contract = oc.input(
   standard(Type.Tuple([Type.String(), Type.Number()])),
 );
@@ -570,7 +667,7 @@ export const contract = oc.input(
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "#adapters/typebox";
+import { standard } from "@rawr/typebox-adapter";
 export const contract = oc
   .input(standard(Type.Object({
     name: Type.String({ minLength: 1 }),
