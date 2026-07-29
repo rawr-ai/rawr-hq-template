@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   commitGeneratedGitRepository,
   createGeneratedGitRepository,
-} from "../../../../../services/agent-plugin-lifecycle/test/support/git-repository";
+} from "../../../../../services/agent-plugin-lifecycle/test/support/service/git-repository";
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
 import {
   createProductionLifecycleClient,

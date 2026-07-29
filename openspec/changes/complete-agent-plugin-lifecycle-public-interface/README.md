@@ -3591,6 +3591,33 @@ validation and focused formatting checks also pass. This is a two-destination
 law correction, not a topology variant, SDK feature, runner, parser,
 compatibility path, or production service change.
 
+## Lifecycle Service Root Closure
+
+The Agent Plugin Lifecycle service root now closes
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21w]] against the
+positive service law. Its exported `Context` declares the five readonly
+`deps`, `scope`, `config`, `invocation`, and `provided` lanes directly; the
+host-bound values, module curation, middleware order, and operations are
+unchanged.
+
+The existing proof corpus now occupies its owning closed destinations:
+service-root and module behavior, client and contract mechanics, integration,
+and service- or module-owned support. The predecessor flat, `shared`, model,
+vendor, module, and support-root test shapes leave in the same cut. Assertions
+are unchanged; only paths and the relative imports required by those moves
+change.
+
+The focused service topology and context laws report zero Lifecycle
+diagnostics. The uncached service typecheck passes in 13.7 seconds. The
+final service suite passes all 377 cases across 43 files in 66.2 seconds
+(1 minute 7 seconds through Nx). This checkpoint changes no runtime capability,
+provider state, Personal content, resource, policy, compatibility path, or
+proof framework. The standing oRPC/Effect-oRPC, behavior/testing, and
+TypeScript/structural reviews accept the complete checkpoint without P0, P1,
+or P2 findings. A categorical search finds no remaining predecessor test-path
+consumer, and the uncached CLI test typecheck passes after its sole external
+fixture import follows the service-owned support destination.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect

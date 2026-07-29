@@ -6,31 +6,24 @@ import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-p
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import type { VendorClockPort } from "./modules/vendors/model/ports/clock";
 
-type LifecycleDependencies = {
-  analytics: AnalyticsClient;
-  clock: VendorClockPort;
-  contentWorkspace: ContentWorkspaceResource<never>;
-  logger: Logger;
-  nativeProviders: NativeAgentProviderResources;
-  packageOutput: AgentPluginPackageOutputResource<never>;
-  versionedContent: VersionedContentResource<never>;
-};
-
-type InitialContext = {
-  deps: LifecycleDependencies;
-  scope: Record<never, never>;
-  config: Record<never, never>;
-};
-
-type InvocationContext = {
-  traceId: string;
-  commandId: string;
-};
-
 /** Host and invocation lanes admitted before lifecycle middleware narrows context. */
-export type Context = InitialContext & {
-  invocation: InvocationContext;
-  provided: Record<never, never>;
+export type Context = {
+  readonly deps: {
+    readonly analytics: AnalyticsClient;
+    readonly clock: VendorClockPort;
+    readonly contentWorkspace: ContentWorkspaceResource<never>;
+    readonly logger: Logger;
+    readonly nativeProviders: NativeAgentProviderResources;
+    readonly packageOutput: AgentPluginPackageOutputResource<never>;
+    readonly versionedContent: VersionedContentResource<never>;
+  };
+  readonly scope: Record<never, never>;
+  readonly config: Record<never, never>;
+  readonly invocation: {
+    readonly traceId: string;
+    readonly commandId: string;
+  };
+  readonly provided: Record<never, never>;
 };
 
 /** Native middleware author rooted in the complete lifecycle context. */
