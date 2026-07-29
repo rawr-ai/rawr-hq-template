@@ -1534,6 +1534,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   the closed service topology. Correct the existing deep-router examples to
   reach the actual package root. Add no alias lane, manual runner, source
   registry, or generalized module resolver.
+- [x] 5.7e21t Migrate Providers into the indexed service law. Split its
+  `test`, `status`, and `sync` contracts into matching semantic leaves, retain
+  the three authored Effect handlers byte-for-byte under unsuffixed router
+  leaves, and compose only plain objects from `contract/index.ts` and
+  `router/index.ts`. Delete the flat faces and `.router.ts` names in the same
+  cut. Preserve exact public keys, TypeBox contracts, module-curated
+  content-workspace and native-provider context, selection and revalidation
+  order, operation-local sessions, native mutation and confirmation behavior,
+  results, failures, defects, and interruption. Add no middleware, resource,
+  provider, policy, alias, compatibility face, or second operation path.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

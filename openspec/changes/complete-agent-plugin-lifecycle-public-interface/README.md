@@ -3526,6 +3526,28 @@ router importing its own package-root proof. The complete service blueprint
 fixture passes all 14 cases and 53 assertions; the live proof and helper-comment
 rules, strict OpenSpec validation, and focused formatting checks also pass.
 
+## Providers Module Burn-Down
+
+Providers now follows the indexed module law under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21t]]. Its
+TypeBox-backed `test`, `status`, and `sync` contract operations occupy matching
+semantic leaves. The three existing Effect handlers move byte-for-byte into
+unsuffixed router leaves; `contract/index.ts` and `router/index.ts` only compose
+the same public keys. The flat faces and `.router.ts` names leave in the same
+cut.
+
+The move preserves the module's curated content-workspace and native-provider
+context, exact selection and revalidation order, operation-local native
+sessions, ordered mutation and immediate confirmation, result variants, typed
+failures, defects, and interruption. No handler body, model, policy,
+middleware, resource, provider, public key, Personal content, or live state
+changes. The uncached service typecheck passes in 13.2 seconds, all 85 focused
+Providers and service-spine cases pass in 3.2 seconds, and the service
+blueprint fixture passes all 50 assertions across 11 cases. The complete
+service suite passes all 377 cases across 43 files in 37.3 seconds. Every new
+cross-file export has declaration-site JSDoc; the repository-wide documentation
+target still exposes its separately tracked pre-existing red corpus.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect
