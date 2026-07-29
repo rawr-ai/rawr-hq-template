@@ -3973,6 +3973,23 @@ The first consumer also replaces the rule's ineffective text matcher with
 Grit's native function-expression nodes so inline native and Effect handlers
 are admitted while detached ordinary and generator callables remain findings.
 
+## Packaging Router Migration
+
+Packaging is the second production module to consume the restored router law.
+Its `package` operation bytes move unchanged to
+`router/package.router.ts`. The former router barrel becomes module-root
+`router.ts`, and only its leaf import path changes. The exact
+language-required `packageOperation` local binding, named `package` export,
+public router key, module context, TypeBox contract, Effect handler,
+observation and revalidation order, publication boundary, failures, defects,
+interruption, and results remain unchanged.
+
+The old router barrel and unsuffixed leaf path disappear in the same
+checkpoint without aliases. Focused Packaging and service-spine proof passes
+all 19 cases, owner typecheck passes, and Habitat reports no Packaging router
+or topology finding. No policy, resource, provider, middleware, contract,
+test, Personal repository, or live provider state changes.
+
 ## Git-Backed Declarative Release Input
 
 The unpublished version-1 release input is recut in place as a declaration
