@@ -12,7 +12,7 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "standalone service production source that statically imports, re-exports, dynamically imports, requires, or resolves a relative module source containing an exact test path segment",
+  "forbids": "standalone service production source that statically imports, re-exports, dynamically imports, requires, or resolves a literal relative module source beneath its own package-root test directory",
   "why": "Package-root service proof may consume production behavior, but production source must not acquire proof fixtures, harnesses, or suites. Keeping the edge one-way preserves the production boundary without inventing a service-test alias lane.",
   "remediate": "Move proof-only code under the package-root test tree and keep production dependencies under src. Remove the relative edge from production source; do not replace it with an alias to proof code.",
   "message": "Standalone service production source must not import package proof code.",

@@ -54,7 +54,8 @@ plugin proof remains governed by its additive kind rather than acquiring the
 standalone service categories.
 
 Standalone production TypeScript does not acquire package proof through a
-relative module source containing the exact path segment `test`. Static
+literal relative module source that resolves beneath its package-root `test`
+directory. A production operation named `test` remains ordinary source. Static
 imports, re-exports, `import()`, `require()`, and `require.resolve()` share that
 one source law. Package-root tests may still import production source; embedded
 API-plugin services remain outside this standalone rule. No alias to proof code
