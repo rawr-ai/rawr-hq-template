@@ -8,16 +8,16 @@
     "check": {
       "executor": "nx:noop"
     },
-    "structural": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun tools/runtime-realization-type-env/scripts/verify-structure.ts"
-      }
-    },
     "report": {
       "executor": "nx:run-commands",
       "options": {
         "command": "bun tools/runtime-realization-type-env/scripts/report-results.ts"
+      }
+    },
+    "evidence-manifest": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test tools/runtime-realization-type-env/test/evidence/report-results.test.ts"
       }
     },
     "typecheck": {
@@ -65,8 +65,8 @@
     "gate": {
       "executor": "nx:noop",
       "dependsOn": [
-        "structural",
         "report",
+        "evidence-manifest",
         {
           "projects": ["habitat"],
           "target": "lint"

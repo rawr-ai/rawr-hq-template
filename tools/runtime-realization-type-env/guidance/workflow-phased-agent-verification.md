@@ -44,8 +44,8 @@ Use only the axes that match the runtime workstream:
 
 - Containment: no production imports, workspace promotion, root gate drift, or
   hidden authority expansion.
-- Mechanical: paths, Nx targets, imports, generated outputs, branch state, and
-  structural guard.
+- Mechanical: Habitat topology and source law, Nx targets, generated outputs,
+  and branch state.
 - Type and negative: TypeScript proof, expected-failure fixtures, and public
   surface boundaries.
 - Vendor fidelity: real dependency behavior only where the claim depends on
@@ -81,7 +81,7 @@ Choose focused gates before composed gates:
 ```bash
 bunx nx show project runtime-realization-type-env --json
 bunx nx run runtime-realization-type-env:<focused-target>
-bunx nx run runtime-realization-type-env:structural
+bunx nx run habitat:check:policy:local
 bunx nx run runtime-realization-type-env:report
 bunx nx run runtime-realization-type-env:gate
 ```

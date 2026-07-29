@@ -13,6 +13,10 @@ import {
   parseCheckOperationRequest,
 } from "../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins check` into the lifecycle service's release and repository checks.
+ * CLI parsing and bounded stdin admission stay here while check policy remains service-owned.
+ */
 export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
   static description = "Check curated release or repository data without publishing it";
 
@@ -50,6 +54,14 @@ type ReleaseInputRecordStdin =
   | Readonly<{ ok: true; bytes: Uint8Array }>
   | Readonly<{ ok: false; message: string }>;
 
+/**
+ * Reads one bounded release-input envelope from piped stdin for the check command.
+ * Rejecting terminals, non-byte chunks, and oversized input here prevents malformed transport
+ * data from reaching the lifecycle request parser.
+ *
+ * @param input - The process stdin stream and its terminal status.
+ * @returns The admitted envelope bytes or an operator-facing input rejection.
+ */
 export async function readReleaseInputRecordStdin(
   input: Readonly<{
     chunks: AsyncIterable<unknown>;

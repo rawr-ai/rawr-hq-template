@@ -4,6 +4,11 @@ import { AgentPluginLifecycleCommand } from "../../../../lib/agent-plugins/comma
 import { contentWorkspaceFlags } from "../../../../lib/agent-plugins/commands/flags";
 import { parseVendorStatusRequest } from "../../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins status vendors` into read-only vendor source inspection.
+ * The command admits workspace coordinates while vendor identity and diagnostics remain
+ * lifecycle-service concerns.
+ */
 export default class AgentPluginsStatusVendors extends AgentPluginLifecycleCommand {
   static description = "Inspect declared vendor sources without authoring repository bytes";
 

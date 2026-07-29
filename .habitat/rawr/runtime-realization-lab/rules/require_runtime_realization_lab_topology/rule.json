@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "require_runtime_realization_lab_topology",
+  "title": "Require Runtime Realization Lab Topology",
+  "placement": {
+    "niche": "rawr/runtime-realization-lab",
+    "blueprint": "_self",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "runtime-realization-type-env",
+  "lane": "enforced",
+  "forbids": "an open Runtime Realization Lab root, source-plane root, test-lane root, or policy-bearing script outside the two admitted operational scripts",
+  "why": "The Lab is one contained proof environment with stable source and test planes. Closing only those container axes prevents new ownership planes and policy scripts without freezing their evolving interiors.",
+  "remediate": "Keep the Lab root and its src, test, and scripts roots on the declared topology. Put executable source and proof in an admitted plane, and express structural policy in Habitat rather than a Lab script.",
+  "message": "The Runtime Realization Lab must retain its closed container topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["tools/runtime-realization-type-env/**"]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/rawr/runtime-realization-lab/rules/require_runtime_realization_lab_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/rawr/runtime-realization-lab/rules/require_runtime_realization_lab_topology/structure.toml"
+    }
+  }
+}

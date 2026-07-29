@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-29 - Policy Is Not A Phase Script
+
+Repository law has one qualified owner. Habitat declares closed topology in
+`structure.toml` and parser-visible source relationships in `pattern.md`. Nx
+schedules those checks and owns project dependency edges. Tests prove behavior.
+Scripts perform bounded operations. A script that walks source to decide where
+files may live or what they may import is not a transitional convenience; it
+is policy in the wrong container.
+
+The correction is deletion-first. Stable positive constraints move into the
+owning Habitat blueprint or niche. Historical names, migration inventories,
+self-checking target lists, and phase bookkeeping disappear rather than
+becoming permanent law. Template currently admits no script-backed Habitat
+rule. A future native capability gap must first receive a named authority
+decision and retirement boundary before packet topology changes.
+
+### Bag Of Keywords
+
+Habitat, law, structure, source, graph, behavior, script, operation, closure,
+deletion.
+
 ## 2026-07-28 - Reveal The Native Wires
 
 The service shape is sealed. The next reduction removes compatibility material

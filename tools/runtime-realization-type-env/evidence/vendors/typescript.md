@@ -5,7 +5,7 @@
 | Need | Answer |
 | --- | --- |
 | What RAWR relies on | TypeScript type checking, discriminated unions, literal inference, and generator typing |
-| Current lab evidence | Type/negative fixtures and structural gates |
+| Current lab evidence | Type/negative fixtures and Habitat source/topology laws |
 | System impact | Authoring contracts, descriptor refs, portable artifact shape, forbidden pattern rejection |
 | Proof ceiling | TypeScript proof is not runtime behavior or Parent-Repo Migration proof |
 

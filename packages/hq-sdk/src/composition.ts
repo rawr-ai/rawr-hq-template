@@ -32,6 +32,16 @@ function isMergeableSurfaceNode(value: unknown): value is Record<string, unknown
   );
 }
 
+/**
+ * Combines independently declared API or workflow trees into one host-realizable surface.
+ * Object branches merge recursively, while duplicate terminal paths fail so plugins cannot
+ * silently replace another owner's contract or router.
+ *
+ * @param trees - The declared surface fragments selected by application composition.
+ * @param path - The recursive path used to identify ownership collisions.
+ * @returns A merged tree preserving every non-conflicting declaration.
+ * @throws When two declarations claim the same terminal surface path.
+ */
 export function mergeDeclaredSurfaceTrees<TTree extends object>(
   trees: readonly TTree[],
   path: readonly string[] = []

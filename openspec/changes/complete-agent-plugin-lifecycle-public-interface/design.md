@@ -186,21 +186,21 @@ Public `bun run check` starts one Nx scheduler graph over every admitted non-roo
 project's plain public check. Shared defaults connect those checks to one
 workspace-owned `habitat:lint`, project-owned typecheck, optional owner
 verification, Habitat policy, and dependency checks.
-Repository separation, CLI Oclif parity, and Habitat project/source policy
+Repository separation, CLI Oclif parity, and Habitat topology/source policy
 remain qualified owner work. The selected local policy batch contains the
-required Oclif structure laws and lifecycle command-channel law; the sibling
-Habitat graph rule owns project admission. The independent nine-rule structure
-leaf supplies Stop feedback and is not a policy dependency. The required CI job
-publishes one stable status. Local hooks provide fast feedback; remote branch
-protection remains merge authority.
+required Oclif structure laws, lifecycle command-channel law, and public
+boundary documentation law. The independent structure leaf supplies Stop
+feedback and is not a policy dependency. The required CI job publishes one
+stable status. Local hooks provide fast feedback; remote branch protection
+remains merge authority.
 
-Every non-root project owns a public check. The current packet-local project
-admission bridge is transitional because the pinned standalone consumer does
-not expose Habitat's native Nx runner; it is not a pattern to extend. Task
-5.7e22 replaces hand-maintained rule selection and structural bridge ownership
-with the upstream Habitat Nx plugin. Registered rules with known live-corpus
-violations remain outside required admission until that cut and their
-owner-local burn-down are complete.
+Every current non-root project owns a public check. The former packet-local Nx
+project adapter started a second scheduler and preserved a coarse project-kind
+matrix only because the pinned standalone consumer lacked Habitat's native Nx
+runner. That bypass is deleted rather than extended. The native workspace
+Grit rule owns the durable scheduler and single lint-owner relationship. Task
+5.7e22 still replaces hand-maintained rule selection with the upstream Habitat
+Nx plugin once a distributable owner release exists.
 
 Foundational project-local target names are uniform across project kinds:
 `build`, `typecheck`, `test`, and `check`; `lint` is workspace-owned.
@@ -217,6 +217,17 @@ ownership. Root `lint` routes directly to `habitat:lint`, and every project
 check shares that one task through Nx. Biome owns ordinary source lint;
 Habitat `structure.toml` and `pattern.md` packets remain the only structural
 and source-relationship authorities.
+
+The Runtime Realization lab follows the same ownership. Its former structural
+target mixed topology, source relationships, phase bookkeeping, migration
+history, evidence validation, and target self-inspection in one TypeScript
+walker. The durable container axes now live in one closed Habitat topology
+rule, and parser-visible plane relationships live in one Grit rule. Historical
+inventories and self-checking orchestration are deleted rather than recast as
+architecture. TypeBox-backed manifest validation remains in the report
+boundary because entry identity, pinned evidence, fixture coverage, and the
+behavior targets scheduled by the owner gate are executable evidence
+semantics, not repository topology.
 
 ### One oRPC service owns curated lifecycle behavior
 

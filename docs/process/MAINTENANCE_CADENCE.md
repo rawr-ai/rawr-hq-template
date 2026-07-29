@@ -27,7 +27,7 @@ Interpretation:
   check once; no hand-maintained project inventory may narrow that population.
 - Shared defaults must preserve one workspace lint task, project-owned
   typecheck, optional owner verification, Habitat policy, and dependency
-  checks. Project-kind and quality-target admission belong to Habitat's
+  checks. The root scheduler and single lint relationship belong to Habitat's
   `nx-workspace` rule; CLI Oclif parity remains with the CLI owner. Required
   Oclif structure, repository-script topology, and lifecycle command-channel
   laws belong to Habitat's selected batch. Template and Personal remain
@@ -37,9 +37,8 @@ Interpretation:
 - The selected Habitat batch must keep empty baselines. Do not claim that all
   registered Habitat rules are required while known live-corpus failures remain
   outside the batch.
-- Habitat's bounded graph admission must reject every new non-root project
-  without a public check. Its packet-local script is the declared bridge to the
-  Nx graph until the pinned consumer exposes Habitat's native Nx runner.
+- Do not emulate Habitat's unavailable native Nx runner with a packet-local
+  script. A future distributable Habitat integration owns graph admission.
 - The `rg` command is a quick markdown-link surface scan used before deeper audits.
 - Protected `main` must require the job context
   `Required lint, typecheck, and topology` published by the

@@ -9,6 +9,11 @@ import {
 } from "../../../lib/agent-plugins/commands/flags";
 import { parseTestRequest } from "../../../lib/agent-plugins/commands/input";
 
+/**
+ * Projects `agent plugins test` into disposable native-provider verification.
+ * It admits release and target selections while the lifecycle service owns test sequencing and
+ * provider-state interpretation.
+ */
 export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
   static description =
     "Test a targeted release selection or complete release set in explicit provider homes";

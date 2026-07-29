@@ -499,19 +499,43 @@ open.
 ### Documentation Target Admission
 
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e18]] repairs the
-pre-existing Nx input parser defect as a separate infrastructure checkpoint.
-The cacheable `habitat:check:documentation` leaf now uses one Nx-supported
-extglob for the same seven source roots. Nx workspace glob evaluation observes
-901 files for both the explicit root union and the replacement, with identical
-sets. No script, wrapper, checker, or baseline is added.
+pre-existing Nx input parser defect in the now-retired manual documentation
+leaf. [[tasks#1. Positive Habitat And Nx Checks|task 1.6c10b5]] supersedes that
+execution mechanism: the TypeScript resolver script, direct Nx target, and
+script-specific tests are deleted.
 
-An uncached direct run now reaches the existing imported-export JSDoc checker
-and reports the repository's existing undocumented corpus after 61 seconds.
-That is a real documentation burn-down boundary, not a parser or service
-failure. The target therefore remains manual and is not yet a dependency of
-`habitat:check:policy`; activation remains one dependency edge after the corpus
-itself is green. This checkpoint makes the existing law executable through Nx
-without weakening it or pretending that a red corpus is admitted.
+The shared Magic `require_exported_value_declarations_have_jsdoc` Grit law now
+owns the public lifecycle boundary directly in Habitat. It deliberately checks
+the authored value-export superset on the admitted command, SDK, resource, and
+service-client faces; Knip and review own reachability and prose quality. The
+bounded corpus is burned to an empty baseline and the native rule runs in the
+required local policy batch. No second parser, source walker, or manual
+documentation target remains.
+
+### Runtime Lab Structural Authority
+
+[[tasks#1. Positive Habitat And Nx Checks|task 1.6c10b4]] removes the final
+non-Habitat source walker. The Runtime Realization lab no longer exposes a
+`structural` target or carries a script that inventories current files,
+blacklists retired names, treats its Nx target list as structural policy,
+parses imports with regular expressions, or treats phase records as repository
+law.
+
+Two owner-qualified Habitat rules retain the durable meaning. A closed
+`structure.toml` rule admits the lab's root containers, source planes, test
+planes, and two operational scripts. A Grit rule owns literal parser-visible
+containment edges between shared source, Oracle, Reference Runtime, scenarios,
+and parent-repository production owners. Both rules have empty baselines and
+run through repository Habitat policy; no lab-local wrapper or replacement
+checker exists. Evidence reporting, type checks, negative fixtures, vendor
+behavior, Oracle behavior, and simulation remain ordinary Nx targets.
+
+The evidence manifest remains a behavior-owned input rather than structural
+law. Its report command uses TypeBox to fail closed on the manifest schema,
+pinned specification, fixture existence, TODO coverage, entry identity, and
+the exact owner targets scheduled by the lab gate. Ten focused cases cover the
+valid report and corrupted manifests. This validation reads evidence inputs; it
+does not inventory implementation topology or enforce source relationships.
 
 The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
@@ -1296,13 +1320,16 @@ so this checkpoint does not optimize that rejected mechanism. The provider
 adapter projects also declare their dependency on the shared provider contract,
 so an affected run cannot omit their behavior tests after a shared change.
 
-The required command now has explicit hierarchical owner boundaries. Public
+At that historical scheduler checkpoint, the required command had explicit
+hierarchical owner boundaries. Public
 `bun run check` invokes one `nx run-many -t check` scheduler. All 37 current
 non-root projects expose a public check, and shared target defaults connect
 those checks to one workspace-owned `habitat:lint`, project-owned typecheck,
 optional owner verification, Habitat `check:policy`, and dependency checks.
 Habitat composes workspace lint, its own typecheck and tests, the selected
-local policy batch, and one rule-owned Nx project admission adapter. CLI adds
+local policy batch, and one rule-owned Nx project admission adapter. The later
+Manual Phase-Gate Retirement checkpoint below deletes that adapter rather than
+preserving a manual graph scanner. CLI adds
 Oclif source/build parity through its own `verify` target. The repository
 project no longer schedules either owner; it retains repository separation.
 TypeBox-validated project-graph admission requires exactly one `type:*` kind
@@ -1336,13 +1363,14 @@ separate migration corpus, not the foundational lint contract, so the required
 edge uses the green repository-wide Biome baseline and retains `lint:effect` as
 an explicit later burn-down surface.
 
-This completes the Civ-style scheduler cutover without importing Civ's
+This completed the Civ-style scheduler cutover without importing Civ's
 repo-local Habitat Nx plugin. Root `lint` now routes directly to the one
 workspace lint owner, and the selected Habitat local policy batch enforces that
 exact scheduler surface. The selected batch still does not imply that every
 registered rule is active. Project admission is now a separate Habitat packet;
-its `check.mjs` remains the explicit narrow bridge until the pinned consumer
-exposes Habitat's native Nx runner.
+its `check.mjs` was an explicit narrow bridge at this checkpoint. The later
+Manual Phase-Gate Retirement checkpoint deletes that bridge; Template does not
+emulate the pinned consumer's unavailable native Nx runner.
 
 The first [[tasks#1. Positive Habitat And Nx Checks|task 1.6c]] checkpoint now
 gives every one of the 38 non-root Nx projects an explicit `project.json` and
@@ -1524,9 +1552,11 @@ already ran in its own native Grit invocation, so no Nx split, retry, scheduling
 lock, or parser recovery was added. The law instead removed
 its embedded JavaScript parser and now expresses first-fence selection and the
 adjacent non-empty comment relation directly in GritQL over the Markdown AST.
-`habitat:check:policy` now composes one selected source-law batch, including the
-lifecycle command-channel law, with the rule-owned Nx project admission
-adapter. Its cache inputs include each rule's owner tree. `repository:check`
+At that checkpoint, `habitat:check:policy` composed one selected source-law
+batch, including the lifecycle command-channel law, with the rule-owned Nx
+project admission adapter. The later Manual Phase-Gate Retirement checkpoint
+removes the adapter rather than retaining a direct script invocation. Its
+cache inputs included each rule's owner tree. `repository:check`
 does not start a redundant owner process; the
 service's required `check` path no longer starts its legacy `structural`
 Habitat invocation a second time. Every selected rule remains required through
@@ -1922,15 +1952,15 @@ than claimed as migrated. The remaining resolved project-quality axis is
 separately admitted by Habitat over the Nx graph through task 1.6c11.
 
 The generic blueprint packet filename set is now closed: every current packet
-contains its rule, locked baseline, and one canonical `pattern.md`,
-`structure.toml`, or exceptional `check.mjs` runner source. The current
-structure rule proves only the closed allowed filename set; it cannot prove
-that `rule.json` selects exactly one present runner source. The pinned Habitat
-binary also does not expose a native packet-fixture runner, and its live
-wildcard walk is not bounded against installed dependency trees, so this
-repository does not add a parallel Markdown fixture parser or wrapper. Exact
-selected-runner participation, native pattern fixtures, and full live-tree
-policy activation remain open until a suitable standalone asset is published.
+contains its rule, locked baseline, and only canonical `pattern.md` or
+`structure.toml` executable source. The current structure rule proves the
+closed allowed filename set; it cannot prove that `rule.json` selects exactly
+one present native source. The pinned Habitat binary also does not expose a
+native packet-fixture runner, and its live wildcard walk is not bounded against
+installed dependency trees, so this repository does not add a parallel
+Markdown fixture parser or wrapper. Exact selected-runner participation,
+native pattern fixtures, and full live-tree policy activation remain open
+until a suitable standalone asset is published.
 
 The private service-alias checkpoint uses workspace-gate acquisition for both
 manifest declarations and source edges. Only an exact top-level
@@ -2966,7 +2996,8 @@ not a boundary claimed by this checkpoint.
 No production source, blueprint pattern, release manifest, provider, Personal
 repository, Habitat SDK source, custom runner, or cache scheme changes here.
 
-Resolved Nx project and task-graph inspection show exactly one
+At that historical checkpoint, resolved Nx project and task-graph inspection
+showed exactly one
 `habitat:check:policy:local` task, with `check:policy` depending only on it and
 `check:project-admission`; `check:structure` has no policy dependency. After an
 Nx reset, cold and immediate repeat structure runs pass all nine selected rules
@@ -3864,16 +3895,28 @@ superseded source-reading tests and helpers are deleted. The root
 not become a second lint or scheduler owner. Nx resolves 39 non-root projects,
 with Habitat as the sole lint and repository-policy owner.
 
-The ten-rule native structure leaf passes in 2.3 seconds. The selected 26-rule
-policy leaf passes with only its pre-existing advisory service findings.
-The current required check passes 39 projects and 85 prerequisite tasks in
-1 minute 9 seconds, with 71 of 124 tasks served from the Nx cache. Habitat's
-35 tests, Habitat typecheck, strict source-law fixtures, Workstream installer
-behavior, Oclif inventory acceptance, and the retained owner behavior suites
-are green. A categorical live-tree audit finds no active hand-written
-repository source, structure, or topology authority outside Habitat. No
-provider, Personal repository, channel, release, or live installation state is
-touched.
+At that checkpoint, the ten-rule native structure leaf passed in 2.3 seconds.
+The selected 26-rule policy leaf passed with only its pre-existing advisory
+service findings.
+
+The final follow-up deletes the two remaining direct `check.mjs` policy
+bypasses. The coarse Nx project-kind matrix is retired rather than translated;
+Nx and its module-boundary lint remain project graph authority. Magic's native
+Grit JSDoc law replaces the TypeScript import/export scanner on the admitted
+public lifecycle faces. The Runtime Realization lab's former 1,023-line walker
+is replaced by its closed Habitat topology and parser-visible source law, while
+the manifest validation above remains executable owner behavior. Native Grit
+fixtures pass all fifteen positive and negative samples.
+
+The final required check passes 39 projects and 84 prerequisite tasks in
+1 minute 15 seconds, with 78 of 123 tasks served from the Nx cache. Habitat's
+29-rule policy batch passes with only its two pre-existing advisory service
+corpora; its eighteen owner tests, TypeScript checks, the ten evidence-manifest
+cases, strict source-law fixtures, Workstream installer behavior, Oclif
+inventory acceptance, and retained owner behavior suites are green. A
+categorical live-tree audit finds no active hand-written repository source,
+structure, or topology authority outside Habitat. No provider, Personal
+repository, channel, release, or live installation state is touched.
 
 ## Settlement Oracles
 

@@ -687,7 +687,6 @@
         "phases/phase-two/handoffs/handoff-2026-05-01-post-phase-two-runtime-reframe.md"
       ],
       "gates": [
-        "structural",
         "report",
         "gate"
       ]
@@ -703,7 +702,6 @@
         "phases/phase-two/handoffs/handoff-2026-05-01-post-phase-two-runtime-reframe.md"
       ],
       "gates": [
-        "structural",
         "report"
       ]
     },
@@ -719,8 +717,7 @@
       ],
       "gates": [
         "oracle",
-        "report",
-        "structural"
+        "report"
       ]
     },
     {
@@ -732,7 +729,6 @@
         "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-native-boundary-observation-and-failure-semantics-ledger.md"
       ],
       "gates": [
-        "structural",
         "report"
       ]
     },
@@ -750,7 +746,6 @@
       "gates": [
         "typecheck",
         "oracle",
-        "structural",
         "report"
       ]
     },
@@ -767,7 +762,6 @@
       "gates": [
         "typecheck",
         "oracle",
-        "structural",
         "report"
       ]
     },
@@ -784,7 +778,6 @@
       "gates": [
         "typecheck",
         "oracle",
-        "structural",
         "report"
       ]
     },
@@ -800,7 +793,6 @@
       "gates": [
         "typecheck",
         "oracle",
-        "structural",
         "report"
       ]
     },
@@ -813,7 +805,6 @@
         "phases/phase-three/workstreams/workstream-2026-05-01-phase-three-live-runtime-passage-scope-and-claim-ledger.md"
       ],
       "gates": [
-        "structural",
         "report"
       ]
     },

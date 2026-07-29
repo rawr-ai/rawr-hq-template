@@ -81,16 +81,16 @@
   `verify`, Habitat `check:policy`, and dependency checks.
   Individual owners add only their qualified prerequisites: CLI owns Oclif
   source/build parity, while Habitat owns structural, repository-script, and
-  project-admission policy. `check:policy` is reserved for Habitat policy
-  rather than behavioral aliases.
+  source policy. `check:policy` is reserved for Habitat policy rather than
+  behavioral aliases.
 - `verify` is a narrow optional extension for deterministic required checks
   that do not reduce to lint, typecheck, or Habitat policy. It is owner-local,
   has no root aggregate, and grants no release or deployment authority.
 - `habitat:check` composes workspace lint, owner typecheck and tests, and
-  `check:policy`. `check:policy` composes the selected green local policy batch
-  and the rule-owned Nx project admission adapter; the independent ten-rule
-  `check:structure` leaf is Stop feedback, not an admission dependency. The
-  selected rule scopes are exact and their baselines are empty, but both CLI
+  `check:policy`. `check:policy` resolves to the selected green local policy
+  batch; the independent `check:structure` leaf is Stop feedback, not an
+  admission dependency. The selected rule scopes are exact and their baselines
+  are empty, but both CLI
   leaves remain uncached while exact Nx cache inputs are future upstream
   Habitat Nx-boundary work. This is not an assertion that every registered
   Habitat rule is active.
@@ -98,11 +98,9 @@
   Git-visible tree the rule inspects. Domain behavior tests and complete owner
   checks remain explicit owner commands; they are not hidden inside merge
   admission.
-- Nx derives the complete target population from the project graph. The current
-  bounded admission check requires exactly one `type:*` kind and a public
-  `check` on every non-root project, then requires `typecheck` on every code
-  project. Only `type:content` and `type:fixture` are exempt from that
-  project-local target; the root command maintains no project-name list.
+- Nx derives the complete target population from the project graph. The root
+  scheduler maintains no project-name list; project targets remain ordinary Nx
+  configuration rather than a second Habitat runner implemented in JavaScript.
 - `.habitat/**` is RAWR HQ-Template's small, positive structural authority
   tree. It constrains declared architectural kinds and relations, including
   the closed `scripts/` mechanics root, without expanding into app composition
@@ -122,9 +120,9 @@
   context, `Required lint, typecheck, and topology`.
 - The Civ-style project-owned `check` composition is active. Do not add a root
   Nx project target, nested scheduler, aggregate owner, or project-name batch.
-  The resolved-project constraint is a Habitat rule. Its `check.mjs` is the
-  narrow allowed adapter for the pinned standalone binary's missing native Nx
-  runner, not a second repository-policy surface.
+  Project targets are ordinary Nx configuration; do not emulate the pinned
+  standalone binary's unavailable native Nx runner with a manual policy
+  adapter.
 - Nx task ownership and cache behavior follow the
   [Nx agent workflow](../docs/process/NX_AGENT_WORKFLOW.md).
 

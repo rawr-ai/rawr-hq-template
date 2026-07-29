@@ -25,7 +25,7 @@
     },
     "typecheck": {
       "executor": "nx:run-commands",
-      "inputs": ["default", "^default", "typescriptRuntime", "habitatTypecheckSources"],
+      "inputs": ["default", "^default", "typescriptRuntime"],
       "options": {
         "command": "tsc -p scripts/habitat/tsconfig.json --noEmit"
       }
@@ -58,7 +58,7 @@
       "cache": false,
       "outputs": [],
       "options": {
-        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_repository_script_topology --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_nx_workspace_scheduler_scripts --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_agent_plugin_command_channel_source_relationships --rule require_hq_app_server_import_funnel --rule require_web_public_environment_funnel --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_proof_isolation --rule require_service_public_consumer_sealing --rule require_service_database_topology --rule require_service_database_import_funnel --rule require_service_contract_property_descriptions --rule require_api_service_contract_property_descriptions --rule require_resource_package_boundary --rule require_provider_package_boundary --rule require_service_boundary_platform_independence"
+        "command": "bun run habitat -- --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_repository_script_topology --rule require_exported_value_declarations_have_jsdoc --rule require_runtime_realization_lab_topology --rule require_runtime_realization_lab_source_relationships --rule require_agent_router_shape --rule require_grit_helper_comments --rule require_nx_workspace_scheduler_scripts --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_agent_plugin_command_channel_source_relationships --rule require_hq_app_server_import_funnel --rule require_web_public_environment_funnel --rule require_oclif_app_configuration --rule require_oclif_app_entrypoints --rule require_oclif_app_topology --rule require_oclif_command_plugin_configuration --rule require_oclif_command_plugin_topology --rule require_oclif_command_source_relationships --rule require_service_proof_isolation --rule require_service_public_consumer_sealing --rule require_service_database_topology --rule require_service_database_import_funnel --rule require_service_contract_property_descriptions --rule require_api_service_contract_property_descriptions --rule require_resource_package_boundary --rule require_provider_package_boundary --rule require_service_boundary_platform_independence"
       }
     },
     "check:structure": {
@@ -66,46 +66,12 @@
       "cache": false,
       "outputs": [],
       "options": {
-        "command": "bun run habitat -- --runner habitat --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_repository_script_topology --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_topology --rule require_oclif_command_plugin_topology --rule require_service_database_topology --rule require_resource_package_boundary --rule require_provider_package_boundary"
-      }
-    },
-    "check:project-admission": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/nx.json",
-        "{workspaceRoot}/package.json",
-        "{workspaceRoot}/**/package.json",
-        "{workspaceRoot}/**/project.json",
-        "{workspaceRoot}/.habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs",
-        "bunToolchain"
-      ],
-      "outputs": [],
-      "options": {
-        "command": "bun .habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs"
-      }
-    },
-    "check:documentation": {
-      "executor": "nx:run-commands",
-      "cache": true,
-      "inputs": [
-        "{workspaceRoot}/.habitat/blueprints/typescript-source/require_imported_exports_have_jsdoc/**/*",
-        "{workspaceRoot}/nx.json",
-        "{projectRoot}/project.json",
-        "{workspaceRoot}/@(apps|packages|plugins|resources|scripts|services|tools)/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
-        "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/tsconfig.json",
-        "{workspaceRoot}/{apps,packages,plugins,resources,scripts,services,tools}/**/package.json",
-        "typescriptRuntime",
-        "bunToolchain"
-      ],
-      "outputs": [],
-      "options": {
-        "command": "bun .habitat/blueprints/typescript-source/require_imported_exports_have_jsdoc/check.mjs"
+        "command": "bun run habitat -- --runner habitat --rule require_blueprint_packet_topology --rule require_agent_router_placement --rule require_repository_script_topology --rule require_runtime_realization_lab_topology --rule require_api_server_plugin_boundary --rule require_agent_plugin_command_channel_topology --rule require_oclif_app_topology --rule require_oclif_command_plugin_topology --rule require_service_database_topology --rule require_resource_package_boundary --rule require_provider_package_boundary"
       }
     },
     "check:policy": {
       "executor": "nx:noop",
-      "dependsOn": ["check:policy:local", "check:project-admission"]
+      "dependsOn": ["check:policy:local"]
     },
     "verify": {
       "executor": "nx:noop",
