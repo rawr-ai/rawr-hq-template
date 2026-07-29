@@ -13,8 +13,8 @@ state owners, failure boundaries, and deletion-first implementation sequence.
 
 Implementation is proceeding as independently green Graphite checkpoints.
 Provider settlement remains closed until the conventional installed CLI and
-bounded lifecycle path land. No canonical provider home, Personal record,
-repository release, or HF01 candidate was mutated by this correction.
+bounded lifecycle path land. No canonical provider home, Personal record, or
+repository release was mutated by this correction.
 
 ## Canonical Repositories
 
@@ -137,7 +137,7 @@ source-checkout renaming.
 | Provider package bytes | Selected Personal Git marketplace; native provider owns its snapshot/cache |
 | App/runtime composition | Separate architecture migration |
 | Destination/export realization | Separate architecture migration |
-| Inngest HF01 | Pending; exact skill identities, payload paths, and repository candidate roots must be excluded and proven by Personal content policy |
+| Inngest content | Accepted and landed on Personal `main`; `dev:inngest` and `dev:effect-inngest` use the normal closed release set, while `inngest-orpc` and research/candidate roots remain excluded |
 
 The conventional CLI package decision remains bounded by current Bun runtime
 use. A registry-published Oclif package whose executable requires installed Bun
@@ -1597,13 +1597,15 @@ slice touches their boundary:
 - oRPC and Effect-oRPC for contract/router/context/integration;
 - Effect/Platform for filesystem, process, and resource lifetime;
 - TypeBox for schema and generated-type authority;
-- newest Personal-worktree Inngest compatibility for protected content,
+- canonical Personal-main Inngest compatibility for accepted subject content,
   package closure, or provider settlement.
 
-The Inngest review uses
-`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/7d03/rawr-hq/plugins/agents/dev/skills/inngest/SKILL.md`
-at commit `75053b308f10dc3b37f94fdf774980b4febf24c9`, not the stale installed
-skill. It cannot authorize HF01 materialization or release.
+The Inngest review uses canonical Personal `main`
+`1e7f346b9b0fb7b356675d3e837295256bda7d0d` and reads
+`plugins/agents/dev/skills/inngest/SKILL.md`, then
+`plugins/agents/dev/skills/effect-inngest/SKILL.md` when Effect adaptation is
+present. Live provider caches remain stale until ordinary settlement. The
+review does not authorize a separate release path.
 
 ## Current Gates
 

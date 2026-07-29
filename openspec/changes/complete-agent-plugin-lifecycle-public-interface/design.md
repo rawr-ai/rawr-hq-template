@@ -381,23 +381,22 @@ pin a controller selector or vendor Template implementation. Once useful
 Personal-only content and records are preserved, remaining Template-derived
 code and process machinery are deleted from Personal rather than synchronized.
 
-### Protected lanes remain excluded
+### Accepted subject content uses the normal release path
 
-HF01 remains pending. The candidate is nested beneath the legitimate Personal
-`dev` plugin, so excluding a top-level member is insufficient. Personal's
-content policy MUST prove that the selected canonical tree and release input
-exclude the exact protected skill identities and payload-relative prefixes
-`skills/inngest/**`, `skills/effect-inngest/**`, and
-`skills/inngest-orpc/**`, plus the declared research/tool candidate roots. No
-refresh, packaging, projection, provider test, release, or settlement operation
-reads or mutates them. Template does not add an Inngest mode; the newest
-Personal-worktree Inngest skill is a review lens for compatibility only.
+The Inngest subject lane is `accepted-landed-read-only` on Personal `main`
+`1e7f346b9b0fb7b356675d3e837295256bda7d0d`. The accepted Inngest and
+Effect-Inngest skills live inside the legitimate Personal `dev` member and MUST
+enter the selected canonical tree and release input through that member's normal
+closed-world path. `inngest-orpc` and the declared research/tool candidate roots
+remain excluded. No separate member, materialization operation, package,
+projection, provider test, release, or settlement exception is introduced.
+Template does not add an Inngest lifecycle mode.
 
-The custom controller currently filters Inngest out of its packaged dependency
-closure. That filter is deleted rather than transplanted. The conventional CLI
-package graph MUST truthfully exclude server/workflow/Inngest runtime packages;
-if shared `@rawr/hq-sdk` dependency metadata changes, the legitimate
-`apps/server` Inngest runtime receives its own typecheck and behavior tests.
+The removed custom controller's Inngest filter is not transplanted. The
+conventional CLI package graph MUST truthfully exclude server, workflow, and
+Inngest runtime packages. If shared `@rawr/hq-sdk` dependency metadata changes,
+the legitimate `apps/server` Inngest runtime receives its own typecheck and
+behavior tests.
 
 The queued oRPC corrective skill release remains downstream of this
 normalization and the first `cognition:state-machine-design` settlement. It does
