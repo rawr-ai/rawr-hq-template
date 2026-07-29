@@ -3709,6 +3709,36 @@ architecture, TypeScript, structural-quality, and behavior-first testing
 reviews report no P0 or P1 findings. This checkpoint does not mutate Personal,
 a native provider home, or any live release channel.
 
+## Template Content Compatibility Retirement
+
+Template no longer carries a curated agent-content workspace. The
+`@rawr/plugin-hq` project, its 48 content and publication files, its workspace
+and lockfile identity, and the obsolete phase-one freeze gates leave together.
+The repository AGENTS law remains generic; only its now-invalid
+`plugins/agents/*` application is removed. Personal remains the sole content
+owner and receives no copy, comparison, merge, or edit from this checkpoint.
+
+The Hyperresearch hook no longer grants special source-capture treatment to the
+retired `rawr plugins sync hyperresearch` spelling. A behavioral oracle proves a
+URL-bearing legacy command is blocked while the qualified Hyperresearch command
+keeps its existing behavior. Active operator guidance now names the ordinary
+Oclif application and the retired custom distribution precisely rather than
+calling both a controller.
+
+Nx reports 40 projects with no `@rawr/plugin-hq`. Habitat's nine-rule structure
+batch and project-admission check pass, as do frozen lock resolution, the
+affected architecture gates, strict OpenSpec, and diff hygiene. The uncached
+CLI, lifecycle, and Hyperresearch build/typecheck/test graph passes 28 tasks in
+1 minute 16 seconds. Source and built Oclif inventories agree, and the
+disposable native extension round trip installs, lists, invokes, and removes
+the fixture through `@oclif/plugin-plugins`.
+
+The legacy aggregate architecture script still reports two unchanged
+non-lifecycle findings owned by later app/runtime containers:
+`apps/hq/src/manifest.ts` and `apps/server/src/request-context.ts`. This
+checkpoint neither masks nor repairs them. No Personal repository, provider
+home, release channel, or app/runtime composition state is mutated.
+
 ## Settlement Oracles
 
 The final product must prove:

@@ -49,7 +49,7 @@ A plugin can be added as a Template fixture only when:
 
 The fixed Nx Release package group is pending. Until it lands, use
 `bun run rawr -- ...` for CLI development and do not restore the removed custom
-controller installer, selector, or release store.
+distribution installer, selector, or release store.
 
 ## Quality Gates
 

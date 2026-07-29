@@ -8,8 +8,8 @@
 
 ## Near-Term Milestones
 
-1. Close official controller and external-extension authority under Template.
-2. Publish curated agent lifecycle schemas/protocols and immutable artifacts.
+1. Publish the official Oclif application and preserve native external-extension authority.
+2. Publish curated agent lifecycle schemas, protocols, and ordinary release artifacts.
 3. Complete independent personal content migration and provider/export settlement.
 
 ## Later (Parked / Future)

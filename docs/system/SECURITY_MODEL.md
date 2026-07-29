@@ -36,7 +36,7 @@ Reports are written to:
 The repo does not run dependency or staged security checks from `scripts/githooks/pre-commit`.
 Security checks remain explicit command and plugin-enablement gates.
 
-Repository hooks do not run controller lifecycle commands or preserve a mirrored
+Repository hooks do not run CLI lifecycle commands or preserve a mirrored
 Template tree in another repository. Lifecycle validation is an explicit
 exact-version tool operation at its owning boundary.
 

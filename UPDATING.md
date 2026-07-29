@@ -19,8 +19,8 @@ bun run rawr -- --version
 
 The conventional fixed Nx Release package group and ordinary package
 installation are still pending. Do not publish the current predecessor closure,
-invent a package version, or restore the removed controller installer, selector,
-release store, or launcher. A previously installed custom controller may remain
+invent a package version, or restore the removed custom installer, selector,
+release store, or launcher. A previously installed custom distribution may remain
 executable on a workstation, but it is obsolete, is not updated, and is not
 authority for development or acceptance.
 
@@ -30,7 +30,7 @@ Update personal from its own `origin`. Once the ordinary Template-owned CLI
 package is published, personal may invoke that externally installed tool at an
 exact package and schema/protocol version accepted by its governed content
 records. Until then, installed-package cross-repository settlement remains
-pending; do not substitute a checkout link or the old custom controller.
+pending; do not substitute a checkout link or the retired custom distribution.
 
 Do not add a Template remote, merge or cherry-pick Template commits, copy runtime
 files, or use tree equivalence as compatibility proof.

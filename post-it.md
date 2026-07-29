@@ -6,6 +6,25 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-28 - Reveal The Native Wires
+
+The service shape is sealed. The next reduction removes compatibility material
+that still hides the ordinary product flow. Oclif owns application composition,
+installation, release, and external extensions. The lifecycle service owns the
+qualified curated-content decisions behind `rawr agent plugins`. Personal owns
+the content. Native providers own installed state. Template needs no copied
+content, custom distribution identity, or legacy sync interpretation between
+those owners.
+
+Each checkpoint now deletes one obsolete reader and writer together, proves the
+surviving native boundary, and lands before another concern opens. Historical
+evidence remains historical; active guidance names only the surviving owners.
+
+### Bag Of Keywords
+
+Oclif, lifecycle, content, provider, owner, command, package, deletion,
+closure, settlement.
+
 ## 2026-07-28 - Ratchet The Known Service
 
 The service kind is already settled in Magic's Jobs and Candidates services.

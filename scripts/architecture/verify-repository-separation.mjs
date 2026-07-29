@@ -41,7 +41,7 @@ const forbiddenOperationalText = [
   ["Template upstream merge", /git\s+(?:merge|rebase|cherry-pick)[^\n]*upstream/u],
   ["Template upstream fetch", /git\s+fetch\s+upstream/u],
   ["tree-preservation guard", /template-managed-paths|check-template-managed/u],
-  ["source controller target", /apps\/cli\/bin\/run\.js/u],
+  ["source-checkout CLI target", /apps\/cli\/bin\/run\.js/u],
   ["checkout owner identity", /global-rawr-owner-path/u],
   ["mixed lifecycle convergence", /rawr\s+plugins\s+(?:sync\s+all|converge|doctor\s+links)/u],
 ];

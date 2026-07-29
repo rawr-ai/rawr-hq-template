@@ -436,12 +436,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 
 ## 4. Custom Controller Deletion
 
-- [ ] 4.1 Complete tasks 4.2a through 4.5 so no controller identity or path
+- [x] 4.1 Complete tasks 4.2a through 4.5 so no controller identity or path
   remains in CLI composition, lifecycle state, diagnostics, service
   dependencies, publication, or operator guidance. Oclif may use its ordinary
   application directories; curated lifecycle MUST introduce no durable local
   data root.
-- [ ] 4.2 Delete the custom controller in two independently green Graphite
+- [x] 4.2 Delete the custom controller in two independently green Graphite
   nodes; do not combine distribution deletion with lifecycle context changes.
 - [x] 4.2a Delete `scripts/controller/**`, the controller publication workflow,
   `packages/controller-release/**`, controller-only CLI classification,
@@ -465,12 +465,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Task 8.3 applies those deltas atomically when this change archives; do not
   hand-edit canonical specifications in parallel, add compatibility aliases, or
   scan old local controller stores.
-- [ ] 4.6 Prove direct source and built Oclif execution cover every retained
+- [x] 4.6 Prove direct source and built Oclif execution cover every retained
   command and that no tracked source imports or invokes the retired verticals.
   Run workspace lint plus affected typecheck/build/test/Habitat and standing deletion and
   architecture reviews. Land coherent controller deletion nodes without
   reopening the extension manager removed in task 2.2. Task 3.4 separately
   proves the later conventional installed package.
+- [x] 4.6a Retire Template's remaining curated agent-content compatibility
+  workspace and its phase-one freeze gates. Remove active guidance and test
+  fixtures that still grant lifecycle meaning to the deleted custom controller
+  or the legacy `rawr plugins sync` surface. Preserve native Oclif extension
+  management under `rawr plugins` and the qualified lifecycle under
+  `rawr agent plugins`; copy nothing to or from Personal and mutate no provider
+  home.
 
 ## 5. Bounded Agent-Plugin Lifecycle Service
 
