@@ -67,13 +67,6 @@ mode = "open"
 required = ["AGENTS.md"]
 
 [[scopes]]
-name = "agent-plugin-package-routers"
-root = "plugins/agents/!(*.*)"
-kind = "directory"
-mode = "open"
-required = ["AGENTS.md"]
-
-[[scopes]]
 name = "web-plugin-package-routers"
 root = "plugins/web/!(*.*)"
 kind = "directory"
