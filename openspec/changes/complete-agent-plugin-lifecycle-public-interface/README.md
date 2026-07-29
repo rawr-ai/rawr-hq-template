@@ -3548,6 +3548,31 @@ service suite passes all 377 cases across 43 files in 37.3 seconds. Every new
 cross-file export has declaration-site JSDoc; the repository-wide documentation
 target still exposes its separately tracked pre-existing red corpus.
 
+## Vendors Module Burn-Down
+
+Vendors now follows the indexed module law under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21u]]. Its
+TypeBox-backed `status` and `update` contract operations occupy matching
+semantic leaves. The former source-lifecycle router group is split into the
+two filename-mapped Effect operation leaves; `contract/index.ts` and
+`router/index.ts` only compose the same public keys. The flat faces and
+`.router.ts` group name leave in the same cut.
+
+This is a topology migration, not a behavior or authority change. Syntax-token
+comparison proves both extracted handler initializers equal their previous
+forms. The move preserves the module's curated clock, content-workspace, and
+versioned-content context; read-only status observation; interruptible update
+preflight; the uninterruptible capture, apply, restore, and settlement
+boundary; result variants; failures; defects; and interruption. No module
+model, policy, context, resource, provider, public key, Personal content, or
+live state changes. The uncached service typecheck passes in 12.8 seconds, and
+all 43 focused Vendors and service-spine cases pass in 1.9 seconds. The
+complete service suite passes all 377 cases across 43 files in 36.1 seconds.
+The repository check completes all 40 project checks and 118 resolved tasks in
+1 minute 8 seconds. The oRPC/Effect-oRPC, behavior/testing, and
+TypeScript/structural standing reviews accept the checkpoint without P0, P1,
+or P2 findings.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect
