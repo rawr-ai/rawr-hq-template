@@ -7,6 +7,7 @@ import {
 } from "../model/policy/staged-content-workspace";
 import { module } from "../module";
 
+/** Refreshes the canonical release input from one immutable staged observation request. */
 export const refreshReleaseInput = module.refreshReleaseInput.effect(function* ({
   context,
   input,

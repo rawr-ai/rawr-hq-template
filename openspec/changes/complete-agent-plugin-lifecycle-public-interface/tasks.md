@@ -1505,6 +1505,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   same cut. Preserve exact public operation keys, TypeBox contracts, context
   curation, handler bodies, Git observation order, and result behavior. Add no
   resource, provider, policy, alias, or second module face.
+- [x] 5.7e21q Migrate Releases into the indexed service law. Split its four
+  contract operations into semantic leaves, retain each authored handler as
+  one semantic router leaf, compose only plain objects from
+  `contract/index.ts` and `router/index.ts`, and delete the flat faces and
+  `.router.ts` names in the same cut. Preserve exact public operation keys,
+  TypeBox contracts, module context, clean and staged observation order,
+  revalidation, release-input encoding, results, and failures. Add no resource,
+  provider, policy, alias, compatibility face, or second operation path.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

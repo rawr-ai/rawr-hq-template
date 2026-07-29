@@ -36,6 +36,7 @@ import {
 } from "../model/policy/staged-content-workspace";
 import { module } from "../module";
 
+/** Observes and revalidates one clean or staged repository snapshot for release use. */
 export const checkRepository = module.checkRepository.effect(function* ({
   context,
   input: request,
