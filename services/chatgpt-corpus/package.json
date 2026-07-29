@@ -1,6 +1,7 @@
 {
   "name": "@rawr/chatgpt-corpus",
-  "private": true,
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
   "packageManager": "bun@1.3.7",
   "main": "./src/index.ts",
@@ -54,5 +55,8 @@
       "type:service",
       "role:servicepackage"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

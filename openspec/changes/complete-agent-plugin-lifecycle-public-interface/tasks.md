@@ -409,13 +409,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   type vendor-neutral, and keep the concrete `Inngest` type at the server host.
   Record the exact nineteen-package closure without versioning, packing,
   publishing, provider mutation, or protected-lane content changes.
-- [ ] 3.2 Give `@rawr/cli` a real version and release metadata. Configure the
+- [x] 3.2 Give `@rawr/cli` a real version and release metadata. Configure the
   coherent publishable runtime group under top-level `nx.json#release`; private
   workspace dependencies must be versioned, bundled by a standard tool, or
   removed from the published closure. Derive this group only after tasks 4,
   5.5, 5.6, and 5.6a; do not version or publish predecessor machinery merely to
   unblock packing.
-- [ ] 3.3 Add owner-local Oclif generated-manifest project targets with
+- [x] 3.3 Add owner-local Oclif generated-manifest project targets with
   declared Nx inputs and outputs. Install the matching `@nx/js` plugin and use
   its inferred `nx-release-publish` target for every public, versioned member
   rather than adding a custom package or publish target. Use `nx release` for

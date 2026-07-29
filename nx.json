@@ -1,5 +1,33 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "release": {
+    "groups": {
+      "rawr-cli": {
+        "projects": [
+          "@rawr/agent-plugin-lifecycle",
+          "@rawr/chatgpt-corpus",
+          "@rawr/cli",
+          "@rawr/core",
+          "@rawr/dev",
+          "@rawr/dev-node",
+          "@rawr/hq-ops",
+          "@rawr/hq-sdk",
+          "@rawr/hyperresearch-codex",
+          "@rawr/plugin-chatgpt-corpus",
+          "@rawr/plugin-devops",
+          "@rawr/plugin-hyperresearch",
+          "@rawr/plugin-session-tools",
+          "@rawr/resource-agent-plugin-package-output",
+          "@rawr/resource-content-workspace",
+          "@rawr/resource-native-agent-provider",
+          "@rawr/resource-versioned-content",
+          "@rawr/session-intelligence",
+          "@rawr/typebox-adapter"
+        ],
+        "projectsRelationship": "fixed"
+      }
+    }
+  },
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "!{projectRoot}/dist/**", "!{projectRoot}/coverage/**"],
     "production": [
@@ -60,6 +88,9 @@
         "!{projectRoot}/oclif.manifest.json"
       ],
       "outputs": ["{projectRoot}/oclif.manifest.json"]
+    },
+    "nx-release-publish": {
+      "dependsOn": ["build", "manifest"]
     },
     "typecheck": {
       "cache": true,
