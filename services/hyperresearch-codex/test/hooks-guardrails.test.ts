@@ -160,18 +160,53 @@ describe("Hyperresearch Codex hook guardrails", () => {
     ).toBe("block");
   });
 
-  it("allows Hyperresearch service commands", () => {
+  it("allows URL-bearing Hyperresearch service commands", () => {
     expect(
       decidePreToolUse({
         payload: basePayload({
           tool_name: "Bash",
           tool_input: {
             command:
-              "bun run --cwd apps/cli rawr hyperresearch codex validate --ledger /tmp/run.json --backend fixture --json",
+              'bun run --cwd apps/cli rawr hyperresearch codex start --query "Summarize https://example.com/source" --vault /tmp/vault --steps /tmp/steps.json --backend fixture --json',
           },
         }),
       })
     ).toEqual({ action: "allow" });
+  });
+
+  it("blocks retired plugins sync commands from bypassing source capture", () => {
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: {
+            command: "rawr plugins sync hyperresearch https://example.com/source --agent codex",
+          },
+        }),
+      })
+    ).toEqual({
+      action: "block",
+      reason:
+        "Hyperresearch source access must route through packet sourceUrls and service source capture before generic shell fetch/search commands run.",
+    });
+  });
+
+  it("blocks mixed legacy and qualified commands from inheriting capture status", () => {
+    expect(
+      decidePreToolUse({
+        payload: basePayload({
+          tool_name: "Bash",
+          tool_input: {
+            command:
+              "rawr plugins sync hyperresearch https://example.com/source --agent codex ; rawr hyperresearch codex validate --ledger /tmp/run.json",
+          },
+        }),
+      })
+    ).toEqual({
+      action: "block",
+      reason:
+        "Hyperresearch source access must route through packet sourceUrls and service source capture before generic shell fetch/search commands run.",
+    });
   });
 
   it("allows explicitly routed source URLs", () => {
