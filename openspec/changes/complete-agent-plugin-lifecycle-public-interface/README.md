@@ -3990,6 +3990,30 @@ all 19 cases, owner typecheck passes, and Habitat reports no Packaging router
 or topology finding. No policy, resource, provider, middleware, contract,
 test, Personal repository, or live provider state changes.
 
+## Vendors Router Migration
+
+Vendors is the third production module to consume the restored router law. Its
+`status` and `update` operation bytes move unchanged to
+`router/status.router.ts` and `router/update.router.ts`. Their SHA-256 digests
+remain `4bdf31b7c3033676315960dc8fcc4182525c62c6dda088391d3812b3d18abb7c`
+and `724f7a05194b16fad17ae6ef92e2ccf6c3af47f72ebefa56feb09454d73da896`.
+The former router barrel becomes module-root `router.ts`, and only its two
+relative leaf imports change. The root service retains its
+`./modules/vendors/router` import.
+
+The module branch and curated context, TypeBox contracts, inline Effect
+handlers, public keys, status observation, held and diverged classification,
+materialization clock, capture/revalidation/apply/restore/settlement order,
+results, failures, defects, and interruption remain unchanged. The old router
+barrel and unsuffixed leaf paths disappear without aliases. Three focused
+Vendors and service-spine files pass all 37 tests, owner typecheck passes, and
+the six advisory service laws report no Vendors finding. Their 359 unaffected
+advisory diagnostics remain outside Vendors: 13 in the predecessor Providers
+and Releases router shapes and 346 elsewhere in the service corpus. Strict
+OpenSpec, Biome on the three TypeScript destinations, and diff hygiene pass.
+No policy, resource, provider, middleware, contract, test, Personal repository,
+or live state changes.
+
 ## Git-Backed Declarative Release Input
 
 The unpublished version-1 release input is recut in place as a declaration

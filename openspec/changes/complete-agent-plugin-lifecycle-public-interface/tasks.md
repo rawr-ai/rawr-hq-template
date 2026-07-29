@@ -1661,6 +1661,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   defects, interruption, and root service composition. Delete the predecessor
   paths without aliases. Add no policy, resource, provider, middleware,
   contract, test, script, or live-state change.
+- [x] 5.7e21z1 Migrate Vendors as the third production consumer of the
+  restored router law. Move the `status` and `update` operation leaves
+  byte-for-byte to `router/status.router.ts` and `router/update.router.ts`;
+  move the former router barrel to module-root `router.ts`; and change only its
+  two relative leaf imports. Preserve the module branch and curated context,
+  TypeBox contracts, inline Effect handlers, public keys, status observation,
+  held and diverged classification, materialization clock,
+  capture/revalidation/apply/restore/settlement order, results, failures,
+  defects, interruption, and the root service's
+  `./modules/vendors/router` import. Delete the predecessor paths without
+  aliases. Add no policy, resource, provider, middleware, contract, test,
+  script, or live-state change.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution
