@@ -437,23 +437,23 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   version/changelog/publication without dispatching a release from unlanded
   source. Produce ordinary artifact-level checksums and release provenance, not
   a per-file runtime envelope.
-- [ ] 3.3a Inspect the packed and installed dependency closure. It must exclude
+- [x] 3.3a Inspect the packed and installed dependency closure. It must exclude
   unused app-server, workflow, async-runtime, and Inngest packages without
   post-pack manifest rewriting. If `@rawr/hq-sdk` dependency metadata changes,
   run the legitimate `@rawr/server` typecheck and behavior tests.
-- [ ] 3.4 Install the local packed tarballs into a disposable prefix before
+- [x] 3.4 Install the local packed tarballs into a disposable prefix before
   landing. An acceptance-only package manifest names every release-group member
   by `file:` tarball; it rewrites no packed metadata and emulates no registry.
   Prove `rawr --version`, help, core command discovery, native external extension
   management, and one read-only agent-plugin status call.
-- [ ] 3.5 Verify the package inventory, generated command manifests, installed
+- [x] 3.5 Verify the package inventory, generated command manifests, installed
   first-party command ontology, and ordinary artifact checksums/provenance. Do
   not add a custom canonicalizer, build-twice byte-identity gate, selector, or
   retained release store.
-- [ ] 3.6 Run workspace lint, package-owner typecheck and behavior, Habitat, and standing
-  Oclif/Nx/release reviews. Land this node after the rejected distribution,
-  persistent lifecycle stores, and obsolete Effect 3 family are absent from the
-  packed closure.
+- [x] 3.6 Run workspace lint, package-owner typecheck and behavior, Habitat, and
+  standing Oclif/Nx/release reviews.
+- [ ] 3.6a Land this node after the rejected distribution, persistent lifecycle
+  stores, and obsolete Effect 3 family are absent from the packed closure.
 - [ ] 3.7 Only after the package source lands on canonical `main` and its required
   release gate passes, publish the versioned registry package and repeat the
   version/help/command-inventory smoke from a registry-installed disposable

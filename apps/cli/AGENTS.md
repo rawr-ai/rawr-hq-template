@@ -61,5 +61,7 @@
 - `bunx nx run @rawr/cli:typecheck`
 - `bunx nx run @rawr/cli:test`
 - `bunx nx run @rawr/cli:acceptance:oclif`
+- `bunx nx run @rawr/cli:acceptance:oclif-installed-package` when installed
+  package behavior or the public CLI release closure changes
 - `bunx nx run @rawr/cli:acceptance:oclif-native-plugins` when native extension
   installation behavior changes
