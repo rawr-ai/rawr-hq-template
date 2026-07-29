@@ -7,14 +7,19 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { DeclaredOwnershipClaim } from "#agent-plugin-lifecycle-service/model/dto/distribution-ownership";
 import type {
   ContentAuthority,
   PluginId,
 } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { RELEASE_INPUT_SCHEMA_VERSION } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+import {
+  RELEASE_INPUT_SCHEMA_VERSION,
+  type ReleaseMemberDeclaration,
+} from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
 import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
+import { deriveAgentPluginPayloadInventory } from "#agent-plugin-lifecycle-service/model/policy/distribution-ownership";
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
@@ -63,8 +68,8 @@ export function authorReleaseInputRefresh(
     existing?.body.members.map((member) => [member.pluginId, member] as const) ?? []
   );
   const selectedMembers = new Set(input.members.map((member) => member.pluginId));
-  const members: unknown[] = [];
-  const skillClaims: unknown[] = [];
+  const members: ReleaseMemberDeclaration[] = [];
+  const skillClaims: DeclaredOwnershipClaim[] = [];
 
   for (const member of input.members) {
     const payloadResult = createAgentPluginPayload(member.payloadEntries);
@@ -74,30 +79,30 @@ export function authorReleaseInputRefresh(
         issues: payloadResult.issues,
       });
     }
-    const skillInventory = payloadResult.value.manifest.flatMap((entry) => {
-      const match = /^skills\/([^/]+)\/SKILL\.md$/u.exec(entry.path);
-      if (match?.[1] === undefined) return [];
-      const inventory = Object.freeze({ identity: match[1], manifestPath: entry.path });
+    const inventory = deriveAgentPluginPayloadInventory(
+      payloadResult.value.manifest,
+      `releaseInputRefresh.members.${member.pluginId}.payloadManifest`
+    );
+    if (!inventory.ok) {
+      return Object.freeze({
+        kind: "ReleaseInputRejected" as const,
+        issues: inventory.issues,
+      });
+    }
+    for (const identity of inventory.value.skillIdentities) {
       skillClaims.push(
         Object.freeze({
           kind: "skill",
-          identity: match[1],
+          identity,
           ownerPluginId: member.pluginId,
         })
       );
-      return [inventory];
-    });
+    }
     const prior = existingMembers.get(member.pluginId);
     members.push(
       Object.freeze({
         kind: "agent-plugin",
         pluginId: member.pluginId,
-        skillInventory: Object.freeze(skillInventory),
-        payload: Object.freeze({
-          protocolVersion: payloadResult.value.protocolVersion,
-          manifest: payloadResult.value.manifest,
-          payloadDigest: payloadResult.value.payloadDigest,
-        }),
         vendor: prior?.vendor ?? Object.freeze([]),
         curation: prior?.curation ?? Object.freeze([]),
       })

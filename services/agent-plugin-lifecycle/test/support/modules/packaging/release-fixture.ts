@@ -45,13 +45,10 @@ export function packagingReleaseFixture(
     createAgentPluginReleaseInput({
       schemaVersion: 1,
       contentAuthority: "generated-content",
-      members: [
-        member("alpha", alphaPayload, "alpha-skill"),
-        member("beta", betaPayload, "beta-skill"),
-      ],
+      members: [member("alpha", alphaPayload), member("beta", betaPayload)],
       ownershipClaims: [
-        { kind: "skill", identity: "alpha-skill", ownerPluginId: "alpha" },
-        { kind: "skill", identity: "beta-skill", ownerPluginId: "beta" },
+        { kind: "skill", identity: "alpha", ownerPluginId: "alpha" },
+        { kind: "skill", identity: "beta", ownerPluginId: "beta" },
       ],
       locks: [binding("lock", "lock-v1", "lock\n")],
       qualityPolicies: [binding("quality", "quality-v1", "quality\n")],
@@ -87,22 +84,10 @@ function payload(
   );
 }
 
-function member(
-  pluginId: string,
-  pluginPayload: AgentPluginPayload,
-  skillIdentity: string
-): Record<string, unknown> {
+function member(pluginId: string, _pluginPayload: AgentPluginPayload): Record<string, unknown> {
   return {
     kind: "agent-plugin",
     pluginId,
-    skillInventory: pluginPayload.manifest
-      .filter((entry) => /^skills\/[^/]+\/SKILL\.md$/u.test(entry.path))
-      .map((entry) => ({ identity: skillIdentity, manifestPath: entry.path })),
-    payload: {
-      protocolVersion: pluginPayload.protocolVersion,
-      manifest: pluginPayload.manifest,
-      payloadDigest: pluginPayload.payloadDigest,
-    },
     vendor: [binding(`vendor-${pluginId}`, "vendor-v1", `${pluginId}-vendor\n`)],
     curation: [binding(`curation-${pluginId}`, "curation-v1", `${pluginId}-curation\n`)],
   };

@@ -1,7 +1,6 @@
 import type { AgentPluginReleaseSet } from "../dto/agent-plugin-release-set";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import { canonicalJsonLine } from "./canonical-json";
-import { completenessWitnessValue } from "./completeness-witness";
 import { ownershipIndexValue } from "./distribution-ownership";
 
 type AgentPluginReleaseSetBodyCandidate = Omit<AgentPluginReleaseSet["body"], "members"> &
@@ -26,7 +25,6 @@ function agentPluginReleaseSetBodyValue(
     sourceCommit: body.sourceCommit,
     sourceTree: body.sourceTree,
     releaseInputDigest: body.releaseInputDigest,
-    completenessWitness: completenessWitnessValue(body.completenessWitness),
     ownershipIndex: ownershipIndexValue(body.ownershipIndex),
     members: body.members.map((member) => ({
       pluginId: member.pluginId,

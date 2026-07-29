@@ -25,7 +25,7 @@ import {
 import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
-import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
+import { validateAgentPluginPayloadOwnership } from "#agent-plugin-lifecycle-service/model/policy/distribution-ownership";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -36,8 +36,8 @@ import {
 } from "#agent-plugin-lifecycle-service/model/policy/release-identity";
 import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
 import {
-  addReleaseSetPayloadBytes,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
+  totalReleaseSetPayloadBytes,
 } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
 import {
   normalizeReleaseSourceChangedDetail,
@@ -137,7 +137,10 @@ export function releaseInputObservationRequest(
 ): ObserveStagedIndexInput {
   return Object.freeze({
     locator: policy.locator,
-    remoteSelection: Object.freeze({ kind: "Named", remoteName: policy.remoteName }),
+    remoteSelection: Object.freeze({
+      kind: "Named",
+      remoteName: policy.remoteName,
+    }),
     refName: policy.refName,
     materializedPaths: Object.freeze([policy.releaseInputPath]),
     materializedRoots: Object.freeze([]),
@@ -153,7 +156,10 @@ export function materializationObservationRequest(
 ): ObserveStagedIndexInput {
   return Object.freeze({
     locator: policy.locator,
-    remoteSelection: Object.freeze({ kind: "Named", remoteName: policy.remoteName }),
+    remoteSelection: Object.freeze({
+      kind: "Named",
+      remoteName: policy.remoteName,
+    }),
     refName: policy.refName,
     materializedPaths: Object.freeze([policy.releaseInputPath]),
     materializedRoots: Object.freeze(
@@ -354,7 +360,12 @@ export function classifyStagedReleaseInputObservation(
       );
       if (!memberRootResult.ok)
         return stagedIneligible("ReleaseInputMismatch", "member root is not canonical");
-      memberRoots.push(Object.freeze({ pluginId: member.pluginId, root: memberRootResult.value }));
+      memberRoots.push(
+        Object.freeze({
+          pluginId: member.pluginId,
+          root: memberRootResult.value,
+        })
+      );
     }
     const declaredPluginIssue = validateDeclaredPluginTree({
       pluginRoot: policy.pluginRoot,
@@ -364,9 +375,6 @@ export function classifyStagedReleaseInputObservation(
     if (declaredPluginIssue !== undefined) {
       return stagedIneligible(declaredPluginIssue.code, declaredPluginIssue.detail);
     }
-    const aggregateIssue = preflightAggregatePayloadBytes(releaseInput);
-    if (aggregateIssue !== undefined) return stagedIneligible("PayloadMismatch", aggregateIssue);
-
     return Object.freeze({
       kind: "ReadyForMaterialization",
       opening: observation.opening,
@@ -413,36 +421,33 @@ export function classifyStagedMaterializationObservation(
       )?.root;
       if (memberRoot === undefined)
         return stagedIneligible("ReleaseInputMismatch", "member root is missing");
-      const payloadEntries: Array<{ path: ReleaseRelativePath; mode: number; bytes: Uint8Array }> =
-        [];
-      for (const declared of member.payload.manifest) {
-        const repositoryPathResult = parseReleaseRelativePath(
-          `${memberRoot}/${declared.path}`,
+      const payloadEntries: Array<{
+        path: ReleaseRelativePath;
+        mode: number;
+        bytes: Uint8Array;
+      }> = [];
+      const entriesUnderRoot = entries
+        .filter((entry) => entry.path.startsWith(`${memberRoot}/`))
+        .sort((left, right) => compareCanonicalText(left.path, right.path));
+      if (entriesUnderRoot.length === 0) {
+        return stagedIneligible(
+          "PayloadMismatch",
+          `declared staged payload root ${memberRoot} contains no files`
+        );
+      }
+      for (const entry of entriesUnderRoot) {
+        const relativePathResult = parseReleaseRelativePath(
+          entry.path.slice(memberRoot.length + 1),
           "repositoryPayloadPath"
         );
-        if (!repositoryPathResult.ok) {
-          return stagedIneligible("ReleaseInputMismatch", "payload path is not canonical");
-        }
-        const repositoryPath = repositoryPathResult.value;
-        const entry = entries.find((candidate) => candidate.path === repositoryPath);
-        if (entry === undefined)
-          return stagedIneligible("PayloadMismatch", `missing staged payload ${repositoryPath}`);
+        if (!relativePathResult.ok)
+          return stagedIneligible("PayloadMismatch", "payload path is not canonical");
         payloadEntries.push({
-          path: declared.path,
+          path: relativePathResult.value,
           mode: entry.mode,
           bytes: requireStagedBlob(blobByObjectId, entry),
         });
-        admitted.add(repositoryPath);
-      }
-      if (
-        entries.some(
-          (entry) => entry.path.startsWith(`${memberRoot}/`) && !admitted.has(entry.path)
-        )
-      ) {
-        return stagedIneligible(
-          "PayloadMismatch",
-          `staged payload root ${memberRoot} contains undeclared files`
-        );
+        admitted.add(entry.path);
       }
       const payloadResult = createAgentPluginPayload(payloadEntries);
       if (!payloadResult.ok) {
@@ -451,22 +456,41 @@ export function classifyStagedMaterializationObservation(
           payloadResult.issues.map((issue) => issue.code).join(",")
         );
       }
-      if (
-        payloadResult.value.payloadDigest !== member.payload.payloadDigest ||
-        !samePayloadManifest(payloadResult.value.manifest, member.payload.manifest)
-      )
+      const ownershipIssues = validateAgentPluginPayloadOwnership(
+        releaseInputClassification.releaseInput.ownershipIndex,
+        member.pluginId,
+        payloadResult.value.manifest,
+        `release.payloads.${member.pluginId}.manifest`
+      );
+      if (ownershipIssues.length > 0) {
         return stagedIneligible(
           "PayloadMismatch",
-          `payload declaration differs for ${member.pluginId}`
+          ownershipIssues.map((issue) => issue.code).join(",")
         );
-      payloads.push(Object.freeze({ pluginId: member.pluginId, payload: payloadResult.value }));
+      }
+      payloads.push(
+        Object.freeze({
+          pluginId: member.pluginId,
+          payload: payloadResult.value,
+        })
+      );
+    }
+    if (!totalReleaseSetPayloadBytes(payloads).ok) {
+      return stagedIneligible(
+        "PayloadMismatch",
+        `release input payloads exceed ${MAX_RELEASE_SET_PAYLOAD_BYTES} decoded bytes`
+      );
     }
 
     const objectBindings = Object.freeze(
       [...admitted].sort(compareCanonicalText).map((path) => {
         const entry = entries.find((candidate) => candidate.path === path);
         if (entry === undefined) throw new Error(`missing admitted staged path ${path}`);
-        return Object.freeze({ path, objectId: entry.objectId, mode: entry.mode });
+        return Object.freeze({
+          path,
+          objectId: entry.objectId,
+          mode: entry.mode,
+        });
       })
     );
     const commit = parsedGitCommit(anchor.commit);
@@ -482,7 +506,10 @@ export function classifyStagedMaterializationObservation(
       objectBindings,
       blobs: [...observation.blobs]
         .sort((left, right) => compareCanonicalText(left.objectId, right.objectId))
-        .map((blob) => ({ objectId: blob.objectId, digest: hashBytes(blob.bytes) })),
+        .map((blob) => ({
+          objectId: blob.objectId,
+          digest: hashBytes(blob.bytes),
+        })),
     });
     return {
       kind: "StagedContentWorkspaceEligible",
@@ -665,19 +692,6 @@ function sameStagedIndexEntries(
   );
 }
 
-function preflightAggregatePayloadBytes(releaseInput: AgentPluginReleaseInput): string | undefined {
-  let aggregateBytes = 0;
-  for (const member of releaseInput.body.members) {
-    for (const entry of member.payload.manifest) {
-      const next = addReleaseSetPayloadBytes(aggregateBytes, entry.byteLength);
-      if (!next.ok)
-        return `release input payloads exceed ${MAX_RELEASE_SET_PAYLOAD_BYTES} decoded bytes`;
-      aggregateBytes = next.value;
-    }
-  }
-  return undefined;
-}
-
 function parsedGitCommit(value: string) {
   const parsed = parseGitCommitId(value);
   if (!parsed.ok) throw stagedError("WrongCommit", "observed HEAD commit is not canonical");
@@ -699,7 +713,10 @@ function refreshMemberRoots(
   for (const memberId of request.memberIds) {
     const parsedMember = parsePluginId(memberId, "releaseInputRefresh.memberIds");
     if (!parsedMember.ok) {
-      return Object.freeze({ ok: false, detail: "member identity is not canonical" });
+      return Object.freeze({
+        ok: false,
+        detail: "member identity is not canonical",
+      });
     }
     const parsedRoot = parseReleaseRelativePath(
       `${request.contentWorkspace.pluginRoot}/${parsedMember.value}`,
@@ -756,7 +773,10 @@ function stagedIneligible(
   code: SourceEligibilityIssueCode,
   detail: string
 ): Extract<StagedContentWorkspaceInspection, { kind: "StagedContentWorkspaceIneligible" }> {
-  return { kind: "StagedContentWorkspaceIneligible", issues: [sourceIssue(code, detail)] };
+  return {
+    kind: "StagedContentWorkspaceIneligible",
+    issues: [sourceIssue(code, detail)],
+  };
 }
 
 function sourceChanged(

@@ -28,14 +28,11 @@ const encoder = new TextEncoder();
 
 describe("release-input policy", () => {
   it("fixes canonical body and envelope bytes while preserving identity across declaration order", () => {
-    const { body, payload } = tinyReleaseInputBody();
+    const { body } = tinyReleaseInputBody();
     const releaseInput = must(createAgentPluginReleaseInput(body));
-    const manifestEntry = payload.manifest[0]!;
     const expectedBodyLine =
       '{"schemaVersion":1,"contentAuthority":"personal-rawr-hq","members":[' +
-      '{"kind":"agent-plugin","pluginId":"alpha","skillInventory":[],"payload":' +
-      `{"protocolVersion":1,"manifest":[{"path":"docs/readme.txt","mode":420,"byteLength":3,"contentDigest":"${manifestEntry.contentDigest}"}],` +
-      `"payloadDigest":"${payload.payloadDigest}"},"vendor":[],"curation":[]}` +
+      '{"kind":"agent-plugin","pluginId":"alpha","vendor":[],"curation":[]}' +
       '],"ownershipClaims":[],"locks":[],"qualityPolicies":[]}\n';
     const expectedBodyBytes = encoder.encode(expectedBodyLine);
     const expectedEnvelopeLine =
@@ -57,8 +54,6 @@ describe("release-input policy", () => {
     permutedBody.locks.reverse();
     permutedBody.qualityPolicies.reverse();
     for (const declaration of permutedBody.members) {
-      declaration.skillInventory.reverse();
-      declaration.payload.manifest.reverse();
       declaration.vendor.reverse();
       declaration.curation.reverse();
     }
@@ -217,11 +212,6 @@ describe("release-input policy", () => {
     expect(Object.isFrozen(created.body.qualityPolicies)).toBe(true);
     for (const declaration of created.body.members) {
       expect(Object.isFrozen(declaration)).toBe(true);
-      expect(Object.isFrozen(declaration.skillInventory)).toBe(true);
-      expect(declaration.skillInventory.every(Object.isFrozen)).toBe(true);
-      expect(Object.isFrozen(declaration.payload)).toBe(true);
-      expect(Object.isFrozen(declaration.payload.manifest)).toBe(true);
-      expect(declaration.payload.manifest.every(Object.isFrozen)).toBe(true);
       expect(Object.isFrozen(declaration.vendor)).toBe(true);
       expect(declaration.vendor.every(Object.isFrozen)).toBe(true);
       expect(Object.isFrozen(declaration.curation)).toBe(true);
@@ -233,8 +223,6 @@ describe("release-input policy", () => {
 
     source.contentAuthority = "changed-authority";
     source.members[0].pluginId = "changed-plugin";
-    source.members[0].skillInventory[0].identity = "changed-skill";
-    source.members[0].payload.manifest[0].path = "changed/path";
     source.members[0].vendor[0].id = "changed-vendor";
     source.ownershipClaims[0].identity = "changed-claim";
     source.locks[0].id = "changed-lock";

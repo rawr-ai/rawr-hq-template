@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-29 - Git Closes Content
+
+The release input declares desired content, not a second copy of content
+identity. It closes plugin membership, ownership, provenance, locks, and
+quality policy. The reviewed Git commit and tree close the selected bytes.
+During one invocation, the lifecycle service derives file inventory, modes,
+payload digests, and release identity from those exact Git objects, then
+discards the derived working values. One ordered plugin-ID/release-digest list
+witnesses complete-set membership; a second completeness record would only
+duplicate the same derivation.
+
+This split keeps each fact with its truthful owner. Personal Git owns curated
+content and its declarations. Template owns derivation and reconciliation.
+Native providers own installed state. A persisted per-file release-input
+manifest duplicates Git, makes content authoring needlessly heavy, and creates
+another representation that can disagree. Because the first ordinary CLI
+release is not yet published, the obsolete shape is deleted in place without a
+version bridge, fallback, or compatibility reader.
+
+See
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/authority-amendment|the authority amendment]],
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/tasks#6. Personal Content-Only Settlement|the settlement tasks]],
+and
+[[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input model]].
+
+### Bag Of Keywords
+
+Git, input, member, owner, provenance, policy, derive, payload, release,
+provider, closure, deletion.
+
 ## 2026-07-29 - Policy Is Not A Phase Script
 
 Repository law has one qualified owner. Habitat declares closed topology in

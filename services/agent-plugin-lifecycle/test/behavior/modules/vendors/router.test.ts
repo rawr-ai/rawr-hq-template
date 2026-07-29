@@ -1029,7 +1029,6 @@ function releaseInputBytes(
   provenanceBytes: Uint8Array,
   lockBytes: Uint8Array
 ): Uint8Array {
-  const skillBytes = encoder.encode("declared skill\n");
   const releaseInput = must(
     createAgentPluginReleaseInput({
       schemaVersion: 1,
@@ -1038,19 +1037,6 @@ function releaseInputBytes(
         {
           kind: "agent-plugin",
           pluginId: "cognition",
-          skillInventory: [{ identity: sourceId, manifestPath: `skills/${sourceId}/SKILL.md` }],
-          payload: {
-            protocolVersion: 1,
-            manifest: [
-              {
-                path: `skills/${sourceId}/SKILL.md`,
-                mode: 0o644,
-                byteLength: skillBytes.byteLength,
-                contentDigest: contentDigest(skillBytes),
-              },
-            ],
-            payloadDigest: `pd1_${"1".repeat(64)}`,
-          },
           vendor: [
             binding(declarationPath, VENDOR_SOURCE_PROTOCOL, declarationBytes),
             binding(provenancePath, VENDOR_PROVENANCE_PROTOCOL, provenanceBytes),

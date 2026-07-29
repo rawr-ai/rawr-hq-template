@@ -1,3 +1,5 @@
+import type { AgentPluginPayload } from "../dto/agent-plugin-payload";
+
 /**
  * Caps aggregate decoded bytes for every release-set admission and resource read.
  *
@@ -28,4 +30,19 @@ export function addReleaseSetPayloadBytes(current: number, additional: number): 
   return Number.isSafeInteger(value) && value <= MAX_RELEASE_SET_PAYLOAD_BYTES
     ? { ok: true, value }
     : { ok: false };
+}
+
+/** Totals the decoded bytes represented by one complete collection of member payloads. */
+export function totalReleaseSetPayloadBytes(
+  members: readonly Readonly<{ payload: AgentPluginPayload }>[]
+): PayloadByteTotal {
+  let total = 0;
+  for (const member of members) {
+    for (const entry of member.payload.manifest) {
+      const next = addReleaseSetPayloadBytes(total, entry.byteLength);
+      if (!next.ok) return next;
+      total = next.value;
+    }
+  }
+  return { ok: true, value: total };
 }

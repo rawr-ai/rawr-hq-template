@@ -291,12 +291,6 @@ async function createContentRepository(
           {
             kind: "agent-plugin",
             pluginId: "example",
-            skillInventory: [],
-            payload: {
-              protocolVersion: 1,
-              manifest: [],
-              payloadDigest: "pd1_37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
-            },
             vendor: [
               {
                 id: "vendor/sources/example.json",

@@ -6,7 +6,6 @@ import type {
 } from "../dto/release-input";
 import { canonicalJsonLine } from "./canonical-json";
 import { ownershipClaimValue } from "./distribution-ownership";
-import { payloadManifestValue } from "./payload-manifest";
 import { provenanceBindingValue } from "./provenance-binding";
 
 /**
@@ -22,8 +21,9 @@ export function canonicalSerializeReleaseInputBody(body: ReleaseInputBody): Uint
 /**
  * Serializes one admitted release input into its unique canonical wire form.
  *
- * The envelope projection deliberately excludes derived ownership and
- * completeness values because they are reconstructed from the reviewed body.
+ * The envelope projection excludes the derived ownership index because it is
+ * reconstructed from the reviewed declarations. Content completeness belongs
+ * to exact selected Git objects and the releases derived from them.
  */
 export function canonicalSerializeAgentPluginReleaseInput(
   input: AgentPluginReleaseInput
@@ -60,15 +60,6 @@ function releaseMemberValue(member: ReleaseMemberDeclaration): CanonicalJsonValu
   return {
     kind: member.kind,
     pluginId: member.pluginId,
-    skillInventory: member.skillInventory.map((entry) => ({
-      identity: entry.identity,
-      manifestPath: entry.manifestPath,
-    })),
-    payload: {
-      protocolVersion: member.payload.protocolVersion,
-      manifest: payloadManifestValue(member.payload.manifest),
-      payloadDigest: member.payload.payloadDigest,
-    },
     vendor: member.vendor.map(provenanceBindingValue),
     curation: member.curation.map(provenanceBindingValue),
   };

@@ -272,8 +272,10 @@ describe("package agent plugin application", () => {
     });
     expect(await readFile(secondOutput)).toEqual(await readFile(firstOutput));
     expect(readStoredZipEntries(await readFile(firstOutput))).toEqual(
-      repository.pluginIds.map((pluginId) => ({
-        path: `plugins/${pluginId}/skills/example/SKILL.md`,
+      repository.pluginIds.map((pluginId, index) => ({
+        path: `plugins/${pluginId}/skills/${
+          index === 0 ? "example" : `${pluginId}-example`
+        }/SKILL.md`,
         text: `# Generated ${pluginId}\n`,
       }))
     );

@@ -97,35 +97,29 @@ function skillClaims(
   pluginId: string,
   payload: AgentPluginPayload
 ): readonly Record<string, unknown>[] {
-  return payload.manifest
-    .filter((entry) => /^skills\/[^/]+\/SKILL\.md$/u.test(entry.path))
-    .map((_, index) => ({
-      kind: "skill",
-      identity: `${pluginId}-skill${index === 0 ? "" : `-${index + 1}`}`,
-      ownerPluginId: pluginId,
-    }));
+  return payload.manifest.flatMap((entry) => {
+    const identity = /^skills\/([^/]+)\/SKILL\.md$/u.exec(entry.path)?.[1];
+    return identity === undefined
+      ? []
+      : [
+          {
+            kind: "skill",
+            identity,
+            ownerPluginId: pluginId,
+          },
+        ];
+  });
 }
 
 export function member(
   pluginId: string,
-  payload: AgentPluginPayload,
+  _payload: AgentPluginPayload,
   vendorId = `vendor-${pluginId}`,
   curationId = `curation-${pluginId}`
 ): Record<string, unknown> {
   return {
     kind: "agent-plugin",
     pluginId,
-    skillInventory: payload.manifest
-      .filter((entry) => /^skills\/[^/]+\/SKILL\.md$/u.test(entry.path))
-      .map((entry, index) => ({
-        identity: `${pluginId}-skill${index === 0 ? "" : `-${index + 1}`}`,
-        manifestPath: entry.path,
-      })),
-    payload: {
-      protocolVersion: payload.protocolVersion,
-      manifest: payload.manifest,
-      payloadDigest: payload.payloadDigest,
-    },
     vendor: [binding(vendorId, "vendor-v1", `${vendorId}\n`)],
     curation: [binding(curationId, "curation-v1", `${curationId}\n`)],
   };

@@ -19,7 +19,6 @@ import type { PluginId } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
   AgentPluginReleaseInputSchema,
-  type CompletenessWitness,
   MAX_RELEASE_MEMBERS,
 } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
@@ -33,13 +32,11 @@ import {
 } from "./agent-plugin-release-set-codec";
 import { canonicalJsonLine, decodeCanonicalJson } from "./canonical-json";
 import { compareCanonicalText } from "./canonical-text-ordering";
-import { completenessWitnessValue, parseCompletenessWitness } from "./completeness-witness";
 import {
   ownershipClaimsFor,
-  ownershipIndexValue,
   parseDistributionOwnershipIndex,
+  validateAgentPluginPayloadOwnership,
 } from "./distribution-ownership";
-import { samePayloadManifest } from "./payload-manifest";
 import { provenanceBindingValue } from "./provenance-binding";
 import {
   parseReleaseDigest,
@@ -57,6 +54,10 @@ import {
 import { verifyAgentPluginReleaseInput } from "./release-input";
 import { releaseInputValue } from "./release-input-codec";
 import { prefixReleaseIssuePath, releaseIssue, sortReleaseIssues } from "./release-issue";
+import {
+  MAX_RELEASE_SET_PAYLOAD_BYTES,
+  totalReleaseSetPayloadBytes,
+} from "./release-payload-accounting";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
 import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
@@ -104,6 +105,16 @@ export function createAgentPluginReleaseSet(
   });
   releases.sort((left, right) => compareCanonicalText(left.body.pluginId, right.body.pluginId));
   reportDuplicateReleaseMembers(releases, issues);
+  if (!totalReleaseSetPayloadBytes(releases).ok) {
+    issues.push(
+      releaseIssue(
+        "PAYLOAD_BYTES_LIMIT_EXCEEDED",
+        "releaseSet.releases",
+        "Release set payloads exceed the aggregate decoded-byte limit",
+        { expected: MAX_RELEASE_SET_PAYLOAD_BYTES }
+      )
+    );
+  }
   if (releaseInput !== undefined) validateExpectedMembership(releaseInput, releases, issues);
 
   const first = releases[0];
@@ -161,7 +172,6 @@ export function createAgentPluginReleaseSet(
     sourceCommit: firstBody.sourceCommit,
     sourceTree: firstBody.sourceTree,
     releaseInputDigest: releaseInput.releaseInputDigest,
-    completenessWitness: releaseInput.completenessWitness,
     ownershipIndex: releaseInput.ownershipIndex,
     members: Object.freeze(members),
   });
@@ -274,6 +284,16 @@ export function verifyCompleteReleaseSet(
       );
   });
   reportDuplicateReleaseMembers(releases, issues);
+  if (!totalReleaseSetPayloadBytes(releases).ok) {
+    issues.push(
+      releaseIssue(
+        "PAYLOAD_BYTES_LIMIT_EXCEEDED",
+        "releases",
+        "Release set payloads exceed the aggregate decoded-byte limit",
+        { expected: MAX_RELEASE_SET_PAYLOAD_BYTES }
+      )
+    );
+  }
 
   if (verifiedSet.ok) validateReleaseSetMembers(verifiedSet.value, releases, issues);
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
@@ -319,7 +339,6 @@ function parseReleaseSetBody(
       input,
       [
         "builderProtocolVersion",
-        "completenessWitness",
         "contentAuthority",
         "members",
         "ownershipIndex",
@@ -383,11 +402,6 @@ function parseReleaseSetBody(
     parseReleaseInputDigest(input.releaseInputDigest, `${path}.releaseInputDigest`),
     issues
   );
-  const witness = parseCompletenessWitness(
-    input.completenessWitness,
-    `${path}.completenessWitness`,
-    issues
-  );
   const ownershipIndex = parseDistributionOwnershipIndex(
     input.ownershipIndex,
     `${path}.ownershipIndex`,
@@ -395,41 +409,9 @@ function parseReleaseSetBody(
   );
   const members = parseSetMembers(input.members, `${path}.members`, issues);
 
-  if (
-    witness !== undefined &&
-    inputDigest !== undefined &&
-    witness.releaseInputDigest !== inputDigest
-  ) {
-    issues.push(
-      releaseIssue(
-        "RELEASE_INPUT_IDENTITY_MISMATCH",
-        `${path}.completenessWitness.releaseInputDigest`,
-        "Completeness witness belongs to another release input",
-        {
-          expected: inputDigest,
-          actual: witness.releaseInputDigest,
-        }
-      )
-    );
+  if (ownershipIndex !== undefined && members !== undefined) {
+    validateOwnershipMemberIds(ownershipIndex, members, path, issues);
   }
-  if (
-    witness !== undefined &&
-    ownershipIndex !== undefined &&
-    !sameCanonicalValue(
-      ownershipIndexValue(witness.ownershipIndex),
-      ownershipIndexValue(ownershipIndex)
-    )
-  ) {
-    issues.push(
-      releaseIssue(
-        "OWNERSHIP_INDEX_MISMATCH",
-        `${path}.ownershipIndex`,
-        "Set ownership index differs from its completeness witness"
-      )
-    );
-  }
-  if (witness !== undefined && members !== undefined)
-    validateWitnessMemberIds(witness, members, path, issues);
   if (
     input.schemaVersion !== AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION ||
     input.builderProtocolVersion !== BUILDER_PROTOCOL_VERSION ||
@@ -438,7 +420,6 @@ function parseReleaseSetBody(
     commit === undefined ||
     tree === undefined ||
     inputDigest === undefined ||
-    witness === undefined ||
     ownershipIndex === undefined ||
     members === undefined
   )
@@ -451,7 +432,6 @@ function parseReleaseSetBody(
     sourceCommit: commit,
     sourceTree: tree,
     releaseInputDigest: inputDigest,
-    completenessWitness: witness,
     ownershipIndex,
     members: Object.freeze(members),
   });
@@ -560,16 +540,9 @@ function validateExpectedMembership(
   releases: readonly AgentPluginRelease[],
   issues: ReleaseIssue[]
 ): void {
-  const expected = new Map(
-    input.completenessWitness.expectedMembers.map((member) => [
-      member.pluginId,
-      member.payloadDigest,
-    ])
-  );
+  const expected = new Set(input.body.members.map((member) => member.pluginId));
   const actual = new Map(releases.map((release) => [release.body.pluginId, release]));
-  for (const [pluginId, payloadDigest] of [...expected].sort(([left], [right]) =>
-    compareCanonicalText(left, right)
-  )) {
+  for (const pluginId of [...expected].sort(compareCanonicalText)) {
     const release = actual.get(pluginId);
     if (release === undefined) {
       issues.push(
@@ -580,18 +553,6 @@ function validateExpectedMembership(
           { actual: pluginId }
         )
       );
-    } else if (release.body.payloadDigest !== payloadDigest) {
-      issues.push(
-        releaseIssue(
-          "PAYLOAD_DIGEST_MISMATCH",
-          `releaseSet.members.${pluginId}.payloadDigest`,
-          "Member payload differs from the completeness witness",
-          {
-            expected: payloadDigest,
-            actual: release.body.payloadDigest,
-          }
-        )
-      );
     }
   }
   for (const pluginId of [...actual.keys()].sort(compareCanonicalText)) {
@@ -600,7 +561,7 @@ function validateExpectedMembership(
         releaseIssue(
           "EXTRA_MEMBER",
           `releaseSet.members.${pluginId}`,
-          "Release is not declared by the completeness witness",
+          "Release is not declared by the release input",
           { actual: pluginId }
         )
       );
@@ -655,6 +616,13 @@ function validateReleaseIdentity(
       )
     );
   } else {
+    issues.push(
+      ...validateAgentPluginPayloadOwnership(
+        input.ownershipIndex,
+        body.pluginId,
+        release.body.payloadManifest
+      )
+    );
     const expectedAliases = ownershipClaimsFor(input.ownershipIndex, body.pluginId, "alias")
       .map((claim) => claim.identity)
       .sort(compareCanonicalText);
@@ -667,15 +635,6 @@ function validateReleaseIdentity(
           "RELEASE_INPUT_IDENTITY_MISMATCH",
           `releaseSet.members.${body.pluginId}.aliases`,
           "Release aliases differ from the verified release input"
-        )
-      );
-    }
-    if (!samePayloadManifest(declaration.payload.manifest, body.payloadManifest)) {
-      issues.push(
-        releaseIssue(
-          "PAYLOAD_MANIFEST_MISMATCH",
-          `releaseSet.members.${body.pluginId}.payloadManifest`,
-          "Release manifest differs from the verified release input"
         )
       );
     }
@@ -716,13 +675,17 @@ function validateReleaseIdentity(
   }
 }
 
-function validateWitnessMemberIds(
-  witness: CompletenessWitness,
+function validateOwnershipMemberIds(
+  ownershipIndex: AgentPluginReleaseSet["body"]["ownershipIndex"],
   members: readonly AgentPluginReleaseSetMember[],
   path: string,
   issues: ReleaseIssue[]
 ): void {
-  const expected = new Set(witness.expectedMembers.map((member) => member.pluginId));
+  const expected = new Set(
+    ownershipIndex.claims
+      .filter((claim) => claim.kind === "plugin")
+      .map((claim) => claim.ownerPluginId)
+  );
   const actual = new Set(members.map((member) => member.pluginId));
   for (const pluginId of [...expected].sort(compareCanonicalText)) {
     if (!actual.has(pluginId)) {
@@ -730,7 +693,7 @@ function validateWitnessMemberIds(
         releaseIssue(
           "MISSING_EXPECTED_MEMBER",
           `${path}.members.${pluginId}`,
-          "Set omits a completeness-witness member",
+          "Set omits an ownership-index member",
           { actual: pluginId }
         )
       );
@@ -740,9 +703,9 @@ function validateWitnessMemberIds(
     if (!expected.has(pluginId)) {
       issues.push(
         releaseIssue(
-          "EXTRA_MEMBER",
-          `${path}.members.${pluginId}`,
-          "Set contains a member absent from its completeness witness",
+          "OWNERSHIP_INDEX_MISMATCH",
+          `${path}.ownershipIndex`,
+          "Set member is absent from its ownership index",
           { actual: pluginId }
         )
       );
@@ -841,22 +804,14 @@ function validateReleaseSetMembers(
         )
       );
     }
-    const witness = body.completenessWitness.expectedMembers.find(
-      (entry) => entry.pluginId === pluginId
+    issues.push(
+      ...validateAgentPluginPayloadOwnership(
+        body.ownershipIndex,
+        pluginId,
+        releaseBody.payloadManifest,
+        `releases.${pluginId}.payloadManifest`
+      )
     );
-    if (witness !== undefined && witness.payloadDigest !== releaseBody.payloadDigest) {
-      issues.push(
-        releaseIssue(
-          "PAYLOAD_DIGEST_MISMATCH",
-          `releases.${pluginId}.payloadDigest`,
-          "Member payload differs from the completeness witness",
-          {
-            expected: witness.payloadDigest,
-            actual: releaseBody.payloadDigest,
-          }
-        )
-      );
-    }
   }
   for (const pluginId of [...actual.keys()].sort(compareCanonicalText)) {
     if (!expected.has(pluginId)) {

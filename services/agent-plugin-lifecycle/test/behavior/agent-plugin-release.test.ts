@@ -166,7 +166,7 @@ describe("agent-plugin release", () => {
     );
 
     expect(changedPayload.payloadDigest).not.toBe(fixture.alphaPayload.payloadDigest);
-    expect(changedInput.releaseInputDigest).not.toBe(fixture.releaseInput.releaseInputDigest);
+    expect(changedInput.releaseInputDigest).toBe(fixture.releaseInput.releaseInputDigest);
     expect(changedRelease.releaseDigest).not.toBe(fixture.alphaRelease.releaseDigest);
   });
 

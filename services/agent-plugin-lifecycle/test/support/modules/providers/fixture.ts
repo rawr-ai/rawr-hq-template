@@ -178,27 +178,16 @@ function buildSelectedContent(
     createAgentPluginReleaseInput({
       schemaVersion: 1,
       contentAuthority: CONTENT_AUTHORITY,
-      members: payloads.map(({ pluginId, payload }) => ({
+      members: payloads.map(({ pluginId }) => ({
         kind: "agent-plugin",
         pluginId,
-        skillInventory: [
-          {
-            identity: `${pluginId}-skill`,
-            manifestPath: requireParsed(parseReleaseRelativePath(`skills/${pluginId}/SKILL.md`)),
-          },
-        ],
-        payload: {
-          protocolVersion: payload.protocolVersion,
-          manifest: payload.manifest,
-          payloadDigest: payload.payloadDigest,
-        },
         vendor: [],
         curation: [],
       })),
       ownershipClaims: [
         ...payloads.map(({ pluginId }) => ({
           kind: "skill" as const,
-          identity: `${pluginId}-skill`,
+          identity: pluginId,
           ownerPluginId: pluginId,
         })),
         ...members.flatMap((entry) =>

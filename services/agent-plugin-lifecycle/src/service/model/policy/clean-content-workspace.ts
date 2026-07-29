@@ -26,7 +26,7 @@ import { equalBytes } from "../helpers/byte-equality";
 import { createAgentPluginPayload } from "./agent-plugin-payload";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
-import { samePayloadManifest } from "./payload-manifest";
+import { validateAgentPluginPayloadOwnership } from "./distribution-ownership";
 import {
   parseContentAuthority,
   parseGitCommitId,
@@ -36,8 +36,8 @@ import {
 } from "./release-identity";
 import { decodeAgentPluginReleaseInput } from "./release-input";
 import {
-  addReleaseSetPayloadBytes,
   MAX_RELEASE_SET_PAYLOAD_BYTES,
+  totalReleaseSetPayloadBytes,
 } from "./release-payload-accounting";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -80,7 +80,10 @@ interface CleanWorkspaceEvidence {
   readonly anchor: GitWorkspaceAnchor;
   readonly trackedStatus: Uint8Array;
   readonly trackedFlags: readonly GitTrackedPathFlag[];
-  readonly worktreeObjectIds: readonly Readonly<{ path: ReleaseRelativePath; objectId: string }>[];
+  readonly worktreeObjectIds: readonly Readonly<{
+    path: ReleaseRelativePath;
+    objectId: string;
+  }>[];
   readonly untracked: Uint8Array;
   readonly ignored: Uint8Array;
   readonly index: Uint8Array;
@@ -112,9 +115,8 @@ interface CleanPayloadReadFacts extends CleanWorkspaceTreeFacts {
   readonly admittedPaths: readonly ReleaseRelativePath[];
   readonly consumedRoots: readonly ReleaseRelativePath[];
   readonly blobEntries: readonly CleanContentTreeEntry[];
-  readonly declaredPayloads: readonly Readonly<{
+  readonly memberPayloads: readonly Readonly<{
     pluginId: PluginId;
-    expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
     entries: readonly Readonly<{
       path: ReleaseRelativePath;
       entry: CleanContentTreeEntry;
@@ -124,7 +126,10 @@ interface CleanPayloadReadFacts extends CleanWorkspaceTreeFacts {
 
 /** Admitted payload facts required by the two workspace evidence captures. */
 interface CleanEvidenceReadFacts extends CleanPayloadReadFacts {
-  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
+  readonly payloads: readonly Readonly<{
+    pluginId: PluginId;
+    payload: AgentPluginPayload;
+  }>[];
 }
 
 /** Classifies one typed workspace anchor observation without performing I/O. */
@@ -204,7 +209,7 @@ export function classifyCleanContentWorkspaceTree(
 }
 
 /**
- * Classifies release-input bytes and derives the exact declared payload blob set.
+ * Classifies release-input bytes and derives every blob below each declared member root.
  *
  * @remarks
  * This phase owns release policy only. The calling operation remains responsible
@@ -246,17 +251,12 @@ export function classifyCleanReleaseInput(
     declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
   });
   if (declaredPluginIssue !== undefined) return declined(ineligibleIssue(declaredPluginIssue));
-  const aggregatePayloadIssue = preflightAggregatePayloadBytes(releaseInput);
-  if (aggregatePayloadIssue !== undefined) {
-    return declined(ineligible("PayloadMismatch", aggregatePayloadIssue));
-  }
 
   const admittedPaths = new Set<ReleaseRelativePath>([policy.releaseInputPath]);
   const consumedRoots: ReleaseRelativePath[] = [];
-  const declaredPayloads: Array<
+  const memberPayloads: Array<
     Readonly<{
       pluginId: PluginId;
-      expected: AgentPluginReleaseInput["body"]["members"][number]["payload"];
       entries: readonly Readonly<{
         path: ReleaseRelativePath;
         entry: CleanContentTreeEntry;
@@ -276,38 +276,29 @@ export function classifyCleanReleaseInput(
     consumedRoots.push(memberRoot);
     const entries: Array<Readonly<{ path: ReleaseRelativePath; entry: CleanContentTreeEntry }>> =
       [];
-    for (const declared of member.payload.manifest) {
-      const repositoryPathResult = parseReleaseRelativePath(
-        `${memberRoot}/${declared.path}`,
+    const actualUnderRoot = tree.treeEntries
+      .filter((entry) => entry.path.startsWith(`${memberRoot}/`))
+      .sort((left, right) => compareCanonicalText(left.path, right.path));
+    if (actualUnderRoot.length === 0) {
+      return declined(
+        ineligible("PayloadMismatch", `declared payload root ${memberRoot} contains no files`)
+      );
+    }
+    for (const entry of actualUnderRoot) {
+      const relativePathResult = parseReleaseRelativePath(
+        entry.path.slice(memberRoot.length + 1),
         "repositoryPayloadPath"
       );
-      if (!repositoryPathResult.ok) {
-        return declined(ineligible("ReleaseInputMismatch", "payload path is not canonical"));
+      if (!relativePathResult.ok) {
+        return declined(ineligible("PayloadMismatch", "payload path is not canonical"));
       }
-      const repositoryPath = repositoryPathResult.value;
-      const entry = tree.entryByPath.get(repositoryPath);
-      if (entry === undefined) {
-        return declined(ineligible("PayloadMismatch", `missing tracked payload ${repositoryPath}`));
-      }
-      entries.push(Object.freeze({ path: declared.path, entry }));
+      entries.push(Object.freeze({ path: relativePathResult.value, entry }));
       uniqueBlobEntries.set(entry.objectId, entry);
-      admittedPaths.add(repositoryPath);
+      admittedPaths.add(entry.path);
     }
-    const actualUnderRoot = tree.treeEntries.filter((entry) =>
-      entry.path.startsWith(`${memberRoot}/`)
-    );
-    if (actualUnderRoot.some((entry) => !admittedPaths.has(entry.path))) {
-      return declined(
-        ineligible(
-          "PayloadMismatch",
-          `tracked payload root ${memberRoot} contains undeclared files`
-        )
-      );
-    }
-    declaredPayloads.push(
+    memberPayloads.push(
       Object.freeze({
         pluginId: member.pluginId,
-        expected: member.payload,
         entries: Object.freeze(entries),
       })
     );
@@ -320,12 +311,12 @@ export function classifyCleanReleaseInput(
       admittedPaths: Object.freeze([...admittedPaths].sort(compareCanonicalText)),
       consumedRoots: Object.freeze([...consumedRoots].sort(compareCanonicalText)),
       blobEntries: Object.freeze([...uniqueBlobEntries.values()]),
-      declaredPayloads: Object.freeze(declaredPayloads),
+      memberPayloads: Object.freeze(memberPayloads),
     })
   );
 }
 
-/** Classifies one bounded payload blob batch against every declared payload manifest. */
+/** Classifies one bounded payload blob batch into byte-derived member payloads. */
 export function classifyCleanPayloads(
   releaseInput: CleanPayloadReadFacts,
   attempt: Result.Result<readonly GitBlobObservation[], ContentWorkspaceFailure>
@@ -336,25 +327,29 @@ export function classifyCleanPayloads(
   );
   if (bytesByBlob.size !== releaseInput.blobEntries.length) {
     return declined(
-      ineligible("PayloadMismatch", "Git batch omitted or duplicated a declared payload blob")
+      ineligible("PayloadMismatch", "Git batch omitted or duplicated a selected payload blob")
     );
   }
 
   const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
-  for (const declaredPayload of releaseInput.declaredPayloads) {
+  for (const memberPayload of releaseInput.memberPayloads) {
     const payloadEntries: Array<{
       path: ReleaseRelativePath;
       mode: number;
       bytes: Uint8Array;
     }> = [];
-    for (const declared of declaredPayload.entries) {
-      const bytes = bytesByBlob.get(declared.entry.objectId);
+    for (const selected of memberPayload.entries) {
+      const bytes = bytesByBlob.get(selected.entry.objectId);
       if (bytes === undefined) {
         return declined(
-          ineligible("PayloadMismatch", `Git batch omitted declared payload ${declared.entry.path}`)
+          ineligible("PayloadMismatch", `Git batch omitted selected payload ${selected.entry.path}`)
         );
       }
-      payloadEntries.push({ path: declared.path, mode: declared.entry.mode, bytes });
+      payloadEntries.push({
+        path: selected.path,
+        mode: selected.entry.mode,
+        bytes,
+      });
     }
     const payloadResult = createAgentPluginPayload(payloadEntries);
     if (!payloadResult.ok) {
@@ -362,16 +357,30 @@ export function classifyCleanPayloads(
         ineligible("PayloadMismatch", payloadResult.issues.map((entry) => entry.code).join(","))
       );
     }
-    if (
-      payloadResult.value.payloadDigest !== declaredPayload.expected.payloadDigest ||
-      !samePayloadManifest(payloadResult.value.manifest, declaredPayload.expected.manifest)
-    ) {
+    const ownershipIssues = validateAgentPluginPayloadOwnership(
+      releaseInput.releaseInput.ownershipIndex,
+      memberPayload.pluginId,
+      payloadResult.value.manifest,
+      `release.payloads.${memberPayload.pluginId}.manifest`
+    );
+    if (ownershipIssues.length > 0) {
       return declined(
-        ineligible("PayloadMismatch", `payload declaration differs for ${declaredPayload.pluginId}`)
+        ineligible("PayloadMismatch", ownershipIssues.map((entry) => entry.code).join(","))
       );
     }
     payloads.push(
-      Object.freeze({ pluginId: declaredPayload.pluginId, payload: payloadResult.value })
+      Object.freeze({
+        pluginId: memberPayload.pluginId,
+        payload: payloadResult.value,
+      })
+    );
+  }
+  if (!totalReleaseSetPayloadBytes(payloads).ok) {
+    return declined(
+      ineligible(
+        "PayloadMismatch",
+        `release input payloads exceed ${MAX_RELEASE_SET_PAYLOAD_BYTES} decoded bytes`
+      )
     );
   }
 
@@ -519,7 +528,11 @@ function interpretWorkspaceEvidence(
 function classifyWorkspaceStatus(
   status: Uint8Array,
   consumedRoots: readonly ReleaseRelativePath[]
-): Readonly<{ tracked: Uint8Array; untracked: Uint8Array; ignored: Uint8Array }> {
+): Readonly<{
+  tracked: Uint8Array;
+  untracked: Uint8Array;
+  ignored: Uint8Array;
+}> {
   const tracked: string[] = [];
   const untracked: string[] = [];
   const ignored: string[] = [];
@@ -763,20 +776,6 @@ function decodeNulList(bytes: Uint8Array): readonly string[] {
 
 function encodeNulList(values: readonly string[]): Uint8Array {
   return values.length === 0 ? new Uint8Array() : encoder.encode(`${values.join("\0")}\0`);
-}
-
-function preflightAggregatePayloadBytes(releaseInput: AgentPluginReleaseInput): string | undefined {
-  let aggregateBytes = 0;
-  for (const member of releaseInput.body.members) {
-    for (const entry of member.payload.manifest) {
-      const next = addReleaseSetPayloadBytes(aggregateBytes, entry.byteLength);
-      if (!next.ok) {
-        return `release input payloads exceed ${MAX_RELEASE_SET_PAYLOAD_BYTES} decoded bytes`;
-      }
-      aggregateBytes = next.value;
-    }
-  }
-  return undefined;
 }
 
 function digestBinding(value: unknown): string {

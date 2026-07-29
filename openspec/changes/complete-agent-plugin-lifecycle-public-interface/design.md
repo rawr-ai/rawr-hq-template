@@ -340,6 +340,14 @@ in memory. Release-set digests may be computed as invocation-local verification
 values, but they are not recorded by Personal and never become local storage
 handles. No provider projection identity is created.
 
+The persisted release input declares members, ownership, provenance, locks, and
+quality policy. It does not enumerate selected files or persist payload
+manifests, payload digests, skill inventory, or completeness. Each invocation
+enumerates every regular file below each declared member root from the exact
+selected Git objects and derives those values in memory. A payload-only change
+therefore changes the selected tree and applicable derived identities without
+rewriting the release-input bytes or digest.
+
 Status does not materialize provider package bytes. Sync first compares derived
 identity with live provider provenance. Canonical mutation passes the selected
 immutable Personal Git marketplace to the provider's native command, and the

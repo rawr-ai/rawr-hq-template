@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
@@ -23,6 +25,8 @@ import {
   unavailableContentWorkspace,
 } from "../../../support/service/client";
 import {
+  commitGeneratedGitRepository,
+  createGeneratedGitRepository,
   createGeneratedMultiMemberGitRepository,
   GIT_EXECUTABLE,
 } from "../../../support/service/git-repository";
@@ -122,6 +126,48 @@ describe("release check", () => {
         },
       ],
     });
+  });
+
+  it("includes every tracked file under a declared clean member root", async () => {
+    root = await createOwnedFixtureRoot();
+    const repository = await createGeneratedGitRepository(root);
+    const client = createLifecycleTestClient({
+      contentWorkspace: makeNodeContentWorkspaceResource({ gitExecutable: GIT_EXECUTABLE }),
+    });
+    const mode = { kind: "targeted" as const, pluginId: repository.pluginId };
+    const baseline = await client.releases.check(
+      { contentWorkspace: repository.policy, mode },
+      testInvocation
+    );
+    const extraFile = join(
+      repository.root,
+      ...repository.policy.pluginRoot.split("/"),
+      repository.pluginId,
+      "references",
+      "extra.md"
+    );
+    await mkdir(dirname(extraFile), { recursive: true });
+    await writeFile(extraFile, "extra tracked content\n");
+    const changedPolicy = await commitGeneratedGitRepository(
+      repository,
+      "add extra declared-root content"
+    );
+    const changed = await client.releases.check(
+      { contentWorkspace: changedPolicy, mode },
+      testInvocation
+    );
+
+    expect(baseline.kind).toBe("EligibleReport");
+    expect(changed.kind).toBe("EligibleReport");
+    if (
+      baseline.kind !== "EligibleReport" ||
+      baseline.derivation.kind !== "release" ||
+      changed.kind !== "EligibleReport" ||
+      changed.derivation.kind !== "release"
+    ) {
+      throw new Error("Clean extra-file fixture did not derive targeted releases");
+    }
+    expect(changed.derivation.releaseDigest).not.toBe(baseline.derivation.releaseDigest);
   });
 
   it("authors the exact bounded clean-content resource sequence in the public operation", async () => {

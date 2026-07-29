@@ -455,11 +455,6 @@ describe("provider channel selected content", () => {
       path: "plugins/agents/cognition/skills/cafe\u0301/SKILL.md",
       detail: "noncanonical release path",
     },
-    {
-      name: "an undeclared payload file",
-      path: "plugins/agents/cognition/extra.txt",
-      detail: "undeclared",
-    },
   ])("rejects $name through the public status boundary", async ({ path, detail }) => {
     const content = selectedContent();
     const session = fakeNativeSession({ target: channelRequest.targets[0], content });
@@ -491,5 +486,34 @@ describe("provider channel selected content", () => {
       },
     ]);
     expect(session.calls).toEqual([]);
+  });
+
+  it("includes an extra file under a declared payload root", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({ target: channelRequest.targets[0], content });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]), {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          readGitTree: (input: Parameters<ContentWorkspaceResource<never>["readGitTree"]>[0]) =>
+            Effect.map(delegate.readGitTree(input), (entries) => {
+              const source = entries[0];
+              if (source === undefined) throw new Error("Expected selected-content tree fixture");
+              return Object.freeze([
+                ...entries,
+                Object.freeze({
+                  path: "plugins/agents/cognition/extra.txt",
+                  mode: "100644" as const,
+                  blob: source.blob,
+                }),
+              ]);
+            }),
+        }),
+    });
+
+    const result = await client.providers.status(channelRequest, testInvocation);
+
+    expect(result.classification).toBe("Drifted");
+    expect(session.calls.length).toBeGreaterThan(0);
   });
 });
