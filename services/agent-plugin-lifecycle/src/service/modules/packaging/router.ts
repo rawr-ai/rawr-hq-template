@@ -1,4 +1,4 @@
-import { package as packageOperation } from "./package";
+import { package as packageOperation } from "./router/package.router";
 
 /** Composes Packaging's authored operation into its public module face. */
 export const router = {

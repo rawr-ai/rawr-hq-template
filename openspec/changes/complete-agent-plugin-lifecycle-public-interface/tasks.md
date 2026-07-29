@@ -1651,6 +1651,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   ineffective function text matcher with Grit's native function-expression
   nodes and prove that inline ordinary, async, and Effect handlers pass while
   detached ordinary and generator callables remain findings.
+- [x] 5.7e21z Migrate Packaging as the second production consumer of the
+  restored router law. Move the `package` operation leaf byte-for-byte to
+  `router/package.router.ts`; move the former router barrel to module-root
+  `router.ts`; and change only its relative leaf import. Preserve the exact
+  language-required `packageOperation` local binding and named `package`
+  export, module context, TypeBox contract, Effect handler, source observation
+  and revalidation order, publication boundary, public key, results, failures,
+  defects, interruption, and root service composition. Delete the predecessor
+  paths without aliases. Add no policy, resource, provider, middleware,
+  contract, test, script, or live-state change.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution
