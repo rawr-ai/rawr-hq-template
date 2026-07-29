@@ -20,19 +20,21 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 
 ## CLI Development And Installation
 
-During the distribution transition, run the Oclif application from a clean
-Template checkout through the repository-owned script:
+Run the Oclif application from a clean Template checkout through the
+repository-owned script:
 
 ```bash
 bun run rawr -- --version
 bun run rawr -- --help
 ```
 
-The intended distribution is an ordinary Oclif CLI package built and published
-by one fixed Nx Release group. That package group is not active yet, so do not
-fabricate package metadata or treat the current workspace closure as releasable.
-Do not run the removed custom installer, selector, release store, or launcher.
-A previously installed custom distribution may remain executable, but it is
+The ordinary Oclif CLI package is built by one landed fixed Nx Release group,
+and its complete packed runtime closure passes installation acceptance in a
+disposable prefix. Public registry publication and registry-installed smoke
+remain pending npm scope authorization. Until those complete, use the
+repository-local command rather than fabricating an installed release. Do not
+run the removed custom installer, selector, release store, or launcher. A
+previously installed custom distribution may remain executable, but it is
 obsolete and is not invoked, updated, or accepted as current CLI authority.
 
 ## Plugin Boundaries

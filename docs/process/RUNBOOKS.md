@@ -29,8 +29,9 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 - Agent-plugin authoring ends at source and review. Build, test, export, provider
   convergence, retirement, and undo are separate explicit lifecycle operations.
 - CLI development uses repository-local Nx targets and `bun run rawr -- ...`.
-  Ordinary package installation becomes the operational path after the fixed Nx
-  Release group lands; that release path is explicitly pending.
+  The fixed Nx Release group and packed-install acceptance are landed. Ordinary
+  package installation becomes the operational path after public registry
+  publication and registry-installed smoke complete.
 
 Do not mix command families. App, web, and runtime composition are not lifecycle
 fallbacks.

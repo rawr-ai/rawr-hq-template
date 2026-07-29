@@ -18,10 +18,11 @@ and independent cross-repository acceptance.
 
 - `rawr plugins ...` manages external Oclif extensions only.
 - `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
-- During the distribution transition, invoke the Template CLI with
-  `bun run rawr -- ...`. The fixed Nx Release package group and ordinary
-  installed CLI are pending; the obsolete predecessor distribution may remain
-  executable, but it is not invoked, updated, or accepted as authority.
+- Invoke the Template CLI from source with `bun run rawr -- ...`. The fixed Nx
+  Release group and packed-install acceptance are landed; public registry
+  publication and registry-installed smoke remain pending npm scope
+  authorization. The obsolete predecessor distribution may remain executable,
+  but it is not invoked, updated, or accepted as authority.
 - App composition and repository hooks own no lifecycle mutation.
 
 ## Pre-Change Impact Check
@@ -34,11 +35,13 @@ and independent cross-repository acceptance.
 
 ## Safety And Verification
 
-For Template changes, run the affected Nx targets and the relevant repository-local
-Oclif acceptance. Once the ordinary package is published, add installed-package
-acceptance. For personal changes, run repository-owned content checks and
-exact-version interface validation. Mutating provider/Oclif acceptance uses
-explicit disposable homes until its owning container authorizes settlement.
+For Template changes, run the affected Nx targets and the relevant
+repository-local Oclif acceptance. Packed-install acceptance is already part of
+the CLI release boundary; after public publication, repeat version, help, and
+command inventory from a registry-installed disposable prefix. For personal
+changes, run repository-owned content checks and exact-version interface
+validation. Mutating provider/Oclif acceptance uses explicit disposable homes
+until its owning container authorizes settlement.
 
 ## Transient Test Failure Policy
 
