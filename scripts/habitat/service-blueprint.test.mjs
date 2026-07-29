@@ -136,6 +136,7 @@ const contractPropertyDescriptions = "require_service_contract_property_descript
 const routerAuthorship = "require_service_router_authorship";
 const contextBoundaries = "require_service_context_boundaries";
 const moduleIsolation = "require_service_module_isolation";
+const proofIsolation = "require_service_proof_isolation";
 
 /** @returns {Record<string, string>} */
 function canonicalTopology() {
@@ -593,5 +594,50 @@ describe("service module source direction", () => {
     expect(routerPaths).toContain(routerGetPath);
     expect(routerPaths).toContain(routerPath);
     expect(routerPaths).toContain(routerIndexPath);
+  });
+});
+
+describe("service package proof isolation", () => {
+  it("admits a production operation named test", async () => {
+    const path = "services/orders/src/service/modules/catalog/router/index.ts";
+    const root = await createFixture(
+      {
+        [path]: 'import { test } from "./test"; export const router = { test };',
+      },
+      [proofIsolation]
+    );
+    const result = await check(root, [proofIsolation]);
+
+    expect(diagnostics(result.report, proofIsolation)).toEqual([]);
+  });
+
+  it("admits a relative import into another package's test tree", async () => {
+    const path = "services/orders/src/service/index.ts";
+    const root = await createFixture(
+      {
+        [path]:
+          'import { fixture } from "../../../catalog/test/fixture"; export const value = fixture;',
+      },
+      [proofIsolation]
+    );
+    const result = await check(root, [proofIsolation]);
+
+    expect(diagnostics(result.report, proofIsolation)).toEqual([]);
+  });
+
+  it("rejects a production import that resolves beneath package-root test", async () => {
+    const path = "services/orders/src/service/modules/catalog/router/index.ts";
+    const root = await createFixture(
+      {
+        [path]:
+          'import { fixture } from "../../../../../test/support/fixture"; export const router = { fixture };',
+      },
+      [proofIsolation]
+    );
+    const result = await check(root, [proofIsolation]);
+
+    expect(
+      diagnostics(result.report, proofIsolation).map(({ path: diagnosticPath }) => diagnosticPath)
+    ).toEqual([path]);
   });
 });

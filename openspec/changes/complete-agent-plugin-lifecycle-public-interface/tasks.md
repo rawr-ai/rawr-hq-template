@@ -1526,6 +1526,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   bytes, publication boundary, results, failures, and interruption behavior.
   Add no resource, provider, policy, compatibility face, or second operation
   path.
+- [x] 5.7e21s Make service proof isolation resolve the owning package-root
+  `test/` directory instead of matching the word `test` anywhere in a relative
+  source. Preserve static import, re-export, dynamic import, CommonJS require,
+  and resolution coverage for literal sources. Admit ordinary production
+  operations named `test` and leave source-owned test-directory rejection to
+  the closed service topology. Correct the existing deep-router examples to
+  reach the actual package root. Add no alias lane, manual runner, source
+  registry, or generalized module resolver.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

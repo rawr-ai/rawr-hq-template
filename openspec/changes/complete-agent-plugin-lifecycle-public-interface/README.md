@@ -3504,6 +3504,28 @@ public key, Personal content, or live state changes. The module typecheck
 passes, the four Packaging files plus service-spine proof pass all 33 focused
 cases, and the complete service suite passes all 377 cases across 43 files.
 
+## Service Proof Root Resolution
+
+The proof-isolation law now classifies a literal relative source by its lexical
+destination under the owning service package. Only a destination below that
+package's root `test/` directory is proof. An ordinary operation leaf such as
+`router/test.ts` therefore remains production source, while imports,
+re-exports, dynamic imports, `require`, and `require.resolve` into package-root
+proof remain rejected.
+
+This is a generic Habitat source-law correction, not a Providers exception.
+The pattern examples retain every supported source form, add the production
+`./test` counterexample, distinguish a source-local test path owned by the
+separate closed topology law, and correct the deep-router positive examples to
+reach the actual package root. No runtime source, service behavior, alias,
+runner, registry, or live state changes.
+
+The native Habitat fixture admits the production `./test` operation and a
+relative import into another package's test tree, then rejects the same deep
+router importing its own package-root proof. The complete service blueprint
+fixture passes all 14 cases and 53 assertions; the live proof and helper-comment
+rules, strict OpenSpec validation, and focused formatting checks also pass.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect
