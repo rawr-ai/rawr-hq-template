@@ -3448,6 +3448,23 @@ production corpus remains intentionally red against the one indexed
 destination; this checkpoint does not recast that migration work as a passing
 baseline or recognize the retired flat composer as another form.
 
+## Governance Module Burn-Down
+
+Governance is the first production module moved through the indexed service
+law from [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21p]]. Its
+two contract operations and two authored handlers now occupy semantic leaves;
+`contract/index.ts` and `router/index.ts` only compose the public objects. The
+flat contract and router files and the `.router.ts` compatibility names leave
+in the same cut.
+
+This is a topology migration, not a behavior or authority change. Public
+operation keys, TypeBox schemas, module-curated content-workspace context,
+handler bodies, exact Git observation order, and returned result variants are
+unchanged. The module typecheck passes, and six focused Governance/service
+files pass all 38 behavior cases. The native Habitat topology scan reports no
+Governance finding; no runtime, resource, provider, Personal content, or live
+provider state changes.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect

@@ -1497,6 +1497,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   crossings, and relative escape from the closed module. Let contract, context,
   and router laws own executable direction inside it. Add no topology variant,
   source parser, compatibility face, runtime change, or provider mutation.
+- [x] 5.7e21p Migrate Governance as the first production module into the
+  indexed service law. Split its two contract operations and two authored
+  handlers into semantic leaves, compose only plain objects from the
+  `contract/index.ts` and `router/index.ts` faces, and delete the flat
+  `contract.ts`, flat `router.ts`, and `.router.ts` compatibility names in the
+  same cut. Preserve exact public operation keys, TypeBox contracts, context
+  curation, handler bodies, Git observation order, and result behavior. Add no
+  resource, provider, policy, alias, or second module face.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

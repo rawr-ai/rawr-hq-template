@@ -11,12 +11,10 @@ import { module } from "../module";
  * @behavior Return the same closed TypeBox-backed record result for both actions.
  * @relation Keep record authorship separate from exact Git selection.
  */
-export const router = {
-  currentMainRecord: module.currentMainRecord.effect(function* ({ input }) {
-    return yield* Effect.succeed(
-      input.kind === "encode-body"
-        ? encodeCurrentMainBodyV3(input.body)
-        : validateCurrentMainRecordV3(input.bytes)
-    );
-  }),
-};
+export const currentMainRecord = module.currentMainRecord.effect(function* ({ input }) {
+  return yield* Effect.succeed(
+    input.kind === "encode-body"
+      ? encodeCurrentMainBodyV3(input.body)
+      : validateCurrentMainRecordV3(input.bytes)
+  );
+});
