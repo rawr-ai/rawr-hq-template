@@ -100,7 +100,9 @@ independently owned topology and source axes:
    destination remains advisory until the shared TypeBox and platform-neutral
    source laws cover it; production entity movement waits for that law rather
    than creating a RAWR-only fork.
-10. Module-local imports use normalized relative paths. A module does not reach
+10. Module-local imports remain inside their sealed module through owner-local
+    routes. Habitat owns containment at the module root; contract, context, and
+    router laws own executable direction inside it. A module does not reach
     upward or sideways for another implementation. Foreign, cross-kind, and
     outside-owner imports use public exports.
 11. Service source remains independent of concrete Node, Bun, and provider

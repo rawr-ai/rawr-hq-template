@@ -19,10 +19,7 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        "plugins/server/api/*/src/service/modules/*/contract.ts",
-        "plugins/server/api/*/src/service/modules/*/contract/*.ts"
-      ]
+      "patterns": ["plugins/server/api/*/src/service/modules/*/contract/*.ts"]
     }
   ],
   "scanRoots": ["plugins/server/api"],

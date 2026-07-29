@@ -61,6 +61,54 @@ predicate require_service_context_boundaries_is_module_middleware_index() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/middleware/index\.ts$"
 }
 
+// Matches a source alias kind to the importing service lane.
+predicate require_service_context_boundaries_is_same_kind($lane, $alias_kind) {
+  or {
+    and {
+      $lane <: r"^services$",
+      $alias_kind <: r"^service$"
+    },
+    and {
+      $lane <: r"^plugins/server/api$",
+      $alias_kind <: r"^api$"
+    }
+  }
+}
+
+// Recognizes the configured module face that middleware must not reacquire.
+predicate require_service_context_boundaries_is_module_implementation_source($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/middleware/[^/]+\.ts$"($lane, $owner, $module),
+  or {
+    $source <: r"^[\"']\.\./module(?:\.[cm]?[jt]s)?[\"']$",
+    and {
+      $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)/module(?:\.[cm]?[jt]s)?[\"']$"($alias_owner, $alias_kind, $target),
+      $alias_owner <: $owner,
+      require_service_context_boundaries_is_same_kind(
+        lane=$lane,
+        alias_kind=$alias_kind
+      ),
+      $target <: $module
+    }
+  }
+}
+
+// Recognizes middleware cycling through its own directory access point.
+predicate require_service_context_boundaries_is_own_middleware_index_source($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/middleware/[^/]+\.ts$"($lane, $owner, $module),
+  or {
+    $source <: r"^[\"'](?:\.|\./|\./index(?:\.[cm]?[jt]s)?|\.\./middleware(?:/|/index(?:\.[cm]?[jt]s)?)?)[\"']$",
+    and {
+      $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)/middleware(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"($alias_owner, $alias_kind, $target),
+      $alias_owner <: $owner,
+      require_service_context_boundaries_is_same_kind(
+        lane=$lane,
+        alias_kind=$alias_kind
+      ),
+      $target <: $module
+    }
+  }
+}
+
 // Recognizes one documented semantic alias to a simple middleware leaf.
 predicate require_service_context_boundaries_is_middleware_catalog_entry($statement) {
   $statement <: `export { middleware as $name } from $source` as $export,
@@ -403,6 +451,30 @@ or {
       )
     }
   },
+  import_statement(source=$source) where {
+    require_service_context_boundaries_is_module_middleware(),
+    require_service_context_boundaries_is_module_implementation_source(
+      source=$source
+    )
+  },
+  import_statement(source=$source) where {
+    require_service_context_boundaries_is_module_middleware(),
+    require_service_context_boundaries_is_own_middleware_index_source(
+      source=$source
+    )
+  },
+  export_statement(source=$source) where {
+    require_service_context_boundaries_is_module_middleware(),
+    require_service_context_boundaries_is_module_implementation_source(
+      source=$source
+    )
+  },
+  export_statement(source=$source) where {
+    require_service_context_boundaries_is_module_middleware(),
+    require_service_context_boundaries_is_own_middleware_index_source(
+      source=$source
+    )
+  },
   program(statements=$body) where {
     require_service_context_boundaries_is_module_middleware_consumer(),
     $body <: some import_statement(source=$source) as $import where {
@@ -478,6 +550,22 @@ or {
     not { $filename <: r".*/router/index\.ts$" }
   }
 }
+```
+
+## Matches middleware that reacquires its configured module
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/middleware/access.ts
+import { module } from "../module";
+export const middleware = module.middleware(({ next }) => next());
+```
+
+## Matches middleware cycling through its catalog
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/middleware/access.ts
+import { admitCatalog } from "../middleware";
+export const middleware = impl.catalog.middleware(({ next }) => next());
 ```
 
 ## Matches an incomplete context declaration

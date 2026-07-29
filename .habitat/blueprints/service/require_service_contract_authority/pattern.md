@@ -59,31 +59,68 @@ predicate require_service_contract_authority_is_module_contract_entrypoint() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract/index\.ts$"
 }
 
-// Keeps the previous single-file contract governed until topology migration closes.
-predicate require_service_contract_authority_is_legacy_module_contract() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract\.ts$"
-}
-
-// Selects either contract composition boundary during the topology migration.
+// Selects the one contract composition boundary.
 predicate require_service_contract_authority_is_module_contract_boundary() {
-  or {
-    require_service_contract_authority_is_module_contract_entrypoint(),
-    require_service_contract_authority_is_legacy_module_contract()
-  }
+  require_service_contract_authority_is_module_contract_entrypoint()
 }
 
 // Selects every direct source in a closed module contract directory.
 predicate require_service_contract_authority_is_module_contract_source() {
-  or {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract/[^/]+\.ts$",
-    require_service_contract_authority_is_legacy_module_contract()
-  }
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/contract/[^/]+\.ts$"
 }
 
 // Selects direct semantic leaves while excluding the directory entrypoint.
 predicate require_service_contract_authority_is_module_contract_leaf() {
   require_service_contract_authority_is_module_contract_source(),
   not { require_service_contract_authority_is_module_contract_boundary() }
+}
+
+// Matches a source alias kind to the importing service lane.
+predicate require_service_contract_authority_is_same_kind($lane, $alias_kind) {
+  or {
+    and {
+      $lane <: r"^services$",
+      $alias_kind <: r"^service$"
+    },
+    and {
+      $lane <: r"^plugins/server/api$",
+      $alias_kind <: r"^api$"
+    }
+  }
+}
+
+// Recognizes implementation faces that contract source cannot acquire.
+predicate require_service_contract_authority_is_implementation_source($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/contract/[^/]+\.ts$"($lane, $owner, $module),
+  or {
+    $source <: r"^[\"']\.\./(?:module(?:\.[cm]?[jt]s)?|router(?:/[^\"']*)?|middleware(?:/[^\"']*)?)[\"']$",
+    and {
+      $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)/(?:module(?:\.[cm]?[jt]s)?|router(?:/[^\"']*)?|middleware(?:/[^\"']*)?)[\"']$"($alias_owner, $alias_kind, $target),
+      $alias_owner <: $owner,
+      require_service_contract_authority_is_same_kind(
+        lane=$lane,
+        alias_kind=$alias_kind
+      ),
+      $target <: $module
+    }
+  }
+}
+
+// Recognizes a contract leaf cycling through its own directory access point.
+predicate require_service_contract_authority_is_own_index_source($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/contract/[^/]+\.ts$"($lane, $owner, $module),
+  or {
+    $source <: r"^[\"'](?:\.|\./|\./index(?:\.[cm]?[jt]s)?|\.\./contract(?:/|/index(?:\.[cm]?[jt]s)?)?)[\"']$",
+    and {
+      $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)/contract(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"($alias_owner, $alias_kind, $target),
+      $alias_owner <: $owner,
+      require_service_contract_authority_is_same_kind(
+        lane=$lane,
+        alias_kind=$alias_kind
+      ),
+      $target <: $module
+    }
+  }
 }
 
 // Checks that a direct leaf import maps its kebab-case source to one binding.
@@ -257,6 +294,14 @@ or {
   } where {
     require_service_contract_authority_is_module_contract_leaf()
   },
+  import_statement(source=$source) where {
+    require_service_contract_authority_is_module_contract_source(),
+    require_service_contract_authority_is_implementation_source(source=$source)
+  },
+  import_statement(source=$source) where {
+    require_service_contract_authority_is_module_contract_leaf(),
+    require_service_contract_authority_is_own_index_source(source=$source)
+  },
   import_statement(source=$source) as $import where {
     $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/.*\.ts$",
     ! $filename <: r".*/(?:test|tests|__tests__)/.*",
@@ -373,6 +418,22 @@ or {
     }
   }
 }
+```
+
+## Matches contract acquisition of a configured module
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { module } from "../module";
+export const get = oc.input(JobRequestSchema);
+```
+
+## Matches a contract leaf cycling through its access point
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { contract } from ".";
+export const get = oc.input(standard(JobRequestSchema));
 ```
 
 ## Matches exported parallel error authority

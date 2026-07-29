@@ -30,7 +30,7 @@ language js(typescript)
 
 // Confirms a direct contract entrypoint or semantic leaf in the bounded application.
 predicate require_service_contract_property_descriptions_is_module_contract() {
-  $filename <: r".*modules/[^/]+/(?:contract\.ts|contract/[^/]+\.ts)$"
+  $filename <: r".*modules/[^/]+/contract/[^/]+\.ts$"
 }
 
 // Confirms that the contract acquires the canonical TypeBox runtime binding.

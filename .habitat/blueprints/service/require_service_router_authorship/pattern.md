@@ -54,7 +54,49 @@ predicate require_service_router_authorship_is_leaf() {
 
 // Selects composition-only module and root router spines.
 predicate require_service_router_authorship_is_composer() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/(?:router\.ts|router/index\.ts))$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/router/index\.ts)$"
+}
+
+// Selects the module access point that composes local operation leaves.
+predicate require_service_router_authorship_is_module_composer() {
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/index\.ts$"
+}
+
+// Recognizes a direct semantic leaf source from its module router access point.
+predicate require_service_router_authorship_is_leaf_source($source) {
+  $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
+  not { $source <: r"^[\"']\./index[\"']$" }
+}
+
+// Matches a source alias kind to the importing service lane.
+predicate require_service_router_authorship_is_same_kind($lane, $alias_kind) {
+  or {
+    and {
+      $lane <: r"^services$",
+      $alias_kind <: r"^service$"
+    },
+    and {
+      $lane <: r"^plugins/server/api$",
+      $alias_kind <: r"^api$"
+    }
+  }
+}
+
+// Recognizes an operation leaf cycling through its own router access point.
+predicate require_service_router_authorship_is_own_index_source($source) {
+  $filename <: r".*(services|plugins/server/api)/([^/]+)/src/service/modules/([^/]+)/router/[^/]+\.ts$"($lane, $owner, $module),
+  or {
+    $source <: r"^[\"'](?:\.|\./|\./index(?:\.[cm]?[jt]s)?|\.\./router(?:/|/index(?:\.[cm]?[jt]s)?)?)[\"']$",
+    and {
+      $source <: r"^[\"']#([^/]+)-(service|api)/modules/([^/]+)/router(?:/|/index(?:\.[cm]?[jt]s)?)?[\"']$"($alias_owner, $alias_kind, $target),
+      $alias_owner <: $owner,
+      require_service_router_authorship_is_same_kind(
+        lane=$lane,
+        alias_kind=$alias_kind
+      ),
+      $target <: $module
+    }
+  }
 }
 
 // Recognizes runtime declarations crossing a router-leaf export boundary.
@@ -112,6 +154,16 @@ or {
   `$receiver.$operation.$method($handler)` where {
     require_service_router_authorship_is_composer(),
     $method <: r"^(?:effect|handler)$"
+  },
+  import_statement(source=$source) where {
+    require_service_router_authorship_is_module_composer(),
+    not {
+      require_service_router_authorship_is_leaf_source(source=$source)
+    }
+  },
+  import_statement(source=$source) where {
+    require_service_router_authorship_is_leaf(),
+    require_service_router_authorship_is_own_index_source(source=$source)
   }
 }
 ```
@@ -146,6 +198,24 @@ export const submit = module.jobs.status.handler(submitJob);
 // @filename: services/jobs/src/service/modules/catalog/router/index.ts
 export const get = module.get.handler(getJob);
 export const router = impl.catalog.router({ get });
+```
+
+## Matches implementation acquisition from a module router access point
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/index.ts
+import { module } from "../module";
+import { get } from "./get";
+export const router = { get };
+```
+
+## Matches an operation leaf cycling through its router access point
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
+import { router } from ".";
+import { module } from "../module";
+export const get = module.get.handler(getJob);
 ```
 
 ## Matches an extra runtime export from a leaf

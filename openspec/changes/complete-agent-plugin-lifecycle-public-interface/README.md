@@ -3422,6 +3422,32 @@ failures; and `bun run check` completed all 40 project checks and 118 resolved
 tasks in 1 minute 2 seconds. The architecture, TypeScript/oRPC, and behavioral
 standing reviews accepted the checkpoint without P0 or P1 findings.
 
+## Service Law Regrounding
+
+The service ratchet adopts the indexed capability funnel instantiated by
+Magic's Jobs and Candidates services. Template now asserts closed `contract/`
+and `router/` directories with composition-only `index.ts` faces, optional
+indexed middleware, one configured `module.ts`, and semantic authoring leaves
+as its one target. The current flat production corpus remains visible red for
+the next burn-down container; no second module router form or Template-specific
+service topology is introduced.
+
+Task 5.7e21o removes the stale source-law selections that still treated a flat
+module `contract.ts` or `router.ts` as a valid contract, schema owner, anchor,
+composer, or executable error boundary. It also narrows module isolation to
+its actual owner: service-root composition, declared base/impl crossings,
+sibling entry, and the first relative path that escapes a closed module.
+Contract, context, and router laws own executable direction inside that sealed
+module without turning isolation into a second import grammar.
+
+The checkpoint changes no production service, public contract, runtime,
+resource, provider, Personal content, Nx graph, or Habitat SDK. Habitat
+typecheck and its 30-case suite pass; focused fixtures prove contract, context,
+router, and module-isolation direction at their owning boundaries. The
+production corpus remains intentionally red against the one indexed
+destination; this checkpoint does not recast that migration work as a passing
+baseline or recognize the retired flat composer as another form.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect

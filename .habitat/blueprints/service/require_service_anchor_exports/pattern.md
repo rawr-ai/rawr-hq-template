@@ -64,7 +64,7 @@ predicate require_service_anchor_exports_is_base_file() {
 
 // Maps the root contract and module contract entrypoints to the generic anchor.
 predicate require_service_anchor_exports_is_contract_file() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:contract\.ts|modules/[^/]+/(?:contract\.ts|contract/index\.ts))$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:contract\.ts|modules/[^/]+/contract/index\.ts)$"
 }
 
 // Maps root implementations to the generic service anchor.
@@ -79,7 +79,7 @@ predicate require_service_anchor_exports_is_module_file() {
 
 // Maps the root router and module router entrypoints to the generic anchor.
 predicate require_service_anchor_exports_is_router_file() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/(?:router\.ts|router/index\.ts))$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:router\.ts|modules/[^/]+/router/index\.ts)$"
 }
 
 // Recognizes authored runtime declarations and runtime export forwarding.
