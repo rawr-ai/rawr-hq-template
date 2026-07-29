@@ -1638,6 +1638,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   advisory while the production corpus is red. Add no production move, SDK
   change, variant system, script, runner, helper, alias, provider mutation, or
   second router form.
+- [x] 5.7e21y Migrate Governance as the first production consumer of the
+  restored router law. Move the two operation leaves byte-for-byte to
+  `router/current-main-record.router.ts` and
+  `router/current-main-selection.router.ts`; move the former router barrel to
+  module-root `router.ts`; and change only its two relative imports. Delete the
+  predecessor paths without aliases. Preserve the module branch and context,
+  TypeBox contracts, Effect handlers, public operation keys, Git observation
+  order, results, failures, defects, interruption, and root service
+  composition. Add no policy, resource, provider, middleware, contract, test,
+  script, or live-state change. Replace the router-authorship rule's
+  ineffective function text matcher with Grit's native function-expression
+  nodes and prove that inline ordinary, async, and Effect handlers pass while
+  detached ordinary and generator callables remain findings.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution
