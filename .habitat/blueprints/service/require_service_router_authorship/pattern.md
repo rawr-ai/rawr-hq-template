@@ -6,6 +6,10 @@ tags: [orpc, service, router, authorship]
 
 Operation leaves author behavior from the matching configured module operation.
 Module and root router spines remain composition-only.
+When an operation name is an ECMAScript reserved word, the leaf uses the exact
+language-required `<name>Operation` local binding and aliases only that binding
+to the filename-mapped public export; its index imports the same public name
+into the same local binding. This is not a general alias form.
 
 ```grit
 language js(typescript)
@@ -46,6 +50,23 @@ function require_service_router_authorship_leaf_status($filename, $operation, $v
     : "wrong-root";
 }
 
+// Admits one exact local binding for an ECMAScript-reserved public operation.
+function require_service_router_authorship_reserved_binding_status($local, $operation) js {
+  const reserved = new Set([
+    "await", "break", "case", "catch", "class", "const", "continue",
+    "debugger", "default", "delete", "do", "else", "enum", "export",
+    "extends", "false", "finally", "for", "function", "if", "implements",
+    "import", "in", "instanceof", "interface", "let", "new", "null",
+    "package", "private", "protected", "public", "return", "static", "super",
+    "switch", "this", "throw", "true", "try", "typeof", "var", "void",
+    "while", "with", "yield",
+  ]);
+  return reserved.has($operation.text) &&
+    $local.text === `${$operation.text}Operation`
+    ? "ok"
+    : "wrong-operation";
+}
+
 // Selects operation-authoring router leaves.
 predicate require_service_router_authorship_is_leaf() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.ts$",
@@ -66,6 +87,46 @@ predicate require_service_router_authorship_is_module_composer() {
 predicate require_service_router_authorship_is_leaf_source($source) {
   $source <: r"^[\"']\./[a-z][a-z0-9]*(?:-[a-z0-9]+)*[\"']$",
   not { $source <: r"^[\"']\./index[\"']$" }
+}
+
+// Checks that a direct leaf import maps its kebab-case source to one binding.
+function require_service_router_authorship_entrypoint_import_status($source, $operation) js {
+  const match = $source.text.match(/^["']\.\/([^/"']+)["']$/);
+  if (!match || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
+    return "noncanonical-source";
+  }
+  const expected = match[1].replace(
+    /-([a-z0-9])/g,
+    (_all, value) => value.toUpperCase(),
+  );
+  return expected === $operation.text ? "ok" : "wrong-binding";
+}
+
+// Proves one filename-mapped direct leaf import at the router access point.
+predicate require_service_router_authorship_is_canonical_leaf_import($statement) {
+  or {
+    and {
+      $statement <: `import { $operation } from $source`,
+      $status = require_service_router_authorship_entrypoint_import_status(
+        source=$source,
+        operation=$operation
+      ),
+      $status <: includes "ok"
+    },
+    and {
+      $statement <: `import { $operation as $local } from $source`,
+      $source_status = require_service_router_authorship_entrypoint_import_status(
+        source=$source,
+        operation=$operation
+      ),
+      $source_status <: includes "ok",
+      $binding_status = require_service_router_authorship_reserved_binding_status(
+        local=$local,
+        operation=$operation
+      ),
+      $binding_status <: includes "ok"
+    }
+  }
 }
 
 // Matches a source alias kind to the importing service lane.
@@ -127,13 +188,30 @@ or {
   program(statements=$body) where {
     require_service_router_authorship_is_leaf(),
     not {
-      $body <: contains `export const $operation = $value` where {
-        $status = require_service_router_authorship_leaf_status(
-          filename=$filename,
-          operation=$operation,
-          value=$value
-        ),
-        $status <: includes "ok"
+      or {
+        $body <: contains `export const $operation = $value` where {
+          $status = require_service_router_authorship_leaf_status(
+            filename=$filename,
+            operation=$operation,
+            value=$value
+          ),
+          $status <: includes "ok"
+        },
+        and {
+          $body <: contains `const $local = $value`,
+          $body <: contains `export { $local as $operation }`,
+          $operation_status = require_service_router_authorship_leaf_status(
+            filename=$filename,
+            operation=$operation,
+            value=$value
+          ),
+          $operation_status <: includes "ok",
+          $binding_status = require_service_router_authorship_reserved_binding_status(
+            local=$local,
+            operation=$operation
+          ),
+          $binding_status <: includes "ok"
+        }
       }
     }
   },
@@ -144,21 +222,41 @@ or {
       require_service_router_authorship_is_operation_export(export=$export)
     }
   },
-  or {
-    `export { $specifiers }`,
-    `export { $specifiers } from $source`,
-    `export default $value`
-  } where {
+  `export { $specifiers }` as $export where {
+    require_service_router_authorship_is_leaf(),
+    not {
+      $export <: `export { $local as $operation }`,
+      $program <: contains `const $local = $value`,
+      $operation_status = require_service_router_authorship_leaf_status(
+        filename=$filename,
+        operation=$operation,
+        value=$value
+      ),
+      $operation_status <: includes "ok",
+      $binding_status = require_service_router_authorship_reserved_binding_status(
+        local=$local,
+        operation=$operation
+      ),
+      $binding_status <: includes "ok"
+    }
+  },
+  export_statement(source=$source) where {
+    require_service_router_authorship_is_leaf(),
+    $source <: string()
+  },
+  `export default $value` where {
     require_service_router_authorship_is_leaf()
   },
   `$receiver.$operation.$method($handler)` where {
     require_service_router_authorship_is_composer(),
     $method <: r"^(?:effect|handler)$"
   },
-  import_statement(source=$source) where {
+  import_statement() as $statement where {
     require_service_router_authorship_is_module_composer(),
     not {
-      require_service_router_authorship_is_leaf_source(source=$source)
+      require_service_router_authorship_is_canonical_leaf_import(
+        statement=$statement
+      )
     }
   },
   import_statement(source=$source) where {

@@ -152,6 +152,9 @@ not a second implementation lineage.
 
 Module capability directories are ordinary static TypeScript faces. Each
 contract or router leaf maps its kebab-case filename to one lower-camel export.
+An ECMAScript-reserved operation name keeps that exact public export through
+the sole language-required `<name>Contract` or `<name>Operation` local binding;
+the laws admit no general leaf alias form.
 Contract law owns canonical direct import of contract leaves. Router indexes
 are composition-only; TypeScript owns router completeness, Knip owns
 unreachable leaves and import hygiene, and generated-client/API behavior proof

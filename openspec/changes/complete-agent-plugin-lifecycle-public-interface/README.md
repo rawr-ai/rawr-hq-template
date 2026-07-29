@@ -3481,6 +3481,29 @@ public key, or live state changes. The module typecheck passes, and the six
 Releases files plus the service-spine proof pass all 63 focused cases. The
 complete service suite passes all 377 cases across 43 files.
 
+## Packaging Module Burn-Down
+
+Packaging now follows the indexed module law under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21r]]. Its one
+TypeBox-backed contract operation and one authored handler occupy semantic
+leaves; `contract/index.ts` and `router/index.ts` only compose the public
+`package` key. The flat faces and `.router.ts` name leave in the same cut.
+Because `package` is an ECMAScript-reserved binding name, the shared contract
+and router laws admit only the exact `packageContract` and `packageOperation`
+local bindings with a named `package` export. The corresponding indexes import
+that exact public name into the same qualified locals. No general alias or
+second operation name is admitted. The contract law now names Template's
+canonical `@rawr/typebox-adapter` package rather than Magic Migration's
+repository-local adapter alias.
+
+The move preserves module-curated content-workspace and package-output
+context, source observation and final revalidation order, deterministic Cowork
+bytes, the uninterruptible publication boundary, result variants, typed
+failures, defects, and interruption. No model, policy, resource, provider,
+public key, Personal content, or live state changes. The module typecheck
+passes, the four Packaging files plus service-spine proof pass all 33 focused
+cases, and the complete service suite passes all 377 cases across 43 files.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect

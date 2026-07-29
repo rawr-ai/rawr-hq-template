@@ -1513,6 +1513,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   TypeBox contracts, module context, clean and staged observation order,
   revalidation, release-input encoding, results, and failures. Add no resource,
   provider, policy, alias, compatibility face, or second operation path.
+- [x] 5.7e21r Migrate Packaging into the indexed service law. Move its one
+  TypeBox-backed contract operation and one authored handler into semantic
+  leaves, compose only plain objects from `contract/index.ts` and
+  `router/index.ts`, and delete the flat faces and `.router.ts` name in the
+  same cut. Extend the shared contract and router laws only for the exact
+  language-required `packageContract` and `packageOperation` local bindings
+  that preserve the ECMAScript-reserved public `package` export; admit no
+  general alias form. Bind the contract law to Template's canonical
+  `@rawr/typebox-adapter` package rather than a foreign repository alias.
+  Preserve module context, source observation and revalidation order, Cowork
+  bytes, publication boundary, results, failures, and interruption behavior.
+  Add no resource, provider, policy, compatibility face, or second operation
+  path.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution
