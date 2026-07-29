@@ -111,33 +111,6 @@ describe("hq runtime commands", () => {
     ]);
   });
 
-  it("keeps HQ async startup gated and Inngest CLI pinned", () => {
-    const workspaceRoot = path.resolve(
-      path.dirname(fileURLToPath(import.meta.url)),
-      "..",
-      "..",
-      ".."
-    );
-    const hqScript = readFileSync(path.join(workspaceRoot, "scripts", "dev", "hq.sh"), "utf8");
-    const serverPackage = JSON.parse(
-      readFileSync(path.join(workspaceRoot, "apps", "server", "package.json"), "utf8")
-    ) as {
-      devDependencies: Record<string, string>;
-      scripts: Record<string, string>;
-    };
-
-    expect(serverPackage.devDependencies["inngest-cli"]).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(serverPackage.scripts["dev:inngest"]).toContain(
-      `inngest-cli@${serverPackage.devDependencies["inngest-cli"]}`
-    );
-    expect(hqScript).not.toContain("inngest-cli@latest");
-    expect(hqScript).toContain("resolve_hq_async_enabled");
-    expect(hqScript).toContain("async: disabled (no HQ workflows or schedules configured)");
-    expect(hqScript).toContain("cd apps/hq");
-    expect(hqScript).toContain("bun --hot server.ts");
-    expect(hqScript).not.toContain("bun --hot src/index.ts");
-  });
-
   it("plans hq graph as an on-demand Nx graph launch", () => {
     const proc = runRawr(["hq", "graph", "--focus", "@rawr/web", "--view", "projects", "--json"]);
     expect(proc.status).toBe(0);

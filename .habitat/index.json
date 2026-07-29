@@ -4,6 +4,7 @@
   "ownerRoots": {
     "habitat": "scripts/habitat",
     "@rawr/agent-plugin-lifecycle": "services/agent-plugin-lifecycle",
-    "@rawr/hq-app": "apps/hq"
+    "@rawr/hq-app": "apps/hq",
+    "@rawr/web": "apps/web"
   }
 }

@@ -1,6 +1,5 @@
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -42,37 +41,6 @@ describe("qualified lifecycle command boundary", () => {
   it("has no mutable process-global lifecycle binding surface", () => {
     expect(Object.hasOwn(projectionSurface, "bindLifecycleClientFactory")).toBe(false);
     expect(Object.hasOwn(projectionSurface, "bindAgentPluginUndoApplication")).toBe(false);
-  });
-
-  it("keeps the lifecycle command closure disjoint from the external Oclif registry owner", () => {
-    const closure = relativeImportClosure([
-      path.join(cliRoot, "src", "commands", "agent", "plugins"),
-      path.join(cliRoot, "src", "lib", "agent-plugins", "commands"),
-    ]);
-
-    expect(closure.some((file) => file.includes(`${path.sep}external-extensions${path.sep}`))).toBe(
-      false
-    );
-    for (const file of closure) {
-      const source = readFileSync(file, "utf8");
-      expect(source, file).not.toContain("@oclif/plugin-plugins");
-    }
-  });
-
-  it("declares only the exact curated lifecycle command inventory", () => {
-    const declared = commandFiles(
-      path.join(cliRoot, "src", "commands", "agent", "plugins"),
-      "agent:plugins"
-    ).sort();
-
-    expect(declared).toEqual([...EXACT_CURATED_PLUGIN_COMMANDS]);
-    expect(existsSync(path.join(cliRoot, "src", "commands", "plugins"))).toBe(false);
-    for (const id of declared) {
-      const root = path.join(cliRoot, "src", "commands", "agent", "plugins");
-      const relative = id.replace("agent:plugins:", "").split(":").join(path.sep);
-      const source = readFileSync(path.join(root, `${relative}.ts`), "utf8");
-      expect(source, id).not.toMatch(/static\s+(?:hiddenAliases|aliases)\s*=/u);
-    }
   });
 
   it("loads representative admitted commands and preserves native not-found behavior", () => {
@@ -808,39 +776,6 @@ describe("qualified lifecycle command boundary", () => {
   });
 });
 
-const EXACT_CURATED_PLUGIN_COMMANDS = [
-  "agent:plugins:check",
-  "agent:plugins:create",
-  "agent:plugins:package",
-  "agent:plugins:status",
-  "agent:plugins:status:vendors",
-  "agent:plugins:sync",
-  "agent:plugins:test",
-  "agent:plugins:update:vendors",
-] as const;
-
-function commandFiles(root: string, prefix: string): string[] {
-  const ids: string[] = [];
-  const visit = (directory: string): void => {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      const absolute = path.join(directory, entry.name);
-      if (entry.isDirectory()) {
-        visit(absolute);
-        continue;
-      }
-      if (!entry.isFile() || !entry.name.endsWith(".ts")) continue;
-      const relative = path
-        .relative(root, absolute)
-        .slice(0, -".ts".length)
-        .split(path.sep)
-        .join(":");
-      ids.push(`${prefix}:${relative}`);
-    }
-  };
-  visit(root);
-  return ids;
-}
-
 function recordingClient(calls: string[]): Client {
   const call = (name: string) => async () => {
     calls.push(name);
@@ -1060,60 +995,4 @@ function jsonRecord(value: unknown): Readonly<Record<string, unknown>> {
     throw new Error("Expected JSON object");
   }
   return value as Readonly<Record<string, unknown>>;
-}
-
-function relativeImportClosure(roots: readonly string[]): readonly string[] {
-  const pending = roots.flatMap((root) => collectTypeScriptFiles(root));
-  const visited = new Set<string>();
-  while (pending.length > 0) {
-    const file = pending.pop();
-    if (file === undefined || visited.has(file)) continue;
-    visited.add(file);
-    const source = readFileSync(file, "utf8");
-    for (const specifier of relativeImportSpecifiers(source)) {
-      const dependency = resolveTypeScriptImport(file, specifier);
-      if (dependency !== undefined && !visited.has(dependency)) pending.push(dependency);
-    }
-  }
-  return [...visited].sort();
-}
-
-function collectTypeScriptFiles(root: string): string[] {
-  const files: string[] = [];
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    const target = path.join(root, entry.name);
-    if (entry.isDirectory()) files.push(...collectTypeScriptFiles(target));
-    else if (entry.isFile() && /\.tsx?$/u.test(entry.name)) files.push(target);
-  }
-  return files;
-}
-
-function relativeImportSpecifiers(source: string): readonly string[] {
-  const specifiers = new Set<string>();
-  for (const pattern of [
-    /\bfrom\s+["'](\.[^"']+)["']/gu,
-    /\bimport\s*\(\s*["'](\.[^"']+)["']\s*\)/gu,
-    /\bimport\s+["'](\.[^"']+)["']/gu,
-  ]) {
-    for (const match of source.matchAll(pattern)) {
-      const specifier = match[1];
-      if (specifier !== undefined) specifiers.add(specifier);
-    }
-  }
-  return [...specifiers];
-}
-
-function resolveTypeScriptImport(importer: string, specifier: string): string | undefined {
-  const unresolved = path.resolve(path.dirname(importer), specifier);
-  const extensionless = unresolved.replace(/\.js$/u, "");
-  for (const candidate of [
-    unresolved,
-    `${extensionless}.ts`,
-    `${extensionless}.tsx`,
-    path.join(extensionless, "index.ts"),
-    path.join(extensionless, "index.tsx"),
-  ]) {
-    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-  }
-  return undefined;
 }

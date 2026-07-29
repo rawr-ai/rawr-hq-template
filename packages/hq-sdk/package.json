@@ -46,7 +46,6 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-sdk",
     "test": "vitest run --project hq-sdk",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

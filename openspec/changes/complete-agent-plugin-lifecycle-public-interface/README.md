@@ -3803,6 +3803,41 @@ oracles. Both CLI behavior targets also hash the fixture's project-scoped
 production input, so cache correctness does not require a false CLI runtime
 dependency.
 
+## Manual Phase-Gate Retirement
+
+Habitat now owns the repository's structural and source-law surface without a
+parallel phase-runner layer. This checkpoint deletes all 61 hand-written
+architecture, observability, phase, runtime, and repository-separation MJS
+scanners; their root aliases; twelve package-local `structural` wrappers; the
+stale Nx input group; and the script-backed repository project. Executed
+behavior remains in owner tests. The one behavioral contract embedded in the
+old repository scanner now has a two-case Workstream Plugin Pack test that
+executes outside-root and symlink refusal before replacement. The
+Habitat-backed Example Todo API target and contained Runtime Realization lab
+target remain qualified; the latter verifies its isolated evidence plane
+rather than acting as repository architecture authority.
+
+One enforced, empty-baseline Habitat structure rule positively closes
+`scripts/` to its five admitted mechanics or content roots. Two enforced,
+empty-baseline Grit rules own the remaining parser-visible relations: curated
+agent-plugin commands cannot acquire `@oclif/plugin-plugins`, and browser
+environment access passes through the web-owned public projection. Their
+superseded source-reading tests and helpers are deleted. The root
+`package.json` exposes no inferred Nx targets, so ordinary operator commands do
+not become a second lint or scheduler owner. Nx resolves 39 non-root projects,
+with Habitat as the sole lint and repository-policy owner.
+
+The ten-rule native structure leaf passes in 2.3 seconds. The selected 26-rule
+policy leaf passes with only its pre-existing advisory service findings.
+The current required check passes 39 projects and 85 prerequisite tasks in
+1 minute 9 seconds, with 71 of 124 tasks served from the Nx cache. Habitat's
+35 tests, Habitat typecheck, strict source-law fixtures, Workstream installer
+behavior, Oclif inventory acceptance, and the retained owner behavior suites
+are green. A categorical live-tree audit finds no active hand-written
+repository source, structure, or topology authority outside Habitat. No
+provider, Personal repository, channel, release, or live installation state is
+touched.
+
 ## Settlement Oracles
 
 The final product must prove:

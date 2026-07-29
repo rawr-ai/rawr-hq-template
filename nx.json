@@ -36,18 +36,6 @@
       "!{projectRoot}/**/*.test.*",
       "!{projectRoot}/**/*.spec.*"
     ],
-    "architectureGlobals": [
-      "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/package.json",
-      "{workspaceRoot}/.habitat/**/*",
-      "{workspaceRoot}/scripts/architecture/**/*.mjs",
-      "{workspaceRoot}/scripts/habitat/**/*",
-      "{workspaceRoot}/scripts/observability/**/*.mjs",
-      "{workspaceRoot}/scripts/phase-a/**/*.mjs",
-      "{workspaceRoot}/scripts/phase-2/**/*.mjs",
-      "{workspaceRoot}/scripts/phase-03/**/*.mjs",
-      "{workspaceRoot}/scripts/runtime/**/*.mjs"
-    ],
     "habitatPolicy": ["{workspaceRoot}/.habitat/**/*", "!{workspaceRoot}/.habitat/cache/**"],
     "habitatTypecheckSources": [
       "{workspaceRoot}/.habitat/blueprints/nx-workspace/require_nx_project_quality_targets/check.mjs",
@@ -118,10 +106,6 @@
     "verify": {
       "cache": false,
       "dependsOn": ["build", "^build"]
-    },
-    "structural": {
-      "cache": false,
-      "inputs": ["default", "^default", "architectureGlobals"]
     }
   }
 }

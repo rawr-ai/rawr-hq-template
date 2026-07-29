@@ -32,7 +32,6 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "bun --hot dev.ts",
     "dev:server": "bun --hot server.ts",
-    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/hq-app",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bunx vitest run --project hq-app"
   },

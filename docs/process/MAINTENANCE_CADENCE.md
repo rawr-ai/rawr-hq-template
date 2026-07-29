@@ -28,9 +28,10 @@ Interpretation:
 - Shared defaults must preserve one workspace lint task, project-owned
   typecheck, optional owner verification, Habitat policy, and dependency
   checks. Project-kind and quality-target admission belong to Habitat's
-  `nx-workspace` rule; repository separation and CLI Oclif parity remain their
-  qualified owners. Required Oclif structure laws and the lifecycle
-  command-channel law belong to Habitat's selected source-law batch.
+  `nx-workspace` rule; CLI Oclif parity remains with the CLI owner. Required
+  Oclif structure, repository-script topology, and lifecycle command-channel
+  laws belong to Habitat's selected batch. Template and Personal remain
+  independent repositories rather than a source-scanner relationship.
 - `habitat:check` must run workspace lint, Habitat-owner typecheck and tests,
   and the selected green local policy batch.
 - The selected Habitat batch must keep empty baselines. Do not claim that all

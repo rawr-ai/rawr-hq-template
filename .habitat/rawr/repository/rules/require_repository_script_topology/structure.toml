@@ -1,0 +1,15 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "repository-script-topology"
+root = "scripts"
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "chatgpt-corpus-template",
+  "dev",
+  "githooks",
+  "habitat",
+]
+allowed = []

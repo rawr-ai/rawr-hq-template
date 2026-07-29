@@ -30,7 +30,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "manifest": "NODE_ENV=production bun --bun oclif manifest",
-    "structural": "bun ../../../../scripts/phase-03/run-structural-suite.mjs --project @rawr/plugin-chatgpt-corpus",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run --project plugin-chatgpt-corpus"

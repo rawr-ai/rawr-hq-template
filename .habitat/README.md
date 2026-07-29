@@ -46,11 +46,14 @@ The current generic kinds are:
 The `rawr/` tree carries owner-qualified constraints that are not generic
 package laws. Its repository niche owns the cross-kind `AGENTS.md` placement
 relation without acquiring the topology of the heterogeneous package and
-module roots it inspects. Its remaining lifecycle rule closes the curated
-command channel while that implementation is simplified. Generic service and
-Oclif packets own their admitted source relationships, and TypeScript package
-exports own public compatibility. Neither niche duplicates those laws as a
-package-name or path blacklist. Resolved project admission is a separate
+module roots it inspects, plus the positively closed root for repository
+scripts. Its agent-plugin lifecycle niche closes the curated command channel
+and keeps curated command source independent from the native external-plugin
+package. Its web-host niche admits public environment fields only through the
+web-owned projection funnel. Generic service and Oclif packets own their
+admitted source relationships, and TypeScript package exports own public
+compatibility. These qualified niches do not duplicate generic laws as
+package-name or path blacklists. Resolved project admission is a separate
 Habitat rule, not an ESLint rule.
 
 Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
@@ -62,9 +65,9 @@ in a second filename convention. Grit rules own source relationships. A
 must remain inside its rule packet. Behavioral semantics stay in TypeScript
 tests and owner review rather than being approximated as source shape.
 
-`habitat:check:policy` composes the pinned-binary 23-rule local policy batch at
+`habitat:check:policy` composes the pinned-binary 26-rule local policy batch at
 `habitat:check:policy:local` with the one rule-owned Nx graph adapter. The
-independent `habitat:check:structure` leaf selects exactly nine Habitat
+independent `habitat:check:structure` leaf selects exactly ten Habitat
 structure rules for Stop feedback and is not a policy dependency. Both CLI
 leaves are intentionally uncached: their rule scopes are exact, while exact Nx
 cache inputs remain owned by the future upstream distributable Habitat Nx

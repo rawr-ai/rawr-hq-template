@@ -63,7 +63,6 @@
     "dev:cli": "bun src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "manifest": "NODE_ENV=production bun --bun oclif manifest",
-    "structural": "bun ../../scripts/phase-03/run-structural-suite.mjs --project @rawr/cli",
     "structure-oclif": "bun run --cwd ../.. habitat -- --rule require_oclif_app_configuration --rule require_oclif_app_topology",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
