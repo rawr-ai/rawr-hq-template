@@ -3573,6 +3573,24 @@ The repository check completes all 40 project checks and 118 resolved tasks in
 TypeScript/structural standing reviews accept the checkpoint without P0, P1,
 or P2 findings.
 
+## Service Proof Ownership Correction
+
+The service topology now gives service-root behavior and compile-only contract
+relations their own positive proof destinations under
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21v]].
+`test/behavior/*.test.ts` sits beside real
+`test/behavior/modules/<module>/*.test.ts`, so root-owned policy is not
+misclassified as a sixth module. `test/mechanics/contract/*.typecheck.ts`
+preserves TypeScript-only contract relations without making Vitest execute
+ambient proof values or hiding them in support.
+
+The existing module behavior, runtime mechanics, integration, and support
+owners remain closed and unchanged. The native Habitat fixture exercises both
+new positive forms and passes all 14 cases and 53 assertions. Strict OpenSpec
+validation and focused formatting checks also pass. This is a two-destination
+law correction, not a topology variant, SDK feature, runner, parser,
+compatibility path, or production service change.
+
 ## Effect And TypeBox Vendor Preparation
 
 The vendor-preparation checkpoint moves every direct Effect and Effect

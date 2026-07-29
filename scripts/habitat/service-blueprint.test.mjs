@@ -171,6 +171,14 @@ function canonicalTopology() {
     "services/orders/src/service/db/migrations/0001-orders.sql": "select 1;",
     "services/orders/src/service/db/schema/orders.ts": "export const orders = {};",
     "services/orders/src/service/db/stores/orders.ts": "export const orders = {};",
+    "services/orders/test/behavior/release-model.test.ts": "export {};",
+    "services/orders/test/behavior/modules/catalog/find.test.ts": "export {};",
+    "services/orders/test/mechanics/client/context.test.ts": "export {};",
+    "services/orders/test/mechanics/contract/contract.test.ts": "export {};",
+    "services/orders/test/mechanics/contract/contract.typecheck.ts": "export {};",
+    "services/orders/test/mechanics/db/orders.test.ts": "export {};",
+    "services/orders/test/integration/provider.test.ts": "export {};",
+    "services/orders/test/support/service/fixture.ts": "export {};",
     "plugins/server/api/catalog/src/service/base.ts": "export type Context = {};",
     "plugins/server/api/catalog/src/service/contract.ts": "export const contract = {};",
     "plugins/server/api/catalog/src/service/impl.ts": "export const impl = {};",
@@ -193,7 +201,7 @@ function canonicalTopology() {
 }
 
 describe("service and database blueprint topology", () => {
-  it("admits Template package metadata, directory entrypoints, entities, and root database ownership", async () => {
+  it("admits Template package metadata, directory entrypoints, proof owners, entities, and root database ownership", async () => {
     const root = await createFixture(canonicalTopology(), topologyRules, topologyBlueprints);
     const result = await check(root, topologyRules);
 

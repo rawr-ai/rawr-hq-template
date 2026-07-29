@@ -1555,6 +1555,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   capture/apply/restore/settle boundary, results, failures, defects, and
   interruption. Add no middleware, resource, provider, policy, alias,
   compatibility face, or second operation path.
+- [x] 5.7e21v Give service-root behavior and TypeScript contract relations
+  positive proof destinations. Admit direct `test/behavior/*.test.ts` beside
+  real module behavior, and admit compile-only `*.typecheck.ts` only under
+  `test/mechanics/contract`. Preserve the existing module, runtime mechanics,
+  integration, and support owners. Extend the native Habitat fixture with both
+  positive forms. Add no pseudo-module, test runner, source parser, topology
+  variant, SDK capability, or compatibility path.
+- [ ] 5.7e21w Close the Agent Plugin Lifecycle service root and proof corpus.
+  Declare the five context lanes directly on the exported `Context` type
+  without changing any lane or capability, then rehome the existing tests into
+  the closed behavior, mechanics, integration, and support roots. Preserve
+  every assertion and operation behavior; update only paths and relative
+  imports required by the move. Delete the predecessor flat, `shared`, model,
+  vendor, module, and support-root test shapes in the same cut. Add no runtime
+  helper, alias, compatibility path, resource, provider, policy, or new proof
+  framework.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

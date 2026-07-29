@@ -391,11 +391,19 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "modules",
+  "@(*.test.ts|modules)",
 ]
 allowed = [
+  "*.test.ts",
   "modules",
 ]
+
+[[scopes]]
+name = "standalone-service-direct-behavior-suites"
+root = "services/*/test/behavior/*.test.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-behavior-module-roots"
@@ -446,8 +454,8 @@ allowed = [
 ]
 
 [[scopes]]
-name = "standalone-service-mechanics-categories"
-root = "services/*/test/mechanics/@(client|contract|db)"
+name = "standalone-service-runtime-mechanics-categories"
+root = "services/*/test/mechanics/@(client|db)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
@@ -459,8 +467,29 @@ allowed = [
 ]
 
 [[scopes]]
-name = "standalone-service-mechanics-suites"
-root = "services/*/test/mechanics/@(client|contract|db)/*.test.ts"
+name = "standalone-service-runtime-mechanics-suites"
+root = "services/*/test/mechanics/@(client|db)/*.test.ts"
+kind = "file"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "standalone-service-contract-mechanics"
+root = "services/*/test/mechanics/contract"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(*.test.ts|*.typecheck.ts)",
+]
+allowed = [
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "standalone-service-contract-mechanics-files"
+root = "services/*/test/mechanics/contract/@(*.test.ts|*.typecheck.ts)"
 kind = "file"
 mode = "open"
 allowEmpty = true
