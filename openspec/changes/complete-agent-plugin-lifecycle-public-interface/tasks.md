@@ -1562,7 +1562,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   integration, and support owners. Extend the native Habitat fixture with both
   positive forms. Add no pseudo-module, test runner, source parser, topology
   variant, SDK capability, or compatibility path.
-- [ ] 5.7e21w Close the Agent Plugin Lifecycle service root and proof corpus.
+- [x] 5.7e21w Close the Agent Plugin Lifecycle service root and proof corpus.
   Declare the five context lanes directly on the exported `Context` type
   without changing any lane or capability, then rehome the existing tests into
   the closed behavior, mechanics, integration, and support roots. Preserve
