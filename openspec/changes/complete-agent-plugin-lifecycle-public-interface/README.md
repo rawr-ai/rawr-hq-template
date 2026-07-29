@@ -20,7 +20,7 @@ repository release, or HF01 candidate was mutated by this correction.
 
 | Repository | Checkpoint base identity | Role |
 | --- | --- | --- |
-| RAWR HQ-Template | `main` / `5f9de703f5ecfcf322bd1e31af6721a6ad8ebd81` | Executable code, Oclif CLI, services, resources, generic tooling |
+| RAWR HQ-Template | `main` / `f979e1746b48101483c080e6692d23ead65e3aa7` | Executable code, Oclif CLI, services, resources, generic tooling |
 | Personal RAWR HQ | `main` / `1e7f346b9b0fb7b356675d3e837295256bda7d0d` | Curated agent content, provenance, policy/evaluation, governed records |
 
 Active Template execution uses isolated Graphite worktrees descended from
@@ -3802,6 +3802,43 @@ twenty-five-task prerequisite graph and passes all three Oclif inventory
 oracles. Both CLI behavior targets also hash the fixture's project-scoped
 production input, so cache correctness does not require a false CLI runtime
 dependency.
+
+## Ordinary Installed Oclif Acceptance
+
+The qualified, uncached
+`@rawr/cli:acceptance:oclif-installed-package` target reads the fixed
+nineteen-member release group from `nx.json`, uses the existing build and Oclif
+manifest prerequisites, and packs every member with `bun pm pack`. A normal
+`npm install` then installs those local tarballs into one disposable prefix.
+Bun 1.3.14 attempted registry resolution for unpublished internal dependencies
+even when all nineteen tarballs were direct file dependencies; using npm avoids
+that pre-publication limitation without rewriting packed manifests or
+emulating a registry.
+
+The acceptance proves that the CLI's complete `@rawr/*` runtime closure is
+installed as ordinary package directories with no workspace links or nested
+copies. It verifies version and help output, generated command-module
+containment, the first-party command inventory, and native
+`@oclif/plugin-plugins` ownership. It installs the ordinary Hello fixture,
+lists and invokes it, removes it, and observes the command disappear. One
+read-only lifecycle status call returns a typed blocked result for missing
+Personal content while every explicit provider and configuration home remains
+unchanged.
+
+TypeBox validates the external JSON boundaries used by the test. Each tarball
+receives an ordinary SHA-256 annotation bound to the current revision and
+working-tree status; no receipt or retained artifact store is created. The
+final local target passes in 53.6 seconds. Guarded cleanup is limited to the
+exact real directory created under the canonical temporary parent. No registry,
+Personal repository, provider home, or release channel is mutated.
+
+The complete CLI behavior suite passes 82 cases, and the uncached CLI
+typecheck passes its nineteen-task dependency graph. The required repository
+check passes all 124 tasks in 2 minutes 13 seconds, including Habitat's 26-rule
+policy batch and 35 behavior cases; its only findings are the already-recorded
+advisory service migration corpus. Strict OpenSpec, Biome, and diff hygiene
+pass. Standing behavioral, native-authority, and TypeScript/structural reviews
+report no unresolved P0, P1, or P2 finding.
 
 ## Manual Phase-Gate Retirement
 
