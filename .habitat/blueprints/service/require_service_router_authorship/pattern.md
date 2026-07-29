@@ -121,7 +121,8 @@ predicate require_service_router_authorship_is_runtime_export($export) {
 predicate require_service_router_authorship_is_inline_handler($handler) {
   or {
     $handler <: arrow_function(),
-    $handler <: r"^\s*(?:async\s+)?function(?:\s*\*)?(?:\s+[A-Za-z_$][A-Za-z0-9_$]*)?\s*\("
+    $handler <: function(),
+    $handler <: generator_function()
   }
 }
 
@@ -129,6 +130,7 @@ predicate require_service_router_authorship_is_inline_handler($handler) {
 predicate require_service_router_authorship_is_detached_callable($statement) {
   or {
     $statement <: function_declaration(),
+    $statement <: generator_function_declaration(),
     $statement <: `const $name = $handler` where {
       require_service_router_authorship_is_inline_handler(handler=$handler)
     },
@@ -308,6 +310,61 @@ export const router = {
 // @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
 import { module } from "../module";
 export const find = module.find.effect(({ context }) => context.catalog.find());
+```
+
+## Ignores an inline function operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { module } from "../module";
+export const find = module.find.handler(function ({ context }) {
+  return context.catalog.find();
+});
+```
+
+## Ignores an inline async function operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { module } from "../module";
+export const find = module.find.handler(async function ({ context }) {
+  return context.catalog.find();
+});
+```
+
+## Ignores an inline Effect generator operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { Effect } from "effect";
+import { module } from "../module";
+export const find = module.find.effect(function* ({ context }) {
+  return yield* Effect.succeed(context.catalog.find());
+});
+```
+
+## Matches a detached Effect generator operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { Effect } from "effect";
+import { module } from "../module";
+const runFind = function* ({ context }) {
+  return yield* Effect.succeed(context.catalog.find());
+};
+export const find = module.find.effect(runFind);
+```
+
+## Matches a detached named Effect generator operation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { Effect } from "effect";
+import { module } from "../module";
+function* runFind({ context }) {
+  return yield* Effect.succeed(context.catalog.find());
+}
+export const find = module.find.effect(runFind);
 ```
 
 ## Ignores a cohesive grouped router

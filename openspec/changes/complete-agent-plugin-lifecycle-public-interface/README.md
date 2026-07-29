@@ -3956,6 +3956,23 @@ its findings are the expected predecessor topology, not accepted debt. No
 manual checker, local SDK change, runtime helper, compatibility face, provider
 mutation, or production service edit is part of this checkpoint.
 
+## Governance Router Migration
+
+Governance is the first production module to consume the restored router law.
+Its `currentMainRecord` and `currentMainSelection` operation bytes move
+unchanged into the required `router/*.router.ts` leaves. The former router
+barrel becomes module-root `router.ts`, and only its two relative import paths
+change. Root service composition, the Governance module branch and context,
+TypeBox contracts, Effect handlers, public operation keys, Git observation
+order, failures, defects, interruption, and results remain unchanged.
+
+The old router barrel and unsuffixed leaf paths disappear in the same
+checkpoint without aliases. No policy, resource, provider, middleware,
+contract, test, Personal repository, or live provider state changes.
+The first consumer also replaces the rule's ineffective text matcher with
+Grit's native function-expression nodes so inline native and Effect handlers
+are admitted while detached ordinary and generator callables remain findings.
+
 ## Git-Backed Declarative Release Input
 
 The unpublished version-1 release input is recut in place as a declaration
