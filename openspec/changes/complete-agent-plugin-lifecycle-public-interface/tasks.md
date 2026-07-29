@@ -1544,6 +1544,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   order, operation-local sessions, native mutation and confirmation behavior,
   results, failures, defects, and interruption. Add no middleware, resource,
   provider, policy, alias, compatibility face, or second operation path.
+- [x] 5.7e21u Migrate Vendors into the indexed service law. Split its
+  `status` and `update` contracts into matching semantic leaves, split the
+  former source-lifecycle group into the two filename-mapped Effect operation
+  leaves, and compose only plain objects from `contract/index.ts` and
+  `router/index.ts`. Delete the flat faces and `.router.ts` group name in the
+  same cut. Preserve exact public keys, TypeBox contracts, metadata,
+  module-curated clock/content-workspace/versioned-content context, read-only
+  status behavior, interruptible update preflight, the uninterruptible
+  capture/apply/restore/settle boundary, results, failures, defects, and
+  interruption. Add no middleware, resource, provider, policy, alias,
+  compatibility face, or second operation path.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution
