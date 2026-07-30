@@ -4392,6 +4392,37 @@ research-service design. Its other prerequisite is already present:
 issue paths. The reviewed runtime checkpoint will be reported by exact commit
 after it is independently green; no moving branch head is a handoff.
 
+## Distribution Ownership Aggregate Admission
+
+The bounded ownership follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.3f]] deletes the
+ownership-index parser's handwritten object guard and unsafe record cast. The
+existing `DistributionOwnershipIndexRecordSchema` now owns exact root
+membership through the same root-only TypeBox admission boundary used by the
+other release aggregates.
+
+Root structural refusal remains the ownership family's documented single
+`EXPECTED_OBJECT` diagnostic. Exact-shape values still bound `claims` before
+the full schema validator sees them, so TypeBox never traverses a caller-owned
+array beyond the protocol ceiling. Primitive-invalid values retain that
+owner-local aggregate classification, while structurally valid records continue
+to reach member coverage, plugin synthesis, duplicate and routing conflict
+policy, canonical ordering, and immutable reconstruction.
+
+The cut adds no schema, parser framework, nested error walker, proxy hardening,
+router, resource, runtime, caller implementation, or public terminal
+classification. It intentionally normalizes a missing `claims` member and the
+non-object message to the ownership family's documented aggregate
+`EXPECTED_OBJECT` diagnostic. Individual-release and complete-set aggregate
+parser deletion remain open, so this checkpoint does not complete task 5.3.
+
+The focused ownership, release-input, and release-set regression passes 44
+tests across three files; the complete lifecycle owner passes 405 tests across
+43 files. Lifecycle source and test typechecks, touched-file Biome, strict
+OpenSpec validation, and diff hygiene pass. Standing TypeScript/TypeBox,
+testing, and structural-quality reviews accepted the final cut after exact-bound
+and root-refusal child-traversal proofs were added.
+
 ## Settlement Oracles
 
 The final product must prove:

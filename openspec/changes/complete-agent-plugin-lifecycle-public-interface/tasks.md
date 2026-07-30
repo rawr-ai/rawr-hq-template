@@ -710,6 +710,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   existing individual-release regression without adding a schema, mapper,
   walker, parser framework, or caller implementation change. This checkpoint
   does not claim task 5.3 complete.
+- [x] 5.3f Delete the ownership-index parser's handwritten object guard and
+  record cast. Let `DistributionOwnershipIndexRecordSchema` own root membership
+  through the existing root-only TypeBox admission adapter, then bound the
+  caller-owned claims array before full schema validation and semantic
+  ownership checks. Preserve the owner-local `EXPECTED_OBJECT` diagnostic,
+  exact claim ceiling without excluded-tail traversal, plugin synthesis,
+  canonical ordering, conflict classification, and immutability. Prove
+  non-object, missing, extra, primitive-invalid, semantic-mismatch, and
+  over-bound cases without adding a new schema, helper, error walker, parser
+  framework, router, resource, runtime, or caller change. This checkpoint does
+  not claim task 5.3 complete.
 - [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.

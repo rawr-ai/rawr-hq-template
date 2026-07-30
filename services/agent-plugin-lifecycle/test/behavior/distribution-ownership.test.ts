@@ -134,6 +134,7 @@ describe("distribution ownership", () => {
     expect(parsed).toEqual(created);
 
     for (const candidate of [
+      null,
       { schemaVersion: 2, claims: created.claims },
       { schemaVersion: 1, claims: created.claims, unexpected: true },
       { schemaVersion: 1 },
@@ -142,8 +143,36 @@ describe("distribution ownership", () => {
       expect(
         parseDistributionOwnershipIndex(candidate, "ownershipIndex", invalidIssues)
       ).toBeUndefined();
-      expect(invalidIssues.length).toBeGreaterThan(0);
+      expect(invalidIssues).toEqual([
+        {
+          code: "EXPECTED_OBJECT",
+          path: "ownershipIndex",
+          message: "Ownership index must match the closed TypeBox schema",
+        },
+      ]);
     }
+
+    const rootRefused = {
+      schemaVersion: 1,
+      unexpected: true,
+    };
+    Object.defineProperty(rootRefused, "claims", {
+      enumerable: true,
+      get: () => {
+        throw new Error("ownership-index parsing traversed a root-refused child");
+      },
+    });
+    const rootIssues: ReleaseIssue[] = [];
+    expect(
+      parseDistributionOwnershipIndex(rootRefused, "ownershipIndex", rootIssues)
+    ).toBeUndefined();
+    expect(rootIssues).toEqual([
+      {
+        code: "EXPECTED_OBJECT",
+        path: "ownershipIndex",
+        message: "Ownership index must match the closed TypeBox schema",
+      },
+    ]);
 
     const mismatchIssues: ReleaseIssue[] = [];
     const mismatch = parseDistributionOwnershipIndex(
@@ -336,6 +365,15 @@ describe("distribution ownership", () => {
           ? fullClaim("plugin", "alpha", "alpha")
           : fullClaim("alias", `index-alias-${index}`, "alpha")
     );
+    const exactIndexIssues: ReleaseIssue[] = [];
+    const exactIndex = parseDistributionOwnershipIndex(
+      { schemaVersion: 1, claims: indexClaims },
+      "ownershipIndex",
+      exactIndexIssues
+    );
+    expect(exactIndexIssues).toEqual([]);
+    expect(exactIndex?.claims).toHaveLength(MAX_OWNERSHIP_CLAIMS);
+
     Object.defineProperty(indexClaims, MAX_OWNERSHIP_CLAIMS, {
       configurable: true,
       get: () => {

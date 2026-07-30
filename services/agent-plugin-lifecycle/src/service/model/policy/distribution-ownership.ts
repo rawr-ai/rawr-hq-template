@@ -22,7 +22,7 @@ import { compareCanonicalText } from "./canonical-text-ordering";
 import { parseOwnershipIdentity } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, failure, success } from "./release-result";
-import { parseBoundedArray } from "./release-value-admission";
+import { admitTypeBoxRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
 const SKILL_MANIFEST_PATH = /^skills\/([^/]+)\/SKILL\.md$/u;
 
@@ -105,14 +105,23 @@ export function parseDistributionOwnershipIndex(
   issues: ReleaseIssue[]
 ): DistributionOwnershipIndex | undefined {
   const initialIssueCount = issues.length;
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    issues.push(releaseIssue("EXPECTED_OBJECT", path, "Ownership index must be an object"));
+  const admissionIssues: ReleaseIssue[] = [];
+  if (
+    !admitTypeBoxRecordForTraversal(
+      DistributionOwnershipIndexRecordSchema,
+      input,
+      path,
+      admissionIssues
+    )
+  ) {
+    issues.push(
+      releaseIssue("EXPECTED_OBJECT", path, "Ownership index must match the closed TypeBox schema")
+    );
     return undefined;
   }
-  const record = input as Record<string, unknown>;
-  const claims = parseBoundedArray(record.claims, `${path}.claims`, MAX_OWNERSHIP_CLAIMS, issues);
+  const claims = parseBoundedArray(input.claims, `${path}.claims`, MAX_OWNERSHIP_CLAIMS, issues);
   if (claims === undefined) return undefined;
-  const boundedRecord = { ...record, claims };
+  const boundedRecord = { ...input, claims };
   if (!Value.Check(DistributionOwnershipIndexRecordSchema, boundedRecord)) {
     issues.push(
       releaseIssue("EXPECTED_OBJECT", path, "Ownership index must match the closed TypeBox schema")
