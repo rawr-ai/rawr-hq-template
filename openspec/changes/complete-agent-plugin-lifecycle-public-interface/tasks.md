@@ -1926,6 +1926,25 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   findings; the intentionally unfinished oRPC-composition and
   router-authorship counts remain eight and nine until operation leaves move
   in the next checkpoint.
+- [x] 5.7e29 Narrow Dev's shared host mechanics without changing its public
+  construction boundary, module contexts, or operation behavior. Make the
+  shared command executor consume only the existing process capability and
+  delete the identity `execText` wrapper rather than preserving a second
+  command vocabulary. Make scratch observation consume only the existing
+  filesystem and path capabilities, then move sorting, missing-record
+  classification, and blocking policy into one pure evaluator that copies
+  caller-owned arrays. Preserve bypass and off-mode no-observation behavior,
+  recursive discovery, command exit and adapter-throw classification, the
+  public `DevResources` construction bundle, and every router result. Prove
+  active scratch observation, pure deterministic evaluation, no mutation of
+  observations, and both no-observation paths through owner-local behavior
+  tests. Add no resource, service, provider, middleware, compatibility alias,
+  router move, or source-law mechanism. Dev source typecheck and all 15
+  behavior tests pass, together with touched-file Biome, the 34-rule Habitat
+  policy, strict OpenSpec validation, and diff hygiene. Standing
+  architecture/oRPC, TypeScript/structural, and behavior-first testing reviews
+  accepted the final cut after exact guarded-mutation, active-mode,
+  nonzero-exit, and both-array nonmutation oracles were added.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

@@ -2,6 +2,8 @@ import { getProcedureMetadata } from "@rawr/hq-sdk";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import { contract, createClient } from "../src/client";
+import type { ScratchPolicyCheck } from "../src/service/model/dto/scratch-policy.dto";
+import { evaluateScratchPolicy } from "../src/service/model/policy/scratch-policy";
 import {
   RepoSyncUpstreamInputSchema,
   RepoSyncUpstreamResultSchema,
@@ -71,6 +73,87 @@ describe("@rawr/dev service shell", () => {
 });
 
 describe("@rawr/dev service behavior", () => {
+  it("evaluates scratch observations without mutating their order", () => {
+    const matches: ScratchPolicyCheck["matches"] = {
+      planScratchPaths: ["/repo/z/PLAN_SCRATCH.md", "/repo/a/PLAN_SCRATCH.md"],
+      workingPadPaths: ["/repo/z/WORKING_PAD.md", "/repo/a/WORKING_PAD.md"],
+    };
+
+    const result = evaluateScratchPolicy({ mode: "block", enforce: true }, matches);
+
+    expect(result.matches.planScratchPaths).toEqual([
+      "/repo/a/PLAN_SCRATCH.md",
+      "/repo/z/PLAN_SCRATCH.md",
+    ]);
+    expect(result.matches.workingPadPaths).toEqual([
+      "/repo/a/WORKING_PAD.md",
+      "/repo/z/WORKING_PAD.md",
+    ]);
+    expect(result.missing).toEqual([]);
+    expect(result.blocked).toBe(false);
+    expect(matches.planScratchPaths).toEqual([
+      "/repo/z/PLAN_SCRATCH.md",
+      "/repo/a/PLAN_SCRATCH.md",
+    ]);
+    expect(matches.workingPadPaths).toEqual(["/repo/z/WORKING_PAD.md", "/repo/a/WORKING_PAD.md"]);
+  });
+
+  it("feeds recursive scratch observation into every active policy mode", async () => {
+    const { resources } = createFakeResources({
+      dirs: {
+        "/repo/rawr/docs/projects": [
+          { name: "nested", isDirectory: true },
+          { name: "PLAN_SCRATCH.md", isDirectory: false },
+        ],
+        "/repo/rawr/docs/projects/nested": [
+          { name: "PERSONAL_WORKING_PAD.md", isDirectory: false },
+        ],
+      },
+    });
+    const client = createClient(createClientOptions({ resources }));
+
+    for (const mode of ["warn", "block"] as const) {
+      const result = await client.scratchPolicy.check(
+        { mode, enforce: true },
+        { context: { invocation: { traceId: `test.scratch.${mode}` } } }
+      );
+
+      expect(result).toMatchObject({
+        mode,
+        blocked: false,
+        missing: [],
+        required: { planScratch: true, workingPad: true },
+        matches: {
+          planScratchPaths: ["/repo/rawr/docs/projects/PLAN_SCRATCH.md"],
+          workingPadPaths: ["/repo/rawr/docs/projects/nested/PERSONAL_WORKING_PAD.md"],
+        },
+      });
+    }
+  });
+
+  it("does not observe the filesystem when scratch policy is off or bypassed", async () => {
+    const { resources } = createFakeResources();
+    let reads = 0;
+    resources.fs.readDir = async () => {
+      reads += 1;
+      throw new Error("scratch observation should not run");
+    };
+    const client = createClient(createClientOptions({ resources }));
+
+    const off = await client.scratchPolicy.check(
+      { mode: "off" },
+      { context: { invocation: { traceId: "test.scratch.off" } } }
+    );
+    const bypassed = await client.scratchPolicy.check(
+      { bypassed: true },
+      { context: { invocation: { traceId: "test.scratch.bypassed" } } }
+    );
+
+    expect(off.mode).toBe("off");
+    expect(bypassed).toMatchObject({ mode: "off", bypassed: true });
+    expect(reads).toBe(0);
+  });
+
   it("plans stack drain by default and does not run mutating Graphite commands", async () => {
     const { resources, calls } = createFakeResources({
       commands: [
@@ -91,6 +174,34 @@ describe("@rawr/dev service behavior", () => {
       "gt",
       "ss --publish --stack --ai --no-interactive",
     ]);
+  });
+
+  it("blocks applied stack drain on missing scratch without blocking a dry run", async () => {
+    const { resources, calls } = createFakeResources({
+      commands: [
+        { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
+        { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
+      ],
+    });
+    const client = createClient(createClientOptions({ resources }));
+
+    const planned = await client.stack.drain(
+      { scratchPolicy: { mode: "block" } },
+      { context: { invocation: { traceId: "test.stack.drain.scratch-plan" } } }
+    );
+    const blocked = await client.stack.drain(
+      { apply: true, scratchPolicy: { mode: "block" } },
+      { context: { invocation: { traceId: "test.stack.drain.scratch-block" } } }
+    );
+
+    expect(planned.preflight.ok).toBe(true);
+    expect(blocked.preflight).toMatchObject({
+      ok: false,
+      issues: [{ code: "SCRATCH_POLICY_BLOCKED" }],
+    });
+    expect(calls.map((call) => `${call.command} ${call.args.join(" ")}`)).not.toContain(
+      "gt ss --publish --stack --ai --no-interactive"
+    );
   });
 
   it("stops applied stack drain after a failed publish step", async () => {
@@ -116,6 +227,11 @@ describe("@rawr/dev service behavior", () => {
     expect(result.action).toBe("applied");
     expect(result.execution.ok).toBe(false);
     expect(result.execution.issues[0]?.code).toBe("STACK_DRAIN_COMMAND_FAILED");
+    expect(result.cycles[0]?.publish).toMatchObject({
+      status: "failed",
+      exitCode: 1,
+      stderr: "publish failed",
+    });
     const rendered = calls.map((call) => `${call.command} ${call.args.join(" ")}`);
     expect(rendered).not.toContain("gt merge --no-interactive");
     expect(rendered).not.toContain("gt sync --no-restack --no-interactive");

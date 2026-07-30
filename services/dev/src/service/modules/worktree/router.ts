@@ -1,4 +1,4 @@
-import { execStep, execText } from "#dev-service/model/helpers/command-execution";
+import { execStep } from "#dev-service/model/helpers/command-execution";
 import { parseWorktrees } from "#dev-service/model/helpers/git-output";
 import {
   execution,
@@ -19,16 +19,19 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   const pinnedBranches = new Set(input.pinnedBranches ?? []);
   const scratchPolicy = await checkScratchPolicy({
     workspaceRoot: context.workspaceRoot,
-    resources: context.resources,
+    fs: context.resources.fs,
+    path: context.resources.path,
     request: { ...input.scratchPolicy, enforce: apply },
   });
   const issues = [];
   const candidates = [];
   const skipped = [];
 
-  const currentRun = await execText(context.resources, context.workspaceRoot, "pwd", ["-P"]);
+  const currentRun = await execStep(context.resources.process, context.workspaceRoot, "pwd", [
+    "-P",
+  ]);
   const currentPath = (currentRun.stdout ?? "").trim() || context.workspaceRoot;
-  const listRun = await execText(context.resources, context.workspaceRoot, "git", [
+  const listRun = await execStep(context.resources.process, context.workspaceRoot, "git", [
     "worktree",
     "list",
     "--porcelain",
@@ -68,7 +71,7 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
       continue;
     }
     if (mergedOnly) {
-      const mergedRun = await execText(context.resources, context.workspaceRoot, "git", [
+      const mergedRun = await execStep(context.resources.process, context.workspaceRoot, "git", [
         "branch",
         "--merged",
         trunk,
@@ -120,7 +123,7 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   for (const candidate of candidates) {
     removed.push(
       await execStep(
-        context.resources,
+        context.resources.process,
         context.workspaceRoot,
         "git",
         ["worktree", "remove", candidate.path],

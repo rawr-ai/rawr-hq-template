@@ -1,5 +1,5 @@
 import type { DevCommandStep } from "../dto/operation-outcomes.dto";
-import type { DevResources } from "../ports/dev-resources";
+import type { DevProcessResource } from "../ports/dev-resources";
 
 const textDecoder = new TextDecoder();
 
@@ -10,7 +10,7 @@ const textDecoder = new TextDecoder();
  * blocks, truncates, or merely informs their own outcome.
  */
 export async function execStep(
-  resources: DevResources,
+  process: DevProcessResource,
   workspaceRoot: string,
   command: string,
   args: string[],
@@ -18,7 +18,7 @@ export async function execStep(
 ): Promise<DevCommandStep> {
   let result;
   try {
-    result = await resources.process.exec(command, args, { cwd: workspaceRoot, timeoutMs });
+    result = await process.exec(command, args, { cwd: workspaceRoot, timeoutMs });
   } catch (error) {
     return {
       command,
@@ -37,15 +37,4 @@ export async function execStep(
     stdout: textDecoder.decode(result.stdout),
     stderr: textDecoder.decode(result.stderr),
   };
-}
-
-/** Executes one external command and returns its structured textual step. */
-export async function execText(
-  resources: DevResources,
-  workspaceRoot: string,
-  command: string,
-  args: string[],
-  timeoutMs?: number
-): Promise<DevCommandStep> {
-  return execStep(resources, workspaceRoot, command, args, timeoutMs);
 }

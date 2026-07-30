@@ -4633,6 +4633,37 @@ pass. A behavior case proves a mismatched URL rejects before record reads,
 upstream observation, capture, or mutation; the Node integration uses a
 logical identity and a distinct HTTPS remote.
 
+## Dev Mechanics Capability Narrowing
+
+The bounded Dev follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e29]] narrows shared
+mechanics before changing module context or router topology. The command
+executor now accepts only the existing process capability, and its identity
+`execText` alias is absent. Command exit, output decoding, timeout, and thrown
+adapter behavior remain one `DevCommandStep` contract.
+
+Scratch discovery now accepts only the existing filesystem and path
+capabilities. A pure policy function owns deterministic ordering,
+missing-record classification, and blocking; it copies observed arrays before
+sorting. The async coordinator still owns recursive discovery and still avoids
+filesystem reads entirely when policy is off or explicitly bypassed.
+
+The public `DevResources` host-construction bundle, service base, module
+contexts, contracts, routers, host adapters, and operation results are
+unchanged. This checkpoint adds no resource, provider, middleware, compatibility
+surface, or runtime owner. Module context curation and the known native oRPC
+beta.20 `module.router(...)` middleware replay remain separate topology work;
+this cut neither blesses nor repairs that behavior.
+
+Dev source typecheck and all 15 owner-local behavior tests pass. The tests pin
+active `warn` and `block` observation, off and bypass no-observation, dry-run
+admission versus applied mutation refusal, ordinary nonzero exits versus
+adapter throws, deterministic output order, and preservation of both observed
+path arrays. Touched-file Biome, the complete 34-rule Habitat policy, strict
+OpenSpec validation, and diff hygiene pass. Standing architecture/oRPC,
+TypeScript/structural, and behavior-first testing reviews accepted the final
+cut after those mutation-boundary oracles were added.
+
 ## Settlement Oracles
 
 The final product must prove:
