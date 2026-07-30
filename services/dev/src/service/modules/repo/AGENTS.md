@@ -36,8 +36,10 @@
 
 ## Interfaces
 
-- `syncUpstream` is the caller operation. Filesystem, process, path, and clock
-  resources supply mechanics and structured command observations.
+- `syncUpstream` is the caller operation. Its handler authors against the
+  workspace root, process and clock resources, and the service-owned scratch
+  policy checker curated by the module. Root construction lanes remain
+  service-internal and are not an operation interface.
 
 ## Routing
 

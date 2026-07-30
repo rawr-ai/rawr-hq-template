@@ -1945,6 +1945,29 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   architecture/oRPC, TypeScript/structural, and behavior-first testing reviews
   accepted the final cut after exact guarded-mutation, active-mode,
   nonzero-exit, and both-array nonmutation oracles were added.
+- [x] 5.7e30 Curate each Dev module's operation context without changing the
+  service base, public host-construction bundle, contracts, router topology, or
+  behavior. Keep complete `DevResources` admission at the service boundary,
+  then let each `module.ts` select its branch's authored vocabulary: Scratch
+  Policy receives workspace root, filesystem, and path; Stack receives
+  workspace root and process; Repo receives workspace root, process, and clock;
+  Worktree receives workspace root, process, and path. Bind the existing
+  service-owned scratch policy during module curation and expose one checker
+  name. Make every operation consume those curated names, keep handler
+  reach-back into root construction lanes absent, and record the staged Habitat
+  source law as the service-wide enforcement owner when that law activates.
+  Update each module's `AGENTS.md` interface account. Native beta.20 context
+  merging remains additive; this slice does not claim runtime or type-level erasure.
+  Preserve all 15 Dev behavior oracles and source typecheck. Add no service
+  middleware, resource, provider, context wrapper, public type, router move, or
+  compatibility path; the known `module.router(...)` middleware replay remains
+  explicit separate topology work. Uncached Dev source typecheck and all 15
+  behavior tests pass in 3.7 seconds. Touched TypeScript passes Biome; all 34
+  active Habitat rules, strict OpenSpec validation, and diff hygiene pass.
+  Standing architecture/oRPC, TypeScript/structural, and behavior-first testing
+  reviews accepted the cut after its records distinguished additive native
+  context from the curated authorship boundary and named the staged Habitat law
+  only as eventual enforcement.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
