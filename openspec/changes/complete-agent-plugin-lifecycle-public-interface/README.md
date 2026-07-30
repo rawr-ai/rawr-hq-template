@@ -4358,6 +4358,40 @@ behavior enters this checkpoint. The ownership, individual-release, and
 complete-set aggregate parser families remain open, so this does not complete
 task 5.3.
 
+## Lifecycle Service Cohesion Decision
+
+The service-boundary reassessment considered both serious destinations. One
+reading split Vendors, Packaging, and Providers because they consume different
+resources and mutate different external owners. The opposing reading kept the
+five modules together because they interpret one release domain. The decisive
+evidence is change coupling and invariant ownership, not file count or
+destination count.
+
+Release derivation, clean-content eligibility, current-main selection,
+release-input admission, payload, ownership, and complete-set identity form one
+release domain whose coordinated subsets cross module branches and have changed
+together. Splitting would either duplicate that kernel, turn it into a new
+shared package, or place service calls across the strongest collaboration. The
+one-service decision therefore stands. Independent domain meaning and cadence,
+a qualified consumer that does not need the shared release truth, or durable
+sequencing outside one request reopens placement; it does not predetermine a
+sibling service rather than a plugin or workflow.
+
+The concrete fatness is in the CLI command path, which currently constructs the
+full concrete resource set before selecting one typed operation. A separately
+owned bounded runtime checkpoint moves provider selection, acquisition,
+finalization, and service binding into the CLI process composition root. At
+least one Oclif command then consumes a ready client without importing concrete
+providers. This lifecycle change consumes that exact reviewed checkpoint; it
+does not add a registry, controller, workflow engine, app composition layer, or
+second service.
+
+That checkpoint is also the remaining upstream prerequisite for the accepted
+research-service design. Its other prerequisite is already present:
+`@rawr/typebox-adapter` uses TypeBox's native validator and omits ambiguous
+issue paths. The reviewed runtime checkpoint will be reported by exact commit
+after it is independently green; no moving branch head is a handoff.
+
 ## Settlement Oracles
 
 The final product must prove:

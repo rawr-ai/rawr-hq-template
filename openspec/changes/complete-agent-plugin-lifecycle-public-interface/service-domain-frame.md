@@ -48,6 +48,57 @@ and each provider home have different state owners and transition laws. The
 service composes them through explicit requests and results without inventing a
 shared lifecycle store.
 
+## Cohesion Decision
+
+The service remains one domain owner. Releases, Governance, Packaging,
+Providers, and Vendors consume coordinated subsets of one admitted release
+domain: exact Git selection, release input, payload, ownership, release and
+complete-set identity, and current-main selection. Governance and Providers
+share current-main selection; Releases, Packaging, and Providers share release
+derivation; Vendors consumes the root release-input model while applying its
+owner-local authoring policy. Their differing dependency sets and mutation
+destinations are real, but those destinations are resource-owned mechanics and
+external state authorities. They do not establish independent service meaning.
+
+The split and keep reviews agreed on the concrete defect: the CLI host eagerly
+constructs the complete concrete resource set before invoking one operation.
+They differed on whether that fat host assembly falsified the service boundary.
+Change coupling resolves the question. Release derivation, clean-content
+policy, current-main selection, and release-input meaning intentionally cross
+module branches and have changed together. Splitting along destination lines
+would duplicate this kernel, expose it as a new shared package, or introduce
+service calls across the strongest collaboration in the domain.
+
+The corrective boundary is therefore outside the service and outside this
+service-topology change. The CLI process composition root selects providers,
+acquires and releases them within one managed Effect lifetime, and binds the
+service once. Oclif command adapters receive the ready typed client and do not
+construct concrete providers. The service continues to receive ready
+capabilities through its root context and each module continues to curate its
+terminal operation vocabulary.
+
+This decision has three falsifiers:
+
+- a branch acquires an independent semantic model and change cadence;
+- a qualified consumer needs that branch without the shared release truth; or
+- the outcome requires durable cross-owner sequencing beyond one request.
+
+Any of those findings reopens placement; it does not predetermine a sibling
+service rather than a plugin or workflow. Different output paths, module size,
+or a root context that truthfully declares complete host requirements do not.
+
+The downstream research service requires one reviewed Template checkpoint with
+the canonical TypeBox Standard Schema adapter and one production runtime
+provisioning vertical. The TypeBox requirement is already satisfied by
+`@rawr/typebox-adapter`, which uses the native TypeBox validator and returns
+message-only issues because TypeBox `1.3.8` paths are ambiguous. The remaining
+deliverable is the bounded runtime vertical above: its dedicated architecture
+owner must make one Oclif command host consume a ready service while the CLI
+process composition root owns concrete providers. This OpenSpec consumes that
+exact reviewed checkpoint as an integration prerequisite; it does not move
+runtime composition into the lifecycle service or authorize a generalized
+runtime platform.
+
 ## Authority Ledger
 
 | Concern | Truth owner | Lifecycle role |
@@ -156,7 +207,7 @@ invalid service green. See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tas
 
 ## Shared Domain Collaborations
 
-Only two domain collaborations cross module boundaries:
+Only two executable domain-policy collaborations cross module boundaries:
 
 1. **Current-main selection** verifies the governed Personal record and returns
    one canonical repository, ref, commit, tree, and release-input selection.
@@ -164,8 +215,8 @@ Only two domain collaborations cross module boundaries:
    model function.
 2. **Release derivation** reads exact selected Git objects and returns one
    closed, immutable, invocation-local release observation for a targeted member
-   or the complete set. Release and packaging operations call the same
-   service-owned model function.
+   or the complete set. Release, packaging, and provider operations call the
+   same service-owned model function.
 
 These collaborations belong to the service model because their meaning and
 invariants span the service capability suite, not merely because multiple
@@ -178,6 +229,11 @@ mechanics remain in resources and providers. A shared collaboration is not an
 injected host-domain
 implementation, nested router call, persistent repository, root-to-child
 import, or permission for siblings to import one another.
+
+The root release-input schema and policy are shared domain model rather than a
+third executable collaboration. Releases owns its public admission and refresh
+operations; Vendors reads and rewrites the same model only through its
+owner-local authoring policy.
 
 Provider-selected content is not a third shared collaboration. Providers alone
 consumes its exact Git payload, native marketplace, and selection-result
@@ -497,7 +553,8 @@ Effect, or resource structure. See
 
 - custom controller distribution, selector, release store, and launcher;
 - external Oclif extension mechanics;
-- app, web, and runtime composition;
+- app, web, and runtime composition; this change may consume one separately
+  owned production runtime checkpoint as an integration prerequisite;
 - legacy destination realization inside the lifecycle owner; export remains a
   retained capability under the dedicated destination architecture;
 - promotion, undo, hosted approval, and provider-wide coordination;
@@ -512,9 +569,9 @@ independent domain truth, a module without a coherent subdomain, durable
 lifecycle storage, a sibling-module import, a root-to-child implementation
 import, direct provider-home writes, an Oclif mutation, a second schema
 authority, Personal executable code, legacy destination implementation inside
-this service, app/runtime composition, or a changed public terminal
-classification without an explicit product decision. A sixth module or a
-large handler is not itself a falsifier.
+this service, runtime composition inside this service change, or a changed
+public terminal classification without an explicit product decision. A sixth
+module or a large handler is not itself a falsifier.
 
 ## Completion
 

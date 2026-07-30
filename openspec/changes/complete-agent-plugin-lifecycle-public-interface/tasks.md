@@ -1791,6 +1791,23 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   future execution boundary is installed, promote the staged service topology,
   anchor, isolation, context, composition, and router authorship laws to
   enforced and include them in the required repository gate.
+- [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
+  ownership, change coupling, dependency subsets, mutation destinations,
+  request lifetime, and plugin/workflow placement. Keep one service because the
+  modules interpret one shared release truth; record the exact falsifiers for a
+  later split. Locate the observed fatness at the CLI host's eager concrete
+  resource construction rather than weakening module curation or manufacturing
+  sibling services.
+- [ ] 5.7f Land and consume one separately owned, bounded production runtime
+  provisioning checkpoint. Let the CLI process composition root select
+  providers, acquire and release them in one managed Effect lifetime, and bind
+  the lifecycle service once. Make at least one Oclif command consume the ready
+  typed client without concrete provider imports. Reuse the canonical
+  `@rawr/typebox-adapter` boundary. The lifecycle change owns integration
+  acceptance, not runtime architecture. Add no generic registry, controller,
+  bootgraph expansion, workflow engine, second service, app/web composition, or
+  request-owned provider acquisition. Record the reviewed exact commit before
+  naming it as the research-service restack prerequisite.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

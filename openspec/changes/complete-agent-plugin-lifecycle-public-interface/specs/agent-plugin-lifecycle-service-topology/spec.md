@@ -18,6 +18,15 @@ absent.
 - **AND** no peer lifecycle service, export module, or undo application remains
   reachable
 
+#### Scenario: Shared release truth determines cohesion
+- **WHEN** module dependencies, consumers, change coupling, and external
+  mutation destinations are classified
+- **THEN** modules that collaborate through coordinated subsets of release
+  input, ownership, payload, release-set, derivation, and current-main
+  invariants remain inside the one lifecycle service
+- **AND** resource-owned destinations and different ready dependency subsets
+  do not create additional service identities
+
 ### Requirement: Service topology follows the canonical shell
 
 The lifecycle service MUST expose one root base, composed contract, implementer,
@@ -132,10 +141,26 @@ The service MUST use the same Effect-backed contract-first oRPC construction as
 the generic Magic Migration service blueprint. TypeBox remains the public
 schema authority. Filesystem/process Effect programs remain inside their owning
 resources and expose ready capabilities to service construction. App/runtime
-composition remains owned by the dedicated architecture migration.
+composition remains owned by the dedicated architecture migration. The service
+MUST NOT select or acquire concrete providers. This lifecycle change MAY
+consume a separately reviewed runtime checkpoint that lets the CLI process
+composition root select, acquire, release, and bind the service's ready
+capabilities within one managed Effect lifetime. That checkpoint MUST replace
+eager concrete construction in at least one Oclif command path and MUST NOT
+introduce a generic registry, workflow engine, alternate service identity, or
+app/web composition.
 
 #### Scenario: Service correction remains inside lifecycle semantics
 - **WHEN** dependency and source changes are reviewed
 - **THEN** the change contains only lifecycle semantics and required resource
   boundary corrections
 - **AND** no app/web composition or second service construction appears
+
+#### Scenario: Oclif command receives one ready service
+- **WHEN** the separately owned production runtime checkpoint is integrated
+  into a real CLI invocation
+- **THEN** the CLI process composition root selects concrete providers, owns
+  their acquisition and finalization, and binds one ready typed lifecycle
+  client
+- **AND** the Oclif command adapter, lifecycle service, and lifecycle modules
+  import or construct no concrete provider
