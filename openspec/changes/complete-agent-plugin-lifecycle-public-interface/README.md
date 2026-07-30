@@ -4749,8 +4749,8 @@ completion on the `worktree.cleanup` lineage. One dry-plan call and one thrown
 admission failure each emitted two analytics entries and two lifecycle logs
 before the correction; each now emits exactly one of each. The closed lineage
 carries three middleware entries rather than the predecessor's six. Scratch
-Policy is already closed; Repo and Stack retain their predecessor completion
-shape until their own bounded checkpoints.
+Policy is already closed; Stack retains its predecessor completion shape until
+its own bounded checkpoint.
 
 Cleanup semantics remain intact: selection uses the strict worktree basename
 prefix, protects the current worktree and explicit pins, refuses detached,
@@ -4770,6 +4770,47 @@ TypeScript/structural, and behavior-first testing reviews report no P0-P2.
 This checkpoint is not the production compiler, bootgraph, or runtime-provider
 boundary awaited by the separate research service; it makes no such peer
 handoff claim.
+
+## Dev Repo Router Authority
+
+The next bounded Dev checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e33]] closes the Repo
+module without widening the service. Repo now declares upstream synchronization
+in `contract/sync-upstream.ts`, retains terminal context curation in
+`module.ts`, authors target resolution, admission, planning, and ordered
+execution in `router/sync-upstream.router.ts`, and composes the completed
+operation through module-root `router.ts`.
+
+The module composer is a plain object. It no longer calls
+`module.router(...)`, so root `impl.router(...)` is the only native router
+completion on the `repo.syncUpstream` lineage. One structured merge failure
+and one thrown admission failure each emitted two analytics entries and two
+lifecycle logs before the correction; each now emits exactly one of each. The
+closed lineage carries three middleware entries rather than the predecessor's
+six. Scratch Policy, Worktree, and Repo are closed; Stack retains its
+predecessor completion shape until its bounded checkpoint.
+
+Repository semantics remain intact: an explicit upstream ref outranks Git
+configuration and the `origin/main` default; branch naming remains
+clock-derived; dirty, detached, missing-ref, branch-collision, worktree,
+Graphite, and scratch observations complete before mutation. Apply mode
+executes the fixed Git and Graphite plan sequentially. The behavior proof pins
+the exact fetch, switch, and failed-merge prefix, the skipped result suffix,
+and the absence of any post-failure command. A command failure remains a
+structured execution result, while a scratch-admission adapter failure retains
+its thrown identity.
+
+The public operation key, TypeBox schemas, metadata, result shape, client, and
+service-root composition do not change. Uncached source typecheck and all 18
+Dev tests pass in 3.4 seconds. All 33 active Habitat rules pass, and direct
+staged composition, authorship, context, anchor, and isolation probes report
+zero Repo findings. Strict OpenSpec, focused Biome, and diff hygiene pass.
+Standing architecture/oRPC, TypeScript/structural, and behavior-first testing
+reviews report no P0-P2 after the ordered-tail proof correction.
+
+Like the preceding Dev checkpoints, this landed boundary is independently
+usable but is not the production compiler, bootgraph, or runtime-provider
+checkpoint awaited by the separate research service.
 
 ## Settlement Oracles
 

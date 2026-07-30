@@ -30,9 +30,13 @@
 
 ## Flow
 
-- The caller selects repository scope, target, and apply posture; the module
-  gathers Git and Graphite observations, rejects unsafe preflight, then returns
-  or executes the plan.
+- `contract/sync-upstream.ts` declares the operation boundary and
+  `contract/index.ts` composes the module contract.
+- `module.ts` curates the Repo operation context from the service base.
+- `router/sync-upstream.router.ts` authors target resolution, admission,
+  planning, and ordered execution.
+- Module-root `router.ts` composes the completed operation for the service
+  router.
 
 ## Interfaces
 
@@ -40,6 +44,8 @@
   workspace root, process and clock resources, and the service-owned scratch
   policy checker curated by the module. Root construction lanes remain
   service-internal and are not an operation interface.
+- Module-root `router.ts` is composition only. Operation logic remains in the
+  named router leaf.
 
 ## Routing
 

@@ -68,6 +68,13 @@ describe("@rawr/dev service shell", () => {
       audit: "full",
       entity: "worktree",
     });
+    expect(getProcedureMetadata(contract.repo.syncUpstream)).toEqual({
+      idempotent: false,
+      domain: "dev",
+      audience: "internal",
+      audit: "full",
+      entity: "repo",
+    });
   });
 
   it("keeps retired repo inspection fields outside the public contract", async () => {
@@ -454,7 +461,9 @@ describe("@rawr/dev service behavior", () => {
   });
 
   it("reports applied repo sync command failures through execution status", async () => {
-    const { resources } = createFakeResources({
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const { resources, calls } = createFakeResources({
       commands: [
         { command: "git", args: ["config", "--get", "rawr.upstreamRef"], exitCode: 1 },
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
@@ -480,7 +489,13 @@ describe("@rawr/dev service behavior", () => {
         },
       ],
     });
-    const client = createClient(createClientOptions({ resources }));
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
 
     const result = await client.repo.syncUpstream(
       { apply: true },
@@ -489,6 +504,88 @@ describe("@rawr/dev service behavior", () => {
 
     expect(result.execution.ok).toBe(false);
     expect(result.execution.issues[0]?.code).toBe("REPO_SYNC_COMMAND_FAILED");
+    expect(result.steps.map((step) => step.status)).toEqual([
+      "succeeded",
+      "succeeded",
+      "failed",
+      "skipped",
+      "skipped",
+    ]);
+    const rendered = calls.map((call) => `${call.command} ${call.args.join(" ")}`);
+    const mutationStart = rendered.indexOf("git fetch --all --prune");
+    expect(mutationStart).toBeGreaterThanOrEqual(0);
+    expect(rendered.slice(mutationStart)).toEqual([
+      "git fetch --all --prune",
+      "git switch -c chore/upstream-sync-20260508123456",
+      "git merge --no-ff origin/main",
+    ]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "repo.syncUpstream",
+        outcome: "success",
+        analytics_trace_id: "test.repo.apply-fail",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "repo.syncUpstream",
+        outcome: "success",
+        invocationTraceId: "test.repo.apply-fail",
+        entity: "repo",
+      },
+    });
+  });
+
+  it("reports one error lifecycle without replacing repo admission failures", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const failure = new Error("repo admission failed");
+    const { resources, calls } = createFakeResources();
+    resources.fs.readDir = async () => {
+      throw failure;
+    };
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    await expect(
+      client.repo.syncUpstream(
+        { apply: true, upstreamRef: "origin/main" },
+        { context: { invocation: { traceId: "test.repo.error" } } }
+      )
+    ).rejects.toBe(failure);
+    expect(calls).toEqual([]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "repo.syncUpstream",
+        outcome: "error",
+        analytics_trace_id: "test.repo.error",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "error",
+      event: "dev.procedure",
+      payload: {
+        path: "repo.syncUpstream",
+        outcome: "error",
+        invocationTraceId: "test.repo.error",
+        entity: "repo",
+        errorName: "Error",
+        errorMessage: failure.message,
+      },
+    });
   });
 
   it("uses strict basename prefix for worktree cleanup and never plans prune", async () => {

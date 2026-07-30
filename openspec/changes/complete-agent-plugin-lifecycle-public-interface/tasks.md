@@ -2015,6 +2015,33 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   findings on the Worktree lineage. Strict OpenSpec, focused Biome, and diff
   hygiene pass. Standing architecture/oRPC, TypeScript/structural, and
   behavior-first testing reviews report no P0-P2.
+- [x] 5.7e33 Close the Dev Repo module through one contract leaf and one
+  operation router leaf. Replace the flat module contract with
+  `contract/sync-upstream.ts` plus `contract/index.ts`; keep `module.ts` as the
+  terminal context-curation boundary; author upstream resolution, admission,
+  planning, and ordered execution in `router/sync-upstream.router.ts`; and make
+  module-root `router.ts` a plain-object composer. Remove `module.router(...)`
+  so root `impl.router(...)` is the only native router completion on the
+  `repo.syncUpstream` lineage and inherited observability and analytics execute
+  exactly once for that operation. Preserve explicit/config/default upstream
+  precedence, branch naming, complete preflight, fixed command order, stopped
+  applied prefix, skipped suffix, public key, TypeBox schemas, metadata, result
+  shape, failure identity, public client, and service-root composition. Add
+  behavior proof for the exact applied prefix and skipped suffix after a
+  structured command failure plus one thrown admission-error lifecycle. Update
+  the module `AGENTS.md`; modify no Habitat law, sibling module, public export,
+  resource, provider, Effect boundary, or compatibility path. The red behavior
+  proof observed two analytics entries and two lifecycle logs for one
+  structured merge failure and again for one thrown admission failure. The
+  closed lineage carries three middleware entries rather than the legacy
+  replay's six. Uncached source typecheck and all 18 Dev tests pass in 3.4
+  seconds. The behavior proof pins the exact ordered mutation prefix, skipped
+  result suffix, no post-failure command, and retained thrown identity. All 33
+  active Habitat rules pass, and direct staged composition, authorship,
+  context, anchor, and isolation probes report zero findings on the Repo
+  lineage. Strict OpenSpec, focused Biome, and diff hygiene pass. Standing
+  architecture/oRPC, TypeScript/structural, and behavior-first testing reviews
+  report no P0-P2 after the ordered-tail proof correction.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
