@@ -4405,8 +4405,8 @@ binding map are absent. No factory runs when the profile is imported.
 This checkpoint changes no resource implementation or Effect behavior. Native
 provider sessions, temporary Git roots, content captures, child processes, and
 package publication cleanup remain owned by the operations that acquire them.
-There is no process runtime, finalizer, client cache, registry, controller, or
-second service.
+There is no process runtime, finalizer, client cache, provider registry,
+controller, or second service.
 
 The focused profile, provider binding, client-context, command-local binding,
 and command-boundary regression passes 28 tests. The complete CLI suite passes
@@ -4434,6 +4434,49 @@ is review/check provenance only. The handoff means app-owned cold provider
 selection, direct local service binding, and operation-owned cleanup. It does
 not promise or require a process runtime, process finalizer, provider registry,
 or persistent client.
+
+## Lifecycle Integration Closure
+
+The final service/CLI integration boundary now admits every command input before
+the production profile can materialize a resource. The current-main body flag
+uses the governance module's TypeBox schema through the public client face; a
+schema-invalid body exits with `LIFECYCLE_INPUT_INVALID` and makes zero binding
+calls. The service's empty `scope`, `config`, and `provided` lanes are exact
+empty types, with negative compile-time assertions rejecting added keys.
+
+The CLI no longer erases service results to `unknown` and reconstructs their
+shape. Each operation remains correlated with its TypeBox-derived client result
+through invocation, exit classification, byte-to-text presentation, and human
+output. Exhaustive switches make a new operation or changed result variant a
+compiler-visible integration change. Binding failure still performs no
+selection or invocation; a rejected selected operation is invoked once without
+retry; both produce the typed `LIFECYCLE_PROCEDURE_FAILED` terminal and exit
+one.
+
+The uncached lifecycle and CLI gate passes 412 tests across 43 service files and
+89 tests across 25 CLI files, together with source and test typechecks. The
+uncached native Oclif extension round trip passes in a disposable environment.
+The ordinary installed Nx release-package round trip also passes and exposes 46
+first-party commands. Touched-file Biome, diff hygiene, and strict OpenSpec
+validation pass. No live provider state was read or mutated by this closure.
+
+Standing architecture/oRPC/Effect, TypeScript/TypeBox/structural, and
+behavior/testing reviews accepted the composed diff with no P0-P2 findings.
+The exact installed experimental tuple is
+`@orpc/experimental-effect@2.0.0-beta.20` with
+`effect@4.0.0-beta.101`. That tuple is outside the skill's frozen beta.17
+profile, so the review is exact-source-recovered evidence for this repository,
+not a portable Effect 4 conformance claim. The preexisting service-bootstrap
+`.effect` bridge remains unchanged.
+
+This closure does not move the downstream research-service prerequisite.
+Canonical Template commit
+`a25f72da1505f90206c6ff14bcb0ab5de77cbbec` remains the exact implementation
+restack base, and
+`abc8f16fba7c9c2b125d4e088101872582573fa3` remains its durable handoff record.
+The task 5.8 checkpoint strengthens integration around that landed boundary; it
+does not create a runtime, provider registry, persistent client, second service,
+or new provider authority.
 
 ## Distribution Ownership Aggregate Admission
 
