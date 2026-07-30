@@ -113,6 +113,11 @@ describe("qualified lifecycle command boundary", () => {
           "repository-identity": "repo",
           target: ["codex=relative"],
         }),
+      () =>
+        parseVendorStatusRequest({
+          ...vendorWorkspace(),
+          "remote-url": undefined,
+        }),
     ]) {
       expect(() => {
         invalid();
@@ -335,7 +340,11 @@ describe("qualified lifecycle command boundary", () => {
       },
     });
     expect(parseVendorStatusRequest(vendorWorkspace())).toMatchObject({
-      contentWorkspace: { locator: "/tmp/content" },
+      contentWorkspace: {
+        locator: "/tmp/content",
+        repositoryIdentity: "github:rawr/hq",
+        remoteUrl: "https://example.invalid/rawr-hq.git",
+      },
     });
     expect(parseVendorUpdateRequest({ ...vendorWorkspace(), source: ["vendor-a"] })).toMatchObject({
       sourceIds: ["vendor-a"],
@@ -976,6 +985,7 @@ function vendorWorkspace() {
   return {
     "content-workspace": input["content-workspace"],
     "repository-identity": input["repository-identity"],
+    "remote-url": input["remote-url"],
     "content-authority": input["content-authority"],
     ref: input.ref,
     "source-commit": input["source-commit"],

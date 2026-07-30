@@ -4578,6 +4578,29 @@ architecture/structural-quality reviews accepted the final cut after canonical
 wire construction, independent missing and extra membership, exact primitive
 diagnostics, and both bounded member collections were pinned.
 
+## Vendor Content Workspace Identity
+
+The bounded Vendor interface correction
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.9]] distinguishes the
+Personal content repository's logical identity from the exact URL reported by
+Git. The public Vendor request now carries both `repositoryIdentity` and
+`remoteUrl`. Status and update compare native workspace observations with the
+URL while retaining the logical identity in release and authoring semantics.
+
+The CLI reuses its existing `--remote-url` flag for
+`rawr agent plugins status vendors` and
+`rawr agent plugins update vendors`. The correction does not broaden the
+logical identity schema, infer identity from transport syntax, alter persisted
+Vendor records, add a compatibility reader, or change the content-workspace
+resource.
+
+The complete lifecycle suite passes 413 tests across 43 files and the complete
+CLI suite passes 89 tests across 25 files. Source and test typechecks,
+touched-file Biome, the service contract-property Habitat law, and diff hygiene
+pass. A behavior case proves a mismatched URL rejects before record reads,
+upstream observation, capture, or mutation; the Node integration uses a
+logical identity and a distinct HTTPS remote.
+
 ## Settlement Oracles
 
 The final product must prove:

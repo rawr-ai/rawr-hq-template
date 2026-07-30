@@ -45,6 +45,7 @@ void emptyUpdateIssues;
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
   repositoryIdentity: "git:personal-rawr-hq",
+  remoteUrl: "https://github.com/rawr-ai/rawr-hq.git",
   contentAuthority: "personal-rawr-hq",
   refName: "refs/heads/main",
   sourceCommit: "a".repeat(40),
@@ -197,12 +198,17 @@ describe("vendor procedure schema boundary", () => {
   });
 
   it("rejects ambiguous workspace locators, refs, object ids, and release-input paths", () => {
+    const { remoteUrl: _remoteUrl, ...missingRemoteUrl } = contentWorkspace;
+    void _remoteUrl;
     const invalidWorkspaces = [
+      missingRemoteUrl,
       { ...contentWorkspace, locator: "/" },
       { ...contentWorkspace, locator: "relative/workspace" },
       { ...contentWorkspace, locator: "/tmp/../workspace" },
       { ...contentWorkspace, locator: "/tmp//workspace" },
       { ...contentWorkspace, repositoryIdentity: "file:/tmp/content-workspace" },
+      { ...contentWorkspace, remoteUrl: "https://example.invalid/\nrawr-hq.git" },
+      { ...contentWorkspace, remoteUrl: "x".repeat(513) },
       { ...contentWorkspace, refName: "main" },
       { ...contentWorkspace, refName: "refs/heads/main..next" },
       { ...contentWorkspace, sourceCommit: "a".repeat(41) },

@@ -3,6 +3,7 @@ import { Flags } from "@oclif/core";
 export const contentWorkspaceFlags = {
   "content-workspace": Flags.string({ description: "Canonical absolute content workspace" }),
   "repository-identity": Flags.string({ description: "Expected content repository identity" }),
+  "remote-url": Flags.string({ description: "Expected exact Git remote URL" }),
   "content-authority": Flags.string({ description: "Declared content authority" }),
   ref: Flags.string({ description: "Qualified Git ref" }),
   "source-commit": Flags.string({ description: "Exact source commit object" }),
@@ -13,7 +14,6 @@ export const contentWorkspaceFlags = {
 export const releaseWorkspaceFlags = {
   ...contentWorkspaceFlags,
   "remote-name": Flags.string({ description: "Declared Git remote name" }),
-  "remote-url": Flags.string({ description: "Declared Git remote URL" }),
   "plugin-root": Flags.string({ description: "Canonical agent-plugin root" }),
   plugin: Flags.string({ description: "Target one declared agent plugin" }),
   "complete-set": Flags.boolean({ description: "Select the complete release set" }),

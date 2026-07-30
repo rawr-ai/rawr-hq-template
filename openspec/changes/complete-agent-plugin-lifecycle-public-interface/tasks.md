@@ -1876,6 +1876,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Template PRs #680 through #682 landed this integration sequence on canonical
   `main` at `7d126548ebffe9fd84a8da8010f6a3d8aa0014f2`. The final exact-main
   Repository Ratchet passed in run `30534802970`, job `90845419520`.
+- [x] 5.9 Separate the Personal content repository's logical identity from its
+  exact Git remote URL at the Vendor command boundary. Require both values in
+  the TypeBox request, compare native Git observations only with the URL, and
+  preserve the logical identity for release and authoring semantics. Reuse
+  `--remote-url` in the public status/update commands without broadening
+  repository identity, changing persisted Vendor protocols, or adding
+  compatibility state. Prove a real distinct HTTPS remote through the Node
+  integration and reject a mismatched remote before record reads, upstream
+  observation, capture, or mutation.
 
 ## 6. Personal Content-Only Settlement
 

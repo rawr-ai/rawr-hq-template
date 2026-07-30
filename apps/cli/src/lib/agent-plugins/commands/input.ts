@@ -424,6 +424,7 @@ function vendorWorkspace(flags: RawFlags): VendorStatusRequest["contentWorkspace
       parseRepositoryIdentity(flags["repository-identity"]),
       "--repository-identity must be a canonical logical repository identity"
     ),
+    remoteUrl: requireString(flags["remote-url"], "--remote-url"),
     contentAuthority: requireLifecycleInput(
       parseContentAuthority(flags["content-authority"]),
       "--content-authority must be canonical"

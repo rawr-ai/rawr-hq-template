@@ -1,5 +1,6 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
+import { RemoteUrlSchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
@@ -27,6 +28,7 @@ export const VendorContentWorkspaceRefSchema = ReadonlyObject(
   Type.Object({
     locator: CanonicalAbsolutePathSchema,
     repositoryIdentity: RepositoryIdentitySchema,
+    remoteUrl: RemoteUrlSchema,
     contentAuthority: ContentAuthoritySchema,
     refName: QualifiedHeadRefSchema,
     sourceCommit: GitCommitIdSchema,

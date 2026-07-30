@@ -73,6 +73,7 @@ type VendorContentWorkspaceRef = VendorStatusRequest["contentWorkspace"];
 const contentWorkspace: VendorContentWorkspaceRef = Object.freeze({
   locator: "/tmp/content-workspace",
   repositoryIdentity: parsed(parseRepositoryIdentity("git:personal-rawr-hq")),
+  remoteUrl: "https://github.com/rawr-ai/rawr-hq.git",
   contentAuthority: parsed(parseContentAuthority("personal-rawr-hq")),
   refName: "refs/heads/main",
   sourceCommit: parsed(parseGitCommitId("a".repeat(40))),
@@ -81,6 +82,31 @@ const contentWorkspace: VendorContentWorkspaceRef = Object.freeze({
 });
 
 describe("vendor lifecycle applications", () => {
+  it("rejects a mismatched content remote before reading records or observing upstream", async () => {
+    const harness = new VendorHarness();
+    const mismatchedWorkspace = Object.freeze({
+      ...contentWorkspace,
+      remoteUrl: "https://github.com/rawr-ai/not-the-content-repository.git",
+    });
+
+    const status = await createVendorStatus(harness)({ contentWorkspace: mismatchedWorkspace });
+    const update = await createVendorUpdate(harness)({
+      contentWorkspace: mismatchedWorkspace,
+      sourceIds: [sourceId],
+    });
+
+    expect(status).toMatchObject({ kind: "Rejected", issues: [{ code: "WrongRepository" }] });
+    expect(update).toMatchObject({ kind: "Rejected", issues: [{ code: "WrongRepository" }] });
+    expect(harness.counters).toMatchObject({
+      readFile: 0,
+      readTree: 0,
+      observeRemote: 0,
+      materializeRemote: 0,
+      capture: 0,
+      apply: 0,
+    });
+  });
+
   it("rejects corrupt canonical records before upstream observation or authoring", async () => {
     const harness = new VendorHarness();
     harness.corruptFile(declarationPath);
@@ -684,7 +710,7 @@ class VendorHarness {
     commit: contentWorkspace.sourceCommit,
     tree: contentWorkspace.sourceTree,
     objectFormat: "sha1",
-    remoteUrls: [contentWorkspace.repositoryIdentity],
+    remoteUrls: [contentWorkspace.remoteUrl],
   });
   private readonly files = new Map<string, FileImage>();
   private readonly trees = new Map<string, readonly MaterializedContentTreeEntry[]>();

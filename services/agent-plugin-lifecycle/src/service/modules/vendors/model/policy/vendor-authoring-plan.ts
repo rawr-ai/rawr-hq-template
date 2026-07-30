@@ -204,6 +204,7 @@ export function createVendorAuthoringPlan(
         locator: contentWorkspace.locator,
         objectFormat: observation.workspaceIdentity.objectFormat,
         repositoryIdentity: contentWorkspace.repositoryIdentity,
+        remoteUrl: contentWorkspace.remoteUrl,
         sourceCommit: contentWorkspace.sourceCommit,
         sourceTree: contentWorkspace.sourceTree,
       },

@@ -235,6 +235,7 @@ async function createContentRepository(
 > {
   const root = path.join(parent, "content");
   const repositoryIdentity = parsed(parseRepositoryIdentity("git:fixture-content"));
+  const remoteUrl = "https://github.com/rawr-ai/rawr-hq.git";
   const declaration = Object.freeze({
     schemaVersion: 1 as const,
     sourceId: "example",
@@ -342,7 +343,7 @@ async function createContentRepository(
   await writeFile(path.join(root, "plugins/example/vendor/payload.txt"), "initial\n");
   await git(root, ["init", "-b", "main"]);
   await configureGit(root);
-  await git(root, ["remote", "add", "origin", repositoryIdentity]);
+  await git(root, ["remote", "add", "origin", remoteUrl]);
   await git(root, ["add", "--all"]);
   await git(root, ["commit", "-m", "content"]);
   return Object.freeze({
@@ -350,6 +351,7 @@ async function createContentRepository(
     workspace: Object.freeze({
       locator: root,
       repositoryIdentity,
+      remoteUrl,
       contentAuthority: parsed(parseContentAuthority("fixture-authority")),
       refName: "refs/heads/main",
       sourceCommit: parsed(parseGitCommitId(await git(root, ["rev-parse", "HEAD"]))),
