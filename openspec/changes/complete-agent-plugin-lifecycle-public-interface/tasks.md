@@ -478,6 +478,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   stores, and obsolete Effect 3 family are absent from the packed closure.
   Canonical Template `main` merge `b0a975727c618d007ac4be7003e7a4379106dcbd`
   passed required push run `30477436378`.
+- [x] 3.6b Make the packed-install and native Oclif extension acceptances
+  mandatory predecessors of every inferred `nx-release-publish` target through
+  one workspace-owned Nx dependency relation. Let Nx deduplicate the two
+  `@rawr/cli` acceptance tasks across the fixed release group; add no publish
+  wrapper, phase gate, script, registry emulator, or second release graph.
 - [ ] 3.7 Only after the package source lands on canonical `main` and its required
   release gate passes, publish the versioned registry package and repeat the
   version/help/command-inventory smoke from a registry-installed disposable
