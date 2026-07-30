@@ -4,7 +4,9 @@ import type { Client } from "@rawr/agent-plugin-lifecycle/client";
 import {
   type LifecycleOperation,
   type LifecycleOperationClient,
+  type LifecycleOperationOutcome,
   type LifecycleOperationSelector,
+  type LifecycleResultByOperation,
 } from "./binding";
 
 import type {
@@ -22,6 +24,13 @@ import type {
   VendorUpdateRequest,
 } from "./input";
 
+/**
+ * Closed operation/input union admitted by lifecycle command parsing.
+ *
+ * @remarks
+ * The operation discriminant narrows the request passed to the matching
+ * service-client procedure.
+ */
 export type LifecycleOperationRequest =
   | Readonly<{ operation: "releases.check"; input: CheckRequest }>
   | Readonly<{ operation: "releases.checkRepository"; input: RepositoryCheckRequest }>
@@ -42,140 +51,291 @@ export type LifecycleOperationRequest =
       input: CurrentMainSelectionRequest;
     }>;
 
+type ProjectBytesAsText<TResult, TTextProperty extends string> =
+  TResult extends Readonly<{
+    bytes: Uint8Array;
+  }>
+    ? Readonly<Omit<TResult, "bytes"> & Readonly<Record<TTextProperty, string>>>
+    : TResult;
+
+type ProjectSuccessfulValueBytesAsText<TResult, TTextProperty extends string> =
+  TResult extends Readonly<{
+    ok: true;
+    value: infer TValue extends Readonly<{ bytes: Uint8Array }>;
+  }>
+    ? Readonly<
+        Omit<TResult, "value"> & {
+          readonly value: ProjectBytesAsText<TValue, TTextProperty>;
+        }
+      >
+    : TResult;
+
+type LifecycleProjectedResultByOperation = Readonly<{
+  [TOperation in LifecycleOperation]: TOperation extends "releases.releaseInputRecord"
+    ? ProjectSuccessfulValueBytesAsText<LifecycleResultByOperation[TOperation], "envelopeText">
+    : TOperation extends "releases.refreshReleaseInput"
+      ? ProjectBytesAsText<LifecycleResultByOperation[TOperation], "envelopeText">
+      : TOperation extends "governance.currentMainRecord"
+        ? ProjectSuccessfulValueBytesAsText<LifecycleResultByOperation[TOperation], "recordText">
+        : LifecycleResultByOperation[TOperation];
+}>;
+
+/**
+ * Correlates an operation with its terminal-safe presentation result.
+ *
+ * @remarks
+ * Binary record fields become UTF-8 text while the operation and service
+ * result variants remain available for exhaustive human rendering.
+ */
+export type LifecycleProjectedOperationOutcome = {
+  [TOperation in LifecycleOperation]: Readonly<{
+    operation: TOperation;
+    result: LifecycleProjectedResultByOperation[TOperation];
+  }>;
+}[LifecycleOperation];
+
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
 export {
   type LifecycleOperation,
   type LifecycleOperationClient,
+  type LifecycleOperationOutcome,
   type LifecycleOperationSelector,
+  type LifecycleResultByOperation,
 } from "./binding";
 
 /**
- * Invokes one admitted lifecycle operation through its narrowed client surface.
+ * Invokes one admitted lifecycle operation and returns its correlated result.
+ *
+ * @remarks
+ * Selection and procedure dispatch each occur once; the operation tag then
+ * carries the service-owned result into classification and presentation.
  */
 export async function invokeLifecycleProcedure(
   request: LifecycleOperationRequest,
   selectClient: LifecycleOperationSelector
-): Promise<unknown> {
+): Promise<LifecycleOperationOutcome> {
   const callOptions = invocation(request.operation);
   switch (request.operation) {
     case "releases.check": {
       const client = selectClient("releases.check");
-      return await client.releases.check(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.releases.check(request.input, callOptions),
+      };
     }
     case "releases.checkRepository": {
       const client = selectClient("releases.checkRepository");
-      return await client.releases.checkRepository(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.releases.checkRepository(request.input, callOptions),
+      };
     }
     case "releases.releaseInputRecord": {
       const client = selectClient("releases.releaseInputRecord");
-      return await client.releases.releaseInputRecord(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.releases.releaseInputRecord(request.input, callOptions),
+      };
     }
     case "releases.refreshReleaseInput": {
       const client = selectClient("releases.refreshReleaseInput");
-      return await client.releases.refreshReleaseInput(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.releases.refreshReleaseInput(request.input, callOptions),
+      };
     }
     case "vendors.status": {
       const client = selectClient("vendors.status");
-      return await client.vendors.status(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.vendors.status(request.input, callOptions),
+      };
     }
     case "vendors.update": {
       const client = selectClient("vendors.update");
-      return await client.vendors.update(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.vendors.update(request.input, callOptions),
+      };
     }
     case "packaging.package": {
       const client = selectClient("packaging.package");
-      return await client.packaging.package(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.packaging.package(request.input, callOptions),
+      };
     }
     case "providers.test": {
       const client = selectClient("providers.test");
-      return await client.providers.test(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.providers.test(request.input, callOptions),
+      };
     }
     case "providers.sync": {
       const client = selectClient("providers.sync");
-      return await client.providers.sync(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.providers.sync(request.input, callOptions),
+      };
     }
     case "providers.status": {
       const client = selectClient("providers.status");
-      return await client.providers.status(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.providers.status(request.input, callOptions),
+      };
     }
     case "governance.currentMainRecord": {
       const client = selectClient("governance.currentMainRecord");
-      return await client.governance.currentMainRecord(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.governance.currentMainRecord(request.input, callOptions),
+      };
     }
     case "governance.currentMainSelection": {
       const client = selectClient("governance.currentMainSelection");
-      return await client.governance.currentMainSelection(request.input, callOptions);
+      return {
+        operation: request.operation,
+        result: await client.governance.currentMainSelection(request.input, callOptions),
+      };
     }
     default:
       return assertNever(request);
   }
 }
 
-export function lifecycleResultExitCode(operation: LifecycleOperation, result: unknown): 0 | 1 | 2 {
-  const record = asRecord(result);
-  if (operation.startsWith("providers.")) {
-    if (record.classification === "Blocked") return 2;
-    return record.classification === "Converged" || record.classification === "Changed" ? 0 : 1;
+/**
+ * Classifies one typed lifecycle outcome as a CLI process exit code.
+ *
+ * @remarks
+ * Exhaustive operation dispatch keeps each operation's service result narrowed
+ * while preserving its existing success, failure, and blocked semantics.
+ */
+export function lifecycleResultExitCode(outcome: LifecycleOperationOutcome): 0 | 1 | 2 {
+  switch (outcome.operation) {
+    case "releases.check":
+      return outcome.result.kind === "EligibleReport" ? 0 : 1;
+    case "releases.checkRepository":
+      return outcome.result.kind === "StagedRepositoryEligible" ||
+        outcome.result.kind === "CleanRepositoryEligible"
+        ? 0
+        : 1;
+    case "releases.releaseInputRecord":
+      return outcome.result.ok ? 0 : 1;
+    case "releases.refreshReleaseInput":
+      return outcome.result.kind === "ReleaseInputCandidateReady" ||
+        outcome.result.kind === "ReleaseInputReadOnlyConverged"
+        ? 0
+        : 1;
+    case "vendors.status":
+      return outcome.result.kind === "VendorStatus" ? 0 : 1;
+    case "vendors.update":
+      return outcome.result.kind === "ReadOnlyConverged" ||
+        outcome.result.kind === "AuthoredReviewableChanges"
+        ? 0
+        : 1;
+    case "packaging.package":
+      return outcome.result.kind === "ReadOnlyConverged" ||
+        outcome.result.kind === "OutputReplacedVerified"
+        ? 0
+        : 1;
+    case "providers.test":
+    case "providers.sync":
+      if (outcome.result.classification === "Blocked") return 2;
+      return outcome.result.classification === "Converged" ||
+        outcome.result.classification === "Changed"
+        ? 0
+        : 1;
+    case "providers.status":
+      if (outcome.result.classification === "Blocked") return 2;
+      return outcome.result.classification === "Converged" ? 0 : 1;
+    case "governance.currentMainRecord":
+      return outcome.result.ok ? 0 : 1;
+    case "governance.currentMainSelection":
+      return outcome.result.kind === "CURRENT_ELIGIBLE" ? 0 : 2;
+    default:
+      return assertNever(outcome);
   }
-  if (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord")
-    return record.ok === true ? 0 : 1;
-  if (operation === "releases.refreshReleaseInput") {
-    return record.kind === "ReleaseInputCandidateReady" ||
-      record.kind === "ReleaseInputReadOnlyConverged"
-      ? 0
-      : 1;
-  }
-  if (operation === "governance.currentMainSelection") {
-    return record.kind === "CURRENT_ELIGIBLE" ? 0 : 2;
-  }
-  const successfulKinds: Readonly<Record<LifecycleOperation, readonly string[]>> = {
-    "releases.check": ["EligibleReport"],
-    "releases.checkRepository": ["StagedRepositoryEligible", "CleanRepositoryEligible"],
-    "releases.releaseInputRecord": [],
-    "releases.refreshReleaseInput": [],
-    "vendors.status": ["VendorStatus"],
-    "vendors.update": ["ReadOnlyConverged", "AuthoredReviewableChanges"],
-    "packaging.package": ["ReadOnlyConverged", "OutputReplacedVerified"],
-    "providers.test": [],
-    "providers.sync": [],
-    "providers.status": [],
-    "governance.currentMainRecord": [],
-    "governance.currentMainSelection": [],
-  };
-  return successfulKinds[operation].includes(String(record.kind)) ? 0 : 1;
 }
 
+/**
+ * Converts lifecycle byte payloads into their operator-facing UTF-8 text form.
+ *
+ * @remarks
+ * Operations without byte presentation flow through unchanged, and the
+ * operation/result correlation is preserved for JSON and human output.
+ */
 export function projectLifecycleResultForOutput(
-  operation: LifecycleOperation,
-  result: unknown
-): unknown {
-  if (
-    operation !== "releases.releaseInputRecord" &&
-    operation !== "releases.refreshReleaseInput" &&
-    operation !== "governance.currentMainRecord"
-  )
-    return result;
-  const record = asRecord(result);
-  const value =
-    operation === "releases.refreshReleaseInput"
-      ? record
-      : record.ok === true
-        ? asRecord(record.value)
-        : undefined;
-  if (value === undefined) return result;
-  if (!(value.bytes instanceof Uint8Array)) return result;
-  const { bytes, ...projectedValue } = value;
-  const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  const projected = Object.freeze({
-    ...projectedValue,
-    ...(operation === "governance.currentMainRecord"
-      ? { recordText: text }
-      : { envelopeText: text }),
-  });
-  return operation === "releases.refreshReleaseInput"
-    ? projected
-    : Object.freeze({ ...record, value: projected });
+  outcome: LifecycleOperationOutcome
+): LifecycleProjectedOperationOutcome {
+  switch (outcome.operation) {
+    case "releases.releaseInputRecord": {
+      if (!outcome.result.ok) {
+        return { operation: outcome.operation, result: outcome.result };
+      }
+      const { bytes, ...value } = outcome.result.value;
+      return Object.freeze({
+        operation: outcome.operation,
+        result: Object.freeze({
+          ...outcome.result,
+          value: Object.freeze({
+            ...value,
+            envelopeText: decodeLifecycleText(bytes),
+          }),
+        }),
+      });
+    }
+    case "releases.refreshReleaseInput":
+      switch (outcome.result.kind) {
+        case "ReleaseInputCandidateReady":
+        case "ReleaseInputReadOnlyConverged": {
+          const { bytes, ...result } = outcome.result;
+          return Object.freeze({
+            operation: outcome.operation,
+            result: Object.freeze({
+              ...result,
+              envelopeText: decodeLifecycleText(bytes),
+            }),
+          });
+        }
+        case "RepositoryIneligible":
+        case "ReleaseInputRejected":
+        case "SourceChanged":
+          return { operation: outcome.operation, result: outcome.result };
+        default:
+          return assertNever(outcome.result);
+      }
+    case "governance.currentMainRecord": {
+      if (!outcome.result.ok) {
+        return { operation: outcome.operation, result: outcome.result };
+      }
+      const { bytes, ...value } = outcome.result.value;
+      return Object.freeze({
+        operation: outcome.operation,
+        result: Object.freeze({
+          ...outcome.result,
+          value: Object.freeze({
+            ...value,
+            recordText: decodeLifecycleText(bytes),
+          }),
+        }),
+      });
+    }
+    case "releases.check":
+    case "releases.checkRepository":
+    case "vendors.status":
+    case "vendors.update":
+    case "packaging.package":
+    case "providers.test":
+    case "providers.sync":
+    case "providers.status":
+    case "governance.currentMainSelection":
+      return outcome;
+    default:
+      return assertNever(outcome);
+  }
 }
 
 function invocation(operation: LifecycleOperation) {
@@ -190,10 +350,8 @@ function invocation(operation: LifecycleOperation) {
   } satisfies LifecycleCallOptions;
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
+function decodeLifecycleText(bytes: Uint8Array): string {
+  return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 }
 
 function assertNever(value: never): never {

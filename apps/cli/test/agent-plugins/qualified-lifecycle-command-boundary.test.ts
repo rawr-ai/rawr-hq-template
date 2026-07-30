@@ -24,6 +24,7 @@ import {
 import * as projectionSurface from "../../src/lib/agent-plugins/commands/projection";
 import {
   invokeLifecycleProcedure,
+  type LifecycleOperationOutcome,
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
 } from "../../src/lib/agent-plugins/commands/projection";
@@ -596,73 +597,128 @@ describe("qualified lifecycle command boundary", () => {
   });
 
   it("preserves status exit semantics and stutter outcomes without mutation dispatch", async () => {
-    expect(
-      lifecycleResultExitCode("providers.status", {
-        operation: "status",
-        classification: "Converged",
-      })
-    ).toBe(0);
-    expect(
-      lifecycleResultExitCode("providers.status", {
-        operation: "status",
-        classification: "Drifted",
-      })
-    ).toBe(1);
-    expect(
-      lifecycleResultExitCode("providers.status", {
-        operation: "status",
-        classification: "Blocked",
-      })
-    ).toBe(2);
-    expect(
-      lifecycleResultExitCode("providers.sync", {
-        operation: "sync",
-        classification: "Partial",
-      })
-    ).toBe(1);
-    expect(
-      lifecycleResultExitCode("providers.test", {
-        operation: "test",
-        classification: "Changed",
-      })
-    ).toBe(0);
-    expect(
-      lifecycleResultExitCode("providers.test", {
-        operation: "test",
-        classification: "Blocked",
-      })
-    ).toBe(2);
-    expect(lifecycleResultExitCode("governance.currentMainRecord", { ok: true, value: {} })).toBe(
-      0
-    );
-    expect(
-      lifecycleResultExitCode("releases.refreshReleaseInput", {
-        kind: "ReleaseInputCandidateReady",
-      })
-    ).toBe(0);
-    expect(
-      lifecycleResultExitCode("releases.refreshReleaseInput", {
-        kind: "RepositoryIneligible",
-      })
-    ).toBe(1);
-    expect(
-      lifecycleResultExitCode("governance.currentMainRecord", {
-        ok: false,
-        failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
-      })
-    ).toBe(1);
-    expect(
-      lifecycleResultExitCode("governance.currentMainSelection", {
-        kind: "CURRENT_ELIGIBLE",
-        selection: {},
-      })
-    ).toBe(0);
-    expect(
-      lifecycleResultExitCode("governance.currentMainSelection", {
-        kind: "STALE_RECORD",
-        reason: "stale",
-      })
-    ).toBe(2);
+    const currentMainRecord = parseCheckOperationRequest({
+      mode: "current-main-record",
+      "current-main-body-json": JSON.stringify(currentMainBodyFixture()),
+    });
+    if (
+      currentMainRecord.operation !== "governance.currentMainRecord" ||
+      currentMainRecord.input.kind !== "encode-body"
+    ) {
+      throw new Error("Expected current-main encode request");
+    }
+    const selection = currentMainRecord.input.body;
+    const bytes = new TextEncoder().encode("{}\n");
+    const providerResult = Object.freeze({
+      selection: null,
+      issues: Object.freeze([]),
+      targets: Object.freeze([]),
+    });
+    const exitCases = [
+      [
+        {
+          operation: "providers.status",
+          result: { ...providerResult, operation: "status", classification: "Converged" },
+        },
+        0,
+      ],
+      [
+        {
+          operation: "providers.status",
+          result: { ...providerResult, operation: "status", classification: "Drifted" },
+        },
+        1,
+      ],
+      [
+        {
+          operation: "providers.status",
+          result: { ...providerResult, operation: "status", classification: "Blocked" },
+        },
+        2,
+      ],
+      [
+        {
+          operation: "providers.sync",
+          result: { ...providerResult, operation: "sync", classification: "Partial" },
+        },
+        1,
+      ],
+      [
+        {
+          operation: "providers.test",
+          result: { ...providerResult, operation: "test", classification: "Changed" },
+        },
+        0,
+      ],
+      [
+        {
+          operation: "providers.test",
+          result: { ...providerResult, operation: "test", classification: "Blocked" },
+        },
+        2,
+      ],
+      [
+        {
+          operation: "governance.currentMainRecord",
+          result: {
+            ok: true,
+            value: {
+              protocol: "agent-plugin-current-main@v3",
+              byteLength: bytes.byteLength,
+              bytes,
+              record: selection,
+            },
+          },
+        },
+        0,
+      ],
+      [
+        {
+          operation: "releases.refreshReleaseInput",
+          result: {
+            kind: "ReleaseInputCandidateReady",
+            releaseInputDigest: selection.releaseInputDigest,
+            byteLength: bytes.byteLength,
+            bytes,
+          },
+        },
+        0,
+      ],
+      [
+        {
+          operation: "releases.refreshReleaseInput",
+          result: { kind: "SourceChanged", mode: "staged", detail: "changed" },
+        },
+        1,
+      ],
+      [
+        {
+          operation: "governance.currentMainRecord",
+          result: {
+            ok: false,
+            failure: { code: "InvalidSchema", path: "currentMain", message: "invalid" },
+          },
+        },
+        1,
+      ],
+      [
+        {
+          operation: "governance.currentMainSelection",
+          result: { kind: "CURRENT_ELIGIBLE", selection },
+        },
+        0,
+      ],
+      [
+        {
+          operation: "governance.currentMainSelection",
+          result: { kind: "STALE_RECORD", reason: "stale" },
+        },
+        2,
+      ],
+    ] satisfies readonly (readonly [LifecycleOperationOutcome, 0 | 1 | 2])[];
+    for (const [outcome, expectedExitCode] of exitCases) {
+      expect(lifecycleResultExitCode(outcome)).toBe(expectedExitCode);
+    }
 
     let writes = 0;
     const client = {

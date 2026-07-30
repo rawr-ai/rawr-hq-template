@@ -6,6 +6,7 @@ import { LifecycleInputError } from "./input";
 import {
   invokeLifecycleProcedure,
   type LifecycleOperationRequest,
+  type LifecycleProjectedOperationOutcome,
   lifecycleResultExitCode,
   projectLifecycleResultForOutput,
 } from "./projection";
@@ -45,14 +46,13 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     let exitCode: 0 | 1 | 2;
     try {
       const selectClient = bindProductionLifecycleService(productionLifecycleProfile);
-      const result = await invokeLifecycleProcedure(request, selectClient);
-      exitCode = lifecycleResultExitCode(request.operation, result);
-      const projectedResult = projectLifecycleResultForOutput(request.operation, result);
-      this.outputResult(this.ok({ operation: request.operation, result: projectedResult }), {
+      const outcome = await invokeLifecycleProcedure(request, selectClient);
+      exitCode = lifecycleResultExitCode(outcome);
+      const projectedOutcome = projectLifecycleResultForOutput(outcome);
+      this.outputResult(this.ok(projectedOutcome), {
         flags: baseFlags,
         human: () => {
-          for (const line of lifecycleHumanLines(request.operation, projectedResult))
-            this.log(line);
+          for (const line of lifecycleHumanLines(projectedOutcome)) this.log(line);
         },
       });
     } catch (error) {
@@ -83,54 +83,49 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
   }
 }
 
-function lifecycleHumanLines(
-  operation: LifecycleOperationRequest["operation"],
-  result: unknown
-): readonly string[] {
-  const record = asRecord(result);
-  if (
-    (operation === "releases.releaseInputRecord" || operation === "governance.currentMainRecord") &&
-    record.ok === true
-  ) {
-    const value = asRecord(record.value);
-    const text =
-      operation === "governance.currentMainRecord" ? value.recordText : value.envelopeText;
-    if (typeof text === "string" && text.endsWith("\n")) {
-      return [text.slice(0, -1)];
-    }
+function lifecycleHumanLines(outcome: LifecycleProjectedOperationOutcome): readonly string[] {
+  switch (outcome.operation) {
+    case "releases.releaseInputRecord":
+      if (outcome.result.ok && outcome.result.value.envelopeText.endsWith("\n")) {
+        return [outcome.result.value.envelopeText.slice(0, -1)];
+      }
+      return [`${outcome.operation}: ${JSON.stringify(outcome.result)}`];
+    case "releases.refreshReleaseInput":
+      if (
+        (outcome.result.kind === "ReleaseInputCandidateReady" ||
+          outcome.result.kind === "ReleaseInputReadOnlyConverged") &&
+        outcome.result.envelopeText.endsWith("\n")
+      ) {
+        return [outcome.result.envelopeText.slice(0, -1)];
+      }
+      return [`${outcome.operation}: ${outcome.result.kind}`];
+    case "governance.currentMainRecord":
+      if (outcome.result.ok && outcome.result.value.recordText.endsWith("\n")) {
+        return [outcome.result.value.recordText.slice(0, -1)];
+      }
+      return [`${outcome.operation}: ${JSON.stringify(outcome.result)}`];
+    case "providers.status":
+      return [
+        `${outcome.operation}:`,
+        ...outcome.result.targets.map(
+          (result) => `${result.target.provider} ${result.target.home}: ${result.classification}`
+        ),
+      ];
+    case "providers.test":
+    case "providers.sync":
+      return [`${outcome.operation}: ${outcome.result.classification}`];
+    case "releases.check":
+    case "releases.checkRepository":
+    case "vendors.status":
+    case "vendors.update":
+    case "packaging.package":
+    case "governance.currentMainSelection":
+      return [`${outcome.operation}: ${outcome.result.kind}`];
+    default:
+      return assertNever(outcome);
   }
-  if (
-    operation === "releases.refreshReleaseInput" &&
-    (record.kind === "ReleaseInputCandidateReady" ||
-      record.kind === "ReleaseInputReadOnlyConverged") &&
-    typeof record.envelopeText === "string" &&
-    record.envelopeText.endsWith("\n")
-  ) {
-    return [record.envelopeText.slice(0, -1)];
-  }
-  if (operation === "providers.status" && Array.isArray(record.targets)) {
-    return [
-      `${operation}:`,
-      ...record.targets.map((value) => {
-        const outcome = asRecord(value);
-        const target = asRecord(outcome.target);
-        return `${String(target.provider)} ${String(target.home)}: ${String(outcome.classification)}`;
-      }),
-    ];
-  }
-  if (typeof record.kind === "string") return [`${operation}: ${record.kind}`];
-  if (typeof record.classification === "string") {
-    return [`${operation}: ${record.classification}`];
-  }
-  if (record.ok === true) {
-    const value = asRecord(record.value);
-    if (typeof value.status === "string") return [`${operation}: ${value.status}`];
-  }
-  return [`${operation}: ${JSON.stringify(result)}`];
 }
 
-function asRecord(value: unknown): Readonly<Record<string, unknown>> {
-  return value !== null && typeof value === "object" && !Array.isArray(value)
-    ? (value as Readonly<Record<string, unknown>>)
-    : {};
+function assertNever(value: never): never {
+  throw new Error(`Unreachable projected lifecycle outcome: ${String(value)}`);
 }
