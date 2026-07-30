@@ -7,6 +7,7 @@ import {
   NormalizedFileModeSchema,
   type PayloadEntry,
   type PayloadManifestEntry,
+  PayloadManifestEntrySchema,
 } from "../dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import type { ReleaseRelativePath } from "../dto/release-identity";
@@ -18,7 +19,7 @@ import { parseReleaseRelativePath } from "./release-identity";
 import { releaseIssue } from "./release-issue";
 import { collectReleaseResult, failure, success } from "./release-result";
 import {
-  admitClosedRecordForTraversal,
+  admitTypeBoxRecordForTraversal,
   parseBoundedArray,
   parseInteger,
 } from "./release-value-admission";
@@ -43,7 +44,7 @@ export function parseNormalizedFileMode(
 
 /**
  * Parses, canonically orders, freezes, and diagnoses one untrusted payload
- * manifest without replacing the existing granular admission diagnostics.
+ * manifest while retaining established field-level semantic diagnostics.
  */
 export function parsePayloadManifest(
   input: unknown,
@@ -53,17 +54,13 @@ export function parsePayloadManifest(
   const values = parseBoundedArray(input, path, MAX_PAYLOAD_ENTRIES_PER_MEMBER, issues);
   if (values === undefined) return undefined;
   const manifest: PayloadManifestEntry[] = [];
+  let structurallyComplete = true;
   values.forEach((candidate, index) => {
     const entryPath = `${path}[${index}]`;
-    if (
-      !admitClosedRecordForTraversal(
-        candidate,
-        ["byteLength", "contentDigest", "mode", "path"],
-        entryPath,
-        issues
-      )
-    )
+    if (!admitTypeBoxRecordForTraversal(PayloadManifestEntrySchema, candidate, entryPath, issues)) {
+      structurallyComplete = false;
       return;
+    }
     const relativePath = collectReleaseResult(
       parseReleaseRelativePath(candidate.path, `${entryPath}.path`),
       issues
@@ -101,6 +98,7 @@ export function parsePayloadManifest(
   });
   manifest.sort((left, right) => compareCanonicalText(left.path, right.path));
   reportDuplicatePayloadPaths(manifest, path, issues);
+  if (!structurallyComplete) return undefined;
   return Object.freeze(manifest);
 }
 

@@ -1,3 +1,6 @@
+import type { TObject } from "typebox";
+import { Value } from "typebox/value";
+
 import type { ReleaseIssue, ReleaseIssueCode } from "../dto/release-issue";
 import { releaseIssue } from "./release-issue";
 
@@ -39,6 +42,44 @@ export function admitClosedRecordForTraversal(
       issues.push(releaseIssue("UNKNOWN_FIELD", `${path}.${key}`, "Required field is missing"));
   }
   return true;
+}
+
+/**
+ * Admits only the root membership of one closed TypeBox record.
+ *
+ * Plain objects are projected to their enumerable key presence before schema
+ * evaluation, so aggregate admission never traverses caller-owned field values.
+ *
+ * @param schema Owning TypeBox object schema whose properties define exact membership.
+ * @param value Raw candidate to inspect without traversing its field values.
+ * @param path Base path used for the aggregate structural diagnostic.
+ * @param issues Ordered destination for the aggregate admission diagnostic.
+ * @returns Whether the value has the exact root shape required for traversal.
+ */
+export function admitTypeBoxRecordForTraversal(
+  schema: TObject,
+  value: unknown,
+  path: string,
+  issues: ReleaseIssue[]
+): value is Record<string, unknown> {
+  const projection =
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? Object.fromEntries(Object.keys(value).map((key) => [key, undefined]))
+      : value;
+  const rootError = Value.Errors(schema, projection).find(
+    ({ instancePath }) => instancePath === ""
+  );
+  if (rootError === undefined) return true;
+  issues.push(
+    rootError.keyword === "type"
+      ? releaseIssue("EXPECTED_OBJECT", path, "Value must be an object")
+      : releaseIssue(
+          "UNKNOWN_FIELD",
+          path,
+          `Expected exactly: ${Object.keys(schema.properties).sort().join(", ")}`
+        )
+  );
+  return false;
 }
 
 /**

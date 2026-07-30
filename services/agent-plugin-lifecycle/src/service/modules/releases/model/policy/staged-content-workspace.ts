@@ -8,7 +8,11 @@ import type {
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
 } from "@rawr/resource-content-workspace";
-import type { AgentPluginPayload } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
+import type {
+  AgentPluginPayload,
+  NormalizedFileMode,
+  PayloadEntryInput,
+} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import {
   type SourceEligibilityIssue,
   type SourceEligibilityIssueCode,
@@ -67,7 +71,7 @@ if (!materializedByteLimit.ok) {
 export const MAX_STAGED_MATERIALIZED_BLOB_BYTES = materializedByteLimit.value;
 
 interface StagedTreeEntry {
-  readonly mode: number;
+  readonly mode: NormalizedFileMode;
   readonly objectId: string;
   readonly path: ReleaseRelativePath;
 }
@@ -421,11 +425,7 @@ export function classifyStagedMaterializationObservation(
       )?.root;
       if (memberRoot === undefined)
         return stagedIneligible("ReleaseInputMismatch", "member root is missing");
-      const payloadEntries: Array<{
-        path: ReleaseRelativePath;
-        mode: number;
-        bytes: Uint8Array;
-      }> = [];
+      const payloadEntries: PayloadEntryInput[] = [];
       const entriesUnderRoot = entries
         .filter((entry) => entry.path.startsWith(`${memberRoot}/`))
         .sort((left, right) => compareCanonicalText(left.path, right.path));

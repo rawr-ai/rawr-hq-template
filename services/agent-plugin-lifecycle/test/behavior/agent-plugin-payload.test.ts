@@ -7,7 +7,11 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   type NormalizedFileMode,
   NormalizedFileModeSchema,
+  type PayloadEntryInput,
+  PayloadEntryInputSchema,
+  PayloadEntryRecordSchema,
   type PayloadManifestEntry,
+  PayloadManifestEntrySchema,
 } from "../../src/service/model/dto/agent-plugin-payload";
 import {
   createAgentPluginPayload,
@@ -28,6 +32,34 @@ import { must, productFixture, wire } from "../support/service/release-fixtures"
 const encoder = new TextEncoder();
 
 describe("agent-plugin payload", () => {
+  it("derives raw entry types and closes every payload record with its owner schema", () => {
+    expectTypeOf<PayloadEntryInput>().toEqualTypeOf<Static<typeof PayloadEntryInputSchema>>();
+
+    const payload = productFixture().alphaPayload;
+    const payloadWire = wire(canonicalSerializeAgentPluginPayload(payload));
+    const cases = [
+      {
+        schema: PayloadEntryInputSchema,
+        value: {
+          path: payload.entries[0]!.path,
+          mode: payload.entries[0]!.mode,
+          bytes: payloadEntryBytes(payload.entries[0]!),
+        },
+      },
+      { schema: PayloadEntryRecordSchema, value: payloadWire.entries[0]! },
+      { schema: PayloadManifestEntrySchema, value: payloadWire.manifest[0]! },
+      { schema: AgentPluginPayloadRecordSchema, value: payloadWire },
+    ];
+
+    for (const { schema, value } of cases) {
+      expect(Value.Check(schema, value)).toBe(true);
+      const missing = { ...value } as Record<string, unknown>;
+      delete missing[Object.keys(schema.properties)[0]!];
+      expect(Value.Check(schema, missing)).toBe(false);
+      expect(Value.Check(schema, { ...value, extra: true })).toBe(false);
+    }
+  });
+
   it("derives normalized file modes from one closed TypeBox authority", () => {
     expectTypeOf<NormalizedFileMode>().toEqualTypeOf<Static<typeof NormalizedFileModeSchema>>();
 
@@ -157,6 +189,74 @@ describe("agent-plugin payload", () => {
     expect(verified.ok).toBe(false);
     if (!verified.ok)
       expect(verified.issues.map((entry) => entry.code)).toContain("PAYLOAD_DIGEST_MISMATCH");
+  });
+
+  it("projects malformed payload records into schema-owned aggregate diagnostics", () => {
+    expect(createAgentPluginPayload([null])).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "EXPECTED_OBJECT",
+          path: "payload.entries[0]",
+          message: "Value must be an object",
+        },
+      ],
+    });
+    expect(
+      createAgentPluginPayload([
+        {
+          path: "a",
+          mode: 0o644,
+          extra: true,
+        },
+      ])
+    ).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "UNKNOWN_FIELD",
+          path: "payload.entries[0]",
+          message: "Expected exactly: bytes, mode, path",
+        },
+      ],
+    });
+
+    const root = wire(canonicalSerializeAgentPluginPayload(productFixture().alphaPayload));
+    root.extra = true;
+    expect(verifyAgentPluginPayload(root)).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "UNKNOWN_FIELD",
+          path: "payload",
+          message: "Expected exactly: entries, manifest, payloadDigest, protocolVersion",
+        },
+      ],
+    });
+
+    for (const [field, missingField, expected] of [
+      ["entries", "bytesBase64", "Expected exactly: bytesBase64, mode, path"],
+      ["manifest", "byteLength", "Expected exactly: byteLength, contentDigest, mode, path"],
+    ] as const) {
+      for (const membership of ["missing", "extra"] as const) {
+        const candidate = wire(canonicalSerializeAgentPluginPayload(productFixture().alphaPayload));
+        if (membership === "missing") {
+          delete candidate[field][0][missingField];
+        } else {
+          candidate[field][0].extra = true;
+        }
+        expect(verifyAgentPluginPayload(candidate)).toEqual({
+          ok: false,
+          issues: [
+            {
+              code: "UNKNOWN_FIELD",
+              path: `payload.${field}[0]`,
+              message: expected,
+            },
+          ],
+        });
+      }
+    }
   });
 
   it("compares ordered manifest fields exactly without mutating either input", () => {
@@ -289,5 +389,62 @@ describe("agent-plugin payload", () => {
         },
       ],
     });
+  });
+
+  it("bounds wire entries and manifests before child schema admission", () => {
+    const emptyBytes = new Uint8Array();
+    const emptyDigest = contentDigest(emptyBytes);
+    const entries = Array.from({ length: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1 }, (_, index) => ({
+      path: `files/${index}`,
+      mode: 0o644,
+      bytesBase64: "",
+    }));
+    const manifest = entries.map(({ path, mode }) => ({
+      path,
+      mode,
+      byteLength: 0,
+      contentDigest: emptyDigest,
+    }));
+    let excludedEntryRead = false;
+    let excludedManifestRead = false;
+    Object.defineProperty(entries, MAX_PAYLOAD_ENTRIES_PER_MEMBER, {
+      get() {
+        excludedEntryRead = true;
+        throw new Error("excluded wire entry was read");
+      },
+    });
+    Object.defineProperty(manifest, MAX_PAYLOAD_ENTRIES_PER_MEMBER, {
+      get() {
+        excludedManifestRead = true;
+        throw new Error("excluded manifest entry was read");
+      },
+    });
+    const payloadWire = wire(canonicalSerializeAgentPluginPayload(productFixture().alphaPayload));
+    payloadWire.entries = entries;
+    payloadWire.manifest = manifest;
+
+    const bounded = verifyAgentPluginPayload(payloadWire);
+
+    expect(excludedEntryRead).toBe(false);
+    expect(excludedManifestRead).toBe(false);
+    expect(bounded.ok).toBe(false);
+    if (!bounded.ok) {
+      expect(bounded.issues.filter(({ code }) => code === "COUNT_LIMIT_EXCEEDED")).toEqual([
+        {
+          code: "COUNT_LIMIT_EXCEEDED",
+          path: "payload.entries",
+          message: `Array exceeds protocol limit ${MAX_PAYLOAD_ENTRIES_PER_MEMBER}`,
+          expected: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+          actual: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1,
+        },
+        {
+          code: "COUNT_LIMIT_EXCEEDED",
+          path: "payload.manifest",
+          message: `Array exceeds protocol limit ${MAX_PAYLOAD_ENTRIES_PER_MEMBER}`,
+          expected: MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+          actual: MAX_PAYLOAD_ENTRIES_PER_MEMBER + 1,
+        },
+      ]);
+    }
   });
 });

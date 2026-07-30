@@ -670,6 +670,24 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   shapes, all-invalid exact shapes, and successful immutable values. Add no
   generic schema walker, adversarial object hardening, provider change, or
   second parser framework. This checkpoint does not claim task 5.3 complete.
+- [x] 5.3d Delete the payload and payload-manifest families' four manual
+  closed-record field arrays. Add the missing closed
+  `PayloadEntryInputSchema`, derive its type, and let the raw entry, payload
+  root, wire entry, and manifest entry schemas own aggregate membership.
+  Normalize malformed object membership to one schema-derived
+  `UNKNOWN_FIELD` diagnostic at the aggregate path, retain the existing
+  `EXPECTED_OBJECT` diagnostic for non-objects, and stop field parsing after
+  aggregate refusal. Use one root-only admission adapter that projects key
+  presence without traversing raw values; keep the older granular helper for
+  untouched parser families. Preserve bounded child traversal, canonical
+  bytes and digests, duplicates, byte limits, manifest equality, copying, and
+  freezing. Treat a structurally refused wire or manifest child as an
+  incomplete collection so dependent manifest and digest comparisons never
+  run against partial projections. Prove schema parity, missing and extra
+  refusal, exact aggregate diagnostics without derivative mismatches, and
+  excluded-tail bounds without adding a nested TypeBox error walker, proxy
+  hardening, or caller implementation change. This checkpoint does not claim
+  task 5.3 complete.
 - [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.
