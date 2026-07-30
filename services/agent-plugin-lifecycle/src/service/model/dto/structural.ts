@@ -1,4 +1,11 @@
-import { ReadonlyObject, type Static, type TArrayOptions, type TSchema, Type } from "typebox";
+import {
+  ReadonlyObject,
+  Refine,
+  type Static,
+  type TArrayOptions,
+  type TSchema,
+  Type,
+} from "typebox";
 
 type BoundedArrayOptions = Omit<TArrayOptions, "minItems" | "maxItems"> &
   Readonly<{
@@ -46,6 +53,13 @@ export const CanonicalAbsolutePathSchema = Type.String({
   minLength: 1,
   maxLength: MAX_CANONICAL_ABSOLUTE_PATH_BYTES,
 });
+
+/** Admits the binary byte container shared by lifecycle collaboration contracts. */
+export const Uint8ArraySchema = Refine(
+  Type.Unsafe<Uint8Array>(Type.Unknown()),
+  (value) => value instanceof Uint8Array,
+  () => "Expected Uint8Array"
+);
 
 export function NonEmptyReadonlyArray<const Item extends TSchema>(
   item: Item,

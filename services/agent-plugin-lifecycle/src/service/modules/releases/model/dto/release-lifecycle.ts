@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import {
   ContentWorkspacePolicySchema,
   QualifiedHeadRefSchema,
@@ -22,7 +22,10 @@ import {
   MAX_RELEASE_MEMBERS,
 } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
-import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
+import {
+  NonEmptyReadonlyArray,
+  Uint8ArraySchema,
+} from "#agent-plugin-lifecycle-service/model/dto/structural";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
 export const CheckInputSchema = ReadonlyObject(
@@ -34,12 +37,6 @@ export const CheckInputSchema = ReadonlyObject(
 );
 
 export type AgentPluginCheckRequest = Static<typeof CheckInputSchema>;
-
-const Uint8ArraySchema = Refine(
-  Type.Unsafe<Uint8Array>(Type.Unknown()),
-  (value) => value instanceof Uint8Array,
-  () => "Expected Uint8Array"
-);
 
 export const MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH = 4_096;
 export const MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH = 4_096;

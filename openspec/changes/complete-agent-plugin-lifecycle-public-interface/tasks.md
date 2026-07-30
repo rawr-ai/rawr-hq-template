@@ -653,6 +653,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   modes to the existing normalized file-mode type. Keep current-main Git
   structure and manual release parser deletion in later owner-specific
   checkpoints; this checkpoint does not claim task 5.3 complete.
+- [x] 5.3b Give canonical refs, blob identities, Git locators, exact path
+  selections, blob pointers, and observed blob bytes one current-main TypeBox
+  schema/type authority. Reuse the service-wide Git object identity and the
+  existing locator and byte refinements; keep tag-only channel-record policy
+  distinct. Route primitive diagnostic admission through those schemas while
+  retaining exact object diagnostics and all selection bounds, copying,
+  freezing, ordering, and cross-field policy. This checkpoint does not claim
+  task 5.3 complete.
 - [ ] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.

@@ -1,21 +1,15 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 
 import {
   CurrentMainRecordValidationCodeSchema,
   MAX_CURRENT_MAIN_V3_RECORD_BYTES,
 } from "#agent-plugin-lifecycle-service/model/dto/current-main-record";
 import { CanonicalChannelSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+import { Uint8ArraySchema } from "#agent-plugin-lifecycle-service/model/dto/structural";
 
 export const CURRENT_MAIN_V3_PROTOCOL = "agent-plugin-current-main@v3" as const;
 export const MAX_CURRENT_MAIN_V3_CODEC_PATH_LENGTH = 512;
 export const MAX_CURRENT_MAIN_V3_CODEC_MESSAGE_LENGTH = 4_096;
-
-/** Byte representation accepted and returned by the governance record operation. */
-const CurrentMainBytesSchema = Refine(
-  Type.Unsafe<Uint8Array>(Type.Unknown()),
-  (value) => value instanceof Uint8Array,
-  () => "Expected Uint8Array"
-);
 
 /** Closed request envelope for encoding or validating one current-main record. */
 export const CurrentMainRecordInputSchema = Type.Union([
@@ -29,7 +23,7 @@ export const CurrentMainRecordInputSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
       kind: Type.Literal("validate-record"),
-      bytes: CurrentMainBytesSchema,
+      bytes: Uint8ArraySchema,
     }),
     { additionalProperties: false }
   ),
@@ -43,7 +37,7 @@ const CanonicalCurrentMainV3Schema = ReadonlyObject(
       minimum: 1,
       maximum: MAX_CURRENT_MAIN_V3_RECORD_BYTES,
     }),
-    bytes: CurrentMainBytesSchema,
+    bytes: Uint8ArraySchema,
     record: CanonicalChannelSelectionSchema,
   }),
   { additionalProperties: false }

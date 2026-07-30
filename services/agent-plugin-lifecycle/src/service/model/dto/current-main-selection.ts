@@ -1,5 +1,5 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
+import { GitLocatorSchema } from "./current-main-git";
 import { ReleaseInputDigestSchema } from "./release-digest";
 import {
   ContentAuthoritySchema,
@@ -12,13 +12,8 @@ export const CURRENT_MAIN_V3_SCHEMA_VERSION = 3 as const;
 export const CURRENT_MAIN_V3_CHANNEL = "current-main" as const;
 export const MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH = 4_096;
 
-export const CurrentMainSelectionLocatorSchema = ReadonlyObject(
-  Type.Object({
-    workspacePath: CanonicalAbsoluteLocatorSchema,
-    expectedRepositoryIdentity: RepositoryIdentitySchema,
-  }),
-  { additionalProperties: false }
-);
+/** The explicit content workspace and repository identity inspected for current-main. */
+export const CurrentMainSelectionLocatorSchema = GitLocatorSchema;
 
 /** The complete repository-owned current-main channel selection. */
 export const CanonicalChannelSelectionSchema = ReadonlyObject(
@@ -70,7 +65,7 @@ export const CurrentMainSelectionResultSchema = Type.Union([
   selectionFailure("FORGED_RECORD"),
 ]);
 
-/** The explicit content workspace and repository identity inspected for current-main. */
+/** TypeBox-derived content workspace and repository identity inspected for current-main. */
 export type CurrentMainSelectionLocator = Static<typeof CurrentMainSelectionLocatorSchema>;
 
 /** Governance-verified channel data consumed by lifecycle operations. */
