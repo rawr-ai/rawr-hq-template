@@ -180,7 +180,7 @@ asset SHA-256 is
 Template owns no copied Habitat SDK source, executable selector, or second rule
 inventory.
 
-The consumer candidate installs `@habitat/cli/nx-plugin`, which infers one
+The landed consumer installs `@habitat/cli/nx-plugin`, which infers one
 cacheable target per registered rule and one owner-local policy aggregate.
 Thirty-three active laws across six owners pass with zero findings; 25 belong
 to the `habitat` project. The contract-authority law now
@@ -1580,6 +1580,23 @@ seconds with one shared structure traversal across six laws. Three uncached
 repository checks passed in 15.3, 16.0, and 12.9 seconds with 17 dependencies
 instead of 18; the cached public `bun run check` completed in 7.7 seconds.
 
+Task 1.6c7d corrects the remaining consumer-side concurrency gap without
+weakening admission. The six package-inferred Habitat owner batches previously
+entered the Nx graph as independent tasks, which let six native Grit processes
+compete during a cold hosted run. Five filtered Nx dependencies now form one
+owner-batch lane while preserving every inferred dependency through Nx's
+`"..."` merge token. All other tasks remain parallel-capable, and protected CI
+continues to run the complete `build,check,test` graph. The portable package
+also removes the historical Darwin-only prerequisite, so the protected job now
+uses the same standard Linux runner as the Civ7 source repository. No lock,
+retry, wrapper, alternate policy runner, or Habitat SDK fork is introduced. The
+resolved cold graph retains all 165 tasks. It passed locally without cache in 2
+minutes 34 seconds; the critical path was 1 minute 11 seconds and 1 minute 24
+seconds remained parallelizable. Nx has no target-scoped concurrency group, so
+direct execution of a later owner batch also schedules its lane predecessors.
+That is an accepted bounded execution cost, not a new subject dependency or
+authority relation.
+
 The workflow remains named `Repository Ratchet`; its job publishes the context
 `Required lint, typecheck, and topology`. It checks the exact candidate and
 runs the complete project-owned `check` graph without constructing an unused
@@ -1628,11 +1645,11 @@ review does not authorize a separate release path.
 | Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; the portable Habitat Nx boundary is installed, while complete live-corpus conformance and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat package consumer | Immutable package URL, lockfile integrity, package-owned Grit acquisition, CLI, and Nx plugin are complete on the consumer candidate |
+| Habitat package consumer | Immutable package URL, lockfile integrity, package-owned Grit acquisition, CLI, and Nx plugin landed in Template PR #689 at `407ab045`; service-law activation remains open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
-| Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph; canonical-main landing and staged service-law activation remain open |
+| Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, and packed-install acceptance are landed and green; public registry publication and registry-installed smoke remain pending npm scope authorization |

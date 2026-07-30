@@ -78,7 +78,8 @@ remain qualified owner work. Habitat's inferred owner targets own the workspace
 scheduler law, required Oclif structure laws, and lifecycle command-channel law.
 Habitat targets are cacheable only when their Nx inputs cover every Git-visible
 tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
-owner-local verification rather than hidden merge-admission work.
+owner-local `test` targets rather than hidden `check` dependencies. Protected
+CI adds those explicit targets through the root `ci` graph.
 
 Every current non-root project owns a public check. The installed Habitat Nx
 plugin infers rule targets, owner-local policy composition, inputs, caching,
@@ -89,8 +90,11 @@ Habitat evaluation uses an exact Civ7-owned `@habitat/cli` package release
 pinned by URL and lockfile integrity. This repository owns only the consumer
 configuration and `.habitat` policy tree and does not vendor SDK sources.
 
-The `Repository Ratchet` workflow runs `bun run check` for pull requests,
-merge groups, and pushes to `main`. Local hooks are useful feedback but can be
-bypassed. Protected `main` must therefore require the exact job context
-`Required lint, typecheck, and topology`; remote branch protection is the
-enforcement authority for merging.
+The `Repository Ratchet` workflow runs `bun run ci` for pull requests, merge
+groups, and pushes to `main`, composing `build`, `check`, and `test` through one
+Nx scheduler. Local hooks are useful feedback but can be bypassed. Protected
+`main` must therefore require the exact job context
+`Required lint, typecheck, and topology`; that stable legacy name is the
+branch-protection identity even though the graph also includes builds and
+behavior tests. Remote branch protection is the enforcement authority for
+merging.

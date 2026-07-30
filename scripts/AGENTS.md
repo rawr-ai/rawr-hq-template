@@ -49,8 +49,8 @@
 - Dependency installation configures the repository-owned Git hooks.
 - Pre-push invokes `bun run check`, which schedules every admitted project's
   public check once through Nx.
-- The repository workflow runs the same required check before protected
-  branches admit a candidate SHA.
+- The repository workflow runs `bun run ci`, one Nx graph over `build`,
+  `check`, and `test`, before protected branches admit a candidate SHA.
 
 ## Interfaces
 
@@ -94,8 +94,8 @@
   the admission graph.
 - Habitat checks are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests and complete owner
-  checks remain explicit owner commands; they are not hidden inside merge
-  admission.
+  checks remain explicit owner commands; the protected `ci` graph schedules
+  the ordinary `test` targets without hiding them inside `check`.
 - Nx derives the complete target population from the project graph. The root
   scheduler maintains no project-name list; project targets remain ordinary Nx
   configuration rather than a second Habitat runner implemented in JavaScript.
@@ -112,7 +112,8 @@
   or maintain another executable selector.
 - The `Repository Ratchet` workflow runs for ordinary pull requests, merge
   groups, and pushes to `main`. Branch protection must require its exact job
-  context, `Required lint, typecheck, and topology`.
+  context, `Required lint, typecheck, and topology`. The context name is stable
+  legacy identity; the workflow also admits builds and behavior tests.
 - The Civ-style project-owned `check` composition is active. Do not add a root
   Nx project target, nested scheduler, aggregate owner, or project-name batch.
   Project targets are ordinary Nx configuration; the installed Habitat Nx
