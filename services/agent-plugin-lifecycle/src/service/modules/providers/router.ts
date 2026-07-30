@@ -1,6 +1,6 @@
-import { status } from "./status";
-import { sync } from "./sync";
-import { test } from "./test";
+import { status } from "./router/status.router";
+import { sync } from "./router/sync.router";
+import { test } from "./router/test.router";
 
 /**
  * Composes the Providers module's public operations for the service root.
