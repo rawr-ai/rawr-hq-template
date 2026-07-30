@@ -43,8 +43,8 @@
 - `assign` and `listForTask` are the composite caller boundary. `module.ts`
   curates the clock, identifier, workspace, assignment limit, and three stores
   plus the read-only policy that their handlers need from inherited service context. Qualified telemetry
-  observes inherited lanes before curation; the named assignment router leaf
-  owns cross-entity behavior.
+  observes inherited lanes before curation; the named assignment router leaves
+  own cross-entity behavior.
 
 ## Routing
 

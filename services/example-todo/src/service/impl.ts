@@ -33,4 +33,5 @@ import { middleware as stores } from "./middleware/stores";
 /** Unconfigured contract implementer used for aggregate router implementation. */
 export const impl = implement(contract).$context<Context>();
 
+/** Configured service lineage with observability, analytics, and workspace stores attached once. */
 export const service = impl.use(observability).use(analytics).use(stores);

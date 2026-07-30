@@ -4,7 +4,7 @@ import { createClient } from "../src/client";
 import { contract as assignmentsContract } from "../src/service/modules/assignments/contract";
 import { contract as tagsContract } from "../src/service/modules/tags/contract";
 import { contract as tasksContract } from "../src/service/modules/tasks/contract";
-import { createClientOptions, invocation, type OrpcErrorShape } from "./helpers";
+import { createClientOptions, createDeps, invocation, type OrpcErrorShape } from "./helpers";
 
 async function expectOrpcError<PromiseType extends Promise<unknown>>(
   promise: PromiseType,
@@ -75,6 +75,35 @@ describe("example-todo typed procedure errors", () => {
         data: { path: "assignments.assign" },
       }
     );
+  });
+
+  it("validates input before entering a read-only handler", async () => {
+    let identifierCalls = 0;
+    const deps = createDeps();
+    const client = createClient(
+      createClientOptions({
+        readOnly: true,
+        deps: {
+          ...deps,
+          identifierGenerator: {
+            generate: () => {
+              identifierCalls += 1;
+              return "00000000-0000-4000-8000-000000000001";
+            },
+          },
+        },
+      })
+    );
+
+    const result = await safe(
+      client.tasks.create({ title: "" }, invocation("trace-invalid-read-only"))
+    );
+
+    expect(result.isSuccess).toBe(false);
+    expect(identifierCalls).toBe(0);
+    if (!result.isSuccess) {
+      expect((result.error as Partial<OrpcErrorShape>).code).not.toBe("READ_ONLY_MODE");
+    }
   });
 
   it("returns INVALID_TASK_TITLE for whitespace title after normalization", async () => {
