@@ -14,8 +14,8 @@ When an operation name is an ECMAScript reserved word, the leaf uses the exact
 language-required `<name>Contract` local binding and aliases only that binding
 to the filename-mapped public export; its index imports the same public name
 into the same local binding. This is not a general alias form.
-Procedure input and output envelopes adapt TypeBox with `standard(...)` at
-their contract positions.
+Procedure input, output, and public error-data envelopes adapt TypeBox with
+`standard(...)` at their native contract positions.
 
 Contract and reusable DTO schema owners use TypeBox's native JSON Schema
 builders. Executable refinements, codecs, native-only builders and literals,
@@ -26,9 +26,10 @@ families instead of making the adapter traverse and reinterpret arbitrary
 schema graphs at runtime.
 
 Public procedure failures are declared with native `.errors(...)` maps in the
-owning contract. A map may be inline or a private local object literal; it may
-not be imported, computed dynamically, exported, or backed by custom tagged
-error constructors. Procedure implementations receive the corresponding
+owning contract. A map may be inline or a private local object literal, and a
+shorthand item in an inline map is likewise private and local. Neither map nor
+item may be imported, computed dynamically, exported, or backed by custom
+tagged error constructors. Procedure implementations receive the corresponding
 constructors from native handler context.
 
 Reusable domain DTO schemas may live in the owning module model as
@@ -278,6 +279,73 @@ predicate require_service_contract_authority_contract_uses($name) {
   }
 }
 
+// Recognizes the repository's one TypeBox-to-Standard-Schema adapter.
+predicate require_service_contract_authority_is_standard_schema($value) {
+  $value <: `$adapter($schema)` where {
+    or {
+      and {
+        $adapter <: `standard`,
+        $program <: contains `import { $..., standard, $... } from "@rawr/typebox-adapter"`
+      },
+      $program <: contains `import { $..., standard as $adapter, $... } from "@rawr/typebox-adapter"`
+    }
+  }
+}
+
+// Recognizes a private adapted schema binding used as attached error data.
+predicate require_service_contract_authority_is_local_standard_error_data($value) {
+  $value <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
+  $program <: contains variable_declarator(name=$value, value=$adapted),
+  require_service_contract_authority_is_standard_schema(value=$adapted)
+}
+
+// Recognizes native oRPC error data, inline or through private local support.
+predicate require_service_contract_authority_is_standard_error_data($value) {
+  or {
+    require_service_contract_authority_is_standard_schema(value=$value),
+    require_service_contract_authority_is_local_standard_error_data(value=$value)
+  }
+}
+
+// Proves one exact exported errors call owns one locally declared item.
+predicate require_service_contract_authority_is_attached_local_error_item(
+  $call,
+  $argument,
+  $item,
+  $definition
+) {
+  $program <: contains `$builder.errors($argument)` as $call where {
+    require_service_contract_authority_contract_uses(name=$call)
+  },
+  $program <: contains variable_declarator(
+    name=$item,
+    value=$definition
+  ),
+  $argument <: contains $item
+}
+
+// Connects error data to its owning exported call or attached local item.
+predicate require_service_contract_authority_is_attached_error_data($value) {
+  or {
+    $program <: contains `$builder.errors($argument)` as $call where {
+      require_service_contract_authority_contract_uses(name=$call),
+      $argument <: contains `data: $value`
+    },
+    $program <: contains variable_declarator(
+      name=$item,
+      value=$definition
+    ) where {
+      $definition <: contains `data: $value`,
+      require_service_contract_authority_is_attached_local_error_item(
+        call=$call,
+        argument=$argument,
+        item=$item,
+        definition=$definition
+      )
+    }
+  }
+}
+
 // Recognizes a private local object-literal error map.
 predicate require_service_contract_authority_is_local_error_map($map) {
   $map <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
@@ -426,6 +494,27 @@ or {
       }
     }
   },
+  `$builder.errors($argument)` as $call where {
+    require_service_contract_authority_is_module_contract_source(),
+    require_service_contract_authority_contract_uses(name=$call),
+    $argument <: `{ $..., $item, $... }`,
+    $item <: shorthand_property_identifier(),
+    not {
+      require_service_contract_authority_is_attached_local_error_item(
+        call=$call,
+        argument=$argument,
+        item=$item,
+        definition=$definition
+      )
+    }
+  },
+  `data: $data` where {
+    require_service_contract_authority_is_module_contract_source(),
+    require_service_contract_authority_is_attached_error_data(value=$data),
+    not {
+      require_service_contract_authority_is_standard_error_data(value=$data)
+    }
+  },
   `$procedure.$direction($schema)` where {
     require_service_contract_authority_is_module_contract_source(),
     $direction <: r"^(?:input|output)$",
@@ -454,7 +543,14 @@ or {
     not {
       or {
         $program <: contains `$procedure.input($adapter($schema))`,
-        $program <: contains `$procedure.output($adapter($schema))`
+        $program <: contains `$procedure.output($adapter($schema))`,
+        require_service_contract_authority_is_attached_error_data(
+          value=`$adapter($schema)`
+        ),
+        and {
+          $program <: contains `const $name = $adapter($schema)`,
+          require_service_contract_authority_is_attached_error_data(value=$name)
+        }
       }
     }
   },
@@ -558,6 +654,78 @@ import { Type } from "typebox";
 export const contract = oc.input(Type.Object({ query: Type.String() }));
 ```
 
+## Matches raw native error data
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+export const get = oc
+  .errors({
+    BAD_REQUEST: {
+      message: "Bad request",
+      data: Type.Object({ reason: Type.String() }),
+    },
+  })
+  .input(standard(Type.Object({ query: Type.String() })));
+```
+
+## Matches a detached adapted schema
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+const DetachedData = standard(Type.Object({ reason: Type.String() }));
+export const get = oc.input(standard(Type.Object({ query: Type.String() })));
+```
+
+## Matches adapted schema used as helper state
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+const HelperData = standard(Type.Object({ reason: Type.String() }));
+const metadata = { helper: HelperData };
+export const get = oc
+  .meta(metadata)
+  .input(standard(Type.Object({ query: Type.String() })));
+```
+
+## Matches a detached native errors call
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+oc.errors({
+  BAD_REQUEST: {
+    data: standard(Type.Object({ reason: Type.String() })),
+  },
+});
+export const get = oc.input(
+  standard(Type.Object({ query: Type.String() })),
+);
+```
+
+## Matches an imported shorthand native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { BAD_REQUEST } from "./errors";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+export const get = oc
+  .errors({ BAD_REQUEST })
+  .input(standard(Type.Object({ query: Type.String() })));
+```
+
 ## Matches a contract leaf whose export does not match its filename
 
 ```typescript
@@ -608,6 +776,65 @@ export const get = oc
   .errors(errors)
   .input(standard(Type.Object({ query: Type.String() })))
   .output(standard(Type.Object({ found: Type.Boolean() })));
+```
+
+## Ignores inline native error data
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+export const get = oc
+  .errors({
+    BAD_REQUEST: {
+      message: "Bad request",
+      data: standard(Type.Object({ reason: Type.String() })),
+    },
+  })
+  .input(standard(Type.Object({ query: Type.String() })));
+```
+
+## Ignores private named native error data
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import type { ErrorMapItem } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+const BadRequestData = standard(Type.Object({ reason: Type.String() }));
+const BAD_REQUEST: ErrorMapItem<typeof BadRequestData> = {
+  message: "Bad request",
+  data: BadRequestData,
+};
+export const get = oc
+  .errors({ BAD_REQUEST })
+  .input(standard(Type.Object({ query: Type.String() })));
+```
+
+## Ignores contract metadata with a data property
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+const metadata = { data: { owner: "catalog" } };
+export const get = oc
+  .meta(metadata)
+  .input(standard(Type.Object({ query: Type.String() })));
+```
+
+## Ignores a named input schema with a data property
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@rawr/typebox-adapter";
+const CatalogRequestSchema = Type.Object({ data: Type.String() });
+export const get = oc.input(standard(CatalogRequestSchema));
 ```
 
 ## Ignores a canonical contract directory entrypoint
