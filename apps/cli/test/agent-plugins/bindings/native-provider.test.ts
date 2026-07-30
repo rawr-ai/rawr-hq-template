@@ -22,7 +22,7 @@ vi.mock("@rawr/resource-native-agent-provider/providers/claude-effect-platform-n
   makeNodeClaudeNativeAgentProviderResource: provider.claudeFactory,
 }));
 
-import { createNodeNativeAgentProviderResources } from "../../../src/lib/agent-plugins/bindings/providers";
+import { createNativeAgentProviderResources } from "../../../src/lib/agent-plugins/bindings/providers";
 
 describe("native provider resource binding", () => {
   beforeEach(() => {
@@ -45,7 +45,7 @@ describe("native provider resource binding", () => {
     "claude",
   ] as const)("keeps the catalog cold and acquires only the selected %s resource", async (id) => {
     const home = `/tmp/rawr-native-binding-${id}`;
-    const resources = createNodeNativeAgentProviderResources();
+    const resources = createResources();
 
     expect(provider.codexAcquire).not.toHaveBeenCalled();
     expect(provider.claudeAcquire).not.toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe("native provider resource binding", () => {
   });
 
   it("preserves the provider-discriminated Effect surface", async () => {
-    const resources = createNodeNativeAgentProviderResources();
+    const resources = createResources();
     const codex = await Effect.runPromise(resources.codex.acquire({ home: "/tmp/codex" }));
     const claude = await Effect.runPromise(resources.claude.acquire({ home: "/tmp/claude" }));
 
@@ -92,7 +92,7 @@ describe("native provider resource binding", () => {
         )
       )
     );
-    const resources = createNodeNativeAgentProviderResources();
+    const resources = createResources();
     const session = await Effect.runPromise(resources.codex.acquire({ home: "/tmp/codex" }));
     const controller = new AbortController();
     const probe = Effect.runPromiseExit(session.probe(), { signal: controller.signal });
@@ -118,19 +118,26 @@ describe("native provider resource binding", () => {
       detail: "Codex command is missing",
     });
     provider.codexAcquire.mockReturnValue(Effect.fail(failure));
-    const resources = createNodeNativeAgentProviderResources();
+    const resources = createResources();
     const exit = await Effect.runPromiseExit(resources.codex.acquire({ home: "/tmp/codex" }));
 
     expect(typedFailure(exit)).toBe(failure);
   });
 
   it("constructs the complete closed catalog from the two ordinary provider factories", () => {
-    const resources = createNodeNativeAgentProviderResources();
+    const resources = createResources();
     expect(Object.keys(resources).sort()).toEqual(["claude", "codex"]);
     expect(provider.codexFactory).toHaveBeenCalledWith();
     expect(provider.claudeFactory).toHaveBeenCalledWith();
   });
 });
+
+function createResources() {
+  return createNativeAgentProviderResources({
+    codex: provider.codexFactory,
+    claude: provider.claudeFactory,
+  });
+}
 
 function codexSession(
   input: NativeProviderSessionInput,

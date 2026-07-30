@@ -1,17 +1,26 @@
 import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
-import { makeNodeClaudeNativeAgentProviderResource } from "@rawr/resource-native-agent-provider/providers/claude-effect-platform-node";
-import { makeNodeCodexNativeAgentProviderResource } from "@rawr/resource-native-agent-provider/providers/codex-effect-platform-node";
 
 /**
- * Constructs the app-owned closed catalog of ready native provider resources.
+ * Exact factories selected by an app for the closed native provider catalog.
+ */
+export type NativeAgentProviderResourceFactories = Readonly<{
+  codex: () => NativeAgentProviderResources["codex"];
+  claude: () => NativeAgentProviderResources["claude"];
+}>;
+
+/**
+ * Materializes the app-selected closed catalog of native provider resources.
  *
  * @remarks
- * Concrete providers resolve the operator's ordinary `codex` and `claude`
- * commands only when an explicit provider home is acquired.
+ * Provider resources remain cold after construction. They resolve the
+ * operator's ordinary `codex` and `claude` commands only when a service
+ * operation acquires an explicit provider home.
  */
-export function createNodeNativeAgentProviderResources(): NativeAgentProviderResources {
+export function createNativeAgentProviderResources(
+  factories: NativeAgentProviderResourceFactories
+): NativeAgentProviderResources {
   return Object.freeze({
-    codex: makeNodeCodexNativeAgentProviderResource(),
-    claude: makeNodeClaudeNativeAgentProviderResource(),
+    codex: factories.codex(),
+    claude: factories.claude(),
   });
 }

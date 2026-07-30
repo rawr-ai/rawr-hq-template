@@ -1840,16 +1840,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   later split. Locate the observed fatness at the CLI host's eager concrete
   resource construction rather than weakening module curation or manufacturing
   sibling services.
-- [ ] 5.7f Land and consume one separately owned, bounded production runtime
-  provisioning checkpoint. Let the CLI process composition root select
-  providers, acquire and release them in one managed Effect lifetime, and bind
-  the lifecycle service once. Make at least one Oclif command consume the ready
-  typed client without concrete provider imports. Reuse the canonical
-  `@rawr/typebox-adapter` boundary. The lifecycle change owns integration
-  acceptance, not runtime architecture. Add no generic registry, controller,
-  bootgraph expansion, workflow engine, second service, app/web composition, or
-  request-owned provider acquisition. Record the reviewed exact commit before
-  naming it as the research-service restack prerequisite.
+- [ ] 5.7f Implement, review, land, and consume one bounded app-owned
+  production profile and command-local service binding. Keep the profile cold
+  and limited to exact factory references. After closed CLI input admission,
+  materialize the selected ready dependencies once, construct one local
+  lifecycle client with fixed `deps`, `scope`, and `config`, and invoke exactly
+  one operation with per-call `invocation`. Preserve provider-session
+  acquisition, temporary-resource cleanup, capture settlement, and publication
+  cleanup inside their existing operation owners. Make at least one real Oclif
+  command consume this binding without concrete provider imports or a hidden
+  production fallback. Reuse the canonical `@rawr/typebox-adapter` boundary.
+  Add no managed runtime, process finalizer, client cache, generic registry,
+  controller, bootgraph expansion, workflow engine, second service, or app/web
+  composition. Record the reviewed exact landed commit before naming it as the
+  research-service restack prerequisite.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Lifetime Follows Handles
+
+Provider selection and resource lifetime are separate questions. The CLI app
+owns one cold profile of exact factory references. After command input is
+admitted, it materializes ready dependencies once, constructs one local service
+client with fixed `deps`, `scope`, and `config`, and invokes one selected
+operation with fresh invocation context.
+
+Only an acquired handle creates a release obligation. This dependency graph
+contains cold resource objects; its actual handles, temporary directories,
+capture claims, child processes, and publication files are acquired and cleaned
+up inside their owning operations. A process runtime, global client, registry,
+cache, or no-op finalizer would invent lifetime rather than manage it.
+
+The downstream handoff is therefore exact but narrow: Template provides
+app-owned selection, compiler-visible provider closure, direct service binding,
+and preserved operation-local cleanup. It does not claim process-owned
+acquisition or release where no such lifetime exists.
+
+### Bag Of Keywords
+
+profile, factory, client, handle, lifetime, command, operation, cleanup,
+selection, binding, owner, closure.
+
 ## 2026-07-30 - Cohesion Follows Shared Truth
 
 A service boundary follows the invariant that changes together, not the number

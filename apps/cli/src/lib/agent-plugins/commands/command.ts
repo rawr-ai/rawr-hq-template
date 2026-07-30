@@ -1,11 +1,12 @@
 import type { RawrBaseFlags } from "@rawr/core";
 import { RawrCommand } from "@rawr/core";
-
+import { productionLifecycleProfile } from "../profiles/production";
+import { bindProductionLifecycleService } from "../service-runtime/client";
 import { LifecycleInputError } from "./input";
 import {
+  invokeLifecycleProcedure,
   type LifecycleOperationRequest,
   lifecycleResultExitCode,
-  projectLifecycleOperation,
   projectLifecycleResultForOutput,
 } from "./projection";
 
@@ -43,7 +44,8 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     }
     let exitCode: 0 | 1 | 2;
     try {
-      const result = await projectLifecycleOperation(request);
+      const selectClient = bindProductionLifecycleService(productionLifecycleProfile);
+      const result = await invokeLifecycleProcedure(request, selectClient);
       exitCode = lifecycleResultExitCode(request.operation, result);
       const projectedResult = projectLifecycleResultForOutput(request.operation, result);
       this.outputResult(this.ok({ operation: request.operation, result: projectedResult }), {

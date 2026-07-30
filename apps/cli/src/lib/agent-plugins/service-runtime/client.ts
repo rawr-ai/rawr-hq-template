@@ -3,36 +3,15 @@ import {
   type CreateClientOptions,
   createClient,
 } from "@rawr/agent-plugin-lifecycle/client";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createNativeAgentProviderResources } from "../bindings/providers";
 import {
-  bindService,
-  type ProcessView,
-  type RoleView,
-  type ServiceBinding,
-  type ServiceBindingContext,
-} from "@rawr/hq-sdk/plugins";
-import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
-import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
-import { makeNodeVersionedContentResource } from "@rawr/resource-versioned-content/providers/git-effect-platform-node";
-import { createNodeNativeAgentProviderResources } from "../bindings/providers";
-import {
-  type LifecycleClientFactory,
   type LifecycleOperation,
   type LifecycleOperationClient,
+  type LifecycleOperationSelector,
 } from "../commands/binding";
+import type { LifecycleProductionProfile } from "../profiles/production";
 
 type LifecycleBoundary = CreateClientOptions;
-type LifecycleProcess = ProcessView &
-  Readonly<{
-    processId: "rawr-cli";
-  }>;
-type LifecycleRole = RoleView &
-  Readonly<{
-    roleId: "agent-plugin-lifecycle";
-    capability: "agent-plugin-lifecycle";
-  }>;
-type LifecycleBindingContext = ServiceBindingContext<LifecycleProcess, LifecycleRole>;
 
 type LifecycleDeps = CreateClientOptions["deps"];
 
@@ -91,36 +70,36 @@ const lifecycleClientSelectors: LifecycleClientSelectors = Object.freeze({
     }),
 });
 
-export const createProductionLifecycleClient: LifecycleClientFactory = (
-  operation
-): LifecycleOperationClient<typeof operation> => {
-  const deps = createProductionLifecycleDeps();
-
-  const lifecycleService = bindService(createClient, {
-    bindingId: `rawr-cli/agent-plugin-lifecycle/${operation}`,
-    deps,
-    scope: () => ({}),
+/**
+ * Binds one local lifecycle service client to a validated CLI command.
+ *
+ * @remarks
+ * The profile is materialized once. Resource sessions and temporary values
+ * remain operation-local and retain their existing cleanup owners.
+ */
+export function bindProductionLifecycleService(
+  profile: LifecycleProductionProfile
+): LifecycleOperationSelector {
+  const client = createClient({
+    deps: createProductionLifecycleDeps(profile),
+    scope: {},
     config: {},
-  } satisfies ServiceBinding<LifecycleBoundary, LifecycleProcess, LifecycleRole>);
-  const client = lifecycleService.resolve({
-    process: { processId: "rawr-cli" },
-    role: {
-      roleId: "agent-plugin-lifecycle",
-      capability: "agent-plugin-lifecycle",
-    },
-  } satisfies LifecycleBindingContext);
-  return selectLifecycleOperationClient(operation, client);
-};
+  } satisfies LifecycleBoundary);
+  return (operation) => selectLifecycleOperationClient(operation, client);
+}
 
-export function createProductionLifecycleDeps(): LifecycleDeps {
+/**
+ * Materializes the ready lifecycle dependencies selected by the CLI profile.
+ */
+export function createProductionLifecycleDeps(profile: LifecycleProductionProfile): LifecycleDeps {
   return Object.freeze({
-    logger: createEmbeddedPlaceholderLoggerAdapter(),
-    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
-    contentWorkspace: makeNodeContentWorkspaceResource(),
-    clock: Object.freeze({ now: () => new Date() }),
-    packageOutput: makeNodeAgentPluginPackageOutputResource(),
-    nativeProviders: createNodeNativeAgentProviderResources(),
-    versionedContent: makeNodeVersionedContentResource(),
+    logger: profile.createLogger(),
+    analytics: profile.createAnalytics(),
+    contentWorkspace: profile.createContentWorkspace(),
+    clock: profile.createClock(),
+    packageOutput: profile.createPackageOutput(),
+    nativeProviders: createNativeAgentProviderResources(profile.nativeProviders),
+    versionedContent: profile.createVersionedContent(),
   } satisfies LifecycleDeps);
 }
 

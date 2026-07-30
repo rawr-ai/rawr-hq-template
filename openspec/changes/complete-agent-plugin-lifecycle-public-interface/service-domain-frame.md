@@ -69,13 +69,15 @@ module branches and have changed together. Splitting along destination lines
 would duplicate this kernel, expose it as a new shared package, or introduce
 service calls across the strongest collaboration in the domain.
 
-The corrective boundary is therefore outside the service and outside this
-service-topology change. The CLI process composition root selects providers,
-acquires and releases them within one managed Effect lifetime, and binds the
-service once. Oclif command adapters receive the ready typed client and do not
-construct concrete providers. The service continues to receive ready
-capabilities through its root context and each module continues to curate its
-terminal operation vocabulary.
+The corrective boundary is therefore outside the service. The CLI app owns one
+cold profile of exact provider factory references. After command input is
+admitted, the command materializes ready dependencies once, constructs one
+local service client with fixed construction context, and invokes one selected
+operation. The resources retain their existing operation-local acquisition and
+cleanup. Oclif command projections and the service import no concrete
+providers. The service continues to receive ready capabilities through its
+root context and each module continues to curate its terminal operation
+vocabulary.
 
 This decision has three falsifiers:
 
@@ -88,16 +90,16 @@ service rather than a plugin or workflow. Different output paths, module size,
 or a root context that truthfully declares complete host requirements do not.
 
 The downstream research service requires one reviewed Template checkpoint with
-the canonical TypeBox Standard Schema adapter and one production runtime
+the canonical TypeBox Standard Schema adapter and one production CLI
 provisioning vertical. The TypeBox requirement is already satisfied by
 `@rawr/typebox-adapter`, which uses the native TypeBox validator and returns
 message-only issues because TypeBox `1.3.8` paths are ambiguous. The remaining
-deliverable is the bounded runtime vertical above: its dedicated architecture
-owner must make one Oclif command host consume a ready service while the CLI
-process composition root owns concrete providers. This OpenSpec consumes that
+deliverable is the bounded CLI vertical above: one real Oclif command consumes
+a local ready service client while the app profile owns concrete selection and
+each operation keeps its existing resource lifetime. This OpenSpec records that
 exact reviewed checkpoint as an integration prerequisite; it does not move
-runtime composition into the lifecycle service or authorize a generalized
-runtime platform.
+composition into the lifecycle service or authorize a generalized runtime
+platform.
 
 ## Authority Ledger
 
@@ -553,8 +555,8 @@ Effect, or resource structure. See
 
 - custom controller distribution, selector, release store, and launcher;
 - external Oclif extension mechanics;
-- app, web, and runtime composition; this change may consume one separately
-  owned production runtime checkpoint as an integration prerequisite;
+- app, web, and runtime-platform composition beyond the bounded CLI production
+  profile and local service binding required for command integration;
 - legacy destination realization inside the lifecycle owner; export remains a
   retained capability under the dedicated destination architecture;
 - promotion, undo, hosted approval, and provider-wide coordination;

@@ -1,11 +1,10 @@
 import { randomUUID } from "node:crypto";
 
 import type { Client } from "@rawr/agent-plugin-lifecycle/client";
-import { createProductionLifecycleClient } from "../service-runtime/client";
 import {
-  type LifecycleClientFactory,
   type LifecycleOperation,
   type LifecycleOperationClient,
+  type LifecycleOperationSelector,
 } from "./binding";
 
 import type {
@@ -46,70 +45,66 @@ export type LifecycleOperationRequest =
 type LifecycleCallOptions = NonNullable<Parameters<Client["releases"]["check"]>[1]>;
 
 export {
-  type LifecycleClientFactory,
   type LifecycleOperation,
   type LifecycleOperationClient,
+  type LifecycleOperationSelector,
 } from "./binding";
 
-export async function projectLifecycleOperation(
-  request: LifecycleOperationRequest,
-  factory: LifecycleClientFactory = createProductionLifecycleClient
-): Promise<unknown> {
-  return invokeLifecycleProcedure(request, factory);
-}
-
+/**
+ * Invokes one admitted lifecycle operation through its narrowed client surface.
+ */
 export async function invokeLifecycleProcedure(
   request: LifecycleOperationRequest,
-  factory: LifecycleClientFactory
+  selectClient: LifecycleOperationSelector
 ): Promise<unknown> {
   const callOptions = invocation(request.operation);
   switch (request.operation) {
     case "releases.check": {
-      const client = await factory("releases.check");
+      const client = selectClient("releases.check");
       return await client.releases.check(request.input, callOptions);
     }
     case "releases.checkRepository": {
-      const client = await factory("releases.checkRepository");
+      const client = selectClient("releases.checkRepository");
       return await client.releases.checkRepository(request.input, callOptions);
     }
     case "releases.releaseInputRecord": {
-      const client = await factory("releases.releaseInputRecord");
+      const client = selectClient("releases.releaseInputRecord");
       return await client.releases.releaseInputRecord(request.input, callOptions);
     }
     case "releases.refreshReleaseInput": {
-      const client = await factory("releases.refreshReleaseInput");
+      const client = selectClient("releases.refreshReleaseInput");
       return await client.releases.refreshReleaseInput(request.input, callOptions);
     }
     case "vendors.status": {
-      const client = await factory("vendors.status");
+      const client = selectClient("vendors.status");
       return await client.vendors.status(request.input, callOptions);
     }
     case "vendors.update": {
-      const client = await factory("vendors.update");
+      const client = selectClient("vendors.update");
       return await client.vendors.update(request.input, callOptions);
     }
     case "packaging.package": {
-      const client = await factory("packaging.package");
+      const client = selectClient("packaging.package");
       return await client.packaging.package(request.input, callOptions);
     }
     case "providers.test": {
-      const client = await factory("providers.test");
+      const client = selectClient("providers.test");
       return await client.providers.test(request.input, callOptions);
     }
     case "providers.sync": {
-      const client = await factory("providers.sync");
+      const client = selectClient("providers.sync");
       return await client.providers.sync(request.input, callOptions);
     }
     case "providers.status": {
-      const client = await factory("providers.status");
+      const client = selectClient("providers.status");
       return await client.providers.status(request.input, callOptions);
     }
     case "governance.currentMainRecord": {
-      const client = await factory("governance.currentMainRecord");
+      const client = selectClient("governance.currentMainRecord");
       return await client.governance.currentMainRecord(request.input, callOptions);
     }
     case "governance.currentMainSelection": {
-      const client = await factory("governance.currentMainSelection");
+      const client = selectClient("governance.currentMainSelection");
       return await client.governance.currentMainSelection(request.input, callOptions);
     }
     default:

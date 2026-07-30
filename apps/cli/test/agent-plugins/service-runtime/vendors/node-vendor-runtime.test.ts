@@ -13,7 +13,12 @@ import {
 } from "@rawr/agent-plugin-lifecycle/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createProductionLifecycleClient } from "../../../../src/lib/agent-plugins/service-runtime/client";
+import type {
+  LifecycleOperation,
+  LifecycleOperationClient,
+} from "../../../../src/lib/agent-plugins/commands/binding";
+import { productionLifecycleProfile } from "../../../../src/lib/agent-plugins/profiles/production";
+import { bindProductionLifecycleService } from "../../../../src/lib/agent-plugins/service-runtime/client";
 import {
   createOwnedFixtureRoot,
   type OwnedFixtureRoot,
@@ -50,6 +55,12 @@ const invocation = {
   },
 } as const;
 
+function selectProductionLifecycleOperation<TOperation extends LifecycleOperation>(
+  operation: TOperation
+): LifecycleOperationClient<TOperation> {
+  return bindProductionLifecycleService(productionLifecycleProfile)(operation);
+}
+
 describe("node vendor lifecycle runtime", () => {
   let fixture: OwnedFixtureRoot | undefined;
 
@@ -63,7 +74,7 @@ describe("node vendor lifecycle runtime", () => {
     fixture = await createOwnedFixtureRoot();
     const upstream = await createUpstreamRepository(fixture.path);
     const content = await createContentRepository(fixture.path, upstream.initialIdentity);
-    const client = await createProductionLifecycleClient("vendors.status");
+    const client = selectProductionLifecycleOperation("vendors.status");
     expect(Object.keys(client.vendors)).toEqual(["status"]);
     // @ts-expect-error A status binding cannot represent the update procedure.
     void client.vendors.update;
@@ -104,7 +115,7 @@ describe("node vendor lifecycle runtime", () => {
     await writeFile(path.join(upstream.root, "source", "payload.txt"), "updated\n");
     await git(upstream.root, ["add", "--all"]);
     await git(upstream.root, ["commit", "-m", "update"]);
-    const client = await createProductionLifecycleClient("vendors.update");
+    const client = selectProductionLifecycleOperation("vendors.update");
     expect(Object.keys(client.vendors)).toEqual(["update"]);
     // @ts-expect-error An update binding cannot represent the status procedure.
     void client.vendors.status;
@@ -131,9 +142,7 @@ describe("node vendor lifecycle runtime", () => {
       await readFile(path.join(content.root, "plugins/example/vendor/payload.txt"), "utf8")
     ).toBe("updated\n");
     const releaseInputBytes = await readFile(path.join(content.root, ".rawr/release-input.json"));
-    const releaseRecordClient = await createProductionLifecycleClient(
-      "releases.releaseInputRecord"
-    );
+    const releaseRecordClient = selectProductionLifecycleOperation("releases.releaseInputRecord");
     const validatedReleaseInput = await releaseRecordClient.releases.releaseInputRecord(
       { kind: "validate-envelope", bytes: releaseInputBytes },
       invocation
@@ -280,7 +289,7 @@ async function createContentRepository(
     schemaVersion: lock.schemaVersion,
     sourceId: lock.sourceId,
   });
-  const releaseRecordClient = await createProductionLifecycleClient("releases.releaseInputRecord");
+  const releaseRecordClient = selectProductionLifecycleOperation("releases.releaseInputRecord");
   const release = await releaseRecordClient.releases.releaseInputRecord(
     {
       kind: "encode-body",

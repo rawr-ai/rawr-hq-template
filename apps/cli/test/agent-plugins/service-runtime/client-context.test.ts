@@ -7,8 +7,9 @@ import {
   createGeneratedGitRepository,
 } from "../../../../../services/agent-plugin-lifecycle/test/support/service/git-repository";
 import type { LifecycleOperation } from "../../../src/lib/agent-plugins/commands/binding";
+import { productionLifecycleProfile } from "../../../src/lib/agent-plugins/profiles/production";
 import {
-  createProductionLifecycleClient,
+  bindProductionLifecycleService,
   createProductionLifecycleDeps,
 } from "../../../src/lib/agent-plugins/service-runtime/client";
 import {
@@ -80,7 +81,7 @@ describe("production lifecycle service context", () => {
   it("assembles host-bound capabilities as cold ordinary data properties", async () => {
     const root = requireFixture();
     const before = await directoryNames(root.path);
-    const deps = createProductionLifecycleDeps();
+    const deps = createProductionLifecycleDeps(productionLifecycleProfile);
 
     expect(Object.isFrozen(deps)).toBe(true);
     for (const dependency of LIFECYCLE_OBJECT_DEP_KEYS) {
@@ -108,11 +109,15 @@ describe("production lifecycle service context", () => {
     expect(await directoryNames(root.path)).toEqual(before);
   });
 
-  it("constructs one complete client while exposing only the selected operation", async () => {
+  it("binds one complete client while exposing only the selected operation", async () => {
     const root = requireFixture();
+    const beforeBinding = await directoryNames(root.path);
+    const selectClient = bindProductionLifecycleService(productionLifecycleProfile);
+    expect(await directoryNames(root.path)).toEqual(beforeBinding);
+
     for (const expected of OPERATION_CASES) {
       const before = await directoryNames(root.path);
-      const client = await createProductionLifecycleClient(expected.operation);
+      const client = selectClient(expected.operation);
       const ownerClient = Object.values(client)[0];
 
       expect(Reflect.ownKeys(client), expected.operation).toEqual([expected.owner]);
@@ -136,7 +141,7 @@ describe("production lifecycle service context", () => {
     );
     const before = await directoryNames(root.path);
     const client = createClient({
-      deps: createProductionLifecycleDeps(),
+      deps: createProductionLifecycleDeps(productionLifecycleProfile),
       scope: {},
       config: {},
     });
