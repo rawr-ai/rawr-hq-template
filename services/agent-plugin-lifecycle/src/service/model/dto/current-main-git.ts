@@ -1,41 +1,103 @@
-import type {
-  GitCommitId,
-  GitTreeId,
-  ReleaseRelativePath,
-  RepositoryIdentity,
+import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
+import {
+  GitCommitIdSchema,
+  GitObjectIdSchema,
+  GitTreeIdSchema,
+  ReleaseRelativePathSchema,
+  RepositoryIdentitySchema,
 } from "./release-identity";
+import { Uint8ArraySchema } from "./structural";
 
 declare const canonicalRefBrand: unique symbol;
 declare const gitBlobIdBrand: unique symbol;
 
+type CanonicalRefBrand = string & {
+  readonly [canonicalRefBrand]: "CanonicalRef";
+};
+type GitBlobIdBrand = string & { readonly [gitBlobIdBrand]: "GitBlobId" };
+
 /** Identifies one qualified canonical branch or tag ref used by current-main selection. */
-export type CanonicalRef = string & { readonly [canonicalRefBrand]: "CanonicalRef" };
+export const CanonicalRefSchema = Type.Unsafe<CanonicalRefBrand>(
+  Refine(
+    Type.String({
+      pattern: "^refs/(?:heads|tags)/[A-Za-z0-9][A-Za-z0-9._/-]*$",
+    }),
+    isCanonicalRef,
+    () => "Expected a qualified canonical Git ref"
+  )
+);
 
 /** Identifies the exact Git blob object read for a current-main selection. */
-export type GitBlobId = string & { readonly [gitBlobIdBrand]: "GitBlobId" };
+export const GitBlobIdSchema = Type.Unsafe<GitBlobIdBrand>(GitObjectIdSchema);
 
 /** Locates the expected logical repository behind one local content workspace. */
-export interface GitLocator {
-  readonly workspacePath: string;
-  readonly expectedRepositoryIdentity: RepositoryIdentity;
-}
+export const GitLocatorSchema = ReadonlyObject(
+  Type.Object({
+    workspacePath: CanonicalAbsoluteLocatorSchema,
+    expectedRepositoryIdentity: RepositoryIdentitySchema,
+  }),
+  { additionalProperties: false }
+);
 
 /** Selects one exact path from a qualified Git ref, commit, and tree. */
-export interface GitBlobSelection {
-  readonly repositoryIdentity: RepositoryIdentity;
-  readonly ref: CanonicalRef;
-  readonly commit: GitCommitId;
-  readonly tree: GitTreeId;
-  readonly path: ReleaseRelativePath;
-}
+export const GitBlobSelectionSchema = ReadonlyObject(
+  Type.Object({
+    repositoryIdentity: RepositoryIdentitySchema,
+    ref: CanonicalRefSchema,
+    commit: GitCommitIdSchema,
+    tree: GitTreeIdSchema,
+    path: ReleaseRelativePathSchema,
+  }),
+  { additionalProperties: false }
+);
 
 /** Binds one selected Git path to its exact blob object. */
-export interface ExactGitBlobPointer extends GitBlobSelection {
-  readonly blob: GitBlobId;
-}
+export const ExactGitBlobPointerSchema = ReadonlyObject(
+  Type.Object({
+    ...GitBlobSelectionSchema.properties,
+    blob: GitBlobIdSchema,
+  }),
+  { additionalProperties: false }
+);
 
 /** Carries exact selected Git bytes together with their verified object identities. */
-export interface ExactGitBlobObservation {
-  readonly pointer: ExactGitBlobPointer;
-  readonly bytes: Uint8Array;
+export const ExactGitBlobObservationSchema = ReadonlyObject(
+  Type.Object({
+    pointer: ExactGitBlobPointerSchema,
+    bytes: Uint8ArraySchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** TypeBox-derived qualified canonical branch or tag ref. */
+export type CanonicalRef = Static<typeof CanonicalRefSchema>;
+
+/** TypeBox-derived exact Git blob object identity. */
+export type GitBlobId = Static<typeof GitBlobIdSchema>;
+
+/** TypeBox-derived content-workspace locator and expected repository identity. */
+export type GitLocator = Static<typeof GitLocatorSchema>;
+
+/** TypeBox-derived exact path selection from one Git ref, commit, and tree. */
+export type GitBlobSelection = Static<typeof GitBlobSelectionSchema>;
+
+/** TypeBox-derived selected Git path bound to its exact blob object. */
+export type ExactGitBlobPointer = Static<typeof ExactGitBlobPointerSchema>;
+
+/** TypeBox-derived exact Git pointer and its observed bytes. */
+export type ExactGitBlobObservation = Static<typeof ExactGitBlobObservationSchema>;
+
+function isCanonicalRef(value: string): boolean {
+  return (
+    !value.includes("..") &&
+    !value.includes("//") &&
+    !value.includes("@{") &&
+    !/[\u0000-\u0020~^:?*\\[]/u.test(value) &&
+    !value.endsWith("/") &&
+    !value.endsWith(".") &&
+    value
+      .split("/")
+      .every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"))
+  );
 }

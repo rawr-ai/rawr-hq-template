@@ -180,6 +180,20 @@ describe("observed-Git current-main v3 selection", () => {
     });
   });
 
+  it("rejects a malformed observed record blob before ancestry", async () => {
+    const fixture = selectionFixture({ recordBlob: "not-a-git-object" });
+
+    await expect(select(fixture.resource)).resolves.toEqual({
+      kind: "FORGED_RECORD",
+      reason: "Git provider returned a noncanonical blob identity",
+    });
+    expect(fixture.calls).toEqual([
+      `inspect:${MAIN_REF}`,
+      `inspect:${MAIN_REF}`,
+      `read:${CURRENT_MAIN_V3_RECORD_PATH}`,
+    ]);
+  });
+
   it("reports a wrong observed repository before object reads", async () => {
     const fixture = selectionFixture({
       remoteUrls: ["https://github.com/example/other.git"],
@@ -282,6 +296,7 @@ interface SelectionFixtureOptions {
   readonly ancestor?: boolean;
   readonly changeClosingMain?: boolean;
   readonly recordReadFailure?: ContentWorkspaceFailure;
+  readonly recordBlob?: string;
   readonly recordBlobCommit?: string;
   readonly recordBlobTree?: string;
   readonly movedSourceRef?: boolean;
@@ -350,7 +365,7 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
         refCommit: !recordRead && options.movedSourceRef ? HEAD_COMMIT : selectedCommit,
         commit: recordRead ? (options.recordBlobCommit ?? selectedCommit) : selectedCommit,
         tree: recordRead ? (options.recordBlobTree ?? selectedTree) : selectedTree,
-        blob: recordRead ? RECORD_BLOB : RELEASE_INPUT_BLOB,
+        blob: recordRead ? (options.recordBlob ?? RECORD_BLOB) : RELEASE_INPUT_BLOB,
         bytes: recordRead ? recordBytes : releaseInputBytes,
       });
     },

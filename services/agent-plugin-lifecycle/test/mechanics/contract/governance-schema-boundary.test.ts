@@ -6,11 +6,28 @@ import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { contract as serviceContract } from "../../../src/service/contract";
 import {
+  type CanonicalRef,
+  CanonicalRefSchema,
+  type ExactGitBlobObservation,
+  ExactGitBlobObservationSchema,
+  type ExactGitBlobPointer,
+  ExactGitBlobPointerSchema,
+  type GitBlobId,
+  GitBlobIdSchema,
+  type GitBlobSelection,
+  GitBlobSelectionSchema,
+  type GitLocator,
+  GitLocatorSchema,
+} from "../../../src/service/model/dto/current-main-git";
+import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
+  type CurrentMainSelectionLocator,
+  CurrentMainSelectionLocatorSchema,
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../../../src/service/model/dto/current-main-selection";
+import { decodeGitLocator } from "../../../src/service/model/policy/current-main-locator";
 import { parseReleaseInputDigest } from "../../../src/service/model/policy/release-digest";
 import {
   parseContentAuthority,
@@ -32,6 +49,112 @@ import {
 import { encodeCurrentMainBodyV3 } from "../../../src/service/modules/governance/model/policy/current-main-record";
 
 describe("governance procedure schema boundary", () => {
+  it("derives current-main Git collaboration types from their structural schemas", () => {
+    expectTypeOf<CanonicalRef>().toEqualTypeOf<Static<typeof CanonicalRefSchema>>();
+    expectTypeOf<GitBlobId>().toEqualTypeOf<Static<typeof GitBlobIdSchema>>();
+    expectTypeOf<GitLocator>().toEqualTypeOf<Static<typeof GitLocatorSchema>>();
+    expectTypeOf<GitBlobSelection>().toEqualTypeOf<Static<typeof GitBlobSelectionSchema>>();
+    expectTypeOf<ExactGitBlobPointer>().toEqualTypeOf<Static<typeof ExactGitBlobPointerSchema>>();
+    expectTypeOf<ExactGitBlobObservation>().toEqualTypeOf<
+      Static<typeof ExactGitBlobObservationSchema>
+    >();
+    expectTypeOf<CurrentMainSelectionLocator>().toEqualTypeOf<GitLocator>();
+    expect(CurrentMainSelectionLocatorSchema).toBe(GitLocatorSchema);
+  });
+
+  it("admits only closed, exact current-main Git collaboration values", () => {
+    const locator = {
+      workspacePath: "/tmp/personal-rawr-hq",
+      expectedRepositoryIdentity: "git:github.com/rawr-ai/rawr-hq",
+    };
+    const selection = {
+      repositoryIdentity: locator.expectedRepositoryIdentity,
+      ref: "refs/heads/main",
+      commit: "a".repeat(40),
+      tree: "b".repeat(64),
+      path: "agent-plugins/current-main.json",
+    };
+    const pointer = { ...selection, blob: "c".repeat(40) };
+    const observation = { pointer, bytes: Uint8Array.of(0, 1, 2) };
+
+    for (const ref of ["refs/heads/main", "refs/tags/agent-plugins/content-2026-07-29"]) {
+      expect(Value.Check(CanonicalRefSchema, ref)).toBe(true);
+    }
+    for (const invalid of [
+      "refs/remotes/main",
+      "refs/heads/.main",
+      "refs/heads/main.lock",
+      "refs/heads/main..next",
+      "refs/heads/main//next",
+      "refs/heads/main~next",
+      null,
+    ]) {
+      expect(Value.Check(CanonicalRefSchema, invalid)).toBe(false);
+    }
+
+    expect(Value.Check(GitBlobIdSchema, "d".repeat(40))).toBe(true);
+    expect(Value.Check(GitBlobIdSchema, "e".repeat(64))).toBe(true);
+    for (const invalid of ["f".repeat(39), "f".repeat(41), "f".repeat(65), "F".repeat(40), null]) {
+      expect(Value.Check(GitBlobIdSchema, invalid)).toBe(false);
+    }
+
+    expect(Value.Check(GitLocatorSchema, locator)).toBe(true);
+    expect(Value.Check(GitBlobSelectionSchema, selection)).toBe(true);
+    expect(Value.Check(ExactGitBlobPointerSchema, pointer)).toBe(true);
+    expect(Value.Check(ExactGitBlobObservationSchema, observation)).toBe(true);
+    expect(Value.Check(GitLocatorSchema, { ...locator, unexpected: true })).toBe(false);
+    expect(Value.Check(GitBlobSelectionSchema, { ...selection, unexpected: true })).toBe(false);
+    expect(Value.Check(ExactGitBlobPointerSchema, { ...pointer, unexpected: true })).toBe(false);
+    expect(Value.Check(ExactGitBlobObservationSchema, { ...observation, unexpected: true })).toBe(
+      false
+    );
+    expect(
+      Value.Check(GitLocatorSchema, {
+        workspacePath: locator.workspacePath,
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(GitBlobSelectionSchema, {
+        repositoryIdentity: selection.repositoryIdentity,
+        ref: selection.ref,
+        commit: selection.commit,
+        tree: selection.tree,
+      })
+    ).toBe(false);
+    expect(Value.Check(ExactGitBlobPointerSchema, selection)).toBe(false);
+    expect(Value.Check(GitBlobSelectionSchema, pointer)).toBe(false);
+    expect(Value.Check(ExactGitBlobObservationSchema, { pointer })).toBe(false);
+    expect(Value.Check(ExactGitBlobObservationSchema, { pointer, bytes: [0, 1, 2] })).toBe(false);
+    expect(
+      Value.Check(ExactGitBlobObservationSchema, {
+        pointer,
+        bytes: new Uint16Array([1]),
+      })
+    ).toBe(false);
+  });
+
+  it("retains the 4096-byte locator policy behind the shared schema", () => {
+    const expectedRepositoryIdentity = mustParse(
+      parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")
+    );
+    const maximum = {
+      workspacePath: `/${"x".repeat(4_095)}`,
+      expectedRepositoryIdentity,
+    };
+    const oversized = {
+      ...maximum,
+      workspacePath: `/${"x".repeat(4_096)}`,
+    };
+
+    expect(Value.Check(GitLocatorSchema, maximum)).toBe(true);
+    expect(Value.Check(GitLocatorSchema, oversized)).toBe(true);
+    expect(decodeGitLocator(maximum).ok).toBe(true);
+    expect(decodeGitLocator(oversized)).toEqual({
+      ok: false,
+      reason: "locator.workspacePath must be a canonical non-root absolute path",
+    });
+  });
+
   it("derives the public selection and result types from TypeBox", () => {
     type ContractInputs = InferRouterContractInputs<typeof contract>;
     type ContractOutputs = InferRouterContractOutputs<typeof contract>;
@@ -162,6 +285,7 @@ describe("governance procedure schema boundary", () => {
           releaseSetDigest: `rs1_${"0".repeat(64)}`,
         },
       },
+      { ...eligible, selection: { ...eligible.selection, sourceRef: "refs/heads/main" } },
       { ...eligible, selection: { ...eligible.selection, projections: [] } },
       { kind: "ACCEPTED_PENDING_CONVERGENCE", reason: "legacy" },
     ]) {

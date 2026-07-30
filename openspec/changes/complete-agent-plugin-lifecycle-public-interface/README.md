@@ -4193,6 +4193,34 @@ See [[service-domain-frame#Burn-Down Design|the burn-down design]],
 [[tasks|the active task ledger]], and
 [[authority-amendment#Positive Architecture Ratchet|the architecture ratchet]].
 
+## Current-Main Git Schema And Type Authority
+
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|Task 5.3b]] is a schema/type
+authority checkpoint only. The current-main Git DTO now owns closed TypeBox
+schemas and generated types for canonical refs, exact blob identities,
+repository locators, Git path selections, exact blob pointers, and observed
+bytes. Blob identity reuses the service-wide Git object schema, pointer shape
+composes the selection fields, and the governance locator directly reuses the
+same Git locator schema. The channel record's separate tag-only `sourceRef`
+contract remains unchanged.
+
+Primitive ref and blob admission now uses the owning TypeBox schemas while
+retaining the established parser functions, diagnostics and order, exact-record
+checks, locator and blob bounds, byte copying, freezing, ancestry, equality,
+and cross-field policy. Owner schema proof covers static parity, both Git
+object formats, invalid refs and object identities, closed-object membership,
+missing fields, extra fields, and the `Uint8Array` refinement. Caller behavior
+proves a malformed observed blob remains `FORGED_RECORD` and stops before
+ancestry.
+
+The focused schema, current-main selection, diagnostic, and byte-consumer
+suites pass 5 files and 43 tests; the owner typecheck passes. This does not
+complete task 5.3
+or alter providers, callers, resource sequencing, operation results, or live
+state. See [[service-domain-frame#Burn-Down Design|the remaining burn-down]],
+[[tasks|the active task ledger]], and
+[[authority-amendment#Positive Architecture Ratchet|the architecture ratchet]].
+
 ## Settlement Oracles
 
 The final product must prove:

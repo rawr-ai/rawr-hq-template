@@ -1,8 +1,11 @@
-import type {
-  CanonicalRef,
-  ExactGitBlobPointer,
-  GitBlobId,
-  GitBlobSelection,
+import { Value } from "typebox/value";
+import {
+  type CanonicalRef,
+  CanonicalRefSchema,
+  type ExactGitBlobPointer,
+  type GitBlobId,
+  GitBlobIdSchema,
+  type GitBlobSelection,
 } from "../dto/current-main-git";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
@@ -14,33 +17,20 @@ import {
 } from "./release-identity";
 import { releaseIssue } from "./release-issue";
 
-const REF_PATTERN = /^refs\/(?:heads|tags)\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
-const GIT_OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
-
 /** Admits one qualified canonical branch or tag ref for current-main selection. */
 export function parseCanonicalRef(
   value: unknown,
   path: string
 ): ReleaseResult<CanonicalRef, ReleaseIssue> {
-  if (
-    typeof value !== "string" ||
-    !REF_PATTERN.test(value) ||
-    value.includes("..") ||
-    value.includes("//") ||
-    value.includes("@{") ||
-    /[\u0000-\u0020~^:?*\\[]/u.test(value) ||
-    value.endsWith("/") ||
-    value.endsWith(".") ||
-    value.split("/").some((part) => part === "" || part.startsWith(".") || part.endsWith(".lock"))
-  ) {
+  if (!Value.Check(CanonicalRefSchema, value)) {
     return invalidGitIdentity(path, "Expected a qualified canonical Git ref");
   }
-  return { ok: true, value: value as CanonicalRef };
+  return { ok: true, value };
 }
 
 function parseGitBlobId(value: unknown, path: string): ReleaseResult<GitBlobId, ReleaseIssue> {
-  return typeof value === "string" && GIT_OBJECT_PATTERN.test(value)
-    ? { ok: true, value: value as GitBlobId }
+  return Value.Check(GitBlobIdSchema, value)
+    ? { ok: true, value }
     : invalidGitIdentity(path, "Expected an exact Git blob object ID");
 }
 
