@@ -8,7 +8,8 @@ import { contract as exampleTodoContract } from "@rawr/example-todo/client";
  * @behavior Preserve the domain schemas while adding HTTP route metadata.
  * @relation Forms the task branch of the Example Todo API module contract.
  */
-const tasks = {
+/** Task API contract group consumed by the module contract access face. */
+export const tasks = {
   create: oc
     .meta(
       openapi({
@@ -32,6 +33,3 @@ const tasks = {
     )
     .router(exampleTodoContract.tasks.get),
 } as const;
-
-/** Public Example Todo API module contract composed from its task capability. */
-export const contract = { tasks } as const;
