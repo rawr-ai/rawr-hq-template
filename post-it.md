@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Cohesion Follows Shared Truth
+
+A service boundary follows the invariant that changes together, not the number
+of modules, dependencies, or external destinations inside it. Releases,
+governance, packaging, providers, and vendors consume coordinated subsets of
+one admitted release domain: selected Git identity, release input, ownership,
+payload, release set, and current-main selection. Their different writes are
+performed through ready resources whose destinations remain truthful state
+owners. Those destinations do not become peer service identities merely
+because their mechanics and lifetimes differ.
+
+The root context therefore declares the service's complete ready capability
+set once. Each module then curates the smallest vocabulary its handlers need.
+The host, not the service, selects providers, acquires resources, binds the
+service, and releases the process lifetime. Eagerly constructing every concrete
+resource for each CLI operation is a host-realization defect, not evidence that
+the domain must be split.
+
+A branch's placement must be reopened only when it owns an independent semantic
+model and change cadence, serves a consumer without the shared release truth,
+or requires durable sequencing outside one request. The answer may be a
+sibling service, plugin, or workflow. Until then, splitting would put service
+calls across the strongest collaboration and obscure the invariant it is meant
+to clarify.
+
+### Bag Of Keywords
+
+service, release, module, context, policy, resource, provider, request, owner,
+cohesion, runtime, binding.
+
 ## 2026-07-29 - Schema Owns Shape
 
 TypeBox is the sole authority for object membership, required fields, primitive
