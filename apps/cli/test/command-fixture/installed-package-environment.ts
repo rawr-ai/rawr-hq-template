@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   lstatSync,
@@ -12,6 +13,7 @@ import path from "node:path";
 
 const temporaryParent = realpathSync(os.tmpdir());
 const temporaryPrefix = "rawr-installed-oclif-";
+const nodeExecutable = resolveNodeExecutable();
 
 export type InstalledPackageEnvironment = {
   operator: string;
@@ -74,7 +76,7 @@ export function installedPackageChildEnvironment(
     NPM_CONFIG_PREFIX: at("npm-prefix"),
     NPM_CONFIG_REGISTRY: "https://registry.npmjs.org",
     NPM_CONFIG_USERCONFIG: at("npmrc"),
-    PATH: process.env.PATH,
+    PATH: [path.dirname(nodeExecutable), process.env.PATH].filter(Boolean).join(path.delimiter),
     RAWR_NPM_REGISTRY: "https://registry.npmjs.org",
     TEMP: at("tmp"),
     TMP: at("tmp"),
@@ -84,6 +86,21 @@ export function installedPackageChildEnvironment(
     XDG_DATA_HOME: state.xdgData,
     XDG_STATE_HOME: at("xdg-state"),
   };
+}
+
+function resolveNodeExecutable(): string {
+  const result = spawnSync("node", ["--print", "process.execPath"], {
+    encoding: "utf8",
+    env: process.env,
+  });
+  if (result.status !== 0) {
+    throw new Error(`unable to resolve the ambient Node executable: ${result.stderr}`);
+  }
+  const executable = result.stdout.trim();
+  if (!path.isAbsolute(executable) || !existsSync(executable)) {
+    throw new Error(`ambient Node reported an invalid executable path: ${executable}`);
+  }
+  return realpathSync(executable);
 }
 
 export function removeInstalledPackageEnvironment(root: string): void {

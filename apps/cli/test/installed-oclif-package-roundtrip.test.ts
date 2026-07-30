@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import {
   existsSync,
   lstatSync,
+  mkdirSync,
   readdirSync,
   readFileSync,
   readlinkSync,
@@ -251,6 +252,23 @@ afterAll(() => {
 });
 
 describe("ordinary installed Oclif package", () => {
+  it("prefers the real Node toolchain to an ambient PATH shim", async () => {
+    const state = requireState();
+    const shimDirectory = path.join(state.root, "shim");
+    mkdirSync(shimDirectory);
+    writeFileSync(path.join(shimDirectory, "npm"), "#!/bin/sh\nexit 126\n", { mode: 0o755 });
+
+    const ambientPath = process.env.PATH;
+    process.env.PATH = [shimDirectory, ambientPath].filter(Boolean).join(path.delimiter);
+    try {
+      const npm = await execute("npm", ["--version"], state.prefix, childEnvironment());
+      expect(npm.status, npm.stderr).toBe(0);
+      expect(npm.stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/u);
+    } finally {
+      process.env.PATH = ambientPath;
+    }
+  });
+
   it("packs the Nx release group and exercises installed rawr", async ({ annotate }) => {
     const state = requireState();
     const releaseProjects = readReleaseProjects();
