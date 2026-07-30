@@ -9,19 +9,19 @@ import {
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
-import { contract, createClient } from "../src/client";
-import type { ScratchPolicyCheck } from "../src/service/model/dto/scratch-policy.dto";
-import { evaluateScratchPolicy } from "../src/service/model/policy/scratch-policy";
+import { contract, createClient } from "../../src/client";
+import type { ScratchPolicyCheck } from "../../src/service/model/dto/scratch-policy.dto";
+import { evaluateScratchPolicy } from "../../src/service/model/policy/scratch-policy";
 import {
   RepoSyncUpstreamInputSchema,
   RepoSyncUpstreamResultSchema,
-} from "../src/service/modules/repo/model/dto/repo-operations.dto";
+} from "../../src/service/modules/repo/model/dto/repo-operations.dto";
 import {
   StackDoctorResultSchema,
   StackDrainResultSchema,
-} from "../src/service/modules/stack/model/dto/stack-operations.dto";
-import { router } from "../src/service/router";
-import { createClientOptions, createFakeResources } from "./helpers";
+} from "../../src/service/modules/stack/model/dto/stack-operations.dto";
+import { router } from "../../src/service/router";
+import { createClientOptions, createFakeResources } from "../support/service/helpers";
 
 const cleanStatus = "## agent/devops...origin/agent/devops\n";
 const worktrees = [

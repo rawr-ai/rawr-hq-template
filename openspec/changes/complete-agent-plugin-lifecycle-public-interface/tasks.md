@@ -2084,6 +2084,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Fresh oRPC/architecture, behavior-first testing, and TypeScript/structural
   completion reviews report no P0-P2 after the failed-status proof was
   strengthened with misleading stdout.
+- [x] 5.7e36 Categorize the completed Dev service proof without changing
+  production or test behavior. Move the aggregate behavior suite to
+  `test/behavior/dev-service.test.ts` and its reusable client/resource fixture
+  to `test/support/service/helpers.ts`; update only the relative imports made
+  necessary by those moves. Preserve all 23 behavior tests and the
+  existing contract mechanics proof. Prove uncached Dev behavior and
+  typecheck, active Habitat policy, strict OpenSpec validation, focused Biome,
+  and diff hygiene. Add no test abstraction, source-shape assertion, runner,
+  baseline, production helper, or staged-law activation.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

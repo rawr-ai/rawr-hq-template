@@ -4890,6 +4890,24 @@ runtime acquisition/finalization, service binding, or production-host migration
 and therefore is not the exact upstream checkpoint awaited by the separate
 research service.
 
+## Dev Proof Categories
+
+The bounded follow-up
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e36]] places Dev's
+existing proof in the closed service-package categories without changing what
+it proves. The aggregate service suite moves to
+`test/behavior/dev-service.test.ts`; its reusable client and fake-resource
+construction moves to `test/support/service/helpers.ts`. The existing
+compile-only contract relation remains under `test/mechanics/contract`.
+
+Only relative imports change. The 23 behavior tests, production source,
+public contract, resources, router lineages, and operation outcomes remain
+unchanged. This removes Dev's final two service-topology findings but does not
+activate a staged construction law or claim the remaining service corpus is
+green. Uncached Dev behavior and typecheck pass, all 25 active Habitat rules
+report zero findings, the active OpenSpec change validates strictly, focused
+Biome passes, and diff hygiene is clean.
+
 ## Settlement Oracles
 
 The final product must prove:
