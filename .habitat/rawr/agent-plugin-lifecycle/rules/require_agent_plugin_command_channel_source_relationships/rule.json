@@ -25,7 +25,6 @@
       ]
     }
   ],
-  "scanRoots": ["apps/cli/src/commands/agent/plugins", "apps/cli/src/lib/agent-plugins/commands"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_source_relationships/baseline.json"
@@ -35,6 +34,10 @@
     "files": {
       "pattern": ".habitat/rawr/agent-plugin-lifecycle/rules/require_agent_plugin_command_channel_source_relationships/pattern.md"
     },
-    "patternName": "require_agent_plugin_command_channel_source_relationships"
+    "patternName": "require_agent_plugin_command_channel_source_relationships",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps/cli/src/commands/agent/plugins", "apps/cli/src/lib/agent-plugins/commands"]
+    }
   }
 }

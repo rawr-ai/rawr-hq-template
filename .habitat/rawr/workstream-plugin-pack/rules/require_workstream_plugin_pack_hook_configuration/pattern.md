@@ -493,7 +493,7 @@ or {
         "hooks": [
           {
             "type": "command",
-            "command": "bunx nx run habitat:check:structure"
+            "command": "bun habitat hook agent-stop"
           }
         ]
       }

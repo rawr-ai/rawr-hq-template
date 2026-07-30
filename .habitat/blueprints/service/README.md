@@ -76,16 +76,16 @@ data remains outside the source relation.
 
 Contract and error packets own the single exported contract directory
 entrypoint and one operation or deliberate group per direct leaf. They own Standard Schema
-adaptation at every procedure input/output, bounded private support
-reachability, and private native error-map authority when those support
-declarations are present. Contract property-description law requires every
+adaptation at every procedure input/output and public error-data position, plus
+private native error-map authority when those declarations are present.
+Contract property-description law requires every
 directly authored TypeBox object property, including API transport containers,
 to declare its meaning or delegate it to a named schema authority. Standalone
 and embedded API services apply that one source law at their own bounded
 Habitat scan roots. Private schema composition, local error maps, fragments,
-and helpers remain valid only while they are syntactically reachable from the
-owning leaf export or directory contract anchor; imported or dynamic error-map authority and exported
-parallel schema, type, envelope, or helper authority remain invalid.
+and helpers remain source-local; Knip owns private reachability and the
+contract law does not govern general schema/type naming outside its declared
+owners. Imported or dynamic error-map authority remains invalid.
 The kind preserves one implementation lineage across three flows. Module
 contracts compose into the root contract; `base.ts` declares one complete
 context and adds a native author only when context middleware needs it;
@@ -158,8 +158,8 @@ not a second implementation lineage.
 Module capability directories are ordinary static TypeScript interiors. Each
 contract or router leaf maps its kebab-case filename to one lower-camel export.
 An ECMAScript-reserved operation name keeps that exact public export through
-the sole language-required `<name>Contract` or `<name>Operation` local binding;
-the laws admit no general leaf alias form.
+an export-list alias; its private local binding is not part of the public
+contract. The laws admit no general leaf alias form.
 Contract law owns canonical direct import of contract leaves. Module-root
 routers are composition-only; TypeScript owns router completeness, Knip owns
 unreachable leaves and import hygiene, and generated-client/API behavior proof
@@ -190,9 +190,11 @@ Services that author Effect procedures admit the official Effect-oRPC
 `@orpc/experimental-effect/extensions/effect` extension in `impl.ts`. A
 native-handler service does not import it ceremonially. Service contracts use
 native `.errors(...)` maps and procedure implementations use the
-handler-supplied `errors` constructors. The selected official extension does
-not admit the community bridge, `ORPCTaggedError` classes, status tables, or
-custom error-translation tunnels as compatibility surfaces.
+handler-supplied `errors` constructors. Public error data uses the same
+`standard(...)` adaptation as procedure input and output data. The selected
+official extension does not admit the community bridge, `ORPCTaggedError`
+classes, status tables, or custom error-translation tunnels as compatibility
+surfaces.
 
 Each fallible service capability owns the exact typed failure crossing its
 boundary. Define it beside its sole owning port by default. When multiple
@@ -212,14 +214,15 @@ inferred failure channels. Effect diagnostics own catch construction and
 failure composition. Behavior tests own actual adapter translation and
 procedure mapping.
 
-The spine topology, anchor, context, composition, module-isolation, and
-independent router-authorship packets are closed and advisory while the module
-entrypoint and service-funnel corpus is migrated. Their empty baselines
-preserve every live finding as visible red rather than accepted debt. The
-six packets return to enforced together at zero red corpus after their focused
-proofs pass. The independent public-consumer packet remains advisory until its
-owner-local relative-path classifier is corrected under task 5.7e21i, then
-returns to enforcement through its own zero-red proof. Habitat structure owns topology, including the package-root proof
+The spine topology, anchor, context, composition, module-isolation,
+router-authorship, and public-consumer packets are intentionally staged under
+`.habitat/staged/blueprints/service` while their live corpora are migrated.
+Their empty baselines and candidate manifests record the exact destination
+without adding unfinished work to the required graph. A burn-down branch moves
+the six service-construction packets back into this affirmed blueprint,
+enforces them, and lands only at zero; public-consumer sealing follows its own
+zero-red proof after its relative-path classifier is corrected. Habitat
+structure owns topology, including the package-root proof
 categories and the absence of source-owned test directories and suite files;
 Grit owns the declared source relations; Nx production inputs exclude
 `{projectRoot}/test/**/*`; and behavior tests remain with the behavior they

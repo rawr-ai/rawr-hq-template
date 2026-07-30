@@ -155,26 +155,25 @@ The API-plugin boundary is active now rather than waiting for the wider service
 corpus migration. Its closed source faces are `client.ts`, `api.ts`, and one
 embedded service; outward documentation calls the API members operations.
 The independent Grit-helper documentation law is also active and requires a
-semantic comment immediately above each named helper. Both run in one selected
-green local Habitat batch behind `check:policy`, with empty baselines.
-`habitat:check` composes that policy with workspace lint, owner typecheck, and
-tests. The one root Nx scheduler graph reaches repository admission and separation,
-Habitat policy, and CLI Oclif parity through their qualified owners. The
-selected Habitat batch owns the required Oclif structure laws and lifecycle
-command-channel law. The six staged service rules remain governed by
-[[tasks]] 1.5e, 5.7e2, and 5.7e22 and must not join required admission while
-their known live-corpus violations or the hand-maintained execution boundary
-remain.
+semantic comment immediately above each named helper. The installed Habitat Nx
+plugin discovers these laws from the registry and projects them into their
+qualified owners' inferred policy targets. The one root Nx scheduler graph
+reaches repository admission and separation, Habitat policy, and CLI Oclif
+parity through those owners. The inferred targets include the required Oclif
+structure laws and lifecycle command-channel law. The six staged service rules
+remain governed by [[tasks]] 1.5e, 5.7e2, and 5.7e22 and join required
+admission only as their live-corpus violations are burned down and each law is
+activated in the registry.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
 rule is not invented without a stable common corpus.
 
-The compiled Habitat binary is pinned to Civ7 `habitat-sdk-v0.1.6`, source
-`ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4. The
-temporary release is Darwin arm64 only, matching the active development and
-required-check host. Template will consume the upstream distributable Habitat
-Nx-plugin package when available; it will not fork, vendor, or modify the SDK
+The portable Habitat package is pinned to Civ7 release
+`habitat-cli-v0.1.0`, reviewed source
+`d51e8c7454e301bcaba56c8364f5c714d5febca3`. Its exported Nx plugin owns
+registry discovery, exact inputs, caching, owner-local policy composition, and
+package-local acquisition. Template does not fork, vendor, or modify the SDK
 locally.
 
 ### Required checks follow the Nx graph
@@ -188,20 +187,18 @@ project's plain public check. Shared defaults connect those checks to one
 workspace-owned `habitat:lint`, project-owned typecheck, optional owner
 verification, Habitat policy, and dependency checks.
 Repository separation, CLI Oclif parity, and Habitat topology/source policy
-remain qualified owner work. The selected local policy batch contains the
+remain qualified owner work. Habitat's inferred owner targets contain the
 required Oclif structure laws, lifecycle command-channel law, and public
-boundary documentation law. The independent structure leaf supplies Stop
-feedback and is not a policy dependency. The required CI job publishes one
-stable status. Local hooks provide fast feedback; remote branch protection
-remains merge authority.
+boundary documentation law. The package-owned Stop hook selects registered
+hook laws without becoming a second admission graph. The required CI job
+publishes one stable status. Local hooks provide fast feedback; remote branch
+protection remains merge authority.
 
 Every current non-root project owns a public check. The former packet-local Nx
-project adapter started a second scheduler and preserved a coarse project-kind
-matrix only because the pinned standalone consumer lacked Habitat's native Nx
-runner. That bypass is deleted rather than extended. The native workspace
-Grit rule owns the durable scheduler and single lint-owner relationship. Task
-5.7e22 still replaces hand-maintained rule selection with the upstream Habitat
-Nx plugin once a distributable owner release exists.
+project adapter and hand-maintained rule selector are deleted rather than
+extended. The native workspace Grit rule owns the durable scheduler and single
+lint-owner relationship; the installed Habitat Nx plugin projects registered
+policy into that graph.
 
 Foundational project-local target names are uniform across project kinds:
 `build`, `typecheck`, `test`, and `check`; `lint` is workspace-owned.

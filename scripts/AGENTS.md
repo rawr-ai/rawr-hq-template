@@ -28,8 +28,9 @@
   implementation of domain policy.
 - Local hooks provide fast feedback. Remote branch protection remains merge
   authority.
-- Habitat policy belongs in `.habitat/**`; scripts may provision and invoke
-  the pinned SDK but must not duplicate its evaluator.
+- Habitat policy belongs in `.habitat/**`; the installed `@habitat/cli` package
+  and its Nx plugin own discovery, acquisition, and evaluation. Scripts must
+  not duplicate those responsibilities.
 
 ## Behavior
 
@@ -86,14 +87,11 @@
 - `verify` is a narrow optional extension for deterministic required checks
   that do not reduce to lint, typecheck, or Habitat policy. It is owner-local,
   has no root aggregate, and grants no release or deployment authority.
-- `habitat:check` composes workspace lint, owner typecheck and tests, and
-  `check:policy`. `check:policy` resolves to the selected green local policy
-  batch; the independent `check:structure` leaf is Stop feedback, not an
-  admission dependency. The selected rule scopes are exact and their baselines
-  are empty, but both CLI
-  leaves remain uncached while exact Nx cache inputs are future upstream
-  Habitat Nx-boundary work. This is not an assertion that every registered
-  Habitat rule is active.
+- `habitat:check` composes workspace lint and the inferred owner-local
+  `check:policy` target. Habitat's Nx plugin derives rule selection, exact
+  inputs, caching, and dependencies from the registry. Candidate packets under
+  `.habitat/staged/**` remain reviewable without registering unfinished laws in
+  the admission graph.
 - Habitat checks are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests and complete owner
   checks remain explicit owner commands; they are not hidden inside merge
@@ -109,20 +107,16 @@
   ordinary repository-wide source lint once. It does not encode topology or
   source relationships; those remain native Habitat `structure.toml` and
   `pattern.md` laws.
-- `scripts/habitat/release.json` pins the standalone Habitat asset by source
-  provenance, byte size, and SHA-256. The Civ7 release owns the binary, which is
-  compiled with Bun 1.4; this repository consumes it and does not vendor its SDK
-  sources.
-- `scripts/habitat/provision.mjs` accepts only the manifest-selected platform
-  asset and verifies it before execution.
+- `package.json` and `bun.lock` pin the portable Habitat package release and
+  integrity. Template consumes that package and does not vendor its SDK source
+  or maintain another executable selector.
 - The `Repository Ratchet` workflow runs for ordinary pull requests, merge
   groups, and pushes to `main`. Branch protection must require its exact job
   context, `Required lint, typecheck, and topology`.
 - The Civ-style project-owned `check` composition is active. Do not add a root
   Nx project target, nested scheduler, aggregate owner, or project-name batch.
-  Project targets are ordinary Nx configuration; do not emulate the pinned
-  standalone binary's unavailable native Nx runner with a manual policy
-  adapter.
+  Project targets are ordinary Nx configuration; the installed Habitat Nx
+  plugin owns policy projection without a manual adapter.
 - Nx task ownership and cache behavior follow the
   [Nx agent workflow](../docs/process/NX_AGENT_WORKFLOW.md).
 

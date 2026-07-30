@@ -29,16 +29,19 @@
       ]
     }
   ],
-  "scanRoots": ["apps", "packages", "plugins", "resources", "services", "tools"],
   "hookCheck": true,
   "supportFiles": {
-    "baseline": ".habitat/blueprints/service/require_service_public_consumer_sealing/baseline.json"
+    "baseline": ".habitat/staged/blueprints/service/require_service_public_consumer_sealing/baseline.json"
   },
   "runner": {
     "name": "grit",
     "files": {
-      "pattern": ".habitat/blueprints/service/require_service_public_consumer_sealing/pattern.md"
+      "pattern": ".habitat/staged/blueprints/service/require_service_public_consumer_sealing/pattern.md"
     },
-    "patternName": "require_service_public_consumer_sealing"
+    "patternName": "require_service_public_consumer_sealing",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps", "packages", "plugins", "resources", "services", "tools"]
+    }
   }
 }

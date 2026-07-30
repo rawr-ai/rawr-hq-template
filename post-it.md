@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Graph Owns Selection
+
+The released Habitat package is a tool dependency, not repository authority.
+Its version and integrity identify the evaluator; `.habitat/**` identifies the
+laws. The Nx plugin projects that registry into cacheable rule targets and
+owner-local policy targets, so neither a root script nor a hook needs another
+rule inventory.
+
+An active blueprint is an affirmed law and is therefore enforced. A law whose
+live corpus is not yet green belongs in the explicit staged area with a
+candidate manifest, outside the required registry. Its burn-down branch first
+activates the law, then makes that red corpus green before landing. Hooks
+select from the same registry and package rather than creating another
+admission path.
+
+The next peer handoff follows the same shape: only one reviewed, landed runtime
+checkpoint can become a restack base. A moving branch or partial service
+checkpoint is context, never identity.
+
+### Bag Of Keywords
+
+package, registry, rule, owner, graph, cache, hook, stage, enforce, handoff.
+
 ## 2026-07-30 - Lifetime Follows Handles
 
 Provider selection and resource lifetime are separate questions. The CLI app

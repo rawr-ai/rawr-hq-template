@@ -31,15 +31,14 @@ Interpretation:
   checks. The root scheduler and single lint relationship belong to Habitat's
   `nx-workspace` rule; CLI Oclif parity remains with the CLI owner. Required
   Oclif structure, repository-script topology, and lifecycle command-channel
-  laws belong to Habitat's selected batch. Template and Personal remain
+  laws belong to Habitat's inferred owner targets. Template and Personal remain
   independent repositories rather than a source-scanner relationship.
-- `habitat:check` must run workspace lint, Habitat-owner typecheck and tests,
-  and the selected green local policy batch.
-- The selected Habitat batch must keep empty baselines. Do not claim that all
-  registered Habitat rules are required while known live-corpus failures remain
-  outside the batch.
-- Do not emulate Habitat's unavailable native Nx runner with a packet-local
-  script. A future distributable Habitat integration owns graph admission.
+- `habitat:check` must run workspace lint and the inferred owner-local policy
+  graph.
+- Every registered rule is enforced with an empty baseline. Unfinished laws
+  remain candidate packets under `.habitat/staged/**`, outside discovery.
+- Do not replace the installed Habitat Nx plugin with a packet-local script,
+  alternate runner, or hand-maintained rule list.
 - The `rg` command is a quick markdown-link surface scan used before deeper audits.
 - Protected `main` must require the job context
   `Required lint, typecheck, and topology` published by the
@@ -61,17 +60,16 @@ Until publication and the registry-installed smoke both complete, run only the
 equivalent repository-local compatibility checks through
 `bun run rawr -- ...`; do not promote them as installed settlement.
 
-When advancing the Habitat binary, accept only a Civ7-owned standalone release
-compiled with Bun 1.4. Update `scripts/habitat/release.json` with its immutable
-source provenance, platform byte size, and SHA-256, then run the public required
-check:
+When advancing Habitat, accept only a reviewed Civ7-owned package release.
+Update the exact `@habitat/cli` release URL and lockfile integrity, realize its
+package-local Grit dependency, then run the public required check:
 
 ```bash
 bun run check
 ```
 
 Do not copy the Habitat SDK source tree into this repository. RAWR HQ-Template
-owns only its positive `.habitat` policy tree and checksum-pinned consumer.
+owns only its positive `.habitat` policy tree and package consumer.
 
 ## Routing Change Contract
 

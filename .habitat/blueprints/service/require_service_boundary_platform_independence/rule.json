@@ -22,7 +22,6 @@
       "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
     }
   ],
-  "scanRoots": ["services", "plugins/server/api"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_boundary_platform_independence/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/service/require_service_boundary_platform_independence/pattern.md"
     },
-    "patternName": "require_service_boundary_platform_independence"
+    "patternName": "require_service_boundary_platform_independence",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services", "plugins/server/api"]
+    }
   }
 }

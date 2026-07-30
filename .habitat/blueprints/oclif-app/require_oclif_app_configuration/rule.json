@@ -22,7 +22,6 @@
       "patterns": ["apps/cli/package.json", "apps/cli/tsconfig.json"]
     }
   ],
-  "scanRoots": ["apps/cli/package.json", "apps/cli/tsconfig.json"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_configuration/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/oclif-app/require_oclif_app_configuration/pattern.md"
     },
-    "patternName": "require_oclif_app_configuration"
+    "patternName": "require_oclif_app_configuration",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps/cli/package.json", "apps/cli/tsconfig.json"]
+    }
   }
 }

@@ -22,7 +22,6 @@
       "patterns": ["services/*/src/service/modules/*/contract/*.ts"]
     }
   ],
-  "scanRoots": ["services"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_contract_property_descriptions/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/service/require_service_contract_property_descriptions/pattern.md"
     },
-    "patternName": "require_service_contract_property_descriptions"
+    "patternName": "require_service_contract_property_descriptions",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services"]
+    }
   }
 }

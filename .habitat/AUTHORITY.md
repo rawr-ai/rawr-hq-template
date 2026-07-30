@@ -1,7 +1,7 @@
 # Habitat Authority Boundary
 
-RAWR HQ-Template owns the constraints in this directory. The pinned Habitat
-binary owns read-only evaluation mechanics; it does not own repository
+RAWR HQ-Template owns the constraints in this directory. The installed Habitat
+package owns read-only evaluation mechanics; it does not own repository
 architecture or product behavior.
 
 This tree narrows reusable package kinds through positive structure and source
@@ -158,14 +158,11 @@ former coarse project-kind matrix is retired, not represented as another
 source pattern. Nx observes and schedules the graph.
 
 The `nx-workspace` blueprint owns the root scheduler contract and the single
-workspace lint relationship. Grit owns that scheduler source law. The former
-resolved-project adapter is deleted because the pinned standalone consumer
-cannot execute Habitat's native Nx runner; Template does not bypass Habitat by
-calling its implementation script directly.
-The selected local policy CLI leaf and the independent Stop-time structure CLI
-leaf remain intentionally uncached until an upstream distributable Habitat Nx
-boundary owns registry discovery, exact Nx cache inputs, caching, and one
-acquisition. The selected rule scopes themselves remain exact.
+workspace lint relationship. Grit owns that scheduler source law. The installed
+Habitat Nx plugin owns registry discovery, inferred rule and owner targets,
+exact cache inputs, caching, graph dependencies, and one package-local
+acquisition. Codex Stop delegates to the same package's hook surface rather
+than maintaining another selector.
 No equivalent structural or source policy belongs in ESLint or a hand-written
 script. Nx module dependency edges may use the Nx ESLint boundary rule when
 that separate graph law is admitted.

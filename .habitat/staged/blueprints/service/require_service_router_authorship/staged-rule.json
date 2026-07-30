@@ -29,16 +29,19 @@
       ]
     }
   ],
-  "scanRoots": ["services", "plugins/server/api"],
   "hookCheck": true,
   "supportFiles": {
-    "baseline": ".habitat/blueprints/service/require_service_router_authorship/baseline.json"
+    "baseline": ".habitat/staged/blueprints/service/require_service_router_authorship/baseline.json"
   },
   "runner": {
     "name": "grit",
     "files": {
-      "pattern": ".habitat/blueprints/service/require_service_router_authorship/pattern.md"
+      "pattern": ".habitat/staged/blueprints/service/require_service_router_authorship/pattern.md"
     },
-    "patternName": "require_service_router_authorship"
+    "patternName": "require_service_router_authorship",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services", "plugins/server/api"]
+    }
   }
 }

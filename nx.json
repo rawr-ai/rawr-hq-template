@@ -36,10 +36,26 @@
       "!{projectRoot}/**/*.test.*",
       "!{projectRoot}/**/*.spec.*"
     ],
-    "habitatPolicy": ["{workspaceRoot}/.habitat/**/*", "!{workspaceRoot}/.habitat/cache/**"],
+    "habitatRuntime": [
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/bun.lock",
+      { "env": "HABITAT_HARNESS_ROOT" },
+      { "env": "HABITAT_CACHE_ROOT" },
+      { "env": "HABITAT_PATTERN_CACHE_ROOT" },
+      { "env": "HABITAT_TELEMETRY_DISABLED" },
+      { "env": "HABITAT_COMMAND_TIMEOUT_MS" }
+    ],
     "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
   },
+  "plugins": [
+    {
+      "plugin": "@habitat/cli/nx-plugin",
+      "options": {
+        "checkTargetName": "check:policy"
+      }
+    }
+  ],
   "targetDefaults": {
     "check": {
       "cache": false,

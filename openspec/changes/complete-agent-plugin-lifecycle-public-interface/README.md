@@ -166,8 +166,32 @@ The current service packet follows the later committed Magic lineage:
 - one canonical public module router:
   `beac5efed773cd772e76649e514d646d4f4d7bf9`; and
 - current root router composition:
-  `52873620ffe0b8b6e60527cd399076fc13ab86a7`, service-blueprint tree
-  `e8f0d548fba17936bf39084607c3cf12c5c97ee0`.
+`52873620ffe0b8b6e60527cd399076fc13ab86a7`, service-blueprint tree
+`e8f0d548fba17936bf39084607c3cf12c5c97ee0`.
+
+The portable evaluator is now available as Civ7 release
+`habitat-cli-v0.1.0`. Its reviewed source candidate is
+`d51e8c7454e301bcaba56c8364f5c714d5febca3`, tree
+`5b35c34f2fa13e0eece1ea4cea7e6b1000df71dc`; canonical Civ7 main is
+`ebf5bbcab1e754a17a63999747f80c5e60b28fb7`. Template pins the release asset
+`habitat-cli-0.1.0.tgz` by immutable GitHub URL and lockfile integrity; the
+asset SHA-256 is
+`d21f7ab85d9895666174003b7024aa2473e83db047f42bc2c801666e0dd448f5`.
+Template owns no copied Habitat SDK source, executable selector, or second rule
+inventory.
+
+The consumer candidate installs `@habitat/cli/nx-plugin`, which infers one
+cacheable target per registered rule and one owner-local policy aggregate.
+Thirty-three active laws across six owners pass with zero findings; 25 belong
+to the `habitat` project. The contract-authority law now
+acquires only its contract and reusable-DTO corpus and completes in 2.9
+seconds; the complete uncached Habitat policy graph completes in 44.8 seconds,
+and an unchanged repeat is restored from Nx cache in 18 milliseconds. Seven
+unfinished service laws remain explicit candidate packets under
+`.habitat/staged/**`; they are not compatibility paths or active registry
+members. The six construction laws enter the graph together on the lifecycle
+burn-down branch, while public-consumer sealing retains its independent
+classifier gate.
 
 Two further Magic boundary laws are now part of the enforced RAWR service
 packet. Commit `21497500629f6b77ccbd6b0e983f2cc7c16ca663` isolates production
@@ -1174,57 +1198,46 @@ and the TypeScript mapping. Task 3.3 tightens generated-manifest packaging only
 when that behavior exists. The
 configuration fixtures and both live rules pass with zero diagnostics.
 
-The Template `habitat` project pins the current published Civ7 artifact:
+The Template `habitat` project pins the current published Civ7 package:
 
 | Field | Value |
 | --- | --- |
-| Release | `habitat-sdk-v0.1.6` |
-| Source commit | `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b` |
-| Habitat tree | `d67b402583eb17eca9f1b76c8c753ab1f448451d` |
-| Bun | `1.4.0-canary.1+5b98630ac` / `5b98630ac045622ce9ddfe0b53a2c4f3a91f26c4` |
-| Darwin arm64 SHA-256 | `e3b172c897e57c2a787df6ab2b264901cd7554a7fb9ac86afffb91eda3d6704e` |
+| Release | `habitat-cli-v0.1.0` |
+| Reviewed source | `d51e8c7454e301bcaba56c8364f5c714d5febca3` |
+| Source tree | `5b35c34f2fa13e0eece1ea4cea7e6b1000df71dc` |
+| Canonical Civ7 main | `ebf5bbcab1e754a17a63999747f80c5e60b28fb7` |
+| Package SHA-256 | `d21f7ab85d9895666174003b7024aa2473e83db047f42bc2c801666e0dd448f5` |
 
-The temporary published tool is Darwin arm64 only, so the required repository
-check runs on macOS. Linux packaging belongs to the later in-repository
-Habitat npm package and binary migration; this initiative neither vendors the
-SDK source nor holds current structural work behind that later distribution.
+The package supplies the CLI and Nx plugin through the ordinary Bun dependency
+graph. Template neither vendors the SDK source nor maintains a platform
+selector, executable cache, or hand-authored rule aggregate.
 
 ## Core Toolchain Grounding
 
-The current Civ7 studio-refactor and final-ratchet tips (`f9345ee958` and
-`80c1637f5e`) share one core toolchain baseline. RAWR adopts the responsibilities
-rather than copying configuration blindly:
+The current Template candidate keeps one explicit workspace toolchain:
 
-| Concern | Civ7 baseline | Template disposition |
-| --- | --- | --- |
-| Bun runtime | `1.3.14` | Keep; the separately pinned Habitat artifact remains a Bun 1.4 build |
-| Biome | `2.5.3` | Adopt required workspace hygiene and formatting |
-| lintEffect | `@catenarycloud/linteffect@0.0.6` | Expose as an advisory owner command, not a universal push gate |
-| Nx | `23.1.0` | Adopted as the exact task-graph pin; the ESLint graph adapter is retired |
-| TypeScript compiler | native `7.0.2` | Make normal `tsc`/typecheck authority |
-| TypeScript compiler API | `6.0.3` | Keep as the `typescript` package for build-tool consumers |
-| TypeScript fallback | `6.0.2` | Expose only the narrow `tsc6` compatibility command |
-| ESLint / parser | `9.39.2` / `8.54.0` | Retire; Biome owns ordinary lint and Habitat owns structure and source relationships |
-| TypeBox | `1.3.6` | Already aligned |
-| oRPC | `1.14.6` | Upgrade to current `1.14.8` in the atomic root-vendor checkpoint |
-| Effect / Platform | Current official Effect 4 line | Migrate the surviving resource/provider family after rejected owners are deleted; use exact aligned pins and remove `@effect/platform` |
+| Concern | Template disposition |
+| --- | --- |
+| Bun | `1.3.14` package manager and runtime |
+| Biome | `2.5.3` workspace hygiene and formatting |
+| lintEffect | `@catenarycloud/linteffect@0.0.6` as a separate owner command |
+| Nx | `23.1.0` task graph |
+| TypeScript | `5.9.3` compiler and compiler API |
+| TypeBox | `1.3.8` schema and type authority |
+| oRPC | `2.0.0-beta.20` contract, server, client, OpenAPI, and Effect bridge |
+| Effect / Platform | `4.0.0-beta.101` |
 
-TypeScript 6 and 7 are a split of responsibilities, not a doubled CI matrix.
-Biome owns fast general hygiene; Habitat owns positive architecture topology
-and source relationships. Full-corpus
-lintEffect is intentionally not part of the required push check because its
-cold-run cost is an upstream limitation rather than repository admission logic.
+Biome owns ordinary hygiene; Habitat owns positive topology and source
+relationships. Full-corpus lintEffect remains outside the required push check.
+The installed Habitat package's oRPC 1, Effect 3, and TypeBox 1.3.6 dependencies
+are package-local implementation dependencies; they are not Template product
+schema, context, or runtime authority.
 
-Official npm metadata on 2026-07-22 reports stable Effect `3.22.0` and the
-current Effect 4 line as `4.0.0-beta.100`; `@effect/platform-node` exposes the
-same Effect 4 beta while `@effect/platform` has no Effect 4 release. Effect 4 is
-therefore an explicit prerelease adoption, not a claim that the major is stable.
-The migration waits until controller and persistent lifecycle-state deletion so
-dead owners are not ported. It then moves the lifecycle service, surviving
-filesystem/process resource family, and CLI adapter together in one distinct
-Graphite node, using the exact current Effect 4 versions at execution. The
-service uses the Effect-backed oRPC construction required by the generic
-service blueprint while TypeBox remains public schema authority.
+### Historical Checkpoint Ledger
+
+The remaining entries in this section preserve superseded vendor-migration
+observations. They do not override the current package and version selection
+above.
 
 That migration now resolves one physical vendor realm:
 
@@ -1612,14 +1625,14 @@ review does not authorize a separate release path.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
-| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's stronger entity, metadata, documentation, alias, and platform extensions; the latest capability-funnel delta is the active authority checkpoint, while complete live-corpus conformance and the upstream Habitat Nx-plugin execution boundary remain open |
+| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; the portable Habitat Nx boundary is installed, while complete live-corpus conformance and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Typechecked Habitat project and TypeBox release manifest | Complete on the active Template stack |
-| Civ-aligned Biome/Nx/TypeScript toolchain | Biome admission, bounded CLI proof, and exact Nx 23.1 migration complete; TypeScript remains pending |
-| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, Habitat source-law policy, and Habitat-owned project admission are active; generic service-rule inclusion remains pending |
-| Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules already curate route vocabulary; the six shared service laws remain advisory until the remaining topology, middleware-authorship, and complete admitted-corpus findings reach zero |
-| Habitat execution normalization | Pending upstream distributable Civ7-style Nx plugin; the handwritten rule selection is interim and no local SDK fork or replacement runner is admitted |
+| Habitat package consumer | Immutable package URL, lockfile integrity, package-owned Grit acquisition, CLI, and Nx plugin are complete on the consumer candidate |
+| Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
+| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
+| Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
+| Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph; canonical-main landing and staged service-law activation remain open |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, and packed-install acceptance are landed and green; public registry publication and registry-installed smoke remain pending npm scope authorization |
@@ -1692,11 +1705,12 @@ The lifecycle service does not yet conform, so the rules remain outside the
 selected policy batch until tasks 5.2b and 5.7 seal the live corpus.
 
 The former v0.1.1 live-tree probe exposed an unbounded wildcard walk and was
-interrupted without repository mutation. The current v0.1.6 binary adds a
+interrupted without repository mutation. At the superseded standalone
+checkpoint, the v0.1.6 binary added a
 single fail-closed Git-visible inventory, bounded Picomatch-aware traversal,
 Effect Platform no-follow reads, and non-baselinable acquisition failures.
 The immutable Civ7 release workflow rebuilt and published the exact source with
-Bun 1.4. Template invokes the verified executable directly from Nx; no
+Bun 1.4. Template invoked the verified executable directly from Nx; no
 JavaScript check wrapper, SDK source, or worktree path remains in the gate.
 Habitat delegates pattern execution to the pinned Grit dependency, so the
 required workflow provisions Grit explicitly after its `--ignore-scripts`

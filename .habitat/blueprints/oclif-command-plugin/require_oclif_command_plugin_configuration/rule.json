@@ -22,7 +22,6 @@
       "patterns": ["plugins/cli/commands/*/package.json", "plugins/cli/commands/*/tsconfig.json"]
     }
   ],
-  "scanRoots": ["plugins/cli/commands"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_configuration/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_plugin_configuration/pattern.md"
     },
-    "patternName": "require_oclif_command_plugin_configuration"
+    "patternName": "require_oclif_command_plugin_configuration",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["plugins/cli/commands"]
+    }
   }
 }
