@@ -661,6 +661,15 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   retaining exact object diagnostics and all selection bounds, copying,
   freezing, ordering, and cross-field policy. This checkpoint does not claim
   task 5.3 complete.
+- [x] 5.3c Delete the current-main Git family's manual exact-record parser.
+  Let `GitBlobSelectionSchema` and `ExactGitBlobPointerSchema` own aggregate
+  admission, derive the exact expected-field diagnostics from their sorted
+  properties, and treat only root-instance schema errors as structural so
+  exact-shape invalid fields retain their primitive diagnostics and order.
+  Preserve reconstruction and freezing; prove malformed selection and pointer
+  shapes, all-invalid exact shapes, and successful immutable values. Add no
+  generic schema walker, adversarial object hardening, provider change, or
+  second parser framework. This checkpoint does not claim task 5.3 complete.
 - [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.

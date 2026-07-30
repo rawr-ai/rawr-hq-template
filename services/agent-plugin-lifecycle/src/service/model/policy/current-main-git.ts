@@ -3,9 +3,11 @@ import {
   type CanonicalRef,
   CanonicalRefSchema,
   type ExactGitBlobPointer,
+  ExactGitBlobPointerSchema,
   type GitBlobId,
   GitBlobIdSchema,
   type GitBlobSelection,
+  GitBlobSelectionSchema,
 } from "../dto/current-main-git";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
@@ -39,15 +41,20 @@ export function parseGitBlobSelection(
   input: unknown,
   path: string
 ): ReleaseResult<GitBlobSelection, ReleaseIssue> {
-  const record = exactRecord(input, ["commit", "path", "ref", "repositoryIdentity", "tree"], path);
-  if (!record.ok) return record;
+  if (Value.Errors(GitBlobSelectionSchema, input).some(({ instancePath }) => instancePath === "")) {
+    return invalid(
+      path,
+      `Expected exactly: ${Object.keys(GitBlobSelectionSchema.properties).sort().join(", ")}`
+    );
+  }
+  const record = input as Record<keyof GitBlobSelection, unknown>;
 
   const fields = [
-    parseRepositoryIdentity(record.value.repositoryIdentity, `${path}.repositoryIdentity`),
-    parseCanonicalRef(record.value.ref, `${path}.ref`),
-    parseGitCommitId(record.value.commit, `${path}.commit`),
-    parseGitTreeId(record.value.tree, `${path}.tree`),
-    parseReleaseRelativePath(record.value.path, `${path}.path`),
+    parseRepositoryIdentity(record.repositoryIdentity, `${path}.repositoryIdentity`),
+    parseCanonicalRef(record.ref, `${path}.ref`),
+    parseGitCommitId(record.commit, `${path}.commit`),
+    parseGitTreeId(record.tree, `${path}.tree`),
+    parseReleaseRelativePath(record.path, `${path}.path`),
   ] as const;
   const issues = fields.flatMap((result) => (result.ok ? [] : result.issues));
   if (issues.length > 0) return failed(issues);
@@ -70,23 +77,26 @@ function parseExactGitBlobPointer(
   input: unknown,
   path: string
 ): ReleaseResult<ExactGitBlobPointer, ReleaseIssue> {
-  const record = exactRecord(
-    input,
-    ["blob", "commit", "path", "ref", "repositoryIdentity", "tree"],
-    path
-  );
-  if (!record.ok) return record;
+  if (
+    Value.Errors(ExactGitBlobPointerSchema, input).some(({ instancePath }) => instancePath === "")
+  ) {
+    return invalid(
+      path,
+      `Expected exactly: ${Object.keys(ExactGitBlobPointerSchema.properties).sort().join(", ")}`
+    );
+  }
+  const record = input as Record<keyof ExactGitBlobPointer, unknown>;
   const selection = parseGitBlobSelection(
     {
-      repositoryIdentity: record.value.repositoryIdentity,
-      ref: record.value.ref,
-      commit: record.value.commit,
-      tree: record.value.tree,
-      path: record.value.path,
+      repositoryIdentity: record.repositoryIdentity,
+      ref: record.ref,
+      commit: record.commit,
+      tree: record.tree,
+      path: record.path,
     },
     path
   );
-  const blob = parseGitBlobId(record.value.blob, `${path}.blob`);
+  const blob = parseGitBlobId(record.blob, `${path}.blob`);
   const issues = [selection, blob].flatMap((result) => (result.ok ? [] : result.issues));
   if (issues.length > 0) return failed(issues);
   if (!selection.ok || !blob.ok)
@@ -99,21 +109,6 @@ export function createExactGitBlobPointer(
   input: unknown
 ): ReleaseResult<ExactGitBlobPointer, ReleaseIssue> {
   return parseExactGitBlobPointer(input, "gitObject");
-}
-
-function exactRecord(
-  input: unknown,
-  keys: readonly string[],
-  path: string
-): ReleaseResult<Record<string, unknown>, ReleaseIssue> {
-  if (input === null || typeof input !== "object" || Array.isArray(input)) {
-    return invalid(path, `Expected exactly: ${keys.join(", ")}`);
-  }
-  const actual = Object.keys(input).sort();
-  const expected = [...keys].sort();
-  return actual.length === expected.length && actual.every((key, index) => key === expected[index])
-    ? { ok: true, value: input as Record<string, unknown> }
-    : invalid(path, `Expected exactly: ${keys.join(", ")}`);
 }
 
 function invalidGitIdentity(path: string, message: string): ReleaseResult<never, ReleaseIssue> {
