@@ -5,6 +5,7 @@ import {
   type AgentPluginRelease,
   type AgentPluginReleaseBody,
   AgentPluginReleaseBodySchema,
+  AgentPluginReleaseConstructionSchema,
   AgentPluginReleaseEnvelopeSchema,
   AgentPluginReleaseSchema,
   BUILDER_PROTOCOL_VERSION,
@@ -49,7 +50,7 @@ import { verifyAgentPluginReleaseInput } from "./release-input";
 import { releaseInputValue } from "./release-input-codec";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
-import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
+import { admitTypeBoxRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
 /**
  * Constructs one verified in-memory release from a reviewed input and payload.
@@ -62,12 +63,7 @@ export function createAgentPluginRelease(
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["payload", "pluginId", "releaseInput", "source"],
-      "release",
-      issues
-    )
+    !admitTypeBoxRecordForTraversal(AgentPluginReleaseConstructionSchema, input, "release", issues)
   ) {
     return failure([
       issues[0] ??
@@ -168,14 +164,7 @@ export function verifyAgentPluginRelease(
   input: unknown
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["body", "payload", "releaseDigest", "schemaVersion"],
-      "release",
-      issues
-    )
-  ) {
+  if (!admitTypeBoxRecordForTraversal(AgentPluginReleaseEnvelopeSchema, input, "release", issues)) {
     return failure([
       issues[0] ?? releaseIssue("EXPECTED_OBJECT", "release", "Release envelope must be an object"),
     ]);
@@ -281,28 +270,7 @@ function parseReleaseBody(
   path: string,
   issues: ReleaseIssue[]
 ): AgentPluginReleaseBody | undefined {
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      [
-        "aliases",
-        "builderProtocolVersion",
-        "contentAuthority",
-        "curation",
-        "payloadDigest",
-        "payloadManifest",
-        "pluginId",
-        "releaseInputDigest",
-        "schemaVersion",
-        "sourceCommit",
-        "sourceRepository",
-        "sourceTree",
-        "vendor",
-      ],
-      path,
-      issues
-    )
-  )
+  if (!admitTypeBoxRecordForTraversal(AgentPluginReleaseBodySchema, input, path, issues))
     return undefined;
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SCHEMA_VERSION) {
     issues.push(
@@ -402,14 +370,7 @@ function parseReleaseSourceIdentity(
   path: string,
   issues: ReleaseIssue[]
 ): ReleaseSourceIdentity | undefined {
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["sourceCommit", "sourceRepository", "sourceTree"],
-      path,
-      issues
-    )
-  )
+  if (!admitTypeBoxRecordForTraversal(ReleaseSourceIdentitySchema, input, path, issues))
     return undefined;
   return parseReleaseSourceFields(input, path, issues);
 }

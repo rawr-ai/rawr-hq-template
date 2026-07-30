@@ -5,12 +5,17 @@ import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   type AgentPluginReleaseBody,
   AgentPluginReleaseBodySchema,
+  type AgentPluginReleaseConstruction,
+  AgentPluginReleaseConstructionSchema,
   type AgentPluginReleaseEnvelope,
   AgentPluginReleaseEnvelopeSchema,
   type ReleaseSourceIdentity,
   ReleaseSourceIdentitySchema,
 } from "../../src/service/model/dto/agent-plugin-release";
+import { MAX_OWNERSHIP_CLAIMS } from "../../src/service/model/dto/distribution-ownership";
+import { OwnershipIdentitySchema } from "../../src/service/model/dto/release-identity";
 import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
+import { payloadValue } from "../../src/service/model/policy/agent-plugin-payload-codec";
 import {
   createAgentPluginRelease,
   decodeAgentPluginRelease,
@@ -22,6 +27,7 @@ import {
 } from "../../src/service/model/policy/agent-plugin-release-codec";
 import { releaseDigest } from "../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
+import { releaseInputValue } from "../../src/service/model/policy/release-input-codec";
 import {
   must,
   productFixture,
@@ -63,6 +69,9 @@ describe("agent-plugin release", () => {
     expectTypeOf<ReleaseSourceIdentity>().toEqualTypeOf<
       Static<typeof ReleaseSourceIdentitySchema>
     >();
+    expectTypeOf<AgentPluginReleaseConstruction>().toEqualTypeOf<
+      Static<typeof AgentPluginReleaseConstructionSchema>
+    >();
     expectTypeOf<AgentPluginReleaseBody>().toEqualTypeOf<
       Static<typeof AgentPluginReleaseBodySchema>
     >();
@@ -70,8 +79,29 @@ describe("agent-plugin release", () => {
       Static<typeof AgentPluginReleaseEnvelopeSchema>
     >();
 
-    const release = productFixture().alphaRelease;
+    const fixture = productFixture();
+    const release = fixture.alphaRelease;
     const envelope = mutableReleaseWire(canonicalSerializeAgentPluginRelease(release));
+    const construction = {
+      releaseInput: fixture.releaseInput,
+      pluginId: "alpha",
+      source: SOURCE,
+      payload: fixture.alphaPayload,
+    };
+    expect(Value.Check(AgentPluginReleaseConstructionSchema, construction)).toBe(true);
+    const wireConstruction = {
+      ...construction,
+      releaseInput: releaseInputValue(fixture.releaseInput),
+      payload: payloadValue(fixture.alphaPayload),
+    };
+    expect(Value.Check(AgentPluginReleaseConstructionSchema, wireConstruction)).toBe(true);
+    expect(createAgentPluginRelease(wireConstruction).ok).toBe(true);
+    expect(
+      Value.Check(AgentPluginReleaseConstructionSchema, {
+        ...construction,
+        unknown: true,
+      })
+    ).toBe(false);
     const firstEntry = envelope.payload.entries[0];
     if (firstEntry === undefined) throw new Error("Release fixture entry is missing");
     expect(Value.Check(AgentPluginReleaseEnvelopeSchema, envelope)).toBe(true);
@@ -200,6 +230,164 @@ describe("agent-plugin release", () => {
     }
   });
 
+  it("uses the owning TypeBox schemas for aggregate release admission", () => {
+    const fixture = productFixture();
+    const base = {
+      releaseInput: fixture.releaseInput,
+      pluginId: "alpha",
+      source: SOURCE,
+      payload: fixture.alphaPayload,
+    };
+    const envelope = mutableReleaseWire(canonicalSerializeAgentPluginRelease(fixture.alphaRelease));
+
+    const cases = [
+      {
+        result: createAgentPluginRelease({ ...base, unknown: true }),
+        path: "release",
+        message: "Expected exactly: payload, pluginId, releaseInput, source",
+      },
+      {
+        result: createAgentPluginRelease(withoutField(base, "pluginId")),
+        path: "release",
+        message: "Expected exactly: payload, pluginId, releaseInput, source",
+      },
+      {
+        result: createAgentPluginRelease({
+          ...base,
+          source: { ...SOURCE, unknown: true },
+        }),
+        path: "release.source",
+        message: "Expected exactly: sourceCommit, sourceRepository, sourceTree",
+      },
+      {
+        result: createAgentPluginRelease({
+          ...base,
+          source: withoutField(SOURCE, "sourceTree"),
+        }),
+        path: "release.source",
+        message: "Expected exactly: sourceCommit, sourceRepository, sourceTree",
+      },
+      {
+        result: verifyAgentPluginRelease({ ...envelope, unknown: true }),
+        path: "release",
+        message: "Expected exactly: body, payload, releaseDigest, schemaVersion",
+      },
+      {
+        result: verifyAgentPluginRelease(withoutField(envelope, "payload")),
+        path: "release",
+        message: "Expected exactly: body, payload, releaseDigest, schemaVersion",
+      },
+      {
+        result: verifyAgentPluginRelease({
+          ...envelope,
+          body: { ...envelope.body, unknown: true },
+        }),
+        path: "release.body",
+        message:
+          "Expected exactly: aliases, builderProtocolVersion, contentAuthority, curation, payloadDigest, payloadManifest, pluginId, releaseInputDigest, schemaVersion, sourceCommit, sourceRepository, sourceTree, vendor",
+      },
+      {
+        result: verifyAgentPluginRelease({
+          ...envelope,
+          body: withoutField(envelope.body, "vendor"),
+        }),
+        path: "release.body",
+        message:
+          "Expected exactly: aliases, builderProtocolVersion, contentAuthority, curation, payloadDigest, payloadManifest, pluginId, releaseInputDigest, schemaVersion, sourceCommit, sourceRepository, sourceTree, vendor",
+      },
+    ];
+
+    for (const { result, path, message } of cases) {
+      expect(result).toEqual({
+        ok: false,
+        issues: [{ code: "UNKNOWN_FIELD", path, message }],
+      });
+    }
+
+    const primitiveInvalid = mutableReleaseWire(
+      canonicalSerializeAgentPluginRelease(fixture.alphaRelease)
+    );
+    primitiveInvalid.schemaVersion = 2;
+    expect(verifyAgentPluginRelease(primitiveInvalid)).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "INVALID_SCHEMA_VERSION",
+          path: "release.schemaVersion",
+          message: "Unsupported release envelope version",
+          expected: 1,
+          actual: 2,
+        },
+      ],
+    });
+  });
+
+  it("refuses an invalid release root without traversing its children", () => {
+    const candidate: Record<string, unknown> = {
+      schemaVersion: 1,
+      releaseDigest: `rd1_${"0".repeat(64)}`,
+      unknown: true,
+    };
+    for (const field of ["body", "payload"]) {
+      Object.defineProperty(candidate, field, {
+        enumerable: true,
+        get: () => {
+          throw new Error(`must not read ${field}`);
+        },
+      });
+    }
+
+    expect(() => verifyAgentPluginRelease(candidate)).not.toThrow();
+    expect(verifyAgentPluginRelease(candidate)).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "UNKNOWN_FIELD",
+          path: "release",
+          message: "Expected exactly: body, payload, releaseDigest, schemaVersion",
+        },
+      ],
+    });
+  });
+
+  it("bounds aliases before validating or traversing an excluded value", () => {
+    const fixture = productFixture();
+    const aliases: AgentPluginReleaseBody["aliases"] = Object.freeze(
+      Array.from({ length: MAX_OWNERSHIP_CLAIMS }, (_, index) => {
+        const candidate = `alias-${index.toString().padStart(5, "0")}`;
+        if (!Value.Check(OwnershipIdentitySchema, candidate)) {
+          throw new Error(`Invalid ownership-identity fixture: ${candidate}`);
+        }
+        return candidate;
+      })
+    );
+    const exactBody: AgentPluginReleaseBody = Object.freeze({
+      ...fixture.alphaRelease.body,
+      aliases,
+    });
+    const exact = mutableReleaseWire(canonicalSerializeAgentPluginRelease(fixture.alphaRelease));
+    exact.body.aliases = [...aliases];
+    exact.releaseDigest = releaseDigest(canonicalSerializeAgentPluginReleaseBody(exactBody));
+    expect(verifyAgentPluginRelease(exact).ok).toBe(true);
+
+    const overBound = mutableReleaseWire(
+      canonicalSerializeAgentPluginRelease(fixture.alphaRelease)
+    );
+    overBound.body.aliases = [...aliases, "excluded"];
+    Object.defineProperty(overBound.body.aliases, MAX_OWNERSHIP_CLAIMS, {
+      enumerable: true,
+      get: () => {
+        throw new Error("must not traverse the excluded alias");
+      },
+    });
+    expect(() => verifyAgentPluginRelease(overBound)).not.toThrow();
+    const result = verifyAgentPluginRelease(overBound);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.map((issue) => issue.code)).toContain("COUNT_LIMIT_EXCEEDED");
+    }
+  });
+
   it("rejects body, release-digest, payload, and unknown-field tampering", () => {
     const fixture = productFixture();
     const mutations: Array<(value: MutableReleaseWire) => void> = [
@@ -310,4 +498,10 @@ function mutablePayload(
     ...payload,
     entries: payload.entries.map((entry) => ({ ...entry })),
   };
+}
+
+function withoutField(value: object, field: string): Record<string, unknown> {
+  const candidate: Record<string, unknown> = { ...value };
+  delete candidate[field];
+  return candidate;
 }
