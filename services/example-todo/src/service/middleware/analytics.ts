@@ -1,6 +1,6 @@
 import { createAnalyticsMiddlewareCallback } from "@rawr/hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy/procedure-metadata";
 
 /** Emits one service-owned analytics event with its qualified operation identity. */
 export const middleware = base.middleware(

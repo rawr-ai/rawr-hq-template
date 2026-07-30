@@ -36,4 +36,4 @@ export const TagSchema = Type.Object(
 );
 
 /** Tag record type generated from the canonical TypeBox schema. */
-export type Tag = Static<typeof TagSchema>;
+export type TagType = Static<typeof TagSchema>;

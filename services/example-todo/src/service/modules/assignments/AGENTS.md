@@ -42,7 +42,7 @@
 
 - `assign` and `listForTask` are the composite caller boundary. `module.ts`
   curates the clock, identifier, workspace, assignment limit, and three stores
-  that their handlers need from inherited service context. Qualified telemetry
+  plus the read-only policy that their handlers need from inherited service context. Qualified telemetry
   observes inherited lanes before curation; the named assignment router leaf
   owns cross-entity behavior.
 
@@ -53,8 +53,9 @@
 - [[../../model/ports/assignments-store|Assignment store contract]]
 - [[../../model/ports/tasks-store|Task store contract]]
 - [[../../model/ports/tags-store|Tag store contract]]
-- [[middleware/telemetry.middleware|Assignment telemetry]]
-- [[router/assignments.router|Assignment operation group]]
+- [[middleware/telemetry|Assignment telemetry]]
+- [[router/assign.router|Assignment mutation]]
+- [[router/list-for-task.router|Assigned-tag query]]
 - [Tasks module](../tasks/AGENTS.md)
 - [Tags module](../tags/AGENTS.md)
 

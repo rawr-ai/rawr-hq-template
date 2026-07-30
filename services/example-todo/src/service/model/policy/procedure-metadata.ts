@@ -12,6 +12,15 @@ export type TodoProcedureMetadata = BaseMetadata & {
   };
 };
 
+/** Service-wide metadata inherited by every Example Todo procedure. */
+export const metadataDefaults: TodoProcedureMetadata = {
+  idempotent: true,
+  domain: "todo",
+  audience: "internal",
+  audit: "basic",
+  entity: "service",
+};
+
 const [attachTodoProcedureMetadata, readTodoProcedureMetadata] = defineMeta<
   "rawr.procedure",
   TodoProcedureMetadata

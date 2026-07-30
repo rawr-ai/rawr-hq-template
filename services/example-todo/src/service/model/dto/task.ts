@@ -51,4 +51,4 @@ export const TaskSchema = Type.Object(
 );
 
 /** Task record type generated from the canonical TypeBox schema. */
-export type Task = Static<typeof TaskSchema>;
+export type TaskType = Static<typeof TaskSchema>;

@@ -1,6 +1,6 @@
 import { createObservabilityMiddlewareCallback } from "@rawr/hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy/procedure-metadata";
 
 const policyEvents = {
   readOnlyRejected: "todo.policy.read_only_rejected",

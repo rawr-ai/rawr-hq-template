@@ -29,4 +29,4 @@ export const AssignmentSchema = Type.Object(
 );
 
 /** Assignment record type generated from the canonical TypeBox schema. */
-export type Assignment = Static<typeof AssignmentSchema>;
+export type AssignmentType = Static<typeof AssignmentSchema>;
