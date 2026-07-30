@@ -1,4 +1,12 @@
 import { getProcedureMetadata } from "@rawr/hq-sdk";
+import {
+  createEmbeddedPlaceholderAnalyticsAdapter,
+  type EmbeddedPlaceholderAnalyticsEntry,
+} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import {
+  createEmbeddedPlaceholderLoggerAdapter,
+  type EmbeddedPlaceholderLogEntry,
+} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import { contract, createClient } from "../src/client";
@@ -99,6 +107,8 @@ describe("@rawr/dev service behavior", () => {
   });
 
   it("feeds recursive scratch observation into every active policy mode", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
     const { resources } = createFakeResources({
       dirs: {
         "/repo/rawr/docs/projects": [
@@ -110,7 +120,13 @@ describe("@rawr/dev service behavior", () => {
         ],
       },
     });
-    const client = createClient(createClientOptions({ resources }));
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
 
     for (const mode of ["warn", "block"] as const) {
       const result = await client.scratchPolicy.check(
@@ -118,8 +134,9 @@ describe("@rawr/dev service behavior", () => {
         { context: { invocation: { traceId: `test.scratch.${mode}` } } }
       );
 
-      expect(result).toMatchObject({
+      expect(result).toEqual({
         mode,
+        bypassed: false,
         blocked: false,
         missing: [],
         required: { planScratch: true, workingPad: true },
@@ -129,6 +146,55 @@ describe("@rawr/dev service behavior", () => {
         },
       });
     }
+
+    expect(
+      analyticsEntries.map(({ event, payload }) => ({
+        event,
+        path: payload.path,
+        outcome: payload.outcome,
+        traceId: payload.analytics_trace_id,
+      }))
+    ).toEqual([
+      {
+        event: "orpc.procedure",
+        path: "scratchPolicy.check",
+        outcome: "success",
+        traceId: "test.scratch.warn",
+      },
+      {
+        event: "orpc.procedure",
+        path: "scratchPolicy.check",
+        outcome: "success",
+        traceId: "test.scratch.block",
+      },
+    ]);
+    expect(
+      logEntries.map(({ level, event, payload }) => ({
+        level,
+        event,
+        path: payload.path,
+        outcome: payload.outcome,
+        traceId: payload.invocationTraceId,
+        entity: payload.entity,
+      }))
+    ).toEqual([
+      {
+        level: "info",
+        event: "dev.procedure",
+        path: "scratchPolicy.check",
+        outcome: "success",
+        traceId: "test.scratch.warn",
+        entity: "scratchPolicy",
+      },
+      {
+        level: "info",
+        event: "dev.procedure",
+        path: "scratchPolicy.check",
+        outcome: "success",
+        traceId: "test.scratch.block",
+        entity: "scratchPolicy",
+      },
+    ]);
   });
 
   it("does not observe the filesystem when scratch policy is off or bypassed", async () => {
@@ -152,6 +218,49 @@ describe("@rawr/dev service behavior", () => {
     expect(off.mode).toBe("off");
     expect(bypassed).toMatchObject({ mode: "off", bypassed: true });
     expect(reads).toBe(0);
+  });
+
+  it("reports one error lifecycle without replacing scratch observation failures", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const failure = new Error("scratch observation failed");
+    const { resources } = createFakeResources();
+    resources.fs.readDir = async () => {
+      throw failure;
+    };
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    await expect(
+      client.scratchPolicy.check({}, { context: { invocation: { traceId: "test.scratch.error" } } })
+    ).rejects.toBe(failure);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "scratchPolicy.check",
+        outcome: "error",
+        analytics_trace_id: "test.scratch.error",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "error",
+      event: "dev.procedure",
+      payload: {
+        path: "scratchPolicy.check",
+        outcome: "error",
+        invocationTraceId: "test.scratch.error",
+        entity: "scratchPolicy",
+        errorName: "Error",
+        errorMessage: failure.message,
+      },
+    });
   });
 
   it("plans stack drain by default and does not run mutating Graphite commands", async () => {

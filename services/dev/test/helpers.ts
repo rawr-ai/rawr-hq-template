@@ -68,11 +68,16 @@ export function createFakeResources(
 }
 
 export function createClientOptions(
-  input: { workspaceRoot?: string; resources?: DevResources } = {}
+  input: {
+    workspaceRoot?: string;
+    resources?: DevResources;
+    analytics?: Context["deps"]["analytics"];
+    logger?: Context["deps"]["logger"];
+  } = {}
 ): CreateClientOptions {
   const deps: Context["deps"] = {
-    logger: createEmbeddedPlaceholderLoggerAdapter(),
-    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    logger: input.logger ?? createEmbeddedPlaceholderLoggerAdapter(),
+    analytics: input.analytics ?? createEmbeddedPlaceholderAnalyticsAdapter(),
     resources: input.resources ?? createFakeResources().resources,
   };
   return {

@@ -4702,6 +4702,38 @@ validation, and diff hygiene pass. Standing architecture/oRPC,
 TypeScript/structural, and behavior-first testing reviews accepted the cut
 after the additive-context correction above.
 
+## Dev Scratch Policy Router Authority
+
+The next bounded Dev checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e31]] closes one
+module without widening the service. Scratch Policy now declares its operation
+in `contract/check.ts`, curates observation capabilities in `module.ts`,
+authors discovery and policy evaluation in `router/check.router.ts`, and
+composes the completed operation through module-root `router.ts`.
+
+The module composer is a plain object. It no longer calls
+`module.router(...)`, so root `impl.router(...)` is the only native router
+completion on the `scratchPolicy.check` lineage and service observability and
+analytics execute once per scratch-policy call. Behavior proof covers both
+successful active policy modes and a retained filesystem failure, including
+exact analytics and lifecycle-log cardinality. Sibling module lineages retain
+their existing completion shape until their own bounded checkpoints.
+
+The public `scratchPolicy.check` key, TypeBox schemas, metadata, result shape,
+failure identity, service-owned policy, client construction, and service-root
+composition remain unchanged. This checkpoint changes no Habitat law, sibling
+module, public export, resource, provider, Effect boundary, or compatibility
+path.
+
+The red behavior proof observed four success signals for two calls and two
+error signals for one failing call. The closed lineage now carries three
+middleware entries rather than the legacy replay's six; uncached source
+typecheck and all 16 Dev tests pass in 3.4 seconds. All 34 active Habitat rules
+pass, and direct staged composition, authorship, context, anchor, and isolation
+probes report zero findings on the Scratch Policy lineage. Strict OpenSpec,
+focused Biome, and diff hygiene pass. Standing architecture/oRPC,
+TypeScript/structural, and behavior-first testing reviews report no P0-P2.
+
 ## Settlement Oracles
 
 The final product must prove:

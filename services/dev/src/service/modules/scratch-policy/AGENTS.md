@@ -33,8 +33,12 @@
 
 ## Flow
 
-- The caller submits roots, filename sets, and policy controls; the handler
-  searches through host resources; it returns matches, missing artifact kinds,
+- `contract/check.ts` declares the TypeBox-backed operation. `module.ts`
+  curates workspace observation capabilities. `router/check.router.ts` authors
+  discovery and policy evaluation, and module-root `router.ts` composes the
+  completed operation without replaying module middleware.
+- The caller submits roots, filename sets, and policy controls; the operation
+  searches through host resources and returns matches, missing artifact kinds,
   and the resulting blocked state.
 
 ## Interfaces
@@ -43,6 +47,8 @@
   plus file and path resources curated by the module for artifact discovery.
   Root construction lanes remain service-internal and are not an operation
   interface.
+- Module-root `router.ts` is composition only. Operation logic remains in the
+  named router leaf.
 
 ## Routing
 
