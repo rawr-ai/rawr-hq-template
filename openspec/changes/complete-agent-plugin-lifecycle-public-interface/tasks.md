@@ -1852,14 +1852,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   production fallback. Reuse the canonical `@rawr/typebox-adapter` boundary.
   Add no managed runtime, process finalizer, client cache, generic registry,
   controller, bootgraph expansion, workflow engine, second service, or app/web
-  composition. Record the reviewed exact landed commit before naming it as the
-  research-service restack prerequisite. Template PR #678 landed the reviewed
+  composition. Record the reviewed exact landed commit as lifecycle integration
+  provenance without claiming the wider production-runtime prerequisite.
+  Template PR #678 landed the reviewed
   implementation on canonical `main` at
   `a25f72da1505f90206c6ff14bcb0ab5de77cbbec`; the exact candidate head was
   `60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3`, and the required repository
   ratchet passed for that head in run `30530555544`, job `90831615094`. The
-  candidate head is review/check provenance only; the landed `main` commit is
-  the downstream restack base.
+  candidate head is review/check provenance only. The landed `main` commit is
+  lifecycle implementation evidence; it does not satisfy a downstream gate
+  that separately requires a production compiler, bootgraph, and process
+  runtime.
 - [x] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews. The uncached gate passes 412 service and 89 CLI tests plus source and
@@ -1870,6 +1873,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   findings. Owner-schema admission precedes profile binding, empty context lanes
   are compiler-exact, and operation/results remain correlated through
   classification and presentation. No live provider state was read or mutated.
+  Template PRs #680 through #682 landed this integration sequence on canonical
+  `main` at `7d126548ebffe9fd84a8da8010f6a3d8aa0014f2`. The final exact-main
+  Repository Ratchet passed in run `30534802970`, job `90845419520`.
 
 ## 6. Personal Content-Only Settlement
 

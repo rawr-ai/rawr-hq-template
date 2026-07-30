@@ -89,21 +89,24 @@ Any of those findings reopens placement; it does not predetermine a sibling
 service rather than a plugin or workflow. Different output paths, module size,
 or a root context that truthfully declares complete host requirements do not.
 
-The downstream research service requires one reviewed Template checkpoint with
-the canonical TypeBox Standard Schema adapter and one production CLI
-provisioning vertical. Both requirements are present on canonical `main` at
-`a25f72da1505f90206c6ff14bcb0ab5de77cbbec`. Its ancestry contains the
-native-validator, message-only bridge correction at
-`0854024afe9a76ef0ae4ae3f427182be25fe8420` and its current
+The downstream research service requires the canonical TypeBox Standard Schema
+adapter plus a separately governed production runtime-provisioning boundary.
+Canonical `main` contains the lifecycle-specific evidence: the native-validator,
+message-only bridge correction at
+`0854024afe9a76ef0ae4ae3f427182be25fe8420`, its current
 `@rawr/typebox-adapter` package owner at
-`3b142e560f3b3cefa255356fa7343c56cac18d99`. That adapter uses the native
-TypeBox validator and returns message-only issues because TypeBox `1.3.8` paths
-are ambiguous. The same checkpoint contains the bounded CLI vertical above:
-one real Oclif command consumes a local ready service client while the app
-profile owns concrete selection and each operation keeps its existing resource
-lifetime. The exact integration handoff is recorded in
-[[README#CLI Production Profile Handoff]]; it does not move composition into
-the lifecycle service or authorize a generalized runtime platform.
+`3b142e560f3b3cefa255356fa7343c56cac18d99`, and the bounded CLI vertical
+landed at `a25f72da1505f90206c6ff14bcb0ab5de77cbbec`. The adapter returns
+message-only issues because TypeBox `1.3.8` paths are ambiguous. One real Oclif
+command consumes a local ready lifecycle-service client while the app profile
+owns concrete selection and each operation keeps its existing resource
+lifetime.
+
+That lifecycle checkpoint does not implement the required production compiler,
+bootgraph, process-runtime binding, or harness boundary, so it does not
+authorize downstream research BUILD or restack. The exact integration handoff
+is recorded in [[README#CLI Production Profile Handoff]]; the wider consumer
+remains held for the separately governed runtime-realization migration.
 
 ## Authority Ledger
 
