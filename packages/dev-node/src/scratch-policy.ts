@@ -1,4 +1,4 @@
-import type { ScratchPolicyInput } from "@rawr/dev/types";
+import type { ScratchPolicyInput } from "@rawr/dev/client";
 import { createNodeDevResources } from "./resources";
 
 function normalizeMode(value: string | undefined): ScratchPolicyInput["mode"] | undefined {

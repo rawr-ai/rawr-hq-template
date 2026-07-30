@@ -3,7 +3,7 @@ import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-ada
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
 import type { Context } from "../src/service/base";
-import type { DevResources } from "../src/service/common/resources";
+import type { DevResources } from "../src/service/model/ports/dev-resources";
 
 const encoder = new TextEncoder();
 

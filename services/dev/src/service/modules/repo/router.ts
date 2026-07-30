@@ -1,22 +1,21 @@
+import { execStep, execText } from "#dev-service/model/helpers/command-execution";
+import { parseGitStatus, parseWorktrees } from "#dev-service/model/helpers/git-output";
 import {
-  execStep,
-  execText,
   execution,
   executionIssueFromStep,
   issue,
-  parseGitStatus,
-  parseWorktrees,
   planned,
   preflight,
   skipped,
-  timestampForBranch,
   warning,
-} from "../../common/helpers";
-import { checkScratchPolicy } from "../scratch-policy/helpers";
+} from "#dev-service/model/policy/operation-outcomes";
+import { checkScratchPolicy } from "#dev-service/model/policy/scratch-policy";
+import type { DevResources } from "#dev-service/model/ports/dev-resources";
+import { timestampForBranch } from "./model/policy/sync-branch";
 import { module } from "./module";
 
 async function resolveUpstreamRef(
-  context: { workspaceRoot: string; resources: any },
+  context: { workspaceRoot: string; resources: DevResources },
   explicit?: string
 ) {
   if (explicit) return { ref: explicit, source: "flag" as const };

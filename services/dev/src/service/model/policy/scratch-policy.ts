@@ -1,5 +1,5 @@
-import type { ScratchPolicyCheck, ScratchPolicyInput } from "../../common/entities";
-import type { DevResources } from "../../common/resources";
+import type { ScratchPolicyCheck, ScratchPolicyInput } from "../dto/scratch-policy.dto";
+import type { DevResources } from "../ports/dev-resources";
 
 const DEFAULT_ROOTS = ["docs/projects"];
 const DEFAULT_PLAN_FILES = ["PLAN_SCRATCH.md", "PERSONAL_PLAN_SCRATCH.md"];
@@ -30,6 +30,13 @@ async function collectScratchFiles(input: {
   }
 }
 
+/**
+ * Observes and evaluates the scratch records required before Dev mutations.
+ *
+ * This policy is service-wide because Repo, Stack, and Worktree operations
+ * apply the same admission rule; no module reaches into Scratch Policy
+ * implementation state.
+ */
 export async function checkScratchPolicy(input: {
   workspaceRoot: string;
   resources: DevResources;

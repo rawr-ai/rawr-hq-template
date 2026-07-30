@@ -6,7 +6,7 @@ import {
   StackDoctorResultSchema,
   StackDrainInputSchema,
   StackDrainResultSchema,
-} from "../../common/entities";
+} from "./model/dto/stack-operations.dto";
 
 export const contract = {
   doctor: oc

@@ -1,6 +1,6 @@
 import { os } from "@orpc/server";
 import type { AnalyticsClient, Logger } from "@rawr/hq-sdk";
-import type { DevResources } from "./common/resources";
+import type { DevResources } from "./model/ports/dev-resources";
 
 type Deps = {
   analytics: AnalyticsClient;
