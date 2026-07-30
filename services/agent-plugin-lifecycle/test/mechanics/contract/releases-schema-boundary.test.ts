@@ -5,16 +5,31 @@ import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { contract as serviceContract } from "../../../src/service/contract";
+import type { AgentPluginPayload } from "../../../src/service/model/dto/agent-plugin-payload";
+import type { AgentPluginRelease } from "../../../src/service/model/dto/agent-plugin-release";
+import type { AgentPluginReleaseSet } from "../../../src/service/model/dto/agent-plugin-release-set";
 import {
+  type ContentWorkspaceInspection,
+  ContentWorkspaceInspectionSchema,
+  type ContentWorkspaceSnapshot,
+  ContentWorkspaceSnapshotSchema,
   MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH,
   SourceEligibilityIssueSchema,
   sourceEligibilityIssue,
 } from "../../../src/service/model/dto/content-workspace";
 import {
+  type DerivedReleaseSelection,
+  DerivedReleaseSelectionSchema,
+  type ReleaseDerivationResult,
+  ReleaseDerivationResultSchema,
+  type ReleaseDerivationSource,
+  ReleaseDerivationSourceSchema,
   type ReleaseSelection,
   ReleaseSelectionSchema,
 } from "../../../src/service/model/dto/release-derivation";
 import {
+  type AgentPluginReleaseInput,
+  MAX_RELEASE_MEMBERS,
   type ReleaseInputBody,
   ReleaseInputBodySchema,
   type ReleaseInputEnvelope,
@@ -47,6 +62,7 @@ import {
   RepositoryCheckResultSchema,
   releaseConstructionIssue,
 } from "../../../src/service/modules/releases/model/dto/release-lifecycle";
+import { productFixture, SOURCE } from "../../support/service/release-fixtures";
 
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
@@ -116,6 +132,134 @@ describe("release procedure schema boundary", () => {
     expectTypeOf<ContractOutputs["checkRepository"]>().toEqualTypeOf<
       Static<typeof RepositoryCheckResultSchema>
     >();
+  });
+
+  it("derives cross-module release and workspace types from their structural schemas", () => {
+    type SchemaParity = [
+      ReleaseDerivationSource extends Static<typeof ReleaseDerivationSourceSchema> ? true : false,
+      DerivedReleaseSelection extends Static<typeof DerivedReleaseSelectionSchema> ? true : false,
+      ReleaseDerivationResult extends Static<typeof ReleaseDerivationResultSchema> ? true : false,
+      ContentWorkspaceSnapshot extends Static<typeof ContentWorkspaceSnapshotSchema> ? true : false,
+      ContentWorkspaceInspection extends Static<typeof ContentWorkspaceInspectionSchema>
+        ? true
+        : false,
+    ];
+
+    expectTypeOf<SchemaParity>().toEqualTypeOf<[true, true, true, true, true]>();
+    expectTypeOf<keyof ReleaseDerivationSource>().toEqualTypeOf<
+      keyof Static<typeof ReleaseDerivationSourceSchema>
+    >();
+    expectTypeOf<keyof DerivedReleaseSelection>().toEqualTypeOf<
+      keyof Static<typeof DerivedReleaseSelectionSchema>
+    >();
+    expectTypeOf<keyof ContentWorkspaceSnapshot>().toEqualTypeOf<
+      keyof Static<typeof ContentWorkspaceSnapshotSchema>
+    >();
+    expectTypeOf<
+      ReleaseDerivationSource["releaseInput"]
+    >().toEqualTypeOf<AgentPluginReleaseInput>();
+    expectTypeOf<
+      ReleaseDerivationSource["payloads"][number]["payload"]
+    >().toEqualTypeOf<AgentPluginPayload>();
+    expectTypeOf<DerivedReleaseSelection["releases"][number]>().toEqualTypeOf<AgentPluginRelease>();
+    expectTypeOf<DerivedReleaseSelection["releaseSet"]>().toEqualTypeOf<
+      AgentPluginReleaseSet | undefined
+    >();
+    expectTypeOf<ContentWorkspaceSnapshot["releaseInput"]>().toEqualTypeOf<
+      ReleaseDerivationSource["releaseInput"]
+    >();
+    expectTypeOf<
+      Extract<ReleaseDerivationResult, { ok: true }>["value"]
+    >().toEqualTypeOf<DerivedReleaseSelection>();
+  });
+
+  it("admits representative closed release-derivation and workspace values", () => {
+    const fixture = productFixture();
+    const source = {
+      repositoryIdentity: SOURCE.sourceRepository,
+      sourceCommit: SOURCE.sourceCommit,
+      sourceTree: SOURCE.sourceTree,
+      releaseInput: fixture.releaseInput,
+      payloads: [
+        { pluginId: "alpha", payload: fixture.alphaPayload },
+        { pluginId: "beta", payload: fixture.betaPayload },
+      ],
+    };
+    const snapshot = {
+      ...source,
+      objectBindings: [
+        {
+          path: "skills/alpha/SKILL.md",
+          objectId: "d".repeat(40),
+          mode: 0o644,
+        },
+      ],
+      eligibilityBinding: workspaceBinding,
+    };
+    const result = {
+      ok: true,
+      value: {
+        releases: [fixture.alphaRelease, fixture.betaRelease],
+        releaseSet: fixture.releaseSet,
+      },
+    };
+    const failureResult = {
+      ok: false,
+      failure: {
+        reason: "InvalidRelease",
+        pluginId: "alpha",
+        issueCodes: ["INVALID_DIGEST"],
+        detail: "release digest is invalid",
+      },
+    };
+
+    expect(Value.Check(ReleaseDerivationSourceSchema, source)).toBe(true);
+    expect(Value.Check(ContentWorkspaceSnapshotSchema, snapshot)).toBe(true);
+    expect(Value.Check(ReleaseDerivationResultSchema, result)).toBe(true);
+    expect(
+      Value.Check(ReleaseDerivationResultSchema, {
+        ok: true,
+        value: { releases: [fixture.alphaRelease] },
+      })
+    ).toBe(true);
+    expect(Value.Check(ReleaseDerivationResultSchema, failureResult)).toBe(true);
+    expect(
+      Value.Check(ReleaseDerivationSourceSchema, {
+        ...source,
+        unexpected: true,
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(ReleaseDerivationSourceSchema, {
+        repositoryIdentity: source.repositoryIdentity,
+        sourceCommit: source.sourceCommit,
+        sourceTree: source.sourceTree,
+        payloads: source.payloads,
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(ContentWorkspaceSnapshotSchema, {
+        ...snapshot,
+        objectBindings: [{ ...snapshot.objectBindings[0], mode: 0o600 }],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(DerivedReleaseSelectionSchema, {
+        releases: [],
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(ReleaseDerivationSourceSchema, {
+        ...source,
+        payloads: Array.from({ length: MAX_RELEASE_MEMBERS + 1 }, () => source.payloads[0]),
+      })
+    ).toBe(false);
+    expect(
+      Value.Check(ContentWorkspaceInspectionSchema, {
+        kind: "Ineligible",
+        issues: [],
+      })
+    ).toBe(false);
   });
 
   it("inherits service metadata and keeps release overrides local", () => {

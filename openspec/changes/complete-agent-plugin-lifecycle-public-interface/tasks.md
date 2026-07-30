@@ -646,6 +646,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   oRPC family pinned by task 5.6f and run the exact source, type, and behavior
   review required by the current oRPC skill; do not infer compatibility from
   version proximity or mix family versions.
+- [x] 5.3a Give the cross-module release-derivation source, derived selection,
+  neutral failure/result, and clean content-workspace snapshot/inspection one
+  closed TypeBox schema owner each. Derive their structural types from those
+  schemas, retain only already-admitted nested brands, and narrow clean Git
+  modes to the existing normalized file-mode type. Keep current-main Git
+  structure and manual release parser deletion in later owner-specific
+  checkpoints; this checkpoint does not claim task 5.3 complete.
 - [ ] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.

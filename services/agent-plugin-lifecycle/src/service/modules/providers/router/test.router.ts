@@ -12,7 +12,10 @@ import {
 } from "@rawr/resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
-import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import {
+  type ContentWorkspaceSnapshot,
+  MAX_CLEAN_CONTENT_TREE_ENTRIES,
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
   classifyCleanContentWorkspaceAnchor,
@@ -24,7 +27,6 @@ import {
   finishCleanContentWorkspaceInspection,
   MAX_CLEAN_CONTENT_INDEX_BYTES,
   MAX_CLEAN_CONTENT_TREE_BYTES,
-  MAX_CLEAN_CONTENT_TREE_ENTRIES,
   MAX_CLEAN_CONTENT_WORKTREE_BYTES,
   MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,

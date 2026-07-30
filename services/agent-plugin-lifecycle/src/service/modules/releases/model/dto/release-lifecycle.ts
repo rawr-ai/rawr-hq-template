@@ -3,6 +3,7 @@ import {
   ContentWorkspacePolicySchema,
   QualifiedHeadRefSchema,
   SourceEligibilityIssueSchema,
+  WorkspaceBindingSchema,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
@@ -39,12 +40,6 @@ const Uint8ArraySchema = Refine(
   (value) => value instanceof Uint8Array,
   () => "Expected Uint8Array"
 );
-
-const WorkspaceBindingSchema = Type.String({
-  minLength: 64,
-  maxLength: 64,
-  pattern: "^[0-9a-f]{64}$",
-});
 
 export const MAX_RELEASE_CONSTRUCTION_ISSUE_DETAIL_LENGTH = 4_096;
 export const MAX_RELEASE_SOURCE_CHANGED_DETAIL_LENGTH = 4_096;
