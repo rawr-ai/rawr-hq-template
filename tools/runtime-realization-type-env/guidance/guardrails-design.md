@@ -60,8 +60,8 @@ Every new claim should state which verification lane owns it.
 | Vendor boundaries | TypeBox/oRPC/Inngest/Bun shapes RAWR must adapt. | Adapter behavior, durable scheduling, HTTP serving, or production host mounting. |
 | Oracle | RAWR-owned registry, invocation, managed runtime access, fake adapter delegation, deployment handoff, and regression substrate. | Lab-Production Proof by itself, Reference Runtime behavior, or Parent-Repo Migration. |
 | Simulation | Compatibility proof for the first lab spine. | New canonical runtime behavior once Oracle or the Reference Runtime owns the proof. |
-| Structural guard | Containment, manifest hygiene, pinned authority, allowed imports, required docs. | Behavioral correctness. |
-| Report | Human-readable status and proof strength. | A replacement for gates. |
+| Structural guard | Habitat-owned containment, topology, parser-visible source relationships, allowed imports, and required docs. | Behavioral correctness, evidence-manifest semantics, or Nx task-graph membership. |
+| Report | TypeBox manifest decoding, intra-manifest semantics, referenced evidence-file validity, pinned authority-hash verification, and human-readable status. | A replacement for gates, Habitat policy, or the Nx task graph. |
 
 ## Review Categories
 

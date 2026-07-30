@@ -24,6 +24,19 @@ const ManifestStatusSchema = Type.Union([
   Type.Literal("out-of-scope"),
 ]);
 
+const EvidenceGateSchema = Type.Union([
+  Type.Literal("gate"),
+  Type.Literal("report"),
+  Type.Literal("evidence-manifest"),
+  Type.Literal("typecheck"),
+  Type.Literal("negative"),
+  Type.Literal("vendor-effect"),
+  Type.Literal("vendor-boundaries"),
+  Type.Literal("oracle"),
+  Type.Literal("middle-spine"),
+  Type.Literal("simulate"),
+]);
+
 const ManifestEntrySchema = Type.Object(
   {
     id: Type.String({ minLength: 1 }),
@@ -31,7 +44,7 @@ const ManifestEntrySchema = Type.Object(
     source: Type.String({ minLength: 1 }),
     oracle: Type.String({ minLength: 1 }),
     fixtures: Type.Array(Type.String({ minLength: 1 })),
-    gates: Type.Optional(Type.Array(Type.String({ minLength: 1 }))),
+    gates: Type.Optional(Type.Array(EvidenceGateSchema)),
   },
   { additionalProperties: false }
 );
@@ -63,6 +76,7 @@ const ManifestSchema = Type.Object(
 type Manifest = Static<typeof ManifestSchema>;
 type ManifestEntry = Static<typeof ManifestEntrySchema>;
 type ManifestStatus = Static<typeof ManifestStatusSchema>;
+type EvidenceGate = Static<typeof EvidenceGateSchema>;
 
 /**
  * Locates the repository authority and contained lab used to validate one
@@ -77,14 +91,9 @@ const manifestValidator = Compile(ManifestSchema);
 const canonicalSpecPath =
   "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md";
 const gatedProofStatuses = new Set<ManifestStatus>(["proof", "vendor-proof", "simulation-proof"]);
-const nonBehaviorGateTargets = new Set(["report", "evidence-manifest"]);
-const simulationBehaviorTargets = new Set([
-  "oracle",
-  "middle-spine",
-  "simulate",
-  "reference-runtime",
-]);
-const vendorBehaviorTargets = new Set(["vendor-effect", "vendor-boundaries"]);
+const nonBehaviorGateTargets = new Set<EvidenceGate>(["gate", "report", "evidence-manifest"]);
+const simulationBehaviorTargets = new Set<EvidenceGate>(["oracle", "middle-spine", "simulate"]);
+const vendorBehaviorTargets = new Set<EvidenceGate>(["vendor-effect", "vendor-boundaries"]);
 
 const toolRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = path.resolve(toolRoot, "..", "..");
@@ -105,52 +114,6 @@ function pathInside(root: string, relativePath: string, label: string): string {
     `${label} escapes its owner root: ${relativePath}`
   );
   return resolvedPath;
-}
-
-function walkFiles(root: string): string[] {
-  if (!fs.existsSync(root)) {
-    return [];
-  }
-
-  return fs.readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
-    const entryPath = path.join(root, entry.name);
-    return entry.isDirectory() ? walkFiles(entryPath) : [entryPath];
-  });
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function readScheduledGateTargets(toolRoot: string): Set<string> {
-  const projectPath = path.join(toolRoot, "project.json");
-  let project: unknown;
-  try {
-    project = JSON.parse(fs.readFileSync(projectPath, "utf8"));
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(`invalid runtime realization project configuration: ${detail}`);
-  }
-
-  assert(
-    isRecord(project) && isRecord(project.targets),
-    "runtime realization project configuration must define targets"
-  );
-  const gateTarget = project.targets.gate;
-  assert(
-    isRecord(gateTarget) && Array.isArray(gateTarget.dependsOn),
-    "runtime realization gate must declare its dependencies"
-  );
-  const scheduledTargets = gateTarget.dependsOn.filter(
-    (dependency): dependency is string => typeof dependency === "string"
-  );
-  for (const target of scheduledTargets) {
-    assert(
-      target in project.targets,
-      `runtime realization gate schedules an unknown target: ${target}`
-    );
-  }
-  return new Set(scheduledTargets);
 }
 
 function parseManifestJson(contents: string): Manifest {
@@ -190,11 +153,6 @@ function validateManifest(manifest: Manifest, roots: ManifestValidationRoots): v
   );
 
   const manifestEntryIds = new Set<string>();
-  const manifestFixtures = new Set<string>();
-  const scheduledGateTargets = readScheduledGateTargets(roots.toolRoot);
-  const behaviorGateTargets = new Set(
-    [...scheduledGateTargets].filter((gate) => !nonBehaviorGateTargets.has(gate))
-  );
 
   for (const entry of manifest.entries) {
     assert(!manifestEntryIds.has(entry.id), `duplicate manifest entry id: ${entry.id}`);
@@ -205,23 +163,15 @@ function validateManifest(manifest: Manifest, roots: ManifestValidationRoots): v
         (entry.gates?.length ?? 0) > 0,
         `manifest entry ${entry.id} must name at least one regression gate`
       );
-
-      for (const gate of entry.gates ?? []) {
-        assert(
-          scheduledGateTargets.has(gate),
-          `manifest entry ${entry.id} names gate not scheduled by the owner gate: ${gate}`
-        );
-      }
-
       assert(
-        (entry.gates ?? []).some((gate) => behaviorGateTargets.has(gate)),
+        (entry.gates ?? []).some((gate) => !nonBehaviorGateTargets.has(gate)),
         `manifest entry ${entry.id} must name at least one behavior gate`
       );
 
       if (entry.status === "simulation-proof") {
         assert(
           (entry.gates ?? []).some((gate) => simulationBehaviorTargets.has(gate)),
-          `simulation-proof entry ${entry.id} must include oracle, simulate, middle-spine, or reference-runtime`
+          `simulation-proof entry ${entry.id} must include oracle, simulate, or middle-spine`
         );
       }
 
@@ -234,7 +184,6 @@ function validateManifest(manifest: Manifest, roots: ManifestValidationRoots): v
     }
 
     for (const fixture of entry.fixtures) {
-      manifestFixtures.add(fixture);
       const fixturePath = pathInside(roots.toolRoot, fixture, "manifest fixture path");
       assert(
         fs.existsSync(fixturePath) && fs.statSync(fixturePath).isFile(),
@@ -268,15 +217,6 @@ function validateManifest(manifest: Manifest, roots: ManifestValidationRoots): v
         `currentExperiment references unknown entry: ${entryId}`
       );
     }
-  }
-
-  const todoRoot = path.join(roots.toolRoot, "fixtures", "todo");
-  for (const todoFile of walkFiles(todoRoot)) {
-    const relativeTodoFile = path.relative(roots.toolRoot, todoFile).split(path.sep).join("/");
-    assert(
-      manifestFixtures.has(relativeTodoFile),
-      `todo fixture missing manifest entry: ${relativeTodoFile}`
-    );
   }
 }
 
