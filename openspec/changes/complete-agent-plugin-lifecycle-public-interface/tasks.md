@@ -1840,7 +1840,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   later split. Locate the observed fatness at the CLI host's eager concrete
   resource construction rather than weakening module curation or manufacturing
   sibling services.
-- [ ] 5.7f Implement, review, land, and consume one bounded app-owned
+- [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
   materialize the selected ready dependencies once, construct one local
@@ -1853,7 +1853,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Add no managed runtime, process finalizer, client cache, generic registry,
   controller, bootgraph expansion, workflow engine, second service, or app/web
   composition. Record the reviewed exact landed commit before naming it as the
-  research-service restack prerequisite.
+  research-service restack prerequisite. Template PR #678 landed the reviewed
+  implementation on canonical `main` at
+  `a25f72da1505f90206c6ff14bcb0ab5de77cbbec`; the exact candidate head was
+  `60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3`, and the required repository
+  ratchet passed for that head in run `30530555544`, job `90831615094`. The
+  candidate head is review/check provenance only; the landed `main` commit is
+  the downstream restack base.
 - [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews.

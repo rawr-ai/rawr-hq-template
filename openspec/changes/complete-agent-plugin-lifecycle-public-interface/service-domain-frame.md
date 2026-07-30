@@ -91,15 +91,19 @@ or a root context that truthfully declares complete host requirements do not.
 
 The downstream research service requires one reviewed Template checkpoint with
 the canonical TypeBox Standard Schema adapter and one production CLI
-provisioning vertical. The TypeBox requirement is already satisfied by
-`@rawr/typebox-adapter`, which uses the native TypeBox validator and returns
-message-only issues because TypeBox `1.3.8` paths are ambiguous. The remaining
-deliverable is the bounded CLI vertical above: one real Oclif command consumes
-a local ready service client while the app profile owns concrete selection and
-each operation keeps its existing resource lifetime. This OpenSpec records that
-exact reviewed checkpoint as an integration prerequisite; it does not move
-composition into the lifecycle service or authorize a generalized runtime
-platform.
+provisioning vertical. Both requirements are present on canonical `main` at
+`a25f72da1505f90206c6ff14bcb0ab5de77cbbec`. Its ancestry contains the
+native-validator, message-only bridge correction at
+`0854024afe9a76ef0ae4ae3f427182be25fe8420` and its current
+`@rawr/typebox-adapter` package owner at
+`3b142e560f3b3cefa255356fa7343c56cac18d99`. That adapter uses the native
+TypeBox validator and returns message-only issues because TypeBox `1.3.8` paths
+are ambiguous. The same checkpoint contains the bounded CLI vertical above:
+one real Oclif command consumes a local ready service client while the app
+profile owns concrete selection and each operation keeps its existing resource
+lifetime. The exact integration handoff is recorded in
+[[README#CLI Production Profile Handoff]]; it does not move composition into
+the lifecycle service or authorize a generalized runtime platform.
 
 ## Authority Ledger
 
