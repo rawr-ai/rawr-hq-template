@@ -2,6 +2,7 @@ import { ReadonlyObject, type Static, Type } from "typebox";
 
 import { ContentDigestSchema, PayloadDigestSchema } from "./release-digest";
 import { ReleaseRelativePathSchema } from "./release-identity";
+import { Uint8ArraySchema } from "./structural";
 
 declare const agentPluginPayloadBrand: unique symbol;
 
@@ -19,6 +20,16 @@ export const NormalizedFileModeSchema = Type.Union([Type.Literal(0o644), Type.Li
 
 /** TypeBox-derived normalized mode carried by one payload file. */
 export type NormalizedFileMode = Static<typeof NormalizedFileModeSchema>;
+
+/** Defines one closed raw file candidate admitted into payload construction. */
+export const PayloadEntryInputSchema = ReadonlyObject(
+  Type.Object({
+    path: ReleaseRelativePathSchema,
+    mode: NormalizedFileModeSchema,
+    bytes: Uint8ArraySchema,
+  }),
+  { additionalProperties: false }
+);
 
 /** Defines one exact file record in an agent-plugin payload manifest. */
 export const PayloadManifestEntrySchema = ReadonlyObject(
@@ -41,7 +52,7 @@ export const PayloadManifestEntrySchema = ReadonlyObject(
  * Byte length and content digest are deliberately absent: payload policy
  * derives them from decoded bytes and cross-checks them against the manifest.
  */
-const PayloadEntryRecordSchema = ReadonlyObject(
+export const PayloadEntryRecordSchema = ReadonlyObject(
   Type.Object({
     path: ReleaseRelativePathSchema,
     mode: NormalizedFileModeSchema,
@@ -98,12 +109,8 @@ export const AgentPluginPayloadSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-/** Carries one untrusted file candidate into payload construction. */
-export interface PayloadEntryInput {
-  readonly path: unknown;
-  readonly mode: unknown;
-  readonly bytes: unknown;
-}
+/** TypeBox-derived raw file candidate admitted into payload construction. */
+export type PayloadEntryInput = Static<typeof PayloadEntryInputSchema>;
 
 /** TypeBox-derived in-memory payload entry with policy-derived byte metadata. */
 export type PayloadEntry = Static<typeof PayloadEntrySchema>;

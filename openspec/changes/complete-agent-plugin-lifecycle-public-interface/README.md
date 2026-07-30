@@ -4277,6 +4277,50 @@ resource sequencing change, caller change, or live-state mutation enters this
 checkpoint. The six release aggregate parser families remain open, so this
 does not complete task 5.3.
 
+## Payload Aggregate Admission
+
+The bounded payload follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.3d]] deletes four
+manual closed-record field arrays from payload and payload-manifest policy.
+The new `PayloadEntryInputSchema` directly composes release-relative path,
+normalized mode, and `Uint8Array` authorities and derives the raw entry type;
+the existing wire-entry schema is now exported for its policy owner. The one
+staged-tree annotation that previously widened an already-normalized mode to
+`number` now retains the exact normalized-mode type emitted by its classifier,
+and the payload construction collection uses the schema-derived raw entry type
+instead of repeating and widening its shape.
+
+One root-only TypeBox admission adapter projects plain objects to enumerable
+key presence before reading `Value.Errors`. It therefore delegates required
+and additional membership to the owner schema without traversing raw field
+values or becoming a nested error walker. Non-objects retain their established
+`EXPECTED_OBJECT` diagnostic. Missing or extra membership deliberately
+normalizes to one `UNKNOWN_FIELD` diagnostic at the aggregate path with the
+schema-derived sorted field list, and field parsing stops for that malformed
+record. The older granular key-array helper remains for the five untouched
+release parser families.
+
+Raw construction arrays remain bounded before entry admission. Payload wire
+entries and manifests are independently bounded before child parsing, so an
+excluded tail getter is never evaluated despite TypeBox 1.3.8 traversing array
+items before reporting `maxItems` in ordinary aggregate checks. A structurally
+refused wire entry or manifest entry marks its parsed collection incomplete:
+the structural diagnostic is retained, while dependent manifest and payload
+digest comparisons do not run against a partial projection. Canonical
+ordering, bytes and digests, duplicate detection, defensive copying and
+freezing, aggregate byte limits, and field-exact manifest comparison remain
+unchanged for complete collections.
+
+The focused payload and release regression corpus passes 58 tests across six
+files, and the complete lifecycle owner passes 397 tests across 43 files.
+Lifecycle source and test typechecks, touched-file Biome, strict OpenSpec
+validation, diff hygiene, and the four applicable Habitat source laws pass.
+Final architecture, TypeBox/testing, and TypeScript/structural reviews report
+no unresolved P0, P1, or P2 finding. No nested schema-error framework, proxy
+hardening, router, resource, provider, caller implementation, canonical format,
+or live-state behavior enters this checkpoint. Five release aggregate parser
+families remain open, so this does not complete task 5.3.
+
 ## Settlement Oracles
 
 The final product must prove:

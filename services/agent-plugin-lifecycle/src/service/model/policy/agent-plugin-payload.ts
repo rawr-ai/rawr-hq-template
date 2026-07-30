@@ -8,6 +8,8 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   PAYLOAD_PROTOCOL_VERSION,
   type PayloadEntry,
+  PayloadEntryInputSchema,
+  PayloadEntryRecordSchema,
   type PayloadManifestEntry,
 } from "../dto/agent-plugin-payload";
 import type { PayloadDigest } from "../dto/release-digest";
@@ -27,7 +29,7 @@ import { contentDigest, parsePayloadDigest, payloadDigest } from "./release-dige
 import { parseReleaseRelativePath } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
-import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
+import { admitTypeBoxRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
 /**
  * Owns caller-supplied payload bytes, derives canonical entries and identity,
@@ -48,7 +50,7 @@ export function createAgentPluginPayload(
 
   rawEntries?.forEach((candidate, index) => {
     const path = `payload.entries[${index}]`;
-    if (!admitClosedRecordForTraversal(candidate, ["bytes", "mode", "path"], path, issues)) return;
+    if (!admitTypeBoxRecordForTraversal(PayloadEntryInputSchema, candidate, path, issues)) return;
     const parsedPath = collectReleaseResult(
       parseReleaseRelativePath(candidate.path, `${path}.path`),
       issues
@@ -89,19 +91,28 @@ export function verifyAgentPluginPayload(
   path = "payload"
 ): ReleaseResult<AgentPluginPayload, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["entries", "manifest", "payloadDigest", "protocolVersion"],
-      path,
-      issues
-    )
-  ) {
+  if (!admitTypeBoxRecordForTraversal(AgentPluginPayloadRecordSchema, input, path, issues)) {
     return failure([
       issues[0] ?? releaseIssue("EXPECTED_OBJECT", path, "Payload must be an object"),
     ]);
   }
-  if (input.protocolVersion !== PAYLOAD_PROTOCOL_VERSION) {
+  const record = input;
+  const entriesInput = record.entries;
+  const manifestInput = record.manifest;
+  const rawEntries = parseBoundedArray(
+    entriesInput,
+    `${path}.entries`,
+    MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    issues
+  );
+  const rawManifest = parseBoundedArray(
+    manifestInput,
+    `${path}.manifest`,
+    MAX_PAYLOAD_ENTRIES_PER_MEMBER,
+    issues
+  );
+
+  if (record.protocolVersion !== PAYLOAD_PROTOCOL_VERSION) {
     issues.push(
       releaseIssue(
         "INVALID_SCHEMA_VERSION",
@@ -110,17 +121,21 @@ export function verifyAgentPluginPayload(
         {
           expected: PAYLOAD_PROTOCOL_VERSION,
           actual:
-            typeof input.protocolVersion === "number"
-              ? input.protocolVersion
-              : String(input.protocolVersion),
+            typeof record.protocolVersion === "number"
+              ? record.protocolVersion
+              : String(record.protocolVersion),
         }
       )
     );
   }
-  const entries = parseWireEntries(input.entries, `${path}.entries`, issues);
-  const manifest = parsePayloadManifest(input.manifest, `${path}.manifest`, issues);
+  const entries =
+    rawEntries === undefined ? undefined : parseWireEntries(rawEntries, `${path}.entries`, issues);
+  const manifest =
+    rawManifest === undefined
+      ? undefined
+      : parsePayloadManifest(rawManifest, `${path}.manifest`, issues);
   const claimedDigest = collectReleaseResult(
-    parsePayloadDigest(input.payloadDigest, `${path}.payloadDigest`),
+    parsePayloadDigest(record.payloadDigest, `${path}.payloadDigest`),
     issues
   );
   const totalBytes = entries?.reduce((total, entry) => total + entry.byteLength, 0) ?? 0;
@@ -186,19 +201,18 @@ export function payloadEntryBytes(entry: PayloadEntry): Uint8Array {
 }
 
 function parseWireEntries(
-  input: unknown,
+  values: readonly unknown[],
   path: string,
   issues: ReleaseIssue[]
 ): readonly PayloadEntry[] | undefined {
-  const values = parseBoundedArray(input, path, MAX_PAYLOAD_ENTRIES_PER_MEMBER, issues);
-  if (values === undefined) return undefined;
   const entries: PayloadEntry[] = [];
+  let structurallyComplete = true;
   values.forEach((candidate, index) => {
     const entryPath = `${path}[${index}]`;
-    if (
-      !admitClosedRecordForTraversal(candidate, ["bytesBase64", "mode", "path"], entryPath, issues)
-    )
+    if (!admitTypeBoxRecordForTraversal(PayloadEntryRecordSchema, candidate, entryPath, issues)) {
+      structurallyComplete = false;
       return;
+    }
     const relativePath = collectReleaseResult(
       parseReleaseRelativePath(candidate.path, `${entryPath}.path`),
       issues
@@ -225,6 +239,7 @@ function parseWireEntries(
   });
   entries.sort((left, right) => compareCanonicalText(left.path, right.path));
   reportDuplicatePayloadPaths(entries, path, issues);
+  if (!structurallyComplete) return undefined;
   return Object.freeze(entries);
 }
 
