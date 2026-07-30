@@ -4387,14 +4387,13 @@ cleanup remain operation-local. This change adds no managed runtime, process
 finalizer, cache, registry, controller, workflow engine, app composition layer,
 or second service.
 
-That checkpoint is also the remaining upstream prerequisite for the accepted
-research-service design. Its other prerequisite is already present:
+That checkpoint was the remaining upstream prerequisite for the accepted
+research-service design. Its other prerequisite was already present:
 `@rawr/typebox-adapter` uses TypeBox's native validator and omits ambiguous
-issue paths. The reviewed CLI profile and binding checkpoint will be reported by
-exact landed commit after it is independently green; no moving branch head is a
-handoff.
+issue paths. Both are now present in the exact landed handoff below; no moving
+branch head is a handoff.
 
-## CLI Production Profile Candidate
+## CLI Production Profile Handoff
 
 The CLI now has one cold production profile containing the exact factory
 references selected by the app. A lifecycle command admits its input, materializes
@@ -4403,7 +4402,7 @@ the service's public `createClient` boundary, and selects one synchronous
 operation surface. The old hidden production fallback and the redundant SDK
 binding map are absent. No factory runs when the profile is imported.
 
-This candidate changes no resource implementation or Effect behavior. Native
+This checkpoint changes no resource implementation or Effect behavior. Native
 provider sessions, temporary Git roots, content captures, child processes, and
 package publication cleanup remain owned by the operations that acquire them.
 There is no process runtime, finalizer, client cache, registry, controller, or
@@ -4418,9 +4417,23 @@ package exposes 46 first-party commands and exercises the real
 `rawr agent plugins` surface from the packed Nx release group.
 
 Standing architecture, Effect/oRPC, TypeScript/structural, and testing reviews
-accepted the final diff. Task 5.7f remains open until this candidate is landed
-on `main`, its required remote repository check is green, and the exact landed
-commit is recorded as the downstream research-service prerequisite.
+accepted the final diff. Template PR #678 landed the checkpoint on canonical
+`main` at `a25f72da1505f90206c6ff14bcb0ab5de77cbbec`; its exact candidate head was
+`60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3`. The required
+`Required lint, typecheck, and topology` check passed for that head in
+Repository Ratchet run `30530555544`, job `90831615094`.
+
+This exact landed checkpoint also contains the canonical TypeBox adapter
+lineage: the native-validator, message-only bridge correction landed at
+`0854024afe9a76ef0ae4ae3f427182be25fe8420`, and its current
+`@rawr/typebox-adapter` package owner landed at
+`3b142e560f3b3cefa255356fa7343c56cac18d99`. The landed `main` commit
+`a25f72da1505f90206c6ff14bcb0ab5de77cbbec` is the downstream
+research-service restack prerequisite; `60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3`
+is review/check provenance only. The handoff means app-owned cold provider
+selection, direct local service binding, and operation-owned cleanup. It does
+not promise or require a process runtime, process finalizer, provider registry,
+or persistent client.
 
 ## Distribution Ownership Aggregate Admission
 
