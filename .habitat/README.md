@@ -1,12 +1,12 @@
 # RAWR Habitat Authority
 
 This tree is RAWR HQ-Template's repository-local structural authority. The
-pinned standalone Habitat binary evaluates these packets without amending
-them.
+installed `@habitat/cli` package evaluates these packets without amending them.
 
 ```text
 .habitat/blueprints/<kind>/<rule>/
 .habitat/rawr/<niche>/rules/<rule>/
+.habitat/staged/blueprints/<kind>/<rule>/
 ```
 
 The current generic kinds are:
@@ -55,6 +55,11 @@ Generic service and Oclif packets own their admitted source relationships, and
 TypeScript package exports own public compatibility. These qualified niches do
 not duplicate generic laws as package-name or path blacklists.
 
+Every rule under `.habitat/blueprints/**` is affirmed and enforced. An
+intentionally unfinished law lives under `.habitat/staged/blueprints/**` with
+a `staged-rule.json` candidate manifest. It enters the required graph only when
+a burn-down branch moves it into the active blueprint and enforces it.
+
 Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
 topology. Every Grit packet exposes its executable source as `pattern.md`;
@@ -65,20 +70,10 @@ requires a named authority decision before the packet topology can change.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
 
-Habitat consumer tests cover release-manifest selection, direct asset
-verification, and bounded fixture cleanup; they do not replay blueprint
-topology or source policy in a hand-authored test fixture.
-
-`habitat:check:policy` resolves to the selected pinned-binary native policy
-batch at `habitat:check:policy:local`. The independent
-`habitat:check:structure` leaf selects the structure-only subset for Stop
-feedback and is not a policy dependency. Both CLI
-leaves are intentionally uncached: their rule scopes are exact, while exact Nx
-cache inputs remain owned by the future upstream distributable Habitat Nx
-boundary. The published binary exposes neither its native Nx runner nor a
-packet-fixture runner. Template therefore deletes rules that depended on those
-unsupported modes instead of invoking their implementation scripts outside
-Habitat.
+The installed Habitat Nx plugin discovers the registry and infers one cacheable
+target per rule plus owner-local `check:policy` composition. Codex Stop invokes
+`habitat hook agent-stop`; it shares the package and registry but does not
+become a second admission graph.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
@@ -122,14 +117,14 @@ exports `middleware` for semantic attachment in `impl.ts`. The former module
 `contract.ts`, router barrel, and duplicate private-alias packets are
 superseded rather than preserved as compatibility rules.
 
-The database topology requires closed `migrations/*.sql` and `stores/*.ts`
+The enforced database topology requires closed `migrations/*.sql` and `stores/*.ts`
 interiors when `db` is present and admits optional closed `schema/*.ts` only
 for technology-specific physical mappings. Database-owned source and direct
 named root middleware leaves may import database source. Those leaves attach
 through `impl.ts` without a root barrel; modules consume projected stores
-through inherited context. The service and database migration packets remain
-advisory with empty baselines, so current violations stay visible until the
-production burn-down reaches this destination.
+through inherited context. The unfinished service spine, anchor, context,
+composition, isolation, router-authorship, and public-consumer laws remain
+explicit staged packets until their production burn-down reaches zero.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed

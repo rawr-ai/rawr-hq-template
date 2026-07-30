@@ -64,7 +64,4 @@
 ## Validation
 
 - `bun tools/workstream-plugin-pack/scripts/install-local-codex-pack.ts --dry-run`
-- `bun run habitat -- --rule require_workstream_plugin_pack_topology`
-- `bun run habitat -- --rule require_workstream_plugin_pack_hook_configuration`
-- `bunx nx run workstream-plugin-pack:test`
 - `bunx nx run workstream-plugin-pack:check`

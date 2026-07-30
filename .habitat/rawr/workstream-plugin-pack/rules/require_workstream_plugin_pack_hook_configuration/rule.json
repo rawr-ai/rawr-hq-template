@@ -22,7 +22,6 @@
       "patterns": [".codex/hooks.json", "tools/workstream-plugin-pack/hooks/hooks.json"]
     }
   ],
-  "scanRoots": [".codex/hooks.json", "tools/workstream-plugin-pack/hooks/hooks.json"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/rawr/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/rawr/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/pattern.md"
     },
-    "patternName": "require_workstream_plugin_pack_hook_configuration"
+    "patternName": "require_workstream_plugin_pack_hook_configuration",
+    "acquisition": {
+      "kind": "check",
+      "roots": [".codex/hooks.json", "tools/workstream-plugin-pack/hooks/hooks.json"]
+    }
   }
 }

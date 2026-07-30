@@ -225,7 +225,7 @@ Keep vendor probes only when they protect a RAWR adaptation boundary, and label 
 For meaningful lab changes, run the focused target first, then:
 
 ```bash
-bunx nx run habitat:check:policy:local
+bunx nx run runtime-realization-type-env:check:policy
 bunx nx run runtime-realization-type-env:gate
 ```
 

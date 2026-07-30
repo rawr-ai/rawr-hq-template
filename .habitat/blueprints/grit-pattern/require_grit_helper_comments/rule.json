@@ -22,7 +22,6 @@
       "patterns": [".habitat/**/pattern.md"]
     }
   ],
-  "scanRoots": [".habitat"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/grit-pattern/require_grit_helper_comments/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/grit-pattern/require_grit_helper_comments/pattern.md"
     },
-    "patternName": "require_grit_helper_comments"
+    "patternName": "require_grit_helper_comments",
+    "acquisition": {
+      "kind": "check",
+      "roots": [".habitat"]
+    }
   }
 }

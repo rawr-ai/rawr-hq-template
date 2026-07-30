@@ -22,7 +22,6 @@
       "patterns": ["apps/web/src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}"]
     }
   ],
-  "scanRoots": ["apps/web/src"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/rawr/web-host/rules/require_web_public_environment_funnel/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/rawr/web-host/rules/require_web_public_environment_funnel/pattern.md"
     },
-    "patternName": "require_web_public_environment_funnel"
+    "patternName": "require_web_public_environment_funnel",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps/web/src"]
+    }
   }
 }

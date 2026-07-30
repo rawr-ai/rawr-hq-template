@@ -91,21 +91,17 @@
   non-root project's public `check` once through one Nx scheduler graph. Shared defaults connect
   those checks to one workspace-owned `habitat:lint`, project-owned typecheck,
   optional owner verification, Habitat policy, and dependency checks. The
-  repository, Habitat, and CLI each retain their qualified work. Oclif
-  structure laws, the workspace scheduler law, and the lifecycle
-  command-channel law run inside Habitat's selected local policy batch. Codex
-  Stop runs only an independent Habitat-structure subset for fast
-  feedback; it does not schedule lint, Grit, or the complete policy graph.
+  repository, Habitat, and CLI each retain their qualified work. The installed
+  `@habitat/cli` Nx plugin discovers registered laws and infers cacheable rule
+  targets plus owner-local `check:policy` composition. No root script maintains
+  a second rule list.
 - `verify` is the optional owner-local extension for deterministic checks that
   do not reduce to lint, typecheck, or Habitat policy. It is not release,
   deployment, or acceptance authority and has no root aggregate.
-- `habitat:check` composes the workspace lint owner, Habitat typecheck and
-  tests, and `check:policy`. The policy target resolves to the selected green
-  `check:policy:local` CLI leaf; it does not depend on the Stop-only
-  `check:structure` leaf. Both CLI leaves are
-  intentionally uncached until the upstream distributable Habitat Nx boundary
-  can own discovery, exact Nx cache inputs, caching, and acquisition; their
-  selected rule scopes remain exact.
+- `habitat:check` composes workspace lint and the inferred Habitat policy
+  target. Codex Stop delegates to `habitat hook agent-stop`, which selects the
+  registered hook rules through the same package and authority tree; it does
+  not schedule lint or the complete repository graph.
 - The ordinary `pull_request`, `merge_group`, and `push`-to-`main` workflow
   named `Repository Ratchet` publishes the job context
   `Required lint, typecheck, and topology` for the candidate SHA. Remote branch

@@ -60,7 +60,7 @@ target that matches the workstream before running composed gates.
 
 - `bunx nx show project runtime-realization-type-env --json`.
 - `bunx nx run runtime-realization-type-env:<focused-target>`.
-- `bunx nx run habitat:check:policy:local`.
+- `bunx nx run runtime-realization-type-env:check:policy`.
 - `bunx nx run runtime-realization-type-env:report`.
 - `bunx nx run runtime-realization-type-env:gate`.
 - `bun run runtime-realization:type-env`.

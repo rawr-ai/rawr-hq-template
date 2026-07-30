@@ -22,7 +22,6 @@
       "patterns": ["plugins/cli/commands/*/src/**/*.ts"]
     }
   ],
-  "scanRoots": ["plugins/cli/commands"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_source_relationships/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/oclif-command-plugin/require_oclif_command_source_relationships/pattern.md"
     },
-    "patternName": "require_oclif_command_source_relationships"
+    "patternName": "require_oclif_command_source_relationships",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["plugins/cli/commands"]
+    }
   }
 }

@@ -16,10 +16,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [x] 0.3 Record the corrected target, authority ledger, component disposition,
   falsifiers, positive constraints, behavioral boundary, and standard
   vocabulary in [[authority-amendment]], [[proposal]], and [[design]].
-- [x] 0.4 Record Magic Migration and Civ7 Habitat provenance. The current
-  Template artifact is published `habitat-sdk-v0.1.6`, source
-  `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, compiled with Bun 1.4. SDK source
-  is not imported.
+- [x] 0.4 Record Magic Migration and Civ7 Habitat provenance. The predecessor
+  standalone artifact was `habitat-sdk-v0.1.6`, source
+  `ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`. The current portable package is
+  Civ7 release `habitat-cli-v0.1.0`, reviewed source
+  `d51e8c7454e301bcaba56c8364f5c714d5febca3`. SDK source is not imported.
 - [x] 0.5 Run strict OpenSpec validation, backlinks/link checks where owned,
   `git diff --check`, and standing architecture/terminology reviews. Commit this
   record as one Graphite node.
@@ -107,22 +108,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   unregistered kind-local skill frames, keep both baselines empty, and admit
   both rules through the existing `check:source-law` edge without another
   runner or hook.
-- [ ] 1.5 Give the Habitat project owner-local policy targets, pattern execution,
-  isolated named inputs, and a blueprint-packet topology law closing the allowed
-  packet filename set. The bounded packet check is complete, but it does not yet
-  prove that `rule.json` selects exactly one present runner source. Native Grit
-  fixture automation and inclusion of every registered rule in live-tree policy
-  also remain pending because the published standalone binary exposes no
-  packet-fixture runner and known corpus violations remain. Do not hide that
-  limitation behind another parser or runner. Keep the compiled Bun 1.4 artifact
-  consumer and reproducible update recipe; the current temporary release and
-  required check are Darwin arm64 until the upstream Habitat distribution
-  exposes its Nx-plugin package and proper multi-platform binary.
-- [x] 1.5a Give every admitted code project an Nx lint and typecheck target.
-  Keep content and fixture projects explicitly classified outside that law.
-  Typecheck the Habitat project against `bun-types@1.3.14`; derive its release
-  manifest type and validation from one closed TypeBox schema; keep its asset
-  cache fixed under the repository and reject non-basename asset filenames.
+- [x] 1.5 Give the Habitat project owner-local policy targets, native pattern
+  execution, exact cache inputs, and a blueprint-packet topology law closing
+  the allowed packet filename set. The released `@habitat/cli` package owns
+  registry discovery, runner selection, package-local Grit acquisition, and
+  inferred Nx targets. The active registry contains 33 enforced rules across
+  six owners; intentionally unfinished service laws remain outside discovery
+  under `.habitat/staged/**`.
+- [x] 1.5a Give every admitted code project an Nx typecheck target and one
+  public `check`; keep content and fixture projects explicitly classified
+  outside that law. The Habitat package owns its compiled toolchain. Template
+  pins its immutable release URL and lockfile integrity without a release
+  manifest, executable selector, or local asset cache.
 - [x] 1.5b Adopt Civ7's Biome `2.5.3` hygiene and formatting responsibilities,
   adapted to Template paths and generated outputs. Preserve ESLint as the
   separate boundary-rule leaf. Expose the Civ7 lintEffect configuration and
@@ -144,8 +141,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   service corpus,
   activate the six staged laws only through the upstream Habitat Nx-plugin
   boundary in task 5.7e22. Let inferred owner-local targets provide exact
-  service-source, service-packet, provisioner, release-manifest, and
-  Bun-toolchain inputs and one Habitat acquisition.
+  service-source, service-packet, package-release, and toolchain inputs and one
+  Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, hand-maintain rule selection, or duplicate rule discovery in a script.
 - [ ] 1.5g Use the pinned TypeScript compiler API to identify authored
@@ -1833,6 +1830,13 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   future execution boundary is installed, promote the staged service topology,
   anchor, isolation, context, composition, and router authorship laws to
   enforced and include them in the required repository gate.
+  Civ7 release `habitat-cli-v0.1.0` now supplies the distributable
+  `@habitat/cli` package. The current Template consumer candidate pins that
+  package by immutable release URL and lockfile integrity, installs its Nx
+  plugin, deletes the interim provisioner and hand-maintained selectors, and
+  keeps unfinished service laws outside the active registry. This task remains
+  open until the six-law lifecycle corpus is activated, burned to zero, and
+  enforced through the installed graph.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
@@ -1863,6 +1867,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   lifecycle implementation evidence; it does not satisfy a downstream gate
   that separately requires a production compiler, bootgraph, and process
   runtime.
+- [ ] 5.7g Seal the generic production runtime-provisioning boundary required
+  by downstream service consumers. Keep public authoring contracts in the
+  canonical Template SDK surface and runtime realization in its internal
+  owner. Compile one complete app/profile selection before acquisition,
+  acquire resources in dependency order, release them in reverse order with
+  rollback on partial acquisition, bind ready service clients, and migrate at
+  least one production host so it no longer imports concrete providers. Reuse
+  the landed native TypeBox validator bridge. Add no controller, local release
+  store, provider registry, research-local fork, or moving-branch handoff.
+  After standing architecture, Effect, oRPC, TypeScript, and behavior reviews
+  accept the boundary and its required repository check lands, publish that
+  exact canonical-main commit to the research-service peers as their sole
+  legal restack base.
 - [x] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews. The uncached gate passes 412 service and 89 CLI tests plus source and

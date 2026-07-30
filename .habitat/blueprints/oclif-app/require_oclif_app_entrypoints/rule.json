@@ -22,7 +22,6 @@
       "patterns": ["apps/cli/bin/run.js", "apps/cli/src/index.ts"]
     }
   ],
-  "scanRoots": ["apps/cli/bin/run.js", "apps/cli/src/index.ts"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/oclif-app/require_oclif_app_entrypoints/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/oclif-app/require_oclif_app_entrypoints/pattern.md"
     },
-    "patternName": "require_oclif_app_entrypoints"
+    "patternName": "require_oclif_app_entrypoints",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps/cli/bin/run.js", "apps/cli/src/index.ts"]
+    }
   }
 }

@@ -39,24 +39,6 @@
       ]
     }
   ],
-  "scanRoots": [
-    "apps/cli/src/commands/agent/plugins",
-    "packages/hq-sdk/src/index.ts",
-    "packages/hq-sdk/src/plugins.ts",
-    "packages/hq-sdk/src/apis.ts",
-    "packages/hq-sdk/src/composition.ts",
-    "packages/hq-sdk/src/workflows.ts",
-    "packages/hq-sdk/src/host-adapters",
-    "resources/agent-plugin-package-output/contract.ts",
-    "resources/agent-plugin-package-output/providers",
-    "resources/content-workspace/contract.ts",
-    "resources/content-workspace/providers",
-    "resources/native-agent-provider/contract.ts",
-    "resources/native-agent-provider/providers",
-    "resources/versioned-content/contract.ts",
-    "resources/versioned-content/providers",
-    "services/agent-plugin-lifecycle/src/client.ts"
-  ],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/rawr/repository/contracts/rules/require_exported_value_declarations_have_jsdoc/baseline.json"
@@ -66,6 +48,27 @@
     "files": {
       "pattern": ".habitat/rawr/repository/contracts/rules/require_exported_value_declarations_have_jsdoc/pattern.md"
     },
-    "patternName": "require_exported_value_declarations_have_jsdoc"
+    "patternName": "require_exported_value_declarations_have_jsdoc",
+    "acquisition": {
+      "kind": "check",
+      "roots": [
+        "apps/cli/src/commands/agent/plugins",
+        "packages/hq-sdk/src/index.ts",
+        "packages/hq-sdk/src/plugins.ts",
+        "packages/hq-sdk/src/apis.ts",
+        "packages/hq-sdk/src/composition.ts",
+        "packages/hq-sdk/src/workflows.ts",
+        "packages/hq-sdk/src/host-adapters",
+        "resources/agent-plugin-package-output/contract.ts",
+        "resources/agent-plugin-package-output/providers",
+        "resources/content-workspace/contract.ts",
+        "resources/content-workspace/providers",
+        "resources/native-agent-provider/contract.ts",
+        "resources/native-agent-provider/providers",
+        "resources/versioned-content/contract.ts",
+        "resources/versioned-content/providers",
+        "services/agent-plugin-lifecycle/src/client.ts"
+      ]
+    }
   }
 }

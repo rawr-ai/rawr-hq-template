@@ -64,7 +64,6 @@
     "dev:cli": "bun src/index.ts",
     "build": "tsc -p tsconfig.build.json",
     "manifest": "NODE_ENV=production bun --bun oclif manifest",
-    "structure-oclif": "bun run --cwd ../.. habitat -- --rule require_oclif_app_configuration --rule require_oclif_app_topology",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli",
@@ -117,16 +116,6 @@
             "input": "production"
           }
         ]
-      },
-      "structure-oclif": {
-        "cache": true,
-        "inputs": [
-          "default",
-          "{workspaceRoot}/.habitat/blueprints/oclif-app/**/*",
-          "{workspaceRoot}/scripts/habitat/**/*",
-          "bunToolchain"
-        ],
-        "outputs": []
       },
       "acceptance:oclif": {
         "cache": true,

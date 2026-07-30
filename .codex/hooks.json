@@ -28,9 +28,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash -lc 'repo=\"$(git rev-parse --show-toplevel 2>/dev/null)\" && cd \"$repo\" 2>/dev/null || { printf \"%s\\n\" \"RAWR quality hook must run inside the repo worktree.\" >&2; exit 2; }; out=$(bunx nx run habitat:check:structure --outputStyle=static 2>&1); status=$?; if [ \"$status\" -eq 0 ]; then exit 0; fi; printf \"%s\\n\" \"$out\" >&2; exit 2'",
-            "timeout": 180,
-            "statusMessage": "Checking RAWR Habitat structure"
+            "command": "bash -lc 'repo=\"${CODEX_WORKSPACE_ROOT:-${CLAUDE_PROJECT_DIR:-}}\"; if [ -n \"$repo\" ]; then repo=\"$(git -C \"$repo\" rev-parse --show-toplevel 2>/dev/null)\"; else repo=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; fi && cd \"$repo\" 2>/dev/null || { printf \"%s\\n\" \"Habitat agent-stop hook must run inside the repository worktree.\" >&2; exit 2; }; bun habitat hook agent-stop'",
+            "timeout": 120,
+            "statusMessage": "Checking Habitat structure laws"
           }
         ]
       }

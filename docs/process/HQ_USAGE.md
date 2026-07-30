@@ -74,21 +74,20 @@ Nx graph over every admitted non-root project's public check. Shared defaults
 connect each check to one workspace-owned `habitat:lint`, project-owned
 typecheck, optional owner verification, Habitat policy, and dependency checks.
 Repository separation, CLI Oclif parity, and Habitat project/source policy
-remain qualified owner work. The selected source-law batch owns the workspace
+remain qualified owner work. Habitat's inferred owner targets own the workspace
 scheduler law, required Oclif structure laws, and lifecycle command-channel law.
 Habitat targets are cacheable only when their Nx inputs cover every Git-visible
 tree the rule inspects; see [[NX_AGENT_WORKFLOW]]. Domain behavior tests remain
 owner-local verification rather than hidden merge-admission work.
 
-Every current non-root project owns a public check. Do not add a script-backed
-Habitat graph rule merely because the pinned standalone consumer does not
-expose the native Nx runner; the upstream distributable integration owns that
-future capability.
+Every current non-root project owns a public check. The installed Habitat Nx
+plugin infers rule targets, owner-local policy composition, inputs, caching,
+and graph dependencies from `.habitat/**`; do not add a script-backed graph
+rule or hand-maintained selector.
 
-Habitat evaluation uses a checksum-pinned standalone binary owned by a Civ7
-release and compiled with Bun 1.4. `scripts/habitat/release.json` binds its
-source provenance, platform asset, byte size, and SHA-256; this repository owns
-only the consumer and `.habitat` policy tree and does not vendor SDK sources.
+Habitat evaluation uses an exact Civ7-owned `@habitat/cli` package release
+pinned by URL and lockfile integrity. This repository owns only the consumer
+configuration and `.habitat` policy tree and does not vendor SDK sources.
 
 The `Repository Ratchet` workflow runs `bun run check` for pull requests,
 merge groups, and pushes to `main`. Local hooks are useful feedback but can be

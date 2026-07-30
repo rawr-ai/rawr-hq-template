@@ -11,7 +11,7 @@
     "kind": "check"
   },
   "ownerProject": "habitat",
-  "lane": "advisory",
+  "lane": "enforced",
   "forbids": "a direct database-source import from a standalone service module, handler, root anchor, model, module middleware, middleware index, or any other source outside the database interior and direct named service-root middleware leaves",
   "why": "Database source realizes service-owned stores. Only database internals and direct named service-root middleware leaves need that source in production; modules consume projected capabilities through inherited oRPC context. Owner-local package proof remains governed by the service test boundary.",
   "remediate": "Move the database import to a direct named service-root middleware leaf that exports the generic middleware value, import that value by semantic alias in impl.ts, attach it to the service lineage, project a narrow store capability into context, and consume that capability from the module handler. Do not create a root middleware barrel. Keep external database acquisition in its resource/provider owner.",
@@ -22,7 +22,7 @@
       "patterns": ["services/*/src/service/**/*.{js,jsx,ts,tsx,cjs,cts,mjs,mts}"]
     }
   ],
-  "scanRoots": ["services"],
+  "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/database/require_service_database_import_funnel/baseline.json"
   },
@@ -31,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/database/require_service_database_import_funnel/pattern.md"
     },
-    "patternName": "require_service_database_import_funnel"
+    "patternName": "require_service_database_import_funnel",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services"]
+    }
   }
 }

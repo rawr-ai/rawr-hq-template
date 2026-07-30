@@ -22,7 +22,6 @@
       "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
     }
   ],
-  "scanRoots": ["services", "plugins/server/api"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_orpc_error_authority/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/service/require_orpc_error_authority/pattern.md"
     },
-    "patternName": "require_orpc_error_authority"
+    "patternName": "require_orpc_error_authority",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services", "plugins/server/api"]
+    }
   }
 }

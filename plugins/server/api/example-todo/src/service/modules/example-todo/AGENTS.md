@@ -45,5 +45,6 @@
 
 ## Validation
 
-- Run `bunx nx run plugin-server-api-example-todo:typecheck`.
-- Run `bunx nx run plugin-server-api-example-todo:structural`.
+- Run `bunx nx run plugin-server-api-example-todo:check`.
+- Run `bun habitat check --rule require_api_server_plugin_boundary` when the
+  containing API-plugin topology changes.

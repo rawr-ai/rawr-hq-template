@@ -23,13 +23,13 @@
     }
   ],
   "supportFiles": {
-    "baseline": ".habitat/blueprints/service/require_service_spine_topology/baseline.json"
+    "baseline": ".habitat/staged/blueprints/service/require_service_spine_topology/baseline.json"
   },
   "runner": {
     "name": "habitat",
     "mode": "structure",
     "files": {
-      "structure": ".habitat/blueprints/service/require_service_spine_topology/structure.toml"
+      "structure": ".habitat/staged/blueprints/service/require_service_spine_topology/structure.toml"
     }
   }
 }

@@ -22,7 +22,6 @@
       "patterns": ["apps/hq/**/*.ts"]
     }
   ],
-  "scanRoots": ["apps/hq"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/rawr/app-host/rules/require_hq_app_server_import_funnel/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/rawr/app-host/rules/require_hq_app_server_import_funnel/pattern.md"
     },
-    "patternName": "require_hq_app_server_import_funnel"
+    "patternName": "require_hq_app_server_import_funnel",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps/hq"]
+    }
   }
 }

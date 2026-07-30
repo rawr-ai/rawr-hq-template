@@ -22,7 +22,6 @@
       "patterns": ["services/*/src/**/*.ts"]
     }
   ],
-  "scanRoots": ["services"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/service/require_service_proof_isolation/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/service/require_service_proof_isolation/pattern.md"
     },
-    "patternName": "require_service_proof_isolation"
+    "patternName": "require_service_proof_isolation",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services"]
+    }
   }
 }

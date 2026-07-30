@@ -35,7 +35,18 @@
         "resources/*/AGENTS.md",
         "resources/*/providers/*/AGENTS.md",
         "tools/*/AGENTS.md",
-        "scripts/habitat/AGENTS.md"
+        "scripts/habitat/AGENTS.md",
+        "apps/**",
+        "services/**",
+        "plugins/server/api/**",
+        "plugins/async/workflows/**",
+        "plugins/async/schedules/**",
+        "plugins/cli/commands/**",
+        "plugins/web/**",
+        "packages/**",
+        "resources/**",
+        "tools/**",
+        "scripts/habitat/**"
       ]
     }
   ],

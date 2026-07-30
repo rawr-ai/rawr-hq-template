@@ -197,10 +197,10 @@ historical imports and current Magic service lineage. RAWR adaptations preserve
 those shared laws while qualifying repository identity, the canonical
 `@rawr/hq-sdk` TypeBox bridge, and one module-router composition face over named
 authored router leaves. Template-owned extensions cover platform independence
-and private-alias configuration/ownership. The compiled Habitat consumer pins Civ7
-`habitat-sdk-v0.1.6`, source
-`ca5fe0eafb14a310a310bb2ebc49ca1dbe84860b`, built natively with Bun 1.4 for the
-temporary Darwin arm64 lane.
+and private-alias configuration/ownership. The portable Habitat consumer pins
+Civ7 release `habitat-cli-v0.1.0`, reviewed source
+`d51e8c7454e301bcaba56c8364f5c714d5febca3`, through the ordinary package
+graph. Its exported Nx plugin owns discovery, inputs, caching, and acquisition.
 
 ## Behavioral Boundary
 

@@ -19,10 +19,27 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["package.json", "project.json", "nx.json"]
+      "patterns": [
+        "package.json",
+        "project.json",
+        "nx.json",
+        "apps/**/package.json",
+        "apps/**/project.json",
+        "packages/**/package.json",
+        "packages/**/project.json",
+        "plugins/**/package.json",
+        "plugins/**/project.json",
+        "resources/**/package.json",
+        "resources/**/project.json",
+        "scripts/**/package.json",
+        "scripts/**/project.json",
+        "services/**/package.json",
+        "services/**/project.json",
+        "tools/**/package.json",
+        "tools/**/project.json"
+      ]
     }
   ],
-  "scanRoots": ["."],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/nx-workspace/require_nx_workspace_scheduler_scripts/baseline.json"
@@ -32,6 +49,10 @@
     "files": {
       "pattern": ".habitat/blueprints/nx-workspace/require_nx_workspace_scheduler_scripts/pattern.md"
     },
-    "patternName": "require_nx_workspace_scheduler_scripts"
+    "patternName": "require_nx_workspace_scheduler_scripts",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["."]
+    }
   }
 }

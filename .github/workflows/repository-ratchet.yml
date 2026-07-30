@@ -43,8 +43,8 @@ jobs:
       - name: Install locked dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Provision pinned Grit runtime
-        run: bun run habitat:grit:provision
+      - name: Acquire package-owned Grit runtime
+        run: bun -e 'import { acquirePinnedGrit } from "@habitat/cli/grit"; acquirePinnedGrit()'
 
       - name: Verify required repository gates
         run: bun run ci

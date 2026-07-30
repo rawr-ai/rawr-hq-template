@@ -22,7 +22,6 @@
       "patterns": ["tools/runtime-realization-type-env/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}"]
     }
   ],
-  "scanRoots": ["tools/runtime-realization-type-env"],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/rawr/runtime-realization-lab/rules/require_runtime_realization_lab_source_relationships/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/rawr/runtime-realization-lab/rules/require_runtime_realization_lab_source_relationships/pattern.md"
     },
-    "patternName": "require_runtime_realization_lab_source_relationships"
+    "patternName": "require_runtime_realization_lab_source_relationships",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["tools/runtime-realization-type-env"]
+    }
   }
 }

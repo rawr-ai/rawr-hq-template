@@ -2,100 +2,62 @@
 
 ## Purpose
 
-- Provision the exact pinned Habitat executable and expose it to repository
-  checks without duplicating Habitat's evaluation engine or policy.
+- Expose the installed Habitat CLI and its inferred Nx policy graph without
+  duplicating Habitat's evaluator, registry, or acquisition lifecycle.
 
 ## Scope
 
-- Applies to the pinned Habitat tool integration in `scripts/habitat/**`.
+- Applies to Template's Habitat consumer boundary in `scripts/habitat/**`.
 
 ## Boundaries
 
-- Owns the pinned release manifest, platform selection, download, exact byte
-  verification, and local executable provisioning for the Civ7-owned Habitat
-  CLI.
-- `release.json` is the sole accepted release identity. A caller-supplied
-  binary must be absolute, executable, and match its selected asset exactly.
-- Habitat blueprint structure and source-pattern policy belong in `.habitat/**`;
-  the native Habitat CLI owns evaluation. Template admits no script-backed
-  Habitat rule; do not invoke a rule implementation around Habitat or place
-  structural policy in `scripts/**`. A future native capability gap requires a
-  named authority decision before packet topology changes.
-- Fixture cleanup must stay limited to a canonical temporary parent, an exact
-  owned prefix, a real directory, and a non-symlink path before recursive
-  removal.
-- This project consumes a compiled release. It must not vendor the Habitat SDK
-  source or become a second SDK implementation.
+- `package.json` and `bun.lock` pin the released `@habitat/cli` package and its
+  exact bytes. This repository does not vendor the Habitat SDK source.
+- `.habitat/**` owns structure, source, and blueprint authority. The installed
+  Habitat package owns registry discovery, rule selection, inputs, caching,
+  Grit acquisition, evaluation, and hook behavior.
+- This project owns only workspace hygiene, formatting, and the explicit Nx
+  anchor that merges with Habitat's inferred targets.
+- Do not restore a provisioner, wrapper, hand-maintained rule list, raw Grit
+  invocation, or script-backed structural policy.
 
 ## Behavior
 
-- The integration selects one manifest-approved platform asset, verifies every
-  local or downloaded byte, publishes it through a bounded cache transition,
-  and invokes the native CLI for owned checks.
+- Nx loads `@habitat/cli/nx-plugin`, discovers registered rules, and infers one
+  cacheable rule target plus owner-local `check:policy` composition.
+- The `habitat` project contributes the repository-wide Biome pass. Its public
+  `check` enters the same shared Nx graph as every other project.
+- Codex Stop delegates to `habitat hook agent-stop`; it is fast feedback over
+  the registered hook rules, not a second admission graph.
 
 ## Concepts
 
-- The **release manifest** is executable identity. A **verified cache entry**
-  is a byte-exact local copy; the **local policy batch** is the explicitly
-  selected native Habitat CLI leaf. The independent **structure leaf** is its
-  structure-only subset used for fast Stop feedback.
+- The **package release** is tool identity. The **rule registry** is policy
+  identity. An **owner target** is the Nx projection of rules owned by one
+  repository component.
 
 ## Flow
 
-- The release manifest identifies one supported platform asset and its source
-  provenance.
-- Provisioning selects that asset, verifies an existing cache entry or
-  downloads into an exclusive temporary file, then publishes and re-verifies
-  the executable.
-- Nx-owned repository checks consume the verified executable; policy remains
-  in the `.habitat` authority tree.
-- `habitat:lint` performs the one ordinary repository-wide Biome lint
-  pass. It is not structural or architectural authority.
-- `habitat:lint:effect` is the stricter Effect migration surface. It remains
-  separate until its existing findings are burned down; it is not a substitute
-  structural checker.
-- `habitat:check` composes the workspace lint owner, this project's typecheck
-  and tests, and `check:policy`.
-- `check:policy` resolves to `check:policy:local`. The local policy leaf
-  acquires the selected green Grit and
-  structure rules once, including the workspace scheduler law, admitted Oclif
-  structure laws, resource and provider package boundaries, the closed
-  repository-script root, exported-value documentation law, Runtime
-  Realization lab boundaries, agent-plugin command-channel topology and source
-  separation, workstream-plugin-pack topology and canonical hook
-  configuration, and the web public-environment funnel.
-- `check:structure` is an independent Habitat-structure leaf for
-  fast Codex Stop feedback. It does not depend on or replace policy, lint, or
-  the complete repository graph.
-- Both CLI leaves are intentionally uncached because Nx and Habitat do not
-  share one ignore model. Nx may schedule independent graph work beside them;
-  Habitat owns bounded execution inside each native process. Rule selection and
-  scopes are exact; upstream task 5.7e22 remains the future owner of
-  distributable registry discovery, exact Nx cache inputs, caching, and one
-  acquisition.
-- Package scripts invoke the provisioned executable directly. Do not restore a
-  JavaScript check wrapper or move pattern logic out of Habitat.
-- Consumer tests prove manifest admission, platform selection, direct asset
-  verification, and bounded fixture cleanup. They do not restate Habitat
-  topology or source policy.
+- Bun installs the pinned package and realizes its package-local Grit binary.
+- Nx derives rule and owner targets from `.habitat/**`.
+- Project `check` targets depend on their inferred policy target, while
+  protected CI remains merge authority.
 
 ## Interfaces
 
-- Release provenance and downloads enter through the manifest and provisioner;
-  Nx targets invoke the verified Habitat CLI; `.habitat/**` supplies policy
-  directly to that native evaluator.
+- `bun habitat` is the operator and hook command surface.
+- `bunx nx run <project>:check:policy` is the owner-local policy surface.
+- `.habitat/**` is the only structural and source-law authoring surface.
 
 ## Routing
 
 - [Scripts router](../AGENTS.md)
 - [Repository router](../../AGENTS.md)
+- [Habitat authority](../../.habitat/AUTHORITY.md)
 
 ## Validation
 
-- `bunx nx run habitat:lint`
-- `bunx nx run habitat:typecheck`
-- `bunx nx run habitat:test`
-- `bunx nx run habitat:check:policy:local`
-- `bunx nx run habitat:check:structure`
+- `bun habitat --version`
+- `bunx nx show project habitat --json`
 - `bunx nx run habitat:check:policy`
 - `bunx nx run habitat:check`

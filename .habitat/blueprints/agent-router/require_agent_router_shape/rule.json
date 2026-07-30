@@ -22,7 +22,6 @@
       "patterns": ["AGENTS.md", "**/AGENTS.md"]
     }
   ],
-  "scanRoots": ["."],
   "hookCheck": true,
   "supportFiles": {
     "baseline": ".habitat/blueprints/agent-router/require_agent_router_shape/baseline.json"
@@ -32,6 +31,10 @@
     "files": {
       "pattern": ".habitat/blueprints/agent-router/require_agent_router_shape/pattern.md"
     },
-    "patternName": "require_agent_router_shape"
+    "patternName": "require_agent_router_shape",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["."]
+    }
   }
 }
