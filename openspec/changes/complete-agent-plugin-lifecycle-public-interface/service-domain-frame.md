@@ -89,10 +89,9 @@ Any of those findings reopens placement; it does not predetermine a sibling
 service rather than a plugin or workflow. Different output paths, module size,
 or a root context that truthfully declares complete host requirements do not.
 
-The downstream research service requires the canonical TypeBox Standard Schema
-adapter plus a separately governed production runtime-provisioning boundary.
-Canonical `main` contains the lifecycle-specific evidence: the native-validator,
-message-only bridge correction at
+The bounded lifecycle handoff includes the canonical TypeBox Standard Schema
+adapter and the CLI's cold app-owned lifecycle profile. Canonical `main`
+contains the native-validator, message-only bridge correction at
 `0854024afe9a76ef0ae4ae3f427182be25fe8420`, its current
 `@rawr/typebox-adapter` package owner at
 `3b142e560f3b3cefa255356fa7343c56cac18d99`, and the bounded CLI vertical
@@ -102,11 +101,14 @@ command consumes a local ready lifecycle-service client while the app profile
 owns concrete selection and each operation keeps its existing resource
 lifetime.
 
-That lifecycle checkpoint does not implement the required production compiler,
-bootgraph, process-runtime binding, or harness boundary, so it does not
-authorize downstream research BUILD or restack. The exact integration handoff
-is recorded in [[README#CLI Production Profile Handoff]]; the wider consumer
-remains held for the separately governed runtime-realization migration.
+The downstream research design additionally requires a production compiler,
+bootgraph, process-runtime binding, and harness boundary. Those are consumer
+dependencies owned by the separately governed runtime-realization migration,
+not unfinished lifecycle work. The lifecycle checkpoint therefore does not
+authorize downstream research BUILD or restack. Its exact integration handoff
+is recorded in [[README#CLI Production Profile Handoff]]; a consumer requiring
+the wider runtime remains held until a separately accepted, production-owned
+Parent-Repo Migration authorizes that boundary.
 
 ## Authority Ledger
 

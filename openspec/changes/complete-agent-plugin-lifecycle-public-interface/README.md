@@ -4418,12 +4418,13 @@ cleanup remain operation-local. This change adds no managed runtime, process
 finalizer, cache, registry, controller, workflow engine, app composition layer,
 or second service.
 
-That checkpoint completes the lifecycle-specific half of the accepted
-research-service prerequisite: `@rawr/typebox-adapter` uses TypeBox's native
-validator and omits ambiguous issue paths, while the CLI owns cold provider
-selection and direct local lifecycle-service binding. It does not supply the
-separately governed production compiler, bootgraph, process-runtime binding, or
-harness boundary. The exact landed handoff below is therefore lifecycle
+That checkpoint completes the lifecycle production boundary:
+`@rawr/typebox-adapter` uses TypeBox's native validator and omits ambiguous
+issue paths, while the CLI owns cold provider selection and direct local
+lifecycle-service binding. A consumer's additional need for a production
+compiler, bootgraph, process-runtime binding, or harness belongs to the
+separately governed runtime-realization migration; it does not make this
+lifecycle boundary incomplete. The exact landed handoff below is lifecycle
 evidence, not research BUILD or restack authorization; no moving branch head is
 a handoff.
 
