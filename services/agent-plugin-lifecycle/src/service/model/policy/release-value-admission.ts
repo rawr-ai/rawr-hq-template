@@ -8,43 +8,6 @@ const encoder = new TextEncoder();
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
 
 /**
- * Accumulates closed-record field diagnostics while admitting an object for traversal.
- *
- * Unknown fields are reported in object-key order before missing fields in the
- * supplied key order. Any non-null, non-array object remains traversable even
- * when those field diagnostics were appended to the caller-owned collection.
- *
- * @param value Raw value to inspect.
- * @param keys Exact field names admitted by the owning record.
- * @param path Base path used to qualify field diagnostics.
- * @param issues Ordered destination for admission diagnostics.
- * @returns Whether the value is a non-null, non-array object.
- */
-export function admitClosedRecordForTraversal(
-  value: unknown,
-  keys: readonly string[],
-  path: string,
-  issues: ReleaseIssue[]
-): value is Record<string, unknown> {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    issues.push(releaseIssue("EXPECTED_OBJECT", path, "Value must be an object"));
-    return false;
-  }
-  const expected = new Set(keys);
-  for (const key of Object.keys(value)) {
-    if (!expected.has(key))
-      issues.push(
-        releaseIssue("UNKNOWN_FIELD", `${path}.${key}`, "Field is not part of the closed schema")
-      );
-  }
-  for (const key of keys) {
-    if (!Object.hasOwn(value, key))
-      issues.push(releaseIssue("UNKNOWN_FIELD", `${path}.${key}`, "Required field is missing"));
-  }
-  return true;
-}
-
-/**
  * Admits only the root membership of one closed TypeBox record.
  *
  * Plain objects are projected to their enumerable key presence before schema

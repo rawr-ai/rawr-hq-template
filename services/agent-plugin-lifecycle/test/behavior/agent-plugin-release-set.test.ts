@@ -7,10 +7,13 @@ import {
   type AgentPluginReleaseSet,
   type AgentPluginReleaseSetBody,
   AgentPluginReleaseSetBodySchema,
+  type AgentPluginReleaseSetConstruction,
+  AgentPluginReleaseSetConstructionSchema,
   type AgentPluginReleaseSetMember,
   AgentPluginReleaseSetMemberSchema,
   AgentPluginReleaseSetSchema,
 } from "../../src/service/model/dto/agent-plugin-release-set";
+import { MAX_RELEASE_MEMBERS } from "../../src/service/model/dto/release-input";
 import { ReleaseIssueSchema } from "../../src/service/model/dto/release-issue";
 import { createAgentPluginPayload } from "../../src/service/model/policy/agent-plugin-payload";
 import { payloadValue } from "../../src/service/model/policy/agent-plugin-payload-codec";
@@ -34,6 +37,7 @@ import {
 } from "../../src/service/model/policy/agent-plugin-release-set-codec";
 import { releaseDigest, releaseSetDigest } from "../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../src/service/model/policy/release-input-codec";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../src/service/model/policy/release-payload-accounting";
 import {
   member,
@@ -138,6 +142,14 @@ function aggregatePayloadLimitFixture() {
 
 describe("complete release-set integrity", () => {
   it("derives the set contract from closed TypeBox member, body, and envelope schemas", () => {
+    const fixture = productFixture();
+    const wireConstruction = {
+      releaseInput: wire(canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)),
+      releases: [
+        wire(canonicalSerializeAgentPluginRelease(fixture.alphaRelease)),
+        wire(canonicalSerializeAgentPluginRelease(fixture.betaRelease)),
+      ],
+    };
     type Equal<TLeft, TRight> =
       (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
         ? (<T>() => T extends TRight ? 1 : 2) extends <T>() => T extends TLeft ? 1 : 2
@@ -148,6 +160,10 @@ describe("complete release-set integrity", () => {
       AgentPluginReleaseSetMember,
       Static<typeof AgentPluginReleaseSetMemberSchema>
     >;
+    type ConstructionParity = Equal<
+      AgentPluginReleaseSetConstruction,
+      Static<typeof AgentPluginReleaseSetConstructionSchema>
+    >;
     type BodyParity = Equal<
       AgentPluginReleaseSetBody,
       Static<typeof AgentPluginReleaseSetBodySchema>
@@ -156,10 +172,19 @@ describe("complete release-set integrity", () => {
       AgentPluginReleaseSet extends Static<typeof AgentPluginReleaseSetSchema> ? true : false;
 
     expectTypeOf<MemberParity>().toEqualTypeOf<true>();
+    expectTypeOf<ConstructionParity>().toEqualTypeOf<true>();
     expectTypeOf<BodyParity>().toEqualTypeOf<true>();
     expectTypeOf<EnvelopeCompatibility>().toEqualTypeOf<true>();
 
-    const envelope = wire(canonicalSerializeAgentPluginReleaseSet(productFixture().releaseSet));
+    expect(
+      Value.Check(AgentPluginReleaseSetConstructionSchema, {
+        releaseInput: fixture.releaseInput,
+        releases: [fixture.alphaRelease, fixture.betaRelease],
+      })
+    ).toBe(true);
+    expect(Value.Check(AgentPluginReleaseSetConstructionSchema, wireConstruction)).toBe(true);
+    expect(createAgentPluginReleaseSet(wireConstruction).ok).toBe(true);
+    const envelope = wire(canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet));
     const member = envelope.body.members[0];
     if (member === undefined) throw new Error("Release-set fixture member is missing");
 
@@ -456,21 +481,290 @@ describe("complete release-set integrity", () => {
     }
   });
 
-  it("refuses unknown fields directly at the set envelope, body, and member boundaries", () => {
-    const bytes = canonicalSerializeAgentPluginReleaseSet(productFixture().releaseSet);
-    const envelopeUnknown = wire(bytes);
-    envelopeUnknown.unknown = true;
-    const bodyUnknown = wire(bytes);
-    bodyUnknown.body.unknown = true;
-    const memberUnknown = wire(bytes);
-    memberUnknown.body.members[0].unknown = true;
-    const obsoleteWitness = wire(bytes);
-    obsoleteWitness.body.completenessWitness = {};
+  it("reports one schema-owned diagnostic for missing or extra aggregate membership", () => {
+    const fixture = productFixture();
+    const bytes = canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet);
+    const boundaries = [
+      {
+        make: () => ({
+          releaseInput: fixture.releaseInput,
+          releases: [fixture.alphaRelease, fixture.betaRelease],
+        }),
+        remove: (candidate: any) => {
+          delete candidate.releaseInput;
+        },
+        run: createAgentPluginReleaseSet,
+        path: "releaseSet",
+        fields: "releaseInput, releases",
+      },
+      {
+        make: () => wire(bytes),
+        remove: (candidate: any) => {
+          delete candidate.body;
+        },
+        run: verifyAgentPluginReleaseSet,
+        path: "releaseSet",
+        fields: "body, releaseSetDigest, schemaVersion",
+      },
+      {
+        make: () => wire(bytes),
+        remove: (candidate: any) => {
+          delete candidate.body.members;
+        },
+        add: (candidate: any) => {
+          candidate.body.extra = true;
+        },
+        run: verifyAgentPluginReleaseSet,
+        path: "releaseSet.body",
+        fields:
+          "builderProtocolVersion, contentAuthority, members, ownershipIndex, releaseInputDigest, schemaVersion, sourceCommit, sourceRepository, sourceTree",
+      },
+      {
+        make: () => wire(bytes),
+        remove: (candidate: any) => {
+          delete candidate.body.members[0].releaseDigest;
+        },
+        add: (candidate: any) => {
+          candidate.body.members[0].extra = true;
+        },
+        run: verifyAgentPluginReleaseSet,
+        path: "releaseSet.body.members[0]",
+        fields: "pluginId, releaseDigest",
+      },
+    ];
 
-    for (const candidate of [envelopeUnknown, bodyUnknown, memberUnknown, obsoleteWitness]) {
-      const result = verifyAgentPluginReleaseSet(candidate);
-      expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.issues.map((issue) => issue.code)).toContain("UNKNOWN_FIELD");
+    for (const boundary of boundaries) {
+      for (const mutation of ["missing", "extra"] as const) {
+        const candidate = boundary.make();
+        if (mutation === "missing") boundary.remove(candidate);
+        else if (boundary.add !== undefined) boundary.add(candidate);
+        else (candidate as any).extra = true;
+
+        expect(boundary.run(candidate)).toEqual({
+          ok: false,
+          issues: [
+            {
+              code: "UNKNOWN_FIELD",
+              path: boundary.path,
+              message: `Expected exactly: ${boundary.fields}`,
+            },
+          ],
+        });
+      }
+    }
+  });
+
+  it("preserves exact non-object and primitive-field diagnostics at every aggregate", () => {
+    const bytes = canonicalSerializeAgentPluginReleaseSet(productFixture().releaseSet);
+    const bodyPrimitive = wire(bytes);
+    bodyPrimitive.body = 1;
+    const memberPrimitive = wire(bytes);
+    memberPrimitive.body.members[0] = 1;
+    const boundaries = [
+      { result: createAgentPluginReleaseSet(null), path: "releaseSet" },
+      { result: verifyAgentPluginReleaseSet([]), path: "releaseSet" },
+      { result: verifyAgentPluginReleaseSet(bodyPrimitive), path: "releaseSet.body" },
+      {
+        result: verifyAgentPluginReleaseSet(memberPrimitive),
+        path: "releaseSet.body.members[0]",
+      },
+    ];
+    for (const { result, path } of boundaries) {
+      expect(result).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: "EXPECTED_OBJECT",
+            path,
+            message: "Value must be an object",
+          },
+        ],
+      });
+    }
+
+    const primitiveFields = wire(bytes);
+    primitiveFields.body.members[0] = {
+      pluginId: "Alpha",
+      releaseDigest: "not-a-release-digest",
+    };
+    const result = verifyAgentPluginReleaseSet(primitiveFields);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(
+        result.issues.filter(({ path }) => path.startsWith("releaseSet.body.members[0]."))
+      ).toEqual([
+        {
+          code: "INVALID_PLUGIN_ID",
+          path: "releaseSet.body.members[0].pluginId",
+          message: "Invalid plugin identity",
+        },
+        {
+          code: "INVALID_DIGEST",
+          path: "releaseSet.body.members[0].releaseDigest",
+          message: "Digest has the wrong domain or encoding",
+        },
+      ]);
+    }
+  });
+
+  it("refuses a malformed root without traversing its child values", () => {
+    const candidate = {
+      extra: true,
+      get releaseInput(): never {
+        throw new Error("releaseInput must not be read");
+      },
+      get releases(): never {
+        throw new Error("releases must not be read");
+      },
+    };
+
+    expect(() => createAgentPluginReleaseSet(candidate)).not.toThrow();
+    expect(createAgentPluginReleaseSet(candidate)).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "UNKNOWN_FIELD",
+          path: "releaseSet",
+          message: "Expected exactly: releaseInput, releases",
+        },
+      ],
+    });
+  });
+
+  it("does not derive ownership or digest failures from a structurally refused member", () => {
+    const candidate = wire(canonicalSerializeAgentPluginReleaseSet(productFixture().releaseSet));
+    candidate.body.members[0] = {
+      pluginId: "alpha",
+      extra: true,
+    };
+
+    expect(verifyAgentPluginReleaseSet(candidate)).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "UNKNOWN_FIELD",
+          path: "releaseSet.body.members[0]",
+          message: "Expected exactly: pluginId, releaseDigest",
+        },
+      ],
+    });
+  });
+
+  it("bounds release traversal without reading an excluded tail member", () => {
+    const fixture = productFixture();
+    let exactVisits = 0;
+    const exactReleases = new Array(MAX_RELEASE_MEMBERS);
+    Object.defineProperty(exactReleases, MAX_RELEASE_MEMBERS - 1, {
+      enumerable: true,
+      get() {
+        exactVisits += 1;
+        return fixture.alphaRelease;
+      },
+    });
+    const exact = createAgentPluginReleaseSet({
+      releaseInput: fixture.releaseInput,
+      releases: exactReleases,
+    });
+    expect(exactVisits).toBe(1);
+    expect(exact.ok).toBe(false);
+    if (!exact.ok) {
+      expect(exact.issues.map(({ code }) => code)).not.toContain("COUNT_LIMIT_EXCEEDED");
+    }
+
+    const releases = new Array(MAX_RELEASE_MEMBERS + 1);
+    let admittedVisits = 0;
+    Object.defineProperty(releases, MAX_RELEASE_MEMBERS - 1, {
+      enumerable: true,
+      get() {
+        admittedVisits += 1;
+        return fixture.alphaRelease;
+      },
+    });
+    Object.defineProperty(releases, MAX_RELEASE_MEMBERS, {
+      enumerable: true,
+      get(): never {
+        throw new Error("excluded release must not be read");
+      },
+    });
+
+    const call = () =>
+      createAgentPluginReleaseSet({
+        releaseInput: fixture.releaseInput,
+        releases,
+      });
+    let result: ReturnType<typeof call> | undefined;
+    expect(() => {
+      result = call();
+    }).not.toThrow();
+    expect(admittedVisits).toBe(1);
+    if (result === undefined) throw new Error("Expected bounded construction result");
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues).toContainEqual({
+        code: "COUNT_LIMIT_EXCEEDED",
+        path: "releaseSet.releases",
+        message: `Array exceeds protocol limit ${MAX_RELEASE_MEMBERS}`,
+        expected: MAX_RELEASE_MEMBERS,
+        actual: MAX_RELEASE_MEMBERS + 1,
+      });
+    }
+  });
+
+  it("bounds set-member traversal at the exact ceiling and before an excluded tail", () => {
+    const fixture = productFixture();
+    const admittedMember = fixture.releaseSet.body.members[0];
+    if (admittedMember === undefined) throw new Error("Expected an admitted set member");
+    let exactVisits = 0;
+    const exactMembers = new Array(MAX_RELEASE_MEMBERS);
+    Object.defineProperty(exactMembers, MAX_RELEASE_MEMBERS - 1, {
+      enumerable: true,
+      get() {
+        exactVisits += 1;
+        return admittedMember;
+      },
+    });
+    const exactCandidate = wire(canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet));
+    exactCandidate.body.members = exactMembers;
+    const exact = verifyAgentPluginReleaseSet(exactCandidate);
+    expect(exactVisits).toBe(1);
+    expect(exact.ok).toBe(false);
+    if (!exact.ok) {
+      expect(exact.issues.map(({ code }) => code)).not.toContain("COUNT_LIMIT_EXCEEDED");
+    }
+
+    const overMembers = new Array(MAX_RELEASE_MEMBERS + 1);
+    let admittedVisits = 0;
+    Object.defineProperty(overMembers, MAX_RELEASE_MEMBERS - 1, {
+      enumerable: true,
+      get() {
+        admittedVisits += 1;
+        return admittedMember;
+      },
+    });
+    Object.defineProperty(overMembers, MAX_RELEASE_MEMBERS, {
+      enumerable: true,
+      get(): never {
+        throw new Error("excluded set member must not be read");
+      },
+    });
+    const overCandidate = wire(canonicalSerializeAgentPluginReleaseSet(fixture.releaseSet));
+    overCandidate.body.members = overMembers;
+    const call = () => verifyAgentPluginReleaseSet(overCandidate);
+    let over: ReturnType<typeof call> | undefined;
+    expect(() => {
+      over = call();
+    }).not.toThrow();
+    expect(admittedVisits).toBe(1);
+    if (over === undefined) throw new Error("Expected bounded verification result");
+    expect(over.ok).toBe(false);
+    if (!over.ok) {
+      expect(over.issues).toContainEqual({
+        code: "COUNT_LIMIT_EXCEEDED",
+        path: "releaseSet.body.members",
+        message: `Array exceeds protocol limit ${MAX_RELEASE_MEMBERS}`,
+        expected: MAX_RELEASE_MEMBERS,
+        actual: MAX_RELEASE_MEMBERS + 1,
+      });
     }
   });
 
