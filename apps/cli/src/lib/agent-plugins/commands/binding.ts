@@ -43,6 +43,44 @@ export type LifecycleOperationClient<TOperation extends LifecycleOperation> =
   LifecycleClientByOperation[TOperation];
 
 /**
+ * Maps each admitted CLI operation to its service-client result type.
+ *
+ * @remarks
+ * Results stay derived from the TypeBox-backed client so service schema changes
+ * propagate into CLI classification and presentation at compile time.
+ */
+export type LifecycleResultByOperation = Readonly<{
+  "releases.check": Awaited<ReturnType<Client["releases"]["check"]>>;
+  "releases.checkRepository": Awaited<ReturnType<Client["releases"]["checkRepository"]>>;
+  "releases.releaseInputRecord": Awaited<ReturnType<Client["releases"]["releaseInputRecord"]>>;
+  "releases.refreshReleaseInput": Awaited<ReturnType<Client["releases"]["refreshReleaseInput"]>>;
+  "vendors.status": Awaited<ReturnType<Client["vendors"]["status"]>>;
+  "vendors.update": Awaited<ReturnType<Client["vendors"]["update"]>>;
+  "packaging.package": Awaited<ReturnType<Client["packaging"]["package"]>>;
+  "providers.test": Awaited<ReturnType<Client["providers"]["test"]>>;
+  "providers.sync": Awaited<ReturnType<Client["providers"]["sync"]>>;
+  "providers.status": Awaited<ReturnType<Client["providers"]["status"]>>;
+  "governance.currentMainRecord": Awaited<ReturnType<Client["governance"]["currentMainRecord"]>>;
+  "governance.currentMainSelection": Awaited<
+    ReturnType<Client["governance"]["currentMainSelection"]>
+  >;
+}>;
+
+/**
+ * Correlates one invoked operation with that operation's service-owned result.
+ *
+ * @remarks
+ * Downstream switches narrow both fields together, making new operations
+ * compiler-visible across exit classification and output projection.
+ */
+export type LifecycleOperationOutcome = {
+  [TOperation in LifecycleOperation]: Readonly<{
+    operation: TOperation;
+    result: LifecycleResultByOperation[TOperation];
+  }>;
+}[LifecycleOperation];
+
+/**
  * Selects the one operation surface exposed to an admitted CLI command.
  *
  * @remarks
