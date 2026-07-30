@@ -4,7 +4,8 @@ import { module } from "./module";
 const check = module.check.handler(async ({ context, input }) => {
   return checkScratchPolicyPolicy({
     workspaceRoot: context.workspaceRoot,
-    resources: context.resources,
+    fs: context.resources.fs,
+    path: context.resources.path,
     request: input,
   });
 });
