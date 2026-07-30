@@ -15,13 +15,25 @@ export const doctor = module.doctor.handler(async ({ context, input }) => {
     "list",
     "--porcelain",
   ]);
-  const parsedStatus = parseGitStatus(gitStatus.stdout ?? "");
+  const gitStatusReadable = gitStatus.status === "succeeded";
+  const parsedStatus = gitStatusReadable
+    ? parseGitStatus(gitStatus.stdout ?? "")
+    : { branch: null, detached: false, dirty: false };
   const branch = input.branch ?? parsedStatus.branch ?? "";
   const graphiteAvailable = gtLs.status === "succeeded";
   const worktreeListReadable = worktreeList.status === "succeeded";
   const needsAttention =
-    parsedStatus.dirty || parsedStatus.detached || !graphiteAvailable || !worktreeListReadable;
+    !gitStatusReadable ||
+    parsedStatus.dirty ||
+    parsedStatus.detached ||
+    !graphiteAvailable ||
+    !worktreeListReadable;
   const actions = [];
+  if (!gitStatusReadable)
+    actions.push({
+      command: "git status --short --branch",
+      reason: "Git status is not readable",
+    });
   if (parsedStatus.dirty)
     actions.push({ command: "git status --short", reason: "working tree has uncommitted changes" });
   if (parsedStatus.detached)
@@ -51,9 +63,15 @@ export const doctor = module.doctor.handler(async ({ context, input }) => {
       actions,
       raw: {
         branch,
-        gitStatus: gitStatus.stdout ?? gitStatus.stderr ?? "",
-        gtLs: gtLs.stdout ?? gtLs.stderr ?? "",
-        worktreeList: worktreeList.stdout ?? worktreeList.stderr ?? "",
+        gitStatus:
+          gitStatus.status === "succeeded"
+            ? (gitStatus.stdout ?? "")
+            : gitStatus.stderr || gitStatus.stdout || "",
+        gtLs: gtLs.status === "succeeded" ? (gtLs.stdout ?? "") : gtLs.stderr || gtLs.stdout || "",
+        worktreeList:
+          worktreeList.status === "succeeded"
+            ? (worktreeList.stdout ?? "")
+            : worktreeList.stderr || worktreeList.stdout || "",
       },
     },
   };

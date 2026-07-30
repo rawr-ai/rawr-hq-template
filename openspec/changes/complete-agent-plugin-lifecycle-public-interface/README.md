@@ -4857,6 +4857,39 @@ provider selection, compiler coverage, runtime acquisition/finalization, or
 production host binding. It is not the runtime-provisioning checkpoint awaited
 by the separate research service.
 
+## Dev Stack Observation Authority
+
+The follow-up behavior checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e35]] makes external
+command status authoritative wherever Stack uses command output to admit
+mutation or claim convergence. A failed initial `git status --short --branch`
+now makes doctor report `NEEDS_ATTENTION` and makes an applied drain return a
+failed preflight before its first mutating command. A failed closing `gt ls`
+becomes a structured execution issue and stops the applied drain without
+claiming convergence or beginning another cycle.
+
+The correction remains inside the existing `doctor` and `drain` router leaves.
+It adds no operation, schema, context member, resource, provider, fallback, or
+durable state. These command failures remain TypeBox-valid domain results, so
+each operation emits one successful oRPC middleware lifecycle; genuinely thrown
+resource failures retain their existing identity and error lifecycle.
+
+The three behavior proofs pin the exact read-only admission prefix, the exact
+applied prefix through the failed closing observation, the absence of a second
+cycle or sleep, diagnostic stderr, result validity, and one analytics plus one
+log event per call. Before the source correction, all three proofs failed for
+the intended semantic reason. Afterward, all 23 Dev tests and uncached Dev
+typecheck pass. The repository's single Nx `check` graph passes across its 39
+projects and dependencies, all 25 active repository Habitat rules pass, and
+focused Biome plus diff hygiene pass. Fresh oRPC/architecture, behavior-first
+testing, and TypeScript/structural completion reviews report no P0-P2 after the
+failed-status proof was strengthened with misleading stdout.
+
+This is Stack operation correctness only. It provides no compiler, bootgraph,
+runtime acquisition/finalization, service binding, or production-host migration
+and therefore is not the exact upstream checkpoint awaited by the separate
+research service.
+
 ## Settlement Oracles
 
 The final product must prove:
