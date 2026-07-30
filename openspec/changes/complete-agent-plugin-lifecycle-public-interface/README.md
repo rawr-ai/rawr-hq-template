@@ -3899,6 +3899,17 @@ published nothing, and completed all nineteen dry-run publishers plus their 29
 predecessor tasks in 55.9 seconds. Standing Nx-architecture and behavior-first
 reviews accepted the boundary with no P0, P1, or P2 finding.
 
+Active product and process guidance now follows the same ownership model. The
+runbook index describes reviewed `current-main`, exact Git verification,
+in-memory release-set derivation, and native provider delegation as the curated
+path. It preserves creation, packaging, vendor update, and destination export as
+qualified adjacent capabilities rather than lifecycle state owners. The process
+gateways, maintenance cadence, and cross-repository workflow record the fixed Nx
+Release group and packed-install acceptance as active while keeping publication,
+registry-installed smoke, and cross-repository settlement pending in that order.
+Lifecycle-authority and operational-truth reviews accepted the aligned guidance
+with no P0, P1, or P2 finding.
+
 Task 3.7 remains a real release operation rather than another implementation
 slice. The npm registry currently reports no authenticated operator and
 `@rawr/cli@0.1.0` is not published. No repository publish workflow or npm token

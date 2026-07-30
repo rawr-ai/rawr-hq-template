@@ -20,9 +20,10 @@ Interpretation:
 - `gt trunk` must print `main`.
 - `check-remotes.sh` must pass.
 - The repository-local Oclif CLI must start from the checked-out Template source.
-  This is development verification, not installed-package acceptance. The fixed
-  Nx Release group and ordinary installation path remain pending, and the
-  obsolete predecessor distribution is not invoked, checked, or updated.
+  This is development verification, not registry-installed acceptance. The fixed
+  Nx Release group and packed-install acceptance are landed; public registry
+  publication and registry-installed smoke remain pending. The obsolete
+  predecessor distribution is not invoked, checked, or updated.
 - The root check must schedule every admitted non-root project's plain public
   check once; no hand-maintained project inventory may narrow that population.
 - Shared defaults must preserve one workspace lint task, project-owned
@@ -47,8 +48,8 @@ Interpretation:
 
 ## Monthly Interface Rehearsal
 
-After the fixed Nx Release package group is published, use disposable homes and
-an exact content fixture to verify:
+After the package group is published and the registry-installed smoke passes,
+use disposable homes and an exact content fixture to verify:
 
 1. the exact ordinarily installed Template CLI accepts the declared
    schema/protocol version;
@@ -56,8 +57,9 @@ an exact content fixture to verify:
 3. no personal executable mirror or cross-repository workspace link exists;
 4. repeated convergence performs no writes.
 
-Until that release exists, run only the equivalent repository-local compatibility
-checks through `bun run rawr -- ...`; do not promote them as installed settlement.
+Until publication and the registry-installed smoke both complete, run only the
+equivalent repository-local compatibility checks through
+`bun run rawr -- ...`; do not promote them as installed settlement.
 
 When advancing the Habitat binary, accept only a Civ7-owned standalone release
 compiled with Bun 1.4. Update `scripts/habitat/release.json` with its immutable

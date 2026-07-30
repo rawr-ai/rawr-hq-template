@@ -39,8 +39,8 @@ Before changing docs:
 3. Inspect staged and unstaged changes.
 4. During the distribution transition, use the repository-owned Oclif command
    `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor distribution.
-   Ordinary installed-package acceptance begins only after the fixed Nx Release
-   group lands.
+   The fixed Nx Release group and packed-install acceptance are landed;
+   registry-installed acceptance follows public package publication.
 5. If the `bun run rawr -- sessions ...` surface is unavailable, extract transcript
    evidence directly from the session JSONL and record that tooling gap in the
    workstream notes. Do not repair it with an Oclif extension link.

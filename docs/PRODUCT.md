@@ -27,6 +27,8 @@ product for a local-first AI headquarters.
 - Exchange only versioned data and ordinary published interfaces across
   repository boundaries.
 
-The fixed Nx Release package group is pending. Current development uses
-`bun run rawr -- ...`; the predecessor custom distribution may remain
-executable on a workstation, but it is obsolete and is not a product authority.
+The fixed Nx Release package group and packed-install acceptance are landed.
+Current development uses `bun run rawr -- ...` until public registry publication
+and registry-installed smoke complete. The predecessor custom distribution may
+remain executable on a workstation, but it is obsolete and is not a product
+authority.

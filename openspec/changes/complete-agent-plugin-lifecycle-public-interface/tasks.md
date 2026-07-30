@@ -779,6 +779,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   bounded in-memory derivation facts. Regenerate the workspace lockfile, update
   active contracts and operator guidance, and prove no tracked executable
   reader or writer remains before closing the subtask.
+- [x] 5.5c1 Correct the remaining active process guidance after the ordinary
+  release group lands. Describe curated lifecycle as exact Git verification,
+  in-memory derivation, and native provider delegation; retain destination
+  export only as a separately owned capability and advertise no build,
+  promotion, retirement, undo, or persistent lifecycle authority.
 - [x] 5.5d Materialize the exact selected provider-test marketplace below the
   explicit disposable root, keep it alive through final provider observation,
   and retire the exact scoped child before the operation returns. The caller
