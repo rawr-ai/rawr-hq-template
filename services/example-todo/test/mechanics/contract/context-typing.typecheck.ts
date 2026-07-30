@@ -1,14 +1,14 @@
 import type { InferRouterInitialContext } from "@orpc/server";
 
-import { type CreateClientOptions, createClient, type Invocation } from "../src/client";
-import type { Context } from "../src/service/base";
-import { contract } from "../src/service/contract";
+import { type CreateClientOptions, createClient, type Invocation } from "../../../src/client";
+import type { Context } from "../../../src/service/base";
+import { contract } from "../../../src/service/contract";
 import {
   getTodoProcedureMetadata,
   type TodoProcedureMetadata,
-} from "../src/service/model/policy/procedure-metadata";
-import { router } from "../src/service/router";
-import { createClientOptions, invocation } from "./helpers";
+} from "../../../src/service/model/policy/procedure-metadata";
+import { router } from "../../../src/service/router";
+import { createClientOptions, invocation } from "../../support/service/helpers";
 
 type Equal<Left, Right> =
   (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2

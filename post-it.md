@@ -6,6 +6,42 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Service Narrows Capability
+
+A service is one request-bounded capability suite. Its root declares the
+context, contract, and genuinely shared domain model that every contained
+branch descends from; it is not an orchestration plane over its modules.
+Modules own sealed subdomains, curate their exact context in `module.ts`, and
+author decisions and effects inside named oRPC procedure handlers. Their
+`router.ts` files compose completed `router/*.router.ts` leaves, and the service
+router composes completed module routers. Context and implementation move
+downward; completed operation trees move upward.
+
+The ownership test stays semantic. A reusable runtime capability with an
+acquisition lifecycle is a resource implemented by providers. A separately
+owned domain capability is a sibling service. Cross-service or durable
+orchestration belongs to a plugin or workflow. App code selects and realizes
+providers. None of those classifications is justified merely by a large
+context, shared TypeBox value, or convenient extraction. The lifecycle service
+remains one service while its modules change one coordinated release truth
+inside one request; provider destinations remain truthful external owners
+behind ready resources.
+
+Habitat now admits only that narrowing shape. Positive closed topology removes
+alternative destinations such as `common`, `shared`, `internal`, detached
+handlers, and service-root dependency catalogs. Source law guards the few
+directional edges structure alone cannot express. It does not micromanage
+ordinary collaboration inside a sealed module or build an alias-obfuscation
+detector. TypeBox owns structural data contracts, oRPC owns context and
+procedure composition, Effect owns execution and lifetime, and behavior tests
+own outcomes.
+
+### Bag Of Keywords
+
+service, request, capability, context, contract, model, module, router,
+handler, resource, provider, plugin, app, descend, compose, curate, own,
+close.
+
 ## 2026-07-30 - Graph Owns Selection
 
 The released Habitat package is a tool dependency, not repository authority.

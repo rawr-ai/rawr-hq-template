@@ -1,11 +1,11 @@
 import { getHiddenRouterContract } from "@orpc/server";
 import { describe, expect, it } from "vitest";
-import { contract } from "../src/service/contract";
-import { getTodoProcedureMetadata } from "../src/service/model/policy/procedure-metadata";
-import { contract as assignmentsContract } from "../src/service/modules/assignments/contract";
-import { contract as tagsContract } from "../src/service/modules/tags/contract";
-import { contract as tasksContract } from "../src/service/modules/tasks/contract";
-import { router } from "../src/service/router";
+import { contract } from "../../../src/service/contract";
+import { getTodoProcedureMetadata } from "../../../src/service/model/policy/procedure-metadata";
+import { contract as assignmentsContract } from "../../../src/service/modules/assignments/contract";
+import { contract as tagsContract } from "../../../src/service/modules/tags/contract";
+import { contract as tasksContract } from "../../../src/service/modules/tasks/contract";
+import { router } from "../../../src/service/router";
 
 function expectEffectiveProcedureMeta(
   meta: unknown,

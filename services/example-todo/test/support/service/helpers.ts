@@ -11,7 +11,7 @@ import {
   createEmbeddedInMemoryDbPoolAdapter,
   type EmbeddedInMemorySqlOptions,
 } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
-import type { CreateClientOptions, Deps, Invocation } from "../src/client";
+import type { CreateClientOptions, Deps, Invocation } from "../../../src/client";
 
 type DepsOptions = EmbeddedInMemorySqlOptions & {
   logs?: LogEntry[];

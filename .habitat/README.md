@@ -90,21 +90,22 @@ constructible document-kind topology.
 The `rawr/app-host` niche keeps the HQ application-to-server dependency
 directional: the declaration manifest stays cold, and only the app-owned
 server entrypoint crosses through the server's public host export.
-The port keeps Magic's source patterns byte-identical. Rule manifests adapt
-their niche (`magic` to `rawr`) and repository formatting; the strengthened
-consumer-sealing law is advisory while its shared owner-local relative-path
-case is corrected. Template otherwise adds only package metadata, module
-`AGENTS.md`, and API paths. RAWR adds one generic model distinction: optional
-closed `entities` directories own stable domain identity that survives
-attribute changes and participates in transitions. Persistence alone is
-insufficient. TypeBox owns canonical entity schemas and generated types; DTOs
-remain operation or boundary projections, while database schema remains
-physical mapping. Stores privately realize persistence and may map records
-into entities when the domain models continuing identity. There is no database
-DTO category, and entity declarations do not import those downstream owners.
-That structural destination remains advisory until the shared TypeBox and
-platform-neutral source laws cover entities; no production entity source moves
-before that shared law lands.
+The port preserves Magic's service-law lineage rather than claiming continuing
+byte identity. Template deliberately refines the module router face, package
+metadata, module `AGENTS.md`, API paths, and the qualified RAWR niche; those
+differences are owned and proved here instead of being described as upstream
+copies. The strengthened consumer-sealing law remains advisory while its
+owner-local relative-path case is corrected. RAWR also records one generic
+model distinction: optional closed `entities` directories own stable domain
+identity that survives attribute changes and participates in transitions.
+Persistence alone is insufficient. TypeBox owns canonical entity schemas and
+generated types; DTOs remain operation or boundary projections, while database
+schema remains physical mapping. Stores privately realize persistence and may
+map records into entities when the domain models continuing identity. There is
+no database DTO category, and entity declarations do not import those
+downstream owners. That structural destination remains advisory until the
+shared TypeBox and platform-neutral source laws cover entities; no production
+entity source moves before that shared law lands.
 
 Required module `contract/` and `router/` directories have distinct faces.
 `contract/` exposes `index.ts` plus semantic leaves. `router/` contains named

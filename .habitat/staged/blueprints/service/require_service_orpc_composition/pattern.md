@@ -79,6 +79,14 @@ predicate require_service_orpc_composition_is_root_router() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/router\.ts$"
 }
 
+// Admits the canonical bare object literal shared with router authorship.
+predicate require_service_orpc_composition_is_plain_router($value) {
+  $value <: object(),
+  not { $value <: contains call_expression() },
+  not { $value <: contains method_definition() },
+  not { $value <: contains arrow_function() }
+}
+
 // Proves that the implementation spine contains exactly one contract implementation.
 predicate require_service_orpc_composition_has_single_implement($body) {
   $calls = [],
@@ -148,7 +156,11 @@ or {
   },
   program(statements=$body) where {
     require_service_orpc_composition_is_module_router(),
-    not { $body <: contains `export const router = { $properties }` }
+    not {
+      $body <: contains `export const router = $value` where {
+        require_service_orpc_composition_is_plain_router(value=$value)
+      }
+    }
   },
   `$receiver.router($surface)` where {
     require_service_orpc_composition_is_module_router()
@@ -238,12 +250,29 @@ export const module = service.queue.use(provideCatalog);
 export const router = impl.catalog.router({ get });
 ```
 
+## Matches an asserted module router object
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import type { Router } from "./contract";
+import { get } from "./router/get.router";
+export const router = { get } as Router;
+```
+
 ## Matches a second private root router implementation
 
 ```typescript
 // @filename: services/jobs/src/service/router.ts
 export const router = impl.router({ catalog });
 const preview = impl.router({ catalog });
+```
+
+## Ignores a bare module router object
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import { get } from "./router/get.router";
+export const router = { get };
 ```
 
 ## Ignores one complete native lineage
