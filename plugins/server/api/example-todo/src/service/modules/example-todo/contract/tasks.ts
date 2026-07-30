@@ -8,7 +8,6 @@ import { contract as exampleTodoContract } from "@rawr/example-todo/client";
  * @behavior Preserve the domain schemas while adding HTTP route metadata.
  * @relation Forms the task branch of the Example Todo API module contract.
  */
-/** Task API contract group consumed by the module contract access face. */
 export const tasks = {
   create: oc
     .meta(
