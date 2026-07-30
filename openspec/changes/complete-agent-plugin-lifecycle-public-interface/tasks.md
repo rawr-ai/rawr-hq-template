@@ -1856,7 +1856,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   later split. Locate the observed fatness at the CLI host's eager concrete
   resource construction rather than weakening module curation or manufacturing
   sibling services.
-- [ ] 5.7e24 Correct the two concrete staged-law overreaches before corpus
+- [x] 5.7e24 Correct the two concrete staged-law overreaches before corpus
   migration. Let a router leaf retain private pure value builders that are not
   passed to `.handler(...)` or `.effect(...)`, while continuing to reject
   detached operation callables that displace router authorship. Make router
@@ -1866,6 +1866,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   construction laws staged, advisory, and baseline-free in this independently
   reviewed checkpoint; add no alias analysis, obfuscation defense, script, or
   generalized source framework.
+- [x] 5.7e25 Categorize Example Todo's existing proof without changing
+  production behavior. Move behavior, integration, contract mechanics,
+  database mechanics, compile-only context relations, and support into their
+  closed package-root destinations; preserve every assertion and update only
+  required relative imports plus the owning `AGENTS.md` route. Prove the owner
+  through uncached typecheck, all 34 behavior tests, Biome, and diff hygiene.
+  Add no proof framework, aggregate schema walker, source check, or production
+  helper.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

@@ -10,7 +10,9 @@ router composes the completed module routers.
 
 The oRPC handler is the operation authoring site. It receives the curated
 context and owns the transition directly rather than delegating to a parallel
-callable that reconstructs the request and dependencies.
+callable that reconstructs the request and dependencies. Leaf-local pure
+builders may prepare values for that inline handler without becoming a second
+operation author.
 
 ```grit
 language js(typescript)
@@ -126,26 +128,6 @@ predicate require_service_router_authorship_is_inline_handler($handler) {
   }
 }
 
-// Recognizes a top-level callable that displaces operation authorship.
-predicate require_service_router_authorship_is_detached_callable($statement) {
-  or {
-    $statement <: function_declaration(),
-    $statement <: generator_function_declaration(),
-    $statement <: `const $name = $handler` where {
-      require_service_router_authorship_is_inline_handler(handler=$handler)
-    },
-    $statement <: `const $name: $type = $handler` where {
-      require_service_router_authorship_is_inline_handler(handler=$handler)
-    },
-    $statement <: `export const $name = $handler` where {
-      require_service_router_authorship_is_inline_handler(handler=$handler)
-    },
-    $statement <: `export const $name: $type = $handler` where {
-      require_service_router_authorship_is_inline_handler(handler=$handler)
-    }
-  }
-}
-
 // Admits type-only imports and values from direct local named router leaves.
 predicate require_service_router_authorship_is_module_router_import($import, $source) {
   or {
@@ -157,20 +139,9 @@ predicate require_service_router_authorship_is_module_router_import($import, $so
   }
 }
 
-// Admits the finite TypeScript wrappers around a plain composition object.
+// Admits the canonical bare object literal shared with native oRPC composition.
 predicate require_service_router_authorship_is_plain_router($value) {
-  or {
-    $value <: object(),
-    $value <: `$object satisfies $type` where {
-      $object <: object()
-    },
-    $value <: `$object as const` where {
-      $object <: object()
-    },
-    $value <: `$object as $type` where {
-      $object <: object()
-    }
-  },
+  $value <: object(),
   not { $value <: contains call_expression() },
   not { $value <: contains method_definition() },
   not { $value <: contains arrow_function() }
@@ -186,9 +157,6 @@ predicate require_service_router_authorship_is_module_router_statement($statemen
       )
     },
     $statement <: `export const router = $value` where {
-      require_service_router_authorship_is_plain_router(value=$value)
-    },
-    $statement <: `export const router: $type = $value` where {
       require_service_router_authorship_is_plain_router(value=$value)
     }
   }
@@ -230,14 +198,6 @@ or {
   },
   `export default $value` where {
     require_service_router_authorship_is_named_router()
-  },
-  program(statements=$statements) where {
-    require_service_router_authorship_is_named_router(),
-    $statements <: some $statement where {
-      require_service_router_authorship_is_detached_callable(
-        statement=$statement
-      )
-    }
   },
   or {
     `$receiver.effect($handler)`,
@@ -292,6 +252,26 @@ export const read = { find, list };
 import { module } from "../module";
 const runSync = ({ context, input }) => context.catalog.sync(input);
 export const sync = module.sync.effect(runSync);
+```
+
+## Matches a detached native handler implementation
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { module } from "../module";
+const runFind = ({ context, input }) => context.catalog.find(input);
+export const find = module.find.handler(runFind);
+```
+
+## Ignores a leaf-local pure builder used by an inline handler
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+import { module } from "../module";
+const buildLookup = (input: { id: string }) => ({ id: input.id.trim() });
+export const find = module.find.effect(({ context, input }) =>
+  context.catalog.find(buildLookup(input)),
+);
 ```
 
 ## Matches operation authorship in a module composer
@@ -388,15 +368,23 @@ const packageOperation = module.package.effect(
 export { packageOperation as package };
 ```
 
-## Ignores a composition-only module router
+## Matches an asserted module router object
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router.ts
+import type { Router } from "./contract";
+import { read } from "./router/read.router";
+export const router = { read } as Router;
+```
+
+## Ignores a bare composition-only module router
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
 import { read } from "./router/read.router";
 import { package as packageOperation } from "./router/package.router";
-import type { Router } from "./contract";
 export const router = {
   ...read,
   package: packageOperation,
-} satisfies Router;
+};
 ```
