@@ -1536,11 +1536,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   behavior, and close every lifecycle diagnostic from the six staged service
   laws. Prove lifecycle type and behavior boundaries. Do not acquire a resource,
   move policy, or change public contracts in this checkpoint.
-- [ ] 5.7e21 Burn the same law through the remaining HQ Ops and embedded API
-  service modules, then close every remaining live standalone/API diagnostic
-  from all six staged service laws. Keep qualified guard, acquisition, and
-  enrichment middleware; remove only projection-only context assembly. Prove
-  each owner independently before claiming the admitted service corpus green.
+- [ ] 5.7e21 Burn the same law through the complete remaining standalone and
+  embedded-API service corpus. Categorize Example Todo proof, then migrate
+  ChatGPT Corpus, Dev, Hyperresearch Codex, HQ Ops, and Session Intelligence
+  one owner at a time. Remove false `common` and `shared` owners, give genuine
+  cross-module domain matter one service-model owner, move reusable acquired
+  runtime capabilities behind qualified resources and providers, and keep
+  operation sequencing inside named oRPC router handlers. Preserve qualified
+  guard, acquisition, and enrichment middleware. Prove each owner independently
+  before claiming the admitted service corpus green; add no compatibility
+  face, baseline, manual scanner, sibling service, or second orchestration
+  plane merely to satisfy topology.
 - [x] 5.7e21a Curate HQ Ops config, journal, and security route context from the
   inherited resource and repository-scope lanes. Keep observability and
   analytics ordering unchanged, preserve exact resource identity, and make
@@ -1830,24 +1836,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   predecessor paths and one-use helpers without aliases. Add no generalized
   rule, resource, provider, middleware, compatibility face, Personal,
   live-state, or second operation path.
-- [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
-  distributable to Template, replace the interim hand-maintained
-  `check:policy:local` and `check:structure` CLI leaves with that execution
-  boundary. No such distributable boundary is installed by task 1.5l. Let its
-  registry discovery and owner-local inferred targets own inputs, caching, and
-  one Habitat acquisition. Add no local SDK fork, manifest generator, wrapper,
-  raw Grit invocation, or alternate runner. Only after tasks 5.7e19 through
-  5.7e21 are green, task 5.7e2 proves the complete six-law live corpus, and this
-  future execution boundary is installed, promote the staged service topology,
-  anchor, isolation, context, composition, and router authorship laws to
-  enforced and include them in the required repository gate.
-  Civ7 release `habitat-cli-v0.1.0` now supplies the distributable
-  `@habitat/cli` package. The landed Template consumer pins that package by
-  immutable release URL and lockfile integrity, installs its Nx
-  plugin, deletes the interim provisioner and hand-maintained selectors, and
-  keeps unfinished service laws outside the active registry. This task remains
-  open until the six-law lifecycle corpus is activated, burned to zero, and
-  enforced through the installed graph.
+- [ ] 5.7e22 Activate the six closed service-construction laws through the
+  installed Habitat Nx boundary after tasks 5.7e19 through 5.7e21 and 5.7e24
+  are green and task 5.7e2 proves the complete live corpus. Move topology,
+  anchor, isolation, context, composition, and router-authorship packets into
+  the enforced registry together, retain empty baselines, and let inferred
+  owner-local targets own inputs, caching, and one Habitat acquisition. The
+  landed Template consumer already pins the distributable
+  `@habitat/cli` package by immutable release URL and lockfile integrity,
+  installs its Nx plugin, and has deleted the interim provisioner and
+  hand-maintained selectors. Add no local SDK fork, manifest generator,
+  wrapper, raw Grit invocation, alternate runner, path exception, or partial
+  activation. Close this task only when the six laws are enforced by the
+  required repository gate and the complete admitted corpus reports zero.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
@@ -1855,6 +1856,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   later split. Locate the observed fatness at the CLI host's eager concrete
   resource construction rather than weakening module curation or manufacturing
   sibling services.
+- [ ] 5.7e24 Correct the two concrete staged-law overreaches before corpus
+  migration. Let a router leaf retain private pure value builders that are not
+  passed to `.handler(...)` or `.effect(...)`, while continuing to reject
+  detached operation callables that displace router authorship. Make router
+  composition accept one canonical plain-object form and reject arbitrary type
+  assertions consistently across the authorship and oRPC-composition packets.
+  Prove both admitted and rejected forms in the packet fixtures. Keep all six
+  construction laws staged, advisory, and baseline-free in this independently
+  reviewed checkpoint; add no alias analysis, obfuscation defense, script, or
+  generalized source framework.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
