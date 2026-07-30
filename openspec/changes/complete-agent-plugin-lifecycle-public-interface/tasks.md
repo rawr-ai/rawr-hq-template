@@ -1899,6 +1899,33 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   the intentionally unfinished module-isolation, oRPC-composition, and
   router-authorship counts remain unchanged at 12, 8, and 9. This checkpoint
   does not activate any staged law or claim the Dev service corpus is green.
+- [x] 5.7e28 Delete Dev's false `common` owner and redundant public source
+  facades without changing operation behavior. Give shared operation outcomes,
+  scratch-policy data, and host capability ports direct service-model owners;
+  give Repo, Stack, and Worktree requests and results their module-local DTO
+  owners; and place shared Git parsing, command execution, operation-outcome
+  policy, and scratch admission in qualified service-model leaves. Keep
+  Stack convergence and Repo branch naming local to their modules. Add the
+  private `#dev-service/*` import boundary so module code reaches genuinely
+  shared service-model values without a relative module escape. Replace the
+  top-level `index.ts`, `router.ts`, and `types.ts` facades plus the
+  `./types`, `./resources`, `./router`, and `./service/contract` package
+  subpaths plus the root alias with one `./client` package export that exposes
+  the native client, declarative contract, and the exact existing public DTO
+  and host-port type names. The removed router value and package paths are an
+  intentional pre-1.0 boundary narrowing; repo-wide search finds no remaining
+  consumer, and no compatibility alias is added. Update Dev Node and the
+  DevOps plugin to consume the qualified client export while preserving every
+  host-port member and signature exactly. Add compile-only proof that all 28
+  retained non-router public type names resolve through `./client` while the
+  root and four retired subpaths remain unreachable, and prove invalid input
+  is rejected through the public client before any host capability runs. Prove Dev
+  typecheck and all 11 behavior tests, Dev Node typecheck and all three adapter
+  tests, and DevOps plugin typecheck and all five command tests. The staged
+  anchor, context, isolation, and public-consumer laws report zero Dev
+  findings; the intentionally unfinished oRPC-composition and
+  router-authorship counts remain eight and nine until operation leaves move
+  in the next checkpoint.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

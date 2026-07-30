@@ -1,13 +1,12 @@
 import { getProcedureMetadata } from "@rawr/hq-sdk";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
-import { createClient } from "../src/client";
-import { router } from "../src/router";
+import { contract, createClient } from "../src/client";
 import {
   RepoSyncUpstreamInputSchema,
   RepoSyncUpstreamResultSchema,
-} from "../src/service/common/entities";
-import { contract } from "../src/service/contract";
+} from "../src/service/modules/repo/model/dto/repo-operations.dto";
+import { router } from "../src/service/router";
 import { createClientOptions, createFakeResources } from "./helpers";
 
 const cleanStatus = "## agent/devops...origin/agent/devops\n";
@@ -54,9 +53,20 @@ describe("@rawr/dev service shell", () => {
     });
   });
 
-  it("keeps retired repo inspection fields outside the public schemas", () => {
+  it("keeps retired repo inspection fields outside the public contract", async () => {
     expect(Value.Check(RepoSyncUpstreamInputSchema, {})).toBe(true);
     expect(Value.Check(RepoSyncUpstreamInputSchema, { inspectAfter: true })).toBe(false);
+
+    const { resources, calls } = createFakeResources();
+    const client = createClient(createClientOptions({ resources }));
+    await expect(
+      client.repo.syncUpstream(
+        // @ts-expect-error The retired inspection field is absent from the public contract.
+        { inspectAfter: true },
+        { context: { invocation: { traceId: "test.repo.invalid-input" } } }
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(calls).toEqual([]);
   });
 });
 

@@ -1,16 +1,15 @@
+import { execStep, execText } from "#dev-service/model/helpers/command-execution";
+import { parseGitStatus } from "#dev-service/model/helpers/git-output";
 import {
-  execStep,
-  execText,
   execution,
   executionIssueFromStep,
   issue,
-  parseGitStatus,
   planned,
   preflight,
-  stackLooksConverged,
   warning,
-} from "../../common/helpers";
-import { checkScratchPolicy } from "../scratch-policy/helpers";
+} from "#dev-service/model/policy/operation-outcomes";
+import { checkScratchPolicy } from "#dev-service/model/policy/scratch-policy";
+import { stackLooksConverged } from "./model/policy/stack-convergence";
 import { module } from "./module";
 
 const doctor = module.doctor.handler(async ({ context, input }) => {

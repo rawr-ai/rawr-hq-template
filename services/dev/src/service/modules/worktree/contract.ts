@@ -1,7 +1,10 @@
 import { oc } from "@orpc/contract";
 import { procedureMetadata } from "@rawr/hq-sdk";
 import { standard } from "@rawr/typebox-adapter";
-import { WorktreeCleanupInputSchema, WorktreeCleanupResultSchema } from "../../common/entities";
+import {
+  WorktreeCleanupInputSchema,
+  WorktreeCleanupResultSchema,
+} from "./model/dto/worktree-operations.dto";
 
 export const contract = {
   cleanup: oc

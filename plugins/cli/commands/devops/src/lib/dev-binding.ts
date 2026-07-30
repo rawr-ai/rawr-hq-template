@@ -1,4 +1,4 @@
-import { type Client, type CreateClientOptions, createClient } from "@rawr/dev";
+import { type Client, type CreateClientOptions, createClient } from "@rawr/dev/client";
 import { createNodeDevResources } from "@rawr/dev-node/resources";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";

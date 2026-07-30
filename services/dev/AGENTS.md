@@ -34,9 +34,10 @@
 
 ## Flow
 
-- A host binds development resources; the public router selects the stack,
-  repository, worktree, or scratch-policy module; that module inspects or
-  performs the requested operation and returns structured results.
+- A host binds development resources through the public client; the private
+  service router selects the stack, repository, worktree, or scratch-policy
+  module; that module performs the requested operation and returns structured
+  results.
 
 ## Interfaces
 
@@ -46,8 +47,9 @@
 ## Routing
 
 - [Repository router](../../AGENTS.md)
+- [Public service client](src/client.ts)
 - [Public service contract](src/service/contract.ts)
-- [Host resource contracts](src/service/common/resources.ts)
+- [Host capability ports](src/service/model/ports/dev-resources.ts)
 
 ## Validation
 
