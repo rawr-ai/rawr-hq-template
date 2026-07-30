@@ -281,6 +281,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   exact root scheduler and shared lint-edge contract as a Habitat Grit law.
   Keep topology and source relationships in `structure.toml` and `pattern.md`
   respectively.
+- [x] 1.6c7d Keep the complete `build,check,test` admission graph while
+  serializing only the six package-inferred Habitat owner batches through
+  filtered Nx target defaults. Preserve every inferred target's native
+  dependencies, caching, and parallel eligibility; let all unrelated build,
+  lint, typecheck, test, manifest, and acceptance work continue in parallel.
+  Run the protected job on standard Linux after the portable package removes
+  the retired Darwin-only runtime requirement. Add no lock, retry, wrapper,
+  alternate policy runner, Habitat SDK fork, or weakened admission command.
+  Accept that directly running a later owner batch schedules its lane
+  predecessors; the edges express a bounded execution constraint, not subject
+  ownership.
 - [x] 1.6c8 Govern `#<owner>-service/*` and `#<owner>-api/*` through Habitat.
   Require each package import map to target its own `src/service` interior and
   use Grit source law to reject outside-owner, foreign-owner, cross-kind, and
@@ -1831,8 +1842,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   anchor, isolation, context, composition, and router authorship laws to
   enforced and include them in the required repository gate.
   Civ7 release `habitat-cli-v0.1.0` now supplies the distributable
-  `@habitat/cli` package. The current Template consumer candidate pins that
-  package by immutable release URL and lockfile integrity, installs its Nx
+  `@habitat/cli` package. The landed Template consumer pins that package by
+  immutable release URL and lockfile integrity, installs its Nx
   plugin, deletes the interim provisioner and hand-maintained selectors, and
   keeps unfinished service laws outside the active registry. This task remains
   open until the six-law lifecycle corpus is activated, burned to zero, and

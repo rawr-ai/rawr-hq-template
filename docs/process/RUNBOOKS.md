@@ -46,7 +46,9 @@ fallbacks.
 
 ## Required Repository Check
 
-- Local pre-push feedback and remote CI both run `bun run check`.
+- Local pre-push feedback runs `bun run check`. Protected remote CI runs
+  `bun run ci`, one Nx invocation over the complete `build`, `check`, and
+  `test` graph.
 - The root command starts one Nx `check` scheduler graph over every admitted non-root
   project. Shared defaults connect each plain public check to one
   workspace-owned `habitat:lint`, project-owned typecheck, optional owner
@@ -59,7 +61,8 @@ fallbacks.
   owner graph.
 - Habitat targets are cacheable only when their Nx inputs cover every
   Git-visible tree the rule inspects. Domain behavior tests remain explicit
-  owner verification. See [[NX_AGENT_WORKFLOW]].
+  owner `test` targets and enter protected admission through the root `ci`
+  graph. See [[NX_AGENT_WORKFLOW]].
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through the
   exact Civ7-owned `@habitat/cli` package. The SDK source is not vendored here.
 - Every current non-root project owns a public check. The installed Habitat Nx
@@ -74,7 +77,8 @@ fallbacks.
   [[NX_AGENT_WORKFLOW#Target Vocabulary]].
 - The `Repository Ratchet` workflow publishes the job context
   `Required lint, typecheck, and topology` for pull requests, merge groups, and
-  pushes to `main`.
+  pushes to `main`. That stable legacy context name is branch-protection
+  identity; the admitted graph also includes builds and behavior tests.
 - Protected `main` must require that exact context. Remote branch protection,
   not the bypassable local hook, is merge authority.
 
