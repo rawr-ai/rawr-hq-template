@@ -1,6 +1,10 @@
 import type { CanonicalJsonValue } from "../dto/canonical-json";
 import { MAX_CANONICAL_ID_BYTES } from "../dto/release-identity";
-import { MAX_PROVENANCE_BINDINGS, type ProvenanceBinding } from "../dto/release-input";
+import {
+  MAX_PROVENANCE_BINDINGS,
+  type ProvenanceBinding,
+  ProvenanceBindingSchema,
+} from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { parseContentDigest } from "./release-digest";
@@ -8,7 +12,7 @@ import { parseOwnershipIdentity } from "./release-identity";
 import { releaseIssue } from "./release-issue";
 import { collectReleaseResult } from "./release-result";
 import {
-  admitClosedRecordForTraversal,
+  admitTypeBoxRecordForTraversal,
   parseBoundedArray,
   parseCanonicalString,
 } from "./release-value-admission";
@@ -28,17 +32,13 @@ export function parseProvenanceBindings(
   const values = parseBoundedArray(input, path, MAX_PROVENANCE_BINDINGS, issues);
   if (values === undefined) return undefined;
   const bindings: ProvenanceBinding[] = [];
+  let structurallyComplete = true;
   values.forEach((candidate, index) => {
     const bindingPath = `${path}[${index}]`;
-    if (
-      !admitClosedRecordForTraversal(
-        candidate,
-        ["contentDigest", "id", "protocol"],
-        bindingPath,
-        issues
-      )
-    )
+    if (!admitTypeBoxRecordForTraversal(ProvenanceBindingSchema, candidate, bindingPath, issues)) {
+      structurallyComplete = false;
       return;
+    }
     const id = collectReleaseResult(
       parseOwnershipIdentity(candidate.id, `${bindingPath}.id`),
       issues
@@ -67,6 +67,7 @@ export function parseProvenanceBindings(
       );
     }
   }
+  if (!structurallyComplete) return undefined;
   return Object.freeze(bindings);
 }
 

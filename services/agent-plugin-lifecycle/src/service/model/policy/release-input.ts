@@ -12,6 +12,7 @@ import {
   type ReleaseInputEnvelope,
   ReleaseInputEnvelopeSchema,
   type ReleaseMemberDeclaration,
+  ReleaseMemberDeclarationSchema,
 } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
@@ -31,7 +32,7 @@ import {
 } from "./release-input-codec";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
-import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
+import { admitTypeBoxRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
 /**
  * Admits one reviewed release-input body and derives its immutable identity.
@@ -77,14 +78,7 @@ export function verifyAgentPluginReleaseInput(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["body", "releaseInputDigest", "schemaVersion"],
-      "releaseInput",
-      issues
-    )
-  ) {
+  if (!admitTypeBoxRecordForTraversal(ReleaseInputEnvelopeSchema, input, "releaseInput", issues)) {
     return failure([
       issues[0] ??
         releaseIssue("EXPECTED_OBJECT", "releaseInput", "Release input must be an object"),
@@ -217,21 +211,7 @@ function parseReleaseInputBody(
   ReleaseIssue
 > {
   const issues: ReleaseIssue[] = [];
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      [
-        "contentAuthority",
-        "locks",
-        "members",
-        "ownershipClaims",
-        "qualityPolicies",
-        "schemaVersion",
-      ],
-      path,
-      issues
-    )
-  ) {
+  if (!admitTypeBoxRecordForTraversal(ReleaseInputBodySchema, input, path, issues)) {
     return failure([
       issues[0] ?? releaseIssue("EXPECTED_OBJECT", path, "Release-input body must be an object"),
     ]);
@@ -327,17 +307,15 @@ function parseMembers(
   const values = parseBoundedArray(input, path, MAX_RELEASE_MEMBERS, issues);
   if (values === undefined) return undefined;
   const members: ReleaseMemberDeclaration[] = [];
+  let structurallyComplete = true;
   values.forEach((candidate, index) => {
     const memberPath = `${path}[${index}]`;
     if (
-      !admitClosedRecordForTraversal(
-        candidate,
-        ["curation", "kind", "pluginId", "vendor"],
-        memberPath,
-        issues
-      )
-    )
+      !admitTypeBoxRecordForTraversal(ReleaseMemberDeclarationSchema, candidate, memberPath, issues)
+    ) {
+      structurallyComplete = false;
       return;
+    }
     const kind = parseUnitKind(candidate.kind, `${memberPath}.kind`, issues);
     const pluginId = collectReleaseResult(
       parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
@@ -345,6 +323,7 @@ function parseMembers(
     );
     const vendor = parseProvenanceBindings(candidate.vendor, `${memberPath}.vendor`, issues);
     const curation = parseProvenanceBindings(candidate.curation, `${memberPath}.curation`, issues);
+    if (vendor === undefined || curation === undefined) structurallyComplete = false;
     if (
       kind === "agent-plugin" &&
       pluginId !== undefined &&
@@ -360,6 +339,7 @@ function parseMembers(
     path,
     issues
   );
+  if (!structurallyComplete) return undefined;
   if (members.length === 0) {
     issues.push(
       releaseIssue(

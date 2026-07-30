@@ -688,6 +688,28 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   excluded-tail bounds without adding a nested TypeBox error walker, proxy
   hardening, or caller implementation change. This checkpoint does not claim
   task 5.3 complete.
+- [x] 5.3e Delete the provenance-binding and release-input families' four
+  remaining manual closed-record field arrays. Let
+  `ProvenanceBindingSchema`, `ReleaseInputEnvelopeSchema`,
+  `ReleaseInputBodySchema`, and `ReleaseMemberDeclarationSchema` own exact
+  aggregate membership through the existing root-only TypeBox admission
+  adapter. Preserve one aggregate-path `UNKNOWN_FIELD` diagnostic for missing
+  or extra membership and the established `EXPECTED_OBJECT` result for
+  non-objects; exact-shape primitive-invalid values must retain their existing
+  diagnostics and order. Treat structurally refused provenance children as
+  incomplete provenance collections, and propagate an undefined or non-array
+  nested `vendor` or `curation` collection into member-collection
+  incompleteness so ownership-index derivation, release-input digest
+  comparison, and the derived zero-member diagnostic do not run against
+  partial projections.
+  Preserve every array ceiling before child admission, canonical ordering,
+  duplicate refusal, ownership-index derivation, bytes and digests,
+  reconstruction, defensive freezing, and post-reconstruction TypeBox checks.
+  Prove direct provenance policy, release-input construction and verification,
+  release-input-record projection, canonical release-input behavior, and the
+  existing individual-release regression without adding a schema, mapper,
+  walker, parser framework, or caller implementation change. This checkpoint
+  does not claim task 5.3 complete.
 - [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.
