@@ -3882,6 +3882,23 @@ retired custom distribution, and the Habitat-only structural policy boundary.
 Required canonical-main push run `30477436378` passed. This closes
 [[tasks#3. Conventional CLI Package And Release|task 3.6a]].
 
+The release publisher now has the same acceptance boundary as the product
+record. Every inferred `nx-release-publish` task depends through Nx on the
+single `@rawr/cli:acceptance:oclif-installed-package` and
+`@rawr/cli:acceptance:oclif-native-plugins` tasks. Nx deduplicates those
+cross-project predecessors across the fixed nineteen-package group, so no
+publisher can begin before the ordinary packed installation and native Oclif
+extension round trip pass. This is one task-graph relation at the workspace
+owner, not a wrapper, phase gate, script, registry emulator, or alternate
+release path.
+
+The generated Nx task graph contains 48 tasks and 162 dependency edges. All
+nineteen publishers have both acceptance tasks as direct predecessors. An
+uncached `nx release publish --dry-run` then ran the two acceptances once,
+published nothing, and completed all nineteen dry-run publishers plus their 29
+predecessor tasks in 55.9 seconds. Standing Nx-architecture and behavior-first
+reviews accepted the boundary with no P0, P1, or P2 finding.
+
 Task 3.7 remains a real release operation rather than another implementation
 slice. The npm registry currently reports no authenticated operator and
 `@rawr/cli@0.1.0` is not published. No repository publish workflow or npm token

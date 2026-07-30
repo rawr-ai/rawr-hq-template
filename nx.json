@@ -74,7 +74,18 @@
       "outputs": ["{projectRoot}/oclif.manifest.json"]
     },
     "nx-release-publish": {
-      "dependsOn": ["build", "manifest"]
+      "dependsOn": [
+        "build",
+        "manifest",
+        {
+          "projects": ["@rawr/cli"],
+          "target": "acceptance:oclif-installed-package"
+        },
+        {
+          "projects": ["@rawr/cli"],
+          "target": "acceptance:oclif-native-plugins"
+        }
+      ]
     },
     "typecheck": {
       "cache": true,
