@@ -1885,6 +1885,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Prove the packet examples, the enforced owner-local rule, the complete
   Habitat policy owner, and strict OpenSpec validation. Add no runner, wrapper,
   retry, lock, baseline, SDK fork, or Nx scheduling exception.
+- [x] 5.7e27 Move the Dev service's procedure-metadata defaults out of the
+  root contract and into its service-wide `model/policy` owner. Make the
+  contract and root middleware consume that policy directly, leaving
+  `contract.ts` as the sole contract anchor. Remove the accidental
+  `metadataDefaults` named export from the public contract path rather than
+  preserving a compatibility alias; the pre-1.0 public contract anchor remains
+  `contract`. Preserve the exact readonly metadata literals while proving
+  inherited service metadata and operation-specific overrides through the
+  public contract without moving any router, resource, schema, or behavior.
+  The uncached Dev suite passes 11 tests and source typecheck; touched-file
+  Biome passes. The staged anchor and context laws report zero findings, while
+  the intentionally unfinished module-isolation, oRPC-composition, and
+  router-authorship counts remain unchanged at 12, 8, and 9. This checkpoint
+  does not activate any staged law or claim the Dev service corpus is green.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
