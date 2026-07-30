@@ -56,9 +56,9 @@ This file is the repository authority boundary. `RAWR HQ-Template` and personal
   installer, never a Template or Personal checkout or private release selector.
 - Personal checks may invoke an externally installed Template-owned tool at an
   exact interface version. Personal does not vendor that tool.
-- Until the fixed Nx Release package group lands, Template development uses
-  `bun run rawr -- ...`; that source command is not a cross-repository release
-  interface.
+- Until public registry publication and registry-installed smoke complete,
+  Template development uses `bun run rawr -- ...`; that source command is not a
+  cross-repository release interface.
 
 ## Repository Separation Rule (Hard)
 

@@ -26,8 +26,16 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 
 - External Oclif extensions: `rawr plugins ...`
 - Curated agent-plugin lifecycle: `rawr agent plugins ...`
-- Agent-plugin authoring ends at source and review. Build, test, export, provider
-  convergence, retirement, and undo are separate explicit lifecycle operations.
+- Personal owns agent-plugin source, provenance, policy/evaluation inputs, and
+  governed release, acceptance, and channel records. Reviewed `current-main`
+  selects the exact Git and release-input identity for the canonical channel.
+- The Template lifecycle verifies that selection, derives the closed release set
+  in memory, and delegates provider `status`, `test`, and `sync` to native
+  commands. Test callers own the explicit disposable root and provider homes;
+  the service owns only its scoped projection child.
+- Creation, packaging, vendor updates, and destination export remain qualified
+  adjacent capabilities. They do not select a channel or create build,
+  promotion, retirement, undo, or persistent local lifecycle authority.
 - CLI development uses repository-local Nx targets and `bun run rawr -- ...`.
   The fixed Nx Release group and packed-install acceptance are landed. Ordinary
   package installation becomes the operational path after public registry

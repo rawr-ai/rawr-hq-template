@@ -44,10 +44,13 @@ replace any interface field above.
 ## Template Publication
 
 1. Implement and verify the generic behavior in Template.
-2. Publish the versioned schema/protocol and ordinary Oclif CLI package through
-   the fixed Nx Release group once that group is available.
-3. Record its package version, package integrity, and compatibility declaration.
-4. Land through Template's own Graphite stack and canonical `main`.
+2. Land through Template's own Graphite stack and canonical `main`; the required
+   repository gate must pass on the exact release source.
+3. Publish the versioned schema/protocol and ordinary Oclif CLI package through
+   the fixed Nx Release group.
+4. Repeat the version, help, and command-inventory smoke from a
+   registry-installed disposable prefix, then record the package version,
+   integrity, and compatibility declaration.
 
 No personal checkout participates in CLI build, packaging, or release identity.
 
@@ -89,6 +92,8 @@ for validating a personal interface version, but it is never merged into persona
 A personal content release may become input data to Template tooling, but personal
 source is never imported as executable CLI code.
 
-Until the fixed Nx Release package group is active, cross-repository
-installed-package settlement is pending. Template development uses
-`bun run rawr -- ...`; the obsolete predecessor distribution is not an interface.
+The fixed Nx Release package group and packed-install acceptance are active.
+Registry-installed cross-repository settlement remains pending public package
+publication and the registry-installed smoke. Until then Template development
+uses `bun run rawr -- ...`; the obsolete predecessor distribution is not an
+interface.
