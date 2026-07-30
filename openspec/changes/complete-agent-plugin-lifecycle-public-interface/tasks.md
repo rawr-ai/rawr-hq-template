@@ -661,18 +661,21 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   retaining exact object diagnostics and all selection bounds, copying,
   freezing, ordering, and cross-field policy. This checkpoint does not claim
   task 5.3 complete.
-- [ ] 5.4 Seed the native Effect-oRPC root once with the complete ready host
+- [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.
-  Let documented module middleware contribute owner-specific capabilities and
-  attach it to the matching branch through inferred `.use(middleware)`
-  composition. Native oRPC context merging is additive: do not claim that
-  `.use<Context>` removes inherited lanes or introduce shadow context types,
-  adapters, or witnesses. Remove broad operation dependency access through
-  owner-local resource ports and direct handler authorship; do not replace it
-  with a source-spelling blacklist. Keep filesystem/process Effect programs
-  inside their owning resources and expose only ready capabilities into
-  operation context.
+  Let documented module middleware contribute qualified acquisition, guard, or
+  enrichment capabilities and attach it to the matching branch through native
+  `.use(middleware)` composition when needed. Terminal route-context curation
+  belongs directly in `module.ts`, not in projection-only middleware. Native
+  oRPC context merging is additive: do not claim that `.use<Context>` removes
+  inherited lanes or introduce shadow context types, adapters, or witnesses.
+  Remove broad operation dependency access through owner-local resource ports
+  and direct handler authorship; do not replace it with a source-spelling
+  blacklist. Keep filesystem/process Effect programs inside their owning
+  resources and expose only ready capabilities into operation context. Tasks
+  5.4a-i establish the ready resources and handler boundaries; tasks 5.7e20,
+  5.7e21w, 5.7e21x, and 5.7e21y-z3 establish the final context and router shape.
 - [x] 5.4a Delete the content-workspace Promise mirror and detached production
   runner. Let the concrete Git/Effect Platform provider bind its exact
   filesystem layer once and expose one ready

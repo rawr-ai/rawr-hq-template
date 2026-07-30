@@ -3065,6 +3065,36 @@ build prerequisites: all 377 tests pass in 1 minute 26 seconds with the cache
 intentionally disabled. This checkpoint changes no provider home, Personal
 repository, Oclif surface, or live lifecycle state.
 
+## Lifecycle Context Funnel Closure
+
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|Task 5.4]] is complete through
+its owner-specific resource checkpoints and the later sealed-service burn-down.
+The service base declares the complete `deps`, `scope`, `config`, `invocation`,
+and `provided` context once and owns the sole native middleware author. The
+native Effect-oRPC implementer attaches root middleware once; the plain root
+router only composes completed module routers and cannot replay that middleware.
+Client construction fixes host dependencies, scope, and configuration, then
+creates fresh invocation context and empty provided context for each call.
+
+Governance, Packaging, Providers, Releases, and Vendors each derive their branch
+from the service implementer and terminally curate only the vocabulary authored
+by their route handlers. Qualified acquisition, guard, and enrichment
+middleware remains available where behavior needs it; projection-only
+middleware is retired. Every operation is authored directly as an Effect-oRPC
+handler. Ready filesystem, Git, package-output, and native-provider Effects
+remain resource-owned. The provider-test marketplace is scoped, and its
+temporary tree closes before the operation returns.
+
+The lifecycle owner typecheck and test-typecheck prerequisites pass. Focused
+service-spine and Effect-oRPC admission pass 2 files and 4 tests, Habitat lint
+passes, and standing architecture/oRPC review reports no shadow context,
+detached runner, duplicate implementer, platform acquisition, or handler
+indirection. This ledger closure changes no runtime source, provider state,
+Personal repository, or public result. See
+[[service-domain-frame#Request And Context Flow|the context flow]],
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|the task ledger]], and
+[[authority-amendment#Positive Architecture Ratchet|the architecture ratchet]].
+
 ## HQ Ops Module Context Curation
 
 The bounded HQ Ops checkpoint completes
