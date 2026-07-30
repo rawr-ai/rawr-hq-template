@@ -13,6 +13,7 @@ import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   parseContentAuthority,
+  parseCurrentMainRecordInput,
   parseGitCommitId,
   parseGitTreeId,
   parsePluginId,
@@ -44,6 +45,7 @@ void constructLifecycleClient;
 void MAX_RELEASE_INPUT_ENVELOPE_BYTES;
 void MAX_RELEASE_MEMBERS;
 void parseContentAuthority;
+void parseCurrentMainRecordInput;
 void parseGitCommitId;
 void parseGitTreeId;
 void parsePluginId;
@@ -69,6 +71,24 @@ void retiredReleaseSurface;
 void retiredTypesSurface;
 
 type LifecycleDeps = CreateClientOptions["deps"];
+
+declare const lifecycleDeps: LifecycleDeps;
+
+const extraScopeIsRejected: CreateClientOptions = {
+  deps: lifecycleDeps,
+  // @ts-expect-error Lifecycle scope is an exact empty context lane.
+  scope: { repository: "unexpected" },
+  config: {},
+};
+void extraScopeIsRejected;
+
+const extraConfigIsRejected: CreateClientOptions = {
+  deps: lifecycleDeps,
+  scope: {},
+  // @ts-expect-error Lifecycle config is an exact empty context lane.
+  config: { retries: 1 },
+};
+void extraConfigIsRejected;
 
 type ProviderCurrentMainIsAbsent = "providerCurrentMain" extends keyof LifecycleDeps ? never : true;
 const providerCurrentMainIsAbsent: ProviderCurrentMainIsAbsent = true;
