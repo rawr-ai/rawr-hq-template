@@ -29,13 +29,18 @@
 
 ## Flow
 
-- The caller requests diagnosis or drain for a repository; the module gathers
-  Graphite state, builds a plan, and either returns it or runs each admitted
+- The service contract routes `doctor` or `drain` into this module. `module.ts`
+  narrows the service context once; each router leaf authors its operation
+  against that curated context; module-root `router.ts` composes the leaves
+  without completing another oRPC router.
+- Diagnosis gathers Git, Graphite, and worktree observations. Drain evaluates
+  scratch admission, builds a plan, and either returns it or runs each admitted
   step in sequence.
 
 ## Interfaces
 
-- `doctor` and `drain` are the service operations. Their handlers author
+- `contract/doctor.ts` and `contract/drain.ts` declare the two service
+  operations. Their matching `router/*.router.ts` leaves author behavior
   against the workspace root, process resource, and service-owned scratch
   policy checker curated by the module; structured reports are the caller
   result. Root construction lanes remain service-internal and are not an

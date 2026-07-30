@@ -4812,6 +4812,51 @@ Like the preceding Dev checkpoints, this landed boundary is independently
 usable but is not the production compiler, bootgraph, or runtime-provider
 checkpoint awaited by the separate research service.
 
+## Dev Stack Router Authority
+
+The final bounded Dev topology checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e34]] closes the
+Stack module without widening the service. Stack now declares diagnosis and
+drain through `contract/doctor.ts` and `contract/drain.ts`, retains terminal
+context curation in `module.ts`, authors each operation in its matching
+`router/*.router.ts` leaf, and composes those leaves through module-root
+`router.ts`.
+
+The module composer is a plain object. It no longer calls
+`module.router(...)`, so root `impl.router(...)` is the only native router
+completion on the `stack.doctor` and `stack.drain` lineages. Before the
+correction, one healthy diagnosis, one dry drain plan, and one thrown
+scratch-admission failure each emitted two analytics entries and two lifecycle
+logs. Each now emits exactly one of each while preserving the original thrown
+failure identity and zero process calls before failed scratch admission.
+
+The public operation keys, TypeBox schemas, metadata, result shapes, Stack
+policy, module context, public client, and service-root composition remain
+unchanged. Focused proof also pins healthy diagnosis observations, exact dry
+plan command order, TypeBox-valid results, and the absence of mutating
+Graphite commands during planning. This checkpoint adds no resource, provider,
+Effect boundary, compatibility path, or runtime owner.
+
+Uncached source typecheck and all 20 Dev behavior tests pass. All 33 active
+Habitat rules and the staged-file gate pass. Direct candidate-law probes report
+no Stack finding for the spine, anchor, context, isolation, composition, and
+authorship boundaries; the wider service corpus remains staged and is not
+claimed green by this module checkpoint. Strict OpenSpec, focused Biome, and
+diff hygiene pass. Standing architecture/oRPC, TypeScript/structural, and
+behavior-first testing reviews report no P0-P2.
+
+Review identified a separate pre-existing observation-authority defect:
+unreadable initial Git status does not yet block an applied drain, and an
+unreadable closing Graphite observation can be mistaken for convergence.
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e35]] owns that
+behavioral correction after this topology checkpoint lands; it is not hidden
+inside a file move.
+
+Like the preceding Dev checkpoints, this boundary contributes no app/profile
+provider selection, compiler coverage, runtime acquisition/finalization, or
+production host binding. It is not the runtime-provisioning checkpoint awaited
+by the separate research service.
+
 ## Settlement Oracles
 
 The final product must prove:

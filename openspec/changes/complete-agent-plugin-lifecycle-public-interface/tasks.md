@@ -2042,6 +2042,36 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   lineage. Strict OpenSpec, focused Biome, and diff hygiene pass. Standing
   architecture/oRPC, TypeScript/structural, and behavior-first testing reviews
   report no P0-P2 after the ordered-tail proof correction.
+- [x] 5.7e34 Close the Dev Stack module through two contract leaves and two
+  operation router leaves. Replace the flat module contract with
+  `contract/doctor.ts`, `contract/drain.ts`, and `contract/index.ts`; retain
+  terminal context curation in `module.ts`; author diagnosis and drain behavior
+  in their matching `router/*.router.ts` leaves; and make module-root
+  `router.ts` a plain-object composer. Remove `module.router(...)` so root
+  `impl.router(...)` is the only native router completion on both Stack
+  lineages and inherited observability and analytics execute exactly once.
+  Preserve public keys, TypeBox schemas, metadata, diagnosis and drain results,
+  dry-run nonmutation, stopped execution, thrown failure identity, public
+  client, module policy, and service-root composition. Add behavior proof for
+  one healthy diagnosis, one dry drain plan, and one thrown scratch-admission
+  failure with exact resource-call order and lifecycle cardinality. Update the
+  module `AGENTS.md`; modify no Habitat law, sibling module, public export,
+  resource, provider, Effect boundary, or compatibility path. The three red
+  proofs each observed two analytics entries and two lifecycle logs; the
+  closed lineages emit exactly one of each. Uncached source typecheck and all
+  20 Dev tests pass. All 33 active Habitat rules and the staged-file gate pass.
+  Direct Stack probes of the candidate spine, anchor, context, isolation,
+  composition, and authorship laws report no Stack finding; the wider service
+  corpus remains staged rather than being misrepresented as green. Strict
+  OpenSpec, focused Biome, and diff hygiene pass. Standing architecture/oRPC,
+  TypeScript/structural, and behavior-first testing reviews report no P0-P2.
+- [ ] 5.7e35 Correct Stack command-observation authority as a separate
+  behavior checkpoint after topology lands. A failed initial Git-status
+  observation must make diagnosis unhealthy and block applied drain before its
+  first mutating command. A failed closing Graphite observation must not satisfy
+  convergence. Prove exact issues, calls, stopped prefixes, result validity,
+  and middleware lifecycles without changing the public operation set,
+  context/resource boundary, or adding fallback state.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
