@@ -4387,11 +4387,14 @@ cleanup remain operation-local. This change adds no managed runtime, process
 finalizer, cache, registry, controller, workflow engine, app composition layer,
 or second service.
 
-That checkpoint was the remaining upstream prerequisite for the accepted
-research-service design. Its other prerequisite was already present:
-`@rawr/typebox-adapter` uses TypeBox's native validator and omits ambiguous
-issue paths. Both are now present in the exact landed handoff below; no moving
-branch head is a handoff.
+That checkpoint completes the lifecycle-specific half of the accepted
+research-service prerequisite: `@rawr/typebox-adapter` uses TypeBox's native
+validator and omits ambiguous issue paths, while the CLI owns cold provider
+selection and direct local lifecycle-service binding. It does not supply the
+separately governed production compiler, bootgraph, process-runtime binding, or
+harness boundary. The exact landed handoff below is therefore lifecycle
+evidence, not research BUILD or restack authorization; no moving branch head is
+a handoff.
 
 ## CLI Production Profile Handoff
 
@@ -4428,12 +4431,12 @@ lineage: the native-validator, message-only bridge correction landed at
 `0854024afe9a76ef0ae4ae3f427182be25fe8420`, and its current
 `@rawr/typebox-adapter` package owner landed at
 `3b142e560f3b3cefa255356fa7343c56cac18d99`. The landed `main` commit
-`a25f72da1505f90206c6ff14bcb0ab5de77cbbec` is the downstream
-research-service restack prerequisite; `60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3`
-is review/check provenance only. The handoff means app-owned cold provider
-selection, direct local service binding, and operation-owned cleanup. It does
-not promise or require a process runtime, process finalizer, provider registry,
-or persistent client.
+`a25f72da1505f90206c6ff14bcb0ab5de77cbbec` is lifecycle implementation
+evidence; `60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3` is review/check provenance
+only. The handoff means app-owned cold provider selection, direct local service
+binding, and operation-owned cleanup. It does not implement or authorize the
+separate production compiler, bootgraph, process-runtime binding, or harness
+boundary required by a full runtime-realization consumer.
 
 ## Lifecycle Integration Closure
 
@@ -4469,14 +4472,16 @@ profile, so the review is exact-source-recovered evidence for this repository,
 not a portable Effect 4 conformance claim. The preexisting service-bootstrap
 `.effect` bridge remains unchanged.
 
-This closure does not move the downstream research-service prerequisite.
-Canonical Template commit
-`a25f72da1505f90206c6ff14bcb0ab5de77cbbec` remains the exact implementation
-restack base, and
-`abc8f16fba7c9c2b125d4e088101872582573fa3` remains its durable handoff record.
-The task 5.8 checkpoint strengthens integration around that landed boundary; it
-does not create a runtime, provider registry, persistent client, second service,
-or new provider authority.
+Template PRs #680 through #682 landed this closure on canonical `main` at
+`7d126548ebffe9fd84a8da8010f6a3d8aa0014f2`. The exact-main Repository Ratchet
+passed in run `30534802970`, job `90845419520`. The earlier profile checkpoint
+`a25f72da1505f90206c6ff14bcb0ab5de77cbbec` and handoff record
+`abc8f16fba7c9c2b125d4e088101872582573fa3` remain lineage, not a downstream
+runtime restack authorization. Task 5.8 strengthens integration around that
+landed lifecycle boundary; it does not create a compiler, bootgraph, process
+runtime, provider registry, persistent client, second service, or new provider
+authority. A consumer requiring those production runtime owners remains held
+for the separately governed runtime-realization migration.
 
 ## Distribution Ownership Aggregate Admission
 
