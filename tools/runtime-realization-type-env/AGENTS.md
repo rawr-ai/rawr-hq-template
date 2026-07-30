@@ -193,7 +193,6 @@ Task-specific reads:
   future Reference Runtime.
 - TODO fixtures are not proof. They are fenced experiments or known design gaps.
 - Every proof entry must name a gate that would fail if the claim regressed.
-- Every new TODO fixture must be listed in `proof-manifest.json`.
 - Experiment changes must keep `evidence/current-lab-state.md` and `proof-manifest.currentExperiment` aligned.
 - Vendor-specific behavior or shape changes must update the relevant `evidence/vendors/*.md` concept map.
 - Runtime subsystem evidence changes must update the relevant `evidence/systems/*.md` concept map.

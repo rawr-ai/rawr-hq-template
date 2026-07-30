@@ -200,6 +200,6 @@ Before closing a plane reorg or new workstream:
   seam.
 - Tests live under the lane matching their proof ceiling.
 - Scenario packs are not called fixtures.
-- Manifest fixtures and gates point at existing paths.
+- Manifest evidence references point at existing files.
 - The diagnostic and evidence maps do not overstate the proof ceiling.
 - Parent-Repo Migration remains explicitly separate.

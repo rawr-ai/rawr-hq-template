@@ -50,38 +50,6 @@ function createValidManifestFixture(): {
   const specContents = "# Runtime realization fixture spec\n";
 
   writeFixture(repoRoot, canonicalSpecPath, specContents);
-  writeFixture(
-    toolRoot,
-    "project.json",
-    JSON.stringify({
-      targets: {
-        check: {},
-        report: {},
-        "evidence-manifest": {},
-        typecheck: {},
-        negative: {},
-        "vendor-effect": {},
-        "vendor-boundaries": {},
-        oracle: {},
-        "middle-spine": {},
-        simulate: {},
-        dormant: {},
-        gate: {
-          dependsOn: [
-            "report",
-            "evidence-manifest",
-            "typecheck",
-            "negative",
-            "vendor-effect",
-            "vendor-boundaries",
-            "oracle",
-            "middle-spine",
-            "simulate",
-          ],
-        },
-      },
-    })
-  );
   writeFixture(toolRoot, "test/oracle/example.test.ts");
   writeFixture(toolRoot, "fixtures/todo/open-design.todo.ts");
 
@@ -94,7 +62,7 @@ function createValidManifestFixture(): {
       },
       currentExperiment: {
         id: "experiment.current",
-        focus: "Exercise manifest closure.",
+        focus: "Exercise manifest validation.",
         relatedEntries: ["simulation.example"],
       },
       entries: [
@@ -160,7 +128,7 @@ describe("runtime realization evidence manifest", () => {
         `spec sha256: ${manifest.spec.sha256}`,
         "",
         "current experiment: experiment.current",
-        "focus: Exercise manifest closure.",
+        "focus: Exercise manifest validation.",
         "related entries: simulation.example",
         "",
         "proof: 0",
@@ -197,30 +165,39 @@ describe("runtime realization evidence manifest", () => {
     );
   });
 
-  test("rejects proof assigned to an unknown gate", () => {
+  test("rejects an unknown evidence gate before report rendering", () => {
     const { manifest, roots } = createValidManifestFixture();
     manifest.entries[0].gates = ["oracle", "invented-gate"];
 
-    expect(() => validate(manifest, roots)).toThrow(
-      "manifest entry simulation.example names gate not scheduled by the owner gate: invented-gate"
-    );
+    expect(() => validate(manifest, roots)).toThrow("invalid proof manifest structure");
   });
 
-  test("rejects proof assigned to a defined target outside the owner gate", () => {
+  test("rejects proof assigned only to reporting gates", () => {
     const { manifest, roots } = createValidManifestFixture();
-    manifest.entries[0].gates = ["oracle", "dormant"];
-
-    expect(() => validate(manifest, roots)).toThrow(
-      "manifest entry simulation.example names gate not scheduled by the owner gate: dormant"
-    );
-  });
-
-  test("rejects proof assigned only to report or manifest-check targets", () => {
-    const { manifest, roots } = createValidManifestFixture();
+    manifest.entries[0].status = "proof";
     manifest.entries[0].gates = ["report", "evidence-manifest"];
 
     expect(() => validate(manifest, roots)).toThrow(
       "manifest entry simulation.example must name at least one behavior gate"
+    );
+  });
+
+  test("rejects simulation proof without a simulation behavior gate", () => {
+    const { manifest, roots } = createValidManifestFixture();
+    manifest.entries[0].gates = ["typecheck", "negative"];
+
+    expect(() => validate(manifest, roots)).toThrow(
+      "simulation-proof entry simulation.example must include oracle, simulate, or middle-spine"
+    );
+  });
+
+  test("rejects vendor proof without a vendor behavior gate", () => {
+    const { manifest, roots } = createValidManifestFixture();
+    manifest.entries[0].status = "vendor-proof";
+    manifest.entries[0].gates = ["typecheck", "negative"];
+
+    expect(() => validate(manifest, roots)).toThrow(
+      "vendor-proof entry simulation.example must include vendor-effect or vendor-boundaries"
     );
   });
 
@@ -233,12 +210,22 @@ describe("runtime realization evidence manifest", () => {
     );
   });
 
-  test("rejects an uncovered TODO fixture", () => {
+  test("rejects proof that points at a TODO fixture", () => {
     const { manifest, roots } = createValidManifestFixture();
-    manifest.entries.pop();
+    manifest.entries[1].status = "proof";
+    manifest.entries[1].gates = ["typecheck"];
 
     expect(() => validate(manifest, roots)).toThrow(
-      "todo fixture missing manifest entry: fixtures/todo/open-design.todo.ts"
+      "proof entry open.example must not point at todo fixture fixtures/todo/open-design.todo.ts"
+    );
+  });
+
+  test("rejects a TODO fixture assigned outside the TODO statuses", () => {
+    const { manifest, roots } = createValidManifestFixture();
+    manifest.entries[1].status = "out-of-scope";
+
+    expect(() => validate(manifest, roots)).toThrow(
+      "todo fixture fixtures/todo/open-design.todo.ts must belong to xfail or todo entry, not out-of-scope"
     );
   });
 
