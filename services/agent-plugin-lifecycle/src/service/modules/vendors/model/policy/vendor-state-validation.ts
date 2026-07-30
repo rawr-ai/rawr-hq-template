@@ -1,4 +1,5 @@
 import { Value } from "typebox/value";
+import { RemoteUrlSchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import {
   ContentAuthoritySchema,
@@ -53,6 +54,12 @@ export function vendorWorkspaceIssue(
     return vendorIssue(
       "WrongRepository",
       "Repository observation does not match the requested repository identity."
+    );
+  }
+  if (!Value.Check(RemoteUrlSchema, actual.remoteUrl) || actual.remoteUrl !== expected.remoteUrl) {
+    return vendorIssue(
+      "WrongRepository",
+      "Repository observation does not match the requested remote URL."
     );
   }
   if (

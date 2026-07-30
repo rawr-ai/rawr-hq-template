@@ -40,10 +40,10 @@ export function vendorWorkspaceIdentityIssue(
       "Content workspace identity returned a different canonical root."
     );
   }
-  if (!actual.remoteUrls.includes(requested.repositoryIdentity)) {
+  if (!actual.remoteUrls.includes(requested.remoteUrl)) {
     return vendorIssue(
       "WrongRepository",
-      "Content workspace has no exact remote matching the requested repository identity."
+      "Content workspace has no exact remote matching the requested remote URL."
     );
   }
   if (actual.refName !== requested.refName) {
@@ -149,6 +149,7 @@ export function createVendorWorkspaceObservation(input: {
   return Object.freeze({
     contentWorkspace: Object.freeze({
       repositoryIdentity: input.requested.repositoryIdentity,
+      remoteUrl: input.requested.remoteUrl,
       contentAuthority: input.requested.contentAuthority,
       refName: input.requested.refName,
       sourceCommit: input.requested.sourceCommit,
