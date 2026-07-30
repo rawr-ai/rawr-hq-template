@@ -1874,6 +1874,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   through uncached typecheck, all 34 behavior tests, Biome, and diff hygiene.
   Add no proof framework, aggregate schema walker, source check, or production
   helper.
+- [x] 5.7e26 Collapse the service proof-isolation law back to the shared
+  Magic/Civ regex-only Grit form, qualified for Template's real `test`
+  operation. Let closed service topology own valid production destinations and
+  let this source law reject relative imports with an exact upward traversal
+  before an exact `test` path segment while admitting the local `./test`
+  operation leaf. Delete the inline filesystem resolver and its topology
+  reconstruction without weakening static, re-export, dynamic, CommonJS, or
+  template-literal proof coverage.
+  Prove the packet examples, the enforced owner-local rule, the complete
+  Habitat policy owner, and strict OpenSpec validation. Add no runner, wrapper,
+  retry, lock, baseline, SDK fork, or Nx scheduling exception.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

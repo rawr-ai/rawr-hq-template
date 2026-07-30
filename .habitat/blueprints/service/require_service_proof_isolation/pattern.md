@@ -10,11 +10,12 @@ production source, while production source remains independent from proof
 fixtures, harnesses, and suites.
 
 This law selects only top-level `services/<owner>/src/**/*.ts` sources and only
-quoted or substitution-free template module sources that lexically resolve
-beneath that service's package-root `test/` directory. A production operation
-named `test` is not proof code merely because its local module source contains
-the same word. There is no service-proof alias lane. Embedded API-plugin
-services and package-root test sources remain outside this source selector.
+quoted or substitution-free template module sources with an exact upward
+traversal before an exact `test` path segment. The closed service topology
+separately owns valid production destinations, so this source law does not
+reconstruct filesystem topology. There is no service-proof alias lane.
+Embedded API-plugin services and package-root test sources remain outside this
+source selector.
 
 ```grit
 language js(typescript)
@@ -27,66 +28,16 @@ predicate require_service_proof_isolation_is_standalone_production_source() {
   }
 }
 
-// Classifies a literal relative source by resolving it against its production owner.
-function require_service_proof_isolation_relative_source_status($filename, $source) js {
-  const filename = $filename.text.replaceAll("\\", "/");
-  const source = $source.text;
-  const quote = source[0];
-  if (
-    source.length < 2 ||
-    (quote !== "\"" && quote !== "'" && quote !== "`") ||
-    source[source.length - 1] !== quote
-  ) {
-    return "not-literal";
-  }
-  const specifier = source.slice(1, -1);
-  if (!specifier.startsWith("./") && !specifier.startsWith("../")) {
-    return "not-relative";
-  }
-
-  const segments = filename.split("/");
-  let serviceIndex = -1;
-  for (let index = 0; index < segments.length - 2; index += 1) {
-    if (segments[index] === "services" && segments[index + 2] === "src") {
-      serviceIndex = index;
-    }
-  }
-  if (serviceIndex < 0) {
-    return "outside-service";
-  }
-
-  const packageRoot = segments.slice(0, serviceIndex + 2).join("/");
-  const resolved = segments.slice(0, -1);
-  for (const segment of specifier.split("/")) {
-    if (segment === "" || segment === ".") {
-      continue;
-    }
-    if (segment === "..") {
-      resolved.pop();
-      continue;
-    }
-    resolved.push(segment);
-  }
-  return resolved.slice(0, serviceIndex + 2).join("/") === packageRoot &&
-    resolved[serviceIndex + 2] === "test"
-    ? "package-proof"
-    : "production";
-}
-
-// Recognizes only literal relative sources that resolve into package-root proof.
+// Recognizes a relative source with an exact upward traversal before an exact test segment.
 predicate require_service_proof_isolation_is_relative_test_source($source) {
   or {
-    $source <: string(),
+    $source <: r"^[\"'](?:(?:\.\./)(?:[^/\"']+/)*|(?:\./)+(?:[^/\"']+/)*\.\./(?:[^/\"']+/)*)test(?:/[^\"']*)?[\"']$",
     and {
       $source <: template_string(),
-      $source <: not contains template_substitution()
+      $source <: not contains template_substitution(),
+      $source <: r"^`(?:(?:\.\./)(?:[^/`]+/)*|(?:\./)+(?:[^/`]+/)*\.\./(?:[^/`]+/)*)test(?:/[^`]*)?`$"
     }
-  },
-  $status = require_service_proof_isolation_relative_source_status(
-    filename=$filename,
-    source=$source
-  ),
-  $status <: includes "package-proof"
+  }
 }
 
 or {
@@ -157,6 +108,21 @@ const fixtures = require(`../../../../test/support/modules/catalog/fixture`);
 const fixturePath = require.resolve(`../../../../test/support/modules/catalog/fixture`);
 ```
 
+## Matches an upward traversal after a current segment
+
+```typescript
+// @filename: services/jobs/src/client.ts
+const fixtures = await import(`./../test/support/client`);
+```
+
+## Matches the terminal proof root
+
+```typescript
+// @filename: services/jobs/src/service/router.ts
+import "../../../test";
+const proofRoot = require.resolve(`../../../test`);
+```
+
 ## Ignores production imports
 
 ```typescript
@@ -185,21 +151,14 @@ import { jobsFixture } from "../../../../test/support/modules/jobs/fixture";
 import { contestPolicy } from "./contest/policy";
 ```
 
-## Ignores a production operation named test
+## Ignores an operation named test
+
+The contract leaf is production matter and does not traverse upward from its
+sealed contract directory.
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
+// @filename: services/jobs/src/service/modules/providers/contract/index.ts
 import { test } from "./test";
-```
-
-## Ignores a source-local test path
-
-The closed service topology rejects source-owned test directories separately.
-This relation remains exact to package-root proof.
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/router.ts
-import { sourceTest } from "../../../../test/source-test";
 ```
 
 ## Ignores interpolated template sources
