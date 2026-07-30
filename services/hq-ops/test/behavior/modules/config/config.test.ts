@@ -3,9 +3,14 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { createClient } from "../src";
-import { validateRawrConfig } from "../src/service/modules/config/helpers/validation.js";
-import { createClientOptions, invocation, writeGlobalRawrConfig, writeRawrConfig } from "./helpers";
+import { createClient } from "../../../../src";
+import { validateRawrConfig } from "../../../../src/service/modules/config/helpers/validation.js";
+import {
+  createClientOptions,
+  invocation,
+  writeGlobalRawrConfig,
+  writeRawrConfig,
+} from "../../../support/service/helpers";
 
 describe("hq-ops config support", () => {
   it("accepts a minimal v1 config", () => {

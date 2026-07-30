@@ -2093,6 +2093,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   typecheck, active Habitat policy, strict OpenSpec validation, focused Biome,
   and diff hygiene. Add no test abstraction, source-shape assertion, runner,
   baseline, production helper, or staged-law activation.
+- [x] 5.7e37 Categorize the existing HQ Ops proof before changing its
+  production topology. Move Config behavior to
+  `test/behavior/modules/config/config.test.ts`, the configured
+  resource-backed service proof to `test/integration`, the public service-spine
+  proof to `test/mechanics/contract`, and shared test construction to
+  `test/support/service`. Update only the relative imports required by those
+  moves. Preserve all 11 test cases and keep the known duplicate root
+  middleware lifecycle visible for the next module-router checkpoints. Prove
+  uncached HQ Ops behavior and typecheck, active Habitat policy, strict
+  OpenSpec validation, focused Biome, and diff hygiene. Add no source-shape
+  proof, behavior, production helper, runner, baseline, or staged-law
+  activation.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

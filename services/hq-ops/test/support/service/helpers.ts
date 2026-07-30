@@ -10,14 +10,14 @@ import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
 } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import type { CreateClientOptions } from "../src/client";
-import type { Context } from "../src/service/base";
+import type { CreateClientOptions } from "../../../src/client";
+import type { Context } from "../../../src/service/base";
 import type {
   ExecResult,
   HqOpsResources,
   SqliteDatabase,
-} from "../src/service/common/ports/resources";
-import type { RawrConfig } from "../src/service/modules/config/entities";
+} from "../../../src/service/common/ports/resources";
+import type { RawrConfig } from "../../../src/service/modules/config/entities";
 
 type ClientOptions = {
   deps?: Partial<Context["deps"]>;
