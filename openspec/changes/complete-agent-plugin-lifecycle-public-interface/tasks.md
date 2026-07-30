@@ -721,6 +721,21 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   over-bound cases without adding a new schema, helper, error walker, parser
   framework, router, resource, runtime, or caller change. This checkpoint does
   not claim task 5.3 complete.
+- [x] 5.3g Delete the individual-release family's four manual closed-record
+  field arrays. Add one closed TypeBox construction schema that accepts the
+  existing admitted in-memory or canonical wire forms for embedded release
+  input and payload values; let it, `AgentPluginReleaseEnvelopeSchema`,
+  `AgentPluginReleaseBodySchema`, and `ReleaseSourceIdentitySchema` own exact
+  aggregate membership through the existing root-only TypeBox admission
+  adapter. Preserve non-object admission, exact-shape primitive diagnostics,
+  embedded-value re-verification, canonical bytes and digest, source identity,
+  payload binding, defensive immutability, and every nested array ceiling before
+  child traversal. Normalize missing or extra aggregate membership to one
+  owner-path `UNKNOWN_FIELD` diagnostic, and prove refused roots do not traverse
+  children plus exact and over-bound alias behavior. Add no nested error walker,
+  parser framework, resource, provider, runtime, router, or caller change. The
+  complete-set parser remains open, so this checkpoint does not claim task 5.3
+  complete.
 - [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.

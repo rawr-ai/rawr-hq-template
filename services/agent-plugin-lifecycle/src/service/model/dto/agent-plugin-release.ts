@@ -21,9 +21,11 @@ import {
   RepositoryIdentitySchema,
 } from "./release-identity";
 import {
+  AgentPluginReleaseInputSchema,
   MAX_PROVENANCE_BINDINGS,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   ProvenanceBindingSchema,
+  ReleaseInputEnvelopeSchema,
 } from "./release-input";
 
 declare const agentPluginReleaseBrand: unique symbol;
@@ -43,6 +45,22 @@ export const ReleaseSourceIdentitySchema = ReadonlyObject(
     sourceRepository: RepositoryIdentitySchema,
     sourceCommit: GitCommitIdSchema,
     sourceTree: GitTreeIdSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/**
+ * Defines the exact construction boundary accepted by individual-release policy.
+ *
+ * Embedded release inputs and payloads may arrive as already-admitted in-memory
+ * values or as their canonical wire records; policy re-verifies either form.
+ */
+export const AgentPluginReleaseConstructionSchema = ReadonlyObject(
+  Type.Object({
+    releaseInput: Type.Union([AgentPluginReleaseInputSchema, ReleaseInputEnvelopeSchema]),
+    pluginId: PluginIdSchema,
+    source: ReleaseSourceIdentitySchema,
+    payload: Type.Union([AgentPluginPayloadSchema, AgentPluginPayloadRecordSchema]),
   }),
   { additionalProperties: false }
 );
@@ -112,6 +130,9 @@ export const AgentPluginReleaseSchema = ReadonlyObject(
 
 /** TypeBox-derived source identity used during release construction. */
 export type ReleaseSourceIdentity = Static<typeof ReleaseSourceIdentitySchema>;
+
+/** TypeBox-derived construction input accepted by individual-release policy. */
+export type AgentPluginReleaseConstruction = Static<typeof AgentPluginReleaseConstructionSchema>;
 
 /** TypeBox-derived digest-free release body. */
 export type AgentPluginReleaseBody = Static<typeof AgentPluginReleaseBodySchema>;

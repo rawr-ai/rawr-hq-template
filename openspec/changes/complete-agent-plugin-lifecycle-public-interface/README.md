@@ -4423,6 +4423,36 @@ OpenSpec validation, and diff hygiene pass. Standing TypeScript/TypeBox,
 testing, and structural-quality reviews accepted the final cut after exact-bound
 and root-refusal child-traversal proofs were added.
 
+## Individual Release Aggregate Admission
+
+The bounded individual-release follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.3g]] deletes the four
+manual closed-record field arrays from individual-release construction,
+envelope admission, body admission, and source admission. The existing release
+envelope, body, and source TypeBox schemas now own those aggregate boundaries.
+One new closed construction schema names the already-supported input shape,
+including the admitted in-memory and canonical wire alternatives for embedded
+release inputs and payloads; its TypeScript type is derived from that schema.
+
+Missing or extra aggregate membership now produces one `UNKNOWN_FIELD` issue at
+the owning aggregate path, while non-objects retain `EXPECTED_OBJECT`.
+Exact-shape values continue through the existing primitive and semantic policy,
+so schema versions, identities, canonical ordering, payload binding, digest
+verification, copying, and freezing keep their established owners. Root
+membership projection does not inspect child values. Alias arrays remain
+bounded before child admission, including the exact ceiling and an over-limit
+array whose excluded value is never read.
+
+The focused individual-release, release-set, and value-admission regression
+passes 38 tests across three files; the complete lifecycle owner passes 408
+tests across 43 files. Lifecycle source and test typechecks and touched-file
+Biome pass. The cut adds no nested TypeBox error walker, parser framework,
+resource, provider, runtime, router, caller implementation, or native-state
+behavior. Complete-set aggregate parser deletion remains open, so task 5.3
+remains open. Standing TypeScript/TypeBox and structural reviews accepted the
+cut directly; the testing review accepted after canonical wire alternatives,
+missing aggregate membership, and the complete primitive diagnostic were pinned.
+
 ## Settlement Oracles
 
 The final product must prove:
