@@ -31,7 +31,16 @@ export const drain = module.drain.handler(async ({ context, input }) => {
     "--short",
     "--branch",
   ]);
-  const parsedStatus = parseGitStatus(gitStatus.stdout ?? "");
+  const gitStatusReadable = gitStatus.status === "succeeded";
+  const parsedStatus = gitStatusReadable
+    ? parseGitStatus(gitStatus.stdout ?? "")
+    : { branch: null, detached: false, dirty: false };
+  if (!gitStatusReadable)
+    issues.push(
+      issue("GIT_STATUS_FAILED", "Git status is not readable.", {
+        stderr: gitStatus.stderr,
+      })
+    );
   if (parsedStatus.dirty)
     issues.push(issue("DIRTY_WORKING_TREE", "Working tree must be clean before stack drain."));
   if (parsedStatus.detached)
@@ -138,6 +147,12 @@ export const drain = module.drain.handler(async ({ context, input }) => {
       executionIssues.push(syncIssue);
     }
     const gtLsRun = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
+    const gtLsIssue = executionIssueFromStep(
+      gtLsRun,
+      "STACK_DRAIN_COMMAND_FAILED",
+      "Graphite stack observation failed."
+    );
+    if (gtLsIssue) executionIssues.push(gtLsIssue);
     const gtLsOutput = gtLsRun.stdout ?? "";
     cycles.push({ cycle, publish, merge, sync, gtLs: gtLsOutput });
     if (executionIssues.length === 0 && stackLooksConverged(gtLsOutput)) {

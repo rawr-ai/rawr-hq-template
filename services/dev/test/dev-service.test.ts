@@ -357,6 +357,80 @@ describe("@rawr/dev service behavior", () => {
     });
   });
 
+  it("reports unreadable Git status as a successful stack diagnosis needing attention", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const { resources, calls } = createFakeResources({
+      commands: [
+        {
+          command: "git",
+          args: ["status", "--short", "--branch"],
+          exitCode: 1,
+          stdout: "## agent/devops\n M misleading-output\n",
+          stderr: "fatal: status unavailable",
+        },
+        { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
+        { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
+      ],
+    });
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    const result = await client.stack.doctor(
+      { repo: "rawr-hq-template" },
+      { context: { invocation: { traceId: "test.stack.doctor.git-status-failed" } } }
+    );
+
+    expect(result.report.status).toBe("NEEDS_ATTENTION");
+    expect(result.report.branch).toBe("");
+    expect(result.report.checks).toMatchObject({
+      dirtyWorkingTree: false,
+      detachedHead: false,
+    });
+    expect(result.report.actions).toEqual([
+      {
+        command: "git status --short --branch",
+        reason: "Git status is not readable",
+      },
+    ]);
+    expect(result.report.raw.gitStatus).toBe("fatal: status unavailable");
+    expect(Value.Check(StackDoctorResultSchema, result)).toBe(true);
+    expect(calls).toEqual([
+      { command: "git", args: ["status", "--short", "--branch"], cwd: "/repo/rawr" },
+      { command: "gt", args: ["ls"], cwd: "/repo/rawr" },
+      {
+        command: "git",
+        args: ["worktree", "list", "--porcelain"],
+        cwd: "/repo/rawr",
+      },
+    ]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "stack.doctor",
+        outcome: "success",
+        analytics_trace_id: "test.stack.doctor.git-status-failed",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "stack.doctor",
+        outcome: "success",
+        invocationTraceId: "test.stack.doctor.git-status-failed",
+        entity: "stack",
+      },
+    });
+  });
+
   it("plans stack drain by default and does not run mutating Graphite commands", async () => {
     const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
     const logEntries: EmbeddedPlaceholderLogEntry[] = [];
@@ -425,6 +499,76 @@ describe("@rawr/dev service behavior", () => {
     });
   });
 
+  it("blocks applied stack drain when initial Git status is unreadable", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const { resources, calls } = createFakeResources({
+      commands: [
+        {
+          command: "git",
+          args: ["status", "--short", "--branch"],
+          exitCode: 1,
+          stdout: "## agent/devops\n M misleading-output\n",
+          stderr: "fatal: status unavailable",
+        },
+        { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
+      ],
+    });
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    const result = await client.stack.drain(
+      { apply: true, scratchPolicy: { mode: "off" } },
+      { context: { invocation: { traceId: "test.stack.drain.git-status-failed" } } }
+    );
+
+    expect(result.action).toBe("planned");
+    expect(result.converged).toBe(false);
+    expect(result.cycles).toEqual([]);
+    expect(result.execution).toEqual({ ok: true, issues: [] });
+    expect(result.preflight).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "GIT_STATUS_FAILED",
+          message: "Git status is not readable.",
+          severity: "error",
+          details: { stderr: "fatal: status unavailable" },
+        },
+      ],
+    });
+    expect(Value.Check(StackDrainResultSchema, result)).toBe(true);
+    expect(calls).toEqual([
+      { command: "git", args: ["status", "--short", "--branch"], cwd: "/repo/rawr" },
+      { command: "gt", args: ["ls"], cwd: "/repo/rawr" },
+    ]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "success",
+        analytics_trace_id: "test.stack.drain.git-status-failed",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "success",
+        invocationTraceId: "test.stack.drain.git-status-failed",
+        entity: "stack",
+      },
+    });
+  });
+
   it("blocks applied stack drain on missing scratch without blocking a dry run", async () => {
     const { resources, calls } = createFakeResources({
       commands: [
@@ -484,6 +628,121 @@ describe("@rawr/dev service behavior", () => {
     const rendered = calls.map((call) => `${call.command} ${call.args.join(" ")}`);
     expect(rendered).not.toContain("gt merge --no-interactive");
     expect(rendered).not.toContain("gt sync --no-restack --no-interactive");
+  });
+
+  it("stops applied stack drain when closing Graphite observation fails", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const { resources, calls } = createFakeResources({
+      commands: [
+        { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
+        { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
+        {
+          command: "gt",
+          args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
+        },
+        { command: "gt", args: ["merge", "--no-interactive"] },
+        { command: "gt", args: ["sync", "--no-restack", "--no-interactive"] },
+      ],
+    });
+    const exec = resources.process.exec;
+    let gtLsCalls = 0;
+    let sleepCalls = 0;
+    resources.process.exec = async (command, args, options) => {
+      const result = await exec(command, args, options);
+      if (command === "gt" && args.length === 1 && args[0] === "ls") {
+        gtLsCalls += 1;
+        if (gtLsCalls === 2) {
+          return {
+            ...result,
+            exitCode: 1,
+            stdout: new Uint8Array(),
+            stderr: new TextEncoder().encode("closing gt ls failed"),
+          };
+        }
+      }
+      return result;
+    };
+    resources.process.sleep = async () => {
+      sleepCalls += 1;
+    };
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    const result = await client.stack.drain(
+      {
+        apply: true,
+        maxCycles: 2,
+        sleepSeconds: 1,
+        scratchPolicy: { mode: "off" },
+      },
+      { context: { invocation: { traceId: "test.stack.drain.closing-observation-failed" } } }
+    );
+
+    expect(result.action).toBe("applied");
+    expect(result.converged).toBe(false);
+    expect(result.cycles).toHaveLength(1);
+    expect(result.cycles[0]).toMatchObject({ cycle: 1, gtLs: "" });
+    expect(result.preflight).toEqual({ ok: true, issues: [] });
+    expect(result.execution).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "STACK_DRAIN_COMMAND_FAILED",
+          message: "Graphite stack observation failed.",
+          severity: "error",
+          details: {
+            command: "gt ls",
+            exitCode: 1,
+            stderr: "closing gt ls failed",
+          },
+        },
+      ],
+    });
+    expect(Value.Check(StackDrainResultSchema, result)).toBe(true);
+    expect(calls).toEqual([
+      { command: "git", args: ["status", "--short", "--branch"], cwd: "/repo/rawr" },
+      { command: "gt", args: ["ls"], cwd: "/repo/rawr" },
+      {
+        command: "gt",
+        args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
+        cwd: "/repo/rawr",
+      },
+      { command: "gt", args: ["merge", "--no-interactive"], cwd: "/repo/rawr" },
+      {
+        command: "gt",
+        args: ["sync", "--no-restack", "--no-interactive"],
+        cwd: "/repo/rawr",
+      },
+      { command: "gt", args: ["ls"], cwd: "/repo/rawr" },
+    ]);
+    expect(gtLsCalls).toBe(2);
+    expect(sleepCalls).toBe(0);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "success",
+        analytics_trace_id: "test.stack.drain.closing-observation-failed",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "success",
+        invocationTraceId: "test.stack.drain.closing-observation-failed",
+        entity: "stack",
+      },
+    });
   });
 
   it("reports thrown process adapter errors as failed command steps", async () => {

@@ -2065,13 +2065,25 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   corpus remains staged rather than being misrepresented as green. Strict
   OpenSpec, focused Biome, and diff hygiene pass. Standing architecture/oRPC,
   TypeScript/structural, and behavior-first testing reviews report no P0-P2.
-- [ ] 5.7e35 Correct Stack command-observation authority as a separate
+- [x] 5.7e35 Correct Stack command-observation authority as a separate
   behavior checkpoint after topology lands. A failed initial Git-status
   observation must make diagnosis unhealthy and block applied drain before its
   first mutating command. A failed closing Graphite observation must not satisfy
   convergence. Prove exact issues, calls, stopped prefixes, result validity,
   and middleware lifecycles without changing the public operation set,
-  context/resource boundary, or adding fallback state.
+  context/resource boundary, or adding fallback state. The red behavior matrix
+  produced exactly three failures: doctor reported healthy after failed Git
+  status, applied drain crossed admission after failed Git status, and a failed
+  closing `gt ls` was treated as convergence. The bounded correction checks
+  command status in the two existing Stack router leaves, returns admission or
+  execution issues through the existing result vocabulary, and preserves failed
+  command stderr as diagnostic evidence. All 23 Dev tests, uncached Dev
+  typecheck, the repository's Nx `check` graph, all 25 repository Habitat rules,
+  focused Biome, and diff hygiene pass. The public operations, TypeBox schemas,
+  context, resources, router composition, and middleware remain unchanged.
+  Fresh oRPC/architecture, behavior-first testing, and TypeScript/structural
+  completion reviews report no P0-P2 after the failed-status proof was
+  strengthened with misleading stdout.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
