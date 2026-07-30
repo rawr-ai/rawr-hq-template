@@ -1907,20 +1907,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   candidate head is review/check provenance only. The landed `main` commit is
   lifecycle implementation evidence; it does not satisfy a downstream gate
   that separately requires a production compiler, bootgraph, and process
-  runtime.
-- [ ] 5.7g Seal the generic production runtime-provisioning boundary required
-  by downstream service consumers. Keep public authoring contracts in the
-  canonical Template SDK surface and runtime realization in its internal
-  owner. Compile one complete app/profile selection before acquisition,
-  acquire resources in dependency order, release them in reverse order with
-  rollback on partial acquisition, bind ready service clients, and migrate at
-  least one production host so it no longer imports concrete providers. Reuse
-  the landed native TypeBox validator bridge. Add no controller, local release
-  store, provider registry, research-local fork, or moving-branch handoff.
-  After standing architecture, Effect, oRPC, TypeScript, and behavior reviews
-  accept the boundary and its required repository check lands, publish that
-  exact canonical-main commit to the research-service peers as their sole
-  legal restack base.
+  runtime. That wider runtime-realization program is external to this change:
+  it neither blocks lifecycle closure nor authorizes compiler, bootgraph,
+  process-runtime, harness, production-host migration, or peer-restack work
+  here.
 - [x] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
   reviews. The uncached gate passes 412 service and 89 CLI tests plus source and
