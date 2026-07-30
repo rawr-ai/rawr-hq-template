@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Product Bounds Handoff
+
+A downstream consumer can reveal a missing production boundary, but it cannot
+make peer-specific infrastructure part of the product by needing it. The test
+is independent utility: the upstream checkpoint must simplify a real host,
+replace concrete provider construction with one qualified runtime boundary,
+and preserve only lifetimes that actual acquired handles create. If the
+requested abstraction exists solely to unlock a moving research branch, it is
+not an upstream capability.
+
+The handoff is one reviewed canonical-main commit, never a branch name or
+partially composed stack. It contains the complete reusable boundary and its
+behavior proof; the downstream lane consumes it without forking the TypeBox,
+oRPC, Effect, resource, or provider model. Until that exact commit exists,
+design context is not implementation authority.
+
+### Bag Of Keywords
+
+product, consumer, boundary, host, provider, handle, lifetime, proof, commit,
+handoff, reuse, refuse.
+
 ## 2026-07-30 - Service Narrows Capability
 
 A service is one request-bounded capability suite. Its root declares the
