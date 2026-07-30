@@ -61,6 +61,13 @@ describe("@rawr/dev service shell", () => {
       audit: "full",
       entity: "stack",
     });
+    expect(getProcedureMetadata(contract.worktree.cleanup)).toEqual({
+      idempotent: false,
+      domain: "dev",
+      audience: "internal",
+      audit: "full",
+      entity: "worktree",
+    });
   });
 
   it("keeps retired repo inspection fields outside the public contract", async () => {
@@ -485,7 +492,9 @@ describe("@rawr/dev service behavior", () => {
   });
 
   it("uses strict basename prefix for worktree cleanup and never plans prune", async () => {
-    const { resources } = createFakeResources({
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const { resources, calls } = createFakeResources({
       commands: [
         { command: "pwd", args: ["-P"], stdout: "/repo/rawr\n" },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
@@ -496,7 +505,13 @@ describe("@rawr/dev service behavior", () => {
         },
       ],
     });
-    const client = createClient(createClientOptions({ resources }));
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
 
     const result = await client.worktree.cleanup(
       { prefix: "wt-agent", apply: false },
@@ -511,10 +526,33 @@ describe("@rawr/dev service behavior", () => {
     expect(result.followUpCommands.map((command) => command.args.join(" "))).not.toContain(
       "worktree prune"
     );
+    expect(calls.map((call) => `${call.command} ${call.args.join(" ")}`)).not.toContain(
+      "git worktree remove /repo/wt-agent-devops-old"
+    );
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "worktree.cleanup",
+        outcome: "success",
+        analytics_trace_id: "test.worktree.cleanup",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "worktree.cleanup",
+        outcome: "success",
+        invocationTraceId: "test.worktree.cleanup",
+        entity: "worktree",
+      },
+    });
   });
 
   it("reports failed worktree removals through execution status", async () => {
-    const { resources } = createFakeResources({
+    const { resources, calls } = createFakeResources({
       commands: [
         { command: "pwd", args: ["-P"], stdout: "/repo/rawr\n" },
         { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
@@ -540,5 +578,68 @@ describe("@rawr/dev service behavior", () => {
 
     expect(result.execution.ok).toBe(false);
     expect(result.execution.issues[0]?.code).toBe("WORKTREE_REMOVE_FAILED");
+    expect(result.removed).toEqual([
+      {
+        command: "git",
+        args: ["worktree", "remove", "/repo/wt-agent-devops-old"],
+        status: "failed",
+        exitCode: 1,
+        stdout: "",
+        stderr: "remove failed",
+      },
+    ]);
+    expect(
+      calls.filter(
+        ({ command, args }) =>
+          command === "git" && args.join(" ") === "worktree remove /repo/wt-agent-devops-old"
+      )
+    ).toHaveLength(1);
+  });
+
+  it("reports one error lifecycle without replacing worktree admission failures", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const failure = new Error("worktree admission failed");
+    const { resources, calls } = createFakeResources();
+    resources.fs.readDir = async () => {
+      throw failure;
+    };
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    await expect(
+      client.worktree.cleanup(
+        { prefix: "wt-agent", apply: true },
+        { context: { invocation: { traceId: "test.worktree.error" } } }
+      )
+    ).rejects.toBe(failure);
+    expect(calls).toEqual([]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "worktree.cleanup",
+        outcome: "error",
+        analytics_trace_id: "test.worktree.error",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "error",
+      event: "dev.procedure",
+      payload: {
+        path: "worktree.cleanup",
+        outcome: "error",
+        invocationTraceId: "test.worktree.error",
+        entity: "worktree",
+        errorName: "Error",
+        errorMessage: failure.message,
+      },
+    });
   });
 });

@@ -1989,6 +1989,32 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   findings on the Scratch Policy lineage. Strict OpenSpec, focused Biome, and
   diff hygiene pass. Standing architecture/oRPC, TypeScript/structural, and
   behavior-first testing reviews report no P0-P2.
+- [x] 5.7e32 Close the Dev Worktree module through one contract leaf and one
+  operation router leaf. Replace the flat module contract with
+  `contract/cleanup.ts` plus `contract/index.ts`; keep `module.ts` as the
+  terminal context-curation boundary; author the cleanup operation in
+  `router/cleanup.router.ts`; and make module-root `router.ts` a plain-object
+  composer. Remove `module.router(...)` so root `impl.router(...)` is the only
+  native router completion on the `worktree.cleanup` lineage and inherited
+  observability and analytics execute exactly once for that operation. Preserve
+  strict basename-prefix selection, current-worktree and pin exclusions,
+  detached/trunk/unmerged refusal, dry planning, sequential admitted removal,
+  the public key, TypeBox schemas, metadata, result shape, failure identity,
+  public client, and service-root composition. Add behavior proof for one
+  successful dry-plan lifecycle, exact failed removal reporting, and one
+  thrown admission-error lifecycle. Update the module `AGENTS.md`; modify no
+  Habitat law, sibling module, public export, resource, provider, Effect
+  boundary, or compatibility path. The red behavior proof observed two
+  analytics entries and two lifecycle logs for one successful dry plan and
+  again for one thrown admission failure. The closed lineage carries three
+  middleware entries rather than the legacy replay's six. Review also removed
+  one unused planned-removal computation without changing the returned empty
+  `followUpCommands` field. Uncached source typecheck and all 17 Dev tests pass
+  in 3.6 seconds. All 33 active Habitat rules pass, and direct staged
+  composition, authorship, context, anchor, and isolation probes report zero
+  findings on the Worktree lineage. Strict OpenSpec, focused Biome, and diff
+  hygiene pass. Standing architecture/oRPC, TypeScript/structural, and
+  behavior-first testing reviews report no P0-P2.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
