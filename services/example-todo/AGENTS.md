@@ -94,7 +94,7 @@ no fifth input lane and does not remove the inherited service context.
 - [[src/client|Public client]]
 - [[src/service/base|Service context declaration]]
 - [[src/service/impl|Service middleware assembly]]
-- [[test/context-typing|Context lane type proof]]
+- [[test/mechanics/contract/context-typing.typecheck|Context lane type proof]]
 - [[src/service/contract|Private service contract]]
 - [[src/service/model/dto/identifier|Todo identifier DTO]]
 - [[src/service/model/dto/workspace-id|Workspace identity DTO]]

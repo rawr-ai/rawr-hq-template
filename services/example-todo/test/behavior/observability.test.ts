@@ -11,8 +11,13 @@ import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-ho
 import { safe } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 
-import { createClient } from "../src/client";
-import { type AnalyticsEntry, createClientOptions, invocation, type LogEntry } from "./helpers";
+import { createClient } from "../../src/client";
+import {
+  type AnalyticsEntry,
+  createClientOptions,
+  invocation,
+  type LogEntry,
+} from "../support/service/helpers";
 
 class RecordingSpan implements Span {
   readonly attributes: Record<string, string | number | boolean> = {};

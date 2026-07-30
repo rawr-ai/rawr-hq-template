@@ -1,6 +1,6 @@
 import { safe } from "@orpc/server";
 import { describe, expect, it } from "vitest";
-import { createClient } from "../src/client";
+import { createClient } from "../../src/client";
 import {
   type AnalyticsEntry,
   createClientOptions,
@@ -8,7 +8,7 @@ import {
   invocation,
   type LogEntry,
   type OrpcErrorShape,
-} from "./helpers";
+} from "../support/service/helpers";
 
 function createIdentifierProbe() {
   let calls = 0;
