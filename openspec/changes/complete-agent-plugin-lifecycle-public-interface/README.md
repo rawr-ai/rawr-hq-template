@@ -4453,6 +4453,40 @@ remains open. Standing TypeScript/TypeBox and structural reviews accepted the
 cut directly; the testing review accepted after canonical wire alternatives,
 missing aggregate membership, and the complete primitive diagnostic were pinned.
 
+## Complete Release-Set Aggregate Admission
+
+The final owner-local TypeBox follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.3h]] deletes the
+complete-set family's four remaining manual closed-record field arrays and the
+now-unused handwritten admission helper. One closed construction schema names
+the already-supported in-memory and canonical wire alternatives for the
+embedded release input and releases. The existing complete-set envelope, body,
+and member schemas own their aggregate boundaries; all corresponding
+TypeScript types derive from those schemas.
+
+Missing or extra membership produces one `UNKNOWN_FIELD` issue at the owning
+aggregate path, while non-objects and exact-shape primitive failures retain
+their established diagnostics. Root membership projection does not inspect
+child values. A structurally refused member marks the collection incomplete,
+so ownership, completeness, and set-digest policy do not run against a partial
+projection. Release and member arrays remain bounded before traversal, and an
+over-limit release array does not read its excluded tail.
+
+Canonical ordering, embedded-value re-verification, ownership closure,
+complete membership, canonical bytes, digest verification, copying, and
+freezing keep their existing policy owners. The cut adds no nested TypeBox
+error walker, parser framework, resource, provider, runtime, router, caller
+implementation, or native-state behavior. With the handwritten closed-record
+helper and its sole direct test deleted, this checkpoint completes task 5.3.
+The focused complete-set and value-admission regression passes 30 tests across
+two files, and the complete lifecycle owner passes 412 tests across 43 files.
+Lifecycle source and test typechecks, touched-file Biome, the applicable
+contract-property Habitat law, strict OpenSpec validation, and diff hygiene
+pass. Standing TypeScript/TypeBox, behavior-first testing, and
+architecture/structural-quality reviews accepted the final cut after canonical
+wire construction, independent missing and extra membership, exact primitive
+diagnostics, and both bounded member collections were pinned.
+
 ## Settlement Oracles
 
 The final product must prove:

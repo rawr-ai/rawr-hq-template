@@ -2,33 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { ReleaseIssue } from "../../src/service/model/dto/release-issue";
 import {
-  admitClosedRecordForTraversal,
   parseBoundedArray,
   parseCanonicalString,
   parseInteger,
 } from "../../src/service/model/policy/release-value-admission";
 
 describe("release value admission", () => {
-  it("reports unknown fields before missing fields in exact record traversal order", () => {
-    const issues: ReleaseIssue[] = [];
-
-    expect(admitClosedRecordForTraversal({ extra: true }, ["required"], "record", issues)).toBe(
-      true
-    );
-    expect(issues).toEqual([
-      {
-        code: "UNKNOWN_FIELD",
-        path: "record.extra",
-        message: "Field is not part of the closed schema",
-      },
-      {
-        code: "UNKNOWN_FIELD",
-        path: "record.required",
-        message: "Required field is missing",
-      },
-    ]);
-  });
-
   it("returns the bounded array prefix and one exact over-limit issue", () => {
     const issues: ReleaseIssue[] = [];
 

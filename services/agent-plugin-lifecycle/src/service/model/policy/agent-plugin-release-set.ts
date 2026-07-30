@@ -11,6 +11,8 @@ import type {
 import {
   AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION,
   AgentPluginReleaseSetBodySchema,
+  AgentPluginReleaseSetConstructionSchema,
+  AgentPluginReleaseSetMemberSchema,
   AgentPluginReleaseSetSchema,
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
 } from "../dto/agent-plugin-release-set";
@@ -59,7 +61,7 @@ import {
   totalReleaseSetPayloadBytes,
 } from "./release-payload-accounting";
 import { asNonEmpty, collectReleaseResult, failure, success } from "./release-result";
-import { admitClosedRecordForTraversal, parseBoundedArray } from "./release-value-admission";
+import { admitTypeBoxRecordForTraversal, parseBoundedArray } from "./release-value-admission";
 
 type AgentPluginReleaseSetBodyCandidate = Parameters<
   typeof canonicalSerializeAgentPluginReleaseSetBody
@@ -75,7 +77,14 @@ export function createAgentPluginReleaseSet(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (!admitClosedRecordForTraversal(input, ["releaseInput", "releases"], "releaseSet", issues)) {
+  if (
+    !admitTypeBoxRecordForTraversal(
+      AgentPluginReleaseSetConstructionSchema,
+      input,
+      "releaseSet",
+      issues
+    )
+  ) {
     return failure([
       issues[0] ??
         releaseIssue(
@@ -192,14 +201,7 @@ export function verifyAgentPluginReleaseSet(
   input: unknown
 ): ReleaseResult<AgentPluginReleaseSet, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      ["body", "releaseSetDigest", "schemaVersion"],
-      "releaseSet",
-      issues
-    )
-  ) {
+  if (!admitTypeBoxRecordForTraversal(AgentPluginReleaseSetSchema, input, "releaseSet", issues)) {
     return failure([
       issues[0] ??
         releaseIssue("EXPECTED_OBJECT", "releaseSet", "Release-set envelope must be an object"),
@@ -334,24 +336,7 @@ function parseReleaseSetBody(
   path: string,
   issues: ReleaseIssue[]
 ): ParsedAgentPluginReleaseSetBody | undefined {
-  if (
-    !admitClosedRecordForTraversal(
-      input,
-      [
-        "builderProtocolVersion",
-        "contentAuthority",
-        "members",
-        "ownershipIndex",
-        "releaseInputDigest",
-        "schemaVersion",
-        "sourceCommit",
-        "sourceRepository",
-        "sourceTree",
-      ],
-      path,
-      issues
-    )
-  )
+  if (!admitTypeBoxRecordForTraversal(AgentPluginReleaseSetBodySchema, input, path, issues))
     return undefined;
   if (input.schemaVersion !== AGENT_PLUGIN_RELEASE_SET_SCHEMA_VERSION) {
     issues.push(
@@ -464,12 +449,20 @@ function parseSetMembers(
   const values = parseBoundedArray(input, path, MAX_RELEASE_MEMBERS, issues);
   if (values === undefined) return undefined;
   const members: AgentPluginReleaseSetMember[] = [];
+  let structurallyComplete = true;
   values.forEach((candidate, index) => {
     const memberPath = `${path}[${index}]`;
     if (
-      !admitClosedRecordForTraversal(candidate, ["pluginId", "releaseDigest"], memberPath, issues)
-    )
+      !admitTypeBoxRecordForTraversal(
+        AgentPluginReleaseSetMemberSchema,
+        candidate,
+        memberPath,
+        issues
+      )
+    ) {
+      structurallyComplete = false;
       return;
+    }
     const pluginId = collectReleaseResult(
       parsePluginId(candidate.pluginId, `${memberPath}.pluginId`),
       issues
@@ -482,6 +475,7 @@ function parseSetMembers(
       members.push(Object.freeze({ pluginId, releaseDigest: rd }));
     }
   });
+  if (!structurallyComplete) return undefined;
   members.sort((left, right) => compareCanonicalText(left.pluginId, right.pluginId));
   for (let index = 1; index < members.length; index += 1) {
     if (members[index - 1]!.pluginId === members[index]!.pluginId) {

@@ -1,5 +1,9 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
-import { BUILDER_PROTOCOL_VERSION } from "./agent-plugin-release";
+import {
+  AgentPluginReleaseEnvelopeSchema,
+  AgentPluginReleaseSchema,
+  BUILDER_PROTOCOL_VERSION,
+} from "./agent-plugin-release";
 import {
   type DistributionOwnershipIndex,
   DistributionOwnershipIndexRecordSchema,
@@ -16,7 +20,12 @@ import {
   PluginIdSchema,
   RepositoryIdentitySchema,
 } from "./release-identity";
-import { MAX_RELEASE_INPUT_ENVELOPE_BYTES, MAX_RELEASE_MEMBERS } from "./release-input";
+import {
+  AgentPluginReleaseInputSchema,
+  MAX_RELEASE_INPUT_ENVELOPE_BYTES,
+  MAX_RELEASE_MEMBERS,
+  ReleaseInputEnvelopeSchema,
+} from "./release-input";
 import { NonEmptyReadonlyArray } from "./structural";
 
 declare const agentPluginReleaseSetBrand: unique symbol;
@@ -32,6 +41,25 @@ export const AgentPluginReleaseSetMemberSchema = ReadonlyObject(
   Type.Object({
     pluginId: PluginIdSchema,
     releaseDigest: ReleaseDigestSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/**
+ * Defines the exact construction boundary accepted by complete-set policy.
+ *
+ * Embedded inputs and releases may be admitted in-memory values or canonical
+ * wire records; policy re-verifies either form before deriving the set.
+ */
+export const AgentPluginReleaseSetConstructionSchema = ReadonlyObject(
+  Type.Object({
+    releaseInput: Type.Union([AgentPluginReleaseInputSchema, ReleaseInputEnvelopeSchema]),
+    releases: ReadonlyObject(
+      Type.Array(Type.Union([AgentPluginReleaseSchema, AgentPluginReleaseEnvelopeSchema]), {
+        maxItems: MAX_RELEASE_MEMBERS,
+        description: "Complete release values that must exactly realize the reviewed input.",
+      })
+    ),
   }),
   { additionalProperties: false }
 );
@@ -78,6 +106,11 @@ export const AgentPluginReleaseSetSchema = ReadonlyObject(
 
 /** TypeBox-derived member identity carried by one complete release set. */
 export type AgentPluginReleaseSetMember = Static<typeof AgentPluginReleaseSetMemberSchema>;
+
+/** TypeBox-derived construction input accepted by complete-set policy. */
+export type AgentPluginReleaseSetConstruction = Static<
+  typeof AgentPluginReleaseSetConstructionSchema
+>;
 
 /** TypeBox-derived digest-free complete-set body. */
 export type AgentPluginReleaseSetBody = Static<typeof AgentPluginReleaseSetBodySchema>;

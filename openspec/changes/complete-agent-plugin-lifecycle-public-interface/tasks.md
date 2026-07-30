@@ -639,7 +639,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   copies and broad model barrel; and leave no root middleware import into the
   governance module. Preserve the exact Git behavior and the remaining
   release-owned selected-content edge for its own checkpoint.
-- [ ] 5.3 Make TypeBox the sole structural schema and generated-type source for
+- [x] 5.3 Make TypeBox the sole structural schema and generated-type source for
   requests, results, persisted JSON, and intermodule domain collaborations.
   Remove manual closed-object parsing while retaining canonical order, digest,
   uniqueness, and cross-field domain checks. Use the coherent current
@@ -736,6 +736,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   parser framework, resource, provider, runtime, router, or caller change. The
   complete-set parser remains open, so this checkpoint does not claim task 5.3
   complete.
+- [x] 5.3h Delete the complete-set family's four remaining manual closed-record
+  field arrays and the now-unused handwritten admission helper. Add one closed
+  TypeBox construction schema that accepts the existing admitted in-memory or
+  canonical wire forms for release input and release members; let it,
+  `AgentPluginReleaseSetSchema`, `AgentPluginReleaseSetBodySchema`, and
+  `AgentPluginReleaseSetMemberSchema` own exact aggregate membership through
+  the root-only TypeBox admission adapter. Preserve non-object and
+  exact-shape primitive diagnostics, embedded-value re-verification, every
+  array ceiling before child traversal, canonical ordering and bytes, digest
+  verification, ownership closure, completeness, and defensive immutability.
+  Treat a structurally refused member as an incomplete collection so ownership
+  and digest policy never run against a partial set projection. Prove aggregate
+  missing and extra membership, root refusal without child traversal, no
+  derivative member diagnostics, and excluded-tail bounds. Add no nested error
+  walker, parser framework, resource, provider, runtime, router, or caller
+  change. This deletion completes task 5.3.
 - [x] 5.4 Seed the native Effect-oRPC root once with the complete ready host
   dependency context and expose one separate base-owned native middleware
   author when host projection is needed.
