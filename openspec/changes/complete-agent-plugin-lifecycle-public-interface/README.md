@@ -4014,6 +4014,38 @@ OpenSpec, Biome on the three TypeScript destinations, and diff hygiene pass.
 No policy, resource, provider, middleware, contract, test, Personal repository,
 or live state changes.
 
+## Providers Router Migration
+
+Providers is the fourth production module to consume the restored router law.
+Its `status`, `sync`, and `test` operation bytes move unchanged to
+`router/status.router.ts`, `router/sync.router.ts`, and
+`router/test.router.ts`. Their SHA-256 digests remain
+`b3d78d64f322a2164653ee81bb6556db4fb4eceea57e64b8085e8ccf50e46b4f`,
+`fada4dd3b5c2202c566081479886a3e625417354bc34e64feea3c3df2a23462d`,
+and `a9a6ece029f9a4208674b1cdb00785483c8f524511ad02123797d841ba4cb24b`.
+The former router barrel moves from `router/index.ts` to module-root
+`router.ts`; its SHA-256 changes from
+`9623a3b85f5c62cec76c43aa0ffa73dfe3ecfd9b5d797e2788fa3c9bbf924deb`
+to `4039b34dd39f83043ee2cd0ddda1ae5db2484262ed821e0910f42c86b5aff94b`
+only because its three relative leaf imports change. The root service retains
+its `./modules/providers/router` import.
+
+The module branch and curated context, TypeBox contracts and schemas, inline
+Effect handlers, public `test`, `status`, and `sync` keys, selected-content
+derivation and revalidation, source-interface and marketplace validation,
+native observation and mutation order, operation-local sessions, targeted and
+canonical retirement policy, disposable workspace scope, results, failures,
+defects, and interruption remain unchanged. The old router barrel and
+unsuffixed leaf paths disappear without aliases. Seven focused Providers
+behavior, schema-boundary, and service-spine files pass all 85 tests in 2.47
+seconds. Owner typecheck and its seven prerequisites pass uncached in 12.2
+seconds. The six advisory service laws report no Providers finding; their 353
+unaffected diagnostics remain outside Providers: seven in the predecessor
+Releases router shape and 346 elsewhere in the service corpus. Strict OpenSpec,
+Biome on the four TypeScript destinations, and diff hygiene pass. No policy,
+resource, provider, middleware, contract, test, Personal repository, provider
+home, native command, or live-state change.
+
 ## Git-Backed Declarative Release Input
 
 The unpublished version-1 release input is recut in place as a declaration
