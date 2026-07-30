@@ -4321,6 +4321,43 @@ hardening, router, resource, provider, caller implementation, canonical format,
 or live-state behavior enters this checkpoint. Five release aggregate parser
 families remain open, so this does not complete task 5.3.
 
+## Provenance And Release-Input Aggregate Admission
+
+The bounded release-input follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.3e]] deletes four
+manual closed-record field arrays from provenance-binding and release-input
+policy. The existing `ProvenanceBindingSchema`,
+`ReleaseInputEnvelopeSchema`, `ReleaseInputBodySchema`, and
+`ReleaseMemberDeclarationSchema` now own exact aggregate membership through the
+same root-only TypeBox admission adapter. No local shape copy or new schema was
+needed; the policies continue to construct their TypeBox-generated binding,
+member, body, and envelope types.
+
+Missing or extra membership produces one schema-derived `UNKNOWN_FIELD`
+diagnostic at the aggregate path, while non-objects retain `EXPECTED_OBJECT`.
+Exact-shape values still reach the established primitive parsers in their
+existing order. A structurally refused provenance child marks its collection
+incomplete, so envelope verification preserves the structural issue without a
+derivative release-input digest mismatch. Release-input member parsing
+propagates an incomplete or non-array nested `vendor` or `curation` collection
+into member-collection incompleteness. Ownership-index derivation, release-input
+digest comparison, and the derived zero-member diagnostic therefore never run
+against a member omitted by nested provenance structure.
+
+Provenance and member arrays remain bounded before child admission. Canonical
+ordering, duplicate refusal, ownership-index construction, canonical bytes and
+digests, envelope reconstruction, defensive freezing, and the existing
+post-reconstruction TypeBox checks remain unchanged. The focused provenance,
+release-input, release-input-record, canonical release-input, and
+individual-release regression corpus passes 37 tests across five files.
+The complete lifecycle owner passes 405 tests across 43 files. Lifecycle source
+and test typechecks, touched-file Biome, strict OpenSpec validation, and diff
+hygiene pass. No schema mapper, nested error walker, parser framework, proxy
+hardening, router, resource, provider, caller implementation, or live-state
+behavior enters this checkpoint. The ownership, individual-release, and
+complete-set aggregate parser families remain open, so this does not complete
+task 5.3.
+
 ## Settlement Oracles
 
 The final product must prove:

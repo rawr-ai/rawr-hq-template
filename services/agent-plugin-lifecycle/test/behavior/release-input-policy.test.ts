@@ -107,6 +107,217 @@ describe("release-input policy", () => {
     });
   });
 
+  it("uses owner schemas for envelope, body, member, and provenance aggregate diagnostics", () => {
+    const fixture = productFixture();
+    const candidate = () => structuredClone(releaseInputValue(fixture.releaseInput)) as any;
+    const cases = [
+      {
+        path: "releaseInput",
+        fields: "body, releaseInputDigest, schemaVersion",
+        missing: (value: any) => {
+          delete value.body;
+        },
+        extra: (value: any) => {
+          value.extra = true;
+        },
+      },
+      {
+        path: "releaseInput.body",
+        fields: "contentAuthority, locks, members, ownershipClaims, qualityPolicies, schemaVersion",
+        missing: (value: any) => {
+          delete value.body.contentAuthority;
+        },
+        extra: (value: any) => {
+          value.body.extra = true;
+        },
+      },
+      {
+        path: "releaseInput.body.members[0]",
+        fields: "curation, kind, pluginId, vendor",
+        missing: (value: any) => {
+          delete value.body.members[0].pluginId;
+        },
+        extra: (value: any) => {
+          value.body.members[0].extra = true;
+        },
+      },
+      {
+        path: "releaseInput.body.locks[0]",
+        fields: "contentDigest, id, protocol",
+        missing: (value: any) => {
+          delete value.body.locks[0].id;
+        },
+        extra: (value: any) => {
+          value.body.locks[0].extra = true;
+        },
+      },
+    ] as const;
+
+    for (const { path, fields, missing, extra } of cases) {
+      for (const mutate of [missing, extra]) {
+        const input = candidate();
+        mutate(input);
+        expect(verifyAgentPluginReleaseInput(input)).toEqual({
+          ok: false,
+          issues: [
+            {
+              code: "UNKNOWN_FIELD",
+              path,
+              message: `Expected exactly: ${fields}`,
+            },
+          ],
+        });
+      }
+    }
+  });
+
+  for (const field of ["vendor", "curation"] as const) {
+    it(`propagates nested ${field} refusal into member-collection incompleteness`, () => {
+      const fixture = productFixture();
+      const candidate = () => {
+        const value = structuredClone(releaseInputValue(fixture.releaseInput)) as any;
+        value.body.members = [value.body.members[0]];
+        value.body.ownershipClaims = value.body.ownershipClaims.filter(
+          (claim: any) => claim.ownerPluginId === "alpha"
+        );
+        return value;
+      };
+      const cases = [
+        {
+          mutate: (value: any) => {
+            value.body.members[0][field][0].extra = true;
+          },
+          issue: {
+            code: "UNKNOWN_FIELD",
+            path: `releaseInput.body.members[0].${field}[0]`,
+            message: "Expected exactly: contentDigest, id, protocol",
+          },
+        },
+        {
+          mutate: (value: any) => {
+            value.body.members[0][field] = {};
+          },
+          issue: {
+            code: "EXPECTED_ARRAY",
+            path: `releaseInput.body.members[0].${field}`,
+            message: "Value must be an array",
+          },
+        },
+      ] as const;
+
+      for (const { mutate, issue } of cases) {
+        const input = candidate();
+        mutate(input);
+        const result = verifyAgentPluginReleaseInput(input);
+
+        expect(result).toEqual({ ok: false, issues: [issue] });
+        expect(result.ok).toBe(false);
+        if (result.ok) throw new Error("Expected nested provenance refusal");
+        const codes = result.issues.map(({ code }) => code);
+        expect(codes).not.toContain("COUNT_LIMIT_EXCEEDED");
+        expect(codes).not.toContain("MISSING_OWNER");
+        expect(codes).not.toContain("RELEASE_INPUT_DIGEST_MISMATCH");
+      }
+    });
+  }
+
+  it("retains exact non-object aggregate diagnostics without derivative issues", () => {
+    const fixture = productFixture();
+    const body = structuredClone(releaseInputValue(fixture.releaseInput)) as any;
+    body.body = null;
+    const member = structuredClone(releaseInputValue(fixture.releaseInput)) as any;
+    member.body.members[0] = null;
+    const provenance = structuredClone(releaseInputValue(fixture.releaseInput)) as any;
+    provenance.body.locks[0] = null;
+
+    for (const [candidate, path] of [
+      [null, "releaseInput"],
+      [body, "releaseInput.body"],
+      [member, "releaseInput.body.members[0]"],
+      [provenance, "releaseInput.body.locks[0]"],
+    ] as const) {
+      expect(verifyAgentPluginReleaseInput(candidate)).toEqual({
+        ok: false,
+        issues: [
+          {
+            code: "EXPECTED_OBJECT",
+            path,
+            message: "Value must be an object",
+          },
+        ],
+      });
+    }
+  });
+
+  it("retains ordered primitive diagnostics for exact-shape invalid values", () => {
+    expect(
+      verifyAgentPluginReleaseInput({
+        schemaVersion: 2,
+        releaseInputDigest: "not-a-digest",
+        body: {
+          schemaVersion: 2,
+          contentAuthority: "",
+          members: [
+            {
+              kind: "invalid",
+              pluginId: "",
+              vendor: [],
+              curation: [],
+            },
+          ],
+          ownershipClaims: [],
+          locks: [],
+          qualityPolicies: [],
+        },
+      })
+    ).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "INVALID_CONTENT_AUTHORITY",
+          path: "releaseInput.body.contentAuthority",
+          message: "Content authority must be canonical",
+        },
+        {
+          code: "COUNT_LIMIT_EXCEEDED",
+          path: "releaseInput.body.members",
+          message: "A curated release input must declare at least one member",
+          expected: "1..1024",
+          actual: 0,
+        },
+        {
+          code: "INVALID_STRING",
+          path: "releaseInput.body.members[0].kind",
+          message: "Unit kind must be agent-plugin",
+        },
+        {
+          code: "INVALID_PLUGIN_ID",
+          path: "releaseInput.body.members[0].pluginId",
+          message: "Invalid plugin identity",
+        },
+        {
+          code: "INVALID_SCHEMA_VERSION",
+          path: "releaseInput.body.schemaVersion",
+          message: "Unsupported release-input body version",
+          expected: 1,
+          actual: 2,
+        },
+        {
+          code: "INVALID_DIGEST",
+          path: "releaseInput.releaseInputDigest",
+          message: "Digest has the wrong domain or encoding",
+        },
+        {
+          code: "INVALID_SCHEMA_VERSION",
+          path: "releaseInput.schemaVersion",
+          message: "Unsupported release-input envelope version",
+          expected: 1,
+          actual: 2,
+        },
+      ],
+    });
+  });
+
   it("decodes only the unique canonical UTF-8 envelope", () => {
     const created = must(createAgentPluginReleaseInput(tinyReleaseInputBody().body));
     const canonical = canonicalSerializeAgentPluginReleaseInput(created);
@@ -237,12 +448,11 @@ describe("release-input policy", () => {
     expect(created.body.members.map(({ pluginId }) => pluginId)).toEqual(["alpha", "beta"]);
   });
 
-  it("orders complete diagnostics independently of declaration order", () => {
+  it("orders complete semantic diagnostics independently of declaration order", () => {
     const fixture = productFixture();
     const conflicting = structuredClone(
       releaseInputBody(fixture.alphaPayload, fixture.betaPayload)
     ) as any;
-    conflicting.unexpected = true;
     conflicting.ownershipClaims.push(
       { kind: "alias", identity: "duplicate", ownerPluginId: "alpha" },
       { kind: "alias", identity: "duplicate", ownerPluginId: "alpha" },
@@ -266,7 +476,6 @@ describe("release-input policy", () => {
       "OWNERSHIP_CONFLICT",
       "MISSING_OWNER",
       "OWNERSHIP_CONFLICT",
-      "UNKNOWN_FIELD",
     ]);
   });
 });

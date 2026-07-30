@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { MAX_PROVENANCE_BINDINGS } from "../../src/service/model/dto/release-input";
+import type { Static } from "typebox";
+import { Value } from "typebox/value";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import {
+  MAX_PROVENANCE_BINDINGS,
+  type ProvenanceBinding,
+  ProvenanceBindingSchema,
+} from "../../src/service/model/dto/release-input";
 import type { ReleaseIssue, ReleaseIssueCode } from "../../src/service/model/dto/release-issue";
 import {
   parseProvenanceBindings,
@@ -11,6 +17,21 @@ import { releaseIssue } from "../../src/service/model/policy/release-issue";
 const encoder = new TextEncoder();
 
 describe("provenance binding policy", () => {
+  it("derives the closed binding type from its owner schema", () => {
+    expectTypeOf<ProvenanceBinding>().toEqualTypeOf<Static<typeof ProvenanceBindingSchema>>();
+
+    const binding = {
+      id: "binding",
+      protocol: "vendor-v1",
+      contentDigest: digest("binding"),
+    };
+    expect(Value.Check(ProvenanceBindingSchema, binding)).toBe(true);
+    expect(Value.Check(ProvenanceBindingSchema, { ...binding, extra: true })).toBe(false);
+    expect(
+      Value.Check(ProvenanceBindingSchema, { id: binding.id, protocol: binding.protocol })
+    ).toBe(false);
+  });
+
   it("canonically orders, defensively freezes, and projects admitted bindings", () => {
     const seed = releaseIssue("INVALID_STRING", "seed", "Seed diagnostic");
     const issues = [seed];
@@ -160,6 +181,66 @@ describe("provenance binding policy", () => {
         name
       ).toEqual(expected);
     }
+  });
+
+  it("uses the owner schema for exact aggregate diagnostics and incomplete collections", () => {
+    const binding = {
+      id: "binding",
+      protocol: "vendor-v1",
+      contentDigest: digest("binding"),
+    };
+    for (const candidate of [
+      { id: binding.id, protocol: binding.protocol },
+      { ...binding, extra: true },
+    ]) {
+      const issues: ReleaseIssue[] = [];
+
+      expect(parseProvenanceBindings([candidate], "bindings", issues)).toBeUndefined();
+      expect(issues).toEqual([
+        releaseIssue(
+          "UNKNOWN_FIELD",
+          "bindings[0]",
+          "Expected exactly: contentDigest, id, protocol"
+        ),
+      ]);
+    }
+
+    const issues: ReleaseIssue[] = [];
+    expect(parseProvenanceBindings([null], "bindings", issues)).toBeUndefined();
+    expect(issues).toEqual([
+      releaseIssue("EXPECTED_OBJECT", "bindings[0]", "Value must be an object"),
+    ]);
+  });
+
+  it("retains primitive diagnostic order for exact-shape invalid bindings", () => {
+    const issues: ReleaseIssue[] = [];
+
+    expect(
+      parseProvenanceBindings(
+        [
+          {
+            id: "../binding",
+            protocol: "Vendor",
+            contentDigest: "not-a-digest",
+          },
+        ],
+        "bindings",
+        issues
+      )
+    ).toEqual([]);
+    expect(issues).toEqual([
+      releaseIssue("INVALID_OWNERSHIP_IDENTITY", "bindings[0].id", "Invalid ownership identity"),
+      releaseIssue(
+        "INVALID_STRING",
+        "bindings[0].protocol",
+        "Value must be canonical UTF-8 between 1 and 512 bytes"
+      ),
+      releaseIssue(
+        "INVALID_DIGEST",
+        "bindings[0].contentDigest",
+        "Digest has the wrong domain or encoding"
+      ),
+    ]);
   });
 });
 

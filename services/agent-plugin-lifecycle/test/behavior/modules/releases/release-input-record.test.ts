@@ -50,7 +50,7 @@ describe("release-input record procedure", () => {
 
     expect(invalidBody).toMatchObject({
       ok: false,
-      issues: [{ code: "UNKNOWN_FIELD", path: "releaseInput.body.unexpected" }],
+      issues: [{ code: "UNKNOWN_FIELD", path: "releaseInput.body" }],
     });
 
     const canonicalBytes = canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput);
