@@ -4251,6 +4251,32 @@ state. See [[service-domain-frame#Burn-Down Design|the remaining burn-down]],
 [[tasks|the active task ledger]], and
 [[authority-amendment#Positive Architecture Ratchet|the architecture ratchet]].
 
+## Current-Main Git Aggregate Admission
+
+The bounded follow-on
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.3c]] deletes the
+current-main Git family's handwritten exact-record parser and manual field
+arrays. `GitBlobSelectionSchema` and `ExactGitBlobPointerSchema` now own
+aggregate shape admission. The unchanged `UNKNOWN_FIELD` messages derive their
+field lists from each schema's sorted properties rather than a second
+structural declaration.
+
+Aggregate admission reads TypeBox `Value.Errors` and treats only root
+`instancePath` errors as shape failures. An exact-shape input with invalid field
+values therefore continues through the established repository, ref, commit,
+tree, path, and blob parsers in the same order. Successful selections and
+pointers are still reconstructed and frozen rather than returning caller
+objects.
+
+The new owner behavior suite passes all 3 cases; the four focused current-main,
+schema, and diagnostic files pass all 39 tests. The lifecycle owner source and
+test typechecks pass with their seven Nx prerequisites uncached. Strict
+OpenSpec validation, touched-file Biome, and diff hygiene pass. No generic
+schema helper or walker, proxy or prototype hardening, provider change,
+resource sequencing change, caller change, or live-state mutation enters this
+checkpoint. The six release aggregate parser families remain open, so this
+does not complete task 5.3.
+
 ## Settlement Oracles
 
 The final product must prove:
