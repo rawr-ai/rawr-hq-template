@@ -1860,9 +1860,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   ratchet passed for that head in run `30530555544`, job `90831615094`. The
   candidate head is review/check provenance only; the landed `main` commit is
   the downstream restack base.
-- [ ] 5.8 Run complete service and CLI integration tests plus standing oRPC,
+- [x] 5.8 Run complete service and CLI integration tests plus standing oRPC,
   Effect-oRPC, TypeScript, Effect/Platform, TypeBox, testing, and structural
-  reviews.
+  reviews. The uncached gate passes 412 service and 89 CLI tests plus source and
+  test typechecks. Native Oclif extension and ordinary installed-package
+  acceptance pass in disposable environments, exposing 46 first-party
+  commands. Standing architecture/oRPC/Effect, TypeScript/TypeBox/structural,
+  and behavior/testing reviews accepted the composed boundary with no P0-P2
+  findings. Owner-schema admission precedes profile binding, empty context lanes
+  are compiler-exact, and operation/results remain correlated through
+  classification and presentation. No live provider state was read or mutated.
 
 ## 6. Personal Content-Only Settlement
 
