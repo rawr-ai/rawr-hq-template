@@ -4046,6 +4046,61 @@ Biome on the four TypeScript destinations, and diff hygiene pass. No policy,
 resource, provider, middleware, contract, test, Personal repository, provider
 home, native command, or live-state change.
 
+## Releases Router Migration
+
+Releases is the fifth production module to consume the restored router law.
+Its former `router/index.ts` composition face moves to module-root `router.ts`,
+which changes only its four imports to the named
+`router/check.router.ts`, `router/check-repository.router.ts`,
+`router/refresh-release-input.router.ts`, and
+`router/release-input-record.router.ts` leaves. The root service retains its
+`./modules/releases/router` import and the same `check`,
+`releaseInputRecord`, `refreshReleaseInput`, and `checkRepository` public keys.
+
+The refresh and input-record leaves are exact R100 renames: their SHA-256
+digests remain
+`beda9d8776aaeac7f92226361d639cf6af74f8d8e32cbbd335cefc1a895858aa`
+and `ee5a1a31fd11484d38b45fc7f9c7a5c0cb984f4a5ed339d99cc1973093cf3a65`.
+The check leaf changes from
+`22c25989c1ec1f4c5a14184b4b51f5f273bbf8c8954c976c5a9d665e0bb6e5f7`
+to `f0ae2f8eb94e2e55b9d7031a1f763f64deb942aed2e7ce02d0879b7741fc1d30`,
+and the repository-check leaf changes from
+`159efca0e43ea50c6714be928b4433e3e905a15d57542d422e2e7e024168607a`
+to `86dc2863a82600bfeb641816a54858c5e8b8e5b1a69db78960a208dc015e5a74`.
+Those two changes move only Effect-free result construction into
+`model/policy/eligibility-result.ts`: release derivation identity projection,
+the repeated release-check ineligible result with its source-issue projection
+inlined, and the staged source-changed result. The composer's digest changes
+from `7704886acea65d9310fe4f595f9621654bc18cabe8e92f14e8bd935b71adfd7c`
+to `bae37d08cce9666d97b110bfab0a5844463649699be741cc1fcd551d0328db62`
+only because of its four relative leaf imports.
+
+The one-use staged-ineligible object now remains directly at its handler
+branch, and the exhaustive switch default uses a local `never` binding while
+preserving the exact `Unreachable repository check variant: ...` runtime
+message. The nested `inspectStagedRepository` and `inspectCleanRepository`
+closures remain in the handler with the same context and resource sequencing.
+The release-check projection receives the operation mode and refuses an
+impossible complete-set derivation or any targeted derivation that does not
+contain exactly one release. Its ineligible and repository source-change
+constructors retain their exact TypeBox-derived union branches rather than
+widening to the complete public result unions.
+Resource calls and bounds, clean and staged observation and final revalidation
+order, release-input encoding, result shapes and freezing, contracts, module
+context, failures, defects, interruption, and root composition remain
+unchanged. Predecessor paths and one-use helpers disappear without aliases.
+
+The seven focused Releases behavior, schema-boundary, and service-spine files
+pass the same 75 tests in 15.25 seconds. The full uncached lifecycle target and
+its six build prerequisites pass all 385 tests across 42 files in 38.78
+seconds. Owner typecheck and its seven prerequisites pass uncached in 15.0
+seconds. The exact six advisory service laws pass with zero Releases finding;
+their 346 unaffected diagnostics remain elsewhere in the service corpus.
+Strict OpenSpec, Biome on the six touched TypeScript destinations, and diff
+hygiene pass. No generalized rule, resource, provider, middleware,
+compatibility face, Personal repository, provider home, native command, or
+live state changes.
+
 ## Git-Backed Declarative Release Input
 
 The unpublished version-1 release input is recut in place as a declaration

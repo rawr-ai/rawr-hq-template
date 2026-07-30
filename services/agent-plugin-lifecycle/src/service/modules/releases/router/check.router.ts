@@ -1,9 +1,4 @@
 import { Effect } from "effect";
-import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import type {
-  DerivedReleaseSelection,
-  ReleaseSelection,
-} from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -23,19 +18,20 @@ import {
 } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
-import type {
-  CheckResult,
-  ReleaseCheckIssue,
-  ReleaseDerivationIdentity,
-} from "../model/dto/release-lifecycle";
 import { releaseConstructionIssue } from "../model/dto/release-lifecycle";
+import {
+  createReleaseCheckDerivationIdentity,
+  createReleaseCheckIneligibleResult,
+} from "../model/policy/eligibility-result";
 import { module } from "../module";
 
 /** Checks whether one exact content snapshot can produce the requested release selection. */
 export const check = module.check.effect(function* ({ context, input: request }) {
   const policy = request.contentWorkspace;
   const policyIssue = validateCleanContentWorkspacePolicy(policy);
-  if (policyIssue !== undefined) return ineligibleReport(request.mode, [policyIssue]);
+  if (policyIssue !== undefined) {
+    return createReleaseCheckIneligibleResult(request.mode, [policyIssue]);
+  }
 
   const anchorAttempt = yield* Effect.result(
     context.contentWorkspace.inspectGitWorkspace({
@@ -45,7 +41,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     })
   );
   const anchor = classifyCleanContentWorkspaceAnchor(policy, anchorAttempt);
-  if (!anchor.ok) return ineligibleReport(request.mode, anchor.result.issues);
+  if (!anchor.ok) {
+    return createReleaseCheckIneligibleResult(request.mode, anchor.result.issues);
+  }
 
   const treeAttempt = yield* Effect.result(
     context.contentWorkspace.readGitTree({
@@ -58,7 +56,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     })
   );
   const tree = classifyCleanContentWorkspaceTree(policy, anchor.value, treeAttempt);
-  if (!tree.ok) return ineligibleReport(request.mode, tree.result.issues);
+  if (!tree.ok) {
+    return createReleaseCheckIneligibleResult(request.mode, tree.result.issues);
+  }
 
   const releaseInputAttempt = yield* Effect.result(
     context.contentWorkspace.readGitBlob({
@@ -69,7 +69,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     })
   );
   const releaseInput = classifyCleanReleaseInput(policy, tree.value, releaseInputAttempt);
-  if (!releaseInput.ok) return ineligibleReport(request.mode, releaseInput.result.issues);
+  if (!releaseInput.ok) {
+    return createReleaseCheckIneligibleResult(request.mode, releaseInput.result.issues);
+  }
 
   const payloadAttempt = yield* Effect.result(
     context.contentWorkspace.readGitBlobs({
@@ -82,7 +84,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     })
   );
   const payloads = classifyCleanPayloads(releaseInput.value, payloadAttempt);
-  if (!payloads.ok) return ineligibleReport(request.mode, payloads.result.issues);
+  if (!payloads.ok) {
+    return createReleaseCheckIneligibleResult(request.mode, payloads.result.issues);
+  }
 
   const openingEvidenceAttempt = yield* Effect.result(
     context.contentWorkspace.captureGitWorkspaceEvidence({
@@ -103,7 +107,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     payloads.value,
     openingEvidenceAttempt
   );
-  if (!openingEvidence.ok) return ineligibleReport(request.mode, openingEvidence.result.issues);
+  if (!openingEvidence.ok) {
+    return createReleaseCheckIneligibleResult(request.mode, openingEvidence.result.issues);
+  }
 
   const closingEvidenceAttempt = yield* Effect.result(
     context.contentWorkspace.captureGitWorkspaceEvidence({
@@ -123,7 +129,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     payloads.value,
     closingEvidenceAttempt
   );
-  if (!closingEvidence.ok) return ineligibleReport(request.mode, closingEvidence.result.issues);
+  if (!closingEvidence.ok) {
+    return createReleaseCheckIneligibleResult(request.mode, closingEvidence.result.issues);
+  }
 
   const inspected = finishCleanContentWorkspaceInspection(
     policy,
@@ -131,7 +139,9 @@ export const check = module.check.effect(function* ({ context, input: request })
     openingEvidence.value,
     closingEvidence.value
   );
-  if (inspected.kind === "Ineligible") return ineligibleReport(request.mode, inspected.issues);
+  if (inspected.kind === "Ineligible") {
+    return createReleaseCheckIneligibleResult(request.mode, inspected.issues);
+  }
   const derivation = deriveReleaseSelection(inspected.snapshot, request.mode);
   if (!derivation.ok) {
     return {
@@ -142,46 +152,7 @@ export const check = module.check.effect(function* ({ context, input: request })
   }
   return {
     kind: "EligibleReport" as const,
-    derivation: releaseDerivationIdentity(derivation.value),
+    derivation: createReleaseCheckDerivationIdentity(request.mode, derivation.value),
     eligibilityBinding: inspected.snapshot.eligibilityBinding,
   };
 });
-
-function releaseDerivationIdentity(derivation: DerivedReleaseSelection): ReleaseDerivationIdentity {
-  if (derivation.releaseSet !== undefined) {
-    return Object.freeze({
-      kind: "complete-set",
-      releaseSetDigest: derivation.releaseSet.releaseSetDigest,
-      members: Object.freeze(
-        derivation.releaseSet.body.members.map((member) =>
-          Object.freeze({
-            pluginId: member.pluginId,
-            releaseDigest: member.releaseDigest,
-          })
-        )
-      ),
-    });
-  }
-  const release = derivation.releases[0]!;
-  return Object.freeze({
-    kind: "release",
-    pluginId: release.body.pluginId,
-    releaseDigest: release.releaseDigest,
-  });
-}
-
-function ineligibleReport(
-  mode: ReleaseSelection,
-  issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]]
-): CheckResult {
-  return { kind: "IneligibleReport", mode, issues: sourceIssues(issues) };
-}
-
-function sourceIssues(
-  issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]]
-): readonly [ReleaseCheckIssue, ...ReleaseCheckIssue[]] {
-  return issues.map((issue) => Object.freeze({ kind: "SourceEligibility", issue })) as [
-    ReleaseCheckIssue,
-    ...ReleaseCheckIssue[],
-  ];
-}
