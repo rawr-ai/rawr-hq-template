@@ -1687,6 +1687,22 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `./modules/providers/router` import. Delete the predecessor paths without
   aliases. Add no policy, resource, provider, middleware, contract, test,
   script, provider-home, native-command, Personal, or live-state change.
+- [x] 5.7e21z3 Migrate Releases as the fifth production consumer of the
+  restored router law. Move its former router barrel to module-root
+  `router.ts`, rename the four operation leaves to matching
+  `router/*.router.ts` destinations, and change only the composer's four leaf
+  imports. Extract only the Effect-free release-identity, repeated check
+  ineligibility, and staged source-change result construction into qualified
+  module policy; inline the one-use staged-ineligible object and exhaustive
+  default without moving the handler-owned staged and clean inspection
+  closures. Preserve the module branch and curated context, TypeBox contracts
+  and schemas, public operation keys, resource calls and bounds, clean and
+  staged observation and revalidation order, release-input encoding, result
+  shapes and freezing, failures, defects, interruption, exact unreachable
+  error text, and the root service's `./modules/releases/router` import. Delete
+  predecessor paths and one-use helpers without aliases. Add no generalized
+  rule, resource, provider, middleware, compatibility face, Personal,
+  live-state, or second operation path.
 - [ ] 5.7e22 Once an upstream Civ7-style Habitat Nx-plugin package is actually
   distributable to Template, replace the interim hand-maintained
   `check:policy:local` and `check:structure` CLI leaves with that execution

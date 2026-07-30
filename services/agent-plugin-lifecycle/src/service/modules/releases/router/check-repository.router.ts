@@ -1,8 +1,5 @@
 import { Effect } from "effect";
-import {
-  type SourceEligibilityIssue,
-  sourceEligibilityIssue,
-} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -21,11 +18,7 @@ import {
   validateCleanContentWorkspacePolicy,
 } from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
-import {
-  normalizeReleaseSourceChangedDetail,
-  type RepositoryCheckResult,
-} from "../model/dto/release-lifecycle";
-import type { StagedContentWorkspaceInspection } from "../model/dto/staged-content-workspace";
+import { createRepositoryCheckSourceChangedResult } from "../model/policy/eligibility-result";
 import {
   classifyStagedMaterializationObservation,
   classifyStagedObservationFailure,
@@ -46,7 +39,12 @@ export const checkRepository = module.checkRepository.effect(function* ({
       const inspectStagedRepository = () =>
         Effect.gen(function* () {
           const policyIssue = validateStagedContentWorkspacePolicy(request.contentWorkspace);
-          if (policyIssue !== undefined) return stagedIneligible(policyIssue);
+          if (policyIssue !== undefined) {
+            return {
+              kind: "StagedContentWorkspaceIneligible" as const,
+              issues: [policyIssue] as const,
+            };
+          }
 
           const releaseInputAttempt = yield* Effect.result(
             context.contentWorkspace.observeGitStagedIndex(
@@ -77,7 +75,9 @@ export const checkRepository = module.checkRepository.effect(function* ({
         });
 
       const inspected = yield* inspectStagedRepository();
-      if (inspected.kind === "SourceChanged") return stagedSourceChanged(inspected.detail);
+      if (inspected.kind === "SourceChanged") {
+        return createRepositoryCheckSourceChangedResult(inspected.detail);
+      }
       if (inspected.kind === "StagedContentWorkspaceIneligible") {
         return {
           kind: "RepositoryIneligible" as const,
@@ -90,7 +90,7 @@ export const checkRepository = module.checkRepository.effect(function* ({
         revalidated.kind !== "StagedContentWorkspaceEligible" ||
         revalidated.snapshot.stagedBinding !== inspected.snapshot.stagedBinding
       ) {
-        return stagedSourceChanged(
+        return createRepositoryCheckSourceChangedResult(
           revalidated.kind === "SourceChanged"
             ? revalidated.detail
             : "staged repository changed before final revalidation"
@@ -250,25 +250,9 @@ export const checkRepository = module.checkRepository.effect(function* ({
         eligibilityBinding: revalidated.snapshot.eligibilityBinding,
       };
     }
-    default:
-      return assertNever(request);
+    default: {
+      const unreachable: never = request;
+      throw new Error(`Unreachable repository check variant: ${String(unreachable)}`);
+    }
   }
 });
-
-function stagedIneligible(
-  issue: SourceEligibilityIssue
-): Extract<StagedContentWorkspaceInspection, { kind: "StagedContentWorkspaceIneligible" }> {
-  return { kind: "StagedContentWorkspaceIneligible", issues: [issue] };
-}
-
-function stagedSourceChanged(detail: string): RepositoryCheckResult {
-  return {
-    kind: "SourceChanged",
-    mode: "staged",
-    detail: normalizeReleaseSourceChangedDetail(detail),
-  };
-}
-
-function assertNever(value: never): never {
-  throw new Error(`Unreachable repository check variant: ${String(value)}`);
-}
