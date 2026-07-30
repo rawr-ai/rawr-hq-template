@@ -16,6 +16,10 @@ import {
   RepoSyncUpstreamInputSchema,
   RepoSyncUpstreamResultSchema,
 } from "../src/service/modules/repo/model/dto/repo-operations.dto";
+import {
+  StackDoctorResultSchema,
+  StackDrainResultSchema,
+} from "../src/service/modules/stack/model/dto/stack-operations.dto";
 import { router } from "../src/service/router";
 import { createClientOptions, createFakeResources } from "./helpers";
 
@@ -53,6 +57,13 @@ describe("@rawr/dev service shell", () => {
       audience: "internal",
       audit: "basic",
       entity: "scratchPolicy",
+    });
+    expect(getProcedureMetadata(contract.stack.doctor)).toEqual({
+      idempotent: true,
+      domain: "dev",
+      audience: "internal",
+      audit: "basic",
+      entity: "stack",
     });
     expect(getProcedureMetadata(contract.stack.drain)).toEqual({
       idempotent: false,
@@ -277,14 +288,91 @@ describe("@rawr/dev service behavior", () => {
     });
   });
 
+  it("reports one success lifecycle for a healthy stack diagnosis", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const { resources, calls } = createFakeResources({
+      commands: [
+        { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
+        { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
+        { command: "git", args: ["worktree", "list", "--porcelain"], stdout: worktrees },
+      ],
+    });
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    const result = await client.stack.doctor(
+      { repo: "rawr-hq-template" },
+      { context: { invocation: { traceId: "test.stack.doctor" } } }
+    );
+
+    expect(result).toMatchObject({
+      repo: "rawr-hq-template",
+      report: {
+        status: "HEALTHY",
+        branch: "agent/devops",
+        checks: {
+          dirtyWorkingTree: false,
+          detachedHead: false,
+          graphiteAvailable: true,
+          worktreeListReadable: true,
+          graphShowsStack: true,
+        },
+      },
+    });
+    expect(Value.Check(StackDoctorResultSchema, result)).toBe(true);
+    expect(calls).toEqual([
+      { command: "git", args: ["status", "--short", "--branch"], cwd: "/repo/rawr" },
+      { command: "gt", args: ["ls"], cwd: "/repo/rawr" },
+      {
+        command: "git",
+        args: ["worktree", "list", "--porcelain"],
+        cwd: "/repo/rawr",
+      },
+    ]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "stack.doctor",
+        outcome: "success",
+        analytics_trace_id: "test.stack.doctor",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "stack.doctor",
+        outcome: "success",
+        invocationTraceId: "test.stack.doctor",
+        entity: "stack",
+      },
+    });
+  });
+
   it("plans stack drain by default and does not run mutating Graphite commands", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
         { command: "gt", args: ["ls"], stdout: "◉ agent/devops\n" },
       ],
     });
-    const client = createClient(createClientOptions({ resources }));
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
 
     const result = await client.stack.drain(
       {},
@@ -293,10 +381,48 @@ describe("@rawr/dev service behavior", () => {
 
     expect(result.action).toBe("planned");
     expect(result.preflight.ok).toBe(true);
-    expect(calls.map((call) => [call.command, call.args.join(" ")])).not.toContainEqual([
-      "gt",
-      "ss --publish --stack --ai --no-interactive",
+    expect(result.cycles).toEqual([]);
+    expect(
+      result.plannedCommands.map(({ command, args, status }) => ({ command, args, status }))
+    ).toEqual([
+      {
+        command: "gt",
+        args: ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
+        status: "planned",
+      },
+      { command: "gt", args: ["merge", "--no-interactive"], status: "planned" },
+      {
+        command: "gt",
+        args: ["sync", "--no-restack", "--no-interactive"],
+        status: "planned",
+      },
+      { command: "gt", args: ["ls"], status: "planned" },
     ]);
+    expect(Value.Check(StackDrainResultSchema, result)).toBe(true);
+    expect(calls).toEqual([
+      { command: "git", args: ["status", "--short", "--branch"], cwd: "/repo/rawr" },
+      { command: "gt", args: ["ls"], cwd: "/repo/rawr" },
+    ]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "success",
+        analytics_trace_id: "test.stack.drain",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "info",
+      event: "dev.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "success",
+        invocationTraceId: "test.stack.drain",
+        entity: "stack",
+      },
+    });
   });
 
   it("blocks applied stack drain on missing scratch without blocking a dry run", async () => {
@@ -384,6 +510,53 @@ describe("@rawr/dev service behavior", () => {
     expect(result.cycles[0]?.publish.exitCode).toBeNull();
     expect(result.cycles[0]?.publish.stderr).toContain("spawn gt ENOENT");
     expect(result.execution.issues[0]?.code).toBe("STACK_DRAIN_COMMAND_FAILED");
+  });
+
+  it("reports one error lifecycle without replacing stack admission failures", async () => {
+    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
+    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const failure = new Error("stack scratch observation failed");
+    const { resources, calls } = createFakeResources();
+    resources.fs.readDir = async () => {
+      throw failure;
+    };
+    const client = createClient(
+      createClientOptions({
+        resources,
+        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
+        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      })
+    );
+
+    await expect(
+      client.stack.drain(
+        { apply: true, scratchPolicy: { mode: "block" } },
+        { context: { invocation: { traceId: "test.stack.error" } } }
+      )
+    ).rejects.toBe(failure);
+    expect(calls).toEqual([]);
+    expect(analyticsEntries).toHaveLength(1);
+    expect(analyticsEntries[0]).toMatchObject({
+      event: "orpc.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "error",
+        analytics_trace_id: "test.stack.error",
+      },
+    });
+    expect(logEntries).toHaveLength(1);
+    expect(logEntries[0]).toMatchObject({
+      level: "error",
+      event: "dev.procedure",
+      payload: {
+        path: "stack.drain",
+        outcome: "error",
+        invocationTraceId: "test.stack.error",
+        entity: "stack",
+        errorName: "Error",
+        errorMessage: failure.message,
+      },
+    });
   });
 
   it("resolves repo sync to origin/main by default and fails missing refs before mutation", async () => {
