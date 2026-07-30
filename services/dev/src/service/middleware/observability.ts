@@ -1,6 +1,6 @@
 import { createObservabilityMiddlewareCallback } from "@rawr/hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy/procedure-metadata";
 
 /** Authors workspace lifecycle signals through the Dev service context. */
 export const middleware = base.middleware(

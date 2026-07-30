@@ -1,3 +1,4 @@
+import { getProcedureMetadata } from "@rawr/hq-sdk";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../src/client";
@@ -34,6 +35,23 @@ describe("@rawr/dev service shell", () => {
     expect(Object.keys(contract.repo)).toEqual(["syncUpstream"]);
     expect(Object.keys(contract.worktree)).toEqual(["cleanup"]);
     expect(Object.keys(contract.scratchPolicy)).toEqual(["check"]);
+  });
+
+  it("inherits service metadata policy while preserving operation ownership", () => {
+    expect(getProcedureMetadata(contract.scratchPolicy.check)).toEqual({
+      idempotent: true,
+      domain: "dev",
+      audience: "internal",
+      audit: "basic",
+      entity: "scratchPolicy",
+    });
+    expect(getProcedureMetadata(contract.stack.drain)).toEqual({
+      idempotent: false,
+      domain: "dev",
+      audience: "internal",
+      audit: "full",
+      entity: "stack",
+    });
   });
 
   it("keeps retired repo inspection fields outside the public schemas", () => {
