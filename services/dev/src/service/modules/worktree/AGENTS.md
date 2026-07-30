@@ -31,9 +31,13 @@
 
 ## Flow
 
-- The caller supplies repository scope, expected prefix, pins, and apply
-  posture; the module evaluates worktree facts and either returns the plan or
-  executes only its admitted removals.
+- `contract/cleanup.ts` declares the operation boundary and
+  `contract/index.ts` composes the module contract.
+- `module.ts` curates the Worktree operation context from the service base.
+- `router/cleanup.router.ts` authors candidate admission, planning, and
+  removal behavior.
+- Module-root `router.ts` composes the completed operation for the service
+  router.
 
 ## Interfaces
 
@@ -41,6 +45,8 @@
   root, process and path resources, and the service-owned scratch policy
   checker curated by the module. Root construction lanes remain
   service-internal and are not an operation interface.
+- Module-root `router.ts` is composition only. Operation logic remains in the
+  named router leaf.
 
 ## Routing
 
