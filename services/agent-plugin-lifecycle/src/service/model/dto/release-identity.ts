@@ -50,7 +50,8 @@ export const RepositoryIdentitySchema = Type.Unsafe<RepositoryIdentityBrand>(
   })
 );
 
-const GitObjectIdSchema = Type.String({
+/** Identifies one lowercase SHA-1 or SHA-256 Git object. */
+export const GitObjectIdSchema = Type.String({
   minLength: 40,
   maxLength: 64,
   pattern: "^(?:[0-9a-f]{40}|[0-9a-f]{64})$",

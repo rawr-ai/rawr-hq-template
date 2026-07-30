@@ -1,5 +1,8 @@
 import { Effect } from "effect";
-import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import {
+  MAX_CLEAN_CONTENT_TREE_ENTRIES,
+  sourceEligibilityIssue,
+} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -10,7 +13,6 @@ import {
   finishCleanContentWorkspaceInspection,
   MAX_CLEAN_CONTENT_INDEX_BYTES,
   MAX_CLEAN_CONTENT_TREE_BYTES,
-  MAX_CLEAN_CONTENT_TREE_ENTRIES,
   MAX_CLEAN_CONTENT_WORKTREE_BYTES,
   MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,

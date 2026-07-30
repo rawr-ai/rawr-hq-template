@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-29 - Schema Owns Shape
+
+TypeBox is the sole authority for object membership, required fields, primitive
+shape, and derived TypeScript types. Policy begins after structural admission.
+It may bound work, canonicalize values, preserve deterministic issue ordering,
+and enforce relationships that a field schema cannot express, but it does not
+restate the schema through handwritten key lists or exact-record parsers.
+
+The service root owns only values that genuinely cross module boundaries.
+Release derivation and content-workspace snapshots qualify because Releases,
+Packaging, and Providers exchange them. Their schemas therefore live with the
+service model and their types descend from those schemas. Module-specific
+results remain inside their modules. The correction is deletion-first: reuse
+the native TypeBox validator, project only truthful diagnostics, and add no
+generic parsing layer or service-wide schema walker.
+
+### Bag Of Keywords
+
+schema, shape, type, admission, issue, bound, policy, identity, module,
+service, deletion, proof.
+
 ## 2026-07-29 - One Router Face
 
 A service narrows from host context into one configured service, then into one

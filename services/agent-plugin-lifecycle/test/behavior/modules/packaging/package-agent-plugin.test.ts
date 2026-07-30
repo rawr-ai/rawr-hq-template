@@ -14,10 +14,10 @@ import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspa
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { afterEach, describe, expect, it } from "vitest";
+import { MAX_CLEAN_CONTENT_TREE_ENTRIES } from "../../../../src/service/model/dto/content-workspace";
 import {
   MAX_CLEAN_CONTENT_INDEX_BYTES,
   MAX_CLEAN_CONTENT_TREE_BYTES,
-  MAX_CLEAN_CONTENT_TREE_ENTRIES,
   MAX_CLEAN_CONTENT_WORKTREE_BYTES,
   MAX_CLEAN_CONTENT_WORKTREE_FILE_BYTES,
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,

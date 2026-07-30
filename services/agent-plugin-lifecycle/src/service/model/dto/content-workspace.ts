@@ -1,24 +1,25 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import type { AgentPluginPayload } from "./agent-plugin-payload";
+import { NormalizedFileModeSchema } from "./agent-plugin-payload";
+import { type ReleaseDerivationSource, ReleaseDerivationSourceSchema } from "./release-derivation";
 import {
-  type ContentAuthority,
   ContentAuthoritySchema,
-  type GitCommitId,
   GitCommitIdSchema,
-  type GitTreeId,
+  GitObjectIdSchema,
   GitTreeIdSchema,
-  type PluginId,
-  type ReleaseRelativePath,
   ReleaseRelativePathSchema,
-  type RepositoryIdentity,
   RepositoryIdentitySchema,
 } from "./release-identity";
-import type { AgentPluginReleaseInput } from "./release-input";
+import { NonEmptyReadonlyArray } from "./structural";
 
+/** Maximum detail length admitted for one clean-source eligibility issue. */
 export const MAX_SOURCE_ELIGIBILITY_ISSUE_DETAIL_LENGTH = 4_096;
+
+/** Maximum regular Git tree entries admitted into one clean content snapshot. */
+export const MAX_CLEAN_CONTENT_TREE_ENTRIES = 200_000;
 
 const TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX = "...[truncated]";
 
+/** Admits one canonical non-root absolute content-workspace locator. */
 export const CanonicalAbsoluteLocatorSchema = Refine(
   Type.String({
     minLength: 2,
@@ -30,18 +31,21 @@ export const CanonicalAbsoluteLocatorSchema = Refine(
   () => "Expected a canonical non-root absolute workspace locator"
 );
 
+/** Admits one canonical Git remote name used by content-workspace policy. */
 export const RemoteNameSchema = Type.String({
   minLength: 1,
   maxLength: 128,
   pattern: "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
 });
 
+/** Admits one bounded Git remote URL without control characters. */
 export const RemoteUrlSchema = Type.String({
   minLength: 1,
   maxLength: 512,
   pattern: "^[^\\u0000-\\u001f\\u007f]+$",
 });
 
+/** Admits one canonical fully qualified Git branch ref. */
 export const QualifiedHeadRefSchema = Refine(
   Type.String({
     minLength: "refs/heads/a".length,
@@ -52,6 +56,14 @@ export const QualifiedHeadRefSchema = Refine(
   () => "Expected a canonical fully qualified branch ref"
 );
 
+/** Admits one SHA-256 binding over an exact content-workspace observation. */
+export const WorkspaceBindingSchema = Type.String({
+  minLength: 64,
+  maxLength: 64,
+  pattern: "^[0-9a-f]{64}$",
+});
+
+/** Defines the caller-selected clean content-workspace policy. */
 export const ContentWorkspacePolicySchema = ReadonlyObject(
   Type.Object({
     locator: CanonicalAbsoluteLocatorSchema,
@@ -68,22 +80,10 @@ export const ContentWorkspacePolicySchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** TypeBox-derived caller policy for one clean content workspace. */
 export type ContentWorkspacePolicy = Static<typeof ContentWorkspacePolicySchema>;
 
-export interface ContentWorkspaceSnapshot {
-  readonly repositoryIdentity: RepositoryIdentity;
-  readonly sourceCommit: GitCommitId;
-  readonly sourceTree: GitTreeId;
-  readonly releaseInput: AgentPluginReleaseInput;
-  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
-  readonly objectBindings: readonly Readonly<{
-    path: ReleaseRelativePath;
-    objectId: string;
-    mode: number;
-  }>[];
-  readonly eligibilityBinding: string;
-}
-
+/** Enumerates stable diagnostic codes emitted by clean content-workspace policy. */
 export const SourceEligibilityIssueCodeSchema = Type.Union([
   Type.Literal("AliasedLocator"),
   Type.Literal("WrongRepository"),
@@ -102,6 +102,7 @@ export const SourceEligibilityIssueCodeSchema = Type.Union([
   Type.Literal("SourceChanged"),
 ]);
 
+/** Defines one bounded diagnostic emitted while inspecting a clean workspace. */
 export const SourceEligibilityIssueSchema = ReadonlyObject(
   Type.Object({
     code: SourceEligibilityIssueCodeSchema,
@@ -113,9 +114,73 @@ export const SourceEligibilityIssueSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
+/** TypeBox-derived clean content-workspace diagnostic code. */
 export type SourceEligibilityIssueCode = Static<typeof SourceEligibilityIssueCodeSchema>;
+
+/** TypeBox-derived clean content-workspace diagnostic. */
 export type SourceEligibilityIssue = Static<typeof SourceEligibilityIssueSchema>;
 
+const SourceEligibilityIssuesSchema = NonEmptyReadonlyArray(SourceEligibilityIssueSchema, {
+  maxItems: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+});
+
+const ContentWorkspaceObjectBindingSchema = ReadonlyObject(
+  Type.Object({
+    path: ReleaseRelativePathSchema,
+    objectId: GitObjectIdSchema,
+    mode: NormalizedFileModeSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/**
+ * Defines an exact clean content snapshot shared by lifecycle capability modules.
+ *
+ * The release-derivation fields are reused directly so the snapshot cannot
+ * drift from the source facts consumed by release construction.
+ */
+export const ContentWorkspaceSnapshotSchema = ReadonlyObject(
+  Type.Object({
+    ...ReleaseDerivationSourceSchema.properties,
+    objectBindings: ReadonlyObject(Type.Array(ContentWorkspaceObjectBindingSchema), {
+      maxItems: MAX_CLEAN_CONTENT_TREE_ENTRIES,
+    }),
+    eligibilityBinding: WorkspaceBindingSchema,
+  }),
+  { additionalProperties: false }
+);
+
+/** TypeBox-derived exact clean content-workspace snapshot. */
+export type ContentWorkspaceSnapshot = Static<typeof ContentWorkspaceSnapshotSchema> &
+  Pick<ReleaseDerivationSource, "releaseInput" | "payloads">;
+
+/** Defines either an eligible clean snapshot or a nonempty list of bounded issues. */
+export const ContentWorkspaceInspectionSchema = Type.Union([
+  ReadonlyObject(
+    Type.Object({
+      kind: Type.Literal("Eligible"),
+      snapshot: ContentWorkspaceSnapshotSchema,
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
+      kind: Type.Literal("Ineligible"),
+      issues: SourceEligibilityIssuesSchema,
+    }),
+    { additionalProperties: false }
+  ),
+]);
+
+type ContentWorkspaceInspectionShape = Static<typeof ContentWorkspaceInspectionSchema>;
+
+/** TypeBox-derived result of one clean content-workspace inspection. */
+export type ContentWorkspaceInspection =
+  | (Extract<ContentWorkspaceInspectionShape, { readonly kind: "Eligible" }> &
+      Readonly<{ snapshot: ContentWorkspaceSnapshot }>)
+  | Extract<ContentWorkspaceInspectionShape, { readonly kind: "Ineligible" }>;
+
+/** Constructs one bounded clean-source eligibility diagnostic. */
 export function sourceEligibilityIssue(
   code: SourceEligibilityIssueCode,
   detail: string
@@ -130,13 +195,6 @@ export function sourceEligibilityIssue(
         )}${TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX}`;
   return Object.freeze({ code, detail: boundedDetail });
 }
-
-export type ContentWorkspaceInspection =
-  | Readonly<{ kind: "Eligible"; snapshot: ContentWorkspaceSnapshot }>
-  | Readonly<{
-      kind: "Ineligible";
-      issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
-    }>;
 
 function isCanonicalAbsoluteLocator(value: string): boolean {
   if (

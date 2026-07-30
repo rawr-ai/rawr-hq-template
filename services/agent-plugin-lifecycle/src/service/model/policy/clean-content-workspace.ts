@@ -16,7 +16,11 @@ import type {
   SourceEligibilityIssueCode,
 } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import { type AgentPluginPayload, MAX_PAYLOAD_BYTES_PER_MEMBER } from "../dto/agent-plugin-payload";
+import {
+  type AgentPluginPayload,
+  MAX_PAYLOAD_BYTES_PER_MEMBER,
+  type NormalizedFileMode,
+} from "../dto/agent-plugin-payload";
 import type { PluginId, ReleaseRelativePath } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
@@ -43,9 +47,6 @@ import {
 const decoder = new TextDecoder("utf-8", { fatal: true });
 const encoder = new TextEncoder();
 
-/** Maximum regular Git tree entries admitted by clean-content policy. */
-export const MAX_CLEAN_CONTENT_TREE_ENTRIES = 200_000;
-
 /** Maximum native Git tree bytes admitted by clean-content policy. */
 export const MAX_CLEAN_CONTENT_TREE_BYTES = 100 * 1024 * 1024;
 
@@ -70,7 +71,7 @@ export const MAX_CLEAN_CONTENT_WORKTREE_BYTES =
 
 /** Canonical regular Git tree fact interpreted by clean-content policy. */
 interface CleanContentTreeEntry {
-  readonly mode: number;
+  readonly mode: NormalizedFileMode;
   readonly objectId: string;
   readonly path: ReleaseRelativePath;
 }
@@ -335,7 +336,7 @@ export function classifyCleanPayloads(
   for (const memberPayload of releaseInput.memberPayloads) {
     const payloadEntries: Array<{
       path: ReleaseRelativePath;
-      mode: number;
+      mode: NormalizedFileMode;
       bytes: Uint8Array;
     }> = [];
     for (const selected of memberPayload.entries) {
@@ -449,7 +450,7 @@ export function finishCleanContentWorkspaceInspection(
   }
 
   const objectBindings: Array<
-    Readonly<{ path: ReleaseRelativePath; objectId: string; mode: number }>
+    Readonly<{ path: ReleaseRelativePath; objectId: string; mode: NormalizedFileMode }>
   > = [];
   for (const path of payloads.admittedPaths) {
     const entry = payloads.entryByPath.get(path);

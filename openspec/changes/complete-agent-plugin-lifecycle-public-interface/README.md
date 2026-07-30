@@ -4160,6 +4160,39 @@ and test typechecks plus diff hygiene pass. Personal content and native provider
 settlement remain unopened until this Template checkpoint lands through the
 required repository gate.
 
+## Cross-Module Release Schema Authority
+
+The first bounded task 5.3 checkpoint gives the existing release-derivation and
+clean content-workspace collaborations one structural owner each. Closed
+TypeBox schemas now define the derivation source, constructed selection,
+neutral failure and result, clean snapshot, and clean inspection. Their
+TypeScript types descend from those schemas and layer only the admitted
+release-input, payload, release, and release-set brands that structural
+validation alone cannot establish.
+
+The content snapshot reuses the exact derivation-source properties rather than
+restating them. Clean Git object bindings use the existing normalized file-mode
+domain, one service-owned workspace-binding schema, and the existing clean-tree
+cardinality. Clean-content policy consumes those admitted facts and carries the
+normalized mode from tree classification through snapshot construction. The
+existing release-member cardinality likewise closes derivation arrays. No
+generic parser, schema walker, context lane, module result, persistent record,
+or new state owner appears.
+
+The owner-local schema boundary passes 13 tests. The complete lifecycle target
+passes 42 files and 387 tests uncached in 42.2 seconds; the lifecycle owner
+typecheck and its seven Nx prerequisites pass uncached in 12.2 seconds. Biome
+passes, and the five relevant Habitat laws complete without an enforced
+finding. The service topology and router laws retain their existing advisory
+corpus outside this change.
+
+This is an intermediate semantic checkpoint, not task 5.3 closure. The separate
+current-main Git family and the six release parser families still retain their
+handwritten structural authority and remain the next owner-specific deletions.
+See [[service-domain-frame#Burn-Down Design|the burn-down design]],
+[[tasks|the active task ledger]], and
+[[authority-amendment#Positive Architecture Ratchet|the architecture ratchet]].
+
 ## Settlement Oracles
 
 The final product must prove:

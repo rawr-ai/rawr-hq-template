@@ -1,15 +1,22 @@
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import type { AgentPluginPayload } from "./agent-plugin-payload";
-import type { AgentPluginRelease } from "./agent-plugin-release";
-import type { AgentPluginReleaseSet } from "./agent-plugin-release-set";
+import { type AgentPluginPayload, AgentPluginPayloadSchema } from "./agent-plugin-payload";
+import { type AgentPluginRelease, AgentPluginReleaseSchema } from "./agent-plugin-release";
 import {
-  type GitCommitId,
-  type GitTreeId,
-  type PluginId,
+  type AgentPluginReleaseSet,
+  AgentPluginReleaseSetSchema,
+} from "./agent-plugin-release-set";
+import {
+  GitCommitIdSchema,
+  GitTreeIdSchema,
   PluginIdSchema,
-  type RepositoryIdentity,
+  RepositoryIdentitySchema,
 } from "./release-identity";
-import { type AgentPluginReleaseInput, MAX_RELEASE_MEMBERS } from "./release-input";
+import {
+  type AgentPluginReleaseInput,
+  AgentPluginReleaseInputSchema,
+  MAX_RELEASE_MEMBERS,
+} from "./release-input";
+import { ReleaseIssueCodeSchema } from "./release-issue";
 import { NonEmptyReadonlyArray } from "./structural";
 
 /**
@@ -68,50 +75,140 @@ export const ReleaseDerivationSelectionSchema = Type.Union([
 /** TypeBox-derived service-internal release derivation selection. */
 export type ReleaseDerivationSelection = Static<typeof ReleaseDerivationSelectionSchema>;
 
+const ReleaseDerivationPayloadSchema = ReadonlyObject(
+  Type.Object({
+    pluginId: PluginIdSchema,
+    payload: AgentPluginPayloadSchema,
+  }),
+  { additionalProperties: false }
+);
+
+type ReleaseDerivationPayload = Static<typeof ReleaseDerivationPayloadSchema> &
+  Readonly<{ payload: AgentPluginPayload }>;
+
 /**
- * Carries the exact verified source facts needed to construct releases.
+ * Defines the exact verified source facts needed to construct releases.
  *
  * @remarks
  * A complete content-workspace snapshot is structurally compatible, while
  * channel selection can supply the same facts without inventing eligibility
  * or object-binding state.
  */
-export interface ReleaseDerivationSource {
-  readonly repositoryIdentity: RepositoryIdentity;
-  readonly sourceCommit: GitCommitId;
-  readonly sourceTree: GitTreeId;
-  readonly releaseInput: AgentPluginReleaseInput;
-  readonly payloads: readonly Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>[];
-}
+export const ReleaseDerivationSourceSchema = ReadonlyObject(
+  Type.Object({
+    repositoryIdentity: RepositoryIdentitySchema,
+    sourceCommit: GitCommitIdSchema,
+    sourceTree: GitTreeIdSchema,
+    releaseInput: AgentPluginReleaseInputSchema,
+    payloads: ReadonlyObject(Type.Array(ReleaseDerivationPayloadSchema), {
+      maxItems: MAX_RELEASE_MEMBERS,
+    }),
+  }),
+  { additionalProperties: false }
+);
+
+/** TypeBox-derived verified source facts consumed by release derivation policy. */
+export type ReleaseDerivationSource = Static<typeof ReleaseDerivationSourceSchema> &
+  Readonly<{
+    releaseInput: AgentPluginReleaseInput;
+    payloads: readonly ReleaseDerivationPayload[];
+  }>;
 
 /**
- * Carries constructed release values from service policy to an owning
+ * Defines constructed release values passed from service policy to an owning
  * operation. Each module projects these inert values into its own public
  * result vocabulary.
  */
-export interface DerivedReleaseSelection {
-  readonly releases: readonly AgentPluginRelease[];
-  readonly releaseSet?: AgentPluginReleaseSet;
-}
+export const DerivedReleaseSelectionSchema = ReadonlyObject(
+  Type.Object({
+    releases: ReadonlyObject(Type.Array(AgentPluginReleaseSchema), {
+      minItems: 1,
+      maxItems: MAX_RELEASE_MEMBERS,
+    }),
+    releaseSet: Type.Optional(AgentPluginReleaseSetSchema),
+  }),
+  { additionalProperties: false }
+);
 
-/** Stable failure reasons emitted by shared release-derivation policy. */
-export type ReleaseDerivationFailure =
-  | Readonly<{ reason: "InvalidSelection"; detail: string }>
-  | Readonly<{ reason: "UndeclaredMember"; pluginId: PluginId; detail: string }>
-  | Readonly<{ reason: "MissingPayload"; pluginId: PluginId; detail: string }>
-  | Readonly<{
-      reason: "InvalidRelease";
-      pluginId: PluginId;
-      issueCodes: readonly string[];
-      detail: string;
-    }>
-  | Readonly<{
-      reason: "InvalidReleaseSet";
-      issueCodes: readonly string[];
-      detail: string;
-    }>;
+/** TypeBox-derived constructed release values returned by shared policy. */
+export type DerivedReleaseSelection = Static<typeof DerivedReleaseSelectionSchema> &
+  Readonly<{
+    releases: readonly AgentPluginRelease[];
+    releaseSet?: AgentPluginReleaseSet;
+  }>;
 
-/** Constructed releases or one exact neutral derivation failure. */
+const ReleaseDerivationDetailSchema = Type.String();
+const ReleaseDerivationIssueCodesSchema = ReadonlyObject(Type.Array(ReleaseIssueCodeSchema));
+
+/** Defines the stable failure reasons emitted by shared release-derivation policy. */
+export const ReleaseDerivationFailureSchema = Type.Union([
+  ReadonlyObject(
+    Type.Object({
+      reason: Type.Literal("InvalidSelection"),
+      detail: ReleaseDerivationDetailSchema,
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
+      reason: Type.Literal("UndeclaredMember"),
+      pluginId: PluginIdSchema,
+      detail: ReleaseDerivationDetailSchema,
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
+      reason: Type.Literal("MissingPayload"),
+      pluginId: PluginIdSchema,
+      detail: ReleaseDerivationDetailSchema,
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
+      reason: Type.Literal("InvalidRelease"),
+      pluginId: PluginIdSchema,
+      issueCodes: ReleaseDerivationIssueCodesSchema,
+      detail: ReleaseDerivationDetailSchema,
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
+      reason: Type.Literal("InvalidReleaseSet"),
+      issueCodes: ReleaseDerivationIssueCodesSchema,
+      detail: ReleaseDerivationDetailSchema,
+    }),
+    { additionalProperties: false }
+  ),
+]);
+
+/** TypeBox-derived neutral failure returned by shared release-derivation policy. */
+export type ReleaseDerivationFailure = Static<typeof ReleaseDerivationFailureSchema>;
+
+/** Defines constructed releases or one exact neutral derivation failure. */
+export const ReleaseDerivationResultSchema = Type.Union([
+  ReadonlyObject(
+    Type.Object({
+      ok: Type.Literal(true),
+      value: DerivedReleaseSelectionSchema,
+    }),
+    { additionalProperties: false }
+  ),
+  ReadonlyObject(
+    Type.Object({
+      ok: Type.Literal(false),
+      failure: ReleaseDerivationFailureSchema,
+    }),
+    { additionalProperties: false }
+  ),
+]);
+
+type ReleaseDerivationResultShape = Static<typeof ReleaseDerivationResultSchema>;
+
+/** TypeBox-derived result returned by shared release-derivation policy. */
 export type ReleaseDerivationResult =
-  | Readonly<{ ok: true; value: DerivedReleaseSelection }>
-  | Readonly<{ ok: false; failure: ReleaseDerivationFailure }>;
+  | (Extract<ReleaseDerivationResultShape, { readonly ok: true }> &
+      Readonly<{ value: DerivedReleaseSelection }>)
+  | Extract<ReleaseDerivationResultShape, { readonly ok: false }>;
