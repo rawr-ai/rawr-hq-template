@@ -6,6 +6,8 @@ import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-p
 import type { VersionedContentResource } from "@rawr/resource-versioned-content";
 import type { VendorClockPort } from "./modules/vendors/model/ports/clock";
 
+type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
+
 /** Host and invocation lanes admitted before lifecycle middleware narrows context. */
 export type Context = {
   readonly deps: {
@@ -17,13 +19,13 @@ export type Context = {
     readonly packageOutput: AgentPluginPackageOutputResource<never>;
     readonly versionedContent: VersionedContentResource<never>;
   };
-  readonly scope: Record<never, never>;
-  readonly config: Record<never, never>;
+  readonly scope: EmptyContextLane;
+  readonly config: EmptyContextLane;
   readonly invocation: {
     readonly traceId: string;
     readonly commandId: string;
   };
-  readonly provided: Record<never, never>;
+  readonly provided: EmptyContextLane;
 };
 
 /** Native middleware author rooted in the complete lifecycle context. */

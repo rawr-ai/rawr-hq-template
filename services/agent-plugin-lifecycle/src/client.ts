@@ -10,6 +10,7 @@ import {
   ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+import { CurrentMainRecordInputSchema } from "#agent-plugin-lifecycle-service/modules/governance/model/dto/current-main-record";
 import { router } from "#agent-plugin-lifecycle-service/router";
 
 export { type Contract, contract } from "#agent-plugin-lifecycle-service/contract";
@@ -42,6 +43,9 @@ export function createClient({ deps, scope, config }: CreateClientOptions) {
 
 /** Typed local caller surface derived from the lifecycle service router. */
 export type Client = ReturnType<typeof createClient>;
+
+/** Admits one caller-supplied current-main record operation request. */
+export const parseCurrentMainRecordInput = inputParser(CurrentMainRecordInputSchema);
 
 /** Admits one caller-supplied content authority before service dispatch. */
 export const parseContentAuthority = inputParser(ContentAuthoritySchema);

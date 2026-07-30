@@ -4,6 +4,7 @@ import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   parseContentAuthority,
+  parseCurrentMainRecordInput,
   parseGitCommitId,
   parseGitTreeId,
   parsePluginId,
@@ -261,7 +262,10 @@ function parseCurrentMainRecordRequest(flags: RawFlags): CurrentMainRecordReques
     } catch {
       throw new LifecycleInputError("--current-main-body-json must contain valid JSON");
     }
-    return Object.freeze({ kind: "encode-body", body }) as CurrentMainRecordRequest;
+    return requireLifecycleInput(
+      parseCurrentMainRecordInput(Object.freeze({ kind: "encode-body", body })),
+      "--current-main-body-json must contain a valid current-main body"
+    );
   }
   return Object.freeze({
     kind: "validate-record",

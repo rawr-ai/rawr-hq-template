@@ -46,6 +46,7 @@ describe.sequential("production lifecycle profile", () => {
   });
 
   it("materializes every selected provider once for one local service binding", () => {
+    const createClock = vi.fn(() => Object.freeze({ now: () => new Date() }));
     const values = {
       logger: Object.freeze({ log: vi.fn() }),
       analytics: Object.freeze({ capture: vi.fn() }),
@@ -59,12 +60,15 @@ describe.sequential("production lifecycle profile", () => {
       factory.mockReturnValue(values[name as keyof typeof values]);
     }
 
-    const client = bindProductionLifecycleService(productionLifecycleProfile);
+    const client = bindProductionLifecycleService(
+      Object.freeze({ ...productionLifecycleProfile, createClock })
+    );
     const releaseClient = client("releases.check");
     const providerClient = client("providers.status");
 
     expect(Reflect.ownKeys(releaseClient)).toEqual(["releases"]);
     expect(Reflect.ownKeys(providerClient)).toEqual(["providers"]);
     for (const factory of Object.values(selected)) expect(factory).toHaveBeenCalledTimes(1);
+    expect(createClock).toHaveBeenCalledOnce();
   });
 });
