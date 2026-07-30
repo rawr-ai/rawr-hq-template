@@ -8,7 +8,6 @@ import {
   preflight,
   warning,
 } from "#dev-service/model/policy/operation-outcomes";
-import { checkScratchPolicy } from "#dev-service/model/policy/scratch-policy";
 import { module } from "./module";
 
 const cleanup = module.cleanup.handler(async ({ context, input }) => {
@@ -17,21 +16,17 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   const trunk = input.trunk ?? "main";
   const pinnedPaths = new Set(input.pinnedPaths ?? []);
   const pinnedBranches = new Set(input.pinnedBranches ?? []);
-  const scratchPolicy = await checkScratchPolicy({
-    workspaceRoot: context.workspaceRoot,
-    fs: context.resources.fs,
-    path: context.resources.path,
-    request: { ...input.scratchPolicy, enforce: apply },
+  const scratchPolicy = await context.checkScratchPolicy({
+    ...input.scratchPolicy,
+    enforce: apply,
   });
   const issues = [];
   const candidates = [];
   const skipped = [];
 
-  const currentRun = await execStep(context.resources.process, context.workspaceRoot, "pwd", [
-    "-P",
-  ]);
+  const currentRun = await execStep(context.process, context.workspaceRoot, "pwd", ["-P"]);
   const currentPath = (currentRun.stdout ?? "").trim() || context.workspaceRoot;
-  const listRun = await execStep(context.resources.process, context.workspaceRoot, "git", [
+  const listRun = await execStep(context.process, context.workspaceRoot, "git", [
     "worktree",
     "list",
     "--porcelain",
@@ -45,11 +40,9 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   }
 
   for (const entry of parseWorktrees(listRun.stdout ?? "")) {
-    const baseName = context.resources.path.basename(entry.path);
+    const baseName = context.path.basename(entry.path);
     if (!baseName.startsWith(input.prefix)) continue;
-    if (
-      context.resources.path.resolve(entry.path) === context.resources.path.resolve(currentPath)
-    ) {
+    if (context.path.resolve(entry.path) === context.path.resolve(currentPath)) {
       issues.push(
         issue("UNSAFE_CURRENT_WORKTREE_MATCH", "Cleanup candidate matches the current worktree.", {
           path: entry.path,
@@ -71,7 +64,7 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
       continue;
     }
     if (mergedOnly) {
-      const mergedRun = await execStep(context.resources.process, context.workspaceRoot, "git", [
+      const mergedRun = await execStep(context.process, context.workspaceRoot, "git", [
         "branch",
         "--merged",
         trunk,
@@ -123,7 +116,7 @@ const cleanup = module.cleanup.handler(async ({ context, input }) => {
   for (const candidate of candidates) {
     removed.push(
       await execStep(
-        context.resources.process,
+        context.process,
         context.workspaceRoot,
         "git",
         ["worktree", "remove", candidate.path],

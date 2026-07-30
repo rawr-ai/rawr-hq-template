@@ -6,6 +6,28 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Curation Governs Authorship
+
+Native oRPC beta.20 middleware context is additive: a module projection adds
+curated names but does not erase the initial service context at runtime or from
+the inferred handler type. Module curation therefore defines the intended
+operation vocabulary, not a capability sandbox. Handlers author against that
+vocabulary; the staged Habitat source law is the enforcement owner for
+preventing them from reopening the root construction lanes when that
+service-wide law activates.
+
+That distinction keeps the service funnel honest. `base.ts` admits complete
+host dependencies, each `module.ts` selects the names its operations need, and
+router handlers consume those names. We do not add a context wrapper or a
+second implementation boundary merely to simulate erasure that oRPC does not
+provide. True runtime isolation would require a separate initial-context or
+router boundary and is not earned by this request-bounded service.
+
+### Bag Of Keywords
+
+context, merge, curation, authorship, source, boundary, handler, capability,
+law, honesty.
+
 ## 2026-07-30 - Product Bounds Handoff
 
 A downstream consumer can reveal a missing production boundary, but it cannot

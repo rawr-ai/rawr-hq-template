@@ -4664,6 +4664,44 @@ OpenSpec validation, and diff hygiene pass. Standing architecture/oRPC,
 TypeScript/structural, and behavior-first testing reviews accepted the final
 cut after those mutation-boundary oracles were added.
 
+## Dev Module Context Curation
+
+The next bounded Dev checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e30]] keeps the
+complete host capability bundle at the service boundary while removing it from
+operation authorship. Each `module.ts` now projects the vocabulary its branch
+authors against: Scratch Policy receives workspace root, filesystem, and path;
+Stack receives workspace root and process; Repo receives workspace root,
+process, and clock; Worktree receives workspace root, process, and path.
+
+Guarded modules also receive one request-scoped scratch-policy checker. That
+checker binds the existing service-owned policy to the root workspace,
+filesystem, and path capabilities during module curation. Stack, Repo, and
+Worktree handlers author against scratch admission without reaching back into
+raw construction lanes that their operations do not use. The Scratch Policy
+module remains the direct artifact-observation surface.
+
+Native oRPC beta.20 context merging is additive, so module curation does not
+erase the initial service context at runtime or from the inferred handler type.
+This is an authorship boundary, not a capability sandbox. The staged Habitat
+source law is its service-wide enforcement owner when that law activates; the
+current cut keeps handler reach-backs absent without pretending that the law is
+already active. A context wrapper or second implementation boundary would add
+machinery without improving this request-bounded service.
+
+The service base, public `DevResources` construction contract, root
+implementer, contracts, router topology, result types, host adapter, and
+operation behavior are unchanged. No service middleware, resource, provider,
+context wrapper, or compatibility path is added. The native beta.20
+`module.router(...)` middleware replay remains a separate, explicitly
+unresolved topology correction.
+
+Uncached Dev source typecheck and all 15 behavior tests pass in 3.7 seconds.
+Touched TypeScript passes Biome; all 34 active Habitat rules, strict OpenSpec
+validation, and diff hygiene pass. Standing architecture/oRPC,
+TypeScript/structural, and behavior-first testing reviews accepted the cut
+after the additive-context correction above.
+
 ## Settlement Oracles
 
 The final product must prove:

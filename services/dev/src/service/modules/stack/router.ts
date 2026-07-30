@@ -8,18 +8,17 @@ import {
   preflight,
   warning,
 } from "#dev-service/model/policy/operation-outcomes";
-import { checkScratchPolicy } from "#dev-service/model/policy/scratch-policy";
 import { stackLooksConverged } from "./model/policy/stack-convergence";
 import { module } from "./module";
 
 const doctor = module.doctor.handler(async ({ context, input }) => {
-  const gitStatus = await execStep(context.resources.process, context.workspaceRoot, "git", [
+  const gitStatus = await execStep(context.process, context.workspaceRoot, "git", [
     "status",
     "--short",
     "--branch",
   ]);
-  const gtLs = await execStep(context.resources.process, context.workspaceRoot, "gt", ["ls"]);
-  const worktreeList = await execStep(context.resources.process, context.workspaceRoot, "git", [
+  const gtLs = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
+  const worktreeList = await execStep(context.process, context.workspaceRoot, "git", [
     "worktree",
     "list",
     "--porcelain",
@@ -70,11 +69,9 @@ const doctor = module.doctor.handler(async ({ context, input }) => {
 
 const drain = module.drain.handler(async ({ context, input }) => {
   const apply = Boolean(input.apply);
-  const scratchPolicy = await checkScratchPolicy({
-    workspaceRoot: context.workspaceRoot,
-    fs: context.resources.fs,
-    path: context.resources.path,
-    request: { ...input.scratchPolicy, enforce: apply },
+  const scratchPolicy = await context.checkScratchPolicy({
+    ...input.scratchPolicy,
+    enforce: apply,
   });
   const plannedCommands = [
     planned("gt", ["ss", "--publish", "--stack", "--ai", "--no-interactive"]),
@@ -84,7 +81,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
   ];
 
   const issues = [];
-  const gitStatus = await execStep(context.resources.process, context.workspaceRoot, "git", [
+  const gitStatus = await execStep(context.process, context.workspaceRoot, "git", [
     "status",
     "--short",
     "--branch",
@@ -94,7 +91,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
     issues.push(issue("DIRTY_WORKING_TREE", "Working tree must be clean before stack drain."));
   if (parsedStatus.detached)
     issues.push(issue("DETACHED_HEAD_UNSUPPORTED", "Stack drain requires a named branch."));
-  const gtLs = await execStep(context.resources.process, context.workspaceRoot, "gt", ["ls"]);
+  const gtLs = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
   if (gtLs.status !== "succeeded")
     issues.push(
       issue("GRAPHITE_UNAVAILABLE", "Graphite stack state is not readable.", {
@@ -135,7 +132,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
   const sleepSeconds = input.sleepSeconds ?? 8;
   for (let cycle = 1; cycle <= maxCycles; cycle += 1) {
     const publish = await execStep(
-      context.resources.process,
+      context.process,
       context.workspaceRoot,
       "gt",
       ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
@@ -158,7 +155,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
       break;
     }
     const merge = await execStep(
-      context.resources.process,
+      context.process,
       context.workspaceRoot,
       "gt",
       ["merge", "--no-interactive"],
@@ -181,7 +178,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
       break;
     }
     const sync = await execStep(
-      context.resources.process,
+      context.process,
       context.workspaceRoot,
       "gt",
       ["sync", "--no-restack", "--no-interactive"],
@@ -195,7 +192,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
     if (syncIssue) {
       executionIssues.push(syncIssue);
     }
-    const gtLsRun = await execStep(context.resources.process, context.workspaceRoot, "gt", ["ls"]);
+    const gtLsRun = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
     const gtLsOutput = gtLsRun.stdout ?? "";
     cycles.push({ cycle, publish, merge, sync, gtLs: gtLsOutput });
     if (executionIssues.length === 0 && stackLooksConverged(gtLsOutput)) {
@@ -211,7 +208,7 @@ const drain = module.drain.handler(async ({ context, input }) => {
       };
     }
     if (executionIssues.length > 0) break;
-    if (sleepSeconds > 0) await context.resources.process.sleep(sleepSeconds * 1000);
+    if (sleepSeconds > 0) await context.process.sleep(sleepSeconds * 1000);
   }
 
   return {

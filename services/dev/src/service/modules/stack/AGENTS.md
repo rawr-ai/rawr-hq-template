@@ -35,9 +35,11 @@
 
 ## Interfaces
 
-- `doctor` and `drain` are the service operations. Process and repository
-  resource observations are the mechanics interface; structured reports are
-  the caller result.
+- `doctor` and `drain` are the service operations. Their handlers author
+  against the workspace root, process resource, and service-owned scratch
+  policy checker curated by the module; structured reports are the caller
+  result. Root construction lanes remain service-internal and are not an
+  operation interface.
 
 ## Routing
 

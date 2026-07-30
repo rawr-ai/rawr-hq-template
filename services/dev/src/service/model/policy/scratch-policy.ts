@@ -128,3 +128,21 @@ export async function checkScratchPolicy(input: {
 
   return evaluateScratchPolicy(request, { planScratchPaths, workingPadPaths });
 }
+
+/** Request-scoped scratch admission capability curated for guarded Dev operations. */
+export type ScratchPolicyChecker = (request?: ScratchPolicyInput) => Promise<ScratchPolicyCheck>;
+
+/**
+ * Binds workspace observation mechanics into one shared scratch-policy capability.
+ *
+ * Guarded module handlers author against this function. The staged Habitat
+ * source law owns eventual service-wide enforcement against reopening the
+ * service's raw construction lanes.
+ */
+export function createScratchPolicyChecker(input: {
+  workspaceRoot: string;
+  fs: DevFileSystemResource;
+  path: DevPathResource;
+}): ScratchPolicyChecker {
+  return (request) => checkScratchPolicy({ ...input, request });
+}

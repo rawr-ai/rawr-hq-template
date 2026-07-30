@@ -39,8 +39,10 @@
 
 ## Interfaces
 
-- `check` is the caller boundary. The module context supplies `workspaceRoot`
-  plus file and path resources for artifact discovery.
+- `check` is the caller boundary. Its handler authors against `workspaceRoot`
+  plus file and path resources curated by the module for artifact discovery.
+  Root construction lanes remain service-internal and are not an operation
+  interface.
 
 ## Routing
 
