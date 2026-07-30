@@ -19,4 +19,4 @@ const get = module.tasks.get.handler(async ({ context, input }) => {
  * @behavior Forward request trace identity and preserve domain outcomes unchanged.
  * @relation Completes the task branch consumed by the Example Todo module router.
  */
-export const router = { create, get };
+export const tasks = { create, get };

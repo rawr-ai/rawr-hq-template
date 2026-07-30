@@ -14,8 +14,9 @@
   uniqueness, and declared failures. The inert tag record schema belongs to
   the service model because persistence and Assignments share it; the relation
   between a tag and a task belongs to Assignments.
-- Read-only policy is enforced at the service boundary, while database,
-  identifier, logging, and analytics mechanics remain host-supplied.
+- Read-only policy remains service-owned and is enforced by the mutating
+  handler, while database, identifier, logging, and analytics mechanics remain
+  host-supplied.
 
 ## Behavior
 
@@ -37,8 +38,8 @@
 ## Interfaces
 
 - `create` and `list` are the caller operations. `module.ts` curates the clock,
-  identifier, logger, workspace, trace, and tag-store capabilities that their
-  handlers need from inherited service context. Qualified telemetry observes
+  identifier, logger, workspace, trace, read-only policy, and tag-store
+  capabilities that their handlers need from inherited service context. Qualified telemetry observes
   the inherited lanes before curation; the named tag router leaf owns behavior.
 
 ## Routing
@@ -46,8 +47,9 @@
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/tag|Tag record DTO]]
 - [[../../model/ports/tags-store|Tag store contract]]
-- [[middleware/telemetry.middleware|Tag telemetry]]
-- [[router/tags.router|Tag operation group]]
+- [[middleware/telemetry|Tag telemetry]]
+- [[router/create.router|Tag creation]]
+- [[router/list.router|Tag catalog]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

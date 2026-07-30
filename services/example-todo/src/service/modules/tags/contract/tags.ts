@@ -7,7 +7,7 @@
  *
  * @agents
  * Add/modify procedures here first. Module composition lives in `module.ts`, and
- * handler behavior lives in `router/tags.router.ts`.
+ * handler behavior lives in named router leaves.
  */
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
@@ -41,7 +41,8 @@ const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
   data: ReadOnlyModeData,
 } as const;
 
-export const contract = {
+/** Tag contract group consumed by the module contract access face. */
+export const tags = {
   create: oc
     .meta(
       todoProcedureMetadata({

@@ -27,7 +27,7 @@ function observe(action: () => void): void {
  * curation. Completion remains nested inside the service-wide lifecycle so
  * the qualified event precedes the root success event.
  */
-export const telemetry = base.middleware(async ({ context, path, next }) => {
+export const middleware = base.middleware(async ({ context, path, next }) => {
   const span = trace.getActiveSpan();
   const pathLabel = path.join(".");
 

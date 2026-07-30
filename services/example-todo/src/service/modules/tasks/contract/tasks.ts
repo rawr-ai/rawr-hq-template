@@ -8,11 +8,11 @@
  * - caller-actionable ORPC errors.
  *
  * Module composition belongs in `module.ts`; handler implementation belongs in
- * `router/tasks.router.ts`.
+ * the matching named router leaves.
  *
  * @agents
  * Extend task capability by updating this contract first, then implement handlers
- * in `router/tasks.router.ts`. Keep this file free of execution logic and dependencies.
+ * in named router leaves. Keep this file free of execution logic and dependencies.
  */
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
@@ -75,7 +75,8 @@ const READ_ONLY_MODE: ErrorMapItem<typeof ReadOnlyModeData> = {
   data: ReadOnlyModeData,
 } as const;
 
-export const contract = {
+/** Task contract group consumed by the module contract access face. */
+export const tasks = {
   create: oc
     .meta(
       todoProcedureMetadata({

@@ -17,8 +17,7 @@ import type { Context } from "./base";
 import { contract } from "./contract";
 import { middleware as analytics } from "./middleware/analytics";
 import { middleware as observability } from "./middleware/observability";
-import { readOnlyMode } from "./middleware/read-only-mode.middleware";
-import { stores } from "./middleware/stores.middleware";
+import { middleware as stores } from "./middleware/stores";
 
 /**
  * Central implementer tree derived from the root contract.
@@ -27,7 +26,6 @@ import { stores } from "./middleware/stores.middleware";
  * Middleware order is authored here:
  * 1) service-owned observability and analytics
  * 2) service-owned store projection
- * 3) the read-only policy guard
  *
  * Do not attach another generic observability or analytics lifecycle here.
  * Qualified module telemetry belongs on the corresponding module branch.
@@ -35,4 +33,4 @@ import { stores } from "./middleware/stores.middleware";
 /** Unconfigured contract implementer used for aggregate router implementation. */
 export const impl = implement(contract).$context<Context>();
 
-export const service = impl.use(observability).use(analytics).use(stores).use(readOnlyMode);
+export const service = impl.use(observability).use(analytics).use(stores);

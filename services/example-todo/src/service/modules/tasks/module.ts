@@ -21,6 +21,7 @@ export const module = service.tasks.use(async ({ context, next }) =>
       identifierGenerator: context.deps.identifierGenerator,
       logger: context.deps.logger,
       workspaceId: context.scope.workspaceId,
+      readOnly: context.config.readOnly,
       tasksStore: context.provided.tasksStore,
     },
   })

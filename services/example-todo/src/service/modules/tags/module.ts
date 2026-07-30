@@ -9,7 +9,7 @@
  * - export configured `module` for handler implementations
  */
 import { service } from "../../impl";
-import { telemetry } from "./middleware/telemetry.middleware";
+import { telemetry } from "./middleware";
 
 /**
  * SECTION: Module Composition (Always Present)
@@ -24,6 +24,7 @@ export const module = service.tags.use(telemetry).use(async ({ context, next }) 
       logger: context.deps.logger,
       workspaceId: context.scope.workspaceId,
       traceId: context.invocation.traceId,
+      readOnly: context.config.readOnly,
       tagsStore: context.provided.tagsStore,
     },
   })

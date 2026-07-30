@@ -8,7 +8,7 @@
  */
 import { oc } from "@orpc/contract";
 import {
-  type TodoProcedureMetadata,
+  metadataDefaults,
   todoProcedureMetadata,
 } from "#example-todo-service/model/policy/procedure-metadata";
 import { contract as assignments } from "./modules/assignments/contract";
@@ -16,14 +16,6 @@ import { contract as tags } from "./modules/tags/contract";
 import { contract as tasks } from "./modules/tasks/contract";
 
 /** Composes the three module contracts into the service's caller boundary. */
-export const metadataDefaults: TodoProcedureMetadata = {
-  idempotent: true,
-  domain: "todo",
-  audience: "internal",
-  audit: "basic",
-  entity: "service",
-};
-
 export const contract = oc.meta(todoProcedureMetadata(metadataDefaults)).router({
   tasks,
   tags,

@@ -27,7 +27,7 @@ function observe(action: () => void): void {
  * success event runs inside the root service lifecycle, preserving qualified
  * completion before the service-wide success event.
  */
-export const telemetry = base.middleware(async ({ context, path, next }) => {
+export const middleware = base.middleware(async ({ context, path, next }) => {
   const span = trace.getActiveSpan();
   const pathLabel = path.join(".");
 

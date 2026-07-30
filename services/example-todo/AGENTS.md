@@ -103,11 +103,11 @@ no fifth input lane and does not remove the inherited service context.
 - [[src/service/model/dto/assignment|Assignment record DTO]]
 - [[src/service/model/ports/clock|Clock port]]
 - [[src/service/model/ports/identifier-generator|Identifier generator port]]
-- [[src/service/middleware/stores.middleware|Store capability middleware]]
+- [[src/service/middleware/stores|Store capability middleware]]
 - [[src/service/db/migrations/0001_create_example_todo.sql|Database migration]]
-- [[src/service/db/stores/tasks.store|Task store]]
-- [[src/service/db/stores/tags.store|Tag store]]
-- [[src/service/db/stores/assignments.store|Assignment store]]
+- [[src/service/db/stores/tasks|Task store]]
+- [[src/service/db/stores/tags|Tag store]]
+- [[src/service/db/stores/assignments|Assignment store]]
 
 ## Validation
 

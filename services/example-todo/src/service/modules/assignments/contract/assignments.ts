@@ -4,11 +4,11 @@
  * @remarks
  * Assignment is a composite module. This contract declares multi-entity
  * boundary behavior; module composition is in `module.ts` and implementation
- * is in `router/assignments.router.ts`.
+ * is in the named assignment router leaves.
  *
  * @agents
  * Keep this contract focused on caller-visible shape. Cross-module access
- * patterns belong in `router/assignments.router.ts`, not here.
+ * patterns belong in the named assignment router leaves, not here.
  */
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
@@ -101,7 +101,8 @@ const ASSIGNMENT_LIMIT_REACHED: ErrorMapItem<typeof AssignmentLimitReachedData> 
   data: AssignmentLimitReachedData,
 } as const;
 
-export const contract = {
+/** Assignment contract group consumed by the module contract access face. */
+export const assignments = {
   assign: oc
     .meta(
       todoProcedureMetadata({
