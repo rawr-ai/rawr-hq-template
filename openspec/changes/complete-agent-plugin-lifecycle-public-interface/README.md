@@ -4378,19 +4378,49 @@ sequencing outside one request reopens placement; it does not predetermine a
 sibling service rather than a plugin or workflow.
 
 The concrete fatness is in the CLI command path, which currently constructs the
-full concrete resource set before selecting one typed operation. A separately
-owned bounded runtime checkpoint moves provider selection, acquisition,
-finalization, and service binding into the CLI process composition root. At
-least one Oclif command then consumes a ready client without importing concrete
-providers. This lifecycle change consumes that exact reviewed checkpoint; it
-does not add a registry, controller, workflow engine, app composition layer, or
-second service.
+full concrete resource set through a hidden production fallback before
+selecting one typed operation. A bounded app-owned profile instead stores exact
+factory references without constructing them. After closed input admission, a
+command materializes those ready dependencies once, constructs one local
+lifecycle client, and invokes one selected operation. Resource acquisition and
+cleanup remain operation-local. This change adds no managed runtime, process
+finalizer, cache, registry, controller, workflow engine, app composition layer,
+or second service.
 
 That checkpoint is also the remaining upstream prerequisite for the accepted
 research-service design. Its other prerequisite is already present:
 `@rawr/typebox-adapter` uses TypeBox's native validator and omits ambiguous
-issue paths. The reviewed runtime checkpoint will be reported by exact commit
-after it is independently green; no moving branch head is a handoff.
+issue paths. The reviewed CLI profile and binding checkpoint will be reported by
+exact landed commit after it is independently green; no moving branch head is a
+handoff.
+
+## CLI Production Profile Candidate
+
+The CLI now has one cold production profile containing the exact factory
+references selected by the app. A lifecycle command admits its input, materializes
+the selected ready dependencies once, creates one local service client through
+the service's public `createClient` boundary, and selects one synchronous
+operation surface. The old hidden production fallback and the redundant SDK
+binding map are absent. No factory runs when the profile is imported.
+
+This candidate changes no resource implementation or Effect behavior. Native
+provider sessions, temporary Git roots, content captures, child processes, and
+package publication cleanup remain owned by the operations that acquire them.
+There is no process runtime, finalizer, client cache, registry, controller, or
+second service.
+
+The focused profile, provider binding, client-context, command-local binding,
+and command-boundary regression passes 28 tests. The complete CLI suite passes
+86 tests across 25 files. CLI source and test typechecks, the exact closed
+Habitat command-channel rule, strict OpenSpec validation, source/compiled Oclif
+inventory acceptance, and the installed-package round trip pass. The installed
+package exposes 46 first-party commands and exercises the real
+`rawr agent plugins` surface from the packed Nx release group.
+
+Standing architecture, Effect/oRPC, TypeScript/structural, and testing reviews
+accepted the final diff. Task 5.7f remains open until this candidate is landed
+on `main`, its required remote repository check is green, and the exact landed
+commit is recorded as the downstream research-service prerequisite.
 
 ## Distribution Ownership Aggregate Admission
 

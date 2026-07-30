@@ -142,13 +142,15 @@ the generic Magic Migration service blueprint. TypeBox remains the public
 schema authority. Filesystem/process Effect programs remain inside their owning
 resources and expose ready capabilities to service construction. App/runtime
 composition remains owned by the dedicated architecture migration. The service
-MUST NOT select or acquire concrete providers. This lifecycle change MAY
-consume a separately reviewed runtime checkpoint that lets the CLI process
-composition root select, acquire, release, and bind the service's ready
-capabilities within one managed Effect lifetime. That checkpoint MUST replace
-eager concrete construction in at least one Oclif command path and MUST NOT
-introduce a generic registry, workflow engine, alternate service identity, or
-app/web composition.
+MUST NOT select or acquire concrete providers. The CLI app MUST own a cold
+production profile of exact provider factory references. After closed command
+input admission, the CLI MUST materialize the ready dependencies once, construct
+one local lifecycle client with fixed construction context, and invoke one
+selected operation. Provider sessions, temporary values, capture claims, and
+publication files MUST retain their existing operation-local acquisition and
+cleanup owners. This binding MUST NOT introduce a managed runtime, process
+finalizer, client cache, generic registry, workflow engine, alternate service
+identity, or app/web composition.
 
 #### Scenario: Service correction remains inside lifecycle semantics
 - **WHEN** dependency and source changes are reviewed
@@ -156,11 +158,11 @@ app/web composition.
   boundary corrections
 - **AND** no app/web composition or second service construction appears
 
-#### Scenario: Oclif command receives one ready service
-- **WHEN** the separately owned production runtime checkpoint is integrated
-  into a real CLI invocation
-- **THEN** the CLI process composition root selects concrete providers, owns
-  their acquisition and finalization, and binds one ready typed lifecycle
-  client
-- **AND** the Oclif command adapter, lifecycle service, and lifecycle modules
+#### Scenario: Oclif command binds one local ready service
+- **WHEN** a real CLI invocation admits closed input and reaches its lifecycle
+  operation
+- **THEN** the app-owned profile supplies the exact selected provider factories
+  and the command constructs one ready typed lifecycle client
+- **AND** the command projection, lifecycle service, and lifecycle modules
   import or construct no concrete provider
+- **AND** resource acquisition and cleanup remain inside their owning operation

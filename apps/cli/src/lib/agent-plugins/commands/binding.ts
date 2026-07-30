@@ -42,6 +42,14 @@ export type LifecycleClientByOperation = Readonly<{
 export type LifecycleOperationClient<TOperation extends LifecycleOperation> =
   LifecycleClientByOperation[TOperation];
 
-export type LifecycleClientFactory = <TOperation extends LifecycleOperation>(
+/**
+ * Selects the one operation surface exposed to an admitted CLI command.
+ *
+ * @remarks
+ * The selector is created from one command-local lifecycle client. It narrows
+ * access without constructing another client or introducing asynchronous
+ * binding state.
+ */
+export type LifecycleOperationSelector = <TOperation extends LifecycleOperation>(
   operation: TOperation
-) => LifecycleOperationClient<TOperation> | Promise<LifecycleOperationClient<TOperation>>;
+) => LifecycleOperationClient<TOperation>;

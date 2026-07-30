@@ -12,6 +12,16 @@ required = [
 allowed = []
 
 [[scopes]]
+name = "curated-agent-plugin-production-profile"
+root = "apps/cli/src/lib/agent-plugins/profiles"
+kind = "directory"
+mode = "closed"
+required = [
+  "production.ts",
+]
+allowed = []
+
+[[scopes]]
 name = "curated-agent-plugin-lifecycle-service-binding"
 root = "apps/cli/src/lib/agent-plugins/service-runtime"
 kind = "directory"
