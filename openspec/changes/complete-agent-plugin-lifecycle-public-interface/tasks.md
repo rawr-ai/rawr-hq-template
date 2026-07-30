@@ -1968,6 +1968,27 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   reviews accepted the cut after its records distinguished additive native
   context from the curated authorship boundary and named the staged Habitat law
   only as eventual enforcement.
+- [x] 5.7e31 Close the Dev Scratch Policy module through one contract leaf and
+  one operation router leaf. Replace the flat module contract with
+  `contract/check.ts` plus `contract/index.ts`; keep `module.ts` as the terminal
+  context-curation boundary; author the check operation in
+  `router/check.router.ts`; and make module-root `router.ts` a plain-object
+  composer. Remove `module.router(...)` so root `impl.router(...)` is the only
+  native router completion on the `scratchPolicy.check` lineage and inherited
+  observability and analytics execute exactly once for that operation. Preserve
+  the key, TypeBox schemas, metadata, result shape, failure identity,
+  service-owned policy, public client, and root composition. Add behavior proof
+  for exactly-once success and error analytics/logging. Update the module
+  `AGENTS.md`; modify no Habitat law, sibling module, public export, resource,
+  provider, Effect boundary, or compatibility path. The red behavior proof
+  observed four success signals for two calls and two error signals for one
+  failing call. The closed lineage now carries three middleware entries rather
+  than the legacy replay's six; uncached source typecheck and all 16 Dev tests
+  pass in 3.4 seconds. All 34 active Habitat rules pass, and direct staged
+  composition, authorship, context, anchor, and isolation probes report zero
+  findings on the Scratch Policy lineage. Strict OpenSpec, focused Biome, and
+  diff hygiene pass. Standing architecture/oRPC, TypeScript/structural, and
+  behavior-first testing reviews report no P0-P2.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
