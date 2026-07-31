@@ -40,6 +40,7 @@ import {
   makeStructureUniverse,
   planStructureEvaluation,
   type StructureRootKind,
+  structureChildObservationPaths,
 } from "../model/policy/structure";
 import { module } from "../module";
 
@@ -82,6 +83,12 @@ type StructureRootObservationFailure = {
 type StructureRootObservation =
   | { readonly ok: true; readonly kind: StructureRootKind | "missing" }
   | StructureRootObservationFailure;
+type StructureObservationPreparation =
+  | {
+      readonly kind: "ready";
+      readonly kinds: Map<string, StructureRootKind | "missing">;
+    }
+  | { readonly kind: "failed"; readonly detail: string };
 
 type CatalogOperationContext = {
   readonly fileSystem: FileSystem.FileSystem;
@@ -480,30 +487,31 @@ const check = module.check.effect(function* ({ context, input }) {
     return selectionRejected(selection.issues);
   }
 
-  const observeStructureRootKind = (relativePath: string) =>
+  const observedKinds = new Map<string, StructureRootObservation>();
+  const observeStructurePathKind = (relativePath: string) =>
     Effect.gen(function* () {
       const absolutePath = context.path.resolve(context.workspaceRoot, relativePath);
       const linkAttempt = yield* Effect.result(context.fileSystem.readLink(absolutePath));
       if (linkAttempt._tag === "Success") {
         return { ok: true, kind: "other" } satisfies StructureRootObservation;
       }
-      if (isNotFound(linkAttempt.failure)) {
+      if (isNotFound(linkAttempt.failure) || hasExactCauseCode(linkAttempt.failure, "ENOTDIR")) {
         return { ok: true, kind: "missing" } satisfies StructureRootObservation;
       }
       if (!hasExactCauseCode(linkAttempt.failure, "EINVAL")) {
         return {
           ok: false,
-          detail: `Unable to inspect matched structure root "${relativePath || "."}".`,
+          detail: `Unable to inspect structure path "${relativePath || "."}".`,
         } satisfies StructureRootObservation;
       }
       const statAttempt = yield* Effect.result(context.fileSystem.stat(absolutePath));
       if (statAttempt._tag === "Failure") {
-        if (isNotFound(statAttempt.failure)) {
+        if (isNotFound(statAttempt.failure) || hasExactCauseCode(statAttempt.failure, "ENOTDIR")) {
           return { ok: true, kind: "missing" } satisfies StructureRootObservation;
         }
         return {
           ok: false,
-          detail: `Unable to inspect matched structure root "${relativePath || "."}".`,
+          detail: `Unable to inspect structure path "${relativePath || "."}".`,
         } satisfies StructureRootObservation;
       }
       const kind: StructureRootKind =
@@ -513,6 +521,27 @@ const check = module.check.effect(function* ({ context, input }) {
             ? "file"
             : "other";
       return { ok: true, kind } satisfies StructureRootObservation;
+    });
+  const prepareStructureObservations = (
+    relativePaths: readonly string[],
+    kinds: Map<string, StructureRootKind | "missing">
+  ) =>
+    Effect.gen(function* () {
+      for (const relativePath of relativePaths) {
+        let observation = observedKinds.get(relativePath);
+        if (observation === undefined) {
+          observation = yield* observeStructurePathKind(relativePath);
+          observedKinds.set(relativePath, observation);
+        }
+        if (!observation.ok) {
+          return {
+            kind: "failed",
+            detail: observation.detail,
+          } satisfies StructureObservationPreparation;
+        }
+        kinds.set(relativePath, observation.kind);
+      }
+      return { kind: "ready", kinds } satisfies StructureObservationPreparation;
     });
 
   const preparations: CheckApplicationPreparation[] = [];
@@ -601,7 +630,6 @@ const check = module.check.effect(function* ({ context, input }) {
   }
 
   const reports: CheckApplicationReport[] = [];
-  const observedKinds = new Map<string, StructureRootObservation>();
   for (const prepared of preparations) {
     if (prepared.kind === "structure") {
       if (prepared.preparation.kind === "failed") {
@@ -627,24 +655,14 @@ const check = module.check.effect(function* ({ context, input }) {
       }
 
       const plan = planStructureEvaluation(admitted, inventoryPreparation.universe);
-      let observations:
-        | { readonly kind: "ready"; readonly rootKinds: Map<string, StructureRootKind | "missing"> }
-        | { readonly kind: "failed"; readonly detail: string } = {
-        kind: "ready",
-        rootKinds: new Map(),
-      };
-      for (const relativePath of plan.observationPaths) {
-        let observation = observedKinds.get(relativePath);
-        if (observation === undefined) {
-          observation = yield* observeStructureRootKind(relativePath);
-          observedKinds.set(relativePath, observation);
-        }
-        if (!observation.ok) {
-          observations = { kind: "failed", detail: observation.detail };
-          break;
-        }
-        observations.rootKinds.set(relativePath, observation.kind);
-      }
+      const observations = yield* Effect.gen(function* () {
+        const roots = yield* prepareStructureObservations(plan.rootObservationPaths, new Map());
+        if (roots.kind === "failed") return roots;
+        return yield* prepareStructureObservations(
+          structureChildObservationPaths(plan, roots.kinds),
+          roots.kinds
+        );
+      });
       if (observations.kind === "failed") {
         reports.push(
           failedStructureApplication(application, "StructureObservationFailed", observations.detail)
@@ -652,10 +670,7 @@ const check = module.check.effect(function* ({ context, input }) {
         continue;
       }
       reports.push(
-        evaluatedStructureApplication(
-          application,
-          evaluateStructurePlan(plan, observations.rootKinds)
-        )
+        evaluatedStructureApplication(application, evaluateStructurePlan(plan, observations.kinds))
       );
       continue;
     }

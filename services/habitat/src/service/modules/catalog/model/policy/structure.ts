@@ -46,7 +46,6 @@ export type StructureUniverse = {
 
 type PlannedRoot = {
   readonly path: string;
-  readonly kind?: StructureRootKind;
 };
 
 type PlannedScope = {
@@ -55,11 +54,11 @@ type PlannedScope = {
   readonly roots: readonly PlannedRoot[];
 };
 
-/** Pure inventory interpretation awaiting only matched leaf-root observations. */
+/** Pure inventory interpretation awaiting live matched-root and direct-child observations. */
 export type StructureEvaluationPlan = {
   readonly application: HabitatStructureApplication;
   readonly scopes: readonly PlannedScope[];
-  readonly observationPaths: readonly string[];
+  readonly rootObservationPaths: readonly string[];
   readonly universe: StructureUniverse;
 };
 
@@ -147,12 +146,12 @@ export function makeStructureUniverse(inventory: SourceInventoryResult): Structu
   };
 }
 
-/** Plans root matching and identifies only leaf roots whose live kind must be observed. */
+/** Plans inventory-visible root matching without treating retained Git entries as live facts. */
 export function planStructureEvaluation(
   admitted: AdmittedStructureApplication,
   universe: StructureUniverse
 ): StructureEvaluationPlan {
-  const observationPaths = new Set<string>();
+  const rootObservationPaths = new Set<string>();
   const scopes = admitted.scopes.map((scope): PlannedScope => {
     const reportPath = appendPath(scope.bindingPath, scope.relativePath);
     const matches =
@@ -165,11 +164,7 @@ export function planStructureEvaluation(
         return relativePath !== undefined && matches(relativePath);
       })
       .map((candidate): PlannedRoot => {
-        if (universe.trackedNonFilePaths.has(candidate)) return { path: candidate, kind: "other" };
-        if ((universe.directChildren.get(candidate)?.length ?? 0) > 0) {
-          return { path: candidate, kind: "directory" };
-        }
-        observationPaths.add(candidate);
+        rootObservationPaths.add(candidate);
         return { path: candidate };
       });
     return { scope, reportPath, roots };
@@ -177,9 +172,27 @@ export function planStructureEvaluation(
   return {
     application: admitted.application,
     scopes,
-    observationPaths: [...observationPaths].sort(compareText),
+    rootObservationPaths: [...rootObservationPaths].sort(compareText),
     universe,
   };
+}
+
+/** Selects inventory-admitted direct children only for roots observed as live directories. */
+export function structureChildObservationPaths(
+  plan: StructureEvaluationPlan,
+  observedKinds: ReadonlyMap<string, StructureRootKind | "missing">
+): readonly string[] {
+  const paths = new Set<string>();
+  for (const planned of plan.scopes) {
+    if (planned.scope.kind !== "directory") continue;
+    for (const root of planned.roots) {
+      if (plannedStructureKind(plan, root.path, observedKinds) !== "directory") continue;
+      for (const child of plan.universe.directChildren.get(root.path) ?? []) {
+        paths.add(appendPath(root.path, child));
+      }
+    }
+  }
+  return [...paths].sort(compareText);
 }
 
 /** Applies native structure semantics to a prepared source universe and observed root kinds. */
@@ -190,11 +203,7 @@ export function evaluateStructurePlan(
   const diagnostics: StructureDiagnostic[] = [];
   for (const planned of plan.scopes) {
     const roots = planned.roots.flatMap((root) => {
-      if (root.kind !== undefined) return [{ path: root.path, kind: root.kind }];
-      const observedKind = observedKinds.get(root.path);
-      if (observedKind === undefined) {
-        throw new Error(`Missing observation for planned structure root "${root.path}".`);
-      }
+      const observedKind = plannedStructureKind(plan, root.path, observedKinds);
       return observedKind === "missing" ? [] : [{ path: root.path, kind: observedKind }];
     });
     if (!planned.scope.allowEmpty && roots.length === 0) {
@@ -218,16 +227,33 @@ export function evaluateStructurePlan(
     if (planned.scope.kind !== "directory") continue;
     for (const root of roots) {
       if (root.kind !== "directory") continue;
-      diagnostics.push(
-        ...evaluateDirectoryChildren(
-          planned.scope,
-          root.path,
-          plan.universe.directChildren.get(root.path) ?? []
-        )
+      const visibleChildren = (plan.universe.directChildren.get(root.path) ?? []).filter(
+        (child) => observedStructureKind(appendPath(root.path, child), observedKinds) !== "missing"
       );
+      diagnostics.push(...evaluateDirectoryChildren(planned.scope, root.path, visibleChildren));
     }
   }
   return diagnostics;
+}
+
+function observedStructureKind(
+  path: string,
+  observedKinds: ReadonlyMap<string, StructureRootKind | "missing">
+): StructureRootKind | "missing" {
+  const kind = observedKinds.get(path);
+  if (kind === undefined) {
+    throw new Error(`Missing observation for planned structure path "${path}".`);
+  }
+  return kind;
+}
+
+function plannedStructureKind(
+  plan: StructureEvaluationPlan,
+  path: string,
+  observedKinds: ReadonlyMap<string, StructureRootKind | "missing">
+): StructureRootKind | "missing" {
+  const kind = observedStructureKind(path, observedKinds);
+  return kind !== "missing" && plan.universe.trackedNonFilePaths.has(path) ? "other" : kind;
 }
 
 function evaluateDirectoryChildren(

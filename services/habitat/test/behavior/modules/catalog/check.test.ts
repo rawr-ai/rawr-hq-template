@@ -606,6 +606,7 @@ forbidden = ["forbidden.txt"]
   });
 
   test("uses one fresh inventory per invocation across exact structure application identities", async () => {
+    const observedPaths: string[] = [];
     const fixture = authorityFixture({
       blueprints: [
         {
@@ -629,14 +630,23 @@ forbidden = ["forbidden.txt"]
     const expanded: Fixture = {
       ...fixture,
       files: { ...fixture.files, "packages/example/leaf.ts": "export {};\n" },
+      clientFileSystem: (fileSystem, path, workspaceRoot) => ({
+        ...fileSystem,
+        readLink: (candidate) => {
+          observedPaths.push(path.relative(workspaceRoot, candidate));
+          return fileSystem.readLink(candidate);
+        },
+      }),
     };
     await withFixture(
       expanded,
       async (client, recording) => {
         const first = await client.catalog.check({});
         expect(recording.inventory.calls).toHaveLength(1);
+        expect(observedPaths).toEqual(["packages/example/leaf.ts"]);
         const second = await client.catalog.check({});
         expect(recording.inventory.calls).toHaveLength(2);
+        expect(observedPaths).toEqual(["packages/example/leaf.ts"]);
         const firstIdentities =
           first._tag === "Completed" ? first.applications.map(applicationKey) : [];
         const secondIdentities =
@@ -700,6 +710,13 @@ mode = "closed"
 allowEmpty = true
 
 [[scopes]]
+name = "deleted-tracked-link"
+rootRole = "project"
+relativePath = "deleted-link"
+kind = "directory"
+mode = "open"
+
+[[scopes]]
 name = "visible-untracked"
 rootRole = "project"
 relativePath = "visible/*.ts"
@@ -742,11 +759,12 @@ allowed = ["habitat.toml", "link", "visible"]
           ".habitat/blueprints/package/blueprint.toml",
           ".habitat/blueprints/package/inventory_structure.structure.toml",
           "packages/example/habitat.toml",
+          "packages/example/deleted-link",
           "packages/example/link",
           "packages/example/link/descendant.ts",
           "packages/example/visible/new.ts",
         ],
-        trackedNonFilePaths: ["packages/example/link"],
+        trackedNonFilePaths: ["packages/example/deleted-link", "packages/example/link"],
       })
     );
 
@@ -756,6 +774,7 @@ allowed = ["habitat.toml", "link", "visible"]
         {
           findings: [
             { code: "wrong-root-kind", path: "packages/example/link" },
+            { code: "root-missing", path: "packages/example/deleted-link" },
             { code: "wrong-root-kind", path: "packages/example/visible/new.ts" },
             { code: "root-missing", path: "packages/example/link/descendant.ts" },
           ],
@@ -763,6 +782,90 @@ allowed = ["habitat.toml", "link", "visible"]
       ],
     });
     expect(JSON.stringify(checked.result)).not.toContain("ignored-live.ts");
+  });
+
+  test("reconciles retained inventory entries with deleted and type-replaced live paths", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "live_structure",
+              runner: "structure",
+              structureContents: `schemaVersion = 2
+
+[[scopes]]
+name = "deleted-root"
+rootRole = "project"
+relativePath = "ghost"
+kind = "directory"
+mode = "open"
+required = ["required.ts"]
+
+[[scopes]]
+name = "deleted-required-child"
+rootRole = "project"
+relativePath = "live-root"
+kind = "directory"
+mode = "open"
+required = ["required.ts"]
+
+[[scopes]]
+name = "directory-replaced-by-file"
+rootRole = "project"
+relativePath = "replaced"
+kind = "directory"
+mode = "open"
+
+[[scopes]]
+name = "descendant-below-replaced-directory"
+rootRole = "project"
+relativePath = "replaced/legacy.ts"
+kind = "file"
+mode = "open"
+`,
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const expanded: Fixture = {
+      ...fixture,
+      directories: ["packages/example/live-root"],
+      files: {
+        ...fixture.files,
+        "packages/example/replaced": "now a file\n",
+      },
+    };
+    const inventory = defaultInventory(expanded);
+    const checked = await checkFixture(expanded, {}, undefined, () =>
+      Effect.succeed({
+        ...inventory,
+        paths: [
+          ...inventory.paths,
+          "packages/example/ghost/required.ts",
+          "packages/example/live-root/required.ts",
+          "packages/example/replaced/legacy.ts",
+        ].sort(textOrder),
+      })
+    );
+
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          disposition: { kind: "evaluated" },
+          findings: [
+            { code: "root-missing", path: "packages/example/ghost" },
+            { code: "missing-required-child", path: "packages/example/live-root" },
+            { code: "wrong-root-kind", path: "packages/example/replaced" },
+            { code: "root-missing", path: "packages/example/replaced/legacy.ts" },
+          ],
+        },
+      ],
+    });
   });
 
   test("applies open, allowEmpty, and direct-child glob semantics in one focused matrix", async () => {
@@ -985,12 +1088,14 @@ mode = "open"
       ok: false,
       applications: [
         {
+          ruleId: "alpha_structure",
           runner: "habitat",
           status: "error",
           disposition: { kind: "failed", reason: "InventoryFailed" },
           findings: [],
         },
         {
+          ruleId: "beta_grit",
           runner: "grit",
           status: "pass",
           findings: [],
@@ -1003,6 +1108,28 @@ mode = "open"
       expect(grit?.runner).toBe("grit");
       expect(habitat?.runner).toBe("habitat");
     }
+
+    const reverse = await checkFixture(reverseMixedRunnerFixture(), {}, undefined, () =>
+      Effect.fail({
+        _tag: "SourceInventoryFailure",
+        reason: "CommandFailed",
+        detail: "Reverse inventory command failed.",
+      })
+    );
+    expect(reverse.calls).toHaveLength(1);
+    expect(reverse.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        { ruleId: "alpha_grit", runner: "grit", status: "pass", findings: [] },
+        {
+          ruleId: "beta_structure",
+          runner: "habitat",
+          status: "error",
+          disposition: { kind: "failed", reason: "InventoryFailed" },
+          findings: [],
+        },
+      ],
+    });
 
     await expect(
       checkFixture(fixture, {}, undefined, () =>
@@ -1482,6 +1609,18 @@ function mixedRunnerFixture(): Fixture {
           },
           { id: "beta_grit" },
         ],
+      },
+    ],
+    instances: [exampleInstance()],
+  });
+}
+
+function reverseMixedRunnerFixture(): Fixture {
+  return authorityFixture({
+    blueprints: [
+      {
+        id: "package",
+        rules: [{ id: "alpha_grit" }, { id: "beta_structure", runner: "structure" }],
       },
     ],
     instances: [exampleInstance()],
