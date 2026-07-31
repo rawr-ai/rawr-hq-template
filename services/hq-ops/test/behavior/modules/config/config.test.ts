@@ -4,15 +4,58 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { createClient } from "../../../../src";
-import { validateRawrConfig } from "../../../../src/service/modules/config/helpers/validation.js";
+import { validateRawrConfig } from "../../../../src/service/modules/config/model/policy/config-validation.js";
 import {
+  type AnalyticsEntry,
   createClientOptions,
+  createTestHqOpsResources,
   invocation,
+  type LogEntry,
   writeGlobalRawrConfig,
   writeRawrConfig,
 } from "../../../support/service/helpers";
 
 describe("hq-ops config support", () => {
+  it("records one successful lifecycle for a missing workspace config", async () => {
+    const analytics: AnalyticsEntry[] = [];
+    const logs: LogEntry[] = [];
+    const resources = createTestHqOpsResources();
+    resources.fs.stat = async () => null;
+    const client = createClient(
+      createClientOptions({
+        analytics,
+        logs,
+        repoRoot: "/repo/rawr",
+        resources,
+      })
+    );
+
+    await expect(
+      client.config.getWorkspaceConfig({}, invocation("trace-config-workspace"))
+    ).resolves.toEqual({
+      config: null,
+      path: null,
+      warnings: [],
+    });
+
+    const procedureAnalytics = analytics.filter(
+      (entry) =>
+        entry.event === "orpc.procedure" &&
+        entry.payload.path === "config.getWorkspaceConfig" &&
+        entry.payload.outcome === "success"
+    );
+    const procedureLogs = logs.filter(
+      (entry) =>
+        entry.level === "info" &&
+        entry.event === "hq-ops.procedure" &&
+        entry.payload.path === "config.getWorkspaceConfig" &&
+        entry.payload.outcome === "success"
+    );
+
+    expect(procedureAnalytics).toHaveLength(1);
+    expect(procedureLogs).toHaveLength(1);
+  });
+
   it("accepts a minimal v1 config", () => {
     const r = validateRawrConfig({ version: 1 });
     expect(r.ok).toBe(true);

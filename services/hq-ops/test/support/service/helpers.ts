@@ -17,7 +17,7 @@ import type {
 } from "#hq-ops-service/model/ports/resources";
 import type { CreateClientOptions } from "../../../src/client";
 import type { Context } from "../../../src/service/base";
-import type { RawrConfig } from "../../../src/service/modules/config/entities";
+import type { RawrConfig } from "../../../src/service/modules/config/model/dto/config.dto";
 
 type ClientOptions = {
   deps?: Partial<Context["deps"]>;
