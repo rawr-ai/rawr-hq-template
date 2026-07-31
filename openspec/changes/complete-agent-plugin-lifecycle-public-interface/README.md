@@ -5127,8 +5127,54 @@ provider behavior tests, and both owner check targets pass. The parent
 production input includes nested provider source, so a provider change
 invalidates the package artifact that emits it. Standing architecture,
 TypeScript/Effect, structural-quality, and behavior-first reviews report no
-remaining P0 or P1. Task 5.7e22b2 remains open because the Habitat service and
-its blueprint-aware authority catalog have not yet moved.
+remaining P0 or P1. Task 5.7e22b2 remains open for the separate check operation
+that will consume the rule-evaluation resource.
+
+## Habitat Self-Hosting Boundary
+
+Habitat is built through the same resource, provider, service, plugin, and app
+chain it enforces. Self-hosting does not make candidate source its own merge
+authority. The installed Habitat release remains the repository checker while
+the replacement source is constructed; a candidate self-check is additional
+compatibility evidence, not the required gate.
+
+The reviewed version-three product-kind definitions therefore remain inert
+until an ordinary new Habitat app release can parse and evaluate them. The
+service, plugins, and app may land first without `habitat.toml` product
+instances so the existing required check is neither bypassed nor asked to
+interpret a protocol it does not support. The released replacement then checks
+and activates those definitions and instances as its first governed successor
+change. This is a bounded bootstrap sequence, not a `habitat-cli` kind
+exception, second checker, private selector, or permanent compatibility path.
+The reviewed inert definition set is preserved at
+`fa2d4be63a06eace0b30924f5b3c126d8f3c01ae`; its blocked repository check
+does not transfer merge authority to candidate source.
+
+The first service checkpoint owns catalog resolution only. Generic callers
+request resolution; the Habitat service enumerates the finite repository
+authority surface, classifies exact blueprint and instance paths, admits their
+TypeBox-backed documents, resolves applications, retains version-two records
+only as inert compatibility data, and returns deterministic rejection or
+catalog results. Effect filesystem and path capabilities enter ready through
+service context. Grit execution remains behind the landed provider-neutral
+rule-evaluation resource and is not added to the service until the subsequent
+check operation consumes it.
+
+### Habitat Catalog Service Checkpoint
+
+[[services/habitat/AGENTS|The Habitat catalog service]] now exposes one closed
+`catalog.resolve` operation. The caller supplies no repository listing or
+invocation ceremony. The handler enumerates ordinary and hidden instance
+manifests through ready Effect filesystem/path capabilities, confines and reads
+each authority document once, and hands schema-admitted facts to pure catalog
+policy. An absent version-two index yields exact empty compatibility; orphan
+version-two rules remain unread.
+
+The uncached Nx typecheck, build, test, and service check pass. The behavior
+suite reports 18 passing tests, the OpenSpec validates strictly, repository
+Biome passes, and the 25 required Habitat policy rules report no findings.
+Architecture, behavior-first testing, and TypeScript/Effect reviews report no
+remaining P0, P1, or material P2 findings.
 
 ## Settlement Oracles
 

@@ -1878,12 +1878,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   create a composite `habitat-cli` source kind or bless one package as a
   service/resource/plugin/app exception.
 - [ ] 5.7e22b1 Close the Habitat source graph against its own ordinary kind
-  blueprints before behavior migration. Use the generic package, resource,
-  provider, service, plugin, and app laws; add only the missing generic Nx
-  projection kind required by the actual product graph. One singular
-  `structure.toml` remains at each blueprint root. Remove the rejected
-  `habitat-cli` blueprint rather than teaching Habitat an exception for its own
-  source.
+  blueprints. Design and review the generic package, resource, provider,
+  service, plugin, app, and missing Nx-projection definitions before behavior
+  migration, but do not let candidate source authorize its own gate. The
+  installed release checks the candidate until the ordinary Habitat app can be
+  released; only that released checker may admit and activate the version-three
+  definitions and product instances. Until then, migrate source without
+  `habitat.toml` instances rather than bypassing the required repository gate.
+  One singular `structure.toml` remains at each blueprint root. Remove the
+  rejected `habitat-cli` blueprint rather than teaching Habitat an exception
+  for its own source.
 - [ ] 5.7e22b2 Migrate the service and resource/provider boundaries without
   changing public Habitat behavior. Keep rule and authority semantics in the
   service, make external execution capabilities provider-neutral resources,

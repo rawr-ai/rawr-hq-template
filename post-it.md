@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Evaluator Reports, Service Decides
+
+Habitat realizes itself through the same product chain it governs. Rules remain
+data. A provider-neutral resource describes mechanical evaluation, a provider
+implements it, the Habitat service owns catalog admission and outcome meaning,
+plugins project that service into Oclif and Nx, and the Habitat app selects the
+providers and executable composition. No source package or release artifact
+inherits the authority of all those parts merely by containing their output.
+
+The first service boundary is catalog resolution alone. The service enumerates
+the finite repository authority surface, recognizes exact blueprint and
+instance locations, admits TypeBox-backed documents, resolves applications,
+and refuses duplicate identities. The Effect filesystem and path capabilities
+enter ready through service context. Mechanical rule evaluation joins only
+when the later check operation consumes it.
+
+Self-hosting does not let a candidate authorize itself. The currently installed
+release checks candidate source until an ordinary Habitat app release replaces
+it. Candidate self-checks are compatibility evidence. Version-three manifests
+therefore activate only after a released checker can admit them; that bounded
+bootstrap is not a permanent exception to Habitat structure.
+
+### Bag Of Keywords
+
+Habitat, catalog, admission, application, service.
+
+authority, closure, parity, reuse, bootstrap.
+
+TypeBox, Effect, oRPC, resource, Oclif, Nx.
+
 ## 2026-07-30 - Product Shape Governs Release
 
 Habitat is a product suite, not a package with unusually broad privileges.
