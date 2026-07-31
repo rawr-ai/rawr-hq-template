@@ -3,7 +3,6 @@
   "name": "@habitat/plugin-nx",
   "root": "plugins/nx/habitat",
   "sourceRoot": "plugins/nx/habitat/src",
-  "implicitDependencies": ["@habitat/service"],
   "tags": ["type:plugin", "surface:nx", "capability:habitat"],
   "targets": {
     "typecheck": {
