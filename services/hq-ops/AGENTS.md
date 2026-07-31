@@ -48,7 +48,8 @@
 
 - [Repository router](../../AGENTS.md)
 - [Public service contract](src/service/contract.ts)
-- [Common resource boundary](src/service/common/README.md)
+- [Host resource ports](src/service/model/ports/resources.ts)
+- [Procedure metadata policy](src/service/model/policy/procedure-metadata.ts)
 
 ## Validation
 

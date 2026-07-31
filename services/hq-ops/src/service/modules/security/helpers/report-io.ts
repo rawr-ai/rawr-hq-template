@@ -1,4 +1,4 @@
-import type { HqOpsResources } from "../../../common/ports/resources";
+import type { HqOpsResources } from "#hq-ops-service/model/ports/resources";
 import type { SecurityReport } from "../entities";
 
 const DEFAULT_MAX_REPORT_BYTES = 250_000;

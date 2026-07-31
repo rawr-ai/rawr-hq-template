@@ -2105,6 +2105,24 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   OpenSpec validation, focused Biome, and diff hygiene. Add no source-shape
   proof, behavior, production helper, runner, baseline, or staged-law
   activation.
+- [x] 5.7e38 Close HQ Ops' service-root model authority before changing any
+  module topology. Move the host capability contract from the invalid
+  `service/common` bucket to `service/model/ports`, move procedure metadata
+  from root contract composition to `service/model/policy`, and make the five
+  base context lanes immutable. Add the package-private service alias and
+  TypeScript roots required for module access to that service-owned model.
+  Delete the unused common error placeholders and update only affected imports
+  and navigation. Preserve all operation implementations, module router
+  lineages, middleware order, provider construction, package export map, and
+  caller behavior. Add one contract-mechanics proof that service metadata still
+  composes with operation-owned overrides. Prove all 12 owner tests, uncached
+  owner typecheck, active
+  Habitat policy, strict OpenSpec validation, focused Biome, and diff hygiene.
+  Do not migrate a module, activate a staged law, add a resource implementation,
+  or change a consumer in this checkpoint. All 12 owner tests and the uncached
+  owner typecheck and build pass. All 25 active Habitat rules, strict OpenSpec,
+  focused Biome, and diff hygiene pass. A fresh architecture/oRPC/Effect/
+  TypeScript/TypeBox review reports no P0 or P1 in this root-model boundary.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
