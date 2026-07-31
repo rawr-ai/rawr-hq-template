@@ -26,6 +26,9 @@
       "types": "./src/service/contract.ts",
       "default": "./src/service/contract.ts"
     },
+    "./migrations/0001_journal.sql": {
+      "default": "./src/service/db/migrations/0001_journal.sql"
+    },
     "./router": {
       "types": "./src/router.ts",
       "default": "./src/router.ts"

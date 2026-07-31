@@ -16,7 +16,7 @@ import {
 
 type HqOpsBoundary = CreateClientOptions;
 type HqOpsResources = HqOpsBoundary["deps"]["resources"];
-type SqliteDatabase = Awaited<ReturnType<HqOpsResources["sqlite"]["open"]>>;
+type SqliteDatabase = Awaited<ReturnType<HqOpsResources["journalIndexDatabase"]["open"]>>;
 type HqOpsProcess = ProcessView & {
   processId: "rawr-cli";
   repoRoot: string;
@@ -27,11 +27,22 @@ type HqOpsRole = RoleView & {
 };
 type BindingContext = ServiceBindingContext<HqOpsProcess, HqOpsRole>;
 
-async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
+async function openJournalIndex(dbPath: string): Promise<SqliteDatabase> {
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
   const mod = await import("bun:sqlite");
   const Database = (mod as { Database: new (dbPath: string) => SqliteDatabase }).Database;
-  return new Database(dbPath);
+  const db = new Database(dbPath);
+
+  try {
+    const migrationUrl = new URL(import.meta.resolve("@rawr/hq-ops/migrations/0001_journal.sql"));
+    const journalMigration = await fs.readFile(migrationUrl, "utf8");
+    db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
+    db.exec(journalMigration);
+    return db;
+  } catch (error) {
+    db.close();
+    throw error;
+  }
 }
 
 async function embedText(input: {
@@ -182,8 +193,8 @@ function createHqOpsResources(): HqOpsResources {
         );
       },
     },
-    sqlite: {
-      open: openSqliteDatabase,
+    journalIndexDatabase: {
+      open: openJournalIndex,
     },
     embeddings: {
       getConfig() {

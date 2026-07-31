@@ -31,6 +31,11 @@ type ClientOptions = {
 export type LogEntry = EmbeddedPlaceholderLogEntry;
 export type AnalyticsEntry = EmbeddedPlaceholderAnalyticsEntry;
 
+const journalMigrationUrl = new URL(
+  "../../../src/service/db/migrations/0001_journal.sql",
+  import.meta.url
+);
+
 export async function writeRawrConfig(repoRoot: string, config: RawrConfig): Promise<void> {
   await fs.writeFile(
     path.join(repoRoot, "rawr.config.ts"),
@@ -45,7 +50,7 @@ export async function writeGlobalRawrConfig(homeDir: string, config: RawrConfig)
   await fs.writeFile(configPath, `${JSON.stringify(config, null, 2)}\n`, "utf8");
 }
 
-async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
+async function openNativeSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
   await fs.mkdir(path.dirname(dbPath), { recursive: true });
   try {
     const mod = await import("bun:sqlite");
@@ -91,6 +96,18 @@ async function openSqliteDatabase(dbPath: string): Promise<SqliteDatabase> {
         db.close();
       },
     };
+  }
+}
+
+async function openJournalIndex(dbPath: string): Promise<SqliteDatabase> {
+  const db = await openNativeSqliteDatabase(dbPath);
+  try {
+    db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
+    db.exec(await fs.readFile(journalMigrationUrl, "utf8"));
+    return db;
+  } catch (error) {
+    db.close();
+    throw error;
   }
 }
 
@@ -198,8 +215,8 @@ export function createTestHqOpsResources(
       },
       exec: input.exec ?? (async () => emptyExecResult()),
     },
-    sqlite: {
-      open: openSqliteDatabase,
+    journalIndexDatabase: {
+      open: openJournalIndex,
     },
     embeddings: {
       getConfig() {
