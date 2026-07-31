@@ -1,7 +1,9 @@
 # Service
 
-`service` is the reusable contract-first oRPC kind shared by standalone
-services and API-plugin service interiors.
+`service` is the reusable contract-first oRPC kind. Its v3 structure defines a
+standalone service project. Embedded API-plugin service interiors reuse the
+applicable service source laws through their own additive plugin kind; they are
+not instances of the standalone project structure.
 
 The topology packet owns the standalone package/public face, its optional
 package-root proof tree, and the root and module interior spines. Optional
@@ -15,17 +17,19 @@ retains its indexed catalog only when middleware exists. A module-level
 `contract.ts` and `router.ts` remain because they compose modules. Embedded API
 service interiors do not contain proof; the independently selected
 `plugin-server-api` kind owns their package-root behavior/support topology.
-Optional model facts live as direct leaves under `actors`, `dto`, `entities`,
-`errors`, `helpers`, `policy`, `ports`, or `prompts`; model `index.ts` files
-and deeper catch-all trees are not part of the kind. An entity has stable
-domain identity that survives attribute changes and participates in domain
-transitions. Persistence may evidence that meaning but cannot establish it by
-itself. TypeBox owns the canonical entity schema and generated type. A DTO is
-an operation or boundary projection and may compose, pick, omit, or refine an
-entity without acquiring its authority. Service-root entities own identity or
-invariants that genuinely span modules; access alone never promotes module
-meaning. Module entities remain specific to one subdomain. A standalone
-service spine admits the optional
+Optional model facts live as direct leaves under `dto`, `entities`, `errors`,
+`policy`, or `ports`. Each present model kind has one `index.ts`
+import face over its direct semantic leaves; there is no service-wide
+`model/index.ts`. The barrel owns no decisions and does not turn access into
+shared meaning. `shared`, `internal`, `dependencies`, and `helpers` are not
+model destinations. An entity has stable domain identity that survives
+attribute changes and participates in domain transitions. Persistence may
+evidence that meaning but cannot establish it by itself. TypeBox owns the
+canonical entity schema and generated type. A DTO is an operation or boundary
+projection and may compose, pick, omit, or refine an entity without acquiring
+its authority. Service-root entities own identity or invariants that genuinely
+span modules; access alone never promotes module meaning. Module entities
+remain specific to one subdomain. A standalone service spine admits the optional
 `db` child whose entire topology and import funnel belong to the independent
 [[../database/README|database blueprint]]; modules and embedded API service
 interiors do not own database placement. Entity placement is structurally
@@ -42,20 +46,19 @@ Effect failure slots at service capability boundaries. The
 [[skill|service capability funnel]] is the authoring frame for these rules.
 
 Standalone service proof lives only under optional package-root `test/`.
-Behavior suites follow their production owner: service-root behavior lives at
-`behavior/*.test.ts`, while module behavior lives at
-`behavior/modules/<module>/*.test.ts`. Client and database mechanics live at
-`mechanics/{client,db}/*.test.ts`; contract mechanics additionally admit
-compile-only `mechanics/contract/*.typecheck.ts` beside runtime
-`*.test.ts` suites. Integration suites live at `integration/*.test.ts`, and
-reusable non-suite assets live at
-`support/{db,service,modules/<module>}/*.ts`. Categories remain optional and
-need not exist when a service has no proof of that kind. `test`, `tests`, and
-`__tests__` directories do not live under standalone or API-embedded service
-source, and standalone service `src/` does not contain `*.test.ts` or
-`*.spec.ts` suite files. Support does not contain those suites either. API
-plugin proof remains governed by its additive kind rather than acquiring the
-standalone service categories.
+The source catalog schema-admits the v3 service definition, but no service
+instance exists and the definition has no release-pack acceptance. Its current
+generic rule set is structure-only: RAWR-path-qualified Grit rules remain
+outside the definition while the location-independent service laws are staged.
+Release-pack acceptance waits until finite contract, operation-semantic, and
+root-execution member axes are frozen and the application resolver can reject
+unselected members. No open support, helper, runtime, fixture, or case-by-case
+proof cabinet is admitted. Existing v2 service proof topology remains
+compatibility evidence during that transition.
+`test`, `tests`, and `__tests__` directories do not live under standalone or
+API-embedded service source, and standalone service `src/` does not contain
+`*.test.ts` or `*.spec.ts` suite files. API plugin proof remains governed by
+its additive kind rather than acquiring the standalone service axes.
 
 Standalone production TypeScript does not acquire package proof through a
 literal relative module source that resolves beneath its package-root `test`

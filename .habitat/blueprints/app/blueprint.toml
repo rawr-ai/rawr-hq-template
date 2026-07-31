@@ -1,0 +1,29 @@
+schemaVersion = 1
+id = "app"
+version = 1
+
+[[rules]]
+id = "app_v1_structure"
+lane = "enforced"
+message = "Applications must preserve the generic closed package-backed composition shell."
+remediate = "Restore the app project shell and keep host-specific topology in a narrower app blueprint."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"

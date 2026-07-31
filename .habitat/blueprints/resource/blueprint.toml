@@ -1,0 +1,29 @@
+schemaVersion = 1
+id = "resource"
+version = 1
+
+[[rules]]
+id = "resource_v1_structure"
+lane = "enforced"
+message = "Resources must preserve one closed provider-neutral project shell."
+remediate = "Restore contract.ts and the provider-family boundary at the resource project root."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"

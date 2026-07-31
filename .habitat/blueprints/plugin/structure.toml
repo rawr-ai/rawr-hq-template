@@ -1,0 +1,18 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "plugin-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "habitat.toml",
+  "project.json",
+  "src",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "test",
+]

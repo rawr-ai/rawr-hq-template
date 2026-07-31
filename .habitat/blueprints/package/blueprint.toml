@@ -1,0 +1,42 @@
+schemaVersion = 1
+id = "package"
+version = 1
+
+[[rules]]
+id = "package_v1_structure"
+lane = "enforced"
+message = "Package projects must preserve the closed reusable-support shell."
+remediate = "Restore the package project shell and keep proof in selected contract or semantics members."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"
+
+[[instance.selections]]
+id = "contract"
+root = "project"
+kind = "file"
+memberPattern = "^[a-z][a-z0-9-]*$"
+pathTemplate = "test/contract/{member}.typecheck.ts"
+
+[[instance.selections]]
+id = "semantics"
+root = "project"
+kind = "file"
+memberPattern = "^[a-z][a-z0-9-]*$"
+pathTemplate = "test/semantics/{member}.test.ts"

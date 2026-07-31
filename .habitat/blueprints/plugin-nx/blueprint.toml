@@ -1,0 +1,29 @@
+schemaVersion = 1
+id = "plugin-nx"
+version = 1
+
+[[rules]]
+id = "plugin_nx_v1_structure"
+lane = "enforced"
+message = "Nx projection plugins must preserve the generic plugin shell and one closed TypeScript source face."
+remediate = "Restore the plugin project metadata and keep the source root to index.ts plus direct TypeScript leaves."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"

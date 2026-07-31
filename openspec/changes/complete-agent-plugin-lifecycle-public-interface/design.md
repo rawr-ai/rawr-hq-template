@@ -164,11 +164,36 @@ parity through those owners. The inferred targets include the required Oclif
 structure laws and lifecycle command-channel law. The six staged service rules
 remain governed by [[tasks]] 1.5e, 5.7e2, and 5.7e22 and join required
 admission only as their live-corpus violations are burned down and each law is
-activated in the registry.
+activated in the registry. Public-consumer sealing additionally remains outside
+service-local v3 application until resolution can acquire foreign consumers
+across the workspace.
 
 RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
 rule is not invented without a stable common corpus.
+
+The definition-only v3 checkpoint checks in seven root records: `package`,
+`resource`, `provider`, `service`, `plugin`, `plugin-nx`, and `app`. The source
+catalog schema-admits them, but they have zero instances, zero resolved
+applications, and no released-pack acceptance; the released 33-rule v2
+registry remains the sole execution authority. Only the `package@1` `contract`
+and `semantics` proof-axis mapping is frozen, and that kind remains outside
+release-pack acceptance until exact selected-member equality is proven. Every
+other kind's proof axes remain candidates. Blueprint-declared
+root relations are not yet enforceable: manifests can name `project` and
+`source` independently even where service, app, and plugin structures require
+exactly `source = project/src`. Release-pack acceptance and instance activation
+must derive or positively bound that relation rather than trusting two unrelated
+paths.
+
+The first `@habitat/blueprints` pack has no precommitted accepted set. It cannot
+promise `package@1` before exact-member closure, activate a definition before
+its root relations are bounded, or promise the six service-construction laws
+before source migration and a green complete corpus. Public-consumer sealing
+also requires the workspace acquisition described in
+[[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]]. See
+[[README#Habitat Blueprint Definition Checkpoint]] and
+[[docs/projects/shared-habitat-substrate/CORPUS#Definition Checkpoint|the controlled corpus]].
 
 The Civ7 `habitat-cli-v0.1.0` release and reviewed source
 `d51e8c7454e301bcaba56c8364f5c714d5febca3` are historical transfer evidence.
@@ -239,15 +264,19 @@ semantics, not repository topology.
 `services/agent-plugin-lifecycle` remains one service with bounded modules. Its
 root composes contracts, ready host capabilities, implementation, and routers.
 Each module owns its contract, operation routers, and owner-local
-`model/{dto,policy,ports,...}`, with TypeBox schemas colocated with their DTO
-authorities. No service `db` boundary is admitted until a dedicated database
-blueprint closes its topology; concrete acquisition and mechanics live in
-resources and providers. The root model retains only ready host contracts,
+`model/{dto,entities,errors,policy,ports}` categories, with TypeBox schemas
+colocated with their DTO or entity authorities. Each present category has one
+`index.ts` import face plus direct semantic leaves. There is no service-wide
+`model/index.ts`, and `helpers`, `actors`, and `prompts` are not model
+categories. A service `db` child is admitted only through the separately
+selected database blueprint after exact nested-member resolution closes that
+relation; concrete acquisition and mechanics live in resources and providers.
+The root model retains only ready host contracts,
 dependency-owned observations, and the minimum service-owned domain model
-consumed by multiple modules. Current-main selection is shared because governance
-and providers consume the same service-owned policy; governance-only operation
-requests and results remain module-owned. Domain behavior lives in operation
-handlers and module policy, not an `internal/` implementation tree.
+consumed by multiple modules. Current-main selection is shared because
+governance and providers consume the same service-owned policy; governance-only
+operation requests and results remain module-owned. Domain behavior lives in
+operation handlers and module policy, not an `internal/` implementation tree.
 
 TypeBox schemas are the sole structural and generated-type authority for
 requests, results, persisted JSON, and intermodule domain collaborations.

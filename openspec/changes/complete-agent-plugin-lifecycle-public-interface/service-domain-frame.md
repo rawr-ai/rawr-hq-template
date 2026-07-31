@@ -181,7 +181,8 @@ oRPC-composition rules.
 The corrected use of Habitat is positive and closed:
 
 - the service package, public source face, service spine, module shell, and
-  named model layers enumerate the complete set of admitted children;
+  named `dto`, `entities`, `errors`, `policy`, and `ports` model layers
+  enumerate the complete set of admitted children;
 - every layer exposes a concrete interface to its parent and owns only the
   decisions that can be made with that layer's local context;
 - dependencies and ready capabilities seed the service boundary; qualified
@@ -208,13 +209,24 @@ one module needs that module's contract, curated capability surface, model,
 operations, and the public interfaces it consumes, not the full service
 implementation.
 
-The latest committed Magic Migration service blueprint is the structural
-source. Template retains only explicitly independent RAWR extensions that do
-not weaken or duplicate that packet. The required Nx source-law target must
-invoke the complete service packet serially. Empty baselines remain empty; no
-path exception, legacy inventory, or owner-specific forbidden list may make an
-invalid service green. See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task
-5.7e]].
+The latest committed Magic Migration service blueprint is structural evidence.
+Template retains only explicitly independent RAWR extensions that do not weaken
+or duplicate that packet. The source catalog schema-admits the root `service@1`
+v3 definition, but it has no instance, application, released-pack acceptance,
+or execution authority.
+Its source topology assumes exactly `source = project/src`; the current
+independent root declarations do not enforce that relation, so release-pack
+acceptance and instance activation wait for the blueprint to derive or
+positively bound it.
+All six service-construction laws remain staged candidates. Public-consumer
+sealing is not a service-local v3 application until resolution can acquire
+foreign consumers across the workspace. The required Nx source-law target may
+invoke the laws only after source migration and the complete corpus are green.
+Empty baselines remain empty; no path exception, legacy inventory, or
+owner-specific forbidden list may make an invalid service green. See
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e]],
+[[README#Habitat Blueprint Definition Checkpoint]], and
+[[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]].
 
 ## Shared Domain Collaborations
 
@@ -267,11 +279,9 @@ src/service/
   middleware/
     <capability>.ts
   model/
-    dto/
-    entities/
-    helpers/
-    policy/
-    ports/
+    <kind>/                       # dto | entities | errors | policy | ports
+      index.ts
+      <semantic-name>.ts
   modules/
     <module>/
       contract/
@@ -285,28 +295,29 @@ src/service/
         index.ts
         <capability>.ts
       model/
-        dto/
-        entities/
-        helpers/
-        policy/
-        ports/
+        <kind>/                   # dto | entities | errors | policy | ports
+          index.ts
+          <semantic-name>.ts
 ```
 
 Each directory below `model/` exists only when its owner has corresponding
-domain matter. A module exposes one `contract/index.ts`, authors operations in
-named `router/*.router.ts` leaves, and composes them through one module-root
-`router.ts`. Optional module middleware uses its indexed catalog shape.
-Service-root middleware is the
+domain matter. The only model kinds are `dto`, `entities`, `errors`, `policy`,
+and `ports`. Every present kind exposes one `index.ts` import face over direct
+semantic leaves. There is no service-wide `model/index.ts`; `helpers`, `actors`,
+and `prompts` are not model destinations. A module exposes one
+`contract/index.ts`, authors operations in named `router/*.router.ts` leaves,
+and composes them through one module-root `router.ts`. Optional module
+middleware uses its indexed catalog shape. Service-root middleware is the
 intentional exception: it consists only of direct kebab-case leaves exporting
 `middleware`, imported by semantic alias and attached in `impl.ts`, with no
 barrel. TypeBox schemas are colocated with their DTOs or entities, and outside
 capabilities are declared as model ports. Concrete acquisition and mechanics
 remain in resources/providers. The service root has no `shared/` directory:
-genuinely cross-module release and current-main concepts live in the root model,
-while operation requests, results, issues, and policy stay in their module.
-Root model policy may coordinate only the two service-owned collaborations over
-context-provided ports. It cannot contain module behavior, concrete providers,
-or another root-to-child bridge.
+genuinely cross-module release and current-main concepts live in the root
+model, while operation requests, results, issues, and policy stay in their
+module. Root model policy may coordinate only the two service-owned
+collaborations over context-provided ports. It cannot contain module behavior,
+concrete providers, or another root-to-child bridge.
 
 ## Request And Context Flow
 

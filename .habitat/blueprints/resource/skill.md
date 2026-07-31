@@ -1,51 +1,34 @@
 ---
 name: habitat-resource-frame
-description: Mental model for a provider-neutral capability contract whose concrete realization remains outside product and service policy.
+description: Mental model for a provider-neutral capability contract at the head of the Habitat product chain.
 ---
 
 # Resource Capability Frame
 
-> **Activation:** None. This lowercase `skill.md` is an unregistered design
-> seed. Resource contracts, providers, applications, and adjacent Habitat
-> packets retain their qualified authority.
-
-## Frame
-
-A resource names one capability the runtime can supply without naming how it
-is supplied. Its contract describes the operations, values, failures, and
-lifecycle expectations a consumer may rely on. It contains no provider
-selection, vendor implementation, or product decision.
-
-The resource boundary exists so service authors can reason in capabilities
-rather than reconstructing external systems inside policies or helpers. A
-remote repository, filesystem, database, ledger, model-runtime capability,
-queue, or native host capability belongs here when it can be described
-independently of the consuming operation and requires a concrete runtime
-realization.
-
-## Gradient
-
-The direction is explicit:
+A resource names one capability without naming how it is supplied. Its
+contract owns the values, operations, typed failures, and lifecycle
+expectations that every provider must satisfy. Vendor clients, provider
+selection, product policy, and service decisions remain outside.
 
 ```text
-provider -> resource -> app -> service
+resource -> provider -> service -> plugin -> app
 ```
 
-A provider realizes the contract. An application chooses that provider and
-its lifetime. Runtime acquisition scopes, releases, and binds the ready
-capability into service context. The service consumes only the resource
-contract. Movement in the opposite direction is an authority inversion:
-resources do not import providers, services do not construct vendors, and
-model policy does not perform resource effects.
+This direction is an authorship law, not a call-stack claim. The resource
+defines the neutral vocabulary; a provider realizes it; a service consumes the
+ready capability while owning its domain meaning; a plugin projects that
+service; an app chooses the concrete runtime assembly.
 
-The closed package face keeps the contract visible and makes concrete mechanics
-fall into the nested provider kind. When logic cannot remain provider-neutral,
-it is not resource contract matter.
+At runtime, selection and context flow downward from the app. The service sees
+the resource value, never the concrete vendor construction. A resource does
+not import its providers or select among them, and a provider-specific fact
+does not widen the neutral contract merely because one implementation exposes
+it.
 
-## Relations
+The closed root makes `contract.ts` the visible neutral face and `providers/`
+the hard implementation boundary. When logic cannot remain provider-neutral,
+it does not belong in the contract.
 
-- [[README|Resource boundary]]
-- [[../provider/skill|Provider frame]]
-- [[../service/skill|Service capability funnel]]
-- [[../skill|Blueprint direction]]
-- [[../../AUTHORITY|Habitat authority]]
+## Vocabulary
+
+capability, contract, failure, lifecycle, neutrality, provider, resource

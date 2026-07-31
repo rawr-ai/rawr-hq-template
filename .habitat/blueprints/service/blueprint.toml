@@ -1,0 +1,29 @@
+schemaVersion = 1
+id = "service"
+version = 1
+
+[[rules]]
+id = "service_v1_structure"
+lane = "enforced"
+message = "Services must preserve the closed standalone capability-funnel topology."
+remediate = "Restore the package-root proof boundary, source faces, service spine, modules, routers, middleware, and admitted model kinds."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"

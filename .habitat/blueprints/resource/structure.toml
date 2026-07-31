@@ -1,0 +1,21 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "resource-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "contract.ts",
+  "habitat.toml",
+  "package.json",
+  "project.json",
+  "providers",
+  "tsconfig.build.json",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "test",
+]

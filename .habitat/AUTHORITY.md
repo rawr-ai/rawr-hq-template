@@ -38,7 +38,9 @@ relationships:
 ## Service Source Law
 
 The generic service and optional database kinds narrow construction through
-independently owned topology and source axes:
+independently owned topology and source axes. This section states the normative
+target law; any rule absent from the active v2 registry remains candidate until
+its recorded source-migration and activation gates pass.
 
 1. Every package, public surface, service, module, model kind, database, router,
    and middleware directory is positively closed.
@@ -95,15 +97,18 @@ independently owned topology and source axes:
    `router.ts` implements the aggregate tree once through unconfigured
    `impl.router(...)` so root middleware is not replayed. Knip owns unreachable
    leaves; generated clients and API behavior prove the complete public set.
-9. Every model fact has one direct semantic leaf. Model indexes are
-   inadmissible. `entities` owns stable domain identity that survives attribute
-   changes and participates in transitions. Persistence is evidence, not
-   sufficient classification. TypeBox owns each canonical entity schema and
-   generated type. Service-root entities span modules by identity or invariant,
-   never by access alone; module entities remain subdomain-specific. DTOs own
-   operation and boundary projections. DTOs and contracts may compose
-   entities, and stores may map records to entities when the domain models
-   continuing identity; reverse imports are inadmissible. The structural entity
+9. Every model fact has one direct semantic leaf under exactly one admitted
+   kind: `dto`, `entities`, `errors`, `policy`, or `ports`. Each present kind
+   has one `index.ts` import face that only exposes its own semantic leaves;
+   the barrel does not own decisions or create a service-wide model aggregate.
+   `entities` owns stable domain identity that survives attribute changes and
+   participates in transitions. Persistence is evidence, not sufficient
+   classification. TypeBox owns each canonical entity schema and generated
+   type. Service-root entities span modules by identity or invariant, never by
+   access alone; module entities remain subdomain-specific. DTOs own operation
+   and boundary projections. DTOs and contracts may compose entities, and
+   stores may map records to entities when the domain models continuing
+   identity; reverse imports are inadmissible. The structural entity
    destination remains advisory until the shared TypeBox and platform-neutral
    source laws cover it; production entity movement waits for that law rather
    than creating a RAWR-only fork.

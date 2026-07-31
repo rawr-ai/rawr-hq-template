@@ -1,0 +1,31 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "nx-plugin-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "habitat.toml",
+  "project.json",
+  "src",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "test",
+]
+
+[[scopes]]
+name = "nx-plugin-source"
+rootRole = "source"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+]
+allowed = [
+  "*.ts",
+]

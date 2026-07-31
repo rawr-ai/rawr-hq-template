@@ -1,0 +1,29 @@
+schemaVersion = 1
+id = "plugin"
+version = 1
+
+[[rules]]
+id = "plugin_v1_structure"
+lane = "enforced"
+message = "Plugins must preserve the generic closed projection project shell."
+remediate = "Restore the plugin project shell and keep role-specific structure in a narrower plugin blueprint."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"

@@ -15,6 +15,12 @@ separate release checkpoints.
 
 The current generic kinds are:
 
+- `package`: one closed product-free support shell whose proof members are
+  declared by the owning instance.
+- `resource`: one closed provider-neutral capability contract and its nested
+  provider-family boundary.
+- `provider`: one closed typed realization nested beneath its parent resource,
+  with a single public implementation index.
 - `blueprint-packet`: the closed canonical policy packet shared by every
   generic blueprint rule.
 - `service`: the reusable contract-first oRPC service spine, with independent
@@ -26,10 +32,12 @@ The current generic kinds are:
   root, limited to migrations, schema, and stores whose capabilities enter
   modules only through named root middleware and inherited context. Its own
   closed placement scopes exclude module and embedded API ownership.
-- `resource`: one closed RAWR workspace package around a provider-neutral
-  capability contract and its provider family.
-- `provider`: one closed typed realization nested beneath its parent resource,
-  with a single public implementation index.
+- `plugin`: one closed generic projection project shell. Narrower plugin kinds
+  own their role-specific source and proof faces.
+- `plugin-nx`: the independent closed Nx projection kind whose public index
+  projects resolved applications into scheduler facts.
+- `app`: one closed product-composition shell. Narrower app kinds own their
+  host-specific runtime and entrypoint faces.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` surfaces that
   expose client bindings and API operations around an embedded service.
 - `agent-router`: the positive source shape and routing anchors inside each
@@ -40,8 +48,18 @@ The current generic kinds are:
   discovery configuration, and public dependency boundary.
 - `nx-workspace`: the exact root scheduler surface, including one workspace
   lint owner and one multi-project build/check/test graph.
-- `plugin` and `plugin-server`: documented parent kinds whose universal shape
-  remains intentionally unconstrained.
+- `plugin-server`: a documented ontology node whose current corpus proves no
+  additional universal structure beyond `plugin`.
+
+The seven v3 definitions for `package`, `resource`, `provider`, `service`,
+`plugin`, `plugin-nx`, and `app` currently have no instances or resolved
+applications. Their blueprint-root schema-2 structures are schema-admitted but
+execution-inert while the released evaluator continues to execute only the 33
+registered v2 compatibility rules. The six service-construction packets remain
+staged. Exact blueprint-root relations, nested-member closure, and
+workspace-wide foreign-consumer acquisition remain Habitat-owned constructibility
+requirements; see the active OpenSpec handoff before creating the first v3
+instance.
 
 The `rawr/` tree carries owner-qualified constraints that are not generic
 package laws. It is the current physical overlay for repository governance,
@@ -61,12 +79,12 @@ Generic service and Oclif packets own their admitted source relationships, and
 TypeScript package exports own public compatibility. These qualified niches do
 not duplicate generic laws as package-name or path blacklists.
 
-Every rule under `.habitat/blueprints/**` is affirmed and enforced. An
+Every v2 `rule.json` under `.habitat/blueprints/**` is affirmed and enforced. An
 intentionally unfinished law lives under `.habitat/staged/blueprints/**` with
 a `staged-rule.json` candidate manifest. It enters the required graph only when
 a burn-down branch moves it into the active blueprint and enforces it.
 
-Each enforced rule has a stable `rule.json` plus a locked `baseline.json`
+Each enforced v2 compatibility rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
 topology. Every Grit packet exposes its executable source as `pattern.md`;
 rule-specific semantics belong in the packet directory and rule metadata, not
