@@ -112,6 +112,7 @@
 - [Hello command plugin](cli/commands/hello/AGENTS.md)
 - [Hyperresearch command plugin](cli/commands/hyperresearch/AGENTS.md)
 - [Session Tools command plugin](cli/commands/session-tools/AGENTS.md)
+- [Habitat command plugin](cli/commands/habitat/AGENTS.md)
 - [Example API plugin](server/api/example-todo/AGENTS.md)
 
 ## Validation

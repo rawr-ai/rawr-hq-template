@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-31 - Projection Receives Ready Capability
+
+Each completed Habitat command or Nx plugin projects one sealed service. It
+receives a ready client from the app and translates only its native surface:
+argv into a service request or resolved applications into Nx targets. They do
+not select providers, construct resources, or reinterpret service outcomes.
+
+The app is the single composition boundary. It chooses Node providers, binds
+the repository scope, constructs the client, and supplies that client through
+the native host mechanism. Oclif carries it on the invocation's Config options;
+the Nx plugin factory will receive it when that projection exists. Neither path
+earns a registry, daemon, loader, or retained runtime identity.
+
+### Bag Of Keywords
+
+service, projection, composition, entrypoint, artifact.
+
+identity, parity, reuse, clarity, closure.
+
+Oclif, Nx, Effect, TypeBox, app.
+
 ## 2026-07-31 - Source Is Observed, Structure Is Interpreted
 
 Native structure evaluation is not an external evaluator merely because Grit

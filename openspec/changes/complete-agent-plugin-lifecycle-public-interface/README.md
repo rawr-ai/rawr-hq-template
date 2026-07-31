@@ -1648,7 +1648,7 @@ review does not authorize a separate release path.
 | Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat workspace source now evaluates the corpus, while released adoption and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat package consumer | Template-owned `@habitat/cli` workspace source, package-local Grit acquisition, CLI, v3 catalog, and Nx application projection are under task 5.7e22b review; the initializer, package publication, released adoption, and service-law activation remain open |
+| Habitat product realization | Template-owned resource, provider, service, and first Oclif-projection source are present under task 5.7e22b; Nx projection, app composition, the initializer, package publication, released adoption, and service-law activation remain open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
@@ -5363,6 +5363,40 @@ This definition record completes only
 remain open.
 See [[docs/projects/shared-habitat-substrate/CORPUS#Definition Checkpoint|the controlled corpus]]
 and [[.habitat/AUTHORITY-ONTOLOGY#Current Realization|the authority ontology]].
+
+### Habitat Oclif Projection Decision
+
+The first task 5.7e22b3 checkpoint projects the sealed Habitat service through
+one ordinary `@habitat/plugin-cli` Oclif package. The plugin owns argv
+translation and result rendering only. The Habitat app will construct one
+ready client and carry it through Oclif's invocation-local `Config.options`;
+the plugin does not select providers, locate the repository, or construct a
+runtime. A missing binding refuses rather than falling back to a checkout,
+ambient singleton, or second implementation.
+
+`resolve` and `check` invoke the existing service operations directly. The
+check command maps owner, instance, rule, and runner flags into the
+TypeBox-owned request and derives its process exit from the total service
+result. The sibling Nx projection remains the next separate checkpoint, and
+the Habitat app composes both only after their owner-local contracts are
+sealed. No initializer, release, consumer configuration, provider home,
+Personal content, or live lifecycle state changes in this slice.
+
+The owner proof runs native Oclif discovery and dispatch against the built
+plugin. It observes exactly `check` and `resolve`, preserves the app-selected
+client by identity, proves single and repeated selector translation without
+erasing explicit empty values, renders each complete total result before a
+nonzero exit, and refuses dispatch when the app binding is absent. The
+package build emits the published binding declaration. The four registered
+Oclif Habitat rules, package typecheck/test/build/manifest graph, repository
+lint, strict OpenSpec validation, and diff hygiene are green. Architecture,
+behavior, TypeScript, and structural reviews found no remaining material
+issue in the production boundary.
+
+The widened `@habitat/plugin-*` Grit laws have current-tree execution and
+representative embedded cases. Native injected-fixture execution remains
+bounded upstream Habitat proof debt; this slice does not introduce a one-off
+fixture harness or alternate evaluator as a substitute for that capability.
 
 ## Settlement Oracles
 

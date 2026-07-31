@@ -135,6 +135,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("plugins/cli/commands/habitat"),
+        test: { name: "plugin-habitat", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("plugins/cli/commands/chatgpt-corpus"),
         test: { name: "plugin-chatgpt-corpus", environment: "node", include: [...includes] },
       },

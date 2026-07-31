@@ -26,29 +26,29 @@ or {
   import_statement(source=$source) where {
     $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
-      $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
-      $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
+      $source <: r"^[\"']@(?:rawr|habitat)/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
+      $source <: r"^[\"']@(?:rawr|habitat)/plugin-[^/\"']+(?:/|[\"'])"
     }
   },
   `export { $exports } from $source` where {
     $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
-      $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
-      $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
+      $source <: r"^[\"']@(?:rawr|habitat)/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
+      $source <: r"^[\"']@(?:rawr|habitat)/plugin-[^/\"']+(?:/|[\"'])"
     }
   },
   `export * from $source` where {
     $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
-      $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
-      $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
+      $source <: r"^[\"']@(?:rawr|habitat)/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
+      $source <: r"^[\"']@(?:rawr|habitat)/plugin-[^/\"']+(?:/|[\"'])"
     }
   },
   `import($source)` where {
     $filename <: r".*plugins/cli/commands/[^/]+/src/.*\.ts$",
     or {
-      $source <: r"^[\"']@rawr/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
-      $source <: r"^[\"']@rawr/plugin-[^/\"']+(?:/|[\"'])"
+      $source <: r"^[\"']@(?:rawr|habitat)/[^\"']+/(?:src|dist|test|internal)(?:/|[\"'])",
+      $source <: r"^[\"']@(?:rawr|habitat)/plugin-[^/\"']+(?:/|[\"'])"
     }
   }
 }
@@ -74,7 +74,16 @@ export default class ShowCommand extends Command {}
 
 ```typescript
 // @filename: plugins/cli/commands/example/src/commands/show.ts
-import OtherCommand from "@rawr/plugin-other";
+import OtherCommand from "@habitat/plugin-other";
+
+export default class ShowCommand extends Command {}
+```
+
+## Matches a mechanical Habitat package import
+
+```typescript
+// @filename: plugins/cli/commands/example/src/commands/show.ts
+import { client } from "@habitat/service/src/client";
 
 export default class ShowCommand extends Command {}
 ```
