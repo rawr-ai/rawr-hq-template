@@ -3,16 +3,12 @@
  */
 import { service } from "../../impl";
 
-/**
- * Config implementer with the route-facing resource and repository context.
- *
- * The service lanes remain inherited for downstream middleware; config routes
- * author only against these curated names.
- */
+/** Config implementer with only its filesystem, path, and repository capabilities. */
 export const module = service.config.use(async ({ context, next }) =>
   next({
     context: {
-      resources: context.deps.resources,
+      fs: context.deps.resources.fs,
+      path: context.deps.resources.path,
       repoRoot: context.scope.repoRoot,
     },
   })

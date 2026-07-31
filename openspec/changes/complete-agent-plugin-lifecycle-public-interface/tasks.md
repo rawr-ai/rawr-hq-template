@@ -2123,6 +2123,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   owner typecheck and build pass. All 25 active Habitat rules, strict OpenSpec,
   focused Biome, and diff hygiene pass. A fresh architecture/oRPC/Effect/
   TypeScript/TypeBox review reports no P0 or P1 in this root-model boundary.
+- [x] 5.7e39 Close the HQ Ops Config module as the first behavior-bearing
+  module checkpoint. Move its TypeBox models, pure helpers, and validation
+  policy into the module-owned model; split its contracts and operation
+  handlers into named leaves; make `module.ts` curate only filesystem, path,
+  and repository-root capabilities; and make the module-root `router.ts` a
+  plain operation object. Add a behavior-first oracle proving one successful
+  Config call emits exactly one analytics event and one procedure log. Observe
+  the duplicate lifecycle before replacing configured `module.router(...)`
+  closure, then prove exact-once behavior afterward. Preserve configuration
+  loading, validation, normalization, layering, metadata, and caller results.
+  Prove all 13 owner tests, uncached owner typecheck and build, active Habitat
+  policy, strict OpenSpec, focused Biome, and diff hygiene. Do not touch Journal
+  or Security, activate staged laws, migrate to Effect, change providers or
+  consumers, or introduce a detached operation handler.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

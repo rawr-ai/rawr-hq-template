@@ -4953,6 +4953,31 @@ active Habitat rules, strict OpenSpec, focused Biome, and diff hygiene pass. A
 fresh architecture/oRPC/Effect/TypeScript/TypeBox review reports no P0 or P1 in
 the bounded root-model change.
 
+## HQ Ops Config Module Closure
+
+The next checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e39]] closes Config
+without widening into another HQ Ops module. Config owns its TypeBox model,
+validation policy, capability curation, contracts, and three operation
+handlers. Its module-root router becomes plain composition; the service root
+remains the only native aggregate router closure.
+
+One behavior-first oracle holds the architectural outcome directly: a
+successful workspace-config call emits one analytics event and one procedure
+log. It observes the predecessor configured module-router replay first, then
+must pass exactly once after the module closure. Journal and Security retain
+their visible predecessor shape for their own checkpoints.
+
+The oracle failed deterministically in two predecessor runs with two matching
+analytics entries, then passed after Config's module-root router became plain
+composition. Config now curates only filesystem, path, and repository-root
+capabilities; its contracts, TypeBox DTOs, validation policy, pure mechanics,
+and three operation handlers are module-owned. All 13 owner tests and the
+uncached owner typecheck and build pass. Active Habitat policy, the three
+staged Config construction laws, strict OpenSpec, focused Biome, and diff
+hygiene pass. Fresh architecture/oRPC and TypeScript/TypeBox/testing reviews
+report no P0 or P1.
+
 ## Settlement Oracles
 
 The final product must prove:
