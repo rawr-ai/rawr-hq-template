@@ -22,15 +22,16 @@
 
 ## Scope
 - Applies to everything under `plugins/**`.
-- This repo uses **five plugin roots**:
+- This repo uses **six plugin roots**:
   - `plugins/cli/commands/*` for host-composed Oclif command capabilities
   - `plugins/web/*` for runtime/web plugins (`rawr.kind=web`)
   - `plugins/server/api/*` for server/API runtime adapters (`rawr.kind=api`)
   - `plugins/async/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
   - `plugins/async/schedules/*` for recurring trigger runtime adapters (`rawr.kind=schedules`)
-- Command-plugin leaves are workspace packages. API server plugins are
-  package-less Nx projects composed from source through their public `api.ts`
-  and `client.ts` faces.
+  - `plugins/nx/*` for package-less native Nx projections composed by an app
+- Command-plugin leaves are workspace packages. API server and Nx plugins are
+  package-less Nx projects composed from source through their qualified public
+  faces.
 
 ## Nx First Hop
 
@@ -48,15 +49,15 @@
 
 ## Plugin Ids
 - A command plugin's id is `package.json#name`.
-- A package-less API plugin's Nx project name is its repository identity; its
-  leaf directory names the capability.
+- A package-less API or Nx plugin's Nx project name is its repository identity;
+  its leaf directory names the capability.
 - Package identity does not grant lifecycle authority. External Oclif
   extensions and the curated agent-plugin lifecycle are separate closed
   channels.
 
 ## Manifest Conventions
 - Oclif command-plugin packages include `package.json`. Package-less API server
-  plugins do not.
+  and Nx plugins do not.
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
   - `commands`: `./dist/commands`
   - `typescript.commands`: `./src/commands`
@@ -114,6 +115,7 @@
 - [Session Tools command plugin](cli/commands/session-tools/AGENTS.md)
 - [Habitat command plugin](cli/commands/habitat/AGENTS.md)
 - [Example API plugin](server/api/example-todo/AGENTS.md)
+- [Habitat Nx plugin](nx/habitat/AGENTS.md)
 
 ## Validation
 

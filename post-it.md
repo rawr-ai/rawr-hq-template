@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-31 - Nx Receives Workspace-Bound Resolution
+
+Native Nx plugin configuration is serialized data, not a dependency-injection
+surface. The source projection therefore exports a plugin factory whose
+runtime seams are an app-owned `clientForWorkspace(workspaceRoot)` capability
+and the app's selected runtime cache inputs.
+The later Habitat app invokes that factory inside the Nx plugin worker; it
+constructs providers and fixes service scope from Nx's actual workspace root.
+No client, callback, provider, or runtime handle crosses `nx.json`.
+
+The plugin calls catalog resolution once per graph construction, then converts
+the resolved applications into scheduler facts. Each application becomes one
+cacheable leaf target with complete catalog authority and app-runtime inputs
+plus scoped runner and subject inputs. One owner
+aggregate is a dependency-only `nx:noop` target. Rejection fails graph
+construction; the projection never invents a project, discovers authority,
+checks an application, starts another Nx scheduler, or retains a catalog.
+
+### Bag Of Keywords
+
+application, projection, target, input, cache.
+
+speed, parity, reuse, clarity, closure.
+
+Nx, service, graph, selector, scheduler.
+
 ## 2026-07-31 - Projection Receives Ready Capability
 
 Each completed Habitat command or Nx plugin projects one sealed service. It
