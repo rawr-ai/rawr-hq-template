@@ -135,11 +135,18 @@ const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
   "{workspaceRoot}/package.json",
   { env: "HABITAT_COMMAND_TIMEOUT_MS" },
 ];
+const catalogResolutionInput: HabitatNxBinding["catalogResolutionInput"] = {
+  runtime: "habitat resolve",
+};
 
 function createHandler(
   clientForWorkspace: HabitatClientForWorkspace
 ): CreateNodesFunction<undefined> {
-  const plugin = createHabitatNxPlugin({ clientForWorkspace, runtimeInputs });
+  const plugin = createHabitatNxPlugin({
+    clientForWorkspace,
+    catalogResolutionInput,
+    runtimeInputs,
+  });
   expect("name" in plugin).toBe(false);
   expect(plugin.createNodes[0]).toBe(
     "{.habitat/blueprints/*/blueprint.toml,.habitat/index.json,.habitat/**/rule.json,**/habitat.toml}"
@@ -195,21 +202,15 @@ describe("Habitat Nx projection", () => {
     });
     expect(serviceLeaf?.command).not.toContain("nx");
     expect(serviceLeaf?.inputs).toEqual([
+      { runtime: "habitat resolve" },
       { externalDependencies: ["@habitat/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
-      "{workspaceRoot}/**/habitat.toml",
-      "{workspaceRoot}/.habitat/**/rule.json",
-      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md",
-      "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/services/a/src",
       "{workspaceRoot}/services/a/src/**/*",
     ]);
-    expect(serviceLeaf?.inputs).not.toContain(
-      "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml"
-    );
     expect(serviceTargets?.["check:policy"]).toMatchObject({
       executor: "nx:noop",
       cache: false,
@@ -224,15 +225,12 @@ describe("Habitat Nx projection", () => {
     const pluginTargets = projects["plugins/b"]?.targets;
     const structureLeaf = pluginTargets?.["habitat:application:@scope/plugin-b:plugin-structure"];
     expect(structureLeaf?.inputs).toEqual([
+      { runtime: "habitat resolve" },
       { externalDependencies: ["@habitat/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
-      "{workspaceRoot}/**/habitat.toml",
-      "{workspaceRoot}/.habitat/**/rule.json",
-      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml",
-      "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/plugins/b",
       "{workspaceRoot}/plugins/b/**/*",
       "{workspaceRoot}/plugins/b/habitat.toml",

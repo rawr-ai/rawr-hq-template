@@ -18,8 +18,10 @@ No client, callback, provider, or runtime handle crosses `nx.json`.
 
 The plugin calls catalog resolution once per graph construction, then converts
 the resolved applications into scheduler facts. Each application becomes one
-cacheable leaf target with complete catalog authority and app-runtime inputs
-plus scoped runner and subject inputs. One owner
+cacheable leaf target with app-runtime inputs and explicit runner and subject
+inputs. An app-owned native Nx runtime input carries complete catalog
+resolution, including path kinds and empty directories that file sets cannot
+hash, without coupling every leaf to every source directory. One owner
 aggregate is a dependency-only `nx:noop` target. Rejection fails graph
 construction; the projection never invents a project, discovers authority,
 checks an application, starts another Nx scheduler, or retains a catalog.
