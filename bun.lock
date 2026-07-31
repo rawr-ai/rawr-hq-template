@@ -449,6 +449,7 @@
       "name": "@habitat/service",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat/resource-rule-evaluation": "workspace:*",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/experimental-effect": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",

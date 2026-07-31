@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- Resolve local Habitat authority into a deterministic catalog.
+- Resolve local Habitat authority and check admitted rule applications.
 
 ## Scope
 
@@ -12,7 +12,9 @@
 ## Boundaries
 
 - Consumers cross only through the public client. The service does not select
-  providers, mount a runtime, execute rules, or expose a composite CLI.
+  providers, mount a runtime, or expose a composite CLI.
+- The host supplies a ready provider-neutral evaluator. The service owns
+  application selection, rule meaning, and aggregate outcomes.
 - The service enumerates exact authority paths from its bound workspace. Callers
   provide no repository visibility or authority classification input.
 - Version 2 records are inert compatibility identity facts. They never become
@@ -22,6 +24,8 @@
 
 - The catalog module resolves closed version 3 local authority and reports all
   bounded admission failures as a rejected result.
+- `catalog.check` executes only selected Grit `check` applications. It refuses
+  unsupported runners instead of skipping them.
 
 ## Concepts
 
@@ -31,14 +35,15 @@
 
 ## Flow
 
-- Ready filesystem and path capabilities descend through service context. The
-  catalog module curates them, the resolve handler sequences observation, and
-  pure module policy owns admission and resolution decisions.
+- Ready filesystem, path, and rule-evaluation capabilities descend through
+  service context. The catalog module curates them, grouped handlers sequence
+  observation, and pure module policy owns admission, selection, and result
+  decisions.
 
 ## Interfaces
 
 - `src/client.ts` is the sole public caller face. The private catalog contract
-  exposes one `resolve` operation.
+  exposes `resolve` and `check`.
 
 ## Routing
 
