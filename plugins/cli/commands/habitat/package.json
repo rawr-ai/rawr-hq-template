@@ -1,0 +1,66 @@
+{
+  "name": "@habitat/plugin-cli",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Native Oclif projections for the Habitat catalog service",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "oclif.manifest.json",
+    "package.json"
+  ],
+  "exports": {
+    "./binding": {
+      "types": "./dist/lib/binding.d.ts",
+      "default": "./dist/lib/binding.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "manifest": "NODE_ENV=production bun --bun oclif manifest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:test": "tsc -p tsconfig.test.json --noEmit",
+    "test": "vitest run --project plugin-habitat"
+  },
+  "dependencies": {
+    "@habitat/service": "workspace:*",
+    "@oclif/core": "^4.11.4"
+  },
+  "devDependencies": {
+    "@effect/platform-node": "4.0.0-beta.101",
+    "effect": "4.0.0-beta.101",
+    "oclif": "4.23.27",
+    "typescript": "^5.9.3"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "topicSeparator": " ",
+    "typescript": {
+      "commands": "./src/commands"
+    }
+  },
+  "nx": {
+    "tags": [
+      "type:plugin",
+      "surface:cli",
+      "capability:habitat"
+    ],
+    "targets": {
+      "check:test": {
+        "dependsOn": [
+          "build",
+          "^build"
+        ]
+      },
+      "test": {
+        "dependsOn": [
+          "build"
+        ]
+      }
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

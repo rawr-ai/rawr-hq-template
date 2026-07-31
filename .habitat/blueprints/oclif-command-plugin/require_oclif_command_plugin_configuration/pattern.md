@@ -19,7 +19,7 @@ or {
     or {
       not {
         $properties <: some pair(key=`"name"`, value=$name),
-        $name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
+        $name <: r"^\"@(?:rawr|habitat)/plugin-[a-z0-9-]+\"$"
       },
       not { $properties <: some pair(key=`"version"`, value=string()) },
       not { $properties <: some pair(key=`"type"`, value=`"module"`) },
@@ -27,22 +27,22 @@ or {
       and {
         $properties <: some pair(key=`"dependencies"`, value=`{ $plugin_dependencies }`),
         $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
-        $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
+        $plugin_name <: r"^\"@(?:rawr|habitat)/plugin-[a-z0-9-]+\"$"
       },
       and {
         $properties <: some pair(key=`"devDependencies"`, value=`{ $plugin_dependencies }`),
         $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
-        $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
+        $plugin_name <: r"^\"@(?:rawr|habitat)/plugin-[a-z0-9-]+\"$"
       },
       and {
         $properties <: some pair(key=`"peerDependencies"`, value=`{ $plugin_dependencies }`),
         $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
-        $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
+        $plugin_name <: r"^\"@(?:rawr|habitat)/plugin-[a-z0-9-]+\"$"
       },
       and {
         $properties <: some pair(key=`"optionalDependencies"`, value=`{ $plugin_dependencies }`),
         $plugin_dependencies <: some pair(key=$plugin_name, value=$plugin_version),
-        $plugin_name <: r"^\"@rawr/plugin-[a-z0-9-]+\"$"
+        $plugin_name <: r"^\"@(?:rawr|habitat)/plugin-[a-z0-9-]+\"$"
       },
       not {
         $properties <: some pair(key=`"scripts"`, value=`{ $scripts }`),
@@ -85,7 +85,7 @@ or {
 ```json
 // @filename: plugins/cli/commands/example/package.json
 {
-  "name": "@rawr/plugin-example",
+  "name": "@habitat/plugin-example",
   "version": "1.0.0",
   "type": "module",
   "bin": { "example": "./bin/run.js" },
@@ -139,7 +139,7 @@ or {
   "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
   "dependencies": {
     "@oclif/core": "4.11.14",
-    "@rawr/plugin-other": "1.0.0"
+    "@habitat/plugin-other": "1.0.0"
   },
   "files": ["dist", "oclif.manifest.json"],
   "oclif": { "commands": "./dist/commands", "topicSeparator": " " }
@@ -151,7 +151,7 @@ or {
 ```json
 // @filename: plugins/cli/commands/example/package.json
 {
-  "name": "@rawr/plugin-example",
+  "name": "@habitat/plugin-example",
   "version": "1.0.0",
   "type": "module",
   "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
@@ -199,7 +199,7 @@ or {
 ```json
 // @filename: plugins/cli/commands/example/package.json
 {
-  "name": "@rawr/plugin-example",
+  "name": "@habitat/plugin-example",
   "version": "1.0.0",
   "type": "module",
   "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
@@ -216,7 +216,7 @@ or {
 ```json
 // @filename: plugins/cli/commands/example/package.json
 {
-  "name": "@rawr/plugin-example",
+  "name": "@habitat/plugin-example",
   "version": "1.0.0",
   "type": "module",
   "scripts": { "manifest": "NODE_ENV=production bun --bun oclif manifest" },
