@@ -97,14 +97,14 @@ This is the definition-only checkpoint recorded in
 | Habitat product graph | Seven schema-admitted v3 definitions with no instances or applications; Civ7 `@habitat/cli@0.1.0` remains transfer evidence | Realize support, resources/providers, service, Oclif/Nx projections, and app as distinct Nx projects; then publish one assembled `@habitat/cli@0.2.0` release identity |
 | Blueprint policy pack | 33 live v2 rules plus seven inert root v3 definitions; no admitted pack | Construct the data-only `@habitat/blueprints` seam only from definitions that pass their acceptance gates; do not copy current host packets into it |
 | `package@1` | Schema-admitted definition; only `contract` and `semantics` proof axes are frozen | Keep outside release-pack acceptance until exact selected-member equality is proven; do not promise it in the first pack |
-| Resource | Inert root definition plus draft boundary packet; proof axes remain candidates | Correct provider-family closure, proof, anchors, and generator before admission |
-| Provider | Inert root definition plus draft boundary packet; proof axes remain candidates | Correct nested realization closure, proof, anchors, and generator before admission |
-| Service | Inert root definition, enforced v2 partial law, and six staged candidate construction laws | Complete source migration and corpus burn-down before admission; keep public-consumer sealing staged until workspace-wide acquisition exists |
-| Plugin | Inert root definition; no frozen proof axes | Close a finite projection proof grammar before admission |
-| Nx plugin | Inert `plugin-nx` root definition; no frozen proof axes | Close a finite Nx-projection proof grammar before admission |
+| Resource | Schema-admitted, execution-inert root definition plus draft boundary packet; proof axes remain candidates | Correct provider-family closure, proof, anchors, and generator before release-pack acceptance |
+| Provider | Schema-admitted, execution-inert root definition plus draft boundary packet; proof axes remain candidates | Correct nested realization closure, proof, anchors, and generator before release-pack acceptance |
+| Service | Schema-admitted, execution-inert root definition, enforced v2 partial law, and six staged candidate construction laws | Complete source migration and corpus burn-down before release-pack acceptance; keep public-consumer sealing staged until workspace-wide acquisition exists |
+| Plugin | Schema-admitted, execution-inert root definition; no frozen proof axes | Close a finite projection proof grammar before release-pack acceptance |
+| Nx plugin | Schema-admitted, execution-inert `plugin-nx` definition; no frozen proof axes | Treat it as a complete independent leaf kind until Habitat admits a monotonic specialization relation; close a finite Nx-projection proof grammar before release-pack acceptance |
 | Server API projection | Shallow current packet | Compose service-source law and close public faces and proof |
-| App | Inert root definition; proof axes remain candidates | Port and validate the accepted Magic app evidence before Habitat app admission |
-| CLI app | Legacy Oclif app law owns commands | Rebuild as a commandless specialization of app |
+| App | Schema-admitted, execution-inert root definition; proof axes remain candidates | Port and validate the accepted Magic app evidence before release-pack acceptance and instance admission |
+| CLI app | Legacy Oclif app law owns commands | Define a complete commandless app kind; do not depend on a specialization relation Habitat does not yet provide |
 | CLI topic | Legacy command-plugin root | Rename and rebuild at `plugins/cli/topics/*` |
 
 ## Current Structural Red

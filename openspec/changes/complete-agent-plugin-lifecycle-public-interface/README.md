@@ -595,9 +595,10 @@ sources. Pre-push `bun run check` and protected `bun run ci` remain the
 non-skippable repository admission owners.
 
 Future generic support for kinds that intentionally admit multiple positive
-forms is recorded for the upstream SDK in
-[[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]]. It is not implemented or
-emulated in Template, and it does not block this single-shape service law.
+forms is recorded as a Template-owned Habitat capability in
+[[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]]. It is not yet implemented and
+is not emulated by this definition checkpoint; it does not block this
+single-shape service law.
 
 Magic commit `fb91606db1c63dad92d3d4945bbb21bc92f9d1c3` supplies the shared
 TypeBox/oRPC contract-property-description law. Template adopts its pattern
