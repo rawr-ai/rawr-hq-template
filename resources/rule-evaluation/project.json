@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat/resource-rule-evaluation",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/rule-evaluation/providers/**/*.ts",
+      "!{workspaceRoot}/resources/rule-evaluation/providers/**/test/**",
+      "!{workspaceRoot}/resources/rule-evaluation/providers/**/*.test.*",
+      "!{workspaceRoot}/resources/rule-evaluation/providers/**/*.spec.*",
+      "!{workspaceRoot}/resources/rule-evaluation/providers/**/vitest.config.*"
+    ]
+  },
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

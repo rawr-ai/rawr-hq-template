@@ -1,0 +1,29 @@
+{
+  "name": "provider-rule-evaluation-grit-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/rule-evaluation/providers/grit-effect-platform-node",
+  "implicitDependencies": ["@habitat/resource-rule-evaluation"],
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:rule-evaluation",
+    "provider:grit-effect-platform-node"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

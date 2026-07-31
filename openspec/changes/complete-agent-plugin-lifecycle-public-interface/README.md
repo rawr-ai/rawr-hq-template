@@ -20,7 +20,7 @@ repository release was mutated by this correction.
 
 | Repository | Checkpoint base identity | Role |
 | --- | --- | --- |
-| RAWR HQ-Template | `main` / `b0a975727c618d007ac4be7003e7a4379106dcbd` | Executable code, Oclif CLI, services, resources, generic tooling |
+| RAWR HQ-Template | `main` / `53184506445dd2155687b0d89e843e1e10331a4b` | Executable code, Oclif CLI, services, resources, generic tooling |
 | Personal RAWR HQ | `main` / `1e7f346b9b0fb7b356675d3e837295256bda7d0d` | Curated agent content, provenance, policy/evaluation, governed records |
 
 Active Template execution uses isolated Graphite worktrees descended from
@@ -5101,6 +5101,34 @@ No product root, host policy, manual consumer target chain,
 generator/taxonomy/doc path, branch ancestry, or wholesale `tools/habitat`
 tree enters the product graph. No initializer, release, consumer repository,
 provider home, Personal repository, or live state has moved.
+
+## Habitat Rule Evaluation Resource
+
+The first executable source checkpoint realizes one narrow link in the Habitat
+product funnel. `@habitat/resource-rule-evaluation` owns only the
+provider-neutral request, finding, result, and typed mechanical-failure
+contracts. Its nested Grit Effect Platform Node provider owns one
+invocation-scoped temporary catalog, one native check process, bounded output,
+wire validation, timeout, interruption, and cleanup. The application will
+select that provider; the Habitat service will later own rule discovery,
+admission, selection, baselines, aggregate interpretation, and public
+operations.
+
+The provider accepts an already-resolved evaluator program and caller-resolved
+absolute subject paths. TypeBox is the sole structural authority. Effect owns
+filesystem, child-process, timeout, interruption, and scope lifecycles. The
+provider verifies its local Grit result identity, returns findings in
+deterministic order, and retains no catalog, output, evidence, or policy state
+after the invocation.
+
+Focused uncached Nx proof completes in 5.8 seconds: repository lint, resource
+and provider typecheck, parent package build, three contract tests, eight
+provider behavior tests, and both owner check targets pass. The parent
+production input includes nested provider source, so a provider change
+invalidates the package artifact that emits it. Standing architecture,
+TypeScript/Effect, structural-quality, and behavior-first reviews report no
+remaining P0 or P1. Task 5.7e22b2 remains open because the Habitat service and
+its blueprint-aware authority catalog have not yet moved.
 
 ## Settlement Oracles
 
