@@ -5208,6 +5208,53 @@ service suite reports 33 passing tests. Uncached Nx typecheck and build pass,
 with dependency and operation boundaries unchanged outside the Habitat service
 and rule-evaluation resource.
 
+### Native Structure Ownership Correction
+
+The first native-structure implementation candidate correctly used Effect
+Platform filesystem mechanics, but placed structure meaning in a new
+rule-evaluation provider. Review rejected that classification before commit.
+Unlike Grit, native structure matching does not execute a foreign evaluation
+program. `allowEmpty`, root kinds, direct-child admission, closure, and
+diagnostic classification are Habitat domain policy and remain in the catalog
+module.
+
+The source universe is the repository's Git-visible workspace, not every live
+filesystem entry. A live-filesystem-only evaluator treated ignored `dist` and
+`node_modules` output as governed source and broke the existing ranged Grit
+result consumer by widening its contract prematurely. The candidate was
+deleted uncommitted.
+
+Task [[tasks#5. Bounded Agent-Plugin Lifecycle Service|5.7e22b2a]] now lands one
+generic source-inventory resource and ordinary local-Git provider. It reports
+bounded visible paths and tracked non-file facts without knowing Habitat. Task
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|5.7e22b2b]] then consumes
+those facts through ready service context and authors native structure
+semantics inside the existing catalog procedure and module policy. This is the
+same narrowing product funnel recorded in
+[[../../../post-it#2026-07-31 - Source Is Observed, Structure Is Interpreted|the active mental-model ledger]];
+it adds no compatibility runner, retained inventory, hostile Git hardening, or
+second rule authority.
+
+### Source Inventory Checkpoint
+
+`@habitat/resource-source-inventory` now owns one TypeBox-derived mechanical
+contract for a bounded visible-entry inventory. Its local-Git Effect Platform
+Node provider runs the ordinary inherited `git ls-files` observation, drains
+the process under Effect scope, normalizes sorted unique entry paths, and
+identifies tracked symlink and Gitlink entries without consulting the live
+filesystem. Contract proof and provider proof are separate Nx targets.
+
+Standing architecture, TypeScript, structural-quality, and behavior reviews
+closed the embedded-repository sentinel, mixed-mode index aggregation,
+Unicode-path parity, provider-option admission, defect and interruption
+preservation, bounded diagnostics, Gitlink classification, duplicate-aware
+limits, and target-ownership findings. No P0, P1, or P2 remains. Uncached Nx
+typecheck, test, and build complete in 3.9 seconds with 4 contract tests and 17
+provider tests passing; Habitat lint, the resource/provider/agent/Nx blueprint
+rules, strict OpenSpec validation, and diff hygiene also pass. The checkpoint
+does not inspect or mutate provider homes, Personal content, release channels,
+or live lifecycle state.
+
 ## Settlement Oracles
 
 The final product must prove:

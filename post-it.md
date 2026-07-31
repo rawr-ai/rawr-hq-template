@@ -6,6 +6,39 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-31 - Source Is Observed, Structure Is Interpreted
+
+Native structure evaluation is not an external evaluator merely because Grit
+evaluation is one. A generic source-inventory resource acquires the current
+Git-visible paths and tracked non-file facts through one host-selected
+provider. Habitat service policy combines those facts with lazy Effect
+filesystem observation and owns the meaning of a structure scope: root
+matching, kind expectations, required and admitted children, closure, and
+diagnostic classification. The procedure handler composes acquisition with
+that pure policy inside one request.
+
+This split preserves the product funnel. The resource knows nothing about
+blueprints, applications, lanes, or structure semantics. The service does not
+run Git or construct a provider. Ignored build and dependency output never
+enters the admitted source inventory, while untracked nonignored content
+remains visible. Git supplies ordinary workspace observation, not hostile
+configuration hardening, lifecycle authority, or persistent state.
+
+The rejected live-filesystem structure provider was a useful falsifier. It
+would have treated ignored `dist` and `node_modules` directories as governed
+source, moved domain policy into a provider, and widened the Grit result
+contract before its consumer could admit path-only findings. None of that
+landed. Source inventory and service-owned matching now proceed as separate
+green checkpoints.
+
+### Bag Of Keywords
+
+inventory, path, kind, structure, finding.
+
+source, truth, closure, parity, clarity.
+
+observe, normalize, match, classify, report.
+
 ## 2026-07-31 - Evaluation Is A Service Decision
 
 Catalog resolution and rule checking are two operations over the same admitted
