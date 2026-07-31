@@ -5409,17 +5409,17 @@ and remains the sole owner of provider selection, resource construction,
 service scope, and the cache facts for its selected runtime.
 
 One graph construction resolves the catalog once. Each resolved application
-becomes one cacheable `habitat check --instance ... --rule ...` leaf. Every
-leaf hashes app-selected runtime facts and selected-operation inputs. The app
-also supplies one native Nx runtime input for complete catalog resolution,
-preserving global authority plus path-kind and empty-directory facts without a
-repository-wide file wildcard. Each owner receives one
-dependency-only `check:policy` aggregate. The projection returns
+becomes one cacheable `habitat check --instance ... --rule ...` leaf. Complete
+catalog authority and app-selected runtime facts invalidate every leaf, while
+runner assets and inspected subjects remain application-scoped; each owner
+receives one dependency-only `check:policy` aggregate. The projection returns
 target augmentations at instance manifest roots without a project name, so it
 cannot create a second project identity. Catalog rejection, missing instance
 lineage, owner mismatch, duplicate target identity, or an application outside
 the matched authority files fails graph construction rather than producing an
-empty or partial graph. The aggregate is the fixed `check:policy` target; no
+empty or partial graph. Referenced-path existence, kind, and confinement are
+therefore graph-admission facts, not duplicated task-cache inputs. The aggregate
+is the fixed `check:policy` target; no
 serialized option can reinterpret it as an Nx target glob.
 
 The sealed source proof is `@habitat/plugin-nx:typecheck`, six owner-local

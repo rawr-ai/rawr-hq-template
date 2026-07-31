@@ -21,7 +21,6 @@ type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["cata
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedInstance = ResolvedCatalog["instances"][number];
 type TargetInput = NonNullable<TargetConfiguration["inputs"]>[number];
-type RuntimeInput = Extract<TargetInput, { runtime: string }>;
 
 /**
  * Supplies the ready Habitat client for the workspace being projected by Nx.
@@ -36,13 +35,6 @@ export type HabitatClientForWorkspace = (
 /** App-owned runtime and provider facts required for sound target caching. */
 export type HabitatNxBinding = {
   readonly clientForWorkspace: HabitatClientForWorkspace;
-  /**
-   * App-owned command whose stable output represents complete catalog resolution.
-   *
-   * This runtime input preserves cache correctness for path facts that Nx file
-   * sets cannot observe, including an admitted empty directory becoming absent.
-   */
-  readonly catalogResolutionInput: RuntimeInput;
   readonly runtimeInputs: readonly [TargetInput, ...TargetInput[]];
 };
 
@@ -64,12 +56,7 @@ export function createHabitatNxPlugin(
       const result = await client.catalog.resolve({});
       if (result._tag === "Rejected") throw rejectedCatalogError(result);
 
-      return projectApplications(
-        matchedFiles,
-        result.catalog,
-        binding.catalogResolutionInput,
-        binding.runtimeInputs
-      );
+      return projectApplications(matchedFiles, result.catalog, binding.runtimeInputs);
     },
   ];
 
@@ -79,7 +66,6 @@ export function createHabitatNxPlugin(
 function projectApplications(
   matchedFiles: readonly string[],
   catalog: ResolvedCatalog,
-  catalogResolutionInput: HabitatNxBinding["catalogResolutionInput"],
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): CreateNodesResultArray {
   if (catalog.applications.length === 0) return [];
@@ -131,11 +117,7 @@ function projectApplications(
         `Habitat Nx projection rejected duplicate target '${application.ownerProject}:${targetName}'.`
       );
     }
-    project.targets[targetName] = applicationTarget(
-      application,
-      catalogResolutionInput,
-      runtimeInputs
-    );
+    project.targets[targetName] = applicationTarget(application, runtimeInputs);
     projects.set(root, project);
   }
 
@@ -212,13 +194,12 @@ function applicationTargetName(application: ResolvedApplication): string {
 
 function applicationTarget(
   application: ResolvedApplication,
-  catalogResolutionInput: HabitatNxBinding["catalogResolutionInput"],
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): TargetConfiguration {
   return {
     command: `${HABITAT_EXECUTABLE} check --instance ${application.instanceId} --rule ${application.ruleId}`,
     cache: true,
-    inputs: applicationInputs(application, catalogResolutionInput, runtimeInputs),
+    inputs: applicationInputs(application, runtimeInputs),
     outputs: [],
     options: { cwd: "{workspaceRoot}" },
     metadata: {
@@ -239,10 +220,9 @@ function ownerTarget(ownerProject: string, leafTargets: readonly string[]): Targ
 
 function applicationInputs(
   application: ResolvedApplication,
-  catalogResolutionInput: HabitatNxBinding["catalogResolutionInput"],
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): TargetConfiguration["inputs"] {
-  const files = new Set<string>();
+  const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
 
   if (application.runner.name === "grit") {
     files.add(workspaceInput(application.runner.pattern.relativePath));
@@ -256,7 +236,7 @@ function applicationInputs(
     }
   }
 
-  return [catalogResolutionInput, ...runtimeInputs, ...[...files].sort()];
+  return [...runtimeInputs, ...[...files].sort()];
 }
 
 function addSubjectInputs(target: Set<string>, path: string, kind: "directory" | "file"): void {
