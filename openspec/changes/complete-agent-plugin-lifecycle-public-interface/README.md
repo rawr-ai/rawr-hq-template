@@ -4929,6 +4929,30 @@ service corpus green or activate any staged construction law. All 25 active
 Habitat rules report zero findings, the active OpenSpec change validates
 strictly, focused Biome passes, and diff hygiene is clean.
 
+## HQ Ops Root Model Authority
+
+The next bounded checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e38]] closes the HQ
+Ops service-root model before any module topology changes. The host capability
+contract moves from the predecessor `service/common` bucket to
+`service/model/ports`; service-wide procedure metadata moves from contract
+composition to `service/model/policy`. The base keeps one explicit immutable
+five-lane context, and the package-private service alias gives modules one
+qualified route to genuinely service-owned model types.
+
+The unused common error placeholders disappear with the invalid bucket.
+Operation handlers, module routers, root middleware order, concrete provider
+construction, the package export map, and callers remain unchanged. This
+checkpoint does not migrate a module or activate a staged service law.
+The former contract-local metadata export has no repository caller and is not
+retained as an alias. One contract-mechanics proof verifies that service
+metadata still composes with operation-owned overrides.
+
+All 12 owner tests and the uncached owner typecheck and build pass. All 25
+active Habitat rules, strict OpenSpec, focused Biome, and diff hygiene pass. A
+fresh architecture/oRPC/Effect/TypeScript/TypeBox review reports no P0 or P1 in
+the bounded root-model change.
+
 ## Settlement Oracles
 
 The final product must prove:

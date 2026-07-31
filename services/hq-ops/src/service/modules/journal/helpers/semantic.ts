@@ -2,7 +2,7 @@ import type {
   HqOpsResources,
   SemanticEmbeddingConfig,
   SqliteDatabase,
-} from "../../../common/ports/resources";
+} from "#hq-ops-service/model/ports/resources";
 import type { JournalSearchRow } from "../entities";
 import { listRecentSnippetsFull } from "./storage";
 

@@ -1,5 +1,3 @@
-/// <reference path="../shims/bun-sqlite.d.ts" />
-
 /**
  * @fileoverview Root HQ Ops contract composition.
  *
@@ -10,21 +8,12 @@
  */
 import { oc } from "@orpc/contract";
 import { procedureMetadata } from "@rawr/hq-sdk";
+import { metadataDefaults } from "./model/policy/procedure-metadata";
 import { contract as config } from "./modules/config/contract";
 import { contract as journal } from "./modules/journal/contract";
 import { contract as security } from "./modules/security/contract";
 
-/**
- * Root HQ Ops contract.
- */
-export const metadataDefaults = {
-  idempotent: true,
-  domain: "hq-ops",
-  audience: "internal",
-  audit: "basic",
-  entity: "service",
-} as const;
-
+/** Root HQ Ops contract. */
 export const contract = oc.meta(procedureMetadata(metadataDefaults)).router({
   config,
   journal,

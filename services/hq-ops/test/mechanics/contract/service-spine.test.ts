@@ -1,3 +1,4 @@
+import { getProcedureMetadata } from "@rawr/hq-sdk";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../../../src/client";
 import { router } from "../../../src/router";
@@ -25,5 +26,22 @@ describe("hq-ops service shell", () => {
       "gateEnable",
       "getSecurityReport",
     ]);
+  });
+
+  it("inherits service metadata while preserving operation policy", () => {
+    expect(getProcedureMetadata(contract.config.getWorkspaceConfig)).toEqual({
+      idempotent: true,
+      domain: "hq-ops",
+      audience: "internal",
+      audit: "basic",
+      entity: "config",
+    });
+    expect(getProcedureMetadata(contract.journal.writeEvent)).toEqual({
+      idempotent: false,
+      domain: "hq-ops",
+      audience: "internal",
+      audit: "basic",
+      entity: "journal",
+    });
   });
 });

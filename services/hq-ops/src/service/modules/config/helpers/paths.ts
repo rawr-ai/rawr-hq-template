@@ -1,4 +1,4 @@
-import type { HqOpsResources } from "../../../common/ports/resources";
+import type { HqOpsResources } from "#hq-ops-service/model/ports/resources";
 
 type ConfigResources = Pick<HqOpsResources, "fs" | "path">;
 
