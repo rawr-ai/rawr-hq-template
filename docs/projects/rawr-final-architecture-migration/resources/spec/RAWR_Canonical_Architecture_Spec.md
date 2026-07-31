@@ -132,7 +132,7 @@ The same capability can be realized across multiple output shapes without changi
 | Durable consumer | Service clients + schema-backed event payload | `plugins/async/consumers/<capability>` | App selects consumer projection and `async` role; durable event consumption mounts through the async harness |
 | Human-facing shell | Service clients, machine resources, policy hooks | `plugins/agent/channels/*`, `plugins/agent/shell/*`, `plugins/agent/tools/*` | App selects `agent` projections; agent/OpenShell harness mounts the human-facing shell surfaces |
 | Governed steward work | Service truth + worktree, steward, and governance resources | Async workflow projection and steward activation surface | Durable steward execution stays on `async`; the shell routes governed durable work into that plane |
-| CLI command | Service clients + command schema | `plugins/cli/commands/<capability>` | App selects CLI projection; command harness mounts terminal-facing execution |
+| CLI command | Service clients + command schema | `plugins/cli/topics/<topic>` | App selects CLI topic projections; the OCLIF harness mounts their nested commands |
 | Web app | Generated clients or surface contracts | `plugins/web/app/<capability>` | App selects web projection; web host owns native rendering and bundling |
 | Desktop product | Service clients or host resources | `plugins/desktop/menubar/*`, `plugins/desktop/windows/*`, `plugins/desktop/background/*` | App selects desktop projection; desktop harness owns native desktop interior |
 
@@ -168,7 +168,7 @@ RAWR has five canonical repository roots.
 
 ```text
 packages/    support matter and platform machinery
-resources/   provisionable runtime capability contracts and provider selectors
+resources/   provisionable runtime capability contracts and closed provider families
 services/    semantic capability boundaries
 plugins/     runtime projections
 apps/        app identities, app composition, profiles, and entrypoints
@@ -284,7 +284,8 @@ A resource owns:
 - allowed lifetimes;
 - optional runtime config schema;
 - diagnostic-safe snapshot contribution rules where needed;
-- provider selector surfaces for app runtime profiles.
+- one closed provider family;
+- the public contract face and direct public face for each admitted provider.
 
 A resource does not acquire itself. A resource does not implement itself. A resource does not own semantic service truth. A resource does not choose app membership.
 
@@ -673,8 +674,8 @@ plugins/
     consumers/
       <capability>/
   cli/
-    commands/
-      <capability>/
+    topics/
+      <topic>/                  # owns nested OCLIF commands
   web/
     app/
       <capability>/
@@ -732,7 +733,9 @@ Canonical public imports are SDK-shaped:
 | `@rawr/sdk/runtime/profiles` | Runtime profile declarations |
 | `@rawr/sdk/runtime/schema` | `RuntimeSchema` facade |
 
-Ordinary services, plugins, apps, and entrypoints import public SDK surfaces, service boundary exports, plugin factories, resource descriptors, provider selectors, and app-owned profile helpers.
+Ordinary services, plugins, apps, and entrypoints import public SDK surfaces,
+service boundary exports, plugin factories, resource contract faces, direct
+provider faces, and app-owned profile helpers.
 
 They do not import Effect layer internals, concrete managed runtime handles, process runtime internals, harness mount code, adapter-lowered payload constructors, raw provider acquisition machinery, or unredacted provider config.
 
@@ -1134,9 +1137,15 @@ Resources own:
 - default and allowed lifetimes;
 - optional runtime-carried config schema;
 - diagnostic-safe snapshot contribution hooks where needed;
-- provider selector surfaces for app runtime profiles.
+- one closed provider family;
+- the package public contract face and exact public face for each admitted
+  provider.
 
 Diagnostic hooks contribute redacted read-model snapshots. They do not expose live values, raw provider internals, raw Effect handles, or unredacted secrets.
+
+The resource contract never imports a provider. Package export metadata may
+address the contract and provider faces, but it is not a runtime catalog and
+does not create a contract-to-provider source edge.
 
 Process and role are acquisition/scoping semantics on requirements and compiled plans. They are not separate public resource-definition species.
 
@@ -1196,6 +1205,16 @@ A `ProviderSelection` is the app-owned normalized selection of a provider for a 
 
 Every required resource has exactly one selected provider at the relevant lifetime and instance unless the requirement is explicitly optional. Provider dependencies close before provisioning. Ambiguous provider coverage requires explicit app-owned selection.
 
+App profiles import the resource contract and provider through their direct
+package public faces and call the SDK-owned generic selector:
+
+```ts
+providerSelection({ resource, provider, config })
+```
+
+The resource family does not own a selector wrapper, provider catalog, or
+selection default.
+
 ### 7.6 RuntimeProfile posture
 
 Runtime profiles live under:
@@ -1213,7 +1232,10 @@ For this app, in this environment, when this entrypoint starts these roles,
 which providers satisfy which runtime resources?
 ```
 
-Profiles select providers through `providers` or `providerSelections`. A profile field named `resources` is not the provider-selection field.
+Profiles place generic
+`providerSelection({ resource, provider, config, lifetime?, role?, instance? })`
+results in `providers`. A profile field named `resources` is not the
+provider-selection field.
 
 A runtime profile:
 
@@ -1246,22 +1268,33 @@ The laws are:
 
 Every required resource has exactly one selected provider at the relevant lifetime and instance unless the requirement is explicitly optional. Provider dependencies close before provisioning. Ambiguous provider coverage requires explicit app-owned selection.
 
-### 7.8 Resource catalog topology
+### 7.8 Resource package and provider-family topology
 
-Authored provisionable capability contracts live under `resources/*`.
+Authored provisionable capability contracts and their closed provider families
+live under `resources/*`.
 
-A typical resource family may contain:
+A resource package has one provider-neutral contract and one directory per
+admitted provider:
 
 ```text
 resources/<capability>/
-  resource.ts
+  contract.ts
+  package.json
+  project.json
   providers/
-    <provider>.ts
-  select.ts
-  index.ts
+    <provider>/
+      index.ts
+      project.json
 ```
 
-Public authoring flows through `@rawr/sdk` and through resource descriptors/selector surfaces. Provider internals are not service, plugin, or app authoring surfaces.
+The package's root public face resolves to `contract.ts`. Each
+`./providers/<provider>` public subpath resolves directly to that provider's
+`index.ts`. The provider imports the resource contract face; the contract does
+not import the provider. Apps select the two faces through
+`providerSelection({ resource, provider, config })`. There is no `select.ts`,
+resource-owned provider catalog, provider barrel, or standard-provider
+backdoor. Provider internals beyond `index.ts` are not service, plugin, or app
+authoring surfaces.
 
 ## 8. Plugin model
 
@@ -1303,7 +1336,7 @@ No generic projection-classification field declares projection identity.
 | `plugins/async/workflows/<capability>` | Workflow projection builder | Durable workflow projection |
 | `plugins/async/schedules/<capability>` | Schedule projection builder | Durable scheduled projection |
 | `plugins/async/consumers/<capability>` | Consumer projection builder | Durable consumer projection |
-| `plugins/cli/commands/<capability>` | CLI command projection builder | OCLIF command projection |
+| `plugins/cli/topics/<topic>` | CLI topic projection builder | OCLIF command projection |
 | `plugins/web/app/<capability>` | Web app projection builder | Web surface projection |
 | `plugins/agent/channels/<capability>` | Agent channel projection builder | Agent channel projection |
 | `plugins/agent/shell/<capability>` | Agent shell projection builder | OpenShell projection |
@@ -1370,7 +1403,8 @@ Event names, cron strings, and function ids identify triggers. Any read event da
 
 ### 8.8 CLI projection
 
-CLI command plugins live under `plugins/cli/commands/<capability>` and lower to OCLIF commands.
+CLI topic plugins live under `plugins/cli/topics/<topic>` and own nested OCLIF
+commands. The CLI app selects topic plugins and owns no command implementation.
 
 OCLIF owns command dispatch semantics. The plugin owns projection. The service owns capability truth.
 
@@ -1419,7 +1453,8 @@ Desktop native interiors do not become RAWR roles. A desktop harness may own nat
 - plugins declare resource requirements without acquiring providers;
 - plugins stay role-first and surface-explicit;
 - actual business truth stays in `services/*`;
-- actual provider implementation stays in `resources/*` provider internals or runtime standard provider internals;
+- actual provider implementation stays inside the closed provider family under
+  `resources/*`;
 - agent plugins do not bypass service or steward law for governed domain work;
 - desktop plugins do not become a second async plane;
 - native framework details stay inside owning plugin packages, adapters, or harnesses.
@@ -1508,7 +1543,8 @@ Resources, providers, and profiles are separate layers:
 ```text
 resource declares capability contract
 provider implements capability contract
-profile selects provider implementation, config source, process defaults, and harness defaults
+profile calls providerSelection({ resource, provider, config })
+and selects process defaults and harness defaults
 ```
 
 The SDK derives normalized `ProviderSelection` artifacts from the profile. The runtime compiler validates provider coverage and provider dependency closure. Bootgraph receives provider ordering input. The provisioning kernel loads config, redacts secrets, and acquires selected providers.
@@ -1644,7 +1680,10 @@ definition -> selection -> derivation -> compilation -> provisioning -> mounting
 
 All declarations are import-safe.
 
-A service, plugin, resource, provider, app, or profile module declares facts, factories, descriptors, selectors, schemas, and contracts. Importing a declaration does not acquire resources, read secrets, connect providers, start processes, register globals, mutate app composition, or mount native hosts.
+A service, plugin, resource, provider, app, or profile module declares facts,
+factories, descriptors, selection values, schemas, and contracts. Importing a
+declaration does not acquire resources, read secrets, connect providers, start
+processes, register globals, mutate app composition, or mount native hosts.
 
 A provider may contain Effect-native acquisition code, but it remains cold until provisioning. A plugin may contain native oRPC, Inngest-shaped, OCLIF, web, OpenShell, desktop, or host declarations, but those declarations remain cold until the SDK derives, the runtime compiler compiles, the provisioning kernel provisions, the process runtime binds, the surface adapters lower, and the harnesses mount.
 
@@ -2198,7 +2237,7 @@ The CLI process stack is:
 
 ```text
 services/*
-  -> plugins/cli/commands/*
+  -> plugins/cli/topics/*
   -> AppDefinition
   -> startApp(...)
   -> @rawr/sdk derivation
@@ -2606,6 +2645,51 @@ The important enforcement consequences are:
 
 Exact tag spellings, dependency-constraint syntax, generator implementation, and structural test mechanics remain implementation details.
 
+### 16.1 Habitat policy and mechanics
+
+RAWR HQ-Template owns the `@habitat/cli` source, package identity, releases,
+consumer integration, and generic blueprint policy. It publishes accepted
+policy as the data-only `@rawr/habitat-blueprints` pack. Its public policy
+export surface is limited to `habitat-pack.json` and `blueprints/**`, in
+addition to the package envelope and metadata required for ordinary
+distribution. It contains no executable JavaScript, product instances, host
+baselines, RAWR HQ-Template paths, or legacy v2 rules.
+
+`@habitat/cli` owns exact pack/version/protocol resolution, instance admission,
+evaluation, classification, generation, and Nx integration mechanics. It does
+not amend generic policy. Resolution has no fallback or precedence merge;
+multiple accepted versions of one blueprint identity may coexist, a duplicate
+blueprint identity/version pair is fatal, and rule ids are globally unique
+across the resolved authority catalog.
+
+One idempotent initializer supplied by the Template-owned package configures
+the ordinary Nx plugin and inferred repository targets, supplies one named
+Habitat hook contribution, and acquires pinned Grit. Each consumer repository
+owns its hook files and final hook composition. Initialization preserves
+unrelated hook behavior, replaces only an older contribution with the same
+Habitat identity during upgrade, fails on an incompatible Habitat
+contribution, makes no change on a converged repeat, and removes its
+contribution only through an explicit removal operation. Consumers own their
+exact package pins, selected packs, and repository instances; they do not
+duplicate Habitat source or integration wiring.
+
+### 16.2 Closed proof topology
+
+Every admitted kind that permits `test/` MUST define a finite, versioned set of
+disjoint, kind-relevant confidence axes and an exact path mapping for their
+selected member ids. The `test/` root is closed over those selected paths.
+Every proof file belongs to exactly one axis. An absent axis has no directory;
+an instance with no selected proof members has no `test/` root.
+
+No instance may add a case-by-case axis or an open `support`, `helpers`,
+`runtime`, `fixtures`, `other`, or similar cabinet. A new axis requires a new
+versioned kind law.
+
+Proof stays with its semantic owner. Resource proof does not repeat provider
+behavior. Provider proof does not repeat resource-contract, SDK, compiler, or
+framework guarantees. Projection and app proof do not duplicate adapter,
+runtime, or harness guarantees.
+
 ---
 
 ## 17. Canonical invariants
@@ -2640,7 +2724,8 @@ RuntimeAccess != diagnostics
 
 - services never depend on plugins or apps;
 - plugins may depend on services, resource descriptors, and packages but do not become truth owners;
-- apps may depend on services, plugins, resources, provider selectors, and packages but do not redefine service truth;
+- apps may depend on services, plugins, resource contract faces, direct
+  provider faces, and packages but do not redefine service truth;
 - provider implementations stay behind resource/provider boundaries;
 - hidden runtime infrastructure remains under `packages/core/runtime/*`.
 
@@ -2791,10 +2876,15 @@ The following patterns are forbidden in the canonical architecture:
 
 These details may vary without reopening the architecture:
 
-- exact helper filenames under `apps/<app>/*`;
-- exact internal structure of individual service packages;
-- exact internal structure of individual plugin packages;
-- exact internal structure of resource provider packages;
+- app-private helper decomposition only through interiors admitted by the
+  selected versioned app law;
+- service-private implementation decomposition only through interiors admitted
+  by the selected versioned service law;
+- plugin-private implementation decomposition only through interiors admitted
+  by the selected versioned plugin law;
+- exact private implementation decomposition inside an admitted resource
+  provider, while its public `index.ts`, allowed roots, and closed proof
+  topology remain fixed by the versioned provider law;
 - exact internal structure of `packages/core/runtime/substrate` and its subfolders;
 - exact internal shape of runtime-owned Effect services and low-level tags;
 - exact runtime harness wrappers around Elysia, Inngest, OCLIF, OpenShell, desktop, or web tooling;
@@ -2868,11 +2958,12 @@ flowchart LR
   end
 
   P -. "support" .-> R
-  R -->|"capability contract"| V
+  V -->|"implements contract"| R
   R -->|"resourceDep declarations"| S
   S -->|"capability truth"| G
   G -->|"projection packages"| M
-  V -->|"provider selectors"| RP
+  R -->|"resource public face"| RP
+  V -->|"provider public face"| RP
   A --> M
   A --> RP
   M --> D

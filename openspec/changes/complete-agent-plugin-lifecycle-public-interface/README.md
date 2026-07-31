@@ -5009,7 +5009,46 @@ server typecheck/build, focused CLI Journal/config tests, server host tests,
 direct host migration smokes, package inclusion proof, all 25 active Habitat
 rules, strict OpenSpec validation, focused Biome, and diff hygiene. Fresh
 architecture/oRPC, TypeScript/TypeBox, and behavior-first reviews report no P0,
-P1, or P2. Graphite landing and exact-main verification remain pending.
+P1, or P2. Template PR #708 landed the byte-identical candidate tree on
+canonical `main` at `58e005878d4ca69bbeaafc1f5cca990c941a1643`; candidate
+head `c4d81b060b4c7ffb5d08873f77aee2d361c31d2f` remains review
+provenance only. The required repository ratchet passed in run `30602570035`,
+job `91068208363`.
+
+## Habitat Package And Release Authority
+
+Before transferring any Habitat source, the authority record now makes RAWR
+HQ-Template the sole owner of `@habitat/cli` source, package identity,
+releases, generic policy distribution, and ordinary consumer integration.
+Magic Migration and Civ7 remain design, implementation, and consumer evidence;
+they are not standing package owners or runtime dependencies.
+
+The executable package owns one idempotent initializer for Nx plugin
+registration, inferred repository targets, one named Habitat hook
+contribution, and pinned Grit acquisition. The consumer repository owns its
+hook files and final composition. Initialization preserves unrelated hooks,
+updates only its own older contribution, refuses an incompatible Habitat
+contribution, changes nothing on a converged repeat, and removes its
+contribution only through an explicit removal operation. Consumers select
+exact package and policy versions plus their own repository instances. They do
+not copy Habitat source or reproduce its wiring.
+The data-only `@rawr/habitat-blueprints` pack remains distinct from executable
+mechanics, but both are bound through one exact package protocol and one
+consumer entrypoint.
+
+Exact Civ7 implementation inputs and exclusions are recorded in
+[[docs/projects/shared-habitat-substrate/CORPUS|the controlled transfer corpus]].
+The transfer is scoped extraction, not a wholesale `tools/habitat` transplant:
+Civ7 host policy, product roots, product generator/taxonomy/doc paths, and
+manual consumer wiring do not move. Combined source intake/deproductization,
+vendor modernization, initializer closure, policy-pack construction, and
+release remain separate semantic checkpoints. Template ownership is already
+effective; the historical Civ7 releases retain provenance only.
+
+This checkpoint changes authority and execution records only. No Habitat
+source, release, consumer configuration, provider home, Personal repository,
+or live state moves until the separately reviewed transfer and release
+containers land.
 
 ## Settlement Oracles
 

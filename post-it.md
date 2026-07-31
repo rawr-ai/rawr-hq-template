@@ -6,6 +6,40 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Habitat Integrates Once
+
+RAWR HQ-Template owns Habitat source, package identity, releases, generic
+policy distribution, and consumer integration. Magic Migration and Civ7 are
+high-value design and implementation evidence with historical provenance, not
+current package authority. The accepted source lands here, is reviewed here,
+and is released from here.
+
+Consumers select an exact package, policy packs, and repository instances.
+They do not reproduce Nx plugin registration, repository targets, hook
+composition, Grit acquisition, or source trees. One idempotent initializer
+owns that ordinary integration so every downstream repository receives the
+same mechanics without surrendering its own policy and instance authority.
+
+The repository still owns its hooks. Habitat supplies one named contribution,
+preserves unrelated behavior, upgrades only its own contribution, refuses a
+conflicting Habitat contribution, and removes nothing without an explicit
+removal operation.
+
+The executable CLI and the data-only blueprint pack remain separate public
+artifacts because mechanics and policy have different owners inside the
+product boundary. That separation does not justify two installation paths:
+the initializer binds both through one exact protocol.
+
+Source intake is scoped extraction, not ancestry or wholesale copying. Product
+policy stays with its current product owner. Ownership is already assigned;
+combined intake/deproductization, vendors, initialization, policy, and release
+are distinct checkpoints.
+
+### Bag Of Keywords
+
+Habitat, source, package, release, policy, initializer, consumer, plugin,
+generator, pin, protocol, instance.
+
 ## 2026-07-30 - Persistence Requires A Truthful Owner
 
 A service database owns physical persistence for the whole standalone service,
