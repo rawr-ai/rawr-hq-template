@@ -605,7 +605,7 @@ forbidden = ["forbidden.txt"]
     });
   });
 
-  test("uses one fresh inventory per invocation across exact structure application identities", async () => {
+  test("uses fresh inventory and observations per invocation across exact structure application identities", async () => {
     const observedPaths: string[] = [];
     const fixture = authorityFixture({
       blueprints: [
@@ -630,64 +630,60 @@ forbidden = ["forbidden.txt"]
     const expanded: Fixture = {
       ...fixture,
       files: { ...fixture.files, "packages/example/leaf.ts": "export {};\n" },
-      clientFileSystem: (fileSystem, path, workspaceRoot) => ({
-        ...fileSystem,
-        readLink: (candidate) => {
-          observedPaths.push(path.relative(workspaceRoot, candidate));
-          return fileSystem.readLink(candidate);
-        },
-      }),
-    };
-    await withFixture(
-      expanded,
-      async (client, recording) => {
-        const first = await client.catalog.check({});
-        expect(recording.inventory.calls).toHaveLength(1);
-        expect(observedPaths).toEqual(["packages/example/leaf.ts"]);
-        const second = await client.catalog.check({});
-        expect(recording.inventory.calls).toHaveLength(2);
-        expect(observedPaths).toEqual(["packages/example/leaf.ts"]);
-        const firstIdentities =
-          first._tag === "Completed" ? first.applications.map(applicationKey) : [];
-        const secondIdentities =
-          second._tag === "Completed" ? second.applications.map(applicationKey) : [];
-
-        expect(firstIdentities).toEqual([
-          "alpha_structure:example-package:@rawr/example",
-          "beta_structure:example-package:@rawr/example",
-        ]);
-        expect(secondIdentities).toEqual(firstIdentities);
-        expect(first).toMatchObject({
-          _tag: "Completed",
-          applications: [
-            { status: "pass", findings: [] },
-            { status: "pass", findings: [] },
-          ],
+      clientFileSystem: (fileSystem, path, workspaceRoot) => {
+        const leafPath = path.join(workspaceRoot, "packages/example/leaf.ts");
+        return FileSystem.makeNoop({
+          ...fileSystem,
+          readLink: (candidate) => {
+            if (candidate !== leafPath) return fileSystem.readLink(candidate);
+            observedPaths.push(path.relative(workspaceRoot, candidate));
+            return observedPaths.length === 1
+              ? fileSystem.readLink(candidate)
+              : Effect.fail(
+                  PlatformError.systemError({
+                    _tag: "NotFound",
+                    module: "FileSystem",
+                    method: "readLink",
+                    pathOrDescriptor: candidate,
+                  })
+                );
+          },
         });
-        expect(second).toMatchObject({
-          _tag: "Completed",
-          applications: [
-            { findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }] },
-            { findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }] },
-          ],
-        });
-        expect(recording.calls).toEqual([]);
       },
-      undefined,
-      (_input, index) => {
-        const inventory = defaultInventory(expanded);
-        return Effect.succeed(
-          index === 0
-            ? inventory
-            : {
-                ...inventory,
-                paths: inventory.paths.filter(
-                  (candidate) => candidate !== "packages/example/leaf.ts"
-                ),
-              }
-        );
-      }
-    );
+    };
+    await withFixture(expanded, async (client, recording) => {
+      const first = await client.catalog.check({});
+      expect(recording.inventory.calls).toHaveLength(1);
+      expect(observedPaths).toEqual(["packages/example/leaf.ts"]);
+      const second = await client.catalog.check({});
+      expect(recording.inventory.calls).toHaveLength(2);
+      expect(observedPaths).toEqual(["packages/example/leaf.ts", "packages/example/leaf.ts"]);
+      const firstIdentities =
+        first._tag === "Completed" ? first.applications.map(applicationKey) : [];
+      const secondIdentities =
+        second._tag === "Completed" ? second.applications.map(applicationKey) : [];
+
+      expect(firstIdentities).toEqual([
+        "alpha_structure:example-package:@rawr/example",
+        "beta_structure:example-package:@rawr/example",
+      ]);
+      expect(secondIdentities).toEqual(firstIdentities);
+      expect(first).toMatchObject({
+        _tag: "Completed",
+        applications: [
+          { status: "pass", findings: [] },
+          { status: "pass", findings: [] },
+        ],
+      });
+      expect(second).toMatchObject({
+        _tag: "Completed",
+        applications: [
+          { findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }] },
+          { findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }] },
+        ],
+      });
+      expect(recording.calls).toEqual([]);
+    });
   });
 
   test("treats inventory as the source universe and prunes tracked non-file descendants", async () => {
