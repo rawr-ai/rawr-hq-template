@@ -2,14 +2,14 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { createClient } from "../src/client";
+import { createClient } from "../../src/client";
 import {
   createClientOptions,
   createTestHqOpsResources,
   invocation,
   writeGlobalRawrConfig,
   writeRawrConfig,
-} from "./helpers";
+} from "../support/service/helpers";
 
 const tempDirs: string[] = [];
 

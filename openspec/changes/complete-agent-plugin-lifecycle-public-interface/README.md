@@ -4908,6 +4908,27 @@ green. Uncached Dev behavior and typecheck pass, all 25 active Habitat rules
 report zero findings, the active OpenSpec change validates strictly, focused
 Biome passes, and diff hygiene is clean.
 
+## HQ Ops Proof Categories
+
+The next bounded checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e37]] categorizes HQ
+Ops proof before production topology changes. Config behavior moves under its
+module behavior category, configured resource-backed behavior moves to
+integration, the public service-spine relation moves to contract mechanics,
+and reusable client/resource construction moves to service support.
+
+Only relative imports change. All 11 test cases, production source, public
+contract, resource behavior, and current router lineages remain unchanged.
+The suite therefore continues to expose the predecessor module-router shape;
+the next module checkpoints own the already-observed duplicate root middleware
+lifecycle rather than hiding a behavior correction in proof movement.
+
+Uncached HQ Ops behavior and typecheck pass. This checkpoint removes the
+package's flat proof-topology findings but does not claim its production
+service corpus green or activate any staged construction law. All 25 active
+Habitat rules report zero findings, the active OpenSpec change validates
+strictly, focused Biome passes, and diff hygiene is clean.
+
 ## Settlement Oracles
 
 The final product must prove:
