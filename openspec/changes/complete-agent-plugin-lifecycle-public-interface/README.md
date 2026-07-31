@@ -5270,21 +5270,27 @@ TypeBox is the sole structure-document admission authority. Pure catalog policy
 binds each scope's literal `rootRole` base to its `relativePath`, interprets the
 Git-visible universe, evaluates root kind and direct-child requirements, and
 produces deterministic path-only diagnostics. The handler owns TOML reading,
-live no-follow root observation, Effect failure boundaries, and result
-sequencing. Grit reports retain their ranged finding contract; native Habitat
-reports are runner-discriminated and cannot acquire source ranges or predecessor
-baseline state. Exact `instance` selection is now available for the later Nx
-projection without adding another operation or runner.
+live no-follow path observation, Effect failure boundaries, and result
+sequencing. Inventory selects the candidate source universe; request-local live
+observation reconciles ordinary candidate existence and kind before policy
+decides the result. Git-owned symlink and Gitlink identities remain `other`
+while present and keep their descendants pruned, but become missing when absent.
+Grit reports retain their ranged finding contract; native Habitat reports are
+runner-discriminated and cannot acquire source ranges or predecessor baseline
+state. Exact `instance` selection is now available for the later Nx projection
+without adding another operation or runner.
 
-The behavior suite passes 44 tests, including 26 `catalog.check` cases covering
+The behavior suite passes 45 tests, including 27 `catalog.check` cases covering
 closed and open scopes, empty matching, distinct root roles, tracked non-file
-pruning, one-inventory repeat isolation, mixed Grit/Habitat results, and typed,
-defect, and interruption observation boundaries. Uncached Nx typecheck, test,
-and build pass. The 25-rule local Habitat policy batch, strict OpenSpec
-validation, Biome, and diff hygiene are clean. Standing architecture,
-TypeScript/TypeBox, structural-quality, and behavior reviews report no P0 or P1
-finding. The checkpoint does not select a provider, create runtime or retained
-state, mutate provider homes, read Personal content, or touch release channels.
+pruning, deleted and type-replaced inventory entries, one-inventory repeat
+isolation, one live observation per candidate path and request, mixed
+Grit/Habitat results, and typed, defect, and interruption observation
+boundaries. Uncached Nx typecheck, test, and build pass. The 25-rule local
+Habitat policy batch, strict OpenSpec validation, Biome, and diff hygiene are
+clean. Standing architecture, TypeScript/TypeBox, structural-quality, and
+behavior reviews report no P0 or P1 finding. The checkpoint does not select a
+provider, create runtime or retained state, mutate provider homes, read Personal
+content, or touch release channels.
 
 ## Settlement Oracles
 
