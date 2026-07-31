@@ -1,50 +1,30 @@
 ---
 name: habitat-provider-frame
-description: Mental model for one concrete typed realization and lifecycle implementation of a provider-neutral resource contract.
+description: Mental model for one concrete realization of a provider-neutral resource contract.
 ---
 
 # Provider Realization Frame
 
-> **Activation:** None. This lowercase `skill.md` is an unregistered design
-> seed. Provider code, resource contracts, applications, and adjacent Habitat
-> packets retain their qualified authority.
-
-## Frame
-
 A provider makes one resource contract real on one vendor or substrate. It
-owns concrete clients, configuration interpretation, acquisition, release,
-failure translation, and the mechanics required to satisfy that contract. Its
-public index is the only implementation face consumers need to see.
-
-A provider does not decide product intent. It does not select itself, widen its
-parent contract, or become a convenient home for service policy. Vendor-shaped
-facts may originate here; domain decisions remain with the service that owns
-their meaning.
-
-## Gradient
-
-The provider points inward through its resource:
+owns concrete clients, configuration decoding, acquisition, release, vendor
+failure translation, and the mechanics needed to return the neutral resource
+value. Its `index.ts` is the single realization face.
 
 ```text
-vendor -> provider -> resource -> app -> service
+resource -> provider -> service -> plugin -> app
 ```
 
-The application chooses a provider and its lifetime. Runtime acquisition owns
-the realized scope and passes the provider-neutral resource value downward.
-Consumers do not import a concrete implementation. This keeps replacement
-honest: a different provider may realize the same resource without rewriting
-service operations.
+The provider implements; it does not select itself. App-owned composition
+chooses a provider and lifetime, then runtime acquisition passes the ready
+provider-neutral value downward. Services therefore depend on the resource
+contract rather than concrete vendor code.
 
-The closed package face gives vendor mechanics room to decompose in TypeScript
-while preventing unrelated files and alternate public faces from accumulating.
-If an implementation concern is meaningful across providers, reconsider the
-resource contract or a truly agnostic package rather than creating a shared
-provider bag.
+Vendor facts may originate here, but service policy does not. If a concern is
+stable across providers, it may belong in the resource contract or an inert
+package. If it changes product meaning, it belongs with the service. The
+closed nested shell prevents those owners from collapsing into one convenient
+implementation folder.
 
-## Relations
+## Vocabulary
 
-- [[README|Provider boundary]]
-- [[../resource/skill|Resource frame]]
-- [[../service/skill|Service capability funnel]]
-- [[../skill|Blueprint direction]]
-- [[../../AUTHORITY|Habitat authority]]
+acquisition, implementation, lifecycle, provider, resource, translation, vendor

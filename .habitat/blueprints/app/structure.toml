@@ -1,0 +1,20 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "app-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "habitat.toml",
+  "package.json",
+  "project.json",
+  "src",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "bin",
+  "test",
+]

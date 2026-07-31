@@ -1,40 +1,30 @@
 ---
 name: habitat-plugin-frame
-description: Mental model for plugins as single-lane runtime projections that preserve the authority of services, resources, apps, and hosts.
+description: Mental model for plugins as narrow projections of existing capability into one runtime role and surface.
 ---
 
-# Plugin Frame
+# Plugin Projection Frame
 
-> **Activation:** None. This lowercase `skill.md` is an unregistered design
-> seed. Narrower plugin kinds and their packets own any enforceable topology.
+A plugin projects existing capability into one role and surface. It owns the
+caller-facing projection shape and the adapter from service capability to that
+surface. It does not become service truth, acquire providers, select runtime
+profiles, or redefine application membership.
 
-## Frame
+```text
+resource -> provider -> service -> plugin -> app
+```
 
-A plugin projects an existing capability into one role and surface. It owns
-the caller shape, boundary policy, adaptation, and mount facts specific to that
-lane. It does not become the capability's source of truth.
-
-Services own domain meaning. Resources declare runtime capability. Providers
-implement it. Apps select projections. Hosts mount them. A plugin declares the
-service and resource access its projection needs, but it neither acquires
-providers nor chooses app membership.
-
-## Gradient
-
-Projection identity follows topology and the matching lane-specific builder.
-Route, command, workflow, tool, window, and channel details refine a projection;
-they do not reclassify it. A capability that needs two genuinely different
-surfaces earns two projections rather than one conditional aggregate.
-
-The broad plugin kind intentionally carries little universal file geometry.
-Stronger closure belongs to narrower kinds only when every member shares the
-same boundary. This restraint prevents a parent blueprint from inventing a
-mini-framework that erases the native host and the underlying capability
+The service remains authoritative behind the projection. The app decides
+whether the plugin participates in a concrete product and supplies the runtime
+context from above. A server route, CLI command, async function, desktop
+bridge, or Nx projection is therefore a surface fact, not a new semantic
 owner.
 
-## Relations
+The generic plugin shell is intentionally small. A narrower plugin blueprint
+may add one positive source shape for its projection lane, but it only narrows
+the kind; it does not weaken the generic boundary or invent a parallel
+framework.
 
-- [[../skill|Blueprint direction]]
-- [[README|Plugin boundary]]
-- [[../plugin-server/skill|Server-plugin frame]]
-- [[../../AUTHORITY|Habitat authority]]
+## Vocabulary
+
+adapter, boundary, plugin, projection, role, service, surface

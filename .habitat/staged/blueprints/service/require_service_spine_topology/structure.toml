@@ -91,6 +91,8 @@ allowed = [
 ]
 forbidden = [
   "index.ts",
+  "*.test.ts",
+  "*.spec.ts",
   "*.middleware.ts",
 ]
 
@@ -105,6 +107,8 @@ allowed = [
 ]
 forbidden = [
   "index.ts",
+  "*.test.ts",
+  "*.spec.ts",
   "*.middleware.ts",
 ]
 
@@ -141,6 +145,10 @@ required = [
 allowed = [
   "*.ts",
 ]
+forbidden = [
+  "*.test.ts",
+  "*.spec.ts",
+]
 
 [[scopes]]
 name = "standalone-service-module-router-interiors"
@@ -163,6 +171,10 @@ required = [
 allowed = [
   "*.ts",
 ]
+forbidden = [
+  "*.test.ts",
+  "*.spec.ts",
+]
 
 [[scopes]]
 name = "api-service-module-contract-interiors"
@@ -174,6 +186,10 @@ required = [
 ]
 allowed = [
   "*.ts",
+]
+forbidden = [
+  "*.test.ts",
+  "*.spec.ts",
 ]
 
 [[scopes]]
@@ -197,20 +213,10 @@ required = [
 allowed = [
   "*.ts",
 ]
-
-[[scopes]]
-name = "standalone-service-source-test-directory-sentinel"
-root = "services/*/src/**/@(test|tests|__tests__)"
-kind = "file"
-mode = "open"
-allowEmpty = true
-
-[[scopes]]
-name = "standalone-service-source-suite-file-sentinel"
-root = "services/*/src/**/*.@(test|spec).ts"
-kind = "directory"
-mode = "open"
-allowEmpty = true
+forbidden = [
+  "*.test.ts",
+  "*.spec.ts",
+]
 
 [[scopes]]
 name = "standalone-service-root-models"
@@ -219,14 +225,11 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 allowed = [
-  "actors",
   "dto",
   "entities",
   "errors",
-  "helpers",
   "policy",
   "ports",
-  "prompts",
 ]
 
 [[scopes]]
@@ -236,14 +239,11 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 allowed = [
-  "actors",
   "dto",
   "entities",
   "errors",
-  "helpers",
   "policy",
   "ports",
-  "prompts",
 ]
 
 [[scopes]]
@@ -253,14 +253,11 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 allowed = [
-  "actors",
   "dto",
   "entities",
   "errors",
-  "helpers",
   "policy",
   "ports",
-  "prompts",
 ]
 
 [[scopes]]
@@ -270,79 +267,60 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 allowed = [
-  "actors",
   "dto",
   "entities",
   "errors",
-  "helpers",
   "policy",
   "ports",
-  "prompts",
 ]
 
 [[scopes]]
 name = "standalone-service-root-model-kinds"
-root = "services/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
+root = "services/*/src/service/model/@(dto|entities|errors|policy|ports)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = ["*.ts"]
-forbidden = ["index.ts"]
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
 
 [[scopes]]
 name = "standalone-service-module-model-kinds"
-root = "services/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
+root = "services/*/src/service/modules/*/model/@(dto|entities|errors|policy|ports)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = ["*.ts"]
-forbidden = ["index.ts"]
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
 
 [[scopes]]
 name = "api-service-root-model-kinds"
-root = "plugins/server/api/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
+root = "plugins/server/api/*/src/service/model/@(dto|entities|errors|policy|ports)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = ["*.ts"]
-forbidden = ["index.ts"]
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
 
 [[scopes]]
 name = "api-service-module-model-kinds"
-root = "plugins/server/api/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)"
+root = "plugins/server/api/*/src/service/modules/*/model/@(dto|entities|errors|policy|ports)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
-allowed = ["*.ts"]
-forbidden = ["index.ts"]
-
-[[scopes]]
-name = "standalone-service-root-model-leaves"
-root = "services/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
-kind = "file"
-mode = "open"
-allowEmpty = true
-
-[[scopes]]
-name = "standalone-service-module-model-leaves"
-root = "services/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
-kind = "file"
-mode = "open"
-allowEmpty = true
-
-[[scopes]]
-name = "api-service-root-model-leaves"
-root = "plugins/server/api/*/src/service/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
-kind = "file"
-mode = "open"
-allowEmpty = true
-
-[[scopes]]
-name = "api-service-module-model-leaves"
-root = "plugins/server/api/*/src/service/modules/*/model/@(actors|dto|entities|errors|helpers|policy|ports|prompts)/*.ts"
-kind = "file"
-mode = "open"
-allowEmpty = true
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
 
 [[scopes]]
 name = "api-embedded-service-module-shells"

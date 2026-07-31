@@ -1,7 +1,7 @@
 # Shared Habitat Substrate Corpus
 
 **Status:** Controlled transfer evidence
-**Date:** 2026-07-30
+**Date:** 2026-07-31
 
 ## Authority
 
@@ -23,14 +23,14 @@ It is not a second plan or normative design.
 ## Authority Boundary
 
 This repository owns the Habitat product source, `@habitat/cli` release
-identity, releases, consumer integration, and generic blueprint policy.
-`@habitat/blueprints` distributes that policy as versioned data. The Habitat
-service owns exact resolution, protocol validation, admission, evaluation, and
-classification. Qualified plugins own Oclif and Nx projection. The Habitat app
-owns provider/profile selection, product composition, and the executable
-entrypoint.
+identity, releases, consumer integration, and generic blueprint policy. The
+planned `@habitat/blueprints` artifact will distribute accepted policy as
+versioned data. The Habitat service owns exact resolution, protocol validation,
+admission, evaluation, and classification. Qualified plugins own Oclif and Nx
+projection. The Habitat app owns provider/profile selection, product
+composition, and the executable entrypoint.
 
-The frozen public policy export surface is:
+The target public policy export surface is:
 
 ```text
 @habitat/blueprints/
@@ -65,31 +65,45 @@ product graph beneath one `type:package` owner. Standing review rejected that
 placement before landing. The source remains migration evidence until it is
 recut through canonical resource, provider, service, plugin, and app projects.
 
-The transferred source removes the compatibility-only catalog as a separate
-production authority. A present v2 registry contributes current host rules as
-compatibility data to the one resolved catalog; its absence produces the exact
-empty input. Civ7 host policy, product roots, generator/taxonomy/doc paths, and
-manual consumer wiring remain historical evidence, not generic source.
+The target transfer must remove the compatibility-only catalog as a separate
+production authority. A present v2 registry will contribute current host rules
+as compatibility data to the one resolved catalog; its absence must produce the
+exact empty input. Civ7 host policy, product roots, generator/taxonomy/doc
+paths, and manual consumer wiring remain historical evidence, not generic
+source.
 
 The source evidence targets Effect 3.21.3, oRPC 1.14.6, TypeBox 1.3.6, and Bun
-1.3.14. The accepted product graph is implemented directly on this
-repository's Effect 4, oRPC 2, and current TypeBox substrate rather than
-landing a second vendor realm and migrating it later. Consumer initialization,
-policy-pack construction, and release remain separate reviewed boundaries.
-The requested Bun 1.4 native asset remains a separate release proof.
+1.3.14. The accepted product graph must be implemented directly on this
+repository's Effect 4, oRPC 2, and current TypeBox substrate rather than landing
+a second vendor realm and migrating it later. Consumer initialization,
+policy-pack construction, and release remain separate reviewed boundaries. The
+requested Bun 1.4 native asset remains a separate release proof.
+
+## Definition Checkpoint
+
+The repository now carries seven root v3 definition records: `package`,
+`resource`, `provider`, `service`, `plugin`, `plugin-nx`, and `app`. The source
+catalog schema-admits them, but no v3 instance or resolved application exists
+and none is accepted into a released policy pack. The byte-stable 33-rule v2
+registry remains the sole execution authority.
+This is the definition-only checkpoint recorded in
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|the active execution record]] and
+[[.habitat/AUTHORITY-ONTOLOGY#Current Realization|the authority ontology]].
 
 ## Kind Rows
 
 | Kind | Current state | Required disposition |
 | --- | --- | --- |
-| Habitat product graph | Composite `packages/habitat-cli` staging source is behavior evidence only; Civ7 `@habitat/cli@0.1.0` remains transfer evidence | Realize support, resources/providers, service, Oclif/Nx projections, and app as distinct Nx projects; then publish one assembled `@habitat/cli@0.2.0` release identity |
-| Blueprint policy pack | Repository-local v2 packets only | Publish the data-only `@habitat/blueprints` seam; do not copy current host packets into it |
-| `package@1` | No generic packet | Admit first, after CLI 0.2.0, with exact anchors and closed contract/semantics proof members |
-| Resource | Draft boundary packet | Correct provider-family closure, proof, anchors, and generator |
-| Provider | Draft boundary packet | Correct nested realization closure, proof, anchors, and generator |
-| Service | Enforced partial law plus staged construction packets | Correct, burn down, and promote as one public construction model |
+| Habitat product graph | Seven schema-admitted v3 definitions with no instances or applications; Civ7 `@habitat/cli@0.1.0` remains transfer evidence | Realize support, resources/providers, service, Oclif/Nx projections, and app as distinct Nx projects; then publish one assembled `@habitat/cli@0.2.0` release identity |
+| Blueprint policy pack | 33 live v2 rules plus seven inert root v3 definitions; no admitted pack | Construct the data-only `@habitat/blueprints` seam only from definitions that pass their acceptance gates; do not copy current host packets into it |
+| `package@1` | Schema-admitted definition; only `contract` and `semantics` proof axes are frozen | Keep outside release-pack acceptance until exact selected-member equality is proven; do not promise it in the first pack |
+| Resource | Inert root definition plus draft boundary packet; proof axes remain candidates | Correct provider-family closure, proof, anchors, and generator before admission |
+| Provider | Inert root definition plus draft boundary packet; proof axes remain candidates | Correct nested realization closure, proof, anchors, and generator before admission |
+| Service | Inert root definition, enforced v2 partial law, and six staged candidate construction laws | Complete source migration and corpus burn-down before admission; keep public-consumer sealing staged until workspace-wide acquisition exists |
+| Plugin | Inert root definition; no frozen proof axes | Close a finite projection proof grammar before admission |
+| Nx plugin | Inert `plugin-nx` root definition; no frozen proof axes | Close a finite Nx-projection proof grammar before admission |
 | Server API projection | Shallow current packet | Compose service-source law and close public faces and proof |
-| App | No generic packet | Port and activate the accepted Magic app law before Habitat app admission |
+| App | Inert root definition; proof axes remain candidates | Port and validate the accepted Magic app evidence before Habitat app admission |
 | CLI app | Legacy Oclif app law owns commands | Rebuild as a commandless specialization of app |
 | CLI topic | Legacy command-plugin root | Rename and rebuild at `plugins/cli/topics/*` |
 
@@ -100,13 +114,18 @@ The requested Bun 1.4 native asset remains a separate release proof.
 - `.habitat/blueprints/oclif-app` admits app-owned `src/commands`.
 - `apps/cli` owns command implementations.
 - existing first-party command plugins live below `plugins/cli/commands/*`.
-- generic `package` and `app` blueprints do not exist.
+- the seven root v3 definitions have no admitted instances or applications and
+  therefore execute nothing;
+- `package@1` cannot yet prove exact equality between its selected
+  contract/semantics ids and the proof members present on disk;
+- manifests can declare `project` and `source` independently even where the
+  service, app, and plugin definitions require exactly
+  `source = project/src`; the relation is not yet derived or bounded;
 - resource and provider packets do not yet close all member, proof, anchor, and
   generator relationships, including direct resource-package public faces.
 - service construction packets remain staged while current source burns down.
-- the composite Habitat staging source is not an admitted project kind and
-  must be decomposed before executable first-class blueprint/instance
-  admission can land;
+- public-consumer sealing remains outside service-local v3 application until
+  the resolver can acquire foreign consumers across the workspace;
 - current local rule packets carry host baselines and RAWR HQ-Template paths
   and therefore cannot be republished as the generic policy pack.
 
@@ -116,25 +135,33 @@ cost; it must not hide a row or allow an unclassified file to cross kinds.
 
 ## Proof Rows
 
-`package@1` is the only frozen proof grammar. The remaining rows are candidate
-axes that each owning kind must make disjoint and version before admission.
+Only the `package@1` proof-axis grammar is frozen. This freezes the
+`contract`/`semantics` mapping, not `package@1` admission. The remaining rows
+are candidate axes that each owning kind must make disjoint and version before
+admission.
 
-| Kind/version | Frozen or candidate axes |
-| --- | --- |
-| `package@1` | `contract`; `semantics` |
-| Resource | Contract |
-| Provider | Semantics; execution; optional collaboration |
-| Service | Contract; operation-mirrored semantics; root execution |
-| Server API projection | Contract; projection; optional API-owned execution |
-| App | Assembly; optional delivery |
-| CLI topic | Command projection |
-| CLI app | Assembly |
+| Kind/version | Status | Proof axes |
+| --- | --- | --- |
+| `package@1` | Frozen grammar; not release-pack accepted | `contract`; `semantics` |
+| Resource | Candidate | Contract |
+| Provider | Candidate | Semantics; execution; optional collaboration |
+| Service | Candidate | Contract; operation-mirrored semantics; root execution |
+| Plugin | Candidate; no finite set selected | Unselected |
+| Nx plugin | Candidate; no finite set selected | Unselected |
+| Server API projection | Candidate | Contract; projection; optional API-owned execution |
+| App | Candidate | Assembly; optional delivery |
+| CLI topic | Candidate | Command projection |
+| CLI app | Candidate | Assembly |
 
 For `package@1`, the manifest selects contract and semantics component ids.
 Each contract id maps to exactly
 `test/contract/<id>.typecheck.ts`; each semantics id maps to exactly
 `test/semantics/<id>.test.ts`. An absent axis has no directory. When both
-selected lists are empty, the package has no `test/` root.
+selected lists are empty, the package has no `test/` root. Admission
+additionally requires exact equality in both directions: every selected id has
+its one mapped file, and every present proof member is selected. Until the
+evaluator proves that equality, the root definition remains inert and
+`package@1` is not an admitted first-pack promise.
 
 Every later kind version must freeze an equally finite mapping before
 admission. Every proof file belongs to exactly one selected axis. Optional
@@ -146,3 +173,13 @@ Proof stops at its owner. Resource tests do not repeat provider behavior.
 Provider tests do not repeat resource-contract, SDK, compiler, or framework
 guarantees. Projection and app tests do not duplicate runtime, adapter, or
 harness proof.
+
+The first policy pack therefore has no precommitted admitted set. It may include
+`package@1` only after exact selected-member closure. No definition may activate
+until every blueprint-declared root relation it assumes is derived or
+positively bounded, including `source = project/src` for service, app, and
+plugin. The pack may include the six service-construction laws only after
+source migration and a green complete corpus. Public-consumer sealing
+additionally waits for the workspace-wide foreign-consumer acquisition
+recorded in
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF|the Habitat capability handoff]].

@@ -563,8 +563,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `contract/index.ts`, `module.ts`, module-root `router.ts`, direct semantic
   contract leaves, named `router/*.router.ts` authoring leaves, optional
   `middleware/index.ts` over named middleware leaves, and
-  `model/{dto,policy,ports,...}`, with TypeBox schemas colocated with their DTO
-  authorities. Preserve the existing one-service/module-router skeleton. Move
+  `model/{dto,entities,errors,policy,ports}`, with one `index.ts` plus direct
+  semantic leaves in each present kind and TypeBox schemas colocated with their
+  DTO or entity authorities. Admit no service-wide `model/index.ts` and no
+  `helpers`, `actors`, or `prompts` model kind. Preserve the existing
+  one-service/module-router skeleton. Move
   owner-local release and governance requests, results, issues,
   policies, and schemas out of root `service/model/**` into their owning modules;
   remove sibling-module reach-through by keeping behavior in operation handlers
@@ -1836,13 +1839,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   predecessor paths and one-use helpers without aliases. Add no generalized
   rule, resource, provider, middleware, compatibility face, Personal,
   live-state, or second operation path.
-- [ ] 5.7e22 Activate the six closed service-construction laws through the
+- [ ] 5.7e22 Activate the six candidate service-construction laws through the
   installed Habitat Nx boundary after tasks 5.7e19 through 5.7e21 and 5.7e24
   are green, task 5.7e2 proves the complete live corpus, and tasks 5.7e22b
   through 5.7e22f have landed. Consume the installed Template-owned package,
   move topology, anchor, isolation, context, composition, and
   router-authorship packets into the enforced registry together, retain empty
-  baselines, and let inferred owner-local targets own inputs and caching. Add
+  baselines, and let inferred owner-local targets own inputs and caching.
+  Keep public-consumer sealing staged until the application resolver can
+  acquire foreign consumers across the workspace; do not model it as a
+  service-local v3 application. Add
   no local SDK fork, manifest generator, wrapper, raw Grit invocation,
   alternate runner, path exception, duplicated consumer wiring, or partial
   activation. Close this task only when the six laws are enforced by the
@@ -1878,16 +1884,35 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   create a composite `habitat-cli` source kind or bless one package as a
   service/resource/plugin/app exception.
 - [ ] 5.7e22b1 Close the Habitat source graph against its own ordinary kind
-  blueprints. Design and review the generic package, resource, provider,
-  service, plugin, app, and missing Nx-projection definitions before behavior
-  migration, but do not let candidate source authorize its own gate. The
-  installed release checks the candidate until the ordinary Habitat app can be
-  released; only that released checker may admit and activate the version-three
-  definitions and product instances. Until then, migrate source without
-  `habitat.toml` instances rather than bypassing the required repository gate.
-  One singular `structure.toml` remains at each blueprint root. Remove the
-  rejected `habitat-cli` blueprint rather than teaching Habitat an exception
-  for its own source.
+  blueprints. Use the generic package, resource, provider, service, plugin,
+  app, and missing Nx-projection definitions, but do not let candidate source
+  authorize its own gate. The installed release checks the candidate until the
+  ordinary Habitat app can be released. Schema-admitted definitions may land
+  before that app, but only the installed successor may grant release-pack
+  acceptance, activate version-three instances and applications, or replace
+  the required merge checker. Until then, migrate source without `habitat.toml` instances
+  rather than bypassing the required repository gate. One singular
+  `structure.toml` remains at each blueprint root. Remove the rejected
+  `habitat-cli` blueprint rather than teaching Habitat an exception for its own
+  source. Before activation, make
+  blueprint-declared root relations exact: derive or positively bound
+  `source = project/src` wherever the service, app, or plugin structure assumes
+  that topology rather than accepting two independently free roots. This
+  umbrella remains open across pre-release constructibility, ordinary product
+  projection, successor release, and post-release source admission.
+- [x] 5.7e22b1a Land the seven schema-admitted, execution-inert v3 kind
+  definitions, their singular root structures, and their authoring frames
+  without creating any instance or application. Keep the 33-rule v2 registry
+  byte-stable; freeze only the
+  `package@1` contract/semantics proof-axis grammar while leaving that kind
+  outside release-pack acceptance pending exact selected-member equality; keep
+  every other kind's proof axes candidate and the six service-construction laws
+  staged; and record blueprint-declared root relations plus workspace-wide
+  foreign-consumer acquisition as Habitat-owned constructibility gaps. Require every
+  closed project structure to contain its own `habitat.toml`; keep
+  the six active RAWR-path-qualified v2 Grit rules out of the generic service
+  definition. Keep the separate six service-construction laws staged. Do not
+  call task 5.7e22b1 complete from schema admission alone.
 - [ ] 5.7e22b2 Migrate the service and resource/provider boundaries without
   changing public Habitat behavior. Keep rule and authority semantics in the
   service, make external execution capabilities provider-neutral resources,
@@ -1931,12 +1956,18 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   those transitions in an isolated consumer without repository-local wiring.
 - [ ] 5.7e22d Construct and admit the first data-only
   `@habitat/blueprints` package before publication. Freeze its package
-  metadata, `habitat-pack.json` protocol, exports, exclusion proof, and initial
-  admitted set as `package@1` plus exactly the six reviewed service
-  construction laws consumed by task 5.7e22. Exclude draft resource,
-  provider, app, and CLI kinds, repository-qualified instances, host
-  baselines, executable code, product paths, and legacy v2 rules. Prove exact
-  pack resolution and admission through the workspace-owned CLI.
+  metadata, `habitat-pack.json` protocol, exports, and exclusion proof, but do
+  not precommit its admitted set. Include `package@1` only after exact
+  selected-member equality is implemented and proven. Activate no definition
+  until every root relation it assumes is derived or positively bounded.
+  Include the six service construction laws only after source migration and the
+  complete corpus are green; keep public-consumer sealing out until
+  workspace-wide foreign-consumer acquisition exists. Exclude resource,
+  provider, plugin, Nx-plugin, app, and CLI kinds that have not passed
+  release-pack acceptance,
+  repository-qualified instances, host baselines, executable code, product
+  paths, and legacy v2 rules. Prove exact pack resolution and admission through
+  the workspace-owned CLI.
 - [ ] 5.7e22e Publish the first Template-owned `@habitat/cli` and
   `@habitat/blueprints` releases from reviewed canonical `main`. Bind
   package, policy, protocol, source provenance, and any native asset to one

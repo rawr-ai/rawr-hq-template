@@ -1,0 +1,29 @@
+schemaVersion = 1
+id = "provider"
+version = 1
+
+[[rules]]
+id = "provider_v1_structure"
+lane = "enforced"
+message = "Providers must preserve one closed nested realization shell."
+remediate = "Restore the provider index and Nx project metadata inside the parent resource provider family."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"

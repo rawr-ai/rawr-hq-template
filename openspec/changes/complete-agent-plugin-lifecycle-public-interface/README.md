@@ -657,7 +657,7 @@ The corrected service authority packet is now sealed as the first half of the
 categorical service-law repair. Every module has one public composition face at
 `router.ts` and named operation-authoring leaves under `router/*.router.ts`;
 `router/index.ts`, `shared`, `internal`, `dependencies`, loose `schemas.ts`,
-and model barrels are outside the positive shape. Magic Migration
+and a service-wide `model/index.ts` are outside the positive shape. Magic
 `52873620ffe0b8b6e60527cd399076fc13ab86a7` initially supplied the direct local
 `Router<typeof contract, never>` root relation and rule-qualified Grit helpers.
 The later pinned-N1 runtime oracle supersedes that root-specific relation with
@@ -5063,11 +5063,12 @@ Nx projections, runtime selection, and the executable app under one
 `type:package` owner. Its bespoke `habitat-cli` blueprint then validated the
 exception rather than the repository's canonical product kinds.
 
-The staging tree remains migration evidence only. Green source tests prove the
-imported behavior, not architectural fitness. It may be moved or rewritten,
-but it is not an accepted source container and must not land in that shape.
+The rejected staging tree remains historical migration evidence only and is
+absent from this definition checkpoint. Green source tests proved the imported
+behavior, not architectural fitness. That container is not accepted and must
+not return in the recut.
 
-Habitat now realizes itself through the ordinary product funnel:
+The accepted target will realize Habitat through the ordinary product funnel:
 
 ```text
 resources -> providers -> service -> plugins -> app -> runtime -> entrypoint
@@ -5147,9 +5148,8 @@ interpret a protocol it does not support. The released replacement then checks
 and activates those definitions and instances as its first governed successor
 change. This is a bounded bootstrap sequence, not a `habitat-cli` kind
 exception, second checker, private selector, or permanent compatibility path.
-The reviewed inert definition set is preserved at
-`fa2d4be63a06eace0b30924f5b3c126d8f3c01ae`; its blocked repository check
-does not transfer merge authority to candidate source.
+This checkpoint carries the reviewed inert definition set. Its earlier blocked
+repository check did not transfer merge authority to candidate source.
 
 The first service checkpoint owns catalog resolution only. Generic callers
 request resolution; the Habitat service enumerates the finite repository
@@ -5291,6 +5291,63 @@ clean. Standing architecture, TypeScript/TypeBox, structural-quality, and
 behavior reviews report no P0 or P1 finding. The checkpoint does not select a
 provider, create runtime or retained state, mutate provider homes, read Personal
 content, or touch release channels.
+
+### Habitat Blueprint Definition Checkpoint
+
+The definition-only checkpoint records seven ordinary v3 kinds: `package`,
+`resource`, `provider`, `service`, `plugin`, `plugin-nx`, and `app`. Each
+definition owns one blueprint-root `structure.toml` and one authoring
+`skill.md`; there is no `habitat-cli` kind. The source catalog schema-admits all
+seven definitions. They have zero repository instances, zero resolved
+applications, and no released-pack acceptance, so they add no executing policy
+path and cannot replace the installed merge checker.
+
+The released v2 compatibility registry remains the sole executing authority
+and retains exactly its prior 33 live rules. The six service-construction laws
+remain under `.habitat/staged/**`; this checkpoint does not copy or promote
+them while source migration is incomplete and their corpus is red. The
+schema-admitted `service@1` definition therefore declares only its native
+structure rule; RAWR-path-qualified Grit rules stay outside the generic
+definition until location-independent service laws are ready.
+Public-consumer sealing remains staged and outside service-local v3 application
+until resolution can acquire foreign consumers across the workspace. The v2
+nested schema-1 structure assets remain temporarily executable because the
+released evaluator cannot consume the blueprint-root schema-2 form. They are
+removed atomically only when release-accepted v3 instances and source migration
+activate; until then the new root assets are inert and do not compete with them.
+Every closed project structure requires its own `habitat.toml`, so the manifest
+that selects a kind cannot become an unexpected child of that kind.
+
+Only the `package@1` proof-axis grammar is frozen: manifest-selected `contract`
+and `semantics` ids map to their exact proof files. The kind remains outside
+release-pack acceptance until resolution proves equality between selected ids
+and all present proof members. Every other kind's proof axes remain candidates.
+The definitions also lack an enforceable blueprint-declared root relation:
+manifests can name `project` and `source` independently even where service, app,
+and plugin structures require exactly `source = project/src`. The first
+`@habitat/blueprints` pack therefore precommits neither `package@1` nor the six
+service laws; no definition activates before its root relations are derived or
+positively bounded, and those contents wait for exact-member closure, completed
+source migration, and a green complete corpus.
+
+Three constructibility relations remain deliberately open in task 5.7e22b1:
+exact selected-member equality for hierarchical proof and nested provider
+families; blueprint-declared root relations that derive or bound `source` to
+`project/src` where the topology assumes it; and a workspace-wide application
+boundary for foreign service consumer sealing. The Habitat-owned requirement is
+recorded in [[HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF]]. RAWR does not
+emulate any relation with a script, glob convention, local SDK fork, or
+knowingly partial application. The definition checkpoint may land
+independently, but the closed source graph is not claimed complete until those
+relations or an equally owner-correct simplification are available and the
+first instances pass.
+
+This definition record completes only
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e22b1a]]. Task
+5.7e22b1 and the remaining source, pack, release, and consumer checkpoints
+remain open.
+See [[docs/projects/shared-habitat-substrate/CORPUS#Definition Checkpoint|the controlled corpus]]
+and [[.habitat/AUTHORITY-ONTOLOGY#Current Realization|the authority ontology]].
 
 ## Settlement Oracles
 

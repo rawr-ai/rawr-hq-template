@@ -123,10 +123,27 @@ Application bounds execution.
 
 ## Current Realization
 
-The current v3 slice realizes `blueprint.toml`, `habitat.toml`, roots,
-selections, and resolved applications. It intentionally does not realize
-`capability.toml`, `niche.toml`, capability activation, niche admission, or
-cross-authority conflict resolution.
+The current definition checkpoint contains seven root v3 blueprint records:
+`package`, `resource`, `provider`, `service`, `plugin`, `plugin-nx`, and `app`.
+They describe `blueprint.toml`, instance-manifest roots and selections, and one
+root `structure.toml` per kind. The source catalog schema-admits these
+definitions, but they have no instances or resolved applications and are not
+accepted into a released policy pack.
+
+The released v2 registry and its 33 rules remain the sole execution authority.
+Only the `package@1` proof-axis grammar is frozen: `contract` and `semantics`
+member ids map to exact files. `package@1` remains outside release-pack
+acceptance until resolution proves exact equality between selected ids and
+present proof members. Every other kind's proof axes remain candidates.
+
+Blueprint-declared root relations are also unresolved. Current manifests can
+name `project` and `source` independently even where the service, app, and
+plugin structures mean exactly `source = project/src`. First release-pack
+acceptance and instance activation must derive or positively bound that
+relation so an instance cannot redirect `source` elsewhere.
+
+This checkpoint also does not realize `capability.toml`, `niche.toml`,
+capability activation, niche admission, or cross-authority conflict resolution.
 
 That narrow protocol is a release boundary, not the whole Habitat ontology.
 Later realization must extend this model without turning transitional packet
@@ -137,5 +154,7 @@ paths, catalogs, runners, or product inventories into peer concepts.
 - [[AUTHORITY|RAWR Habitat authority]]
 - [[README|Habitat policy index]]
 - [[blueprints/skill|Blueprint direction]]
+- [[../docs/projects/shared-habitat-substrate/CORPUS|Shared Habitat substrate corpus]]
+- [[../openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|Definition checkpoint record]]
 - [[../docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec|Canonical architecture]]
 - [[../docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec|Runtime realization]]
