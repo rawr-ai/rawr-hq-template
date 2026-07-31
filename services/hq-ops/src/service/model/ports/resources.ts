@@ -73,8 +73,8 @@ export type SqliteDatabase = {
   close(): void;
 };
 
-/** SQLite acquisition capability whose caller owns each returned handle. */
-export type SqliteResource = {
+/** Host capability that opens one migration-ready Journal index database. */
+export type JournalIndexDatabaseResource = {
   open(dbPath: string): Promise<SqliteDatabase>;
 };
 
@@ -95,6 +95,6 @@ export type HqOpsResources = {
   fs: FileSystemResource;
   path: PathResource;
   process: ProcessResource;
-  sqlite: SqliteResource;
+  journalIndexDatabase: JournalIndexDatabaseResource;
   embeddings: EmbeddingResource;
 };

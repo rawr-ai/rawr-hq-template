@@ -2137,6 +2137,34 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   policy, strict OpenSpec, focused Biome, and diff hygiene. Do not touch Journal
   or Security, activate staged laws, migrate to Effect, change providers or
   consumers, or introduce a detached operation handler.
+- [x] 5.7e40 Close the HQ Ops Journal module and its service-owned derived
+  index as one behavior-bearing checkpoint. Keep JSON records as canonical
+  Journal truth and classify SQLite as the service-owned tail/search index.
+  Move physical SQL and mapping into `service/db/{migrations,stores}`, export
+  the one versioned SQL asset, and make the Bun CLI host apply that asset while
+  preparing each ready Journal index handle. Project a narrow store through
+  direct service-root middleware, attach it once in `impl.ts`, and curate only
+  that store plus embeddings in `modules/journal/module.ts`. Move TypeBox
+  DTOs, policy, contracts, and inline operation handlers into their owned
+  module destinations; keep entity schemas at the pre-existing module-root
+  authority until the shared entity source law lands; make module-root
+  `router.ts` plain composition.
+  Preserve canonical JSON reads, JSON-first best-effort snippet indexing,
+  tail, FTS, semantic ranking, the exact missing-provider warning, metadata,
+  and caller results. Prove one failing Journal call emits exactly one
+  analytics event and one procedure log; canonical JSON survives an index
+  failure; missing embedding configuration performs no embedding call; and a
+  fresh database becomes usable through the exported migration. Prove owner
+  tests, typecheck, build, relevant service/database Habitat laws, strict
+  OpenSpec, focused Biome, and diff hygiene. Add no migration framework,
+  module-local persistence acquisition, generic resource, detached handler,
+  staged-law activation, Security change, or public-client redesign.
+  All 21 HQ Ops tests and the owner typecheck/build pass. CLI and server
+  typecheck/build, focused CLI Journal/config tests, server host tests, direct
+  host migration smokes, and package inclusion proof pass. All 25 active
+  Habitat rules, strict OpenSpec validation, focused Biome, and diff hygiene
+  pass. Fresh architecture/oRPC, TypeScript/TypeBox, and behavior-first reviews
+  report no P0, P1, or P2.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

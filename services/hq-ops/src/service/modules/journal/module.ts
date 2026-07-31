@@ -4,16 +4,16 @@
 import { service } from "../../impl";
 
 /**
- * Journal implementer with the route-facing resource and repository context.
+ * Journal implementer narrowed to the service-projected store and embedding
+ * capability used by its handlers.
  *
- * The service lanes remain inherited for downstream middleware; journal routes
- * author only against these curated names.
+ * The module neither acquires persistence nor recovers aggregate host resources.
  */
 export const module = service.journal.use(async ({ context, next }) =>
   next({
     context: {
-      resources: context.deps.resources,
-      repoRoot: context.scope.repoRoot,
+      journalStore: context.provided.journalStore,
+      embeddings: context.deps.resources.embeddings,
     },
   })
 );

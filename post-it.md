@@ -6,6 +6,39 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Persistence Requires A Truthful Owner
+
+A service database owns physical persistence for the whole standalone service,
+even when one module is its only current consumer. Modules do not acquire a
+database, apply migrations, or import store implementations. The host selects
+and prepares the database resource, service-root middleware projects a narrow
+store capability, and `module.ts` curates that capability for operation
+handlers. This preserves one downward context funnel without turning the
+service root into a second domain-logic plane.
+
+Journal JSON records remain canonical operational history. SQLite is a derived
+index for tail and search. The SQL migration therefore owns the physical index
+shape, while the CLI host owns connection preparation and applies the packaged
+migration before returning a ready handle. One migration needs no migration
+framework: no registry, scanner, version table, runner, or generic publication
+mechanism is earned.
+
+Operation handlers retain the behavioral decisions. A snippet write records
+canonical JSON before its best-effort index update; canonical reads use JSON;
+tail and search use the ready derived index. The store owns physical mapping
+and database mechanics, not request policy, semantic fallback, or public
+results.
+
+Journal entity schemas remain at the existing module-root authority in this
+checkpoint. Moving them under `model/entities` waits for the shared TypeBox and
+platform-neutral entity laws; database closure does not silently activate that
+separate source authority.
+
+### Bag Of Keywords
+
+truth, record, index, cache, migration, host, store, context, module, service,
+owner, ready.
+
 ## 2026-07-30 - Curation Governs Authorship
 
 Native oRPC beta.20 middleware context is additive: a module projection adds

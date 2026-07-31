@@ -15,6 +15,7 @@ import { implement } from "@orpc/server";
 import type { Context } from "./base";
 import { contract } from "./contract";
 import { middleware as analytics } from "./middleware/analytics";
+import { middleware as journal } from "./middleware/journal";
 import { middleware as observability } from "./middleware/observability";
 
 /**
@@ -24,12 +25,10 @@ import { middleware as observability } from "./middleware/observability";
  * Middleware order is authored here:
  * 1) service-owned observability
  * 2) service-owned analytics
- *
- * U02 is reservation-only, so no extra service-wide providers or guards are
- * attached yet.
+ * 3) service-owned Journal store projection
  */
 /** Unconfigured contract implementer used for aggregate router implementation. */
 export const impl = implement(contract).$context<Context>();
 
 /** Configured service stage inherited by every module branch. */
-export const service = impl.use(observability).use(analytics);
+export const service = impl.use(observability).use(analytics).use(journal);

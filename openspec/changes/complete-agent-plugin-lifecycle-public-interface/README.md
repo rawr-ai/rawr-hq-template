@@ -4978,6 +4978,39 @@ staged Config construction laws, strict OpenSpec, focused Biome, and diff
 hygiene pass. Fresh architecture/oRPC and TypeScript/TypeBox/testing reviews
 report no P0 or P1.
 
+## HQ Ops Journal Module Closure
+
+The active checkpoint
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e40]] closes Journal
+without inventing module-local persistence or a migration framework. Journal
+JSON records remain canonical operational history. SQLite remains a derived
+tail/search index, but its physical migration and store implementation move to
+the standalone service database boundary because physical persistence belongs
+to the service regardless of current module count.
+
+The Bun CLI and server hosts lazily resolve the one versioned package SQL
+asset, apply it while preparing a fresh Journal index handle, and supply that
+ready capability through the service context. Direct service-root middleware
+projects a narrow store; the Journal module curates only that store and
+embeddings. Operation handlers retain JSON-first best-effort indexing,
+canonical JSON reads, tail, FTS, semantic ranking, and fallback policy.
+Contracts, DTOs, ports, and policy are module-owned, while entity schemas stay
+at the pre-existing module-root authority until the shared entity source law
+lands. The module-root router is plain composition, so root observability and
+analytics execute once.
+
+This boundary deliberately adds no migration registry, scanner, runner,
+version table, generic database framework, detached handler, or new runtime
+resource. Migration `0002` is the trigger for separately deciding whether
+ordered migration state is actually required.
+
+The checkpoint passes all 21 HQ Ops tests, owner typecheck/build, CLI and
+server typecheck/build, focused CLI Journal/config tests, server host tests,
+direct host migration smokes, package inclusion proof, all 25 active Habitat
+rules, strict OpenSpec validation, focused Biome, and diff hygiene. Fresh
+architecture/oRPC, TypeScript/TypeBox, and behavior-first reviews report no P0,
+P1, or P2. Graphite landing and exact-main verification remain pending.
+
 ## Settlement Oracles
 
 The final product must prove:
