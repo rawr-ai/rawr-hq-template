@@ -5432,6 +5432,42 @@ app, initialize a consumer, or publish an artifact. It imports no provider,
 constructs no runtime, calls no check operation during graph construction,
 starts no nested Nx scheduler, and retains no catalog or result state.
 
+### Habitat App Composition Checkpoint
+
+The third task 5.7e22b3 checkpoint introduces the ordinary `apps/habitat`
+Oclif app with package identity `@habitat/cli`. One app-owned construction
+function selects the ready Node filesystem, path, Grit evaluation, and Git
+inventory capabilities, fixes the workspace scope, and constructs the public
+Habitat client. The Oclif entrypoint binds that client through native
+`Config.options`; the Nx entrypoint supplies the same function to the landed
+package-less projection factory.
+
+The Nx entrypoint is conventional bundled application output. Bundling the
+qualified package-less projection into `@habitat/cli/nx-plugin` makes one
+installable artifact without copying source, transferring plugin authority, or
+inventing a loader. Oclif command ownership remains in
+`@habitat/plugin-cli`; the app manifest correctly has no app-local commands.
+The app has no controller, release store, selector, daemon, provider registry,
+or retained domain state.
+
+Source development uses Oclif's native development mode. Production uses the
+compiled app and plugin manifests. The app resolves its pinned Grit executable
+from its own dependency closure, and the TypeBox-admitted command timeout is an
+explicit Nx runtime input. Until installed acceptance and consumer cutover,
+the candidate app remains outside Bun's workspace set while Nx owns its source
+project. The root therefore keeps the exact released Civ7 `@habitat/cli` as
+merge checker without creating a package alias or a second CLI identity.
+Build-only root dependencies expose the candidate's already-owned internal
+packages to its Nx tasks and leave the packed manifest on ordinary versions.
+The first-release cutover admits the app to the Bun workspace and deletes that
+temporary build wiring atomically.
+
+The source checkpoint passes app typecheck, build, Oclif manifest generation,
+the six-test Oclif/Nx/provider/configuration boundary suite, repository Biome,
+the current repository Habitat check, and diff hygiene. Installed tarball
+acceptance, the Habitat Nx release group, task completion, release, and consumer
+cutover remain open.
+
 ## Settlement Oracles
 
 The final product must prove:
