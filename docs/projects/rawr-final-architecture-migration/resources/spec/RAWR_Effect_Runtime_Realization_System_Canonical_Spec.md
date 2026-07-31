@@ -408,10 +408,10 @@ packages/
         agent/
         desktop/
       topology/
-      standard/                  # RAWR-owned standard providers and internal runtime machinery
+      standard/                  # internal runtime machinery only
 
 resources/
-  <capability>/                  # authored provisionable capability catalog
+  <capability>/                  # contract plus closed provider family
 
 services/
   <service>/                     # domain capability boundary
@@ -430,8 +430,8 @@ plugins/
     consumers/
       <capability>/              # durable consumer projection
   cli/
-    commands/
-      <capability>/              # OCLIF command projection
+    topics/
+      <topic>/                   # owns nested OCLIF commands
   web/
     app/
       <capability>/              # web app projection
@@ -541,7 +541,7 @@ packages/core/sdk/src/
 
     cli/
       index.ts
-      define-command-plugin.ts
+      define-cli-topic-plugin.ts
       schema.ts
       effect/
         index.ts
@@ -634,14 +634,18 @@ Only `@rawr/sdk` public imports are locked public package export conventions in 
 
 All declarations are import-safe.
 
-A service, plugin, resource, provider, app, or profile module declares facts, factories, descriptors, selectors, schemas, contracts, and cold execution plans. Importing a declaration does not acquire resources, read secrets, connect providers, start processes, register globals, mutate app composition, execute `RawrEffect`, or mount native hosts.
+A service, plugin, resource, provider, app, or profile module declares facts,
+factories, descriptors, selection values, schemas, contracts, and cold
+execution plans. Importing a declaration does not acquire resources, read
+secrets, connect providers, start processes, register globals, mutate app
+composition, execute `RawrEffect`, or mount native hosts.
 
 | Module kind | Import-safe content |
 | --- | --- |
 | Service modules | Boundary schemas, service declarations, service contracts, router factories, Effect execution descriptors |
 | Plugin modules | One plugin factory, lane-specific definitions, oRPC routers/contracts, workflow definitions, command definitions, web/agent/desktop surface definitions, Effect execution descriptors |
-| Resource modules | `RuntimeResource` descriptors, requirement helpers, provider selector helpers, value types |
-| Provider modules | Cold `RuntimeProvider` descriptors and `ProviderEffectPlan` acquisition/release plans |
+| Resource modules | `RuntimeResource` descriptors, requirement helpers, value types, and no provider imports |
+| Provider modules | Cold `RuntimeProvider` descriptors and `ProviderEffectPlan` acquisition/release plans behind direct package public faces |
 | App modules | App membership declarations and runtime profile selection |
 | Entrypoints | `startApp(...)` invocation and selected process shape |
 
@@ -1462,7 +1466,7 @@ import { createPlugin as workItemsPublicApi } from "@rawr/plugins/server/api/wor
 import { createPlugin as workItemsInternalApi } from "@rawr/plugins/server/internal/work-items-ops";
 import { createPlugin as workItemsSyncWorkflow } from "@rawr/plugins/async/workflows/work-items-sync";
 import { createPlugin as workItemsDigestSchedule } from "@rawr/plugins/async/schedules/work-items-digest";
-import { createPlugin as workItemsCli } from "@rawr/plugins/cli/commands/work-items";
+import { createPlugin as workItemsCli } from "@rawr/plugins/cli/topics/work-items";
 import { createPlugin as workItemsWeb } from "@rawr/plugins/web/app/work-items-board";
 import { createPlugin as workItemsAgentTools } from "@rawr/plugins/agent/tools/work-items";
 import { createPlugin as diskStatusDesktop } from "@rawr/plugins/desktop/menubar/disk-status";
@@ -1488,7 +1492,10 @@ The app owns membership. The SDK derives role/surface indexes from the selected 
 
 Profiles select supply.
 
-Runtime profiles live under `apps/<app>/runtime/profiles/*`. They select providers and config sources for the app. The profile field that holds provider choices is `providers` or `providerSelections`, never `resources`.
+Runtime profiles live under `apps/<app>/runtime/profiles/*`. They select
+providers and config sources for the app. The profile field that holds generic
+`providerSelection({ resource, provider, config })` results is `providers`,
+never `resources`.
 
 Resources, providers, and profiles are separate layers.
 
@@ -1496,24 +1503,54 @@ A resource declares a capability contract. A provider implements that capability
 
 File: `apps/hq/runtime/profiles/production.ts`  
 Layer: app-owned runtime profile selection  
-Exactness: normative for provider-selection field names, app ownership, config-source binding, and selector shape; illustrative for non-`@rawr/sdk` imports and provider selector names.
+Exactness: normative for the `providers` field, app ownership,
+config-source binding, direct resource/provider public imports, and generic
+`providerSelection({ resource, provider, config })` calls; illustrative for
+non-`@rawr/sdk` imports and provider names.
 
 ```ts
-import { defineRuntimeProfile } from "@rawr/sdk/runtime/profiles";
-import { clock } from "@rawr/resources/clock/select";
-import { email } from "@rawr/resources/email/select";
-import { inngest } from "@rawr/resources/inngest/select";
-import { logger } from "@rawr/resources/logger/select";
-import { sql } from "@rawr/resources/sql/select";
+import {
+  defineRuntimeProfile,
+  providerSelection,
+} from "@rawr/sdk/runtime/profiles";
+import { ClockResource } from "@rawr/resources/clock";
+import { systemClockProvider } from "@rawr/resources/clock/providers/system";
+import { EmailSenderResource } from "@rawr/resources/email";
+import { resendEmailProvider } from "@rawr/resources/email/providers/resend";
+import { InngestClientResource } from "@rawr/resources/inngest";
+import { cloudInngestProvider } from "@rawr/resources/inngest/providers/cloud";
+import { LoggerResource } from "@rawr/resources/logger";
+import { openTelemetryLoggerProvider } from "@rawr/resources/logger/providers/open-telemetry";
+import { SqlPoolResource } from "@rawr/resources/sql";
+import { postgresSqlProvider } from "@rawr/resources/sql/providers/postgres";
 
 export const productionProfile = defineRuntimeProfile({
   id: "hq.production",
   providers: [
-    clock.system(),
-    logger.openTelemetry({ configKey: "telemetry" }),
-    sql.postgres({ configKey: "sql.primary" }),
-    email.resend({ configKey: "email.primary" }),
-    inngest.cloud({ configKey: "inngest.primary" }),
+    providerSelection({
+      resource: ClockResource,
+      provider: systemClockProvider,
+    }),
+    providerSelection({
+      resource: LoggerResource,
+      provider: openTelemetryLoggerProvider,
+      config: { from: "runtime-config", key: "telemetry" },
+    }),
+    providerSelection({
+      resource: SqlPoolResource,
+      provider: postgresSqlProvider,
+      config: { from: "runtime-config", key: "sql.primary" },
+    }),
+    providerSelection({
+      resource: EmailSenderResource,
+      provider: resendEmailProvider,
+      config: { from: "runtime-config", key: "email.primary" },
+    }),
+    providerSelection({
+      resource: InngestClientResource,
+      provider: cloudInngestProvider,
+      config: { from: "runtime-config", key: "inngest.primary" },
+    }),
   ],
   configSources: [
     { kind: "env" },
@@ -1521,6 +1558,10 @@ export const productionProfile = defineRuntimeProfile({
   ],
 });
 ```
+
+The resource contracts do not import their providers and own no selector
+wrappers or provider catalog. The profile imports both direct package faces and
+forms the selection through the SDK-owned generic helper.
 
 The SDK derives normalized `ProviderSelection` artifacts from the profile. The runtime compiler validates provider coverage and provider dependency closure. The bootgraph receives provider ordering input. The provisioning kernel loads config, redacts secrets, and acquires selected providers.
 
@@ -2178,7 +2219,7 @@ Public server API, trusted server internal, async, CLI, web, agent, desktop, and
 | `plugins/async/workflows/<capability>` | Workflow projection builder | Durable workflow projection |
 | `plugins/async/schedules/<capability>` | Schedule projection builder | Durable scheduled projection |
 | `plugins/async/consumers/<capability>` | Consumer projection builder | Durable consumer projection |
-| `plugins/cli/commands/<capability>` | CLI command projection builder | OCLIF command projection |
+| `plugins/cli/topics/<topic>` | CLI topic projection builder | OCLIF command projection |
 | `plugins/web/app/<capability>` | Web app projection builder | Web surface projection |
 | `plugins/agent/channels/<capability>` | Agent channel projection builder | Agent channel projection |
 | `plugins/agent/shell/<capability>` | Agent shell projection builder | OpenShell projection |
@@ -2486,11 +2527,13 @@ The outer async function is native host interop. The step-local body is Effect a
 
 Schedules and consumers keep the same async ownership law. Cron strings and event names identify triggers only. Any read event data must have a schema-backed payload contract.
 
-### 12.8 CLI command plugin
+### 12.8 CLI topic plugin
 
-CLI command plugins live under `plugins/cli/commands/<capability>` and lower to OCLIF commands. OCLIF owns command dispatch semantics. The plugin owns projection.
+CLI topic plugins live under `plugins/cli/topics/<topic>` and own nested OCLIF
+commands. OCLIF owns command dispatch semantics. The topic plugin owns
+projection; the CLI app owns process composition and no command implementation.
 
-File: `plugins/cli/commands/work-items/src/commands/create.ts`  
+File: `plugins/cli/topics/work-items/src/commands/create.ts`  
 Layer: CLI command Effect authoring  
 Exactness: normative for `defineCommand(...).effect(function*)`, invocation-bound service client creation, and service invocation lane separation; illustrative for command body.
 
@@ -2638,19 +2681,32 @@ Web-local RAWR execution uses Effect where the SDK provides web-local execution 
 
 Resources define runtime contracts. Providers implement runtime contracts. Profiles select supply.
 
-Resources declare provisionable capability contracts. Providers implement those capability contracts. Profiles select providers and config sources. The SDK derives resource requirements and provider selections. The runtime compiler validates coverage and dependency closure. The bootgraph provisions selected providers in deterministic order.
+Resources declare provisionable capability contracts and own closed provider
+families. Each provider implements one contract and exposes one direct package
+public face. Profiles import the resource and provider faces and select them
+with generic `providerSelection({ resource, provider, config })`. The SDK
+derives resource requirements and provider selections. The runtime compiler
+validates coverage and dependency closure. The bootgraph provisions selected
+providers in deterministic order.
 
 Resources may expose value operations that return `RawrEffect`. Raw Effect imports remain forbidden in ordinary resource descriptor modules.
 
 A `RuntimeResource` names a provisionable capability contract consumed by services, plugins, harnesses, providers, or runtime plans. A `RuntimeProvider` implements that contract. A `RuntimeProfile` is app-owned selection of provider implementations, config sources, process defaults, harness choices, and environment-shaped wiring.
 
-Profiles select providers through `providers` or `providerSelections`. A profile field named `resources` is reserved for required capabilities, not provider selection.
+Profiles place generic
+`providerSelection({ resource, provider, config, lifetime?, role?, instance? })`
+results in `providers`. A profile field named `resources` is reserved for
+required capabilities, not provider selection.
 
 Resources do not acquire themselves. Providers do not select themselves. Runtime profiles do not acquire anything. Plugins do not acquire providers.
 
 ### 13.2 `RuntimeResource`
 
-A `RuntimeResource` owns stable identity, consumed value shape, default and allowed lifetimes, optional config schema, and diagnostic-safe contributor hooks.
+A `RuntimeResource` owns stable identity, consumed value shape, default and
+allowed lifetimes, optional config schema, and diagnostic-safe contributor
+hooks. Its resource package also closes the finite provider family and exports
+the contract plus each provider as distinct public faces. The contract module
+does not import providers.
 
 File: `packages/core/sdk/src/runtime/resources/define-runtime-resource.ts`  
 Layer: SDK resource authoring type shape  
@@ -2808,7 +2864,8 @@ A `ProviderSelection` is the app-owned normalized selection of a provider for a 
 
 File: `packages/core/sdk/src/runtime/profiles/provider-selection.ts`  
 Layer: SDK/provider profile derivation  
-Exactness: normative for selected-provider fields and object-shaped selector result.
+Exactness: normative for selected-provider fields, generic selector ownership,
+and the extensible object-shaped selector input.
 
 ```ts
 export interface ProviderSelection<
@@ -2835,58 +2892,53 @@ export function providerSelection(input: {
 
 Every required resource has exactly one selected provider at the relevant lifetime and instance unless the requirement is explicitly optional. Provider dependencies close before provisioning. Ambiguous provider coverage requires explicit app-owned selection.
 
-### 13.6 Resource catalog and standard provider stock
+### 13.6 Resource package and closed provider family
 
-Authored provisionable capability contracts live under `resources/*`.
+Authored provisionable capability contracts and their finite provider families
+live under `resources/*`.
 
 File: `resources/email/_tree.txt`  
-Layer: authored resource catalog topology  
-Exactness: normative for top-level resource catalog role; illustrative for provider names.
+Layer: authored resource package topology  
+Exactness: normative for the contract filename, closed nested provider shape,
+and package public faces; illustrative for provider names.
 
 ```text
 resources/email/
-  index.ts
-  resource.ts
-  select.ts
+  contract.ts
+  package.json              # "." -> contract.ts
+                            # "./providers/<provider>" -> provider index.ts
+  project.json
   providers/
-    resend.ts
-    smtp.ts
-    noop.ts
+    resend/
+      index.ts
+      project.json
+    smtp/
+      index.ts
+      project.json
+    noop/
+      index.ts
+      project.json
 ```
 
-RAWR-owned standard provider implementations and internal standard runtime machinery live under `packages/core/runtime/standard/*`.
+The package root exports only the provider-neutral contract. Each admitted
+provider is directly selectable through its own package public subpath. The
+contract module does not import provider modules, and the resource package owns
+no `select.ts`, provider catalog, or provider barrel.
 
-File: `packages/core/runtime/standard/_tree.txt`  
-Layer: RAWR-owned standard runtime provider stock  
-Exactness: normative for standard provider stock placement; illustrative for families.
-
-```text
-packages/core/runtime/standard/
-  resources/
-    clock/
-    logger/
-    config/
-    filesystem/
-    telemetry/
-  providers/
-    system-clock/
-    console-logger/
-    local-filesystem/
-    open-telemetry/
-```
-
-Public authoring still flows through `resources/*` and `@rawr/sdk`.
+`packages/core/runtime/standard/*` may contain private reusable runtime
+machinery. It is not an app-selectable provider stock and may not become an
+alternate home for provider instances.
 
 ### 13.7 Resource value example
 
-File: `resources/email/resource.ts`  
+File: `resources/email/contract.ts`  
 Layer: authored runtime resource contract  
-Exactness: normative for `RawrEffect`-returning resource value operation and `RuntimeSchema` on config; illustrative for exact resource family.
+Exactness: normative for the provider-neutral `RawrEffect`-returning resource
+value operation; illustrative for the exact resource family.
 
 ```ts
 import { TaggedError, type RawrEffect } from "@rawr/sdk/effect";
 import { defineRuntimeResource } from "@rawr/sdk/runtime/resources";
-import { RuntimeSchema } from "@rawr/sdk/runtime/schema";
 
 export class EmailSendError extends TaggedError("EmailSendError")<{
   readonly provider: string;
@@ -2902,73 +2954,46 @@ export interface EmailSender {
   }): RawrEffect<{ providerMessageId: string }, EmailSendError>;
 }
 
-export const EmailSenderConfigSchema = RuntimeSchema.struct({
-  apiKey: RuntimeSchema.redactedString(),
-  from: RuntimeSchema.string(),
-});
-
-export type EmailSenderConfig =
-  RuntimeSchema.Infer<typeof EmailSenderConfigSchema>;
-
 export const EmailSenderResource = defineRuntimeResource<
   "rawr.email.sender",
-  EmailSender,
-  EmailSenderConfig
+  EmailSender
 >({
   id: "rawr.email.sender",
   title: "Email sender",
   purpose: "Process-scoped outbound email sender capability.",
   defaultLifetime: "process",
   allowedLifetimes: ["process"],
-  configSchema: EmailSenderConfigSchema,
 });
 ```
 
-### 13.8 Provider selector example
+### 13.8 Direct app-owned provider selection
 
-File: `resources/email/select.ts`  
-Layer: provider selector surface  
-Exactness: normative for app-facing provider selection through selectors and object-shaped provider selection; illustrative for provider names and non-`@rawr/sdk` imports.
+File: `apps/hq/runtime/profiles/production.ts`  
+Layer: app-owned provider selection  
+Exactness: normative for direct package public faces and generic
+`providerSelection({ resource, provider, config })`; illustrative for provider
+names and non-`@rawr/sdk` imports.
 
 ```ts
 import { providerSelection } from "@rawr/sdk/runtime/profiles";
+import { EmailSenderResource } from "@rawr/resources/email";
+import { resendEmailProvider } from "@rawr/resources/email/providers/resend";
 
-import { EmailSenderResource } from "./resource";
-import { noopEmailProvider } from "./providers/noop";
-import { resendEmailProvider } from "./providers/resend";
-import { smtpEmailProvider } from "./providers/smtp";
-
-export const email = {
-  resend(input: { configKey: string }) {
-    return providerSelection({
-      resource: EmailSenderResource,
-      provider: resendEmailProvider,
-      config: { from: "runtime-config", key: input.configKey },
-    });
-  },
-
-  smtp(input: { configKey: string }) {
-    return providerSelection({
-      resource: EmailSenderResource,
-      provider: smtpEmailProvider,
-      config: { from: "runtime-config", key: input.configKey },
-    });
-  },
-
-  noop() {
-    return providerSelection({
-      resource: EmailSenderResource,
-      provider: noopEmailProvider,
-    });
-  },
-};
+const emailSelection = providerSelection({
+  resource: EmailSenderResource,
+  provider: resendEmailProvider,
+  config: { from: "runtime-config", key: "email.primary" },
+});
 ```
 
-A notifications service may declare `email: resourceDep(EmailSenderResource)`. The app profile decides whether the provider is Resend, SMTP, or no-op. The service does not import provider internals.
+A notifications service may declare
+`email: resourceDep(EmailSenderResource)`. The app profile decides whether the
+provider is Resend, SMTP, or no-op. The service imports only the resource
+contract public face.
 
 ### 13.9 Provider acquire/release example
 
-File: `resources/email/providers/resend.ts`  
+File: `resources/email/providers/resend/index.ts`  
 Layer: provider implementation authoring  
 Exactness: normative for cold provider descriptor, `providerFx.acquireRelease(...)`, telemetry, curated Effect use on returned resource operations, and redaction; illustrative for native client construction and non-`@rawr/sdk` imports.
 
@@ -2976,19 +3001,24 @@ Exactness: normative for cold provider descriptor, `providerFx.acquireRelease(..
 import { Effect } from "@rawr/sdk/effect";
 import { defineRuntimeProvider } from "@rawr/sdk/runtime/providers";
 import { providerFx } from "@rawr/sdk/runtime/providers/effect";
+import { RuntimeSchema } from "@rawr/sdk/runtime/schema";
 
 import {
-  EmailSenderConfigSchema,
   EmailSenderResource,
   EmailSendError,
-} from "../resource";
+} from "@rawr/resources/email";
+
+const ResendEmailConfigSchema = RuntimeSchema.struct({
+  apiKey: RuntimeSchema.redactedString(),
+  from: RuntimeSchema.string(),
+});
 
 export const resendEmailProvider = defineRuntimeProvider({
   id: "rawr.provider.email.resend",
   title: "Resend email provider",
   provides: EmailSenderResource,
   requires: [],
-  configSchema: EmailSenderConfigSchema,
+  configSchema: ResendEmailConfigSchema,
   defaultConfigKey: "email.primary",
 
   build({ config, telemetry }) {
@@ -3050,7 +3080,7 @@ Process-local queue, pubsub, cache, and concurrency limiting are explicit runtim
 
 ### 14.1 `ProcessQueueHubResource`
 
-File: `resources/process-queue-hub/resource.ts`  
+File: `resources/process-queue-hub/contract.ts`  
 Layer: process-local coordination resource  
 Exactness: normative for process-local queue semantics.
 
@@ -3096,7 +3126,7 @@ export const ProcessQueueHubResource = defineRuntimeResource<
 
 ### 14.2 `ProcessPubSubHubResource`
 
-File: `resources/process-pubsub-hub/resource.ts`  
+File: `resources/process-pubsub-hub/contract.ts`  
 Layer: process-local coordination resource  
 Exactness: normative for process-local pubsub semantics.
 
@@ -3132,7 +3162,7 @@ export const ProcessPubSubHubResource = defineRuntimeResource<
 
 ### 14.3 `ProcessConcurrencyLimiterResource`
 
-File: `resources/process-concurrency-limiter/resource.ts`  
+File: `resources/process-concurrency-limiter/contract.ts`  
 Layer: process-local coordination resource  
 Exactness: normative for process-local concurrency semantics.
 
@@ -3166,7 +3196,7 @@ Allowed uses include external API fanout limits, browser automation caps, local 
 
 ### 14.4 `ProcessCacheHubResource`
 
-File: `resources/process-cache-hub/resource.ts`  
+File: `resources/process-cache-hub/contract.ts`  
 Layer: process-local coordination resource  
 Exactness: normative for process-local cache semantics.
 
@@ -4295,7 +4325,7 @@ Boundary rule: Inngest owns durable async execution semantics. It does not own w
 
 Placement: `packages/core/runtime/harnesses/oclif`.
 
-Input: adapter-lowered command payloads from `plugins/cli/commands/*`, role access, process access.
+Input: adapter-lowered command payloads from `plugins/cli/topics/*`, role access, process access.
 
 Output: native OCLIF command registration/materialization, native command callbacks that delegate to `ProcessExecutionRuntime`, `StartedHarness`.
 
@@ -4722,7 +4752,7 @@ apps/hq/rawr.hq.ts
   selects workItems public API plugin
 
 apps/hq/runtime/profiles/production.ts
-  selects sql.postgres, clock.system, logger.openTelemetry
+  selects the SQL, clock, and logger resource/provider public faces through providerSelection(...)
 
 apps/hq/server.ts
   calls startApp(hqApp, { profile: productionProfile, roles: ["server"] })
@@ -4783,7 +4813,7 @@ apps/hq/rawr.hq.ts
   selects both projection packages
 
 apps/hq/runtime/profiles/production.ts
-  selects inngest.cloud plus required service/provider resources
+  selects InngestClientResource and its cloud provider through providerSelection(...)
 
 apps/hq/server.ts
   realizes trusted internal API surface
@@ -4918,7 +4948,10 @@ Runtime and package boundaries may initialize `provided: {}` only. Only service 
 
 ### 25.3 Resource/provider/profile
 
-Services and plugins declare resource requirements. Apps select providers through `RuntimeProfile` using `providers` or `providerSelections`.
+Services and plugins declare resource requirements. Apps import resource and
+provider package public faces, call generic
+`providerSelection({ resource, provider, config })`, and place the results in
+the runtime profile's `providers` field.
 
 A profile field named `resources` is not the provider-selection field.
 
@@ -5046,7 +5079,49 @@ They do not provide cross-process durability, workflow run identity, workflow hi
 
 Desktop background cadence is process-local desktop behavior. Business-level durable work belongs on `async`.
 
-### 25.11 Acceptance gates
+### 25.11 Blueprint evaluator and proof topology
+
+RAWR HQ-Template owns the `@habitat/cli` source, package identity, releases,
+consumer integration, and generic blueprint policy. It publishes policy
+through the data-only `@rawr/habitat-blueprints` payload:
+
+```text
+habitat-pack.json
+blueprints/**
+```
+
+The pack contains no executable JavaScript, product instances, host baselines,
+RAWR HQ-Template paths, or legacy v2 rules. `@habitat/cli` owns exact
+pack/version/protocol resolution, admission, evaluation, classification,
+generation, and Nx integration mechanics. It does not amend policy. Resolution
+has no fallback or precedence merge. Multiple accepted versions of one
+blueprint identity may coexist; a duplicate blueprint identity/version pair is
+fatal, and rule ids are globally unique across the resolved authority catalog.
+
+The Template-owned package supplies one idempotent initializer that configures
+the ordinary Nx plugin and inferred repository targets, supplies one named
+Habitat hook contribution, and acquires pinned Grit. Each consumer repository
+owns its hook files and final hook composition. Initialization preserves
+unrelated hook behavior, replaces only an older contribution with the same
+Habitat identity during upgrade, fails on an incompatible Habitat
+contribution, makes no change on a converged repeat, and removes its
+contribution only through an explicit removal operation. Consumers select
+exact packages, policy packs, and repository instances without copying Habitat
+mechanics or integration wiring.
+
+Every admitted kind that permits `test/` defines a finite, versioned set of
+disjoint, kind-relevant axes and exact member-id-to-path mappings. The `test/`
+root contains only selected members; every proof file belongs to exactly one
+axis. An absent axis has no directory, and an instance with no proof members
+has no `test/` root.
+
+Open or case-by-case `support`, `helpers`, `runtime`, `fixtures`, `other`, and
+similar cabinets are invalid. Resource proof does not duplicate provider
+behavior. Provider proof does not duplicate resource-contract, SDK, compiler,
+or framework guarantees. Plugin and app proof does not duplicate adapter,
+runtime, or harness guarantees.
+
+### 25.12 Acceptance gates
 
 Gate families are:
 
@@ -5059,6 +5134,8 @@ Gate families are:
 | Fixture/plan gates | `NormalizedAuthoringGraph`, `ServiceBindingPlan`, `CompiledExecutionPlan`, `CompiledExecutionRegistryInput`, provider dependency graph, `RuntimeCatalog`, telemetry labels, startup rollback, finalization records |
 | Effect-only terminal gates | no public `.handler(...)` terminal in normalized graphs, compiled plans, fixtures, examples, or public SDK implementers; no inline async step executable body hidden inside workflow invocation |
 | Provider separation gates | provider acquire/release represented as `ProviderEffectPlan` and bootgraph module metadata, not as ordinary `EffectExecutionDescriptor` procedure plans |
+| Blueprint-pack gates | exact CLI, pack version, and protocol; data-only public payload; no precedence; accepted blueprint versions coexist; duplicate identity/version pairs and repeated rule ids are refused |
+| Proof-topology gates | every admitted `test/` member maps once to a selected finite axis; absent axes and open proof cabinets are absent; no cross-owner duplicate proof |
 
 ## 26. Load-bearing foundation and flexible extension matrix
 
@@ -5067,7 +5144,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Area | Load-bearing foundation | Flexible extension boundary |
 | --- | --- | --- |
 | Ownership | Services govern domains, plugins project capabilities, apps compose products, runtime realizes | New service domains, plugin capabilities, provider families |
-| Topology | Locked roots and projection lanes | Additional files inside package boundaries |
+| Topology | Locked roots, public faces, projection lanes, and closed proof interiors | Additional private files only through explicitly admitted, versioned blueprint interiors |
 | Lifecycle | `definition -> selection -> derivation -> compilation -> provisioning -> mounting -> observation` | Additional diagnostics and derived artifacts within phases |
 | App start | `defineApp(...)`, `startApp(...)` | Entrypoint count and selected role combinations |
 | Service lanes | `deps`, `scope`, `config`, `invocation`, `provided` | Service-specific schemas and middleware |
@@ -5092,9 +5169,9 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | `AppDefinition` | App | `apps/<app>/rawr.<app>.ts` | `defineApp(...)` | SDK derivation | Definition | App identity and plugin membership findings | App composition snapshot |
 | `Entrypoint` | App | `apps/<app>/<entrypoint>.ts` | `startApp(...)` call | SDK derivation/runtime compiler | Selection | Entrypoint/process shape findings | Entrypoint selection gate |
 | `RuntimeProfile` | App runtime profile | `apps/<app>/runtime/profiles/*` | `defineRuntimeProfile(...)` | SDK derivation/runtime compiler | Selection/compilation | Provider/config findings | Profile snapshot |
-| `RuntimeResource` | Resource catalog | `resources/<capability>` | `defineRuntimeResource(...)` | SDK derivation/compiler/providers | Definition through provisioning | Resource coverage, lifetime, diagnostic contributor findings | Resource contract gate |
-| `RuntimeProvider` | Provider package | `resources/<capability>/providers/*` or standard provider package | `defineRuntimeProvider(...)` | SDK derivation/compiler/bootgraph | Definition through provisioning | Provider coverage, dependency, config, acquisition, release findings | Provider coverage gate |
-| `ProviderSelection` | App/runtime profile | profile selector helpers | `providerSelection(...)` | SDK derivation/compiler | Selection/compilation | Ambiguity/missing provider findings | Provider selection gate |
+| `RuntimeResource` | Resource contract family | `resources/<capability>/contract.ts` through the package root public face | `defineRuntimeResource(...)` | SDK derivation/compiler/providers | Definition through provisioning | Resource coverage, lifetime, diagnostic contributor findings | Resource contract gate |
+| `RuntimeProvider` | Nested provider | `resources/<capability>/providers/<provider>/index.ts` through its direct package public face | `defineRuntimeProvider(...)` | SDK derivation/compiler/bootgraph | Definition through provisioning | Provider coverage, dependency, config, acquisition, release findings | Provider coverage gate |
+| `ProviderSelection` | App/runtime profile | generic SDK helper call in `apps/<app>/runtime/profiles/*` | `providerSelection({ resource, provider, config, lifetime?, role?, instance? })` | SDK derivation/compiler | Selection/compilation | Ambiguity/missing provider findings | Provider selection gate |
 | `ProviderEffectPlan` | SDK provider execution model | `packages/core/sdk/src/runtime/providers/provider-effect-plan.ts` | `providerFx` | Runtime provider lowering/bootgraph | Definition/provisioning | `provider.effect-plan.missing` | Provider effect plan gate |
 | `RawrEffect` | SDK Effect facade | `packages/core/sdk/src/effect` | Curated `Effect` facade and sanctioned SDK facades | Execution descriptors, resource values, runtime lowering | Definition through invocation | Raw import, yieldability, and runtime execution diagnostics | `rawr-effect.execution` gate |
 | `EffectExecutionDescriptor` | SDK execution model | `packages/core/sdk/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies and `defineAsyncStepEffect(...)` descriptors | Runtime compiler/process execution runtime | Derivation through invocation | Effect descriptor diagnostics | Effect descriptor gate |

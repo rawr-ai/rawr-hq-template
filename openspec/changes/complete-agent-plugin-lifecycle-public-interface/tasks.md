@@ -1838,17 +1838,74 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   live-state, or second operation path.
 - [ ] 5.7e22 Activate the six closed service-construction laws through the
   installed Habitat Nx boundary after tasks 5.7e19 through 5.7e21 and 5.7e24
-  are green and task 5.7e2 proves the complete live corpus. Move topology,
-  anchor, isolation, context, composition, and router-authorship packets into
-  the enforced registry together, retain empty baselines, and let inferred
-  owner-local targets own inputs, caching, and one Habitat acquisition. The
-  landed Template consumer already pins the distributable
-  `@habitat/cli` package by immutable release URL and lockfile integrity,
-  installs its Nx plugin, and has deleted the interim provisioner and
-  hand-maintained selectors. Add no local SDK fork, manifest generator,
-  wrapper, raw Grit invocation, alternate runner, path exception, or partial
+  are green, task 5.7e2 proves the complete live corpus, and tasks 5.7e22b
+  through 5.7e22f have landed. Consume the installed Template-owned package,
+  move topology, anchor, isolation, context, composition, and
+  router-authorship packets into the enforced registry together, retain empty
+  baselines, and let inferred owner-local targets own inputs and caching. Add
+  no local SDK fork, manifest generator, wrapper, raw Grit invocation,
+  alternate runner, path exception, duplicated consumer wiring, or partial
   activation. Close this task only when the six laws are enforced by the
   required repository gate and the complete admitted corpus reports zero.
+- [x] 5.7e22a Correct Habitat package and release authority before source
+  intake. Make RAWR HQ-Template the owner of `@habitat/cli` source, package
+  identity, releases, generic policy distribution, and plug-and-play consumer
+  integration. Retain Magic Migration and Civ7 only as implementation and
+  consumer evidence with historical provenance. Require one idempotent
+  initializer rather than copied Nx, Grit, or target wiring, while keeping each
+  repository authoritative for its hook files and final hook composition.
+  Record combined source intake/deproductization, initializer closure, policy
+  pack construction, release, consumer adoption, and vendor modernization as
+  separately reviewed boundaries. Bind any native asset to the same package
+  release rather than creating a second CLI identity.
+  Update the canonical architecture, runtime-realization specification,
+  controlled transfer corpus, active execution record, and rolling mental
+  model together. Move no source, release, consumer, provider, or Personal
+  state in this authority checkpoint.
+- [ ] 5.7e22b Intake and deproductize the Template-owned Habitat source as one
+  reviewed Graphite checkpoint. Extract only generic primitives from exact
+  committed Civ7 evidence; do not transplant branch ancestry, Civ7 host
+  policy, product roots, generator/taxonomy/doc paths, generated output,
+  manual consumer wiring, or a wholesale `tools/habitat` tree. Make the
+  blueprint-aware authority catalog the production runtime path, remove the
+  compatibility-only registry from owner-correct execution, close Habitat
+  self-authority, and dogfood the source through one workspace package.
+- [ ] 5.7e22c Implement one idempotent Habitat consumer initializer as its own
+  reviewed checkpoint. It registers the Nx plugin, projects inferred
+  repository targets, supplies one named Habitat hook contribution, and
+  acquires pinned Grit. Preserve unrelated repository-owned hook behavior,
+  replace only an older contribution with the same Habitat identity, refuse an
+  incompatible Habitat contribution, make no write on a converged repeat, and
+  remove the contribution only through an explicit removal operation. Prove
+  those transitions in an isolated consumer without repository-local wiring.
+- [ ] 5.7e22d Construct and admit the first data-only
+  `@rawr/habitat-blueprints` package before publication. Freeze its package
+  metadata, `habitat-pack.json` protocol, exports, exclusion proof, and initial
+  admitted set as `package@1` plus exactly the six reviewed service
+  construction laws consumed by task 5.7e22. Exclude draft resource,
+  provider, app, and CLI kinds, repository-qualified instances, host
+  baselines, executable code, product paths, and legacy v2 rules. Prove exact
+  pack resolution and admission through the workspace-owned CLI.
+- [ ] 5.7e22e Publish the first Template-owned `@habitat/cli` and
+  `@rawr/habitat-blueprints` releases from reviewed canonical `main`. Bind
+  package, policy, protocol, source provenance, and any native asset to one
+  compatible release set and publish the CLI before its policy pack. Build the
+  requested Bun 1.4 native asset where viable; if Bun 1.4 cannot preserve the
+  supported CLI behavior, record the concrete incompatibility and the
+  owner-correct update path rather than falling back silently. Prove an
+  isolated installed consumer before publication.
+- [ ] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
+  consumer. Delete the manual Nx rule chain, explicit CI Grit acquisition,
+  copied hook locator, stale Civ7 tarball pin, and consumer-only ownership
+  prose only after the initializer preserves the repository's remote-safety
+  hook behavior. Run initialization twice and require a byte-stable second
+  pass, then prove repeated parallel policy checks through native Nx targets.
+- [ ] 5.7e22g Migrate the Template-owned Habitat package from its isolated
+  Effect 3/oRPC 1/TypeBox 1.3.6 substrate to Template's Effect 4, oRPC 2, and
+  TypeBox version as a separate reviewed vendor boundary. This planned
+  modernization is not source ownership and does not block the first
+  owner-correct package release. Preserve public Habitat behavior and remove
+  the predecessor vendor set without a compatibility bridge.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
