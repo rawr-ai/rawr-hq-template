@@ -2,35 +2,37 @@
 
 ## Purpose
 
-- Admit local Habitat authority and resolve reusable rule applications.
+- Admit local Habitat authority, resolve applications, and check their rules.
 
 ## Scope
 
-- Applies to the catalog module's contract, policy, and resolve handler.
+- Applies to the catalog module's contract, model, and grouped router handlers.
 
 ## Boundaries
 
-- The handler owns filesystem observation and operation sequencing. Module
+- Router handlers own filesystem observation and operation sequencing. Module
   policy owns deterministic classification, schema admission, path semantics,
-  duplicate refusal, and application resolution.
-- The module does not evaluate applications, acquire providers, persist a
-  catalog, or reproduce the version 2 runner model.
+  duplicate refusal, application resolution, selection, and result meaning.
+- The module consumes a ready evaluator but does not select or construct its
+  provider, persist a catalog, or reproduce the version 2 runner model.
 
 ## Behavior
 
 - `resolve` returns a closed resolved/rejected result and never hides expected
   repository, parse, schema, or semantic failures as defects.
+- `check` intersects selectors over resolved version 3 applications, evaluates
+  selected Grit checks, and refuses unsupported runner kinds before execution.
 
 ## Concepts
 
-- Authority paths and resolved path facts are service-observed evidence used by
-  pure catalog policy.
+- Authority paths, resolved applications, and mechanical findings are observed
+  facts interpreted by pure catalog policy.
 
 ## Flow
 
-- The module curates filesystem, path, and workspace-root vocabulary. The
-  resolve handler enumerates exact sources and observes referenced paths before
-  policy closes the catalog.
+- The module curates filesystem, path, evaluator, and workspace-root
+  vocabulary. The grouped router leaf resolves exact sources before either
+  returning the catalog or selecting and evaluating applications.
 
 ## Interfaces
 

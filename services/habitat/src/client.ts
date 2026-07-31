@@ -5,7 +5,7 @@ export { type Contract, contract } from "./service/contract";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
 
-/** Host-supplied ready Effect capabilities used by catalog resolution. */
+/** Host-supplied ready Effect capabilities used by Habitat operations. */
 export type Deps = RouterInitialContext["deps"];
 
 /** Stable absolute workspace binding fixed at client construction. */

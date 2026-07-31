@@ -5127,8 +5127,9 @@ provider behavior tests, and both owner check targets pass. The parent
 production input includes nested provider source, so a provider change
 invalidates the package artifact that emits it. Standing architecture,
 TypeScript/Effect, structural-quality, and behavior-first reviews report no
-remaining P0 or P1. Task 5.7e22b2 remains open for the separate check operation
-that will consume the rule-evaluation resource.
+remaining P0 or P1. At this resource checkpoint, task 5.7e22b2 remained open
+for the separate service operation that would consume the rule-evaluation
+resource.
 
 ## Habitat Self-Hosting Boundary
 
@@ -5175,6 +5176,37 @@ suite reports 18 passing tests, the OpenSpec validates strictly, repository
 Biome passes, and the 25 required Habitat policy rules report no findings.
 Architecture, behavior-first testing, and TypeScript/Effect reviews report no
 remaining P0, P1, or material P2 findings.
+
+### Habitat Catalog Check Checkpoint
+
+The next service-owned operation is `catalog.check`, not a parallel checker or
+runtime host. It consumes the same admitted catalog, intersects optional
+owner/rule/runner selectors, and evaluates the resulting applications in stable
+rule/instance/owner order. Empty authority completes successfully without
+resource calls. Unknown values, wrong selector namespaces, and cross-selector
+empty intersections refuse before evaluation; a sole recognized runner with
+no current applications preserves the predecessor's successful empty result.
+
+The host supplies one ready provider-neutral rule-evaluation resource through
+the service dependency lane. The catalog module neither selects a provider nor
+constructs a runtime. Its grouped router handler reads the admitted Grit
+program, passes resolved absolute subjects to the resource, confines returned
+paths to those subjects, and interprets findings through service-owned lane
+policy. Typed evaluator failures become application errors; defects and
+interruptions remain Effect failures.
+
+This checkpoint executes only Grit applications whose acquisition kind is
+`check`. Native structure and Grit `apply-dry-run` applications are refused
+before resource invocation. They cannot silently pass, and they do not acquire
+transitional runners. TypeBox owns the closed request and total result shapes;
+version-three reports preserve `locked: false` and `baselined: false` without
+acquiring predecessor baseline state. The operation retains no catalog,
+provider, finding, or result state.
+
+The focused behavior suite reports 15 passing check tests and the complete
+service suite reports 33 passing tests. Uncached Nx typecheck and build pass,
+with dependency and operation boundaries unchanged outside the Habitat service
+and rule-evaluation resource.
 
 ## Settlement Oracles
 

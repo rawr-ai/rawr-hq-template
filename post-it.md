@@ -6,6 +6,35 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-31 - Evaluation Is A Service Decision
+
+Catalog resolution and rule checking are two operations over the same admitted
+Habitat authority. They remain inside one sealed catalog module so application
+meaning does not rise into a service-root orchestration plane. One grouped
+router leaf owns their shared current-repository observation; each procedure
+still owns its operation sequence and pure module policy owns selection and
+interpretation.
+
+The host supplies one ready provider-neutral evaluator. The service never
+selects Grit, constructs a runtime, or gives the resource catalog semantics.
+It resolves applications, intersects selectors, reads the admitted program,
+passes absolute subjects to the resource, validates returned paths, and derives
+the Habitat result. The resource reports mechanics; the service decides
+meaning.
+
+The first executable set is deliberately closed to Grit `check` applications.
+Native structure and `apply-dry-run` are refused before evaluation. Silence or
+skipping would counterfeit a passing result; another mechanical capability
+must land before those application kinds become executable.
+
+### Bag Of Keywords
+
+check, selector, application, finding, result.
+
+truth, closure, determinism, diagnosis, idempotence.
+
+resolve, select, evaluate, interpret, sort.
+
 ## 2026-07-30 - Evaluator Reports, Service Decides
 
 Habitat realizes itself through the same product chain it governs. Rules remain
