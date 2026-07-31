@@ -48,8 +48,9 @@ Effect failure slots at service capability boundaries. The
 Standalone service proof lives only under optional package-root `test/`.
 The source catalog schema-admits the v3 service definition, but no service
 instance exists and the definition has no release-pack acceptance. Its current
-generic rule set is structure-only: RAWR-path-qualified Grit rules remain
-outside the definition while the location-independent service laws are staged.
+generic rule set is structure-only: the active RAWR-path-qualified v2 Grit
+rules remain outside the definition, and the separate staged construction laws
+remain path-qualified candidates pending a location-independent recut.
 Release-pack acceptance waits until finite contract, operation-semantic, and
 root-execution member axes are frozen and the application resolver can reject
 unselected members. No open support, helper, runtime, fixture, or case-by-case

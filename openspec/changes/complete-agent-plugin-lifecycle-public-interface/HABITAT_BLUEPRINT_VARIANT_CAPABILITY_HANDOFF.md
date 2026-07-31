@@ -2,12 +2,12 @@
 
 ## Status
 
-`UPSTREAM_NORMATIVE_HANDOFF`
+`TEMPLATE_OWNED_NORMATIVE_RECORD`
 
-This document specifies a future Habitat SDK capability. It is not implemented
-in RAWR HQ-Template, does not authorize a local SDK fork or script, and does not
-block the active lifecycle work recorded in [[README]]. The service posture
-remains governed by the
+This document specifies future Template-owned Habitat catalog capabilities. It
+does not authorize a parallel SDK, repository-specific script, or partial v3
+activation, and it does not block the active lifecycle work recorded in
+[[README]]. The service posture remains governed by the
 [[.habitat/blueprints/service/skill|Service Capability Funnel]] and the
 [[.habitat/blueprints/service/README|service blueprint authority]].
 
@@ -37,7 +37,7 @@ variants without requiring a repository-specific checker.
 
 ## Exact Member Closure
 
-The same upstream relation model MUST let a blueprint declare a finite family
+The same Habitat relation model MUST let a blueprint declare a finite family
 of owned members without reducing membership to filename inference.
 
 - A parent instance MUST be able to declare exact child members, including a
@@ -81,9 +81,36 @@ constructible. RAWR MUST NOT substitute matching filenames, repository
 convention, or a separate validation script for a blueprint-owned root
 relation.
 
+## Workspace Acquisition
+
+Habitat MUST let catalog resolution attach the exact workspace subject set
+needed by a relation that crosses one instance boundary, such as service
+public-consumer sealing, to the resulting application.
+
+- The blueprint relation MUST declare the bounded foreign-subject selector
+  shape, and the instance manifest MUST supply the exact selectors.
+- Every selector MUST resolve to exactly one schema-admitted instance and its
+  definition kind.
+- For a workspace-wide relation, the eligible subject set MUST be derived from
+  the authoritative workspace project set and the relation's declared project
+  kinds. The instance-selected set MUST equal that eligible set; missing and
+  extra subjects MUST be refused.
+- Each selector MUST declare exact, bounded source roots for its foreign
+  subject rather than scan an ambient repository or infer ownership from an
+  import string.
+- A service instance MUST NOT own, admit, or rewrite a foreign consumer. It may
+  only evaluate the acquired subjects against the service-owned public face.
+- The Nx projection MUST consume the same resolved application and subject set;
+  it MUST NOT construct a second workspace inventory.
+- Missing, ambiguous, out-of-workspace, and wrong-kind subjects MUST be refused
+  before source evaluation.
+
+This capability is required before public-consumer sealing becomes a resolved
+v3 application. Until then the corresponding source law remains staged.
+
 ## Required Verification
 
-The upstream implementation MUST prove:
+The Template-owned Habitat implementation MUST prove:
 
 1. One declared, admitted variant composes with and preserves its kind's base
    constraints.
@@ -102,10 +129,14 @@ The upstream implementation MUST prove:
    diagnostics.
 10. Derived root relations accept the exact descendant and reject unrelated,
     escaping, and missing paths.
+11. Foreign-consumer acquisition proves exact equality with the eligible
+    workspace subject set, refuses missing, extra, or ambiguous ownership, and
+    supplies the same resolved set to Habitat evaluation and Nx projection.
 
-These obligations belong to the upstream Habitat SDK. RAWR MUST NOT emulate
-them with local cardinality checks, XOR scripts, filename inference, or
-repository-specific runners.
+These obligations belong to Template-owned Habitat catalog resolution and
+application execution. RAWR MUST NOT emulate them with a parallel SDK, local
+cardinality checks, XOR scripts, filename inference, or repository-specific
+runners.
 
 ## Current RAWR Resolution
 
@@ -131,6 +162,6 @@ module's one plain router object. `contract/index.ts` owns the matching
 declarative contract composition. Module `contract.ts` and `router/index.ts`
 alternatives are not admitted.
 
-This single positive shape eliminates the local router XOR. The upstream
+This single positive shape eliminates the local router XOR. The deferred
 variant capability remains useful only for future kinds that deliberately need
 more than one explicit structural form.
