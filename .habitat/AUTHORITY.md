@@ -1,8 +1,12 @@
 # Habitat Authority Boundary
 
-RAWR HQ-Template owns the constraints in this directory. The installed Habitat
-package owns read-only evaluation mechanics; it does not own repository
-architecture or product behavior.
+RAWR HQ-Template owns both the constraints in this directory and the generic
+evaluation mechanics that execute them. [[AUTHORITY-ONTOLOGY|The Habitat
+authority ontology]] is the conceptual owner for blueprint, instance,
+capability, niche, and application meaning. Policy remains repository-owned
+data: the evaluator can resolve, schedule, and run admitted applications, but
+it cannot amend repository architecture or product behavior. Publication and
+consumer initialization remain separately reviewed release work.
 
 This tree narrows reusable package kinds through positive structure and source
 relationships:
@@ -140,7 +144,9 @@ TypeScript decomposition. Provider lifecycle mechanics remain inside that
 realization; the application retains selection while runtime owns scope.
 
 Rules under `.habitat/rawr` remain qualified repository, lifecycle, or host
-constraints rather than generic blueprints. The repository niche owns the
+constraints rather than generic blueprints. That path is a current physical
+governance overlay, not the semantic definition of a niche. The repository
+niche owns the
 cross-kind `AGENTS.md` placement relation and the closed repository-script
 root while leaving package topology with each package blueprint. Its contracts
 subniche applies the shared exported-value JSDoc law to the admitted public
@@ -158,14 +164,16 @@ former coarse project-kind matrix is retired, not represented as another
 source pattern. Nx observes and schedules the graph.
 
 The `nx-workspace` blueprint owns the root scheduler contract and the single
-workspace lint relationship. Grit owns that scheduler source law. The installed
-Habitat Nx plugin owns registry discovery, inferred rule and owner targets,
-exact cache inputs, caching, graph dependencies, and one package-local
-acquisition. Codex Stop delegates to the same package's hook surface rather
-than maintaining another selector.
+workspace lint relationship. Grit owns that scheduler source law. The
+Template-owned Habitat Nx plugin owns application discovery, inferred rule and
+owner targets, exact cache inputs, caching, and graph dependencies. Codex Stop
+delegates through the repository-owned hook composition to the Habitat
+projection rather than maintaining another selector.
 No equivalent structural or source policy belongs in ESLint or a hand-written
 script. Nx module dependency edges may use the Nx ESLint boundary rule when
 that separate graph law is admitted.
 
-See [[README|the Habitat blueprint index]], [[AGENTS|the repository router]],
-and [[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].
+See [[README|the Habitat blueprint index]],
+[[AUTHORITY-ONTOLOGY|the authority ontology]], [[AGENTS|the repository
+router]], and
+[[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].

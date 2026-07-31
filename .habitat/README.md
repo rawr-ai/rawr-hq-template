@@ -1,7 +1,11 @@
 # RAWR Habitat Authority
 
-This tree is RAWR HQ-Template's repository-local structural authority. The
-installed `@habitat/cli` package evaluates these packets without amending them.
+This tree is RAWR HQ-Template's repository-local structural authority.
+[[AUTHORITY-ONTOLOGY|Habitat's authority ontology]] distinguishes kinds,
+instances, capabilities, governed communities, and resolved execution. The
+current evaluator realizes only the documented blueprint/instance slice and
+cannot amend these packets. Publication and consumer initialization remain
+separate release checkpoints.
 
 ```text
 .habitat/blueprints/<kind>/<rule>/
@@ -40,7 +44,9 @@ The current generic kinds are:
   remains intentionally unconstrained.
 
 The `rawr/` tree carries owner-qualified constraints that are not generic
-package laws. Its repository niche owns the cross-kind `AGENTS.md` placement
+package laws. It is the current physical overlay for repository governance,
+not the complete definition of a Habitat niche. Its repository niche owns the
+cross-kind `AGENTS.md` placement
 relation without acquiring the topology of the heterogeneous package and
 module roots it inspects, plus the positively closed root for repository
 scripts and the exported-value documentation contract on the admitted public
@@ -70,10 +76,11 @@ requires a named authority decision before the packet topology can change.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
 
-The installed Habitat Nx plugin discovers the registry and infers one cacheable
-target per rule plus owner-local `check:policy` composition. Codex Stop invokes
-`habitat hook agent-stop`; it shares the package and registry but does not
-become a second admission graph.
+The Habitat Nx plugin discovers resolved applications and infers one cacheable
+target per application plus owner-local `check:policy` composition. The
+workspace currently loads that plugin from Template-owned source. Codex Stop
+invokes `habitat hook agent-stop`; it shares the package and catalog but does
+not become a second admission graph.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit

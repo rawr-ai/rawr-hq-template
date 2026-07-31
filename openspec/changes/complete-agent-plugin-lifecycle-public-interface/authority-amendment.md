@@ -197,10 +197,16 @@ historical imports and current Magic service lineage. RAWR adaptations preserve
 those shared laws while qualifying repository identity, the canonical
 `@rawr/hq-sdk` TypeBox bridge, and one module-router composition face over named
 authored router leaves. Template-owned extensions cover platform independence
-and private-alias configuration/ownership. The portable Habitat consumer pins
-Civ7 release `habitat-cli-v0.1.0`, reviewed source
-`d51e8c7454e301bcaba56c8364f5c714d5febca3`, through the ordinary package
-graph. Its exported Nx plugin owns discovery, inputs, caching, and acquisition.
+and private-alias configuration/ownership. Civ7 release
+`habitat-cli-v0.1.0` and reviewed source
+`d51e8c7454e301bcaba56c8364f5c714d5febca3` remain transfer evidence only.
+Template owns the Habitat product source and realizes it through the ordinary
+resource, provider, service, plugin, and app graph. `@habitat/cli` is the
+assembled Oclif release identity rather than a composite package source owner.
+The Habitat Nx projection owns application discovery, exact inputs, caching,
+and execution without acquiring service or provider authority. Publication,
+the idempotent consumer initializer, and released-package adoption remain
+separately reviewed checkpoints.
 
 ## Behavioral Boundary
 

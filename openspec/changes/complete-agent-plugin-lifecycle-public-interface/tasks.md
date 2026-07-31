@@ -1862,14 +1862,44 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   controlled transfer corpus, active execution record, and rolling mental
   model together. Move no source, release, consumer, provider, or Personal
   state in this authority checkpoint.
-- [ ] 5.7e22b Intake and deproductize the Template-owned Habitat source as one
-  reviewed Graphite checkpoint. Extract only generic primitives from exact
-  committed Civ7 evidence; do not transplant branch ancestry, Civ7 host
-  policy, product roots, generator/taxonomy/doc paths, generated output,
-  manual consumer wiring, or a wholesale `tools/habitat` tree. Make the
-  blueprint-aware authority catalog the production runtime path, remove the
-  compatibility-only registry from owner-correct execution, close Habitat
-  self-authority, and dogfood the source through one workspace package.
+- [ ] 5.7e22b Intake and deproductize the Template-owned Habitat source through
+  the canonical product-realization graph as one reviewed Graphite stack.
+  Extract only generic behavior from exact committed Civ7 evidence; do not
+  transplant branch ancestry, Civ7 host policy, product roots,
+  generator/taxonomy/doc paths, generated output, manual consumer wiring, or a
+  wholesale `tools/habitat` tree. Keep support-only matter in packages,
+  provider-neutral lifecycle contracts in resources, concrete acquisition in
+  providers, semantic Habitat operations in one service, Oclif and Nx
+  projections in plugins, and provider/profile selection plus the executable
+  entrypoint in an app. Make the blueprint-aware authority catalog the
+  production service path. Admit an existing v2 registry only as compatibility
+  data inside that catalog, resolve its absence to one exact empty document,
+  and retain no separate predecessor startup or execution authority. Do not
+  create a composite `habitat-cli` source kind or bless one package as a
+  service/resource/plugin/app exception.
+- [ ] 5.7e22b1 Close the Habitat source graph against its own ordinary kind
+  blueprints before behavior migration. Use the generic package, resource,
+  provider, service, plugin, and app laws; add only the missing generic Nx
+  projection kind required by the actual product graph. One singular
+  `structure.toml` remains at each blueprint root. Remove the rejected
+  `habitat-cli` blueprint rather than teaching Habitat an exception for its own
+  source.
+- [ ] 5.7e22b2 Migrate the service and resource/provider boundaries without
+  changing public Habitat behavior. Keep rule and authority semantics in the
+  service, make external execution capabilities provider-neutral resources,
+  select concrete providers only in the app, and remove consumer Git-hook,
+  Biome, Graphite, and repository scheduling policy from the evaluator
+  service. Correct blueprint discovery to
+  `.habitat/blueprints/<kind>/blueprint.toml`, include resolved applications in
+  `--owner` selection, and make blueprint-only execution independent of the v2
+  compatibility registry. Prove each correction with behavior-first oracles.
+- [ ] 5.7e22b3 Project the sealed Habitat service through one Oclif command
+  plugin and one Nx integration plugin, then compose them in the Habitat app.
+  Build and package one ordinary `@habitat/cli` artifact whose `habitat`
+  entrypoint and Nx export share the same public service semantics. Artifact
+  unity does not change source ownership. Use native Nx and Oclif build,
+  manifest, package, and release mechanics; add no controller, private runtime
+  selector, or duplicated consumer wiring.
 - [ ] 5.7e22c Implement one idempotent Habitat consumer initializer as its own
   reviewed checkpoint. It registers the Nx plugin, projects inferred
   repository targets, supplies one named Habitat hook contribution, and
@@ -1879,7 +1909,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   remove the contribution only through an explicit removal operation. Prove
   those transitions in an isolated consumer without repository-local wiring.
 - [ ] 5.7e22d Construct and admit the first data-only
-  `@rawr/habitat-blueprints` package before publication. Freeze its package
+  `@habitat/blueprints` package before publication. Freeze its package
   metadata, `habitat-pack.json` protocol, exports, exclusion proof, and initial
   admitted set as `package@1` plus exactly the six reviewed service
   construction laws consumed by task 5.7e22. Exclude draft resource,
@@ -1887,7 +1917,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   baselines, executable code, product paths, and legacy v2 rules. Prove exact
   pack resolution and admission through the workspace-owned CLI.
 - [ ] 5.7e22e Publish the first Template-owned `@habitat/cli` and
-  `@rawr/habitat-blueprints` releases from reviewed canonical `main`. Bind
+  `@habitat/blueprints` releases from reviewed canonical `main`. Bind
   package, policy, protocol, source provenance, and any native asset to one
   compatible release set and publish the CLI before its policy pack. Build the
   requested Bun 1.4 native asset where viable; if Bun 1.4 cannot preserve the
@@ -1900,12 +1930,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   prose only after the initializer preserves the repository's remote-safety
   hook behavior. Run initialization twice and require a byte-stable second
   pass, then prove repeated parallel policy checks through native Nx targets.
-- [ ] 5.7e22g Migrate the Template-owned Habitat package from its isolated
-  Effect 3/oRPC 1/TypeBox 1.3.6 substrate to Template's Effect 4, oRPC 2, and
-  TypeBox version as a separate reviewed vendor boundary. This planned
-  modernization is not source ownership and does not block the first
-  owner-correct package release. Preserve public Habitat behavior and remove
-  the predecessor vendor set without a compatibility bridge.
+- [ ] 5.7e22g Realize the Habitat product graph directly on Template's Effect
+  4, oRPC 2, and current TypeBox substrate. Do not first preserve an isolated
+  Effect 3/oRPC 1 realm and then migrate it. Keep this vendor cut independently
+  reviewable inside the source-intake stack, preserve public Habitat behavior,
+  and introduce no compatibility bridge or parallel runtime.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the

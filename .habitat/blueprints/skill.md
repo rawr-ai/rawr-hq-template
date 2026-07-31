@@ -16,6 +16,11 @@ a stable name, a bounded interior, known public faces, and a predictable
 handoff to neighboring kinds. The enclosure is valuable because an author can
 reason locally without reconstructing the whole repository.
 
+A blueprint is not a capability or niche. A capability adds a reusable facet
+to an admitted instance. A niche governs a community selected from accepted
+instance and capability facts. Those relations are additive; neither may
+silently weaken the instance's blueprint kind.
+
 RAWR's durable direction is:
 
 ```text
@@ -46,6 +51,11 @@ exists and expands the context required to change it. When matter does not fit
 the admitted kinds, the unresolved question is ownership, not where to hide a
 file.
 
+Within a v3 blueprint, one structural spine is a singular anchor and therefore
+lives at the blueprint root as `structure.toml`. Directory trees are reserved
+for genuinely plural rule families whose members need additional local
+context; nesting is not a substitute for naming the blueprint's one relation.
+
 The skill seed supplies orientation. Neighboring `structure.toml` files close
 filesystem possibility, `pattern.md` files assert source relations, TypeScript
 owns type compatibility, and behavioral tests prove the capability itself.
@@ -54,6 +64,7 @@ None may impersonate another.
 ## Relations
 
 - [[../AUTHORITY|Habitat authority]]
+- [[../AUTHORITY-ONTOLOGY|Habitat authority ontology]]
 - [[agent-router/skill|Agent routers]]
 - [[blueprint-packet/skill|Blueprint packets]]
 - [[database/skill|Service databases]]
