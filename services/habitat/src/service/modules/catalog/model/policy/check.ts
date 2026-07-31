@@ -6,18 +6,31 @@ import type {
   CheckCatalogResult,
   CheckSelectionIssue,
 } from "../dto/check";
+import type { HabitatStructureApplication, StructureDiagnostic } from "./structure";
 
 type RuleApplication = HabitatCatalog["applications"][number];
+type ResolvedGritRunner = Extract<RuleApplication["runner"], { name: "grit" }>;
+type GritCheckRunner = Omit<ResolvedGritRunner, "acquisition"> & {
+  readonly acquisition: Omit<ResolvedGritRunner["acquisition"], "kind"> & {
+    readonly kind: "check";
+  };
+};
 
 /** Resolved application mechanically executable by the Grit check resource. */
-export type GritCheckApplication = RuleApplication & {
-  readonly runner: Extract<RuleApplication["runner"], { name: "grit" }>;
+export type GritCheckApplication = Omit<RuleApplication, "runner"> & {
+  readonly runner: GritCheckRunner;
 };
+
+/** Runner set executable by catalog.check. */
+export type ExecutableCheckApplication = GritCheckApplication | HabitatStructureApplication;
+
+type GritCheckApplicationReport = Extract<CheckApplicationReport, { runner: "grit" }>;
+type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
 
 type CheckSelection =
   | {
       readonly ok: true;
-      readonly applications: readonly GritCheckApplication[];
+      readonly applications: readonly ExecutableCheckApplication[];
     }
   | {
       readonly ok: false;
@@ -26,7 +39,7 @@ type CheckSelection =
 
 const knownRunnerSelectors = new Set(["grit", "habitat", "nx"]);
 
-/** Selects the closed Grit-check application set from resolved catalog authority. */
+/** Selects the closed executable Grit-check and native structure application set. */
 export function selectCheckApplications(
   catalog: HabitatCatalog,
   input: CheckCatalogInput
@@ -40,12 +53,17 @@ export function selectCheckApplications(
   ];
   const hasExplicitSelectors =
     selectors?.owner !== undefined ||
+    selectors?.instance !== undefined ||
     selectors?.rule !== undefined ||
     selectors?.rules !== undefined ||
     selectors?.runner !== undefined;
   const issues: CheckSelectionIssue[] = [];
   if (selectors?.owner !== undefined) {
     const issue = selectionIssue(catalog, "owner", selectors.owner);
+    if (issue !== undefined) issues.push(issue);
+  }
+  if (selectors?.instance !== undefined) {
+    const issue = selectionIssue(catalog, "instance", selectors.instance);
     if (issue !== undefined) issues.push(issue);
   }
   for (const ruleId of requestedRules) {
@@ -61,6 +79,7 @@ export function selectCheckApplications(
   const selected = catalog.applications.filter(
     (application) =>
       (selectors?.owner === undefined || application.ownerProject === selectors.owner) &&
+      (selectors?.instance === undefined || application.instanceId === selectors.instance) &&
       (requestedRules.length === 0 || requestedRules.includes(application.ruleId)) &&
       (selectors?.runner === undefined || application.runner.name === selectors.runner)
   );
@@ -74,19 +93,14 @@ export function selectCheckApplications(
     ]);
   }
 
-  const unsupported = selected.filter(
-    (application) =>
-      application.runner.name !== "grit" || application.runner.acquisition.kind !== "check"
-  );
+  const unsupported = selected.filter(isUnsupportedGritApplication);
   if (unsupported.length > 0) {
     return refused(
       unsupported.map((application) =>
         issue(
           "runner-unsupported",
           `${application.instanceId}:${application.ruleId}`,
-          application.runner.name === "grit"
-            ? `Rule "${application.ruleId}" requires Grit ${application.runner.acquisition.kind}, which catalog.check does not execute.`
-            : `Rule "${application.ruleId}" requires the native Habitat structure runner, which catalog.check does not execute.`
+          `Rule "${application.ruleId}" requires Grit ${application.runner.acquisition.kind}, which catalog.check does not execute.`
         )
       )
     );
@@ -94,7 +108,7 @@ export function selectCheckApplications(
 
   return {
     ok: true,
-    applications: selected.filter(isGritCheckApplication).sort(compareApplications),
+    applications: selected.filter(isExecutableCheckApplication).sort(compareApplications),
   };
 }
 
@@ -123,7 +137,7 @@ export function extractGritProgram(
 export function evaluatedApplication(
   application: GritCheckApplication,
   findings: readonly RuleEvaluationFinding[]
-): CheckApplicationReport {
+): GritCheckApplicationReport {
   const severity = application.lane === "enforced" ? "error" : "advisory";
   return {
     ...applicationIdentity(application),
@@ -141,9 +155,9 @@ export function evaluatedApplication(
 /** Produces one deterministic operational-error report for an application. */
 export function failedApplication(
   application: GritCheckApplication,
-  reason: Extract<CheckApplicationReport["disposition"], { kind: "failed" }>["reason"],
+  reason: Extract<GritCheckApplicationReport["disposition"], { kind: "failed" }>["reason"],
   detail: string
-): CheckApplicationReport {
+): GritCheckApplicationReport {
   return {
     ...applicationIdentity(application),
     status: "error",
@@ -152,6 +166,43 @@ export function failedApplication(
       reason,
       detail: boundedDetail(detail),
     },
+    findings: [],
+  };
+}
+
+/** Produces one native Habitat report from pure structure diagnostics. */
+export function evaluatedStructureApplication(
+  application: HabitatStructureApplication,
+  diagnostics: readonly StructureDiagnostic[]
+): StructureCheckApplicationReport {
+  const severity = application.lane === "enforced" ? "error" : "advisory";
+  return {
+    ...structureApplicationIdentity(application),
+    status:
+      diagnostics.length === 0
+        ? "pass"
+        : application.lane === "enforced"
+          ? "fail"
+          : "advisory-findings",
+    disposition: { kind: "evaluated" },
+    findings: diagnostics.map((diagnostic) => ({
+      ...diagnostic,
+      severity,
+      baselined: false,
+    })),
+  };
+}
+
+/** Produces one deterministic native Habitat operational-error report. */
+export function failedStructureApplication(
+  application: HabitatStructureApplication,
+  reason: Extract<StructureCheckApplicationReport["disposition"], { kind: "failed" }>["reason"],
+  detail: string
+): StructureCheckApplicationReport {
+  return {
+    ...structureApplicationIdentity(application),
+    status: "error",
+    disposition: { kind: "failed", reason, detail: boundedDetail(detail) },
     findings: [],
   };
 }
@@ -172,7 +223,7 @@ export function completedCheck(
 function applicationIdentity(
   application: GritCheckApplication
 ): Pick<
-  CheckApplicationReport,
+  GritCheckApplicationReport,
   "ownerProject" | "instanceId" | "ruleId" | "runner" | "lane" | "locked" | "message" | "remediate"
 > {
   return {
@@ -187,11 +238,46 @@ function applicationIdentity(
   };
 }
 
+function structureApplicationIdentity(
+  application: HabitatStructureApplication
+): Pick<
+  StructureCheckApplicationReport,
+  "ownerProject" | "instanceId" | "ruleId" | "runner" | "lane" | "locked" | "message" | "remediate"
+> {
+  return {
+    ownerProject: application.ownerProject,
+    instanceId: application.instanceId,
+    ruleId: application.ruleId,
+    runner: "habitat",
+    lane: application.lane,
+    locked: false,
+    message: application.message,
+    remediate: application.remediate,
+  };
+}
+
 function isGritCheckApplication(application: RuleApplication): application is GritCheckApplication {
   return application.runner.name === "grit" && application.runner.acquisition.kind === "check";
 }
 
-function compareApplications(left: GritCheckApplication, right: GritCheckApplication): number {
+function isUnsupportedGritApplication(
+  application: RuleApplication
+): application is RuleApplication & {
+  readonly runner: ResolvedGritRunner;
+} {
+  return application.runner.name === "grit" && application.runner.acquisition.kind !== "check";
+}
+
+function isExecutableCheckApplication(
+  application: RuleApplication
+): application is ExecutableCheckApplication {
+  return application.runner.name === "habitat" || isGritCheckApplication(application);
+}
+
+function compareApplications(
+  left: ExecutableCheckApplication,
+  right: ExecutableCheckApplication
+): number {
   return (
     compareText(left.ruleId, right.ruleId) ||
     compareText(left.instanceId, right.instanceId) ||
@@ -217,16 +303,17 @@ function issue(
 
 function selectionIssue(
   catalog: HabitatCatalog,
-  kind: "owner" | "rule" | "runner",
+  kind: "owner" | "instance" | "rule" | "runner",
   value: string
 ): CheckSelectionIssue | undefined {
   const matches = {
     owner: catalog.applications.some((application) => application.ownerProject === value),
+    instance: catalog.applications.some((application) => application.instanceId === value),
     rule: catalog.applications.some((application) => application.ruleId === value),
     runner: catalog.applications.some((application) => application.runner.name === value),
   };
   if (matches[kind] || (kind === "runner" && knownRunnerSelectors.has(value))) return undefined;
-  const actualKind = (["owner", "rule", "runner"] as const).find(
+  const actualKind = (["owner", "instance", "rule", "runner"] as const).find(
     (candidate) => candidate !== kind && matches[candidate]
   );
   return actualKind === undefined
@@ -245,6 +332,7 @@ function selectionIssue(
 function isKnownEmptyRunnerSelection(selectors: CheckCatalogInput["selectors"]): boolean {
   return (
     selectors?.owner === undefined &&
+    selectors?.instance === undefined &&
     selectors?.rule === undefined &&
     selectors?.rules === undefined &&
     selectors?.runner !== undefined &&

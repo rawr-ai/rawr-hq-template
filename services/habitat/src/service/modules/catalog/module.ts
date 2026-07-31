@@ -1,12 +1,13 @@
 import { service } from "../../impl";
 
-/** Catalog implementer with only the vocabulary required by resolve. */
+/** Catalog implementer exposing the vocabulary required by resolve and check. */
 export const module = service.catalog.use(async ({ context, next }) =>
   next({
     context: {
       fileSystem: context.deps.fileSystem,
       path: context.deps.path,
       ruleEvaluation: context.deps.ruleEvaluation,
+      sourceInventory: context.deps.sourceInventory,
       workspaceRoot: context.scope.workspaceRoot,
     },
   })
