@@ -1905,7 +1905,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   persistence, evidence, and lifecycle state outside the resource. Use
   TypeBox for the complete contract and Effect 4 for process, interruption,
   and failure lifecycles.
-- [ ] 5.7e22b2b Execute native structure applications inside the existing
+- [x] 5.7e22b2b Execute native structure applications inside the existing
   Habitat catalog operation. Parse the admitted schema-version-two
   `rootRole + relativePath` asset, acquire one ready source inventory through
   service context, and author root matching, kind expectations,

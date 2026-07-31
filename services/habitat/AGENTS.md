@@ -13,8 +13,9 @@
 
 - Consumers cross only through the public client. The service does not select
   providers, mount a runtime, or expose a composite CLI.
-- The host supplies a ready provider-neutral evaluator. The service owns
-  application selection, rule meaning, and aggregate outcomes.
+- The host supplies ready provider-neutral evaluation and source-inventory
+  resources. The service owns application selection, rule meaning, and
+  aggregate outcomes.
 - The service enumerates exact authority paths from its bound workspace. Callers
   provide no repository visibility or authority classification input.
 - Version 2 records are inert compatibility identity facts. They never become
@@ -24,8 +25,9 @@
 
 - The catalog module resolves closed version 3 local authority and reports all
   bounded admission failures as a rejected result.
-- `catalog.check` executes only selected Grit `check` applications. It refuses
-  unsupported runners instead of skipping them.
+- `catalog.check` executes selected Grit `check` and native Habitat structure
+  applications. It refuses unsupported Grit acquisition modes instead of
+  skipping them.
 
 ## Concepts
 
@@ -35,10 +37,10 @@
 
 ## Flow
 
-- Ready filesystem, path, and rule-evaluation capabilities descend through
-  service context. The catalog module curates them, grouped handlers sequence
-  observation, and pure module policy owns admission, selection, and result
-  decisions.
+- Ready filesystem, path, rule-evaluation, and source-inventory capabilities
+  descend through service context. The catalog module curates them, grouped
+  handlers sequence observation, and pure module policy owns admission,
+  selection, and result decisions.
 
 ## Interfaces
 

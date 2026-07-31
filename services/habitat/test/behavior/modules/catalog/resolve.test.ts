@@ -1,11 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import { NodeServices } from "@effect/platform-node";
 import type { RuleEvaluationResource } from "@habitat/resource-rule-evaluation";
+import type { SourceInventoryResource } from "@habitat/resource-source-inventory";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import { type Client, createClient } from "../../../../src/client";
 
 const unusedRuleEvaluation: RuleEvaluationResource<never> = {
   evaluate: () => Effect.die(new Error("Catalog resolution must not evaluate rules.")),
+};
+
+const unusedSourceInventory: SourceInventoryResource<never> = {
+  observe: () => Effect.die(new Error("Catalog resolution must not observe source inventory.")),
 };
 
 type Fixture = {
@@ -591,7 +596,12 @@ async function withFixture<T>(fixture: Fixture, use: (client: Client) => Promise
         const clientFileSystem =
           fixture.clientFileSystem?.(fileSystem, path, workspaceRoot) ?? fileSystem;
         const client: Client = createClient({
-          deps: { fileSystem: clientFileSystem, path, ruleEvaluation: unusedRuleEvaluation },
+          deps: {
+            fileSystem: clientFileSystem,
+            path,
+            ruleEvaluation: unusedRuleEvaluation,
+            sourceInventory: unusedSourceInventory,
+          },
           scope: { workspaceRoot },
           config: {},
         });

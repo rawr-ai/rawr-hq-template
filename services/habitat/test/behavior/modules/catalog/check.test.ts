@@ -5,21 +5,41 @@ import type {
   RuleEvaluationRequest,
   RuleEvaluationResource,
 } from "@habitat/resource-rule-evaluation";
-import { Effect, FileSystem, Path } from "effect";
+import {
+  MAX_SOURCE_INVENTORY_ENTRIES,
+  type ObserveSourceInventoryInput,
+  type SourceInventoryResource,
+  type SourceInventoryResult,
+} from "@habitat/resource-source-inventory";
+import { Effect, FileSystem, Path, PlatformError } from "effect";
 import { type Client, createClient } from "../../../../src/client";
 
 type CheckInput = Parameters<Client["catalog"]["check"]>[0];
 type Evaluation = ReturnType<RuleEvaluationResource<never>["evaluate"]>;
 type EvaluationHandler = (input: RuleEvaluationRequest, index: number) => Evaluation;
+type InventoryObservation = ReturnType<SourceInventoryResource<never>["observe"]>;
+type InventoryHandler = (input: ObserveSourceInventoryInput, index: number) => InventoryObservation;
 
 type RecordingRuleEvaluation = {
   readonly calls: RuleEvaluationRequest[];
   readonly resource: RuleEvaluationResource<never>;
+  readonly inventory: RecordingSourceInventory;
+};
+
+type RecordingSourceInventory = {
+  readonly calls: ObserveSourceInventoryInput[];
+  readonly resource: SourceInventoryResource<never>;
 };
 
 type Fixture = {
   readonly files: Readonly<Record<string, string>>;
   readonly directories?: readonly string[];
+  readonly onWorkspaceRoot?: (workspaceRoot: string) => void;
+  readonly clientFileSystem?: (
+    fileSystem: FileSystem.FileSystem,
+    path: Path.Path,
+    workspaceRoot: string
+  ) => FileSystem.FileSystem;
 };
 
 type RuleSpec = {
@@ -28,6 +48,7 @@ type RuleSpec = {
   readonly runner?: "grit" | "structure";
   readonly acquisition?: "check" | "apply-dry-run";
   readonly patternContents?: string;
+  readonly structureContents?: string;
 };
 
 type BlueprintSpec = {
@@ -53,7 +74,7 @@ describe("Habitat catalog check", () => {
       ],
       instances: [exampleInstance()],
     });
-    const { calls, result } = await checkFixture(fixture, {}, (input) => {
+    const { calls, inventoryCalls, result } = await checkFixture(fixture, {}, (input) => {
       if (input.program.includes("a_clean")) return Effect.succeed({ findings: [] });
       const ruleId = input.program.includes("b_enforced") ? "b_enforced" : "c_advisory";
       return Effect.succeed({
@@ -66,6 +87,7 @@ describe("Habitat catalog check", () => {
       "b_enforced()",
       "c_advisory()",
     ]);
+    expect(inventoryCalls).toEqual([]);
     expect(calls.every(({ subjectPaths }) => subjectPaths.length === 1)).toBe(true);
     expect(result).toMatchObject({
       _tag: "Completed",
@@ -115,6 +137,20 @@ describe("Habitat catalog check", () => {
           application.findings.every((finding) => finding.baselined === false)
         )
       ).toBe(true);
+      const enforced = result.applications[1];
+      expect(enforced?.runner).toBe("grit");
+      if (enforced?.runner === "grit") {
+        expect(enforced.findings).toEqual([
+          {
+            path: "packages/example/src/b_enforced.ts",
+            start: { line: 1, column: 1, offset: 0 },
+            end: { line: 1, column: 2, offset: 1 },
+            message: "b_enforced finding",
+            severity: "error",
+            baselined: false,
+          },
+        ]);
+      }
     }
   });
 
@@ -211,7 +247,7 @@ describe("Habitat catalog check", () => {
     });
   });
 
-  test("intersects owner, rule, and runner selectors before evaluation", async () => {
+  test("intersects exact instance, rule, and runner selectors before evaluation", async () => {
     const fixture = authorityFixture({
       blueprints: [
         {
@@ -233,7 +269,11 @@ describe("Habitat catalog check", () => {
       ],
     });
     const { calls, result } = await checkFixture(fixture, {
-      selectors: { owner: "@rawr/beta", rule: "b_rule", runner: "grit" },
+      selectors: {
+        instance: "beta",
+        rule: "b_rule",
+        runner: "grit",
+      },
     });
 
     expect(calls).toHaveLength(1);
@@ -271,20 +311,26 @@ describe("Habitat catalog check", () => {
     });
 
     const unknown = await checkFixture(splitFixture, {
-      selectors: { owner: "@rawr/missing", rule: "missing_rule", runner: "missing" },
+      selectors: {
+        owner: "@rawr/missing",
+        instance: "missing_instance",
+        rule: "missing_rule",
+        runner: "missing",
+      },
     });
     expect(unknown.calls).toEqual([]);
     expect(unknown.result).toMatchObject({
       _tag: "SelectionRejected",
       issues: [
         { code: "selector-unknown", selector: "owner:@rawr/missing" },
+        { code: "selector-unknown", selector: "instance:missing_instance" },
         { code: "selector-unknown", selector: "rule:missing_rule" },
         { code: "selector-unknown", selector: "runner:missing" },
       ],
     });
 
     const wrongNamespace = await checkFixture(splitFixture, {
-      selectors: { owner: "alpha_rule" },
+      selectors: { instance: "alpha_rule" },
     });
     expect(wrongNamespace.calls).toEqual([]);
     expect(wrongNamespace.result).toMatchObject({
@@ -292,7 +338,7 @@ describe("Habitat catalog check", () => {
       issues: [
         {
           code: "selector-wrong-namespace",
-          selector: "owner:alpha_rule",
+          selector: "instance:alpha_rule",
         },
       ],
     });
@@ -345,28 +391,783 @@ describe("Habitat catalog check", () => {
     });
   });
 
-  test("rejects the unsupported structure runner without evaluation", async () => {
+  test("evaluates native structure semantics with stable path-only findings", async () => {
+    let workspaceRoot = "";
     const fixture = authorityFixture({
       blueprints: [
         {
           id: "package",
-          rules: [{ id: "package_structure", runner: "structure" }],
+          rules: [
+            {
+              id: "package_structure",
+              runner: "structure",
+              structureContents: `schemaVersion = 2
+
+[[scopes]]
+name = "missing-root"
+rootRole = "project"
+relativePath = "missing.ts"
+kind = "file"
+mode = "open"
+
+[[scopes]]
+name = "wrong-kind"
+rootRole = "project"
+relativePath = "actual.txt"
+kind = "directory"
+mode = "open"
+
+[[scopes]]
+name = "closed-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = ["habitat.toml", "missing.txt"]
+allowed = ["actual.txt", "forbidden.txt"]
+forbidden = ["forbidden.txt"]
+`,
+            },
+          ],
         },
       ],
       instances: [exampleInstance()],
     });
-    const { calls, result } = await checkFixture(fixture, {});
+    const expanded: Fixture = {
+      ...fixture,
+      onWorkspaceRoot: (root) => {
+        workspaceRoot = root;
+      },
+      files: {
+        ...fixture.files,
+        "packages/example/actual.txt": "actual\n",
+        "packages/example/forbidden.txt": "forbidden\n",
+        "packages/example/unexpected.txt": "unexpected\n",
+      },
+    };
+    const { calls, inventoryCalls, result } = await checkFixture(expanded, {});
 
     expect(calls).toEqual([]);
+    expect(inventoryCalls).toEqual([
+      { root: workspaceRoot, maxEntries: MAX_SOURCE_INVENTORY_ENTRIES },
+    ]);
     expect(result).toMatchObject({
-      _tag: "SelectionRejected",
-      issues: [
+      _tag: "Completed",
+      ok: false,
+      applications: [
         {
-          code: "runner-unsupported",
-          selector: "example-package:package_structure",
+          runner: "habitat",
+          status: "fail",
+          disposition: { kind: "evaluated" },
+          findings: [
+            { code: "root-missing", path: "packages/example/missing.ts" },
+            { code: "wrong-root-kind", path: "packages/example/actual.txt" },
+            { code: "missing-required-child", path: "packages/example" },
+            { code: "forbidden-child", path: "packages/example/forbidden.txt" },
+            { code: "unexpected-child", path: "packages/example/unexpected.txt" },
+          ],
         },
       ],
     });
+    if (result._tag === "Completed") {
+      const structure = result.applications[0];
+      expect(structure?.runner).toBe("habitat");
+      if (structure?.runner === "habitat") {
+        for (const finding of structure.findings) {
+          expect(Object.keys(finding).sort()).toEqual([
+            "baselined",
+            "code",
+            "message",
+            "path",
+            "severity",
+          ]);
+        }
+        expect(structure.findings.every((finding) => finding.baselined === false)).toBe(true);
+      }
+    }
+  });
+
+  test("does not observe inventory for invalid or wholly unbound structure applications", async () => {
+    const invalid = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "invalid_structure",
+              runner: "structure",
+              structureContents: "schemaVersion = 1\nscopes = []\n",
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const invalidResult = await checkFixture(invalid, {});
+    expect(invalidResult.inventoryCalls).toEqual([]);
+    expect(invalidResult.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          runner: "habitat",
+          status: "error",
+          disposition: { kind: "failed", reason: "StructureInvalid" },
+        },
+      ],
+    });
+
+    const unboundResult = await checkFixture(optionalUnboundStructureFixture(), {});
+    expect(unboundResult.inventoryCalls).toEqual([]);
+    expect(unboundResult.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [
+        {
+          runner: "habitat",
+          status: "pass",
+          disposition: { kind: "evaluated" },
+          findings: [],
+        },
+      ],
+    });
+  });
+
+  test("rejects malformed structure globs before inventory", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "invalid_glob",
+              runner: "structure",
+              structureContents: defaultStructureToml().replace(
+                'relativePath = "."',
+                'relativePath = "[broken"'
+              ),
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+
+    const checked = await checkFixture(fixture, {});
+
+    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "StructureInvalid",
+            detail: expect.stringContaining("safe, valid root-relative path or glob"),
+          },
+        },
+      ],
+    });
+  });
+
+  test("rejects an unknown structure root role before inventory", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "unknown_role",
+              runner: "structure",
+              structureContents: defaultStructureToml().replace(
+                'rootRole = "project"',
+                'rootRole = "missing"'
+              ),
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const checked = await checkFixture(fixture, {});
+    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          disposition: {
+            kind: "failed",
+            reason: "StructureInvalid",
+            detail: expect.stringContaining('unknown root role "missing"'),
+          },
+        },
+      ],
+    });
+  });
+
+  test("uses one fresh inventory per invocation across exact structure application identities", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "alpha_structure",
+              runner: "structure",
+              structureContents: leafStructureToml(),
+            },
+            {
+              id: "beta_structure",
+              runner: "structure",
+              structureContents: leafStructureToml(),
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const expanded: Fixture = {
+      ...fixture,
+      files: { ...fixture.files, "packages/example/leaf.ts": "export {};\n" },
+    };
+    await withFixture(
+      expanded,
+      async (client, recording) => {
+        const first = await client.catalog.check({});
+        expect(recording.inventory.calls).toHaveLength(1);
+        const second = await client.catalog.check({});
+        expect(recording.inventory.calls).toHaveLength(2);
+        const firstIdentities =
+          first._tag === "Completed" ? first.applications.map(applicationKey) : [];
+        const secondIdentities =
+          second._tag === "Completed" ? second.applications.map(applicationKey) : [];
+
+        expect(firstIdentities).toEqual([
+          "alpha_structure:example-package:@rawr/example",
+          "beta_structure:example-package:@rawr/example",
+        ]);
+        expect(secondIdentities).toEqual(firstIdentities);
+        expect(first).toMatchObject({
+          _tag: "Completed",
+          applications: [
+            { status: "pass", findings: [] },
+            { status: "pass", findings: [] },
+          ],
+        });
+        expect(second).toMatchObject({
+          _tag: "Completed",
+          applications: [
+            { findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }] },
+            { findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }] },
+          ],
+        });
+        expect(recording.calls).toEqual([]);
+      },
+      undefined,
+      (_input, index) => {
+        const inventory = defaultInventory(expanded);
+        return Effect.succeed(
+          index === 0
+            ? inventory
+            : {
+                ...inventory,
+                paths: inventory.paths.filter(
+                  (candidate) => candidate !== "packages/example/leaf.ts"
+                ),
+              }
+        );
+      }
+    );
+  });
+
+  test("treats inventory as the source universe and prunes tracked non-file descendants", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "inventory_structure",
+              runner: "structure",
+              structureContents: `schemaVersion = 2
+
+[[scopes]]
+name = "tracked-link"
+rootRole = "project"
+relativePath = "link"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "visible-untracked"
+rootRole = "project"
+relativePath = "visible/*.ts"
+kind = "directory"
+mode = "open"
+
+[[scopes]]
+name = "pruned-descendant"
+rootRole = "project"
+relativePath = "link/descendant.ts"
+kind = "file"
+mode = "open"
+
+[[scopes]]
+name = "closed-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+allowed = ["habitat.toml", "link", "visible"]
+`,
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const expanded: Fixture = {
+      ...fixture,
+      files: {
+        ...fixture.files,
+        "packages/example/ignored-live.ts": "ignored\n",
+        "packages/example/link/descendant.ts": "tracked descendant\n",
+        "packages/example/visible/new.ts": "visible\n",
+      },
+    };
+    const checked = await checkFixture(expanded, {}, undefined, () =>
+      Effect.succeed({
+        paths: [
+          ".habitat/blueprints/package/blueprint.toml",
+          ".habitat/blueprints/package/inventory_structure.structure.toml",
+          "packages/example/habitat.toml",
+          "packages/example/link",
+          "packages/example/link/descendant.ts",
+          "packages/example/visible/new.ts",
+        ],
+        trackedNonFilePaths: ["packages/example/link"],
+      })
+    );
+
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          findings: [
+            { code: "wrong-root-kind", path: "packages/example/link" },
+            { code: "wrong-root-kind", path: "packages/example/visible/new.ts" },
+            { code: "root-missing", path: "packages/example/link/descendant.ts" },
+          ],
+        },
+      ],
+    });
+    expect(JSON.stringify(checked.result)).not.toContain("ignored-live.ts");
+  });
+
+  test("applies open, allowEmpty, and direct-child glob semantics in one focused matrix", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "structure_matrix",
+              runner: "structure",
+              structureContents: `schemaVersion = 2
+
+[[scopes]]
+name = "open-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "open"
+required = ["habitat.toml", "required.ts"]
+forbidden = ["forbidden.ts"]
+
+[[scopes]]
+name = "missing-default"
+rootRole = "project"
+relativePath = "missing-default"
+kind = "directory"
+mode = "open"
+
+[[scopes]]
+name = "missing-allowed"
+rootRole = "project"
+relativePath = "missing-allowed"
+kind = "directory"
+mode = "open"
+allowEmpty = true
+
+[[scopes]]
+name = "direct-present"
+rootRole = "project"
+relativePath = "direct-present"
+kind = "directory"
+mode = "open"
+required = ["*.ts"]
+
+[[scopes]]
+name = "grandchild-only"
+rootRole = "project"
+relativePath = "grandchild-only"
+kind = "directory"
+mode = "open"
+required = ["*.ts"]
+`,
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const expanded: Fixture = {
+      ...fixture,
+      files: {
+        ...fixture.files,
+        "packages/example/unlisted.extra": "open mode accepts this\n",
+        "packages/example/forbidden.ts": "open mode still forbids this\n",
+        "packages/example/direct-present/match.ts": "export {};\n",
+        "packages/example/direct-present/nested/grandchild.ts": "export {};\n",
+        "packages/example/grandchild-only/nested/grandchild.ts": "export {};\n",
+      },
+    };
+
+    const checked = await checkFixture(expanded, {});
+
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          findings: [
+            { code: "missing-required-child", path: "packages/example" },
+            { code: "forbidden-child", path: "packages/example/forbidden.ts" },
+            { code: "root-missing", path: "packages/example/missing-default" },
+            { code: "missing-required-child", path: "packages/example/grandchild-only" },
+          ],
+        },
+      ],
+    });
+    expect(JSON.stringify(checked.result)).not.toContain("missing-allowed");
+    expect(JSON.stringify(checked.result)).not.toContain("unlisted.extra");
+  });
+
+  test("treats a binding path with glob syntax as a literal confinement root", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "literal_binding",
+              runner: "structure",
+              structureContents: `schemaVersion = 2
+
+[[scopes]]
+name = "literal-binding"
+rootRole = "project"
+relativePath = "target.ts"
+kind = "file"
+mode = "open"
+`,
+            },
+          ],
+        },
+      ],
+      instances: [
+        exampleInstance({
+          ownerProject: "@rawr/literal",
+          projectPath: "packages/@(foo)",
+        }),
+      ],
+    });
+    const expanded: Fixture = {
+      ...fixture,
+      files: {
+        ...fixture.files,
+        "packages/foo/target.ts": "export const sibling = true;\n",
+      },
+    };
+
+    const checked = await checkFixture(expanded, {});
+
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          status: "fail",
+          findings: [
+            {
+              code: "root-missing",
+              path: "packages/@(foo)/target.ts",
+            },
+          ],
+        },
+      ],
+    });
+    expect(JSON.stringify(checked.result)).not.toContain("packages/foo/target.ts");
+  });
+
+  test("resolves the same relative pattern against distinct bound root-role bases", async () => {
+    const checked = await checkFixture(distinctRootStructureFixture(), {});
+
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          findings: [
+            { code: "root-missing", path: "packages/example/base/missing.ts" },
+            { code: "root-missing", path: "packages/example/src/base/missing.ts" },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("keeps mixed Grit ranges and Habitat path-only findings runner-specific", async () => {
+    const checked = await checkFixture(mixedRunnerFixture(), {}, (input) =>
+      Effect.succeed({
+        findings: [finding(`${input.subjectPaths[0]}/grit.ts`, "mixed Grit finding")],
+      })
+    );
+
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        { runner: "habitat", disposition: { kind: "evaluated" } },
+        { runner: "grit", disposition: { kind: "evaluated" } },
+      ],
+    });
+    if (checked.result._tag === "Completed") {
+      const habitat = checked.result.applications[0];
+      const grit = checked.result.applications[1];
+      expect(habitat?.runner).toBe("habitat");
+      expect(grit?.runner).toBe("grit");
+      if (habitat?.runner === "habitat" && grit?.runner === "grit") {
+        expect(Object.keys(habitat.findings[0] ?? {}).sort()).toEqual([
+          "baselined",
+          "code",
+          "message",
+          "path",
+          "severity",
+        ]);
+        expect(habitat.findings[0]).toMatchObject({
+          code: "root-missing",
+          path: "packages/example/leaf.ts",
+        });
+        expect(grit.findings).toEqual([
+          {
+            path: "packages/example/grit.ts",
+            start: { line: 1, column: 1, offset: 0 },
+            end: { line: 1, column: 2, offset: 1 },
+            message: "mixed Grit finding",
+            severity: "error",
+            baselined: false,
+          },
+        ]);
+      }
+    }
+  });
+
+  test("isolates typed inventory failure while defects and interruptions escape", async () => {
+    const fixture = mixedRunnerFixture();
+    const typed = await checkFixture(fixture, {}, undefined, () =>
+      Effect.fail({
+        _tag: "SourceInventoryFailure",
+        reason: "CommandFailed",
+        detail: "Inventory command failed.",
+      })
+    );
+    expect(typed.calls).toHaveLength(1);
+    expect(typed.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          runner: "habitat",
+          status: "error",
+          disposition: { kind: "failed", reason: "InventoryFailed" },
+          findings: [],
+        },
+        {
+          runner: "grit",
+          status: "pass",
+          findings: [],
+        },
+      ],
+    });
+    if (typed.result._tag === "Completed") {
+      const habitat = typed.result.applications[0];
+      const grit = typed.result.applications[1];
+      expect(grit?.runner).toBe("grit");
+      expect(habitat?.runner).toBe("habitat");
+    }
+
+    await expect(
+      checkFixture(fixture, {}, undefined, () =>
+        Effect.die(new Error("Inventory defect must remain a defect."))
+      )
+    ).rejects.toBeDefined();
+    await expect(
+      checkFixture(fixture, {}, undefined, () => Effect.interrupt)
+    ).rejects.toBeDefined();
+  });
+
+  test("reports typed matched-root observation failure while defects and interruptions escape", async () => {
+    const base = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "leaf_structure",
+              runner: "structure",
+              structureContents: `schemaVersion = 2
+
+[[scopes]]
+name = "leaf"
+rootRole = "project"
+relativePath = "leaf.ts"
+kind = "file"
+mode = "open"
+`,
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const injectedLeafInventory: SourceInventoryResult = {
+      ...defaultInventory(base),
+      paths: [...defaultInventory(base).paths, "packages/example/leaf.ts"].sort(textOrder),
+    };
+    let eioStatCalls = 0;
+    const eio = await checkFixture(
+      {
+        ...base,
+        clientFileSystem: (fileSystem, _path, workspaceRoot) =>
+          FileSystem.makeNoop({
+            ...fileSystem,
+            readLink: (candidate) =>
+              candidate === `${workspaceRoot}/packages/example/leaf.ts`
+                ? Effect.fail(
+                    PlatformError.systemError({
+                      _tag: "Unknown",
+                      module: "FileSystem",
+                      method: "readLink",
+                      pathOrDescriptor: candidate,
+                      cause: { code: "EIO" },
+                    })
+                  )
+                : fileSystem.readLink(candidate),
+            stat: (candidate) => {
+              if (candidate === `${workspaceRoot}/packages/example/leaf.ts`) eioStatCalls += 1;
+              return fileSystem.stat(candidate);
+            },
+          }),
+      },
+      {},
+      undefined,
+      () => Effect.succeed(injectedLeafInventory)
+    );
+    expect(eioStatCalls).toBe(0);
+    expect(eio.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          disposition: { kind: "failed", reason: "StructureObservationFailed" },
+        },
+      ],
+    });
+
+    const disappeared = await checkFixture(base, {}, undefined, () =>
+      Effect.succeed(injectedLeafInventory)
+    );
+    expect(disappeared.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          disposition: { kind: "evaluated" },
+          findings: [{ code: "root-missing", path: "packages/example/leaf.ts" }],
+        },
+      ],
+    });
+
+    const files = { ...base.files, "packages/example/leaf.ts": "export {};\n" };
+    const typed = await checkFixture(
+      {
+        ...base,
+        files,
+        clientFileSystem: (fileSystem, _path, workspaceRoot) => {
+          return FileSystem.makeNoop({
+            ...fileSystem,
+            readLink: (candidate) => {
+              if (candidate !== `${workspaceRoot}/packages/example/leaf.ts`) {
+                return fileSystem.readLink(candidate);
+              }
+              return Effect.fail(
+                PlatformError.systemError({
+                  _tag: "PermissionDenied",
+                  module: "FileSystem",
+                  method: "readLink",
+                  pathOrDescriptor: candidate,
+                })
+              );
+            },
+          });
+        },
+      },
+      {}
+    );
+    expect(typed.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          status: "error",
+          disposition: { kind: "failed", reason: "StructureObservationFailed" },
+        },
+      ],
+    });
+
+    await expect(
+      checkFixture(
+        {
+          ...base,
+          files,
+          clientFileSystem: (fileSystem, _path, workspaceRoot) => {
+            return FileSystem.makeNoop({
+              ...fileSystem,
+              readLink: (candidate) => {
+                if (candidate !== `${workspaceRoot}/packages/example/leaf.ts`) {
+                  return fileSystem.readLink(candidate);
+                }
+                return Effect.die(new Error("Structure observation defect."));
+              },
+            });
+          },
+        },
+        {}
+      )
+    ).rejects.toBeDefined();
+
+    await expect(
+      checkFixture(
+        {
+          ...base,
+          files,
+          clientFileSystem: (fileSystem, _path, workspaceRoot) =>
+            FileSystem.makeNoop({
+              ...fileSystem,
+              readLink: (candidate) =>
+                candidate === `${workspaceRoot}/packages/example/leaf.ts`
+                  ? Effect.interrupt
+                  : fileSystem.readLink(candidate),
+            }),
+        },
+        {}
+      )
+    ).rejects.toBeDefined();
   });
 
   test("rejects Grit apply-dry-run without evaluation", async () => {
@@ -501,21 +1302,32 @@ describe("Habitat catalog check", () => {
   });
 });
 
-async function checkFixture(fixture: Fixture, input: CheckInput, handler?: EvaluationHandler) {
+async function checkFixture(
+  fixture: Fixture,
+  input: CheckInput,
+  handler?: EvaluationHandler,
+  inventoryHandler?: InventoryHandler
+) {
   return withFixture(
     fixture,
     async (client, recording) => {
       const result = await client.catalog.check(input);
-      return { result, calls: [...recording.calls] };
+      return {
+        result,
+        calls: [...recording.calls],
+        inventoryCalls: [...recording.inventory.calls],
+      };
     },
-    handler
+    handler,
+    inventoryHandler
   );
 }
 
 async function withFixture<T>(
   fixture: Fixture,
   use: (client: Client, recording: RecordingRuleEvaluation) => Promise<T>,
-  handler: EvaluationHandler = () => Effect.succeed({ findings: [] })
+  handler: EvaluationHandler = () => Effect.succeed({ findings: [] }),
+  inventoryHandler: InventoryHandler = () => Effect.succeed(defaultInventory(fixture))
 ): Promise<T> {
   return Effect.runPromise(
     Effect.scoped(
@@ -525,6 +1337,7 @@ async function withFixture<T>(
         const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
           prefix: "habitat-check-test-",
         });
+        fixture.onWorkspaceRoot?.(workspaceRoot);
         for (const directory of [...(fixture.directories ?? [])].sort(textOrder)) {
           yield* fileSystem.makeDirectory(path.join(workspaceRoot, directory), { recursive: true });
         }
@@ -535,9 +1348,19 @@ async function withFixture<T>(
           yield* fileSystem.makeDirectory(path.dirname(absolutePath), { recursive: true });
           yield* fileSystem.writeFileString(absolutePath, contents);
         }
-        const recording = makeRecordingRuleEvaluation(handler);
+        const recording = makeRecordingRuleEvaluation(
+          handler,
+          makeRecordingSourceInventory(inventoryHandler)
+        );
+        const clientFileSystem =
+          fixture.clientFileSystem?.(fileSystem, path, workspaceRoot) ?? fileSystem;
         const client: Client = createClient({
-          deps: { fileSystem, path, ruleEvaluation: recording.resource },
+          deps: {
+            fileSystem: clientFileSystem,
+            path,
+            ruleEvaluation: recording.resource,
+            sourceInventory: recording.inventory.resource,
+          },
           scope: { workspaceRoot },
           config: {},
         });
@@ -547,10 +1370,14 @@ async function withFixture<T>(
   );
 }
 
-function makeRecordingRuleEvaluation(handler: EvaluationHandler): RecordingRuleEvaluation {
+function makeRecordingRuleEvaluation(
+  handler: EvaluationHandler,
+  inventory: RecordingSourceInventory
+): RecordingRuleEvaluation {
   const calls: RuleEvaluationRequest[] = [];
   return {
     calls,
+    inventory,
     resource: {
       evaluate: (input) => {
         const index = calls.length;
@@ -558,6 +1385,27 @@ function makeRecordingRuleEvaluation(handler: EvaluationHandler): RecordingRuleE
         return handler(input, index);
       },
     },
+  };
+}
+
+function makeRecordingSourceInventory(handler: InventoryHandler): RecordingSourceInventory {
+  const calls: ObserveSourceInventoryInput[] = [];
+  return {
+    calls,
+    resource: {
+      observe: (input) => {
+        const index = calls.length;
+        calls.push(input);
+        return handler(input, index);
+      },
+    },
+  };
+}
+
+function defaultInventory(fixture: Fixture): SourceInventoryResult {
+  return {
+    paths: Object.keys(fixture.files).sort(textOrder),
+    trackedNonFilePaths: [],
   };
 }
 
@@ -574,7 +1422,8 @@ function authorityFixture(options: {
     files[`${blueprintRoot}/blueprint.toml`] = blueprintToml(blueprint.id, rules);
     for (const rule of rules) {
       if (rule.runner === "structure") {
-        files[`${blueprintRoot}/${rule.id}.structure.toml`] = "schemaVersion = 1\n";
+        files[`${blueprintRoot}/${rule.id}.structure.toml`] =
+          rule.structureContents ?? defaultStructureToml();
       } else {
         files[`${blueprintRoot}/${rule.id}.md`] =
           rule.patternContents ?? `# ${rule.id}\n\n\`\`\`grit\n${rule.id}()\n\`\`\`\n`;
@@ -589,11 +1438,162 @@ function authorityFixture(options: {
   return { files };
 }
 
+function defaultStructureToml(): string {
+  return `schemaVersion = 2
+
+[[scopes]]
+name = "project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "open"
+`;
+}
+
+function leafStructureToml(): string {
+  return `schemaVersion = 2
+
+[[scopes]]
+name = "leaf"
+rootRole = "project"
+relativePath = "leaf.ts"
+kind = "file"
+mode = "open"
+`;
+}
+
 function singleGritFixture(): Fixture {
   return authorityFixture({
     blueprints: [{ id: "package", rules: [{ id: "package_rule" }] }],
     instances: [exampleInstance()],
   });
+}
+
+function mixedRunnerFixture(): Fixture {
+  return authorityFixture({
+    blueprints: [
+      {
+        id: "package",
+        rules: [
+          {
+            id: "alpha_structure",
+            runner: "structure",
+            structureContents: leafStructureToml(),
+          },
+          { id: "beta_grit" },
+        ],
+      },
+    ],
+    instances: [exampleInstance()],
+  });
+}
+
+function distinctRootStructureFixture(): Fixture {
+  return {
+    directories: ["packages/example/src"],
+    files: {
+      ".habitat/blueprints/package/blueprint.toml": `schemaVersion = 1
+id = "package"
+version = 1
+
+[[rules]]
+id = "distinct_roots"
+lane = "enforced"
+message = "Distinct roots found a violation."
+remediate = "Fix the distinct roots."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "distinct_roots.structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.roots]]
+id = "source"
+required = true
+kind = "directory"
+`,
+      ".habitat/blueprints/package/distinct_roots.structure.toml": `schemaVersion = 2
+
+[[scopes]]
+name = "project-base"
+rootRole = "project"
+relativePath = "base/missing.ts"
+kind = "file"
+mode = "open"
+
+[[scopes]]
+name = "source-base"
+rootRole = "source"
+relativePath = "base/missing.ts"
+kind = "file"
+mode = "open"
+`,
+      "packages/example/habitat.toml": `schemaVersion = 1
+id = "example-package"
+ownerProject = "@rawr/example"
+blueprint = "package"
+blueprintVersion = 1
+
+[roots]
+project = "packages/example"
+source = "packages/example/src"
+
+[selections]
+`,
+    },
+  };
+}
+
+function optionalUnboundStructureFixture(): Fixture {
+  return {
+    files: {
+      ".habitat/blueprints/package/blueprint.toml": `schemaVersion = 1
+id = "package"
+version = 1
+
+[[rules]]
+id = "optional_structure"
+lane = "enforced"
+message = "optional structure"
+remediate = "Bind the optional root."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "optional.structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "optional"
+required = false
+kind = "directory"
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+`,
+      ".habitat/blueprints/package/optional.structure.toml": defaultStructureToml().replace(
+        'rootRole = "project"',
+        'rootRole = "optional"'
+      ),
+      "packages/example/habitat.toml": instanceToml(exampleInstance()),
+    },
+  };
 }
 
 function fileAcquisitionFixture(): Fixture {

@@ -5255,6 +5255,37 @@ rules, strict OpenSpec validation, and diff hygiene also pass. The checkpoint
 does not inspect or mutate provider homes, Personal content, release channels,
 or live lifecycle state.
 
+### Native Structure Checkpoint
+
+`catalog.check` now executes admitted schema-version-two structure applications
+alongside its existing Grit checks. The host supplies the ready
+`SourceInventoryResource` through service base context; the catalog module
+curates that capability downward, and the procedure handler acquires at most one
+fresh inventory for each invocation that contains a bound structure scope.
+Invalid assets, unbound optional roots, refused selection, and Grit-only checks
+do not acquire an inventory. No inventory, observation, report, or result is
+retained between invocations.
+
+TypeBox is the sole structure-document admission authority. Pure catalog policy
+binds each scope's literal `rootRole` base to its `relativePath`, interprets the
+Git-visible universe, evaluates root kind and direct-child requirements, and
+produces deterministic path-only diagnostics. The handler owns TOML reading,
+live no-follow root observation, Effect failure boundaries, and result
+sequencing. Grit reports retain their ranged finding contract; native Habitat
+reports are runner-discriminated and cannot acquire source ranges or predecessor
+baseline state. Exact `instance` selection is now available for the later Nx
+projection without adding another operation or runner.
+
+The behavior suite passes 44 tests, including 26 `catalog.check` cases covering
+closed and open scopes, empty matching, distinct root roles, tracked non-file
+pruning, one-inventory repeat isolation, mixed Grit/Habitat results, and typed,
+defect, and interruption observation boundaries. Uncached Nx typecheck, test,
+and build pass. The 25-rule local Habitat policy batch, strict OpenSpec
+validation, Biome, and diff hygiene are clean. Standing architecture,
+TypeScript/TypeBox, structural-quality, and behavior reviews report no P0 or P1
+finding. The checkpoint does not select a provider, create runtime or retained
+state, mutate provider homes, read Personal content, or touch release channels.
+
 ## Settlement Oracles
 
 The final product must prove:

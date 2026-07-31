@@ -20,6 +20,13 @@ const CheckSelectorsSchema = Type.Object(
         description: "Repository project identity whose applications enter the check.",
       })
     ),
+    instance: Type.Optional(
+      Type.String({
+        minLength: 1,
+        maxLength: 250,
+        description: "Exact resolved instance identity whose applications enter the check.",
+      })
+    ),
     rule: Type.Optional(
       Type.String({
         minLength: 1,
@@ -91,7 +98,7 @@ const CheckSelectionIssueSchema = Type.Object(
   }
 );
 
-const CheckFindingSchema = Type.Object(
+const GritCheckFindingSchema = Type.Object(
   {
     path: Type.String({
       minLength: 1,
@@ -129,7 +136,7 @@ const CheckApplicationStatusSchema = Type.Union(
   }
 );
 
-const CheckApplicationDispositionSchema = Type.Union(
+const GritCheckApplicationDispositionSchema = Type.Union(
   [
     Type.Object(
       {
@@ -175,7 +182,7 @@ const CheckApplicationDispositionSchema = Type.Union(
   }
 );
 
-const CheckApplicationReportSchema = Type.Object(
+const GritCheckApplicationReportSchema = Type.Object(
   {
     ownerProject: Type.String({
       minLength: 1,
@@ -210,8 +217,8 @@ const CheckApplicationReportSchema = Type.Object(
     remediate: Type.Union([Type.String({ maxLength: 16_384 }), Type.Null()], {
       description: "Rule-authored remediation when supplied.",
     }),
-    disposition: CheckApplicationDispositionSchema,
-    findings: Type.Array(CheckFindingSchema, {
+    disposition: GritCheckApplicationDispositionSchema,
+    findings: Type.Array(GritCheckFindingSchema, {
       description: "Deterministically ordered findings for this application.",
     }),
   },
@@ -219,6 +226,124 @@ const CheckApplicationReportSchema = Type.Object(
     additionalProperties: false,
     description: "One resolved application check report.",
   }
+);
+
+const StructureFindingCodeSchema = Type.Union(
+  [
+    Type.Literal("root-missing"),
+    Type.Literal("wrong-root-kind"),
+    Type.Literal("missing-required-child"),
+    Type.Literal("forbidden-child"),
+    Type.Literal("unexpected-child"),
+  ],
+  { description: "Stable native Habitat structure diagnostic classification." }
+);
+
+const StructureCheckFindingSchema = Type.Object(
+  {
+    path: Type.String({
+      minLength: 1,
+      maxLength: 4_096,
+      description: "Normalized repository-relative structure path.",
+    }),
+    code: StructureFindingCodeSchema,
+    message: Type.String({
+      minLength: 1,
+      maxLength: 8_192,
+      description: "Deterministic Habitat-authored structure diagnostic.",
+    }),
+    severity: Type.Union([Type.Literal("error"), Type.Literal("advisory")], {
+      description: "Service-owned severity derived from the application lane.",
+    }),
+    baselined: Type.Literal(false, {
+      description: "Version-three findings do not inherit predecessor baselines.",
+    }),
+  },
+  { additionalProperties: false, description: "One path-only native structure finding." }
+);
+
+const StructureCheckApplicationDispositionSchema = Type.Union(
+  [
+    Type.Object(
+      {
+        kind: Type.Literal("evaluated", {
+          description: "Native structure evaluation completed.",
+        }),
+      },
+      { additionalProperties: false, description: "Completed native structure evaluation." }
+    ),
+    Type.Object(
+      {
+        kind: Type.Literal("failed", {
+          description: "Native structure evaluation failed operationally.",
+        }),
+        reason: Type.Union(
+          [
+            Type.Literal("StructureReadFailed"),
+            Type.Literal("StructureInvalid"),
+            Type.Literal("InventoryFailed"),
+            Type.Literal("StructureObservationFailed"),
+          ],
+          { description: "Stable native structure operational failure reason." }
+        ),
+        detail: Type.String({
+          minLength: 1,
+          maxLength: 4_096,
+          description: "Bounded native structure failure detail.",
+        }),
+      },
+      { additionalProperties: false, description: "Failed native structure evaluation." }
+    ),
+  ],
+  { description: "Native structure evaluation disposition." }
+);
+
+const StructureCheckApplicationReportSchema = Type.Object(
+  {
+    ownerProject: Type.String({
+      minLength: 1,
+      maxLength: 250,
+      description: "Repository project that owns this structure application.",
+    }),
+    instanceId: Type.String({
+      minLength: 1,
+      maxLength: 250,
+      description: "Resolved instance evaluated by this structure application.",
+    }),
+    ruleId: Type.String({
+      minLength: 1,
+      maxLength: 200,
+      description: "Native structure rule evaluated for this instance.",
+    }),
+    runner: Type.Literal("habitat", {
+      description: "Native Habitat runner used by this application.",
+    }),
+    lane: Type.Union([Type.Literal("enforced"), Type.Literal("advisory")], {
+      description: "Policy lane that determines finding severity and completion status.",
+    }),
+    locked: Type.Literal(false, {
+      description: "Native structure reports do not expose Grit lock semantics.",
+    }),
+    status: CheckApplicationStatusSchema,
+    message: Type.String({
+      minLength: 1,
+      maxLength: 8_192,
+      description: "Catalog-authored human guidance for this structure rule.",
+    }),
+    remediate: Type.Union([Type.String({ maxLength: 16_384 }), Type.Null()], {
+      description: "Optional catalog-authored remediation guidance.",
+    }),
+    disposition: StructureCheckApplicationDispositionSchema,
+    findings: Type.Array(StructureCheckFindingSchema, {
+      description: "Deterministically ordered path-only structure findings.",
+    }),
+  },
+  { additionalProperties: false, description: "One native Habitat structure report." }
+);
+
+const CheckApplicationReportSchema = Type.Union(
+  [GritCheckApplicationReportSchema, StructureCheckApplicationReportSchema],
+  { description: "Runner-discriminated application check report." }
 );
 
 /** Closed total result for one current-catalog check. */
@@ -288,6 +413,12 @@ export type CheckApplicationReport = Extract<
   CheckCatalogResult,
   { _tag: "Completed" }
 >["applications"][number];
+
+/** One public path-only native Habitat structure finding. */
+export type StructureCheckFinding = Extract<
+  CheckApplicationReport,
+  { runner: "habitat" }
+>["findings"][number];
 
 /** One expected selection refusal. */
 export type CheckSelectionIssue = Extract<

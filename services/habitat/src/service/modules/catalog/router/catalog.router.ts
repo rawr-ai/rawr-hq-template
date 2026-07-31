@@ -1,4 +1,5 @@
 import type { RuleEvaluationFinding } from "@habitat/resource-rule-evaluation";
+import { MAX_SOURCE_INVENTORY_ENTRIES } from "@habitat/resource-source-inventory";
 import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
 import { parse as parseToml } from "smol-toml";
 import type { CatalogIssue } from "../model/dto/catalog";
@@ -24,11 +25,22 @@ import {
 import {
   completedCheck,
   evaluatedApplication,
+  evaluatedStructureApplication,
   extractGritProgram,
   failedApplication,
+  failedStructureApplication,
   type GritCheckApplication,
   selectCheckApplications,
 } from "../model/policy/check";
+import {
+  type AdmittedStructureApplication,
+  admitStructureDocument,
+  evaluateStructurePlan,
+  isHabitatStructureApplication,
+  makeStructureUniverse,
+  planStructureEvaluation,
+  type StructureRootKind,
+} from "../model/policy/structure";
 import { module } from "../module";
 
 const authorityGlobs = [
@@ -51,6 +63,25 @@ const excludedDirectorySegments = new Set([
 ]);
 const excludedRepositoryGlobs = [...excludedDirectorySegments].map((segment) => `**/${segment}/**`);
 const MAX_MANIFEST_DIRECTORIES = 50_000;
+
+type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
+type StructurePreparation =
+  | { readonly kind: "failed"; readonly report: StructureCheckApplicationReport }
+  | { readonly kind: "admitted"; readonly value: AdmittedStructureApplication };
+type CheckApplicationPreparation =
+  | { readonly kind: "grit"; readonly application: GritCheckApplication }
+  | { readonly kind: "structure"; readonly preparation: StructurePreparation };
+type StructureInventoryPreparation =
+  | { readonly kind: "not-required" }
+  | { readonly kind: "failed"; readonly detail: string }
+  | { readonly kind: "ready"; readonly universe: ReturnType<typeof makeStructureUniverse> };
+type StructureRootObservationFailure = {
+  readonly ok: false;
+  readonly detail: string;
+};
+type StructureRootObservation =
+  | { readonly ok: true; readonly kind: StructureRootKind | "missing" }
+  | StructureRootObservationFailure;
 
 type CatalogOperationContext = {
   readonly fileSystem: FileSystem.FileSystem;
@@ -432,8 +463,7 @@ function resolveCurrentCatalog(context: CatalogOperationContext) {
  * Catalog authority operations share one current-repository resolution boundary.
  *
  * `resolve` returns that admitted authority directly. `check` consumes the same
- * resolution, selects applications, invokes only the ready Grit-check resource,
- * and interprets mechanical findings without constructing a provider.
+ * resolution, selects applications, and invokes only ready host resources.
  */
 const resolve = module.resolve.effect(function* ({ context }) {
   return yield* resolveCurrentCatalog(context);
@@ -450,8 +480,187 @@ const check = module.check.effect(function* ({ context, input }) {
     return selectionRejected(selection.issues);
   }
 
-  const reports: CheckApplicationReport[] = [];
+  const observeStructureRootKind = (relativePath: string) =>
+    Effect.gen(function* () {
+      const absolutePath = context.path.resolve(context.workspaceRoot, relativePath);
+      const linkAttempt = yield* Effect.result(context.fileSystem.readLink(absolutePath));
+      if (linkAttempt._tag === "Success") {
+        return { ok: true, kind: "other" } satisfies StructureRootObservation;
+      }
+      if (isNotFound(linkAttempt.failure)) {
+        return { ok: true, kind: "missing" } satisfies StructureRootObservation;
+      }
+      if (!hasExactCauseCode(linkAttempt.failure, "EINVAL")) {
+        return {
+          ok: false,
+          detail: `Unable to inspect matched structure root "${relativePath || "."}".`,
+        } satisfies StructureRootObservation;
+      }
+      const statAttempt = yield* Effect.result(context.fileSystem.stat(absolutePath));
+      if (statAttempt._tag === "Failure") {
+        if (isNotFound(statAttempt.failure)) {
+          return { ok: true, kind: "missing" } satisfies StructureRootObservation;
+        }
+        return {
+          ok: false,
+          detail: `Unable to inspect matched structure root "${relativePath || "."}".`,
+        } satisfies StructureRootObservation;
+      }
+      const kind: StructureRootKind =
+        statAttempt.success.type === "Directory"
+          ? "directory"
+          : statAttempt.success.type === "File"
+            ? "file"
+            : "other";
+      return { ok: true, kind } satisfies StructureRootObservation;
+    });
+
+  const preparations: CheckApplicationPreparation[] = [];
   for (const application of selection.applications) {
+    if (!isHabitatStructureApplication(application)) {
+      preparations.push({ kind: "grit", application });
+      continue;
+    }
+    const structureAttempt = yield* Effect.result(
+      context.fileSystem.readFileString(application.runner.structure.absolutePath)
+    );
+    if (structureAttempt._tag === "Failure") {
+      preparations.push({
+        kind: "structure",
+        preparation: {
+          kind: "failed",
+          report: failedStructureApplication(
+            application,
+            "StructureReadFailed",
+            `Unable to read structure asset "${application.runner.structure.relativePath}".`
+          ),
+        },
+      });
+      continue;
+    }
+
+    const parseAttempt = yield* Effect.result(
+      Effect.try({ try: () => parseToml(structureAttempt.success), catch: (cause) => cause })
+    );
+    if (parseAttempt._tag === "Failure") {
+      preparations.push({
+        kind: "structure",
+        preparation: {
+          kind: "failed",
+          report: failedStructureApplication(
+            application,
+            "StructureInvalid",
+            `Invalid Habitat structure TOML in "${application.runner.structure.relativePath}".`
+          ),
+        },
+      });
+      continue;
+    }
+    const admission = admitStructureDocument(parseAttempt.success, application);
+    if (!admission.ok) {
+      preparations.push({
+        kind: "structure",
+        preparation: {
+          kind: "failed",
+          report: failedStructureApplication(application, "StructureInvalid", admission.detail),
+        },
+      });
+      continue;
+    }
+    preparations.push({
+      kind: "structure",
+      preparation: { kind: "admitted", value: admission.admitted },
+    });
+  }
+
+  const needsInventory = preparations.some(
+    (prepared) =>
+      prepared.kind === "structure" &&
+      prepared.preparation.kind === "admitted" &&
+      prepared.preparation.value.scopes.length > 0
+  );
+  let inventoryPreparation: StructureInventoryPreparation = { kind: "not-required" };
+  if (needsInventory) {
+    const inventoryAttempt = yield* Effect.result(
+      context.sourceInventory.observe({
+        root: context.workspaceRoot,
+        maxEntries: MAX_SOURCE_INVENTORY_ENTRIES,
+      })
+    );
+    if (inventoryAttempt._tag === "Failure") {
+      inventoryPreparation = {
+        kind: "failed",
+        detail: `Source inventory failed (${inventoryAttempt.failure.reason}): ${inventoryAttempt.failure.detail}`,
+      };
+    } else {
+      inventoryPreparation = {
+        kind: "ready",
+        universe: makeStructureUniverse(inventoryAttempt.success),
+      };
+    }
+  }
+
+  const reports: CheckApplicationReport[] = [];
+  const observedKinds = new Map<string, StructureRootObservation>();
+  for (const prepared of preparations) {
+    if (prepared.kind === "structure") {
+      if (prepared.preparation.kind === "failed") {
+        reports.push(prepared.preparation.report);
+        continue;
+      }
+      const admitted = prepared.preparation.value;
+      const application = admitted.application;
+      if (admitted.scopes.length === 0) {
+        reports.push(evaluatedStructureApplication(application, []));
+        continue;
+      }
+      if (inventoryPreparation.kind === "failed") {
+        reports.push(
+          failedStructureApplication(application, "InventoryFailed", inventoryPreparation.detail)
+        );
+        continue;
+      }
+      if (inventoryPreparation.kind === "not-required") {
+        return yield* Effect.die(
+          new Error("Structure inventory was not prepared for an admitted bound scope.")
+        );
+      }
+
+      const plan = planStructureEvaluation(admitted, inventoryPreparation.universe);
+      let observations:
+        | { readonly kind: "ready"; readonly rootKinds: Map<string, StructureRootKind | "missing"> }
+        | { readonly kind: "failed"; readonly detail: string } = {
+        kind: "ready",
+        rootKinds: new Map(),
+      };
+      for (const relativePath of plan.observationPaths) {
+        let observation = observedKinds.get(relativePath);
+        if (observation === undefined) {
+          observation = yield* observeStructureRootKind(relativePath);
+          observedKinds.set(relativePath, observation);
+        }
+        if (!observation.ok) {
+          observations = { kind: "failed", detail: observation.detail };
+          break;
+        }
+        observations.rootKinds.set(relativePath, observation.kind);
+      }
+      if (observations.kind === "failed") {
+        reports.push(
+          failedStructureApplication(application, "StructureObservationFailed", observations.detail)
+        );
+        continue;
+      }
+      reports.push(
+        evaluatedStructureApplication(
+          application,
+          evaluateStructurePlan(plan, observations.rootKinds)
+        )
+      );
+      continue;
+    }
+
+    const application = prepared.application;
     const patternAttempt = yield* Effect.result(
       context.fileSystem.readFileString(application.runner.pattern.absolutePath)
     );
@@ -546,6 +755,11 @@ function isContained(root: string, target: string, path: Path.Path): boolean {
     candidate === "" ||
     (candidate !== ".." && !candidate.startsWith(`..${path.sep}`) && !path.isAbsolute(candidate))
   );
+}
+
+function hasExactCauseCode(error: PlatformError.PlatformError, code: string): boolean {
+  const cause = "cause" in error.reason ? error.reason.cause : undefined;
+  return typeof cause === "object" && cause !== null && "code" in cause && cause.code === code;
 }
 
 type ResolvedSubject = {

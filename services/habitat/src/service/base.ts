@@ -1,4 +1,5 @@
 import type { RuleEvaluationResource } from "@habitat/resource-rule-evaluation";
+import type { SourceInventoryResource } from "@habitat/resource-source-inventory";
 import type { FileSystem, Path } from "effect";
 
 type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
@@ -9,6 +10,7 @@ export type Context = {
     readonly fileSystem: FileSystem.FileSystem;
     readonly path: Path.Path;
     readonly ruleEvaluation: RuleEvaluationResource<never>;
+    readonly sourceInventory: SourceInventoryResource<never>;
   };
   readonly scope: {
     readonly workspaceRoot: string;
