@@ -72,6 +72,25 @@ describe("Habitat catalog resolve", () => {
     ).toEqual([".habitat/blueprints/package/blueprint.toml", "packages/example/habitat.toml"]);
   });
 
+  test("rejects a blueprint whose id disagrees with its authority directory", async () => {
+    const result = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml({ id: "service" }),
+        ".habitat/blueprints/package/structure.toml": structureToml(),
+      },
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-definition-kind-mismatch",
+          path: ".habitat/blueprints/package/blueprint.toml",
+        },
+      ],
+    });
+  });
+
   test("keeps the empty request closed", async () => {
     await expect(
       withFixture({ files: {} }, (client) =>

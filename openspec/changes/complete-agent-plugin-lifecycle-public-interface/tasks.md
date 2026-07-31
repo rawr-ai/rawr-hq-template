@@ -1913,7 +1913,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   the six active RAWR-path-qualified v2 Grit rules out of the generic service
   definition. Keep the separate six service-construction laws staged. Do not
   call task 5.7e22b1 complete from schema admission alone.
-- [ ] 5.7e22b2 Migrate the service and resource/provider boundaries without
+- [x] 5.7e22b2 Migrate the service and resource/provider boundaries without
   changing public Habitat behavior. Keep rule and authority semantics in the
   service, make external execution capabilities provider-neutral resources,
   select concrete providers only in the app, and remove consumer Git-hook,

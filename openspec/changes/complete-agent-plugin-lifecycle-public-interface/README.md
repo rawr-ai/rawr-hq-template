@@ -5293,6 +5293,20 @@ behavior reviews report no P0 or P1 finding. The checkpoint does not select a
 provider, create runtime or retained state, mutate provider homes, read Personal
 content, or touch release channels.
 
+### Habitat Boundary Migration Closure
+
+Task [[tasks#5. Bounded Agent-Plugin Lifecycle Service|5.7e22b2]] is complete.
+The two previously indirect boundary corrections now have direct public behavior proof: a
+blueprint whose declared id disagrees with its authority-directory kind is
+rejected, and a known owner selector evaluates only that owner's resolved v3
+applications. The complete focused Habitat service suite passes 47 tests.
+
+The service imports only provider-neutral resource contracts and retains
+authority, selection, and structure meaning. Concrete Git and Grit providers
+remain in their resource-owned projects. Positive provider selection and Oclif
+or Nx projection do not exist at this checkpoint; the Habitat app and its two
+qualified plugins remain task 5.7e22b3.
+
 ### Habitat Blueprint Definition Checkpoint
 
 The definition-only checkpoint records seven ordinary v3 kinds: `package`,

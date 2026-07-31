@@ -288,6 +288,45 @@ describe("Habitat catalog check", () => {
     });
   });
 
+  test("evaluates only applications owned by the selected project", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [{ id: "a_rule" }, { id: "b_rule" }],
+        },
+      ],
+      instances: [
+        exampleInstance({
+          id: "alpha",
+          ownerProject: "@rawr/alpha",
+          projectPath: "packages/alpha",
+        }),
+        exampleInstance({
+          id: "beta",
+          ownerProject: "@rawr/beta",
+          projectPath: "packages/beta",
+        }),
+      ],
+    });
+    const { calls, result } = await checkFixture(fixture, {
+      selectors: { owner: "@rawr/beta" },
+    });
+
+    expect(calls.map(({ program }) => program)).toEqual(["a_rule()", "b_rule()"]);
+    expect(calls.every(({ subjectPaths }) => subjectPaths[0]?.endsWith("/packages/beta"))).toBe(
+      true
+    );
+    expect(result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [
+        { ownerProject: "@rawr/beta", instanceId: "beta", ruleId: "a_rule" },
+        { ownerProject: "@rawr/beta", instanceId: "beta", ruleId: "b_rule" },
+      ],
+    });
+  });
+
   test("rejects unknown, wrong-namespace, and empty selections without evaluation", async () => {
     const splitFixture = authorityFixture({
       blueprints: [
