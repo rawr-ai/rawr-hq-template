@@ -5398,6 +5398,38 @@ representative embedded cases. Native injected-fixture execution remains
 bounded upstream Habitat proof debt; this slice does not introduce a one-off
 fixture harness or alternate evaluator as a substitute for that capability.
 
+### Habitat Nx Projection Decision
+
+The second task 5.7e22b3 checkpoint introduces the package-less
+`@habitat/plugin-nx` source project. It exports a factory over an app-owned
+`clientForWorkspace(workspaceRoot)` capability and non-empty runtime input set
+because native Nx plugin options are serialized data and cannot carry a ready
+service client. The later Habitat app calls that factory inside the Nx worker
+and remains the sole owner of provider selection, resource construction,
+service scope, and the cache facts for its selected runtime.
+
+One graph construction resolves the catalog once. Each resolved application
+becomes one cacheable `habitat check --instance ... --rule ...` leaf. Complete
+catalog authority and app-selected runtime facts invalidate every leaf, while
+runner assets and inspected subjects remain application-scoped; each owner
+receives one dependency-only `check:policy` aggregate. The projection returns
+target augmentations at instance manifest roots without a project name, so it
+cannot create a second project identity. Catalog rejection, missing instance
+lineage, owner mismatch, duplicate target identity, aggregate/leaf collision,
+or an application outside the matched authority files fails graph construction
+rather than producing an empty or partial graph.
+
+The sealed source proof is `@habitat/plugin-nx:typecheck`, eight owner-local
+behavior tests, the composed `@habitat/plugin-nx:check` graph, repository lint,
+and strict OpenSpec validation. Independent native-Nx, behavior, and structural
+reviews found no remaining P0/P1 after the aggregate collision refusal landed.
+
+This source checkpoint does not register itself in `nx.json`, replace the
+released Civ7 checker, activate a version-three instance, compose the Habitat
+app, initialize a consumer, or publish an artifact. It imports no provider,
+constructs no runtime, calls no check operation during graph construction,
+starts no nested Nx scheduler, and retains no catalog or result state.
+
 ## Settlement Oracles
 
 The final product must prove:
