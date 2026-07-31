@@ -2647,22 +2647,28 @@ Exact tag spellings, dependency-constraint syntax, generator implementation, and
 
 ### 16.1 Habitat policy and mechanics
 
-RAWR HQ-Template owns the `@habitat/cli` source, package identity, releases,
-consumer integration, and generic blueprint policy. It publishes accepted
-policy as the data-only `@rawr/habitat-blueprints` pack. Its public policy
+RAWR HQ-Template owns the Habitat product source, `@habitat/cli` release
+identity, releases, consumer integration, and generic blueprint policy.
+Habitat source obeys the same product graph it governs: resources declare,
+providers implement, services own semantics, plugins project, and an app
+selects and realizes the executable entrypoint. `@habitat/cli` is the assembled
+Oclif release artifact, not a composite package source owner. It publishes
+accepted policy as the data-only `@habitat/blueprints` pack. Its public policy
 export surface is limited to `habitat-pack.json` and `blueprints/**`, in
 addition to the package envelope and metadata required for ordinary
 distribution. It contains no executable JavaScript, product instances, host
 baselines, RAWR HQ-Template paths, or legacy v2 rules.
 
-`@habitat/cli` owns exact pack/version/protocol resolution, instance admission,
-evaluation, classification, generation, and Nx integration mechanics. It does
-not amend generic policy. Resolution has no fallback or precedence merge;
+The Habitat service owns exact pack/version/protocol resolution, instance
+admission, evaluation, and classification. Qualified plugins own Oclif and Nx
+projection; the Habitat app owns provider/profile selection and release
+composition. None amends generic policy. Resolution has no fallback or
+precedence merge;
 multiple accepted versions of one blueprint identity may coexist, a duplicate
 blueprint identity/version pair is fatal, and rule ids are globally unique
 across the resolved authority catalog.
 
-One idempotent initializer supplied by the Template-owned package configures
+One idempotent initializer supplied by the Habitat app configures
 the ordinary Nx plugin and inferred repository targets, supplies one named
 Habitat hook contribution, and acquires pinned Grit. Each consumer repository
 owns its hook files and final hook composition. Initialization preserves

@@ -1198,7 +1198,8 @@ and the TypeScript mapping. Task 3.3 tightens generated-manifest packaging only
 when that behavior exists. The
 configuration fixtures and both live rules pass with zero diagnostics.
 
-The Template `habitat` project pins the current published Civ7 package:
+At the historical consumer checkpoint, the Template `habitat` project pinned
+the published Civ7 package:
 
 | Field | Value |
 | --- | --- |
@@ -1208,9 +1209,10 @@ The Template `habitat` project pins the current published Civ7 package:
 | Canonical Civ7 main | `ebf5bbcab1e754a17a63999747f80c5e60b28fb7` |
 | Package SHA-256 | `d21f7ab85d9895666174003b7024aa2473e83db047f42bc2c801666e0dd448f5` |
 
-The package supplies the CLI and Nx plugin through the ordinary Bun dependency
-graph. Template neither vendors the SDK source nor maintains a platform
-selector, executable cache, or hand-authored rule aggregate.
+That package supplied the CLI and Nx plugin through the ordinary Bun dependency
+graph. Task 5.7e22b supersedes the source-ownership part of this checkpoint;
+the table remains exact transfer provenance rather than current package
+authority.
 
 ## Core Toolchain Grounding
 
@@ -1642,10 +1644,10 @@ review does not authorize a separate release path.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
-| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; the portable Habitat Nx boundary is installed, while complete live-corpus conformance and activation of the staged construction laws remain open |
+| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat workspace source now evaluates the corpus, while released adoption and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat package consumer | Immutable package URL, lockfile integrity, package-owned Grit acquisition, CLI, and Nx plugin landed in Template PR #689 at `407ab045`; service-law activation remains open |
+| Habitat package consumer | Template-owned `@habitat/cli` workspace source, package-local Grit acquisition, CLI, v3 catalog, and Nx application projection are under task 5.7e22b review; the initializer, package publication, released adoption, and service-law activation remain open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
@@ -5015,15 +5017,16 @@ head `c4d81b060b4c7ffb5d08873f77aee2d361c31d2f` remains review
 provenance only. The required repository ratchet passed in run `30602570035`,
 job `91068208363`.
 
-## Habitat Package And Release Authority
+## Habitat Product And Release Authority
 
-Before transferring any Habitat source, the authority record now makes RAWR
-HQ-Template the sole owner of `@habitat/cli` source, package identity,
-releases, generic policy distribution, and ordinary consumer integration.
+Before transferring any Habitat source, the authority record makes this
+repository the sole owner of the Habitat product source, the `@habitat/cli`
+release identity, releases, generic policy distribution, and ordinary consumer
+integration.
 Magic Migration and Civ7 remain design, implementation, and consumer evidence;
 they are not standing package owners or runtime dependencies.
 
-The executable package owns one idempotent initializer for Nx plugin
+The Habitat product owns one idempotent initializer for Nx plugin
 registration, inferred repository targets, one named Habitat hook
 contribution, and pinned Grit acquisition. The consumer repository owns its
 hook files and final composition. Initialization preserves unrelated hooks,
@@ -5032,7 +5035,7 @@ contribution, changes nothing on a converged repeat, and removes its
 contribution only through an explicit removal operation. Consumers select
 exact package and policy versions plus their own repository instances. They do
 not copy Habitat source or reproduce its wiring.
-The data-only `@rawr/habitat-blueprints` pack remains distinct from executable
+The data-only `@habitat/blueprints` pack remains distinct from executable
 mechanics, but both are bound through one exact package protocol and one
 consumer entrypoint.
 
@@ -5049,6 +5052,55 @@ This checkpoint changes authority and execution records only. No Habitat
 source, release, consumer configuration, provider home, Personal repository,
 or live state moves until the separately reviewed transfer and release
 containers land.
+
+## Habitat Product Realization Correction
+
+Task [[tasks#1. Positive Habitat And Nx Checks|5.7e22b]] first produced a
+behaviorally green staging candidate under `packages/habitat-cli`. Standing
+architecture review rejected that placement before landing. The directory
+combined a semantic service, resource contracts, concrete providers, Oclif and
+Nx projections, runtime selection, and the executable app under one
+`type:package` owner. Its bespoke `habitat-cli` blueprint then validated the
+exception rather than the repository's canonical product kinds.
+
+The staging tree remains migration evidence only. Green source tests prove the
+imported behavior, not architectural fitness. It may be moved or rewritten,
+but it is not an accepted source container and must not land in that shape.
+
+Habitat now realizes itself through the ordinary product funnel:
+
+```text
+resources -> providers -> service -> plugins -> app -> runtime -> entrypoint
+```
+
+Product-free support matter may remain in packages. `@habitat/cli` is the
+single assembled Oclif release identity, not a semantic source owner. The
+release may contain compiled output from several Nx projects without erasing
+their boundaries. The data-only policy artifact is `@habitat/blueprints`.
+
+The current repository remains the source and release home. It is becoming the
+Habitat product suite, with RAWR retained as one governed realization. Creating
+another repository would add a synchronization boundary without adding a
+truthful owner. The physical repository and directory rename waits for a clean,
+drained Graphite boundary so it cannot disturb active worktrees or ancestry.
+
+The recut carries three bounded behavioral corrections discovered by review:
+
+1. local blueprint discovery admits only
+   `.habitat/blueprints/<kind>/blueprint.toml` and validates path identity;
+2. public owner selection includes resolved v3 applications;
+3. blueprint-only execution does not require a v2 compatibility registry.
+
+Consumer Git-hook, Biome, Graphite, and repository scheduling policy does not
+belong to the Habitat evaluator service. The initializer and consumer-owned
+hook composition project those workflows without creating another semantic
+service owner.
+
+Magic Migration and Civ7 remain exact provenance and implementation evidence.
+No product root, host policy, manual consumer target chain,
+generator/taxonomy/doc path, branch ancestry, or wholesale `tools/habitat`
+tree enters the product graph. No initializer, release, consumer repository,
+provider home, Personal repository, or live state has moved.
 
 ## Settlement Oracles
 

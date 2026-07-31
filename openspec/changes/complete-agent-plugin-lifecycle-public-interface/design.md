@@ -155,9 +155,10 @@ The API-plugin boundary is active now rather than waiting for the wider service
 corpus migration. Its closed source faces are `client.ts`, `api.ts`, and one
 embedded service; outward documentation calls the API members operations.
 The independent Grit-helper documentation law is also active and requires a
-semantic comment immediately above each named helper. The installed Habitat Nx
-plugin discovers these laws from the registry and projects them into their
-qualified owners' inferred policy targets. The one root Nx scheduler graph
+semantic comment immediately above each named helper. The Template-owned
+Habitat Nx plugin discovers these laws from the application catalog and
+projects them into their qualified owners' inferred policy targets. The one
+root Nx scheduler graph
 reaches repository admission and separation, Habitat policy, and CLI Oclif
 parity through those owners. The inferred targets include the required Oclif
 structure laws and lifecycle command-channel law. The six staged service rules
@@ -169,12 +170,17 @@ RAWR adds generic Oclif app and command-plugin blueprints. These assert the
 kind's valid axes, not a list of retired filenames. A broad universal “plugin”
 rule is not invented without a stable common corpus.
 
-The portable Habitat package is pinned to Civ7 release
-`habitat-cli-v0.1.0`, reviewed source
-`d51e8c7454e301bcaba56c8364f5c714d5febca3`. Its exported Nx plugin owns
-registry discovery, exact inputs, caching, owner-local policy composition, and
-package-local acquisition. Template does not fork, vendor, or modify the SDK
-locally.
+The Civ7 `habitat-cli-v0.1.0` release and reviewed source
+`d51e8c7454e301bcaba56c8364f5c714d5febca3` are historical transfer evidence.
+Template owns the Habitat product source and the `@habitat/cli` release
+identity, but those are different boundaries. Habitat source follows the
+ordinary resource, provider, service, plugin, app, runtime, and entrypoint
+funnel; no composite package is allowed to own all of those kinds. The Oclif
+app assembles one release artifact. The Nx plugin resolves admitted
+applications, derives exact inputs, and owns caching plus owner-local policy
+composition without acquiring service or provider authority. Workspace source
+is dogfooded through those ordinary projects; publication and idempotent
+consumer installation remain separately reviewed work.
 
 ### Required checks follow the Nx graph
 
@@ -189,16 +195,17 @@ verification, Habitat policy, and dependency checks.
 Repository separation, CLI Oclif parity, and Habitat topology/source policy
 remain qualified owner work. Habitat's inferred owner targets contain the
 required Oclif structure laws, lifecycle command-channel law, and public
-boundary documentation law. The package-owned Stop hook selects registered
-hook laws without becoming a second admission graph. The required CI job
+boundary documentation law. The consumer-owned Stop hook invokes the Habitat
+projection selected by repository configuration without becoming a second
+admission graph. The required CI job
 publishes one stable status. Local hooks provide fast feedback; remote branch
 protection remains merge authority.
 
 Every current non-root project owns a public check. The former packet-local Nx
 project adapter and hand-maintained rule selector are deleted rather than
 extended. The native workspace Grit rule owns the durable scheduler and single
-lint-owner relationship; the installed Habitat Nx plugin projects registered
-policy into that graph.
+lint-owner relationship; the Template-owned Habitat Nx plugin projects
+resolved policy applications into that graph.
 
 Foundational project-local target names are uniform across project kinds:
 `build`, `typecheck`, `test`, and `check`; `lint` is workspace-owned.

@@ -22,16 +22,18 @@ It is not a second plan or normative design.
 
 ## Authority Boundary
 
-RAWR HQ-Template owns `@habitat/cli` source, package identity, releases,
-consumer integration, and generic blueprint policy.
-`@rawr/habitat-blueprints` distributes that policy as versioned data.
-`@habitat/cli` owns exact resolution, protocol validation, admission,
-evaluation, classification, generation, and Nx integration mechanics.
+This repository owns the Habitat product source, `@habitat/cli` release
+identity, releases, consumer integration, and generic blueprint policy.
+`@habitat/blueprints` distributes that policy as versioned data. The Habitat
+service owns exact resolution, protocol validation, admission, evaluation, and
+classification. Qualified plugins own Oclif and Nx projection. The Habitat app
+owns provider/profile selection, product composition, and the executable
+entrypoint.
 
 The frozen public policy export surface is:
 
 ```text
-@rawr/habitat-blueprints/
+@habitat/blueprints/
   habitat-pack.json
   blueprints/**
 ```
@@ -54,37 +56,40 @@ The current Civ7 source audit establishes these exact, read-only inputs:
 | Resolved applications | commit `8b18c9f46d8bfe8471ced1b8acf573dea297a0fb` | Clean local implementation evidence; not a release |
 | Application execution | commit `7b6da1c525acb6f37822d383d2240cccd5b3fa36` | Clean implementation evidence beneath moving work; not a wholesale transfer tree or release |
 | Application classification | commit `b41cf544b1a3aa446320894ef2b5f01b5051b0eb`; tree `46e252dd8f2c75be30bae06c165a1ce111e58b4f` | Clean scoped implementation evidence; not Nx projection or a release |
+| Habitat authority ontology | file at commit `ebf5bbcab1e754a17a63999747f80c5e60b28fb7`; blob `021bc1895f6e65cde6b2d1e8fc297720cb4a8b20`; introduced by `de8359e8ea7039359aa101c4b8f6614f8c1b49f7`, last substantive ontology activation `f6454f82e6788415a0315b7d61e0f75f2a756b46` | Conceptual consolidation only; product examples and transitional physical layout do not transfer, while capability and niche realization remain deferred |
 
 No `@habitat/cli@0.2.0` release exists. Nx application projection and Fluree
-lifecycle changes are not transfer inputs. The audited source also does not yet
-close blueprint-aware production loading, Nx projection, complete generators,
-and one consumer initializer together.
-Production still loads the legacy `.habitat/index.json` compatibility catalog;
-the blueprint-aware catalog is test-only. The audited source also contains
-Civ7 host policy, product roots, generator/taxonomy/doc paths, and manual
-consumer wiring. Those paths are explicit exclusions, not generic source.
+lifecycle changes are not transfer inputs. The first staging intake proved
+blueprint-aware loading and Nx application behavior but collapsed the complete
+product graph beneath one `type:package` owner. Standing review rejected that
+placement before landing. The source remains migration evidence until it is
+recut through canonical resource, provider, service, plugin, and app projects.
 
-Its package still targets Effect 3.21.3, oRPC 1.14.6, TypeBox 1.3.6, and Bun
-1.3.14. Combined source intake/deproductization, vendor modernization,
-consumer initialization, policy-pack construction, and release are separate
-reviewed boundaries. Effect 4, oRPC 2, and Template's TypeBox version are an
-explicit later vendor migration, not a condition on current ownership or the
-first owner-correct package release. The requested Bun 1.4 native asset remains
-a separate release proof; Template itself still pins Bun 1.3.14 until that
-distinct vendor boundary lands.
+The transferred source removes the compatibility-only catalog as a separate
+production authority. A present v2 registry contributes current host rules as
+compatibility data to the one resolved catalog; its absence produces the exact
+empty input. Civ7 host policy, product roots, generator/taxonomy/doc paths, and
+manual consumer wiring remain historical evidence, not generic source.
+
+The source evidence targets Effect 3.21.3, oRPC 1.14.6, TypeBox 1.3.6, and Bun
+1.3.14. The accepted product graph is implemented directly on this
+repository's Effect 4, oRPC 2, and current TypeBox substrate rather than
+landing a second vendor realm and migrating it later. Consumer initialization,
+policy-pack construction, and release remain separate reviewed boundaries.
+The requested Bun 1.4 native asset remains a separate release proof.
 
 ## Kind Rows
 
 | Kind | Current state | Required disposition |
 | --- | --- | --- |
-| CLI pack/admission mechanics | Installed Civ7 release `@habitat/cli@0.1.0` has no first-class pack/admission protocol and remains transfer evidence only | Extract reviewed generic primitives into RAWR HQ-Template, remove Civ7 product policy and manual consumer wiring, then publish Template-owned `@habitat/cli@0.2.0` only after exact resolution, multi-version coexistence, duplicate identity/version refusal, globally unique rule ids, and one idempotent consumer initializer close |
-| Blueprint policy pack | RAWR HQ-Template-local v2 packets only | Publish the data-only `@rawr/habitat-blueprints` seam; do not copy current host packets into it |
+| Habitat product graph | Composite `packages/habitat-cli` staging source is behavior evidence only; Civ7 `@habitat/cli@0.1.0` remains transfer evidence | Realize support, resources/providers, service, Oclif/Nx projections, and app as distinct Nx projects; then publish one assembled `@habitat/cli@0.2.0` release identity |
+| Blueprint policy pack | Repository-local v2 packets only | Publish the data-only `@habitat/blueprints` seam; do not copy current host packets into it |
 | `package@1` | No generic packet | Admit first, after CLI 0.2.0, with exact anchors and closed contract/semantics proof members |
 | Resource | Draft boundary packet | Correct provider-family closure, proof, anchors, and generator |
 | Provider | Draft boundary packet | Correct nested realization closure, proof, anchors, and generator |
 | Service | Enforced partial law plus staged construction packets | Correct, burn down, and promote as one public construction model |
 | Server API projection | Shallow current packet | Compose service-source law and close public faces and proof |
-| App | No generic packet | Design and activate before any specialization |
+| App | No generic packet | Port and activate the accepted Magic app law before Habitat app admission |
 | CLI app | Legacy Oclif app law owns commands | Rebuild as a commandless specialization of app |
 | CLI topic | Legacy command-plugin root | Rename and rebuild at `plugins/cli/topics/*` |
 
@@ -99,8 +104,9 @@ distinct vendor boundary lands.
 - resource and provider packets do not yet close all member, proof, anchor, and
   generator relationships, including direct resource-package public faces.
 - service construction packets remain staged while current source burns down.
-- no executable first-class blueprint/instance manifest admission path exists
-  in the installed Habitat release.
+- the composite Habitat staging source is not an admitted project kind and
+  must be decomposed before executable first-class blueprint/instance
+  admission can land;
 - current local rule packets carry host baselines and RAWR HQ-Template paths
   and therefore cannot be republished as the generic policy pack.
 

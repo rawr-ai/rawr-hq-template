@@ -5081,9 +5081,12 @@ Desktop background cadence is process-local desktop behavior. Business-level dur
 
 ### 25.11 Blueprint evaluator and proof topology
 
-RAWR HQ-Template owns the `@habitat/cli` source, package identity, releases,
-consumer integration, and generic blueprint policy. It publishes policy
-through the data-only `@rawr/habitat-blueprints` payload:
+RAWR HQ-Template owns the Habitat product source, `@habitat/cli` release
+identity, releases, consumer integration, and generic blueprint policy.
+Habitat source follows the ordinary resource, provider, service, plugin, app,
+runtime, and entrypoint realization chain. `@habitat/cli` is the assembled
+Oclif release artifact rather than a composite package source owner. Template
+publishes policy through the data-only `@habitat/blueprints` payload:
 
 ```text
 habitat-pack.json
@@ -5091,14 +5094,15 @@ blueprints/**
 ```
 
 The pack contains no executable JavaScript, product instances, host baselines,
-RAWR HQ-Template paths, or legacy v2 rules. `@habitat/cli` owns exact
-pack/version/protocol resolution, admission, evaluation, classification,
-generation, and Nx integration mechanics. It does not amend policy. Resolution
-has no fallback or precedence merge. Multiple accepted versions of one
+RAWR HQ-Template paths, or legacy v2 rules. The Habitat service owns exact
+pack/version/protocol resolution, admission, evaluation, and classification;
+qualified plugins own Oclif and Nx projection; the Habitat app owns
+provider/profile selection and release composition. None amends policy.
+Resolution has no fallback or precedence merge. Multiple accepted versions of one
 blueprint identity may coexist; a duplicate blueprint identity/version pair is
 fatal, and rule ids are globally unique across the resolved authority catalog.
 
-The Template-owned package supplies one idempotent initializer that configures
+The Habitat app supplies one idempotent initializer that configures
 the ordinary Nx plugin and inferred repository targets, supplies one named
 Habitat hook contribution, and acquires pinned Grit. Each consumer repository
 owns its hook files and final hook composition. Initialization preserves

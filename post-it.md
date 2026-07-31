@@ -6,6 +6,69 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-30 - Product Shape Governs Release
+
+Habitat is a product suite, not a package with unusually broad privileges.
+Its source follows the same narrowing realization chain it governs:
+provider-neutral resources declare capabilities, providers implement them,
+services own semantic truth, plugins project operations, an app selects the
+product graph, runtime realizes it, and an entrypoint activates it.
+
+`@habitat/cli` remains one ordinary Oclif release identity. That distribution
+boundary may assemble several source projects without making the release
+package their semantic owner. Packages retain only product-free support
+matter; a package may not absorb a service, provider selection, projections,
+or app composition merely because one artifact ships them together.
+
+Habitat governs its own source through the ordinary blueprint kinds. There is
+no composite `habitat-cli` exception. The repository itself is the Habitat
+product suite; RAWR is one governed product realization inside it. A second
+repository would add coordination without clarifying authority, so the
+existing repository keeps its history and becomes the renamed Habitat
+identity after the active stack is clean and drained.
+
+The active source intake is therefore migration evidence until it is recut
+into the canonical product graph. The recut also closes three concrete
+behavior gaps: blueprint discovery is limited to the blueprint authority
+root, owner selection includes resolved applications, and blueprint-only
+execution never depends on the predecessor registry.
+
+### Bag Of Keywords
+
+Habitat, product, service, plugin, app.
+
+identity, coherence, closure, clarity, reuse.
+
+blueprint, resource, provider, Oclif, Nx.
+
+## 2026-07-30 - Mechanics Ship Once
+
+Habitat is one Template-owned product with two deliberately separate outputs:
+an executable evaluator and a data-only policy pack. Template owns the source,
+package identity, release, and integration contract for both. Consumers own
+their instances, repository policy, hook files, and final scheduling choices.
+That line makes reuse ordinary rather than negotiated.
+
+One resolved application is the unit of execution. Blueprint law plus
+repository instance becomes an application; the CLI and Nx plugin consume the
+same deterministic catalog. Nx owns scheduling and caching. Habitat owns
+resolution and evaluation. Grit owns source relations. No consumer reproduces
+those wires, and no compatibility registry becomes a second runtime path.
+
+The source checkpoint proves ownership before distribution. The initializer is
+the next independent product boundary: it must integrate Nx, Grit acquisition,
+and one named hook contribution without erasing consumer policy. Publication
+follows only after that behavior is sealed. This keeps source, setup, policy,
+and release reviewable without turning them into separate authorities.
+
+### Bag Of Keywords
+
+tooling, catalog, blueprint, package, release.
+
+authority, reuse, closure, clarity, leverage.
+
+Nx, Habitat, TypeBox, Grit, Graphite.
+
 ## 2026-07-30 - Habitat Integrates Once
 
 RAWR HQ-Template owns Habitat source, package identity, releases, generic
