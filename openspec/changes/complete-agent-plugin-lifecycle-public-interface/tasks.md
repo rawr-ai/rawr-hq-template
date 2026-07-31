@@ -1897,6 +1897,23 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `.habitat/blueprints/<kind>/blueprint.toml`, include resolved applications in
   `--owner` selection, and make blueprint-only execution independent of the v2
   compatibility registry. Prove each correction with behavior-first oracles.
+- [x] 5.7e22b2a Add one generic source-inventory resource and ordinary local-Git
+  provider. Return a bounded, canonical, Git-visible workspace inventory that
+  includes tracked and untracked nonignored source while identifying Git-owned
+  tracked non-file entries. Keep eager filesystem classification, Habitat
+  blueprints, applications, lanes, structure policy, Git hardening, mutation,
+  persistence, evidence, and lifecycle state outside the resource. Use
+  TypeBox for the complete contract and Effect 4 for process, interruption,
+  and failure lifecycles.
+- [ ] 5.7e22b2b Execute native structure applications inside the existing
+  Habitat catalog operation. Parse the admitted schema-version-two
+  `rootRole + relativePath` asset, acquire one ready source inventory through
+  service context, and author root matching, kind expectations,
+  required/allowed/forbidden direct children, closure, and diagnostic
+  classification as pure catalog-module policy consumed by the procedure
+  handler. Preserve Grit's ranged evaluator contract, admit path-only structure
+  diagnostics only at the service result boundary, add exact instance
+  selection for later Nx projection, and retain no inventory or result state.
 - [ ] 5.7e22b3 Project the sealed Habitat service through one Oclif command
   plugin and one Nx integration plugin, then compose them in the Habitat app.
   Build and package one ordinary `@habitat/cli` artifact whose `habitat`

@@ -1,0 +1,19 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat/resource-source-inventory",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/source-inventory/providers/**/*.ts",
+      "!{workspaceRoot}/resources/source-inventory/providers/**/test/**",
+      "!{workspaceRoot}/resources/source-inventory/providers/**/*.test.*",
+      "!{workspaceRoot}/resources/source-inventory/providers/**/*.spec.*",
+      "!{workspaceRoot}/resources/source-inventory/providers/**/vitest.config.*"
+    ]
+  },
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}
