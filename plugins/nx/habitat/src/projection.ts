@@ -1,13 +1,14 @@
 import { posix } from "node:path";
 import type { Client } from "@habitat/service/client";
-import type {
-  CreateNodes,
-  CreateNodesResultArray,
-  NxPlugin,
-  TargetConfiguration,
-} from "@nx/devkit";
+import type { CreateNodes, CreateNodesResultArray, TargetConfiguration } from "@nx/devkit";
 
-const HABITAT_AUTHORITY_GLOB = "{.habitat/**/*,**/habitat.toml}";
+const HABITAT_CATALOG_PATHS = [
+  ".habitat/blueprints/*/blueprint.toml",
+  ".habitat/index.json",
+  ".habitat/**/rule.json",
+  "**/habitat.toml",
+] as const;
+const HABITAT_AUTHORITY_GLOB = `{${HABITAT_CATALOG_PATHS.join(",")}}`;
 const DEFAULT_CHECK_TARGET = "check:policy";
 const HABITAT_EXECUTABLE = "habitat";
 
@@ -37,11 +38,6 @@ export type HabitatNxBinding = {
   readonly runtimeInputs: readonly [TargetInput, ...TargetInput[]];
 };
 
-/** Serialized configuration for the owner-local aggregate target name. */
-export type HabitatNxPluginOptions = {
-  readonly checkTargetName?: string;
-};
-
 /**
  * Projects service-resolved Habitat applications into native Nx targets.
  *
@@ -51,21 +47,16 @@ export type HabitatNxPluginOptions = {
  */
 export function createHabitatNxPlugin(
   binding: HabitatNxBinding
-): Omit<NxPlugin<HabitatNxPluginOptions>, "name"> {
-  const createNodes: CreateNodes<HabitatNxPluginOptions> = [
+): Readonly<{ createNodes: CreateNodes<undefined> }> {
+  const createNodes: CreateNodes<undefined> = [
     HABITAT_AUTHORITY_GLOB,
-    async (configFiles, options, context) => {
+    async (configFiles, _options, context) => {
       const matchedFiles = [...new Set(configFiles.map(normalizeWorkspacePath))].sort();
       const client = await binding.clientForWorkspace(context.workspaceRoot);
       const result = await client.catalog.resolve({});
       if (result._tag === "Rejected") throw rejectedCatalogError(result);
 
-      return projectApplications(
-        matchedFiles,
-        result.catalog,
-        checkTargetName(options),
-        binding.runtimeInputs
-      );
+      return projectApplications(matchedFiles, result.catalog, binding.runtimeInputs);
     },
   ];
 
@@ -75,22 +66,20 @@ export function createHabitatNxPlugin(
 function projectApplications(
   matchedFiles: readonly string[],
   catalog: ResolvedCatalog,
-  aggregateTargetName: string,
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): CreateNodesResultArray {
   if (catalog.applications.length === 0) return [];
-
-  const anchor = matchedFiles[0];
-  if (anchor === undefined) {
-    throw new Error("Habitat Nx projection cannot attach applications without authority files.");
-  }
 
   const authorityFiles = new Set(matchedFiles);
   const instances = indexInstances(catalog.instances);
   const rootsByOwner = new Map<string, string>();
   const projects = new Map<
     string,
-    { readonly ownerProject: string; readonly targets: Record<string, TargetConfiguration> }
+    {
+      readonly manifestPath: string;
+      readonly ownerProject: string;
+      readonly targets: Record<string, TargetConfiguration>;
+    }
   >();
 
   for (const application of catalog.applications) {
@@ -112,6 +101,7 @@ function projectApplications(
     rootsByOwner.set(application.ownerProject, root);
 
     const project = projects.get(root) ?? {
+      manifestPath,
       ownerProject: application.ownerProject,
       targets: {},
     };
@@ -131,29 +121,24 @@ function projectApplications(
     projects.set(root, project);
   }
 
-  const projected = Object.fromEntries(
-    [...projects.entries()]
-      .sort(([left], [right]) => left.localeCompare(right))
-      .map(([root, project]) => {
-        const leafTargets = Object.keys(project.targets).sort();
-        if (Object.hasOwn(project.targets, aggregateTargetName)) {
-          throw new Error(
-            `Habitat Nx projection rejected aggregate target '${aggregateTargetName}': it collides with an application target in '${project.ownerProject}'.`
-          );
-        }
-        project.targets[aggregateTargetName] = ownerTarget(project.ownerProject, leafTargets);
-        return [
-          root,
-          {
-            targets: Object.fromEntries(
-              Object.entries(project.targets).sort(([left], [right]) => left.localeCompare(right))
-            ),
+  return [...projects.entries()]
+    .sort(([left], [right]) => compareText(left, right))
+    .map(([root, project]) => {
+      const leafTargets = Object.keys(project.targets).sort();
+      project.targets[DEFAULT_CHECK_TARGET] = ownerTarget(project.ownerProject, leafTargets);
+      return [
+        project.manifestPath,
+        {
+          projects: {
+            [root]: {
+              targets: Object.fromEntries(
+                Object.entries(project.targets).sort(([left], [right]) => compareText(left, right))
+              ),
+            },
           },
-        ];
-      })
-  );
-
-  return [[anchor, { projects: projected }]];
+        },
+      ] as const;
+    });
 }
 
 function requireApplicationInstance(
@@ -203,14 +188,6 @@ function indexInstances(instances: readonly ResolvedInstance[]): Map<string, Res
   return indexed;
 }
 
-function checkTargetName(options: HabitatNxPluginOptions | undefined): string {
-  const targetName = options?.checkTargetName ?? DEFAULT_CHECK_TARGET;
-  if (targetName.length === 0 || targetName.trim() !== targetName) {
-    throw new Error("Habitat Nx projection requires a non-empty, trimmed check target name.");
-  }
-  return targetName;
-}
-
 function applicationTargetName(application: ResolvedApplication): string {
   return `habitat:application:${application.instanceId}:${application.ruleId}`;
 }
@@ -245,12 +222,7 @@ function applicationInputs(
   application: ResolvedApplication,
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): TargetConfiguration["inputs"] {
-  const files = new Set<string>([
-    "{workspaceRoot}/.habitat/**/*",
-    "{workspaceRoot}/**/habitat.toml",
-    workspaceInput(application.manifestPath),
-    workspaceInput(application.provenance.relativePath),
-  ]);
+  const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
 
   if (application.runner.name === "grit") {
     files.add(workspaceInput(application.runner.pattern.relativePath));
@@ -302,4 +274,8 @@ function rejectedCatalogError(result: Extract<ResolveCatalogResult, { _tag: "Rej
   return new Error(
     `Habitat catalog resolution rejected during Nx projection: ${JSON.stringify(result.issues)}`
   );
+}
+
+function compareText(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
 }

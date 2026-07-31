@@ -5415,14 +5415,14 @@ runner assets and inspected subjects remain application-scoped; each owner
 receives one dependency-only `check:policy` aggregate. The projection returns
 target augmentations at instance manifest roots without a project name, so it
 cannot create a second project identity. Catalog rejection, missing instance
-lineage, owner mismatch, duplicate target identity, aggregate/leaf collision,
-or an application outside the matched authority files fails graph construction
-rather than producing an empty or partial graph.
+lineage, owner mismatch, duplicate target identity, or an application outside
+the matched authority files fails graph construction rather than producing an
+empty or partial graph. The aggregate is the fixed `check:policy` target; no
+serialized option can reinterpret it as an Nx target glob.
 
-The sealed source proof is `@habitat/plugin-nx:typecheck`, eight owner-local
+The sealed source proof is `@habitat/plugin-nx:typecheck`, six owner-local
 behavior tests, the composed `@habitat/plugin-nx:check` graph, repository lint,
-and strict OpenSpec validation. Independent native-Nx, behavior, and structural
-reviews found no remaining P0/P1 after the aggregate collision refusal landed.
+and strict OpenSpec validation.
 
 This source checkpoint does not register itself in `nx.json`, replace the
 released Civ7 checker, activate a version-three instance, compose the Habitat

@@ -5,7 +5,6 @@ import {
   createHabitatNxPlugin,
   type HabitatClientForWorkspace,
   type HabitatNxBinding,
-  type HabitatNxPluginOptions,
 } from "../src";
 
 type ResolveCatalogResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
@@ -139,18 +138,19 @@ const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
 
 function createHandler(
   clientForWorkspace: HabitatClientForWorkspace
-): CreateNodesFunction<HabitatNxPluginOptions> {
+): CreateNodesFunction<undefined> {
   const plugin = createHabitatNxPlugin({ clientForWorkspace, runtimeInputs });
   expect("name" in plugin).toBe(false);
-  expect(plugin.createNodes?.[0]).toBe("{.habitat/**/*,**/habitat.toml}");
-  if (!plugin.createNodes) throw new Error("Expected the Habitat createNodes projection.");
+  expect(plugin.createNodes[0]).toBe(
+    "{.habitat/blueprints/*/blueprint.toml,.habitat/index.json,.habitat/**/rule.json,**/habitat.toml}"
+  );
   return plugin.createNodes[1];
 }
 
 function projectMap(result: CreateNodesResultArray) {
-  expect(result).toHaveLength(1);
-  expect(result[0]?.[0]).toBe(".habitat/blueprints/plugin/blueprint.toml");
-  return result[0]?.[1].projects ?? {};
+  return Object.fromEntries(
+    result.flatMap(([, projected]) => Object.entries(projected.projects ?? {}))
+  );
 }
 
 describe("Habitat Nx projection", () => {
@@ -170,6 +170,10 @@ describe("Habitat Nx projection", () => {
 
     expect(first).toEqual(second);
     expect(JSON.stringify(first)).not.toContain("/workspace");
+    expect(first.map(([source]) => source)).toEqual([
+      "plugins/b/habitat.toml",
+      "services/a/habitat.toml",
+    ]);
     expect(clientForWorkspace.mock.calls).toEqual([["/first/workspace"], ["/second/workspace"]]);
     expect(resolve).toHaveBeenCalledTimes(2);
     expect(resolve).toHaveBeenNthCalledWith(1, {});
@@ -196,13 +200,16 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
       "{workspaceRoot}/**/habitat.toml",
-      "{workspaceRoot}/.habitat/**/*",
-      "{workspaceRoot}/.habitat/blueprints/service/blueprint.toml",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md",
-      "{workspaceRoot}/services/a/habitat.toml",
+      "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/services/a/src",
       "{workspaceRoot}/services/a/src/**/*",
     ]);
+    expect(serviceLeaf?.inputs).not.toContain(
+      "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml"
+    );
     expect(serviceTargets?.["check:policy"]).toMatchObject({
       executor: "nx:noop",
       cache: false,
@@ -222,9 +229,10 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
       "{workspaceRoot}/**/habitat.toml",
-      "{workspaceRoot}/.habitat/**/*",
-      "{workspaceRoot}/.habitat/blueprints/plugin/blueprint.toml",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml",
+      "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/plugins/b",
       "{workspaceRoot}/plugins/b/**/*",
       "{workspaceRoot}/plugins/b/habitat.toml",
@@ -272,16 +280,15 @@ describe("Habitat Nx projection", () => {
       },
     }));
 
-    const result = await createNodes(
-      [...configFiles, "services/c/habitat.toml"],
-      { checkTargetName: "quality" },
-      { workspaceRoot: "/workspace", nxJsonConfiguration: {} }
-    );
+    const result = await createNodes([...configFiles, "services/c/habitat.toml"], undefined, {
+      workspaceRoot: "/workspace",
+      nxJsonConfiguration: {},
+    });
     const projects = projectMap(result);
     expect(
       projects["services/c"]?.targets?.["habitat:application:service-c:source-law"]
     ).toBeDefined();
-    expect(projects["services/a"]?.targets?.quality?.dependsOn).toEqual([
+    expect(projects["services/a"]?.targets?.["check:policy"]?.dependsOn).toEqual([
       { target: "habitat:application:service-a:a-rule" },
       { target: "habitat:application:service-a:source-law" },
     ]);
@@ -406,41 +413,6 @@ describe("Habitat Nx projection", () => {
         })
       ).rejects.toThrow(message);
     }
-  });
-
-  it("rejects an empty or padded aggregate target option", async () => {
-    const createNodes = createHandler(() => ({
-      catalog: { resolve: async () => resolvedCatalog() },
-    }));
-
-    for (const checkTargetName of ["", " check:policy"]) {
-      await expect(
-        createNodes(
-          configFiles,
-          { checkTargetName },
-          {
-            workspaceRoot: "/workspace",
-            nxJsonConfiguration: {},
-          }
-        )
-      ).rejects.toThrow("requires a non-empty, trimmed check target name");
-    }
-  });
-
-  it("rejects an aggregate target that collides with an application target", async () => {
-    const createNodes = createHandler(() => ({
-      catalog: { resolve: async () => resolvedCatalog([gritApplication]) },
-    }));
-
-    await expect(
-      createNodes(
-        configFiles,
-        { checkTargetName: "habitat:application:service-a:source-law" },
-        { workspaceRoot: "/workspace", nxJsonConfiguration: {} }
-      )
-    ).rejects.toThrow(
-      "aggregate target 'habitat:application:service-a:source-law': it collides with an application target in 'service-a'"
-    );
   });
 
   it("replaces prior targets when a later resolution changes", async () => {
