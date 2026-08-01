@@ -1,5 +1,5 @@
 import { bindHabitatClient } from "@habitat/plugin-cli/binding";
-import { execute } from "@oclif/core";
+import { execute, settings } from "@oclif/core";
 import { createHabitatClientForWorkspace } from "./composition.js";
 
 /** Inputs fixed by one Habitat process activation. */
@@ -22,6 +22,7 @@ export async function executeHabitat({
   args,
   development,
 }: ExecuteHabitatOptions): Promise<unknown> {
+  settings.enableAutoTranspile = development === true;
   const client = await createHabitatClientForWorkspace(workspaceRoot);
   return execute({
     ...(args === undefined ? {} : { args }),

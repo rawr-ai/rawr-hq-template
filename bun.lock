@@ -263,7 +263,7 @@
     },
     "plugins/cli/commands/habitat": {
       "name": "@habitat/plugin-cli",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@habitat/service": "workspace:*",
         "@oclif/core": "^4.11.4",
@@ -367,7 +367,7 @@
     },
     "resources/rule-evaluation": {
       "name": "@habitat/resource-rule-evaluation",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "effect": "4.0.0-beta.101",
@@ -380,7 +380,7 @@
     },
     "resources/source-inventory": {
       "name": "@habitat/resource-source-inventory",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "effect": "4.0.0-beta.101",
@@ -482,7 +482,7 @@
     },
     "services/habitat": {
       "name": "@habitat/service",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "dependencies": {
         "@habitat/resource-rule-evaluation": "workspace:*",
         "@habitat/resource-source-inventory": "workspace:*",
