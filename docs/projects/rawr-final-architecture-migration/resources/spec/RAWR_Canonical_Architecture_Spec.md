@@ -2647,13 +2647,13 @@ Exact tag spellings, dependency-constraint syntax, generator implementation, and
 
 ### 16.1 Habitat policy and mechanics
 
-RAWR HQ-Template owns the Habitat product source, `@habitat/cli` release
+RAWR HQ-Template owns the Habitat product source, `@habitat-ai/cli` release
 identity, releases, consumer integration, and generic blueprint policy.
 Habitat source obeys the same product graph it governs: resources declare,
 providers implement, services own semantics, plugins project, and an app
-selects and realizes the executable entrypoint. `@habitat/cli` is the assembled
+selects and realizes the executable entrypoint. `@habitat-ai/cli` is the assembled
 Oclif release artifact, not a composite package source owner. It publishes
-accepted policy as the data-only `@habitat/blueprints` pack. Its public policy
+accepted policy as the data-only `@habitat-ai/blueprints` pack. Its public policy
 export surface is limited to `habitat-pack.json` and `blueprints/**`, in
 addition to the package envelope and metadata required for ordinary
 distribution. It contains no executable JavaScript, product instances, host

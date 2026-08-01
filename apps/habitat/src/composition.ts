@@ -1,16 +1,16 @@
 import { createRequire } from "node:module";
 
 import { NodeServices } from "@effect/platform-node";
-import { makeNodeGritRuleEvaluationResource } from "@habitat/resource-rule-evaluation/providers/grit-effect-platform-node";
-import { makeNodeGitSourceInventoryResource } from "@habitat/resource-source-inventory/providers/git-effect-platform-node";
-import { type Client, createClient, type Deps } from "@habitat/service/client";
+import { makeNodeGritRuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation/providers/grit-effect-platform-node";
+import { makeNodeGitSourceInventoryResource } from "@habitat-ai/resource-source-inventory/providers/git-effect-platform-node";
+import { type Client, createClient, type Deps } from "@habitat-ai/service/client";
 import { Effect, FileSystem, Path } from "effect";
 import { Type } from "typebox";
 import { Validator } from "typebox/schema";
 
 const require = createRequire(import.meta.url);
 const gritExecutable = require.resolve("@getgrit/cli/run-grit.js");
-const HABITAT_BLUEPRINT_PACK = "@habitat/blueprints";
+const HABITAT_BLUEPRINT_PACK = "@habitat-ai/blueprints";
 const CommandTimeoutSchema = Type.Integer({ minimum: 1, maximum: 600_000 });
 const commandTimeoutValidator = new Validator({}, CommandTimeoutSchema);
 const commandTimeoutMs = decodeCommandTimeout(process.env.HABITAT_COMMAND_TIMEOUT_MS);

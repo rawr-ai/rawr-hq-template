@@ -17,7 +17,7 @@ import {
   isSourceInventoryFailure,
   MAX_SOURCE_INVENTORY_FAILURE_DETAIL,
   type SourceInventoryFailure,
-} from "@habitat/resource-source-inventory";
+} from "@habitat-ai/resource-source-inventory";
 import { Cause, Effect, Exit, Fiber } from "effect";
 import { ChildProcessSpawner } from "effect/unstable/process";
 

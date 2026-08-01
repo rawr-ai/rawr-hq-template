@@ -78,7 +78,7 @@
     "@catenarycloud/linteffect@0.0.6": "patches/@catenarycloud%2Flinteffect@0.0.6.patch"
   },
   "dependencies": {
-    "@habitat/service": "workspace:*",
+    "@habitat-ai/service": "workspace:*",
     "@orpc/client": "2.0.0-beta.20",
     "@orpc/contract": "2.0.0-beta.20",
     "@orpc/experimental-effect": "2.0.0-beta.20",
@@ -102,9 +102,9 @@
     "@effect/platform-node": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
     "@habitat/cli": "https://github.com/mateicanavra/civ7-modding-tools/releases/download/habitat-cli-v0.1.0/habitat-cli-0.1.0.tgz",
-    "@habitat/plugin-cli": "workspace:*",
-    "@habitat/resource-rule-evaluation": "workspace:*",
-    "@habitat/resource-source-inventory": "workspace:*",
+    "@habitat-ai/plugin-cli": "workspace:*",
+    "@habitat-ai/resource-rule-evaluation": "workspace:*",
+    "@habitat-ai/resource-source-inventory": "workspace:*",
     "@nx/devkit": "23.1.0",
     "@nx/js": "23.1.0",
     "@oclif/core": "^4.11.4",

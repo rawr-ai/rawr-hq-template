@@ -5021,7 +5021,7 @@ job `91068208363`.
 ## Habitat Product And Release Authority
 
 Before transferring any Habitat source, the authority record makes this
-repository the sole owner of the Habitat product source, the `@habitat/cli`
+repository the sole owner of the Habitat product source, the `@habitat-ai/cli`
 release identity, releases, generic policy distribution, and ordinary consumer
 integration.
 Magic Migration and Civ7 remain design, implementation, and consumer evidence;
@@ -5036,7 +5036,7 @@ contribution, changes nothing on a converged repeat, and removes its
 contribution only through an explicit removal operation. Consumers select
 exact package and policy versions plus their own repository instances. They do
 not copy Habitat source or reproduce its wiring.
-The data-only `@habitat/blueprints` pack remains distinct from executable
+The data-only `@habitat-ai/blueprints` pack remains distinct from executable
 mechanics, but both are bound through one exact package protocol and one
 consumer entrypoint.
 
@@ -5075,10 +5075,10 @@ The accepted target will realize Habitat through the ordinary product funnel:
 resources -> providers -> service -> plugins -> app -> runtime -> entrypoint
 ```
 
-Product-free support matter may remain in packages. `@habitat/cli` is the
+Product-free support matter may remain in packages. `@habitat-ai/cli` is the
 single assembled Oclif release identity, not a semantic source owner. The
 release may contain compiled output from several Nx projects without erasing
-their boundaries. The data-only policy artifact is `@habitat/blueprints`.
+their boundaries. The data-only policy artifact is `@habitat-ai/blueprints`.
 
 The current repository remains the source and release home. It is becoming the
 Habitat product suite, with RAWR retained as one governed realization. Creating
@@ -5107,7 +5107,7 @@ provider home, Personal repository, or live state has moved.
 ## Habitat Rule Evaluation Resource
 
 The first executable source checkpoint realizes one narrow link in the Habitat
-product funnel. `@habitat/resource-rule-evaluation` owns only the
+product funnel. `@habitat-ai/resource-rule-evaluation` owns only the
 provider-neutral request, finding, result, and typed mechanical-failure
 contracts. Its nested Grit Effect Platform Node provider owns one
 invocation-scoped temporary catalog, one native check process, bounded output,
@@ -5238,7 +5238,7 @@ second rule authority.
 
 ### Source Inventory Checkpoint
 
-`@habitat/resource-source-inventory` now owns one TypeBox-derived mechanical
+`@habitat-ai/resource-source-inventory` now owns one TypeBox-derived mechanical
 contract for a bounded visible-entry inventory. Its local-Git Effect Platform
 Node provider runs the ordinary inherited `git ls-files` observation, drains
 the process under Effect scope, normalizes sorted unique entry paths, and
@@ -5340,7 +5340,7 @@ and all present proof members. Every other kind's proof axes remain candidates.
 The definitions also lack an enforceable blueprint-declared root relation:
 manifests can name `project` and `source` independently even where service, app,
 and plugin structures require exactly `source = project/src`. The first
-`@habitat/blueprints` pack therefore precommits neither `package@1` nor the six
+`@habitat-ai/blueprints` pack therefore precommits neither `package@1` nor the six
 service laws; no definition activates before its root relations are derived or
 positively bounded, and those contents wait for exact-member closure, completed
 source migration, and a green complete corpus.
@@ -5367,7 +5367,7 @@ and [[.habitat/AUTHORITY-ONTOLOGY#Current Realization|the authority ontology]].
 ### Habitat Oclif Projection Decision
 
 The first task 5.7e22b3 checkpoint projects the sealed Habitat service through
-one ordinary `@habitat/plugin-cli` Oclif package. The plugin owns argv
+one ordinary `@habitat-ai/plugin-cli` Oclif package. The plugin owns argv
 translation and result rendering only. The Habitat app will construct one
 ready client and carry it through Oclif's invocation-local `Config.options`;
 the plugin does not select providers, locate the repository, or construct a
@@ -5393,7 +5393,7 @@ lint, strict OpenSpec validation, and diff hygiene are green. Architecture,
 behavior, TypeScript, and structural reviews found no remaining material
 issue in the production boundary.
 
-The widened `@habitat/plugin-*` Grit laws have current-tree execution and
+The widened `@habitat-ai/plugin-*` Grit laws have current-tree execution and
 representative embedded cases. Native injected-fixture execution remains
 bounded upstream Habitat proof debt; this slice does not introduce a one-off
 fixture harness or alternate evaluator as a substitute for that capability.
@@ -5401,7 +5401,7 @@ fixture harness or alternate evaluator as a substitute for that capability.
 ### Habitat Nx Projection Decision
 
 The second task 5.7e22b3 checkpoint introduces the package-less
-`@habitat/plugin-nx` source project. It exports a factory over an app-owned
+`@habitat-ai/plugin-nx` source project. It exports a factory over an app-owned
 `clientForWorkspace(workspaceRoot)` capability and non-empty runtime input set
 because native Nx plugin options are serialized data and cannot carry a ready
 service client. The later Habitat app calls that factory inside the Nx worker
@@ -5422,8 +5422,8 @@ therefore graph-admission facts, not duplicated task-cache inputs. The aggregate
 is the fixed `check:policy` target; no
 serialized option can reinterpret it as an Nx target glob.
 
-The sealed source proof is `@habitat/plugin-nx:typecheck`, six owner-local
-behavior tests, the composed `@habitat/plugin-nx:check` graph, repository lint,
+The sealed source proof is `@habitat-ai/plugin-nx:typecheck`, six owner-local
+behavior tests, the composed `@habitat-ai/plugin-nx:check` graph, repository lint,
 and strict OpenSpec validation.
 
 This source checkpoint does not register itself in `nx.json`, replace the
@@ -5435,7 +5435,7 @@ starts no nested Nx scheduler, and retains no catalog or result state.
 ### Habitat App Composition Checkpoint
 
 The third task 5.7e22b3 checkpoint introduces the ordinary `apps/habitat`
-Oclif app with package identity `@habitat/cli`. One app-owned construction
+Oclif app with package identity `@habitat-ai/cli`. One app-owned construction
 function selects the ready Node filesystem, path, Grit evaluation, and Git
 inventory capabilities, fixes the workspace scope, and constructs the public
 Habitat client. The Oclif entrypoint binds that client through native
@@ -5443,10 +5443,10 @@ Habitat client. The Oclif entrypoint binds that client through native
 package-less projection factory.
 
 The Nx entrypoint is conventional bundled application output. Bundling the
-qualified package-less projection into `@habitat/cli/nx-plugin` makes one
+qualified package-less projection into `@habitat-ai/cli/nx-plugin` makes one
 installable artifact without copying source, transferring plugin authority, or
 inventing a loader. Oclif command ownership remains in
-`@habitat/plugin-cli`; the app manifest correctly has no app-local commands.
+`@habitat-ai/plugin-cli`; the app manifest correctly has no app-local commands.
 The app has no controller, release store, selector, daemon, provider registry,
 or retained domain state.
 
@@ -5474,13 +5474,13 @@ while registry release and consumer cutover remain open.
 Task 5.7e22b3 now closes through three semantic package checkpoints:
 
 - `883cdaef` emits ordinary public TypeBox and Habitat resource artifacts;
-- `45eebd1a` emits the portable `@habitat/service/client` declaration and
+- `45eebd1a` emits the portable `@habitat-ai/service/client` declaration and
   runtime surface; and
 - `025869eb` defines the fixed Habitat release group and proves its installed
   Oclif and Nx behavior.
 
-The release closure is exactly `@habitat/cli`, `@habitat/plugin-cli`, the two
-Habitat resources, `@habitat/service`, and the independently versioned
+The release closure is exactly `@habitat-ai/cli`, `@habitat-ai/plugin-cli`, the two
+Habitat resources, `@habitat-ai/service`, and the independently versioned
 `@rawr/typebox-adapter`. The acceptance packs those six ordinary package
 tarballs, installs them as real package directories without workspace links,
 typechecks every Habitat-owned public declaration under strict NodeNext,
@@ -5500,9 +5500,11 @@ execution intentionally excludes, so it is not publication proof.
 The repository still consumes the pinned Civ7 Habitat artifact at Nx graph
 bootstrap. That pin remains a compiler-bootstrap input, not a second Habitat
 product identity, until the first Template-owned package is actually
-published. The local npm registry session currently returns `E401`; task
-5.7e22e and consumer cutover therefore remain open rather than replacing the
-bootstrap with an unpublished workspace path or bypassing registry authority.
+published. The authenticated npm session identifies `magicapply1`, while its
+read-only organization query currently returns no `habitat-ai` membership.
+Task 5.7e22e and consumer cutover therefore remain open rather than replacing
+the bootstrap with an unpublished workspace path or bypassing registry
+authority.
 See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.7e22e and 5.7e22f]].
 
 ### Proportional Nx Repository Gate
@@ -5526,13 +5528,13 @@ the ineffective dependency-update tuning knob was not retained.
 
 Canonical Template merge `11c83f08` (PR #737) closes task 5.7e22c through the
 ordinary Nx plugin installation path:
-the npm registry carries the versioned `@habitat/cli` package, and
-`nx add @habitat/cli@<exact-version>` discovers and runs its native `init`
+the npm registry carries the versioned `@habitat-ai/cli` package, and
+`nx add @habitat-ai/cli@<exact-version>` discovers and runs its native `init`
 generator. Nx owns consumer activation and graph projection; the package adds
 no installer, downloader, release selector, or retained consumer state.
 
 The initializer plans every admission before its first Nx `Tree` write. It
-registers the fixed `@habitat/cli/nx-plugin` face, replaces the repository's
+registers the fixed `@habitat-ai/cli/nx-plugin` face, replaces the repository's
 exact unmarked predecessor Stop hook with one marked package-owned
 contribution, and admits the exact Grit dependency already carried by the app.
 Duplicate or incompatible owned entries refuse without a partial write. A
@@ -5557,7 +5559,7 @@ consumer repository was changed.
 
 Canonical Template merges `d898aaa5` (PR #739), `7ba8fb7d` (PR #740), and
 `5de49c16` (PR #741) close task 5.7e22d. The first
-`@habitat/blueprints@0.2.0` candidate is an ordinary data-only package with
+`@habitat-ai/blueprints@0.2.0` candidate is an ordinary data-only package with
 exactly `LICENSE`, `README.md`, `habitat-pack.json`, and `package.json`. Its
 protocol-one manifest admits an empty member set, exports no runtime, contains
 no executable code, and does not precommit a later blueprint corpus.
@@ -5598,6 +5600,15 @@ native executable. Such an artifact would be another distribution form, not
 the missing transport for Nx consumers, and can be evaluated later only after
 proving the same Oclif command discovery and Nx plugin behavior without
 creating a second Habitat identity.
+
+The first package versions are already present in reviewed source, so the
+publication operation does not run a no-op version rewrite. After all three Nx
+release groups publish and registry inspection verifies their exact versions,
+integrities, and file inventories, the ordinary annotated release tags
+`typebox-adapter-v0.1.0`, `habitat-cli-v0.2.0`, and
+`habitat-blueprints-v0.2.0` point to that same canonical-main commit. Those
+tags and the registry metadata bind source provenance; they do not create a
+second installer, channel, version selector, or retained local release state.
 
 ## Settlement Oracles
 

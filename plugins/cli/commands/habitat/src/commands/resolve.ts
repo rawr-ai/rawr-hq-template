@@ -1,4 +1,4 @@
-import type { Client } from "@habitat/service/client";
+import type { Client } from "@habitat-ai/service/client";
 import { Command } from "@oclif/core";
 import { habitatClientFrom } from "../lib/binding.js";
 

@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import type { Client } from "@habitat/service/client";
+import type { Client } from "@habitat-ai/service/client";
 import type { CreateNodes, CreateNodesResultArray, TargetConfiguration } from "@nx/devkit";
 
 const HABITAT_CATALOG_PATHS = [

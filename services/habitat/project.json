@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@habitat/service",
+  "name": "@habitat-ai/service",
   "targets": {
     "check": {
       "executor": "nx:noop"

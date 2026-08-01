@@ -201,7 +201,7 @@ and private-alias configuration/ownership. Civ7 release
 `habitat-cli-v0.1.0` and reviewed source
 `d51e8c7454e301bcaba56c8364f5c714d5febca3` remain transfer evidence only.
 Template owns the Habitat product source and realizes it through the ordinary
-resource, provider, service, plugin, and app graph. `@habitat/cli` is the
+resource, provider, service, plugin, and app graph. `@habitat-ai/cli` is the
 assembled Oclif release identity rather than a composite package source owner.
 The Habitat Nx projection owns application discovery, exact inputs, caching,
 and execution without acquiring service or provider authority. The idempotent

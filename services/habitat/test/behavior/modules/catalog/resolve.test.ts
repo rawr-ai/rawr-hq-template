@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { NodeServices } from "@effect/platform-node";
-import type { RuleEvaluationResource } from "@habitat/resource-rule-evaluation";
-import type { SourceInventoryResource } from "@habitat/resource-source-inventory";
+import type { RuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation";
+import type { SourceInventoryResource } from "@habitat-ai/resource-source-inventory";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import { type Client, createClient } from "../../../../src/client";
 

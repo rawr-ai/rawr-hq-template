@@ -50,5 +50,5 @@
 
 ## Validation
 
-- Run `bunx nx run @habitat/plugin-cli:typecheck`, `:test`, `:build`, and
+- Run `bunx nx run @habitat-ai/plugin-cli:typecheck`, `:test`, `:build`, and
   `:manifest`.

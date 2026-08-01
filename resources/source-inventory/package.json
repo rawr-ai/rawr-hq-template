@@ -1,5 +1,5 @@
 {
-  "name": "@habitat/resource-source-inventory",
+  "name": "@habitat-ai/resource-source-inventory",
   "version": "0.2.0",
   "private": false,
   "type": "module",

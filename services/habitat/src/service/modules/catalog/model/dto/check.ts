@@ -1,7 +1,7 @@
 import {
   RuleEvaluationFailureReasonSchema,
   RuleEvaluationPositionSchema,
-} from "@habitat/resource-rule-evaluation";
+} from "@habitat-ai/resource-rule-evaluation";
 import { type Static, Type } from "typebox";
 import { CatalogIssueSchema } from "./catalog.js";
 

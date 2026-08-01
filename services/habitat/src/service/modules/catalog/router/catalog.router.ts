@@ -1,5 +1,5 @@
-import type { RuleEvaluationFinding } from "@habitat/resource-rule-evaluation";
-import { MAX_SOURCE_INVENTORY_ENTRIES } from "@habitat/resource-source-inventory";
+import type { RuleEvaluationFinding } from "@habitat-ai/resource-rule-evaluation";
+import { MAX_SOURCE_INVENTORY_ENTRIES } from "@habitat-ai/resource-source-inventory";
 import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
 import { parse as parseToml } from "smol-toml";
 import type { CatalogIssue } from "../model/dto/catalog.js";

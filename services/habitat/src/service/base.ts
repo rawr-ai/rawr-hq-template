@@ -1,5 +1,5 @@
-import type { RuleEvaluationResource } from "@habitat/resource-rule-evaluation";
-import type { SourceInventoryResource } from "@habitat/resource-source-inventory";
+import type { RuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation";
+import type { SourceInventoryResource } from "@habitat-ai/resource-source-inventory";
 import type { FileSystem, Path } from "effect";
 
 type EmptyContextLane = Readonly<Record<PropertyKey, never>>;

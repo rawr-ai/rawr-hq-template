@@ -181,7 +181,16 @@ function planNxInitialization(
   binding: HabitatConsumerBinding
 ): PlannedValue<NxJsonConfiguration> {
   const plugins = nxJson.plugins ?? [];
-  const matches = plugins.filter((plugin) => hasPluginIdentity(plugin, binding.nxPlugin));
+  const matches = plugins.filter(
+    (plugin) =>
+      hasPluginIdentity(plugin, binding.nxPlugin) ||
+      binding.predecessorNxPlugins.some((predecessor) =>
+        hasPluginIdentity(
+          plugin,
+          typeof predecessor === "string" ? predecessor : predecessor.plugin
+        )
+      )
+  );
   if (matches.length > 1) {
     throw new Error("nx.json contains multiple Habitat Nx plugin registrations.");
   }

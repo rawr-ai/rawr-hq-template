@@ -6,6 +6,25 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-01 - Habitat Has One Future Package Scope
+
+`@habitat-ai` is the sole future scope for RAWR HQ-Template Habitat products.
+The old `@habitat` scope names only the exact temporary Civ7 v0.1.0 bootstrap
+and its provenance. npm transports the packages; Nx owns release and consumer
+orchestration. After the native packages publish,
+`nx add @habitat-ai/cli@<exact-version>` removes that bootstrap and completes
+the cutover without an alias or dual identity. See
+[[.habitat/AUTHORITY|Habitat authority]] and
+[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
+
+### Bag Of Keywords
+
+identity, package, scope, release, provenance.
+
+singularity, truth, install, transport, cutover.
+
+classify, rename, preserve, verify, record.
+
 ## 2026-08-01 - Policy Travels As Data
 
 The first Habitat policy pack is an ordinary public npm package containing one
@@ -40,7 +59,7 @@ npm, Nx, TypeBox, service, app.
 ## 2026-07-31 - Nx Installs Habitat Once
 
 Habitat consumer setup is a native Nx plugin installation concern, not another
-service capability or executable lifecycle. `nx add @habitat/cli` installs the
+service capability or executable lifecycle. `nx add @habitat-ai/cli` installs the
 ordinary npm artifact and invokes its package-declared `init` generator. Nx's
 Tree owns the bounded repository edits; the existing Habitat Nx plugin owns
 target inference; the app package merely assembles and distributes those
@@ -242,7 +261,7 @@ provider-neutral resources declare capabilities, providers implement them,
 services own semantic truth, plugins project operations, an app selects the
 product graph, runtime realizes it, and an entrypoint activates it.
 
-`@habitat/cli` remains one ordinary Oclif release identity. That distribution
+`@habitat-ai/cli` remains one ordinary Oclif release identity. That distribution
 boundary may assemble several source projects without making the release
 package their semantic owner. Packages retain only product-free support
 matter; a package may not absorb a service, provider selection, projections,

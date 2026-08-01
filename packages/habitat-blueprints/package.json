@@ -1,5 +1,5 @@
 {
-  "name": "@habitat/blueprints",
+  "name": "@habitat-ai/blueprints",
   "version": "0.2.0",
   "private": false,
   "description": "Data-only Habitat blueprint policy pack",

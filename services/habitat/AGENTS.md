@@ -54,4 +54,4 @@
 
 ## Validation
 
-- Run `bunx nx run @habitat/service:typecheck`, `:test`, and `:build`.
+- Run `bunx nx run @habitat-ai/service:typecheck`, `:test`, and `:build`.

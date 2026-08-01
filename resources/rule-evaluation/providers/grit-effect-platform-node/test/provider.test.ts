@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import type { RuleEvaluationFailure } from "@habitat/resource-rule-evaluation";
+import type { RuleEvaluationFailure } from "@habitat-ai/resource-rule-evaluation";
 import { Cause, Effect, Exit, Fiber } from "effect";
 
 import { makeNodeGritRuleEvaluationResource } from "../index";

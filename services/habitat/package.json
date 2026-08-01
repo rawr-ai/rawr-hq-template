@@ -1,5 +1,5 @@
 {
-  "name": "@habitat/service",
+  "name": "@habitat-ai/service",
   "version": "0.2.0",
   "private": false,
   "type": "module",
@@ -19,8 +19,8 @@
     "test": "bun test test"
   },
   "dependencies": {
-    "@habitat/resource-rule-evaluation": "workspace:*",
-    "@habitat/resource-source-inventory": "workspace:*",
+    "@habitat-ai/resource-rule-evaluation": "workspace:*",
+    "@habitat-ai/resource-source-inventory": "workspace:*",
     "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "2.0.0-beta.20",
     "@orpc/experimental-effect": "2.0.0-beta.20",

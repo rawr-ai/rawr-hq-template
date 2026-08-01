@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "name": "@habitat/plugin-nx",
+  "name": "@habitat-ai/plugin-nx",
   "root": "plugins/nx/habitat",
   "sourceRoot": "plugins/nx/habitat/src",
   "tags": ["type:plugin", "surface:nx", "capability:habitat"],

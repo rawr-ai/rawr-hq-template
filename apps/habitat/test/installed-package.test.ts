@@ -31,7 +31,7 @@ type PackedProject = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const INSTALLED_HABITAT_HOOK_COMMAND =
-  'bash -lc \'repo="${CODEX_WORKSPACE_ROOT:-${CLAUDE_PROJECT_DIR:-}}"; if [ -n "$repo" ]; then repo="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)"; else repo="$(git rev-parse --show-toplevel 2>/dev/null)"; fi && cd "$repo" 2>/dev/null || { printf "%s\\n" "Habitat agent-stop hook must run inside the repository worktree." >&2; exit 2; }; bunx --bun --no-install --package @habitat/cli habitat hook agent-stop\'';
+  'bash -lc \'repo="${CODEX_WORKSPACE_ROOT:-${CLAUDE_PROJECT_DIR:-}}"; if [ -n "$repo" ]; then repo="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)"; else repo="$(git rev-parse --show-toplevel 2>/dev/null)"; fi && cd "$repo" 2>/dev/null || { printf "%s\\n" "Habitat agent-stop hook must run inside the repository worktree." >&2; exit 2; }; bunx --bun --no-install --package @habitat-ai/cli habitat hook agent-stop\'';
 const PREDECESSOR_HABITAT_HOOK_COMMAND =
   'bash -lc \'repo="${CODEX_WORKSPACE_ROOT:-${CLAUDE_PROJECT_DIR:-}}"; if [ -n "$repo" ]; then repo="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)"; else repo="$(git rev-parse --show-toplevel 2>/dev/null)"; fi && cd "$repo" 2>/dev/null || { printf "%s\\n" "Habitat agent-stop hook must run inside the repository worktree." >&2; exit 2; }; bun habitat hook agent-stop\'';
 const temporaryParent = await realpath(tmpdir());
@@ -44,7 +44,7 @@ const packedProjects: readonly PackedProject[] = [
       "./package.json": "./package.json",
     },
     filename: "habitat-blueprints.tgz",
-    name: "@habitat/blueprints",
+    name: "@habitat-ai/blueprints",
     root: "packages/habitat-blueprints",
     version: "0.2.0",
   },
@@ -66,7 +66,7 @@ const packedProjects: readonly PackedProject[] = [
       },
     },
     filename: "habitat-resource-rule-evaluation.tgz",
-    name: "@habitat/resource-rule-evaluation",
+    name: "@habitat-ai/resource-rule-evaluation",
     root: "resources/rule-evaluation",
     version: "0.2.0",
   },
@@ -79,7 +79,7 @@ const packedProjects: readonly PackedProject[] = [
       },
     },
     filename: "habitat-resource-source-inventory.tgz",
-    name: "@habitat/resource-source-inventory",
+    name: "@habitat-ai/resource-source-inventory",
     root: "resources/source-inventory",
     version: "0.2.0",
   },
@@ -88,7 +88,7 @@ const packedProjects: readonly PackedProject[] = [
       "./client": { default: "./dist/client.js", types: "./dist/client.d.ts" },
     },
     filename: "habitat-service.tgz",
-    name: "@habitat/service",
+    name: "@habitat-ai/service",
     root: "services/habitat",
     version: "0.2.0",
   },
@@ -100,7 +100,7 @@ const packedProjects: readonly PackedProject[] = [
       },
     },
     filename: "habitat-plugin-cli.tgz",
-    name: "@habitat/plugin-cli",
+    name: "@habitat-ai/plugin-cli",
     root: "plugins/cli/commands/habitat",
     version: "0.2.0",
   },
@@ -114,7 +114,7 @@ const packedProjects: readonly PackedProject[] = [
       "./package.json": "./package.json",
     },
     filename: "habitat-cli.tgz",
-    name: "@habitat/cli",
+    name: "@habitat-ai/cli",
     root: "apps/habitat",
     version: "0.2.0",
   },
@@ -162,14 +162,14 @@ describe("installed Habitat package", () => {
       };
       expect(manifest).toMatchObject({ name: project.name, version: project.version });
       expect(manifest.exports).toEqual(project.exports);
-      if (project.name === "@habitat/cli") {
-        expect(manifest.dependencies?.["@habitat/blueprints"]).toBeUndefined();
-        expect(manifest.peerDependencies?.["@habitat/blueprints"]).toBe("0.2.0");
+      if (project.name === "@habitat-ai/cli") {
+        expect(manifest.dependencies?.["@habitat-ai/blueprints"]).toBeUndefined();
+        expect(manifest.peerDependencies?.["@habitat-ai/blueprints"]).toBe("0.2.0");
       }
     }
 
     const policyPackFiles = await listFiles(
-      path.join(consumerRoot, "node_modules/@habitat/blueprints")
+      path.join(consumerRoot, "node_modules/@habitat-ai/blueprints")
     );
     expect(policyPackFiles).toEqual(["LICENSE", "README.md", "habitat-pack.json", "package.json"]);
 
@@ -205,7 +205,7 @@ describe("installed Habitat package", () => {
   it("discovers and executes native Oclif commands from the installed app", async () => {
     const pluginManifest = JSON.parse(
       await readFile(
-        path.join(consumerRoot, "node_modules/@habitat/plugin-cli/oclif.manifest.json"),
+        path.join(consumerRoot, "node_modules/@habitat-ai/plugin-cli/oclif.manifest.json"),
         "utf8"
       )
     ) as {
@@ -220,7 +220,7 @@ describe("installed Habitat package", () => {
 
     const appManifest = JSON.parse(
       await readFile(
-        path.join(consumerRoot, "node_modules/@habitat/cli/oclif.manifest.json"),
+        path.join(consumerRoot, "node_modules/@habitat-ai/cli/oclif.manifest.json"),
         "utf8"
       )
     ) as { readonly commands?: Record<string, unknown> };
@@ -230,16 +230,16 @@ describe("installed Habitat package", () => {
       "bun",
       [
         path.join(consumerRoot, "inventory.mjs"),
-        path.join(consumerRoot, "node_modules/@habitat/cli"),
+        path.join(consumerRoot, "node_modules/@habitat-ai/cli"),
       ],
       { cwd: consumerRoot }
     );
     expect(inventory).toMatchObject({ exitCode: 0, stderr: "" });
     expect(JSON.parse(inventory.stdout)).toEqual([
-      { id: "check", pluginName: "@habitat/plugin-cli" },
+      { id: "check", pluginName: "@habitat-ai/plugin-cli" },
       { id: "help", pluginName: "@oclif/plugin-help" },
-      { id: "hook", pluginName: "@habitat/plugin-cli" },
-      { id: "resolve", pluginName: "@habitat/plugin-cli" },
+      { id: "hook", pluginName: "@habitat-ai/plugin-cli" },
+      { id: "resolve", pluginName: "@habitat-ai/plugin-cli" },
     ]);
 
     const executable = path.join(consumerRoot, "node_modules/.bin/habitat");
@@ -259,7 +259,7 @@ describe("installed Habitat package", () => {
       _tag: "Resolved",
       catalog: {
         policyPack: {
-          name: "@habitat/blueprints",
+          name: "@habitat-ai/blueprints",
           version: "0.2.0",
           protocolVersion: 1,
           blueprints: [],
@@ -288,7 +288,7 @@ describe("installed Habitat package", () => {
   it("rejects a malformed selected policy pack without fallback", async () => {
     const manifestPath = path.join(
       consumerRoot,
-      "node_modules/@habitat/blueprints/habitat-pack.json"
+      "node_modules/@habitat-ai/blueprints/habitat-pack.json"
     );
     const original = await readFile(manifestPath, "utf8");
     try {
@@ -302,7 +302,7 @@ describe("installed Habitat package", () => {
       expect(rejected.stderr).toBe("");
       expect(JSON.parse(rejected.stdout)).toMatchObject({
         _tag: "Rejected",
-        issues: [{ path: "@habitat/blueprints/habitat-pack.json" }],
+        issues: [{ path: "@habitat-ai/blueprints/habitat-pack.json" }],
       });
     } finally {
       await writeFile(manifestPath, original);
@@ -315,7 +315,7 @@ describe("installed Habitat package", () => {
       nx,
       [
         "add",
-        `@habitat/cli@file:${path.join(acceptanceRoot, "packages/habitat-cli.tgz")}`,
+        `@habitat-ai/cli@file:${path.join(acceptanceRoot, "packages/habitat-cli.tgz")}`,
         "--no-interactive",
       ],
       { cwd: fixtureRoot, timeoutMs: 120_000 }
@@ -327,7 +327,7 @@ describe("installed Habitat package", () => {
     const firstNx = await readFile(nxPath, "utf8");
     const firstHooks = await readFile(hooksPath, "utf8");
     const firstPackage = await readFile(packagePath, "utf8");
-    expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat/cli/nx-plugin"] });
+    expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat-ai/cli/nx-plugin"] });
     expect(JSON.parse(firstPackage)).toMatchObject({
       trustedDependencies: ["@getgrit/cli"],
     });
@@ -350,11 +350,11 @@ describe("installed Habitat package", () => {
       };
     };
     const habitatGroups = (initializedHooks.hooks?.Stop ?? []).filter(
-      (group) => group._habitat?.identity === "@habitat/cli:agent-stop"
+      (group) => group._habitat?.identity === "@habitat-ai/cli:agent-stop"
     );
     expect(habitatGroups).toHaveLength(1);
     expect(habitatGroups[0]).toMatchObject({
-      _habitat: { identity: "@habitat/cli:agent-stop", revision: 1 },
+      _habitat: { identity: "@habitat-ai/cli:agent-stop", revision: 1 },
       hooks: [{ command: INSTALLED_HABITAT_HOOK_COMMAND }],
     });
     expect(firstHooks).not.toContain(PREDECESSOR_HABITAT_HOOK_COMMAND);
@@ -372,7 +372,7 @@ describe("installed Habitat package", () => {
       stdout: "",
     });
 
-    const repeated = await run(nx, ["generate", "@habitat/cli:init", "--no-interactive"], {
+    const repeated = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
       cwd: fixtureRoot,
       timeoutMs: 60_000,
     });
@@ -418,7 +418,7 @@ describe("installed Habitat package", () => {
       "Successfully ran target habitat:application:installed-package:source_shape"
     );
 
-    const removed = await run(nx, ["generate", "@habitat/cli:remove-hook", "--no-interactive"], {
+    const removed = await run(nx, ["generate", "@habitat-ai/cli:remove-hook", "--no-interactive"], {
       cwd: fixtureRoot,
       timeoutMs: 60_000,
     });
@@ -427,15 +427,15 @@ describe("installed Habitat package", () => {
       stderr: "",
     });
     expect(JSON.parse(await readFile(nxPath, "utf8"))).toMatchObject({
-      plugins: ["@habitat/cli/nx-plugin"],
+      plugins: ["@habitat-ai/cli/nx-plugin"],
     });
     const removedHooks = await readFile(hooksPath, "utf8");
-    expect(removedHooks).not.toContain("@habitat/cli:agent-stop");
+    expect(removedHooks).not.toContain("@habitat-ai/cli:agent-stop");
     expect(removedHooks).toContain("echo preserved");
 
     const repeatedRemoval = await run(
       nx,
-      ["generate", "@habitat/cli:remove-hook", "--no-interactive"],
+      ["generate", "@habitat-ai/cli:remove-hook", "--no-interactive"],
       { cwd: fixtureRoot, timeoutMs: 60_000 }
     );
     expect(repeatedRemoval, repeatedRemoval.stderr || repeatedRemoval.stdout).toMatchObject({
@@ -453,8 +453,8 @@ async function assertReleaseGroupInventory(): Promise<void> {
     };
   };
   const groups = nx.release?.groups;
-  expect(groups?.["habitat-cli"]?.projects).not.toContain("@habitat/blueprints");
-  expect(groups?.["habitat-blueprints"]?.projects).toEqual(["@habitat/blueprints"]);
+  expect(groups?.["habitat-cli"]?.projects).not.toContain("@habitat-ai/blueprints");
+  expect(groups?.["habitat-blueprints"]?.projects).toEqual(["@habitat-ai/blueprints"]);
   const expectedProjects = ["habitat-cli", "habitat-blueprints", "typebox-adapter"]
     .flatMap((group) => groups?.[group]?.projects ?? [])
     .sort();
@@ -670,12 +670,12 @@ async function run(
 
 function consumerSource(): string {
   return `import { standard } from "@rawr/typebox-adapter";
-import type { RuleEvaluationResource } from "@habitat/resource-rule-evaluation";
-import type { GritRuleEvaluationProviderConfig } from "@habitat/resource-rule-evaluation/providers/grit-effect-platform-node";
-import type { SourceInventoryResource } from "@habitat/resource-source-inventory";
-import type { GitSourceInventoryProviderOptions } from "@habitat/resource-source-inventory/providers/git-effect-platform-node";
-import type { Client } from "@habitat/service/client";
-import { bindHabitatClient } from "@habitat/plugin-cli/binding";
+import type { RuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation";
+import type { GritRuleEvaluationProviderConfig } from "@habitat-ai/resource-rule-evaluation/providers/grit-effect-platform-node";
+import type { SourceInventoryResource } from "@habitat-ai/resource-source-inventory";
+import type { GitSourceInventoryProviderOptions } from "@habitat-ai/resource-source-inventory/providers/git-effect-platform-node";
+import type { Client } from "@habitat-ai/service/client";
+import { bindHabitatClient } from "@habitat-ai/plugin-cli/binding";
 import { Type } from "typebox";
 
 standard(Type.Object({ ready: Type.Boolean() }));
@@ -735,17 +735,17 @@ console.log(JSON.stringify(resolved));
 
 function publicEntries(): readonly string[] {
   return [
-    "@habitat/blueprints/habitat-pack.json",
-    "@habitat/blueprints/package.json",
+    "@habitat-ai/blueprints/habitat-pack.json",
+    "@habitat-ai/blueprints/package.json",
     "@rawr/typebox-adapter",
-    "@habitat/resource-rule-evaluation",
-    "@habitat/resource-rule-evaluation/providers/grit-effect-platform-node",
-    "@habitat/resource-source-inventory",
-    "@habitat/resource-source-inventory/providers/git-effect-platform-node",
-    "@habitat/service/client",
-    "@habitat/plugin-cli/binding",
-    "@habitat/cli/nx-plugin",
-    "@habitat/cli/package.json",
+    "@habitat-ai/resource-rule-evaluation",
+    "@habitat-ai/resource-rule-evaluation/providers/grit-effect-platform-node",
+    "@habitat-ai/resource-source-inventory",
+    "@habitat-ai/resource-source-inventory/providers/git-effect-platform-node",
+    "@habitat-ai/service/client",
+    "@habitat-ai/plugin-cli/binding",
+    "@habitat-ai/cli/nx-plugin",
+    "@habitat-ai/cli/package.json",
   ];
 }
 

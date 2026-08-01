@@ -2,7 +2,7 @@
   "name": "provider-source-inventory-git-effect-platform-node",
   "projectType": "library",
   "sourceRoot": "resources/source-inventory/providers/git-effect-platform-node",
-  "implicitDependencies": ["@habitat/resource-source-inventory"],
+  "implicitDependencies": ["@habitat-ai/resource-source-inventory"],
   "tags": [
     "type:provider",
     "layer:resource-provider",

@@ -5,7 +5,7 @@
     "": {
       "name": "rawr-hq-template",
       "dependencies": {
-        "@habitat/service": "workspace:*",
+        "@habitat-ai/service": "workspace:*",
         "@orpc/client": "2.0.0-beta.20",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/experimental-effect": "2.0.0-beta.20",
@@ -28,10 +28,10 @@
         "@catenarycloud/linteffect": "0.0.6",
         "@effect/platform-node": "4.0.0-beta.101",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
+        "@habitat-ai/plugin-cli": "workspace:*",
+        "@habitat-ai/resource-rule-evaluation": "workspace:*",
+        "@habitat-ai/resource-source-inventory": "workspace:*",
         "@habitat/cli": "https://github.com/mateicanavra/civ7-modding-tools/releases/download/habitat-cli-v0.1.0/habitat-cli-0.1.0.tgz",
-        "@habitat/plugin-cli": "workspace:*",
-        "@habitat/resource-rule-evaluation": "workspace:*",
-        "@habitat/resource-source-inventory": "workspace:*",
         "@nx/devkit": "23.1.0",
         "@nx/js": "23.1.0",
         "@oclif/core": "^4.11.4",
@@ -191,7 +191,7 @@
       },
     },
     "packages/habitat-blueprints": {
-      "name": "@habitat/blueprints",
+      "name": "@habitat-ai/blueprints",
       "version": "0.2.0",
     },
     "packages/hq-sdk": {
@@ -266,10 +266,10 @@
       },
     },
     "plugins/cli/commands/habitat": {
-      "name": "@habitat/plugin-cli",
+      "name": "@habitat-ai/plugin-cli",
       "version": "0.2.0",
       "dependencies": {
-        "@habitat/service": "workspace:*",
+        "@habitat-ai/service": "workspace:*",
         "@oclif/core": "^4.11.4",
       },
       "devDependencies": {
@@ -370,7 +370,7 @@
       },
     },
     "resources/rule-evaluation": {
-      "name": "@habitat/resource-rule-evaluation",
+      "name": "@habitat-ai/resource-rule-evaluation",
       "version": "0.2.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
@@ -383,7 +383,7 @@
       },
     },
     "resources/source-inventory": {
-      "name": "@habitat/resource-source-inventory",
+      "name": "@habitat-ai/resource-source-inventory",
       "version": "0.2.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
@@ -485,11 +485,11 @@
       },
     },
     "services/habitat": {
-      "name": "@habitat/service",
+      "name": "@habitat-ai/service",
       "version": "0.2.0",
       "dependencies": {
-        "@habitat/resource-rule-evaluation": "workspace:*",
-        "@habitat/resource-source-inventory": "workspace:*",
+        "@habitat-ai/resource-rule-evaluation": "workspace:*",
+        "@habitat-ai/resource-source-inventory": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/experimental-effect": "2.0.0-beta.20",
@@ -939,17 +939,17 @@
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
 
-    "@habitat/blueprints": ["@habitat/blueprints@workspace:packages/habitat-blueprints"],
+    "@habitat-ai/blueprints": ["@habitat-ai/blueprints@workspace:packages/habitat-blueprints"],
+
+    "@habitat-ai/plugin-cli": ["@habitat-ai/plugin-cli@workspace:plugins/cli/commands/habitat"],
+
+    "@habitat-ai/resource-rule-evaluation": ["@habitat-ai/resource-rule-evaluation@workspace:resources/rule-evaluation"],
+
+    "@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@workspace:resources/source-inventory"],
+
+    "@habitat-ai/service": ["@habitat-ai/service@workspace:services/habitat"],
 
     "@habitat/cli": ["@habitat/cli@https://github.com/mateicanavra/civ7-modding-tools/releases/download/habitat-cli-v0.1.0/habitat-cli-0.1.0.tgz", { "dependencies": { "@effect/platform": "0.96.1", "@effect/platform-node": "0.107.0", "@getgrit/cli": "0.1.0-alpha.1743007075", "@nx/devkit": "23.1.0", "@oclif/core": "^4.11.4", "@oclif/plugin-help": "^6.2.50", "@orpc/client": "1.14.6", "@orpc/contract": "1.14.6", "@orpc/server": "1.14.6", "@orpc/shared": "1.14.6", "@standard-schema/spec": "^1.1.0", "effect": "3.21.3", "effect-orpc": "0.5.0", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.6" }, "bin": { "habitat": "./bin/run.js" } }, "sha512-URcx+/MD0cowsZ2OqrBBR4C2Q/3vZ6oybWq68vNMB/Dfi7y6zNd5wniosIZhIeMCUAOPAiZxSSD/+YR3qnDUpw=="],
-
-    "@habitat/plugin-cli": ["@habitat/plugin-cli@workspace:plugins/cli/commands/habitat"],
-
-    "@habitat/resource-rule-evaluation": ["@habitat/resource-rule-evaluation@workspace:resources/rule-evaluation"],
-
-    "@habitat/resource-source-inventory": ["@habitat/resource-source-inventory@workspace:resources/source-inventory"],
-
-    "@habitat/service": ["@habitat/service@workspace:services/habitat"],
 
     "@hey-api/spec-types": ["@hey-api/spec-types@0.0.0-next-20260408030107", "", { "dependencies": { "@hey-api/types": "0.1.4" } }, "sha512-P5DKr4dpZ7lmZpZt2bc2KWuzU9vl4GZcN7VrjchZF1WWKNGZFnwWhBxZo1t6P2muOCopIvqD2Fvp5os4QiitKA=="],
 

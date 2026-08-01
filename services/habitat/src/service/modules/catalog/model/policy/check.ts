@@ -1,4 +1,4 @@
-import type { RuleEvaluationFinding } from "@habitat/resource-rule-evaluation";
+import type { RuleEvaluationFinding } from "@habitat-ai/resource-rule-evaluation";
 import type { HabitatCatalog } from "../dto/catalog.js";
 import type {
   CheckApplicationReport,

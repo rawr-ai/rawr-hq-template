@@ -1,8 +1,8 @@
 import { fileURLToPath } from "node:url";
 
 import { NodeServices } from "@effect/platform-node";
-import { bindHabitatClient, habitatClientFrom } from "@habitat/plugin-cli/binding";
-import { type Client, createClient } from "@habitat/service/client";
+import { bindHabitatClient, habitatClientFrom } from "@habitat-ai/plugin-cli/binding";
+import { type Client, createClient } from "@habitat-ai/service/client";
 import { Config } from "@oclif/core";
 import { Effect, FileSystem, Path } from "effect";
 import { describe, expect, it, vi } from "vitest";
@@ -14,7 +14,7 @@ const resolved: Awaited<ReturnType<Client["catalog"]["resolve"]>> = {
   catalog: {
     schemaVersion: 3,
     policyPack: {
-      name: "@habitat/blueprints",
+      name: "@habitat-ai/blueprints",
       version: "0.2.0",
       protocolVersion: 1,
       blueprints: [],
@@ -66,7 +66,7 @@ describe("Habitat Oclif projection binding", () => {
           yield* fileSystem.makeDirectory(policyPackRoot);
           yield* fileSystem.writeFileString(
             path.join(policyPackRoot, "package.json"),
-            JSON.stringify({ name: "@habitat/blueprints", version: "0.2.0" })
+            JSON.stringify({ name: "@habitat-ai/blueprints", version: "0.2.0" })
           );
           yield* fileSystem.writeFileString(
             path.join(policyPackRoot, "habitat-pack.json"),
@@ -86,7 +86,7 @@ describe("Habitat Oclif projection binding", () => {
             scope: { workspaceRoot },
             config: {
               policyPack: {
-                name: "@habitat/blueprints",
+                name: "@habitat-ai/blueprints",
                 packageJsonPath: path.join(policyPackRoot, "package.json"),
                 manifestPath: path.join(policyPackRoot, "habitat-pack.json"),
               },
