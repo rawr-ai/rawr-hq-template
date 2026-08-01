@@ -4,6 +4,13 @@ import type { FileSystem, Path } from "effect";
 
 type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
 
+/** One app-selected policy-pack installation admitted by the service. */
+export type SelectedPolicyPack = {
+  readonly name: string;
+  readonly packageJsonPath: string;
+  readonly manifestPath: string;
+};
+
 /** Host and invocation lanes admitted by the Habitat catalog boundary. */
 export type Context = {
   readonly deps: {
@@ -15,7 +22,9 @@ export type Context = {
   readonly scope: {
     readonly workspaceRoot: string;
   };
-  readonly config: EmptyContextLane;
+  readonly config: {
+    readonly policyPack: SelectedPolicyPack;
+  };
   readonly invocation: EmptyContextLane;
   readonly provided: EmptyContextLane;
 };

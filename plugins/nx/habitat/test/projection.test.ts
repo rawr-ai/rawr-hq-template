@@ -121,6 +121,12 @@ function resolvedCatalog(
     _tag: "Resolved",
     catalog: {
       schemaVersion: 3,
+      policyPack: {
+        name: "@habitat/blueprints",
+        version: "0.2.0",
+        protocolVersion: 1,
+        blueprints: [],
+      },
       blueprints: [],
       instances,
       applications,

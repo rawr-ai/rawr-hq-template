@@ -27,6 +27,25 @@ type SourceCliResult = Readonly<{
 const appRoot = fileURLToPath(new URL("..", import.meta.url));
 const sourceEntrypoint = fileURLToPath(new URL("../src/index.ts", import.meta.url));
 const fixtureRoots: string[] = [];
+const policyPackFixtureFiles = {
+  "node_modules/@habitat/blueprints/package.json": `${JSON.stringify(
+    {
+      name: "@habitat/blueprints",
+      version: "0.2.0",
+      exports: {
+        "./habitat-pack.json": "./habitat-pack.json",
+        "./package.json": "./package.json",
+      },
+    },
+    null,
+    2
+  )}\n`,
+  "node_modules/@habitat/blueprints/habitat-pack.json": `${JSON.stringify(
+    { protocolVersion: 1, blueprints: [] },
+    null,
+    2
+  )}\n`,
+} as const;
 
 afterEach(async () => {
   for (const root of fixtureRoots.splice(0)) {
@@ -146,7 +165,8 @@ describe("Habitat app composition", () => {
   }, 60_000);
 
   it("accepts an unset command-timeout override at process activation", async () => {
-    const result = await runSourceCli(appRoot, ["--help"]);
+    const fixture = await makeEmptyWorkspace();
+    const result = await runSourceCli(fixture.root, ["--help"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("USAGE");
   });
@@ -164,6 +184,21 @@ describe("Habitat app composition", () => {
   });
 });
 
+async function makeEmptyWorkspace(): Promise<WorkspaceFixture> {
+  const root = await mkdtemp(path.join(tmpdir(), "habitat-app-test-"));
+  fixtureRoots.push(root);
+  const files = {
+    "package.json": `${JSON.stringify({ name: "habitat-empty-fixture", private: true }, null, 2)}\n`,
+    ...policyPackFixtureFiles,
+  };
+  for (const [relativePath, contents] of Object.entries(files)) {
+    const absolutePath = path.join(root, relativePath);
+    await mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeFile(absolutePath, contents);
+  }
+  return { configFiles: [], root };
+}
+
 async function makeWorkspace(input: {
   readonly instanceId: string;
   readonly ownerProject: string;
@@ -175,6 +210,8 @@ async function makeWorkspace(input: {
   const blueprintPath = ".habitat/blueprints/package/blueprint.toml";
   const manifestPath = `${input.projectPath}/habitat.toml`;
   const files: Record<string, string> = {
+    "package.json": `${JSON.stringify({ name: "habitat-app-fixture", private: true }, null, 2)}\n`,
+    ...policyPackFixtureFiles,
     [blueprintPath]: blueprintToml(input.rules),
     [manifestPath]: instanceToml(input),
     [`${input.projectPath}/allowed.ts`]: "allowed();\n",

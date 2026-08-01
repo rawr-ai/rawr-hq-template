@@ -13,6 +13,12 @@ const resolved: Awaited<ReturnType<Client["catalog"]["resolve"]>> = {
   _tag: "Resolved",
   catalog: {
     schemaVersion: 3,
+    policyPack: {
+      name: "@habitat/blueprints",
+      version: "0.2.0",
+      protocolVersion: 1,
+      blueprints: [],
+    },
     blueprints: [],
     instances: [],
     applications: [],
@@ -56,6 +62,16 @@ describe("Habitat Oclif projection binding", () => {
           const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
             prefix: "habitat-oclif-projection-",
           });
+          const policyPackRoot = path.join(workspaceRoot, ".test-policy-pack");
+          yield* fileSystem.makeDirectory(policyPackRoot);
+          yield* fileSystem.writeFileString(
+            path.join(policyPackRoot, "package.json"),
+            JSON.stringify({ name: "@habitat/blueprints", version: "0.2.0" })
+          );
+          yield* fileSystem.writeFileString(
+            path.join(policyPackRoot, "habitat-pack.json"),
+            JSON.stringify({ protocolVersion: 1, blueprints: [] })
+          );
           const client = createClient({
             deps: {
               fileSystem,
@@ -68,7 +84,13 @@ describe("Habitat Oclif projection binding", () => {
               },
             },
             scope: { workspaceRoot },
-            config: {},
+            config: {
+              policyPack: {
+                name: "@habitat/blueprints",
+                packageJsonPath: path.join(policyPackRoot, "package.json"),
+                manifestPath: path.join(policyPackRoot, "habitat-pack.json"),
+              },
+            },
           });
           const config = yield* Effect.promise(() => loadProjection(client));
 

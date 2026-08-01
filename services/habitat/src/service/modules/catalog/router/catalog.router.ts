@@ -13,11 +13,16 @@ import {
   admitCompatibilityIndex,
   admitCompatibilityRule,
   admitInstanceSource,
+  admitPolicyPackManifest,
+  admitPolicyPackPackageJson,
+  admitPolicyPackSelection,
   type BlueprintSource,
   type CatalogDocuments,
   type CatalogPathFact,
   type CompatibilityRuleDocument,
   type InstanceSource,
+  type PolicyPackSelection,
+  type PolicyPackSource,
   referencedRepositoryPaths,
   rejected,
   resolveCatalog,
@@ -94,12 +99,89 @@ type CatalogOperationContext = {
   readonly fileSystem: FileSystem.FileSystem;
   readonly path: Path.Path;
   readonly workspaceRoot: string;
+  readonly policyPack: PolicyPackSelection;
 };
 
 function resolveCurrentCatalog(context: CatalogOperationContext) {
   return Effect.gen(function* () {
     const { fileSystem, path } = context;
     const workspaceRoot = context.workspaceRoot;
+    const selectedPolicyPack = admitPolicyPackSelection(context.policyPack, path);
+    if (!selectedPolicyPack.ok) return rejected(selectedPolicyPack.issues);
+
+    const selection = selectedPolicyPack.selection;
+    const packageSourcePath = `${selection.name}/package.json`;
+    const manifestSourcePath = `${selection.name}/habitat-pack.json`;
+    const packageRead = yield* Effect.result(fileSystem.readFileString(selection.packageJsonPath));
+    const manifestRead = yield* Effect.result(fileSystem.readFileString(selection.manifestPath));
+    const policyPackIssues: CatalogIssue[] = [];
+    if (packageRead._tag === "Failure") {
+      policyPackIssues.push(
+        filesystemIssue(
+          packageRead.failure,
+          packageSourcePath,
+          "read selected policy-pack package.json",
+          "Selected policy-pack package.json does not exist."
+        )
+      );
+    }
+    if (manifestRead._tag === "Failure") {
+      policyPackIssues.push(
+        filesystemIssue(
+          manifestRead.failure,
+          manifestSourcePath,
+          "read selected policy-pack manifest",
+          "Selected policy-pack manifest does not exist."
+        )
+      );
+    }
+    if (packageRead._tag === "Failure" || manifestRead._tag === "Failure") {
+      return rejected(policyPackIssues);
+    }
+
+    const parsedPackage = yield* Effect.result(
+      Effect.try({ try: (): unknown => JSON.parse(packageRead.success), catch: (cause) => cause })
+    );
+    const parsedManifest = yield* Effect.result(
+      Effect.try({
+        try: (): unknown => JSON.parse(manifestRead.success),
+        catch: (cause) => cause,
+      })
+    );
+    if (parsedPackage._tag === "Failure") {
+      policyPackIssues.push({
+        code: "authority-json-invalid",
+        path: packageSourcePath,
+        message: "Selected policy-pack package.json is not valid JSON.",
+      });
+    }
+    if (parsedManifest._tag === "Failure") {
+      policyPackIssues.push({
+        code: "authority-json-invalid",
+        path: manifestSourcePath,
+        message: "Selected policy-pack manifest is not valid JSON.",
+      });
+    }
+    if (parsedPackage._tag === "Failure" || parsedManifest._tag === "Failure") {
+      return rejected(policyPackIssues);
+    }
+
+    const admittedPackage = admitPolicyPackPackageJson(
+      parsedPackage.success,
+      selection.name,
+      packageSourcePath
+    );
+    const admittedManifest = admitPolicyPackManifest(parsedManifest.success, manifestSourcePath);
+    if (!admittedPackage.ok) policyPackIssues.push(...admittedPackage.issues);
+    if (!admittedManifest.ok) policyPackIssues.push(...admittedManifest.issues);
+    if (!admittedPackage.ok || !admittedManifest.ok) return rejected(policyPackIssues);
+    const policyPack: PolicyPackSource = {
+      name: admittedPackage.value.name,
+      version: admittedPackage.value.version,
+      protocolVersion: admittedManifest.value.protocolVersion,
+      blueprints: [],
+    };
+
     if (!path.isAbsolute(workspaceRoot)) {
       return rejected([
         {
@@ -412,6 +494,7 @@ function resolveCurrentCatalog(context: CatalogOperationContext) {
 
     if (issues.length > 0) return rejected(issues);
     const documents: CatalogDocuments = {
+      policyPack,
       blueprints,
       manifests,
       compatibilityIndex,

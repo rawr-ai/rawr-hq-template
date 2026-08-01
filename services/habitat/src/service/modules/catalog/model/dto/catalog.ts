@@ -29,6 +29,18 @@ const RelativePathSchema = Type.String({
   description: "Normalized repository-relative path.",
 });
 
+const PackageNameSchema = Type.String({
+  minLength: 1,
+  maxLength: 214,
+  description: "Exact npm package identity.",
+});
+
+const PackageVersionSchema = Type.String({
+  minLength: 1,
+  maxLength: 200,
+  description: "Version declared by the selected npm package.",
+});
+
 const AbsolutePathSchema = Type.String({
   minLength: 1,
   maxLength: 16_384,
@@ -77,6 +89,8 @@ const CatalogIssueCodeSchema = Type.Union(
     Type.Literal("authority-path-invalid"),
     Type.Literal("authority-path-kind-mismatch"),
     Type.Literal("authority-path-missing"),
+    Type.Literal("authority-package-name-mismatch"),
+    Type.Literal("authority-policy-pack-members-unsupported"),
     Type.Literal("authority-resolution-failed"),
     Type.Literal("authority-rule-invalid"),
     Type.Literal("authority-schema-invalid"),
@@ -85,6 +99,35 @@ const CatalogIssueCodeSchema = Type.Union(
     Type.Literal("authority-workspace-root-invalid"),
   ],
   { description: "Closed stable catalog issue identity." }
+);
+
+/** npm metadata fields that own selected policy-pack package identity. */
+export const PolicyPackPackageJsonSchema = Type.Object(
+  {
+    name: PackageNameSchema,
+    version: PackageVersionSchema,
+  },
+  { additionalProperties: true, description: "Selected policy-pack npm metadata." }
+);
+
+const PolicyPackBlueprintMemberSchema = Type.Object(
+  {
+    id: IdSchema,
+    version: Type.Integer({ minimum: 1, description: "Exact blueprint version." }),
+    path: RelativePathSchema,
+  },
+  { additionalProperties: false, description: "One declared policy-pack blueprint member." }
+);
+
+/** Closed selected policy-pack protocol 1 manifest. */
+export const PolicyPackManifestSchema = Type.Object(
+  {
+    protocolVersion: Type.Literal(1, { description: "Supported policy-pack protocol." }),
+    blueprints: Type.Array(PolicyPackBlueprintMemberSchema, {
+      description: "Closed declared blueprint member set.",
+    }),
+  },
+  { additionalProperties: false, description: "Closed Habitat policy-pack manifest." }
 );
 
 const BlueprintGritAcquisitionSchema = Type.Object(
@@ -434,9 +477,24 @@ const CompatibilityCatalogSchema = Type.Object(
   { additionalProperties: false, description: "Inert version 2 compatibility facts." }
 );
 
+const ResolvedPolicyPackSchema = Type.Object(
+  {
+    name: PackageNameSchema,
+    version: PackageVersionSchema,
+    protocolVersion: Type.Literal(1, {
+      description: "Admitted policy-pack protocol version.",
+    }),
+    blueprints: Type.Array(PolicyPackBlueprintMemberSchema, {
+      description: "Admitted blueprint members in manifest order.",
+    }),
+  },
+  { additionalProperties: false, description: "One admitted selected policy pack." }
+);
+
 const HabitatCatalogSchema = Type.Object(
   {
     schemaVersion: Type.Literal(3, { description: "Resolved authority catalog version." }),
+    policyPack: ResolvedPolicyPackSchema,
     blueprints: Type.Array(BlueprintDefinitionRecordSchema, {
       description: "Admitted local blueprints in stable identity/version order.",
     }),
@@ -494,6 +552,12 @@ export const ResolveCatalogResultSchema = Type.Union(
 
 /** One admitted blueprint definition document. */
 export type BlueprintDefinition = Static<typeof BlueprintDefinitionSchema>;
+
+/** Selected npm package metadata admitted for a policy pack. */
+export type PolicyPackPackageJson = Static<typeof PolicyPackPackageJsonSchema>;
+
+/** Closed selected policy-pack protocol manifest. */
+export type PolicyPackManifest = Static<typeof PolicyPackManifestSchema>;
 
 /** One admitted local instance manifest document. */
 export type HabitatInstanceManifest = Static<typeof HabitatInstanceManifestSchema>;

@@ -1499,11 +1499,16 @@ async function withFixture<T>(
         const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
           prefix: "habitat-check-test-",
         });
+        const fixtureFiles = {
+          ...fixture.files,
+          [`${POLICY_PACK_ROOT}/package.json`]: DEFAULT_POLICY_PACK_PACKAGE_JSON,
+          [`${POLICY_PACK_ROOT}/habitat-pack.json`]: DEFAULT_POLICY_PACK_MANIFEST,
+        };
         fixture.onWorkspaceRoot?.(workspaceRoot);
         for (const directory of [...(fixture.directories ?? [])].sort(textOrder)) {
           yield* fileSystem.makeDirectory(path.join(workspaceRoot, directory), { recursive: true });
         }
-        for (const [relativePath, contents] of Object.entries(fixture.files).sort(
+        for (const [relativePath, contents] of Object.entries(fixtureFiles).sort(
           ([left], [right]) => textOrder(left, right)
         )) {
           const absolutePath = path.join(workspaceRoot, relativePath);
@@ -1524,13 +1529,28 @@ async function withFixture<T>(
             sourceInventory: recording.inventory.resource,
           },
           scope: { workspaceRoot },
-          config: {},
+          config: {
+            policyPack: {
+              name: POLICY_PACK_NAME,
+              packageJsonPath: path.join(workspaceRoot, POLICY_PACK_ROOT, "package.json"),
+              manifestPath: path.join(workspaceRoot, POLICY_PACK_ROOT, "habitat-pack.json"),
+            },
+          },
         });
         return yield* Effect.promise(() => use(client, recording));
       })
     ).pipe(Effect.provide(NodeServices.layer))
   );
 }
+
+const POLICY_PACK_NAME = "@fixture/habitat-blueprints";
+const POLICY_PACK_ROOT = ".test-policy-pack";
+const DEFAULT_POLICY_PACK_PACKAGE_JSON = JSON.stringify({
+  name: POLICY_PACK_NAME,
+  version: "1.2.3",
+  private: false,
+});
+const DEFAULT_POLICY_PACK_MANIFEST = JSON.stringify({ protocolVersion: 1, blueprints: [] });
 
 function makeRecordingRuleEvaluation(
   handler: EvaluationHandler,

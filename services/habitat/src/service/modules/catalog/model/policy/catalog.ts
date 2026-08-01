@@ -13,12 +13,18 @@ import {
   type HabitatInstanceManifest,
   HabitatInstanceManifestSchema,
   MAX_CATALOG_ISSUES,
+  type PolicyPackManifest,
+  PolicyPackManifestSchema,
+  type PolicyPackPackageJson,
+  PolicyPackPackageJsonSchema,
   type ResolveCatalogResult,
 } from "../dto/catalog.js";
 
 const MEMBER_PLACEHOLDER = "{member}";
 const GLOB_CHARACTERS = /[*?[\]!]/;
 const blueprintValidator = new Validator({}, BlueprintDefinitionSchema);
+const policyPackManifestValidator = new Validator({}, PolicyPackManifestSchema);
+const policyPackPackageJsonValidator = new Validator({}, PolicyPackPackageJsonSchema);
 const instanceValidator = new Validator({}, HabitatInstanceManifestSchema);
 const compatibilityIndexValidator = new Validator({}, CompatibilityIndexSchema);
 const compatibilityRuleValidator = new Validator({}, CompatibilityRuleSourceSchema);
@@ -27,6 +33,21 @@ const compatibilityRuleValidator = new Validator({}, CompatibilityRuleSourceSche
 export type BlueprintSource = {
   readonly definition: BlueprintDefinition;
   readonly relativePath: string;
+};
+
+/** One admitted selected npm policy-pack envelope. */
+export type PolicyPackSource = {
+  readonly name: string;
+  readonly version: string;
+  readonly protocolVersion: 1;
+  readonly blueprints: readonly [];
+};
+
+/** App-selected absolute package locators interpreted before filesystem I/O. */
+export type PolicyPackSelection = {
+  readonly name: string;
+  readonly packageJsonPath: string;
+  readonly manifestPath: string;
 };
 
 /** One schema-admitted local instance source. */
@@ -43,11 +64,101 @@ export type CompatibilityRuleDocument = {
 
 /** Schema-admitted authority documents observed by the resolve handler. */
 export type CatalogDocuments = {
+  readonly policyPack: PolicyPackSource;
   readonly blueprints: readonly BlueprintSource[];
   readonly manifests: readonly InstanceSource[];
   readonly compatibilityIndex?: CompatibilityIndex;
   readonly compatibilityRules: readonly CompatibilityRuleDocument[];
 };
+
+/** Validates the selected policy-pack filesystem locators. */
+export function admitPolicyPackSelection(
+  selection: PolicyPackSelection,
+  path: Path.Path
+):
+  | { readonly ok: true; readonly selection: PolicyPackSelection }
+  | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
+  const issues: CatalogIssue[] = [];
+  if (!path.isAbsolute(selection.packageJsonPath)) {
+    issues.push(
+      issue(
+        "authority-path-invalid",
+        `${selection.name}/package.json`,
+        "Selected policy-pack packageJsonPath must be absolute."
+      )
+    );
+  }
+  if (!path.isAbsolute(selection.manifestPath)) {
+    issues.push(
+      issue(
+        "authority-path-invalid",
+        `${selection.name}/habitat-pack.json`,
+        "Selected policy-pack manifestPath must be absolute."
+      )
+    );
+  }
+  if (
+    path.basename(selection.packageJsonPath) !== "package.json" ||
+    path.resolve(selection.manifestPath) !==
+      path.resolve(path.dirname(selection.packageJsonPath), "habitat-pack.json")
+  ) {
+    issues.push(
+      issue(
+        "authority-path-invalid",
+        `${selection.name}/habitat-pack.json`,
+        "Selected policy-pack locators must identify sibling package.json and habitat-pack.json files."
+      )
+    );
+  }
+  return issues.length > 0 ? { ok: false, issues } : { ok: true, selection };
+}
+
+/** Admits selected package.json identity through the existing TypeBox validator pattern. */
+export function admitPolicyPackPackageJson(
+  value: unknown,
+  expectedName: string,
+  sourcePath: string
+):
+  | { readonly ok: true; readonly value: PolicyPackPackageJson }
+  | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
+  const admitted = admit(policyPackPackageJsonValidator, value, sourcePath);
+  if (!admitted.ok) return admitted;
+  return admitted.value.name === expectedName
+    ? admitted
+    : {
+        ok: false,
+        issues: [
+          issue(
+            "authority-package-name-mismatch",
+            sourcePath,
+            `Selected package name "${expectedName}" does not equal package.json name "${admitted.value.name}".`
+          ),
+        ],
+      };
+}
+
+/** Admits the closed protocol envelope and refuses future member activation explicitly. */
+export function admitPolicyPackManifest(
+  value: unknown,
+  sourcePath: string
+):
+  | { readonly ok: true; readonly value: PolicyPackManifest }
+  | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
+  const admitted = admit(policyPackManifestValidator, value, sourcePath);
+  if (!admitted.ok) return admitted;
+  return admitted.value.blueprints.length === 0
+    ? admitted
+    : {
+        ok: false,
+        issues: [
+          issue(
+            "authority-policy-pack-members-unsupported",
+            sourcePath,
+            "Policy-pack blueprint members are not admitted by this service version."
+          ),
+        ],
+      };
+}
 
 /** Service-observed filesystem facts for one referenced repository path. */
 export type CatalogPathFact = {
@@ -349,6 +460,12 @@ export function resolveCatalog(
     _tag: "Resolved",
     catalog: {
       schemaVersion: 3,
+      policyPack: {
+        name: documents.policyPack.name,
+        version: documents.policyPack.version,
+        protocolVersion: documents.policyPack.protocolVersion,
+        blueprints: [],
+      },
       blueprints: blueprints.map((source) => ({
         definition: source.definition,
         provenance: {
