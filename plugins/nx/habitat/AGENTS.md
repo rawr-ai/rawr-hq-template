@@ -13,6 +13,8 @@
 - The plugin receives an app-owned workspace client factory and runtime cache
   inputs. It never selects providers, constructs resources, or discovers
   Habitat authority itself.
+- Consumer initialization uses Nx's `Tree` to converge only the app-bound
+  plugin registration, named hook group, and Grit trust declaration.
 - Habitat owns catalog resolution and application meaning; Nx owns target
   scheduling, hashing, caching, and dependency composition.
 - The projection augments existing project roots and never supplies a project
@@ -37,8 +39,9 @@
 
 ## Interfaces
 
-- `src/index.ts` is the sole source face and exports the app composition
-  factory.
+- `src/index.ts` is the installed target-inference face. The Habitat app
+  bundles `src/initialization.ts` only into its native Nx generator entries;
+  it is not part of the runtime Nx-plugin export.
 
 ## Routing
 

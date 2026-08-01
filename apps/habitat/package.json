@@ -13,6 +13,8 @@
   "files": [
     "bin",
     "dist",
+    "generators.json",
+    "generators.schema.json",
     "src/nx-plugin.d.ts",
     "oclif.manifest.json",
     "package.json"
@@ -20,6 +22,7 @@
   "bin": {
     "habitat": "./bin/run.js"
   },
+  "generators": "./generators.json",
   "exports": {
     "./nx-plugin": {
       "types": "./src/nx-plugin.d.ts",
@@ -30,7 +33,7 @@
   },
   "scripts": {
     "habitat": "bun src/index.ts",
-    "build": "tsc -p src/tsconfig.build.json && bun build src/nx-plugin.ts --outdir dist --target node --format esm",
+    "build": "tsc -p src/tsconfig.build.json && bun build src/nx-plugin.ts --outdir dist --target node --format esm && bun build src/generators/init.ts --outfile dist/generators/init.cjs --target node --format cjs --packages=external && bun build src/generators/remove-hook.ts --outfile dist/generators/remove-hook.cjs --target node --format cjs --packages=external",
     "manifest": "NODE_ENV=production bun --bun oclif manifest",
     "acceptance:oclif-installed-package": "vitest run --project habitat-cli-installed-package-acceptance",
     "typecheck": "tsc -p tsconfig.json --noEmit",
