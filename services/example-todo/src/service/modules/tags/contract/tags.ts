@@ -9,9 +9,10 @@
  * Add/modify procedures here first. Module composition lives in `module.ts`, and
  * handler behavior lives in named router leaves.
  */
+
+import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 import { TagSchema } from "#example-todo-service/model/dto/tag";
 import {

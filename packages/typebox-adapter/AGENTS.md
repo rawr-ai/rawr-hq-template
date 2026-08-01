@@ -35,5 +35,5 @@
 
 ## Validation
 
-- `bunx nx run @rawr/typebox-adapter:typecheck`
-- `bunx nx run @rawr/typebox-adapter:test`
+- `bunx nx run @habitat-ai/typebox-adapter:typecheck`
+- `bunx nx run @habitat-ai/typebox-adapter:test`

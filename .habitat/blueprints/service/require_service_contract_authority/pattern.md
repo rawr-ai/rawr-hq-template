@@ -227,9 +227,9 @@ predicate require_service_contract_authority_is_standard_schema($value) {
     or {
       and {
         $adapter <: `standard`,
-        $program <: contains `import { $..., standard, $... } from "@rawr/typebox-adapter"`
+        $program <: contains `import { $..., standard, $... } from "@habitat-ai/typebox-adapter"`
       },
-      $program <: contains `import { $..., standard as $adapter, $... } from "@rawr/typebox-adapter"`
+      $program <: contains `import { $..., standard as $adapter, $... } from "@habitat-ai/typebox-adapter"`
     }
   }
 }
@@ -488,7 +488,7 @@ export const get = oc.input(standard(JobRequestSchema));
 import { oc } from "@orpc/contract";
 import { errors } from "./errors";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 export const get = oc
   .errors(errors)
   .input(standard(Type.Object({ query: Type.String() })));
@@ -509,7 +509,7 @@ export const get = oc.input(Type.Object({ query: Type.String() }));
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 export const get = oc
   .errors({
     BAD_REQUEST: {
@@ -526,7 +526,7 @@ export const get = oc
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 const BAD_REQUEST = {
   message: "Bad request",
   data: Type.Object({ reason: Type.String() }),
@@ -543,7 +543,7 @@ export const get = oc
 import { oc } from "@orpc/contract";
 import { BAD_REQUEST } from "./errors";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 export const get = oc
   .errors({ BAD_REQUEST })
   .input(standard(Type.Object({ query: Type.String() })));
@@ -587,7 +587,7 @@ export const contract = { get, metadata: sharedMetadata };
 // @filename: services/jobs/src/service/modules/catalog/contract/delete.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 const removeOperation = oc.input(standard(Type.Object({ id: Type.String() })));
 export { removeOperation as delete };
 ```
@@ -614,7 +614,7 @@ export const contract = { delete: removeOperation };
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 const errors = { SERVICE_UNAVAILABLE: {} };
 export const get = oc
   .errors(errors)
@@ -628,7 +628,7 @@ export const get = oc
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 export const get = oc
   .errors({
     BAD_REQUEST: {
@@ -646,7 +646,7 @@ export const get = oc
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 const BadRequestData = standard(Type.Object({ reason: Type.String() }));
 const BAD_REQUEST: ErrorMapItem<typeof BadRequestData> = {
   message: "Bad request",
@@ -663,7 +663,7 @@ export const get = oc
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 const CatalogRequestSchema = Type.Object({ data: Type.String() });
 export const get = oc.input(standard(CatalogRequestSchema));
 ```
@@ -674,7 +674,7 @@ export const get = oc.input(standard(CatalogRequestSchema));
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 export const get = oc.input(
   standard(Type.Refine(Type.String(), (value) => value === "accepted")),
 );
@@ -686,7 +686,7 @@ export const get = oc.input(
 // @filename: services/jobs/src/service/modules/catalog/contract/get.ts
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 export const get = oc
   .input(standard(Type.Object({
     name: Type.String({ minLength: 1 }),

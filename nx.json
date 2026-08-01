@@ -49,7 +49,7 @@
         }
       },
       "typebox-adapter": {
-        "projects": ["@rawr/typebox-adapter"],
+        "projects": ["@habitat-ai/typebox-adapter"],
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "typebox-adapter-v{version}"
@@ -68,11 +68,21 @@
     "habitatRuntime": [
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/bun.lock",
-      { "env": "HABITAT_HARNESS_ROOT" },
-      { "env": "HABITAT_CACHE_ROOT" },
-      { "env": "HABITAT_PATTERN_CACHE_ROOT" },
-      { "env": "HABITAT_TELEMETRY_DISABLED" },
-      { "env": "HABITAT_COMMAND_TIMEOUT_MS" }
+      {
+        "env": "HABITAT_HARNESS_ROOT"
+      },
+      {
+        "env": "HABITAT_CACHE_ROOT"
+      },
+      {
+        "env": "HABITAT_PATTERN_CACHE_ROOT"
+      },
+      {
+        "env": "HABITAT_TELEMETRY_DISABLED"
+      },
+      {
+        "env": "HABITAT_COMMAND_TIMEOUT_MS"
+      }
     ],
     "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
@@ -215,7 +225,7 @@
             "@rawr/resource-native-agent-provider",
             "@rawr/resource-versioned-content",
             "@rawr/session-intelligence",
-            "@rawr/typebox-adapter"
+            "@habitat-ai/typebox-adapter"
           ]
         },
         "dependsOn": ["...", "build"]

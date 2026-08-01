@@ -3595,9 +3595,10 @@ Because `package` is an ECMAScript-reserved binding name, the shared contract
 and router laws admit only the exact `packageContract` and `packageOperation`
 local bindings with a named `package` export. The corresponding indexes import
 that exact public name into the same qualified locals. No general alias or
-second operation name is admitted. The contract law now names Template's
-canonical `@rawr/typebox-adapter` package rather than Magic Migration's
-repository-local adapter alias.
+second operation name is admitted. At that checkpoint, the contract law bound
+Template's canonical adapter package rather than Magic Migration's
+repository-local alias. This namespace correction binds the same owner to
+`@habitat-ai/typebox-adapter` without changing the law's contract behavior.
 
 The move preserves module-curated content-workspace and package-output
 context, source observation and final revalidation order, deterministic Cowork
@@ -3861,6 +3862,11 @@ This checkpoint adds no version, package archive, publish target, installer,
 retained store, provider mutation, or protected content change.
 
 ## Ordinary Nx Release Group
+
+This section preserves the historical one-group checkpoint and is not current
+operator guidance. The repository now has four release groups; the first
+Habitat release selects `typebox-adapter`, `habitat-cli`, and
+`habitat-blueprints` explicitly and never invokes unfiltered publication.
 
 The nineteen-package CLI runtime closure is now one fixed `rawr-cli` Nx Release
 group at version `0.1.0`. Every member is public, carries ordinary registry
@@ -4421,8 +4427,8 @@ cleanup remain operation-local. This change adds no managed runtime, process
 finalizer, cache, registry, controller, workflow engine, app composition layer,
 or second service.
 
-That checkpoint completes the lifecycle production boundary:
-`@rawr/typebox-adapter` uses TypeBox's native validator and omits ambiguous
+That checkpoint completes the lifecycle production boundary: the canonical
+TypeBox adapter uses TypeBox's native validator and omits ambiguous
 issue paths, while the CLI owns cold provider selection and direct local
 lifecycle-service binding. A consumer's additional need for a production
 compiler, bootgraph, process-runtime binding, or harness belongs to the
@@ -4463,9 +4469,10 @@ Repository Ratchet run `30530555544`, job `90831615094`.
 
 This exact landed checkpoint also contains the canonical TypeBox adapter
 lineage: the native-validator, message-only bridge correction landed at
-`0854024afe9a76ef0ae4ae3f427182be25fe8420`, and its current
-`@rawr/typebox-adapter` package owner landed at
-`3b142e560f3b3cefa255356fa7343c56cac18d99`. The landed `main` commit
+`0854024afe9a76ef0ae4ae3f427182be25fe8420`, and its package owner directory
+landed at `3b142e560f3b3cefa255356fa7343c56cac18d99`. The public
+`@habitat-ai/typebox-adapter` identity belongs to the later namespace
+correction and is not attributed to either historical commit. The landed `main` commit
 `a25f72da1505f90206c6ff14bcb0ab5de77cbbec` is lifecycle implementation
 evidence; `60dd2f7dd97e5c5b30c3aba4310ab99aa38414b3` is review/check provenance
 only. The handoff means app-owned cold provider selection, direct local service
@@ -5481,7 +5488,7 @@ Task 5.7e22b3 now closes through three semantic package checkpoints:
 
 The release closure is exactly `@habitat-ai/cli`, `@habitat-ai/plugin-cli`, the two
 Habitat resources, `@habitat-ai/service`, and the independently versioned
-`@rawr/typebox-adapter`. The acceptance packs those six ordinary package
+`@habitat-ai/typebox-adapter`. The acceptance packs those six ordinary package
 tarballs, installs them as real package directories without workspace links,
 typechecks every Habitat-owned public declaration under strict NodeNext,
 imports every public runtime entry, discovers the installed Oclif commands,
@@ -5500,11 +5507,20 @@ execution intentionally excludes, so it is not publication proof.
 The repository still consumes the pinned Civ7 Habitat artifact at Nx graph
 bootstrap. That pin remains a compiler-bootstrap input, not a second Habitat
 product identity, until the first Template-owned package is actually
-published. The authenticated npm session identifies `magicapply1`, while its
-read-only organization query currently returns no `habitat-ai` membership.
-Task 5.7e22e and consumer cutover therefore remain open rather than replacing
-the bootstrap with an unpublished workspace path or bypassing registry
-authority.
+published. The authenticated npm session identifies `mateicanavra` as an
+accepted `habitat-ai` owner. The user confirmed that Template does not own the
+`rawr` npm organization, so the shared adapter joins the same public substrate
+as `@habitat-ai/typebox-adapter` before first publication. There is no
+predecessor alias, compatibility package, or dual release. Task
+5.7e22e and consumer cutover remain open until the corrected source lands on
+canonical `main`, the complete ordered release publishes, and registry proof
+passes.
+
+The separate `rawr-cli` release group remains outside this Habitat release.
+Its RAWR-specific public-configured packages require an independently owned
+product namespace before publication; this checkpoint neither publishes nor
+bulk-renames them. Private RAWR workspace coordinates are not registry
+identities and remain unchanged.
 See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.7e22e and 5.7e22f]].
 
 ### Proportional Nx Repository Gate

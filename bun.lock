@@ -6,6 +6,7 @@
       "name": "rawr-hq-template",
       "dependencies": {
         "@habitat-ai/service": "workspace:*",
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@orpc/client": "2.0.0-beta.20",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/experimental-effect": "2.0.0-beta.20",
@@ -17,7 +18,6 @@
         "@rawr/hq-app": "workspace:*",
         "@rawr/hq-sdk": "workspace:*",
         "@rawr/runtime-context": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "@standard-schema/spec": "1.1.0",
         "elysia": "^1.3.12",
         "inngest": "3.51.0",
@@ -217,7 +217,7 @@
       "version": "0.1.0",
     },
     "packages/typebox-adapter": {
-      "name": "@rawr/typebox-adapter",
+      "name": "@habitat-ai/typebox-adapter",
       "version": "0.1.0",
       "dependencies": {
         "@standard-schema/spec": "1.1.0",
@@ -410,6 +410,7 @@
       "name": "@rawr/agent-plugin-lifecycle",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@noble/hashes": "2.2.0",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/client": "2.0.0-beta.20",
@@ -421,7 +422,6 @@
         "@rawr/resource-content-workspace": "workspace:*",
         "@rawr/resource-native-agent-provider": "workspace:*",
         "@rawr/resource-versioned-content": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "effect": "4.0.0-beta.101",
         "typebox": "1.3.8",
       },
@@ -438,10 +438,10 @@
       "name": "@rawr/chatgpt-corpus",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "typebox": "1.3.8",
       },
       "devDependencies": {
@@ -454,11 +454,11 @@
       "name": "@rawr/dev",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "typebox": "1.3.8",
       },
       "devDependencies": {
@@ -471,11 +471,11 @@
     "services/example-todo": {
       "name": "@rawr/example-todo",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "typebox": "1.3.8",
       },
       "devDependencies": {
@@ -490,11 +490,11 @@
       "dependencies": {
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/experimental-effect": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
-        "@rawr/typebox-adapter": "workspace:*",
         "effect": "4.0.0-beta.101",
         "picomatch": "4.0.4",
         "smol-toml": "1.7.0",
@@ -511,11 +511,11 @@
       "name": "@rawr/hq-ops",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "typebox": "1.3.8",
       },
       "devDependencies": {
@@ -529,10 +529,10 @@
       "name": "@rawr/hyperresearch-codex",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "typebox": "1.3.8",
       },
       "devDependencies": {
@@ -543,11 +543,11 @@
       "name": "@rawr/session-intelligence",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/typebox-adapter": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "@rawr/hq-sdk": "workspace:*",
-        "@rawr/typebox-adapter": "workspace:*",
         "typebox": "1.3.8",
       },
       "devDependencies": {
@@ -948,6 +948,8 @@
     "@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@workspace:resources/source-inventory"],
 
     "@habitat-ai/service": ["@habitat-ai/service@workspace:services/habitat"],
+
+    "@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@workspace:packages/typebox-adapter"],
 
     "@habitat/cli": ["@habitat/cli@https://github.com/mateicanavra/civ7-modding-tools/releases/download/habitat-cli-v0.1.0/habitat-cli-0.1.0.tgz", { "dependencies": { "@effect/platform": "0.96.1", "@effect/platform-node": "0.107.0", "@getgrit/cli": "0.1.0-alpha.1743007075", "@nx/devkit": "23.1.0", "@oclif/core": "^4.11.4", "@oclif/plugin-help": "^6.2.50", "@orpc/client": "1.14.6", "@orpc/contract": "1.14.6", "@orpc/server": "1.14.6", "@orpc/shared": "1.14.6", "@standard-schema/spec": "^1.1.0", "effect": "3.21.3", "effect-orpc": "0.5.0", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.6" }, "bin": { "habitat": "./bin/run.js" } }, "sha512-URcx+/MD0cowsZ2OqrBBR4C2Q/3vZ6oybWq68vNMB/Dfi7y6zNd5wniosIZhIeMCUAOPAiZxSSD/+YR3qnDUpw=="],
 
@@ -1410,8 +1412,6 @@
     "@rawr/session-intelligence": ["@rawr/session-intelligence@workspace:services/session-intelligence"],
 
     "@rawr/test-utils": ["@rawr/test-utils@workspace:packages/test-utils"],
-
-    "@rawr/typebox-adapter": ["@rawr/typebox-adapter@workspace:packages/typebox-adapter"],
 
     "@rawr/ui-sdk": ["@rawr/ui-sdk@workspace:packages/ui-sdk"],
 

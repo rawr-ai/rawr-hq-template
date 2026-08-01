@@ -1,6 +1,6 @@
+import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import { procedureMetadata } from "@rawr/hq-sdk";
-import { standard } from "@rawr/typebox-adapter";
 import { ConfigLoadResultSchema, EmptyConfigInputSchema } from "../model/dto/config.dto";
 
 /** Declares the read-only workspace HQ configuration operation. */

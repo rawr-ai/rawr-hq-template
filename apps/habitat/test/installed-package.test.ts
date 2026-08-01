@@ -52,8 +52,8 @@ const packedProjects: readonly PackedProject[] = [
     exports: {
       ".": { default: "./dist/index.js", types: "./dist/index.d.ts" },
     },
-    filename: "rawr-typebox-adapter.tgz",
-    name: "@rawr/typebox-adapter",
+    filename: "habitat-ai-typebox-adapter.tgz",
+    name: "@habitat-ai/typebox-adapter",
     root: "packages/typebox-adapter",
     version: "0.1.0",
   },
@@ -669,7 +669,7 @@ async function run(
 }
 
 function consumerSource(): string {
-  return `import { standard } from "@rawr/typebox-adapter";
+  return `import { standard } from "@habitat-ai/typebox-adapter";
 import type { RuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation";
 import type { GritRuleEvaluationProviderConfig } from "@habitat-ai/resource-rule-evaluation/providers/grit-effect-platform-node";
 import type { SourceInventoryResource } from "@habitat-ai/resource-source-inventory";
@@ -737,7 +737,7 @@ function publicEntries(): readonly string[] {
   return [
     "@habitat-ai/blueprints/habitat-pack.json",
     "@habitat-ai/blueprints/package.json",
-    "@rawr/typebox-adapter",
+    "@habitat-ai/typebox-adapter",
     "@habitat-ai/resource-rule-evaluation",
     "@habitat-ai/resource-rule-evaluation/providers/grit-effect-platform-node",
     "@habitat-ai/resource-source-inventory",

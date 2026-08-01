@@ -1,6 +1,6 @@
+import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import { procedureMetadata } from "@rawr/hq-sdk";
-import { standard } from "@rawr/typebox-adapter";
 import { type Static, Type } from "typebox";
 import { RoleFilterSchema, SessionSourceFilterSchema } from "../../common/entities";
 import { INVALID_REGEX } from "../../common/errors";

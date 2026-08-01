@@ -1,4 +1,4 @@
-import { standard } from "@rawr/typebox-adapter";
+import { standard } from "@habitat-ai/typebox-adapter";
 import { Type } from "typebox";
 
 export const ErrorMessageSchema = Type.Object(
