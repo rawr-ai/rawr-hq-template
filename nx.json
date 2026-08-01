@@ -2,6 +2,17 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "release": {
     "groups": {
+      "habitat-cli": {
+        "projects": [
+          "@habitat/cli",
+          "@habitat/plugin-cli",
+          "@habitat/resource-rule-evaluation",
+          "@habitat/resource-source-inventory",
+          "@habitat/resource-temporal-inquiry",
+          "@habitat/service"
+        ],
+        "projectsRelationship": "independent"
+      },
       "rawr-cli": {
         "projects": [
           "@rawr/agent-plugin-lifecycle",
@@ -197,5 +208,6 @@
       "cache": false,
       "dependsOn": ["build", "^build"]
     }
-  }
+  },
+  "analytics": false
 }

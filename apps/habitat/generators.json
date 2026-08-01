@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "name": "@habitat/cli",
+  "version": "0.2",
+  "generators": {
+    "temporal-inquiry-init": {
+      "factory": "./dist/generators/temporal-inquiry-init/generator.js#temporalInquiryInitGenerator",
+      "schema": "./src/generators/temporal-inquiry-init/schema.json",
+      "description": "Install explicit temporal-inquiry target inference in an Nx workspace."
+    },
+    "temporal-inquiry-remove": {
+      "factory": "./dist/generators/temporal-inquiry-remove/generator.js#temporalInquiryRemoveGenerator",
+      "schema": "./src/generators/temporal-inquiry-remove/schema.json",
+      "description": "Remove temporal-inquiry target inference from an Nx workspace."
+    }
+  }
+}

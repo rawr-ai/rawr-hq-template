@@ -6,5 +6,12 @@
     "outDir": "../dist",
     "rootDir": "."
   },
-  "include": ["application.ts", "composition.ts", "index.ts"]
+  "include": [
+    "application.ts",
+    "composition.ts",
+    "fluree-process.ts",
+    "generators/**/*.ts",
+    "index.ts",
+    "temporal-inquiry.ts"
+  ]
 }

@@ -2,6 +2,15 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "@habitat/cli",
   "targets": {
+    "acceptance:temporal-inquiry-installed": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build", "manifest"],
+      "outputs": [],
+      "options": {
+        "command": "vitest run --project habitat-cli-installed-temporal-inquiry"
+      }
+    },
     "check": {
       "executor": "nx:noop"
     }

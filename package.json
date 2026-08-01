@@ -104,6 +104,7 @@
     "@habitat/plugin-cli": "workspace:*",
     "@habitat/resource-rule-evaluation": "workspace:*",
     "@habitat/resource-source-inventory": "workspace:*",
+    "@habitat/resource-temporal-inquiry": "workspace:*",
     "@nx/devkit": "23.1.0",
     "@nx/js": "23.1.0",
     "@oclif/core": "^4.11.4",

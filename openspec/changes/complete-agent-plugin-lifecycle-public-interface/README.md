@@ -5464,9 +5464,45 @@ temporary build wiring atomically.
 
 The source checkpoint passes app typecheck, build, Oclif manifest generation,
 the six-test Oclif/Nx/provider/configuration boundary suite, repository Biome,
-the current repository Habitat check, and diff hygiene. Installed tarball
-acceptance, the Habitat Nx release group, task completion, release, and consumer
-cutover remain open.
+the current repository Habitat check, and diff hygiene. It initially left
+installed acceptance, release configuration, publication, and consumer cutover
+open; the following checkpoint closes the first two without collapsing the
+latter boundaries.
+
+### Temporal Inquiry Distribution Checkpoint
+
+The completed task 5.7e22b3 checkpoint now packages the app, its Oclif
+projection, the bundled Habitat Nx projection, and the accepted temporal
+inquiry surface as one ordinary `@habitat/cli@0.2.0` distribution. The generic
+inquiry kernel and Node provider retain their resource owner. The package adds
+only distribution faces and a separately installed Nx projection; it does not
+turn temporal inquiry into a Habitat service or rule runner.
+
+The temporal-inquiry Nx projection discovers a consumer-owned
+`habitat-inquiry.json` and augments that definition's existing project root
+with explicit `plan`, `query`, and `refresh` targets. All three are
+non-cacheable foreground commands with exact declared and runtime inputs. Graph
+construction reads and validates authored definitions but never starts Fluree,
+refreshes or queries a ledger, writes state, or joins `check`, hooks, or another
+target dependency. Frame identity remains explicit inside the consumer
+definition; Habitat does not infer product meaning.
+
+The installed acceptance packs the real seven-package Habitat release closure,
+requires every packed manifest to contain no `workspace:` dependency, installs
+the exact archives into a disposable Nx workspace, imports the public inquiry
+and runtime faces, verifies inferred target metadata, and proves that project
+discovery, graph construction, and ordinary project check create neither the
+consumer sentinel nor `.fluree` state. Initializer repetition is byte-stable;
+removal deletes only the projection; regeneration reproduces the original
+`nx.json`; package removal leaves no stale plugin reference. Two independent
+packs of the app must have the same SHA-256. The `habitat-cli` Nx release group
+owns the six publishable Habitat packages; the package-less Nx projection is
+bundled by the app and has no second release identity.
+
+Publication, policy-pack construction, and released consumer cutover remain
+tasks 5.7e22d through 5.7e22f. The repository therefore continues to use the
+released Civ7 checker until those boundaries are reviewed; accepted Template
+source is now canonical for the successor package.
 
 ## Settlement Oracles
 
