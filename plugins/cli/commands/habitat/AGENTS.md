@@ -23,6 +23,8 @@
 - `resolve` prints the total service result for current catalog admission.
 - `check` maps native Oclif selectors to the service request, prints the total
   service result, and exits nonzero for refused or unsuccessful outcomes.
+- `hook agent-stop` selects native Habitat structure applications, remains
+  quiet on success, and exits nonzero with the total failed result.
 
 ## Concepts
 
@@ -39,7 +41,7 @@
 ## Interfaces
 
 - `src/lib/binding.ts` defines the app-to-plugin Oclif binding.
-- `src/commands/**` contains the two default-export command faces.
+- `src/commands/**` contains the three default-export command faces.
 
 ## Routing
 

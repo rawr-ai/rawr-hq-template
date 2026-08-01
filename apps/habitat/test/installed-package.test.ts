@@ -176,9 +176,10 @@ describe("installed Habitat package", () => {
     ) as {
       readonly commands?: Readonly<Record<string, { readonly relativePath?: readonly string[] }>>;
     };
-    expect(Object.keys(pluginManifest.commands ?? {}).sort()).toEqual(["check", "resolve"]);
+    expect(Object.keys(pluginManifest.commands ?? {}).sort()).toEqual(["check", "hook", "resolve"]);
     expect(pluginManifest.commands).toMatchObject({
       check: { relativePath: ["dist", "commands", "check.js"] },
+      hook: { relativePath: ["dist", "commands", "hook.js"] },
       resolve: { relativePath: ["dist", "commands", "resolve.js"] },
     });
 
@@ -202,6 +203,7 @@ describe("installed Habitat package", () => {
     expect(JSON.parse(inventory.stdout)).toEqual([
       { id: "check", pluginName: "@habitat/plugin-cli" },
       { id: "help", pluginName: "@oclif/plugin-help" },
+      { id: "hook", pluginName: "@habitat/plugin-cli" },
       { id: "resolve", pluginName: "@habitat/plugin-cli" },
     ]);
 
@@ -210,7 +212,11 @@ describe("installed Habitat package", () => {
     expect(help.exitCode).toBe(0);
     expect(help.stderr).toBe("");
     expect(help.stdout).toContain("check");
+    expect(help.stdout).toContain("hook");
     expect(help.stdout).toContain("resolve");
+
+    const hooked = await run(executable, ["hook", "agent-stop"], { cwd: fixtureRoot });
+    expect(hooked).toMatchObject({ exitCode: 0, stderr: "", stdout: "" });
 
     const resolved = await run(executable, ["resolve"], { cwd: fixtureRoot });
     expect(resolved).toMatchObject({ exitCode: 0, stderr: "" });

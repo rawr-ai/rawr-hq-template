@@ -73,11 +73,13 @@ describe("Habitat Oclif projection binding", () => {
           const config = yield* Effect.promise(() => loadProjection(client));
 
           expect(habitatClientFrom(config)).toBe(client);
-          expect(config.commandIDs).toEqual(["check", "resolve"]);
+          expect(config.commandIDs).toEqual(["check", "hook", "resolve"]);
           const resolved = yield* Effect.promise(() => config.runCommand("resolve"));
           const checked = yield* Effect.promise(() => config.runCommand("check"));
+          const hooked = yield* Effect.promise(() => config.runCommand("hook", ["agent-stop"]));
           expect(resolved).toMatchObject({ _tag: "Resolved" });
           expect(checked).toEqual({ _tag: "Completed", applications: [], ok: true });
+          expect(hooked).toEqual({ _tag: "Completed", applications: [], ok: true });
         })
       ).pipe(Effect.provide(NodeServices.layer))
     );
@@ -105,6 +107,7 @@ describe("Habitat Oclif projection binding", () => {
       "grit",
     ]);
     await config.runCommand("check", ["--owner="]);
+    await config.runCommand("hook", ["agent-stop"]);
 
     expect(inputs).toEqual([
       { selectors: { rule: "one" } },
@@ -117,6 +120,7 @@ describe("Habitat Oclif projection binding", () => {
         },
       },
       { selectors: { owner: "" } },
+      { selectors: { runner: "habitat" } },
     ]);
   });
 
@@ -157,9 +161,12 @@ describe("Habitat Oclif projection binding", () => {
       await expect(config.runCommand("check")).rejects.toMatchObject({ oclif: { exit: 1 } });
       await expect(config.runCommand("check")).rejects.toMatchObject({ oclif: { exit: 1 } });
       await expect(config.runCommand("check")).rejects.toMatchObject({ oclif: { exit: 1 } });
+      await expect(config.runCommand("hook", ["agent-stop"])).rejects.toMatchObject({
+        oclif: { exit: 1 },
+      });
       expect(resolveInputs).toEqual([{}]);
       expect(output.mock.calls).toEqual(
-        [rejected, failed, catalogRejected, selectionRejected].map((result) => [
+        [rejected, failed, catalogRejected, selectionRejected, failed].map((result) => [
           JSON.stringify(result, null, 2),
         ])
       );
