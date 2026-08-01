@@ -2,6 +2,11 @@
   "name": "@habitat-ai/cli",
   "version": "0.2.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "apps/habitat"
+  },
   "description": "Habitat structural authority CLI and Nx projection",
   "license": "MIT",
   "type": "module",

@@ -2,6 +2,11 @@
   "name": "@habitat-ai/typebox-adapter",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "packages/typebox-adapter"
+  },
   "type": "module",
   "files": [
     "dist"

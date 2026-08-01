@@ -2,6 +2,11 @@
   "name": "@habitat-ai/blueprints",
   "version": "0.2.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "packages/habitat-blueprints"
+  },
   "description": "Data-only Habitat blueprint policy pack",
   "license": "MIT",
   "type": "module",

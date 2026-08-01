@@ -2,6 +2,11 @@
   "name": "@habitat-ai/resource-source-inventory",
   "version": "0.2.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "resources/source-inventory"
+  },
   "type": "module",
   "files": [
     "dist"
