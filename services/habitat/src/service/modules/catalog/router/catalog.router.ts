@@ -2,12 +2,12 @@ import type { RuleEvaluationFinding } from "@habitat/resource-rule-evaluation";
 import { MAX_SOURCE_INVENTORY_ENTRIES } from "@habitat/resource-source-inventory";
 import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
 import { parse as parseToml } from "smol-toml";
-import type { CatalogIssue } from "../model/dto/catalog";
+import type { CatalogIssue } from "../model/dto/catalog.js";
 import type {
   CheckApplicationReport,
   CheckCatalogResult,
   CheckSelectionIssue,
-} from "../model/dto/check";
+} from "../model/dto/check.js";
 import {
   admitBlueprintSource,
   admitCompatibilityIndex,
@@ -21,7 +21,7 @@ import {
   referencedRepositoryPaths,
   rejected,
   resolveCatalog,
-} from "../model/policy/catalog";
+} from "../model/policy/catalog.js";
 import {
   completedCheck,
   evaluatedApplication,
@@ -31,7 +31,7 @@ import {
   failedStructureApplication,
   type GritCheckApplication,
   selectCheckApplications,
-} from "../model/policy/check";
+} from "../model/policy/check.js";
 import {
   type AdmittedStructureApplication,
   admitStructureDocument,
@@ -41,8 +41,8 @@ import {
   planStructureEvaluation,
   type StructureRootKind,
   structureChildObservationPaths,
-} from "../model/policy/structure";
-import { module } from "../module";
+} from "../model/policy/structure.js";
+import { module } from "../module.js";
 
 const authorityGlobs = [
   { kind: "blueprint" as const, pattern: ".habitat/blueprints/*/blueprint.toml" },

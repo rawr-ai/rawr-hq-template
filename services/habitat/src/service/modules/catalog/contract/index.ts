@@ -1,4 +1,4 @@
-import { catalog } from "./catalog";
+import { catalog } from "./catalog.js";
 
 /** Catalog module contract exposed through its single composition face. */
-export const contract = { ...catalog };
+export const contract: typeof catalog = { ...catalog };

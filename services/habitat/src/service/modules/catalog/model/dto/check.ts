@@ -3,7 +3,7 @@ import {
   RuleEvaluationPositionSchema,
 } from "@habitat/resource-rule-evaluation";
 import { type Static, Type } from "typebox";
-import { CatalogIssueSchema } from "./catalog";
+import { CatalogIssueSchema } from "./catalog.js";
 
 const SelectorValueSchema = Type.String({
   minLength: 1,

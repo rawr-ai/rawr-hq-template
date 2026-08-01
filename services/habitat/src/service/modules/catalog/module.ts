@@ -1,4 +1,4 @@
-import { service } from "../../impl";
+import { service } from "../../impl.js";
 
 /** Catalog implementer exposing the vocabulary required by resolve and check. */
 export const module = service.catalog.use(async ({ context, next }) =>
