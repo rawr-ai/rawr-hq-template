@@ -5523,6 +5523,54 @@ bulk-renames them. Private RAWR workspace coordinates are not registry
 identities and remain unchanged.
 See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.7e22e and 5.7e22f]].
 
+### Habitat Registry Settlement
+
+Task 5.7e22e settled from canonical Template commit
+`2898d4f8e1d4ebf35ee92f61c64eed2639d90369`, tree
+`2e7b34e2175b7ce7a9c5177c5beab5d3251beddd`. Nx published the explicit groups
+in the accepted order: `typebox-adapter`, `habitat-cli`, then
+`habitat-blueprints`. The three annotated release tags all peel to that exact
+commit:
+
+- `typebox-adapter-v0.1.0`;
+- `habitat-cli-v0.2.0`; and
+- `habitat-blueprints-v0.2.0`.
+
+The public registry release contains exactly seven artifacts. Their npm
+tarball SHA-1 values are:
+
+- `@habitat-ai/typebox-adapter@0.1.0` —
+  `fedabc24f3648b310ba0f8557479c72a0cf3884b`;
+- `@habitat-ai/resource-rule-evaluation@0.2.0` —
+  `661f2bc91ff611b960716351ba5c617b3d293825`;
+- `@habitat-ai/resource-source-inventory@0.2.0` —
+  `729ea4872a140d110ed5071e850a862cc4d524e4`;
+- `@habitat-ai/service@0.2.0` —
+  `de0d1ebb1b5e5e7761fec8ad072996cd6e269b6f`;
+- `@habitat-ai/plugin-cli@0.2.0` —
+  `84e4ffcd47de9461994824969523002f6a9b0ecb`;
+- `@habitat-ai/cli@0.2.0` —
+  `3e751d69c06b052808a9a98971a16eb7af6c52b7`; and
+- `@habitat-ai/blueprints@0.2.0` —
+  `698133fbbb8ed9bbac141282d0abfbf248912080`.
+
+Registry manifests resolve every Habitat workspace dependency to an exact
+published version and contain no `workspace:` protocol. Direct tarball
+verification reproduced all seven publish hashes and the accepted file counts.
+A fresh Nx 23.1.0 workspace then installed `@habitat-ai/cli@0.2.0` through
+native `nx add`, acquired the complete seven-package closure, discovered the
+four Oclif commands, registered `@habitat-ai/cli/nx-plugin`, installed only the
+named Habitat Stop hook, passed a frozen reinstall, and produced byte-identical
+`package.json`, `nx.json`, and `.codex/hooks.json` on a repeated initializer.
+The disposable consumer locally exempted only these exact packages from the
+operator's three-day Bun minimum-release-age policy; the release did not weaken
+that machine-global supply-chain gate.
+
+The bootstrap publication used the accepted `mateicanavra` npm identity and a
+single write OTP. That interaction is first-release setup, not the steady-state
+release process. Task 5.7e22e1 now owns the bounded replacement: one native Nx
+GitHub Actions workflow using npm trusted publishing and no stored write token.
+
 ### Proportional Nx Repository Gate
 
 Canonical Template merge `d4c1f8a2` (PR #733) makes the protected pull-request
