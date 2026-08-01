@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- Project resolved Habitat applications into native Nx scheduler targets.
+- Project resolved Habitat policy into native Nx scheduler targets.
 
 ## Scope
 
@@ -23,19 +23,24 @@
 ## Behavior
 
 - Resolve the catalog once for each graph construction.
-- Project one cacheable leaf per application and one dependency-only aggregate
-  per owner project.
+- Project one cacheable leaf per version 3 application and version 2
+  compatibility rule, then one dependency-only aggregate per owner project.
+- Compatibility leaves augment the exact admitted owner root without inventing
+  an instance identity or a second runtime.
 - Refuse rejected or internally inconsistent catalogs without partial output.
 
 ## Concepts
 
 - An **application target** is the Nx scheduling projection of one resolved
-  Habitat application. An **owner aggregate** contains dependencies only.
+  Habitat application. A **compatibility target** projects one admitted version
+  2 rule directly. An **owner aggregate** contains every owner-local leaf as a
+  direct dependency and no execution of its own.
 
 ## Flow
 
-- The app binds the workspace client, Habitat resolves applications, this
-  plugin projects targets, and Nx schedules the selected leaves.
+- The app binds the workspace client, Habitat resolves applications and
+  compatibility rules, this plugin projects targets, and Nx schedules the
+  selected leaves.
 
 ## Interfaces
 

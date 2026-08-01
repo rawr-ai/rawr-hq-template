@@ -11,6 +11,8 @@ type ResolveCatalogResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedInstance = ResolvedCatalog["instances"][number];
+type CompatibilityCatalog = ResolvedCatalog["compatibility"];
+type CompatibilityRule = CompatibilityCatalog["rules"][number];
 
 const provenance: ResolvedApplication["provenance"] = {
   kind: "local",
@@ -106,6 +108,85 @@ const structureApplication: ResolvedApplication = {
   },
 };
 
+const compatibilityProvenance: CompatibilityRule["provenance"] = {
+  kind: "local",
+  authorityRoot: "/workspace",
+  relativePath: ".habitat/blueprints/legacy/source-compat/rule.json",
+};
+
+const gritCompatibilityRule: CompatibilityRule = {
+  ruleId: "source-compat",
+  ownerProject: "service-a",
+  manifestPath: ".habitat/blueprints/legacy/source-compat/rule.json",
+  lane: "enforced",
+  message: "Legacy service source must satisfy its law.",
+  remediate: "Restore the legacy source law.",
+  provenance: compatibilityProvenance,
+  coveragePatterns: ["services/a/src/**/*.ts", "services/a/package.json"],
+  baseline: {
+    provenance: compatibilityProvenance,
+    relativePath: ".habitat/blueprints/legacy/source-compat/baseline.json",
+    absolutePath: "/workspace/.habitat/blueprints/legacy/source-compat/baseline.json",
+  },
+  runner: {
+    name: "grit",
+    pattern: {
+      provenance: compatibilityProvenance,
+      relativePath: ".habitat/blueprints/legacy/source-compat/pattern.md",
+      absolutePath: "/workspace/.habitat/blueprints/legacy/source-compat/pattern.md",
+    },
+    patternName: "source_compat",
+    acquisition: {
+      kind: "check",
+      entries: [{ kind: "directory", path: "services/a" }],
+    },
+  },
+};
+
+const structureCompatibilityRule: CompatibilityRule = {
+  ruleId: "plugin-compat",
+  ownerProject: "plugin-b",
+  manifestPath: ".habitat/blueprints/legacy/plugin-compat/rule.json",
+  lane: "enforced",
+  message: "Legacy plugin structure must remain closed.",
+  remediate: "Restore the legacy plugin structure.",
+  provenance: {
+    ...compatibilityProvenance,
+    relativePath: ".habitat/blueprints/legacy/plugin-compat/rule.json",
+  },
+  coveragePatterns: ["plugins/b/**/*.ts"],
+  baseline: {
+    provenance: compatibilityProvenance,
+    relativePath: ".habitat/blueprints/legacy/plugin-compat/baseline.json",
+    absolutePath: "/workspace/.habitat/blueprints/legacy/plugin-compat/baseline.json",
+  },
+  runner: {
+    name: "habitat",
+    mode: "structure",
+    structure: {
+      provenance: compatibilityProvenance,
+      relativePath: ".habitat/blueprints/legacy/plugin-compat/structure.toml",
+      absolutePath: "/workspace/.habitat/blueprints/legacy/plugin-compat/structure.toml",
+    },
+  },
+};
+
+const compatibilityConfigFiles = [
+  ".habitat/index.json",
+  gritCompatibilityRule.manifestPath,
+  structureCompatibilityRule.manifestPath,
+];
+
+function compatibilityCatalog(
+  rules: CompatibilityRule[] = [gritCompatibilityRule, structureCompatibilityRule],
+  ownerRoots: CompatibilityCatalog["ownerRoots"] = {
+    "plugin-b": "plugins/b",
+    "service-a": "services/a",
+  }
+): CompatibilityCatalog {
+  return { schemaVersion: 2, ownerRoots, rules };
+}
+
 const configFiles = [
   ".habitat/blueprints/plugin/blueprint.toml",
   ".habitat/blueprints/service/blueprint.toml",
@@ -115,7 +196,8 @@ const configFiles = [
 
 function resolvedCatalog(
   applications: ResolvedApplication[] = [gritApplication, structureApplication],
-  instances: ResolvedInstance[] = [serviceInstance, pluginInstance]
+  instances: ResolvedInstance[] = [serviceInstance, pluginInstance],
+  compatibility: CompatibilityCatalog = compatibilityCatalog([], {})
 ): ResolveCatalogResult {
   return {
     _tag: "Resolved",
@@ -130,7 +212,7 @@ function resolvedCatalog(
       blueprints: [],
       instances,
       applications,
-      compatibility: { schemaVersion: 2, ownerRoots: {}, rules: [] },
+      compatibility,
     },
   };
 }
@@ -216,7 +298,7 @@ describe("Habitat Nx projection", () => {
     expect(serviceLeaf?.inputs).not.toContain(
       "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml"
     );
-    expect(serviceTargets?.["check:policy"]).toMatchObject({
+    expect(serviceTargets?.["check:policy"]).toEqual({
       executor: "nx:noop",
       cache: false,
       outputs: [],
@@ -225,6 +307,7 @@ describe("Habitat Nx projection", () => {
           target: "habitat:application:service-a:source-law",
         },
       ],
+      metadata: { description: "Check resolved Habitat applications owned by service-a" },
     });
 
     const pluginTargets = projects["plugins/b"]?.targets;
@@ -242,6 +325,125 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/plugins/b",
       "{workspaceRoot}/plugins/b/**/*",
       "{workspaceRoot}/plugins/b/habitat.toml",
+    ]);
+  });
+
+  it("projects compatibility-only Grit and structure leaves on exact owner roots", async () => {
+    const resolve = vi.fn(async () => resolvedCatalog([], [], compatibilityCatalog()));
+    const createNodes = createHandler(() => ({ catalog: { resolve } }));
+
+    const first = await createNodes([...compatibilityConfigFiles].reverse(), undefined, {
+      workspaceRoot: "/first/workspace",
+      nxJsonConfiguration: {},
+    });
+    const second = await createNodes(compatibilityConfigFiles, undefined, {
+      workspaceRoot: "/second/workspace",
+      nxJsonConfiguration: {},
+    });
+
+    expect(first).toEqual(second);
+    expect(resolve).toHaveBeenCalledTimes(2);
+    expect(first.map(([source]) => source)).toEqual([
+      structureCompatibilityRule.manifestPath,
+      gritCompatibilityRule.manifestPath,
+    ]);
+
+    const projects = projectMap(first);
+    expect(Object.keys(projects)).toEqual(["plugins/b", "services/a"]);
+    expect(projects["services/a"]?.name).toBeUndefined();
+
+    const gritTargets = projects["services/a"]?.targets;
+    expect(Object.keys(gritTargets ?? {})).toEqual(["check:policy", "habitat:rule:source-compat"]);
+    const gritLeaf = gritTargets?.["habitat:rule:source-compat"];
+    expect(gritLeaf).toMatchObject({
+      command: "habitat check --rule source-compat",
+      cache: true,
+      outputs: [],
+      options: { cwd: "{workspaceRoot}" },
+    });
+    expect(gritLeaf?.command).not.toContain("--instance");
+    expect(gritLeaf?.inputs).toEqual([
+      { externalDependencies: ["@habitat-ai/cli"] },
+      "{workspaceRoot}/bun.lock",
+      "{workspaceRoot}/package.json",
+      { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/baseline.json",
+      "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/pattern.md",
+      "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/rule.json",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/services/a/package.json",
+      "{workspaceRoot}/services/a/src/**/*.ts",
+    ]);
+    expect(gritLeaf?.inputs).not.toContain("{workspaceRoot}/services/a");
+    expect(gritLeaf?.inputs).not.toContain("{workspaceRoot}/services/a/**/*");
+    expect(gritTargets?.["check:policy"]?.dependsOn).toEqual([
+      { target: "habitat:rule:source-compat" },
+    ]);
+
+    const structureTargets = projects["plugins/b"]?.targets;
+    expect(Object.keys(structureTargets ?? {})).toEqual([
+      "check:policy",
+      "habitat:rule:plugin-compat",
+    ]);
+    const structureLeaf = structureTargets?.["habitat:rule:plugin-compat"];
+    expect(structureLeaf).toMatchObject({
+      command: "habitat check --rule plugin-compat",
+      cache: true,
+      outputs: [],
+      options: { cwd: "{workspaceRoot}" },
+    });
+    expect(structureLeaf?.inputs).toEqual([
+      { externalDependencies: ["@habitat-ai/cli"] },
+      "{workspaceRoot}/bun.lock",
+      "{workspaceRoot}/package.json",
+      { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/legacy/plugin-compat/baseline.json",
+      "{workspaceRoot}/.habitat/blueprints/legacy/plugin-compat/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/legacy/plugin-compat/structure.toml",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/plugins/b/**/*.ts",
+    ]);
+    expect(structureTargets?.["check:policy"]?.dependsOn).toEqual([
+      { target: "habitat:rule:plugin-compat" },
+    ]);
+  });
+
+  it("merges compatibility and application leaves into one owner aggregate", async () => {
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () =>
+          resolvedCatalog(
+            [gritApplication],
+            [serviceInstance],
+            compatibilityCatalog([gritCompatibilityRule], { "service-a": "services/a" })
+          ),
+      },
+    }));
+
+    const result = await createNodes([...configFiles, ...compatibilityConfigFiles], undefined, {
+      workspaceRoot: "/workspace",
+      nxJsonConfiguration: {},
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.[0]).toBe("services/a/habitat.toml");
+    const service = projectMap(result)["services/a"];
+    expect(Object.keys(service?.targets ?? {})).toEqual([
+      "check:policy",
+      "habitat:application:service-a:source-law",
+      "habitat:rule:source-compat",
+    ]);
+    expect(service?.targets?.["check:policy"]?.dependsOn).toEqual([
+      { target: "habitat:application:service-a:source-law" },
+      { target: "habitat:rule:source-compat" },
     ]);
   });
 
@@ -300,8 +502,8 @@ describe("Habitat Nx projection", () => {
     ]);
   });
 
-  it("returns no project identity when the resolved application set is empty", async () => {
-    const resolve = vi.fn(async () => resolvedCatalog([]));
+  it("returns no project identity when both catalog generations are empty", async () => {
+    const resolve = vi.fn(async () => resolvedCatalog([], []));
     const clientForWorkspace = vi.fn(() => ({ catalog: { resolve } }));
     const createNodes = createHandler(clientForWorkspace);
 
@@ -421,18 +623,180 @@ describe("Habitat Nx projection", () => {
     }
   });
 
-  it("replaces prior targets when a later resolution changes", async () => {
+  it("refuses inconsistent compatibility owner, root, manifest, and target facts atomically", async () => {
+    if (gritCompatibilityRule.runner.name !== "grit") {
+      throw new Error("Expected the Grit compatibility fixture.");
+    }
+    const cases: readonly [string, ResolveCatalogResult, readonly string[]][] = [
+      [
+        "compatibility rule 'source-compat': owner 'service-a' has no root",
+        resolvedCatalog([], [], compatibilityCatalog([gritCompatibilityRule], {})),
+        compatibilityConfigFiles,
+      ],
+      [
+        "compatibility rule 'source-compat': manifest '.habitat/blueprints/legacy/source-compat/rule.json' is outside the matched authority files",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog([gritCompatibilityRule], { "service-a": "services/a" })
+        ),
+        compatibilityConfigFiles.filter((file) => file !== gritCompatibilityRule.manifestPath),
+      ],
+      [
+        "owner 'service-a': roots 'services/other' and 'services/a' collide",
+        resolvedCatalog(
+          [gritApplication],
+          [serviceInstance],
+          compatibilityCatalog([gritCompatibilityRule], { "service-a": "services/other" })
+        ),
+        [...configFiles, ...compatibilityConfigFiles],
+      ],
+      [
+        "root 'services/a': owners 'plugin-b' and 'service-a' collide",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog([gritCompatibilityRule], {
+            "plugin-b": "services/a",
+            "service-a": "services/a",
+          })
+        ),
+        compatibilityConfigFiles,
+      ],
+      [
+        "path escapes the workspace: '../outside'",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog([gritCompatibilityRule], { "service-a": "../outside" })
+        ),
+        compatibilityConfigFiles,
+      ],
+      [
+        "path escapes the workspace: '../outside/rule.json'",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog(
+            [{ ...gritCompatibilityRule, manifestPath: "../outside/rule.json" }],
+            { "service-a": "services/a" }
+          )
+        ),
+        compatibilityConfigFiles,
+      ],
+      [
+        "requires a workspace-relative path: '/outside/baseline.json'",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog(
+            [
+              {
+                ...gritCompatibilityRule,
+                baseline: {
+                  ...gritCompatibilityRule.baseline,
+                  relativePath: "/outside/baseline.json",
+                },
+              },
+            ],
+            { "service-a": "services/a" }
+          )
+        ),
+        compatibilityConfigFiles,
+      ],
+      [
+        "path escapes the workspace: '../outside/pattern.md'",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog(
+            [
+              {
+                ...gritCompatibilityRule,
+                runner: {
+                  ...gritCompatibilityRule.runner,
+                  pattern: {
+                    ...gritCompatibilityRule.runner.pattern,
+                    relativePath: "../outside/pattern.md",
+                  },
+                },
+              },
+            ],
+            { "service-a": "services/a" }
+          )
+        ),
+        compatibilityConfigFiles,
+      ],
+      [
+        "path escapes the workspace: '../outside/**/*.ts'",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog(
+            [{ ...gritCompatibilityRule, coveragePatterns: ["../outside/**/*.ts"] }],
+            { "service-a": "services/a" }
+          )
+        ),
+        compatibilityConfigFiles,
+      ],
+      [
+        "duplicate target 'service-a:habitat:rule:source-compat'",
+        resolvedCatalog(
+          [],
+          [],
+          compatibilityCatalog([gritCompatibilityRule, gritCompatibilityRule], {
+            "service-a": "services/a",
+          })
+        ),
+        compatibilityConfigFiles,
+      ],
+    ];
+
+    for (const [message, result, files] of cases) {
+      const createNodes = createHandler(() => ({
+        catalog: { resolve: async () => result },
+      }));
+      await expect(
+        createNodes(files, undefined, {
+          workspaceRoot: "/workspace",
+          nxJsonConfiguration: {},
+        })
+      ).rejects.toThrow(message);
+    }
+  });
+
+  it("retains no targets across mixed, empty, and application-only resolutions", async () => {
     const resolve = vi
       .fn()
-      .mockResolvedValueOnce(resolvedCatalog([gritApplication]))
-      .mockResolvedValueOnce(resolvedCatalog([structureApplication]));
+      .mockResolvedValueOnce(
+        resolvedCatalog(
+          [gritApplication],
+          [serviceInstance],
+          compatibilityCatalog([gritCompatibilityRule], { "service-a": "services/a" })
+        )
+      )
+      .mockResolvedValueOnce(resolvedCatalog([], []))
+      .mockResolvedValueOnce(resolvedCatalog([structureApplication], [pluginInstance]));
     const createNodes = createHandler(() => ({ catalog: { resolve } }));
     const context = { workspaceRoot: "/workspace", nxJsonConfiguration: {} };
 
-    const first = projectMap(await createNodes(configFiles, undefined, context));
-    const second = projectMap(await createNodes(configFiles, undefined, context));
+    const authorityFiles = [...configFiles, ...compatibilityConfigFiles];
+    const first = projectMap(await createNodes(authorityFiles, undefined, context));
+    const second = projectMap(await createNodes(authorityFiles, undefined, context));
+    const third = projectMap(await createNodes(authorityFiles, undefined, context));
 
     expect(Object.keys(first)).toEqual(["services/a"]);
-    expect(Object.keys(second)).toEqual(["plugins/b"]);
+    expect(second).toEqual({});
+    expect(Object.keys(third)).toEqual(["plugins/b"]);
+    expect(Object.keys(first["services/a"]?.targets ?? {})).toEqual([
+      "check:policy",
+      "habitat:application:service-a:source-law",
+      "habitat:rule:source-compat",
+    ]);
+    expect(Object.keys(third["plugins/b"]?.targets ?? {})).toEqual([
+      "check:policy",
+      "habitat:application:@scope/plugin-b:plugin-structure",
+    ]);
+    expect(resolve).toHaveBeenCalledTimes(3);
   });
 });

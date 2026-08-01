@@ -20,7 +20,15 @@ type ResolveCatalogResult = Awaited<ReturnType<ResolveCatalogClient["catalog"]["
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedInstance = ResolvedCatalog["instances"][number];
+type CompatibilityRule = ResolvedCatalog["compatibility"]["rules"][number];
 type TargetInput = NonNullable<TargetConfiguration["inputs"]>[number];
+
+type ProjectProjection = {
+  readonly ownerProject: string;
+  readonly applicationManifests: Set<string>;
+  readonly compatibilityManifests: Set<string>;
+  readonly targets: Record<string, TargetConfiguration>;
+};
 
 /**
  * Supplies the ready Habitat client for the workspace being projected by Nx.
@@ -39,7 +47,7 @@ export type HabitatNxBinding = {
 };
 
 /**
- * Projects service-resolved Habitat applications into native Nx targets.
+ * Projects resolved Habitat applications and compatibility rules into native Nx targets.
  *
  * The factory receives the app-owned workspace client and runtime cache facts.
  * It does not select providers, discover authority, execute checks, or name
@@ -56,78 +64,80 @@ export function createHabitatNxPlugin(
       const result = await client.catalog.resolve({});
       if (result._tag === "Rejected") throw rejectedCatalogError(result);
 
-      return projectApplications(matchedFiles, result.catalog, binding.runtimeInputs);
+      return projectCatalogTargets(matchedFiles, result.catalog, binding.runtimeInputs);
     },
   ];
 
   return Object.freeze({ createNodes });
 }
 
-function projectApplications(
+function projectCatalogTargets(
   matchedFiles: readonly string[],
   catalog: ResolvedCatalog,
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): CreateNodesResultArray {
-  if (catalog.applications.length === 0) return [];
+  if (catalog.applications.length === 0 && catalog.compatibility.rules.length === 0) return [];
 
   const authorityFiles = new Set(matchedFiles);
   const instances = indexInstances(catalog.instances);
   const rootsByOwner = new Map<string, string>();
-  const projects = new Map<
-    string,
-    {
-      readonly manifestPath: string;
-      readonly ownerProject: string;
-      readonly targets: Record<string, TargetConfiguration>;
-    }
-  >();
+  const ownersByRoot = new Map<string, string>();
+  const projects = new Map<string, ProjectProjection>();
+
+  for (const [ownerProject, ownerRoot] of Object.entries(catalog.compatibility.ownerRoots).sort(
+    ([left], [right]) => compareText(left, right)
+  )) {
+    recordOwnerRoot(ownerProject, ownerRoot, rootsByOwner, ownersByRoot);
+  }
 
   for (const application of catalog.applications) {
     const instance = requireApplicationInstance(application, instances);
-    const manifestPath = normalizeWorkspacePath(application.manifestPath);
-    if (!authorityFiles.has(manifestPath)) {
-      throw new Error(
-        `Habitat Nx projection rejected instance '${instance.id}': manifest '${manifestPath}' is outside the matched authority files.`
-      );
-    }
-
-    const root = projectRootFor(manifestPath);
-    const priorRoot = rootsByOwner.get(application.ownerProject);
-    if (priorRoot !== undefined && priorRoot !== root) {
-      throw new Error(
-        `Habitat Nx projection rejected owner '${application.ownerProject}': roots '${priorRoot}' and '${root}' collide.`
-      );
-    }
-    rootsByOwner.set(application.ownerProject, root);
-
-    const project = projects.get(root) ?? {
-      manifestPath,
-      ownerProject: application.ownerProject,
-      targets: {},
-    };
-    if (project.ownerProject !== application.ownerProject) {
-      throw new Error(
-        `Habitat Nx projection rejected root '${root}': owners '${project.ownerProject}' and '${application.ownerProject}' collide.`
-      );
-    }
+    const manifestPath = requireMatchedManifest(
+      application.manifestPath,
+      authorityFiles,
+      `instance '${instance.id}'`
+    );
+    const root = recordOwnerRoot(
+      application.ownerProject,
+      projectRootFor(manifestPath),
+      rootsByOwner,
+      ownersByRoot
+    );
+    const project = projectFor(projects, root, application.ownerProject);
+    project.applicationManifests.add(manifestPath);
 
     const targetName = applicationTargetName(application);
-    if (Object.hasOwn(project.targets, targetName)) {
+    addLeafTarget(project, targetName, applicationTarget(application, runtimeInputs));
+  }
+
+  for (const rule of catalog.compatibility.rules) {
+    const root = rootsByOwner.get(rule.ownerProject);
+    if (root === undefined) {
       throw new Error(
-        `Habitat Nx projection rejected duplicate target '${application.ownerProject}:${targetName}'.`
+        `Habitat Nx projection rejected compatibility rule '${rule.ruleId}': owner '${rule.ownerProject}' has no root.`
       );
     }
-    project.targets[targetName] = applicationTarget(application, runtimeInputs);
-    projects.set(root, project);
+    const manifestPath = requireMatchedManifest(
+      rule.manifestPath,
+      authorityFiles,
+      `compatibility rule '${rule.ruleId}'`
+    );
+    const project = projectFor(projects, root, rule.ownerProject);
+    project.compatibilityManifests.add(manifestPath);
+    addLeafTarget(project, compatibilityTargetName(rule), compatibilityTarget(rule, runtimeInputs));
   }
 
   return [...projects.entries()]
     .sort(([left], [right]) => compareText(left, right))
     .map(([root, project]) => {
       const leafTargets = Object.keys(project.targets).sort();
-      project.targets[DEFAULT_CHECK_TARGET] = ownerTarget(project.ownerProject, leafTargets);
+      project.targets[DEFAULT_CHECK_TARGET] = ownerTarget(
+        project.ownerProject,
+        leafTargets,
+        project.compatibilityManifests.size > 0
+      );
       return [
-        project.manifestPath,
+        projectionSource(project),
         {
           projects: {
             [root]: {
@@ -139,6 +149,95 @@ function projectApplications(
         },
       ] as const;
     });
+}
+
+function recordOwnerRoot(
+  ownerProject: string,
+  ownerRoot: string,
+  rootsByOwner: Map<string, string>,
+  ownersByRoot: Map<string, string>
+): string {
+  const root = normalizeWorkspacePath(ownerRoot);
+  const priorRoot = rootsByOwner.get(ownerProject);
+  if (priorRoot !== undefined && priorRoot !== root) {
+    throw new Error(
+      `Habitat Nx projection rejected owner '${ownerProject}': roots '${priorRoot}' and '${root}' collide.`
+    );
+  }
+  const priorOwner = ownersByRoot.get(root);
+  if (priorOwner !== undefined && priorOwner !== ownerProject) {
+    throw new Error(
+      `Habitat Nx projection rejected root '${root}': owners '${priorOwner}' and '${ownerProject}' collide.`
+    );
+  }
+  rootsByOwner.set(ownerProject, root);
+  ownersByRoot.set(root, ownerProject);
+  return root;
+}
+
+function projectFor(
+  projects: Map<string, ProjectProjection>,
+  root: string,
+  ownerProject: string
+): ProjectProjection {
+  const project = projects.get(root);
+  if (project !== undefined) {
+    if (project.ownerProject !== ownerProject) {
+      throw new Error(
+        `Habitat Nx projection rejected root '${root}': owners '${project.ownerProject}' and '${ownerProject}' collide.`
+      );
+    }
+    return project;
+  }
+
+  const created = {
+    ownerProject,
+    applicationManifests: new Set<string>(),
+    compatibilityManifests: new Set<string>(),
+    targets: {},
+  };
+  projects.set(root, created);
+  return created;
+}
+
+function requireMatchedManifest(
+  path: string,
+  authorityFiles: ReadonlySet<string>,
+  subject: string
+): string {
+  const manifestPath = normalizeWorkspacePath(path);
+  if (!authorityFiles.has(manifestPath)) {
+    throw new Error(
+      `Habitat Nx projection rejected ${subject}: manifest '${manifestPath}' is outside the matched authority files.`
+    );
+  }
+  return manifestPath;
+}
+
+function addLeafTarget(
+  project: ProjectProjection,
+  targetName: string,
+  target: TargetConfiguration
+): void {
+  if (Object.hasOwn(project.targets, targetName)) {
+    throw new Error(
+      `Habitat Nx projection rejected duplicate target '${project.ownerProject}:${targetName}'.`
+    );
+  }
+  project.targets[targetName] = target;
+}
+
+function projectionSource(project: ProjectProjection): string {
+  const applicationManifest = [...project.applicationManifests].sort(compareText)[0];
+  if (applicationManifest !== undefined) return applicationManifest;
+
+  const compatibilityManifest = [...project.compatibilityManifests].sort(compareText)[0];
+  if (compatibilityManifest === undefined) {
+    throw new Error(
+      `Habitat Nx projection rejected owner '${project.ownerProject}': projected targets have no manifest.`
+    );
+  }
+  return compatibilityManifest;
 }
 
 function requireApplicationInstance(
@@ -192,6 +291,10 @@ function applicationTargetName(application: ResolvedApplication): string {
   return `habitat:application:${application.instanceId}:${application.ruleId}`;
 }
 
+function compatibilityTargetName(rule: CompatibilityRule): string {
+  return `habitat:rule:${rule.ruleId}`;
+}
+
 function applicationTarget(
   application: ResolvedApplication,
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
@@ -208,13 +311,35 @@ function applicationTarget(
   };
 }
 
-function ownerTarget(ownerProject: string, leafTargets: readonly string[]): TargetConfiguration {
+function compatibilityTarget(
+  rule: CompatibilityRule,
+  runtimeInputs: HabitatNxBinding["runtimeInputs"]
+): TargetConfiguration {
+  return {
+    command: `${HABITAT_EXECUTABLE} check --rule ${rule.ruleId}`,
+    cache: true,
+    inputs: compatibilityInputs(rule, runtimeInputs),
+    outputs: [],
+    options: { cwd: "{workspaceRoot}" },
+    metadata: { description: `Check Habitat compatibility rule ${rule.ruleId}` },
+  };
+}
+
+function ownerTarget(
+  ownerProject: string,
+  leafTargets: readonly string[],
+  hasCompatibility: boolean
+): TargetConfiguration {
   return {
     executor: "nx:noop",
     cache: false,
     outputs: [],
     dependsOn: leafTargets.map((target) => ({ target })),
-    metadata: { description: `Check resolved Habitat applications owned by ${ownerProject}` },
+    metadata: {
+      description: hasCompatibility
+        ? `Check resolved Habitat policy owned by ${ownerProject}`
+        : `Check resolved Habitat applications owned by ${ownerProject}`,
+    },
   };
 }
 
@@ -237,6 +362,26 @@ function applicationInputs(
   }
 
   return [...runtimeInputs, ...[...files].sort()];
+}
+
+function compatibilityInputs(
+  rule: CompatibilityRule,
+  runtimeInputs: HabitatNxBinding["runtimeInputs"]
+): TargetConfiguration["inputs"] {
+  const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
+  files.add(workspaceInput(".habitat/**"));
+  files.add(workspaceInput(rule.manifestPath));
+  files.add(workspaceInput(rule.baseline.relativePath));
+  for (const pattern of rule.coveragePatterns) files.add(workspaceInput(pattern));
+  files.add(
+    workspaceInput(
+      rule.runner.name === "grit"
+        ? rule.runner.pattern.relativePath
+        : rule.runner.structure.relativePath
+    )
+  );
+
+  return [...runtimeInputs, ...[...files].sort(compareText)];
 }
 
 function addSubjectInputs(target: Set<string>, path: string, kind: "directory" | "file"): void {
