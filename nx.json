@@ -31,6 +31,7 @@
       "habitat-cli": {
         "projects": [
           "@habitat/cli",
+          "@habitat/blueprints",
           "@habitat/plugin-cli",
           "@habitat/resource-rule-evaluation",
           "@habitat/resource-source-inventory",
