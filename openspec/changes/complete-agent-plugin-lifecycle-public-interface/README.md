@@ -5505,6 +5505,23 @@ published. The local npm registry session currently returns `E401`; task
 bootstrap with an unpublished workspace path or bypassing registry authority.
 See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.7e22e and 5.7e22f]].
 
+### Proportional Nx Repository Gate
+
+Canonical Template merge `d4c1f8a2` (PR #733) makes the protected pull-request
+check use the exact Nx affected graph for GitHub's checked-out merge candidate.
+`NX_BASE` is the pull request base SHA and `NX_HEAD` is `github.sha`; the stable
+required context remains `Required lint, typecheck, and topology`. Merge-queue
+candidates, when used, and pushes to `main` retain the full `bun run ci` graph.
+
+Graph-only proof selected four Habitat tasks for a documentation change, 91
+tasks for one lifecycle-service source change including its real prerequisites
+and dependents, and the complete 198-task graph for repository scheduler
+configuration. Required PR run `30682277467` passed in 1m37s, and canonical-main
+full run `30682357885` passed in 1m49s. The checkpoint adds no Nx Cloud service,
+distributed runner, package transport, or custom selector. Bun lockfile changes
+remain conservatively broad while root toolchain inputs require that breadth;
+the ineffective dependency-update tuning knob was not retained.
+
 ## Settlement Oracles
 
 The final product must prove:
