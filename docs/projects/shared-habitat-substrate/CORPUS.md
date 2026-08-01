@@ -77,7 +77,10 @@ The source evidence targets Effect 3.21.3, oRPC 1.14.6, TypeBox 1.3.6, and Bun
 repository's Effect 4, oRPC 2, and current TypeBox substrate rather than landing
 a second vendor realm and migrating it later. Consumer initialization,
 policy-pack construction, and release remain separate reviewed boundaries. The
-requested Bun 1.4 native asset remains a separate release proof.
+first Template release is the ordinary Oclif and Nx package set transported by
+npm. A Bun-native artifact is neither a transfer input nor a release
+prerequisite; it remains a later distribution evaluation that may not create a
+second Habitat identity.
 
 ## Definition Checkpoint
 
