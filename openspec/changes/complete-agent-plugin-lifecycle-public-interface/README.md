@@ -5522,6 +5522,35 @@ distributed runner, package transport, or custom selector. Bun lockfile changes
 remain conservatively broad while root toolchain inputs require that breadth;
 the ineffective dependency-update tuning knob was not retained.
 
+### Habitat Consumer Initializer Candidate
+
+The task 5.7e22c candidate uses the ordinary Nx plugin installation path:
+the npm registry carries the versioned `@habitat/cli` package, and
+`nx add @habitat/cli@<exact-version>` discovers and runs its native `init`
+generator. Nx owns consumer activation and graph projection; the package adds
+no installer, downloader, release selector, or retained consumer state.
+
+The initializer plans every admission before its first Nx `Tree` write. It
+registers the fixed `@habitat/cli/nx-plugin` face, replaces the repository's
+exact unmarked predecessor Stop hook with one marked package-owned
+contribution, and admits the exact Grit dependency already carried by the app.
+Duplicate or incompatible owned entries refuse without a partial write. A
+converged repeat performs no write, while `remove-hook` removes only the named
+hook and leaves Nx registration plus unrelated consumer configuration intact.
+
+Nx 23 loads generator factories synchronously, so the type-module app emits
+two qualified CommonJS generator entries while retaining its ESM runtime and
+Nx-plugin faces. Installed-package acceptance packs the ordinary release
+closure, installs and initializes it through native `nx add`, discovers both
+generators, initializes twice with byte-stable
+Nx, hook, and package documents, executes the installed pinned Grit command and
+an inferred target, runs the emitted hook from below the repository root,
+removes the hook twice, and preserves the installed Nx face. Focused
+TypeScript, 17 Nx-plugin behavior tests, three
+installed-package acceptance tests, and the complete repository check are
+green. The checkpoint remains a candidate until its Graphite node lands; task
+5.7e22c is not closed by this record alone.
+
 ## Settlement Oracles
 
 The final product must prove:

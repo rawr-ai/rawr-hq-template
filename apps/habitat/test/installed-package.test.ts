@@ -21,6 +21,10 @@ type PackedProject = Readonly<{
 }>;
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
+const INSTALLED_HABITAT_HOOK_COMMAND =
+  'bash -lc \'repo="${CODEX_WORKSPACE_ROOT:-${CLAUDE_PROJECT_DIR:-}}"; if [ -n "$repo" ]; then repo="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)"; else repo="$(git rev-parse --show-toplevel 2>/dev/null)"; fi && cd "$repo" 2>/dev/null || { printf "%s\\n" "Habitat agent-stop hook must run inside the repository worktree." >&2; exit 2; }; bunx --bun --no-install --package @habitat/cli habitat hook agent-stop\'';
+const PREDECESSOR_HABITAT_HOOK_COMMAND =
+  'bash -lc \'repo="${CODEX_WORKSPACE_ROOT:-${CLAUDE_PROJECT_DIR:-}}"; if [ -n "$repo" ]; then repo="$(git -C "$repo" rev-parse --show-toplevel 2>/dev/null)"; else repo="$(git rev-parse --show-toplevel 2>/dev/null)"; fi && cd "$repo" 2>/dev/null || { printf "%s\\n" "Habitat agent-stop hook must run inside the repository worktree." >&2; exit 2; }; bun habitat hook agent-stop\'';
 const temporaryParent = await realpath(tmpdir());
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const packedProjects: readonly PackedProject[] = [
@@ -246,6 +250,79 @@ describe("installed Habitat package", () => {
 
   it("projects and executes Habitat targets through an installed Nx host", async () => {
     const nx = path.join(consumerRoot, "node_modules/.bin/nx");
+    const initialized = await run(
+      nx,
+      [
+        "add",
+        `@habitat/cli@file:${path.join(acceptanceRoot, "packages/habitat-cli.tgz")}`,
+        "--no-interactive",
+      ],
+      { cwd: fixtureRoot, timeoutMs: 120_000 }
+    );
+    expect(initialized.exitCode, initialized.stderr || initialized.stdout).toBe(0);
+    const nxPath = path.join(fixtureRoot, "nx.json");
+    const hooksPath = path.join(fixtureRoot, ".codex/hooks.json");
+    const packagePath = path.join(fixtureRoot, "package.json");
+    const firstNx = await readFile(nxPath, "utf8");
+    const firstHooks = await readFile(hooksPath, "utf8");
+    const firstPackage = await readFile(packagePath, "utf8");
+    expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat/cli/nx-plugin"] });
+    expect(JSON.parse(firstPackage)).toMatchObject({
+      trustedDependencies: ["@getgrit/cli"],
+    });
+    const grit = await run(path.join(consumerRoot, "node_modules/.bin/grit"), ["--version"], {
+      cwd: fixtureRoot,
+      timeoutMs: 120_000,
+    });
+    expect(grit.exitCode, grit.stderr || grit.stdout).toBe(0);
+    expect(grit.stdout).toMatch(/^grit \d+\.\d+\.\d+/u);
+    const gritManifest = JSON.parse(
+      await readFile(path.join(consumerRoot, "node_modules/@getgrit/cli/package.json"), "utf8")
+    ) as { readonly version?: unknown };
+    expect(gritManifest.version).toBe("0.1.0-alpha.1743007075");
+    const initializedHooks = JSON.parse(firstHooks) as {
+      readonly hooks?: {
+        readonly Stop?: readonly {
+          readonly _habitat?: { readonly identity?: string; readonly revision?: number };
+          readonly hooks?: readonly { readonly command?: string }[];
+        }[];
+      };
+    };
+    const habitatGroups = (initializedHooks.hooks?.Stop ?? []).filter(
+      (group) => group._habitat?.identity === "@habitat/cli:agent-stop"
+    );
+    expect(habitatGroups).toHaveLength(1);
+    expect(habitatGroups[0]).toMatchObject({
+      _habitat: { identity: "@habitat/cli:agent-stop", revision: 1 },
+      hooks: [{ command: INSTALLED_HABITAT_HOOK_COMMAND }],
+    });
+    expect(firstHooks).not.toContain(PREDECESSOR_HABITAT_HOOK_COMMAND);
+
+    const hookCommand = habitatGroups[0]?.hooks?.[0]?.command;
+    expect(hookCommand).toBe(INSTALLED_HABITAT_HOOK_COMMAND);
+    const hookResult = await run("bash", ["-lc", hookCommand ?? ""], {
+      cwd: path.join(fixtureRoot, "packages/example"),
+      env: { CLAUDE_PROJECT_DIR: "", CODEX_WORKSPACE_ROOT: "" },
+      timeoutMs: 120_000,
+    });
+    expect(hookResult, hookResult.stderr || hookResult.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+      stdout: "",
+    });
+
+    const repeated = await run(nx, ["generate", "@habitat/cli:init", "--no-interactive"], {
+      cwd: fixtureRoot,
+      timeoutMs: 60_000,
+    });
+    expect(repeated, repeated.stderr || repeated.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(await readFile(nxPath, "utf8")).toBe(firstNx);
+    expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
+    expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
+
     const projected = await run(nx, ["show", "project", "@fixture/package", "--json"], {
       cwd: fixtureRoot,
       timeoutMs: 60_000,
@@ -279,6 +356,32 @@ describe("installed Habitat package", () => {
     expect(checked.stdout).toContain(
       "Successfully ran target habitat:application:installed-package:source_shape"
     );
+
+    const removed = await run(nx, ["generate", "@habitat/cli:remove-hook", "--no-interactive"], {
+      cwd: fixtureRoot,
+      timeoutMs: 60_000,
+    });
+    expect(removed, removed.stderr || removed.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(JSON.parse(await readFile(nxPath, "utf8"))).toMatchObject({
+      plugins: ["@habitat/cli/nx-plugin"],
+    });
+    const removedHooks = await readFile(hooksPath, "utf8");
+    expect(removedHooks).not.toContain("@habitat/cli:agent-stop");
+    expect(removedHooks).toContain("echo preserved");
+
+    const repeatedRemoval = await run(
+      nx,
+      ["generate", "@habitat/cli:remove-hook", "--no-interactive"],
+      { cwd: fixtureRoot, timeoutMs: 60_000 }
+    );
+    expect(repeatedRemoval, repeatedRemoval.stderr || repeatedRemoval.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(await readFile(hooksPath, "utf8")).toBe(removedHooks);
   });
 });
 
@@ -374,7 +477,36 @@ async function createWorkspaceFixture(): Promise<void> {
   const files: Readonly<Record<string, string>> = {
     ".habitat/blueprints/package/blueprint.toml": blueprintToml(),
     ".habitat/blueprints/package/source_shape.structure.toml": structureToml(),
-    "nx.json": `${JSON.stringify({ plugins: ["@habitat/cli/nx-plugin"] }, null, 2)}\n`,
+    ".codex/hooks.json": `${JSON.stringify(
+      {
+        hooks: {
+          Stop: [
+            {
+              hooks: [
+                {
+                  type: "command",
+                  command: "echo preserved",
+                  statusMessage: "Consumer-owned Stop hook",
+                },
+              ],
+            },
+            {
+              hooks: [
+                {
+                  type: "command",
+                  command: PREDECESSOR_HABITAT_HOOK_COMMAND,
+                  timeout: 120,
+                  statusMessage: "Checking Habitat structure laws",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      null,
+      2
+    )}\n`,
+    "nx.json": `${JSON.stringify({}, null, 2)}\n`,
     "packages/example/habitat.toml": instanceToml(),
     "packages/example/package.json": `${JSON.stringify(
       { name: "@fixture/package", private: true, version: "0.0.0" },
@@ -416,7 +548,11 @@ async function removeOwnedFixture(root: string): Promise<void> {
 async function run(
   executable: string,
   args: readonly string[],
-  options: { readonly cwd?: string; readonly timeoutMs?: number } = {}
+  options: {
+    readonly cwd?: string;
+    readonly env?: NodeJS.ProcessEnv;
+    readonly timeoutMs?: number;
+  } = {}
 ): Promise<CommandResult> {
   const runtimeRoot = path.join(acceptanceRoot, "runtime");
   const env: NodeJS.ProcessEnv = {
@@ -430,6 +566,7 @@ async function run(
     XDG_CACHE_HOME: path.join(runtimeRoot, "cache"),
     XDG_CONFIG_HOME: path.join(runtimeRoot, "config"),
     XDG_DATA_HOME: path.join(runtimeRoot, "data"),
+    ...options.env,
   };
   delete env.FORCE_COLOR;
 

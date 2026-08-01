@@ -39,6 +39,8 @@
 - `application.ts` binds that client into one Oclif invocation.
 - `nx-plugin.ts` supplies the same construction seam to the package-less Nx
   projection and exports its native `createNodes` face.
+- `generators.json` exposes native Nx initialization and named-hook removal;
+  their app binding fixes the package-owned plugin, hook, and Grit identities.
 - `bin/run.js` activates compiled Oclif output; `src/index.ts` is the source
   development entrypoint.
 
@@ -46,6 +48,7 @@
 
 - Executable: `habitat`.
 - Nx plugin: `@habitat/cli/nx-plugin`.
+- Nx generators: `@habitat/cli:init` and `@habitat/cli:remove-hook`.
 - No root library export is admitted.
 
 ## Routing

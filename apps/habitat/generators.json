@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "generators": {
+    "init": {
+      "factory": "./dist/generators/init.cjs",
+      "schema": "./generators.schema.json",
+      "description": "Initialize the installed Habitat package in one Nx consumer."
+    },
+    "remove-hook": {
+      "factory": "./dist/generators/remove-hook.cjs",
+      "schema": "./generators.schema.json",
+      "description": "Remove Habitat's named Codex hook contribution."
+    }
+  }
+}

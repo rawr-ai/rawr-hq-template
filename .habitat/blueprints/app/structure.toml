@@ -16,5 +16,7 @@ required = [
 allowed = [
   "AGENTS.md",
   "bin",
+  "generators.json",
+  "generators.schema.json",
   "test",
 ]
