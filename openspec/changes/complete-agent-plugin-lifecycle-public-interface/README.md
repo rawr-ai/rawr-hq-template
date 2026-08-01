@@ -5584,6 +5584,21 @@ passed on the exact implementation and record candidates before Graphite
 landed them. Registry publication, registry-installed consumer proof, and
 bootstrap cutover remain open under tasks 5.7e22e and 5.7e22f.
 
+### Habitat Release Transport Decision
+
+Nx owns the Habitat release lifecycle inside this workspace: it selects the
+fixed package groups, runs their owned gates, and invokes their ordinary npm
+publishers. npm carries those versioned packages across repository boundaries,
+and a consuming Nx workspace activates the released plugin through `nx add`.
+Neither tool is replaced or wrapped by a Habitat-specific distributor.
+
+The first Template release therefore remains one conventional Oclif and Nx
+package set requiring installed Bun. It does not add a separately compiled
+native executable. Such an artifact would be another distribution form, not
+the missing transport for Nx consumers, and can be evaluated later only after
+proving the same Oclif command discovery and Nx plugin behavior without
+creating a second Habitat identity.
+
 ## Settlement Oracles
 
 The final product must prove:

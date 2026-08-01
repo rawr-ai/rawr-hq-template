@@ -428,8 +428,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   dependencies. Select a registry-published Oclif application whose fixed Nx
   Release package group requires installed Bun. Current direct `bun:sqlite` use
   excludes Oclif's Node-bearing standalone archives from this release. Do not
-  whole-application Bun-compile Oclif; Bun 1.4 native compilation remains
-  appropriate for the separate pinned Habitat CLI.
+  whole-application Bun-compile either Oclif app in this release. A future
+  native Habitat artifact is a separate distribution evaluation, not a
+  prerequisite or second CLI identity.
 - [x] 3.1a Record the current pre-deletion runtime dependency closure without
   making it publishable. Nx
   reports 22 workspace projects including `@rawr/cli`; source reachability
@@ -1974,11 +1975,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   the workspace-owned CLI.
 - [ ] 5.7e22e Publish the first Template-owned `@habitat/cli` and
   `@habitat/blueprints` releases from reviewed canonical `main`. Bind
-  package, policy, protocol, source provenance, and any native asset to one
-  compatible release set and publish the CLI before its policy pack. Build the
-  requested Bun 1.4 native asset where viable; if Bun 1.4 cannot preserve the
-  supported CLI behavior, record the concrete incompatibility and the
-  owner-correct update path rather than falling back silently. Prove an
+  package, policy, protocol, and source provenance to one compatible release
+  set and publish the CLI before its policy pack. Nx owns release orchestration;
+  npm is the ordinary cross-repository transport consumed through `nx add`.
+  Publish no second native executable in this release. A later Bun-native
+  evaluation may proceed only as another distribution form of the same CLI,
+  after proving Oclif command discovery and Nx plugin behavior. Prove an
   isolated installed consumer before publication.
 - [ ] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
   consumer. Delete the manual Nx rule chain, explicit CI Grit acquisition,
