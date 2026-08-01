@@ -1958,7 +1958,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   incompatible Habitat contribution, make no write on a converged repeat, and
   remove the contribution only through an explicit removal operation. Prove
   those transitions in an isolated consumer without repository-local wiring.
-- [ ] 5.7e22d Construct and admit the first data-only
+- [x] 5.7e22d Construct and admit the first data-only
   `@habitat/blueprints` package before publication. Freeze its package
   metadata, `habitat-pack.json` protocol, exports, and exclusion proof, but do
   not precommit its admitted set. Include `package@1` only after exact
