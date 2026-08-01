@@ -9,6 +9,7 @@ export const module = service.catalog.use(async ({ context, next }) =>
       ruleEvaluation: context.deps.ruleEvaluation,
       sourceInventory: context.deps.sourceInventory,
       workspaceRoot: context.scope.workspaceRoot,
+      policyPack: context.config.policyPack,
     },
   })
 );

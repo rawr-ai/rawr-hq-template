@@ -15,6 +15,13 @@ const unusedSourceInventory: SourceInventoryResource<never> = {
 
 type Fixture = {
   readonly files: Readonly<Record<string, string>>;
+  readonly policyPack?: {
+    readonly expectedName?: string;
+    readonly packageJsonPath?: string;
+    readonly packageJson?: string | null;
+    readonly manifestPath?: string;
+    readonly manifest?: string | null;
+  };
   readonly directories?: readonly string[];
   readonly symlinks?: readonly {
     readonly path: string;
@@ -29,6 +36,126 @@ type Fixture = {
 };
 
 describe("Habitat catalog resolve", () => {
+  test("admits an exact empty selected policy pack", async () => {
+    const result = await resolveFixture({ files: {} });
+
+    expect(result).toEqual({
+      _tag: "Resolved",
+      catalog: {
+        schemaVersion: 3,
+        policyPack: {
+          name: POLICY_PACK_NAME,
+          version: "1.2.3",
+          protocolVersion: 1,
+          blueprints: [],
+        },
+        blueprints: [],
+        instances: [],
+        applications: [],
+        compatibility: { schemaVersion: 2, ownerRoots: {}, rules: [] },
+      },
+    });
+  });
+
+  test("rejects malformed selected policy-pack JSON", async () => {
+    const result = await resolveFixture({ files: {}, policyPack: { manifest: "{" } });
+
+    expect(result).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-json-invalid",
+          path: `${POLICY_PACK_NAME}/habitat-pack.json`,
+        },
+      ],
+    });
+  });
+
+  test("rejects missing selected policy-pack files", async () => {
+    for (const policyPack of [{ packageJson: null }, { manifest: null }] as const) {
+      const result = await resolveFixture({ files: {}, policyPack });
+      expect(result).toMatchObject({
+        _tag: "Rejected",
+        issues: [{ code: "authority-path-missing" }],
+      });
+    }
+  });
+
+  test("rejects relative and nonsibling selected policy-pack locators before reading", async () => {
+    for (const [policyPack, issueCount] of [
+      [
+        {
+          packageJsonPath: "relative/package.json",
+          manifestPath: "relative/habitat-pack.json",
+        },
+        2,
+      ],
+      [{ manifestPath: "/other/habitat-pack.json" }, 1],
+    ] as const) {
+      const result = await resolveFixture({ files: {}, policyPack });
+      expect(result._tag).toBe("Rejected");
+      if (result._tag !== "Rejected") throw new Error("Expected rejected policy-pack locators.");
+      expect(result.issues).toHaveLength(issueCount);
+      expect(result.issues.every(({ code }) => code === "authority-path-invalid")).toBe(true);
+    }
+  });
+
+  test("rejects wrong protocol and additional manifest fields", async () => {
+    for (const manifest of [
+      { protocolVersion: 2, blueprints: [] },
+      { protocolVersion: 1, blueprints: [], unexpected: true },
+    ]) {
+      const result = await resolveFixture({
+        files: {},
+        policyPack: { manifest: JSON.stringify(manifest) },
+      });
+      expect(result).toMatchObject({
+        _tag: "Rejected",
+        issues: [
+          {
+            code: "authority-schema-invalid",
+            path: `${POLICY_PACK_NAME}/habitat-pack.json`,
+          },
+        ],
+      });
+    }
+  });
+
+  test("rejects a selected package-name mismatch", async () => {
+    const result = await resolveFixture({
+      files: {},
+      policyPack: { expectedName: "@fixture/other-blueprints" },
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Rejected",
+      issues: [{ code: "authority-package-name-mismatch" }],
+    });
+  });
+
+  test("rejects nonempty policy-pack membership explicitly", async () => {
+    const result = await resolveFixture({
+      files: {},
+      policyPack: {
+        manifest: JSON.stringify({
+          protocolVersion: 1,
+          blueprints: [{ id: "package", version: 1, path: "blueprints/package/blueprint.toml" }],
+        }),
+      },
+    });
+
+    expect(result).toEqual({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-policy-pack-members-unsupported",
+          path: `${POLICY_PACK_NAME}/habitat-pack.json`,
+          message: "Policy-pack blueprint members are not admitted by this service version.",
+        },
+      ],
+    });
+  });
+
   test("self-enumerates exact authority, excludes generated roots, and reads each source once", async () => {
     const reads = new Map<string, number>();
     const fixture = packageInstanceFixture();
@@ -56,8 +183,8 @@ describe("Habitat catalog resolve", () => {
     });
 
     expect(result._tag).toBe("Resolved");
-    expect(reads.size).toBe(2);
-    expect([...reads.values()]).toEqual([1, 1]);
+    expect(reads.size).toBe(4);
+    expect([...reads.values()]).toEqual([1, 1, 1, 1]);
     expect(
       [...reads.keys()]
         .map((candidate) => toRepositoryPath(candidate, "/"))
@@ -69,7 +196,13 @@ describe("Habitat catalog resolve", () => {
               ? "packages/example/habitat.toml"
               : candidate
         )
-    ).toEqual([".habitat/blueprints/package/blueprint.toml", "packages/example/habitat.toml"]);
+        .sort(textOrder)
+    ).toEqual([
+      ".habitat/blueprints/package/blueprint.toml",
+      ".test-policy-pack/habitat-pack.json",
+      ".test-policy-pack/package.json",
+      "packages/example/habitat.toml",
+    ]);
   });
 
   test("rejects a blueprint whose id disagrees with its authority directory", async () => {
@@ -351,7 +484,9 @@ describe("Habitat catalog resolve", () => {
       _tag: "Rejected",
       issues: [expect.objectContaining({ code: "authority-path-escape" })],
     });
-    expect(reads.size).toBe(0);
+    expect(
+      [...reads.keys()].filter((candidate) => !candidate.startsWith(POLICY_PACK_ROOT))
+    ).toEqual([]);
   });
 
   test("rejects referenced repository paths that escape through symbolic links", async () => {
@@ -563,7 +698,7 @@ describe("Habitat catalog resolve", () => {
         compatibility: { schemaVersion: 2, ownerRoots: {}, rules: [] },
       },
     });
-    expect(reads).toEqual([]);
+    expect(reads.filter((candidate) => !candidate.includes(`/${POLICY_PACK_ROOT}/`))).toEqual([]);
   });
 });
 
@@ -580,10 +715,21 @@ async function withFixture<T>(fixture: Fixture, use: (client: Client) => Promise
         const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
           prefix: "habitat-catalog-test-",
         });
+        const fixtureFiles: Record<string, string> = { ...fixture.files };
+        const packageJson = fixture.policyPack?.packageJson;
+        const manifest = fixture.policyPack?.manifest;
+        if (packageJson !== null) {
+          fixtureFiles[`${POLICY_PACK_ROOT}/package.json`] =
+            packageJson ?? DEFAULT_POLICY_PACK_PACKAGE_JSON;
+        }
+        if (manifest !== null) {
+          fixtureFiles[`${POLICY_PACK_ROOT}/habitat-pack.json`] =
+            manifest ?? DEFAULT_POLICY_PACK_MANIFEST;
+        }
         for (const directory of [...(fixture.directories ?? [])].sort(textOrder)) {
           yield* fileSystem.makeDirectory(path.join(workspaceRoot, directory), { recursive: true });
         }
-        for (const [relativePath, contents] of Object.entries(fixture.files).sort(
+        for (const [relativePath, contents] of Object.entries(fixtureFiles).sort(
           ([left], [right]) => textOrder(left, right)
         )) {
           const absolutePath = path.join(workspaceRoot, relativePath);
@@ -622,13 +768,32 @@ async function withFixture<T>(fixture: Fixture, use: (client: Client) => Promise
             sourceInventory: unusedSourceInventory,
           },
           scope: { workspaceRoot },
-          config: {},
+          config: {
+            policyPack: {
+              name: fixture.policyPack?.expectedName ?? POLICY_PACK_NAME,
+              packageJsonPath:
+                fixture.policyPack?.packageJsonPath ??
+                path.join(workspaceRoot, POLICY_PACK_ROOT, "package.json"),
+              manifestPath:
+                fixture.policyPack?.manifestPath ??
+                path.join(workspaceRoot, POLICY_PACK_ROOT, "habitat-pack.json"),
+            },
+          },
         });
         return yield* Effect.promise(() => use(client));
       })
     ).pipe(Effect.provide(NodeServices.layer))
   );
 }
+
+const POLICY_PACK_NAME = "@fixture/habitat-blueprints";
+const POLICY_PACK_ROOT = ".test-policy-pack";
+const DEFAULT_POLICY_PACK_PACKAGE_JSON = JSON.stringify({
+  name: POLICY_PACK_NAME,
+  version: "1.2.3",
+  private: false,
+});
+const DEFAULT_POLICY_PACK_MANIFEST = JSON.stringify({ protocolVersion: 1, blueprints: [] });
 
 function packageInstanceFixture(options: { readonly grit?: boolean } = {}): Fixture {
   const asset = options.grit ? "pattern.md" : "structure.toml";

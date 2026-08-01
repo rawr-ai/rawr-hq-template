@@ -1,5 +1,14 @@
 import { spawn } from "node:child_process";
-import { lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import {
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,6 +37,17 @@ const PREDECESSOR_HABITAT_HOOK_COMMAND =
 const temporaryParent = await realpath(tmpdir());
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const packedProjects: readonly PackedProject[] = [
+  {
+    exports: {
+      "./blueprints/*": "./blueprints/*",
+      "./habitat-pack.json": "./habitat-pack.json",
+      "./package.json": "./package.json",
+    },
+    filename: "habitat-blueprints.tgz",
+    name: "@habitat/blueprints",
+    root: "packages/habitat-blueprints",
+    version: "0.2.0",
+  },
   {
     exports: {
       ".": { default: "./dist/index.js", types: "./dist/index.d.ts" },
@@ -134,13 +154,24 @@ describe("installed Habitat package", () => {
       const manifestText = await readFile(path.join(packageRoot, "package.json"), "utf8");
       expect(manifestText).not.toContain("workspace:");
       const manifest = JSON.parse(manifestText) as {
+        readonly dependencies?: Readonly<Record<string, string>>;
         readonly exports?: unknown;
         readonly name?: unknown;
+        readonly peerDependencies?: Readonly<Record<string, string>>;
         readonly version?: unknown;
       };
       expect(manifest).toMatchObject({ name: project.name, version: project.version });
       expect(manifest.exports).toEqual(project.exports);
+      if (project.name === "@habitat/cli") {
+        expect(manifest.dependencies?.["@habitat/blueprints"]).toBeUndefined();
+        expect(manifest.peerDependencies?.["@habitat/blueprints"]).toBe("0.2.0");
+      }
     }
+
+    const policyPackFiles = await listFiles(
+      path.join(consumerRoot, "node_modules/@habitat/blueprints")
+    );
+    expect(policyPackFiles).toEqual(["LICENSE", "README.md", "habitat-pack.json", "package.json"]);
 
     const typecheck = await run("node", [
       path.join(workspaceRoot, "node_modules/typescript/bin/tsc"),
@@ -227,6 +258,12 @@ describe("installed Habitat package", () => {
     expect(JSON.parse(resolved.stdout)).toMatchObject({
       _tag: "Resolved",
       catalog: {
+        policyPack: {
+          name: "@habitat/blueprints",
+          version: "0.2.0",
+          protocolVersion: 1,
+          blueprints: [],
+        },
         schemaVersion: 3,
         instances: [{ id: "installed-package", ownerProject: "@fixture/package" }],
       },
@@ -246,6 +283,30 @@ describe("installed Habitat package", () => {
       ],
       ok: true,
     });
+  });
+
+  it("rejects a malformed selected policy pack without fallback", async () => {
+    const manifestPath = path.join(
+      consumerRoot,
+      "node_modules/@habitat/blueprints/habitat-pack.json"
+    );
+    const original = await readFile(manifestPath, "utf8");
+    try {
+      await writeFile(
+        manifestPath,
+        `${JSON.stringify({ protocolVersion: 1, blueprints: [], unexpected: true }, null, 2)}\n`
+      );
+      const executable = path.join(consumerRoot, "node_modules/.bin/habitat");
+      const rejected = await run(executable, ["resolve"], { cwd: fixtureRoot });
+      expect(rejected.exitCode).toBe(1);
+      expect(rejected.stderr).toBe("");
+      expect(JSON.parse(rejected.stdout)).toMatchObject({
+        _tag: "Rejected",
+        issues: [{ path: "@habitat/blueprints/habitat-pack.json" }],
+      });
+    } finally {
+      await writeFile(manifestPath, original);
+    }
   });
 
   it("projects and executes Habitat targets through an installed Nx host", async () => {
@@ -392,7 +453,9 @@ async function assertReleaseGroupInventory(): Promise<void> {
     };
   };
   const groups = nx.release?.groups;
-  const expectedProjects = ["habitat-cli", "typebox-adapter"]
+  expect(groups?.["habitat-cli"]?.projects).not.toContain("@habitat/blueprints");
+  expect(groups?.["habitat-blueprints"]?.projects).toEqual(["@habitat/blueprints"]);
+  const expectedProjects = ["habitat-cli", "habitat-blueprints", "typebox-adapter"]
     .flatMap((group) => groups?.[group]?.projects ?? [])
     .sort();
   expect(packedProjects.map(({ name }) => name).sort()).toEqual(expectedProjects);
@@ -630,7 +693,15 @@ async function useClient(client: Client): Promise<void> {
   const resolved = await client.catalog.resolve({});
   if (resolved._tag === "Resolved") {
     const schemaVersion: 3 = resolved.catalog.schemaVersion;
+    const policyPackName: string = resolved.catalog.policyPack.name;
+    const policyPackVersion: string = resolved.catalog.policyPack.version;
+    const policyPackProtocolVersion: 1 = resolved.catalog.policyPack.protocolVersion;
+    const blueprintCount: number = resolved.catalog.policyPack.blueprints.length;
     void schemaVersion;
+    void policyPackName;
+    void policyPackVersion;
+    void policyPackProtocolVersion;
+    void blueprintCount;
   }
 
   const checked = await client.catalog.check({});
@@ -651,7 +722,7 @@ const resolved = [];
 for (const entry of publicEntries) {
   const url = import.meta.resolve(entry);
   resolved.push({ entry, url });
-  if (entry === "@habitat/cli/package.json") {
+  if (entry.endsWith(".json")) {
     await Bun.file(new URL(url)).json();
   } else {
     await import(entry);
@@ -664,6 +735,8 @@ console.log(JSON.stringify(resolved));
 
 function publicEntries(): readonly string[] {
   return [
+    "@habitat/blueprints/habitat-pack.json",
+    "@habitat/blueprints/package.json",
     "@rawr/typebox-adapter",
     "@habitat/resource-rule-evaluation",
     "@habitat/resource-rule-evaluation/providers/grit-effect-platform-node",
@@ -674,6 +747,18 @@ function publicEntries(): readonly string[] {
     "@habitat/cli/nx-plugin",
     "@habitat/cli/package.json",
   ];
+}
+
+async function listFiles(root: string, relativeRoot = ""): Promise<readonly string[]> {
+  const directory = path.join(root, relativeRoot);
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const relativePath = relativeRoot === "" ? entry.name : path.join(relativeRoot, entry.name);
+    if (entry.isDirectory()) files.push(...(await listFiles(root, relativePath)));
+    else if (entry.isFile()) files.push(relativePath.split(path.sep).join("/"));
+  }
+  return files.sort();
 }
 
 function inventorySource(): string {

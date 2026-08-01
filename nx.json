@@ -31,7 +31,6 @@
       "habitat-cli": {
         "projects": [
           "@habitat/cli",
-          "@habitat/blueprints",
           "@habitat/plugin-cli",
           "@habitat/resource-rule-evaluation",
           "@habitat/resource-source-inventory",
@@ -40,6 +39,13 @@
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "habitat-cli-v{version}"
+        }
+      },
+      "habitat-blueprints": {
+        "projects": ["@habitat/blueprints"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "habitat-blueprints-v{version}"
         }
       },
       "typebox-adapter": {

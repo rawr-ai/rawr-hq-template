@@ -32,3 +32,10 @@ instances, and final wiring.
 The package contains no executable code and provides no installer. npm package
 metadata remains the sole package-name and package-version authority; the pack
 protocol does not duplicate it.
+
+The Habitat CLI names this package as an exact required peer. Nx owns separate
+release groups for the executable Habitat suite and this data pack. Installed
+package acceptance proves the exact pair before publication; release operations
+then select the executable group first and this pack second. Consumer
+installation selects both exact versions, and the installed CLI admits the
+selected pack.

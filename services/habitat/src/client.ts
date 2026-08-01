@@ -12,7 +12,7 @@ export type Deps = Context["deps"];
 /** Stable absolute workspace binding fixed at client construction. */
 export type Scope = Context["scope"];
 
-/** Empty externally supplied configuration lane. */
+/** App-selected policy-pack locators admitted by the Habitat service. */
 export type Config = Context["config"];
 
 /** Public construction boundary for one local Habitat client. */

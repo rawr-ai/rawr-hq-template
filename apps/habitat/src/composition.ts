@@ -10,6 +10,7 @@ import { Validator } from "typebox/schema";
 
 const require = createRequire(import.meta.url);
 const gritExecutable = require.resolve("@getgrit/cli/run-grit.js");
+const HABITAT_BLUEPRINT_PACK = "@habitat/blueprints";
 const CommandTimeoutSchema = Type.Integer({ minimum: 1, maximum: 600_000 });
 const commandTimeoutValidator = new Validator({}, CommandTimeoutSchema);
 const commandTimeoutMs = decodeCommandTimeout(process.env.HABITAT_COMMAND_TIMEOUT_MS);
@@ -37,11 +38,20 @@ const deps = Effect.runPromise(
  */
 export async function createHabitatClientForWorkspace(workspaceRoot: string): Promise<Client> {
   const ready = await deps;
+  const resolvedWorkspaceRoot = ready.path.resolve(workspaceRoot);
+  const workspaceRequire = createRequire(ready.path.join(resolvedWorkspaceRoot, "package.json"));
+  const packageJsonPath = workspaceRequire.resolve(`${HABITAT_BLUEPRINT_PACK}/package.json`);
 
   return createClient({
     deps: ready,
-    scope: { workspaceRoot: ready.path.resolve(workspaceRoot) },
-    config: {},
+    scope: { workspaceRoot: resolvedWorkspaceRoot },
+    config: {
+      policyPack: {
+        name: HABITAT_BLUEPRINT_PACK,
+        packageJsonPath,
+        manifestPath: ready.path.join(ready.path.dirname(packageJsonPath), "habitat-pack.json"),
+      },
+    },
   });
 }
 
