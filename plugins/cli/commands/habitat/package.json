@@ -1,6 +1,6 @@
 {
   "name": "@habitat/plugin-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "description": "Native Oclif projections for the Habitat catalog service",
   "license": "MIT",
@@ -35,10 +35,7 @@
   },
   "oclif": {
     "commands": "./dist/commands",
-    "topicSeparator": " ",
-    "typescript": {
-      "commands": "./src/commands"
-    }
+    "topicSeparator": " "
   },
   "nx": {
     "tags": [

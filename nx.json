@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "release": {
+    "version": {
+      "updateDependents": "never"
+    },
     "groups": {
       "rawr-cli": {
         "projects": [
@@ -21,10 +24,29 @@
           "@rawr/resource-content-workspace",
           "@rawr/resource-native-agent-provider",
           "@rawr/resource-versioned-content",
-          "@rawr/session-intelligence",
-          "@rawr/typebox-adapter"
+          "@rawr/session-intelligence"
         ],
         "projectsRelationship": "fixed"
+      },
+      "habitat-cli": {
+        "projects": [
+          "@habitat/cli",
+          "@habitat/plugin-cli",
+          "@habitat/resource-rule-evaluation",
+          "@habitat/resource-source-inventory",
+          "@habitat/service"
+        ],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "habitat-cli-v{version}"
+        }
+      },
+      "typebox-adapter": {
+        "projects": ["@rawr/typebox-adapter"],
+        "projectsRelationship": "fixed",
+        "releaseTag": {
+          "pattern": "typebox-adapter-v{version}"
+        }
       }
     }
   },
@@ -156,20 +178,113 @@
       ],
       "outputs": ["{projectRoot}/oclif.manifest.json"]
     },
-    "nx-release-publish": {
-      "dependsOn": [
-        "build",
-        "manifest",
-        {
-          "projects": ["@rawr/cli"],
-          "target": "acceptance:oclif-installed-package"
+    "nx-release-publish": [
+      {
+        "dependsOn": ["..."]
+      },
+      {
+        "filter": {
+          "projects": [
+            "@habitat/cli",
+            "@habitat/plugin-cli",
+            "@habitat/resource-rule-evaluation",
+            "@habitat/resource-source-inventory",
+            "@habitat/service",
+            "@rawr/agent-plugin-lifecycle",
+            "@rawr/chatgpt-corpus",
+            "@rawr/cli",
+            "@rawr/core",
+            "@rawr/dev",
+            "@rawr/dev-node",
+            "@rawr/hq-ops",
+            "@rawr/hq-sdk",
+            "@rawr/hyperresearch-codex",
+            "@rawr/plugin-chatgpt-corpus",
+            "@rawr/plugin-devops",
+            "@rawr/plugin-hyperresearch",
+            "@rawr/plugin-session-tools",
+            "@rawr/resource-agent-plugin-package-output",
+            "@rawr/resource-content-workspace",
+            "@rawr/resource-native-agent-provider",
+            "@rawr/resource-versioned-content",
+            "@rawr/session-intelligence",
+            "@rawr/typebox-adapter"
+          ]
         },
-        {
-          "projects": ["@rawr/cli"],
-          "target": "acceptance:oclif-native-plugins"
-        }
-      ]
-    },
+        "dependsOn": ["...", "build"]
+      },
+      {
+        "filter": {
+          "projects": [
+            "@rawr/agent-plugin-lifecycle",
+            "@rawr/chatgpt-corpus",
+            "@rawr/cli",
+            "@rawr/core",
+            "@rawr/dev",
+            "@rawr/dev-node",
+            "@rawr/hq-ops",
+            "@rawr/hq-sdk",
+            "@rawr/hyperresearch-codex",
+            "@rawr/plugin-chatgpt-corpus",
+            "@rawr/plugin-devops",
+            "@rawr/plugin-hyperresearch",
+            "@rawr/plugin-session-tools",
+            "@rawr/resource-agent-plugin-package-output",
+            "@rawr/resource-content-workspace",
+            "@rawr/resource-native-agent-provider",
+            "@rawr/resource-versioned-content",
+            "@rawr/session-intelligence"
+          ]
+        },
+        "dependsOn": [
+          "...",
+          {
+            "projects": ["@rawr/cli"],
+            "target": "acceptance:oclif-installed-package"
+          },
+          {
+            "projects": ["@rawr/cli"],
+            "target": "acceptance:oclif-native-plugins"
+          }
+        ]
+      },
+      {
+        "filter": {
+          "projects": [
+            "@rawr/cli",
+            "@rawr/plugin-chatgpt-corpus",
+            "@rawr/plugin-devops",
+            "@rawr/plugin-hyperresearch",
+            "@rawr/plugin-session-tools"
+          ]
+        },
+        "dependsOn": ["...", "manifest"]
+      },
+      {
+        "filter": {
+          "projects": [
+            "@habitat/cli",
+            "@habitat/plugin-cli",
+            "@habitat/resource-rule-evaluation",
+            "@habitat/resource-source-inventory",
+            "@habitat/service"
+          ]
+        },
+        "dependsOn": [
+          "...",
+          {
+            "projects": ["@habitat/cli"],
+            "target": "acceptance:oclif-installed-package"
+          }
+        ]
+      },
+      {
+        "filter": {
+          "projects": ["@habitat/cli", "@habitat/plugin-cli"]
+        },
+        "dependsOn": ["...", "manifest"]
+      }
+    ],
     "typecheck": {
       "cache": true,
       "dependsOn": ["check:test", "check:tools", "^build"],

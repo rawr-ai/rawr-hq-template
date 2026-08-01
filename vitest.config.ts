@@ -61,7 +61,24 @@ export default defineConfig({
       {
         extends: true,
         root: r("apps/habitat"),
-        test: { name: "habitat-cli", environment: "node", include: [...includes] },
+        test: {
+          name: "habitat-cli",
+          environment: "node",
+          exclude: ["test/installed-package.test.ts"],
+          include: [...includes],
+        },
+      },
+      {
+        extends: true,
+        root: r("apps/habitat"),
+        test: {
+          name: "habitat-cli-installed-package-acceptance",
+          environment: "node",
+          fileParallelism: false,
+          hookTimeout: 180_000,
+          include: ["test/installed-package.test.ts"],
+          testTimeout: 180_000,
+        },
       },
       {
         extends: true,
