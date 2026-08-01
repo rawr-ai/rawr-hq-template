@@ -432,13 +432,211 @@ const ResolvedRuleApplicationSchema = Type.Object(
   { additionalProperties: false, description: "One resolved instance/rule application." }
 );
 
+const CompatibilityPlacementSchema = Type.Object(
+  {
+    niche: Type.String({
+      minLength: 1,
+      description: "Frozen version-two niche classification.",
+    }),
+    blueprint: Type.String({
+      minLength: 1,
+      description: "Frozen version-two blueprint classification.",
+    }),
+    category: Type.Union(
+      [
+        Type.Literal("boundary"),
+        Type.Literal("contract"),
+        Type.Literal("execution"),
+        Type.Literal("output"),
+        Type.Literal("policy"),
+        Type.Literal("quality"),
+        Type.Literal("structure"),
+      ],
+      { description: "Frozen version-two rule category." }
+    ),
+  },
+  { additionalProperties: false, description: "Legacy rule classification metadata." }
+);
+
+const CompatibilityPathCoverageSchema = Type.Object(
+  {
+    kind: Type.Literal("exact-path", {
+      description: "Legacy exact repository-path subject declaration.",
+    }),
+    patterns: Type.Array(
+      Type.String({
+        minLength: 1,
+        maxLength: 4_096,
+        description: "Repository-relative path or glob admitted for checking and caching.",
+      }),
+      {
+        minItems: 1,
+        uniqueItems: true,
+        description: "Unique repository path patterns covered by the rule.",
+      }
+    ),
+  },
+  { additionalProperties: false, description: "Legacy exact-path coverage entry." }
+);
+
+const CompatibilitySupportFilesSchema = Type.Object(
+  {
+    baseline: RelativePathSchema,
+  },
+  { additionalProperties: false, description: "Legacy rule support-file locators." }
+);
+
+const CompatibilityGritRunnerSourceSchema = Type.Object(
+  {
+    name: Type.Literal("grit", { description: "Grit runner identity." }),
+    files: Type.Object(
+      {
+        pattern: RelativePathSchema,
+      },
+      { additionalProperties: false, description: "Grit rule asset locator." }
+    ),
+    patternName: PatternNameSchema,
+    acquisition: Type.Object(
+      {
+        kind: Type.Literal("check", { description: "Supported compatibility operation." }),
+        roots: Type.Array(RelativePathSchema, {
+          minItems: 1,
+          uniqueItems: true,
+          description: "Concrete repository roots supplied to Grit.",
+        }),
+      },
+      { additionalProperties: false, description: "Compatibility Grit acquisition roots." }
+    ),
+  },
+  { additionalProperties: false, description: "Supported legacy Grit runner declaration." }
+);
+
+const CompatibilityStructureRunnerSourceSchema = Type.Object(
+  {
+    name: Type.Literal("habitat", { description: "Native Habitat runner identity." }),
+    mode: Type.Literal("structure", { description: "Native structure evaluation mode." }),
+    files: Type.Object(
+      {
+        structure: RelativePathSchema,
+      },
+      { additionalProperties: false, description: "Structure rule asset locator." }
+    ),
+  },
+  { additionalProperties: false, description: "Supported legacy structure runner declaration." }
+);
+
+const CompatibilityRuleSourceCommon = {
+  schemaVersion: Type.Literal(2, { description: "Legacy rule schema version." }),
+  id: IdSchema,
+  title: Type.String({ minLength: 1, maxLength: 500, description: "Legacy rule title." }),
+  placement: CompatibilityPlacementSchema,
+  operation: Type.Object(
+    {
+      kind: Type.Literal("check", { description: "Only admitted compatibility operation." }),
+    },
+    { additionalProperties: false, description: "Legacy rule operation." }
+  ),
+  ownerProject: ProjectIdSchema,
+  lane: Type.Literal("enforced", { description: "Only admitted compatibility policy lane." }),
+  forbids: Type.String({
+    minLength: 1,
+    maxLength: 16_384,
+    description: "State excluded by the compatibility rule.",
+  }),
+  why: Type.String({
+    minLength: 1,
+    maxLength: 16_384,
+    description: "Reason the compatibility rule exists.",
+  }),
+  remediate: Type.String({
+    minLength: 1,
+    maxLength: 16_384,
+    description: "Operator remediation for one finding.",
+  }),
+  message: RuleMessageSchema,
+  pathCoverage: Type.Tuple([CompatibilityPathCoverageSchema], {
+    description: "Single exact-path cache boundary for the compatibility rule.",
+  }),
+  supportFiles: CompatibilitySupportFilesSchema,
+} as const;
+
+const CompatibilityGritRuleSourceSchema = Type.Object(
+  {
+    ...CompatibilityRuleSourceCommon,
+    hookCheck: Type.Literal(true, {
+      description: "The legacy hook executes this Grit check.",
+    }),
+    runner: CompatibilityGritRunnerSourceSchema,
+  },
+  { additionalProperties: false, description: "Supported legacy Grit rule source." }
+);
+
+const CompatibilityStructureRuleSourceSchema = Type.Object(
+  {
+    ...CompatibilityRuleSourceCommon,
+    runner: CompatibilityStructureRunnerSourceSchema,
+  },
+  { additionalProperties: false, description: "Supported legacy structure rule source." }
+);
+
+const ResolvedCompatibilityGritRunnerSchema = Type.Object(
+  {
+    name: Type.Literal("grit", { description: "Grit runner identity." }),
+    pattern: ResolvedRuleAssetSchema,
+    patternName: PatternNameSchema,
+    acquisition: Type.Object(
+      {
+        kind: Type.Literal("check", { description: "Resolved compatibility operation." }),
+        entries: Type.Array(
+          Type.Object(
+            {
+              kind: PathKindSchema,
+              path: RelativePathSchema,
+            },
+            { additionalProperties: false, description: "Resolved compatibility subject root." }
+          ),
+          {
+            minItems: 1,
+            description: "Concrete compatibility roots in declared order.",
+          }
+        ),
+      },
+      { additionalProperties: false, description: "Resolved compatibility Grit acquisition." }
+    ),
+  },
+  { additionalProperties: false, description: "Resolved compatibility Grit runner." }
+);
+
+const ResolvedCompatibilityStructureRunnerSchema = Type.Object(
+  {
+    name: Type.Literal("habitat", { description: "Native Habitat runner identity." }),
+    mode: Type.Literal("structure", { description: "Native structure evaluation mode." }),
+    structure: ResolvedRuleAssetSchema,
+  },
+  { additionalProperties: false, description: "Resolved compatibility structure runner." }
+);
+
 const CompatibilityRuleSchema = Type.Object(
   {
-    id: IdSchema,
+    ruleId: IdSchema,
     ownerProject: ProjectIdSchema,
     manifestPath: RelativePathSchema,
+    lane: Type.Literal("enforced", { description: "Compatibility rule policy lane." }),
+    message: RuleMessageSchema,
+    remediate: RuleRemediationSchema,
+    provenance: LocalAuthorityProvenanceSchema,
+    coveragePatterns: Type.Array(Type.String({ minLength: 1, maxLength: 4_096 }), {
+      minItems: 1,
+      uniqueItems: true,
+      description: "Repository path patterns that define compatibility subjects and cache inputs.",
+    }),
+    baseline: ResolvedRuleAssetSchema,
+    runner: Type.Union(
+      [ResolvedCompatibilityStructureRunnerSchema, ResolvedCompatibilityGritRunnerSchema],
+      { description: "Resolved compatibility runner and its concrete assets." }
+    ),
   },
-  { additionalProperties: false, description: "Inert version 2 rule identity summary." }
+  { additionalProperties: false, description: "One executable version 2 compatibility rule." }
 );
 
 /** Closed compatibility index source schema. */
@@ -454,15 +652,16 @@ export const CompatibilityIndexSchema = Type.Object(
   { additionalProperties: false, description: "Legacy version 2 registry index." }
 );
 
-/** Minimum TypeBox admission schema for an inert legacy rule manifest. */
-export const CompatibilityRuleSourceSchema = Type.Object(
-  {
-    schemaVersion: Type.Literal(2, { description: "Legacy rule schema version." }),
-    id: IdSchema,
-    ownerProject: ProjectIdSchema,
-  },
-  { additionalProperties: true, description: "Legacy rule source identity projected inertly." }
+/** Closed admission schema for the exact executable legacy rule subset. */
+export const CompatibilityRuleSourceSchema = Type.Union(
+  [CompatibilityGritRuleSourceSchema, CompatibilityStructureRuleSourceSchema],
+  { description: "Supported version 2 compatibility rule source." }
 );
+
+/** Closed empty baseline admitted during compatibility resolution. */
+export const CompatibilityBaselineSchema = Type.Tuple([], {
+  description: "Empty compatibility baseline; every observed finding remains live.",
+});
 
 const CompatibilityCatalogSchema = Type.Object(
   {
@@ -471,10 +670,10 @@ const CompatibilityCatalogSchema = Type.Object(
       description: "Validated legacy owner roots keyed by project identity.",
     }),
     rules: Type.Array(CompatibilityRuleSchema, {
-      description: "Stable inert legacy rule identity summaries.",
+      description: "Resolved executable compatibility rules in stable identity order.",
     }),
   },
-  { additionalProperties: false, description: "Inert version 2 compatibility facts." }
+  { additionalProperties: false, description: "Version 2 compatibility rule catalog." }
 );
 
 const ResolvedPolicyPackSchema = Type.Object(
@@ -565,8 +764,11 @@ export type HabitatInstanceManifest = Static<typeof HabitatInstanceManifestSchem
 /** One validated inert compatibility index. */
 export type CompatibilityIndex = Static<typeof CompatibilityIndexSchema>;
 
-/** One validated inert compatibility rule source identity. */
+/** One validated executable compatibility rule source. */
 export type CompatibilityRuleSource = Static<typeof CompatibilityRuleSourceSchema>;
+
+/** Empty admitted compatibility baseline. */
+export type CompatibilityBaseline = Static<typeof CompatibilityBaselineSchema>;
 
 /** Caller request for one catalog resolution. */
 export type ResolveCatalogInput = Static<typeof ResolveCatalogInputSchema>;

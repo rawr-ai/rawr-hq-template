@@ -98,6 +98,54 @@ const CheckSelectionIssueSchema = Type.Object(
   }
 );
 
+const ReportOwnerProjectSchema = Type.String({
+  minLength: 1,
+  maxLength: 250,
+  description: "Repository project that owns the checked rule.",
+});
+
+const ReportInstanceIdSchema = Type.String({
+  minLength: 1,
+  maxLength: 250,
+  description: "Repository-unique version-three instance identity.",
+});
+
+const ReportRuleIdSchema = Type.String({
+  minLength: 1,
+  maxLength: 200,
+  description: "Resolved rule identity.",
+});
+
+const ReportLaneSchema = Type.Union([Type.Literal("enforced"), Type.Literal("advisory")], {
+  description: "Rule lane that determines finding severity and terminal status.",
+});
+
+const ReportMessageSchema = Type.String({
+  minLength: 1,
+  maxLength: 8_192,
+  description: "Rule-authored diagnostic message.",
+});
+
+const ReportRemediationSchema = Type.Union([Type.String({ maxLength: 16_384 }), Type.Null()], {
+  description: "Rule-authored remediation when supplied.",
+});
+
+const InstanceReportLockSchema = Type.Literal(false, {
+  description: "Version-three applications do not use compatibility baseline locking.",
+});
+
+const CompatibilityReportLockSchema = Type.Literal(true, {
+  description: "The compatibility rule has an admitted exact empty baseline.",
+});
+
+const GritRunnerSchema = Type.Literal("grit", {
+  description: "Mechanical Grit runner used by this check.",
+});
+
+const StructureRunnerSchema = Type.Literal("habitat", {
+  description: "Native Habitat structure runner used by this check.",
+});
+
 const GritCheckFindingSchema = Type.Object(
   {
     path: Type.String({
@@ -114,8 +162,7 @@ const GritCheckFindingSchema = Type.Object(
       description: "Service-owned severity derived from the application lane.",
     }),
     baselined: Type.Literal(false, {
-      description:
-        "Version-three findings are not admitted through the predecessor baseline model.",
+      description: "No admitted baseline suppresses this observed finding.",
     }),
   },
   {
@@ -136,87 +183,82 @@ const CheckApplicationStatusSchema = Type.Union(
   }
 );
 
-const GritCheckApplicationDispositionSchema = Type.Union(
-  [
-    Type.Object(
-      {
-        kind: Type.Literal("evaluated", {
-          description: "The application completed mechanical evaluation.",
-        }),
-      },
-      {
-        additionalProperties: false,
-        description: "Completed mechanical evaluation disposition.",
-      }
-    ),
-    Type.Object(
-      {
-        kind: Type.Literal("failed", {
-          description: "The application could not produce trusted findings.",
-        }),
-        reason: Type.Union(
-          [
-            RuleEvaluationFailureReasonSchema,
-            Type.Literal("PatternReadFailed"),
-            Type.Literal("PatternInvalid"),
-            Type.Literal("FindingPathInvalid"),
-          ],
-          {
-            description: "Stable operational failure reason.",
-          }
-        ),
-        detail: Type.String({
-          minLength: 1,
-          maxLength: 4_096,
-          description: "Bounded operational failure detail.",
-        }),
-      },
-      {
-        additionalProperties: false,
-        description: "Failed application evaluation disposition.",
-      }
-    ),
-  ],
+const GritEvaluatedDispositionSchema = Type.Object(
   {
-    description: "Mechanical disposition underlying one semantic application status.",
+    kind: Type.Literal("evaluated", {
+      description: "The application completed mechanical evaluation.",
+    }),
+  },
+  {
+    additionalProperties: false,
+    description: "Completed mechanical evaluation disposition.",
   }
 );
 
-const GritCheckApplicationReportSchema = Type.Object(
+const GritFailedDispositionSchema = Type.Object(
   {
-    ownerProject: Type.String({
+    kind: Type.Literal("failed", {
+      description: "The application could not produce trusted findings.",
+    }),
+    reason: Type.Union(
+      [
+        RuleEvaluationFailureReasonSchema,
+        Type.Literal("PatternReadFailed"),
+        Type.Literal("PatternInvalid"),
+        Type.Literal("FindingPathInvalid"),
+      ],
+      {
+        description: "Stable operational failure reason.",
+      }
+    ),
+    detail: Type.String({
       minLength: 1,
-      maxLength: 250,
-      description: "Repository project that owns the resolved application.",
+      maxLength: 4_096,
+      description: "Bounded operational failure detail.",
     }),
-    instanceId: Type.String({
-      minLength: 1,
-      maxLength: 250,
-      description: "Repository-unique instance identity.",
+  },
+  {
+    additionalProperties: false,
+    description: "Failed application evaluation disposition.",
+  }
+);
+
+const GritNotApplicableDispositionSchema = Type.Object(
+  {
+    kind: Type.Literal("not-applicable", {
+      description: "The compatibility rule had no live exact-coverage subjects.",
     }),
-    ruleId: Type.String({
-      minLength: 1,
-      maxLength: 200,
-      description: "Resolved rule identity.",
+    reason: Type.Literal("no-matched-acquisition-roots", {
+      description: "No regular file matched both exact coverage and declared authority.",
     }),
-    runner: Type.Literal("grit", {
-      description: "Mechanical runner used by this check operation.",
-    }),
-    lane: Type.Union([Type.Literal("enforced"), Type.Literal("advisory")], {
-      description: "Application policy lane.",
-    }),
-    locked: Type.Literal(false, {
-      description: "Version-three applications do not inherit predecessor baseline locking.",
-    }),
+  },
+  {
+    additionalProperties: false,
+    description: "Compatibility rule with no current subject files.",
+  }
+);
+
+const GritCheckApplicationDispositionSchema = Type.Union(
+  [GritEvaluatedDispositionSchema, GritFailedDispositionSchema],
+  { description: "Version-three Grit evaluation disposition." }
+);
+
+const CompatibilityGritCheckApplicationDispositionSchema = Type.Union(
+  [GritEvaluatedDispositionSchema, GritNotApplicableDispositionSchema, GritFailedDispositionSchema],
+  { description: "Compatibility Grit evaluation disposition." }
+);
+
+const GritInstanceCheckApplicationReportSchema = Type.Object(
+  {
+    ownerProject: ReportOwnerProjectSchema,
+    instanceId: ReportInstanceIdSchema,
+    ruleId: ReportRuleIdSchema,
+    runner: GritRunnerSchema,
+    lane: ReportLaneSchema,
+    locked: InstanceReportLockSchema,
     status: CheckApplicationStatusSchema,
-    message: Type.String({
-      minLength: 1,
-      maxLength: 8_192,
-      description: "Rule-authored finding message.",
-    }),
-    remediate: Type.Union([Type.String({ maxLength: 16_384 }), Type.Null()], {
-      description: "Rule-authored remediation when supplied.",
-    }),
+    message: ReportMessageSchema,
+    remediate: ReportRemediationSchema,
     disposition: GritCheckApplicationDispositionSchema,
     findings: Type.Array(GritCheckFindingSchema, {
       description: "Deterministically ordered findings for this application.",
@@ -224,7 +266,29 @@ const GritCheckApplicationReportSchema = Type.Object(
   },
   {
     additionalProperties: false,
-    description: "One resolved application check report.",
+    description: "One version-three Grit application report.",
+  }
+);
+
+const CompatibilityGritCheckApplicationReportSchema = Type.Object(
+  {
+    ownerProject: ReportOwnerProjectSchema,
+    instanceId: Type.Null({ description: "Compatibility rules have no version-three instance." }),
+    ruleId: ReportRuleIdSchema,
+    runner: GritRunnerSchema,
+    lane: ReportLaneSchema,
+    locked: CompatibilityReportLockSchema,
+    status: CheckApplicationStatusSchema,
+    message: ReportMessageSchema,
+    remediate: ReportRemediationSchema,
+    disposition: CompatibilityGritCheckApplicationDispositionSchema,
+    findings: Type.Array(GritCheckFindingSchema, {
+      description: "Deterministically ordered findings for this compatibility rule.",
+    }),
+  },
+  {
+    additionalProperties: false,
+    description: "One version-two compatibility Grit report.",
   }
 );
 
@@ -256,7 +320,7 @@ const StructureCheckFindingSchema = Type.Object(
       description: "Service-owned severity derived from the application lane.",
     }),
     baselined: Type.Literal(false, {
-      description: "Version-three findings do not inherit predecessor baselines.",
+      description: "No admitted baseline suppresses this observed finding.",
     }),
   },
   { additionalProperties: false, description: "One path-only native structure finding." }
@@ -298,52 +362,52 @@ const StructureCheckApplicationDispositionSchema = Type.Union(
   { description: "Native structure evaluation disposition." }
 );
 
-const StructureCheckApplicationReportSchema = Type.Object(
+const StructureInstanceCheckApplicationReportSchema = Type.Object(
   {
-    ownerProject: Type.String({
-      minLength: 1,
-      maxLength: 250,
-      description: "Repository project that owns this structure application.",
-    }),
-    instanceId: Type.String({
-      minLength: 1,
-      maxLength: 250,
-      description: "Resolved instance evaluated by this structure application.",
-    }),
-    ruleId: Type.String({
-      minLength: 1,
-      maxLength: 200,
-      description: "Native structure rule evaluated for this instance.",
-    }),
-    runner: Type.Literal("habitat", {
-      description: "Native Habitat runner used by this application.",
-    }),
-    lane: Type.Union([Type.Literal("enforced"), Type.Literal("advisory")], {
-      description: "Policy lane that determines finding severity and completion status.",
-    }),
-    locked: Type.Literal(false, {
-      description: "Native structure reports do not expose Grit lock semantics.",
-    }),
+    ownerProject: ReportOwnerProjectSchema,
+    instanceId: ReportInstanceIdSchema,
+    ruleId: ReportRuleIdSchema,
+    runner: StructureRunnerSchema,
+    lane: ReportLaneSchema,
+    locked: InstanceReportLockSchema,
     status: CheckApplicationStatusSchema,
-    message: Type.String({
-      minLength: 1,
-      maxLength: 8_192,
-      description: "Catalog-authored human guidance for this structure rule.",
-    }),
-    remediate: Type.Union([Type.String({ maxLength: 16_384 }), Type.Null()], {
-      description: "Optional catalog-authored remediation guidance.",
-    }),
+    message: ReportMessageSchema,
+    remediate: ReportRemediationSchema,
     disposition: StructureCheckApplicationDispositionSchema,
     findings: Type.Array(StructureCheckFindingSchema, {
       description: "Deterministically ordered path-only structure findings.",
     }),
   },
-  { additionalProperties: false, description: "One native Habitat structure report." }
+  { additionalProperties: false, description: "One version-three native structure report." }
+);
+
+const CompatibilityStructureCheckApplicationReportSchema = Type.Object(
+  {
+    ownerProject: ReportOwnerProjectSchema,
+    instanceId: Type.Null({ description: "Compatibility rules have no version-three instance." }),
+    ruleId: ReportRuleIdSchema,
+    runner: StructureRunnerSchema,
+    lane: ReportLaneSchema,
+    locked: CompatibilityReportLockSchema,
+    status: CheckApplicationStatusSchema,
+    message: ReportMessageSchema,
+    remediate: ReportRemediationSchema,
+    disposition: StructureCheckApplicationDispositionSchema,
+    findings: Type.Array(StructureCheckFindingSchema, {
+      description: "Deterministically ordered path-only compatibility findings.",
+    }),
+  },
+  { additionalProperties: false, description: "One version-two compatibility structure report." }
 );
 
 const CheckApplicationReportSchema = Type.Union(
-  [GritCheckApplicationReportSchema, StructureCheckApplicationReportSchema],
-  { description: "Runner-discriminated application check report." }
+  [
+    GritInstanceCheckApplicationReportSchema,
+    CompatibilityGritCheckApplicationReportSchema,
+    StructureInstanceCheckApplicationReportSchema,
+    CompatibilityStructureCheckApplicationReportSchema,
+  ],
+  { description: "Runner- and authority-discriminated application check report." }
 );
 
 /** Closed total result for one current-catalog check. */

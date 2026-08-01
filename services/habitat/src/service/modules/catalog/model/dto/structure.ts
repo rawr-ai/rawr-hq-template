@@ -75,6 +75,45 @@ const StructureScopeSchema = Type.Object(
   { additionalProperties: false, description: "One closed Habitat structure scope." }
 );
 
+const CompatibilityStructureScopeSchema = Type.Object(
+  {
+    name: Type.String({
+      minLength: 1,
+      maxLength: 200,
+      description: "Stable identity for one compatibility structure scope.",
+    }),
+    root: RootRelativePatternSchema,
+    kind: Type.Union([Type.Literal("directory"), Type.Literal("file")], {
+      description: "Expected kind for every matched scope root.",
+    }),
+    mode: Type.Union([Type.Literal("open"), Type.Literal("closed")], {
+      description: "Whether unmatched direct children are admitted.",
+    }),
+    allowEmpty: Type.Optional(
+      Type.Boolean({ description: "Whether a scope may match no visible roots." })
+    ),
+    required: Type.Optional(
+      Type.Array(DirectChildPatternSchema, {
+        uniqueItems: true,
+        description: "Unique direct-child globs that must each match at least one child.",
+      })
+    ),
+    allowed: Type.Optional(
+      Type.Array(DirectChildPatternSchema, {
+        uniqueItems: true,
+        description: "Unique direct-child globs admitted by a closed scope.",
+      })
+    ),
+    forbidden: Type.Optional(
+      Type.Array(DirectChildPatternSchema, {
+        uniqueItems: true,
+        description: "Unique direct-child globs rejected in every scope mode.",
+      })
+    ),
+  },
+  { additionalProperties: false, description: "One closed compatibility structure scope." }
+);
+
 const StructureDocumentShapeSchema = Type.Object(
   {
     schemaVersion: Type.Literal(2, { description: "Structure document schema version." }),
@@ -95,13 +134,43 @@ export const StructureDocumentSchema = Type.Refine(
   () => "Expected unique structure scope names"
 );
 
+const CompatibilityStructureDocumentShapeSchema = Type.Object(
+  {
+    schemaVersion: Type.Literal(1, { description: "Compatibility structure schema version." }),
+    scopes: Type.Array(CompatibilityStructureScopeSchema, {
+      minItems: 1,
+      description: "Compatibility structure scopes evaluated in declared order.",
+    }),
+  },
+  { additionalProperties: false, description: "Closed compatibility structure document." }
+);
+
+type CompatibilityStructureDocumentShape = Static<typeof CompatibilityStructureDocumentShapeSchema>;
+
+/** Sole structural authority for one version-one compatibility structure document. */
+export const CompatibilityStructureDocumentSchema = Type.Refine(
+  CompatibilityStructureDocumentShapeSchema,
+  hasUniqueCompatibilityScopeNames,
+  () => "Expected unique compatibility structure scope names"
+);
+
 /** Schema-admitted version-two Habitat structure document. */
 export type StructureDocument = Static<typeof StructureDocumentSchema>;
 
 /** One schema-admitted structure scope. */
 export type StructureScope = StructureDocument["scopes"][number];
 
+/** Schema-admitted version-one compatibility structure document. */
+export type CompatibilityStructureDocument = Static<typeof CompatibilityStructureDocumentSchema>;
+
+/** One schema-admitted version-one compatibility structure scope. */
+export type CompatibilityStructureScope = CompatibilityStructureDocument["scopes"][number];
+
 function hasUniqueScopeNames(document: StructureDocumentShape): boolean {
+  return new Set(document.scopes.map((scope) => scope.name)).size === document.scopes.length;
+}
+
+function hasUniqueCompatibilityScopeNames(document: CompatibilityStructureDocumentShape): boolean {
   return new Set(document.scopes.map((scope) => scope.name)).size === document.scopes.length;
 }
 

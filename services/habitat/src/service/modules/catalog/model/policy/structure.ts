@@ -4,12 +4,14 @@ import { Validator } from "typebox/schema";
 import type { HabitatCatalog } from "../dto/catalog.js";
 import type { StructureCheckFinding } from "../dto/check.js";
 import {
+  CompatibilityStructureDocumentSchema,
   STRUCTURE_PICOMATCH_OPTIONS,
   StructureDocumentSchema,
-  type StructureScope,
 } from "../dto/structure.js";
 
-type RuleApplication = HabitatCatalog["applications"][number];
+type RuleApplication =
+  | HabitatCatalog["applications"][number]
+  | HabitatCatalog["compatibility"]["rules"][number];
 
 /** Resolved application executable by the native Habitat structure policy. */
 export type HabitatStructureApplication = RuleApplication & {
@@ -24,10 +26,17 @@ export function isHabitatStructureApplication(
 }
 
 /** Live or inventory-derived kind understood by native structure evaluation. */
-export type StructureRootKind = StructureScope["kind"] | "other";
+export type StructureRootKind = "directory" | "file" | "other";
 
-type BoundStructureScope = Omit<StructureScope, "allowEmpty"> & {
+type BoundStructureScope = {
+  readonly name: string;
+  readonly relativePath: string;
+  readonly kind: "directory" | "file";
+  readonly mode: "open" | "closed";
   readonly allowEmpty: boolean;
+  readonly required?: readonly string[];
+  readonly allowed?: readonly string[];
+  readonly forbidden?: readonly string[];
   readonly bindingPath: string;
 };
 
@@ -66,6 +75,7 @@ export type StructureEvaluationPlan = {
 export type StructureDiagnostic = Pick<StructureCheckFinding, "code" | "path" | "message">;
 
 const structureValidator = new Validator({}, StructureDocumentSchema);
+const compatibilityStructureValidator = new Validator({}, CompatibilityStructureDocumentSchema);
 
 /** Admits TypeBox-valid structure authority and resolves its root-role applicability. */
 export function admitStructureDocument(
@@ -74,6 +84,37 @@ export function admitStructureDocument(
 ):
   | { readonly ok: true; readonly admitted: AdmittedStructureApplication }
   | { readonly ok: false; readonly detail: string } {
+  if (isCompatibilityStructureApplication(application)) {
+    if (!compatibilityStructureValidator.Check(value)) {
+      const [, errors] = compatibilityStructureValidator.Errors(value);
+      return {
+        ok: false,
+        detail:
+          errors
+            .slice(0, 20)
+            .map((error) => error.message)
+            .join("; ") || "Structure document does not satisfy compatibility schema version 1.",
+      };
+    }
+    return {
+      ok: true,
+      admitted: {
+        application,
+        scopes: value.scopes.map((scope) => ({
+          name: scope.name,
+          relativePath: scope.root,
+          kind: scope.kind,
+          mode: scope.mode,
+          allowEmpty: scope.allowEmpty ?? false,
+          ...(scope.required === undefined ? {} : { required: scope.required }),
+          ...(scope.allowed === undefined ? {} : { allowed: scope.allowed }),
+          ...(scope.forbidden === undefined ? {} : { forbidden: scope.forbidden }),
+          bindingPath: ".",
+        })),
+      },
+    };
+  }
+
   if (!structureValidator.Check(value)) {
     const [, errors] = structureValidator.Errors(value);
     return {
@@ -112,9 +153,25 @@ export function admitStructureDocument(
         detail: `Structure scope "${scope.name}" resolves beyond the maximum repository path length.`,
       };
     }
-    scopes.push({ ...scope, allowEmpty: scope.allowEmpty ?? false, bindingPath: binding.path });
+    scopes.push({
+      name: scope.name,
+      relativePath: scope.relativePath,
+      kind: scope.kind,
+      mode: scope.mode,
+      allowEmpty: scope.allowEmpty ?? false,
+      ...(scope.required === undefined ? {} : { required: scope.required }),
+      ...(scope.allowed === undefined ? {} : { allowed: scope.allowed }),
+      ...(scope.forbidden === undefined ? {} : { forbidden: scope.forbidden }),
+      bindingPath: binding.path,
+    });
   }
   return { ok: true, admitted: { application, scopes } };
+}
+
+function isCompatibilityStructureApplication(
+  application: HabitatStructureApplication
+): application is Extract<HabitatStructureApplication, { readonly baseline: unknown }> {
+  return "baseline" in application;
 }
 
 /** Derives ancestors and direct children while pruning tracked non-file descendants. */

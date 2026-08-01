@@ -34,6 +34,12 @@ type RecordingSourceInventory = {
 type Fixture = {
   readonly files: Readonly<Record<string, string>>;
   readonly directories?: readonly string[];
+  readonly symlinks?: readonly {
+    readonly path: string;
+    readonly target: "directory" | "file";
+    readonly targetPath?: string;
+    readonly contents?: string;
+  }[];
   readonly onWorkspaceRoot?: (workspaceRoot: string) => void;
   readonly clientFileSystem?: (
     fileSystem: FileSystem.FileSystem,
@@ -324,6 +330,210 @@ describe("Habitat catalog check", () => {
         { ownerProject: "@rawr/beta", instanceId: "beta", ruleId: "a_rule" },
         { ownerProject: "@rawr/beta", instanceId: "beta", ruleId: "b_rule" },
       ],
+    });
+  });
+
+  test("executes compatibility Grit coverage and version 1 structure through one check", async () => {
+    const checked = await checkFixture(compatibilityFixture(), {}, (input) =>
+      Effect.succeed({
+        findings: [
+          finding(
+            input.subjectPaths.find((subject) => subject.endsWith("/covered/child.ts")) ?? "",
+            "compatibility finding"
+          ),
+        ],
+      })
+    );
+
+    expect(checked.calls).toHaveLength(1);
+    expect(checked.calls[0]?.program).toBe("legacy_grit()");
+    expect(
+      checked.calls[0]?.subjectPaths.map((subject) =>
+        subject.slice(subject.indexOf("scripts/habitat/"))
+      )
+    ).toEqual([
+      "scripts/habitat/.codex/hooks.json",
+      "scripts/habitat/covered/child.ts",
+      "scripts/habitat/exact.ts",
+    ]);
+    expect(checked.calls[0]?.subjectPaths.some((subject) => subject.includes("node_modules"))).toBe(
+      false
+    );
+    expect(checked.inventoryCalls).toHaveLength(1);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          ownerProject: "habitat",
+          instanceId: null,
+          ruleId: "legacy_grit",
+          runner: "grit",
+          lane: "enforced",
+          locked: true,
+          status: "fail",
+          disposition: { kind: "evaluated" },
+          findings: [
+            {
+              path: "scripts/habitat/covered/child.ts",
+              message: "compatibility finding",
+              severity: "error",
+              baselined: false,
+            },
+          ],
+        },
+        {
+          ownerProject: "habitat",
+          instanceId: null,
+          ruleId: "legacy_structure",
+          runner: "habitat",
+          lane: "enforced",
+          locked: true,
+          status: "fail",
+          disposition: { kind: "evaluated" },
+          findings: [
+            {
+              code: "missing-required-child",
+              path: "scripts/habitat/shape",
+            },
+            {
+              code: "forbidden-child",
+              path: "scripts/habitat/shape/forbidden.ts",
+            },
+            {
+              code: "unexpected-child",
+              path: "scripts/habitat/shape/unexpected.ts",
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("refuses compatibility Grit subjects selected through symbolic links", async () => {
+    const checked = await checkFixture(
+      compatibilityFixture({
+        symlinks: [
+          {
+            path: "scripts/habitat/covered/linked.ts",
+            target: "file",
+            contents: "export const linked = true;\n",
+          },
+        ],
+      }),
+      { selectors: { rule: "legacy_grit" } }
+    );
+
+    expect(checked.calls).toEqual([]);
+    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          ownerProject: "habitat",
+          instanceId: null,
+          ruleId: "legacy_grit",
+          runner: "grit",
+          lane: "enforced",
+          locked: true,
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining("symbolic link"),
+          },
+          findings: [],
+        },
+      ],
+    });
+  });
+
+  test("refuses compatibility acquisition symlinks before no-match completion", async () => {
+    const checked = await checkFixture(
+      compatibilityFixture({
+        coverageMatches: false,
+        acquisitionRoots: ["scripts/habitat/linked-root"],
+        symlinks: [
+          {
+            path: "scripts/habitat/linked-root",
+            target: "directory",
+            targetPath: "scripts/habitat/real-root",
+          },
+        ],
+      }),
+      { selectors: { rule: "legacy_grit" } }
+    );
+
+    expect(checked.calls).toEqual([]);
+    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          instanceId: null,
+          ruleId: "legacy_grit",
+          locked: true,
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining("acquisition root"),
+          },
+        },
+      ],
+    });
+  });
+
+  test("keeps compatibility selection instance-free and no-match evaluation inert", async () => {
+    const fixture = compatibilityFixture({ coverageMatches: false });
+    const noMatch = await checkFixture(fixture, {
+      selectors: { owner: "habitat", rule: "legacy_grit", runner: "grit" },
+    });
+    const wrongNamespace = await checkFixture(fixture, {
+      selectors: { instance: "legacy_grit" },
+    });
+
+    expect(noMatch.calls).toEqual([]);
+    expect(noMatch.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [
+        {
+          instanceId: null,
+          locked: true,
+          ruleId: "legacy_grit",
+          status: "pass",
+          disposition: {
+            kind: "not-applicable",
+            reason: "no-matched-acquisition-roots",
+          },
+          findings: [],
+        },
+      ],
+    });
+    expect(wrongNamespace.calls).toEqual([]);
+    expect(wrongNamespace.result).toMatchObject({
+      _tag: "SelectionRejected",
+      issues: [
+        {
+          code: "selector-wrong-namespace",
+          selector: "instance:legacy_grit",
+        },
+      ],
+    });
+
+    const v3 = singleGritFixture();
+    const mixed = await checkFixture(
+      { files: { ...fixture.files, ...v3.files } },
+      { selectors: { instance: "example-package" } }
+    );
+    expect(mixed.calls).toHaveLength(1);
+    expect(mixed.calls[0]?.program).toBe("package_rule()");
+    expect(mixed.result).toMatchObject({
+      _tag: "Completed",
+      applications: [{ instanceId: "example-package", ruleId: "package_rule", locked: false }],
     });
   });
 
@@ -1515,6 +1725,30 @@ async function withFixture<T>(
           yield* fileSystem.makeDirectory(path.dirname(absolutePath), { recursive: true });
           yield* fileSystem.writeFileString(absolutePath, contents);
         }
+        for (const [index, symlink] of [...(fixture.symlinks ?? [])]
+          .sort((left, right) => textOrder(left.path, right.path))
+          .entries()) {
+          const target =
+            symlink.targetPath === undefined
+              ? path.join(
+                  yield* fileSystem.makeTempDirectoryScoped({
+                    prefix: "habitat-check-outside-",
+                  }),
+                  `target-${index}`
+                )
+              : path.join(workspaceRoot, symlink.targetPath);
+          if (symlink.target === "directory") {
+            yield* fileSystem.makeDirectory(target, { recursive: true });
+            if (symlink.contents !== undefined) {
+              yield* fileSystem.writeFileString(path.join(target, "subject.ts"), symlink.contents);
+            }
+          } else {
+            yield* fileSystem.writeFileString(target, symlink.contents ?? "");
+          }
+          const link = path.join(workspaceRoot, symlink.path);
+          yield* fileSystem.makeDirectory(path.dirname(link), { recursive: true });
+          yield* fileSystem.symlink(target, link);
+        }
         const recording = makeRecordingRuleEvaluation(
           handler,
           makeRecordingSourceInventory(inventoryHandler)
@@ -1618,6 +1852,109 @@ function authorityFixture(options: {
     files[`${instance.projectPath}/habitat.toml`] = instanceToml(instance);
   }
   return { files };
+}
+
+function compatibilityFixture(
+  options: {
+    readonly coverageMatches?: boolean;
+    readonly acquisitionRoots?: readonly string[];
+    readonly symlinks?: Fixture["symlinks"];
+  } = {}
+): Fixture {
+  const gritRoot = ".habitat/legacy/legacy_grit";
+  const structureRoot = ".habitat/legacy/legacy_structure";
+  const common = (id: string, root: string) => ({
+    schemaVersion: 2,
+    id,
+    title: `Require ${id}`,
+    placement: { niche: "rawr", blueprint: "service", category: "boundary" },
+    operation: { kind: "check" },
+    ownerProject: "habitat",
+    lane: "enforced",
+    forbids: "an invalid compatibility fixture",
+    why: "The compatibility fixture preserves the executing rule outcome.",
+    remediate: "Restore the compatibility fixture.",
+    message: `${id} found a violation.`,
+    pathCoverage: [
+      {
+        kind: "exact-path",
+        patterns:
+          options.coverageMatches === false
+            ? ["scripts/habitat/**/*.tsx"]
+            : [
+                "scripts/habitat/**/*.ts",
+                "scripts/habitat/.codex/hooks.json",
+                "scripts/habitat/covered/node_modules/dependency.ts",
+                ...(options.symlinks ?? []).map(({ path }) => path),
+              ],
+      },
+    ],
+    supportFiles: { baseline: `${root}/baseline.json` },
+  });
+  return {
+    ...(options.symlinks === undefined ? {} : { symlinks: options.symlinks }),
+    files: {
+      ".habitat/index.json": JSON.stringify({
+        schemaVersion: 2,
+        ownerRoots: { habitat: "scripts/habitat" },
+      }),
+      [`${gritRoot}/rule.json`]: JSON.stringify({
+        ...common("legacy_grit", gritRoot),
+        hookCheck: true,
+        runner: {
+          name: "grit",
+          files: { pattern: `${gritRoot}/pattern.md` },
+          patternName: "legacy_grit",
+          acquisition: {
+            kind: "check",
+            roots: options.acquisitionRoots ?? [
+              "scripts/habitat/covered",
+              "scripts/habitat/exact.ts",
+              "scripts/habitat/.codex/hooks.json",
+            ],
+          },
+        },
+      }),
+      [`${gritRoot}/baseline.json`]: "[]",
+      [`${gritRoot}/pattern.md`]: "# legacy_grit\n\n```grit\nlegacy_grit()\n```\n",
+      [`${structureRoot}/rule.json`]: JSON.stringify({
+        ...common("legacy_structure", structureRoot),
+        runner: {
+          name: "habitat",
+          mode: "structure",
+          files: { structure: `${structureRoot}/structure.toml` },
+        },
+      }),
+      [`${structureRoot}/baseline.json`]: "[]",
+      [`${structureRoot}/structure.toml`]: `schemaVersion = 1
+
+[[scopes]]
+name = "closed-shape"
+root = "scripts/habitat/shape"
+kind = "directory"
+mode = "closed"
+required = ["required.ts", "missing.ts"]
+allowed = ["required.ts", "forbidden.ts"]
+forbidden = ["forbidden.ts"]
+
+[[scopes]]
+name = "optional-empty"
+root = "scripts/habitat/absent"
+kind = "directory"
+mode = "open"
+allowEmpty = true
+`,
+      "scripts/habitat/covered/child.ts": "export const covered = true;\n",
+      "scripts/habitat/covered/node_modules/dependency.ts": "export const dependency = true;\n",
+      "scripts/habitat/exact.ts": "export const exact = true;\n",
+      "scripts/habitat/.codex/hooks.json": "{}\n",
+      "scripts/habitat/outside.ts": "export const outside = true;\n",
+      "scripts/habitat/ignored.js": "export const ignored = true;\n",
+      "scripts/habitat/shape/required.ts": "export const required = true;\n",
+      "scripts/habitat/shape/forbidden.ts": "export const forbidden = true;\n",
+      "scripts/habitat/shape/unexpected.ts": "export const unexpected = true;\n",
+    },
+  };
 }
 
 function defaultStructureToml(): string {
@@ -1884,7 +2221,7 @@ function finding(path: string, message: string | null): RuleEvaluationFinding {
 
 function applicationKey(application: {
   readonly ruleId: string;
-  readonly instanceId: string;
+  readonly instanceId: string | null;
   readonly ownerProject: string;
 }): string {
   return `${application.ruleId}:${application.instanceId}:${application.ownerProject}`;

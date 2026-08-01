@@ -4,6 +4,15 @@
   "targets": {
     "check": {
       "executor": "nx:noop"
+    },
+    "test": {
+      "inputs": [
+        "default",
+        "^default",
+        "typescriptRuntime",
+        "{workspaceRoot}/vitest.config.ts",
+        "habitatCatalogAuthority"
+      ]
     }
   }
 }

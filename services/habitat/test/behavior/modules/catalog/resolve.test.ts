@@ -538,12 +538,14 @@ describe("Habitat catalog resolve", () => {
           schemaVersion: 2,
           ownerRoots: { habitat: "scripts/habitat" },
         }),
-        ".habitat/legacy/shared/rule.json": JSON.stringify({
-          schemaVersion: 2,
+        ".habitat/legacy/shared/rule.json": compatibilityGritRuleJson({
           id: "shared_rule",
-          ownerProject: "habitat",
+          root: ".habitat/legacy/shared",
         }),
+        ".habitat/legacy/shared/baseline.json": "[]",
+        ".habitat/legacy/shared/pattern.md": "# shared_rule\n\n```grit\nshared_rule()\n```\n",
       },
+      directories: ["scripts/habitat"],
     };
 
     const first = await resolveFixture(fixture);
@@ -615,21 +617,36 @@ describe("Habitat catalog resolve", () => {
     }
   });
 
-  test("validates and summarizes present v2 authority without retaining its runner model", async () => {
+  test("admits the repository's frozen version 2 compatibility corpus", async () => {
+    const result = await resolveRepositoryCorpus();
+
+    expect(result._tag).toBe("Resolved");
+    if (result._tag !== "Resolved") throw new Error("Expected the repository corpus to resolve.");
+
+    const compatibility = result.catalog.compatibility;
+    const ruleIds = compatibility.rules.map(({ ruleId }) => ruleId);
+    expect(Object.keys(compatibility.ownerRoots)).toHaveLength(6);
+    expect(compatibility.rules).toHaveLength(33);
+    expect(new Set(ruleIds).size).toBe(33);
+  });
+
+  test("resolves executable version 2 Grit authority without retaining asset bytes", async () => {
     const result = await resolveFixture({
       files: {
         ".habitat/index.json": JSON.stringify({
           schemaVersion: 2,
           ownerRoots: { habitat: "scripts/habitat" },
         }),
-        ".habitat/blueprints/legacy/old_rule/rule.json": JSON.stringify({
-          schemaVersion: 2,
+        ".habitat/blueprints/legacy/old_rule/rule.json": compatibilityGritRuleJson({
           id: "old_rule",
-          ownerProject: "habitat",
-          runner: { name: "grit", patternName: "must_not_survive" },
-          lane: "enforced",
+          root: ".habitat/blueprints/legacy/old_rule",
+          patternName: "must_survive_as_identity",
         }),
+        ".habitat/blueprints/legacy/old_rule/baseline.json": "[]",
+        ".habitat/blueprints/legacy/old_rule/pattern.md":
+          "# old_rule\n\n```grit\nasset_bytes_must_not_survive()\n```\n",
       },
+      directories: ["scripts/habitat"],
     });
 
     expect(result).toMatchObject({
@@ -640,15 +657,31 @@ describe("Habitat catalog resolve", () => {
           ownerRoots: { habitat: "scripts/habitat" },
           rules: [
             {
-              id: "old_rule",
+              ruleId: "old_rule",
               ownerProject: "habitat",
               manifestPath: ".habitat/blueprints/legacy/old_rule/rule.json",
+              lane: "enforced",
+              coveragePatterns: ["scripts/habitat/**/*.ts"],
+              baseline: {
+                relativePath: ".habitat/blueprints/legacy/old_rule/baseline.json",
+              },
+              runner: {
+                name: "grit",
+                patternName: "must_survive_as_identity",
+                pattern: {
+                  relativePath: ".habitat/blueprints/legacy/old_rule/pattern.md",
+                },
+                acquisition: {
+                  kind: "check",
+                  entries: [{ kind: "directory", path: "scripts/habitat" }],
+                },
+              },
             },
           ],
         },
       },
     });
-    expect(JSON.stringify(result)).not.toContain("must_not_survive");
+    expect(JSON.stringify(result)).not.toContain("asset_bytes_must_not_survive");
   });
 
   test("resolves an index-only version 2 catalog when the blueprint prefix is absent", async () => {
@@ -659,6 +692,7 @@ describe("Habitat catalog resolve", () => {
           ownerRoots: { habitat: "scripts/habitat" },
         }),
       },
+      directories: ["scripts/habitat"],
     });
 
     expect(result).toMatchObject({
@@ -700,10 +734,95 @@ describe("Habitat catalog resolve", () => {
     });
     expect(reads.filter((candidate) => !candidate.includes(`/${POLICY_PACK_ROOT}/`))).toEqual([]);
   });
+
+  test("rejects missing, malformed, and nonempty compatibility baselines", async () => {
+    const files = {
+      ".habitat/index.json": JSON.stringify({
+        schemaVersion: 2,
+        ownerRoots: { habitat: "scripts/habitat" },
+      }),
+      ".habitat/legacy/checked/rule.json": compatibilityGritRuleJson({
+        id: "checked",
+        root: ".habitat/legacy/checked",
+      }),
+      ".habitat/legacy/checked/pattern.md": "# checked\n\n```grit\nchecked()\n```\n",
+    };
+    const missing = await resolveFixture({ files, directories: ["scripts/habitat"] });
+    const nonempty = await resolveFixture({
+      files: {
+        ...files,
+        ".habitat/legacy/checked/baseline.json": JSON.stringify([{ path: "legacy.ts" }]),
+      },
+      directories: ["scripts/habitat"],
+    });
+    const malformed = await resolveFixture({
+      files: {
+        ...files,
+        ".habitat/legacy/checked/baseline.json": "{",
+      },
+      directories: ["scripts/habitat"],
+    });
+
+    expect(missing).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-path-missing",
+          path: ".habitat/legacy/checked/baseline.json",
+        },
+      ],
+    });
+    expect(nonempty).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-schema-invalid",
+          path: ".habitat/legacy/checked/baseline.json",
+        },
+      ],
+    });
+    expect(malformed).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-json-invalid",
+          path: ".habitat/legacy/checked/baseline.json",
+        },
+      ],
+    });
+  });
 });
 
 async function resolveFixture(fixture: Fixture) {
   return withFixture(fixture, (client) => client.catalog.resolve({}));
+}
+
+async function resolveRepositoryCorpus() {
+  return Effect.runPromise(
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const workspaceRoot = path.resolve(import.meta.dirname, "../../../../../..");
+      const policyPackRoot = path.join(workspaceRoot, "packages/habitat-blueprints");
+      const client: Client = createClient({
+        deps: {
+          fileSystem,
+          path,
+          ruleEvaluation: unusedRuleEvaluation,
+          sourceInventory: unusedSourceInventory,
+        },
+        scope: { workspaceRoot },
+        config: {
+          policyPack: {
+            name: "@habitat-ai/blueprints",
+            packageJsonPath: path.join(policyPackRoot, "package.json"),
+            manifestPath: path.join(policyPackRoot, "habitat-pack.json"),
+          },
+        },
+      });
+      return yield* Effect.promise(() => client.catalog.resolve({}));
+    }).pipe(Effect.provide(NodeServices.layer))
+  );
 }
 
 async function withFixture<T>(fixture: Fixture, use: (client: Client) => Promise<T>): Promise<T> {
@@ -899,6 +1018,35 @@ root = "."
 kind = "directory"
 mode = "open"
 `;
+}
+
+function compatibilityGritRuleJson(options: {
+  readonly id: string;
+  readonly root: string;
+  readonly patternName?: string;
+}): string {
+  return JSON.stringify({
+    schemaVersion: 2,
+    id: options.id,
+    title: `Require ${options.id}`,
+    placement: { niche: "rawr", blueprint: "package", category: "boundary" },
+    operation: { kind: "check" },
+    ownerProject: "habitat",
+    lane: "enforced",
+    forbids: "an invalid fixture state",
+    why: "The compatibility fixture must remain executable.",
+    remediate: "Restore the fixture.",
+    message: `${options.id} found a violation.`,
+    pathCoverage: [{ kind: "exact-path", patterns: ["scripts/habitat/**/*.ts"] }],
+    hookCheck: true,
+    supportFiles: { baseline: `${options.root}/baseline.json` },
+    runner: {
+      name: "grit",
+      files: { pattern: `${options.root}/pattern.md` },
+      patternName: options.patternName ?? options.id,
+      acquisition: { kind: "check", roots: ["scripts/habitat"] },
+    },
+  });
 }
 
 function toRepositoryPath(value: string, separator: string): string {

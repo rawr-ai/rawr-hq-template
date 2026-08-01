@@ -8,7 +8,9 @@ import type {
 } from "../dto/check.js";
 import type { HabitatStructureApplication, StructureDiagnostic } from "./structure.js";
 
-type RuleApplication = HabitatCatalog["applications"][number];
+type InstanceApplication = HabitatCatalog["applications"][number];
+type CompatibilityRule = HabitatCatalog["compatibility"]["rules"][number];
+type RuleApplication = InstanceApplication | CompatibilityRule;
 type ResolvedGritRunner = Extract<RuleApplication["runner"], { name: "grit" }>;
 type GritCheckRunner = Omit<ResolvedGritRunner, "acquisition"> & {
   readonly acquisition: Omit<ResolvedGritRunner["acquisition"], "kind"> & {
@@ -17,7 +19,7 @@ type GritCheckRunner = Omit<ResolvedGritRunner, "acquisition"> & {
 };
 
 /** Resolved application mechanically executable by the Grit check resource. */
-export type GritCheckApplication = Omit<RuleApplication, "runner"> & {
+export type GritCheckApplication = RuleApplication & {
   readonly runner: GritCheckRunner;
 };
 
@@ -26,6 +28,72 @@ export type ExecutableCheckApplication = GritCheckApplication | HabitatStructure
 
 type GritCheckApplicationReport = Extract<CheckApplicationReport, { runner: "grit" }>;
 type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
+type GritInstanceCheckApplicationReport = Extract<
+  GritCheckApplicationReport,
+  { instanceId: string }
+>;
+type CompatibilityGritCheckApplicationReport = Extract<
+  GritCheckApplicationReport,
+  { instanceId: null }
+>;
+type StructureInstanceCheckApplicationReport = Extract<
+  StructureCheckApplicationReport,
+  { instanceId: string }
+>;
+type CompatibilityStructureCheckApplicationReport = Extract<
+  StructureCheckApplicationReport,
+  { instanceId: null }
+>;
+type CompatibilityGritCheckApplication = Extract<
+  GritCheckApplication,
+  { readonly baseline: unknown }
+>;
+type GritReportIdentity =
+  | Pick<
+      GritInstanceCheckApplicationReport,
+      | "ownerProject"
+      | "instanceId"
+      | "ruleId"
+      | "runner"
+      | "lane"
+      | "locked"
+      | "message"
+      | "remediate"
+    >
+  | Pick<
+      CompatibilityGritCheckApplicationReport,
+      | "ownerProject"
+      | "instanceId"
+      | "ruleId"
+      | "runner"
+      | "lane"
+      | "locked"
+      | "message"
+      | "remediate"
+    >;
+type StructureReportIdentity =
+  | Pick<
+      StructureInstanceCheckApplicationReport,
+      | "ownerProject"
+      | "instanceId"
+      | "ruleId"
+      | "runner"
+      | "lane"
+      | "locked"
+      | "message"
+      | "remediate"
+    >
+  | Pick<
+      CompatibilityStructureCheckApplicationReport,
+      | "ownerProject"
+      | "instanceId"
+      | "ruleId"
+      | "runner"
+      | "lane"
+      | "locked"
+      | "message"
+      | "remediate"
+    >;
 
 type CheckSelection =
   | {
@@ -76,10 +144,15 @@ export function selectCheckApplications(
   }
   if (issues.length > 0) return refused(issues);
 
-  const selected = catalog.applications.filter(
+  const applications: readonly RuleApplication[] = [
+    ...catalog.applications,
+    ...catalog.compatibility.rules,
+  ];
+  const selected = applications.filter(
     (application) =>
       (selectors?.owner === undefined || application.ownerProject === selectors.owner) &&
-      (selectors?.instance === undefined || application.instanceId === selectors.instance) &&
+      (selectors?.instance === undefined ||
+        (isInstanceApplication(application) && application.instanceId === selectors.instance)) &&
       (requestedRules.length === 0 || requestedRules.includes(application.ruleId)) &&
       (selectors?.runner === undefined || application.runner.name === selectors.runner)
   );
@@ -99,7 +172,7 @@ export function selectCheckApplications(
       unsupported.map((application) =>
         issue(
           "runner-unsupported",
-          `${application.instanceId}:${application.ruleId}`,
+          applicationIdentityText(application),
           `Rule "${application.ruleId}" requires Grit ${application.runner.acquisition.kind}, which catalog.check does not execute.`
         )
       )
@@ -170,6 +243,25 @@ export function failedApplication(
   };
 }
 
+/** Reports an exact-coverage compatibility rule that has no current subject files. */
+export function notApplicableApplication(
+  application: CompatibilityGritCheckApplication
+): CompatibilityGritCheckApplicationReport {
+  return {
+    ownerProject: application.ownerProject,
+    instanceId: null,
+    ruleId: application.ruleId,
+    runner: "grit",
+    lane: application.lane,
+    locked: true,
+    message: application.message,
+    remediate: application.remediate,
+    status: "pass",
+    disposition: { kind: "not-applicable", reason: "no-matched-acquisition-roots" },
+    findings: [],
+  };
+}
+
 /** Produces one native Habitat report from pure structure diagnostics. */
 export function evaluatedStructureApplication(
   application: HabitatStructureApplication,
@@ -220,12 +312,19 @@ export function completedCheck(
   };
 }
 
-function applicationIdentity(
-  application: GritCheckApplication
-): Pick<
-  GritCheckApplicationReport,
-  "ownerProject" | "instanceId" | "ruleId" | "runner" | "lane" | "locked" | "message" | "remediate"
-> {
+function applicationIdentity(application: GritCheckApplication): GritReportIdentity {
+  if (isCompatibilityRule(application)) {
+    return {
+      ownerProject: application.ownerProject,
+      instanceId: null,
+      ruleId: application.ruleId,
+      runner: "grit",
+      lane: application.lane,
+      locked: true,
+      message: application.message,
+      remediate: application.remediate,
+    };
+  }
   return {
     ownerProject: application.ownerProject,
     instanceId: application.instanceId,
@@ -240,10 +339,19 @@ function applicationIdentity(
 
 function structureApplicationIdentity(
   application: HabitatStructureApplication
-): Pick<
-  StructureCheckApplicationReport,
-  "ownerProject" | "instanceId" | "ruleId" | "runner" | "lane" | "locked" | "message" | "remediate"
-> {
+): StructureReportIdentity {
+  if (isCompatibilityRule(application)) {
+    return {
+      ownerProject: application.ownerProject,
+      instanceId: null,
+      ruleId: application.ruleId,
+      runner: "habitat",
+      lane: application.lane,
+      locked: true,
+      message: application.message,
+      remediate: application.remediate,
+    };
+  }
   return {
     ownerProject: application.ownerProject,
     instanceId: application.instanceId,
@@ -280,7 +388,7 @@ function compareApplications(
 ): number {
   return (
     compareText(left.ruleId, right.ruleId) ||
-    compareText(left.instanceId, right.instanceId) ||
+    compareText(instanceId(left) ?? "", instanceId(right) ?? "") ||
     compareText(left.ownerProject, right.ownerProject)
   );
 }
@@ -306,11 +414,15 @@ function selectionIssue(
   kind: "owner" | "instance" | "rule" | "runner",
   value: string
 ): CheckSelectionIssue | undefined {
+  const applications: readonly RuleApplication[] = [
+    ...catalog.applications,
+    ...catalog.compatibility.rules,
+  ];
   const matches = {
-    owner: catalog.applications.some((application) => application.ownerProject === value),
+    owner: applications.some((application) => application.ownerProject === value),
     instance: catalog.applications.some((application) => application.instanceId === value),
-    rule: catalog.applications.some((application) => application.ruleId === value),
-    runner: catalog.applications.some((application) => application.runner.name === value),
+    rule: applications.some((application) => application.ruleId === value),
+    runner: applications.some((application) => application.runner.name === value),
   };
   if (matches[kind] || (kind === "runner" && knownRunnerSelectors.has(value))) return undefined;
   const actualKind = (["owner", "instance", "rule", "runner"] as const).find(
@@ -327,6 +439,26 @@ function selectionIssue(
         `${kind}:${value}`,
         `"${value}" is a known ${actualKind}, not a ${kind}.`
       );
+}
+
+/** Narrows a resolved check application to one compatibility rule. */
+export function isCompatibilityRule(
+  application: RuleApplication
+): application is CompatibilityRule {
+  return "baseline" in application;
+}
+
+function isInstanceApplication(application: RuleApplication): application is InstanceApplication {
+  return "instanceId" in application;
+}
+
+function instanceId(application: RuleApplication): string | null {
+  return isInstanceApplication(application) ? application.instanceId : null;
+}
+
+function applicationIdentityText(application: RuleApplication): string {
+  const instance = instanceId(application);
+  return instance === null ? application.ruleId : `${instance}:${application.ruleId}`;
 }
 
 function isKnownEmptyRunnerSelection(selectors: CheckCatalogInput["selectors"]): boolean {

@@ -5,6 +5,8 @@ import {
   type BlueprintDefinition,
   BlueprintDefinitionSchema,
   type CatalogIssue,
+  type CompatibilityBaseline,
+  CompatibilityBaselineSchema,
   type CompatibilityIndex,
   CompatibilityIndexSchema,
   type CompatibilityRuleSource,
@@ -28,6 +30,7 @@ const policyPackPackageJsonValidator = new Validator({}, PolicyPackPackageJsonSc
 const instanceValidator = new Validator({}, HabitatInstanceManifestSchema);
 const compatibilityIndexValidator = new Validator({}, CompatibilityIndexSchema);
 const compatibilityRuleValidator = new Validator({}, CompatibilityRuleSourceSchema);
+const compatibilityBaselineValidator = new Validator({}, CompatibilityBaselineSchema);
 
 /** One schema-admitted local blueprint source. */
 export type BlueprintSource = {
@@ -56,10 +59,15 @@ export type InstanceSource = {
   readonly relativePath: string;
 };
 
-/** One schema-admitted inert compatibility rule source. */
-export type CompatibilityRuleDocument = {
+/** One schema-admitted compatibility rule source before support-file admission. */
+export type CompatibilityRuleSourceDocument = {
   readonly rule: CompatibilityRuleSource;
   readonly relativePath: string;
+};
+
+/** One compatibility rule whose empty baseline has been admitted. */
+export type CompatibilityRuleDocument = CompatibilityRuleSourceDocument & {
+  readonly baseline: CompatibilityBaseline;
 };
 
 /** Schema-admitted authority documents observed by the resolve handler. */
@@ -209,10 +217,20 @@ export function admitCompatibilityRule(
   value: unknown,
   relativePath: string
 ):
-  | { readonly ok: true; readonly source: CompatibilityRuleDocument }
+  | { readonly ok: true; readonly source: CompatibilityRuleSourceDocument }
   | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
   const admitted = admit(compatibilityRuleValidator, value, relativePath);
   return admitted.ok ? { ok: true, source: { rule: admitted.value, relativePath } } : admitted;
+}
+
+/** Admits the exact empty baseline supported by compatibility execution. */
+export function admitCompatibilityBaseline(
+  value: unknown,
+  relativePath: string
+):
+  | { readonly ok: true; readonly value: CompatibilityBaseline }
+  | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
+  return admit(compatibilityBaselineValidator, value, relativePath);
 }
 
 /** Collects filesystem paths that schema-admitted documents require the service to observe. */
@@ -221,6 +239,24 @@ export function referencedRepositoryPaths(
   path: Path.Path
 ): readonly string[] {
   const references = new Set<string>();
+  for (const root of Object.values(documents.compatibilityIndex?.ownerRoots ?? {})) {
+    if (relativePathIssues(root, ".habitat/index.json", path).length === 0) {
+      references.add(toRepositoryPath(root, path));
+    }
+  }
+  for (const source of documents.compatibilityRules) {
+    const rule = source.rule;
+    const paths = [
+      rule.supportFiles.baseline,
+      rule.runner.name === "grit" ? rule.runner.files.pattern : rule.runner.files.structure,
+      ...(rule.runner.name === "grit" ? rule.runner.acquisition.roots : []),
+    ];
+    for (const referencedPath of paths) {
+      if (relativePathIssues(referencedPath, source.relativePath, path).length === 0) {
+        references.add(toRepositoryPath(referencedPath, path));
+      }
+    }
+  }
   for (const source of documents.blueprints) {
     const directory = path.dirname(source.relativePath);
     for (const rule of source.definition.rules) {
@@ -303,12 +339,19 @@ export function resolveCatalog(
     issues.push(...validateBlueprint(source, path));
   }
 
-  const compatibility = resolveCompatibility(documents, issues, path);
+  const compatibility = resolveCompatibility(
+    documents,
+    issues,
+    pathFacts,
+    workspaceRoot,
+    workspaceRealRoot,
+    path
+  );
   const ruleSources = [
     ...blueprints.flatMap((source) =>
       source.definition.rules.map((rule) => ({ identity: rule.id, path: source.relativePath }))
     ),
-    ...compatibility.rules.map((rule) => ({ identity: rule.id, path: rule.manifestPath })),
+    ...compatibility.rules.map((rule) => ({ identity: rule.ruleId, path: rule.manifestPath })),
   ];
   issues.push(...duplicateIssues(ruleSources, "authority-duplicate-rule", "rule"));
 
@@ -496,6 +539,9 @@ export function rejected(issues: readonly CatalogIssue[]): ResolveCatalogResult 
 function resolveCompatibility(
   documents: CatalogDocuments,
   issues: CatalogIssue[],
+  pathFacts: ReadonlyMap<string, CatalogPathFact>,
+  workspaceRoot: string,
+  workspaceRealRoot: string,
   path: Path.Path
 ): HabitatCatalog["compatibility"] {
   if (!documents.compatibilityIndex) {
@@ -508,6 +554,17 @@ function resolveCompatibility(
   );
   for (const [owner, root] of Object.entries(ownerRoots)) {
     issues.push(...relativePathIssues(root, `.habitat/index.json#ownerRoots:${owner}`, path));
+    issues.push(
+      ...pathFactIssues(
+        root,
+        "directory",
+        `.habitat/index.json#ownerRoots:${owner}`,
+        pathFacts,
+        workspaceRoot,
+        workspaceRealRoot,
+        path
+      )
+    );
   }
   const rules = [...documents.compatibilityRules]
     .sort(
@@ -515,19 +572,96 @@ function resolveCompatibility(
         textOrder(left.rule.id, right.rule.id) || textOrder(left.relativePath, right.relativePath)
     )
     .map((source) => {
-      if (!Object.hasOwn(ownerRoots, source.rule.ownerProject)) {
+      const rule = source.rule;
+      if (!Object.hasOwn(ownerRoots, rule.ownerProject)) {
         issues.push(
           issue(
             "authority-compatibility-invalid",
             source.relativePath,
-            `Legacy rule ownerProject "${source.rule.ownerProject}" has no owner root.`
+            `Legacy rule ownerProject "${rule.ownerProject}" has no owner root.`
           )
         );
       }
-      return {
-        id: source.rule.id,
-        ownerProject: source.rule.ownerProject,
+      for (const pattern of rule.pathCoverage[0].patterns) {
+        issues.push(...repositoryPatternIssues(pattern, source.relativePath, path));
+      }
+      const baselinePath = rule.supportFiles.baseline;
+      const runnerAssetPath =
+        rule.runner.name === "grit" ? rule.runner.files.pattern : rule.runner.files.structure;
+      issues.push(
+        ...pathFactIssues(
+          baselinePath,
+          "file",
+          source.relativePath,
+          pathFacts,
+          workspaceRoot,
+          workspaceRealRoot,
+          path
+        ),
+        ...pathFactIssues(
+          runnerAssetPath,
+          "file",
+          source.relativePath,
+          pathFacts,
+          workspaceRoot,
+          workspaceRealRoot,
+          path
+        )
+      );
+
+      const provenance = {
+        kind: "local" as const,
+        authorityRoot: workspaceRoot,
+        relativePath: source.relativePath,
+      };
+      const asset = (relativePath: string) => ({
+        provenance,
+        relativePath,
+        absolutePath: path.resolve(workspaceRoot, relativePath),
+      });
+      const common = {
+        ruleId: rule.id,
+        ownerProject: rule.ownerProject,
         manifestPath: source.relativePath,
+        lane: rule.lane,
+        message: rule.message,
+        remediate: rule.remediate,
+        provenance,
+        coveragePatterns: [...rule.pathCoverage[0].patterns],
+        baseline: asset(baselinePath),
+      };
+      if (rule.runner.name === "habitat") {
+        return {
+          ...common,
+          runner: {
+            name: "habitat" as const,
+            mode: "structure" as const,
+            structure: asset(runnerAssetPath),
+          },
+        };
+      }
+
+      const entries: { readonly kind: "directory" | "file"; readonly path: string }[] = [];
+      for (const root of rule.runner.acquisition.roots) {
+        const admission = pathFactAnyIssues(
+          root,
+          source.relativePath,
+          pathFacts,
+          workspaceRoot,
+          workspaceRealRoot,
+          path
+        );
+        issues.push(...admission.issues);
+        if (admission.kind !== undefined) entries.push({ kind: admission.kind, path: root });
+      }
+      return {
+        ...common,
+        runner: {
+          name: "grit" as const,
+          pattern: asset(runnerAssetPath),
+          patternName: rule.runner.patternName,
+          acquisition: { kind: "check" as const, entries },
+        },
       };
     });
   return { schemaVersion: 2, ownerRoots, rules };
@@ -929,6 +1063,34 @@ function pathFactIssues(
   return [];
 }
 
+function pathFactAnyIssues(
+  relativePath: string,
+  sourcePath: string,
+  facts: ReadonlyMap<string, CatalogPathFact>,
+  workspaceRoot: string,
+  workspaceRealRoot: string,
+  path: Path.Path
+): {
+  readonly kind?: "directory" | "file";
+  readonly issues: readonly CatalogIssue[];
+} {
+  const normalized = toRepositoryPath(relativePath, path);
+  const fact = facts.get(normalized);
+  const kind = fact?.kind === "directory" || fact?.kind === "file" ? fact.kind : undefined;
+  return {
+    kind,
+    issues: pathFactIssues(
+      normalized,
+      kind ?? "directory",
+      sourcePath,
+      facts,
+      workspaceRoot,
+      workspaceRealRoot,
+      path
+    ),
+  };
+}
+
 function ruleAssetPath(
   source: BlueprintSource,
   rule: BlueprintDefinition["rules"][number],
@@ -958,6 +1120,29 @@ function relativePathIssues(
           "authority-path-invalid",
           sourcePath,
           `Path must be normalized, repository-relative, traversal-free, and non-glob: "${candidate}".`
+        ),
+      ]
+    : [];
+}
+
+function repositoryPatternIssues(
+  candidate: string,
+  sourcePath: string,
+  path: Path.Path
+): CatalogIssue[] {
+  const invalid =
+    candidate.includes("\\") ||
+    path.isAbsolute(candidate) ||
+    candidate.includes("//") ||
+    candidate.endsWith("/") ||
+    candidate.split("/").some((segment) => segment === "" || segment === "..") ||
+    /[\u0000-\u001f\u007f]/u.test(candidate);
+  return invalid
+    ? [
+        issue(
+          "authority-path-invalid",
+          sourcePath,
+          `Coverage pattern must be repository-relative and traversal-free: "${candidate}".`
         ),
       ]
     : [];
