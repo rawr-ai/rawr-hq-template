@@ -1950,7 +1950,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   client declaration, and proves the complete six-package closure through an
   installed Oclif and Nx consumer. Public registry publication remains open
   under task 5.7e22e because npm scope authorization is absent.
-- [ ] 5.7e22c Implement one idempotent Habitat consumer initializer as its own
+- [x] 5.7e22c Implement one idempotent Habitat consumer initializer as its own
   reviewed checkpoint. It registers the Nx plugin, projects inferred
   repository targets, supplies one named Habitat hook contribution, and
   acquires pinned Grit. Preserve unrelated repository-owned hook behavior,

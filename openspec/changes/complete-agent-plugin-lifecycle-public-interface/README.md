@@ -1648,7 +1648,7 @@ review does not authorize a separate release path.
 | Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat workspace source now evaluates the corpus, while released adoption and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat product realization | Template-owned resource, provider, service, and first Oclif-projection source are present under task 5.7e22b; Nx projection, app composition, the initializer, package publication, released adoption, and service-law activation remain open |
+| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, and the idempotent consumer initializer are landed; policy-pack construction, package publication, released adoption, and service-law activation remain open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
@@ -5522,9 +5522,10 @@ distributed runner, package transport, or custom selector. Bun lockfile changes
 remain conservatively broad while root toolchain inputs require that breadth;
 the ineffective dependency-update tuning knob was not retained.
 
-### Habitat Consumer Initializer Candidate
+### Habitat Consumer Initializer
 
-The task 5.7e22c candidate uses the ordinary Nx plugin installation path:
+Canonical Template merge `11c83f08` (PR #737) closes task 5.7e22c through the
+ordinary Nx plugin installation path:
 the npm registry carries the versioned `@habitat/cli` package, and
 `nx add @habitat/cli@<exact-version>` discovers and runs its native `init`
 generator. Nx owns consumer activation and graph projection; the package adds
@@ -5548,8 +5549,9 @@ an inferred target, runs the emitted hook from below the repository root,
 removes the hook twice, and preserves the installed Nx face. Focused
 TypeScript, 17 Nx-plugin behavior tests, three
 installed-package acceptance tests, and the complete repository check are
-green. The checkpoint remains a candidate until its Graphite node lands; task
-5.7e22c is not closed by this record alone.
+green. Required `Repository Ratchet` run `30685033753` passed on the exact PR
+head before Graphite landed the checkpoint. No package was published and no
+consumer repository was changed.
 
 ## Settlement Oracles
 
