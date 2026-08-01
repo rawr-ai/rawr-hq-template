@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-31 - Nx Installs Habitat Once
+
+Habitat consumer setup is a native Nx plugin installation concern, not another
+service capability or executable lifecycle. `nx add @habitat/cli` installs the
+ordinary npm artifact and invokes its package-declared `init` generator. Nx's
+Tree owns the bounded repository edits; the existing Habitat Nx plugin owns
+target inference; the app package merely assembles and distributes those
+qualified faces.
+
+Initialization admits the existing Nx workspace before changing it, acquires
+the package-local pinned Grit dependency, registers one exact plugin face, and
+adds one named Codex Stop contribution. It preserves unrelated configuration,
+upgrades only the recognized predecessor contribution, blocks ambiguity before
+Tree writes, and makes no write when already converged. The explicit
+`remove-hook` generator removes only Habitat's named hook contribution. Nx
+registration remains the installed plugin surface; package pins, blueprints,
+instances, and every other hook remain consumer authority.
+
+This boundary needs no Habitat service module, Oclif setup command, filesystem
+adapter, registry, receipt, or retained installer state. npm transports the
+package across repositories; Nx activates it inside an Nx repository.
+
+### Bag Of Keywords
+
+initialize, register, project, acquire, preserve, remove, converge.
+
+portability, ownership, identity, repeatability, simplicity, distribution.
+
+Nx, npm, Tree, Grit, hook, plugin, generator.
+
 ## 2026-07-31 - The App Selects And Activates
 
 Habitat's executable is an ordinary app over already-qualified parts. The app
