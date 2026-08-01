@@ -37,6 +37,9 @@
           "@habitat-ai/service"
         ],
         "projectsRelationship": "fixed",
+        "version": {
+          "preserveLocalDependencyProtocols": false
+        },
         "releaseTag": {
           "pattern": "habitat-cli-v{version}"
         }

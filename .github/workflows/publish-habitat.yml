@@ -1,0 +1,96 @@
+name: Publish Habitat
+
+on:
+  push:
+    tags:
+      - habitat-blueprints-v*
+      - habitat-cli-v*
+      - typebox-adapter-v*
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish Nx release group
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out tagged main commit
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Require canonical main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Match TypeBox adapter tag
+        if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
+        run: >-
+          test "$(jq -r .version packages/typebox-adapter/package.json)"
+          = "${GITHUB_REF_NAME#typebox-adapter-v}"
+
+      - name: Match Habitat CLI tag
+        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
+        run: >-
+          test "$(jq -r .version
+          apps/habitat/package.json
+          plugins/cli/commands/habitat/package.json
+          resources/rule-evaluation/package.json
+          resources/source-inventory/package.json
+          services/habitat/package.json
+          | sort -u)"
+          = "${GITHUB_REF_NAME#habitat-cli-v}"
+
+      - name: Match Habitat blueprints tag
+        if: startsWith(github.ref, 'refs/tags/habitat-blueprints-v')
+        run: >-
+          test "$(jq -r .version packages/habitat-blueprints/package.json)"
+          = "${GITHUB_REF_NAME#habitat-blueprints-v}"
+
+      - name: Build TypeBox adapter
+        if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
+        run: >-
+          bunx nx run @habitat-ai/typebox-adapter:build
+          --outputStyle=static
+
+      - name: Verify installed Habitat CLI
+        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
+        run: >-
+          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package
+          --outputStyle=static
+
+      - name: Publish TypeBox adapter
+        if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
+        run: >-
+          bunx nx release publish
+          --group=typebox-adapter
+          --outputStyle=static
+
+      - name: Publish Habitat CLI
+        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
+        run: >-
+          bunx nx release publish
+          --group=habitat-cli
+          --outputStyle=static
+
+      - name: Publish Habitat blueprints
+        if: startsWith(github.ref, 'refs/tags/habitat-blueprints-v')
+        run: >-
+          bunx nx release publish
+          --group=habitat-blueprints
+          --outputStyle=static
