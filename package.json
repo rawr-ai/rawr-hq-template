@@ -35,6 +35,7 @@
     "habitat": "habitat",
     "format": "bunx nx run habitat:format",
     "ci": "nx run-many -t build,check,test",
+    "ci:affected": "nx affected -t build,check,test",
     "check": "nx run-many -t check",
     "runtime-realization:type-env": "bunx nx run runtime-realization-type-env:gate",
     "semantica:setup": "bun tools/semantica-workbench/bin/workbench.mjs setup",

@@ -49,8 +49,11 @@
 - Dependency installation configures the repository-owned Git hooks.
 - Pre-push invokes `bun run check`, which schedules every admitted project's
   public check once through Nx.
-- The repository workflow runs `bun run ci`, one Nx graph over `build`,
-  `check`, and `test`, before protected branches admit a candidate SHA.
+- Pull requests run `bun run ci:affected` against the exact checked-out merge
+  candidate, so Nx selects the complete affected `build`, `check`, and `test`
+  graph before `main` admits that candidate.
+- Merge-queue candidates, when used, and pushes to `main` run the full
+  `bun run ci` graph as repository-wide settlement.
 
 ## Interfaces
 
