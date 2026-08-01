@@ -4,13 +4,13 @@ import type {
   RuleEvaluationFinding,
   RuleEvaluationRequest,
   RuleEvaluationResource,
-} from "@habitat/resource-rule-evaluation";
+} from "@habitat-ai/resource-rule-evaluation";
 import {
   MAX_SOURCE_INVENTORY_ENTRIES,
   type ObserveSourceInventoryInput,
   type SourceInventoryResource,
   type SourceInventoryResult,
-} from "@habitat/resource-source-inventory";
+} from "@habitat-ai/resource-source-inventory";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import { type Client, createClient } from "../../../../src/client";
 

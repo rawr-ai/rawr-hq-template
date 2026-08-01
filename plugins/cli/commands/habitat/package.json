@@ -1,5 +1,5 @@
 {
-  "name": "@habitat/plugin-cli",
+  "name": "@habitat-ai/plugin-cli",
   "version": "0.2.0",
   "private": false,
   "description": "Native Oclif projections for the Habitat catalog service",
@@ -24,7 +24,7 @@
     "test": "vitest run --project plugin-habitat"
   },
   "dependencies": {
-    "@habitat/service": "workspace:*",
+    "@habitat-ai/service": "workspace:*",
     "@oclif/core": "^4.11.4"
   },
   "devDependencies": {

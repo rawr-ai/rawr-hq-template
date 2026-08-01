@@ -1,4 +1,4 @@
-import type { Client } from "@habitat/service/client";
+import type { Client } from "@habitat-ai/service/client";
 import type { CreateNodesFunction, CreateNodesResultArray } from "@nx/devkit";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -122,7 +122,7 @@ function resolvedCatalog(
     catalog: {
       schemaVersion: 3,
       policyPack: {
-        name: "@habitat/blueprints",
+        name: "@habitat-ai/blueprints",
         version: "0.2.0",
         protocolVersion: 1,
         blueprints: [],
@@ -136,7 +136,7 @@ function resolvedCatalog(
 }
 
 const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
-  { externalDependencies: ["@habitat/cli"] },
+  { externalDependencies: ["@habitat-ai/cli"] },
   "{workspaceRoot}/bun.lock",
   "{workspaceRoot}/package.json",
   { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -201,7 +201,7 @@ describe("Habitat Nx projection", () => {
     });
     expect(serviceLeaf?.command).not.toContain("nx");
     expect(serviceLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat/cli"] },
+      { externalDependencies: ["@habitat-ai/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -230,7 +230,7 @@ describe("Habitat Nx projection", () => {
     const pluginTargets = projects["plugins/b"]?.targets;
     const structureLeaf = pluginTargets?.["habitat:application:@scope/plugin-b:plugin-structure"];
     expect(structureLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat/cli"] },
+      { externalDependencies: ["@habitat-ai/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },

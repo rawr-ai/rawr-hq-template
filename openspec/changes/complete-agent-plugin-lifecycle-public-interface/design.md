@@ -186,7 +186,7 @@ exactly `source = project/src`. Release-pack acceptance and instance activation
 must derive or positively bound that relation rather than trusting two unrelated
 paths.
 
-The first `@habitat/blueprints` pack has no precommitted accepted set. It cannot
+The first `@habitat-ai/blueprints` pack has no precommitted accepted set. It cannot
 promise `package@1` before exact-member closure, activate a definition before
 its root relations are bounded, or promise the six service-construction laws
 before source migration and a green complete corpus. Public-consumer sealing
@@ -197,7 +197,7 @@ also requires the workspace acquisition described in
 
 The Civ7 `habitat-cli-v0.1.0` release and reviewed source
 `d51e8c7454e301bcaba56c8364f5c714d5febca3` are historical transfer evidence.
-Template owns the Habitat product source and the `@habitat/cli` release
+Template owns the Habitat product source and the `@habitat-ai/cli` release
 identity, but those are different boundaries. Habitat source follows the
 ordinary resource, provider, service, plugin, app, runtime, and entrypoint
 funnel; no composite package is allowed to own all of those kinds. The Oclif

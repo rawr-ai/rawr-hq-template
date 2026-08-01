@@ -35,5 +35,5 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint`,
-  `bunx nx run @habitat/resource-rule-evaluation:typecheck`, and
+  `bunx nx run @habitat-ai/resource-rule-evaluation:typecheck`, and
   `bunx nx run provider-rule-evaluation-grit-effect-platform-node:test`.

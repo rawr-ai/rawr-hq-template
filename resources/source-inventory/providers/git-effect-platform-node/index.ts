@@ -4,14 +4,14 @@ import type {
   SourceInventoryFailure,
   SourceInventoryResource,
   SourceInventoryResult,
-} from "@habitat/resource-source-inventory";
+} from "@habitat-ai/resource-source-inventory";
 import {
   MAX_SOURCE_INVENTORY_FAILURE_DETAIL,
   MAX_SOURCE_INVENTORY_ROOT_LENGTH,
   ObserveSourceInventoryInputSchema,
   SourceInventoryPathSchema,
   SourceInventoryResultSchema,
-} from "@habitat/resource-source-inventory";
+} from "@habitat-ai/resource-source-inventory";
 import { Effect, type PlatformError, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { ReadonlyObject, type Static, Type } from "typebox";

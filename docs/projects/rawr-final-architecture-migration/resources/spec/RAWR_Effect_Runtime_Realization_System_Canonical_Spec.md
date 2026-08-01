@@ -5081,12 +5081,12 @@ Desktop background cadence is process-local desktop behavior. Business-level dur
 
 ### 25.11 Blueprint evaluator and proof topology
 
-RAWR HQ-Template owns the Habitat product source, `@habitat/cli` release
+RAWR HQ-Template owns the Habitat product source, `@habitat-ai/cli` release
 identity, releases, consumer integration, and generic blueprint policy.
 Habitat source follows the ordinary resource, provider, service, plugin, app,
-runtime, and entrypoint realization chain. `@habitat/cli` is the assembled
+runtime, and entrypoint realization chain. `@habitat-ai/cli` is the assembled
 Oclif release artifact rather than a composite package source owner. Template
-publishes policy through the data-only `@habitat/blueprints` payload:
+publishes policy through the data-only `@habitat-ai/blueprints` payload:
 
 ```text
 habitat-pack.json

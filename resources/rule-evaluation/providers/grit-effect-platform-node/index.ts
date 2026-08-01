@@ -5,11 +5,11 @@ import type {
   RuleEvaluationRequest,
   RuleEvaluationResource,
   RuleEvaluationResult,
-} from "@habitat/resource-rule-evaluation";
+} from "@habitat-ai/resource-rule-evaluation";
 import {
   MAX_RULE_EVALUATION_FAILURE_DETAIL,
   RuleEvaluationRequestSchema,
-} from "@habitat/resource-rule-evaluation";
+} from "@habitat-ai/resource-rule-evaluation";
 import {
   Effect,
   Schema as EffectSchema,

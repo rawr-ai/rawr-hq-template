@@ -1,4 +1,4 @@
-import { bindHabitatClient } from "@habitat/plugin-cli/binding";
+import { bindHabitatClient } from "@habitat-ai/plugin-cli/binding";
 import { execute, settings } from "@oclif/core";
 import { createHabitatClientForWorkspace } from "./composition.js";
 

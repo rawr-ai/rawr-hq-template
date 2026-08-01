@@ -1,5 +1,5 @@
 {
-  "name": "@habitat/resource-rule-evaluation",
+  "name": "@habitat-ai/resource-rule-evaluation",
   "version": "0.2.0",
   "private": false,
   "type": "module",

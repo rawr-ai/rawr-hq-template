@@ -28,9 +28,9 @@ const appRoot = fileURLToPath(new URL("..", import.meta.url));
 const sourceEntrypoint = fileURLToPath(new URL("../src/index.ts", import.meta.url));
 const fixtureRoots: string[] = [];
 const policyPackFixtureFiles = {
-  "node_modules/@habitat/blueprints/package.json": `${JSON.stringify(
+  "node_modules/@habitat-ai/blueprints/package.json": `${JSON.stringify(
     {
-      name: "@habitat/blueprints",
+      name: "@habitat-ai/blueprints",
       version: "0.2.0",
       exports: {
         "./habitat-pack.json": "./habitat-pack.json",
@@ -40,7 +40,7 @@ const policyPackFixtureFiles = {
     null,
     2
   )}\n`,
-  "node_modules/@habitat/blueprints/habitat-pack.json": `${JSON.stringify(
+  "node_modules/@habitat-ai/blueprints/habitat-pack.json": `${JSON.stringify(
     { protocolVersion: 1, blueprints: [] },
     null,
     2

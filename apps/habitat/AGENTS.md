@@ -14,9 +14,9 @@
 - This app is the sole owner of the production Node provider profile.
 - It constructs one workspace-bound Habitat client and supplies it to the
   Oclif and Nx projections.
-- Domain behavior remains in `@habitat/service`; mechanical capabilities remain
+- Domain behavior remains in `@habitat-ai/service`; mechanical capabilities remain
   in resources and providers; argv and task projection remain in plugins.
-- The `@habitat/cli` package is an ordinary Oclif distribution boundary, not a
+- The `@habitat-ai/cli` package is an ordinary Oclif distribution boundary, not a
   controller, runtime selector, service owner, or retained state authority.
 
 ## Behavior
@@ -47,8 +47,8 @@
 ## Interfaces
 
 - Executable: `habitat`.
-- Nx plugin: `@habitat/cli/nx-plugin`.
-- Nx generators: `@habitat/cli:init` and `@habitat/cli:remove-hook`.
+- Nx plugin: `@habitat-ai/cli/nx-plugin`.
+- Nx generators: `@habitat-ai/cli:init` and `@habitat-ai/cli:remove-hook`.
 - No root library export is admitted.
 
 ## Routing
@@ -60,6 +60,6 @@
 
 ## Validation
 
-- Start with `bunx nx show project @habitat/cli --json`.
-- Run `@habitat/cli:typecheck`, `@habitat/cli:test`,
-  `@habitat/cli:build`, and `@habitat/cli:manifest` through Nx.
+- Start with `bunx nx show project @habitat-ai/cli --json`.
+- Run `@habitat-ai/cli:typecheck`, `@habitat-ai/cli:test`,
+  `@habitat-ai/cli:build`, and `@habitat-ai/cli:manifest` through Nx.

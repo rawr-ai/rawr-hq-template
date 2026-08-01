@@ -1,4 +1,4 @@
-import type { Client } from "@habitat/service/client";
+import type { Client } from "@habitat-ai/service/client";
 import { type Config, Errors } from "@oclif/core";
 
 const HABITAT_CLIENT = "habitatClient";

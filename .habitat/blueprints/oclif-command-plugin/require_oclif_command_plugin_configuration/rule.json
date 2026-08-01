@@ -14,7 +14,7 @@
   "lane": "enforced",
   "forbids": "an unversioned or non-ESM command plugin, a dependency on another command plugin, mismatched command discovery, a plugin-owned binary, a missing package-owned Oclif generator or production manifest command, or an ambiguous source-to-output mapping",
   "why": "Each command capability is a versioned Oclif plugin composed by the host rather than another command plugin. Oclif discovers one compiled command root, its development mode maps dist commands back to src through TypeScript rootDir and outDir, and Nx infers the package-owned production manifest script as a target.",
-  "remediate": "Place a versioned @rawr/plugin-* or @habitat/plugin-* ESM command plugin under plugins/cli/commands, depend on @oclif/core but no command plugin, declare the Oclif generator, discover dist/commands, map TypeScript rootDir src to outDir dist, expose no bin field, publish dist and oclif.manifest.json, and use NODE_ENV=production bun --bun oclif manifest as the package manifest script.",
+  "remediate": "Place a versioned @rawr/plugin-* or @habitat-ai/plugin-* ESM command plugin under plugins/cli/commands, depend on @oclif/core but no command plugin, declare the Oclif generator, discover dist/commands, map TypeScript rootDir src to outDir dist, expose no bin field, publish dist and oclif.manifest.json, and use NODE_ENV=production bun --bun oclif manifest as the package manifest script.",
   "message": "The Oclif command-plugin package must describe one host-composed command capability.",
   "pathCoverage": [
     {

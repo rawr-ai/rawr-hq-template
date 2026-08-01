@@ -35,6 +35,6 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint`,
-  `bunx nx run @habitat/resource-source-inventory:typecheck`,
-  `bunx nx run @habitat/resource-source-inventory:test`, and
+  `bunx nx run @habitat-ai/resource-source-inventory:typecheck`,
+  `bunx nx run @habitat-ai/resource-source-inventory:test`, and
   `bunx nx run provider-source-inventory-git-effect-platform-node:test`.

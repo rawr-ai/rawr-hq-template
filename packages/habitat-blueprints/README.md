@@ -1,13 +1,13 @@
-# `@habitat/blueprints`
+# `@habitat-ai/blueprints`
 
-`@habitat/blueprints` is a public, data-only npm artifact that transports
+`@habitat-ai/blueprints` is a public, data-only npm artifact that transports
 selected generic Habitat blueprint data between an exact release and its
 consumers.
 
 ## Public interface
 
-The package exports `@habitat/blueprints/habitat-pack.json`, its ordinary npm
-metadata, and accepted files below `@habitat/blueprints/blueprints/*`.
+The package exports `@habitat-ai/blueprints/habitat-pack.json`, its ordinary npm
+metadata, and accepted files below `@habitat-ai/blueprints/blueprints/*`.
 Protocol 1 is a closed JSON object with these fields:
 
 - `protocolVersion`: the integer `1`.

@@ -1855,7 +1855,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   activation. Close this task only when the six laws are enforced by the
   required repository gate and the complete admitted corpus reports zero.
 - [x] 5.7e22a Correct Habitat package and release authority before source
-  intake. Make RAWR HQ-Template the owner of `@habitat/cli` source, package
+  intake. Make RAWR HQ-Template the owner of `@habitat-ai/cli` source, package
   identity, releases, generic policy distribution, and plug-and-play consumer
   integration. Retain Magic Migration and Civ7 only as implementation and
   consumer evidence with historical provenance. Require one idempotent
@@ -1942,7 +1942,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   selection for later Nx projection, and retain no inventory or result state.
 - [x] 5.7e22b3 Project the sealed Habitat service through one Oclif command
   plugin and one Nx integration plugin, then compose them in the Habitat app.
-  Build and package one ordinary `@habitat/cli` artifact whose `habitat`
+  Build and package one ordinary `@habitat-ai/cli` artifact whose `habitat`
   entrypoint and Nx export share the same public service semantics. Artifact
   unity does not change source ownership. Use native Nx and Oclif build,
   manifest, package, and release mechanics; add no controller, private runtime
@@ -1960,7 +1960,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   remove the contribution only through an explicit removal operation. Prove
   those transitions in an isolated consumer without repository-local wiring.
 - [x] 5.7e22d Construct and admit the first data-only
-  `@habitat/blueprints` package before publication. Freeze its package
+  `@habitat-ai/blueprints` package before publication. Freeze its package
   metadata, `habitat-pack.json` protocol, exports, and exclusion proof, but do
   not precommit its admitted set. Include `package@1` only after exact
   selected-member equality is implemented and proven. Activate no definition
@@ -1973,8 +1973,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   repository-qualified instances, host baselines, executable code, product
   paths, and legacy v2 rules. Prove exact pack resolution and admission through
   the workspace-owned CLI.
-- [ ] 5.7e22e Publish the first Template-owned `@habitat/cli` and
-  `@habitat/blueprints` releases from reviewed canonical `main`. Bind
+- [ ] 5.7e22e Publish the first Template-owned `@habitat-ai/cli` and
+  `@habitat-ai/blueprints` releases from reviewed canonical `main`. Bind
   package, policy, protocol, and source provenance to one compatible release
   set and publish the CLI before its policy pack. Nx owns release orchestration;
   npm is the ordinary cross-repository transport consumed through `nx add`.

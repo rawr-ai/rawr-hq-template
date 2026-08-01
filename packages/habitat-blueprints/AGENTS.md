@@ -1,4 +1,4 @@
-# Habitat Blueprints Package Router (`@habitat/blueprints`)
+# Habitat Blueprints Package Router (`@habitat-ai/blueprints`)
 
 ## Purpose
 
@@ -39,8 +39,8 @@
 
 ## Interfaces
 
-- Public npm subpaths: `@habitat/blueprints/habitat-pack.json`,
-  `@habitat/blueprints/blueprints/*`, and ordinary `package.json` metadata.
+- Public npm subpaths: `@habitat-ai/blueprints/habitat-pack.json`,
+  `@habitat-ai/blueprints/blueprints/*`, and ordinary `package.json` metadata.
 - No root export, executable entrypoint, installer, or runtime interface exists.
 
 ## Routing
@@ -52,5 +52,5 @@
 ## Validation
 
 - Parse `habitat-pack.json` as JSON and confirm its exact protocol-1 fields.
-- Run `bunx nx show project @habitat/blueprints --json` and confirm the package
+- Run `bunx nx show project @habitat-ai/blueprints --json` and confirm the package
   root, public npm status, and ownership tags.

@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@habitat/resource-rule-evaluation",
+  "name": "@habitat-ai/resource-rule-evaluation",
   "namedInputs": {
     "production": [
       "default",

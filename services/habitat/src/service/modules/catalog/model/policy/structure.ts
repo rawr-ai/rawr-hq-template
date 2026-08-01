@@ -1,4 +1,4 @@
-import type { SourceInventoryResult } from "@habitat/resource-source-inventory";
+import type { SourceInventoryResult } from "@habitat-ai/resource-source-inventory";
 import picomatch from "picomatch";
 import { Validator } from "typebox/schema";
 import type { HabitatCatalog } from "../dto/catalog.js";

@@ -50,4 +50,4 @@
 
 ## Validation
 
-- Run `nx run @habitat/plugin-nx:typecheck`, `:test`, and `:check`.
+- Run `nx run @habitat-ai/plugin-nx:typecheck`, `:test`, and `:check`.

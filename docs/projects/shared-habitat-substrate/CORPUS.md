@@ -22,9 +22,9 @@ It is not a second plan or normative design.
 
 ## Authority Boundary
 
-This repository owns the Habitat product source, `@habitat/cli` release
+This repository owns the Habitat product source, `@habitat-ai/cli` release
 identity, releases, consumer integration, and generic blueprint policy. The
-planned `@habitat/blueprints` artifact will distribute accepted policy as
+planned `@habitat-ai/blueprints` artifact will distribute accepted policy as
 versioned data. The Habitat service owns exact resolution, protocol validation,
 admission, evaluation, and classification. Qualified plugins own Oclif and Nx
 projection. The Habitat app owns provider/profile selection, product
@@ -33,7 +33,7 @@ composition, and the executable entrypoint.
 The target public policy export surface is:
 
 ```text
-@habitat/blueprints/
+@habitat-ai/blueprints/
   habitat-pack.json
   blueprints/**
 ```
@@ -58,7 +58,7 @@ The current Civ7 source audit establishes these exact, read-only inputs:
 | Application classification | commit `b41cf544b1a3aa446320894ef2b5f01b5051b0eb`; tree `46e252dd8f2c75be30bae06c165a1ce111e58b4f` | Clean scoped implementation evidence; not Nx projection or a release |
 | Habitat authority ontology | file at commit `ebf5bbcab1e754a17a63999747f80c5e60b28fb7`; blob `021bc1895f6e65cde6b2d1e8fc297720cb4a8b20`; introduced by `de8359e8ea7039359aa101c4b8f6614f8c1b49f7`, last substantive ontology activation `f6454f82e6788415a0315b7d61e0f75f2a756b46` | Conceptual consolidation only; product examples and transitional physical layout do not transfer, while capability and niche realization remain deferred |
 
-No `@habitat/cli@0.2.0` release exists. Nx application projection and Fluree
+No `@habitat-ai/cli@0.2.0` release exists. Nx application projection and Fluree
 lifecycle changes are not transfer inputs. The first staging intake proved
 blueprint-aware loading and Nx application behavior but collapsed the complete
 product graph beneath one `type:package` owner. Standing review rejected that
@@ -97,8 +97,8 @@ This is the definition-only checkpoint recorded in
 
 | Kind | Current state | Required disposition |
 | --- | --- | --- |
-| Habitat product graph | Seven schema-admitted v3 definitions with no instances or applications; Civ7 `@habitat/cli@0.1.0` remains transfer evidence | Realize support, resources/providers, service, Oclif/Nx projections, and app as distinct Nx projects; then publish one assembled `@habitat/cli@0.2.0` release identity |
-| Blueprint policy pack | 33 live v2 rules plus seven inert root v3 definitions; no admitted pack | Construct the data-only `@habitat/blueprints` seam only from definitions that pass their acceptance gates; do not copy current host packets into it |
+| Habitat product graph | Seven schema-admitted v3 definitions with no instances or applications; Civ7 `@habitat/cli@0.1.0` remains transfer evidence | Realize support, resources/providers, service, Oclif/Nx projections, and app as distinct Nx projects; then publish one assembled `@habitat-ai/cli@0.2.0` release identity |
+| Blueprint policy pack | 33 live v2 rules plus seven inert root v3 definitions; no admitted pack | Construct the data-only `@habitat-ai/blueprints` seam only from definitions that pass their acceptance gates; do not copy current host packets into it |
 | `package@1` | Schema-admitted definition; only `contract` and `semantics` proof axes are frozen | Keep outside release-pack acceptance until exact selected-member equality is proven; do not promise it in the first pack |
 | Resource | Schema-admitted, execution-inert root definition plus draft boundary packet; proof axes remain candidates | Correct provider-family closure, proof, anchors, and generator before release-pack acceptance |
 | Provider | Schema-admitted, execution-inert root definition plus draft boundary packet; proof axes remain candidates | Correct nested realization closure, proof, anchors, and generator before release-pack acceptance |

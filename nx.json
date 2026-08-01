@@ -30,11 +30,11 @@
       },
       "habitat-cli": {
         "projects": [
-          "@habitat/cli",
-          "@habitat/plugin-cli",
-          "@habitat/resource-rule-evaluation",
-          "@habitat/resource-source-inventory",
-          "@habitat/service"
+          "@habitat-ai/cli",
+          "@habitat-ai/plugin-cli",
+          "@habitat-ai/resource-rule-evaluation",
+          "@habitat-ai/resource-source-inventory",
+          "@habitat-ai/service"
         ],
         "projectsRelationship": "fixed",
         "releaseTag": {
@@ -42,7 +42,7 @@
         }
       },
       "habitat-blueprints": {
-        "projects": ["@habitat/blueprints"],
+        "projects": ["@habitat-ai/blueprints"],
         "projectsRelationship": "fixed",
         "releaseTag": {
           "pattern": "habitat-blueprints-v{version}"
@@ -192,11 +192,11 @@
       {
         "filter": {
           "projects": [
-            "@habitat/cli",
-            "@habitat/plugin-cli",
-            "@habitat/resource-rule-evaluation",
-            "@habitat/resource-source-inventory",
-            "@habitat/service",
+            "@habitat-ai/cli",
+            "@habitat-ai/plugin-cli",
+            "@habitat-ai/resource-rule-evaluation",
+            "@habitat-ai/resource-source-inventory",
+            "@habitat-ai/service",
             "@rawr/agent-plugin-lifecycle",
             "@rawr/chatgpt-corpus",
             "@rawr/cli",
@@ -270,24 +270,24 @@
       {
         "filter": {
           "projects": [
-            "@habitat/cli",
-            "@habitat/plugin-cli",
-            "@habitat/resource-rule-evaluation",
-            "@habitat/resource-source-inventory",
-            "@habitat/service"
+            "@habitat-ai/cli",
+            "@habitat-ai/plugin-cli",
+            "@habitat-ai/resource-rule-evaluation",
+            "@habitat-ai/resource-source-inventory",
+            "@habitat-ai/service"
           ]
         },
         "dependsOn": [
           "...",
           {
-            "projects": ["@habitat/cli"],
+            "projects": ["@habitat-ai/cli"],
             "target": "acceptance:oclif-installed-package"
           }
         ]
       },
       {
         "filter": {
-          "projects": ["@habitat/cli", "@habitat/plugin-cli"]
+          "projects": ["@habitat-ai/cli", "@habitat-ai/plugin-cli"]
         },
         "dependsOn": ["...", "manifest"]
       }

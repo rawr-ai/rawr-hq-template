@@ -9,7 +9,7 @@ import {
 
 const binding = {
   gritPackage: "@getgrit/cli",
-  nxPlugin: "@habitat/cli/nx-plugin",
+  nxPlugin: "@habitat-ai/cli/nx-plugin",
   predecessorNxPlugins: [
     {
       plugin: "@habitat/cli/nx-plugin",
@@ -17,11 +17,11 @@ const binding = {
     },
   ],
   hook: {
-    _habitat: { identity: "@habitat/cli:agent-stop", revision: 1 },
+    _habitat: { identity: "@habitat-ai/cli:agent-stop", revision: 1 },
     hooks: [
       {
         type: "command",
-        command: "bunx --bun --no-install --package @habitat/cli habitat hook agent-stop",
+        command: "bunx --bun --no-install --package @habitat-ai/cli habitat hook agent-stop",
         statusMessage: "Checking Habitat structure laws",
         timeout: 120,
       },
@@ -84,7 +84,7 @@ describe("Habitat Nx consumer initialization", () => {
     expect(initializeHabitatConsumer(tree, binding)).toEqual({ packageChanged: true });
 
     expect(readJson(tree, "nx.json")).toMatchObject({
-      plugins: ["unrelated-plugin", "@habitat/cli/nx-plugin"],
+      plugins: ["unrelated-plugin", "@habitat-ai/cli/nx-plugin"],
     });
     expect(readJson(tree, "package.json")).toMatchObject({
       name: "consumer",
@@ -121,7 +121,7 @@ describe("Habitat Nx consumer initialization", () => {
     });
   });
 
-  it("replaces exact predecessor states in place", () => {
+  it("replaces the exact root bootstrap predecessor in place and repeats byte-stably", () => {
     const tree = consumerTree({
       nxPlugins: ["before", binding.predecessorNxPlugins[0], "after"],
       stop: [
@@ -135,7 +135,7 @@ describe("Habitat Nx consumer initialization", () => {
     expect(initializeHabitatConsumer(tree, binding)).toEqual({ packageChanged: false });
     expect(readJson<{ readonly plugins: readonly unknown[] }>(tree, "nx.json").plugins).toEqual([
       "before",
-      "@habitat/cli/nx-plugin",
+      "@habitat-ai/cli/nx-plugin",
       "after",
     ]);
     expect(
@@ -147,6 +147,15 @@ describe("Habitat Nx consumer initialization", () => {
       binding.hook,
       { hooks: [{ type: "command", command: "echo after" }] },
     ]);
+
+    const nxAfterFirst = tree.read("nx.json");
+    const changesAfterFirst = tree.listChanges();
+    const write = vi.spyOn(tree, "write");
+
+    expect(initializeHabitatConsumer(tree, binding)).toEqual({ packageChanged: false });
+    expect(write).not.toHaveBeenCalled();
+    expect(tree.read("nx.json")).toEqual(nxAfterFirst);
+    expect(tree.listChanges()).toEqual(changesAfterFirst);
   });
 
   it("makes no Tree write when initialization is already converged", () => {
@@ -166,12 +175,20 @@ describe("Habitat Nx consumer initialization", () => {
       label: "duplicate Nx registration",
       tree: () =>
         consumerTree({
-          nxPlugins: ["@habitat/cli/nx-plugin", "@habitat/cli/nx-plugin"],
+          nxPlugins: ["@habitat-ai/cli/nx-plugin", "@habitat-ai/cli/nx-plugin"],
         }),
       message: "multiple Habitat Nx plugin registrations",
     },
     {
       label: "unknown Nx registration",
+      tree: () =>
+        consumerTree({
+          nxPlugins: [{ plugin: "@habitat-ai/cli/nx-plugin", options: { unsupported: true } }],
+        }),
+      message: "incompatible Habitat Nx plugin registration",
+    },
+    {
+      label: "drifted predecessor Nx registration",
       tree: () =>
         consumerTree({
           nxPlugins: [{ plugin: "@habitat/cli/nx-plugin", options: { unsupported: true } }],
@@ -224,7 +241,7 @@ describe("Habitat Nx consumer initialization", () => {
     removeHabitatHook(tree, binding);
 
     expect(readJson(tree, "nx.json")).toMatchObject({
-      plugins: ["unrelated-plugin", "@habitat/cli/nx-plugin"],
+      plugins: ["unrelated-plugin", "@habitat-ai/cli/nx-plugin"],
     });
     expect(readJson(tree, "package.json")).toMatchObject({
       trustedDependencies: ["unrelated-native-package", "@getgrit/cli"],
