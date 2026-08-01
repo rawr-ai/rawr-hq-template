@@ -1,0 +1,203 @@
+import type { TemporalInquiryResource } from "../../contract";
+import { FlureeClient, type FlureeReadClient } from "./fluree-client";
+import { type TemporalInquirySessionOptions, withTemporalInquirySession } from "./operation";
+
+export {
+  assertInquiryCheckpointEvidenceComplete,
+  assertInquiryCheckpointEvidenceReceiptsComplete,
+  type InquiryCheckpointEvidence,
+  inquiryCheckpointEvidenceHash,
+  inquiryCheckpointIri,
+  inquiryDefinitionHash,
+  normalizeInquiryCheckpointEvidence,
+} from "./checkpoint";
+export {
+  canonicalLedgerId,
+  INQUIRY_DEFINITION_SCHEMA_VERSION,
+  type InquiryDefinition,
+  InquiryDefinitionError,
+  type InquiryRefPolicy,
+  inquiryDefinitionInputs,
+  loadInquiryDefinition,
+  SUPPORTED_FLUREE_VERSION,
+  validateInquiryDefinition,
+} from "./definition";
+export {
+  FlureeClient,
+  type FlureeClientAccess,
+  type FlureeClientOptions,
+  type FlureeFetch,
+  type FlureeGraphUpdate,
+  FlureeHttpError,
+  type FlureeLedgerInfo,
+  type FlureeReadClient,
+  type FlureeWriteOptions,
+  type JsonObject,
+  type JsonValue,
+  type TrackedFlureeResponse,
+} from "./fluree-client";
+export {
+  acquireFlureeProcess,
+  DEFAULT_FLUREE_RUNTIME_CACHE_POLICY,
+  FlureeProcessExitedUnexpectedly,
+  type FlureeProcessHandle,
+  type FlureeProcessOptions,
+  FlureeProcessService,
+  FlureeProcessVersionMismatch,
+  FlureeRuntimeCacheMeasurementFailed,
+  type FlureeRuntimeCachePolicy,
+  type FlureeRuntimeCacheRecoveryReport,
+  FlureeRuntimeConfigurationError,
+  FlureeRuntimeOwnershipHandshakeFailed,
+  FlureeRuntimePortLocked,
+  FlureeRuntimeRetainedByteCapExceeded,
+  FlureeRuntimeRunByteCapExceeded,
+  FlureeRuntimeStorageLocked,
+  makeFlureeProcessLayer,
+  recoverStaleFlureeRuntimeCaches,
+  withFlureeProcess,
+} from "./fluree-process";
+export {
+  assertFrameGenerationImmutable,
+  assertFrameObservationImmutable,
+  FRAME_CONTENT_IDENTITY_VERSION,
+  FRAME_PARSER_VERSION,
+  FRAME_RECONSTRUCTION_VERSION,
+  FRAME_SCHEMA_VERSION,
+  type FrameBag,
+  type FrameIntakeReport,
+  FrameParseError,
+  type FrameRelation,
+  intakeFrame,
+  type ParsedFrameLedger,
+  type ParsedFrameOccurrence,
+  parseFrameLedger,
+  parseFrameLedgerEntries,
+} from "./frame";
+export {
+  FRAME_ATTESTATION_PROMPT,
+  FRAME_ATTESTATION_PROMPT_VERSION,
+} from "./frame-attestation";
+export {
+  assertGitObjectId,
+  createGitRunner,
+  type GitRunner,
+} from "./git";
+export {
+  type AssertHistoryObservationOptions,
+  applyRefPolicy,
+  assertHistoryObservation,
+  changeNode,
+  type ExcludedGitRef,
+  type GitChangeStats,
+  type GitCommit,
+  type GitRef,
+  HISTORY_INTAKE_VERSION,
+  type HistoryIntakePlan,
+  type HistoryIntakeReport,
+  intakeHistory,
+  parseGitRefs,
+  parseNumstat,
+  parseRawDiff,
+  planHistoryIntake,
+  type RawGitChange,
+} from "./history";
+export {
+  MATERIALIZATION_LEDGER_TOKEN,
+  type RefreshSemanticMaterializationOptions,
+  refreshSemanticMaterialization,
+  type SemanticMaterialization,
+  semanticMaterializationIri,
+} from "./materialization";
+export {
+  type AuthoredModel,
+  attestModelSources,
+  installModelControls,
+  intakeModel,
+  integratedModelDocument,
+  loadAuthoredModel,
+  type ModelControlsReceipt,
+  type ModelControlsReport,
+  type ModelIntakeReport,
+  type ModelSourceAttestation,
+  type PreparedModel,
+  prepareModel,
+  validateIntegratedModel,
+  validateKernelShapes,
+  verifyModelSource,
+} from "./model";
+export {
+  configGraphIri,
+  contextFor,
+  dateTimeLiteral,
+  evidenceHash,
+  type InquiryNamespaces,
+  inquiryIri,
+  namespacesFor,
+  nativeConfigGraphIri,
+  semanticGraphIri,
+  sparqlIri,
+  transactionMetadataSource,
+} from "./namespaces";
+export {
+  runTemporalInquiryCommand,
+  runTemporalInquiryOperation,
+  type TemporalInquiryOperationContext,
+  type TemporalInquiryOperationOptions,
+  type TemporalInquiryReadOperationContext,
+  type TemporalInquiryReadOperationOptions,
+  type TemporalInquirySession,
+  type TemporalInquirySessionOptions,
+  type TemporalInquiryWriteOperationContext,
+  type TemporalInquiryWriteOperationOptions,
+  withTemporalInquirySession,
+} from "./operation";
+export {
+  type AssertProjectionGenerationImmutableOptions,
+  assertProjectionGenerationImmutable,
+  type CompleteProjectionEnvelope,
+  type IntakeProjectionOptions,
+  intakeProjection,
+  type ProjectionIntakeReport,
+  projectionGeneration,
+} from "./projection";
+export {
+  assertNoQueryTimeRules,
+  assertReasoningComplete,
+  CHECKPOINT_SPARQL_PLACEHOLDERS,
+  type CheckpointQuery,
+  type CheckpointQueryResult,
+  type CheckpointSemanticDataset,
+  type CheckpointSparqlInput,
+  type CurrentCheckpointQuery,
+  checkpointLedger,
+  checkpointSparqlQuery,
+  type InquiryCheckpoint,
+  type InquiryCheckpointSelector,
+  type QueryCurrentInquiryCheckpointOptions,
+  queryAtCheckpoint,
+  queryCurrentInquiryCheckpoint,
+  REASONING_MODES,
+  type ReasoningMode,
+  readCheckpointSparqlInput,
+  renderCheckpointSparql,
+  resolveInquiryCheckpoint,
+} from "./query";
+export {
+  intakeSession,
+  parseSessionJsonl,
+  projectSession,
+  type SessionIntakeReport,
+  type SessionMessage,
+  type SessionProjectionOptions,
+  type SessionRole,
+  type SessionSource,
+  type SessionTranscript,
+  searchFrameSession,
+} from "./session";
+export { resolveCodexRollout } from "./session-resolver";
+
+/** Node-backed provider for one explicit foreground temporal inquiry session. */
+export const flureeTemporalInquiryResource = {
+  withSession: withTemporalInquirySession,
+} satisfies TemporalInquiryResource<TemporalInquirySessionOptions, FlureeReadClient, FlureeClient>;

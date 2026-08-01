@@ -1,0 +1,29 @@
+{
+  "name": "provider-temporal-inquiry-fluree-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/temporal-inquiry/providers/fluree-effect-platform-node",
+  "implicitDependencies": ["@habitat/resource-temporal-inquiry"],
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:temporal-inquiry",
+    "provider:fluree-effect-platform-node"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx vitest run --config {projectRoot}/vitest.config.ts"
+      }
+    }
+  }
+}
