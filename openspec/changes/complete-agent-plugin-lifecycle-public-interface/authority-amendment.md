@@ -204,9 +204,9 @@ Template owns the Habitat product source and realizes it through the ordinary
 resource, provider, service, plugin, and app graph. `@habitat/cli` is the
 assembled Oclif release identity rather than a composite package source owner.
 The Habitat Nx projection owns application discovery, exact inputs, caching,
-and execution without acquiring service or provider authority. Publication,
-the idempotent consumer initializer, and released-package adoption remain
-separately reviewed checkpoints.
+and execution without acquiring service or provider authority. The idempotent
+consumer initializer is landed; policy-pack construction, publication, and
+released-package adoption remain separately reviewed checkpoints.
 
 ## Behavioral Boundary
 
