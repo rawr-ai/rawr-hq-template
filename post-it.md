@@ -6,6 +6,37 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-01 - Policy Travels As Data
+
+The first Habitat policy pack is an ordinary public npm package containing one
+closed manifest and no executable code. npm transports the artifact, Nx owns
+release and consumer installation, and the Habitat app selects the exact
+installed package. The Habitat service then admits the selected package
+metadata and manifest through TypeBox before catalog resolution. None of those
+mechanics creates another installer, registry, evaluator, or policy owner.
+
+An empty member set is a complete admitted result, not a fallback. It records
+that no blueprint definition has yet passed release-pack acceptance and must
+activate nothing. Later members enter only as explicitly versioned blueprint
+records whose data is present in the same package. Repository instances,
+baselines, legacy rules, executable code, and host paths remain outside the
+artifact.
+
+The installed CLI is the proof boundary: it must expose the exact package
+name, package version, protocol version, and admitted members returned by the
+same service used by Nx. A malformed or missing manifest, or mismatched selected
+pack, is a catalog rejection rather than silent omission or precedence behavior.
+An absent package is an unsatisfied required peer and fails consumer installation
+or app composition before catalog work begins.
+
+### Bag Of Keywords
+
+pack, manifest, member, version, protocol.
+
+portability, identity, admission, closure, reuse.
+
+npm, Nx, TypeBox, service, app.
+
 ## 2026-07-31 - Nx Installs Habitat Once
 
 Habitat consumer setup is a native Nx plugin installation concern, not another
