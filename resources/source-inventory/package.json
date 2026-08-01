@@ -3,14 +3,19 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/contract.js",
+  "types": "./dist/contract.d.ts",
   "exports": {
     ".": {
-      "types": "./contract.ts",
-      "default": "./contract.ts"
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
     },
     "./providers/git-effect-platform-node": {
-      "types": "./providers/git-effect-platform-node/index.ts",
-      "default": "./providers/git-effect-platform-node/index.ts"
+      "types": "./dist/providers/git-effect-platform-node/index.d.ts",
+      "default": "./dist/providers/git-effect-platform-node/index.js"
     }
   },
   "scripts": {
