@@ -1995,11 +1995,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `@habitat-ai` packages to the one landed workflow. Preserve the repository
   ratchet as a prerequisite and add no release wrapper.
 - [ ] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
-  consumer. Delete the manual Nx rule chain, explicit CI Grit acquisition,
-  copied hook locator, stale Civ7 tarball pin, and consumer-only ownership
-  prose only after the initializer preserves the repository's remote-safety
-  hook behavior. Run initialization twice and require a byte-stable second
-  pass, then prove repeated parallel policy checks through native Nx targets.
+  consumer. Before that cutover, make the Template-owned catalog, check
+  operation, and Nx plugin execute and project every still-live version-two
+  compatibility rule through the one native runtime. Preserve exact rule and
+  owner identity, executable outcome, cache inputs, and owner-local target
+  coverage while keeping compatibility facts distinct from version-three
+  blueprint applications. Delete the manual Nx rule chain, explicit CI Grit
+  acquisition, copied hook locator, stale Civ7 tarball pin, and consumer-only
+  ownership prose only after native parity and the initializer's remote-safety
+  hook behavior are proven. Run initialization twice and require a byte-stable
+  second pass, then prove repeated parallel policy checks through native Nx
+  targets.
 - [ ] 5.7e22g Realize the Habitat product graph directly on Template's Effect
   4, oRPC 2, and current TypeBox substrate. Do not first preserve an isolated
   Effect 3/oRPC 1 realm and then migrate it. Keep this vendor cut independently

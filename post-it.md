@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-01 - Compatibility Preserves Execution
+
+The first native Template cutover does not force all thirty-three live Habitat
+laws into version-three blueprints. Those laws already have one admitted
+version-two data format and one executing owner. The Template-owned Habitat
+catalog must therefore admit that exact corpus, the check operation must
+evaluate it through the same Grit and structure capabilities used by native
+applications, and the Nx plugin must project its owner-local leaf targets.
+
+This is execution continuity inside one CLI, not a second runtime or a new
+policy model. Version-three applications and compatibility rules remain
+distinct catalog facts. Each compatibility rule disappears when its accepted
+blueprint application replaces it; until then, deleting the Civ7 predecessor
+cannot delete its enforcement. The empty policy pack remains truthful while
+its first reusable member is still gated.
+
+### Bag Of Keywords
+
+rule, owner, catalog, check, target.
+
+continuity, parity, simplicity, closure, truth.
+
+admit, project, execute, compare, retire.
+
 ## 2026-08-01 - Habitat Is An Ordinary Nx Release
 
 Habitat now crosses repository boundaries as seven ordinary npm packages under
