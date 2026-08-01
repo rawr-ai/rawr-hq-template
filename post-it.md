@@ -6,6 +6,29 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-01 - Habitat Is An Ordinary Nx Release
+
+Habitat now crosses repository boundaries as seven ordinary npm packages under
+`@habitat-ai`. Nx selected, ordered, built, checked, and published the three
+release groups from one reviewed canonical-main commit. npm transported those
+bytes; it did not become another product controller or lifecycle owner.
+
+The first publication used npm's one-time write challenge because trusted
+publishing can only be attached after a package exists. A fresh Nx workspace
+then acquired the complete release through native `nx add`, registered the Nx
+plugin and named hook, discovered the Oclif commands, and made no change on a
+second initialization. Future publication belongs to one tag-triggered Nx
+workflow using npm's short-lived hosted identity, not another local OTP or a
+stored write token.
+
+### Bag Of Keywords
+
+package, release, tag, registry, workflow.
+
+portability, identity, automation, repeatability, closure.
+
+select, publish, install, verify, converge.
+
 ## 2026-08-01 - Habitat Owns The Shared Adapter
 
 The shared TypeBox adapter belongs to the same public substrate as the Habitat

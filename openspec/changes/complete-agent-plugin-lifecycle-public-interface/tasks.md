@@ -1975,7 +1975,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   repository-qualified instances, host baselines, executable code, product
   paths, and legacy v2 rules. Prove exact pack resolution and admission through
   the workspace-owned CLI.
-- [ ] 5.7e22e Publish the first Template-owned
+- [x] 5.7e22e Publish the first Template-owned
   `@habitat-ai/typebox-adapter`, `@habitat-ai/cli`, and
   `@habitat-ai/blueprints` releases from reviewed canonical `main`. Bind
   package, policy, protocol, and source provenance to one compatible release
@@ -1986,6 +1986,14 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   evaluation may proceed only as another distribution form of the same CLI,
   after proving Oclif command discovery and Nx plugin behavior. Prove an
   isolated installed consumer before publication.
+- [ ] 5.7e22e1 Replace the first-release local npm write challenge with one
+  tag-triggered GitHub Actions trusted-publishing workflow. Map each qualified
+  release-tag pattern to exactly its same-named Nx release group so one run can
+  publish only one group; a coordinated release pushes and settles those tags
+  in the declared group order. Keep Nx as release orchestrator, use npm's
+  hosted OIDC identity rather than a stored write token, and bind all seven
+  `@habitat-ai` packages to the one landed workflow. Preserve the repository
+  ratchet as a prerequisite and add no release wrapper.
 - [ ] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
   consumer. Delete the manual Nx rule chain, explicit CI Grit acquisition,
   copied hook locator, stale Civ7 tarball pin, and consumer-only ownership
