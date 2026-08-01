@@ -1,0 +1,19 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat/resource-temporal-inquiry",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/temporal-inquiry/providers/**/*.ts",
+      "!{workspaceRoot}/resources/temporal-inquiry/providers/**/test/**",
+      "!{workspaceRoot}/resources/temporal-inquiry/providers/**/*.test.*",
+      "!{workspaceRoot}/resources/temporal-inquiry/providers/**/*.spec.*",
+      "!{workspaceRoot}/resources/temporal-inquiry/providers/**/vitest.config.*"
+    ]
+  },
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}

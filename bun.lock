@@ -390,6 +390,18 @@
         "typescript": "^5.9.3",
       },
     },
+    "resources/temporal-inquiry": {
+      "name": "@habitat/resource-temporal-inquiry",
+      "version": "0.1.0",
+      "dependencies": {
+        "@effect/platform-node": "4.0.0-beta.101",
+        "effect": "4.0.0-beta.101",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
+      },
+    },
     "resources/versioned-content": {
       "name": "@rawr/resource-versioned-content",
       "version": "0.1.0",
@@ -941,6 +953,8 @@
     "@habitat/resource-rule-evaluation": ["@habitat/resource-rule-evaluation@workspace:resources/rule-evaluation"],
 
     "@habitat/resource-source-inventory": ["@habitat/resource-source-inventory@workspace:resources/source-inventory"],
+
+    "@habitat/resource-temporal-inquiry": ["@habitat/resource-temporal-inquiry@workspace:resources/temporal-inquiry"],
 
     "@habitat/service": ["@habitat/service@workspace:services/habitat"],
 
