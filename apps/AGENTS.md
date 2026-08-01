@@ -17,6 +17,7 @@
 
 ## Runtime Surfaces
 
+- Habitat CLI application and Nx entrypoint: `apps/habitat/`
 - CLI runtime and command entrypoint: `apps/cli/`
 - HQ application shell: `apps/hq/`
 - Local server runtime: `apps/server/`
@@ -59,6 +60,8 @@
 
 ## Routing
 
+- [Habitat app router](habitat/AGENTS.md) for Habitat provider selection,
+  Oclif composition, and the published Nx entrypoint.
 - [CLI router](cli/AGENTS.md) for command topology and CLI-specific
   invariants.
 - [HQ app router](hq/AGENTS.md) for the HQ application shell.

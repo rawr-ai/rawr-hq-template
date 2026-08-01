@@ -60,6 +60,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("apps/habitat"),
+        test: { name: "habitat-cli", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("apps/server"),
         test: { name: "server", environment: "node", include: [...includes] },
       },

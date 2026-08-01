@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-07-31 - The App Selects And Activates
+
+Habitat's executable is an ordinary app over already-qualified parts. The app
+selects one ready Node provider profile, constructs a fresh public service
+client for each workspace, and hands that client to Oclif or Nx through their
+native host contracts. It does not reinterpret service policy, absorb resource
+mechanics, copy plugin source, retain domain state, or introduce another
+runtime identity.
+
+The two entrypoints share one composition function. Oclif owns command
+discovery and dispatch. The package-less Nx plugin owns project inference and
+is bundled into the app's Nx export because artifact assembly does not transfer
+source ownership. Until installed acceptance, Nx recognizes candidate source
+while Bun excludes it from workspace installation. The root therefore keeps
+the exact released Civ7 `@habitat/cli` as merge checker without an alias or a
+second identity. The first-release cutover admits candidate source to Bun and
+removes the temporary build wiring in one change.
+
+### Bag Of Keywords
+
+app, client, provider, projection, entrypoint.
+
+simplicity, parity, closure, portability, ownership.
+
+select, bind, compose, bundle, activate.
+
 ## 2026-07-31 - Nx Receives Workspace-Bound Resolution
 
 Native Nx plugin configuration is serialized data, not a dependency-injection
