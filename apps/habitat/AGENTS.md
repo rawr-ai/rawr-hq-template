@@ -46,6 +46,9 @@
 
 - Executable: `habitat`.
 - Nx plugin: `@habitat/cli/nx-plugin`.
+- Temporal inquiry library: `@habitat/cli/temporal-inquiry`.
+- Temporal inquiry Nx plugin: `@habitat/cli/temporal-inquiry-nx-plugin`.
+- Fluree process compatibility face: `@habitat/cli/runtime/fluree-process`.
 - No root library export is admitted.
 
 ## Routing

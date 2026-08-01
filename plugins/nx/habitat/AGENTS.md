@@ -2,7 +2,8 @@
 
 ## Purpose
 
-- Project resolved Habitat applications into native Nx scheduler targets.
+- Project resolved Habitat applications and explicit temporal inquiries into
+  native Nx scheduler targets.
 
 ## Scope
 
@@ -17,6 +18,8 @@
   scheduling, hashing, caching, and dependency composition.
 - The projection augments existing project roots and never supplies a project
   name or another scheduler.
+- Temporal inquiry graph construction reads one consumer-owned definition and
+  never starts Fluree, refreshes a ledger, executes a query, or creates state.
 
 ## Behavior
 
@@ -24,11 +27,15 @@
 - Project one cacheable leaf per application and one dependency-only aggregate
   per owner project.
 - Refuse rejected or internally inconsistent catalogs without partial output.
+- Project consumer `plan`, `query`, and `refresh` scripts as explicit,
+  non-cacheable foreground targets only.
 
 ## Concepts
 
 - An **application target** is the Nx scheduling projection of one resolved
   Habitat application. An **owner aggregate** contains dependencies only.
+- A **temporal inquiry target** schedules consumer orchestration without
+  acquiring its model, evidence, or runtime lifecycle.
 
 ## Flow
 

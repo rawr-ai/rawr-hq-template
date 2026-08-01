@@ -1939,7 +1939,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   handler. Preserve Grit's ranged evaluator contract, admit path-only structure
   diagnostics only at the service result boundary, add exact instance
   selection for later Nx projection, and retain no inventory or result state.
-- [ ] 5.7e22b3 Project the sealed Habitat service through one Oclif command
+- [x] 5.7e22b3 Project the sealed Habitat service through one Oclif command
   plugin and one Nx integration plugin, then compose them in the Habitat app.
   Build and package one ordinary `@habitat/cli` artifact whose `habitat`
   entrypoint and Nx export share the same public service semantics. Artifact
