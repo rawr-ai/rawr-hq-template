@@ -1648,14 +1648,14 @@ review does not authorize a separate release path.
 | Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat workspace source now evaluates the corpus, while released adoption and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, and the idempotent consumer initializer are landed; policy-pack construction, package publication, released adoption, and service-law activation remain open |
+| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry bootstrap, the idempotent consumer initializer, and native version-two service execution are landed; version-two Nx projection, released adoption/cutover, trusted publishing, and service-law activation remain open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, and packed-install acceptance are landed and green; public registry publication and registry-installed smoke remain pending npm scope authorization |
+| Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, packed-install acceptance, public Habitat registry publication, and registry-installed smoke are landed and green; tag-triggered npm trusted publishing remains open |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -5159,15 +5159,15 @@ exception, second checker, private selector, or permanent compatibility path.
 This checkpoint carries the reviewed inert definition set. Its earlier blocked
 repository check did not transfer merge authority to candidate source.
 
-The first service checkpoint owns catalog resolution only. Generic callers
-request resolution; the Habitat service enumerates the finite repository
-authority surface, classifies exact blueprint and instance paths, admits their
-TypeBox-backed documents, resolves applications, retains version-two records
-only as inert compatibility data, and returns deterministic rejection or
-catalog results. Effect filesystem and path capabilities enter ready through
-service context. Grit execution remains behind the landed provider-neutral
-rule-evaluation resource and is not added to the service until the subsequent
-check operation consumes it.
+At the first service checkpoint, the Habitat service owned catalog resolution
+only. Generic callers requested resolution; the service enumerated the finite
+repository authority surface, classified exact blueprint and instance paths,
+admitted their TypeBox-backed documents, resolved applications, retained
+version-two records as resolution-only compatibility data, and returned
+deterministic rejection or catalog results. Effect filesystem and path
+capabilities entered ready through service context. The later
+[[README#Habitat Version-Two Service Execution Checkpoint|native service-execution checkpoint]]
+supersedes only that historical execution boundary.
 
 ### Habitat Catalog Service Checkpoint
 
@@ -5324,8 +5324,9 @@ seven definitions. They have zero repository instances, zero resolved
 applications, and no released-pack acceptance, so they add no executing policy
 path and cannot replace the installed merge checker.
 
-The released v2 compatibility registry remains the sole executing authority
-and retains exactly its prior 33 live rules. The six service-construction laws
+At this definition-only checkpoint, the released v2 compatibility registry was
+the sole executing authority and retained exactly its prior 33 live rules. The
+six service-construction laws
 remain under `.habitat/staged/**`; this checkpoint does not copy or promote
 them while source migration is incomplete and their corpus is red. The
 schema-admitted `service@1` definition therefore declares only its native
@@ -5504,17 +5505,16 @@ executed exactly its five package publishers without invoking the adapter
 publisher. The graph-only view includes dependency targets that scoped
 execution intentionally excludes, so it is not publication proof.
 
-The repository still consumes the pinned Civ7 Habitat artifact at Nx graph
-bootstrap. That pin remains a compiler-bootstrap input, not a second Habitat
-product identity, until the first Template-owned package is actually
-published. The authenticated npm session identifies `mateicanavra` as an
-accepted `habitat-ai` owner. The user confirmed that Template does not own the
-`rawr` npm organization, so the shared adapter joins the same public substrate
-as `@habitat-ai/typebox-adapter` before first publication. There is no
-predecessor alias, compatibility package, or dual release. Task
-5.7e22e and consumer cutover remain open until the corrected source lands on
-canonical `main`, the complete ordered release publishes, and registry proof
-passes.
+At this pre-publication checkpoint, the repository still consumed the pinned
+Civ7 Habitat artifact at Nx graph bootstrap. That pin was a
+compiler-bootstrap input, not a second Habitat product identity. The
+authenticated npm session identified `mateicanavra` as an accepted
+`habitat-ai` owner. The user confirmed that Template does not own the `rawr`
+npm organization, so the shared adapter joined the same public substrate as
+`@habitat-ai/typebox-adapter`. There was no predecessor alias, compatibility
+package, or dual release. The later
+[[README#Habitat Registry Settlement|registry settlement]] closed task 5.7e22e;
+consumer cutover remains open under task 5.7e22f.
 
 The separate `rawr-cli` release group remains outside this Habitat release.
 Its RAWR-specific public-configured packages require an independently owned
@@ -5619,6 +5619,31 @@ green. Required `Repository Ratchet` run `30685033753` passed on the exact PR
 head before Graphite landed the checkpoint. No package was published and no
 consumer repository was changed.
 
+### Habitat Version-Two Service Execution Checkpoint
+
+Canonical Template merge `0107f908` (PR #748) closes the service-execution
+child [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e22f1]] without
+closing the consumer cutover. Candidate `b9d637f8` passed required Repository
+Ratchet run `30719253578`, job `91420154104`, before Graphite landed it.
+
+The catalog admits the repository's 33 unique retained version-two rules across
+six owners. One `catalog.check` operation now executes admitted compatibility
+Grit checks and native schema-version-one structure rules through the same
+provider-neutral resource and Habitat policy paths used by version-three
+applications. Compatibility reports remain locked and instance-free; exact
+owner, rule, and runner selectors cannot cross the version-two/version-three
+identity boundary. Exact subject coverage, empty baselines, hidden literal
+paths, nested dependency exclusion, and acquisition or subject symlink refusal
+are behavioral contracts rather than a second checker or transitional runtime.
+
+The service suite passes 60 cases: 28 catalog-resolution cases, including the
+complete six-owner/33-rule admission oracle, and 32 check cases covering the
+representative Grit and structure execution paths. The service test target now
+declares the complete `.habitat` authority corpus as an Nx cache input. Native
+version-two Nx target projection, released initializer application,
+predecessor-chain deletion, byte-stable repeat initialization, and repeated
+parallel native policy proof remain open under task 5.7e22f.
+
 ### Habitat Blueprint Pack Admission
 
 Canonical Template merges `d898aaa5` (PR #739), `7ba8fb7d` (PR #740), and
@@ -5647,8 +5672,9 @@ passed 54, 6, 4, 17, and 4 cases respectively. Strict OpenSpec validation
 passed, and the packed policy artifact contained exactly the four declared
 files. Required `Repository Ratchet` runs `30689258768` and `30689342081`
 passed on the exact implementation and record candidates before Graphite
-landed them. Registry publication, registry-installed consumer proof, and
-bootstrap cutover remain open under tasks 5.7e22e and 5.7e22f.
+landed them. Registry publication and registry-installed consumer proof later
+closed under task 5.7e22e; Template bootstrap cutover remains open under task
+5.7e22f.
 
 ### Habitat Release Transport Decision
 

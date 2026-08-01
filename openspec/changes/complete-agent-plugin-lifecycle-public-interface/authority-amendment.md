@@ -203,10 +203,12 @@ and private-alias configuration/ownership. Civ7 release
 Template owns the Habitat product source and realizes it through the ordinary
 resource, provider, service, plugin, and app graph. `@habitat-ai/cli` is the
 assembled Oclif release identity rather than a composite package source owner.
-The Habitat Nx projection owns application discovery, exact inputs, caching,
-and execution without acquiring service or provider authority. The idempotent
-consumer initializer is landed; policy-pack construction, publication, and
-released-package adoption remain separately reviewed checkpoints.
+The Habitat Nx projection owns version-three application discovery, exact
+inputs, caching, and execution without acquiring service or provider authority.
+The idempotent consumer initializer, policy-pack construction, bootstrap
+publication, and native version-two service execution are landed. Version-two
+Nx projection, released-package adoption/cutover, and tag-triggered trusted
+publishing remain separately reviewed checkpoints.
 
 ## Behavioral Boundary
 

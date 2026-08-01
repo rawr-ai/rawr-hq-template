@@ -2006,6 +2006,21 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   hook behavior are proven. Run initialization twice and require a byte-stable
   second pass, then prove repeated parallel policy checks through native Nx
   targets.
+- [x] 5.7e22f1 Land the native service-execution half of version-two
+  compatibility without closing task 5.7e22f. The Template-owned catalog
+  admits the frozen 33-rule corpus across six owners, and `catalog.check`
+  executes admitted Grit `check` and Habitat structure rules through the same
+  service operation and provider-neutral evaluation paths used by version-three
+  applications. Preserve exact-path subject acquisition, empty baseline
+  admission, owner/rule/runner selection, instance-free locked reports, and
+  distinct compatibility identity. Bind service-test caching to the complete
+  catalog authority. Template PR #748 landed on canonical `main` at
+  `0107f9089a687e03793fa6208603b2c95940c6a6`; candidate head
+  `b9d637f8e740f090a014dbdc60609ea8f8947c04` passed required Repository
+  Ratchet run `30719253578`, job `91420154104`. Version-two Nx target
+  projection, released initializer application, predecessor-chain deletion,
+  byte-stable repeated initialization, and repeated parallel native policy
+  proof remain open under task 5.7e22f.
 - [ ] 5.7e22g Realize the Habitat product graph directly on Template's Effect
   4, oRPC 2, and current TypeBox substrate. Do not first preserve an isolated
   Effect 3/oRPC 1 realm and then migrate it. Keep this vendor cut independently
