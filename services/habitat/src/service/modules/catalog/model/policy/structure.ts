@@ -1,13 +1,13 @@
 import type { SourceInventoryResult } from "@habitat/resource-source-inventory";
 import picomatch from "picomatch";
 import { Validator } from "typebox/schema";
-import type { HabitatCatalog } from "../dto/catalog";
-import type { StructureCheckFinding } from "../dto/check";
+import type { HabitatCatalog } from "../dto/catalog.js";
+import type { StructureCheckFinding } from "../dto/check.js";
 import {
   STRUCTURE_PICOMATCH_OPTIONS,
   StructureDocumentSchema,
   type StructureScope,
-} from "../dto/structure";
+} from "../dto/structure.js";
 
 type RuleApplication = HabitatCatalog["applications"][number];
 

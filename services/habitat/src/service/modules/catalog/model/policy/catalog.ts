@@ -14,7 +14,7 @@ import {
   HabitatInstanceManifestSchema,
   MAX_CATALOG_ISSUES,
   type ResolveCatalogResult,
-} from "../dto/catalog";
+} from "../dto/catalog.js";
 
 const MEMBER_PLACEHOLDER = "{member}";
 const GLOB_CHARACTERS = /[*?[\]!]/;

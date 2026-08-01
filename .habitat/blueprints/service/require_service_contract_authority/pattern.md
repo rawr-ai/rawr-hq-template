@@ -11,7 +11,9 @@ one contract source remains bounded to that source.
 When an operation name is an ECMAScript reserved word, the leaf may use any
 private local binding and alias it to the filename-mapped public export.
 Procedure input, output, and public error-data envelopes adapt TypeBox with
-`standard(...)` at their native contract positions.
+`standard(...)` at their native contract positions. A private typed adaptation
+binding may preserve portable declaration names without creating another schema
+owner.
 
 Contract and reusable DTO schema owners use TypeBox's native JSON Schema
 builders. Executable refinements, codecs, native-only builders and literals,
@@ -130,11 +132,13 @@ predicate require_service_contract_authority_is_own_index_source($source) {
 
 // Checks that a direct leaf import maps its kebab-case source to one binding.
 function require_service_contract_authority_entrypoint_import_status($source, $name) js {
-  const match = $source.text.match(/^["']\.\/([^/"']+)["']$/);
-  if (!match || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
+  const relative = $source.text.slice(1, -1);
+  const match = relative.match(/^\.\/([^/]+)$/);
+  const leaf = match?.[1].replace(/\.[cm]?[jt]s$/, "");
+  if (!leaf || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(leaf)) {
     return "noncanonical-source";
   }
-  const expected = match[1].replace(
+  const expected = leaf.replace(
     /-([a-z0-9])/g,
     (_all, value) => value.toUpperCase(),
   );
@@ -230,13 +234,16 @@ predicate require_service_contract_authority_is_standard_schema($value) {
   }
 }
 
-// Recognizes direct adaptation or one private adapted error-data binding.
-predicate require_service_contract_authority_is_standard_error_data($value) {
+// Recognizes direct adaptation or one private typed adaptation binding.
+predicate require_service_contract_authority_is_standard_schema_value($value) {
   or {
     require_service_contract_authority_is_standard_schema(value=$value),
     and {
       $value <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
-      $program <: contains `const $value = $adapted`,
+      $program <: contains variable_declarator(
+        name=$value,
+        value=$adapted
+      ),
       require_service_contract_authority_is_standard_schema(value=$adapted)
     }
   }
@@ -269,7 +276,7 @@ predicate require_service_contract_authority_is_local_error_item($item) {
       }
     },
     not {
-      require_service_contract_authority_is_standard_error_data(value=$data)
+      require_service_contract_authority_is_standard_schema_value(value=$data)
     }
   }
 }
@@ -277,7 +284,12 @@ predicate require_service_contract_authority_is_local_error_item($item) {
 or {
   program(statements=$statements) where {
     require_service_contract_authority_is_module_contract_boundary(),
-    not { $statements <: some `export const contract = $value` }
+    not {
+      or {
+        $statements <: some `export const contract = $value`,
+        $statements <: some `export const contract: $type = $value`
+      }
+    }
   },
   program(statements=$statements) where {
     require_service_contract_authority_is_module_contract_entrypoint(),
@@ -290,7 +302,10 @@ or {
   export_statement() as $export where {
     require_service_contract_authority_is_module_contract_boundary(),
     not {
-      $export <: `export const contract = $value`
+      or {
+        $export <: `export const contract = $value`,
+        $export <: `export const contract: $type = $value`
+      }
     }
   },
   program(statements=$statements) where {
@@ -403,7 +418,7 @@ or {
   `$builder.errors({ $..., $code: { $..., data: $data, $... }, $... })` where {
     require_service_contract_authority_is_module_contract_source(),
     not {
-      require_service_contract_authority_is_standard_error_data(value=$data)
+      require_service_contract_authority_is_standard_schema_value(value=$data)
     }
   },
   `$builder.errors($map)` where {
@@ -411,14 +426,14 @@ or {
     require_service_contract_authority_is_local_error_map(map=$map),
     $program <: contains `const $map = { $..., $code: { $..., data: $data, $... }, $... }`,
     not {
-      require_service_contract_authority_is_standard_error_data(value=$data)
+      require_service_contract_authority_is_standard_schema_value(value=$data)
     }
   },
   `$procedure.$direction($schema)` where {
     require_service_contract_authority_is_module_contract_source(),
     $direction <: r"^(?:input|output)$",
     not {
-      require_service_contract_authority_is_standard_schema(value=$schema)
+      require_service_contract_authority_is_standard_schema_value(value=$schema)
     }
   },
   `$typebox.$constructor` where {

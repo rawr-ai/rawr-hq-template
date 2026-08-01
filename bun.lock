@@ -486,6 +486,7 @@
       "dependencies": {
         "@habitat/resource-rule-evaluation": "workspace:*",
         "@habitat/resource-source-inventory": "workspace:*",
+        "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/experimental-effect": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",

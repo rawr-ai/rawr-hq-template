@@ -1,12 +1,12 @@
 import type { RuleEvaluationFinding } from "@habitat/resource-rule-evaluation";
-import type { HabitatCatalog } from "../dto/catalog";
+import type { HabitatCatalog } from "../dto/catalog.js";
 import type {
   CheckApplicationReport,
   CheckCatalogInput,
   CheckCatalogResult,
   CheckSelectionIssue,
-} from "../dto/check";
-import type { HabitatStructureApplication, StructureDiagnostic } from "./structure";
+} from "../dto/check.js";
+import type { HabitatStructureApplication, StructureDiagnostic } from "./structure.js";
 
 type RuleApplication = HabitatCatalog["applications"][number];
 type ResolvedGritRunner = Extract<RuleApplication["runner"], { name: "grit" }>;
