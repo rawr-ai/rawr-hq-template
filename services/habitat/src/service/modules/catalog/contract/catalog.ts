@@ -1,5 +1,5 @@
+import { standard, type TypeBoxStandardSchema } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
-import { standard, type TypeBoxStandardSchema } from "@rawr/typebox-adapter";
 import { ResolveCatalogInputSchema, ResolveCatalogResultSchema } from "../model/dto/catalog.js";
 import { CheckCatalogInputSchema, CheckCatalogResultSchema } from "../model/dto/check.js";
 

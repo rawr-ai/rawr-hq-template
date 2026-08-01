@@ -1,5 +1,5 @@
+import { standard } from "@habitat-ai/typebox-adapter";
 import type { ErrorMapItem } from "@orpc/server";
-import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 
 const CorpusErrorData = standard(

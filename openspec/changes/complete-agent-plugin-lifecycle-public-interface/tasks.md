@@ -1713,8 +1713,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   same cut. Extend the shared contract and router laws only for the exact
   language-required `packageContract` and `packageOperation` local bindings
   that preserve the ECMAScript-reserved public `package` export; admit no
-  general alias form. Bind the contract law to Template's canonical
-  `@rawr/typebox-adapter` package rather than a foreign repository alias.
+  general alias form. Bind the contract law to Template's then-current
+  canonical TypeBox adapter rather than a foreign repository alias. The later
+  namespace correction publishes the same owner as
+  `@habitat-ai/typebox-adapter` without changing this completed contract law.
   Preserve module context, source observation and revalidation order, Cowork
   bytes, publication boundary, results, failures, and interruption behavior.
   Add no resource, provider, policy, compatibility face, or second operation
@@ -1973,10 +1975,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   repository-qualified instances, host baselines, executable code, product
   paths, and legacy v2 rules. Prove exact pack resolution and admission through
   the workspace-owned CLI.
-- [ ] 5.7e22e Publish the first Template-owned `@habitat-ai/cli` and
+- [ ] 5.7e22e Publish the first Template-owned
+  `@habitat-ai/typebox-adapter`, `@habitat-ai/cli`, and
   `@habitat-ai/blueprints` releases from reviewed canonical `main`. Bind
   package, policy, protocol, and source provenance to one compatible release
-  set and publish the CLI before its policy pack. Nx owns release orchestration;
+  set and publish the adapter before the CLI, then the CLI before its policy
+  pack. Nx owns release orchestration;
   npm is the ordinary cross-repository transport consumed through `nx add`.
   Publish no second native executable in this release. A later Bun-native
   evaluation may proceed only as another distribution form of the same CLI,
@@ -2318,7 +2322,9 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   acquisition, temporary-resource cleanup, capture settlement, and publication
   cleanup inside their existing operation owners. Make at least one real Oclif
   command consume this binding without concrete provider imports or a hidden
-  production fallback. Reuse the canonical `@rawr/typebox-adapter` boundary.
+  production fallback. Reuse the then-current canonical TypeBox adapter
+  boundary; the later namespace correction changes only its public package
+  identity to `@habitat-ai/typebox-adapter`.
   Add no managed runtime, process finalizer, client cache, generic registry,
   controller, bootgraph expansion, workflow engine, second service, or app/web
   composition. Record the reviewed exact landed commit as lifecycle integration

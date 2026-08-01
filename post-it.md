@@ -6,6 +6,23 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-01 - Habitat Owns The Shared Adapter
+
+The shared TypeBox adapter belongs to the same public substrate as the Habitat
+service and CLI, so its first registry identity is
+`@habitat-ai/typebox-adapter`. No `@rawr` registry alias or duplicate release
+exists. This namespace correction leaves private RAWR workspace coordinates
+unchanged and keeps the separately publish-shaped `rawr-cli` group outside the
+Habitat release until it receives its own owned product namespace decision.
+
+### Bag Of Keywords
+
+adapter, identity, scope, release, boundary.
+
+ownership, coherence, resolution, restraint, truth.
+
+rename, publish, exclude, preserve, verify.
+
 ## 2026-08-01 - Habitat Has One Future Package Scope
 
 `@habitat-ai` is the sole future scope for RAWR HQ-Template Habitat products.

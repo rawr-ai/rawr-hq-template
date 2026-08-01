@@ -10,9 +10,10 @@
  * Keep this contract focused on caller-visible shape. Cross-module access
  * patterns belong in the named assignment router leaves, not here.
  */
+
+import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 import { AssignmentSchema } from "#example-todo-service/model/dto/assignment";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";

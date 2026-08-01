@@ -14,9 +14,10 @@
  * Extend task capability by updating this contract first, then implement handlers
  * in named router leaves. Keep this file free of execution logic and dependencies.
  */
+
+import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
-import { standard } from "@rawr/typebox-adapter";
 import { Type } from "typebox";
 import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
 import { TaskSchema } from "#example-todo-service/model/dto/task";

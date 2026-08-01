@@ -92,8 +92,7 @@ or a root context that truthfully declares complete host requirements do not.
 The bounded lifecycle handoff includes the canonical TypeBox Standard Schema
 adapter and the CLI's cold app-owned lifecycle profile. Canonical `main`
 contains the native-validator, message-only bridge correction at
-`0854024afe9a76ef0ae4ae3f427182be25fe8420`, its current
-`@rawr/typebox-adapter` package owner at
+`0854024afe9a76ef0ae4ae3f427182be25fe8420`, its package owner directory at
 `3b142e560f3b3cefa255356fa7343c56cac18d99`, and the bounded CLI vertical
 landed at `a25f72da1505f90206c6ff14bcb0ab5de77cbbec`. The adapter returns
 message-only issues because TypeBox `1.3.8` paths are ambiguous. One real Oclif

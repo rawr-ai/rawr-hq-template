@@ -17,7 +17,7 @@
   observability middleware callbacks, capability ports, host adapters, and
   declared-surface composition.
 - Native oRPC owns contracts, service context, middleware construction,
-  implementers, routers, and clients. `@rawr/typebox-adapter` owns the
+  implementers, routers, and clients. `@habitat-ai/typebox-adapter` owns the
   product-free TypeBox standards bridge.
 - Must not own a domain service's operations, application plugin selection,
   concrete host resources, route mounting, or process and provider state.
@@ -52,7 +52,7 @@
 
 ## Interfaces
 
-- Native oRPC and `@rawr/typebox-adapter` face service authors; composition APIs
+- Native oRPC and `@habitat-ai/typebox-adapter` face service authors; composition APIs
   face apps and plugins; capability ports and realized trees face hosts.
 
 ## Routing

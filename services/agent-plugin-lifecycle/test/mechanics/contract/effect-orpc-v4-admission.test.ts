@@ -1,9 +1,9 @@
 import "@orpc/experimental-effect/extensions/effect";
+import { standard } from "@habitat-ai/typebox-adapter";
 import { ORPCError } from "@orpc/client";
 import { oc, ValidationError } from "@orpc/contract";
 import { createRouterClient, implement } from "@orpc/server";
 import { procedureMetadata } from "@rawr/hq-sdk";
-import { standard } from "@rawr/typebox-adapter";
 import { Effect } from "effect";
 import { Type } from "typebox";
 import { describe, expect, it } from "vitest";
