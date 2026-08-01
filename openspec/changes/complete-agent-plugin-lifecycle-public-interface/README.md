@@ -5553,6 +5553,37 @@ green. Required `Repository Ratchet` run `30685033753` passed on the exact PR
 head before Graphite landed the checkpoint. No package was published and no
 consumer repository was changed.
 
+### Habitat Blueprint Pack Admission
+
+Canonical Template merges `d898aaa5` (PR #739), `7ba8fb7d` (PR #740), and
+`5de49c16` (PR #741) close task 5.7e22d. The first
+`@habitat/blueprints@0.2.0` candidate is an ordinary data-only package with
+exactly `LICENSE`, `README.md`, `habitat-pack.json`, and `package.json`. Its
+protocol-one manifest admits an empty member set, exports no runtime, contains
+no executable code, and does not precommit a later blueprint corpus.
+
+The Habitat app selects one exact policy-pack package from the consumer
+workspace. The service admits its package metadata and manifest through
+TypeBox-owned schemas and Effect filesystem access, requires package identity
+and protocol agreement, rejects malformed or nonempty candidates, and has no
+fallback pack. The CLI and Nx faces receive that same app-owned selection.
+
+Nx owns release orchestration through separate `habitat-cli` and
+`habitat-blueprints` release groups. Installed acceptance is an explicit gate
+before publication. The proof invokes it explicitly before native release
+dry-runs because scoped Nx publication deliberately excludes ordinary target
+dependencies. Those dry-runs selected exactly the five executable Habitat
+publishers and the one policy-pack publisher in their respective groups.
+
+The five directly changed projects passed their uncached `check` targets. The
+service, CLI app, CLI plugin, Nx plugin, and complete installed package suites
+passed 54, 6, 4, 17, and 4 cases respectively. Strict OpenSpec validation
+passed, and the packed policy artifact contained exactly the four declared
+files. Required `Repository Ratchet` runs `30689258768` and `30689342081`
+passed on the exact implementation and record candidates before Graphite
+landed them. Registry publication, registry-installed consumer proof, and
+bootstrap cutover remain open under tasks 5.7e22e and 5.7e22f.
+
 ## Settlement Oracles
 
 The final product must prove:
