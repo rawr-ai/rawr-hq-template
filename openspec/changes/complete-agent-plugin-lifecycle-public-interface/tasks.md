@@ -1939,13 +1939,17 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   handler. Preserve Grit's ranged evaluator contract, admit path-only structure
   diagnostics only at the service result boundary, add exact instance
   selection for later Nx projection, and retain no inventory or result state.
-- [ ] 5.7e22b3 Project the sealed Habitat service through one Oclif command
+- [x] 5.7e22b3 Project the sealed Habitat service through one Oclif command
   plugin and one Nx integration plugin, then compose them in the Habitat app.
   Build and package one ordinary `@habitat/cli` artifact whose `habitat`
   entrypoint and Nx export share the same public service semantics. Artifact
   unity does not change source ownership. Use native Nx and Oclif build,
   manifest, package, and release mechanics; add no controller, private runtime
-  selector, or duplicated consumer wiring.
+  selector, or duplicated consumer wiring. The completed three-node checkpoint
+  emits the public resource and TypeBox artifacts, seals the portable service
+  client declaration, and proves the complete six-package closure through an
+  installed Oclif and Nx consumer. Public registry publication remains open
+  under task 5.7e22e because npm scope authorization is absent.
 - [ ] 5.7e22c Implement one idempotent Habitat consumer initializer as its own
   reviewed checkpoint. It registers the Nx plugin, projects inferred
   repository targets, supplies one named Habitat hook contribution, and

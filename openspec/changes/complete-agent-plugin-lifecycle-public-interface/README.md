@@ -5465,8 +5465,45 @@ temporary build wiring atomically.
 The source checkpoint passes app typecheck, build, Oclif manifest generation,
 the six-test Oclif/Nx/provider/configuration boundary suite, repository Biome,
 the current repository Habitat check, and diff hygiene. Installed tarball
-acceptance, the Habitat Nx release group, task completion, release, and consumer
-cutover remain open.
+acceptance, the Habitat Nx release group, and task completion remained open at
+that checkpoint; the successor below closes those package-construction gates
+while registry release and consumer cutover remain open.
+
+### Habitat Installed Artifact Checkpoint
+
+Task 5.7e22b3 now closes through three semantic package checkpoints:
+
+- `883cdaef` emits ordinary public TypeBox and Habitat resource artifacts;
+- `45eebd1a` emits the portable `@habitat/service/client` declaration and
+  runtime surface; and
+- `025869eb` defines the fixed Habitat release group and proves its installed
+  Oclif and Nx behavior.
+
+The release closure is exactly `@habitat/cli`, `@habitat/plugin-cli`, the two
+Habitat resources, `@habitat/service`, and the independently versioned
+`@rawr/typebox-adapter`. The acceptance packs those six ordinary package
+tarballs, installs them as real package directories without workspace links,
+typechecks every Habitat-owned public declaration under strict NodeNext,
+imports every public runtime entry, discovers the installed Oclif commands,
+executes `habitat --help`, `resolve`, and `check`, then registers the installed
+Nx plugin in a separate fixture and executes its inferred application target.
+The app contains no controller, selector, release store, or private installer.
+
+Nx Release keeps the TypeBox adapter and Habitat as independently selected
+groups. Build, manifests, and installed acceptance run before publication;
+each publication command uses an explicit `--groups` selection. Nx 23 excludes
+task dependencies for a scoped publication, and the real Habitat dry-run
+executed exactly its five package publishers without invoking the adapter
+publisher. The graph-only view includes dependency targets that scoped
+execution intentionally excludes, so it is not publication proof.
+
+The repository still consumes the pinned Civ7 Habitat artifact at Nx graph
+bootstrap. That pin remains a compiler-bootstrap input, not a second Habitat
+product identity, until the first Template-owned package is actually
+published. The local npm registry session currently returns `E401`; task
+5.7e22e and consumer cutover therefore remain open rather than replacing the
+bootstrap with an unpublished workspace path or bypassing registry authority.
+See [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.7e22e and 5.7e22f]].
 
 ## Settlement Oracles
 
