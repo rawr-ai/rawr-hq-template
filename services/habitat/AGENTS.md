@@ -18,16 +18,18 @@
   aggregate outcomes.
 - The service enumerates exact authority paths from its bound workspace. Callers
   provide no repository visibility or authority classification input.
-- Version 2 records are inert compatibility identity facts. They never become
-  an alternate execution path.
+- A present version 2 registry contributes closed compatibility rules to the
+  same check operation. Compatibility facts remain distinct from version 3
+  instance applications and create no second runtime.
 
 ## Behavior
 
 - The catalog module resolves closed version 3 local authority and reports all
   bounded admission failures as a rejected result.
 - `catalog.check` executes selected Grit `check` and native Habitat structure
-  applications. It refuses unsupported Grit acquisition modes instead of
-  skipping them.
+  applications from both admitted authority generations. Version 2 Grit rules
+  retain exact-path subject coverage; unsupported modes refuse instead of
+  skipping.
 
 ## Concepts
 

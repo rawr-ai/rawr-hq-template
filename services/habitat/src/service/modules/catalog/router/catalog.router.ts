@@ -10,6 +10,7 @@ import type {
 } from "../model/dto/check.js";
 import {
   admitBlueprintSource,
+  admitCompatibilityBaseline,
   admitCompatibilityIndex,
   admitCompatibilityRule,
   admitInstanceSource,
@@ -35,6 +36,8 @@ import {
   failedApplication,
   failedStructureApplication,
   type GritCheckApplication,
+  isCompatibilityRule,
+  notApplicableApplication,
   selectCheckApplications,
 } from "../model/policy/check.js";
 import {
@@ -68,6 +71,13 @@ const excludedDirectorySegments = new Set([
   "vendor",
 ]);
 const excludedRepositoryGlobs = [...excludedDirectorySegments].map((segment) => `**/${segment}/**`);
+const compatibilityProtectedRoots = [
+  ".git",
+  ".habitat/cache/patterns",
+  "dist",
+  "node_modules",
+  "tools/habitat/dist",
+];
 const MAX_MANIFEST_DIRECTORIES = 50_000;
 
 type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
@@ -488,8 +498,95 @@ function resolveCurrentCatalog(context: CatalogOperationContext) {
         continue;
       }
       const admitted = admitCompatibilityRule(parsed.success, relativePath);
-      if (admitted.ok) compatibilityRules.push(admitted.source);
-      else issues.push(...admitted.issues);
+      if (!admitted.ok) {
+        issues.push(...admitted.issues);
+        continue;
+      }
+
+      const baselinePath = admitted.source.rule.supportFiles.baseline;
+      const absoluteBaselinePath = path.resolve(workspaceRoot, baselinePath);
+      if (!isContained(workspaceRoot, absoluteBaselinePath, path)) {
+        issues.push({
+          code: "authority-path-escape",
+          path: baselinePath,
+          message: "Compatibility baseline escapes workspaceRoot.",
+        });
+        continue;
+      }
+      const baselineRealPath = yield* Effect.result(fileSystem.realPath(absoluteBaselinePath));
+      if (baselineRealPath._tag === "Failure") {
+        issues.push(
+          filesystemIssue(
+            baselineRealPath.failure,
+            baselinePath,
+            "resolve compatibility baseline",
+            "Compatibility baseline does not exist."
+          )
+        );
+        continue;
+      }
+      if (!isContained(workspaceRealRoot, baselineRealPath.success, path)) {
+        issues.push({
+          code: "authority-path-escape",
+          path: baselinePath,
+          message: "Compatibility baseline escapes workspaceRoot through a symbolic link.",
+        });
+        continue;
+      }
+      const baselineStat = yield* Effect.result(fileSystem.stat(baselineRealPath.success));
+      if (baselineStat._tag === "Failure") {
+        issues.push(
+          filesystemIssue(
+            baselineStat.failure,
+            baselinePath,
+            "inspect compatibility baseline",
+            "Compatibility baseline does not exist."
+          )
+        );
+        continue;
+      }
+      if (baselineStat.success.type !== "File") {
+        issues.push({
+          code: "authority-path-kind-mismatch",
+          path: baselinePath,
+          message: "Compatibility baseline must be a regular file.",
+        });
+        continue;
+      }
+      const baselineRead = yield* Effect.result(
+        fileSystem.readFileString(baselineRealPath.success)
+      );
+      if (baselineRead._tag === "Failure") {
+        issues.push(
+          filesystemIssue(
+            baselineRead.failure,
+            baselinePath,
+            "read compatibility baseline",
+            "Compatibility baseline does not exist."
+          )
+        );
+        continue;
+      }
+      const baselineParsed = yield* Effect.result(
+        Effect.try({
+          try: (): unknown => JSON.parse(baselineRead.success),
+          catch: (cause) => cause,
+        })
+      );
+      if (baselineParsed._tag === "Failure") {
+        issues.push({
+          code: "authority-json-invalid",
+          path: baselinePath,
+          message: "Compatibility baseline is not valid JSON.",
+        });
+        continue;
+      }
+      const baseline = admitCompatibilityBaseline(baselineParsed.success, baselinePath);
+      if (!baseline.ok) {
+        issues.push(...baseline.issues);
+        continue;
+      }
+      compatibilityRules.push({ ...admitted.source, baseline: baseline.value });
     }
 
     if (issues.length > 0) return rejected(issues);
@@ -779,7 +876,26 @@ const check = module.check.effect(function* ({ context, input }) {
       continue;
     }
 
-    const subjects = resolvedSubjects(application, context.workspaceRoot, context.path);
+    const subjectPreparation = yield* prepareGritSubjects(
+      application,
+      context.workspaceRoot,
+      context.fileSystem,
+      context.path
+    );
+    if (subjectPreparation.kind === "failed") {
+      reports.push(failedApplication(application, "SetupFailed", subjectPreparation.detail));
+      continue;
+    }
+    if (subjectPreparation.kind === "not-applicable") {
+      if (!isCompatibilityRule(application)) {
+        return yield* Effect.die(
+          new Error("Version-three Grit applications cannot be not applicable.")
+        );
+      }
+      reports.push(notApplicableApplication(application));
+      continue;
+    }
+    const subjects = subjectPreparation.subjects;
     const evaluation = yield* Effect.result(
       context.ruleEvaluation.evaluate({
         program: program.program,
@@ -864,6 +980,183 @@ type ResolvedSubject = {
   readonly absolutePath: string;
   readonly kind: "directory" | "file";
 };
+
+type GritSubjectPreparation =
+  | { readonly kind: "ready"; readonly subjects: readonly ResolvedSubject[] }
+  | { readonly kind: "not-applicable" }
+  | { readonly kind: "failed"; readonly detail: string };
+
+function prepareGritSubjects(
+  application: GritCheckApplication,
+  workspaceRoot: string,
+  fileSystem: FileSystem.FileSystem,
+  path: Path.Path
+): Effect.Effect<GritSubjectPreparation, never> {
+  if (!isCompatibilityRule(application)) {
+    return Effect.succeed({
+      kind: "ready" as const,
+      subjects: resolvedSubjects(application, workspaceRoot, path),
+    });
+  }
+
+  return Effect.gen(function* () {
+    const workspaceRealPath = yield* Effect.result(fileSystem.realPath(workspaceRoot));
+    if (workspaceRealPath._tag === "Failure") {
+      return {
+        kind: "failed" as const,
+        detail: "Unable to canonicalize the compatibility workspace root.",
+      };
+    }
+
+    const authority = resolvedSubjects(application, workspaceRoot, path);
+    for (const root of authority) {
+      const canonical = yield* Effect.result(fileSystem.realPath(root.absolutePath));
+      if (canonical._tag === "Failure") {
+        return {
+          kind: "failed" as const,
+          detail: `Unable to canonicalize compatibility acquisition root "${toRepositoryPath(
+            path.relative(workspaceRoot, root.absolutePath),
+            path.sep
+          )}".`,
+        };
+      }
+      const expectedCanonical = path.resolve(
+        workspaceRealPath.success,
+        path.relative(workspaceRoot, root.absolutePath)
+      );
+      if (
+        canonical.success !== expectedCanonical ||
+        !isContained(workspaceRealPath.success, canonical.success, path)
+      ) {
+        return {
+          kind: "failed" as const,
+          detail: `Compatibility acquisition root "${toRepositoryPath(
+            path.relative(workspaceRoot, root.absolutePath),
+            path.sep
+          )}" is a symbolic link; compatibility checks accept direct workspace roots only.`,
+        };
+      }
+    }
+
+    const resolvedCoveragePatterns = application.coveragePatterns.map((pattern) =>
+      path.resolve(workspaceRoot, pattern)
+    );
+    const compatibilityExcludes = [path.resolve(workspaceRoot, "**/node_modules/**")];
+    const globAttempts = yield* Effect.all(
+      resolvedCoveragePatterns.map((pattern) =>
+        Effect.result(fileSystem.glob(pattern, { exclude: compatibilityExcludes }))
+      )
+    );
+    const failedGlob = globAttempts.find((attempt) => attempt._tag === "Failure");
+    if (failedGlob?._tag === "Failure") {
+      return {
+        kind: "failed" as const,
+        detail: "Unable to enumerate compatibility exact-path coverage.",
+      };
+    }
+
+    const directAttempts = yield* Effect.all(
+      resolvedCoveragePatterns.map((pattern) => Effect.result(fileSystem.stat(pattern)))
+    );
+    const failedDirect = directAttempts.find(
+      (attempt) => attempt._tag === "Failure" && !isNotFound(attempt.failure)
+    );
+    if (failedDirect?._tag === "Failure") {
+      return {
+        kind: "failed" as const,
+        detail: "Unable to inspect compatibility exact-path coverage.",
+      };
+    }
+
+    const candidates = stablePaths(
+      [
+        ...globAttempts.flatMap((attempt) =>
+          attempt._tag === "Success"
+            ? attempt.success.map((candidate) =>
+                path.isAbsolute(candidate)
+                  ? path.resolve(candidate)
+                  : path.resolve(workspaceRoot, candidate)
+              )
+            : []
+        ),
+        ...directAttempts.flatMap((attempt, index) =>
+          attempt._tag === "Success" && attempt.success.type === "File"
+            ? [resolvedCoveragePatterns[index]]
+            : []
+        ),
+      ].filter((candidate): candidate is string => candidate !== undefined)
+    ).filter(
+      (candidate) =>
+        !isCompatibilityProtectedSubject(candidate, workspaceRoot, path) &&
+        authority.some((root) =>
+          root.kind === "file"
+            ? candidate === root.absolutePath
+            : isContained(root.absolutePath, candidate, path)
+        )
+    );
+
+    const subjects: ResolvedSubject[] = [];
+    for (const candidate of candidates) {
+      const canonical = yield* Effect.result(fileSystem.realPath(candidate));
+      if (canonical._tag === "Failure") {
+        if (isNotFound(canonical.failure)) continue;
+        return {
+          kind: "failed" as const,
+          detail: `Unable to canonicalize compatibility subject "${toRepositoryPath(
+            path.relative(workspaceRoot, candidate),
+            path.sep
+          )}".`,
+        };
+      }
+      const expectedCanonical = path.resolve(
+        workspaceRealPath.success,
+        path.relative(workspaceRoot, candidate)
+      );
+      if (
+        canonical.success !== expectedCanonical ||
+        !isContained(workspaceRealPath.success, canonical.success, path)
+      ) {
+        return {
+          kind: "failed" as const,
+          detail: `Exact coverage selected symbolic link "${toRepositoryPath(
+            path.relative(workspaceRoot, candidate),
+            path.sep
+          )}"; compatibility checks accept regular files only.`,
+        };
+      }
+      const stat = yield* Effect.result(fileSystem.stat(canonical.success));
+      if (stat._tag === "Failure") {
+        if (isNotFound(stat.failure)) continue;
+        return {
+          kind: "failed" as const,
+          detail: `Unable to inspect compatibility subject "${toRepositoryPath(
+            path.relative(workspaceRoot, candidate),
+            path.sep
+          )}".`,
+        };
+      }
+      if (stat.success.type === "File") {
+        subjects.push({ absolutePath: candidate, kind: "file" });
+      }
+    }
+
+    return subjects.length === 0
+      ? ({ kind: "not-applicable" as const } satisfies GritSubjectPreparation)
+      : ({ kind: "ready" as const, subjects } satisfies GritSubjectPreparation);
+  });
+}
+
+function isCompatibilityProtectedSubject(
+  candidate: string,
+  workspaceRoot: string,
+  path: Path.Path
+): boolean {
+  const relative = toRepositoryPath(path.relative(workspaceRoot, candidate), path.sep);
+  if (relative.split("/").includes("node_modules")) return true;
+  return compatibilityProtectedRoots.some(
+    (root) => relative === root || relative.startsWith(`${root}/`)
+  );
+}
 
 function resolvedSubjects(
   application: GritCheckApplication,
