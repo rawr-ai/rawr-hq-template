@@ -90,10 +90,12 @@ Habitat evaluation uses an exact Civ7-owned `@habitat/cli` package release
 pinned by URL and lockfile integrity. This repository owns only the consumer
 configuration and `.habitat` policy tree and does not vendor SDK sources.
 
-The `Repository Ratchet` workflow runs `bun run ci` for pull requests, merge
-groups, and pushes to `main`, composing `build`, `check`, and `test` through one
-Nx scheduler. Local hooks are useful feedback but can be bypassed. Protected
-`main` must therefore require the exact job context
+The `Repository Ratchet` workflow runs `bun run ci:affected` for pull requests
+against the exact checked-out merge candidate. Nx composes the affected
+`build`, `check`, and `test` graph, including affected dependents and declared
+task prerequisites. Merge-queue candidates, when used, and pushes to `main`
+run the full `bun run ci` graph. Local hooks are useful feedback but can be
+bypassed. Protected `main` must therefore require the exact job context
 `Required lint, typecheck, and topology`; that stable legacy name is the
 branch-protection identity even though the graph also includes builds and
 behavior tests. Remote branch protection is the enforcement authority for

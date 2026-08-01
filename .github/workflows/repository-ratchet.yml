@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -46,5 +48,13 @@ jobs:
       - name: Acquire package-owned Grit runtime
         run: bun -e 'import { acquirePinnedGrit } from "@habitat/cli/grit"; acquirePinnedGrit()'
 
-      - name: Verify required repository gates
+      - name: Verify affected repository gates
+        if: github.event_name == 'pull_request'
+        env:
+          NX_BASE: ${{ github.event.pull_request.base.sha }}
+          NX_HEAD: ${{ github.sha }}
+        run: bun run ci:affected
+
+      - name: Verify full repository gates
+        if: github.event_name != 'pull_request'
         run: bun run ci
