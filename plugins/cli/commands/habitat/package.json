@@ -29,7 +29,7 @@
     "test": "vitest run --project plugin-habitat"
   },
   "dependencies": {
-    "@habitat-ai/service": "0.2.3",
+    "@habitat-ai/service": "workspace:*",
     "@oclif/core": "^4.11.4"
   },
   "devDependencies": {

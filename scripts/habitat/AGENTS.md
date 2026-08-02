@@ -11,8 +11,9 @@
 
 ## Boundaries
 
-- `package.json` and `bun.lock` pin the released `@habitat/cli` package and its
-  exact bytes. This repository does not vendor the Habitat SDK source.
+- `package.json` and `bun.lock` pin the released `@habitat-ai/cli` package and
+  its exact bytes. Template owns the package source separately; Nx graph
+  bootstrap never executes that workspace source as a fallback.
 - `.habitat/**` owns structure, source, and blueprint authority. The installed
   Habitat package owns registry discovery, rule selection, inputs, caching,
   Grit acquisition, evaluation, and hook behavior.
@@ -23,7 +24,7 @@
 
 ## Behavior
 
-- Nx loads `@habitat/cli/nx-plugin`, discovers registered rules, and infers one
+- Nx loads `@habitat-ai/cli/nx-plugin`, discovers registered rules, and infers one
   cacheable rule target plus owner-local `check:policy` composition.
 - The `habitat` project contributes the repository-wide Biome pass. Its public
   `check` enters the same shared Nx graph as every other project.

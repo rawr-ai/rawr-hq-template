@@ -2,7 +2,8 @@ env = false
 
 [install]
 linker = "isolated"
+# Registry versions remain registry consumers; source relationships opt in with workspace:*.
+linkWorkspacePackages = false
 # Keep this list small and explicit. Add entries only when needed (e.g. packages
 # with install/postinstall scripts that we intentionally allow).
 trustedDependencies = ["esbuild"]
-

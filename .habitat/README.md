@@ -94,12 +94,12 @@ requires a named authority decision before the packet topology can change.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
 
-The Template-owned Habitat Nx source projects resolved applications into one
+The Template-owned `@habitat-ai/cli` release resolves applications into one
 cacheable target per application plus owner-local `check:policy` composition.
-The workspace still loads the released Civ7 checker until the Habitat app,
-initializer, and successor release are sealed. Codex Stop invokes
-`habitat hook agent-stop`; it shares the predecessor package and catalog but
-does not become a second admission graph.
+The workspace consumes that released Nx plugin while retaining the source
+projects as product owners. Codex Stop invokes `habitat hook agent-stop`
+through the same package and catalog; it does not become a second admission
+graph.
 
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit

@@ -28,7 +28,7 @@
   implementation of domain policy.
 - Local hooks provide fast feedback. Remote branch protection remains merge
   authority.
-- Habitat policy belongs in `.habitat/**`; the installed `@habitat/cli` package
+- Habitat policy belongs in `.habitat/**`; the installed `@habitat-ai/cli` package
   and its Nx plugin own discovery, acquisition, and evaluation. Scripts must
   not duplicate those responsibilities.
 
