@@ -2000,7 +2000,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `2064a431032ac0600e805ddafba6fd17a6b7deb4`. The three ordered tag runs
   `30730782469`, `30730814965`, and `30730880516` published exactly their
   selected Nx groups, and npm exposes SLSA provenance for all seven packages.
-- [ ] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
+- [x] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
   consumer. Before that cutover, make the Template-owned catalog, check
   operation, and Nx plugin execute and project every still-live version-two
   compatibility rule through the one native runtime. Preserve exact rule and
@@ -2011,7 +2011,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   ownership prose only after native parity and the initializer's remote-safety
   hook behavior are proven. Run initialization twice and require a byte-stable
   second pass, then prove repeated parallel policy checks through native Nx
-  targets.
+  targets. Template PR #758 landed the consumer cutover on canonical `main` at
+  `b040e316d7089890d4e59c52af93ea2f9a4b08cc`. The repository now resolves the
+  exact registry-installed `@habitat-ai/cli@0.2.3` and
+  `@habitat-ai/blueprints@0.2.1`, projects all 33 compatibility rules across
+  their six owner projects through inferred Nx targets, and carries no manual
+  policy target chain, explicit CI Grit acquisition, copied hook locator, or
+  Civ7 package pin. Two initializer runs were byte-stable, two uncached
+  parallel policy passes were green, required PR run `30733763031` passed on
+  the exact candidate, and canonical-main run `30734030390` passed the complete
+  repository gate.
 - [x] 5.7e22f1 Land the native service-execution half of version-two
   compatibility without closing task 5.7e22f. The Template-owned catalog
   admits the frozen 33-rule corpus across six owners, and `catalog.check`
@@ -2023,15 +2032,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   catalog authority. Template PR #748 landed on canonical `main` at
   `0107f9089a687e03793fa6208603b2c95940c6a6`; candidate head
   `b9d637f8e740f090a014dbdc60609ea8f8947c04` passed required Repository
-  Ratchet run `30719253578`, job `91420154104`. Version-two Nx target
-  projection, released initializer application, predecessor-chain deletion,
-  byte-stable repeated initialization, and repeated parallel native policy
-  proof remain open under task 5.7e22f.
-- [ ] 5.7e22g Realize the Habitat product graph directly on Template's Effect
+  Ratchet run `30719253578`, job `91420154104`. At this child checkpoint,
+  version-two Nx target projection, released initializer application,
+  predecessor-chain deletion, byte-stable repeated initialization, and repeated
+  parallel native policy proof remained open; task 5.7e22f later closed them at
+  canonical merge `b040e316d7089890d4e59c52af93ea2f9a4b08cc`.
+- [x] 5.7e22g Realize the Habitat product graph directly on Template's Effect
   4, oRPC 2, and current TypeBox substrate. Do not first preserve an isolated
   Effect 3/oRPC 1 realm and then migrate it. Keep this vendor cut independently
   reviewable inside the source-intake stack, preserve public Habitat behavior,
-  and introduce no compatibility bridge or parallel runtime.
+  and introduce no compatibility bridge or parallel runtime. Native catalog
+  service source landed through Template PRs #713 and #714; the conventional
+  registry release landed through PR #752 and became the repository consumer
+  through PR #758 at canonical merge
+  `b040e316d7089890d4e59c52af93ea2f9a4b08cc`.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
