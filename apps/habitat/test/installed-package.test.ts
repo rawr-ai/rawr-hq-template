@@ -635,6 +635,16 @@ async function createWorkspaceFixture(): Promise<void> {
       2
     )}\n`,
     "packages/example/source.ts": "export const installed = true;\n",
+    "packages/producer-blueprints/project.json": `${JSON.stringify(
+      { name: "@habitat-ai/blueprints", projectType: "library", targets: {} },
+      null,
+      2
+    )}\n`,
+    "packages/producer-cli/project.json": `${JSON.stringify(
+      { name: "@habitat-ai/cli", projectType: "application", targets: {} },
+      null,
+      2
+    )}\n`,
   };
 
   for (const [relativePath, contents] of Object.entries(files)) {
