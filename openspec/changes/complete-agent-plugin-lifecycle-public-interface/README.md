@@ -1645,10 +1645,10 @@ review does not authorize a separate release path.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
-| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat workspace source now evaluates the corpus, while released adoption and activation of the staged construction laws remain open |
+| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat source and released consumers now evaluate the corpus, while activation of the staged construction laws remains open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry bootstrap, the idempotent consumer initializer, native version-two service execution, and trusted publishing are landed; version-two Nx projection, released adoption/cutover, and service-law activation remain open |
+| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry publication, idempotent consumer initialization, native version-two execution, and released consumer cutover are landed; service-law activation remains open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
@@ -5470,12 +5470,12 @@ packages to its Nx tasks and leave the packed manifest on ordinary versions.
 The first-release cutover admits the app to the Bun workspace and deletes that
 temporary build wiring atomically.
 
-The source checkpoint passes app typecheck, build, Oclif manifest generation,
+The source checkpoint passed app typecheck, build, Oclif manifest generation,
 the six-test Oclif/Nx/provider/configuration boundary suite, repository Biome,
-the current repository Habitat check, and diff hygiene. Installed tarball
-acceptance, the Habitat Nx release group, and task completion remained open at
-that checkpoint; the successor below closes those package-construction gates
-while registry release and consumer cutover remain open.
+the then-current repository Habitat check, and diff hygiene. Installed tarball
+acceptance, the Habitat Nx release group, and task completion were still open
+at that checkpoint. The successor below closed those package-construction
+gates; later settlement sections close registry release and consumer cutover.
 
 ### Habitat Installed Artifact Checkpoint
 
@@ -5513,8 +5513,8 @@ authenticated npm session identified `mateicanavra` as an accepted
 npm organization, so the shared adapter joined the same public substrate as
 `@habitat-ai/typebox-adapter`. There was no predecessor alias, compatibility
 package, or dual release. The later
-[[README#Habitat Registry Settlement|registry settlement]] closed task 5.7e22e;
-consumer cutover remains open under task 5.7e22f.
+  [[README#Habitat Registry Settlement|registry settlement]] closed task 5.7e22e,
+  and [[README#Habitat Consumer Cutover|consumer cutover]] closed task 5.7e22f.
 
 The separate `rawr-cli` release group remains outside this Habitat release.
 Its RAWR-specific public-configured packages require an independently owned
@@ -5678,13 +5678,14 @@ identity boundary. Exact subject coverage, empty baselines, hidden literal
 paths, nested dependency exclusion, and acquisition or subject symlink refusal
 are behavioral contracts rather than a second checker or transitional runtime.
 
-The service suite passes 60 cases: 28 catalog-resolution cases, including the
+The service suite passed 60 cases: 28 catalog-resolution cases, including the
 complete six-owner/33-rule admission oracle, and 32 check cases covering the
 representative Grit and structure execution paths. The service test target now
-declares the complete `.habitat` authority corpus as an Nx cache input. Native
-version-two Nx target projection, released initializer application,
-predecessor-chain deletion, byte-stable repeat initialization, and repeated
-parallel native policy proof remain open under task 5.7e22f.
+declares the complete `.habitat` authority corpus as an Nx cache input. At this
+child checkpoint, native version-two Nx target projection, released initializer
+application, predecessor-chain deletion, byte-stable repeat initialization, and
+repeated parallel native policy proof remained open; the later
+[[README#Habitat Consumer Cutover|consumer cutover]] closes them.
 
 ### Habitat Blueprint Pack Admission
 
@@ -5715,8 +5716,8 @@ passed, and the packed policy artifact contained exactly the four declared
 files. Required `Repository Ratchet` runs `30689258768` and `30689342081`
 passed on the exact implementation and record candidates before Graphite
 landed them. Registry publication and registry-installed consumer proof later
-closed under task 5.7e22e; Template bootstrap cutover remains open under task
-5.7e22f.
+closed under task 5.7e22e; the Template bootstrap cutover then closed under
+[[README#Habitat Consumer Cutover|task 5.7e22f]].
 
 ### Habitat Release Transport Decision
 
@@ -5741,6 +5742,31 @@ integrities, and file inventories, the ordinary annotated release tags
 `habitat-blueprints-v0.2.0` point to that same canonical-main commit. Those
 tags and the registry metadata bind source provenance; they do not create a
 second installer, channel, version selector, or retained local release state.
+
+### Habitat Consumer Cutover
+
+Template PR #758 landed the released Habitat consumer on canonical `main` at
+`b040e316d7089890d4e59c52af93ea2f9a4b08cc`, closing
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e22f]]. The workspace
+now acquires exact registry releases `@habitat-ai/cli@0.2.3` and
+`@habitat-ai/blueprints@0.2.1`; explicit `workspace:*` edges continue to select
+local source only where one Template producer consumes another. The installed
+CLI supplies the Oclif entrypoint, Nx plugin, initializer, hook contribution,
+and one registry-resolved dependency closure without a copied executable,
+consumer-owned checker, or second distribution identity.
+
+The cutover removes the Civ7 tarball pin, manual Nx policy target chain,
+explicit CI Grit acquisition, and copied hook locator. Nx now infers exactly 33
+locked rule targets across the six declared owners. Two initializer runs were
+byte-stable; two uncached parallel policy passes completed in 26.5s and 22.2s;
+installed Oclif/Nx acceptance and a clean-checkout registry-closure check were
+green. Required PR run `30733763031`, job `91458544658`, passed on candidate
+`f821148757659273aee85f7de1aca8e1b9e06fa0`. Canonical-main run
+`30734030390`, job `91459296678`, then passed the complete repository gate on
+the landed merge from a cold Nx cache. The unchanged follow-up record candidate
+passed the affected gate in 50 seconds on run `30734381904`, job `91460326705`,
+so the cold full-run duration does not establish a steady-state CI defect or
+reopen the settled package boundary.
 
 ## Settlement Oracles
 
