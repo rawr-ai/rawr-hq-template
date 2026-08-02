@@ -803,7 +803,7 @@ async function resolveRepositoryCorpus() {
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const workspaceRoot = path.resolve(import.meta.dirname, "../../../../../..");
-      const policyPackRoot = path.join(workspaceRoot, "packages/habitat-blueprints");
+      const policyPackRoot = path.join(workspaceRoot, "packages/habitat-sdk");
       const client: Client = createClient({
         deps: {
           fileSystem,
@@ -814,7 +814,7 @@ async function resolveRepositoryCorpus() {
         scope: { workspaceRoot },
         config: {
           policyPack: {
-            name: "@habitat-ai/blueprints",
+            name: "@habitat-ai/sdk",
             packageJsonPath: path.join(policyPackRoot, "package.json"),
             manifestPath: path.join(policyPackRoot, "habitat-pack.json"),
           },
