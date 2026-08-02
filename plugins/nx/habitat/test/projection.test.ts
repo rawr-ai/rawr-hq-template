@@ -476,6 +476,42 @@ describe("Habitat Nx projection", () => {
     ]);
   });
 
+  it("projects a workspace-root acquisition as one valid recursive Nx input", async () => {
+    if (gritCompatibilityRule.runner.name !== "grit") {
+      throw new Error("Expected the Grit compatibility fixture.");
+    }
+    const workspaceRule: CompatibilityRule = {
+      ...gritCompatibilityRule,
+      ownerProject: "workspace",
+      manifestPath: ".habitat/workspace/rule.json",
+      runner: {
+        ...gritCompatibilityRule.runner,
+        acquisition: { kind: "check", entries: [{ kind: "directory", path: "." }] },
+      },
+    };
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () =>
+          resolvedCatalog([], [], compatibilityCatalog([workspaceRule], { workspace: "." })),
+      },
+    }));
+
+    const result = await createNodes(
+      [".habitat/index.json", workspaceRule.manifestPath],
+      undefined,
+      {
+        workspaceRoot: "/workspace",
+        nxJsonConfiguration: {},
+      }
+    );
+    const targets = projectMap(result)["."]?.targets;
+
+    expect(targets?.["habitat:rule:source-compat"]?.inputs).toContain("{workspaceRoot}/**/*");
+    expect(targets?.["habitat:rule:source-compat"]?.inputs).not.toContain("{workspaceRoot}");
+    expect(targets?.["check:policy"]?.inputs).toContain("{workspaceRoot}/**/*");
+    expect(targets?.["check:policy"]?.inputs).not.toContain("{workspaceRoot}");
+  });
+
   it("rejects an owner identity that cannot be one portable command argument", async () => {
     const ownerProject = "owner with 'quote; $(touch /tmp/habitat-projection-test)";
     const createNodes = createHandler(() => ({
