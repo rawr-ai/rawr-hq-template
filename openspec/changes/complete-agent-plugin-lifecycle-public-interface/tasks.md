@@ -505,7 +505,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   packages, install only `@habitat-ai/rawr` into a disposable consumer, let npm
   resolve the other seventeen, and repeat the version/help/command-inventory
   smoke. Repository release dispatch is not a pre-landing acceptance step.
-- [ ] 3.7a Land the ordinary Nx/npm release substrate on canonical `main`:
+- [x] 3.7a Land the ordinary Nx/npm release substrate on canonical `main`:
   fixed-group tag ownership, repository metadata, bounded package inventories,
   workspace-protocol materialization, installed Oclif/native-extension gates,
   and retryable tag-triggered trusted publication. Keep this task open until
