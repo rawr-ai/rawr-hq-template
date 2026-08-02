@@ -11,6 +11,7 @@ const HABITAT_CATALOG_PATHS = [
 const HABITAT_AUTHORITY_GLOB = `{${HABITAT_CATALOG_PATHS.join(",")}}`;
 const DEFAULT_CHECK_TARGET = "check:policy";
 const HABITAT_EXECUTABLE = "habitat";
+const PORTABLE_OWNER_PROJECT = /^[A-Za-z0-9@][A-Za-z0-9@._/+:-]*$/u;
 
 type ResolveCatalogClient = {
   readonly catalog: Pick<Client["catalog"], "resolve">;
@@ -130,10 +131,9 @@ function projectCatalogTargets(
   return [...projects.entries()]
     .sort(([left], [right]) => compareText(left, right))
     .map(([root, project]) => {
-      const leafTargets = Object.keys(project.targets).sort();
       project.targets[DEFAULT_CHECK_TARGET] = ownerTarget(
         project.ownerProject,
-        leafTargets,
+        ownerInputs(project.targets, runtimeInputs),
         project.compatibilityManifests.size > 0
       );
       return [
@@ -327,20 +327,42 @@ function compatibilityTarget(
 
 function ownerTarget(
   ownerProject: string,
-  leafTargets: readonly string[],
+  inputs: TargetConfiguration["inputs"],
   hasCompatibility: boolean
 ): TargetConfiguration {
+  if (!PORTABLE_OWNER_PROJECT.test(ownerProject)) {
+    throw new Error(
+      `Habitat Nx projection rejected owner '${ownerProject}': identity is not portable as an Nx command argument.`
+    );
+  }
   return {
-    executor: "nx:noop",
-    cache: false,
+    command: `${HABITAT_EXECUTABLE} check --owner ${ownerProject}`,
+    cache: true,
+    inputs,
     outputs: [],
-    dependsOn: leafTargets.map((target) => ({ target })),
+    options: { cwd: "{workspaceRoot}" },
     metadata: {
       description: hasCompatibility
         ? `Check resolved Habitat policy owned by ${ownerProject}`
         : `Check resolved Habitat applications owned by ${ownerProject}`,
     },
   };
+}
+
+function ownerInputs(
+  targets: Readonly<Record<string, TargetConfiguration>>,
+  runtimeInputs: HabitatNxBinding["runtimeInputs"]
+): TargetConfiguration["inputs"] {
+  const runtimeStrings = new Set(
+    runtimeInputs.filter((input): input is string => typeof input === "string")
+  );
+  const corpusInputs = new Set<string>();
+  for (const target of Object.values(targets)) {
+    for (const input of target.inputs ?? []) {
+      if (typeof input === "string" && !runtimeStrings.has(input)) corpusInputs.add(input);
+    }
+  }
+  return [...runtimeInputs, ...[...corpusInputs].sort(compareText)];
 }
 
 function applicationInputs(
@@ -373,13 +395,14 @@ function compatibilityInputs(
   files.add(workspaceInput(rule.manifestPath));
   files.add(workspaceInput(rule.baseline.relativePath));
   for (const pattern of rule.coveragePatterns) files.add(workspaceInput(pattern));
-  files.add(
-    workspaceInput(
-      rule.runner.name === "grit"
-        ? rule.runner.pattern.relativePath
-        : rule.runner.structure.relativePath
-    )
-  );
+  if (rule.runner.name === "grit") {
+    files.add(workspaceInput(rule.runner.pattern.relativePath));
+    for (const entry of rule.runner.acquisition.entries) {
+      addSubjectInputs(files, entry.path, entry.kind);
+    }
+  } else {
+    files.add(workspaceInput(rule.runner.structure.relativePath));
+  }
 
   return [...runtimeInputs, ...[...files].sort(compareText)];
 }

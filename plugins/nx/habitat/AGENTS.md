@@ -23,8 +23,13 @@
 ## Behavior
 
 - Resolve the catalog once for each graph construction.
-- Project one cacheable leaf per version 3 application and version 2
-  compatibility rule, then one dependency-only aggregate per owner project.
+- Reject owner identities outside the portable shell-safe Nx project grammar
+  before projecting an executable command.
+- Project one cacheable focused leaf per version 3 application and version 2
+  compatibility rule, then one cacheable native `habitat check --owner`
+  target per owner project. The owner target hashes the union of its leaves'
+  authority, acquisition-root, subject, asset, and app-owned runtime inputs; it
+  does not depend on or schedule the leaves.
 - Compatibility leaves augment the exact admitted owner root without inventing
   an instance identity or a second runtime.
 - Refuse rejected or internally inconsistent catalogs without partial output.
@@ -33,14 +38,14 @@
 
 - An **application target** is the Nx scheduling projection of one resolved
   Habitat application. A **compatibility target** projects one admitted version
-  2 rule directly. An **owner aggregate** contains every owner-local leaf as a
-  direct dependency and no execution of its own.
+  2 rule directly. An **owner target** executes one owner-selected native check;
+  focused leaves remain available for exact rule or application scheduling.
 
 ## Flow
 
 - The app binds the workspace client, Habitat resolves applications and
-  compatibility rules, this plugin projects targets, and Nx schedules the
-  selected leaves.
+  compatibility rules, this plugin projects owner and focused targets, and Nx
+  schedules the selected native command.
 
 ## Interfaces
 

@@ -8,6 +8,10 @@ import {
   RuleEvaluationFailureSchema,
   type RuleEvaluationFinding,
   RuleEvaluationFindingSchema,
+  type RuleEvaluationProgram,
+  type RuleEvaluationProgramResult,
+  RuleEvaluationProgramResultSchema,
+  RuleEvaluationProgramSchema,
   type RuleEvaluationRequest,
   RuleEvaluationRequestSchema,
   type RuleEvaluationResult,
@@ -26,6 +30,12 @@ export type RequestComesFromTypeBox = Expect<
 export type FindingComesFromTypeBox = Expect<
   Equal<RuleEvaluationFinding, Static<typeof RuleEvaluationFindingSchema>>
 >;
+export type ProgramComesFromTypeBox = Expect<
+  Equal<RuleEvaluationProgram, Static<typeof RuleEvaluationProgramSchema>>
+>;
+export type ProgramResultComesFromTypeBox = Expect<
+  Equal<RuleEvaluationProgramResult, Static<typeof RuleEvaluationProgramResultSchema>>
+>;
 export type ResultComesFromTypeBox = Expect<
   Equal<RuleEvaluationResult, Static<typeof RuleEvaluationResultSchema>>
 >;
@@ -37,20 +47,27 @@ const requestValidator = Schema.Compile(RuleEvaluationRequestSchema);
 const resultValidator = Schema.Compile(RuleEvaluationResultSchema);
 
 describe("rule-evaluation contract", () => {
-  test("admits one resolved program and a non-empty subject path set", () => {
+  test("admits an ordered resolved-program batch and a non-empty subject path set", () => {
     expect(
       requestValidator.Check({
-        program: "language js\n`forbidden()`",
+        programs: [
+          { id: "first", program: "language js\n`forbidden()`" },
+          { id: "second", program: "language js\n`another_forbidden()`" },
+        ],
         subjectPaths: ["/workspace/source.ts"],
       })
     ).toBe(true);
 
     for (const candidate of [
-      { program: "", subjectPaths: ["/workspace/source.ts"] },
-      { program: "language js\n`forbidden()`", subjectPaths: [] },
-      { program: "language js\n`forbidden()`", subjectPaths: [""] },
+      { programs: [], subjectPaths: ["/workspace/source.ts"] },
+      { programs: [{ id: "", program: "language js\n`forbidden()`" }], subjectPaths: [] },
+      { programs: [{ id: "first", program: "" }], subjectPaths: ["/workspace/source.ts"] },
       {
-        program: "language js\n`forbidden()`",
+        programs: [{ id: "first", program: "language js\n`forbidden()`" }],
+        subjectPaths: [""],
+      },
+      {
+        programs: [{ id: "first", program: "language js\n`forbidden()`" }],
         subjectPaths: ["/workspace/source.ts"],
         severity: "error",
       },
@@ -59,23 +76,28 @@ describe("rule-evaluation contract", () => {
     }
   });
 
-  test("validates exact clean and finding results", () => {
-    expect(resultValidator.Check({ findings: [] })).toBe(true);
+  test("validates exact attributed clean and finding results", () => {
+    expect(resultValidator.Check({ results: [{ programId: "first", findings: [] }] })).toBe(true);
     expect(
       resultValidator.Check({
-        findings: [
+        results: [
           {
-            path: "/workspace/source.ts",
-            start: { line: 1, column: 1, offset: 0 },
-            end: { line: 1, column: 12, offset: 11 },
-            message: null,
+            programId: "first",
+            findings: [
+              {
+                path: "/workspace/source.ts",
+                start: { line: 1, column: 1, offset: 0 },
+                end: { line: 1, column: 12, offset: 11 },
+                message: null,
+              },
+            ],
           },
         ],
       })
     ).toBe(true);
     expect(
       resultValidator.Check({
-        findings: [],
+        results: [{ programId: "first", findings: [] }],
         lane: "enforced",
       })
     ).toBe(false);

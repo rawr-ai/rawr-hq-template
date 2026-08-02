@@ -425,10 +425,73 @@ describe("installed Habitat package", () => {
       readonly targets?: Readonly<Record<string, unknown>>;
     };
     expect(Object.keys(project.targets ?? {}).sort()).toEqual([
+      "check",
       "check:policy",
       "habitat:application:installed-package:source_shape",
       "habitat:rule:installed_compatibility",
     ]);
+    const ownerTarget = project.targets?.["check:policy"] as
+      | {
+          readonly cache?: unknown;
+          readonly dependsOn?: unknown;
+          readonly executor?: unknown;
+          readonly inputs?: readonly unknown[];
+          readonly options?: {
+            readonly command?: unknown;
+          };
+        }
+      | undefined;
+    expect(ownerTarget).toMatchObject({
+      cache: true,
+      executor: "nx:run-commands",
+      options: {
+        command: "habitat check --owner @fixture/package",
+      },
+    });
+    expect(ownerTarget).not.toHaveProperty("dependsOn");
+    expect(ownerTarget?.inputs).toEqual(
+      expect.arrayContaining([
+        "{workspaceRoot}/.habitat/**",
+        "{workspaceRoot}/.habitat/blueprints/package/source_shape.structure.toml",
+        "{workspaceRoot}/packages/example",
+        "{workspaceRoot}/packages/example/**/*",
+      ])
+    );
+
+    const checkGraph = await run(nx, ["run", "@fixture/package:check", "--graph=stdout"], {
+      cwd: fixtureRoot,
+      timeoutMs: 60_000,
+    });
+    expect(checkGraph, checkGraph.stderr || checkGraph.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    const taskGraph = JSON.parse(checkGraph.stdout) as {
+      readonly tasks?: {
+        readonly tasks?: Readonly<Record<string, unknown>>;
+      };
+    };
+    const reachableTaskIds = Object.keys(taskGraph.tasks?.tasks ?? {}).sort();
+    expect(reachableTaskIds).toEqual(["@fixture/package:check", "@fixture/package:check:policy"]);
+    expect(reachableTaskIds.filter((taskId) => taskId.endsWith(":check:policy"))).toHaveLength(1);
+    expect(
+      reachableTaskIds.some(
+        (taskId) => taskId.includes(":habitat:rule:") || taskId.includes(":habitat:application:")
+      )
+    ).toBe(false);
+
+    const ownerChecked = await run(
+      nx,
+      ["run", "@fixture/package:check:policy", "--outputStyle=static", "--skip-nx-cache"],
+      { cwd: fixtureRoot, timeoutMs: 120_000 }
+    );
+    expect(ownerChecked, ownerChecked.stderr || ownerChecked.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(ownerChecked.stdout).toContain('"ruleId": "installed_compatibility"');
+    expect(ownerChecked.stdout).toContain('"ruleId": "source_shape"');
+    expect(ownerChecked.stdout).toContain("Successfully ran target check:policy");
 
     const checked = await run(
       nx,
@@ -648,7 +711,19 @@ async function createWorkspaceFixture(): Promise<void> {
     "nx.json": `${JSON.stringify({}, null, 2)}\n`,
     "packages/example/habitat.toml": instanceToml(),
     "packages/example/package.json": `${JSON.stringify(
-      { name: "@fixture/package", private: true, version: "0.0.0" },
+      {
+        name: "@fixture/package",
+        private: true,
+        version: "0.0.0",
+        nx: {
+          targets: {
+            check: {
+              executor: "nx:noop",
+              dependsOn: ["check:policy"],
+            },
+          },
+        },
+      },
       null,
       2
     )}\n`,
@@ -770,7 +845,12 @@ declare const rules: RuleEvaluationResource;
 declare const gritConfig: GritRuleEvaluationProviderConfig;
 declare const inventory: SourceInventoryResource;
 declare const gitOptions: GitSourceInventoryProviderOptions;
+const evaluation = rules.evaluate({
+  programs: [{ id: "installed", program: "language js(typescript)\\n\`forbidden()\`" }],
+  subjectPaths: ["/workspace/source.ts"],
+});
 void rules;
+void evaluation;
 void gritConfig;
 void inventory;
 void gitOptions;

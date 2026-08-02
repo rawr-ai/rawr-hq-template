@@ -242,7 +242,7 @@ function projectMap(result: CreateNodesResultArray) {
 }
 
 describe("Habitat Nx projection", () => {
-  it("projects stable application leaves and owner-only aggregates", async () => {
+  it("projects stable focused leaves and one cacheable native owner check", async () => {
     const resolve = vi.fn(async () => resolvedCatalog());
     const clientForWorkspace = vi.fn(() => ({ catalog: { resolve } }));
     const createNodes = createHandler(clientForWorkspace);
@@ -299,14 +299,11 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml"
     );
     expect(serviceTargets?.["check:policy"]).toEqual({
-      executor: "nx:noop",
-      cache: false,
+      command: "habitat check --owner service-a",
+      cache: true,
+      inputs: serviceLeaf?.inputs,
       outputs: [],
-      dependsOn: [
-        {
-          target: "habitat:application:service-a:source-law",
-        },
-      ],
+      options: { cwd: "{workspaceRoot}" },
       metadata: { description: "Check resolved Habitat applications owned by service-a" },
     });
 
@@ -375,14 +372,19 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/pattern.md",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/rule.json",
       "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/services/a",
+      "{workspaceRoot}/services/a/**/*",
       "{workspaceRoot}/services/a/package.json",
       "{workspaceRoot}/services/a/src/**/*.ts",
     ]);
-    expect(gritLeaf?.inputs).not.toContain("{workspaceRoot}/services/a");
-    expect(gritLeaf?.inputs).not.toContain("{workspaceRoot}/services/a/**/*");
-    expect(gritTargets?.["check:policy"]?.dependsOn).toEqual([
-      { target: "habitat:rule:source-compat" },
-    ]);
+    expect(gritTargets?.["check:policy"]).toMatchObject({
+      command: "habitat check --owner service-a",
+      cache: true,
+      inputs: gritLeaf?.inputs,
+      outputs: [],
+      options: { cwd: "{workspaceRoot}" },
+    });
+    expect(gritTargets?.["check:policy"]?.dependsOn).toBeUndefined();
 
     const structureTargets = projects["plugins/b"]?.targets;
     expect(Object.keys(structureTargets ?? {})).toEqual([
@@ -411,12 +413,17 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/plugins/b/**/*.ts",
     ]);
-    expect(structureTargets?.["check:policy"]?.dependsOn).toEqual([
-      { target: "habitat:rule:plugin-compat" },
-    ]);
+    expect(structureTargets?.["check:policy"]).toMatchObject({
+      command: "habitat check --owner plugin-b",
+      cache: true,
+      inputs: structureLeaf?.inputs,
+      outputs: [],
+      options: { cwd: "{workspaceRoot}" },
+    });
+    expect(structureTargets?.["check:policy"]?.dependsOn).toBeUndefined();
   });
 
-  it("merges compatibility and application leaves into one owner aggregate", async () => {
+  it("unions compatibility and application inputs into one owner command", async () => {
     const createNodes = createHandler(() => ({
       catalog: {
         resolve: async () =>
@@ -441,10 +448,52 @@ describe("Habitat Nx projection", () => {
       "habitat:application:service-a:source-law",
       "habitat:rule:source-compat",
     ]);
-    expect(service?.targets?.["check:policy"]?.dependsOn).toEqual([
-      { target: "habitat:application:service-a:source-law" },
-      { target: "habitat:rule:source-compat" },
+    const owner = service?.targets?.["check:policy"];
+    expect(owner).toMatchObject({
+      command: "habitat check --owner service-a",
+      cache: true,
+      outputs: [],
+      options: { cwd: "{workspaceRoot}" },
+    });
+    expect(owner?.dependsOn).toBeUndefined();
+    expect(owner?.inputs).toEqual([
+      ...runtimeInputs,
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/baseline.json",
+      "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/pattern.md",
+      "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/services/a",
+      "{workspaceRoot}/services/a/**/*",
+      "{workspaceRoot}/services/a/package.json",
+      "{workspaceRoot}/services/a/src",
+      "{workspaceRoot}/services/a/src/**/*",
+      "{workspaceRoot}/services/a/src/**/*.ts",
     ]);
+  });
+
+  it("rejects an owner identity that cannot be one portable command argument", async () => {
+    const ownerProject = "owner with 'quote; $(touch /tmp/habitat-projection-test)";
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () =>
+          resolvedCatalog(
+            [{ ...gritApplication, ownerProject }],
+            [{ ...serviceInstance, ownerProject }]
+          ),
+      },
+    }));
+
+    await expect(
+      createNodes(configFiles, undefined, {
+        workspaceRoot: "/workspace",
+        nxJsonConfiguration: {},
+      })
+    ).rejects.toThrow("identity is not portable as an Nx command argument");
   });
 
   it("keeps same-rule instances unique and sorts aggregate dependencies", async () => {
@@ -496,10 +545,11 @@ describe("Habitat Nx projection", () => {
     expect(
       projects["services/c"]?.targets?.["habitat:application:service-c:source-law"]
     ).toBeDefined();
-    expect(projects["services/a"]?.targets?.["check:policy"]?.dependsOn).toEqual([
-      { target: "habitat:application:service-a:a-rule" },
-      { target: "habitat:application:service-a:source-law" },
-    ]);
+    expect(projects["services/a"]?.targets?.["check:policy"]).toMatchObject({
+      command: "habitat check --owner service-a",
+      cache: true,
+    });
+    expect(projects["services/a"]?.targets?.["check:policy"]?.dependsOn).toBeUndefined();
   });
 
   it("returns no project identity when both catalog generations are empty", async () => {

@@ -12,7 +12,8 @@
 
 ## Boundaries
 
-- Accept only an already-resolved program and caller-selected subject paths.
+- Accept only ordered already-resolved programs and one shared exact subject
+  set.
 - Own temporary Grit catalog mechanics, native stream draining, timeout,
   Grit-wire validation, finding mapping, and cleanup.
 - Do not select programs, catalog policy, baselines, lanes, severity,
@@ -22,8 +23,14 @@
 
 ## Behavior
 
-- Allocate one temporary catalog, execute one Grit check, validate its native
-  report, map findings, then remove the catalog on every exit.
+- Allocate one temporary multi-pattern catalog and execute one Grit check for
+  the whole request. Attribute findings through provider-owned pattern
+  identities, return results in caller order, then remove the catalog on every
+  exit.
+- Run the native process with `RAYON_NUM_THREADS=2`. Output capacity scales by
+  program count up to an absolute batch cap; the configured timeout is one
+  shared deadline for the native batch. Timeout, failure, and interruption
+  cancel the process group before scoped catalog cleanup.
 
 ## Routing
 

@@ -2,6 +2,7 @@ import { NodeServices } from "@effect/platform-node";
 import type {
   RuleEvaluationFailure,
   RuleEvaluationFinding,
+  RuleEvaluationProgram,
   RuleEvaluationRequest,
   RuleEvaluationResource,
   RuleEvaluationResult,
@@ -28,9 +29,10 @@ import { Value } from "typebox/value";
 type ProviderRequirements = FileSystem.FileSystem | Path.Path | ChildProcessSpawner;
 
 const TEMP_CATALOG_PREFIX = "habitat-rule-evaluation-";
-const GRIT_PATTERN_NAME = "habitat_rule_evaluation";
-/** Maximum bytes retained from either native output stream. */
-const MAX_GRIT_OUTPUT_BYTES = 256 * 1_024;
+const GRIT_PATTERN_PREFIX = "habitat_rule_evaluation_";
+/** Output retained per program, capped so an untrusted batch cannot allocate without bound. */
+const MAX_GRIT_OUTPUT_BYTES_PER_PROGRAM = 256 * 1_024;
+const MAX_GRIT_BATCH_OUTPUT_BYTES = 16 * 1_024 * 1_024;
 
 /** Structural schema for Grit provider construction. */
 export const GritRuleEvaluationProviderConfigSchema = ReadonlyObject(
@@ -64,11 +66,12 @@ const GritPositionSchema = Type.Object(
 const GritResultSchema = Type.Object(
   {
     check_id: Type.String({
-      pattern: `^#${GRIT_PATTERN_NAME}/.+$`,
-      description: "Provider-owned Grit check identity with evaluator suffix",
+      minLength: 1,
+      description: "Grit check identity with evaluator suffix",
     }),
-    local_name: Type.Literal(GRIT_PATTERN_NAME, {
-      description: "Provider-owned local Grit pattern name",
+    local_name: Type.String({
+      minLength: 1,
+      description: "Local Grit catalog pattern name",
     }),
     path: Type.String({ minLength: 1, description: "Grit-reported subject path" }),
     start: GritPositionSchema,
@@ -109,6 +112,12 @@ interface ScopedGritCatalog {
   readonly cacheDirectory: string;
 }
 
+interface MaterializedProgram {
+  readonly id: string;
+  readonly patternName: string;
+  readonly program: string;
+}
+
 interface ProcessObservation {
   readonly stdout: string;
   readonly stderr: string;
@@ -137,7 +146,7 @@ export function makeGritRuleEvaluationResource(
     if (!requestValidator.Check(input)) {
       return yield* fail(
         "InvalidInput",
-        "Rule-evaluation request requires one resolved program and non-empty subject paths"
+        "Rule-evaluation request requires resolved programs and non-empty subject paths"
       );
     }
 
@@ -148,9 +157,20 @@ export function makeGritRuleEvaluationResource(
         "Rule-evaluation subject paths must be caller-resolved absolute paths"
       );
     }
+    const [firstProgram, ...remainingPrograms] = input.programs;
+    if (firstProgram === undefined) {
+      return yield* fail("InvalidInput", "Rule-evaluation request requires at least one program");
+    }
+    if (new Set(input.programs.map(({ id }) => id)).size !== input.programs.length) {
+      return yield* fail("InvalidInput", "Rule-evaluation program identities must be unique");
+    }
+    const programs = [
+      materializeProgram(firstProgram, 0),
+      ...remainingPrograms.map((program, index) => materializeProgram(program, index + 1)),
+    ] as const;
     return yield* Effect.scoped(
-      withScopedGritCatalog(input.program, (catalog) =>
-        runGritCheck(config, catalog, input.subjectPaths)
+      withScopedGritCatalog(programs, (catalog) =>
+        runGritCheck(config, catalog, programs, input.subjectPaths)
       )
     );
   });
@@ -170,7 +190,7 @@ export function makeNodeGritRuleEvaluationResource(
 }
 
 function withScopedGritCatalog<A>(
-  program: string,
+  programs: readonly [MaterializedProgram, ...MaterializedProgram[]],
   use: (
     catalog: ScopedGritCatalog
   ) => Effect.Effect<A, RuleEvaluationFailure, ChildProcessSpawner | Scope.Scope>
@@ -201,7 +221,7 @@ function withScopedGritCatalog<A>(
       .makeDirectory(catalog.cacheDirectory)
       .pipe(mapPlatform("SetupFailed", "Failed to create Grit cache directory"));
     yield* fs
-      .writeFileString(path.join(catalog.gritDirectory, "grit.yaml"), renderGritCatalog(program))
+      .writeFileString(path.join(catalog.gritDirectory, "grit.yaml"), renderGritCatalog(programs))
       .pipe(mapPlatform("SetupFailed", "Failed to write temporary Grit catalog"));
     return yield* use(catalog);
   });
@@ -210,8 +230,10 @@ function withScopedGritCatalog<A>(
 function runGritCheck(
   config: GritRuleEvaluationProviderConfig,
   catalog: ScopedGritCatalog,
+  programs: readonly [MaterializedProgram, ...MaterializedProgram[]],
   subjectPaths: readonly string[]
 ): Effect.Effect<RuleEvaluationResult, RuleEvaluationFailure, ChildProcessSpawner | Scope.Scope> {
+  const outputLimit = gritOutputLimit(programs.length);
   const observe = Effect.gen(function* () {
     const command = ChildProcess.make(
       config.executable,
@@ -224,6 +246,7 @@ function runGritCheck(
           GRIT_USER_CONFIG: catalog.userConfigDirectory,
           GRIT_TELEMETRY_DISABLED: "true",
           NO_COLOR: undefined,
+          RAYON_NUM_THREADS: "2",
         },
         extendEnv: true,
         stdin: "ignore",
@@ -234,8 +257,8 @@ function runGritCheck(
     const process = yield* command.pipe(mapPlatform("ExecutionFailed", "Failed to start Grit"));
     const output = yield* Effect.all(
       {
-        stdout: collectBoundedOutput(process.stdout, "stdout"),
-        stderr: collectBoundedOutput(process.stderr, "stderr"),
+        stdout: collectBoundedOutput(process.stdout, "stdout", outputLimit),
+        stderr: collectBoundedOutput(process.stderr, "stderr", outputLimit),
         exitCode: process.exitCode.pipe(
           Effect.map(Number),
           mapPlatform("ExecutionFailed", "Failed to observe Grit exit")
@@ -268,7 +291,9 @@ function runGritCheck(
           "Grit check emitted unexpected stdout alongside its stderr JSON report"
         );
       }
-      return decodeGritReport(observation.stderr).pipe(Effect.map(resultFromGritReport));
+      return decodeGritReport(observation.stderr).pipe(
+        Effect.flatMap((report) => resultFromGritReport(report, programs))
+      );
     })
   );
 }
@@ -291,43 +316,73 @@ function decodeGritReport(stderr: string): Effect.Effect<GritReport, RuleEvaluat
   );
 }
 
-function resultFromGritReport(report: GritReport): RuleEvaluationResult {
-  const findings = report.results
-    .map(
-      (result): RuleEvaluationFinding =>
-        Object.freeze({
-          path: result.path,
-          start: Object.freeze({
-            line: result.start.line,
-            column: result.start.col,
-            offset: result.start.offset,
-          }),
-          end: Object.freeze({
-            line: result.end.line,
-            column: result.end.col,
-            offset: result.end.offset,
-          }),
-          message: result.extra.message,
-        })
-    )
-    .sort(compareFindings);
+function resultFromGritReport(
+  report: GritReport,
+  programs: readonly [MaterializedProgram, ...MaterializedProgram[]]
+): Effect.Effect<RuleEvaluationResult, RuleEvaluationFailure> {
+  const programsByPattern = new Map(programs.map((program) => [program.patternName, program]));
+  const findingsByProgram = new Map(programs.map(({ id }) => [id, [] as RuleEvaluationFinding[]]));
+  for (const result of report.results) {
+    const program = programsByPattern.get(result.local_name);
+    if (program === undefined || !result.check_id.startsWith(`#${result.local_name}/`)) {
+      return fail(
+        "InvalidOutput",
+        `Grit check reported unexpected pattern identity '${result.local_name}'`
+      );
+    }
+    findingsByProgram.get(program.id)?.push(
+      Object.freeze({
+        path: result.path,
+        start: Object.freeze({
+          line: result.start.line,
+          column: result.start.col,
+          offset: result.start.offset,
+        }),
+        end: Object.freeze({
+          line: result.end.line,
+          column: result.end.col,
+          offset: result.end.offset,
+        }),
+        message: result.extra.message,
+      })
+    );
+  }
+  return Effect.succeed(
+    Object.freeze({
+      results: Object.freeze(
+        programs.map(({ id }) =>
+          Object.freeze({
+            programId: id,
+            findings: Object.freeze((findingsByProgram.get(id) ?? []).sort(compareFindings)),
+          })
+        )
+      ),
+    })
+  );
+}
+
+function materializeProgram(program: RuleEvaluationProgram, index: number): MaterializedProgram {
   return Object.freeze({
-    findings: Object.freeze(findings),
+    id: program.id,
+    patternName: `${GRIT_PATTERN_PREFIX}${index}`,
+    program: program.program,
   });
 }
 
-function renderGritCatalog(program: string): string {
+function renderGritCatalog(
+  programs: readonly [MaterializedProgram, ...MaterializedProgram[]]
+): string {
   return `${JSON.stringify(
     {
       version: "0.0.2",
-      patterns: [
-        {
-          name: GRIT_PATTERN_NAME,
-          title: GRIT_PATTERN_NAME,
+      patterns: programs.map(({ id, patternName, program }) =>
+        Object.freeze({
+          name: patternName,
+          title: id,
           level: "error",
           body: program,
-        },
-      ],
+        })
+      ),
     },
     undefined,
     2
@@ -336,7 +391,8 @@ function renderGritCatalog(program: string): string {
 
 function collectBoundedOutput(
   stream: Stream.Stream<Uint8Array, PlatformError.PlatformError>,
-  channel: "stdout" | "stderr"
+  channel: "stdout" | "stderr",
+  outputLimit: number
 ): Effect.Effect<string, RuleEvaluationFailure> {
   type OutputState = Readonly<{ buffer: Uint8Array; bytes: number }>;
   return Stream.runFoldEffect(
@@ -345,15 +401,12 @@ function collectBoundedOutput(
         failure("ExecutionFailed", `Failed to drain Grit ${channel}: ${error.message}`)
       )
     ),
-    () => Object.freeze({ buffer: new Uint8Array(MAX_GRIT_OUTPUT_BYTES), bytes: 0 }),
+    () => Object.freeze({ buffer: new Uint8Array(outputLimit), bytes: 0 }),
     (state, chunk): Effect.Effect<OutputState, RuleEvaluationFailure> => {
       if (chunk.byteLength === 0) return Effect.succeed(state);
       const bytes = state.bytes + chunk.byteLength;
-      return bytes > MAX_GRIT_OUTPUT_BYTES
-        ? fail(
-            "InvalidOutput",
-            `Grit ${channel} exceeded its ${MAX_GRIT_OUTPUT_BYTES}-byte output limit`
-          )
+      return bytes > outputLimit
+        ? fail("InvalidOutput", `Grit ${channel} exceeded its ${outputLimit}-byte output limit`)
         : Effect.sync(() => {
             state.buffer.set(chunk, state.bytes);
             return Object.freeze({ buffer: state.buffer, bytes });
@@ -369,6 +422,10 @@ function collectBoundedOutput(
       })
     )
   );
+}
+
+function gritOutputLimit(programCount: number): number {
+  return Math.min(MAX_GRIT_BATCH_OUTPUT_BYTES, MAX_GRIT_OUTPUT_BYTES_PER_PROGRAM * programCount);
 }
 
 function mapPlatform(reason: RuleEvaluationFailure["reason"], context: string) {

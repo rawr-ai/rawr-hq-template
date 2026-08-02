@@ -24,7 +24,10 @@
 - `check` intersects selectors over version 3 applications and distinct
   version 2 compatibility rules, then evaluates both through the same Grit and
   native Habitat structure paths. Compatibility Grit acquisition is narrowed
-  to live regular files matching its exact-path coverage.
+  to live regular files matching its exact-path coverage. Grit applications
+  batch only when those final ordered prepared subject paths are exactly equal;
+  provider results are accepted only at matching cardinality, identity, and
+  request order.
 
 ## Concepts
 
