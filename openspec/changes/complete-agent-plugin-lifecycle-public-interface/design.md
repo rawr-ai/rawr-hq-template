@@ -74,25 +74,20 @@ configuration and may emit its own `oclif.manifest.json` cache. Generated
 manifests are build artifacts, not core-membership declarations or runtime
 authority records.
 
-### Nx owns build and release
+### Nx owns build; Habitat owns the target released substrate
 
-Nx projects declare build, typecheck, behavior test, generated-manifest, and
-package targets. One workspace target owns ordinary lint. Top-level `nx.json#release`
-configuration defines the coherent runtime project group; `nx release` owns
-versioning and changelog, and `nx release publish` owns npm publication. The
-selected release is an ordinary registry-published Oclif application backed by
-one fixed package group whose executable requires installed Bun because
-surviving runtime code uses Bun-only APIs.
-That yields a conventional package with a Bun hashbang, not a custom runtime
-store.
+Nx projects declare build, typecheck, behavior test, and generated-manifest
+targets. One workspace target owns ordinary lint. Habitat will be distributed as one
+runtime SDK containing the TypeBox bridge, blueprint catalog, and runtime
+capabilities, plus one ordinary Oclif CLI release consuming that SDK. Consumers
+install it through `nx add @habitat-ai/cli`. Current RAWR applications and their internal
+services, resources, plugins, adapters, and packages remain private workspace
+projects and are not members of an Nx release group.
 
-The release group is derived only after the rejected controller distribution,
-controller identity, persistent agent release/projection stores, and target
-records are deleted and the surviving filesystem/process family is coherently
-on Effect 4. The current pre-deletion runtime dependency closure is evidence for
-deletion, not a package inventory to version. A failed standard pack caused by an unversioned workspace
-dependency is repaired by making the final surviving closure publishable, never
-by publishing machinery already scheduled for removal.
+Project kind does not permanently prohibit publication. A future service,
+resource, plugin, or package may become a public product through an explicit
+Nx release classification and ordinary package metadata; workspace membership
+alone never implies publication.
 
 Oclif's Node-bearing standalone archives and a whole-application Bun compiled
 executable are not release alternatives in this workstream. A later initiative
@@ -100,16 +95,11 @@ may evaluate either only after proving runtime and Oclif plugin-discovery
 compatibility. Neither may reintroduce a local selector, retained private
 release store, or per-file runtime envelope.
 
-Release integrity is artifact-level: ordinary checksums, repository release
-provenance, package inventory, generated-manifest validity, and installed-command
-equivalence. Per-file hostile-local-tamper attestation and custom archive
-canonicalization are out of scope.
-
-Pre-landing installed acceptance packs every release-group member, then uses one
-acceptance-only package manifest whose dependencies are `file:` references to
-those tarballs. The package manager therefore exercises the complete local group
-without unpublished registry dependencies, package-metadata rewriting, or a
-registry emulator. Canonical publication still occurs only from landed source.
+Habitat release integrity remains ordinary npm integrity, provenance, package
+inventory, and installed behavior. RAWR app behavior is verified from its Nx
+and Oclif owners without constructing or publishing an internal package cohort.
+Per-file hostile-local-tamper attestation, custom archive canonicalization, and
+registry emulation remain out of scope.
 
 ### Habitat owns positive architecture policy
 

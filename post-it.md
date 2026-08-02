@@ -6,6 +6,33 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-02 - Runtime Is One Product
+
+Habitat must distribute one runtime SDK. The TypeBox bridge, blueprint catalog, and
+runtime capabilities are facets of that SDK, not independent product
+identities. The Habitat CLI is an ordinary Oclif application that consumes the
+SDK and exposes its Nx initializer. One consumer command installs the product;
+private RAWR applications, services, resources, plugins, and packages never
+become a registry cohort.
+
+Publication remains available to every Habitat project kind. It is an explicit
+product classification, not a consequence of being an application, service,
+resource, plugin, package, or member of the workspace.
+
+Source ownership remains explicit inside the monorepo. Distribution composes
+those sealed owners into the SDK artifact rather than making implementation
+boundaries public. Nx owns the build and release graph. Oclif owns CLI packaging
+and command discovery. npm transports the SDK and CLI without acquiring product
+authority.
+
+### Bag Of Keywords
+
+runtime, sdk, cli, blueprint.
+
+simplicity, ownership, boundary, install.
+
+compose, bundle, release, verify.
+
 ## 2026-08-02 - Registry Names Preserve Package Boundaries
 
 The public RAWR product is `@habitat-ai/rawr`, one ordinary Oclif application

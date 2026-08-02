@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/rawr-plugin-session-tools",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -44,8 +44,5 @@
       "type:plugin",
       "migration-slice:structural-tranche"
     ]
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

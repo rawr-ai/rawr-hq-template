@@ -61,7 +61,5 @@
 - `bunx nx run @habitat-ai/rawr:typecheck`
 - `bunx nx run @habitat-ai/rawr:test`
 - `bunx nx run @habitat-ai/rawr:acceptance:oclif`
-- `bunx nx run @habitat-ai/rawr:acceptance:oclif-installed-package` when installed
-  package behavior or the public CLI release closure changes
 - `bunx nx run @habitat-ai/rawr:acceptance:oclif-native-plugins` when native extension
   installation behavior changes

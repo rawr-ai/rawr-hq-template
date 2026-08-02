@@ -5,35 +5,6 @@
       "updateDependents": "never"
     },
     "groups": {
-      "rawr-cli": {
-        "projects": [
-          "@habitat-ai/rawr-agent-plugin-lifecycle",
-          "@habitat-ai/rawr-chatgpt-corpus",
-          "@habitat-ai/rawr",
-          "@habitat-ai/rawr-core",
-          "@habitat-ai/rawr-dev",
-          "@habitat-ai/rawr-dev-node",
-          "@habitat-ai/rawr-hq-ops",
-          "@habitat-ai/rawr-hq-sdk",
-          "@habitat-ai/rawr-hyperresearch-codex",
-          "@habitat-ai/rawr-plugin-chatgpt-corpus",
-          "@habitat-ai/rawr-plugin-devops",
-          "@habitat-ai/rawr-plugin-hyperresearch",
-          "@habitat-ai/rawr-plugin-session-tools",
-          "@habitat-ai/rawr-resource-agent-plugin-package-output",
-          "@habitat-ai/rawr-resource-content-workspace",
-          "@habitat-ai/rawr-resource-native-agent-provider",
-          "@habitat-ai/rawr-resource-versioned-content",
-          "@habitat-ai/rawr-session-intelligence"
-        ],
-        "projectsRelationship": "fixed",
-        "version": {
-          "preserveLocalDependencyProtocols": true
-        },
-        "releaseTag": {
-          "pattern": "rawr-cli-v{version}"
-        }
-      },
       "habitat-cli": {
         "projects": [
           "@habitat-ai/cli",
@@ -148,75 +119,10 @@
             "@habitat-ai/resource-rule-evaluation",
             "@habitat-ai/resource-source-inventory",
             "@habitat-ai/service",
-            "@habitat-ai/rawr-agent-plugin-lifecycle",
-            "@habitat-ai/rawr-chatgpt-corpus",
-            "@habitat-ai/rawr",
-            "@habitat-ai/rawr-core",
-            "@habitat-ai/rawr-dev",
-            "@habitat-ai/rawr-dev-node",
-            "@habitat-ai/rawr-hq-ops",
-            "@habitat-ai/rawr-hq-sdk",
-            "@habitat-ai/rawr-hyperresearch-codex",
-            "@habitat-ai/rawr-plugin-chatgpt-corpus",
-            "@habitat-ai/rawr-plugin-devops",
-            "@habitat-ai/rawr-plugin-hyperresearch",
-            "@habitat-ai/rawr-plugin-session-tools",
-            "@habitat-ai/rawr-resource-agent-plugin-package-output",
-            "@habitat-ai/rawr-resource-content-workspace",
-            "@habitat-ai/rawr-resource-native-agent-provider",
-            "@habitat-ai/rawr-resource-versioned-content",
-            "@habitat-ai/rawr-session-intelligence",
             "@habitat-ai/typebox-adapter"
           ]
         },
         "dependsOn": ["...", "build"]
-      },
-      {
-        "filter": {
-          "projects": [
-            "@habitat-ai/rawr-agent-plugin-lifecycle",
-            "@habitat-ai/rawr-chatgpt-corpus",
-            "@habitat-ai/rawr",
-            "@habitat-ai/rawr-core",
-            "@habitat-ai/rawr-dev",
-            "@habitat-ai/rawr-dev-node",
-            "@habitat-ai/rawr-hq-ops",
-            "@habitat-ai/rawr-hq-sdk",
-            "@habitat-ai/rawr-hyperresearch-codex",
-            "@habitat-ai/rawr-plugin-chatgpt-corpus",
-            "@habitat-ai/rawr-plugin-devops",
-            "@habitat-ai/rawr-plugin-hyperresearch",
-            "@habitat-ai/rawr-plugin-session-tools",
-            "@habitat-ai/rawr-resource-agent-plugin-package-output",
-            "@habitat-ai/rawr-resource-content-workspace",
-            "@habitat-ai/rawr-resource-native-agent-provider",
-            "@habitat-ai/rawr-resource-versioned-content",
-            "@habitat-ai/rawr-session-intelligence"
-          ]
-        },
-        "dependsOn": [
-          "...",
-          {
-            "projects": ["@habitat-ai/rawr"],
-            "target": "acceptance:oclif-installed-package"
-          },
-          {
-            "projects": ["@habitat-ai/rawr"],
-            "target": "acceptance:oclif-native-plugins"
-          }
-        ]
-      },
-      {
-        "filter": {
-          "projects": [
-            "@habitat-ai/rawr",
-            "@habitat-ai/rawr-plugin-chatgpt-corpus",
-            "@habitat-ai/rawr-plugin-devops",
-            "@habitat-ai/rawr-plugin-hyperresearch",
-            "@habitat-ai/rawr-plugin-session-tools"
-          ]
-        },
-        "dependsOn": ["...", "manifest"]
       },
       {
         "filter": {

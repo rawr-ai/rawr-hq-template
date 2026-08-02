@@ -116,9 +116,8 @@ identity, release identity, or Git ancestry between repositories.
 
 ```text
 RAWR HQ-Template source
-  -> Nx build and release
-  -> registry-published Oclif application package group requiring installed Bun
-  -> normal installer exposes `rawr`
+  -> Nx builds the private Oclif application
+  -> an ordinary development or application host exposes `rawr`
      -> `rawr plugins` delegates to @oclif/plugin-plugins
      -> `rawr agent plugins` calls one oRPC lifecycle service
         -> read the selected Personal content record
@@ -130,12 +129,11 @@ RAWR HQ-Template source
         -> inspect and verify the result
 ```
 
-Development uses the same Oclif application through Nx without an installed
-controller. This release uses a fixed Nx Release package group whose executable
-requires installed Bun because surviving first-party runtime code uses Bun-only
-APIs. Oclif's Node-bearing standalone archives and whole-application Bun
-compilation are outside this workstream. The selected package group does not
-authorize another selector or version store.
+Development and application hosts use the same Oclif application through Nx
+without an installed controller. This workstream does not publish the RAWR
+workspace graph. A later application-distribution decision may use conventional
+Oclif packaging after its runtime requirements are known; it may not introduce
+another selector, version store, or internal-package release cohort.
 
 ## Component Disposition
 
@@ -146,7 +144,7 @@ authorize another selector or version store.
 | `resources/controller-authority/**` | Delete; rehome only narrow surviving checks at their actual owner |
 | `apps/cli/src/lib/controller/**` | Delete |
 | `packages/core/src/cli/controller-reentry.ts` | Delete |
-| Controller release workflow, installer, selector, launcher, diagnostics | Replace with Nx/Oclif build, package, release, and ordinary installation |
+| Controller release workflow, installer, selector, launcher, diagnostics | Replace with ordinary Nx/Oclif build and host composition; distribution remains separate |
 | `apps/cli/src/lib/external-extensions/**` | Delete |
 | Local wrappers for Oclif `plugins` commands | Delete; enable `@oclif/plugin-plugins` directly |
 | `apps/cli/bin/run.js` and `apps/cli/src/index.ts` | Restore to ordinary Oclif entrypoints |
@@ -179,9 +177,9 @@ names.
   resource/provider boundaries; handlers may execute Effect programs without
   acquiring those capabilities directly.
 - **CLI app:** one Oclif entrypoint, one binary declaration, one Oclif package
-  configuration and core-plugin composition; Nx project targets own build,
-  generated-manifest, and package work, while top-level Nx Release configuration
-  owns version/changelog/publish orchestration.
+  configuration and core-plugin composition; Nx project targets own build and
+  generated-manifest work. RAWR workspace projects are private and absent from
+  Nx Release configuration.
 - **CLI command plugin:** one closed package shell and command root; no binary;
   no cross-plugin internal import; commands project through public service or
   client boundaries.
@@ -201,15 +199,18 @@ independence and private-alias configuration/ownership. Civ7 release
 `habitat-cli-v0.1.0` and reviewed source
 `d51e8c7454e301bcaba56c8364f5c714d5febca3` remain transfer evidence only.
 Template owns the Habitat product source and realizes it through the ordinary
-resource, provider, service, plugin, and app graph. `@habitat-ai/cli` is the
-assembled Oclif release identity rather than a composite package source owner.
+resource, provider, service, plugin, and app graph. Distribution composes those
+private owners into the target runtime SDK; the TypeBox bridge and blueprint catalog
+are SDK facets rather than separate public product identities. `@habitat-ai/cli`
+will be the ordinary Oclif release consuming that SDK.
 The Habitat Nx projection owns version-three application discovery, exact
 inputs, caching, and execution without acquiring service or provider authority.
 The idempotent consumer initializer, policy-pack construction, bootstrap
 publication, and native version-two service execution are landed. Version-two
 Nx projection and released-package adoption/cutover remain separately reviewed
-checkpoints. Tag-triggered trusted publishing is landed and proven through the
-seven registry packages' npm-hosted provenance attestations.
+checkpoints. Nx owns the SDK/CLI release graph and npm trusted publishing; the
+earlier multi-package substrate is migration evidence, not the target package
+model.
 
 ## Behavioral Boundary
 

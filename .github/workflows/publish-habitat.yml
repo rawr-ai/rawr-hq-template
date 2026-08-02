@@ -5,7 +5,6 @@ on:
     tags:
       - habitat-blueprints-v*
       - habitat-cli-v*
-      - rawr-cli-v*
       - typebox-adapter-v*
 
 permissions:
@@ -16,27 +15,7 @@ jobs:
   publish:
     name: Publish Nx release group
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      RAWR_RELEASE_MANIFESTS: >-
-        apps/cli/package.json
-        packages/core/package.json
-        packages/dev-node/package.json
-        packages/hq-sdk/package.json
-        plugins/cli/commands/chatgpt-corpus/package.json
-        plugins/cli/commands/devops/package.json
-        plugins/cli/commands/hyperresearch/package.json
-        plugins/cli/commands/session-tools/package.json
-        resources/agent-plugin-package-output/package.json
-        resources/content-workspace/package.json
-        resources/native-agent-provider/package.json
-        resources/versioned-content/package.json
-        services/agent-plugin-lifecycle/package.json
-        services/chatgpt-corpus/package.json
-        services/dev/package.json
-        services/hq-ops/package.json
-        services/hyperresearch-codex/package.json
-        services/session-intelligence/package.json
+    timeout-minutes: 15
     steps:
       - name: Check out tagged main commit
         uses: actions/checkout@v7
@@ -83,17 +62,6 @@ jobs:
           test "$(jq -r .version packages/habitat-blueprints/package.json)"
           = "${GITHUB_REF_NAME#habitat-blueprints-v}"
 
-      - name: Match RAWR CLI tag and release group
-        if: startsWith(github.ref, 'refs/tags/rawr-cli-v')
-        shell: bash
-        run: |
-          read -r -a manifests <<< "$RAWR_RELEASE_MANIFESTS"
-          diff -u \
-            <(jq -r '.release.groups["rawr-cli"].projects[]' nx.json | sort) \
-            <(jq -r .name "${manifests[@]}" | sort)
-          test "$(jq -r .version "${manifests[@]}" | sort -u)" \
-            = "${GITHUB_REF_NAME#rawr-cli-v}"
-
       - name: Materialize Habitat npm manifests with Nx
         if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
         run: |
@@ -121,30 +89,6 @@ jobs:
             resources/source-inventory/package.json \
             services/habitat/package.json
 
-      - name: Materialize RAWR npm manifests with Nx
-        if: startsWith(github.ref, 'refs/tags/rawr-cli-v')
-        shell: bash
-        run: |
-          jq '
-            .release.groups["rawr-cli"].version =
-              ((.release.groups["rawr-cli"].version // {}) +
-                {preserveLocalDependencyProtocols: false}) |
-            .release.version =
-              ((.release.version // {}) +
-                {versionActionsOptions:
-                  (((.release.version // {}).versionActionsOptions // {}) +
-                    {skipLockFileUpdate: true})})
-          ' nx.json > nx.publish.json
-          mv nx.publish.json nx.json
-          bunx nx release version "${GITHUB_REF_NAME#rawr-cli-v}" \
-            --group=rawr-cli \
-            --git-commit=false \
-            --git-tag=false \
-            --git-push=false \
-            --stage-changes=false
-          read -r -a manifests <<< "$RAWR_RELEASE_MANIFESTS"
-          ! grep -n '"workspace:' "${manifests[@]}"
-
       - name: Select npm OIDC publishing for Nx Release
         run: |
           npm install --global npm@12.0.2
@@ -163,18 +107,6 @@ jobs:
           bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package
           --outputStyle=static
 
-      - name: Verify installed RAWR CLI
-        if: startsWith(github.ref, 'refs/tags/rawr-cli-v')
-        run: >-
-          bunx nx run @habitat-ai/rawr:acceptance:oclif-installed-package
-          --outputStyle=static
-
-      - name: Verify native RAWR plugins
-        if: startsWith(github.ref, 'refs/tags/rawr-cli-v')
-        run: >-
-          bunx nx run @habitat-ai/rawr:acceptance:oclif-native-plugins
-          --outputStyle=static
-
       - name: Publish TypeBox adapter
         if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
         run: >-
@@ -187,13 +119,6 @@ jobs:
         run: >-
           npx nx release publish
           --group=habitat-cli
-          --outputStyle=static
-
-      - name: Publish RAWR CLI
-        if: startsWith(github.ref, 'refs/tags/rawr-cli-v')
-        run: >-
-          npx nx release publish
-          --group=rawr-cli
           --outputStyle=static
 
       - name: Publish Habitat blueprints

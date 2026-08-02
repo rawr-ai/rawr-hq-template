@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/rawr-resource-versioned-content",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -41,8 +41,5 @@
       "layer:resource-contract",
       "resource:versioned-content"
     ]
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

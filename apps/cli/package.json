@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/rawr",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -72,14 +72,10 @@
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli",
     "acceptance:oclif": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli test/bin-run.test.ts --testNamePattern='loads the same manifest-backed application inventory from source and compiled entrypoints|discovers the CLI and every command plugin from source and compiled output without manifests|uses generated manifests for the same compiled command inventory'",
-    "acceptance:oclif-installed-package": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli-installed-package-acceptance --reporter=verbose",
     "acceptance:oclif-native-plugins": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli-native-acceptance"
   },
   "bin": {
     "rawr": "./bin/run.js"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "nx": {
     "tags": [
@@ -152,27 +148,6 @@
             ],
             "input": "production"
           }
-        ],
-        "outputs": []
-      },
-      "acceptance:oclif-installed-package": {
-        "cache": false,
-        "dependsOn": [
-          "acceptance:oclif",
-          {
-            "projects": [
-              "@rawr/plugin-hello"
-            ],
-            "target": "manifest"
-          }
-        ],
-        "inputs": [
-          "default",
-          "^default",
-          "typescriptRuntime",
-          "bunToolchain",
-          "{workspaceRoot}/nx.json",
-          "{workspaceRoot}/vitest.config.ts"
         ],
         "outputs": []
       },
