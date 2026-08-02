@@ -409,10 +409,12 @@ function compatibilityInputs(
 
 function addSubjectInputs(target: Set<string>, path: string, kind: "directory" | "file"): void {
   const exact = workspaceInput(path);
-  target.add(exact);
-  if (kind === "directory") {
-    target.add(path === "." ? "{workspaceRoot}/**/*" : `${exact}/**/*`);
+  if (kind === "directory" && path === ".") {
+    target.add("{workspaceRoot}/**/*");
+    return;
   }
+  target.add(exact);
+  if (kind === "directory") target.add(`${exact}/**/*`);
 }
 
 function workspaceInput(path: string): string {

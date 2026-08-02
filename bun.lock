@@ -264,7 +264,7 @@
     },
     "plugins/cli/commands/habitat": {
       "name": "@habitat-ai/plugin-cli",
-      "version": "0.2.4",
+      "version": "0.3.0",
       "dependencies": {
         "@habitat-ai/service": "workspace:*",
         "@oclif/core": "^4.11.4",
@@ -368,7 +368,7 @@
     },
     "resources/rule-evaluation": {
       "name": "@habitat-ai/resource-rule-evaluation",
-      "version": "0.2.4",
+      "version": "0.3.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "effect": "4.0.0-beta.101",
@@ -381,7 +381,7 @@
     },
     "resources/source-inventory": {
       "name": "@habitat-ai/resource-source-inventory",
-      "version": "0.2.4",
+      "version": "0.3.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "effect": "4.0.0-beta.101",
@@ -483,7 +483,7 @@
     },
     "services/habitat": {
       "name": "@habitat-ai/service",
-      "version": "0.2.4",
+      "version": "0.3.0",
       "dependencies": {
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
