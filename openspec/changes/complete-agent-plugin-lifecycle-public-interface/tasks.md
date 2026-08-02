@@ -2000,6 +2000,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   `2064a431032ac0600e805ddafba6fd17a6b7deb4`. The three ordered tag runs
   `30730782469`, `30730814965`, and `30730880516` published exactly their
   selected Nx groups, and npm exposes SLSA provenance for all seven packages.
+- [x] 5.7e22e2 Correct the steady-state Habitat CLI release boundary without
+  creating another distributor. Keep `workspace:*` on producer-to-producer
+  source edges, let Nx materialize exact versions only in the tag workflow's
+  ephemeral publish manifests, and use npm 12 solely as Nx's trusted OIDC
+  publisher. Publish the fixed five-package CLI group rather than a private
+  bundle, runtime image, selector, or local release store; one consumer install
+  of `@habitat-ai/cli` must acquire the complete exact closure. Template PRs
+  #763 and #762 landed the boundary and `0.2.4` cohort on canonical `main` at
+  `6ea15e2e22f798471a2910ebdcf873c3451efe3e` and
+  `6b48478026fddf5b822728e74dbd30201f1e708b`. Annotated tag
+  `habitat-cli-v0.2.4` selected exactly the Habitat CLI group; trusted publish
+  run `30737904634`, job `91469948417`, published all five packages with exact
+  internal `0.2.4` dependencies, source commit `6b484780`, and SLSA provenance.
 - [x] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
   consumer. Before that cutover, make the Template-owned catalog, check
   operation, and Nx plugin execute and project every still-live version-two
@@ -2037,6 +2050,16 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   predecessor-chain deletion, byte-stable repeated initialization, and repeated
   parallel native policy proof remained open; task 5.7e22f later closed them at
   canonical merge `b040e316d7089890d4e59c52af93ea2f9a4b08cc`.
+- [x] 5.7e22f2 Advance Template's ordinary installed Habitat consumer to the
+  corrected `@habitat-ai/cli@0.2.4` closure. Change only the exact external CLI
+  dependency and its registry lock entries; keep local Habitat producers on
+  `workspace:*`. Require a frozen install, physical registry resolution rather
+  than `apps/habitat`, the installed Oclif version, one real installed Habitat
+  policy evaluation, the five owner checks, and installed-package acceptance.
+  Template PR #764 landed on canonical `main` at
+  `1b86282c61c8e222a3d424fcd33031ebc4ec6e90`; required candidate run
+  `30738229951`, job `91470802874`, and canonical-main run `30738486466`, job
+  `91471504067`, were green.
 - [x] 5.7e22g Realize the Habitat product graph directly on Template's Effect
   4, oRPC 2, and current TypeBox substrate. Do not first preserve an isolated
   Effect 3/oRPC 1 realm and then migrate it. Keep this vendor cut independently
