@@ -212,7 +212,9 @@ describe("installed Habitat package", () => {
       )
     ) as {
       readonly commands?: Readonly<Record<string, { readonly relativePath?: readonly string[] }>>;
+      readonly version?: unknown;
     };
+    expect(pluginManifest.version).toBe(packedProjectVersion("@habitat-ai/plugin-cli"));
     expect(Object.keys(pluginManifest.commands ?? {}).sort()).toEqual(["check", "hook", "resolve"]);
     expect(pluginManifest.commands).toMatchObject({
       check: { relativePath: ["dist", "commands", "check.js"] },
@@ -225,7 +227,8 @@ describe("installed Habitat package", () => {
         path.join(consumerRoot, "node_modules/@habitat-ai/cli/oclif.manifest.json"),
         "utf8"
       )
-    ) as { readonly commands?: Record<string, unknown> };
+    ) as { readonly commands?: Record<string, unknown>; readonly version?: unknown };
+    expect(appManifest.version).toBe(packedProjectVersion("@habitat-ai/cli"));
     expect(appManifest.commands ?? {}).toEqual({});
 
     const inventory = await run(
@@ -276,6 +279,12 @@ describe("installed Habitat package", () => {
     expect(JSON.parse(checked.stdout)).toMatchObject({
       _tag: "Completed",
       applications: [
+        {
+          instanceId: null,
+          ruleId: "installed_compatibility",
+          runner: "grit",
+          status: "pass",
+        },
         {
           instanceId: "installed-package",
           ruleId: "source_shape",
@@ -400,6 +409,7 @@ describe("installed Habitat package", () => {
     expect(Object.keys(project.targets ?? {}).sort()).toEqual([
       "check:policy",
       "habitat:application:installed-package:source_shape",
+      "habitat:rule:installed_compatibility",
     ]);
 
     const checked = await run(
@@ -418,6 +428,23 @@ describe("installed Habitat package", () => {
     expect(checked.stdout).toContain('"status": "pass"');
     expect(checked.stdout).toContain(
       "Successfully ran target habitat:application:installed-package:source_shape"
+    );
+
+    const compatibilityChecked = await run(
+      nx,
+      ["run", "@fixture/package:habitat:rule:installed_compatibility", "--outputStyle=static"],
+      { cwd: fixtureRoot, timeoutMs: 60_000 }
+    );
+    expect(
+      compatibilityChecked,
+      compatibilityChecked.stderr || compatibilityChecked.stdout
+    ).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(compatibilityChecked.stdout).toContain('"status": "pass"');
+    expect(compatibilityChecked.stdout).toContain(
+      "Successfully ran target habitat:rule:installed_compatibility"
     );
 
     const removed = await run(nx, ["generate", "@habitat-ai/cli:remove-hook", "--no-interactive"], {
@@ -558,6 +585,19 @@ async function createWorkspaceFixture(): Promise<void> {
   const files: Readonly<Record<string, string>> = {
     ".habitat/blueprints/package/blueprint.toml": blueprintToml(),
     ".habitat/blueprints/package/source_shape.structure.toml": structureToml(),
+    ".habitat/index.json": `${JSON.stringify(
+      { schemaVersion: 2, ownerRoots: { "@fixture/package": "packages/example" } },
+      null,
+      2
+    )}\n`,
+    ".habitat/compatibility/installed_compatibility/baseline.json": "[]\n",
+    ".habitat/compatibility/installed_compatibility/pattern.md":
+      "# installed_compatibility\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
+    ".habitat/compatibility/installed_compatibility/rule.json": `${JSON.stringify(
+      compatibilityRule(),
+      null,
+      2
+    )}\n`,
     ".codex/hooks.json": `${JSON.stringify(
       {
         hooks: {
@@ -852,4 +892,30 @@ project = "packages/example"
 
 [selections]
 `;
+}
+
+function compatibilityRule(): Readonly<Record<string, unknown>> {
+  const root = ".habitat/compatibility/installed_compatibility";
+  return {
+    schemaVersion: 2,
+    id: "installed_compatibility",
+    title: "Require Installed Compatibility",
+    placement: { niche: "fixture", blueprint: "package", category: "boundary" },
+    operation: { kind: "check" },
+    ownerProject: "@fixture/package",
+    lane: "enforced",
+    forbids: "the forbidden fixture call",
+    why: "The installed Nx host must project compatibility rules under Node.",
+    remediate: "Remove the forbidden fixture call.",
+    message: "Installed compatibility found a violation.",
+    pathCoverage: [{ kind: "exact-path", patterns: ["packages/example/source.ts"] }],
+    hookCheck: true,
+    supportFiles: { baseline: `${root}/baseline.json` },
+    runner: {
+      name: "grit",
+      files: { pattern: `${root}/pattern.md` },
+      patternName: "installed_compatibility",
+      acquisition: { kind: "check", roots: ["packages/example/source.ts"] },
+    },
+  };
 }

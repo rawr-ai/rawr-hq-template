@@ -54,10 +54,9 @@ import { module } from "../module.js";
 
 const authorityGlobs = [
   { kind: "blueprint" as const, pattern: ".habitat/blueprints/*/blueprint.toml" },
-  // Effect's glob provider requires a dynamic pattern even for this exact optional file.
-  { kind: "index" as const, pattern: ".habitat/{index.json}" },
   { kind: "rule" as const, pattern: ".habitat/**/rule.json" },
 ];
+const compatibilityIndexAuthorityPath = ".habitat/index.json";
 
 const excludedDirectorySegments = new Set([
   ".git",
@@ -247,6 +246,22 @@ function resolveCurrentCatalog(context: CatalogOperationContext) {
         const relativePath = toRepositoryPath(path.relative(workspaceRoot, absolutePath), path.sep);
         pathsByKind[kind].push(relativePath);
       }
+    }
+
+    const compatibilityIndexStat = yield* Effect.result(
+      fileSystem.stat(path.resolve(workspaceRoot, compatibilityIndexAuthorityPath))
+    );
+    if (compatibilityIndexStat._tag === "Success") {
+      pathsByKind.index.push(compatibilityIndexAuthorityPath);
+    } else if (!isNotFound(compatibilityIndexStat.failure)) {
+      enumerationIssues.push(
+        filesystemIssue(
+          compatibilityIndexStat.failure,
+          compatibilityIndexAuthorityPath,
+          "inspect compatibility index",
+          "Compatibility index does not exist."
+        )
+      );
     }
 
     // The installed glob provider skips hidden directories, so manifests use a confined traversal.
