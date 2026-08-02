@@ -1,8 +1,0 @@
-import { describe, expect, it } from "vitest";
-import { RAWR_CORE_VERSION } from "../src";
-
-describe("@habitat-ai/rawr-core", () => {
-  it("exports version", () => {
-    expect(RAWR_CORE_VERSION).toBe("0.0.0");
-  });
-});

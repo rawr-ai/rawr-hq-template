@@ -2,6 +2,17 @@
   "name": "@habitat-ai/rawr-resource-native-agent-provider",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "resources/native-agent-provider"
+  },
+  "files": [
+    "contract.ts",
+    "providers/effect-platform-node-shared.ts",
+    "providers/codex-effect-platform-node/index.ts",
+    "providers/claude-effect-platform-node/index.ts"
+  ],
   "type": "module",
   "imports": {
     "#native-agent-provider-effect-platform-node": "./providers/effect-platform-node-shared.ts"

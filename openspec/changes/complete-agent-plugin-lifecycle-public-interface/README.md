@@ -5829,6 +5829,29 @@ minute 6 seconds. These are pre-landing candidate results: no RAWR package has
 been published, no release tag has been created, and no native provider state
 has been changed.
 
+## RAWR Registry Release Substrate Candidate
+
+The next bounded candidate makes the existing fixed `rawr-cli` Nx group an
+ordinary npm release cohort. It adds one `rawr-cli-v{version}` tag pattern to Nx,
+qualified repository metadata and bounded file inventories to the eighteen
+package manifests, and one new tag branch in the already-proven
+`publish-habitat.yml` workflow. The workflow lets Nx materialize workspace
+protocols, runs the installed Oclif and native-extension acceptances, and uses
+npm trusted publishing for the selected group. It adds no release wrapper,
+bundler, application image, local version selector, retained artifact store, or
+second package graph.
+
+This is intentionally eighteen published implementation packages but one
+consumer installation: operators install `@habitat-ai/rawr`, and npm resolves
+the other seventeen through ordinary dependency metadata. Workspace links do
+not bundle package bytes; the rejected single-package probe instead captured a
+large linked dependency tree and recreated the private application-image model.
+The first registry version therefore remains a one-time authenticated bootstrap
+needed to establish each package before its workflow-bound trusted publisher
+can take over. Task 3.7 remains open until canonical-main landing, complete
+registry publication, registry-only installation, and the first OIDC-proven
+fixed-version release all pass.
+
 ## Settlement Oracles
 
 The final product must prove:

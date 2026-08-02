@@ -2,6 +2,11 @@
   "name": "@habitat-ai/rawr-plugin-chatgpt-corpus",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "plugins/cli/commands/chatgpt-corpus"
+  },
   "type": "module",
   "files": [
     "dist",
