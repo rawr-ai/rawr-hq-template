@@ -63,7 +63,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
     });
   }, 60_000);
 
-  test("evaluates multiple programs in one native catalog and attributes each finding", async () => {
+  test("evaluates multiple programs sequentially and attributes each finding", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
     await writeFile(subject, "first_forbidden();\nsecond_forbidden();\n");
@@ -285,15 +285,16 @@ describe("grit-effect-platform-node rule evaluation", () => {
     });
   });
 
-  test("sets a fixed two-thread Rayon pool for the native process", async () => {
+  test("runs one two-thread native process at a time", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
     const invocationPath = path.join(fixture, "invocations");
+    const lockPath = path.join(fixture, "active-grit");
     await writeFile(subject, "allowed();\n");
     const executable = await writeExecutable(
       fixture,
       "rayon-grit",
-      `#!/bin/sh\nprintf x >> '${invocationPath}'\nif [ "$RAYON_NUM_THREADS" != "2" ]; then\n  printf 'wrong rayon pool: %s\\n' "$RAYON_NUM_THREADS" >&2\n  exit 42\nfi\nprintf '%s\\n' '${JSON.stringify({ paths: [subject], results: [] })}' >&2\n`
+      `#!/bin/sh\nif ! mkdir '${lockPath}' 2>/dev/null; then\n  printf 'concurrent grit process\\n' >&2\n  exit 43\nfi\ntrap 'rmdir "${lockPath}"' EXIT\nprintf x >> '${invocationPath}'\nif [ "$RAYON_NUM_THREADS" != "2" ]; then\n  printf 'wrong rayon pool: %s\\n' "$RAYON_NUM_THREADS" >&2\n  exit 42\nfi\nsleep 0.05\nprintf '%s\\n' '${JSON.stringify({ paths: [subject], results: [] })}' >&2\n`
     );
 
     await expect(
@@ -312,7 +313,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
         { programId: "rayon-b", findings: [] },
       ],
     });
-    expect(await readFile(invocationPath, "utf8")).toBe("x");
+    expect(await readFile(invocationPath, "utf8")).toBe("xx");
   });
 
   test("cleans its scoped catalog after failure and timeout", async () => {
@@ -354,14 +355,14 @@ describe("grit-effect-platform-node rule evaluation", () => {
     expect(await temporaryCatalogs()).toEqual(baseline);
   });
 
-  test("scales bounded native output capacity with the number of programs", async () => {
+  test("retains bounded output independently for each program", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
     await writeFile(subject, "allowed();\n");
     const executable = await writeExecutable(
       fixture,
       "scaled-output-grit",
-      `#!/usr/bin/env node\nconst subject = ${JSON.stringify(subject)};\nconst message = "x".repeat(300 * 1024);\nprocess.stderr.write(JSON.stringify({ paths: [subject], results: [{ check_id: "#habitat_rule_evaluation_0/js", local_name: "habitat_rule_evaluation_0", path: subject, start: { line: 1, col: 1, offset: 0 }, end: { line: 1, col: 2, offset: 1 }, extra: { message, severity: "error" } }] }));\n`
+      `#!/usr/bin/env node\nconst subject = ${JSON.stringify(subject)};\nconst message = "x".repeat(200 * 1024);\nprocess.stderr.write(JSON.stringify({ paths: [subject], results: [{ check_id: "#habitat_rule_evaluation_0/js", local_name: "habitat_rule_evaluation_0", path: subject, start: { line: 1, col: 1, offset: 0 }, end: { line: 1, col: 2, offset: 1 }, extra: { message, severity: "error" } }] }));\n`
     );
 
     const result = await Effect.runPromise(
@@ -374,8 +375,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
       })
     );
 
-    expect(result.results[0]?.findings[0]?.message?.length).toBe(300 * 1024);
-    expect(result.results[1]).toEqual({ programId: "clean", findings: [] });
+    expect(result.results[0]?.findings[0]?.message?.length).toBe(200 * 1024);
+    expect(result.results[1]?.findings[0]?.message?.length).toBe(200 * 1024);
   });
 
   test("bounds native output and cleans its scoped catalog after overflow", async () => {
