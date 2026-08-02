@@ -172,11 +172,11 @@
         "@opentelemetry/resources": "^2.6.0",
         "@opentelemetry/sdk-metrics": "^2.6.0",
         "@opentelemetry/sdk-node": "^0.213.0",
+        "@opentelemetry/sdk-trace-base": "^2.6.0",
         "@opentelemetry/semantic-conventions": "^1.40.0",
         "@orpc/opentelemetry": "2.0.0-beta.20",
       },
       "devDependencies": {
-        "@opentelemetry/sdk-trace-base": "^2.6.0",
         "typescript": "^5.9.3",
       },
     },
