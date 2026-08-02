@@ -29,7 +29,10 @@
 - `catalog.check` executes selected Grit `check` and native Habitat structure
   applications from both admitted authority generations. Version 2 Grit rules
   retain exact-path subject coverage; unsupported modes refuse instead of
-  skipping.
+  skipping. Selected Grit applications whose final ordered prepared subjects
+  are identical share one provider batch while retaining per-application
+  reports; distinct subject sets and native structure evaluation stay
+  separate.
 
 ## Concepts
 

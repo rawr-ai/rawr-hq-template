@@ -1,4 +1,7 @@
-import type { RuleEvaluationFinding } from "@habitat-ai/resource-rule-evaluation";
+import type {
+  RuleEvaluationFinding,
+  RuleEvaluationProgramResult,
+} from "@habitat-ai/resource-rule-evaluation";
 import { MAX_SOURCE_INVENTORY_ENTRIES } from "@habitat-ai/resource-source-inventory";
 import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
 import { parse as parseToml } from "smol-toml";
@@ -86,6 +89,14 @@ type StructurePreparation =
 type CheckApplicationPreparation =
   | { readonly kind: "grit"; readonly application: GritCheckApplication }
   | { readonly kind: "structure"; readonly preparation: StructurePreparation };
+type ReadyGritEvaluation = {
+  readonly applicationIndex: number;
+  readonly application: GritCheckApplication;
+  readonly programId: string;
+  readonly program: string;
+  readonly subjects: readonly ResolvedSubject[];
+  readonly subjectPaths: readonly string[];
+};
 type StructureInventoryPreparation =
   | { readonly kind: "not-required" }
   | { readonly kind: "failed"; readonly detail: string }
@@ -824,22 +835,25 @@ const check = module.check.effect(function* ({ context, input }) {
     }
   }
 
-  const reports: CheckApplicationReport[] = [];
-  for (const prepared of preparations) {
+  const reports: Array<CheckApplicationReport | undefined> = new Array(preparations.length);
+  const readyGritEvaluations: ReadyGritEvaluation[] = [];
+  for (const [applicationIndex, prepared] of preparations.entries()) {
     if (prepared.kind === "structure") {
       if (prepared.preparation.kind === "failed") {
-        reports.push(prepared.preparation.report);
+        reports[applicationIndex] = prepared.preparation.report;
         continue;
       }
       const admitted = prepared.preparation.value;
       const application = admitted.application;
       if (admitted.scopes.length === 0) {
-        reports.push(evaluatedStructureApplication(application, []));
+        reports[applicationIndex] = evaluatedStructureApplication(application, []);
         continue;
       }
       if (inventoryPreparation.kind === "failed") {
-        reports.push(
-          failedStructureApplication(application, "InventoryFailed", inventoryPreparation.detail)
+        reports[applicationIndex] = failedStructureApplication(
+          application,
+          "InventoryFailed",
+          inventoryPreparation.detail
         );
         continue;
       }
@@ -859,13 +873,16 @@ const check = module.check.effect(function* ({ context, input }) {
         );
       });
       if (observations.kind === "failed") {
-        reports.push(
-          failedStructureApplication(application, "StructureObservationFailed", observations.detail)
+        reports[applicationIndex] = failedStructureApplication(
+          application,
+          "StructureObservationFailed",
+          observations.detail
         );
         continue;
       }
-      reports.push(
-        evaluatedStructureApplication(application, evaluateStructurePlan(plan, observations.kinds))
+      reports[applicationIndex] = evaluatedStructureApplication(
+        application,
+        evaluateStructurePlan(plan, observations.kinds)
       );
       continue;
     }
@@ -875,19 +892,17 @@ const check = module.check.effect(function* ({ context, input }) {
       context.fileSystem.readFileString(application.runner.pattern.absolutePath)
     );
     if (patternAttempt._tag === "Failure") {
-      reports.push(
-        failedApplication(
-          application,
-          "PatternReadFailed",
-          `Unable to read pattern asset "${application.runner.pattern.relativePath}".`
-        )
+      reports[applicationIndex] = failedApplication(
+        application,
+        "PatternReadFailed",
+        `Unable to read pattern asset "${application.runner.pattern.relativePath}".`
       );
       continue;
     }
 
     const program = extractGritProgram(patternAttempt.success);
     if (!program.ok) {
-      reports.push(failedApplication(application, "PatternInvalid", program.detail));
+      reports[applicationIndex] = failedApplication(application, "PatternInvalid", program.detail);
       continue;
     }
 
@@ -898,7 +913,11 @@ const check = module.check.effect(function* ({ context, input }) {
       context.path
     );
     if (subjectPreparation.kind === "failed") {
-      reports.push(failedApplication(application, "SetupFailed", subjectPreparation.detail));
+      reports[applicationIndex] = failedApplication(
+        application,
+        "SetupFailed",
+        subjectPreparation.detail
+      );
       continue;
     }
     if (subjectPreparation.kind === "not-applicable") {
@@ -907,37 +926,84 @@ const check = module.check.effect(function* ({ context, input }) {
           new Error("Version-three Grit applications cannot be not applicable.")
         );
       }
-      reports.push(notApplicableApplication(application));
+      reports[applicationIndex] = notApplicableApplication(application);
       continue;
     }
     const subjects = subjectPreparation.subjects;
+    readyGritEvaluations.push({
+      applicationIndex,
+      application,
+      programId: `application-${applicationIndex}`,
+      program: program.program,
+      subjects,
+      subjectPaths: subjects.map((subject) => subject.absolutePath),
+    });
+  }
+
+  for (const evaluations of groupGritEvaluations(readyGritEvaluations)) {
+    const first = evaluations[0];
+    if (first === undefined) {
+      return yield* Effect.die(new Error("A Grit evaluation group must not be empty."));
+    }
     const evaluation = yield* Effect.result(
       context.ruleEvaluation.evaluate({
-        program: program.program,
-        subjectPaths: subjects.map((subject) => subject.absolutePath),
+        programs: evaluations.map(({ programId, program }) => ({ id: programId, program })),
+        subjectPaths: first.subjectPaths,
       })
     );
     if (evaluation._tag === "Failure") {
-      reports.push(
-        failedApplication(application, evaluation.failure.reason, evaluation.failure.detail)
-      );
+      for (const prepared of evaluations) {
+        reports[prepared.applicationIndex] = failedApplication(
+          prepared.application,
+          evaluation.failure.reason,
+          evaluation.failure.detail
+        );
+      }
       continue;
     }
 
-    const normalized = normalizeFindings(
-      evaluation.success.findings,
-      subjects,
-      context.workspaceRoot,
-      context.path
-    );
-    reports.push(
-      normalized.ok
-        ? evaluatedApplication(application, normalized.findings)
-        : failedApplication(application, "FindingPathInvalid", normalized.detail)
-    );
+    const resultMismatch = evaluationResultMismatch(evaluations, evaluation.success.results);
+    if (resultMismatch !== undefined) {
+      for (const prepared of evaluations) {
+        reports[prepared.applicationIndex] = failedApplication(
+          prepared.application,
+          "InvalidOutput",
+          resultMismatch
+        );
+      }
+      continue;
+    }
+    const results = indexEvaluationResults(evaluation.success.results);
+
+    for (const prepared of evaluations) {
+      const result = results.get(prepared.programId);
+      if (result === undefined) {
+        return yield* Effect.die(
+          new Error(`Validated evaluation result '${prepared.programId}' is absent.`)
+        );
+      }
+      const normalized = normalizeFindings(
+        result.findings,
+        prepared.subjects,
+        context.workspaceRoot,
+        context.path
+      );
+      reports[prepared.applicationIndex] = normalized.ok
+        ? evaluatedApplication(prepared.application, normalized.findings)
+        : failedApplication(prepared.application, "FindingPathInvalid", normalized.detail);
+    }
   }
 
-  return completedCheck(reports);
+  const completedReports: CheckApplicationReport[] = [];
+  for (const [applicationIndex, report] of reports.entries()) {
+    if (report === undefined) {
+      return yield* Effect.die(
+        new Error(`Habitat check produced no report for application ${applicationIndex}.`)
+      );
+    }
+    completedReports.push(report);
+  }
+  return completedCheck(completedReports);
 });
 
 /** Grouped catalog operation tree consumed by the module composition face. */
@@ -1000,6 +1066,44 @@ type GritSubjectPreparation =
   | { readonly kind: "ready"; readonly subjects: readonly ResolvedSubject[] }
   | { readonly kind: "not-applicable" }
   | { readonly kind: "failed"; readonly detail: string };
+
+function groupGritEvaluations(
+  evaluations: readonly ReadyGritEvaluation[]
+): readonly (readonly ReadyGritEvaluation[])[] {
+  const groups = new Map<string, ReadyGritEvaluation[]>();
+  for (const evaluation of evaluations) {
+    const key = JSON.stringify(evaluation.subjectPaths);
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, [evaluation]);
+    else group.push(evaluation);
+  }
+  return [...groups.values()];
+}
+
+function evaluationResultMismatch(
+  evaluations: readonly ReadyGritEvaluation[],
+  results: readonly RuleEvaluationProgramResult[]
+): string | undefined {
+  if (results.length !== evaluations.length) {
+    return `Rule evaluator returned ${results.length} program results for ${evaluations.length} requested programs.`;
+  }
+  const uniqueIds = new Set(results.map(({ programId }) => programId));
+  if (uniqueIds.size !== results.length) {
+    return "Rule evaluator returned duplicate program result identities.";
+  }
+  const unexpected = results.find(
+    (result, index) => result.programId !== evaluations[index]?.programId
+  );
+  return unexpected === undefined
+    ? undefined
+    : "Rule evaluator did not preserve requested program result order and identity.";
+}
+
+function indexEvaluationResults(
+  results: readonly RuleEvaluationProgramResult[]
+): ReadonlyMap<string, RuleEvaluationProgramResult> {
+  return new Map(results.map((result) => [result.programId, result]));
+}
 
 function prepareGritSubjects(
   application: GritCheckApplication,

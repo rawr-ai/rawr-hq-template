@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { chmod, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -39,31 +39,73 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     await writeFile(subject, "allowed();\n");
     expect(
-      await Effect.runPromise(
-        resource.evaluate({
-          program,
-          subjectPaths: [subject],
-        })
-      )
-    ).toEqual({ findings: [] });
+      await Effect.runPromise(resource.evaluate(evaluationRequest("forbidden", program, [subject])))
+    ).toEqual({ results: [{ programId: "forbidden", findings: [] }] });
 
     await writeFile(subject, "forbidden();\n");
     const result = await Effect.runPromise(
-      resource.evaluate({
-        program,
-        subjectPaths: [subject],
-      })
+      resource.evaluate(evaluationRequest("forbidden", program, [subject]))
     );
     expect(result).toEqual({
-      findings: [
+      results: [
         {
-          path: subject,
-          start: { line: 1, column: 1, offset: 0 },
-          end: { line: 1, column: 12, offset: 11 },
-          message: null,
+          programId: "forbidden",
+          findings: [
+            {
+              path: subject,
+              start: { line: 1, column: 1, offset: 0 },
+              end: { line: 1, column: 12, offset: 11 },
+              message: null,
+            },
+          ],
         },
       ],
     });
+  }, 60_000);
+
+  test("evaluates multiple programs in one native catalog and attributes each finding", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    await writeFile(subject, "first_forbidden();\nsecond_forbidden();\n");
+
+    const result = await Effect.runPromise(
+      makeNodeGritRuleEvaluationResource({
+        executable: gritExecutable,
+        timeoutMs: 30_000,
+      }).evaluate({
+        programs: [
+          {
+            id: "first-rule",
+            program: "language js(typescript)\n`first_forbidden()`",
+          },
+          {
+            id: "second-rule",
+            program: "language js(typescript)\n`second_forbidden()`",
+          },
+          {
+            id: "clean-rule",
+            program: "language js(typescript)\n`not_present()`",
+          },
+        ],
+        subjectPaths: [subject],
+      })
+    );
+
+    expect(result.results.map(({ programId }) => programId)).toEqual([
+      "first-rule",
+      "second-rule",
+      "clean-rule",
+    ]);
+    expect(result.results.map(({ findings }) => findings.map(({ start }) => start.line))).toEqual([
+      [1],
+      [2],
+      [],
+    ]);
+    expect(
+      result.results
+        .flatMap(({ findings }) => findings)
+        .every(({ path: findingPath }) => findingPath === subject)
+    ).toBe(true);
   }, 60_000);
 
   test("maps exact wire positions and messages in deterministic order", async () => {
@@ -74,16 +116,16 @@ describe("grit-effect-platform-node rule evaluation", () => {
       paths: [subject],
       results: [
         {
-          check_id: "#habitat_rule_evaluation/js",
-          local_name: "habitat_rule_evaluation",
+          check_id: "#habitat_rule_evaluation_0/js",
+          local_name: "habitat_rule_evaluation_0",
           path: subject,
           start: { line: 2, col: 3, offset: 14 },
           end: { line: 2, col: 9, offset: 20 },
           extra: { message: "later finding", severity: "error" },
         },
         {
-          check_id: "#habitat_rule_evaluation/js",
-          local_name: "habitat_rule_evaluation",
+          check_id: "#habitat_rule_evaluation_0/js",
+          local_name: "habitat_rule_evaluation_0",
           path: subject,
           start: { line: 1, col: 2, offset: 1 },
           end: { line: 1, col: 7, offset: 6 },
@@ -94,24 +136,28 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     expect(
       await Effect.runPromise(
-        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate({
-          program: "language js(typescript)\n`forbidden()`",
-          subjectPaths: [subject],
-        })
+        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate(
+          evaluationRequest("ordered", "language js(typescript)\n`forbidden()`", [subject])
+        )
       )
     ).toEqual({
-      findings: [
+      results: [
         {
-          path: subject,
-          start: { line: 1, column: 2, offset: 1 },
-          end: { line: 1, column: 7, offset: 6 },
-          message: "earlier finding",
-        },
-        {
-          path: subject,
-          start: { line: 2, column: 3, offset: 14 },
-          end: { line: 2, column: 9, offset: 20 },
-          message: "later finding",
+          programId: "ordered",
+          findings: [
+            {
+              path: subject,
+              start: { line: 1, column: 2, offset: 1 },
+              end: { line: 1, column: 7, offset: 6 },
+              message: "earlier finding",
+            },
+            {
+              path: subject,
+              start: { line: 2, column: 3, offset: 14 },
+              end: { line: 2, column: 9, offset: 20 },
+              message: "later finding",
+            },
+          ],
         },
       ],
     });
@@ -136,10 +182,9 @@ describe("grit-effect-platform-node rule evaluation", () => {
     });
 
     const rejected = await evaluationFailure(
-      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate(
+        evaluationRequest("wrong", "language js(typescript)\n`forbidden()`", [subject])
+      )
     );
     expect(rejected).toMatchObject({
       _tag: "RuleEvaluationFailure",
@@ -156,10 +201,9 @@ describe("grit-effect-platform-node rule evaluation", () => {
       makeNodeGritRuleEvaluationResource({
         executable: path.join(fixture, "missing-grit"),
         timeoutMs: 1_000,
-      }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      }).evaluate(
+        evaluationRequest("unavailable", "language js(typescript)\n`forbidden()`", [subject])
+      )
     );
     expect(unavailable).toMatchObject({
       _tag: "RuleEvaluationFailure",
@@ -175,10 +219,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
       makeNodeGritRuleEvaluationResource({
         executable: nonzeroExecutable,
         timeoutMs: 1_000,
-      }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      }).evaluate(evaluationRequest("nonzero", "language js(typescript)\n`forbidden()`", [subject]))
     );
     expect(nonzero).toEqual({
       _tag: "RuleEvaluationFailure",
@@ -195,10 +236,9 @@ describe("grit-effect-platform-node rule evaluation", () => {
       makeNodeGritRuleEvaluationResource({
         executable: malformedExecutable,
         timeoutMs: 1_000,
-      }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      }).evaluate(
+        evaluationRequest("malformed", "language js(typescript)\n`forbidden()`", [subject])
+      )
     );
     expect(malformed).toMatchObject({
       _tag: "RuleEvaluationFailure",
@@ -212,15 +252,67 @@ describe("grit-effect-platform-node rule evaluation", () => {
       makeNodeGritRuleEvaluationResource({
         executable: path.join(fixture, "missing-grit"),
         timeoutMs: 1_000,
-      }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: ["subject.ts"],
-      })
+      }).evaluate(
+        evaluationRequest("relative", "language js(typescript)\n`forbidden()`", ["subject.ts"])
+      )
     );
     expect(rejected).toMatchObject({
       _tag: "RuleEvaluationFailure",
       reason: "InvalidInput",
     });
+  });
+
+  test("rejects duplicate invocation-local program identities", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    await writeFile(subject, "allowed();\n");
+    const rejected = await evaluationFailure(
+      makeNodeGritRuleEvaluationResource({
+        executable: path.join(fixture, "missing-grit"),
+        timeoutMs: 1_000,
+      }).evaluate({
+        programs: [
+          { id: "duplicate", program: "language js(typescript)\n`first()`" },
+          { id: "duplicate", program: "language js(typescript)\n`second()`" },
+        ],
+        subjectPaths: [subject],
+      })
+    );
+    expect(rejected).toMatchObject({
+      _tag: "RuleEvaluationFailure",
+      reason: "InvalidInput",
+      detail: expect.stringContaining("unique"),
+    });
+  });
+
+  test("sets a fixed two-thread Rayon pool for the native process", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    const invocationPath = path.join(fixture, "invocations");
+    await writeFile(subject, "allowed();\n");
+    const executable = await writeExecutable(
+      fixture,
+      "rayon-grit",
+      `#!/bin/sh\nprintf x >> '${invocationPath}'\nif [ "$RAYON_NUM_THREADS" != "2" ]; then\n  printf 'wrong rayon pool: %s\\n' "$RAYON_NUM_THREADS" >&2\n  exit 42\nfi\nprintf '%s\\n' '${JSON.stringify({ paths: [subject], results: [] })}' >&2\n`
+    );
+
+    await expect(
+      Effect.runPromise(
+        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate({
+          programs: [
+            { id: "rayon-a", program: "language js(typescript)\n`first()`" },
+            { id: "rayon-b", program: "language js(typescript)\n`second()`" },
+          ],
+          subjectPaths: [subject],
+        })
+      )
+    ).resolves.toEqual({
+      results: [
+        { programId: "rayon-a", findings: [] },
+        { programId: "rayon-b", findings: [] },
+      ],
+    });
+    expect(await readFile(invocationPath, "utf8")).toBe("x");
   });
 
   test("cleans its scoped catalog after failure and timeout", async () => {
@@ -238,10 +330,9 @@ describe("grit-effect-platform-node rule evaluation", () => {
       makeNodeGritRuleEvaluationResource({
         executable: malformedExecutable,
         timeoutMs: 1_000,
-      }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      }).evaluate(
+        evaluationRequest("malformed", "language js(typescript)\n`forbidden()`", [subject])
+      )
     );
     expect(await temporaryCatalogs()).toEqual(baseline);
 
@@ -251,12 +342,40 @@ describe("grit-effect-platform-node rule evaluation", () => {
         executable: slowExecutable,
         timeoutMs: 50,
       }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
+        programs: [
+          { id: "timeout-a", program: "language js(typescript)\n`first()`" },
+          { id: "timeout-b", program: "language js(typescript)\n`second()`" },
+        ],
         subjectPaths: [subject],
       })
     );
     expect(timedOut.reason).toBe("TimedOut");
+    expect(timedOut.detail).toContain("50ms timeout");
     expect(await temporaryCatalogs()).toEqual(baseline);
+  });
+
+  test("scales bounded native output capacity with the number of programs", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    await writeFile(subject, "allowed();\n");
+    const executable = await writeExecutable(
+      fixture,
+      "scaled-output-grit",
+      `#!/usr/bin/env node\nconst subject = ${JSON.stringify(subject)};\nconst message = "x".repeat(300 * 1024);\nprocess.stderr.write(JSON.stringify({ paths: [subject], results: [{ check_id: "#habitat_rule_evaluation_0/js", local_name: "habitat_rule_evaluation_0", path: subject, start: { line: 1, col: 1, offset: 0 }, end: { line: 1, col: 2, offset: 1 }, extra: { message, severity: "error" } }] }));\n`
+    );
+
+    const result = await Effect.runPromise(
+      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 5_000 }).evaluate({
+        programs: [
+          { id: "large", program: "language js(typescript)\n`large()`" },
+          { id: "clean", program: "language js(typescript)\n`clean()`" },
+        ],
+        subjectPaths: [subject],
+      })
+    );
+
+    expect(result.results[0]?.findings[0]?.message?.length).toBe(300 * 1024);
+    expect(result.results[1]).toEqual({ programId: "clean", findings: [] });
   });
 
   test("bounds native output and cleans its scoped catalog after overflow", async () => {
@@ -271,10 +390,9 @@ describe("grit-effect-platform-node rule evaluation", () => {
     );
 
     const overflow = await evaluationFailure(
-      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 5_000 }).evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 5_000 }).evaluate(
+        evaluationRequest("overflow", "language js(typescript)\n`forbidden()`", [subject])
+      )
     );
     expect(overflow).toMatchObject({
       _tag: "RuleEvaluationFailure",
@@ -288,26 +406,33 @@ describe("grit-effect-platform-node rule evaluation", () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
     await writeFile(subject, "allowed();\n");
-    const slowExecutable = await writeExecutable(fixture, "slow-grit", "#!/bin/sh\nsleep 10\n");
+    const pidPath = path.join(fixture, "grit.pid");
+    const slowExecutable = await writeExecutable(
+      fixture,
+      "slow-grit",
+      `#!/bin/sh\nprintf '%s' "$$" > '${pidPath}'\ntrap 'exit 0' TERM INT\nsleep 30 &\nwait\n`
+    );
     const resource = makeNodeGritRuleEvaluationResource({
       executable: slowExecutable,
       timeoutMs: 30_000,
     });
     const baseline = await temporaryCatalogs();
     const fiber = Effect.runFork(
-      resource.evaluate({
-        program: "language js(typescript)\n`forbidden()`",
-        subjectPaths: [subject],
-      })
+      resource.evaluate(
+        evaluationRequest("interrupted", "language js(typescript)\n`forbidden()`", [subject])
+      )
     );
 
     await waitForTemporaryCatalog(baseline);
+    const pid = await waitForPid(pidPath);
     await Effect.runPromise(Fiber.interrupt(fiber));
     const exit = await Effect.runPromise(Fiber.await(fiber));
 
     expect(Exit.isFailure(exit)).toBe(true);
     if (!Exit.isFailure(exit)) throw new Error("Expected evaluation interruption");
     expect(exit.cause.reasons.some(Cause.isInterruptReason)).toBe(true);
+    expect(processIsReachable(pid)).toBe(false);
+    expect(processGroupIsReachable(pid)).toBe(false);
     expect(await temporaryCatalogs()).toEqual(baseline);
   });
 });
@@ -331,6 +456,10 @@ async function writeReportExecutable(root: string, name: string, report: unknown
     name,
     `#!/bin/sh\ncat >&2 <<'GRIT_REPORT'\n${JSON.stringify(report)}\nGRIT_REPORT\n`
   );
+}
+
+function evaluationRequest(id: string, program: string, subjectPaths: readonly string[]) {
+  return { programs: [{ id, program }], subjectPaths };
 }
 
 async function evaluationFailure<A>(
@@ -358,4 +487,40 @@ async function waitForTemporaryCatalog(baseline: readonly string[]): Promise<voi
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   throw new Error("Rule-evaluation provider did not allocate its temporary catalog");
+}
+
+async function waitForPid(pidPath: string): Promise<number> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    try {
+      const pid = Number(await readFile(pidPath, "utf8"));
+      if (Number.isSafeInteger(pid) && pid > 0) return pid;
+    } catch {
+      // The native fixture has not started yet.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error("Rule-evaluation provider did not start its native process");
+}
+
+function processIsReachable(pid: number): boolean {
+  return signalTargetIsReachable(pid);
+}
+
+function processGroupIsReachable(pid: number): boolean {
+  return signalTargetIsReachable(-pid);
+}
+
+function signalTargetIsReachable(target: number): boolean {
+  try {
+    process.kill(target, 0);
+    return true;
+  } catch (cause) {
+    if (isErrnoException(cause) && cause.code === "ESRCH") return false;
+    throw cause;
+  }
+}
+
+function isErrnoException(cause: unknown): cause is NodeJS.ErrnoException {
+  return typeof cause === "object" && cause !== null && "code" in cause;
 }

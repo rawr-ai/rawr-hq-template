@@ -9,6 +9,22 @@ const NonEmptyStringSchema = Type.String({
   minLength: 1,
 });
 
+/** Structural schema for one caller-identified, already-resolved program. */
+export const RuleEvaluationProgramSchema = ReadonlyObject(
+  Type.Object({
+    id: Type.String({
+      minLength: 1,
+      maxLength: 1_024,
+      description: "Invocation-local program identity used to attribute findings",
+    }),
+    program: Type.String({
+      minLength: 1,
+      description: "Already-resolved evaluator program",
+    }),
+  }),
+  { additionalProperties: false }
+);
+
 /** Structural schema for one source position reported by an evaluator. */
 export const RuleEvaluationPositionSchema = ReadonlyObject(
   Type.Object({
@@ -44,12 +60,12 @@ export const RuleEvaluationFindingSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-/** Structural schema for one already-resolved evaluation request. */
+/** Structural schema for one exact-subject evaluation batch. */
 export const RuleEvaluationRequestSchema = ReadonlyObject(
   Type.Object({
-    program: Type.String({
-      minLength: 1,
-      description: "Already-resolved evaluator program",
+    programs: ReadonlyObject(Type.Array(RuleEvaluationProgramSchema), {
+      minItems: 1,
+      description: "Non-empty ordered programs evaluated against the same subjects",
     }),
     subjectPaths: ReadonlyObject(Type.Array(NonEmptyStringSchema), {
       minItems: 1,
@@ -59,11 +75,27 @@ export const RuleEvaluationRequestSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-/** Structural schema for one completed evaluation. */
-export const RuleEvaluationResultSchema = ReadonlyObject(
+/** Structural schema for one program's attributed evaluation result. */
+export const RuleEvaluationProgramResultSchema = ReadonlyObject(
   Type.Object({
+    programId: Type.String({
+      minLength: 1,
+      maxLength: 1_024,
+      description: "Invocation-local identity of the evaluated program",
+    }),
     findings: ReadonlyObject(Type.Array(RuleEvaluationFindingSchema), {
       description: "Findings reported by the evaluator in provider-defined stable order",
+    }),
+  }),
+  { additionalProperties: false }
+);
+
+/** Structural schema for one completed exact-subject evaluation batch. */
+export const RuleEvaluationResultSchema = ReadonlyObject(
+  Type.Object({
+    results: ReadonlyObject(Type.Array(RuleEvaluationProgramResultSchema), {
+      minItems: 1,
+      description: "Per-program results in request order",
     }),
   }),
   { additionalProperties: false }
@@ -103,10 +135,16 @@ export type RuleEvaluationPosition = Static<typeof RuleEvaluationPositionSchema>
 /** One provider-neutral finding. */
 export type RuleEvaluationFinding = Static<typeof RuleEvaluationFindingSchema>;
 
-/** One already-resolved evaluation request. */
+/** One caller-identified, already-resolved evaluator program. */
+export type RuleEvaluationProgram = Static<typeof RuleEvaluationProgramSchema>;
+
+/** One exact-subject evaluation batch. */
 export type RuleEvaluationRequest = Static<typeof RuleEvaluationRequestSchema>;
 
-/** One completed evaluation result. */
+/** One completed program result within an evaluation batch. */
+export type RuleEvaluationProgramResult = Static<typeof RuleEvaluationProgramResultSchema>;
+
+/** One completed exact-subject evaluation batch. */
 export type RuleEvaluationResult = Static<typeof RuleEvaluationResultSchema>;
 
 /** One provider-neutral mechanical failure reason. */
@@ -122,7 +160,7 @@ export function isRuleEvaluationFailure(input: unknown): input is RuleEvaluation
   return ruleEvaluationFailureValidator.Check(input);
 }
 
-/** Provider-neutral capability for evaluating one resolved program. */
+/** Provider-neutral capability for evaluating resolved programs over one exact subject set. */
 export interface RuleEvaluationResource<R = never> {
   readonly evaluate: (
     input: RuleEvaluationRequest

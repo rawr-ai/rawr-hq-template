@@ -4,6 +4,7 @@ import type {
   RuleEvaluationFinding,
   RuleEvaluationRequest,
   RuleEvaluationResource,
+  RuleEvaluationResult,
 } from "@habitat-ai/resource-rule-evaluation";
 import {
   MAX_SOURCE_INVENTORY_ENTRIES,
@@ -70,7 +71,7 @@ type InstanceSpec = {
 };
 
 describe("Habitat catalog check", () => {
-  test("interprets clean, enforced, and advisory evaluations without acquiring a provider", async () => {
+  test("batches same-subject Grit programs and attributes clean, enforced, and advisory findings", async () => {
     const fixture = authorityFixture({
       blueprints: [
         {
@@ -81,14 +82,17 @@ describe("Habitat catalog check", () => {
       instances: [exampleInstance()],
     });
     const { calls, inventoryCalls, result } = await checkFixture(fixture, {}, (input) => {
-      if (input.program.includes("a_clean")) return Effect.succeed({ findings: [] });
-      const ruleId = input.program.includes("b_enforced") ? "b_enforced" : "c_advisory";
-      return Effect.succeed({
-        findings: [finding(`${input.subjectPaths[0]}/src/${ruleId}.ts`, `${ruleId} finding`)],
-      });
+      return Effect.succeed(
+        evaluationResults(input, ({ program }) => {
+          if (program.includes("a_clean")) return [];
+          const ruleId = program.includes("b_enforced") ? "b_enforced" : "c_advisory";
+          return [finding(`${input.subjectPaths[0]}/src/${ruleId}.ts`, `${ruleId} finding`)];
+        })
+      );
     });
 
-    expect(calls.map(({ program }) => program)).toEqual([
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.programs.map(({ program }) => program)).toEqual([
       "a_clean()",
       "b_enforced()",
       "c_advisory()",
@@ -202,6 +206,131 @@ describe("Habitat catalog check", () => {
     });
   });
 
+  test("fans one typed batch failure out to every member and continues with other subject groups", async () => {
+    const fixture = authorityFixture({
+      blueprints: [{ id: "package", rules: [{ id: "a_rule" }, { id: "b_rule" }] }],
+      instances: [
+        exampleInstance({
+          id: "alpha",
+          ownerProject: "@rawr/alpha",
+          projectPath: "packages/alpha",
+        }),
+        exampleInstance({
+          id: "beta",
+          ownerProject: "@rawr/beta",
+          projectPath: "packages/beta",
+        }),
+      ],
+    });
+    const { calls, result } = await checkFixture(fixture, {}, (input) =>
+      input.subjectPaths[0]?.includes("/packages/alpha") === true
+        ? Effect.fail({
+            _tag: "RuleEvaluationFailure",
+            reason: "ExecutionFailed",
+            detail: "The alpha batch failed.",
+          })
+        : Effect.succeed(evaluationResults(input, () => []))
+    );
+
+    expect(calls).toHaveLength(2);
+    expect(calls.map(({ programs }) => programs.map(({ program }) => program))).toEqual([
+      ["a_rule()", "b_rule()"],
+      ["a_rule()", "b_rule()"],
+    ]);
+    expect(
+      calls.map(({ subjectPaths }) =>
+        subjectPaths[0]?.includes("/packages/alpha") ? "alpha" : "beta"
+      )
+    ).toEqual(["alpha", "beta"]);
+    expect(result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          ruleId: "a_rule",
+          instanceId: "alpha",
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "ExecutionFailed",
+            detail: "The alpha batch failed.",
+          },
+        },
+        { ruleId: "a_rule", instanceId: "beta", status: "pass" },
+        {
+          ruleId: "b_rule",
+          instanceId: "alpha",
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "ExecutionFailed",
+            detail: "The alpha batch failed.",
+          },
+        },
+        { ruleId: "b_rule", instanceId: "beta", status: "pass" },
+      ],
+    });
+  });
+
+  test("rejects missing, duplicate, and out-of-order batch results without misattribution", async () => {
+    const fixture = authorityFixture({
+      blueprints: [{ id: "package", rules: [{ id: "a_rule" }, { id: "b_rule" }] }],
+      instances: [exampleInstance()],
+    });
+    const cases = [
+      {
+        detail: "program results for 2 requested programs",
+        result: (input: RuleEvaluationRequest): RuleEvaluationResult => ({
+          results: [{ programId: input.programs[0]?.id ?? "missing", findings: [] }],
+        }),
+      },
+      {
+        detail: "duplicate program result identities",
+        result: (input: RuleEvaluationRequest): RuleEvaluationResult => ({
+          results: [
+            { programId: input.programs[0]?.id ?? "duplicate", findings: [] },
+            { programId: input.programs[0]?.id ?? "duplicate", findings: [] },
+          ],
+        }),
+      },
+      {
+        detail: "preserve requested program result order and identity",
+        result: (input: RuleEvaluationRequest): RuleEvaluationResult => ({
+          results: [...input.programs].reverse().map(({ id }) => ({ programId: id, findings: [] })),
+        }),
+      },
+    ] as const;
+
+    for (const mismatch of cases) {
+      const checked = await checkFixture(fixture, {}, (input) =>
+        Effect.succeed(mismatch.result(input))
+      );
+      expect(checked.calls).toHaveLength(1);
+      expect(checked.result).toMatchObject({
+        _tag: "Completed",
+        ok: false,
+        applications: [
+          {
+            status: "error",
+            disposition: {
+              kind: "failed",
+              reason: "InvalidOutput",
+              detail: expect.stringContaining(mismatch.detail),
+            },
+          },
+          {
+            status: "error",
+            disposition: {
+              kind: "failed",
+              reason: "InvalidOutput",
+              detail: expect.stringContaining(mismatch.detail),
+            },
+          },
+        ],
+      });
+    }
+  });
+
   test("propagates evaluator defects and interruptions", async () => {
     await expect(
       checkFixture(singleGritFixture(), {}, () =>
@@ -213,7 +342,7 @@ describe("Habitat catalog check", () => {
     ).rejects.toBeDefined();
   });
 
-  test("sorts selected applications and repeats with the same result and evaluation order", async () => {
+  test("separates distinct subject roots while preserving stable application order", async () => {
     const fixture = authorityFixture({
       blueprints: [
         {
@@ -248,8 +377,19 @@ describe("Habitat catalog check", () => {
         "z_rule:alpha:@rawr/alpha",
         "z_rule:zeta:@rawr/zeta",
       ]);
-      expect(recording.calls).toHaveLength(8);
-      expect(recording.calls.slice(0, 4)).toEqual(recording.calls.slice(4));
+      expect(recording.calls).toHaveLength(4);
+      expect(recording.calls.slice(0, 2)).toEqual(recording.calls.slice(2));
+      expect(
+        recording.calls.slice(0, 2).map((call) => call.programs.map(({ program }) => program))
+      ).toEqual([
+        ["a_rule()", "z_rule()"],
+        ["a_rule()", "z_rule()"],
+      ]);
+      expect(
+        recording.calls
+          .slice(0, 2)
+          .map((call) => (call.subjectPaths[0]?.includes("/packages/alpha") ? "alpha" : "zeta"))
+      ).toEqual(["alpha", "zeta"]);
     });
   });
 
@@ -283,7 +423,7 @@ describe("Habitat catalog check", () => {
     });
 
     expect(calls).toHaveLength(1);
-    expect(calls[0]?.program).toBe("b_rule()");
+    expect(calls[0]?.programs.map(({ program }) => program)).toEqual(["b_rule()"]);
     expect(calls[0]?.subjectPaths[0]?.endsWith("/packages/beta")).toBe(true);
     expect(result).toMatchObject({
       _tag: "Completed",
@@ -319,7 +459,8 @@ describe("Habitat catalog check", () => {
       selectors: { owner: "@rawr/beta" },
     });
 
-    expect(calls.map(({ program }) => program)).toEqual(["a_rule()", "b_rule()"]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.programs.map(({ program }) => program)).toEqual(["a_rule()", "b_rule()"]);
     expect(calls.every(({ subjectPaths }) => subjectPaths[0]?.endsWith("/packages/beta"))).toBe(
       true
     );
@@ -335,18 +476,18 @@ describe("Habitat catalog check", () => {
 
   test("executes compatibility Grit coverage and version 1 structure through one check", async () => {
     const checked = await checkFixture(compatibilityFixture(), {}, (input) =>
-      Effect.succeed({
-        findings: [
+      Effect.succeed(
+        evaluationResults(input, () => [
           finding(
             input.subjectPaths.find((subject) => subject.endsWith("/covered/child.ts")) ?? "",
             "compatibility finding"
           ),
-        ],
-      })
+        ])
+      )
     );
 
     expect(checked.calls).toHaveLength(1);
-    expect(checked.calls[0]?.program).toBe("legacy_grit()");
+    expect(checked.calls[0]?.programs.map(({ program }) => program)).toEqual(["legacy_grit()"]);
     expect(
       checked.calls[0]?.subjectPaths.map((subject) =>
         subject.slice(subject.indexOf("scripts/habitat/"))
@@ -408,6 +549,59 @@ describe("Habitat catalog check", () => {
         },
       ],
     });
+  });
+
+  test("keeps compatibility rules with one declared root in separate final-subject batches", async () => {
+    const fixture = compatibilityFixture();
+    const gritRoot = ".habitat/legacy/legacy_grit";
+    const peerRoot = ".habitat/legacy/legacy_peer";
+    const encodedRule = fixture.files[`${gritRoot}/rule.json`];
+    if (encodedRule === undefined) throw new Error("Compatibility fixture has no Grit rule.");
+    const rule = JSON.parse(encodedRule) as Record<string, unknown>;
+    const runner = rule.runner as Record<string, unknown>;
+    const sameRootAcquisition = { kind: "check", roots: ["scripts/habitat"] };
+    const distinctCoverageFixture: Fixture = {
+      ...fixture,
+      files: {
+        ...fixture.files,
+        [`${gritRoot}/rule.json`]: JSON.stringify({
+          ...rule,
+          pathCoverage: [{ kind: "exact-path", patterns: ["scripts/habitat/covered/**/*.ts"] }],
+          runner: { ...runner, acquisition: sameRootAcquisition },
+        }),
+        [`${peerRoot}/rule.json`]: JSON.stringify({
+          ...rule,
+          id: "legacy_peer",
+          title: "Require legacy_peer",
+          message: "legacy_peer found a violation.",
+          pathCoverage: [{ kind: "exact-path", patterns: ["scripts/habitat/exact.ts"] }],
+          supportFiles: { baseline: `${peerRoot}/baseline.json` },
+          runner: {
+            ...runner,
+            files: { pattern: `${peerRoot}/pattern.md` },
+            patternName: "legacy_peer",
+            acquisition: sameRootAcquisition,
+          },
+        }),
+        [`${peerRoot}/baseline.json`]: "[]",
+        [`${peerRoot}/pattern.md`]: "# legacy_peer\n\n```grit\nlegacy_peer()\n```\n",
+      },
+    };
+
+    const checked = await checkFixture(distinctCoverageFixture, {
+      selectors: { runner: "grit" },
+    });
+
+    expect(checked.calls).toHaveLength(2);
+    expect(checked.calls.map(({ programs }) => programs.map(({ program }) => program))).toEqual([
+      ["legacy_grit()"],
+      ["legacy_peer()"],
+    ]);
+    expect(
+      checked.calls.map(({ subjectPaths }) =>
+        subjectPaths.map((subject) => subject.slice(subject.indexOf("scripts/habitat/")))
+      )
+    ).toEqual([["scripts/habitat/covered/child.ts"], ["scripts/habitat/exact.ts"]]);
   });
 
   test("refuses compatibility Grit subjects selected through symbolic links", async () => {
@@ -530,7 +724,7 @@ describe("Habitat catalog check", () => {
       { selectors: { instance: "example-package" } }
     );
     expect(mixed.calls).toHaveLength(1);
-    expect(mixed.calls[0]?.program).toBe("package_rule()");
+    expect(mixed.calls[0]?.programs.map(({ program }) => program)).toEqual(["package_rule()"]);
     expect(mixed.result).toMatchObject({
       _tag: "Completed",
       applications: [{ instanceId: "example-package", ruleId: "package_rule", locked: false }],
@@ -616,7 +810,11 @@ describe("Habitat catalog check", () => {
       selectors: { rule: "alpha_rule", rules: ["beta_rule", "alpha_rule"] },
     });
 
-    expect(selected.calls.map(({ program }) => program)).toEqual(["alpha_rule()", "beta_rule()"]);
+    expect(selected.calls).toHaveLength(1);
+    expect(selected.calls[0]?.programs.map(({ program }) => program)).toEqual([
+      "alpha_rule()",
+      "beta_rule()",
+    ]);
     expect(selected.result).toMatchObject({ _tag: "Completed", ok: true });
   });
 
@@ -1275,9 +1473,11 @@ mode = "open"
 
   test("keeps mixed Grit ranges and Habitat path-only findings runner-specific", async () => {
     const checked = await checkFixture(mixedRunnerFixture(), {}, (input) =>
-      Effect.succeed({
-        findings: [finding(`${input.subjectPaths[0]}/grit.ts`, "mixed Grit finding")],
-      })
+      Effect.succeed(
+        evaluationResults(input, () => [
+          finding(`${input.subjectPaths[0]}/grit.ts`, "mixed Grit finding"),
+        ])
+      )
     );
 
     expect(checked.result).toMatchObject({
@@ -1598,8 +1798,10 @@ mode = "open"
   });
 
   test("turns a finding outside admitted subjects into an application error", async () => {
-    const { calls, result } = await checkFixture(singleGritFixture(), {}, () =>
-      Effect.succeed({ findings: [finding("/outside-habitat-check.ts", "foreign finding")] })
+    const { calls, result } = await checkFixture(singleGritFixture(), {}, (input) =>
+      Effect.succeed(
+        evaluationResults(input, () => [finding("/outside-habitat-check.ts", "foreign finding")])
+      )
     );
 
     expect(calls).toHaveLength(1);
@@ -1624,19 +1826,19 @@ mode = "open"
   test("admits only exact findings for a file acquisition subject", async () => {
     const fixture = fileAcquisitionFixture();
     const exact = await checkFixture(fixture, {}, (input) =>
-      Effect.succeed({
-        findings: [finding(input.subjectPaths[0] ?? "", "exact file finding")],
-      })
+      Effect.succeed(
+        evaluationResults(input, () => [finding(input.subjectPaths[0] ?? "", "exact file finding")])
+      )
     );
     const sibling = await checkFixture(fixture, {}, (input) =>
-      Effect.succeed({
-        findings: [
+      Effect.succeed(
+        evaluationResults(input, () => [
           finding(
             (input.subjectPaths[0] ?? "").replace(/entry\.ts$/, "sibling.ts"),
             "sibling finding"
           ),
-        ],
-      })
+        ])
+      )
     );
 
     expect(exact.result).toMatchObject({
@@ -1698,7 +1900,7 @@ async function checkFixture(
 async function withFixture<T>(
   fixture: Fixture,
   use: (client: Client, recording: RecordingRuleEvaluation) => Promise<T>,
-  handler: EvaluationHandler = () => Effect.succeed({ findings: [] }),
+  handler: EvaluationHandler = (input) => Effect.succeed(evaluationResults(input, () => [])),
   inventoryHandler: InventoryHandler = () => Effect.succeed(defaultInventory(fixture))
 ): Promise<T> {
   return Effect.runPromise(
@@ -1785,6 +1987,21 @@ const DEFAULT_POLICY_PACK_PACKAGE_JSON = JSON.stringify({
   private: false,
 });
 const DEFAULT_POLICY_PACK_MANIFEST = JSON.stringify({ protocolVersion: 1, blueprints: [] });
+
+function evaluationResults(
+  input: RuleEvaluationRequest,
+  findingsForProgram: (
+    program: RuleEvaluationRequest["programs"][number],
+    index: number
+  ) => readonly RuleEvaluationFinding[]
+): RuleEvaluationResult {
+  return {
+    results: input.programs.map((program, index) => ({
+      programId: program.id,
+      findings: findingsForProgram(program, index),
+    })),
+  };
+}
 
 function makeRecordingRuleEvaluation(
   handler: EvaluationHandler,

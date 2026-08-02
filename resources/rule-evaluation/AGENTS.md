@@ -2,8 +2,9 @@
 
 ## Purpose
 
-- Give semantic owners one provider-neutral way to execute an already-resolved
-  evaluation program against caller-selected subjects.
+- Give semantic owners one provider-neutral way to execute ordered,
+  already-resolved evaluation programs against one exact caller-selected
+  subject set.
 
 ## Scope
 
@@ -22,9 +23,10 @@
 
 ## Behavior
 
-- A caller supplies one resolved program and at least one subject path; a
-  provider executes one evaluation and returns findings or a typed mechanical
-  failure.
+- A caller supplies one or more invocation-identified resolved programs and at
+  least one subject path. A provider executes the exact-subject batch and
+  returns one attributed result per program in request order, or one typed
+  mechanical failure for the whole batch.
 
 ## Routing
 

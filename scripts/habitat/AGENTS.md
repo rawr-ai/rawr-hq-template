@@ -24,8 +24,10 @@
 
 ## Behavior
 
-- Nx loads `@habitat-ai/cli/nx-plugin`, discovers registered rules, and infers one
-  cacheable rule target plus owner-local `check:policy` composition.
+- Nx loads `@habitat-ai/cli/nx-plugin`, discovers registered rules, and infers
+  cacheable focused rule targets plus one cacheable native owner-local
+  `check:policy` command. The owner command performs one Habitat acquisition;
+  it does not schedule every focused leaf.
 - The `habitat` project contributes the repository-wide Biome pass. Its public
   `check` enters the same shared Nx graph as every other project.
 - Codex Stop delegates to `habitat hook agent-stop`; it is fast feedback over
