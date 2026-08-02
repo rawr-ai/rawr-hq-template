@@ -5829,9 +5829,9 @@ minute 6 seconds. These are pre-landing candidate results: no RAWR package has
 been published, no release tag has been created, and no native provider state
 has been changed.
 
-## RAWR Registry Release Substrate Candidate
+## RAWR Registry Release Substrate
 
-The next bounded candidate makes the existing fixed `rawr-cli` Nx group an
+Template PR #775 landed the existing fixed `rawr-cli` Nx group as an
 ordinary npm release cohort. It adds one `rawr-cli-v{version}` tag pattern to Nx,
 qualified repository metadata and bounded file inventories to the eighteen
 package manifests, and one new tag branch in the already-proven
@@ -5846,11 +5846,15 @@ consumer installation: operators install `@habitat-ai/rawr`, and npm resolves
 the other seventeen through ordinary dependency metadata. Workspace links do
 not bundle package bytes; the rejected single-package probe instead captured a
 large linked dependency tree and recreated the private application-image model.
-The first registry version therefore remains a one-time authenticated bootstrap
-needed to establish each package before its workflow-bound trusted publisher
-can take over. Task 3.7 remains open until canonical-main landing, complete
-registry publication, registry-only installation, and the first OIDC-proven
-fixed-version release all pass.
+Candidate `e98da179e97b62136c02cd8c54be1794150749b7` passed the required
+Repository Ratchet on run `30745429578`, attempt 2, before Graphite landed merge
+`e78e5765302363aa632e9a213863114d2b430ef5`. Canonical-main run
+`30745934424` then passed the complete repository gate at that exact merge.
+This closes [[tasks#3. Conventional CLI Release Form|task 3.7a]]. The first
+registry version remains a one-time authenticated bootstrap needed to establish
+each package before its workflow-bound trusted publisher can take over. Task
+3.7 remains open until complete registry publication, registry-only
+installation, and the first OIDC-proven fixed-version release all pass.
 
 ## Settlement Oracles
 
