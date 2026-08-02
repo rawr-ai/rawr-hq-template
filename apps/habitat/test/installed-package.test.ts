@@ -100,6 +100,18 @@ describe("installed Habitat products", () => {
     expect(habitatDependencies).toEqual(["@habitat-ai/sdk"]);
     expect(cliManifest.dependencies?.["@habitat-ai/sdk"]).toBe(productVersion("@habitat-ai/sdk"));
 
+    const sdkManifest = JSON.parse(
+      await readFile(path.join(consumerRoot, "node_modules/@habitat-ai/sdk/package.json"), "utf8")
+    ) as { readonly dependencies?: Readonly<Record<string, string>> };
+    expect(sdkManifest.dependencies).toMatchObject({
+      "@effect/platform-node": "4.0.0-beta.101",
+      "@orpc/contract": "2.0.0-beta.23",
+      "@orpc/experimental-effect": "2.0.0-beta.23",
+      "@orpc/server": "2.0.0-beta.23",
+      effect: "4.0.0-beta.101",
+    });
+    expect(Object.values(sdkManifest.dependencies ?? {})).not.toContain("2.0.0-beta.20");
+
     const canonicalBlueprint = await readFile(
       path.join(workspaceRoot, ".habitat/blueprints/package/blueprint.toml"),
       "utf8"
