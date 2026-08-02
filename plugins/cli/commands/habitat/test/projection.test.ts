@@ -167,7 +167,17 @@ describe("Habitat Oclif projection binding", () => {
     const resolveInputs: Parameters<Client["catalog"]["resolve"]>[0][] = [];
     const checkResults = [failed, catalogRejected, selectionRejected];
     let checkIndex = 0;
-    const output = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const writes: string[] = [];
+    const output = vi.spyOn(process.stdout, "write").mockImplementation(((
+      chunk: string | Uint8Array,
+      encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
+      callback?: (error?: Error | null) => void
+    ) => {
+      writes.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+      const complete = typeof encodingOrCallback === "function" ? encodingOrCallback : callback;
+      complete?.();
+      return true;
+    }) as typeof process.stdout.write);
 
     try {
       const config = await loadProjection(
@@ -187,10 +197,10 @@ describe("Habitat Oclif projection binding", () => {
         oclif: { exit: 1 },
       });
       expect(resolveInputs).toEqual([{}]);
-      expect(output.mock.calls).toEqual(
-        [rejected, failed, catalogRejected, selectionRejected, failed].map((result) => [
-          JSON.stringify(result, null, 2),
-        ])
+      expect(writes).toEqual(
+        [rejected, failed, catalogRejected, selectionRejected, failed].map(
+          (result) => `${JSON.stringify(result, null, 2)}\n`
+        )
       );
     } finally {
       output.mockRestore();
