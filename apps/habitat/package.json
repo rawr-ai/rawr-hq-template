@@ -1,6 +1,6 @@
 {
   "name": "@habitat-ai/cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "repository": {
     "type": "git",
@@ -48,10 +48,10 @@
   "dependencies": {
     "@effect/platform-node": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
-    "@habitat-ai/plugin-cli": "0.2.0",
-    "@habitat-ai/resource-rule-evaluation": "0.2.0",
-    "@habitat-ai/resource-source-inventory": "0.2.0",
-    "@habitat-ai/service": "0.2.0",
+    "@habitat-ai/plugin-cli": "0.2.1",
+    "@habitat-ai/resource-rule-evaluation": "0.2.1",
+    "@habitat-ai/resource-source-inventory": "0.2.1",
+    "@habitat-ai/service": "0.2.1",
     "@nx/devkit": "23.1.0",
     "@oclif/core": "^4.11.4",
     "@oclif/plugin-help": "^6.2.27",
@@ -66,7 +66,7 @@
     "vitest": "^4.0.18"
   },
   "peerDependencies": {
-    "@habitat-ai/blueprints": "0.2.0"
+    "@habitat-ai/blueprints": "0.2.1"
   },
   "oclif": {
     "bin": "habitat",
