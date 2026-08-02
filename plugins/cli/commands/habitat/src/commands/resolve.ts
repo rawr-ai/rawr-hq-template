@@ -1,6 +1,7 @@
 import type { Client } from "@habitat-ai/service/client";
 import { Command } from "@oclif/core";
 import { habitatClientFrom } from "../lib/binding.js";
+import { writeJsonResult } from "../lib/output.js";
 
 type ResolveResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
 
@@ -11,7 +12,7 @@ export default class Resolve extends Command {
   async run(): Promise<ResolveResult> {
     await this.parse(Resolve);
     const result = await habitatClientFrom(this.config).catalog.resolve({});
-    this.log(JSON.stringify(result, null, 2));
+    await writeJsonResult(result);
     if (result._tag === "Rejected") this.exit(1);
     return result;
   }

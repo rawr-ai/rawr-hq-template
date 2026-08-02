@@ -1,6 +1,7 @@
 import type { Client } from "@habitat-ai/service/client";
 import { Args, Command } from "@oclif/core";
 import { habitatClientFrom } from "../lib/binding.js";
+import { writeJsonResult } from "../lib/output.js";
 
 type HookResult = Awaited<ReturnType<Client["catalog"]["check"]>>;
 
@@ -23,7 +24,7 @@ export default class Hook extends Command {
     });
 
     if (result._tag !== "Completed" || !result.ok) {
-      this.log(JSON.stringify(result, null, 2));
+      await writeJsonResult(result);
       this.exit(1);
     }
     return result;

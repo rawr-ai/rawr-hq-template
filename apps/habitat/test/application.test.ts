@@ -10,6 +10,7 @@ import { createNodes } from "../src/nx-plugin";
 
 type RuleFixture = Readonly<{
   id: string;
+  outcome?: "fail" | "pass";
   runner: "grit" | "structure";
 }>;
 
@@ -164,6 +165,60 @@ describe("Habitat app composition", () => {
     });
   }, 60_000);
 
+  it("prints a complete JSON result larger than Bun's 64 KiB stdout buffer", async () => {
+    const finalRuleId = "zz_final_output_sentinel";
+    const rules: RuleFixture[] = [
+      ...Array.from({ length: 128 }, (_, index) => ({
+        id: `large_output_${index.toString().padStart(3, "0")}`,
+        runner: "structure" as const,
+      })),
+      { id: finalRuleId, runner: "structure" },
+    ];
+    const fixture = await makeWorkspace({
+      instanceId: "large-output-package",
+      ownerProject: "@rawr/large-output",
+      projectPath: "packages/large-output",
+      rules,
+    });
+
+    const result = await runSourceCli(fixture.root, ["resolve"], undefined, 15_000);
+
+    expect(result).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(Buffer.byteLength(result.stdout, "utf8")).toBeGreaterThan(65_536);
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.catalog.applications).toHaveLength(rules.length);
+    expect(parsed.catalog.applications.at(-1)?.ruleId).toBe(finalRuleId);
+  }, 20_000);
+
+  it("prints a complete large hook failure before exiting nonzero", async () => {
+    const finalRuleId = "zz_final_hook_sentinel";
+    const rules: RuleFixture[] = [
+      ...Array.from({ length: 128 }, (_, index) => ({
+        id: `failing_output_${index.toString().padStart(3, "0")}`,
+        outcome: "fail" as const,
+        runner: "structure" as const,
+      })),
+      { id: finalRuleId, outcome: "fail", runner: "structure" },
+    ];
+    const fixture = await makeWorkspace({
+      instanceId: "large-hook-failure-package",
+      ownerProject: "@rawr/large-hook-failure",
+      projectPath: "packages/large-hook-failure",
+      rules,
+    });
+
+    const result = await runSourceCli(fixture.root, ["hook", "agent-stop"], undefined, 15_000);
+
+    expect(result).toMatchObject({ exitCode: 1, stderr: "" });
+    expect(Buffer.byteLength(result.stdout, "utf8")).toBeGreaterThan(65_536);
+    const parsed = JSON.parse(result.stdout);
+    expect(parsed.applications).toHaveLength(rules.length);
+    expect(parsed.applications.at(-1)).toMatchObject({
+      ruleId: finalRuleId,
+      status: "fail",
+    });
+  }, 20_000);
+
   it("accepts an unset command-timeout override at process activation", async () => {
     const fixture = await makeEmptyWorkspace();
     const result = await runSourceCli(fixture.root, ["--help"]);
@@ -222,7 +277,9 @@ async function makeWorkspace(input: {
     files[`${blueprintRoot}/${rule.id}.${rule.runner === "grit" ? "md" : "structure.toml"}`] =
       rule.runner === "grit"
         ? `# ${rule.id}\n\n\`\`\`grit\nlanguage js(typescript)\n\`forbidden()\`\n\`\`\`\n`
-        : passingStructureToml();
+        : rule.outcome === "fail"
+          ? failingStructureToml()
+          : passingStructureToml();
   }
 
   for (const [relativePath, contents] of Object.entries(files)) {
@@ -262,6 +319,10 @@ function instanceToml(input: {
 
 function passingStructureToml(): string {
   return `schemaVersion = 2\n\n[[scopes]]\nname = "project"\nrootRole = "project"\nrelativePath = "."\nkind = "directory"\nmode = "open"\n`;
+}
+
+function failingStructureToml(): string {
+  return `schemaVersion = 2\n\n[[scopes]]\nname = "project"\nrootRole = "project"\nrelativePath = "."\nkind = "directory"\nmode = "open"\nrequired = ["missing-output-sentinel.txt"]\n`;
 }
 
 async function runSourceCli(
