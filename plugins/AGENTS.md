@@ -22,14 +22,13 @@
 
 ## Scope
 - Applies to everything under `plugins/**`.
-- This repo uses **six plugin roots**:
+- This repo uses **five plugin roots**:
   - `plugins/cli/commands/*` for host-composed Oclif command capabilities
   - `plugins/web/*` for runtime/web plugins (`rawr.kind=web`)
   - `plugins/server/api/*` for server/API runtime adapters (`rawr.kind=api`)
   - `plugins/async/workflows/*` for workflow runtime adapters (`rawr.kind=workflows`)
   - `plugins/async/schedules/*` for recurring trigger runtime adapters (`rawr.kind=schedules`)
-  - `plugins/nx/*` for package-less native Nx projections composed by an app
-- Command-plugin leaves are workspace packages. API server and Nx plugins are
+- Command-plugin leaves are workspace packages. API server plugins are
   package-less Nx projects composed from source through their qualified public
   faces.
 
@@ -49,7 +48,7 @@
 
 ## Plugin Ids
 - A command plugin's id is `package.json#name`.
-- A package-less API or Nx plugin's Nx project name is its repository identity;
+- A package-less API plugin's Nx project name is its repository identity;
   its leaf directory names the capability.
 - Package identity does not grant lifecycle authority. External Oclif
   extensions and the curated agent-plugin lifecycle are separate closed
@@ -57,7 +56,7 @@
 
 ## Manifest Conventions
 - Oclif command-plugin packages include `package.json`. Package-less API server
-  and Nx plugins do not.
+  plugins do not.
 - If the plugin provides **oclif commands**, declare the oclif manifest in `package.json#oclif`:
   - `commands`: `./dist/commands`
   - `typescript.commands`: `./src/commands`
@@ -113,9 +112,7 @@
 - [Hello command plugin](cli/commands/hello/AGENTS.md)
 - [Hyperresearch command plugin](cli/commands/hyperresearch/AGENTS.md)
 - [Session Tools command plugin](cli/commands/session-tools/AGENTS.md)
-- [Habitat command plugin](cli/commands/habitat/AGENTS.md)
 - [Example API plugin](server/api/example-todo/AGENTS.md)
-- [Habitat Nx plugin](nx/habitat/AGENTS.md)
 
 ## Validation
 

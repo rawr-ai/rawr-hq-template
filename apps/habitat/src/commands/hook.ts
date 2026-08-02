@@ -1,9 +1,9 @@
-import type { Client } from "@habitat-ai/service/client";
+import type { HabitatClient } from "@habitat-ai/sdk";
 import { Args, Command } from "@oclif/core";
 import { habitatClientFrom } from "../lib/binding.js";
 import { writeJsonResult } from "../lib/output.js";
 
-type HookResult = Awaited<ReturnType<Client["catalog"]["check"]>>;
+type HookResult = Awaited<ReturnType<HabitatClient["catalog"]["check"]>>;
 
 /** Runs one bounded Habitat operation for a repository-owned local hook. */
 export default class Hook extends Command {

@@ -1,0 +1,17 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat-ai/sdk",
+  "targets": {
+    "build": {
+      "inputs": [
+        "production",
+        "^production",
+        "typescriptRuntime",
+        "{workspaceRoot}/.habitat/blueprints/**/*"
+      ]
+    },
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}

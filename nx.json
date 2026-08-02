@@ -6,33 +6,10 @@
     },
     "groups": {
       "habitat-cli": {
-        "projects": [
-          "@habitat-ai/cli",
-          "@habitat-ai/plugin-cli",
-          "@habitat-ai/resource-rule-evaluation",
-          "@habitat-ai/resource-source-inventory",
-          "@habitat-ai/service"
-        ],
+        "projects": ["@habitat-ai/sdk", "@habitat-ai/cli"],
         "projectsRelationship": "fixed",
-        "version": {
-          "preserveLocalDependencyProtocols": true
-        },
         "releaseTag": {
           "pattern": "habitat-cli-v{version}"
-        }
-      },
-      "habitat-blueprints": {
-        "projects": ["@habitat-ai/blueprints"],
-        "projectsRelationship": "fixed",
-        "releaseTag": {
-          "pattern": "habitat-blueprints-v{version}"
-        }
-      },
-      "typebox-adapter": {
-        "projects": ["@habitat-ai/typebox-adapter"],
-        "projectsRelationship": "fixed",
-        "releaseTag": {
-          "pattern": "typebox-adapter-v{version}"
         }
       }
     }
@@ -67,8 +44,8 @@
     "habitatCatalogAuthority": [
       "{workspaceRoot}/.habitat/**/*",
       "{workspaceRoot}/**/habitat.toml",
-      "{workspaceRoot}/packages/habitat-blueprints/package.json",
-      "{workspaceRoot}/packages/habitat-blueprints/habitat-pack.json"
+      "{workspaceRoot}/packages/habitat-sdk/package.json",
+      "{workspaceRoot}/packages/habitat-sdk/habitat-pack.json"
     ],
     "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
@@ -113,26 +90,13 @@
       },
       {
         "filter": {
-          "projects": [
-            "@habitat-ai/cli",
-            "@habitat-ai/plugin-cli",
-            "@habitat-ai/resource-rule-evaluation",
-            "@habitat-ai/resource-source-inventory",
-            "@habitat-ai/service",
-            "@habitat-ai/typebox-adapter"
-          ]
+          "projects": ["@habitat-ai/cli", "@habitat-ai/sdk"]
         },
         "dependsOn": ["...", "build"]
       },
       {
         "filter": {
-          "projects": [
-            "@habitat-ai/cli",
-            "@habitat-ai/plugin-cli",
-            "@habitat-ai/resource-rule-evaluation",
-            "@habitat-ai/resource-source-inventory",
-            "@habitat-ai/service"
-          ]
+          "projects": ["@habitat-ai/cli", "@habitat-ai/sdk"]
         },
         "dependsOn": [
           "...",
@@ -144,7 +108,7 @@
       },
       {
         "filter": {
-          "projects": ["@habitat-ai/cli", "@habitat-ai/plugin-cli"]
+          "projects": ["@habitat-ai/cli"]
         },
         "dependsOn": ["...", "manifest"]
       }

@@ -28,25 +28,6 @@ type SourceCliResult = Readonly<{
 const appRoot = fileURLToPath(new URL("..", import.meta.url));
 const sourceEntrypoint = fileURLToPath(new URL("../src/index.ts", import.meta.url));
 const fixtureRoots: string[] = [];
-const policyPackFixtureFiles = {
-  "node_modules/@habitat-ai/blueprints/package.json": `${JSON.stringify(
-    {
-      name: "@habitat-ai/blueprints",
-      version: "0.2.0",
-      exports: {
-        "./habitat-pack.json": "./habitat-pack.json",
-        "./package.json": "./package.json",
-      },
-    },
-    null,
-    2
-  )}\n`,
-  "node_modules/@habitat-ai/blueprints/habitat-pack.json": `${JSON.stringify(
-    { protocolVersion: 1, blueprints: [] },
-    null,
-    2
-  )}\n`,
-} as const;
 
 afterEach(async () => {
   for (const root of fixtureRoots.splice(0)) {
@@ -244,7 +225,6 @@ async function makeEmptyWorkspace(): Promise<WorkspaceFixture> {
   fixtureRoots.push(root);
   const files = {
     "package.json": `${JSON.stringify({ name: "habitat-empty-fixture", private: true }, null, 2)}\n`,
-    ...policyPackFixtureFiles,
   };
   for (const [relativePath, contents] of Object.entries(files)) {
     const absolutePath = path.join(root, relativePath);
@@ -266,7 +246,6 @@ async function makeWorkspace(input: {
   const manifestPath = `${input.projectPath}/habitat.toml`;
   const files: Record<string, string> = {
     "package.json": `${JSON.stringify({ name: "habitat-app-fixture", private: true }, null, 2)}\n`,
-    ...policyPackFixtureFiles,
     [blueprintPath]: blueprintToml(input.rules),
     [manifestPath]: instanceToml(input),
     [`${input.projectPath}/allowed.ts`]: "allowed();\n",

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { writeJsonResult } from "../src/lib/output";
+import { writeJsonResult } from "../../src/lib/output";
 
 afterEach(() => vi.restoreAllMocks());
 

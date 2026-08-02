@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import type { Client } from "@habitat-ai/service/client";
+import type { HabitatClient } from "@habitat-ai/sdk";
 import type { CreateNodes, CreateNodesResultArray, TargetConfiguration } from "@nx/devkit";
 
 const HABITAT_CATALOG_PATHS = [
@@ -14,7 +14,7 @@ const HABITAT_EXECUTABLE = "habitat";
 const PORTABLE_OWNER_PROJECT = /^[A-Za-z0-9@][A-Za-z0-9@._/+:-]*$/u;
 
 type ResolveCatalogClient = {
-  readonly catalog: Pick<Client["catalog"], "resolve">;
+  readonly catalog: Pick<HabitatClient["catalog"], "resolve">;
 };
 
 type ResolveCatalogResult = Awaited<ReturnType<ResolveCatalogClient["catalog"]["resolve"]>>;

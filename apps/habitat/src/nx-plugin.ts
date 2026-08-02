@@ -1,8 +1,9 @@
-import type { HabitatClientForWorkspace } from "../../../plugins/nx/habitat/src/index.js";
-import { createHabitatNxPlugin } from "../../../plugins/nx/habitat/src/index.js";
-import { createHabitatClientForWorkspace } from "./composition.js";
+import { createHabitatClientForWorkspace, type HabitatClient } from "@habitat-ai/sdk";
+import { createHabitatNxPlugin } from "./nx/projection.js";
 
-const clientForWorkspace = createHabitatClientForWorkspace satisfies HabitatClientForWorkspace;
+const clientForWorkspace = createHabitatClientForWorkspace satisfies (
+  workspaceRoot: string
+) => Promise<HabitatClient>;
 
 const plugin = createHabitatNxPlugin({
   clientForWorkspace,
@@ -13,5 +14,5 @@ const plugin = createHabitatNxPlugin({
   ],
 });
 
-/** Native Nx project inference backed by the app-owned Habitat composition. */
+/** Native Nx project inference backed by the public Habitat SDK. */
 export const createNodes = plugin.createNodes;

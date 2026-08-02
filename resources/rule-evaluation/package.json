@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/resource-rule-evaluation",
   "version": "0.3.1",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -39,13 +39,9 @@
   },
   "nx": {
     "tags": [
-      "npm:public",
       "type:resource",
       "layer:resource-contract",
       "resource:rule-evaluation"
     ]
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

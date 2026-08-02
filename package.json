@@ -103,9 +103,9 @@
     "@getgrit/cli": "0.1.0-alpha.1743007075",
     "@habitat-ai/blueprints": "0.2.1",
     "@habitat-ai/cli": "0.3.1",
-    "@habitat-ai/plugin-cli": "workspace:*",
     "@habitat-ai/resource-rule-evaluation": "workspace:*",
     "@habitat-ai/resource-source-inventory": "workspace:*",
+    "@habitat-ai/sdk": "workspace:*",
     "@nx/devkit": "23.1.0",
     "@nx/js": "23.1.0",
     "@oclif/core": "^4.11.4",
@@ -120,6 +120,7 @@
     "nx": "23.1.0",
     "oclif": "4.23.27",
     "tar": "7.5.7",
+    "tsdown": "0.22.14",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

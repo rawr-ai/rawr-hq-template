@@ -1,9 +1,9 @@
-import type { Client } from "@habitat-ai/service/client";
+import type { HabitatClient } from "@habitat-ai/sdk";
 import { Command, Flags } from "@oclif/core";
 import { habitatClientFrom } from "../lib/binding.js";
 import { writeJsonResult } from "../lib/output.js";
 
-type CheckResult = Awaited<ReturnType<Client["catalog"]["check"]>>;
+type CheckResult = Awaited<ReturnType<HabitatClient["catalog"]["check"]>>;
 
 /** Projects one selected Habitat catalog check into Oclif. */
 export default class Check extends Command {

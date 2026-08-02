@@ -1,9 +1,9 @@
-import type { Client } from "@habitat-ai/service/client";
+import type { HabitatClient } from "@habitat-ai/sdk";
 import { Command } from "@oclif/core";
 import { habitatClientFrom } from "../lib/binding.js";
 import { writeJsonResult } from "../lib/output.js";
 
-type ResolveResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
+type ResolveResult = Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>>;
 
 /** Projects current-workspace Habitat catalog resolution into Oclif. */
 export default class Resolve extends Command {

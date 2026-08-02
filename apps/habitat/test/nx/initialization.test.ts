@@ -5,7 +5,7 @@ import {
   type HabitatConsumerBinding,
   initializeHabitatConsumer,
   removeHabitatHook,
-} from "../src/initialization";
+} from "../../src/nx/initialization";
 
 const binding = {
   gritPackage: "@getgrit/cli",
