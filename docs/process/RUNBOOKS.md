@@ -64,7 +64,8 @@ fallbacks.
   owner `test` targets and enter protected admission through the root `ci`
   graph. See [[NX_AGENT_WORKFLOW]].
 - Habitat evaluates the RAWR-owned positive `.habitat` topology through the
-  exact Civ7-owned `@habitat/cli` package. The SDK source is not vendored here.
+  exact Template-owned `@habitat-ai/cli` npm release. Workspace source remains
+  the producer, never an Nx-bootstrap fallback.
 - Every current non-root project owns a public check. The installed Habitat Nx
   plugin projects registered laws into that graph; Template keeps no
   script-backed adapter or hand-maintained selector.

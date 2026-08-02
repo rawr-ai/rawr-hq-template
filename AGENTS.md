@@ -92,7 +92,7 @@
   those checks to one workspace-owned `habitat:lint`, project-owned typecheck,
   optional owner verification, Habitat policy, and dependency checks. The
   repository, Habitat, and CLI each retain their qualified work. The installed
-  `@habitat/cli` Nx plugin discovers registered laws and infers cacheable rule
+  `@habitat-ai/cli` Nx plugin discovers registered laws and infers cacheable rule
   targets plus owner-local `check:policy` composition. No root script maintains
   a second rule list.
 - `verify` is the optional owner-local extension for deterministic checks that

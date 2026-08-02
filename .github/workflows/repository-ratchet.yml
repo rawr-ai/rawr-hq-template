@@ -43,10 +43,7 @@ jobs:
             nx-${{ runner.os }}-
 
       - name: Install locked dependencies
-        run: bun install --frozen-lockfile --ignore-scripts
-
-      - name: Acquire package-owned Grit runtime
-        run: bun -e 'import { acquirePinnedGrit } from "@habitat/cli/grit"; acquirePinnedGrit()'
+        run: bun install --frozen-lockfile
 
       - name: Verify affected repository gates
         if: github.event_name == 'pull_request'

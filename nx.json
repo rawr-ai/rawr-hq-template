@@ -96,14 +96,7 @@
     "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
   },
-  "plugins": [
-    {
-      "plugin": "@habitat/cli/nx-plugin",
-      "options": {
-        "checkTargetName": "check:policy"
-      }
-    }
-  ],
+  "plugins": ["@habitat-ai/cli/nx-plugin"],
   "targetDefaults": {
     "check": {
       "cache": false,
@@ -119,73 +112,6 @@
       ],
       "outputs": []
     },
-    "check:policy:local": [
-      {
-        "filter": {
-          "plugin": "@habitat/cli/nx-plugin",
-          "projects": ["@rawr/agent-plugin-lifecycle"]
-        },
-        "dependsOn": [
-          "...",
-          {
-            "projects": ["habitat"],
-            "target": "check:policy:local"
-          }
-        ]
-      },
-      {
-        "filter": {
-          "plugin": "@habitat/cli/nx-plugin",
-          "projects": ["@rawr/hq-app"]
-        },
-        "dependsOn": [
-          "...",
-          {
-            "projects": ["@rawr/agent-plugin-lifecycle"],
-            "target": "check:policy:local"
-          }
-        ]
-      },
-      {
-        "filter": {
-          "plugin": "@habitat/cli/nx-plugin",
-          "projects": ["@rawr/web"]
-        },
-        "dependsOn": [
-          "...",
-          {
-            "projects": ["@rawr/hq-app"],
-            "target": "check:policy:local"
-          }
-        ]
-      },
-      {
-        "filter": {
-          "plugin": "@habitat/cli/nx-plugin",
-          "projects": ["runtime-realization-type-env"]
-        },
-        "dependsOn": [
-          "...",
-          {
-            "projects": ["@rawr/web"],
-            "target": "check:policy:local"
-          }
-        ]
-      },
-      {
-        "filter": {
-          "plugin": "@habitat/cli/nx-plugin",
-          "projects": ["workstream-plugin-pack"]
-        },
-        "dependsOn": [
-          "...",
-          {
-            "projects": ["runtime-realization-type-env"],
-            "target": "check:policy:local"
-          }
-        ]
-      }
-    ],
     "build": {
       "cache": true,
       "dependsOn": ["^build"],

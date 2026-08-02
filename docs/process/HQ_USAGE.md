@@ -86,9 +86,10 @@ plugin infers rule targets, owner-local policy composition, inputs, caching,
 and graph dependencies from `.habitat/**`; do not add a script-backed graph
 rule or hand-maintained selector.
 
-Habitat evaluation uses an exact Civ7-owned `@habitat/cli` package release
-pinned by URL and lockfile integrity. This repository owns only the consumer
-configuration and `.habitat` policy tree and does not vendor SDK sources.
+Habitat evaluation uses the exact Template-owned `@habitat-ai/cli` npm release
+pinned by package version and lockfile integrity. Template owns both the
+released package source and its `.habitat` policy tree, while Nx bootstrap
+loads only the installed package face.
 
 The `Repository Ratchet` workflow runs `bun run ci:affected` for pull requests
 against the exact checked-out merge candidate. Nx composes the affected
