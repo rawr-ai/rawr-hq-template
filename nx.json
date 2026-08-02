@@ -26,7 +26,13 @@
           "@habitat-ai/rawr-resource-versioned-content",
           "@habitat-ai/rawr-session-intelligence"
         ],
-        "projectsRelationship": "fixed"
+        "projectsRelationship": "fixed",
+        "version": {
+          "preserveLocalDependencyProtocols": true
+        },
+        "releaseTag": {
+          "pattern": "rawr-cli-v{version}"
+        }
       },
       "habitat-cli": {
         "projects": [
