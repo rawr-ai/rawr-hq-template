@@ -5768,6 +5768,35 @@ passed the affected gate in 50 seconds on run `30734381904`, job `91460326705`,
 so the cold full-run duration does not establish a steady-state CI defect or
 reopen the settled package boundary.
 
+### Habitat 0.2.4 Release Settlement
+
+Template PR #763 landed the steady-state publication correction at
+`6ea15e2e22f798471a2910ebdcf873c3451efe3e`: committed Habitat producers keep
+their ordinary `workspace:*` edges, while the tag workflow asks Nx to
+materialize exact versions only in its ephemeral publish manifests and then
+uses npm 12 for trusted OIDC publication. PR #762 landed the fixed five-package
+`0.2.4` cohort at `6b48478026fddf5b822728e74dbd30201f1e708b`.
+
+Annotated tag `habitat-cli-v0.2.4` points to that canonical source commit.
+Publish run `30737904634`, job `91469948417`, passed installed Oclif and Nx
+acceptance before publishing `@habitat-ai/cli`, `@habitat-ai/plugin-cli`,
+`@habitat-ai/resource-rule-evaluation`,
+`@habitat-ai/resource-source-inventory`, and `@habitat-ai/service`. Registry
+metadata gives every package the same `gitHead`, exact internal `0.2.4`
+dependencies, integrity, and SLSA provenance. The consumer still installs one
+CLI package; npm resolves its ordinary package closure.
+
+Template PR #764 then advanced only the external CLI dependency and registry
+lock entries. Canonical `main` at
+`1b86282c61c8e222a3d424fcd33031ebc4ec6e90` resolves the installed CLI from
+`node_modules/.bun/@habitat-ai+cli@0.2.4...`, not `apps/habitat`; the installed
+entrypoint reports `@habitat-ai/cli/0.2.4` and passed a real
+`require_repository_script_topology` evaluation. The five owner checks passed
+uncached in 19.1 seconds, installed-package acceptance passed four cases, and
+required candidate run `30738229951` plus canonical-main run `30738486466`
+were green. This settlement adds no bundle, release selector, retained local
+version store, or second Habitat identity.
+
 ## Settlement Oracles
 
 The final product must prove:
