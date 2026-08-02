@@ -2,6 +2,11 @@
   "name": "@habitat-ai/rawr-plugin-session-tools",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "plugins/cli/commands/session-tools"
+  },
   "type": "module",
   "files": [
     "dist",

@@ -2,6 +2,15 @@
   "name": "@habitat-ai/rawr-resource-agent-plugin-package-output",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "resources/agent-plugin-package-output"
+  },
+  "files": [
+    "contract.ts",
+    "providers/cowork-v1-effect-platform-node/index.ts"
+  ],
   "type": "module",
   "exports": {
     ".": {

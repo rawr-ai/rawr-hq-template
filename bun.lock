@@ -38,6 +38,7 @@
         "@nx/js": "23.1.0",
         "@oclif/core": "^4.11.4",
         "@oclif/plugin-help": "^6.2.27",
+        "@rawr/test-utils": "workspace:*",
         "@types/node": "^22.14.0",
         "@vitest/ui": "^4.0.18",
         "bun-types": "1.3.14",
@@ -78,7 +79,6 @@
         "zod": "^3.24.3",
       },
       "devDependencies": {
-        "@rawr/test-utils": "workspace:*",
         "@types/bun": "^1.2.10",
         "@types/node": "^22.14.0",
         "oclif": "4.23.27",
@@ -264,7 +264,7 @@
     },
     "plugins/cli/commands/habitat": {
       "name": "@habitat-ai/plugin-cli",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@habitat-ai/service": "workspace:*",
         "@oclif/core": "^4.11.4",
@@ -368,7 +368,7 @@
     },
     "resources/rule-evaluation": {
       "name": "@habitat-ai/resource-rule-evaluation",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "effect": "4.0.0-beta.101",
@@ -381,7 +381,7 @@
     },
     "resources/source-inventory": {
       "name": "@habitat-ai/resource-source-inventory",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "effect": "4.0.0-beta.101",
@@ -412,7 +412,7 @@
         "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
         "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
         "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/typebox-adapter": "0.1.1",
         "@noble/hashes": "2.2.0",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/client": "2.0.0-beta.20",
@@ -436,7 +436,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/typebox-adapter": "0.1.1",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "typebox": "1.3.8",
@@ -452,7 +452,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/typebox-adapter": "0.1.1",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
@@ -483,7 +483,7 @@
     },
     "services/habitat": {
       "name": "@habitat-ai/service",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
@@ -509,7 +509,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/typebox-adapter": "0.1.1",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
@@ -527,7 +527,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/typebox-adapter": "0.1.1",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
         "typebox": "1.3.8",
@@ -541,7 +541,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/typebox-adapter": "0.1.1",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.20",
         "@orpc/server": "2.0.0-beta.20",
@@ -2731,6 +2731,18 @@
     "@habitat-ai/cli/@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@0.3.1", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "effect": "4.0.0-beta.101", "typebox": "1.3.8" } }, "sha512-8nMboPbcWbHUj+iw4Hn0ugLhU+SxL+JPh0gnRAUZbQQq+8gNhMkjQSU1Pi8uqbgRYR8+eKg4KgPoP0R4TMMU3w=="],
 
     "@habitat-ai/cli/@habitat-ai/service": ["@habitat-ai/service@0.3.1", "", { "dependencies": { "@habitat-ai/resource-rule-evaluation": "0.3.1", "@habitat-ai/resource-source-inventory": "0.3.1", "@habitat-ai/typebox-adapter": "0.1.1", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.20", "@orpc/experimental-effect": "2.0.0-beta.20", "@orpc/server": "2.0.0-beta.20", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-asf5u6yhi4Y6nXNtlJBpAlbuelzS/6sLWgvTrR4IzfeKveKZ+mxbyLu+c6+9szsO2RRZreXthvJnsnQ/4n7M4Q=="],
+
+    "@habitat-ai/rawr-agent-plugin-lifecycle/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
+
+    "@habitat-ai/rawr-chatgpt-corpus/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
+
+    "@habitat-ai/rawr-dev/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
+
+    "@habitat-ai/rawr-hq-ops/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
+
+    "@habitat-ai/rawr-hyperresearch-codex/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
+
+    "@habitat-ai/rawr-session-intelligence/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
 
     "@habitat-ai/service/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
 

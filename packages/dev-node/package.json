@@ -2,6 +2,14 @@
   "name": "@habitat-ai/rawr-dev-node",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "packages/dev-node"
+  },
+  "files": [
+    "src"
+  ],
   "type": "module",
   "packageManager": "bun@1.3.7",
   "main": "./src/index.ts",

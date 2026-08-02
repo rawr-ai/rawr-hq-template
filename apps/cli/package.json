@@ -2,6 +2,11 @@
   "name": "@habitat-ai/rawr",
   "version": "0.1.0",
   "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "apps/cli"
+  },
   "files": [
     "bin",
     "dist",
@@ -35,7 +40,6 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
-    "@rawr/test-utils": "workspace:*",
     "@types/bun": "^1.2.10",
     "@types/node": "^22.14.0",
     "oclif": "4.23.27",
