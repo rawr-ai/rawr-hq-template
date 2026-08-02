@@ -1,6 +1,6 @@
 {
   "name": "@habitat-ai/service",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "repository": {
     "type": "git",
@@ -24,13 +24,13 @@
     "test": "bun test test"
   },
   "dependencies": {
-    "@habitat-ai/resource-rule-evaluation": "workspace:*",
-    "@habitat-ai/resource-source-inventory": "workspace:*",
+    "@habitat-ai/resource-rule-evaluation": "0.2.1",
+    "@habitat-ai/resource-source-inventory": "0.2.1",
     "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "2.0.0-beta.20",
     "@orpc/experimental-effect": "2.0.0-beta.20",
     "@orpc/server": "2.0.0-beta.20",
-    "@habitat-ai/typebox-adapter": "0.1.0",
+    "@habitat-ai/typebox-adapter": "0.1.1",
     "effect": "4.0.0-beta.101",
     "picomatch": "4.0.4",
     "smol-toml": "1.7.0",

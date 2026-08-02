@@ -46,7 +46,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-blueprints.tgz",
     name: "@habitat-ai/blueprints",
     root: "packages/habitat-blueprints",
-    version: "0.2.0",
+    version: await readPackageVersion("packages/habitat-blueprints"),
   },
   {
     exports: {
@@ -55,7 +55,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-ai-typebox-adapter.tgz",
     name: "@habitat-ai/typebox-adapter",
     root: "packages/typebox-adapter",
-    version: "0.1.0",
+    version: await readPackageVersion("packages/typebox-adapter"),
   },
   {
     exports: {
@@ -68,7 +68,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-resource-rule-evaluation.tgz",
     name: "@habitat-ai/resource-rule-evaluation",
     root: "resources/rule-evaluation",
-    version: "0.2.0",
+    version: await readPackageVersion("resources/rule-evaluation"),
   },
   {
     exports: {
@@ -81,7 +81,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-resource-source-inventory.tgz",
     name: "@habitat-ai/resource-source-inventory",
     root: "resources/source-inventory",
-    version: "0.2.0",
+    version: await readPackageVersion("resources/source-inventory"),
   },
   {
     exports: {
@@ -90,7 +90,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-service.tgz",
     name: "@habitat-ai/service",
     root: "services/habitat",
-    version: "0.2.0",
+    version: await readPackageVersion("services/habitat"),
   },
   {
     exports: {
@@ -102,7 +102,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-plugin-cli.tgz",
     name: "@habitat-ai/plugin-cli",
     root: "plugins/cli/commands/habitat",
-    version: "0.2.0",
+    version: await readPackageVersion("plugins/cli/commands/habitat"),
   },
   {
     exports: {
@@ -116,7 +116,7 @@ const packedProjects: readonly PackedProject[] = [
     filename: "habitat-cli.tgz",
     name: "@habitat-ai/cli",
     root: "apps/habitat",
-    version: "0.2.0",
+    version: await readPackageVersion("apps/habitat"),
   },
 ];
 
@@ -164,7 +164,9 @@ describe("installed Habitat package", () => {
       expect(manifest.exports).toEqual(project.exports);
       if (project.name === "@habitat-ai/cli") {
         expect(manifest.dependencies?.["@habitat-ai/blueprints"]).toBeUndefined();
-        expect(manifest.peerDependencies?.["@habitat-ai/blueprints"]).toBe("0.2.0");
+        expect(manifest.peerDependencies?.["@habitat-ai/blueprints"]).toBe(
+          packedProjectVersion("@habitat-ai/blueprints")
+        );
       }
     }
 
@@ -260,7 +262,7 @@ describe("installed Habitat package", () => {
       catalog: {
         policyPack: {
           name: "@habitat-ai/blueprints",
-          version: "0.2.0",
+          version: packedProjectVersion("@habitat-ai/blueprints"),
           protocolVersion: 1,
           blueprints: [],
         },
@@ -459,6 +461,22 @@ async function assertReleaseGroupInventory(): Promise<void> {
     .flatMap((group) => groups?.[group]?.projects ?? [])
     .sort();
   expect(packedProjects.map(({ name }) => name).sort()).toEqual(expectedProjects);
+}
+
+async function readPackageVersion(root: string): Promise<string> {
+  const manifest = JSON.parse(
+    await readFile(path.join(workspaceRoot, root, "package.json"), "utf8")
+  ) as { readonly version?: unknown };
+  if (typeof manifest.version !== "string" || manifest.version.length === 0) {
+    throw new Error(`Package at ${root} has no release version.`);
+  }
+  return manifest.version;
+}
+
+function packedProjectVersion(name: string): string {
+  const project = packedProjects.find((candidate) => candidate.name === name);
+  if (project === undefined) throw new Error(`Unknown packed Habitat project: ${name}`);
+  return project.version;
 }
 
 async function createInstalledConsumer(): Promise<void> {
