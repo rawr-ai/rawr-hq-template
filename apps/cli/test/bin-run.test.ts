@@ -125,7 +125,7 @@ describe("bin/run.js", () => {
     const result = runCli("bin/run.js", ["--version"]);
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("@rawr/cli");
+    expect(result.stdout).toContain("@habitat-ai/rawr");
     expect(result.stderr).toBe("");
   });
 

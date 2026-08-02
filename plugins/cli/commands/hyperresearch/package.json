@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/plugin-hyperresearch",
+  "name": "@habitat-ai/rawr-plugin-hyperresearch",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@oclif/core": "^4.8.0",
-    "@rawr/core": "workspace:*",
-    "@rawr/hq-sdk": "workspace:*",
-    "@rawr/hyperresearch-codex": "workspace:*"
+    "@habitat-ai/rawr-core": "workspace:*",
+    "@habitat-ai/rawr-hq-sdk": "workspace:*",
+    "@habitat-ai/rawr-hyperresearch-codex": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

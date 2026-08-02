@@ -1,4 +1,4 @@
-import { createApiTraceForwardingOptions } from "@rawr/hq-sdk/apis";
+import { createApiTraceForwardingOptions } from "@habitat-ai/rawr-hq-sdk/apis";
 import { module } from "../module";
 
 /** Creates a Todo task through the request-resolved domain client. */

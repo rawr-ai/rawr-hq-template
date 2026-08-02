@@ -1,8 +1,11 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import {
+  __resetRawrOrpcTelemetryForTests,
+  installRawrOrpcTelemetry,
+} from "@habitat-ai/rawr-core/telemetry";
 import type { ReadableSpan, SpanExporter } from "@opentelemetry/sdk-trace-base";
-import { __resetRawrOrpcTelemetryForTests, installRawrOrpcTelemetry } from "@rawr/core/telemetry";
 import type { Inngest } from "inngest";
 import { afterEach, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";

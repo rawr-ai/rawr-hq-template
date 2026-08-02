@@ -1,4 +1,4 @@
-import type { ContentWorkspaceIdentity } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceIdentity } from "@habitat-ai/rawr-resource-content-workspace";
 
 import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
 import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";

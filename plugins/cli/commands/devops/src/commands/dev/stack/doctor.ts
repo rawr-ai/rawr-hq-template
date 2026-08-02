@@ -1,5 +1,5 @@
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createDevClient } from "../../../lib/dev-binding";
 
 export default class DevStackDoctor extends RawrCommand {

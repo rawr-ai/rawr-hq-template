@@ -436,9 +436,9 @@ Template does not add an Inngest lifecycle mode.
 
 The removed custom controller's Inngest filter is not transplanted. The
 conventional CLI package graph MUST truthfully exclude server, workflow, and
-Inngest runtime packages. If shared `@rawr/hq-sdk` dependency metadata changes,
-the legitimate `apps/server` Inngest runtime receives its own typecheck and
-behavior tests.
+Inngest runtime packages. If shared `@habitat-ai/rawr-hq-sdk` dependency
+metadata changes, the legitimate `apps/server` Inngest runtime receives its own
+typecheck and behavior tests.
 
 The queued oRPC corrective skill release remains downstream of this
 normalization and the first `cognition:state-machine-design` settlement. It does

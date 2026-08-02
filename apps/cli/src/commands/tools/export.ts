@@ -1,4 +1,4 @@
-import { RawrCommand } from "@rawr/core";
+import { RawrCommand } from "@habitat-ai/rawr-core";
 
 type ToolExport = {
   command: string;

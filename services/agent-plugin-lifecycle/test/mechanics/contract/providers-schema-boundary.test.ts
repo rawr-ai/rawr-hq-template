@@ -1,5 +1,5 @@
+import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
-import { getProcedureMetadata } from "@rawr/hq-sdk";
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";

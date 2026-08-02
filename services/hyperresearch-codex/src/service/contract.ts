@@ -1,8 +1,9 @@
 /**
  * @fileoverview Root hyperresearch-codex contract composition.
  */
+
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { contract as fixtures } from "./modules/fixtures/contract";
 import { contract as runs } from "./modules/runs/contract";
 

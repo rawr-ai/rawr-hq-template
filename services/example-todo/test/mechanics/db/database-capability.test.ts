@@ -1,4 +1,4 @@
-import type { DbPool, Sql } from "@rawr/hq-sdk";
+import type { DbPool, Sql } from "@habitat-ai/rawr-hq-sdk";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../../../src/client";
 import { createClientOptions, createDeps, invocation } from "../../support/service/helpers";

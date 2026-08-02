@@ -1,15 +1,15 @@
-import type { TemporaryContentTreeEntry } from "@rawr/resource-content-workspace";
+import type { TemporaryContentTreeEntry } from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
   NativeProviderCapabilities,
   NativeProviderInventory,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import {
   NativeProviderCapabilitiesSchema,
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import {

@@ -1,8 +1,8 @@
 import { spawnSync } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { resolveCliInvocation } from "../../lib/subprocess";
 
 type Snapshot = {

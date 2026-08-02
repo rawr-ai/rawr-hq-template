@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "version": "0.1.0",
   "private": false,
   "files": [
@@ -19,18 +19,18 @@
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.36",
     "@orpc/client": "2.0.0-beta.20",
-    "@rawr/agent-plugin-lifecycle": "workspace:*",
-    "@rawr/core": "workspace:*",
-    "@rawr/hq-ops": "workspace:*",
-    "@rawr/hq-sdk": "workspace:*",
-    "@rawr/plugin-chatgpt-corpus": "workspace:*",
-    "@rawr/plugin-devops": "workspace:*",
-    "@rawr/plugin-hyperresearch": "workspace:*",
-    "@rawr/plugin-session-tools": "workspace:*",
-    "@rawr/resource-agent-plugin-package-output": "workspace:*",
-    "@rawr/resource-content-workspace": "workspace:*",
-    "@rawr/resource-native-agent-provider": "workspace:*",
-    "@rawr/resource-versioned-content": "workspace:*",
+    "@habitat-ai/rawr-agent-plugin-lifecycle": "workspace:*",
+    "@habitat-ai/rawr-core": "workspace:*",
+    "@habitat-ai/rawr-hq-ops": "workspace:*",
+    "@habitat-ai/rawr-hq-sdk": "workspace:*",
+    "@habitat-ai/rawr-plugin-chatgpt-corpus": "workspace:*",
+    "@habitat-ai/rawr-plugin-devops": "workspace:*",
+    "@habitat-ai/rawr-plugin-hyperresearch": "workspace:*",
+    "@habitat-ai/rawr-plugin-session-tools": "workspace:*",
+    "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
+    "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
+    "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
+    "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
     "effect": "4.0.0-beta.101",
     "zod": "^3.24.3"
   },
@@ -50,10 +50,10 @@
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
-      "@rawr/plugin-chatgpt-corpus",
-      "@rawr/plugin-devops",
-      "@rawr/plugin-hyperresearch",
-      "@rawr/plugin-session-tools"
+      "@habitat-ai/rawr-plugin-chatgpt-corpus",
+      "@habitat-ai/rawr-plugin-devops",
+      "@habitat-ai/rawr-plugin-hyperresearch",
+      "@habitat-ai/rawr-plugin-session-tools"
     ],
     "typescript": {
       "commands": "./src/commands"
@@ -90,10 +90,10 @@
           "manifest",
           {
             "projects": [
-              "@rawr/plugin-chatgpt-corpus",
-              "@rawr/plugin-devops",
-              "@rawr/plugin-hyperresearch",
-              "@rawr/plugin-session-tools"
+              "@habitat-ai/rawr-plugin-chatgpt-corpus",
+              "@habitat-ai/rawr-plugin-devops",
+              "@habitat-ai/rawr-plugin-hyperresearch",
+              "@habitat-ai/rawr-plugin-session-tools"
             ],
             "target": "manifest"
           },
@@ -123,10 +123,10 @@
           "manifest",
           {
             "projects": [
-              "@rawr/plugin-chatgpt-corpus",
-              "@rawr/plugin-devops",
-              "@rawr/plugin-hyperresearch",
-              "@rawr/plugin-session-tools"
+              "@habitat-ai/rawr-plugin-chatgpt-corpus",
+              "@habitat-ai/rawr-plugin-devops",
+              "@habitat-ai/rawr-plugin-hyperresearch",
+              "@habitat-ai/rawr-plugin-session-tools"
             ],
             "target": "manifest"
           },

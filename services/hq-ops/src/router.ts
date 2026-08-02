@@ -1,7 +1,7 @@
 /// <reference path="./shims/bun-sqlite.d.ts" />
 
 /**
- * @fileoverview Package router export for `@rawr/hq-ops/router`.
+ * @fileoverview Package router export for `@habitat-ai/rawr-hq-ops/router`.
  *
  * @remarks
  * Keep this file as the stable import surface for consumers. The authoritative

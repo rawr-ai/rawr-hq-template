@@ -4,13 +4,13 @@ import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+import type { Client } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
   parseRepositoryIdentity,
-} from "@rawr/agent-plugin-lifecycle/client";
+} from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type {

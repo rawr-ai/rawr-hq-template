@@ -204,7 +204,7 @@ function firstOutputError(spy: ReturnType<typeof spyOutput>): { code?: string; m
   return result.error;
 }
 
-describe("@rawr/plugin-session-tools", () => {
+describe("@habitat-ai/rawr-plugin-session-tools", () => {
   it("keeps the static search manifest independent of HOME", () => {
     expect(SessionsSearch.flags["index-path"]).not.toHaveProperty("default");
   });

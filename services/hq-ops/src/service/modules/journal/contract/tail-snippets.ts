@@ -1,6 +1,6 @@
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { JournalTailResultSchema, TailInputSchema } from "../model/dto/journal.dto";
 
 /** Declares bounded reverse-chronological Journal index retrieval. */

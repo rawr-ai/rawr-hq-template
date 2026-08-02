@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { CreateClientOptions } from "../src/client";
 import type { Context } from "../src/service/base";
 import type {

@@ -1,4 +1,4 @@
-import type { VersionedContentFailure } from "@rawr/resource-versioned-content";
+import type { VersionedContentFailure } from "@habitat-ai/rawr-resource-versioned-content";
 
 import type {
   VendorSourceStatus,

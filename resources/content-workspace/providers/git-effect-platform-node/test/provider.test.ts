@@ -17,7 +17,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { NodeFileSystem } from "@effect/platform-node";
-import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceFailure } from "@habitat-ai/rawr-resource-content-workspace";
 import { Effect, FileSystem, PlatformError } from "effect";
 import { makeContentWorkspaceResource, makeNodeContentWorkspaceResource } from "../index";
 

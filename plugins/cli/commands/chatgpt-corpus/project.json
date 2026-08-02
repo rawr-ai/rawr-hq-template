@@ -1,6 +1,6 @@
 {
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/plugin-chatgpt-corpus",
+  "name": "@habitat-ai/rawr-plugin-chatgpt-corpus",
   "targets": {
     "check": {
       "executor": "nx:noop"

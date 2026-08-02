@@ -42,7 +42,7 @@
 ## Interfaces
 
 - The oRPC contract faces CLI consumers; filesystem, path, process, and clock
-  resource contracts face host implementations such as `@rawr/dev-node`.
+  resource contracts face host implementations such as `@habitat-ai/rawr-dev-node`.
 
 ## Routing
 
@@ -53,5 +53,5 @@
 
 ## Validation
 
-- Run `bunx nx run habitat:lint` and `bunx nx run @rawr/dev:typecheck`.
-- Run `bunx nx run @rawr/dev:test` when operational behavior changes.
+- Run `bunx nx run habitat:lint` and `bunx nx run @habitat-ai/rawr-dev:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-dev:test` when operational behavior changes.

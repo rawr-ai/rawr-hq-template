@@ -1,4 +1,4 @@
-import type { Sql } from "@rawr/hq-sdk";
+import type { Sql } from "@habitat-ai/rawr-hq-sdk";
 import type { TodoIdentifierType } from "../../model/dto/identifier";
 import type { TagType } from "../../model/dto/tag";
 import type { WorkspaceIdType } from "../../model/dto/workspace-id";

@@ -1,5 +1,5 @@
+import type { BaseMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { defineMeta } from "@orpc/contract";
-import type { BaseMetadata } from "@rawr/hq-sdk";
 
 /** Static procedure-policy vocabulary owned by the Example Todo service. */
 export type TodoProcedureMetadata = BaseMetadata & {

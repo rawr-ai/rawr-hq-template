@@ -1,6 +1,6 @@
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { StackDrainInputSchema, StackDrainResultSchema } from "../model/dto/stack-operations.dto";
 
 /** Declares the planned or applied Graphite stack-drain operation. */

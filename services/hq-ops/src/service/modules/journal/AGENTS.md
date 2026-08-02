@@ -48,6 +48,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hq-ops:typecheck`.
-- Run `bunx nx run @rawr/hq-ops:test` for persistence, indexing, full-text and
+- Run `bunx nx run @habitat-ai/rawr-hq-ops:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-hq-ops:test` for persistence, indexing, full-text and
   semantic ranking, result bounds, and fallback behavior.

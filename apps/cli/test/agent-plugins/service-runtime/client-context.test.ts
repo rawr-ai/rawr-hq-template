@@ -1,6 +1,6 @@
 import { readdir, unlink } from "node:fs/promises";
 import path from "node:path";
-import { createClient } from "@rawr/agent-plugin-lifecycle/client";
+import { createClient } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   commitGeneratedGitRepository,

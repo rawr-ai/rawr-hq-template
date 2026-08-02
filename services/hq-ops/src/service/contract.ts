@@ -6,8 +6,9 @@
  * `src/service/impl.ts` implements that root contract once; modules then descend
  * through configured `service.<module>` branches.
  */
+
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { metadataDefaults } from "./model/policy/procedure-metadata";
 import { contract as config } from "./modules/config/contract";
 import { contract as journal } from "./modules/journal/contract";

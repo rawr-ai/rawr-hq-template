@@ -47,6 +47,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/chatgpt-corpus:typecheck`.
-- Run `bunx nx run @rawr/chatgpt-corpus:test` for template identity,
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:test` for template identity,
   initialization, and empty-workspace behavior.

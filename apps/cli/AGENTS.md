@@ -1,4 +1,4 @@
-# CLI Router (`@rawr/cli`)
+# CLI Router (`@habitat-ai/rawr`)
 
 ## Purpose
 
@@ -58,10 +58,10 @@
 ## Validation
 
 - `bunx nx run habitat:lint`
-- `bunx nx run @rawr/cli:typecheck`
-- `bunx nx run @rawr/cli:test`
-- `bunx nx run @rawr/cli:acceptance:oclif`
-- `bunx nx run @rawr/cli:acceptance:oclif-installed-package` when installed
+- `bunx nx run @habitat-ai/rawr:typecheck`
+- `bunx nx run @habitat-ai/rawr:test`
+- `bunx nx run @habitat-ai/rawr:acceptance:oclif`
+- `bunx nx run @habitat-ai/rawr:acceptance:oclif-installed-package` when installed
   package behavior or the public CLI release closure changes
-- `bunx nx run @rawr/cli:acceptance:oclif-native-plugins` when native extension
+- `bunx nx run @habitat-ai/rawr:acceptance:oclif-native-plugins` when native extension
   installation behavior changes

@@ -1,5 +1,5 @@
 /** Publishes Example Todo API operations from the sealed service contract. */
-import { defineApiPlugin, defineApiPluginDeclaration } from "@rawr/hq-sdk/apis";
+import { defineApiPlugin, defineApiPluginDeclaration } from "@habitat-ai/rawr-hq-sdk/apis";
 import { contract } from "./service/contract";
 import { router } from "./service/router";
 

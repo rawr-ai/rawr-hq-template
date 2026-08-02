@@ -1,7 +1,7 @@
 import type {
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
 import type { ContentDigest } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";

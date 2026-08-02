@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/plugin-devops",
+  "name": "@habitat-ai/rawr-plugin-devops",
   "version": "0.1.0",
   "private": false,
   "description": "RAWR DevOps command projections for Graphite, repo, and worktree workflows",
@@ -16,10 +16,10 @@
   },
   "dependencies": {
     "@oclif/core": "^4.8.0",
-    "@rawr/core": "workspace:*",
-    "@rawr/dev": "workspace:*",
-    "@rawr/dev-node": "workspace:*",
-    "@rawr/hq-sdk": "workspace:*"
+    "@habitat-ai/rawr-core": "workspace:*",
+    "@habitat-ai/rawr-dev": "workspace:*",
+    "@habitat-ai/rawr-dev-node": "workspace:*",
+    "@habitat-ai/rawr-hq-sdk": "workspace:*"
   },
   "oclif": {
     "commands": "./dist/commands",

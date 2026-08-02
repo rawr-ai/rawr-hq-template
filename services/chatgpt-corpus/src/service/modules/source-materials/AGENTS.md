@@ -48,6 +48,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/chatgpt-corpus:typecheck`.
-- Run `bunx nx run @rawr/chatgpt-corpus:test` for normalized snapshots,
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:test` for normalized snapshots,
   duplicate basenames, malformed JSON, and invalid export shapes.

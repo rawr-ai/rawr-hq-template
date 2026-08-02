@@ -16,14 +16,14 @@
 
 - Commands own flags, bounded operator defaults, output formatting, and
   optional output-file projection. Session catalog, search, facet, and index
-  policy remain in `@rawr/session-intelligence`.
+  policy remain in `@habitat-ai/rawr-session-intelligence`.
 - `src/lib/session-source-runtime.ts` and
   `src/lib/session-index-runtime.ts` are concrete local filesystem and SQLite
   adapters for public service ports. They expose resource operations; they do
   not become alternate session-domain services.
 - Provider-home discovery belongs to the source adapter, while candidate
   selection, indexing policy, and query semantics belong to the service.
-- This is a core Oclif command plugin composed by `@rawr/cli`, not an external
+- This is a core Oclif command plugin composed by `@habitat-ai/rawr`, not an external
   extension installed through `rawr plugins`.
 
 ## Behavior
@@ -59,9 +59,9 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint`.
-- Run `bunx nx run @rawr/plugin-session-tools:typecheck`.
-- Run `bunx nx run @rawr/plugin-session-tools:test`.
-- Run `bunx nx run @rawr/plugin-session-tools:check` when the package boundary
+- Run `bunx nx run @habitat-ai/rawr-plugin-session-tools:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-session-tools:test`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-session-tools:check` when the package boundary
   changes.
-- Run `bunx nx run @rawr/plugin-session-tools:manifest` when command discovery
+- Run `bunx nx run @habitat-ai/rawr-plugin-session-tools:manifest` when command discovery
   or Oclif metadata changes.

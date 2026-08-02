@@ -1,6 +1,6 @@
-# @rawr/plugin-chatgpt-corpus
+# @habitat-ai/rawr-plugin-chatgpt-corpus
 
-CLI projection for the `@rawr/chatgpt-corpus` service package.
+CLI projection for the `@habitat-ai/rawr-chatgpt-corpus` service package.
 
 Commands:
 

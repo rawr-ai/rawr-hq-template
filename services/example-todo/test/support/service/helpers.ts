@@ -1,16 +1,16 @@
-import type { DbPool } from "@rawr/hq-sdk";
+import type { DbPool } from "@habitat-ai/rawr-hq-sdk";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
   createEmbeddedInMemoryDbPoolAdapter,
   type EmbeddedInMemorySqlOptions,
-} from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/sql/embedded-in-memory";
 import type { CreateClientOptions, Deps, Invocation } from "../../../src/client";
 
 type DepsOptions = EmbeddedInMemorySqlOptions & {

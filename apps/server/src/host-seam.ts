@@ -1,5 +1,11 @@
-import { composeApiPlugins, type MaterializedApiPluginRegistration } from "@rawr/hq-sdk/apis";
-import { composeWorkflowPlugins, type WorkflowPluginRegistration } from "@rawr/hq-sdk/workflows";
+import {
+  composeApiPlugins,
+  type MaterializedApiPluginRegistration,
+} from "@habitat-ai/rawr-hq-sdk/apis";
+import {
+  composeWorkflowPlugins,
+  type WorkflowPluginRegistration,
+} from "@habitat-ai/rawr-hq-sdk/workflows";
 import type { ExampleTodoApiPluginRegistration } from "../../../plugins/server/api/example-todo/src/api";
 
 export type RawrHostDeclarations = Readonly<{

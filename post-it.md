@@ -6,6 +6,31 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-02 - Registry Names Preserve Package Boundaries
+
+The public RAWR product is `@habitat-ai/rawr`, one ordinary Oclif application
+installed from npm. Its compiled JavaScript still imports bounded services,
+resources, and first-party Oclif plugins by package identity, so those runtime
+packages publish together under `@habitat-ai/rawr-*`. Nx owns the fixed release
+group and npm owns ordinary dependency resolution. The group is a package
+closure, not another controller, installer, selector, or retained application
+image.
+
+Workspace links do not bundle dependencies. A disposable npm
+`bundleDependencies` probe pulled source, tests, and Bun's linked dependency
+tree into a 525 MB package with 68,774 entries. That recreates the rejected
+application-image shape and is not the simple path. The proportionate release
+keeps the existing package boundaries visible, publishes their normal npm
+artifacts, and proves the installed CLI from an empty prefix.
+
+### Bag Of Keywords
+
+CLI, package, plugin, service, resource.
+
+identity, ownership, simplicity, portability, install.
+
+Oclif, Nx, npm, build, publish.
+
 ## 2026-08-01 - Compatibility Preserves Execution
 
 The first native Template cutover does not force all thirty-three live Habitat

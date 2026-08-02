@@ -305,7 +305,7 @@ describe("ordinary installed Oclif package", () => {
     await installTarballs(state, artifacts);
     assertInstalledClosure(state, artifacts);
 
-    const cli = requireArtifact(artifacts, "@rawr/cli");
+    const cli = requireArtifact(artifacts, "@habitat-ai/rawr");
     const cliRoot = installedRoot(state.prefix, cli.name);
     const rawr = path.join(state.prefix, "node_modules", ".bin", "rawr");
     expect(existsSync(rawr)).toBe(true);
@@ -329,8 +329,9 @@ describe("ordinary installed Oclif package", () => {
     expect(help.stdout).toContain("USAGE");
     expect(help.stdout).toContain("$ rawr [COMMAND]");
 
+    const officialMembers = officialOclifMembers(cli, releaseProjects);
     const expectedInventory: InstalledCommand[] = [];
-    for (const name of officialOclifMembers(cli, releaseProjects)) {
+    for (const name of officialMembers) {
       const packageRoot = installedRoot(state.prefix, name);
       for (const command of await manifestCommands(requireArtifact(artifacts, name))) {
         expect(command.relativePath[0], `${name}:${command.id}`).toBe("dist");
@@ -369,7 +370,7 @@ describe("ordinary installed Oclif package", () => {
     );
     expect(
       installedInventory
-        .filter(({ pluginName }) => pluginName?.startsWith("@rawr/") === true)
+        .filter(({ pluginName }) => pluginName != null && isRawrPackageIdentity(pluginName))
         .sort(compareCommands)
     ).toEqual(expectedInventory);
     await annotate(`first-party command inventory: ${expectedInventory.length} commands`, "proof");
@@ -527,6 +528,7 @@ async function packProject(
 
 function assertPackageClosure(releaseProjects: readonly string[], artifacts: readonly Artifact[]) {
   const byName = new Map(artifacts.map((artifact) => [artifact.name, artifact]));
+  expect(releaseProjects.every(isCurrentRawrPackageIdentity)).toBe(true);
   const reachable = new Set<string>();
   const visit = (name: string) => {
     if (reachable.has(name)) return;
@@ -538,21 +540,22 @@ function assertPackageClosure(releaseProjects: readonly string[], artifacts: rea
       ...artifact.manifest.optionalDependencies,
     };
     for (const dependency of Object.keys(production)) {
-      if (dependency.startsWith("@rawr/")) visit(dependency);
+      if (isRawrPackageIdentity(dependency)) visit(dependency);
     }
   };
-  visit("@rawr/cli");
+  visit("@habitat-ai/rawr");
   expect([...reachable].sort()).toEqual([...releaseProjects].sort());
 
   for (const artifact of artifacts) {
     for (const peer of Object.keys(artifact.manifest.peerDependencies ?? {})) {
-      if (peer.startsWith("@rawr/")) expect(byName.has(peer)).toBe(true);
+      if (isRawrPackageIdentity(peer)) expect(byName.has(peer)).toBe(true);
     }
     const allDependencies = {
       ...artifact.manifest.dependencies,
       ...artifact.manifest.optionalDependencies,
       ...artifact.manifest.peerDependencies,
     };
+    expect(Object.keys(allDependencies).some(isLegacyRawrPackageIdentity)).toBe(false);
     for (const forbidden of forbiddenPackages) {
       expect(allDependencies[forbidden]).toBeUndefined();
     }
@@ -583,9 +586,16 @@ function assertInstalledClosure(
   artifacts: readonly Artifact[]
 ) {
   const releaseProjects = artifacts.map(({ name }) => name);
-  const installed = readdirSync(path.join(state.prefix, "node_modules", "@rawr"))
-    .map((name) => `@rawr/${name}`)
-    .sort();
+  const installedHabitatPackages = readdirSync(
+    path.join(state.prefix, "node_modules", "@habitat-ai")
+  )
+    .map((name) => `@habitat-ai/${name}`)
+    .filter(isRawrPackageIdentity);
+  const legacyScope = path.join(state.prefix, "node_modules", "@rawr");
+  const installedLegacyPackages = existsSync(legacyScope)
+    ? readdirSync(legacyScope).map((name) => `@rawr/${name}`)
+    : [];
+  const installed = [...installedHabitatPackages, ...installedLegacyPackages].sort();
   expect(installed).toEqual([...releaseProjects].sort());
   for (const artifact of artifacts) {
     const root = installedRoot(state.prefix, artifact.name);
@@ -611,9 +621,11 @@ function assertInstalledClosure(
   if (!Value.Check(PackageLockSchema, lock)) {
     throw new Error("installed package lock has invalid entries");
   }
-  const rawrEntries = Object.entries(lock.packages).filter(([location]) =>
-    /(?:^|\/)node_modules\/@rawr\/[^/]+$/u.test(location)
-  );
+  const rawrEntries = Object.entries(lock.packages).filter(([location]) => {
+    const marker = "node_modules/";
+    const markerIndex = location.lastIndexOf(marker);
+    return markerIndex >= 0 && isRawrPackageIdentity(location.slice(markerIndex + marker.length));
+  });
   expect(rawrEntries.map(([location]) => location).sort()).toEqual(
     releaseProjects.map((name) => `node_modules/${name}`).sort()
   );
@@ -632,11 +644,23 @@ function assertInstalledClosure(
 function officialOclifMembers(cli: Artifact, releaseProjects: readonly string[]) {
   const configured = cli.manifest.oclif?.plugins;
   if (configured === undefined) throw new Error("packed CLI has no Oclif plugin list");
-  const plugins = configured.filter((plugin) => plugin.startsWith("@rawr/"));
+  const plugins = configured.filter(isRawrPackageIdentity);
   const members = [cli.name, ...plugins];
   expect(new Set(members).size).toBe(members.length);
   expect(members.every((member) => releaseProjects.includes(member))).toBe(true);
   return members;
+}
+
+function isCurrentRawrPackageIdentity(name: string): boolean {
+  return name === "@habitat-ai/rawr" || name.startsWith("@habitat-ai/rawr-");
+}
+
+function isLegacyRawrPackageIdentity(name: string): boolean {
+  return name.startsWith("@rawr/");
+}
+
+function isRawrPackageIdentity(name: string): boolean {
+  return isCurrentRawrPackageIdentity(name) || isLegacyRawrPackageIdentity(name);
 }
 
 async function manifestCommands(artifact: Artifact) {

@@ -45,7 +45,7 @@ async function copyFixtureWorkspace(workspaceRoot: string): Promise<void> {
   );
 }
 
-describe("@rawr/plugin-chatgpt-corpus", () => {
+describe("@habitat-ai/rawr-plugin-chatgpt-corpus", () => {
   it("initializes a workspace and returns structured json", async () => {
     const workspaceRoot = await makeTempWorkspace("rawr-plugin-corpus-init-");
     const outputSpy = vi

@@ -1,5 +1,5 @@
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { Args } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 
 export default class JournalShow extends RawrCommand {

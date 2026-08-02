@@ -1,12 +1,16 @@
-import { type CreateClientOptions, createClient, type Client as HqOpsClient } from "@rawr/hq-ops";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+import {
+  type CreateClientOptions,
+  createClient,
+  type Client as HqOpsClient,
+} from "@habitat-ai/rawr-hq-ops";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   bindService,
   type ProcessView,
   type RoleView,
   type ServiceBinding,
   type ServiceBindingContext,
-} from "@rawr/hq-sdk/plugins";
+} from "@habitat-ai/rawr-hq-sdk/plugins";
 import { createHqOpsResources } from "./hq-ops-resources";
 import { createHostLoggerAdapter } from "./logging";
 

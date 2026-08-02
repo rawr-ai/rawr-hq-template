@@ -10,14 +10,14 @@
 - Applies to `plugins/cli/commands/devops/**`; inherit the
   [plugin package router](../../../AGENTS.md).
 - This package owns the Oclif projection for repository, Graphite stack, and
-  worktree operations exposed by `@rawr/dev`.
+  worktree operations exposed by `@habitat-ai/rawr-dev`.
 
 ## Boundaries
 
 - Commands own flags, workspace-root discovery, CLI rendering, and exit-code
-  projection. Planning, preflight, and mutation policy remain in `@rawr/dev`.
+  projection. Planning, preflight, and mutation policy remain in `@habitat-ai/rawr-dev`.
 - `src/lib/dev-binding.ts` binds the public service client to
-  `@rawr/dev-node` resources. Keep Git, Graphite, and filesystem mechanics
+  `@habitat-ai/rawr-dev-node` resources. Keep Git, Graphite, and filesystem mechanics
   behind those public resource and service boundaries.
 - Mutating commands are planning-only by default. Mutation requires explicit
   `--apply`, and the shared dry-run flag must continue to suppress apply.
@@ -46,7 +46,7 @@
 ## Interfaces
 
 - Oclif flags and exit codes face operators; the public Dev client carries
-  plans and results; `@rawr/dev-node` resources are the mechanics handoff for
+  plans and results; `@habitat-ai/rawr-dev-node` resources are the mechanics handoff for
   Git, Graphite, process, and filesystem effects.
 
 ## Routing
@@ -58,7 +58,7 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint`.
-- Run `bunx nx run @rawr/plugin-devops:typecheck`.
-- Run `bunx nx run @rawr/plugin-devops:test`.
-- Run `bunx nx run @rawr/plugin-devops:manifest` when command discovery or
+- Run `bunx nx run @habitat-ai/rawr-plugin-devops:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-devops:test`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-devops:manifest` when command discovery or
   Oclif metadata changes.

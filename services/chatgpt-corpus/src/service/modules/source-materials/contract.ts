@@ -1,6 +1,6 @@
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../common/errors";
 import { SourceSnapshotSchema } from "./entities";

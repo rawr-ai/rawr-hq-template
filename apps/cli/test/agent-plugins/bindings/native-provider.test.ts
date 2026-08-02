@@ -4,7 +4,7 @@ import type {
   NativeAgentProviderFailure,
   NativeProviderCapabilities,
   NativeProviderSessionInput,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Cause, Effect, Exit } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,12 +15,18 @@ const provider = vi.hoisted(() => ({
   claudeAcquire: vi.fn(),
 }));
 
-vi.mock("@rawr/resource-native-agent-provider/providers/codex-effect-platform-node", () => ({
-  makeNodeCodexNativeAgentProviderResource: provider.codexFactory,
-}));
-vi.mock("@rawr/resource-native-agent-provider/providers/claude-effect-platform-node", () => ({
-  makeNodeClaudeNativeAgentProviderResource: provider.claudeFactory,
-}));
+vi.mock(
+  "@habitat-ai/rawr-resource-native-agent-provider/providers/codex-effect-platform-node",
+  () => ({
+    makeNodeCodexNativeAgentProviderResource: provider.codexFactory,
+  })
+);
+vi.mock(
+  "@habitat-ai/rawr-resource-native-agent-provider/providers/claude-effect-platform-node",
+  () => ({
+    makeNodeClaudeNativeAgentProviderResource: provider.claudeFactory,
+  })
+);
 
 import { createNativeAgentProviderResources } from "../../../src/lib/agent-plugins/bindings/providers";
 

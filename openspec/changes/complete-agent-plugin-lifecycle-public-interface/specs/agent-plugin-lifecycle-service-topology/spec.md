@@ -3,12 +3,12 @@
 ### Requirement: Curated lifecycle is one oRPC service
 
 Template MUST implement curated agent-plugin lifecycle as one
-`@rawr/agent-plugin-lifecycle` oRPC service with exactly the `releases`,
-`vendors`, `packaging`, `providers`, and `governance` domain modules. Distinct
-Personal Git records, native provider homes, and explicit package outputs remain
-qualified state owners without becoming peer service identities. Export and
-undo modules, the former peer services, and the release-support package MUST be
-absent.
+`@habitat-ai/rawr-agent-plugin-lifecycle` oRPC service with exactly the
+`releases`, `vendors`, `packaging`, `providers`, and `governance` domain
+modules. Distinct Personal Git records, native provider homes, and explicit
+package outputs remain qualified state owners without becoming peer service
+identities. Export and undo modules, the former peer services, and the
+release-support package MUST be absent.
 
 #### Scenario: State boundaries do not multiply service identity
 - **WHEN** package, Nx, contract, router, import, and runtime inventories are

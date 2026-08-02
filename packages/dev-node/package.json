@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/dev-node",
+  "name": "@habitat-ai/rawr-dev-node",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -26,7 +26,7 @@
     "test": "vitest run --project dev-node"
   },
   "dependencies": {
-    "@rawr/dev": "workspace:*"
+    "@habitat-ai/rawr-dev": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

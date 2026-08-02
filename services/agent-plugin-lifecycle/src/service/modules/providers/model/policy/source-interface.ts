@@ -5,7 +5,7 @@ import type {
   GitRefObservation,
   MaterializedTemporaryTree,
   TemporaryContentTreeEntry,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import type { Result } from "effect";
 import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
 import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";

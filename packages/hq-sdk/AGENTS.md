@@ -1,4 +1,4 @@
-# HQ SDK Router (`@rawr/hq-sdk`)
+# HQ SDK Router (`@habitat-ai/rawr-hq-sdk`)
 
 ## Purpose
 
@@ -65,5 +65,5 @@
 ## Validation
 
 - `bunx nx run habitat:lint`
-- `bunx nx run @rawr/hq-sdk:typecheck`
-- `bunx nx run @rawr/hq-sdk:build`
+- `bunx nx run @habitat-ai/rawr-hq-sdk:typecheck`
+- `bunx nx run @habitat-ai/rawr-hq-sdk:build`

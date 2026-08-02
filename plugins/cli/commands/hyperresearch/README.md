@@ -1,6 +1,6 @@
-# @rawr/plugin-hyperresearch
+# @habitat-ai/rawr-plugin-hyperresearch
 
-CLI projection for the `@rawr/hyperresearch-codex` service package.
+CLI projection for the `@habitat-ai/rawr-hyperresearch-codex` service package.
 
 Commands:
 

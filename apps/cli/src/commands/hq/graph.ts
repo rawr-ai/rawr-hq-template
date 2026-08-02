@@ -1,5 +1,5 @@
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { buildHqGraphPlan, runHqGraph } from "../../lib/hq-graph";
 
 export default class HqGraph extends RawrCommand {

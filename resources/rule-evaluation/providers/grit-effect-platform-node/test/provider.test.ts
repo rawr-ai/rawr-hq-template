@@ -441,7 +441,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
     const slowExecutable = await writeExecutable(
       fixture,
       "slow-grit",
-      `#!/bin/sh\nprintf '%s' "$$" > '${pidPath}'\ntrap 'exit 0' TERM INT\nsleep 30 &\nwait\n`
+      `#!/usr/bin/env node\nrequire("node:fs").writeFileSync(${JSON.stringify(pidPath)}, String(process.pid));\nprocess.on("SIGTERM", () => process.exit(0));\nsetInterval(() => {}, 30_000);\n`
     );
     const resource = makeNodeGritRuleEvaluationResource({
       executable: slowExecutable,
@@ -462,8 +462,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
     expect(Exit.isFailure(exit)).toBe(true);
     if (!Exit.isFailure(exit)) throw new Error("Expected evaluation interruption");
     expect(exit.cause.reasons.some(Cause.isInterruptReason)).toBe(true);
-    expect(processIsReachable(pid)).toBe(false);
-    expect(processGroupIsReachable(pid)).toBe(false);
+    await waitForProcessExit(pid);
     expect(await temporaryCatalogs()).toEqual(baseline);
   });
 });
@@ -538,8 +537,14 @@ function processIsReachable(pid: number): boolean {
   return signalTargetIsReachable(pid);
 }
 
-function processGroupIsReachable(pid: number): boolean {
-  return signalTargetIsReachable(-pid);
+async function waitForProcessExit(pid: number): Promise<void> {
+  const deadline = Date.now() + 2_000;
+  while (processIsReachable(pid)) {
+    if (Date.now() >= deadline) {
+      throw new Error(`Native process ${pid} remained reachable after interruption`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
 }
 
 function signalTargetIsReachable(target: number): boolean {

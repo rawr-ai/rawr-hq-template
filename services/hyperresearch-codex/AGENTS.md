@@ -53,6 +53,6 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @rawr/hyperresearch-codex:typecheck`.
-- Run `bunx nx run @rawr/hyperresearch-codex:test` when run or fixture behavior
+  `bunx nx run @habitat-ai/rawr-hyperresearch-codex:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-hyperresearch-codex:test` when run or fixture behavior
   changes.

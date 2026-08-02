@@ -12,7 +12,8 @@ and keeps the lifecycle behavior that solves the actual product problem.
 
 ## What Changes
 
-- Make `@rawr/cli` an ordinary Oclif application for development and release.
+- Make `@habitat-ai/rawr` an ordinary Oclif application for development and
+  release.
 - Restore `@oclif/plugin-plugins` as the direct owner of `rawr plugins`.
 - Add Nx project targets for build and generated Oclif manifests; use top-level
   Nx Release configuration and its inferred publish targets for

@@ -80,7 +80,7 @@ The final cross-repository integration proof is gated on a versioned
 agent-plugin artifact interface. Once that interface exists, the test uses this
 split:
 
-1. Install the ordinary versioned `@rawr/cli` package containing the
+1. Install the ordinary versioned `@habitat-ai/rawr` package containing the
    Hyperresearch topic after the fixed Nx Release group lands.
 2. Obtain a personal-repository release record and immutable curated-content artifact with exact digest and interface version.
 3. Use the Template-owned agent-plugin lifecycle and provider adapter to project that artifact into an explicit disposable Codex home.

@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "implicitDependencies": ["provider-versioned-content-git-effect-platform-node"],
   "targets": {
     "verify": {

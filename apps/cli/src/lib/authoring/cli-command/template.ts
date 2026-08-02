@@ -15,7 +15,7 @@ export function officialCommandWritePlan(
   return completeOrderedWritePlan(root, [
     qualifiedTextWrite(
       `apps/cli/src/commands/${request.topic}/${request.name}.ts`,
-      `import { RawrCommand } from "@rawr/core";\n\nexport default class ${className} extends RawrCommand {\n  static description = ${JSON.stringify(`Run the ${command} command`)};\n\n  static flags = {\n    ...RawrCommand.baseFlags,\n  } as const;\n\n  async run(): Promise<void> {\n    const { flags } = await this.parseRawr(${className});\n    const baseFlags = RawrCommand.extractBaseFlags(flags);\n    this.outputResult(this.ok({ command: ${JSON.stringify(command)} }), { flags: baseFlags });\n  }\n}\n`
+      `import { RawrCommand } from "@habitat-ai/rawr-core";\n\nexport default class ${className} extends RawrCommand {\n  static description = ${JSON.stringify(`Run the ${command} command`)};\n\n  static flags = {\n    ...RawrCommand.baseFlags,\n  } as const;\n\n  async run(): Promise<void> {\n    const { flags } = await this.parseRawr(${className});\n    const baseFlags = RawrCommand.extractBaseFlags(flags);\n    this.outputResult(this.ok({ command: ${JSON.stringify(command)} }), { flags: baseFlags });\n  }\n}\n`
     ),
     qualifiedTextWrite(
       `apps/cli/test/generated/${request.topic}/${request.name}.test.ts`,

@@ -4,7 +4,7 @@ import type {
   WorkspaceArtifactBundle,
   WorkspaceStore,
   WorkspaceTemplate,
-} from "@rawr/chatgpt-corpus/orpc/ports/workspace-store";
+} from "@habitat-ai/rawr-chatgpt-corpus/orpc/ports/workspace-store";
 
 function toAbsolutePath(workspaceRef: string, relativePath: string): string {
   return path.join(workspaceRef, ...relativePath.split("/"));

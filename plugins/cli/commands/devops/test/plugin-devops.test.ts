@@ -112,7 +112,9 @@ function resolveBunExecutable(): string {
     (candidate): candidate is string => typeof candidate === "string" && existsSync(candidate)
   );
   if (!executable)
-    throw new Error("The @rawr/plugin-devops command test requires an absolute Bun executable");
+    throw new Error(
+      "The @habitat-ai/rawr-plugin-devops command test requires an absolute Bun executable"
+    );
   return path.resolve(executable);
 }
 
@@ -175,7 +177,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-describe("@rawr/plugin-devops command surface", () => {
+describe("@habitat-ai/rawr-plugin-devops command surface", () => {
   it("keeps each devops projection discoverable with its owner-qualified flags", () => {
     expect(DevStackDoctor.description).toContain("Inspect");
     expect(DevStackDrain.flags).toHaveProperty("apply");

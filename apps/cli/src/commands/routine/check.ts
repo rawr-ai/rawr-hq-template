@@ -1,5 +1,5 @@
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 import { resolveCliInvocation, runStep, type StepResult } from "../../lib/subprocess";
 
 export default class RoutineCheck extends RawrCommand {

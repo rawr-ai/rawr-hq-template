@@ -14,7 +14,7 @@
   "lane": "enforced",
   "forbids": "an incorrectly identified, unversioned, or non-ESM CLI package; a missing package-owned Oclif generator or manifest command; missing published runtime files; a missing declared or composed Oclif extension manager; mismatched binary or command discovery; or an ambiguous source-to-output mapping",
   "why": "Package configuration is the installed CLI identity. This closed ratchet fixes the app identity, binary, package-owned Oclif generator and manifest command, published runtime files, declared and composed @oclif/plugin-plugins owner, compiled command root, and TypeScript source-to-output mapping.",
-  "remediate": "Declare the versioned @rawr/cli ESM package and rawr binary, publish bin, dist, and oclif.manifest.json, declare the Oclif generator and use NODE_ENV=production bun --bun oclif manifest, depend on and compose @oclif/plugin-plugins, discover dist/commands, and map TypeScript rootDir src to outDir dist.",
+  "remediate": "Declare the versioned @habitat-ai/rawr ESM package and rawr binary, publish bin, dist, and oclif.manifest.json, declare the Oclif generator and use NODE_ENV=production bun --bun oclif manifest, depend on and compose @oclif/plugin-plugins, discover dist/commands, and map TypeScript rootDir src to outDir dist.",
   "message": "The Oclif app package must describe one conventional installed CLI.",
   "pathCoverage": [
     {

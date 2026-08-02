@@ -4,14 +4,14 @@ import path from "node:path";
 import type {
   DiscoverSessionsInput,
   SessionSourceRuntime,
-} from "@rawr/session-intelligence/ports/session-source-runtime";
+} from "@habitat-ai/rawr-session-intelligence/ports/session-source-runtime";
 import type {
   CodexSessionFile,
   CodexSessionSource,
   DiscoveredSessionFile,
   SessionSource,
   SessionStatus,
-} from "@rawr/session-intelligence/types";
+} from "@habitat-ai/rawr-session-intelligence/types";
 import { readJsonlObjects } from "./jsonl";
 import {
   codexDiscoveryMaxAgeMs,

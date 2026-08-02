@@ -53,5 +53,5 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @rawr/chatgpt-corpus:typecheck`.
-- Run `bunx nx run @rawr/chatgpt-corpus:test` when corpus behavior changes.
+  `bunx nx run @habitat-ai/rawr-chatgpt-corpus:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:test` when corpus behavior changes.

@@ -2,7 +2,7 @@ import {
   MAX_NATIVE_PROVIDER_PLUGINS,
   NativeAgentProviderIdSchema,
   NativeProviderHomeSchema,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";

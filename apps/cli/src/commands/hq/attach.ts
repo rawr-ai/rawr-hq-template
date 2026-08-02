@@ -1,4 +1,4 @@
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { buildHqLifecyclePlan, runHqLifecycle } from "../../lib/hq";
 
 export default class HqAttach extends RawrCommand {

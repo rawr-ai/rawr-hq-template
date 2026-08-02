@@ -66,7 +66,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/agent-plugin-lifecycle:typecheck`.
-- Run `bunx nx run @rawr/agent-plugin-lifecycle:test` for eligibility,
+- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:test` for eligibility,
   release-input codecs and refresh, payload bounds, and repository identity
   behavior.

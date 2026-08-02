@@ -59,7 +59,7 @@ async function makeV8Fixture() {
   return { steps, vault };
 }
 
-describe("@rawr/plugin-hyperresearch", () => {
+describe("@habitat-ai/rawr-plugin-hyperresearch", () => {
   it("runs the codex-slice command with fixture backend and returns structured json", async () => {
     const fixture = await makeFixture();
     const outputSpy = vi

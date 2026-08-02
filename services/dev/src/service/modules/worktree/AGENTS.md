@@ -55,6 +55,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/dev:typecheck`.
-- Run `bunx nx run @rawr/dev:test` for strict-prefix selection, pinned and
+- Run `bunx nx run @habitat-ai/rawr-dev:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-dev:test` for strict-prefix selection, pinned and
   merged exclusions, plan mode, and removal failures.

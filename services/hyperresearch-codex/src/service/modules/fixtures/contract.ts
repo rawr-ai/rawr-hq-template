@@ -2,9 +2,9 @@
  * @fileoverview Synthetic fixture procedure contract for Hyperresearch Codex.
  */
 
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { Type } from "typebox";
 import {
   HyperresearchIntegrityFindingSchema,

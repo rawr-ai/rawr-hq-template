@@ -1,11 +1,11 @@
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceFailureReason,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   VersionedContentFailure,
   VersionedContentFailureReason,
-} from "@rawr/resource-versioned-content";
+} from "@habitat-ai/rawr-resource-versioned-content";
 
 import type { VendorUpdateIssue } from "../dto/vendor-operations";
 

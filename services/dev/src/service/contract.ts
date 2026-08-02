@@ -1,5 +1,5 @@
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { metadataDefaults } from "./model/policy/procedure-metadata";
 import { contract as repo } from "./modules/repo/contract";
 import { contract as scratchPolicy } from "./modules/scratch-policy/contract";

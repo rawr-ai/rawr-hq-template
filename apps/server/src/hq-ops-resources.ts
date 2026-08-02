@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import type { createClient } from "@rawr/hq-ops";
+import type { createClient } from "@habitat-ai/rawr-hq-ops";
 
 type HqOpsBoundary = Parameters<typeof createClient>[0];
 type HqOpsResources = HqOpsBoundary["deps"]["resources"];
@@ -62,7 +62,9 @@ async function openNativeSqliteDatabase(dbPath: string): Promise<SqliteDatabase>
 async function openJournalIndex(dbPath: string): Promise<SqliteDatabase> {
   const db = await openNativeSqliteDatabase(dbPath);
   try {
-    const migrationUrl = new URL(import.meta.resolve("@rawr/hq-ops/migrations/0001_journal.sql"));
+    const migrationUrl = new URL(
+      import.meta.resolve("@habitat-ai/rawr-hq-ops/migrations/0001_journal.sql")
+    );
     const journalMigration = await fs.readFile(migrationUrl, "utf8");
     db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
     db.exec(journalMigration);

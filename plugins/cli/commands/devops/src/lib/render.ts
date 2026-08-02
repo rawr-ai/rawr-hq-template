@@ -1,4 +1,4 @@
-import { RawrCommand, type RawrResult } from "@rawr/core";
+import { RawrCommand, type RawrResult } from "@habitat-ai/rawr-core";
 
 type DevResultProjection = {
   preflight?: { ok: boolean; issues: Array<{ severity: string; code: string; message: string }> };

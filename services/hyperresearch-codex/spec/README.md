@@ -9,7 +9,7 @@ skill/reference/agent content is not an implementation input to this package.
 
 ## Current Topology
 
-- RAWR HQ-Template owns `@rawr/hyperresearch-codex` and the `@rawr/plugin-hyperresearch` CLI topic.
+- RAWR HQ-Template owns `@habitat-ai/rawr-hyperresearch-codex` and the `@habitat-ai/rawr-plugin-hyperresearch` CLI topic.
 - The service has two callable oRPC modules: `fixtures` for the synthetic proof slice and `runs` for durable V8 lifecycle procedures. V8 ledger, step, source-capture, artifact, result, and integrity behavior lives under `src/service/modules/runs/helpers`; fixture-only ledger, step, and integrity behavior lives under `src/service/modules/fixtures/helpers`. Shared code is limited to durable entities/resources and the low-level Hyperresearch CLI backend adapter.
 - Personal RAWR HQ may independently own curated Codex skills, references, and agent content plus its release/acceptance/channel records.
 - Cross-repository proof requires an exact versioned interface and immutable content artifact. A checkout path, Git relation, copied tree, or `rawr plugins` operation cannot substitute for that binding.

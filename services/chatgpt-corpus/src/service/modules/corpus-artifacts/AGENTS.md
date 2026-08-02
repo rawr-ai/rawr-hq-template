@@ -49,6 +49,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/chatgpt-corpus:typecheck`.
-- Run `bunx nx run @rawr/chatgpt-corpus:test` for canonical graphs, reports,
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-chatgpt-corpus:test` for canonical graphs, reports,
   empty input, validation, and materialized output.

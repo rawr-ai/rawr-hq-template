@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/dev-node",
+  "name": "@habitat-ai/rawr-dev-node",
   "targets": {
     "check": {
       "executor": "nx:noop"

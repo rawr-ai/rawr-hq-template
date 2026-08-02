@@ -1,4 +1,4 @@
-import { RawrCommand } from "@rawr/core";
+import { RawrCommand } from "@habitat-ai/rawr-core";
 
 import { AgentPluginLifecycleCommand } from "../../../../lib/agent-plugins/commands/command";
 import { contentWorkspaceFlags } from "../../../../lib/agent-plugins/commands/flags";

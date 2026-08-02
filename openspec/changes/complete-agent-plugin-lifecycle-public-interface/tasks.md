@@ -492,10 +492,19 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   one workspace-owned Nx dependency relation. Let Nx deduplicate the two
   `@rawr/cli` acceptance tasks across the fixed release group; add no publish
   wrapper, phase gate, script, registry emulator, or second release graph.
-- [ ] 3.7 Only after the package source lands on canonical `main` and its required
-  release gate passes, publish the versioned registry package and repeat the
-  version/help/command-inventory smoke from a registry-installed disposable
-  prefix. Repository release dispatch is not a pre-landing acceptance step.
+- [x] 3.6c Move the exact eighteen-package fixed RAWR release group from the
+  unowned `@rawr` namespace to `@habitat-ai/rawr` and
+  `@habitat-ai/rawr-*` as one atomic identity checkpoint. Update package, Nx,
+  TypeScript, Oclif, source, test, Habitat, and live guidance identities
+  together; preserve historical evidence. Prove the ordinary installed package
+  closure without publishing or introducing a bundler, retained package image,
+  selector, or second release graph.
+- [ ] 3.7 Configure tag-triggered npm trusted publishing for the fixed
+  `rawr-cli` release group. Only after the package source lands on canonical
+  `main` and its required release gate passes, publish all eighteen versioned
+  packages, install only `@habitat-ai/rawr` into a disposable consumer, let npm
+  resolve the other seventeen, and repeat the version/help/command-inventory
+  smoke. Repository release dispatch is not a pre-landing acceptance step.
 
 ## 4. Custom Controller Deletion
 

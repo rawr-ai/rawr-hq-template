@@ -1,12 +1,12 @@
-import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import { contract, createClient } from "../../src/client";
@@ -38,7 +38,7 @@ const worktrees = [
   "branch refs/heads/agent/other",
 ].join("\n");
 
-describe("@rawr/dev service shell", () => {
+describe("@habitat-ai/rawr-dev service shell", () => {
   it("keeps the public service boundary intact", () => {
     expect(typeof createClient).toBe("function");
     expect(createClient(createClientOptions())).toBeDefined();
@@ -105,7 +105,7 @@ describe("@rawr/dev service shell", () => {
   });
 });
 
-describe("@rawr/dev service behavior", () => {
+describe("@habitat-ai/rawr-dev service behavior", () => {
   it("evaluates scratch observations without mutating their order", () => {
     const matches: ScratchPolicyCheck["matches"] = {
       planScratchPaths: ["/repo/z/PLAN_SCRATCH.md", "/repo/a/PLAN_SCRATCH.md"],

@@ -55,7 +55,7 @@ function createBoundedFacetRuntime(): MemorySessionSourceRuntime {
   return runtime;
 }
 
-describe("@rawr/session-intelligence", () => {
+describe("@habitat-ai/rawr-session-intelligence", () => {
   it("keeps the package-root client entrypoint stable", async () => {
     const client = createClient(createClientOptions());
     const result = await client.transcripts.detect(

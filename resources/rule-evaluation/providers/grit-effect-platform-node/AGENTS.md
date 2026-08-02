@@ -30,8 +30,9 @@
   exit.
 - Run at most one native process per evaluation request at a time with
   `RAYON_NUM_THREADS=2`. Output and timeout bounds apply independently to each
-  program. Timeout, failure, and interruption cancel the active process group
-  before scoped catalog cleanup.
+  program. Timeout, failure, and interruption cancel the active native process
+  before scoped catalog cleanup. Subprocess-tree signaling remains owned by
+  Effect Platform Node.
 
 ## Routing
 

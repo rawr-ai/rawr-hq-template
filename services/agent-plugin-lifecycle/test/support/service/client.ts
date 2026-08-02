@@ -1,9 +1,9 @@
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import type { AgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output";
-import type { ContentWorkspaceResource } from "@rawr/resource-content-workspace";
-import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
-import type { VersionedContentResource } from "@rawr/resource-versioned-content";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { AgentPluginPackageOutputResource } from "@habitat-ai/rawr-resource-agent-plugin-package-output";
+import type { ContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace";
+import type { NativeAgentProviderResources } from "@habitat-ai/rawr-resource-native-agent-provider";
+import type { VersionedContentResource } from "@habitat-ai/rawr-resource-versioned-content";
 import { Effect } from "effect";
 
 import { type Client, type CreateClientOptions, createClient } from "../../../src/client";
