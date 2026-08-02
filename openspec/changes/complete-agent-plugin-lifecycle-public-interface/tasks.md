@@ -527,6 +527,9 @@ services, resources, plugins, and packages remain private workspace projects.
     two `0.4.0` packages. The uncached installed two-tarball acceptance and Nx
     publication dry-run are green. This task remains open until the canonical
     registry release and exact-version `nx add` pass without a workspace path.
+    Because the SDK is a new npm package, land first, publish the exact `0.4.0`
+    group once through authenticated Nx, bind the SDK's trusted publisher, then
+    use a subsequent canonical patch tag to prove steady-state OIDC publication.
 - [ ] 3.7c Land the correction on canonical `main`, verify the required
   repository ratchet, and notify waiting consumer lanes of the one supported
   installation surface.

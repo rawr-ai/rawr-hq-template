@@ -1223,7 +1223,7 @@ The current Template candidate keeps one explicit workspace toolchain:
 
 | Concern | Template disposition |
 | --- | --- |
-| Node | `24.18.1` CI and supported runtime floor |
+| Node | supported Node 24 LTS range beginning at `24.18.1`; CI pins `24.18.1` |
 | Bun | `1.3.14` package manager and runtime |
 | Biome | `2.5.3` workspace hygiene and formatting |
 | lintEffect | `@catenarycloud/linteffect@0.0.6` as a separate owner command |
@@ -5903,6 +5903,14 @@ acceptance. An Nx publication dry-run selected and packed only the SDK (115
 files, 0.41 MB) and CLI (31 files, 45.79 KB). The tag workflow now invokes that
 same installed acceptance explicitly before Nx publication. Registry release,
 exact-version `nx add`, and canonical-main CI remain open.
+
+Because `@habitat-ai/sdk` does not yet exist on npm, trusted publishing cannot
+authorize its first release. After this candidate lands, one authenticated Nx
+publication of the exact `0.4.0` two-product group establishes the package.
+Template then binds the SDK to the existing GitHub Actions publisher and lands
+a normal patch version whose `habitat-cli-v*` tag proves the steady-state OIDC
+path. The bootstrap does not select packages outside Nx or create another
+publisher, release group, or installation surface.
 
 ## Settlement Oracles
 
