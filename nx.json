@@ -2,10 +2,7 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "release": {
     "version": {
-      "updateDependents": "never",
-      "versionActionsOptions": {
-        "skipLockFileUpdate": true
-      }
+      "updateDependents": "never"
     },
     "groups": {
       "rawr-cli": {
@@ -41,7 +38,7 @@
         ],
         "projectsRelationship": "fixed",
         "version": {
-          "preserveLocalDependencyProtocols": false
+          "preserveLocalDependencyProtocols": true
         },
         "releaseTag": {
           "pattern": "habitat-cli-v{version}"

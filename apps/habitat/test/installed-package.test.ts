@@ -120,6 +120,21 @@ const packedProjects: readonly PackedProject[] = [
   },
 ];
 
+const expectedInternalRuntimeDependencies: Readonly<Record<string, readonly string[]>> = {
+  "@habitat-ai/cli": [
+    "@habitat-ai/plugin-cli",
+    "@habitat-ai/resource-rule-evaluation",
+    "@habitat-ai/resource-source-inventory",
+    "@habitat-ai/service",
+  ],
+  "@habitat-ai/plugin-cli": ["@habitat-ai/service"],
+  "@habitat-ai/service": [
+    "@habitat-ai/resource-rule-evaluation",
+    "@habitat-ai/resource-source-inventory",
+    "@habitat-ai/typebox-adapter",
+  ],
+};
+
 let acceptanceRoot = "";
 let consumerRoot = "";
 let fixtureRoot = "";
@@ -162,6 +177,9 @@ describe("installed Habitat package", () => {
       };
       expect(manifest).toMatchObject({ name: project.name, version: project.version });
       expect(manifest.exports).toEqual(project.exports);
+      for (const dependency of expectedInternalRuntimeDependencies[project.name] ?? []) {
+        expect(manifest.dependencies?.[dependency]).toBe(packedProjectVersion(dependency));
+      }
       if (project.name === "@habitat-ai/cli") {
         expect(manifest.dependencies?.["@habitat-ai/blueprints"]).toBeUndefined();
         expect(manifest.peerDependencies?.["@habitat-ai/blueprints"]).toBe(
