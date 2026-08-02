@@ -9,6 +9,7 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -112,19 +113,26 @@ describe("installed Habitat products", () => {
     });
     expect(Object.values(sdkManifest.dependencies ?? {})).not.toContain("2.0.0-beta.20");
 
-    const canonicalBlueprint = await readFile(
-      path.join(workspaceRoot, ".habitat/blueprints/package/blueprint.toml"),
-      "utf8"
+    const consumerRequire = createRequire(path.join(consumerRoot, "package.json"));
+    const installedPackPath = consumerRequire.resolve("@habitat-ai/sdk/habitat-pack.json");
+    const installedBlueprintPath = consumerRequire.resolve(
+      "@habitat-ai/sdk/blueprints/package/blueprint.toml"
     );
-    expect(
-      await readFile(
-        path.join(
-          consumerRoot,
-          "node_modules/@habitat-ai/sdk/dist/blueprints/package/blueprint.toml"
-        ),
-        "utf8"
+    expect(JSON.parse(await readFile(installedPackPath, "utf8"))).toEqual(
+      JSON.parse(
+        await readFile(path.join(workspaceRoot, "packages/habitat-sdk/habitat-pack.json"), "utf8")
       )
-    ).toBe(canonicalBlueprint);
+    );
+
+    const canonicalBlueprintRoot = path.join(workspaceRoot, ".habitat/blueprints");
+    const installedBlueprintRoot = path.resolve(path.dirname(installedBlueprintPath), "..");
+    const blueprintInventory = await listFiles(canonicalBlueprintRoot);
+    expect(await listFiles(installedBlueprintRoot)).toEqual(blueprintInventory);
+    for (const relativePath of blueprintInventory) {
+      expect(await readFile(path.join(installedBlueprintRoot, relativePath))).toEqual(
+        await readFile(path.join(canonicalBlueprintRoot, relativePath))
+      );
+    }
 
     const typecheck = await run("node", [
       path.join(workspaceRoot, "node_modules/typescript/bin/tsc"),
@@ -297,6 +305,19 @@ function publicProduct(name: PublicProduct["name"]): PublicProduct {
   const product = products.find((candidate) => candidate.name === name);
   if (product === undefined) throw new Error(`Unknown public Habitat product: ${name}`);
   return product;
+}
+
+async function listFiles(root: string, relativeRoot = ""): Promise<readonly string[]> {
+  const entries = await readdir(path.join(root, relativeRoot), { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const relativePath = path.join(relativeRoot, entry.name);
+      if (entry.isDirectory()) return listFiles(root, relativePath);
+      if (entry.isFile()) return [relativePath];
+      throw new Error(`Unexpected non-file blueprint entry: ${relativePath}`);
+    })
+  );
+  return files.flat().sort();
 }
 
 async function packPublicProducts(): Promise<void> {
