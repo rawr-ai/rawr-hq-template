@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/rawr-hq-sdk",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -69,8 +69,5 @@
     "tags": [
       "type:package"
     ]
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

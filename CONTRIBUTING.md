@@ -45,11 +45,12 @@ A plugin can be added as a Template fixture only when:
 - `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
 - App composition commands do not acquire lifecycle authority.
 - Command-surface changes require migration notes in `UPDATING.md`.
-- CLI publish ownership for `@habitat-ai/rawr` is template-only.
+- `@habitat-ai/rawr` and every `@habitat-ai/rawr-*` project are private
+  workspace identities, not public npm products.
 
-The fixed Nx Release package group is pending. Until it lands, use
-`bun run rawr -- ...` for CLI development and do not restore the removed custom
-distribution installer, selector, or release store.
+Use `bun run rawr -- ...` for CLI development. After the SDK collapse lands,
+public Habitat consumers install the Habitat CLI/SDK substrate; do not restore a RAWR package cohort, custom
+installer, selector, or release store.
 
 ## Quality Gates
 

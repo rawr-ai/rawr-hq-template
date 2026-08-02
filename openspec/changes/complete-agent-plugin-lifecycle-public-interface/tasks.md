@@ -424,6 +424,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 
 ## 3. Conventional CLI Package And Release
 
+Tasks 3.1 through 3.6b are retained as investigation history. They do not
+authorize publishing the RAWR workspace graph. The corrected product boundary
+is one installed Habitat substrate; RAWR applications and their internal
+services, resources, plugins, and packages remain private workspace projects.
+
 - [x] 3.1 Inventory the current CLI runtime closure and classify Bun-only
   dependencies. Select a registry-published Oclif application whose fixed Nx
   Release package group requires installed Bun. Current direct `bun:sqlite` use
@@ -492,31 +497,29 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   one workspace-owned Nx dependency relation. Let Nx deduplicate the two
   `@rawr/cli` acceptance tasks across the fixed release group; add no publish
   wrapper, phase gate, script, registry emulator, or second release graph.
-- [x] 3.6c Move the exact eighteen-package fixed RAWR release group from the
-  unowned `@rawr` namespace to `@habitat-ai/rawr` and
-  `@habitat-ai/rawr-*` as one atomic identity checkpoint. Update package, Nx,
-  TypeScript, Oclif, source, test, Habitat, and live guidance identities
-  together; preserve historical evidence. Prove the ordinary installed package
-  closure without publishing or introducing a bundler, retained package image,
-  selector, or second release graph.
-- [ ] 3.7 Configure tag-triggered npm trusted publishing for the fixed
-  `rawr-cli` release group. Only after the package source lands on canonical
-  `main` and its required release gate passes, publish all eighteen versioned
-  packages, install only `@habitat-ai/rawr` into a disposable consumer, let npm
-  resolve the other seventeen, and repeat the version/help/command-inventory
-  smoke. Repository release dispatch is not a pre-landing acceptance step.
-- [x] 3.7a Land the ordinary Nx/npm release substrate on canonical `main`:
-  fixed-group tag ownership, repository metadata, bounded package inventories,
-  workspace-protocol materialization, installed Oclif/native-extension gates,
-  and retryable tag-triggered trusted publication. Keep this task open until
-  the substrate commit itself passes the required repository gate and lands.
-- [ ] 3.7b Bootstrap the first eighteen-package registry version once with the
-  accepted npm owner, configure each package's trusted publisher against the
-  existing workflow, and verify the complete cohort before creating a tag.
-- [ ] 3.7c Publish the next fixed version through npm OIDC, install only
-  `@habitat-ai/rawr` from the public registry into a disposable consumer, and
-  record identical source identity, npm integrity, provenance, package closure,
-  command inventory, native extension behavior, and read-only lifecycle status.
+- [x] 3.6c Move internal package identities into the owned `@habitat-ai`
+  namespace without making them public products. Package identity does not
+  imply release membership.
+- [x] 3.7 Remove the `rawr-cli` Nx release group, tag trigger, workflow branch,
+  and package publication metadata. Mark every RAWR application, service,
+  resource, plugin, and support package private. A later application-release
+  change may choose a conventional Oclif distribution without publishing the
+  workspace graph or adding a custom installer. Enforce coherent package
+  visibility through Habitat: private projects carry no publication metadata;
+  public projects of any kind require explicit npm classification.
+- [ ] 3.7a Retract the accidental `0.1.0` RAWR npm cohort and verify that none
+  of its eighteen names remains available from the public registry. Record the
+  exact preimage and outcome; do not create replacement versions or trusted
+  publishers.
+- [ ] 3.7b Collapse Habitat's public implementation cohort into one runtime SDK
+  containing the TypeBox bridge, blueprint catalog, and runtime capabilities.
+  Keep the CLI as one ordinary Oclif release consuming that SDK. Release both
+  through Nx, then prove the single consumer path in a disposable workspace:
+  `nx add @habitat-ai/cli@<exact-version>`. No internal service, resource,
+  plugin, adapter, or RAWR project may require a public package identity.
+- [ ] 3.7c Land the correction on canonical `main`, verify the required
+  repository ratchet, and notify waiting consumer lanes of the one supported
+  installation surface.
 
 ## 4. Custom Controller Deletion
 

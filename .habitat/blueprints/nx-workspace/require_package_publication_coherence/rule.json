@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "id": "require_package_publication_coherence",
+  "title": "Require Package Publication Coherence",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "nx-workspace",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "an implicit package visibility decision, publication metadata on a private project, or a public project without explicit npm classification",
+  "why": "Project kind and distribution are independent. An application, service, resource, plugin, or package becomes public only through one coherent package and Nx classification.",
+  "remediate": "Declare private explicitly. Keep private projects free of publishConfig and npm:public, or classify a public product with private false, public publishConfig, and the npm:public Nx tag.",
+  "message": "Workspace package visibility and publication metadata must agree.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/**/package.json",
+        "packages/**/package.json",
+        "plugins/**/package.json",
+        "resources/**/package.json",
+        "services/**/package.json"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/nx-workspace/require_package_publication_coherence/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/nx-workspace/require_package_publication_coherence/pattern.md"
+    },
+    "patternName": "require_package_publication_coherence",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["."]
+    }
+  }
+}

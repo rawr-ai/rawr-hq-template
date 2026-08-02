@@ -12,15 +12,13 @@ and keeps the lifecycle behavior that solves the actual product problem.
 
 ## What Changes
 
-- Make `@habitat-ai/rawr` an ordinary Oclif application for development and
-  release.
+- Keep `@habitat-ai/rawr` an ordinary private Oclif workspace application.
+- Distribute Habitat as one runtime SDK containing its TypeBox bridge,
+  blueprints, and runtime capabilities, plus one ordinary Oclif CLI release.
 - Restore `@oclif/plugin-plugins` as the direct owner of `rawr plugins`.
-- Add Nx project targets for build and generated Oclif manifests; use top-level
-  Nx Release configuration and its inferred publish targets for
-  version/changelog/publication of the CLI's actual runtime closure. Use a
-  registry-published Oclif package whose executable requires installed Bun
-  while Bun-only first-party commands remain; adopt Oclif standalone archives
-  only after Node compatibility is proven.
+- Keep Nx project targets for build and generated Oclif manifests. Public
+  distribution of the RAWR application is a separate product decision; this
+  change does not publish its internal workspace graph.
 - Delete the custom controller builder, archive format, release store, selector,
   launcher, installer, per-file runtime envelope, controller diagnostics, and
   release workflow.
@@ -64,8 +62,8 @@ and keeps the lifecycle behavior that solves the actual product problem.
 
 ## Modified Capabilities
 
-- `rawr-cli-distribution`: Nx builds and releases a conventional Oclif CLI
-  package; ordinary installation exposes `rawr`.
+- `rawr-cli-application`: Nx builds and verifies the ordinary private Oclif
+  application; no RAWR release group exists in this change.
 - `external-cli-extension-boundary`: `@oclif/plugin-plugins` directly owns the
   `rawr plugins` command surface.
 - `agent-plugin-command-lifecycle`: `rawr agent plugins` remains the only curated

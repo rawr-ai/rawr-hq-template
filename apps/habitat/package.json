@@ -79,6 +79,7 @@
   },
   "nx": {
     "tags": [
+      "npm:public",
       "type:app",
       "app:habitat",
       "role:cli"

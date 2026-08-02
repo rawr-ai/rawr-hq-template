@@ -12,9 +12,10 @@ package/version manager rather than a necessary agent-plugin lifecycle boundary.
 state owners, failure boundaries, and deletion-first implementation sequence.
 
 Implementation is proceeding as independently green Graphite checkpoints.
-Provider settlement remains closed until the conventional installed CLI and
-bounded lifecycle path land. No canonical provider home, Personal record, or
-repository release was mutated by this correction.
+Provider settlement remains closed until the private RAWR Oclif application and
+bounded lifecycle path land. No canonical provider home or Personal record was
+mutated by this correction. The accidental public RAWR package cohort remains a
+registry cleanup obligation, not a product release.
 
 ## Canonical Repositories
 
@@ -38,11 +39,14 @@ ancestry or executable inputs.
 
 ## Corrected Product
 
+The target architecture is:
+
 ```text
 Template source
-  -> Nx build and release
-  -> ordinary Oclif package and installer
-  -> rawr
+  -> Nx build
+     -> @habitat-ai/sdk      (one public runtime SDK)
+     -> @habitat-ai/cli      (one ordinary Oclif release)
+     -> private rawr app
      -> rawr plugins          (@oclif/plugin-plugins)
      -> rawr agent plugins    (bounded oRPC lifecycle service)
         -> Personal closed release input
@@ -81,14 +85,13 @@ them product authority.
 
 ## Conventional Release Grounding
 
-The release-form audit selects one ordinary registry-published Oclif application
-whose fixed Nx Release package group requires installed Bun. Nx builds the
-workspace closure; Nx Release owns versioning, changelog, and publication;
-Bun/npm packing produces ordinary package archives. Oclif's Node-bearing
-standalone archives remain ineligible while surviving commands import
-`bun:sqlite`. Whole-application Bun compilation would require a separate Oclif
-filesystem plugin-discovery compatibility test that the ordinary package group
-does not need.
+The release-form audit selects exactly two target public products. One
+`@habitat-ai/sdk` package contains Habitat's TypeBox bridge, blueprint catalog,
+and runtime capabilities. One `@habitat-ai/cli` package is an ordinary Oclif
+release that consumes that SDK and exposes the Nx initializer. Nx builds and
+releases those two products. npm transports them. Every source service,
+resource, provider, plugin, adapter, RAWR application, and supporting package
+remains a private workspace owner rather than a public package product.
 
 After controller and persistent lifecycle-state deletion, the Nx graph exposed
 one remaining false edge: `@rawr/cli` declared `@rawr/orpc-client` despite no
@@ -111,17 +114,15 @@ that metadata checkpoint did not manufacture the result. The later independent
 TypeBox adapter release removed that package from the RAWR group, leaving the
 current eighteen-member closure recorded below.
 
-The pre-landing installed-package acceptance uses local packed tarballs in one
-guarded disposable prefix. An acceptance-only package manifest binds every
-release-group member through a `file:` tarball dependency while public
-dependencies use ordinary registry resolution. It rewrites no packed metadata
-and emulates no registry. The acceptance proves version/help/command inventory,
-native external extension install-list-invoke-remove, package containment, one
-ordinary artifact checksum, and a read-only lifecycle status call. After that
-source lands and the required release gate passes, publication and one
-registry-installed smoke are separate release operations. Neither step
-introduces a retained release store, selector, per-file envelope, or
-source-checkout renaming.
+Task 3.7b replaces the current seven-package compatibility release and its
+installed acceptance. The destination acceptance packs only the SDK and CLI into one guarded
+disposable Nx consumer. It proves `nx add`, generated command discovery,
+runtime execution, TypeBox adaptation, blueprint resolution, and repeated
+initialization without a change. It rewrites no packed metadata, emulates no
+registry, and publishes no implementation owner. After that source lands,
+publication and one registry-installed smoke are separate release operations.
+Neither step introduces a retained release store, selector, per-file envelope,
+or source-checkout renaming.
 
 ## Durable Decisions
 
@@ -129,7 +130,7 @@ source-checkout renaming.
 | --- | --- |
 | CLI dispatch | Oclif |
 | External CLI extensions | Direct `@oclif/plugin-plugins` |
-| Build, cache, version, release | Nx and Nx Release |
+| Build, cache, version, release | Nx and Nx Release for `@habitat-ai/sdk` and `@habitat-ai/cli` only |
 | Architecture policy | Habitat closed topology plus Grit source relationships |
 | Package classification | Pure support matter only; external capabilities use resource/provider boundaries, runtime owns acquisition, and resourced product behavior belongs to a service |
 | Curated desired state | Personal Git-reviewed closed release input/channel record |
@@ -1656,7 +1657,7 @@ review does not authorize a separate release path.
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | The exact eighteen-package fixed RAWR Nx Release group has versions, inferred publishers, production Oclif manifests, and green packed-install acceptance under the `@habitat-ai/rawr` and `@habitat-ai/rawr-*` candidate identities; RAWR registry publication, registry-installed smoke, and tag-triggered trusted publishing remain pending. The separate Habitat package group is already published and installed. |
+| Public distribution | RAWR applications and implementation projects are private and absent from Nx Release. The supported public surface is the Habitat CLI/runtime substrate; collapse to one runtime SDK plus the ordinary Oclif CLI is active, and accidental RAWR `0.1.0` retraction remains pending registry authorization. |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -3908,6 +3909,11 @@ oracles. Both CLI behavior targets also hash the fixture's project-scoped
 production input, so cache correctness does not require a false CLI runtime
 dependency.
 
+> [!CAUTION]
+> The release-readiness sections from this point through the RAWR registry
+> substrate are chronological execution evidence. They describe superseded
+> package models and are not current architecture or operator authority.
+
 ## Ordinary Installed Oclif Acceptance
 
 The qualified, uncached
@@ -5831,6 +5837,11 @@ has been changed.
 
 ## RAWR Registry Release Substrate
 
+> [!CAUTION]
+> This section records a rejected release premise. It is historical evidence,
+> not current authority. Publishing the RAWR workspace graph was a categorical
+> scope error.
+
 Template PR #775 landed the existing fixed `rawr-cli` Nx group as an
 ordinary npm release cohort. It adds one `rawr-cli-v{version}` tag pattern to Nx,
 qualified repository metadata and bounded file inventories to the eighteen
@@ -5855,6 +5866,20 @@ registry version remains a one-time authenticated bootstrap needed to establish
 each package before its workflow-bound trusted publisher can take over. Task
 3.7 remains open until complete registry publication, registry-only
 installation, and the first OIDC-proven fixed-version release all pass.
+
+## Public Distribution Correction
+
+The public product boundary is Habitat, not the RAWR implementation graph.
+`@habitat-ai/rawr` and all `@habitat-ai/rawr-*` projects are private workspace
+identities. They are absent from Nx Release and from the tag-triggered publish
+workflow. The accidental `0.1.0` registry cohort is being retracted without a
+replacement version, trusted publisher, compatibility package, or alias.
+
+Habitat now converges on two ordinary artifacts: one runtime SDK containing the
+TypeBox bridge, blueprint catalog, and runtime capabilities, plus one Oclif CLI
+that consumes the SDK and exposes the Nx initializer. Consumers install through
+one Nx command. Internal services, resources, plugins, and packages remain
+visible to the workspace graph without becoming public products.
 
 ## Settlement Oracles
 

@@ -626,8 +626,8 @@ describe("Habitat catalog resolve", () => {
     const compatibility = result.catalog.compatibility;
     const ruleIds = compatibility.rules.map(({ ruleId }) => ruleId);
     expect(Object.keys(compatibility.ownerRoots)).toHaveLength(6);
-    expect(compatibility.rules).toHaveLength(33);
-    expect(new Set(ruleIds).size).toBe(33);
+    expect(compatibility.rules).toHaveLength(34);
+    expect(new Set(ruleIds).size).toBe(34);
   });
 
   test("resolves executable version 2 Grit authority without retaining asset bytes", async () => {

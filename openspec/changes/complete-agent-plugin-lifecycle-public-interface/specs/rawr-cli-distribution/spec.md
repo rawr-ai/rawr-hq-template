@@ -1,51 +1,44 @@
 ## ADDED Requirements
 
-### Requirement: RAWR is a conventional Oclif CLI package
+### Requirement: RAWR is a conventional Oclif application
 
-RAWR HQ-Template MUST build one versioned Oclif CLI package through Nx. The
-package MUST expose the `rawr` binary through its ordinary entrypoint and MUST
-declare every first-party command plugin through Oclif configuration. Source and
-installed invocation MUST use the same Oclif application and command ontology.
-The package MUST NOT require a controller selector, private release store,
-per-file runtime envelope, source checkout, Personal repository, or worktree
-identity.
+RAWR HQ-Template MUST build one Oclif CLI application through Nx. The
+application MUST expose the `rawr` binary through its ordinary entrypoint and
+MUST declare every first-party command plugin through Oclif configuration. The
+application MUST NOT require a controller selector, private release store,
+per-file runtime envelope, Personal repository, or worktree identity.
 
-#### Scenario: Source and installed command discovery agree
-- **WHEN** the exact revision is invoked through the Nx development target and
-  through a package installed in a disposable prefix
-- **THEN** both expose the same first-party command IDs and topics
-- **AND** neither reads a controller selector or source checkout to dispatch
+#### Scenario: Nx and Oclif command discovery agree
+- **WHEN** the exact revision is built and invoked through its Nx-owned Oclif
+  targets
+- **THEN** generated and live discovery expose the same first-party command IDs
+  and topics
+- **AND** neither reads a controller selector to dispatch
 
-#### Scenario: Source checkout is absent after installation
-- **WHEN** the installed package is invoked after its build checkout is made
-  unavailable
-- **THEN** ordinary help, version, external plugin management, and read-only
-  agent-plugin status remain usable from installed package dependencies
+#### Scenario: Public distribution is requested
+- **WHEN** a later change proposes an installable RAWR application
+- **THEN** it selects an ordinary Oclif distribution independently
+- **AND** it does not publish RAWR internal workspace projects as products
 
-### Requirement: Nx and Oclif own their native release relationships
+### Requirement: Nx and Oclif own their native build relationships
 
-Nx project targets MUST own CLI build, generated Oclif manifest, and packaging
-with explicit inputs, outputs, and project dependencies. Top-level
-`nx.json#release` MUST declare the coherent runtime project group; `nx release`
-owns version/changelog and `nx release publish` owns registry publication when a
-package registry is selected. Oclif's pack command MUST own standalone archive
-construction when standalone distribution is selected. No route may introduce
-a RAWR-owned selector or retained local version store.
+Nx project targets MUST own CLI build and generated Oclif manifests with
+explicit inputs, outputs, and project dependencies. Top-level
+`nx.json#release` MUST NOT include the RAWR application or its internal
+services, resources, plugins, or support packages. No route may introduce a
+RAWR-owned selector or retained local version store.
 
-#### Scenario: Released package is inspected
-- **WHEN** one clean source revision produces a release candidate through the
-  selected standard package path
-- **THEN** package inventory, generated command metadata, installed command
-  discovery, ordinary checksum, and repository release provenance verify
-- **AND** RAWR adds no private archive canonicalizer, per-file envelope, or
-  metadata rewrite
+#### Scenario: Application build is inspected
+- **WHEN** one clean source revision produces the Oclif application through Nx
+- **THEN** generated command metadata and command discovery verify
+- **AND** RAWR adds no package cohort, private archive canonicalizer, per-file
+  envelope, or metadata rewrite
 
 #### Scenario: Runtime compatibility is not proven
 - **WHEN** surviving first-party commands still require Bun runtime APIs
-- **THEN** release uses a registry-published Oclif package whose executable
-  requires installed Bun, or fails closed
-- **AND** it does not claim Oclif Node standalone compatibility or create a
-  custom runtime manager or whole-application Bun-compiled Oclif bundle
+- **THEN** a later distribution decision remains open or fails closed
+- **AND** this change does not create a custom runtime manager, release group,
+  or whole-application bundle
 
 ### Requirement: CLI diagnostics report standard installed state
 
@@ -61,24 +54,23 @@ operational prerequisite.
 - **THEN** they report the package and Oclif state without reading or repairing
   an obsolete controller store
 
-### Requirement: Published dependency closure is truthful
+### Requirement: Workspace dependency closure is truthful
 
 The CLI project's declared runtime dependency graph MUST exclude known
 app-server, workflow, async-runtime, and Inngest-only projects unless a
-CLI-owned import requires them. Standard transitive package contents need not be
-globally minimal. The release MUST achieve the declared boundary through correct
-package and project metadata, not a post-pack dependency filter or manifest
-rewrite.
+CLI-owned import requires them. Internal workspace packages MUST remain private.
+The application MUST achieve the declared boundary through correct package and
+project metadata, not a release filter or manifest rewrite.
 
 #### Scenario: Shared SDK declares a server-only runtime
 - **WHEN** a shared package declaration would pull an otherwise unreachable
   server, workflow, or Inngest runtime into the CLI package
-- **THEN** packaging fails until the package boundary or dependency metadata is
+- **THEN** validation fails until the package boundary or dependency metadata is
   corrected
-- **AND** no release filter silently removes the dependency after build
+- **AND** no release filter silently removes the dependency
 
 #### Scenario: Shared dependency metadata changes
-- **WHEN** CLI packaging changes `@habitat-ai/rawr-hq-sdk` dependency or export
+- **WHEN** CLI composition changes `@habitat-ai/rawr-hq-sdk` dependency or export
   boundaries
 - **THEN** the legitimate server project passes its typecheck and owning
   behavior tests before the package change is accepted

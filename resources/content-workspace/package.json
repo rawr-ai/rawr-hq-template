@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/rawr-resource-content-workspace",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -40,8 +40,5 @@
       "layer:resource-contract",
       "resource:content-workspace"
     ]
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

@@ -38,6 +38,7 @@
   },
   "nx": {
     "tags": [
+      "npm:public",
       "type:resource",
       "layer:resource-contract",
       "resource:source-inventory"

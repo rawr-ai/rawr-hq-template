@@ -1,7 +1,7 @@
 {
   "name": "@habitat-ai/rawr-plugin-devops",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
@@ -57,8 +57,5 @@
         ]
       }
     }
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }
