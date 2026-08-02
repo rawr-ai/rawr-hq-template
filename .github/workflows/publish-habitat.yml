@@ -38,12 +38,6 @@ jobs:
       - name: Install locked dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Select npm OIDC publishing for Nx Release
-        run: |
-          npm install --global npm@12.0.2
-          jq '.cli = ((.cli // {}) + {packageManager: "npm"})' nx.json > nx.publish.json
-          mv nx.publish.json nx.json
-
       - name: Match TypeBox adapter tag
         if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
         run: >-
@@ -67,6 +61,39 @@ jobs:
         run: >-
           test "$(jq -r .version packages/habitat-blueprints/package.json)"
           = "${GITHUB_REF_NAME#habitat-blueprints-v}"
+
+      - name: Materialize Habitat npm manifests with Nx
+        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
+        run: |
+          jq '
+            .release.groups["habitat-cli"].version =
+              ((.release.groups["habitat-cli"].version // {}) +
+                {preserveLocalDependencyProtocols: false}) |
+            .release.version =
+              ((.release.version // {}) +
+                {versionActionsOptions:
+                  (((.release.version // {}).versionActionsOptions // {}) +
+                    {skipLockFileUpdate: true})})
+          ' nx.json > nx.publish.json
+          mv nx.publish.json nx.json
+          bunx nx release version "${GITHUB_REF_NAME#habitat-cli-v}" \
+            --group=habitat-cli \
+            --git-commit=false \
+            --git-tag=false \
+            --git-push=false \
+            --stage-changes=false
+          ! grep -n '"workspace:' \
+            apps/habitat/package.json \
+            plugins/cli/commands/habitat/package.json \
+            resources/rule-evaluation/package.json \
+            resources/source-inventory/package.json \
+            services/habitat/package.json
+
+      - name: Select npm OIDC publishing for Nx Release
+        run: |
+          npm install --global npm@12.0.2
+          jq '.cli = ((.cli // {}) + {packageManager: "npm"})' nx.json > nx.publish.json
+          mv nx.publish.json nx.json
 
       - name: Build TypeBox adapter
         if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
