@@ -65,12 +65,16 @@
   preparation/execution/observation/evaluation sequencing, not public stages or
   a detached run-operation facade.
 - [ ] 4.2 Persist `Running` and deterministic provider lookup identities before
-  effects; implement exact adoption and direct monotonic transitions.
+  effects, including each non-secret provider recovery namespace; refuse a
+  namespace mismatch before subject effects and implement direct monotonic
+  transitions.
 - [ ] 4.3 Prove duplicate/restart behavior, distinct-cell overlap, persistence
   unknown, acquisition-before-locator recovery, solver-exit-before-capture
   recovery, live refusal, absent reconciliation, pre/postterminal cleanup
   uncertainty, exact postterminal cleanup retry without solver/evaluator rerun,
-  and Submitted/NoSubmission terminals.
+  exact `CellRunInProgress` retry semantics, terminal-before-destructive-release,
+  product noncompletion versus Effect interruption, and Submitted/NoSubmission
+  terminals.
 - [ ] 4.4 Prove failure taxonomy and terminal/evaluation ordering with injected
   model-free resources.
 - [ ] 4.5 Pass the complete slice gate.
@@ -107,12 +111,17 @@
   only the submitted artifact and introduce hidden verifier/rubric inputs only
   after solver isolation.
 - [ ] 7.2 Persist Evaluated before projection and support both Submitted and
-  NoSubmission terminal evaluation without rerunning the solver.
+  NoSubmission terminal evaluation without rerunning the solver. Bind the
+  evaluator lookup/namespace before acquisition, adopt completed evaluator
+  output across a crash, permit rerun only after confirmed interruption with no
+  completed recoverable outcome, and refuse when absence could hide an outcome.
 - [ ] 7.3 Add the observation/telemetry resource/provider; preserve one
   correlation subject, one application root, redaction, non-authoritative
   projection/runtime diagnostics, and optional/run-level readback.
 - [ ] 7.4 Prove projection failure and explicit projection/readback retry do not
-  alter or repeat evaluation.
+  alter or repeat evaluation; prove evaluator-exit-before-persistence adoption
+  and interrupted-without-outcome rerun from the exact terminal, plus refusal
+  when absence could hide a completed evaluation.
 - [ ] 7.5 Pass the independently reachable evaluation/observation slice gate.
 
 ## 8. CLI And Runtime Projection Slice
@@ -132,10 +141,12 @@
 ## 9. Study Consumer Transition Slice
 
 - [ ] 9.1 Bind one retained model-free oRPC study cell through the service
-  without moving its content or evidence.
+  without moving its content or evidence. Replace, rather than wrap, the
+  canonical real-work evaluator's active runtime/provider wiring.
 - [ ] 9.2 Bind retained Inngest S09 through the same service while preserving
   its study-owned seed/control overlay, allowed product mapping, verifier, and
-  evidence.
+  evidence. Create a typed study binding; no active Inngest SDK/service consumer
+  exists to migrate.
 - [ ] 9.3 Confirm study owners supply data/policy only and do not wire
   providers, persistence, runtime profiles, or shadow service sequencing.
 - [ ] 9.4 Pass both consumer and full Template gates.
@@ -146,9 +157,16 @@
   identity/exports/project shell, package-specific Habitat rules, runtime,
   registries, schema/portability layer, generic stage/state protocols, and Bun
   attestation machinery.
-- [ ] 10.2 Remove superseded active study-runner machinery only after its
-  model-free consumer path is green; preserve frozen historical evidence in
-  place.
+- [ ] 10.2 After the model-free consumer paths are green, remove the canonical
+  oRPC evaluator package outside its closed study allowlist, including its
+  admission executor/tests and package/lock/configuration shell. Remove the
+  behavioral-oracle runner, execution, Langfuse, review, admission, platform,
+  OpenShell, script, package-shell, test, and plugin owners listed in the design
+  ledger only after the study owner independently binds every unique
+  study/evidence item to a named immutable Git ref or retention ledger; do not
+  copy or relocate that material in this change. Delete the current Inngest
+  broken launcher. Keep the older named-ref runners and custody-ledger caches
+  historical, operationally unreachable, and non-authoritative.
 - [ ] 10.3 Confirm no renamed package facade, provider-only dead tranche,
   permanent compatibility shim, research app, scheduler, evidence store, or
   shadow provider wiring remains.

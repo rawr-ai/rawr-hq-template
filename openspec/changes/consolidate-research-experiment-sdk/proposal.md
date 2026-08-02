@@ -54,13 +54,17 @@ kinds rather than creating another platform inside a package.
   A database or filesystem resource provides physical capability only; it does
   not know `Running`, `SolverTerminal`, or `Evaluated`.
 - Preserve monotonic local state:
-  `Missing -> Running -> SolverTerminal -> Evaluated`. Persist deterministic
-  cell+attempt provider lookup identities before acquisition. On re-entry,
-  the owning recoverable-subject provider classifies its subject as live,
-  exited-recoverable, or absent so a recoverable solver result is never rerun.
+  `Missing -> Running -> SolverTerminal -> Evaluated`. Before subject
+  acquisition, persist deterministic lookup identities bound to the cell,
+  attempt, resource, and the selected provider's non-secret recovery namespace.
+  On re-entry, refuse a recovery-namespace mismatch before effects; otherwise
+  the owning provider classifies its subject as live, exited-recoverable, or
+  absent so completed recoverable work is never rerun.
 - Persist the solver terminal, and the submitted artifact when present, before
-  verification. Persist evaluation before non-authoritative telemetry
-  projection.
+  verification or destructive solver-subject release. Persist an evaluator
+  lookup before evaluator acquisition, adopt completed evaluator output across
+  crashes, and persist evaluation before destructive evaluator release or
+  non-authoritative telemetry projection.
 - Reconstruct evaluation from the persisted terminal in a fresh
   solver-inaccessible subject/workspace. Hidden verifier and rubric inputs never
   enter the solver context.
@@ -110,6 +114,11 @@ kinds rather than creating another platform inside a package.
 - `packages/research-sdk` becomes source-quarry evidence and is deleted after
   behaviorally equivalent service/resource slices and both model-free study
   checks are green.
+- The canonical oRPC self-contained evaluator transitions to the service and is
+  deleted; the current Inngest authority has no runnable consumer to migrate,
+  only one broken launcher to delete. Older runners remain historical and
+  operationally unreachable/non-authoritative; study content and evidence stay
+  with their owners.
 - Optional Railway deployment changes process placement only. It does not
   introduce a second semantic app or an adversarial local-host threat model.
 
