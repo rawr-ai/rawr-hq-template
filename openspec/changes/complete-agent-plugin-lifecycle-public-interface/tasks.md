@@ -137,6 +137,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   actual workspace owner. Keep this a separately reviewed vendor migration;
   do not mix dependency upgrades into service topology or owner-local target
   normalization.
+  - Candidate `c5206e64` pins CI and the public Habitat runtime floor to Node
+    24.18.1, advances Oclif to 4.23.29/core 4.13.2 and oRPC to beta 23, and
+    keeps the declaration-clean Effect beta 101 and TypeScript 5.9.3 cohorts.
+    Effect beta 102 and TypeScript 6/7 were rejected by strict package-consumer
+    and full-repository proof rather than hidden with compatibility settings.
+    Task 1.5d remains the separate compiler migration.
 - [ ] 1.5e After every selected service rule passes the admitted Template
   service corpus,
   activate the six staged laws only through the upstream Habitat Nx-plugin
@@ -517,6 +523,10 @@ services, resources, plugins, and packages remain private workspace projects.
   through Nx, then prove the single consumer path in a disposable workspace:
   `nx add @habitat-ai/cli@<exact-version>`. No internal service, resource,
   plugin, adapter, or RAWR project may require a public package identity.
+  - Candidate `e4a47451` plus vendor checkpoint `c5206e64` produces exactly the
+    two `0.4.0` packages. The uncached installed two-tarball acceptance and Nx
+    publication dry-run are green. This task remains open until the canonical
+    registry release and exact-version `nx add` pass without a workspace path.
 - [ ] 3.7c Land the correction on canonical `main`, verify the required
   repository ratchet, and notify waiting consumer lanes of the one supported
   installation surface.

@@ -26,21 +26,19 @@ map, transition guarantees, and burn-down sequence are in
 ```text
                          RAWR HQ-Template
 
-  source -> Nx build/release -> conventional Oclif package -> `rawr`
-                                                           /       \
-                                               `rawr plugins`   `rawr agent plugins`
-                                                     |                 |
-                                          @oclif/plugin-plugins    oRPC lifecycle
-                                                                       |
-                                                           closed Personal release input
-                                                                       |
-                                                   exact Git objects -> in-memory release model
-                                                                       |
-                                                       selected native content
-                                                                       |
-                                                     native Codex / Claude commands
-                                                                       |
-                                                            explicit provider home
+  .habitat + private runtime owners -> Nx build -> @habitat-ai/sdk -> npm
+                                              \-> @habitat-ai/cli -> npm / nx add
+
+  private RAWR Oclif app -> `rawr plugins` ------> @oclif/plugin-plugins
+                         \-> `rawr agent plugins` -> oRPC lifecycle
+                                                       |
+                                           closed Personal release input
+                                                       |
+                                       exact Git -> in-memory release model
+                                                       |
+                                         native Codex / Claude commands
+                                                       |
+                                            explicit provider home
 
                          Personal RAWR HQ
 

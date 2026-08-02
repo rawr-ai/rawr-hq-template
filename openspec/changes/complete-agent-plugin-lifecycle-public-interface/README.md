@@ -1223,20 +1223,24 @@ The current Template candidate keeps one explicit workspace toolchain:
 
 | Concern | Template disposition |
 | --- | --- |
+| Node | `24.18.1` CI and supported runtime floor |
 | Bun | `1.3.14` package manager and runtime |
 | Biome | `2.5.3` workspace hygiene and formatting |
 | lintEffect | `@catenarycloud/linteffect@0.0.6` as a separate owner command |
 | Nx | `23.1.0` task graph |
 | TypeScript | `5.9.3` compiler and compiler API |
 | TypeBox | `1.3.8` schema and type authority |
-| oRPC | `2.0.0-beta.20` contract, server, client, OpenAPI, and Effect bridge |
+| Oclif | `4.23.29` toolchain with `@oclif/core@^4.13.2` |
+| oRPC | `2.0.0-beta.23` contract, server, client, OpenAPI, and Effect bridge |
 | Effect / Platform | `4.0.0-beta.101` |
 
 Biome owns ordinary hygiene; Habitat owns positive topology and source
 relationships. Full-corpus lintEffect remains outside the required push check.
-The installed Habitat package's oRPC 1, Effect 3, and TypeBox 1.3.6 dependencies
-are package-local implementation dependencies; they are not Template product
-schema, context, or runtime authority.
+The strict packed-package consumer rejected Effect beta 102 because its public
+declarations reference an absent `SchemaAST.Sentinel`. Native TypeScript 6 and
+7 remain a separate migration: TypeScript 6 currently fails six repository
+`rootDir` boundaries, while Bun 1.3.14 cannot realize the vendor-prescribed
+TypeScript 7 CLI plus TypeScript 6 compiler-API graph without a circular alias.
 
 ### Historical Checkpoint Ledger
 
@@ -1651,7 +1655,7 @@ review does not authorize a separate release path.
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
 | Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry publication, idempotent consumer initialization, native version-two execution, and released consumer cutover are landed; service-law activation remains open |
-| Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
+| Workspace toolchain | Node 24.18.1, Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, Oclif 4.23.29/core 4.13.2, oRPC 2 beta 23, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
@@ -1660,7 +1664,7 @@ review does not authorize a separate release path.
 | Public distribution | RAWR applications and implementation projects are private and absent from Nx Release. The supported public surface is the Habitat CLI/runtime substrate; collapse to one runtime SDK plus the ordinary Oclif CLI is active, and accidental RAWR `0.1.0` retraction remains pending registry authorization. |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
-| oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
+| oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 23, official Effect bridge beta 23, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
 | Bounded lifecycle simplification | Direct exact-Git native reconciliation and state deletion are green; positive module topology, the context-authoring funnel, and operation-use audit remain |
 | Personal content-only recut | Pending |
 | Disposable provider acceptance | Pending |
@@ -5806,7 +5810,7 @@ version store, or second Habitat identity.
 
 ## RAWR Registry Namespace Checkpoint
 
-The active candidate moves the fixed eighteen-package RAWR release group from
+The historical candidate moved the fixed eighteen-package RAWR release group from
 the unowned `@rawr` namespace into `@habitat-ai`. The installed application is
 `@habitat-ai/rawr`; its four built-in command packages are
 `@habitat-ai/rawr-plugin-*`; and the remaining services, resources, and support
@@ -5861,11 +5865,9 @@ Candidate `e98da179e97b62136c02cd8c54be1794150749b7` passed the required
 Repository Ratchet on run `30745429578`, attempt 2, before Graphite landed merge
 `e78e5765302363aa632e9a213863114d2b430ef5`. Canonical-main run
 `30745934424` then passed the complete repository gate at that exact merge.
-This closes [[tasks#3. Conventional CLI Release Form|task 3.7a]]. The first
-registry version remains a one-time authenticated bootstrap needed to establish
-each package before its workflow-bound trusted publisher can take over. Task
-3.7 remains open until complete registry publication, registry-only
-installation, and the first OIDC-proven fixed-version release all pass.
+That rejected cohort was never completely published. Only
+`@habitat-ai/rawr-hq-sdk@0.1.0` escaped to the registry; current task 3.7a owns
+its exact retraction without a replacement package or publisher.
 
 ## Public Distribution Correction
 
@@ -5880,6 +5882,27 @@ TypeBox bridge, blueprint catalog, and runtime capabilities, plus one Oclif CLI
 that consumes the SDK and exposes the Nx initializer. Consumers install through
 one Nx command. Internal services, resources, plugins, and packages remain
 visible to the workspace graph without becoming public products.
+
+### Habitat SDK And CLI Candidate Proof
+
+The candidate starts from canonical Template `main` at `1d0734dc`. Commit
+`e4a47451` collapses the public product boundary into `@habitat-ai/sdk` and
+`@habitat-ai/cli`; commit `c5206e64` admits the vendor cohort recorded above;
+commit `b41f91b6` versions both products at `0.4.0`; and commit `4b27be5d`
+binds the supported runtime cohort into packed-consumer acceptance.
+
+The fixed `habitat-cli` Nx release group contains exactly those two projects.
+Only their manifests are public, and the CLI's only `@habitat-ai/*` dependency
+is the same-version SDK. Internal services, resources, plugins, adapters, and
+RAWR projects remain private. The release contains no controller, custom
+installer, retained release store, selector, or implementation-package cohort.
+
+The candidate passed the uncached 45-project TypeScript graph in 67 seconds,
+37 Habitat CLI tests, 47 server tests, and the installed two-tarball Oclif/Nx
+acceptance. An Nx publication dry-run selected and packed only the SDK (115
+files, 0.41 MB) and CLI (31 files, 45.79 KB). The tag workflow now invokes that
+same installed acceptance explicitly before Nx publication. Registry release,
+exact-version `nx add`, and canonical-main CI remain open.
 
 ## Settlement Oracles
 
