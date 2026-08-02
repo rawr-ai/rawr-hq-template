@@ -2,8 +2,8 @@
 
 ## Purpose
 
-- Realize rule evaluation with one invocation-scoped Grit catalog and one
-  native check process through Effect Platform Node.
+- Realize rule evaluation with invocation-scoped Grit catalogs and native
+  check processes through Effect Platform Node.
 
 ## Scope
 
@@ -23,14 +23,14 @@
 
 ## Behavior
 
-- Allocate one temporary multi-pattern catalog and execute one Grit check for
-  the whole request. Attribute findings through provider-owned pattern
-  identities, return results in caller order, then remove the catalog on every
+- Realize an ordered batch as one temporary single-pattern catalog and one
+  native Grit check per program. Execute those checks sequentially against the
+  unchanged subject set, attribute findings through provider-owned pattern
+  identities, return results in caller order, then remove each catalog on every
   exit.
-- Run the native process with `RAYON_NUM_THREADS=2`. Output capacity scales by
-  program count up to an absolute batch cap; the configured timeout is one
-  shared deadline for the native batch. Timeout, failure, and interruption
-  cancel the process group before scoped catalog cleanup.
+- Run at most one native process at a time with `RAYON_NUM_THREADS=2`. Output
+  and timeout bounds apply independently to each program. Timeout, failure, and
+  interruption cancel the active process group before scoped catalog cleanup.
 
 ## Routing
 

@@ -166,13 +166,21 @@ export function makeGritRuleEvaluationResource(
     }
     const programs = [
       materializeProgram(firstProgram, 0),
-      ...remainingPrograms.map((program, index) => materializeProgram(program, index + 1)),
+      ...remainingPrograms.map((program) => materializeProgram(program, 0)),
     ] as const;
-    return yield* Effect.scoped(
-      withScopedGritCatalog(programs, (catalog) =>
-        runGritCheck(config, catalog, programs, input.subjectPaths)
-      )
+    const evaluations = yield* Effect.forEach(
+      programs,
+      (program) =>
+        Effect.scoped(
+          withScopedGritCatalog([program], (catalog) =>
+            runGritCheck(config, catalog, [program], input.subjectPaths)
+          )
+        ),
+      { concurrency: 1 }
     );
+    return Object.freeze({
+      results: Object.freeze(evaluations.flatMap(({ results }) => results)),
+    });
   });
 
   return Object.freeze({ evaluate });
