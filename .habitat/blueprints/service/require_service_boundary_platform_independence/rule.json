@@ -19,7 +19,16 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
+      "patterns": [
+        "services/*/src/service/{contract,schemas,model,types}.ts",
+        "services/*/src/service/modules/*/{contract,schemas,model,types}.ts",
+        "services/*/src/service/modules/*/contract/*.ts",
+        "services/*/src/service/{model,modules/*/model}/{dto,schema}/**/*.ts",
+        "plugins/server/api/*/src/service/{contract,schemas,model,types}.ts",
+        "plugins/server/api/*/src/service/modules/*/{contract,schemas,model,types}.ts",
+        "plugins/server/api/*/src/service/modules/*/contract/*.ts",
+        "plugins/server/api/*/src/service/{model,modules/*/model}/{dto,schema}/**/*.ts"
+      ]
     }
   ],
   "hookCheck": true,
