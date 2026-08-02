@@ -59,8 +59,8 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
-    "@orpc/contract": "2.0.0-beta.20",
-    "@orpc/server": "2.0.0-beta.20"
+    "@orpc/contract": "2.0.0-beta.23",
+    "@orpc/server": "2.0.0-beta.23"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

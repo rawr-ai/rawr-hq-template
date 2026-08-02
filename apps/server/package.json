@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
-    "@orpc/client": "2.0.0-beta.20",
-    "@orpc/contract": "2.0.0-beta.20",
-    "@orpc/json-schema": "2.0.0-beta.20",
-    "@orpc/openapi": "2.0.0-beta.20",
-    "@orpc/server": "2.0.0-beta.20",
+    "@orpc/client": "2.0.0-beta.23",
+    "@orpc/contract": "2.0.0-beta.23",
+    "@orpc/json-schema": "2.0.0-beta.23",
+    "@orpc/openapi": "2.0.0-beta.23",
+    "@orpc/server": "2.0.0-beta.23",
     "@habitat-ai/rawr-core": "workspace:*",
     "@rawr/example-todo": "workspace:*",
     "@habitat-ai/rawr-hq-ops": "workspace:*",
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@opentelemetry/sdk-trace-base": "^2.6.0",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.13.3",
     "inngest-cli": "1.16.1",
     "typescript": "^5.9.3"
   },

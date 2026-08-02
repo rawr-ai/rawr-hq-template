@@ -428,6 +428,8 @@ async function run(
     ...options.env,
   };
   delete env.FORCE_COLOR;
+  // Release dry-runs must not turn disposable consumer initialization into a no-op.
+  delete env.NX_DRY_RUN;
 
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, {

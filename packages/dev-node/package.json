@@ -37,7 +37,7 @@
     "@habitat-ai/rawr-dev": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.13.3",
     "typescript": "^5.9.3"
   },
   "nx": {

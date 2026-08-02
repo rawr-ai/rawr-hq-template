@@ -22,14 +22,14 @@
     }
   },
   "dependencies": {
-    "@oclif/core": "^4.8.0",
+    "@oclif/core": "^4.13.2",
     "@habitat-ai/rawr-core": "workspace:*",
     "@habitat-ai/rawr-hq-sdk": "workspace:*",
     "@habitat-ai/rawr-hyperresearch-codex": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.14.0",
-    "oclif": "4.23.27",
+    "@types/node": "^24.13.3",
+    "oclif": "4.23.29",
     "typescript": "^5.9.3"
   },
   "scripts": {

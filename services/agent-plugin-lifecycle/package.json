@@ -30,10 +30,10 @@
   "dependencies": {
     "@noble/hashes": "2.2.0",
     "@opentelemetry/api": "^1.9.0",
-    "@orpc/client": "2.0.0-beta.20",
-    "@orpc/contract": "2.0.0-beta.20",
-    "@orpc/experimental-effect": "2.0.0-beta.20",
-    "@orpc/server": "2.0.0-beta.20",
+    "@orpc/client": "2.0.0-beta.23",
+    "@orpc/contract": "2.0.0-beta.23",
+    "@orpc/experimental-effect": "2.0.0-beta.23",
+    "@orpc/server": "2.0.0-beta.23",
     "@habitat-ai/rawr-hq-sdk": "workspace:*",
     "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
     "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
@@ -47,7 +47,7 @@
     "@opentelemetry/context-async-hooks": "^2.6.0",
     "@opentelemetry/sdk-trace-base": "^2.6.0",
     "@types/bun": "^1.2.10",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.13.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },

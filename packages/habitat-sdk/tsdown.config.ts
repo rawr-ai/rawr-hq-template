@@ -12,6 +12,7 @@ export default defineConfig({
   outDir: "dist",
   format: "esm",
   platform: "node",
+  target: "node24.11.0",
   fixedExtension: false,
   dts: {
     resolver: "tsc",
