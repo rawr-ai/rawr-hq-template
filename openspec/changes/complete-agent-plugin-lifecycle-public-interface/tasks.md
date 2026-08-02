@@ -1986,14 +1986,20 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   evaluation may proceed only as another distribution form of the same CLI,
   after proving Oclif command discovery and Nx plugin behavior. Prove an
   isolated installed consumer before publication.
-- [ ] 5.7e22e1 Replace the first-release local npm write challenge with one
+- [x] 5.7e22e1 Replace the first-release local npm write challenge with one
   tag-triggered GitHub Actions trusted-publishing workflow. Map each qualified
   release-tag pattern to exactly its same-named Nx release group so one run can
   publish only one group; a coordinated release pushes and settles those tags
   in the declared group order. Keep Nx as release orchestrator, use npm's
   hosted OIDC identity rather than a stored write token, and bind all seven
   `@habitat-ai` packages to the one landed workflow. Preserve the repository
-  ratchet as a prerequisite and add no release wrapper.
+  ratchet as a prerequisite and add no release wrapper. Template PR #751
+  landed the workflow on canonical `main` at
+  `37c8eb2a874e790bfd5991976fd30e81d137a442`; PR #752 landed the first
+  trusted-published release set at
+  `2064a431032ac0600e805ddafba6fd17a6b7deb4`. The three ordered tag runs
+  `30730782469`, `30730814965`, and `30730880516` published exactly their
+  selected Nx groups, and npm exposes SLSA provenance for all seven packages.
 - [ ] 5.7e22f Apply the released initializer to RAWR HQ-Template as a normal
   consumer. Before that cutover, make the Template-owned catalog, check
   operation, and Nx plugin execute and project every still-live version-two
