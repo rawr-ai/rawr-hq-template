@@ -1,154 +1,147 @@
 ## Why
 
-The oRPC and Inngest investigations independently built nearly identical
-Effect-based evaluation platforms for exact-environment commands, OpenShell
-resources, Langfuse experiments, Codex tracing, operational events, artifact
-capture, and phase-local continuation. The duplicate implementations now
-diverge in configuration, vendor pins, tracing features, and recovery behavior.
+The oRPC and Inngest studies independently built enough execution,
+observation, recovery, and evaluation machinery to prove a common product
+need: a trusted operator needs to launch, recover, inspect, evaluate, and
+preserve research experiment cells without each study becoming its own runtime
+or provider integrator.
 
-The subject vaults are the correct authorities for research content and frozen
-evidence, but they are the wrong authorities for a reusable operational plane.
-RAWR HQ-Template already defines the service, resource, provider, runtime, and
-package kinds needed to own that plane. Consolidating through those existing
-kinds removes duplicate ownership without moving research truth or creating a
-second framework.
+The preserved implementation at
+`223835fccedcb80523b761c571130852bdb106a2` proved useful cell and artifact
+behavior, but it placed the operational plane in `@rawr/research-sdk`. That is
+the wrong architectural kind. A package cannot own live resources, provider
+selection, durable domain state, or application composition. The subsequent
+service recut corrected part of that error but still let study consumers shadow
+app/profile authority and treated cell persistence as a resource concern.
 
-The deployment is primarily one trusted local operator running one locally
-provisioned service/runtime, with concurrent distinct cells and ordinary
-process crash, interruption, and restart. Optional Railway deployment does not
-turn the local host, repository, Git/Bun installation, configuration, package
-store, or installed dependencies into adversarial or multi-tenant subjects.
-Solver/evaluator isolation still protects benchmark validity; the platform does
-not defend against a malicious operator or ambient toolchain.
+RAWR already has the right kinds. A service owns domain truth. Resources declare
+provisionable capabilities. Providers implement them. An app selects a CLI
+projection and runtime profile. Runtime realization validates provider coverage,
+provisions the process, binds the service, and supplies the exact invocation
+context. This change expresses research experiments through those existing
+kinds rather than creating another platform inside a package.
 
 ## What Changes
 
-- Add one full Habitat-law `research-experiment` service under `services/`.
-  Apply the existing service blueprint for structure and oRPC relationships:
-  TypeBox schemas, oRPC contracts and routers, and effect-oRPC implementation.
-  Use current `services/agent-plugin-lifecycle` only as vendor-closure,
-  behavior, and resource/provider evidence where it conforms to that blueprint.
-- Make that service the semantic owner of cell identity, preparation,
-  execution, observation, evaluation, re-entry, and authoritative write
-  ordering. Lanes select and schedule cells but do not sequence providers.
-- Declare command, Git artifact, sandbox, agent, observation, and
-  operational-event capabilities, plus durable cell-state persistence, as
-  resources. Concrete Bun, Git, OpenShell, Codex, Langfuse,
-  Codex-Langfuse, Codex-OpenShell, EVLog, and cell-state implementations live
-  under resource-local providers and are provisioned by the process runtime.
-  The service owns experiment-domain write ordering and interpretation while
-  consuming the injected persistence port; lanes do not implement persistence.
-- Keep ordinary package build/verification as compatibility tooling outside
-  the running service, using ordinary Bun pack, frozen install, and consumer
-  smoke checks rather than a custom dependency or installed-state authority.
-- Attempt solver-terminal adoption before observation acquisition. On a miss,
-  derive deterministic provider lookup identities from the exact cell and
-  attempt, persist them in one local per-cell `Running` record before any
-  acquisition, and require providers to create or adopt subjects under those
-  identities. Persist the submitted artifact and terminal before verification,
-  then persist evaluation before telemetry projection.
-- Separate scoreable agent outcomes from infrastructure and evaluator failures.
-- Keep a running cell's provider lookup identities, observation, and
-  sandbox/process details in the same record. A retry asks the owning provider
-  whether the subject is live, exited with a recoverable workspace or outcome,
-  or absent. A live subject returns already-running; a recoverable exited
-  subject resumes artifact capture without rerunning the solver; an absent
-  subject is reconciled before execution resumes. Unconfirmed cleanup leaves
-  the cell incomplete rather than authorizing another execution.
-- Repartition the current `packages/research-sdk` implementation. Experiment
-  contracts and laws move into the service; live command and Git behavior moves
-  into resources/providers; ordinary Bun package compatibility remains outside
-  the running service; package-owned runtime acquisition, `Context.Service`,
-  `ManagedRuntime`, manual TypeBox decoding, custom capability facades, and
-  obsolete barrels are deleted.
-- Retain a shared package only for a runtime-agnostic helper with a proved
-  non-service consumer. The current tree has no such whole-file survivor, so
-  the `@rawr/research-sdk` package identity is removed after relocation.
-- Add only the Habitat topology and dependency-direction rules that protect
-  these actual boundaries.
-- Express the retained oRPC and Inngest studies through lane-owned bindings and
-  configuration against the same Template-owned service contract and resource
-  ports.
-- Remove or archive superseded live SDK copies only after both lane bindings
-  pass deterministic compatibility checks.
+- Add one `research-experiment` service with one `cells` module. It owns cell
+  identity, frozen inputs, state schema and migrations, repository semantics,
+  transition policy, recovery, submitted artifacts, evaluation, and
+  authoritative write ordering.
+- Start with two service operations only:
+  - `cells.run` launches or resumes one exact cell through every reachable
+    incomplete boundary until it is evaluated or reaches the first typed
+    refusal or recoverable infrastructure failure.
+  - `cells.inspect` reads durable cell truth and correlation identifiers without
+    changing the cell.
+- Keep preparation, execution, observation, artifact capture, verification, and
+  evaluation as internal handler sequencing, policies, repositories, and ports,
+  not public stage APIs.
+- Add one CLI command plugin that projects `run` and `inspect` into the existing
+  HQ app. The plugin declares service use and owns CLI input/output policy; it
+  does not own experiment truth or provider wiring.
+- Extend the HQ app composition to select that plugin. An HQ runtime profile
+  selects providers and config sources. Runtime compilation validates coverage
+  and dependencies; bootgraph and the Effect kernel provision providers; the
+  process runtime binds and projects the service; and the CLI adapter mounts the
+  handler with the narrowed invocation context.
+- Declare only genuine provisionable resources: persistence substrate,
+  filesystem, process/Bun execution, native Git, OpenShell sandbox, Codex
+  agent, and observation/telemetry. Providers own concrete acquisition,
+  release, vendor mechanics, and redacted diagnostics. Only providers that own
+  recoverable external subjects expose resource-specific
+  create-or-adopt/inspect behavior.
+- Keep the cell repository, migrations, and legal transitions in the service.
+  A database or filesystem resource provides physical capability only; it does
+  not know `Running`, `SolverTerminal`, or `Evaluated`.
+- Preserve monotonic local state:
+  `Missing -> Running -> SolverTerminal -> Evaluated`. Persist deterministic
+  cell+attempt provider lookup identities before acquisition. On re-entry,
+  the owning recoverable-subject provider classifies its subject as live,
+  exited-recoverable, or absent so a recoverable solver result is never rerun.
+- Persist the solver terminal, and the submitted artifact when present, before
+  verification. Persist evaluation before non-authoritative telemetry
+  projection.
+- Reconstruct evaluation from the persisted terminal in a fresh
+  solver-inaccessible subject/workspace. Hidden verifier and rubric inputs never
+  enter the solver context.
+- Keep TypeBox as schema/type/validation authority, native oRPC as
+  contract/router/context/error authority, Effect as execution and resource
+  safety authority, and effect-oRPC only as their adaptation boundary. Use the
+  canonical Template schema bridge; add no research-local decoder or bridge.
+- Re-derive the surviving behavior from `packages/research-sdk` into the
+  service and resources, then delete that package and its identity after both
+  study compatibility cells pass. No current production file survives
+  whole-file as a justified cold shared package.
+- Keep oRPC and Inngest studies outside Template. Study owners retain cases,
+  prompts, treatments, agent/model allocation, schedules, rubrics, hidden
+  checks, aggregates, evidence, interpretation, and history.
 
 ## Explicitly Outside The Change
 
 - No model, reviewer, calibration, or other usage-consuming trial.
-- No provider/profile, gateway lifecycle/configuration, image, skill, Personal
-  RAWR HQ, or release mutation. A deterministic OpenShell check may acquire and
-  delete one explicitly named, provider-free sandbox against a caller-supplied
-  running gateway; it neither configures nor owns that gateway.
-- No migration of prompts, rubrics, packets, fixtures, historical results, or
-  evidence into Template.
-- No generic scheduler around Langfuse Experiments.
-- No controller, workflow engine, service-owned general CAS or database,
-  evidence authority, receipt graph, hosted control plane, package manager, or
-  custom retry control plane.
-- No bespoke procedure, router, context, schema, decoder, Effect runtime, or
-  provider framework beside the existing Habitat, oRPC, TypeBox, effect-oRPC,
-  resource, provider, and runtime stacks.
-- No distributed attempt protocol, receipt graph, package attestation system,
-  hostile-local Git/Bun policy, secure mode, or deferred hardening profile.
-- No oRPC-as-subject, Inngest-as-subject, or skill-efficacy semantics in the
-  shared service.
-- No new shared package without a proved runtime-agnostic consumer outside the
-  service.
+- No provider account, auth home, gateway, image, skill, Personal RAWR HQ, or
+  study evidence mutation.
+- No research-specific app, scheduler, gateway, server surface, provider
+  registry, evidence store, hosted control plane, package manager, workflow
+  engine, receipt graph, or distributed coordination protocol.
+- No study-owned provider selection, persistence implementation, runtime
+  composition, or shadow provider calls.
+- No package-owned runtime, managed runtime, live service facade, callback
+  capability registry, manual schema decoding, portability layer, or
+  research-local TypeBox bridge.
+- No public Prepare/Execute/Observe/Evaluate stage API.
+- No automatic Inngest/async projection merely because one consumer studies
+  Inngest. A durable async surface must earn its own product requirement.
+- No composite Codex-OpenShell or Codex-observation provider unless a single
+  inseparable native lifecycle/auth transaction is independently proved.
+- No migration or relocation of study cases, prompts, rubrics, results, or
+  frozen evidence.
+- No source implementation before the complete activated Habitat service
+  packet and production app-profile/runtime provisioning are both canonical.
 
 ## Impact
 
-- Template gains one ordinary service plus the minimum resource/provider
-  implementations needed by both studies. The invalid package-shaped runtime
-  is removed rather than preserved behind a new facade.
-- The oRPC and Inngest vaults retain all research ownership and consume an
-  ordinary locally packed service/resource closure through explicit bindings
-  and standard package interfaces.
-- Frozen historical/runtime bytes remain path-stable provenance and are never
-  reinterpreted as current service authority.
-- The research-experiment service/resource closure neither imports nor depends
-  on Template lifecycle/controller packages. Simplification or deletion of
-  that system remains owned by the primary Template lane.
-- The service uses the exact accepted oRPC, TypeBox, Effect, and effect-oRPC
-  closure. Resource providers and the process runtime own acquisition and
-  release; live Effect/resource values are not re-exported into unrelated
-  packages.
+- Template gains one ordinary service, one CLI projection, app/profile
+  selection facts, and the minimum generic resource/provider implementations
+  required by the service.
+- Study owners call the service through the HQ projection or generated service
+  boundary and retain all research meaning. They do not install a custom
+  research runtime or wire providers.
+- `packages/research-sdk` becomes source-quarry evidence and is deleted after
+  behaviorally equivalent service/resource slices and both model-free study
+  checks are green.
+- Optional Railway deployment changes process placement only. It does not
+  introduce a second semantic app or an adversarial local-host threat model.
 
-## Integration Condition
+## Implementation Gate
 
-The primary Template lane is actively replacing the rejected custom
-controller/distribution system on a separate Graphite stack. The accepted frame
-has been restacked onto checkpoint
-`911f319c3d3abdab5255d831e8e16ee16543c3bf`; this change branch MUST restack again
-before landing if the accepted upstream stack changes. This change does not
-preserve, replace, or depend on the retiring controller. The named `3beb4936`
-service is not runtime-provisioning authority. Source migration MUST wait for
-an exact accepted upstream commit that contains the full service blueprint
-realization and a legal process-runtime owner that selects/provisions resource
-providers without host or lane shadow wiring. Template's separately owned
-Effect/vendor migration is also a pre-landing restack condition: after that
-migration becomes authoritative, this change MUST align its direct pins with the
-accepted Template closure and pass frozen install plus behavior tests. This lane
-does not upgrade Template root dependencies or invent the missing runtime stack.
-Commit `faa320f1da03d83432d09c06c7445b1ae9a21679` is the current submitted
-Habitat service source law, not a runtime-provisioning restack target.
-The accepted upstream MUST also contain the primary-owned canonical TypeBox
-bridge correction and behavioral admission before research service contracts
-consume that bridge. For admitted TypeBox `1.3.6`, the bridge emits
-message-only Standard Schema issues and always omits `Issue.path`; this lane
-does not copy or repair it locally.
+The docs checkpoint may be reviewed and preserved before source. Source remains
+held until both prerequisites are present in named canonical Template commits:
+
+1. the complete Habitat service packet is activated in the repository source
+   law and proves the current service spine, model ownership, router
+   authorship, context funnel, contract, error, and module-isolation rules;
+2. production app/profile provider selection, provider coverage/dependency
+   validation, bootgraph provisioning, process-runtime service binding, and
+   CLI invocation context are implemented and green.
+
+Canonical Template already contains the corrected TypeBox bridge and the
+admitted oRPC/TypeBox/Effect/effect-oRPC dependency closure. Active Habitat
+branches and merged runtime-realization simulations are design evidence only;
+they do not satisfy either production prerequisite. The preserved draft PR
+#531 is history and source quarry, not a landing vehicle.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `research-experiment-service`: provides one Template-owned Habitat-law
-  research-experiment service and its provisioned resource/provider closure,
-  with durable local continuation and ordinary packed lane compatibility,
-  without owning study content, evidence, scheduling policy, or release
-  authority.
+- `research-experiment-service`: provides the HQ-composed service capability
+  for running and inspecting monotonic research cells through
+  runtime-provisioned generic resources, without owning study content,
+  schedules, evidence, provider selection, or application runtime.
 
 ## Related
 
-- Target structure and migration: [[design]].
+- System design and transition: [[design]].
 - Normative requirements: [[specs/research-experiment-service/spec]].
-- Shared progress record: [[README]].
+- Coordination record: [[README]].

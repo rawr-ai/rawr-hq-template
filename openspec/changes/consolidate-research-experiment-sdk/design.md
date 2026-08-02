@@ -1,573 +1,492 @@
 ## Frame
 
-### Objective
+### Product Outcome
 
-Create one reusable research-experiment service that lets several
-investigations run isolated cells, preserve submitted artifacts, correlate
-observations, and evaluate outcomes without duplicating provider mechanics or
-surrendering study-specific judgment.
+The product is a small HQ platform capability for launching, recovering,
+inspecting, evaluating, and preserving research experiment cells. It is not an
+SDK package and not a research-specific application.
 
-This is a service consolidation, not an SDK framework project. The service owns
-the experiment domain. Resources declare the provisionable capabilities it
-needs. Providers implement those resources. The process runtime provisions
-them. A shared package exists only when a runtime-agnostic helper has a proved
-consumer outside the service.
+One `research-experiment` service owns the cell domain. One CLI plugin projects
+the service into the existing HQ app. The HQ app selects the projection and a
+runtime profile. Runtime realization validates and provisions the selected
+providers, binds the service, and supplies the exact invocation context.
+Research studies remain exterior consumers.
 
 ### Deployment Law
 
-The normal deployment is one trusted local operator and one locally provisioned
-service/runtime. It may run distinct cells concurrently and must tolerate
-ordinary process interruption, crash, and restart. Optional Railway deployment
-does not imply a hostile local host or multi-tenant control plane.
+The primary deployment is one trusted local operator using one HQ app/runtime.
+Distinct cells may execute concurrently. The system must tolerate ordinary
+process interruption, crash, and restart. Optional Railway deployment changes
+process placement only; it does not authorize multiple writers, create a new
+semantic app, or introduce an adversarial local-host threat model.
 
-Solver and evaluator separation protects benchmark validity. The repository,
-Git/Bun installation, configuration, package store, and installed dependencies
-are trusted operating inputs. Re-entry prevents accidental duplicate execution
-of one cell and resumes completed boundaries; it is not distributed consensus,
-supply-chain attestation, or a multi-writer protocol.
+Solver and evaluator separation protects benchmark validity. The host
+repository, ordinary Git/Bun installation, configuration, package store, and
+installed dependencies are trusted operating inputs. Re-entry prevents
+accidental duplicate same-cell work and resumes completed boundaries. It is not
+distributed consensus, supply-chain attestation, or a multi-writer protocol.
 
 ### Hard Core
 
-1. Local frozen study material owns input truth.
-2. A submitted artifact, not solver prose or telemetry, is the product output.
-3. Solver execution, artifact capture, verification, observation, and judgment
-   remain distinguishable authorities.
-4. Agent failure is study data. Infrastructure failure is a typed failure of
-   the service or resource boundary that owns it.
-5. A valid solver terminal cannot be erased or rerun by later verification,
-   review, or telemetry failure.
-6. The service owns per-cell semantics and authoritative write ordering.
-7. Resources and providers own acquisition and vendor mechanics, never study
-   policy or product correctness.
-8. Lanes own cases, prompts, treatments, scheduling, rubrics, interpretation,
-   aggregation, evidence, and history.
+1. One frozen identity and input govern a cell instance.
+2. The submitted artifact, not solver prose or telemetry, is the product
+   output.
+3. Durable cell truth advances monotonically:
+   `Missing -> Running -> SolverTerminal -> Evaluated`.
+4. Provider lookup identities are durable before provider acquisition.
+5. Recoverable solver work is never rerun.
+6. The solver terminal is durable before verification; evaluation is durable
+   before telemetry projection.
+7. The service owns domain state, migrations, repositories, write ordering,
+   reconciliation policy, and terminal/evaluation immutability.
+8. Resources and providers own live capability mechanics, not experiment
+   truth.
+9. Study owners retain study meaning, scheduling, evidence, and
+   interpretation.
+10. Telemetry is correlated observation, never cell truth.
 
 ### Exterior
 
-The shared operational plane does not own subject corpora, profile allocation,
-model catalogs, rubrics, release disposition, evidence retention, gateway
-lifecycle, or a scheduler around Langfuse Experiments.
+The capability does not own cases, prompts, treatments, model/agent allocation,
+run schedules, rubrics, hidden checks, aggregate interpretation, evidence,
+history, release disposition, provider accounts, gateway lifecycle, or model
+catalogs.
 
-## Existing Architecture Authority
+## System Map
 
-The implementation MUST apply the repository's existing service kind rather
-than define another service abstraction.
+### Ontology Ledger
 
-Source authority for the BUILD cut is:
+| Kind | Identity and owner | Owns | Must not own |
+| --- | --- | --- | --- |
+| app | existing HQ app | product membership, selected projections, runtime profiles, provider selections, entrypoints, process-role shape | service truth, provider implementation, acquisition |
+| runtime profile | HQ app-owned selection | provider/config selection facts for a process | acquisition, domain policy |
+| runtime realization | canonical runtime compiler, bootgraph, Effect kernel, and process runtime | coverage/dependency validation, acquisition order, one process runtime, service binding, invocation context, release | app membership, study semantics, service writes |
+| plugin | one CLI projection | CLI contract, command policy, service-use declaration, native command projection | experiment state, providers, persistence, app membership |
+| service | `research-experiment` | cell contracts, schemas, repository, migrations, transitions, recovery and evaluation sequencing, durable evaluation semantics, refusals, authoritative writes | provider selection/acquisition, CLI shape, rubric/check meaning, study interpretation |
+| module | service-owned `cells` subdomain | `run` and `inspect` operations plus narrowed DTO/policy/repository meaning | root config/dependency bags, sibling internals |
+| resource | provisionable capability contract | stable resource identity, value shape, lifetime/config/diagnostic contract | provider implementation, service domain state |
+| provider | resource-local implementation | acquisition/release, native client and resource-specific mechanics, health, redacted diagnostics | selection, cell transitions, study policy, a generic provider protocol |
+| package | cold library only after a second independent consumer proves it | runtime-agnostic declarations or helpers | live context, state, providers, service execution |
+| study owner | oRPC or Inngest research vault/program | cases, inputs, treatments, model allocation, schedules, rubrics, hidden checks, results, evidence, interpretation | provider wiring, persistence implementation, runtime composition |
 
-- Habitat service source law: `.habitat/blueprints/service` at Template commit
-  `faa320f1da03d83432d09c06c7445b1ae9a21679`
-- current closure/behavior reference:
-  `services/agent-plugin-lifecycle` at Template commit
-  `3beb49360968ba7f1ebec1bfe89f572972026306`
-- exact service closure at that commit: oRPC `1.14.8`, TypeBox `1.3.6`,
-  Effect `4.0.0-beta.100`, and `effect-orpc@1.0.0-effect-v4.8`
-- current resource/provider reference:
-  `resources/agent-plugin-package-output`
+No current `packages/research-sdk` production file qualifies whole-file as a
+cold, independently consumed package boundary.
 
-The ordinary project shell requires `AGENTS.md`, package/Nx/TypeScript/test
-configuration, and public `src/{index,client,router}.ts` surfaces. Those files
-are project requirements, not part of Habitat's closed service-spine scope.
-Inside that shell, Habitat requires the generic root and module shells:
+### Context Funnel
+
+Cold realization:
 
 ```text
-services/research-experiment/src/service/
-  base.ts
-  contract.ts
-  impl.ts
-  router.ts
-  modules/
-    <module>/
-      contract.ts
-      module.ts
-      router.ts
+research-experiment declares resource requirements
+  -> CLI command plugin declares use of research-experiment
+  -> HQ app
+     selects plugin + runtime profile + process role
+  -> runtime compiler
+     plans service closure + validates provider coverage/dependencies
+  -> bootgraph + Effect kernel
+     provision selected resource providers
+  -> process runtime
+     binds/projects research-experiment + hands off its client
+  -> CLI adapter/harness
+     mounts the command handler
 ```
 
-The research service selects one `cells` module within that legal shell and
-uses its allowed `model/dto` and `model/policy` directories for the run-cell,
-terminal, evaluation, observation, and pure policy authorities.
+Invocation:
 
-The source law owns these direct anchors and first-hop relations:
+```text
+operator + study-owned request data
+  -> mounted CLI handler
+  -> invocation-bound research-experiment client
+  -> cells module
+  -> native oRPC run or inspect handler
+```
 
-- `base.ts` is the standalone root implementer and directly exports
-  `base = implementEffect(contract, Layer.empty)`. The `Layer.empty` choice and
-  one-root-implementer invariant are research-service behavior requirements;
-  the source law proves the visible `base` anchor and native constructor. This
-  standalone root implementer MUST NOT use `.$context(...)`.
-- root and module `contract.ts` directly export `contract`; the root imports
-  module contracts only at that composition point.
-- `impl.ts` imports `base` and directly exports `service = base` or
-  `service = base.use(...)`, attaching independently decorated native
-  middleware rather than creating a second implementer.
-- module `module.ts` imports the root `service` and directly exports
-  `module = service.cells` or a native `.use(...)` continuation from it.
-- root and module `router.ts` directly export `router`; the root imports module
-  routers only at that composition point.
-- native middleware projects runtime-provisioned dependencies into the narrow
-  module/leaf execution context before `.effect(...)` handlers consume them;
-  the source law permits native context middleware, while leaf handlers do not
-  reach through a root `context.deps` bag. Lane data/configuration/policy enters
-  through the TypeBox service boundary, not executable context hooks.
-- modules inherit the root through the `service`/`module` anchors and do not
-  import current-owner root `base`, context, or root middleware aliases;
-  middleware is a named direct native `const`, never a default export.
+Every descent narrows the authoring/type view. Native oRPC context may remain
+additive at runtime; exact service and module views prevent downstream code
+from accessing wider keys without a custom context-stripping wrapper. The CLI
+plugin does not receive raw providers. The service does not receive the
+app/profile selection bag. The cells module does not reopen root dependencies.
+Handlers receive TypeBox-admitted input and the exact module context only.
 
-Within that lawful shell, the research service deliberately composes the root
-contract with `eoc.router`, the root router with `service.router(...)`, and the
-single cells-module router with `module.run.effect(...)`. TypeScript and
-behavioral tests own assignability, completeness, context narrowing, and
-request isolation; Habitat does not simulate those relations.
+Native oRPC owns contracts, routers, middleware, context, declared errors,
+transport, and clients. TypeBox owns schemas, structural validation, and
+derived TypeScript types. Effect owns typed execution, interruption, and
+resource safety. Effect-oRPC adapts native oRPC handlers to Effect; it is not a
+second router, context, schema, or runtime authority. The canonical Template
+TypeBox bridge is the only Standard Schema bridge.
 
-The remaining contract and package decisions are:
+### Public Operations
 
-- module `contract.ts` imports `eoc` directly, attaches private
-  `ORPCTaggedError` classes, and adapts ordinary TypeBox schemas with the
-  Habitat-required `standard` import from `#adapters/typebox`. That import MUST
-  resolve to the canonical Template bridge already implemented in
-  `packages/hq-sdk/src/orpc/schema.ts`, never to a research-local adapter.
-  TypeBox `1.3.6` does not supply Standard Schema itself. If the authoritative
-  restack still exposes only `schema`/`typeBoxStandardSchema`, BUILD may add only
-  the missing canonical `standard` alias/export and package import mapping at
-  the existing Template authority before scaffolding the service. Before any
-  research contract consumes it, the primary Template owner MUST also correct
-  and behaviorally admit the bridge. At admitted TypeBox `1.3.6`, every native
-  error surface exposes the same raw, lossy `instancePath`; the canonical
-  adapter therefore follows the official `Schema.Validator` Check/Errors
-  structure but emits message-only Standard Schema issues and omits
-  `Issue.path` for every error. It deletes URI decoding and all custom path
-  parsing/traversal. Exact paths may return only when a later admitted upstream
-  exposes escaped pointers or structured segments. Tests cover `%`, `%2F`, `/`,
-  `~`, `~0`, `~1`, nested objects, numeric object keys, and arrays, proving
-  total validation and message fidelity with path absent. The bridge delegates
-  validation and translates issues; it does not decode, transform, clone,
-  freeze, normalize, or compose schemas. It preserves `__typebox` only if the
-  existing OpenAPI projection has a proved consumer.
-- procedure implementations use effect-oRPC `.effect(...)`.
-- public service errors use the existing oRPC/effect-oRPC error authority.
-- `src/router.ts` re-exports the service router, `src/client.ts` uses the
-  existing `defineServicePackage(router)` boundary, and `src/index.ts` plus
-  `package.json` exports expose only the governed router/client/contract
-  surfaces. This ordinary service package shell acquires no runtime resources.
+The service exposes one `cells` module with two callable operations:
 
-No `ProcedureContract`, capability registry, custom router, package-owned
-`Context.Service`, or package-owned `ManagedRuntime` is added.
+- `cells.run`: start or resume one exact cell, advance every reachable
+  incomplete boundary until `Evaluated` or the first typed refusal/recoverable
+  infrastructure failure, and return durable truth, study outcomes, and
+  correlation identifiers.
+- `cells.inspect`: read the durable state and correlations for one exact cell.
+  It performs no transition and never acquires, cancels, cleans, or replaces a
+  provider subject.
 
-Habitat is read-only and has no service generator. BUILD applies these packets
-manually:
+The CLI plugin projects both operations. Whether another plugin later projects
+the same service to an internal API or async host is a separate product
+decision. Service callability does not itself make the operation public on a
+network.
 
-- `require_service_spine_topology`
-- `require_service_anchor_exports`
-- `require_service_context_boundaries`
-- `require_service_contract_authority`
-- `require_service_module_isolation`
-- `require_service_orpc_composition`
-- `require_orpc_error_authority`
-- the existing agent-router placement and shape rules
+Fresh provider/process status is runtime diagnostic data. The CLI may display a
+redacted runtime diagnostic read model beside `cells.inspect`, but the
+diagnostic does not alter or outrank the service result.
 
-The current `agent-plugin-lifecycle` service proves the exact dependency
-closure and selected behavior/resource patterns, but it is not relationship or
-structural authority: its older layout and `.$context(...)` implementation
-conflict with the submitted source law. Commit `faa320f1` governs structure and
-oRPC relationships only; it does not prove process-runtime provider
-provisioning.
+### Observable Flows
 
-## Deletion-First Repartition
+`cells.run`:
 
-The current `packages/research-sdk` tree is a source quarry, not the destination.
-No current production module qualifies whole-file as runtime-agnostic
-cross-service package support.
+```text
+validate exact cell request
+  -> read service-owned cell repository
+     Evaluated      -> adopt; reconcile recorded cleanup; optionally project/read back
+     SolverTerminal -> adopt; reconcile recorded cleanup; evaluate and persist Evaluated
+     Running        -> inspect persisted provider lookup identities
+     Missing        -> persist Running + deterministic lookup identities
+  -> recoverable-subject providers create or adopt their native subjects
+  -> execute or recover agent outcome
+  -> capture a submitted artifact when one exists
+  -> persist Submitted or NoSubmission SolverTerminal
+  -> reconstruct a fresh solver-inaccessible evaluator subject
+  -> apply only the submitted artifact and hidden study verifier/rubric inputs
+  -> evaluate through service sequencing and provisioned resources
+  -> persist Evaluated
+  -> project non-authoritative telemetry
+  -> return durable truth and correlations
+```
 
-| Current surface | Destination |
-| --- | --- |
-| direct cell, input, terminal, evaluation, and observation identities | service-owned TypeBox DTO schemas and inferred types |
-| terminal adoption, local re-entry, and publication ordering | service `modules/cells/model/policy` |
-| `core/capabilities.ts` | delete; normal oRPC procedures and typed resource ports replace it |
-| distributed attempt fences, stage envelopes, predecessor/digest graphs, orphan/residue DAGs | delete; one local per-cell record replaces them |
-| terminal/evaluation persistence | service procedure flow plus a durable cell-state resource/provider |
-| `contracts/schema.ts` | delete outright; use ordinary TypeBox schemas, native checks, and the Habitat-admitted alias to the canonical `@rawr/hq-sdk` Standard Schema bridge |
-| `contracts/config.ts` | split into service request/config schemas and resource-owned configuration |
-| `runtime/command.ts` | command resource contract plus concrete provider |
-| `runtime/managed-runtime.ts` | delete; the process runtime provisions provider resources |
-| native Git materialize/capture/apply behavior | Git-artifact resource/provider |
-| ordinary Bun pack/install/smoke behavior | BUILD compatibility tooling outside the running service |
-| `installed-package.ts`, `package-materialization.ts`, embedded manifests, custom Bun lock/runtime graphs | delete; historical source-quarry code only |
-| package barrels, adapter registry shape, package protocol identity | delete |
+`cells.inspect`:
 
-TypeBox and oRPC own admitted JSON data. There is no public or private
-portability traversal, schema traversal, custom decoder, clone/freeze
-subsystem, duplicate error model, or research-local Standard Schema bridge.
+```text
+validate exact cell identity
+  -> read service-owned repository
+  -> return Missing | Running | SolverTerminal | Evaluated
+     plus durable provider-neutral locators/correlations
+  -> optional CLI display joins a separate redacted runtime diagnostic snapshot
+```
 
-`@rawr/research-sdk` is removed after the accepted behavior has moved and both
-lane compatibility checks pass. If BUILD discovers a genuinely
-runtime-agnostic helper with a non-service consumer, that one helper may move to
-an existing appropriate package or a separately justified package. Discovery
-does not preserve the current package by default.
+The service handler remains the operation authoring site. Internal policies,
+repositories, and ports retain only independently meaningful decisions or
+outside capability calls. There is no detached generic stage runner that
+reconstructs the handler environment.
 
-### Local Deployment Disposition
+## Topology Decision
 
-| Area | Preserve | Delete |
+### Alternatives
+
+| Family | Best version | Decision |
 | --- | --- | --- |
-| cell state | one local `Running -> SolverTerminal -> Evaluated` record; terminal/evaluation adoption | attempt fences, stage/predecessor graphs, orphan/residue DAGs, distributed acknowledgement states |
-| Git | native revision/subtree materialization, patch SHA, fresh apply, product-tree equality | hostile config/attribute policy, provider envelopes, regenerated-patch authority |
-| Bun | clean staging, pack, atomic tarball SHA/length, frozen consumer smoke, cleanup | embedded manifests, custom lock/placement/content graphs, collision and closure-admission protocols |
-| observation | one recorded trace/observation subject, local projection status, optional/run-level readback | global namespace cleanup and unconditional remote-readback correctness gates |
-| vendors | direct pins, checked-in lockfile, frozen install, behavior tests | bespoke transitive re-admission and upstream Git-object provenance manifests |
+| A. reduced SDK monolith | a cold package defines cell contracts and a host supplies ports | reject: the existing package also owns execution, state, and runtime semantics; reducing its surface does not give a package service authority or a second independent consumer |
+| B. dedicated research platform/app | an independently deployable research product selects its own projections, profiles, and process roles | reject now: two study consumers do not establish an independent product identity, lifecycle, security boundary, or deployment need |
+| C. service with study-owned binding | a service owns cell semantics while each study binds persistence and providers | reject: studies would shadow app/profile/runtime authority and duplicate the operational composition this change exists to remove |
+| D. service-centered HQ composition | one service, one CLI projection, existing HQ app/profile/runtime, generic resources/providers | choose: it assigns every behavior to an existing architectural kind and leaves study meaning exterior |
 
-Commit `ce282cb062f0d4bdeb80117a021aa0c766537991` remains historical
-source-quarry and behavior evidence only. No row above is a mandate to port its
-implementation or test suite wholesale.
+### Decision And Growth Falsifiers
 
-## Service Boundary
+Choose D.
 
-### Public Domain
+- Promote to a dedicated app only if research operations require an independent
+  product identity, deployment/security boundary, lifecycle, or role set that
+  cannot be expressed by the HQ app.
+- Add a durable async projection only if a run must outlive the request/process
+  and an explicit product operation needs durable scheduling, retry, wait, or
+  cancellation. Studying Inngest does not satisfy this condition.
+- Add an operation journal only if the monotonic service record cannot recover
+  a demonstrated local write/crash ambiguity without losing accepted intent or
+  rerunning completed work.
+- Add a composite provider only if one vendor-native lifecycle or auth
+  transaction must acquire/release two resource identities atomically and
+  cannot be represented through provider dependencies plus service sequencing.
+- Extract a package only when a second independent consumer needs the same cold
+  contract/helper without importing the service or runtime values.
+- Expand `cells.inspect` only if durable truth plus runtime diagnostics cannot
+  answer a named operator decision. Inspection must remain read-only.
 
-The initial service has one semantic module, `cells`, and one public procedure,
-`cells.run`. This is an ordinary oRPC procedure, not a generic stage facade.
-Its TypeBox input identifies one exact frozen cell invocation and its
-lane-owned policy references. Its output is a tagged result describing the
-adopted or newly completed solver terminal, evaluation, observation
-projection, and any incomplete downstream boundary.
+## Cell Domain
 
-The service keeps Prepare, Execute, Observe, and Evaluate as named internal
-domain operations inside the cells module. They are private Effect functions
-and policy modules used by the single module `router.ts`, not public TypeScript
-capability interfaces and not lane-callable workflow steps.
+### Direct Identities
 
-The service owns frozen-input preparation and deterministic/blind evaluation as
-internal domain operations. Lanes supply TypeBox data, configuration, policy,
-rubric/verifier inputs, and evidence references, never executable preparation
-or evaluation callbacks. Those operations consume provisioned resource ports
-for:
+The service owns direct, TypeBox-defined data:
 
-- one local per-cell running, terminal, and evaluation record;
-- Git artifact materialization/capture/apply;
-- sandbox acquisition and release;
-- agent execution;
-- observation acquisition, settlement, and score projection;
-- operational events.
+- opaque study, cell, and study-assigned instance identifiers;
+- frozen input identity and exact implementation identity;
+- `Running` attempt identifier and deterministic provider lookup identities;
+- provider-neutral observation, sandbox, process, session, and artifact
+  correlation references as they become known;
+- submitted artifact identity when the terminal has a submission;
+- solver terminal and study outcome;
+- evaluation result referring directly to the terminal.
 
-The service imports resource contracts only. It never imports concrete
-providers. Lane bindings invoke the service contract/client and never call
-providers as a shadow orchestration path.
+The service does not restore generic stage tags, predecessor closures,
+self-digest envelopes, replay lineage, provider envelopes, or a portable data
+framework.
 
-### Cell Flow
+### State Machine
 
 ```text
-lane schedules exact cell
-  -> cells.run
-     -> prepare and validate frozen input
-     -> read one per-cell record
-          SolverTerminal | Evaluated -> adopt completed boundaries
-          Running -> inspect deterministic provider lookup identities
-                     live -> return already-running
-                     exited with recoverable workspace/outcome -> resume capture
-                     absent or settled -> clean up and resume execution
-          missing -> derive provider lookup identities from cell + attempt
-                     -> uniquely begin Running with those identities
-                     -> providers create or adopt observation and sandbox/process
-                     -> record concrete handles and locator details
-                     -> invoke agent
-                     -> parent-owned Git artifact capture
-                     -> persist SolverTerminal before verification
-     -> settle the recorded observation
-     -> adopt or evaluate the terminal
-     -> persist Evaluated before telemetry projection
-     -> project scores to the recorded observation subject
-     -> optionally read back now or reconcile at run level
-  -> lane interprets and aggregates result
+Missing
+  -> Running(attempt, frozen input, deterministic provider lookups)
+  -> SolverTerminal(
+       Submitted(submitted artifact, agent/study outcome)
+       | NoSubmission(noncompletion or no-valid-submission outcome)
+     )
+  -> Evaluated(evaluation)
 ```
 
-The service owns this ordering. It does not own a worker, queue, DAG,
-scheduler, database, generic CAS, receipt graph, or evidence store.
+Only the service defines the record schema, migrations, repository semantics,
+legal transitions, conflict checks, and reconciliation decisions. A generic
+persistence resource supplies physical read/write/transaction capability. Its
+provider does not know cell states.
 
-### Identity And Continuation
+`cells.inspect` is a read of this machine. It has no transition edge.
 
-The service domain retains these entities:
+### Idempotence And Crash Windows
 
-- `StudyIdentity`
-- `CellKey`, including a lane-supplied instance/replicate identity
-- `FrozenInput`, including the Git base commit/tree and lane path mapping when
-  applicable
-- `RunningCell`, including an attempt ID, deterministic provider lookup
-  identities, and any acquired observation or concrete sandbox/process details
-- `ObservationHandle`
-- `SubmittedArtifact`
-- `SolverTerminal`
-- `EvaluationResult`
+| Boundary | Required behavior |
+| --- | --- |
+| before `Running` persists | no provider effect is legal |
+| persistence result unknown | stop the call; the next call reads durable state before any effect |
+| after `Running`, before acquisition | create-or-adopt under the persisted deterministic lookup identities |
+| after acquisition, before concrete locator update | recover through the deterministic lookup identity and then record provider-neutral locator details |
+| provider subject is live | return an already-running refusal/result; never replace it |
+| solver exited before artifact capture | inspect and recover the retained workspace/outcome, capture the artifact, and never rerun the solver |
+| provider subject is absent | reconcile the recorded attempt; resume only when the service can prove no live/recoverable subject will be replaced |
+| preterminal cancellation or cleanup is unconfirmed | keep `Running` and the lookup/correlation references; do not claim release or start replacement work |
+| cleanup is unconfirmed after terminal/evaluation persistence | preserve the terminal/evaluation and exact provider correlation; a later `cells.run` may inspect and retry cleanup without changing durable truth |
+| after terminal persistence | adopt the terminal; reconcile recorded postterminal cleanup before or alongside only missing evaluation/projection work |
+| after evaluation persistence | adopt the evaluation; reconcile recorded postterminal cleanup; retry only explicitly requested non-authoritative projection/readback without reevaluation |
+| telemetry projection/readback fails | preserve terminal/evaluation truth and report projection diagnostics separately |
 
-One resource-owned record follows the local transitions
-`Running -> SolverTerminal -> Evaluated`. The record binds the cell, frozen
-inputs, and implementation; the terminal adds the submitted artifact and agent
-outcome; the evaluation refers directly to that terminal. A unique local begin
-and update prevents accidental duplicate same-cell execution. Storage failure
-stops the current call; the next call reads the record rather than interpreting
-an acknowledgement protocol. Resource-local providers own concrete
-persistence, and runtime owns their provisioning. The service owns
-experiment-domain identity checks, ordering, adoption, and interpretation;
-lanes supply study data and policy, not persistence implementations.
+Distinct cell identities may overlap. Same-cell calls converge through the
+service repository; there is no process-wide serialization, lease service,
+fence protocol, residue graph, or distributed CAS.
 
-The semantic laws are:
+### Failure Taxonomy
 
-- exact terminal adoption precedes every execution effect;
-- only a successful unique local transition to `Running`, with deterministic
-  provider lookup identities derived from the exact cell and attempt, permits
-  observation, sandbox, or process acquisition;
-- the terminal payload is immutable once recorded; later transitions only add
-  evaluation or projection state;
-- a downstream failure resumes only the incomplete boundary;
-- a blind or nondeterministic evaluation is published before projection and is
-  adopted on re-entry;
-- a `Running` record retains provider lookup identities even before concrete
-  locator details are recorded; providers create or adopt subjects under those
-  identities so re-entry can recover across both ordinary crash windows;
-- provider inspection distinguishes a live subject, an exited subject with a
-  recoverable workspace or outcome, and an absent subject. A live subject
-  returns already-running; an exited recoverable subject resumes artifact
-  capture without rerunning the solver; an absent subject is reconciled before
-  execution resumes; no replacement starts while termination or cleanup is
-  unconfirmed;
-- local coordination is keyed by cell; distinct cells may overlap and no
-  process-wide duplicate guard serializes them;
-- lanes assign distinct instance identities when a study intentionally repeats
-  a cell; the service does not maintain replicate lineage;
-- agent noncompletion, empty artifacts, compilation failure, policy violation,
-  and low scores remain study outcomes rather than infrastructure retries.
+| Class | Examples | Authority and effect |
+| --- | --- | --- |
+| domain refusal | identity mismatch, illegal transition, terminal conflict, attempt to replace a live cell | declared oRPC error/result; no new provider effect |
+| recoverable infrastructure failure | provider unavailable, persistence outcome unknown, artifact capture failure, observation settlement failure, cleanup uncertainty | typed service/resource failure; durable truth remains; re-entry starts by reading it |
+| study outcome | agent noncompletion, compile/test failure, policy violation, empty/invalid submission, low score | persisted terminal/evaluation data; never infrastructure retry policy |
+| diagnostic failure | telemetry export/readback or wide-event drain failure | non-authoritative status; cannot change cell truth |
+| unexpected defect | undeclared implementation fault | private cause and redacted diagnostics; native internal oRPC failure |
+
+Expected caller-actionable failures are declared through native oRPC with
+TypeBox data. Private causes, stacks, prompts, credentials, and raw provider
+output do not cross the boundary. Fiber interruption is not product
+cancellation.
 
 ## Resource And Provider Boundary
 
-The initial resources are:
+### Resource Families
 
-| Resource | Service-facing capability | Concrete provider ownership |
+| Resource | Service-facing capability | Provider responsibility |
 | --- | --- | --- |
-| durable cell state | read and unique local `Running -> SolverTerminal -> Evaluated` transitions | concrete per-cell record persistence |
-| research command | bounded structured process execution and termination evidence | Bun/host process implementation |
-| Git artifacts | materialize, capture, apply | native Git base/mapping, supported-version preflight, and parent-owned workspaces |
-| sandbox | acquire, execute/transfer, release or retain an unconfirmed locator | OpenShell |
-| agent | invoke, cancel, decode session/rollout evidence | Codex |
-| observation | acquire root, carry context, settle, score, read back | Langfuse/OTel |
-| operational events | bounded non-authoritative wide events | EVLog |
+| persistence substrate | physical atomic read/write/transaction primitives for the service repository | acquire/release filesystem or database capability, health, redacted diagnostics |
+| filesystem | bounded workspace, staging, file, and cleanup operations | host filesystem implementation and lifecycle |
+| process/Bun | structured process execution, input/output capture, cancellation, termination status | Bun/host process implementation |
+| native Git | materialize exact revision/subtree; capture/apply submitted patch | native Git invocation and parent-owned workspaces |
+| sandbox | create-or-adopt, transfer/execute, inspect, retain/release by deterministic identity | OpenShell implementation |
+| agent | invoke/cancel and decode neutral session/rollout/outcome evidence | Codex implementation |
+| observation/telemetry | acquire/correlate/settle/project/read back an experiment subject and emit redacted semantic diagnostics | Langfuse/OTel implementation; EVLog remains runtime/diagnostic mechanism rather than a second research resource |
 
-Each resource follows the current Template pattern:
+The service declares resource requirements. The CLI plugin declares service use
+and any projection-local requirement. The HQ runtime profile selects providers
+and config sources. The runtime compiler validates exact coverage and provider
+dependency closure. Bootgraph and the Effect kernel acquire and release them.
+The process runtime binds the service. No study owner, plugin, handler, service,
+resource, or provider selects or provisions itself.
 
-```text
-resources/<resource>/
-  contract.ts
-  providers/<provider>/
-    index.ts
-    project.json
-    test/
-```
+Providers that acquire recoverable external subjects expose only the native
+create-or-adopt/inspect/reconcile operations their resource requires and return
+neutral serializable locators/correlations where the service needs recovery.
+No generic provider lifecycle facade is added. Concrete clients, secrets,
+Effect runtime handles, and vendor-specific context remain
+provider/runtime-local.
 
-Resource contracts define stable typed capabilities. Providers own
-configuration validation, acquisition, implementation, release, and exact
-vendor or persistence mechanics. The process runtime selects and provisions
-providers. Service `base.ts` depends on those provisioned resource ports; module
-context narrows them for procedure handlers.
-The cell-state provider supplies local persistence mechanics only. The service
-owns which transitions are legal, their order, and how returned states affect
-the experiment.
+Codex, OpenShell, and observation remain separate resource authorities. The
+service sequences them. A provider dependency may express a real lower-level
+need, but no composite research provider is introduced without the falsifier
+above.
 
-Package build and verification is ordinary compatibility tooling outside the
-running research service. Its Bun mechanics may remain resource/provider owned,
-but the service MUST NOT depend on that capability.
+### Native Git Scope
 
-Codex-OpenShell and Codex-Langfuse remain named, bounded compositions, not a
-provider registry. OpenShell remains ignorant of Codex semantics. Codex remains
-ignorant of OpenShell and Langfuse. The composition providers own only the
-proved auth/profile or W3C carrier/projection crossings.
+The retained Git behavior is narrow:
+
+- materialize an exact revision/tree/subtree in a clean parent-owned workspace;
+- bind the base revision/tree and study-supplied product path mapping in frozen
+  input;
+- capture a full-index binary patch from allowed product paths;
+- identify the submitted artifact by patch SHA-256;
+- apply it to a fresh pristine workspace and compare the reconstructed product
+  tree.
+
+Use native Git semantics. Do not restore hostile config/attribute
+neutralization, provider envelopes, exact supported-version identity,
+regenerated-patch byte authority, or adversarial local fixtures.
+
+The process/Bun resource exists only for structured cell and verifier commands.
+Package build/pack/install compatibility machinery from the SDK quarry has no
+proved consumer in the HQ-composed topology and is deleted. Ordinary workspace
+build and dependency installation remain repository gates, not product
+capabilities.
 
 ## Study Ownership
 
-Each lane retains its cases, prompts, treatments, profile allocation, rubrics,
-hidden checks, historical comparison artifacts, results, evidence, and
-history. A lane binding supplies:
+The oRPC and Inngest research programs are study owners, not canonical
+runtime/plugin "lanes." Each supplies typed service input and references to:
 
-- exact path mapping and frozen identities;
-- service input, configuration, policy, rubric/verifier inputs, and evidence
-  references;
-- resource requirements consumed by the runtime-owned provider selection;
-- scheduling, interpretation, aggregation, and reporting.
+- cases, prompts, treatments, frozen inputs, and study-assigned instances;
+- model/agent allocation and study execution policy;
+- product path mapping and verifier/rubric data;
+- schedules, aggregation, evidence, interpretation, and reporting.
 
-The service never scans a vault, discovers a study by directory convention, or
-relocates evidence. The lane does not inject executable orchestration callbacks
-or sequence service resources directly.
+Study owners never supply executable provider callbacks, persistence
+implementations, runtime profiles, raw resource contexts, or service
+transition code. The service never scans a vault, infers a study directory
+topology, relocates evidence, or interprets study-level aggregate meaning.
+The service owns evaluation sequencing, durable record semantics, and domain
+refusals; the study owns the meaning and inputs of rubrics, hidden checks, and
+aggregate interpretation.
 
-## Vendor Baseline
+## Current, Target, And Transition Authority
 
-BUILD starts from the directly pinned service/provider versions proved at
-Template commit `3beb4936`. The repository lockfile, frozen install, and
-behavioral tests are dependency authority. After the mandatory pre-landing
-restack, this lane aligns the direct pins with the accepted Template closure and
-reruns those checks; it does not build a second transitive-admission system.
+### Authority Table
 
-| Boundary | BUILD identity |
+| Authority | Exact evidence | Status for this change |
+| --- | --- | --- |
+| preserved research lineage | `223835fccedcb80523b761c571130852bdb106a2`, tree `c6c7f6174b92553a9ca5b9070569eb3422eef5f9`, draft PR #531 | history/source quarry; never restack or merge as target topology |
+| current canonical Template main | `2e9a2621072fd6313bf4cf9c6fca6b4824ffc2b4` | current repository authority at design time |
+| canonical subject skills | Personal main `1e7f346b9b0fb7b356675d3e837295256bda7d0d` | oRPC/effect-oRPC/Inngest/effect-inngest subject authority |
+| admitted service dependency closure | `b2033f38e4cbca9e3d310921e7463ff92753d8aa` | merged evidence for current oRPC/TypeBox/Effect/effect-oRPC tuple; recheck at source start |
+| canonical TypeBox bridge correction | `0854024afe9a76ef0ae4ae3f427182be25fe8420` | merged and satisfied; use, do not copy |
+| merged service-law refresh | `6e344c272b63e74eb4761dd0779cc4f1cdc410b8` | canonical packet content, but not fully activated by repository source-law checks |
+| active service-law sequence | `5296d9c77247a6a6f418bb3b7081d47a159db21d`, `fbaaf62e1e2685803ef7d334e75dde9127a84c7d`, `2bb4be6eb3d99ee2824b75b725c92055d53a14a1` | useful committed design evidence; unmerged and explicitly unactivated |
+| runtime architecture | `c9b6eb9044d709639a355dbfec83cc5a34b8a00e` | merged normative target |
+| runtime simulations | `3ceb0d333b44af8cd4f8355b2a63f3150a9da0c3`, `e7d43a85fc350e275d9544172b1d31bbcea1aa38`, `b8fb660156700ab70d73760c2d701b9f2d7f073d`, `0ac6650ac1265a4c8c558c0aca24e112d67f490b` | merged contained proof only; not production authority |
+| complete activated service packet | none | hard source blocker |
+| production app-profile/runtime realization | none | hard source blocker |
+
+The obsolete service pins `faa320f1...` and `3beb4936...`, the
+`implementEffect(contract, Layer.empty)` root, inherited module implementers,
+and a no-`.$context` rule are not target authority. The active capability-funnel
+evidence instead narrows `host -> base -> service -> module -> router ->
+handler`, but source must wait for that complete packet to be canonical and
+activated.
+
+### Deletion Ledger
+
+At `223835fc`, `packages/research-sdk` contains 43 tracked files: 31 production
+source files and 7 tests, with 7,873 production TypeScript lines and 4,609 test
+TypeScript lines. The entire package identity is scheduled for deletion after
+green transition.
+
+| Current material | Disposition |
 | --- | --- |
-| oRPC | `@orpc/*@1.14.8` |
-| TypeBox | `typebox@1.3.6` |
-| Effect | `effect@4.0.0-beta.100` |
-| effect-oRPC | `effect-orpc@1.0.0-effect-v4.8` |
-| Bun | `1.3.14` |
-| Git | admitted at `>=2.48.0`; resolved version recorded diagnostically |
-| OpenShell | `0.0.89` |
-| Codex CLI | `0.144.6` |
-| Langfuse | `@langfuse/{client,otel,tracing}@5.9.1` |
-| OpenTelemetry | API `1.9.1`; core/resources/trace SDK `2.9.0`; OTLP HTTP `0.220.0` |
-| EVLog | `2.22.3` |
+| direct cell/input/artifact/terminal/evaluation DTO meaning | re-author as service-owned TypeBox DTOs |
+| adoption, observation, re-entry, stage-shape, and terminal-sink behavior | reduce to direct service state/repository/policy behavior; delete generic frameworks |
+| `contracts/schema.ts` and portability/decode/clone/freeze machinery | delete; canonical TypeBox bridge and native validation own the boundary |
+| generic `StageOutput`, predecessor/digest/publication frameworks | delete |
+| capability facade, callback ports, adapter registry | delete; native service operations and resource contracts replace them |
+| attempt fence, residue/orphan DAG, provider envelopes, replay lineage | delete; direct monotonic local record replaces them |
+| package `Context.Service`, Layers, and `ManagedRuntime` | delete; runtime realization owns live context |
+| command behavior | re-author behind process/Bun resource/provider |
+| native Git materialize/capture/apply behavior | re-author behind native Git resource/provider |
+| hostile Git policy and exact substrate envelopes | delete |
+| package build/pack/install compatibility machinery | delete; ordinary workspace build/install remain repository gates |
+| installed package graph, lock parser, runtime manifest, content/mode attestation | delete |
+| package barrels, exports, project shell, package Habitat rules, `SdkIdentity` | delete |
+| current package tests | replace with behavior tests at the service/resource/consumer owner; do not port wholesale |
 
-The service does not create another Effect or TypeScript realm. It follows the
-accepted Template service closure. Resource providers use the compatible
-Effect/platform closure selected by Template and do not export live runtime
-values through service contracts.
+Commit `ce282cb062f0d4bdeb80117a021aa0c766537991` remains historical
+Git/Bun behavior evidence and source quarry only.
 
-Additional fixed vendor laws remain:
+## Verification Strategy
 
-- Codex admission combines process truth with version-bound rollout evidence;
-  requested flags, public JSONL, and telemetry are not effective-model proof.
-- Codex cancellation completes before outer sandbox release. Unconfirmed exit
-  leaves the running cell's exact process and sandbox locator incomplete.
-- Langfuse scores target the recorded experiment-item root trace and
-  observation. Local projection status is recorded; remote readback is
-  policy-requested per cell or reconciled at run level and never determines
-  local terminal/evaluation correctness.
-- Codex-Langfuse uses one full W3C carrier and cannot create a second
-  application root. Legacy trace-seed mode is rejected.
-- Codex-Langfuse projects the supplied decoded turn set without selecting it,
-  including incomplete/interrupted turns.
-- EVLog is diagnostic, initialized once per process, uses public APIs only,
-  redacts before drain, and cannot alter study truth.
-- OpenShell consumes an explicitly selected running gateway but never owns its
-  lifecycle.
+Tests assert product behavior, not source strings or incidental keys. Habitat
+and GritQL enforce structure and legal dependency directions. TypeScript checks
+context narrowing and contract/client agreement.
 
-## Artifact And Cross-Repository Boundary
+Required deterministic proofs:
 
-The Git-artifact provider is deliberately native and narrow:
+- one target-owned exact-tuple fixture proving TypeBox -> native oRPC contract
+  and context -> effect-oRPC handler -> declared/unknown/defect/interruption
+  behavior and runtime acquisition/disposal;
+- `cells.inspect` over Missing, Running, SolverTerminal, and Evaluated without
+  writes or new experiment-subject acquisition, using an inspect-capable runtime
+  closure that does not require healthy run-only providers;
+- local duplicate, restart, adoption, distinct-cell overlap, both provider
+  lookup crash windows, solver-exit recovery, persistence-unknown read-before-
+  effect, preterminal/postterminal cleanup uncertainty, noncompletion, and
+  no-valid-submission terminals;
+- terminal-before-verification and evaluation-before-projection ordering;
+- fresh solver-inaccessible evaluator reconstruction with hidden verifier and
+  rubric inputs absent from the solver subject;
+- native Git revision/subtree, allowed text/binary/add/delete/rename/mode
+  patching, empty patch, base/mapping mismatch, fresh apply, and product-tree
+  equality;
+- process cancellation/termination and resource cleanup through real local
+  fixture processes;
+- OpenShell/Codex/observation behavior through model-free fixture providers and
+  captured data, with no provider/account/gateway mutation;
+- one retained model-free oRPC study cell and Inngest S09 through the same
+  service boundary, with study content and evidence left in place.
 
-- history-free materialization of the exact commit/tree/subtree into a clean
-  parent-owned workspace;
-- the base commit/tree and lane path mapping required to repeat the operation
-  are persisted in `FrozenInput`;
-- the provider rejects Git below `2.48.0` and records the resolved version
-  diagnostically; an exact supported-version change does not invalidate the
-  frozen input or patch;
-- `git add -A` stages changes within the lane-declared product paths under native
-  Git ignore semantics, then the cached diff uses
-  `--binary --full-index --no-ext-diff --no-textconv`;
-- patch SHA-256 identifies the submitted artifact;
-- a fresh pristine workspace applies that patch and must reconstruct the same
-  product tree.
+Each source slice must pass its activated Habitat packet, Nx lint, typecheck,
+behavior tests, build, and required dependency graph. A provider-only dead
+tranche and a permanent compatibility shim both fail the slice.
 
-The provider does not neutralize or reinterpret Git attributes, configuration,
-hooks, filters, or installed state. Native Git semantics are the authority.
-There is no provider-envelope protocol, hostile-policy mode, or regenerated
-patch-byte authority.
+## Green Slice Sequence
 
-Cross-repository compatibility uses ordinary Bun package behavior outside the
-running service:
+Source work remains blocked until both hard prerequisites in the authority
+table are canonical.
 
-- copy the selected service/resource packages to clean adapter-owned staging
-  without changing caller source or lockfiles;
-- run the repository's ordinary package build in staging;
-- run `bun pm pack --ignore-scripts`;
-- atomically publish the resulting tarball with SHA-256 and byte length;
-- install it into a clean consumer with
-  `bun install --frozen-lockfile --ignore-scripts`;
-- run the lane's import, type, and model-free smoke checks;
-- clean staging and avoid partial publication on interruption.
+1. **Inspect/store:** scaffold the canonical service/cells shell,
+   service-owned cell schema/repository/migrations, generic persistence
+   resource/provider, and read-only `cells.inspect`; prove the inspect-capable
+   runtime closure without healthy run-only providers.
+2. **Recovery core:** add `cells.run`, direct transitions, deterministic lookup
+   identities, re-entry/refusals, and crash-window tests using injected
+   model-free resources.
+3. **Git/process:** add process/Bun and native Git resources/providers and close
+   one artifact-producing cell path.
+4. **Sandbox/agent:** add separate OpenShell and Codex resources/providers and
+   close create-or-adopt, cancellation, recovery, and terminal persistence.
+5. **Evaluation/observation:** add fresh isolated verification/evaluation and
+   the observation/telemetry resource/provider, durable evaluation, and
+   non-authoritative projection/runtime diagnostics.
+6. **CLI/runtime projection:** select the CLI plugin in HQ, add the HQ runtime
+   profile selections, and prove the full app/profile -> runtime -> service ->
+   cells -> oRPC context funnel.
+7. **Consumer transition:** pass retained oRPC and S09 model-free cells without
+   moving their cases or evidence.
+8. **Deletion:** remove `@rawr/research-sdk`, superseded active consumer
+   machinery, package rules, and compatibility code; preserve frozen historical
+   evidence.
 
-Standard Bun workspace, package, and lock behavior is authority. The embedded
-runtime manifest, custom Bun-v1 lock/placement graph, installed content/mode
-attestation, collision classifiers, and special closure-admission protocol from
-`ce282cb0` are not migrated. `installed-package.ts`,
-`package-materialization.ts`, and related graph/manifest code remain historical
-source-quarry evidence only.
+Before landing, restack onto then-current canonical Template, recheck the
+service tuple and provider pins through the repository lock/profile manifests,
+run the full deterministic gate, and obtain exact-commit acceptance.
 
-This change adds no artifact aggregator, bundle format, registry, release
-plane, package manager, compatibility abstraction, or source checkout
-dependency.
+## Design Falsifiers
 
-## Testing Strategy
+The design is wrong if:
 
-### Service
-
-- apply every `.habitat/blueprints/service` packet to
-  `services/research-experiment`;
-- compile the exact oRPC contract/router/client types;
-- test the `cells.run` procedure through the real effect-oRPC implementer with
-  injected resource ports;
-- test local duplicate prevention, restart/resume, terminal and evaluation
-  adoption, distinct-cell overlap, running-locator inspection/cleanup, and
-  failure separation;
-- test TypeBox request/output/error contracts behaviorally, not with source
-  string assertions.
-
-### Resources And Providers
-
-- use real temporary roots and fixture processes for filesystem/process
-  guarantees;
-- prove cancellation before sandbox release, interruption cleanup, retained
-  unconfirmed locator, and primary/secondary failure ordering;
-- prove recovery when a process dies after provider acquisition but before
-  concrete locator update, and when a solver exits before artifact capture;
-  the latter resumes capture from the retained workspace/outcome without
-  rerunning the solver;
-- prove exact revision/subtree materialization, base/mapping mismatch, allowed
-  patch add/delete/rename/mode/binary/text behavior, empty patch, Git
-  minimum-version failure, fresh apply, and reconstructed product-tree equality;
-- prove staged package source/lock immutability, tarball SHA/length and atomic
-  publication, clean frozen consumer import/type/smoke, and interruption cleanup;
-- use local fixture servers and captured Codex/Langfuse data rather than model
-  calls or provider mutation;
-- enforce service-to-resource and resource-to-provider dependency direction
-  with Habitat/GritQL.
-
-### Lane Compatibility
-
-- oRPC: one retained model-free cell through the service;
-- Inngest: retained S09 through the service, with the seven-file seed view,
-  lane-owned control overlay, `src/**`, `test/**`, and `REENTRY.md` product
-  mapping, service-owned Git base/mapping, and existing hidden
-  verification;
-- both lanes consume the same ordinary packed Template closure while retaining
-  their own fixtures and evidence.
-
-## Migration
-
-1. Commit and accept this deletion-first ownership checkpoint.
-2. Restack onto the authoritative Template commit containing the current
-   service/vendor closure and legal process-runtime provider provisioning.
-3. Scaffold `services/research-experiment` by applying the existing service
-   blueprint and current `agent-plugin-lifecycle` pattern.
-4. Move service-domain DTOs and pure laws from `packages/research-sdk` into the
-   cells module, collapsing distributed attempt/stage/residue machinery into one
-   local per-cell record; replace custom schemas/decoders with TypeBox.
-5. Move command, Git, and vendor behavior behind resource contracts/providers;
-   move durable state behind a cell-state resource/provider while keeping
-   experiment write ordering in the service; retain only native Git patching and
-   ordinary Bun pack/install/smoke behavior.
-6. Delete package runtime, custom capabilities, barrels, and the
-   `@rawr/research-sdk` package identity.
-7. Bind and pass the two model-free lane compatibility cells.
-8. Remove superseded active lane machinery, preserving frozen evidence.
-9. Restack again, align direct pins, run the frozen install and deterministic
-   gate, and obtain exact-commit acceptance from both directors.
-
-## Falsifiers
-
-The design is wrong if any of these occur:
-
-- experiment semantics or executable flow remain in a shared package;
-- the service defines its own contract/router/schema/Effect abstraction instead
-  of using the existing Habitat/oRPC/TypeBox/effect-oRPC stack;
-- the service imports a concrete provider or acquires/releases a resource;
-- a lane calls providers directly, injects executable stage callbacks, or
-  reconstructs the per-cell flow;
-- a provider decides study correctness, retry policy, or rubric semantics;
-- adding a third study requires service edits for subject-specific behavior;
-- downstream failure can erase or rerun a valid solver terminal;
-- a live or unconfirmed recorded process permits same-cell replacement;
-- Git patch capture cannot reconstruct the submitted product tree;
-- Bun packaging mutates caller source/lock state or cannot pass a clean frozen
-  consumer smoke check;
-- frozen evidence must be relocated to use the service;
-- a new package, scheduler, controller, receipt graph, store, package manager,
-  or distribution plane appears without an independently proved need.
+- experiment state, repositories, migrations, or execution remain package-owned;
+- a study owner or CLI plugin wires providers, supplies persistence, or
+  sequences service internals;
+- a service/resource/provider selects or provisions itself;
+- a provider interprets cell transitions, study policy, or evaluation meaning;
+- handlers can reopen app/profile/root dependency bags;
+- `cells.inspect` mutates state or provider subjects;
+- a recoverable solver is rerun, a live cell is replaced, or downstream failure
+  erases terminal/evaluation truth;
+- telemetry determines correctness;
+- a composite provider, dedicated app, async projection, operation journal, or
+  package appears without its recorded falsifier;
+- frozen evidence must move to use the service;
+- source begins before both canonical prerequisites exist.

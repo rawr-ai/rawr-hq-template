@@ -1,142 +1,159 @@
 ## 1. Frame And Authority
 
-- [x] 1.1 Classify both lane implementations into shared operational behavior,
-  study-owned content, historical evidence, and superseded machinery.
-- [x] 1.2 Record the shared cell, terminal, evaluation, observation, artifact,
-  interruption, and cleanup behaviors proved by both lanes.
-- [x] 1.3 Complete bounded vendor verification.
-- [x] 1.4 Record `ce282cb062f0d4bdeb80117a021aa0c766537991` as
-  historical Git/Bun source-quarry evidence, not a preservation mandate.
-- [x] 1.5 Accept the deletion-first service/resource/provider checkpoint at
-  `b826254d21d93538edd3f5436ccdc8dbf8500290`.
-- [ ] 1.6 Accept the local single-user deletion amendment from the Inngest
-  director and architecture steward.
-- [ ] 1.7 Restack onto the exact accepted Template upstream containing the
-  current service blueprint realization, vendor closure, and legal
-  process-runtime provider provisioning before source migration. Do not use
-  `3beb4936` as runtime authority or recreate direct host/lane provider wiring.
-  Confirm the Habitat-required `#adapters/typebox` `standard` import resolves to
-  the canonical `packages/hq-sdk/src/orpc/schema.ts` bridge; if the accepted
-  upstream still lacks the alias/export mapping, add only that generic
-  canonical mapping before the service shell. Require the primary Template
-  owner to correct and behaviorally admit that bridge before use. At TypeBox
-  `1.3.6`, use the official `Schema.Validator` Check/Errors structure, emit
-  message-only issues, omit `Issue.path` for every error, and delete all custom
-  path parsing. Cover `%`, `%2F`, `/`, `~`, `~0`, `~1`, nested objects, numeric
-  object keys, and arrays; retain `__typebox` only with a proved OpenAPI
-  consumer.
+- [x] 1.1 Preserve the accepted historical lineage at
+  `223835fccedcb80523b761c571130852bdb106a2` / draft PR #531 and classify it as
+  source quarry rather than target topology.
+- [x] 1.2 Read canonical oRPC, effect-oRPC, Inngest, and effect-inngest subject
+  authority from Personal main
+  `1e7f346b9b0fb7b356675d3e837295256bda7d0d`.
+- [x] 1.3 Compare reduced SDK, dedicated app, study-bound service, and
+  service-centered HQ composition; choose the service-centered HQ topology and
+  record its falsifiers.
+- [x] 1.4 Record the app, runtime profile, runtime, plugin, service, module,
+  resource, provider, package, and study-owner ontology.
+- [x] 1.5 Record the two public operations, monotonic cell state, context
+  funnel, failure taxonomy, crash/idempotence behavior, exterior, observable
+  flows, and deletion ledger.
+- [x] 1.6 Census the current Habitat and runtime prerequisites and distinguish
+  merged authority, contained simulation, active evidence, and missing
+  production implementation.
+- [ ] 1.7 Obtain exact immutable review of this docs-only reframe from the
+  Inngest counterpart. Do not begin source while review or either prerequisite
+  is open.
 
-## 2. Research-Experiment Service
+## 2. Hard Prerequisites
 
-- [ ] 2.1 Manually apply the existing Habitat service blueprint to
-  `services/research-experiment`; do not create a generator. Establish
-  the ordinary `package.json`/Nx/TypeScript/test shell, public `src/index.ts`,
-  `src/client.ts`, and `src/router.ts`, then `service/base.ts`, `contract.ts`,
-  `impl.ts`, `router.ts`, and the `cells` module shell. Export only the governed
-  router/client/contract surfaces; do not acquire resources in the package
-  shell. In `base.ts`, directly export
-  `base = implementEffect(contract, Layer.empty)` exactly once and do not call
-  `.$context(...)`; in `impl.ts`, import `base` and directly export/configure
-  `service` from it. Directly export the required `base`, `contract`, `service`,
-  `module`, and `router` anchors. Project provisioned dependencies into narrow
-  module/leaf context through legal native context middleware.
-- [ ] 2.2 Implement TypeBox cell, running, terminal, evaluation, and observation
-  schemas in the service. As research-service choices within the
-  Habitat shell, compose the root contract with `eoc.router`, the root router
-  with `service.router(...)`, and expose one `cells.run` effect-oRPC procedure
-  from the single cells-module `router.ts`. Import `standard` from the
-  Habitat-required `#adapters/typebox` alias backed by the canonical
-  `@rawr/hq-sdk` TypeBox-to-Standard-Schema bridge only after its issue-path
-  correction/admission; do not add a research-local adapter, property-map
-  composition helper, or runtime key-collision checker. Build closed
-  service-authored `Type.Object` schemas directly and verify them behaviorally.
-- [ ] 2.3 Move direct terminal/evaluation adoption, observation correlation,
-  local restart/resume, and publication ordering into service-owned DTO/policy
-  modules. Delete distributed attempt fences, stage/predecessor graphs,
-  orphan/residue DAGs, and service-owned replicate lineage.
-- [ ] 2.4 Delete custom procedure/capability interfaces, manual JSON decoding,
-  schema traversal, clone/freeze machinery, package-owned `Context.Service`,
-  package-owned `ManagedRuntime`,
-  `packages/research-sdk/src/contracts/schema.ts`, and obsolete barrels.
-- [ ] 2.5 Prove the service flow with injected resource ports: terminal
-  adoption before effects, unique local begin, durable terminal before
-  verification, durable evaluation before projection, exact observation
-  identity, local duplicate/restart/resume, distinct-cell overlap,
-  deterministic pre-acquisition provider lookup, recovery across both
-  acquisition-to-locator and solver-exit-to-capture crash windows, and
-  unconfirmed-locator cleanup. Preparation and evaluation consume lane TypeBox
-  data/configuration/policy plus provisioned resources, never lane-injected
-  executable callbacks.
+- [x] 2.1 Confirm the canonical TypeBox bridge correction at
+  `0854024afe9a76ef0ae4ae3f427182be25fe8420`; consume it later without a
+  research-local bridge.
+- [x] 2.2 Confirm the merged admitted service dependency closure at
+  `b2033f38e4cbca9e3d310921e7463ff92753d8aa`; recheck the exact canonical
+  closure when source begins.
+- [ ] 2.3 Wait for one named canonical commit that activates the complete
+  Habitat service packet, including current spine/model/router/context/
+  contract/error/module-isolation laws. Active commits `5296d9c7`,
+  `fbaaf62e`, and `2bb4be6e` are evidence only.
+- [ ] 2.4 Wait for one named canonical production runtime path covering HQ
+  app/profile provider selection, coverage/dependency validation, bootgraph
+  provisioning, process-runtime service binding, and CLI invocation context.
+  The merged runtime architecture and simulation commits do not satisfy this.
+- [ ] 2.5 Re-read the canonical packets and runtime implementation at their
+  exact commits. Amend this OpenSpec before source if their laws change the
+  target.
 
-## 3. Resources And Providers
+## 3. Inspect And Store Slice
 
-- [ ] 3.1 Move command execution behind a research-command resource contract
-  and concrete host/Bun provider.
-- [ ] 3.2 Move native Git materialize/capture/apply behind a Git-artifact
-  resource/provider. Persist the base commit/tree and path mapping in
-  `FrozenInput`; preflight Git `>=2.48.0` and record the resolved version only
-  diagnostically. Capture a full-index binary patch with SHA-256 and prove fresh
-  apply plus reconstructed product-tree equality under native Git ignore
-  semantics. Delete hostile config/attribute policy, provider envelopes, exact
-  supported-version rejection, and regenerated-patch authority.
-- [ ] 3.3 Build ordinary Bun compatibility tooling outside the running service:
-  clean staging, ordinary package build, `bun pm pack --ignore-scripts`, atomic
-  tarball SHA/length, clean frozen consumer install, import/type/model-free
-  smoke, and interruption cleanup. Delete embedded manifests, custom
-  lock/placement/content graphs, and special closure admission.
-- [ ] 3.4 Add a durable cell-state resource contract and resource-local
-  providers for one local `Running -> SolverTerminal -> Evaluated` record. Keep
-  transition rules, identity checks, adoption, and interpretation in the
-  service; lanes supply data/configuration and policy, not persistence
-  implementations.
-- [ ] 3.5 Implement the sandbox, agent, observation, operational-event,
-  Codex-OpenShell, and Codex-Langfuse providers under their explicit resource
-  contracts and direct pinned vendor laws. Keep the pinned Codex-Langfuse
-  upstream, maintained source/patch, deterministic tests/build, and bundle
-  SHA; do not add an upstream Git-object provenance manifest.
+- [ ] 3.1 Scaffold the canonical `research-experiment` service and one `cells`
+  module using the activated Habitat packets. Do not copy the preserved package
+  topology or add the CLI projection ahead of its runtime slice.
+- [ ] 3.2 Define TypeBox cell, frozen input, Running, SolverTerminal, Evaluated,
+  and correlation schemas with native oRPC contracts/errors and the canonical
+  bridge.
+- [ ] 3.3 Implement service-owned repository, migrations, transition policy,
+  and authoritative writes over a generic persistence resource. Add the
+  minimal model-free provider in this slice; the provider owns physical
+  mechanics only.
+- [ ] 3.4 Implement read-only `cells.inspect` and prove an inspect-capable
+  runtime closure that does not require healthy run-only providers. Keep fresh
+  redacted provider status in runtime diagnostics.
+- [ ] 3.5 Pass Habitat, lint, typecheck, behavior tests, build, and Nx graph for
+  the reachable inspect/store story.
 
-## 4. Delete The Package-Shaped Runtime
+## 4. Recovery Core Slice
 
-- [ ] 4.1 Confirm every current `packages/research-sdk` production file has
-  moved to the service, moved to a resource/provider, or been deleted.
-- [ ] 4.2 Remove the package runtime, adapters, custom contracts, exports,
-  project wiring, and `@rawr/research-sdk` identity unless an independently
-  reviewed non-service package consumer proves one narrow survivor.
-- [ ] 4.3 Replace the package-specific Habitat rules with the existing service
-  blueprint plus only the resource/provider and dependency-direction rules
-  needed by the realized topology.
+- [ ] 4.1 Implement `cells.run` as the native oRPC handler with internal
+  preparation/execution/observation/evaluation sequencing, not public stages or
+  a detached run-operation facade.
+- [ ] 4.2 Persist `Running` and deterministic provider lookup identities before
+  effects; implement exact adoption and direct monotonic transitions.
+- [ ] 4.3 Prove duplicate/restart behavior, distinct-cell overlap, persistence
+  unknown, acquisition-before-locator recovery, solver-exit-before-capture
+  recovery, live refusal, absent reconciliation, pre/postterminal cleanup
+  uncertainty, exact postterminal cleanup retry without solver/evaluator rerun,
+  and Submitted/NoSubmission terminals.
+- [ ] 4.4 Prove failure taxonomy and terminal/evaluation ordering with injected
+  model-free resources.
+- [ ] 4.5 Pass the complete slice gate.
 
-## 5. Lane Compatibility
+## 5. Git And Process Slice
 
-- [ ] 5.1 Pack the required Template service/resource packages through ordinary
-  Bun tooling and pass clean frozen install plus import/type/model-free smoke in
-  both lane consumers.
-- [ ] 5.2 Bind one retained oRPC cell through the service and pass its model-free
-  preparation/evaluation path.
-- [ ] 5.3 Bind retained Inngest S09 through the same service, preserving its
-  seven-file seed view, lane-owned control overlay, service-owned Git
-  base/mapping, allowed product paths, and hidden verifier.
-- [ ] 5.4 Confirm both lanes invoke the service, do not import providers, and
-  retain all subject content and evidence.
+- [ ] 5.1 Add canonical process/Bun and native Git resource contracts and
+  resource-local providers selected through the HQ runtime profile.
+- [ ] 5.2 Retain only exact revision/subtree materialization, frozen base/path
+  mapping, allowed full-index binary patch capture, patch SHA, fresh apply, and
+  product-tree equality.
+- [ ] 5.3 Close one reachable artifact-producing `cells.run` path, including
+  cancellation, termination, cleanup, text/binary/add/delete/rename/mode, empty
+  patch, and base/mapping mismatch behavior.
+- [ ] 5.4 Limit process/Bun to structured cell and verifier commands. Delete
+  package pack/install compatibility machinery rather than migrating it.
+- [ ] 5.5 Pass the complete slice gate.
 
-## 6. Verification And Landing
+## 6. Sandbox And Agent Slice
 
-- [ ] 6.1 Pass Nx lint, typecheck, test, and build for the service and every
-  resource/provider.
-- [ ] 6.2 Pass Habitat
-  `require_service_spine_topology`,
-  `require_service_anchor_exports`,
-  `require_service_context_boundaries`,
-  `require_service_contract_authority`,
-  `require_service_module_isolation`,
-  `require_service_orpc_composition`, and
-  `require_orpc_error_authority`, plus agent-router placement/shape,
-  dependency-direction, packet, and full ratchet checks.
-- [ ] 6.3 Pass the focused model-free local resume, terminal/evaluation,
-  artifact round-trip, staged package/install/smoke, interruption cleanup,
-  observation, and lane-compatibility tests without provider/gateway mutation.
-- [ ] 6.4 Archive or remove superseded active lane machinery only after both
-  compatibility checks pass; preserve frozen evidence and provenance.
-- [ ] 6.5 Restack onto current accepted Template upstream, align direct pins,
-  pass frozen install and every behavioral gate, and obtain exact-commit
-  acceptance from both directors.
+- [ ] 6.1 Add separate OpenShell sandbox and Codex agent resources/providers.
+  Do not add a composite provider absent its recorded native-transaction
+  falsifier.
+- [ ] 6.2 Close create-or-adopt, live/exited/absent inspection, cancellation
+  before release, solver-outcome recovery, artifact capture, and durable
+  terminal behavior through model-free fixtures.
+- [ ] 6.3 Pass the target-owned exact-tuple TypeBox/oRPC/effect-oRPC/runtime
+  fixture and the complete slice gates without model, account, or gateway
+  mutation.
+
+## 7. Evaluation And Observation Slice
+
+- [ ] 7.1 Add fresh solver-inaccessible evaluation subjects/workspaces. Apply
+  only the submitted artifact and introduce hidden verifier/rubric inputs only
+  after solver isolation.
+- [ ] 7.2 Persist Evaluated before projection and support both Submitted and
+  NoSubmission terminal evaluation without rerunning the solver.
+- [ ] 7.3 Add the observation/telemetry resource/provider; preserve one
+  correlation subject, one application root, redaction, non-authoritative
+  projection/runtime diagnostics, and optional/run-level readback.
+- [ ] 7.4 Prove projection failure and explicit projection/readback retry do not
+  alter or repeat evaluation.
+- [ ] 7.5 Pass the independently reachable evaluation/observation slice gate.
+
+## 8. CLI And Runtime Projection Slice
+
+- [ ] 8.1 Add the CLI plugin, select it in HQ, add exact provider selections and
+  config sources in the HQ runtime profile, and start it through the canonical
+  process role/entrypoint.
+- [ ] 8.2 Prove cold realization and invocation separately:
+  `service/plugin -> app/profile -> compiler -> bootgraph/Effect kernel ->
+  process runtime -> CLI adapter`, then `operator -> mounted CLI -> bound
+  service client -> cells -> native handler`.
+- [ ] 8.3 Prove provider coverage/dependency closure, inspect without healthy
+  run-only providers, acquisition/release, service binding, exact module
+  context, and redacted diagnostics.
+- [ ] 8.4 Pass the complete CLI/runtime slice gate.
+
+## 9. Study Consumer Transition Slice
+
+- [ ] 9.1 Bind one retained model-free oRPC study cell through the service
+  without moving its content or evidence.
+- [ ] 9.2 Bind retained Inngest S09 through the same service while preserving
+  its study-owned seed/control overlay, allowed product mapping, verifier, and
+  evidence.
+- [ ] 9.3 Confirm study owners supply data/policy only and do not wire
+  providers, persistence, runtime profiles, or shadow service sequencing.
+- [ ] 9.4 Pass both consumer and full Template gates.
+
+## 10. Delete SDK And Seal
+
+- [ ] 10.1 Remove all 43 tracked `packages/research-sdk` files, its package
+  identity/exports/project shell, package-specific Habitat rules, runtime,
+  registries, schema/portability layer, generic stage/state protocols, and Bun
+  attestation machinery.
+- [ ] 10.2 Remove superseded active study-runner machinery only after its
+  model-free consumer path is green; preserve frozen historical evidence in
+  place.
+- [ ] 10.3 Confirm no renamed package facade, provider-only dead tranche,
+  permanent compatibility shim, research app, scheduler, evidence store, or
+  shadow provider wiring remains.
+- [ ] 10.4 Restack onto then-current canonical Template, recheck direct
+  dependency/provider pins, pass frozen install, Habitat, Nx, lint, typecheck,
+  behavior tests, build, and graph checks.
+- [ ] 10.5 Obtain exact-commit acceptance from both research directors before
+  landing.
