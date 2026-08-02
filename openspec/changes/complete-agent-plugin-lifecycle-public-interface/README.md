@@ -1648,14 +1648,14 @@ review does not authorize a separate release path.
 | Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat workspace source now evaluates the corpus, while released adoption and activation of the staged construction laws remain open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry bootstrap, the idempotent consumer initializer, and native version-two service execution are landed; version-two Nx projection, released adoption/cutover, trusted publishing, and service-law activation remain open |
+| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry bootstrap, the idempotent consumer initializer, native version-two service execution, and trusted publishing are landed; version-two Nx projection, released adoption/cutover, and service-law activation remain open |
 | Workspace toolchain | Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, oRPC 2 beta 20, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
 | Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, packed-install acceptance, public Habitat registry publication, and registry-installed smoke are landed and green; tag-triggered npm trusted publishing remains open |
+| Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, packed-install acceptance, public Habitat registry publication, registry-installed smoke, and tag-triggered npm trusted publishing are landed and green |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -5570,6 +5570,48 @@ The bootstrap publication used the accepted `mateicanavra` npm identity and a
 single write OTP. That interaction is first-release setup, not the steady-state
 release process. Task 5.7e22e1 now owns the bounded replacement: one native Nx
 GitHub Actions workflow using npm trusted publishing and no stored write token.
+
+### Habitat Trusted Publishing Settlement
+
+Canonical Template merge `37c8eb2a` (PR #751) installed the tag-triggered
+`Publish Habitat` workflow. Canonical merge `2064a431` (PR #752) then versioned
+the first trusted-published release set and selected npm as Nx Release's hosted
+publisher without changing the repository's Bun package-manager authority.
+Candidate `57a78705` passed prerequisite Repository Ratchet run `30730569887`,
+job `91450116475`, before Graphite landed the release. The three annotated tags
+all peel to `2064a431032ac0600e805ddafba6fd17a6b7deb4` and settled in the
+accepted order:
+
+- `typebox-adapter-v0.1.1` — run `30730782469`, job `91450723011`;
+- `habitat-cli-v0.2.1` — run `30730814965`, job `91450811883`; and
+- `habitat-blueprints-v0.2.1` — run `30730880516`, job `91450987246`.
+
+Each run admitted the tagged canonical-main commit, matched one tag to one Nx
+release group, and left every other publisher step skipped. The CLI run also
+passed the installed-package acceptance before publication. npm reports the
+same Git head for all seven artifacts, a SLSA v1 provenance attestation for
+each artifact, and these tarball SHA-1 values:
+
+- `@habitat-ai/typebox-adapter@0.1.1` —
+  `df512eb5130b062d179b7440616a50d77cd38eb2`;
+- `@habitat-ai/resource-rule-evaluation@0.2.1` —
+  `222af7dc1b2e720f27e087963cd98459b0c3d3eb`;
+- `@habitat-ai/resource-source-inventory@0.2.1` —
+  `5a29fcc1f8e3688dca27fa7d4edd1f5d99aacd0a`;
+- `@habitat-ai/service@0.2.1` —
+  `8b634ed539f143f2f8dee321333cc3493ea65f70`;
+- `@habitat-ai/plugin-cli@0.2.1` —
+  `c3745a513f301cfdfe620b2a342e630001acf42e`;
+- `@habitat-ai/cli@0.2.1` —
+  `c9aaf4b35c1b61a37a32060b7dd0b5add16167a5`; and
+- `@habitat-ai/blueprints@0.2.1` —
+  `50bab41e0a34b745a8d860545de4ac3090fd8b93`.
+
+The successful hosted publications prove all seven package bindings to the one
+repository workflow. Steady-state publication requires neither a stored npm
+write token nor an interactive OTP. Task 5.7e22f remains the separate consumer
+cutover; this settlement changes no consumer repository and creates no Habitat
+release wrapper, selector, or retained local release state.
 
 ### Proportional Nx Repository Gate
 

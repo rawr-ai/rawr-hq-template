@@ -207,8 +207,9 @@ The Habitat Nx projection owns version-three application discovery, exact
 inputs, caching, and execution without acquiring service or provider authority.
 The idempotent consumer initializer, policy-pack construction, bootstrap
 publication, and native version-two service execution are landed. Version-two
-Nx projection, released-package adoption/cutover, and tag-triggered trusted
-publishing remain separately reviewed checkpoints.
+Nx projection and released-package adoption/cutover remain separately reviewed
+checkpoints. Tag-triggered trusted publishing is landed and proven through the
+seven registry packages' npm-hosted provenance attestations.
 
 ## Behavioral Boundary
 
