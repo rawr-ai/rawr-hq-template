@@ -28,9 +28,10 @@
   unchanged subject set, attribute findings through provider-owned pattern
   identities, return results in caller order, then remove each catalog on every
   exit.
-- Run at most one native process at a time with `RAYON_NUM_THREADS=2`. Output
-  and timeout bounds apply independently to each program. Timeout, failure, and
-  interruption cancel the active process group before scoped catalog cleanup.
+- Run at most one native process per evaluation request at a time with
+  `RAYON_NUM_THREADS=2`. Output and timeout bounds apply independently to each
+  program. Timeout, failure, and interruption cancel the active process group
+  before scoped catalog cleanup.
 
 ## Routing
 

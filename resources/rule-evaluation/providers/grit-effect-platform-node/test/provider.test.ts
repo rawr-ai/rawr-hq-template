@@ -108,6 +108,36 @@ describe("grit-effect-platform-node rule evaluation", () => {
     ).toBe(true);
   }, 60_000);
 
+  test("gives each sequential program an independent deadline", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    const invocationPath = path.join(fixture, "deadline-invocations");
+    await writeFile(subject, "allowed();\n");
+    const executable = await writeExecutable(
+      fixture,
+      "deadline-grit",
+      `#!/bin/sh\nwhile [ "$1" != "--grit-dir" ]; do shift; done\nshift\npattern_count=$(grep -c '"name":' "$1/grit.yaml")\nprintf x >> '${invocationPath}'\nif [ "$pattern_count" -eq 1 ]; then sleep 1; else sleep 2; fi\nprintf '%s\\n' '${JSON.stringify({ paths: [subject], results: [] })}' >&2\n`
+    );
+
+    await expect(
+      Effect.runPromise(
+        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_500 }).evaluate({
+          programs: [
+            { id: "deadline-a", program: "language js(typescript)\n`first()`" },
+            { id: "deadline-b", program: "language js(typescript)\n`second()`" },
+          ],
+          subjectPaths: [subject],
+        })
+      )
+    ).resolves.toEqual({
+      results: [
+        { programId: "deadline-a", findings: [] },
+        { programId: "deadline-b", findings: [] },
+      ],
+    });
+    expect(await readFile(invocationPath, "utf8")).toBe("xx");
+  });
+
   test("maps exact wire positions and messages in deterministic order", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
