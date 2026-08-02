@@ -49,6 +49,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hq-ops:typecheck`.
-- Run `bunx nx run @rawr/hq-ops:test` for audit and secret findings, report
+- Run `bunx nx run @habitat-ai/rawr-hq-ops:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-hq-ops:test` for audit and secret findings, report
   persistence, modes, severity ordering, and tolerance gates.

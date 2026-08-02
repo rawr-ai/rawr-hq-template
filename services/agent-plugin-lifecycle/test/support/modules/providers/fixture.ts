@@ -4,7 +4,7 @@ import type {
   ContentWorkspaceResource,
   MaterializeTemporaryTreeInput,
   TemporaryContentTreeEntry,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   ClaudeNativeAgentProviderSession,
   CodexNativeAgentProviderSession,
@@ -16,7 +16,7 @@ import type {
   NativeProviderPluginFiles,
   NativeProviderPluginFilesReadInput,
   NativeProviderPluginObservation,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Effect } from "effect";
 
 import type { Client } from "../../../../src/client";

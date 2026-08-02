@@ -5,11 +5,11 @@ import { pathToFileURL } from "node:url";
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import type {
   ExecResult,
   HqOpsResources,

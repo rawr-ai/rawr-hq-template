@@ -1,18 +1,18 @@
 import { randomUUID } from "node:crypto";
-import {
-  type CreateClientOptions,
-  createClient as createExampleTodoClient,
-  type Client as ExampleTodoClient,
-} from "@rawr/example-todo/client";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedInMemoryDbPoolAdapter } from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedInMemoryDbPoolAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/sql/embedded-in-memory";
 import {
   bindService,
   type ProcessView,
   type RoleView,
   type ServiceBinding,
   type ServiceBindingContext,
-} from "@rawr/hq-sdk/plugins";
+} from "@habitat-ai/rawr-hq-sdk/plugins";
+import {
+  type CreateClientOptions,
+  createClient as createExampleTodoClient,
+  type Client as ExampleTodoClient,
+} from "@rawr/example-todo/client";
 
 type HostProcess = ProcessView & {
   processId: "server";

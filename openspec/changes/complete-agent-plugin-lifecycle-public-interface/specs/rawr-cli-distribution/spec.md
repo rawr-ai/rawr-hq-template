@@ -78,6 +78,7 @@ rewrite.
 - **AND** no release filter silently removes the dependency after build
 
 #### Scenario: Shared dependency metadata changes
-- **WHEN** CLI packaging changes `@rawr/hq-sdk` dependency or export boundaries
+- **WHEN** CLI packaging changes `@habitat-ai/rawr-hq-sdk` dependency or export
+  boundaries
 - **THEN** the legitimate server project passes its typecheck and owning
   behavior tests before the package change is accepted

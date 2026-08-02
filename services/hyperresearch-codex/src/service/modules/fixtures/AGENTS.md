@@ -47,6 +47,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hyperresearch-codex:typecheck`.
-- Run `bunx nx run @rawr/hyperresearch-codex:test` for fresh-step execution,
+- Run `bunx nx run @habitat-ai/rawr-hyperresearch-codex:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-hyperresearch-codex:test` for fresh-step execution,
   resume, incomplete runs, backend failures, and artifact integrity.

@@ -10,7 +10,7 @@
 - Applies to `plugins/cli/commands/hyperresearch/**`; inherit the
   [plugin package router](../../../AGENTS.md).
 - This package owns the Oclif operator and fixture projection for the
-  `@rawr/hyperresearch-codex` service.
+  `@habitat-ai/rawr-hyperresearch-codex` service.
 
 ## Boundaries
 
@@ -58,7 +58,7 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint`.
-- Run `bunx nx run @rawr/plugin-hyperresearch:typecheck`.
-- Run `bunx nx run @rawr/plugin-hyperresearch:test`.
-- Run `bunx nx run @rawr/plugin-hyperresearch:manifest` when command discovery
+- Run `bunx nx run @habitat-ai/rawr-plugin-hyperresearch:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-hyperresearch:test`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-hyperresearch:manifest` when command discovery
   or Oclif metadata changes.

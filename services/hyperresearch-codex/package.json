@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/hyperresearch-codex",
+  "name": "@habitat-ai/rawr-hyperresearch-codex",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -40,7 +40,7 @@
   "dependencies": {
     "@orpc/contract": "2.0.0-beta.20",
     "@orpc/server": "2.0.0-beta.20",
-    "@rawr/hq-sdk": "workspace:*",
+    "@habitat-ai/rawr-hq-sdk": "workspace:*",
     "@habitat-ai/typebox-adapter": "workspace:*",
     "typebox": "1.3.8"
   },

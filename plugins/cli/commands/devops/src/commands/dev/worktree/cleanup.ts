@@ -1,6 +1,6 @@
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
+import { resolveNodeScratchPolicyInput } from "@habitat-ai/rawr-dev-node/scratch-policy";
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
-import { resolveNodeScratchPolicyInput } from "@rawr/dev-node/scratch-policy";
 import { createDevClient } from "../../../lib/dev-binding";
 import { devHumanRenderer, exitForPreflight } from "../../../lib/render";
 

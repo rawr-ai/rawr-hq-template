@@ -1,4 +1,4 @@
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { collectAndWriteHqStatus, formatHqStatusHuman } from "../../lib/hq-status";
 
 export default class HqStatus extends RawrCommand {

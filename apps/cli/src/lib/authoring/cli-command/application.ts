@@ -59,7 +59,7 @@ export async function verifyOfficialCommandTemplateWorkspace(
   if (
     origin !== TEMPLATE_ORIGIN ||
     rootPackage.name !== "rawr-hq-template" ||
-    cliPackage.name !== "@rawr/cli"
+    cliPackage.name !== "@habitat-ai/rawr"
   ) {
     throw new Error("Official command authoring requires the exact RAWR HQ-Template workspace");
   }

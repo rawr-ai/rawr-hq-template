@@ -57,6 +57,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/dev:typecheck`.
-- Run `bunx nx run @rawr/dev:test` when scratch artifact discovery, modes,
+- Run `bunx nx run @habitat-ai/rawr-dev:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-dev:test` when scratch artifact discovery, modes,
   bypass, or enforcement changes.

@@ -162,6 +162,6 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @rawr/agent-plugin-lifecycle:typecheck`.
-- Run `bunx nx run @rawr/agent-plugin-lifecycle:test` when lifecycle behavior
+  `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:test` when lifecycle behavior
   changes.

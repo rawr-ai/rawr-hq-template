@@ -1,4 +1,4 @@
-import type { Sql } from "@rawr/hq-sdk";
+import type { Sql } from "@habitat-ai/rawr-hq-sdk";
 import type { AssignmentType } from "../../model/dto/assignment";
 import type { TodoIdentifierType } from "../../model/dto/identifier";
 import type { WorkspaceIdType } from "../../model/dto/workspace-id";

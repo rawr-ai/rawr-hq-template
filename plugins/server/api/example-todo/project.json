@@ -3,7 +3,11 @@
   "name": "plugin-server-api-example-todo",
   "root": "plugins/server/api/example-todo",
   "sourceRoot": "plugins/server/api/example-todo/src",
-  "implicitDependencies": ["@rawr/example-todo", "@rawr/hq-sdk", "@rawr/runtime-context"],
+  "implicitDependencies": [
+    "@rawr/example-todo",
+    "@habitat-ai/rawr-hq-sdk",
+    "@rawr/runtime-context"
+  ],
   "tags": [
     "type:plugin",
     "migration-slice:structural-tranche",

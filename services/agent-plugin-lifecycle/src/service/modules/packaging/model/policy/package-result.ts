@@ -1,4 +1,4 @@
-import type { PackageOutputFailure } from "@rawr/resource-agent-plugin-package-output";
+import type { PackageOutputFailure } from "@habitat-ai/rawr-resource-agent-plugin-package-output";
 
 import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
 import {

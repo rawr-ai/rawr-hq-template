@@ -3,12 +3,12 @@ import type {
   NativeAgentProviderSession,
   NativeProviderCapabilities,
   NativeProviderInventory,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import {
   NativeProviderCapabilitiesSchema,
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/release-identity";

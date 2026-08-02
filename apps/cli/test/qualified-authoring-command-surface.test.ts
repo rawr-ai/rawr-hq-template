@@ -137,7 +137,7 @@ describe("qualified authoring command surface", () => {
     const template = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq-template.git",
       packageName: "rawr-hq-template",
-      cliPackageName: "@rawr/cli",
+      cliPackageName: "@habitat-ai/rawr",
     });
     const extensionParent = await commandTempRoot();
     const extension = path.join(extensionParent, "portable-extension");

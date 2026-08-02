@@ -1,12 +1,12 @@
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
-import type { ContentWorkspaceFailure } from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { ContentWorkspaceFailure } from "@habitat-ai/rawr-resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { parseReleaseRelativePath } from "../../../src/service/model/policy/release-identity";

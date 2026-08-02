@@ -7,24 +7,24 @@
     "groups": {
       "rawr-cli": {
         "projects": [
-          "@rawr/agent-plugin-lifecycle",
-          "@rawr/chatgpt-corpus",
-          "@rawr/cli",
-          "@rawr/core",
-          "@rawr/dev",
-          "@rawr/dev-node",
-          "@rawr/hq-ops",
-          "@rawr/hq-sdk",
-          "@rawr/hyperresearch-codex",
-          "@rawr/plugin-chatgpt-corpus",
-          "@rawr/plugin-devops",
-          "@rawr/plugin-hyperresearch",
-          "@rawr/plugin-session-tools",
-          "@rawr/resource-agent-plugin-package-output",
-          "@rawr/resource-content-workspace",
-          "@rawr/resource-native-agent-provider",
-          "@rawr/resource-versioned-content",
-          "@rawr/session-intelligence"
+          "@habitat-ai/rawr-agent-plugin-lifecycle",
+          "@habitat-ai/rawr-chatgpt-corpus",
+          "@habitat-ai/rawr",
+          "@habitat-ai/rawr-core",
+          "@habitat-ai/rawr-dev",
+          "@habitat-ai/rawr-dev-node",
+          "@habitat-ai/rawr-hq-ops",
+          "@habitat-ai/rawr-hq-sdk",
+          "@habitat-ai/rawr-hyperresearch-codex",
+          "@habitat-ai/rawr-plugin-chatgpt-corpus",
+          "@habitat-ai/rawr-plugin-devops",
+          "@habitat-ai/rawr-plugin-hyperresearch",
+          "@habitat-ai/rawr-plugin-session-tools",
+          "@habitat-ai/rawr-resource-agent-plugin-package-output",
+          "@habitat-ai/rawr-resource-content-workspace",
+          "@habitat-ai/rawr-resource-native-agent-provider",
+          "@habitat-ai/rawr-resource-versioned-content",
+          "@habitat-ai/rawr-session-intelligence"
         ],
         "projectsRelationship": "fixed"
       },
@@ -142,24 +142,24 @@
             "@habitat-ai/resource-rule-evaluation",
             "@habitat-ai/resource-source-inventory",
             "@habitat-ai/service",
-            "@rawr/agent-plugin-lifecycle",
-            "@rawr/chatgpt-corpus",
-            "@rawr/cli",
-            "@rawr/core",
-            "@rawr/dev",
-            "@rawr/dev-node",
-            "@rawr/hq-ops",
-            "@rawr/hq-sdk",
-            "@rawr/hyperresearch-codex",
-            "@rawr/plugin-chatgpt-corpus",
-            "@rawr/plugin-devops",
-            "@rawr/plugin-hyperresearch",
-            "@rawr/plugin-session-tools",
-            "@rawr/resource-agent-plugin-package-output",
-            "@rawr/resource-content-workspace",
-            "@rawr/resource-native-agent-provider",
-            "@rawr/resource-versioned-content",
-            "@rawr/session-intelligence",
+            "@habitat-ai/rawr-agent-plugin-lifecycle",
+            "@habitat-ai/rawr-chatgpt-corpus",
+            "@habitat-ai/rawr",
+            "@habitat-ai/rawr-core",
+            "@habitat-ai/rawr-dev",
+            "@habitat-ai/rawr-dev-node",
+            "@habitat-ai/rawr-hq-ops",
+            "@habitat-ai/rawr-hq-sdk",
+            "@habitat-ai/rawr-hyperresearch-codex",
+            "@habitat-ai/rawr-plugin-chatgpt-corpus",
+            "@habitat-ai/rawr-plugin-devops",
+            "@habitat-ai/rawr-plugin-hyperresearch",
+            "@habitat-ai/rawr-plugin-session-tools",
+            "@habitat-ai/rawr-resource-agent-plugin-package-output",
+            "@habitat-ai/rawr-resource-content-workspace",
+            "@habitat-ai/rawr-resource-native-agent-provider",
+            "@habitat-ai/rawr-resource-versioned-content",
+            "@habitat-ai/rawr-session-intelligence",
             "@habitat-ai/typebox-adapter"
           ]
         },
@@ -168,34 +168,34 @@
       {
         "filter": {
           "projects": [
-            "@rawr/agent-plugin-lifecycle",
-            "@rawr/chatgpt-corpus",
-            "@rawr/cli",
-            "@rawr/core",
-            "@rawr/dev",
-            "@rawr/dev-node",
-            "@rawr/hq-ops",
-            "@rawr/hq-sdk",
-            "@rawr/hyperresearch-codex",
-            "@rawr/plugin-chatgpt-corpus",
-            "@rawr/plugin-devops",
-            "@rawr/plugin-hyperresearch",
-            "@rawr/plugin-session-tools",
-            "@rawr/resource-agent-plugin-package-output",
-            "@rawr/resource-content-workspace",
-            "@rawr/resource-native-agent-provider",
-            "@rawr/resource-versioned-content",
-            "@rawr/session-intelligence"
+            "@habitat-ai/rawr-agent-plugin-lifecycle",
+            "@habitat-ai/rawr-chatgpt-corpus",
+            "@habitat-ai/rawr",
+            "@habitat-ai/rawr-core",
+            "@habitat-ai/rawr-dev",
+            "@habitat-ai/rawr-dev-node",
+            "@habitat-ai/rawr-hq-ops",
+            "@habitat-ai/rawr-hq-sdk",
+            "@habitat-ai/rawr-hyperresearch-codex",
+            "@habitat-ai/rawr-plugin-chatgpt-corpus",
+            "@habitat-ai/rawr-plugin-devops",
+            "@habitat-ai/rawr-plugin-hyperresearch",
+            "@habitat-ai/rawr-plugin-session-tools",
+            "@habitat-ai/rawr-resource-agent-plugin-package-output",
+            "@habitat-ai/rawr-resource-content-workspace",
+            "@habitat-ai/rawr-resource-native-agent-provider",
+            "@habitat-ai/rawr-resource-versioned-content",
+            "@habitat-ai/rawr-session-intelligence"
           ]
         },
         "dependsOn": [
           "...",
           {
-            "projects": ["@rawr/cli"],
+            "projects": ["@habitat-ai/rawr"],
             "target": "acceptance:oclif-installed-package"
           },
           {
-            "projects": ["@rawr/cli"],
+            "projects": ["@habitat-ai/rawr"],
             "target": "acceptance:oclif-native-plugins"
           }
         ]
@@ -203,11 +203,11 @@
       {
         "filter": {
           "projects": [
-            "@rawr/cli",
-            "@rawr/plugin-chatgpt-corpus",
-            "@rawr/plugin-devops",
-            "@rawr/plugin-hyperresearch",
-            "@rawr/plugin-session-tools"
+            "@habitat-ai/rawr",
+            "@habitat-ai/rawr-plugin-chatgpt-corpus",
+            "@habitat-ai/rawr-plugin-devops",
+            "@habitat-ai/rawr-plugin-hyperresearch",
+            "@habitat-ai/rawr-plugin-session-tools"
           ]
         },
         "dependsOn": ["...", "manifest"]

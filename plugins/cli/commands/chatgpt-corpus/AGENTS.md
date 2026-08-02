@@ -16,7 +16,7 @@
 
 - Commands own arguments, flags, CLI result envelopes, and human-readable
   output. Corpus policy and result semantics remain in
-  `@rawr/chatgpt-corpus`.
+  `@habitat-ai/rawr-chatgpt-corpus`.
 - `src/lib/client.ts` binds the public corpus client to the package-local
   filesystem workspace-store adapter and observability adapters. Keep
   filesystem realization behind the declared workspace-store port; do not
@@ -60,7 +60,7 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint`.
-- Run `bunx nx run @rawr/plugin-chatgpt-corpus:typecheck`.
-- Run `bunx nx run @rawr/plugin-chatgpt-corpus:test`.
-- Run `bunx nx run @rawr/plugin-chatgpt-corpus:manifest` when command discovery
+- Run `bunx nx run @habitat-ai/rawr-plugin-chatgpt-corpus:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-chatgpt-corpus:test`.
+- Run `bunx nx run @habitat-ai/rawr-plugin-chatgpt-corpus:manifest` when command discovery
   or Oclif metadata changes.

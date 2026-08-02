@@ -1,5 +1,3 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
@@ -7,7 +5,9 @@ import type {
   GitStagedIndexEntry,
   GitStagedIndexObservation,
   GitWorkspaceAnchor,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import type {
   AgentPluginPayload,
   NormalizedFileMode,

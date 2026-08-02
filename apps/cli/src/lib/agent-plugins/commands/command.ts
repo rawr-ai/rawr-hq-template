@@ -1,5 +1,5 @@
-import type { RawrBaseFlags } from "@rawr/core";
-import { RawrCommand } from "@rawr/core";
+import type { RawrBaseFlags } from "@habitat-ai/rawr-core";
+import { RawrCommand } from "@habitat-ai/rawr-core";
 import { productionLifecycleProfile } from "../profiles/production";
 import { bindProductionLifecycleService } from "../service-runtime/client";
 import { LifecycleInputError } from "./input";

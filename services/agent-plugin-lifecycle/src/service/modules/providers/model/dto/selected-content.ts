@@ -1,4 +1,4 @@
-import { NativeMarketplaceSourceSchema } from "@rawr/resource-native-agent-provider";
+import { NativeMarketplaceSourceSchema } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 
 import {

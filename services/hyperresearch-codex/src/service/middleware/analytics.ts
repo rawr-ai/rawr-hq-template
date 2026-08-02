@@ -1,7 +1,7 @@
 /**
  * @fileoverview Required service-wide analytics middleware.
  */
-import { createAnalyticsMiddlewareCallback } from "@rawr/hq-sdk";
+import { createAnalyticsMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
 import { metadataDefaults } from "../contract";
 

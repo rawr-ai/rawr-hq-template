@@ -1,5 +1,5 @@
+import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { oc } from "@orpc/contract";
-import { procedureMetadata } from "@rawr/hq-sdk";
 import { contract as corpusArtifacts } from "./modules/corpus-artifacts/contract";
 import { contract as sourceMaterials } from "./modules/source-materials/contract";
 import { contract as workspace } from "./modules/workspace/contract";

@@ -6,14 +6,14 @@ import type {
   ContentWorkspaceResource,
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   MaterializedRemoteContentTree,
   RemoteContentTree,
   VersionedContentFailure,
   VersionedContentResource,
   VersionedContentTreeEntry,
-} from "@rawr/resource-versioned-content";
+} from "@habitat-ai/rawr-resource-versioned-content";
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";

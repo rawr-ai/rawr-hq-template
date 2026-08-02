@@ -50,7 +50,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hyperresearch-codex:typecheck`.
-- Run `bunx nx run @rawr/hyperresearch-codex:test` for tier routes, resume,
+- Run `bunx nx run @habitat-ai/rawr-hyperresearch-codex:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-hyperresearch-codex:test` for tier routes, resume,
   packet audit and fan-in, source capture, artifact lineage, failed steps, and
   final validation.

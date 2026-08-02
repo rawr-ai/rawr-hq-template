@@ -6,7 +6,7 @@
  * `impl.use(...)`. It enriches the service analytics event with the HQ Ops
  * repository scope and invocation identity.
  */
-import { createAnalyticsMiddlewareCallback } from "@rawr/hq-sdk";
+import { createAnalyticsMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
 import { metadataDefaults } from "../model/policy/procedure-metadata";
 

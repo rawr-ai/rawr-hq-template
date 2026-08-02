@@ -1,7 +1,7 @@
 // @ts-expect-error The Dev service has no bare-root public face.
-import * as retiredRootSurface from "@rawr/dev";
+import * as retiredRootSurface from "@habitat-ai/rawr-dev";
 // @ts-expect-error The executable router remains private behind client construction.
-import type { Router } from "@rawr/dev/client";
+import type { Router } from "@habitat-ai/rawr-dev/client";
 import {
   type Client,
   type Config,
@@ -33,15 +33,15 @@ import {
   type StackDrainResult,
   type WorktreeCleanupInput,
   type WorktreeCleanupResult,
-} from "@rawr/dev/client";
+} from "@habitat-ai/rawr-dev/client";
 // @ts-expect-error Dev host types are exposed through the client, not a parallel facade.
-import * as retiredResourcesSurface from "@rawr/dev/resources";
+import * as retiredResourcesSurface from "@habitat-ai/rawr-dev/resources";
 // @ts-expect-error The executable router is not a public package axis.
-import * as retiredRouterSurface from "@rawr/dev/router";
+import * as retiredRouterSurface from "@habitat-ai/rawr-dev/router";
 // @ts-expect-error The contract is re-exported only through the client face.
-import * as retiredContractSurface from "@rawr/dev/service/contract";
+import * as retiredContractSurface from "@habitat-ai/rawr-dev/service/contract";
 // @ts-expect-error Dev DTOs are exposed through the client, not a parallel facade.
-import * as retiredTypesSurface from "@rawr/dev/types";
+import * as retiredTypesSurface from "@habitat-ai/rawr-dev/types";
 
 type PreservedTypeSurface = {
   client: Client;

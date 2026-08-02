@@ -16,7 +16,7 @@ async function makeTempDir(): Promise<string> {
   return dir;
 }
 
-describe("@rawr/dev-node resources", () => {
+describe("@habitat-ai/rawr-dev-node resources", () => {
   const decoder = new TextDecoder();
 
   it("uses the test command fixture instead of spawning real commands when enabled", async () => {

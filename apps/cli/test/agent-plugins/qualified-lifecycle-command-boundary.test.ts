@@ -5,11 +5,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+import type { Client } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-} from "@rawr/agent-plugin-lifecycle/client";
+} from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 import { describe, expect, it } from "vitest";
 
 import {

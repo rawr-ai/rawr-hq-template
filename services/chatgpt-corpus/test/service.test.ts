@@ -7,7 +7,7 @@ import {
   seedFixtureWorkspace,
 } from "./helpers";
 
-describe("@rawr/chatgpt-corpus", () => {
+describe("@habitat-ai/rawr-chatgpt-corpus", () => {
   it("keeps the package-root client entrypoint stable", async () => {
     const workspaceStore = createMemoryWorkspaceStore();
     const pkg = await import("../src");

@@ -26,7 +26,7 @@ The long research-quality proof class is now represented by the repaired full-ti
 
 ## Component Gates
 
-1. Typecheck `@rawr/hyperresearch-codex`.
+1. Typecheck `@habitat-ai/rawr-hyperresearch-codex`.
 2. Test synthetic three-step run with fake CLI backend.
 3. Test bounded resume after one completed step.
 4. Test unsupported operation rejection for `research`.
@@ -45,8 +45,8 @@ Current observed component evidence:
 - `bun run --cwd plugins/cli/commands/hyperresearch typecheck`
 - `bunx vitest run --project hyperresearch-codex`
 - `bunx vitest run --project plugin-hyperresearch`
-- `bunx nx run-many -t typecheck --projects=@rawr/hyperresearch-codex,@rawr/plugin-hyperresearch`
-- `bunx nx run-many -t test --projects=@rawr/hyperresearch-codex,@rawr/plugin-hyperresearch`
+- `bunx nx run-many -t typecheck --projects=@habitat-ai/rawr-hyperresearch-codex,@habitat-ai/rawr-plugin-hyperresearch`
+- `bunx nx run-many -t test --projects=@habitat-ai/rawr-hyperresearch-codex,@habitat-ai/rawr-plugin-hyperresearch`
 - `bun run --cwd apps/cli rawr hyperresearch codex-slice ... --backend fixture --json` passed.
 - `bun run --cwd apps/cli rawr hyperresearch codex-slice ... --backend fixture --json` with a missing step returned `ok:false` and exited nonzero.
 - `bun run --cwd apps/cli rawr hyperresearch codex run-fixture ... --tier light --json` passed.

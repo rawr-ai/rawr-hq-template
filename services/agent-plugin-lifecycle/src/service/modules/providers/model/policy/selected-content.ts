@@ -1,4 +1,4 @@
-import type { NativeMarketplaceSource } from "@rawr/resource-native-agent-provider";
+import type { NativeMarketplaceSource } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Value } from "typebox/value";
 import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import type {

@@ -1,4 +1,4 @@
-import type { ContentWorkspaceCapture } from "@rawr/resource-content-workspace";
+import type { ContentWorkspaceCapture } from "@habitat-ai/rawr-resource-content-workspace";
 import { Effect } from "effect";
 
 import {

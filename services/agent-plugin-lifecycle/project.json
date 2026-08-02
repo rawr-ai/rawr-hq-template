@@ -1,7 +1,7 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/agent-plugin-lifecycle",
-  "implicitDependencies": ["@rawr/resource-versioned-content"],
+  "name": "@habitat-ai/rawr-agent-plugin-lifecycle",
+  "implicitDependencies": ["@habitat-ai/rawr-resource-versioned-content"],
   "targets": {
     "check": {
       "executor": "nx:noop"

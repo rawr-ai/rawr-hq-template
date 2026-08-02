@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/plugin-chatgpt-corpus",
+  "name": "@habitat-ai/rawr-plugin-chatgpt-corpus",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -18,9 +18,9 @@
   },
   "dependencies": {
     "@oclif/core": "^4.2.10",
-    "@rawr/chatgpt-corpus": "workspace:*",
-    "@rawr/core": "workspace:*",
-    "@rawr/hq-sdk": "workspace:*"
+    "@habitat-ai/rawr-chatgpt-corpus": "workspace:*",
+    "@habitat-ai/rawr-core": "workspace:*",
+    "@habitat-ai/rawr-hq-sdk": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

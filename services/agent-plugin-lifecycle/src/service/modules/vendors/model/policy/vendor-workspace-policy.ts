@@ -1,4 +1,7 @@
-import type { ContentTreeEntry, ContentWorkspaceIdentity } from "@rawr/resource-content-workspace";
+import type {
+  ContentTreeEntry,
+  ContentWorkspaceIdentity,
+} from "@habitat-ai/rawr-resource-content-workspace";
 import { Value } from "typebox/value";
 import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
 import type { ProvenanceBinding } from "#agent-plugin-lifecycle-service/model/dto/release-input";

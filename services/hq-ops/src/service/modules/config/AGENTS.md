@@ -46,6 +46,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/hq-ops:typecheck`.
-- Run `bunx nx run @rawr/hq-ops:test` for schema versions, retired fields,
+- Run `bunx nx run @habitat-ai/rawr-hq-ops:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-hq-ops:test` for schema versions, retired fields,
   validation, precedence, and repository-neutral layered configuration.

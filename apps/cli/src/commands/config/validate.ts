@@ -1,4 +1,4 @@
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { createHqOpsCallOptions, createHqOpsClient } from "../../lib/hq-ops-client";
 
 type ValidationResult =

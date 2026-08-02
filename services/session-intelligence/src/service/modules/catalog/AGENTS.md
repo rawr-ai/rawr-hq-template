@@ -48,6 +48,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/session-intelligence:typecheck`.
-- Run `bunx nx run @rawr/session-intelligence:test` for source detection,
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:test` for source detection,
   filters, ordering, path and id resolution, and typed failures.

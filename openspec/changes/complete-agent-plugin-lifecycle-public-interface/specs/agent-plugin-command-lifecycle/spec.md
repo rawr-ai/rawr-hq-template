@@ -46,8 +46,9 @@ bag.
 ### Requirement: Each service-backed command invokes one typed service procedure
 
 Each service-backed lifecycle transition command MUST perform command-local
-value adaptation and invoke exactly one `@rawr/agent-plugin-lifecycle` client
-procedure. CLI code MUST NOT import a module-local router handler or repository,
+value adaptation and invoke exactly one
+`@habitat-ai/rawr-agent-plugin-lifecycle` client procedure. CLI code MUST NOT
+import a module-local router handler or repository,
 resolve lifecycle prerequisites, sequence plan/apply/verify/retire across
 modules, aggregate procedure results, persist another ledger/receipt/capsule, or
 introduce another lifecycle service. The C4 `create` command remains source
@@ -108,9 +109,9 @@ application directory. Personal executable modules MUST never load.
 `rawr agent plugins check` MUST parse exactly one of release eligibility,
 staged/clean repository validation, release-input body/envelope
 canonicalization, release-input staged refresh, current-main v3 direct-record encode/validate,
-  or current-main selection validation before acquiring any Git, filesystem,
-  provider, Oclif, app, or runtime port. Each selected mode MUST
-invoke exactly one typed `@rawr/agent-plugin-lifecycle` procedure once.
+or current-main selection validation before acquiring any Git, filesystem,
+provider, Oclif, app, or runtime port. Each selected mode MUST invoke exactly one
+typed `@habitat-ai/rawr-agent-plugin-lifecycle` procedure once.
 
 The prior protected-lane runtime mode MUST be absent. C6 settlement MUST select
 the exact canonical personal-main workspace/release input and MUST NOT supply or

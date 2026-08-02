@@ -11,8 +11,8 @@ import type {
   NativeProviderPluginFiles,
   NativeProviderPluginObservation,
   NativeProviderSessionInput,
-} from "@rawr/resource-native-agent-provider";
-import { NativeProviderInventorySchema } from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
+import { NativeProviderInventorySchema } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Effect } from "effect";
 import { type Static, Type } from "typebox";
 import { Value } from "typebox/value";

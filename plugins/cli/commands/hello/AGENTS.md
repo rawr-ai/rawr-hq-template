@@ -18,7 +18,7 @@
 - `package.json#oclif` maps `src/commands` to compiled `dist/commands`; do not
   add a parallel command registry or custom discovery mechanism.
 - This plugin is linked or installed through native Oclif extension state. It
-  is not a core command composed into `@rawr/cli` and has no agent-plugin
+  is not a core command composed into `@habitat-ai/rawr` and has no agent-plugin
   lifecycle authority.
 - Keep the example intentionally small; reusable product behavior belongs in
   a service or package with its own boundary.

@@ -96,19 +96,20 @@ tracked source consumer. The deletion checkpoint removes that dependency, the
 unused package, root build references, and lockfile entries together. It also
 removes duplicate direct CLI dependencies on `@rawr/dev` and `@rawr/dev-node`;
 the DevOps command plugin remains their qualified consumer. That historical
-source-reachability result contained seventeen projects. The package-manifest
-runtime closure is the release authority and contains exactly nineteen package
-roots: the CLI, four first-party Oclif plugins, six services, four support
-packages, and four resources. Three consumers now declare their direct
-`@rawr/hq-sdk` dependency. The SDK's workflow client is vendor-neutral, while
-the server host retains concrete Inngest ownership, so the CLI closure no
-longer installs Inngest for a type-only edge. `@rawr/plugin-hello` remains
-outside as the native external-install fixture. Archived architecture records
-retain their historical package claims as provenance rather than live
-guidance. The fixed Nx Release group now gives all nineteen runtime members
-ordinary version and publication metadata. Installed tarball acceptance remains
-separately owned by task 3.4; this metadata checkpoint does not manufacture
-that result.
+source-reachability result contained seventeen projects. At that checkpoint,
+the package-manifest runtime closure contained exactly nineteen package roots:
+the CLI, four first-party Oclif plugins, six services, four support packages,
+and four resources. Three consumers declared their direct `@rawr/hq-sdk`
+dependency. The SDK's workflow client was vendor-neutral, while the server host
+retained concrete Inngest ownership, so the CLI closure no longer installed
+Inngest for a type-only edge. `@rawr/plugin-hello` remained outside as the
+native external-install fixture. Archived architecture records retain their
+historical package claims as provenance rather than live guidance. The fixed Nx
+Release group gave all nineteen runtime members ordinary version and publication
+metadata. Installed tarball acceptance remained separately owned by task 3.4;
+that metadata checkpoint did not manufacture the result. The later independent
+TypeBox adapter release removed that package from the RAWR group, leaving the
+current eighteen-member closure recorded below.
 
 The pre-landing installed-package acceptance uses local packed tarballs in one
 guarded disposable prefix. An acceptance-only package manifest binds every
@@ -1655,7 +1656,7 @@ review does not authorize a separate release path.
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Conventional CLI package/release | The exact nineteen-package fixed Nx Release group, package versions, inferred publishers, production Oclif manifests, packed-install acceptance, public Habitat registry publication, registry-installed smoke, and tag-triggered npm trusted publishing are landed and green |
+| Conventional CLI package/release | The exact eighteen-package fixed RAWR Nx Release group has versions, inferred publishers, production Oclif manifests, and green packed-install acceptance under the `@habitat-ai/rawr` and `@habitat-ai/rawr-*` candidate identities; RAWR registry publication, registry-installed smoke, and tag-triggered trusted publishing remain pending. The separate Habitat package group is already published and installed. |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 20, official Effect bridge beta 20, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -5796,6 +5797,37 @@ uncached in 19.1 seconds, installed-package acceptance passed four cases, and
 required candidate run `30738229951` plus canonical-main run `30738486466`
 were green. This settlement adds no bundle, release selector, retained local
 version store, or second Habitat identity.
+
+## RAWR Registry Namespace Checkpoint
+
+The active candidate moves the fixed eighteen-package RAWR release group from
+the unowned `@rawr` namespace into `@habitat-ai`. The installed application is
+`@habitat-ai/rawr`; its four built-in command packages are
+`@habitat-ai/rawr-plugin-*`; and the remaining services, resources, and support
+packages retain ordinary package identities under the
+`@habitat-ai/rawr-*` prefix. Package names, Nx project identities, TypeScript
+paths, Oclif composition, workspace dependencies, and live operator guidance
+move together. Historical evidence keeps the names it actually observed.
+
+This checkpoint deliberately retains the existing eighteen-package Nx release
+group. Workspace dependencies are links, not a bundling mechanism. A disposable
+`bundleDependencies` probe against the Bun-linked workspace packed 63.5 MB,
+expanded to 525 MB, and contained 68,774 entries, including source, tests, and
+external `.bun` paths. That application-image shape is rejected. Collapsing the
+thirteen internal libraries into the CLI and four Oclif command packages would
+require a separate compiled-output change with its own installed-package proof;
+no bundler or private package manager enters this namespace checkpoint.
+
+The candidate builds the complete RAWR application closure in 26.1 seconds,
+typechecks its 18 release projects and dependencies in 37.1 seconds, and passes
+the 16 available release-project test targets plus dependencies in 1 minute 1
+second. The namespace-native Habitat rule for Oclif command packages and the
+repository Biome check also pass. The uncached installed-package gate then
+packed the exact eighteen-package group, installed it without workspace links,
+and passed both acceptance cases plus the 46-command first-party inventory in 1
+minute 6 seconds. These are pre-landing candidate results: no RAWR package has
+been published, no release tag has been created, and no native provider state
+has been changed.
 
 ## Settlement Oracles
 

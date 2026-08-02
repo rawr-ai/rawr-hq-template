@@ -3,8 +3,8 @@ import { dirname, join } from "node:path";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
-} from "@rawr/resource-content-workspace";
-import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+} from "@habitat-ai/rawr-resource-content-workspace";
+import { makeNodeContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 

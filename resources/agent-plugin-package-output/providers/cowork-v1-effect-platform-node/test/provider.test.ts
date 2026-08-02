@@ -19,7 +19,7 @@ import { NodeServices } from "@effect/platform-node";
 import type {
   CoworkV1ArchiveEncodingRequest,
   PackageOutputFailure,
-} from "@rawr/resource-agent-plugin-package-output";
+} from "@habitat-ai/rawr-resource-agent-plugin-package-output";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import {
   makeAgentPluginPackageOutputResource,

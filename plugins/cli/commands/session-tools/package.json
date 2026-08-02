@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/plugin-session-tools",
+  "name": "@habitat-ai/rawr-plugin-session-tools",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -11,9 +11,9 @@
   ],
   "dependencies": {
     "@oclif/core": "^4.2.10",
-    "@rawr/core": "workspace:*",
-    "@rawr/hq-sdk": "workspace:*",
-    "@rawr/session-intelligence": "workspace:*"
+    "@habitat-ai/rawr-core": "workspace:*",
+    "@habitat-ai/rawr-hq-sdk": "workspace:*",
+    "@habitat-ai/rawr-session-intelligence": "workspace:*"
   },
   "oclif": {
     "commands": "./dist/commands",

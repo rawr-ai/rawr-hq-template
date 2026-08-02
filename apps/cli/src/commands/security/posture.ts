@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
-import { findWorkspaceRoot, RawrCommand } from "@rawr/core";
 
 type SecurityFinding = {
   kind: string;

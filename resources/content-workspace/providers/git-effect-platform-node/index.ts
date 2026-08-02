@@ -30,13 +30,13 @@ import type {
   MaterializedContentTreeEntry,
   MaterializedTemporaryTree,
   MaterializeTemporaryTreeInput,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import {
   ContentTreeEntrySchema,
   GitStagedIndexEntrySchema,
   GitTrackedPathFlagSchema,
   MaterializeTemporaryTreeInputSchema,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import { Effect, Equal, FileSystem, Option, PlatformError, type Scope } from "effect";
 import Schema from "typebox/schema";
 

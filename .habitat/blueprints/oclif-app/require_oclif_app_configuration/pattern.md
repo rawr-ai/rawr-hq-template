@@ -16,7 +16,7 @@ or {
     $filename <: r".*apps/cli/package\.json$",
     $root <: `{ $properties }`,
     or {
-      not { $properties <: some pair(key=`"name"`, value=`"@rawr/cli"`) },
+      not { $properties <: some pair(key=`"name"`, value=`"@habitat-ai/rawr"`) },
       not { $properties <: some pair(key=`"version"`, value=string()) },
       not { $properties <: some pair(key=`"type"`, value=`"module"`) },
       not {
@@ -68,7 +68,7 @@ or {
 ```json
 // @filename: apps/cli/package.json
 {
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/core": "4.11.14" },
@@ -90,7 +90,7 @@ or {
 ```json
 // @filename: apps/cli/package.json
 {
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
@@ -120,7 +120,7 @@ or {
 ```json
 // @filename: apps/cli/package.json
 {
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
@@ -140,7 +140,7 @@ or {
 ```json
 // @filename: apps/cli/package.json
 {
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },
@@ -162,7 +162,7 @@ or {
 ```json
 // @filename: apps/cli/package.json
 {
-  "name": "@rawr/cli",
+  "name": "@habitat-ai/rawr",
   "version": "1.0.0",
   "type": "module",
   "dependencies": { "@oclif/plugin-plugins": "5.4.36" },

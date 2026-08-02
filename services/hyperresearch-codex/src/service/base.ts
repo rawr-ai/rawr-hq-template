@@ -1,5 +1,5 @@
+import type { AnalyticsClient, Logger } from "@habitat-ai/rawr-hq-sdk";
 import { os } from "@orpc/server";
-import type { AnalyticsClient, Logger } from "@rawr/hq-sdk";
 import type { HyperresearchCliBackend, HyperresearchCodexIO } from "./common/resources";
 
 type Deps = {

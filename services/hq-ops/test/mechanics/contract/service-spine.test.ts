@@ -1,4 +1,4 @@
-import { getProcedureMetadata } from "@rawr/hq-sdk";
+import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../../../src/client";
 import { router } from "../../../src/router";

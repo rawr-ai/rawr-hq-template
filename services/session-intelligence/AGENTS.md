@@ -53,6 +53,6 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @rawr/session-intelligence:typecheck`.
-- Run `bunx nx run @rawr/session-intelligence:test` when session behavior
+  `bunx nx run @habitat-ai/rawr-session-intelligence:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:test` when session behavior
   changes.

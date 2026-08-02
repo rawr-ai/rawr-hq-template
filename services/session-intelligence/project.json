@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/session-intelligence",
+  "name": "@habitat-ai/rawr-session-intelligence",
   "targets": {
     "check": {
       "executor": "nx:noop"

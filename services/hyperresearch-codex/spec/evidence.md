@@ -1,6 +1,6 @@
 # Hyperresearch Codex Evidence
 
-This file records durable proof claims for the `@rawr/hyperresearch-codex`
+This file records durable proof claims for the `@habitat-ai/rawr-hyperresearch-codex`
 service package. Keep it aligned with `TESTING_PLAN.md` and
 `REVIEW_LEDGER.md`. References to the former checkout-projection mechanism are
 historical evidence only and cannot authorize current integration.

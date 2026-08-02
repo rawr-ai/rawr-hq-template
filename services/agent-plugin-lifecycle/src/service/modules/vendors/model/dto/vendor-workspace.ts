@@ -3,8 +3,8 @@ import type {
   ContentWorkspaceIdentity,
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
-} from "@rawr/resource-content-workspace";
-import type { RemoteContentTree } from "@rawr/resource-versioned-content";
+} from "@habitat-ai/rawr-resource-content-workspace";
+import type { RemoteContentTree } from "@habitat-ai/rawr-resource-versioned-content";
 import type { AgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 
 import type { VendorContentWorkspaceRef } from "./vendor-operations";

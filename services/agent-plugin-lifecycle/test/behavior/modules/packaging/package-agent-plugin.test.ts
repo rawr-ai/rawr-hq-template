@@ -4,13 +4,13 @@ import type {
   AgentPluginPackageOutputResource,
   PackageOutputFailure,
   PackageOutputPublicationResult,
-} from "@rawr/resource-agent-plugin-package-output";
-import { makeNodeAgentPluginPackageOutputResource } from "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+} from "@habitat-ai/rawr-resource-agent-plugin-package-output";
+import { makeNodeAgentPluginPackageOutputResource } from "@habitat-ai/rawr-resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
-} from "@rawr/resource-content-workspace";
-import { makeNodeContentWorkspaceResource } from "@rawr/resource-content-workspace/providers/git-effect-platform-node";
+} from "@habitat-ai/rawr-resource-content-workspace";
+import { makeNodeContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { afterEach, describe, expect, it } from "vitest";

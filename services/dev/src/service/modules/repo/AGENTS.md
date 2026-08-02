@@ -54,6 +54,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/dev:typecheck`.
-- Run `bunx nx run @rawr/dev:test` for target resolution, missing refs,
+- Run `bunx nx run @habitat-ai/rawr-dev:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-dev:test` for target resolution, missing refs,
   Graphite preflight, plan mode, and applied failure reporting.

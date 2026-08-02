@@ -6,7 +6,7 @@
  * `impl.use(...)`. It enriches service spans, logs, and lifecycle events with
  * the stable HQ Ops scope and invocation identity.
  */
-import { createObservabilityMiddlewareCallback } from "@rawr/hq-sdk";
+import { createObservabilityMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
 import { metadataDefaults } from "../model/policy/procedure-metadata";
 

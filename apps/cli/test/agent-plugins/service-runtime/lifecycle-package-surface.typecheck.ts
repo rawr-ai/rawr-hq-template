@@ -1,9 +1,9 @@
 // @ts-expect-error The package has no bare-root public face.
-import * as retiredRootSurface from "@rawr/agent-plugin-lifecycle";
+import * as retiredRootSurface from "@habitat-ai/rawr-agent-plugin-lifecycle";
 // @ts-expect-error Retired export host bindings cannot remain package-reachable.
-import * as retiredExportBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/exports";
+import * as retiredExportBindingSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/bindings/exports";
 // @ts-expect-error Lifecycle host bindings are not a public package axis.
-import * as retiredBindingSurface from "@rawr/agent-plugin-lifecycle/bindings/providers";
+import * as retiredBindingSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/bindings/providers";
 import {
   type Client,
   type Contract,
@@ -19,24 +19,24 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "@rawr/agent-plugin-lifecycle/client";
+} from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 // @ts-expect-error Lifecycle host bindings are not a public package axis.
-import * as retiredHostSurface from "@rawr/agent-plugin-lifecycle/host";
+import * as retiredHostSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/host";
 // @ts-expect-error Raw input parsing belongs to the client face, not a parallel facade.
-import * as retiredInputSurface from "@rawr/agent-plugin-lifecycle/input";
+import * as retiredInputSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/input";
 // @ts-expect-error Retired export module ports cannot remain package-reachable.
-import * as retiredExportPortSurface from "@rawr/agent-plugin-lifecycle/ports/exports";
+import * as retiredExportPortSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/ports/exports";
 // @ts-expect-error Lifecycle module ports are not a public package axis.
-import * as retiredPortSurface from "@rawr/agent-plugin-lifecycle/ports/providers";
+import * as retiredPortSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/ports/providers";
 // @ts-expect-error Release construction is private to the lifecycle service.
-import * as retiredReleaseSurface from "@rawr/agent-plugin-lifecycle/release";
+import * as retiredReleaseSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/release";
 // @ts-expect-error The executable router stays private behind client construction.
-import * as retiredRouterSurface from "@rawr/agent-plugin-lifecycle/router";
+import * as retiredRouterSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/router";
 // @ts-expect-error The contract is re-exported only through the client face.
-import * as retiredContractSurface from "@rawr/agent-plugin-lifecycle/service/contract";
+import * as retiredContractSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/service/contract";
 // @ts-expect-error Contract types are exposed only through the public client face.
-import * as retiredTypesSurface from "@rawr/agent-plugin-lifecycle/types";
-import type { NativeAgentProviderResources } from "@rawr/resource-native-agent-provider";
+import * as retiredTypesSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/types";
+import type { NativeAgentProviderResources } from "@habitat-ai/rawr-resource-native-agent-provider";
 
 const lifecycleContract: Contract = contract;
 void lifecycleContract;
@@ -52,7 +52,7 @@ void parsePluginId;
 void parseReleaseRelativePath;
 void parseRepositoryIdentity;
 
-type LifecycleClientSurface = typeof import("@rawr/agent-plugin-lifecycle/client");
+type LifecycleClientSurface = typeof import("@habitat-ai/rawr-agent-plugin-lifecycle/client");
 type RetiredContextAliasesAreAbsent =
   Extract<keyof LifecycleClientSurface, "Config" | "Deps" | "Scope"> extends never ? true : never;
 const retiredContextAliasesAreAbsent: RetiredContextAliasesAreAbsent = true;

@@ -10,14 +10,14 @@ import type {
   VersionedContentObjectFormat,
   VersionedContentResource,
   VersionedContentTreeEntry,
-} from "@rawr/resource-versioned-content";
+} from "@habitat-ai/rawr-resource-versioned-content";
 import {
   AncestryInputSchema,
   MAX_VERSIONED_CONTENT_FAILURE_DETAIL,
   MaterializeRemoteInputSchema,
   ObserveRemoteInputSchema,
   VersionedContentTreeEntrySchema,
-} from "@rawr/resource-versioned-content";
+} from "@habitat-ai/rawr-resource-versioned-content";
 import { Effect, Equal, FileSystem, Path, PlatformError, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import Schema from "typebox/schema";

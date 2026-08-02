@@ -1,19 +1,19 @@
 import {
   createEmbeddedPlaceholderAnalyticsAdapter,
   type EmbeddedPlaceholderAnalyticsEntry,
-} from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import {
   createEmbeddedPlaceholderFeedbackAdapter,
   type EmbeddedPlaceholderFeedbackSessionEntry,
-} from "@rawr/hq-sdk/host-adapters/feedback/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/feedback/embedded-placeholder";
 import {
   createEmbeddedPlaceholderLoggerAdapter,
   type EmbeddedPlaceholderLogEntry,
-} from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
   createEmbeddedInMemoryDbPoolAdapter,
   createEmbeddedInMemorySqlAdapter,
-} from "@rawr/hq-sdk/host-adapters/sql/embedded-in-memory";
+} from "@habitat-ai/rawr-hq-sdk/host-adapters/sql/embedded-in-memory";
 import { describe, expect, it } from "vitest";
 
 describe("host adapters", () => {

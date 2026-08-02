@@ -10,6 +10,6 @@ export type {
   SessionListItem,
   SessionMessage,
   SessionSourceFilter,
-} from "@rawr/session-intelligence/types";
+} from "@habitat-ai/rawr-session-intelligence/types";
 
 export type OutputFormat = "json" | "text" | "markdown";

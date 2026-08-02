@@ -1,5 +1,5 @@
+import type { AnalyticsClient, DbPool, Logger } from "@habitat-ai/rawr-hq-sdk";
 import { os } from "@orpc/server";
-import type { AnalyticsClient, DbPool, Logger } from "@rawr/hq-sdk";
 import type { WorkspaceIdType } from "./model/dto/workspace-id";
 import type { Clock } from "./model/ports/clock";
 import type { IdentifierGenerator } from "./model/ports/identifier-generator";

@@ -1,4 +1,4 @@
-import { RawrCommand } from "@rawr/core";
+import { RawrCommand } from "@habitat-ai/rawr-core";
 
 export default class Doctor extends RawrCommand {
   static description = "Sanity-check the RAWR HQ-Template repo wiring";

@@ -1,5 +1,5 @@
 {
-  "name": "@rawr/hq-sdk",
+  "name": "@habitat-ai/rawr-hq-sdk",
   "version": "0.1.0",
   "private": false,
   "type": "module",

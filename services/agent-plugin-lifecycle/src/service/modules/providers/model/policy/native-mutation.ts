@@ -1,7 +1,7 @@
 import type {
   NativeProviderCommandPhase,
   NativeProviderInventory,
-} from "@rawr/resource-native-agent-provider";
+} from "@habitat-ai/rawr-resource-native-agent-provider";
 
 import type {
   ConfirmedNativeOperation,

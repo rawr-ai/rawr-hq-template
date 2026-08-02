@@ -1,5 +1,5 @@
+import { RawrCommand } from "@habitat-ai/rawr-core";
 import { Args, Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
 
 import {
   authorExternalExtension,

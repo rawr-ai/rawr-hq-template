@@ -53,6 +53,6 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/dev:typecheck`.
-- Run `bunx nx run @rawr/dev:test` for plan-only drains, failed publish stops,
+- Run `bunx nx run @habitat-ai/rawr-dev:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-dev:test` for plan-only drains, failed publish stops,
   adapter failures, and doctor readiness.

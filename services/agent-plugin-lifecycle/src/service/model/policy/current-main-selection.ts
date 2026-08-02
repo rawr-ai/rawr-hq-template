@@ -2,7 +2,7 @@ import type {
   ContentWorkspaceFailure,
   GitBlobAtPathObservation,
   GitRefObservation,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
 import type { Result } from "effect";
 
 import type {

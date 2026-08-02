@@ -8,7 +8,7 @@
 
 - This document is **research + synthesis only**.
 - No architectural decisions or refactors are made here.
-- Goal: become able to reshape `services/example-todo` to be more **oRPC-native** (esp. around middleware/context/metadata) and to graduate stable, generic authoring helpers into `@rawr/hq-sdk`.
+- Goal: become able to reshape `services/example-todo` to be more **oRPC-native** (esp. around middleware/context/metadata) and to graduate stable, generic authoring helpers into `@habitat-ai/rawr-hq-sdk`.
 
 ## When to reach for this doc
 
@@ -140,9 +140,9 @@
 - Key collisions and “action at a distance” from shallow merge.
 - Confusing `.meta()` (generic) vs `.route()` / `.tag()` / `oo.spec()` (OpenAPI).
 
-### Secondary: TypeScript SDK authoring patterns (for `@rawr/hq-sdk`)
+### Secondary: TypeScript SDK authoring patterns (for `@habitat-ai/rawr-hq-sdk`)
 
-Notes we’ll use when shaping `@rawr/hq-sdk` surfaces (non-oRPC-specific, but relevant to the authoring SDK):
+Notes we’ll use when shaping `@habitat-ai/rawr-hq-sdk` surfaces (non-oRPC-specific, but relevant to the authoring SDK):
 
 - Inference-first: prefer APIs where consumers almost never provide explicit generic type params.
 - Don’t “wrap away” type information: highly-generic helpers tend to erase inference and force casts.

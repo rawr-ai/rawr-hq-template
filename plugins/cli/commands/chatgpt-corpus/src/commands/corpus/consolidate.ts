@@ -1,6 +1,6 @@
 import path from "node:path";
+import { RawrCommand } from "@habitat-ai/rawr-core";
 import { Args } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
 import {
   type CorpusMaterializeOptions,
   createCorpusClient,

@@ -1,4 +1,4 @@
-import type { Client } from "@rawr/agent-plugin-lifecycle/client";
+import type { Client } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 
 export type LifecycleOperation =
   | "releases.check"

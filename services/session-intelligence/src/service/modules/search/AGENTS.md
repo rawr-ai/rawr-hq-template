@@ -50,7 +50,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/session-intelligence:typecheck`.
-- Run `bunx nx run @rawr/session-intelligence:test` for metadata isolation,
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:test` for metadata isolation,
   regex handling, content/cache parity, facets and candidate bounds, reindex,
   freshness, and index clearing.

@@ -49,7 +49,7 @@
 
 ## Validation
 
-- Run `bunx nx run @rawr/session-intelligence:typecheck`.
-- Run `bunx nx run @rawr/session-intelligence:test` for Codex and Claude
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:typecheck`.
+- Run `bunx nx run @habitat-ai/rawr-session-intelligence:test` for Codex and Claude
   detection, normalized messages, slicing, dedupe, roles, tools, and unknown
   formats.

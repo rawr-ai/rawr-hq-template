@@ -1,20 +1,20 @@
-# `@rawr/plugin-session-tools`
+# `@habitat-ai/rawr-plugin-session-tools`
 
 Session listing/search/extraction commands for the RAWR CLI.
 
 ## Local dev
 
 - Build and verify this official Oclif command plugin after changing it:
-  - `bunx nx run @rawr/plugin-session-tools:build`
-  - `bunx nx run @rawr/plugin-session-tools:test`
-  - `bunx nx run @rawr/plugin-session-tools:manifest`
+  - `bunx nx run @habitat-ai/rawr-plugin-session-tools:build`
+  - `bunx nx run @habitat-ai/rawr-plugin-session-tools:test`
+  - `bunx nx run @habitat-ai/rawr-plugin-session-tools:manifest`
 - Run commands through the repository-local Oclif app:
   - `bun run rawr -- sessions list --table`
   - `bun run rawr -- sessions resolve <id>`
   - `bun run rawr -- sessions search --query-metadata oclif`
   - `bun run rawr -- sessions extract <id> --format markdown`
 
-Session Tools is a core Oclif command plugin composed by `@rawr/cli`. Do not
+Session Tools is a core Oclif command plugin composed by `@habitat-ai/rawr`. Do not
 install or link it through the native external-extension channel
 `rawr plugins ...`. The ordinary CLI release package is pending; do not restore
 the retired custom distribution to test this module.

@@ -1,5 +1,5 @@
+import type { AnalyticsClient, Logger } from "@habitat-ai/rawr-hq-sdk";
 import { os } from "@orpc/server";
-import type { AnalyticsClient, Logger } from "@rawr/hq-sdk";
 import type { SessionIndexRuntime } from "./common/ports/session-index-runtime";
 import type { SessionSourceRuntime } from "./common/ports/session-source-runtime";
 

@@ -1,4 +1,4 @@
-# Core Package Router (`@rawr/core`)
+# Core Package Router (`@habitat-ai/rawr-core`)
 
 ## Purpose
 
@@ -52,6 +52,6 @@
 ## Validation
 
 - `bunx nx run habitat:lint`
-- `bunx nx run @rawr/core:typecheck`
-- `bunx nx run @rawr/core:test`
-- `bunx nx run @rawr/core:build`
+- `bunx nx run @habitat-ai/rawr-core:typecheck`
+- `bunx nx run @habitat-ai/rawr-core:test`
+- `bunx nx run @habitat-ai/rawr-core:build`

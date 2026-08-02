@@ -16,7 +16,7 @@ downstream fork.
 
 Contribute here when the change implements generic executable behavior:
 - CLI UX and command contract improvements.
-- Shared package behavior (`@rawr/core`, `@rawr/control-plane`, `@rawr/state`, `@rawr/security`, `@rawr/journal`).
+- Shared package behavior (`@habitat-ai/rawr-core`, `@rawr/control-plane`, `@rawr/state`, `@rawr/security`, `@rawr/journal`).
 - Template governance/docs/process improvements.
 
 ## What Belongs In Personal `RAWR HQ`
@@ -36,7 +36,7 @@ A plugin can be added as a Template fixture only when:
 - It has stable command/runtime contracts.
 - It includes tests and documentation.
 - It contains no personal curated content or machine-specific assumptions.
-- It remains outside `@rawr/cli#oclif.plugins` and is covered by the explicit
+- It remains outside `@habitat-ai/rawr#oclif.plugins` and is covered by the explicit
   native Oclif extension acceptance target.
 
 ## API Surface Policy
@@ -45,7 +45,7 @@ A plugin can be added as a Template fixture only when:
 - `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
 - App composition commands do not acquire lifecycle authority.
 - Command-surface changes require migration notes in `UPDATING.md`.
-- CLI publish ownership for `@rawr/cli` is template-only.
+- CLI publish ownership for `@habitat-ai/rawr` is template-only.
 
 The fixed Nx Release package group is pending. Until it lands, use
 `bun run rawr -- ...` for CLI development and do not restore the removed custom

@@ -1,6 +1,6 @@
+import { RawrCommand } from "@habitat-ai/rawr-core";
+import type { Client } from "@habitat-ai/rawr-session-intelligence/client";
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
-import type { Client } from "@rawr/session-intelligence/client";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
 import {
   createSessionIntelligenceClient,

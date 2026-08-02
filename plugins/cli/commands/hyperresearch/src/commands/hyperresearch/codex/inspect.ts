@@ -1,5 +1,5 @@
+import { RawrCommand } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
-import { RawrCommand } from "@rawr/core";
 import { FixtureHyperresearchCliBackend } from "../../../lib/fixture-cli";
 import { createHyperresearchCodexClient } from "../../../lib/hyperresearch-codex-binding";
 import { summarizeV8Result } from "../../../lib/v8-result";

@@ -1,7 +1,7 @@
 /**
  * @fileoverview Required service-wide observability middleware.
  */
-import { createObservabilityMiddlewareCallback } from "@rawr/hq-sdk";
+import { createObservabilityMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
 import { metadataDefaults } from "../contract";
 

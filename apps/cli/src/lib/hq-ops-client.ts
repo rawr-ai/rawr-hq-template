@@ -3,16 +3,16 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { type CreateClientOptions, createClient } from "@rawr/hq-ops";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@rawr/hq-sdk/host-adapters/logger/embedded-placeholder";
+import { type CreateClientOptions, createClient } from "@habitat-ai/rawr-hq-ops";
+import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
+import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import {
   bindService,
   type ProcessView,
   type RoleView,
   type ServiceBinding,
   type ServiceBindingContext,
-} from "@rawr/hq-sdk/plugins";
+} from "@habitat-ai/rawr-hq-sdk/plugins";
 
 type HqOpsBoundary = CreateClientOptions;
 type HqOpsResources = HqOpsBoundary["deps"]["resources"];
@@ -34,7 +34,9 @@ async function openJournalIndex(dbPath: string): Promise<SqliteDatabase> {
   const db = new Database(dbPath);
 
   try {
-    const migrationUrl = new URL(import.meta.resolve("@rawr/hq-ops/migrations/0001_journal.sql"));
+    const migrationUrl = new URL(
+      import.meta.resolve("@habitat-ai/rawr-hq-ops/migrations/0001_journal.sql")
+    );
     const journalMigration = await fs.readFile(migrationUrl, "utf8");
     db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000;");
     db.exec(journalMigration);

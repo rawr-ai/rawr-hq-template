@@ -10,28 +10,34 @@ const selected = vi.hoisted(() => ({
   versionedContent: vi.fn(),
 }));
 
-vi.mock("@rawr/hq-sdk/host-adapters/logger/embedded-placeholder", () => ({
+vi.mock("@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder", () => ({
   createEmbeddedPlaceholderLoggerAdapter: selected.logger,
 }));
-vi.mock("@rawr/hq-sdk/host-adapters/analytics/embedded-placeholder", () => ({
+vi.mock("@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder", () => ({
   createEmbeddedPlaceholderAnalyticsAdapter: selected.analytics,
 }));
-vi.mock("@rawr/resource-content-workspace/providers/git-effect-platform-node", () => ({
+vi.mock("@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platform-node", () => ({
   makeNodeContentWorkspaceResource: selected.contentWorkspace,
 }));
 vi.mock(
-  "@rawr/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
+  "@habitat-ai/rawr-resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
   () => ({
     makeNodeAgentPluginPackageOutputResource: selected.packageOutput,
   })
 );
-vi.mock("@rawr/resource-native-agent-provider/providers/codex-effect-platform-node", () => ({
-  makeNodeCodexNativeAgentProviderResource: selected.codex,
-}));
-vi.mock("@rawr/resource-native-agent-provider/providers/claude-effect-platform-node", () => ({
-  makeNodeClaudeNativeAgentProviderResource: selected.claude,
-}));
-vi.mock("@rawr/resource-versioned-content/providers/git-effect-platform-node", () => ({
+vi.mock(
+  "@habitat-ai/rawr-resource-native-agent-provider/providers/codex-effect-platform-node",
+  () => ({
+    makeNodeCodexNativeAgentProviderResource: selected.codex,
+  })
+);
+vi.mock(
+  "@habitat-ai/rawr-resource-native-agent-provider/providers/claude-effect-platform-node",
+  () => ({
+    makeNodeClaudeNativeAgentProviderResource: selected.claude,
+  })
+);
+vi.mock("@habitat-ai/rawr-resource-versioned-content/providers/git-effect-platform-node", () => ({
   makeNodeVersionedContentResource: selected.versionedContent,
 }));
 

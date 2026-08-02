@@ -3,7 +3,7 @@
 This is the service-package working plan for finishing Hyperresearch Codex
 parity. Implementation planning, acceptance criteria, review findings, and
 working notes for the Template-owned runtime live beside the
-`@rawr/hyperresearch-codex` service. Personal curated content is separately
+`@habitat-ai/rawr-hyperresearch-codex` service. Personal curated content is separately
 governed and can enter proof only as a bound immutable artifact through an
 explicit versioned interface.
 
@@ -139,7 +139,7 @@ Exit gate:
 Run proof gates in this order:
 
 - `bunx nx show projects`
-- `bunx nx show project @rawr/hyperresearch-codex --json`
+- `bunx nx show project @habitat-ai/rawr-hyperresearch-codex --json`
 - `bun run --cwd services/hyperresearch-codex typecheck`
 - `bunx vitest run --project hyperresearch-codex`
 - `bun run --cwd plugins/cli/commands/hyperresearch typecheck`

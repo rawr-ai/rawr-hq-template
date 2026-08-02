@@ -1,6 +1,6 @@
 {
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "name": "@rawr/plugin-hyperresearch",
+  "name": "@habitat-ai/rawr-plugin-hyperresearch",
   "targets": {
     "check": {
       "executor": "nx:noop"

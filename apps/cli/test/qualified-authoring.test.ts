@@ -425,7 +425,7 @@ describe("qualified authoring owners", () => {
     const template = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq-template.git",
       packageName: "rawr-hq-template",
-      cliPackageName: "@rawr/cli",
+      cliPackageName: "@habitat-ai/rawr",
     });
     const foreign = await gitFixture({
       origin: "https://github.com/example/foreign.git",
@@ -445,17 +445,17 @@ describe("qualified authoring owners", () => {
     const template = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq-template.git",
       packageName: "rawr-hq-template",
-      cliPackageName: "@rawr/cli",
+      cliPackageName: "@habitat-ai/rawr",
     });
     const personal = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq.git",
       packageName: "rawr-hq",
-      cliPackageName: "@rawr/cli",
+      cliPackageName: "@habitat-ai/rawr",
     });
     const foreign = await gitFixture({
       origin: "https://github.com/example/foreign.git",
       packageName: "rawr-hq-template",
-      cliPackageName: "@rawr/cli",
+      cliPackageName: "@habitat-ai/rawr",
     });
 
     await expect(verifyOfficialCommandTemplateWorkspace(template)).resolves.toBe(template);

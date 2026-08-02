@@ -1,5 +1,3 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
 import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
@@ -7,7 +5,9 @@ import type {
   GitTrackedPathFlag,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
-} from "@rawr/resource-content-workspace";
+} from "@habitat-ai/rawr-resource-content-workspace";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import type { Result } from "effect";
 import type {
   ContentWorkspaceInspection,
