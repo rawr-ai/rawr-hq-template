@@ -29,7 +29,7 @@
         "@effect/platform-node": "4.0.0-beta.101",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
         "@habitat-ai/blueprints": "0.2.1",
-        "@habitat-ai/cli": "0.2.3",
+        "@habitat-ai/cli": "0.2.4",
         "@habitat-ai/plugin-cli": "workspace:*",
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
@@ -926,7 +926,7 @@
 
     "@habitat-ai/blueprints": ["@habitat-ai/blueprints@0.2.1", "", {}, "sha512-5+ff/8pUopQqxmWWnwYB3L+Y7Cg/2d4FBn54yNKgTn5HfYDNZEMsOZz6r9rbE+ks6ilYrUU25/91KEcgY/9ITw=="],
 
-    "@habitat-ai/cli": ["@habitat-ai/cli@0.2.3", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@habitat-ai/plugin-cli": "0.2.3", "@habitat-ai/resource-rule-evaluation": "0.2.3", "@habitat-ai/resource-source-inventory": "0.2.3", "@habitat-ai/service": "0.2.3", "@nx/devkit": "23.1.0", "@oclif/core": "^4.11.4", "@oclif/plugin-help": "^6.2.27", "effect": "4.0.0-beta.101", "typebox": "1.3.8" }, "peerDependencies": { "@habitat-ai/blueprints": "0.2.1" }, "bin": { "habitat": "bin/run.js" } }, "sha512-hr+1K7xlV77QoSep53W7ydzbjJAtr3ZrcDwpkXmH+fFYKvizaDWboPNYggQ5qQHMTfTXJWHAM5vG4eAGlPdkiw=="],
+    "@habitat-ai/cli": ["@habitat-ai/cli@0.2.4", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@habitat-ai/plugin-cli": "0.2.4", "@habitat-ai/resource-rule-evaluation": "0.2.4", "@habitat-ai/resource-source-inventory": "0.2.4", "@habitat-ai/service": "0.2.4", "@nx/devkit": "23.1.0", "@oclif/core": "^4.11.4", "@oclif/plugin-help": "^6.2.27", "effect": "4.0.0-beta.101", "typebox": "1.3.8" }, "peerDependencies": { "@habitat-ai/blueprints": "0.2.1" }, "bin": { "habitat": "bin/run.js" } }, "sha512-CybRKkbXCMPBQS0594bja5j9nYFxcc/+v9gCe/hLASZa6e35PCau/so+QcUw8FFnMEvHUBwl4Acz/45+WfNjFw=="],
 
     "@habitat-ai/plugin-cli": ["@habitat-ai/plugin-cli@workspace:plugins/cli/commands/habitat"],
 
@@ -2724,13 +2724,13 @@
 
     "@effect/platform-node-shared/ws": ["ws@8.21.1", "", { "peerDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": ">=5.0.2" }, "optionalPeers": ["bufferutil", "utf-8-validate"] }, "sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw=="],
 
-    "@habitat-ai/cli/@habitat-ai/plugin-cli": ["@habitat-ai/plugin-cli@0.2.3", "", { "dependencies": { "@habitat-ai/service": "0.2.3", "@oclif/core": "^4.11.4" } }, "sha512-O12Ph2LvvYPWYx5xOuj0yPGaDqqsPNgvQ9136f+vdF57LwenLbT/4s/1I95tYQ32LLWSjEJIPw62BQBVNGh6Qg=="],
+    "@habitat-ai/cli/@habitat-ai/plugin-cli": ["@habitat-ai/plugin-cli@0.2.4", "", { "dependencies": { "@habitat-ai/service": "0.2.4", "@oclif/core": "^4.11.4" } }, "sha512-Je1anN51wYb9GmGmAI2SzaKc6+isPaFD/pWvJ4BK0GcvdnoqhD1lJKqHkqX/BDnFykXm46l+TGqsjqgC7fVTdQ=="],
 
-    "@habitat-ai/cli/@habitat-ai/resource-rule-evaluation": ["@habitat-ai/resource-rule-evaluation@0.2.3", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "effect": "4.0.0-beta.101", "typebox": "1.3.8" } }, "sha512-0+pfGVEMAsi4ZfVeoMHKl0CaBQaTlqYtwoAY47dxawMYw9vThQ1gY8Bkp+Kce0m6/VPjyCNSdyVMctCJ2vR3YA=="],
+    "@habitat-ai/cli/@habitat-ai/resource-rule-evaluation": ["@habitat-ai/resource-rule-evaluation@0.2.4", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "effect": "4.0.0-beta.101", "typebox": "1.3.8" } }, "sha512-xvbhJ842ppcGEq+8J3TmLzeZ9eRmS0cCf12huzfkl9l2+SwPd4+OpdCdSJ7SetBJd1+ad/FzFyEc3JLcRcryaw=="],
 
-    "@habitat-ai/cli/@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@0.2.3", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "effect": "4.0.0-beta.101", "typebox": "1.3.8" } }, "sha512-jt3Ih6OfOjFn/N2jMRzxKA4+30bIzXNxOJ3VLff6iJi4qGVERmFmLEDwj5DDNTWEYa8wW/zLK7TjYqHKLy1b1Q=="],
+    "@habitat-ai/cli/@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@0.2.4", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "effect": "4.0.0-beta.101", "typebox": "1.3.8" } }, "sha512-4u1USxUARCq5yc6EA+MheQjEykSvEibFOGXz5vEGZ1LxS4d2913KPzkuubpnnjLDSwbeY3MIMNnWnVOkbRhw6g=="],
 
-    "@habitat-ai/cli/@habitat-ai/service": ["@habitat-ai/service@0.2.3", "", { "dependencies": { "@habitat-ai/resource-rule-evaluation": "0.2.3", "@habitat-ai/resource-source-inventory": "0.2.3", "@habitat-ai/typebox-adapter": "0.1.1", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.20", "@orpc/experimental-effect": "2.0.0-beta.20", "@orpc/server": "2.0.0-beta.20", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-Isksu5CA3WMtAlEhuFnBua8MdgFvoMau+k0hJRembAzgwdUAKCWBVJcO8P+N/NfB5fCQFxLB/fYdipLSBT92uA=="],
+    "@habitat-ai/cli/@habitat-ai/service": ["@habitat-ai/service@0.2.4", "", { "dependencies": { "@habitat-ai/resource-rule-evaluation": "0.2.4", "@habitat-ai/resource-source-inventory": "0.2.4", "@habitat-ai/typebox-adapter": "0.1.1", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.20", "@orpc/experimental-effect": "2.0.0-beta.20", "@orpc/server": "2.0.0-beta.20", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-WGeCYyj9PqVPImt6+ewOAfhDKI3O9oS4EWJwRDUwPpc1auVYp23xNAU8N5s7tep3zdFpBr3TYlC5ayM6Nbbu9w=="],
 
     "@habitat-ai/service/@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@0.1.1", "", { "dependencies": { "@standard-schema/spec": "1.1.0", "typebox": "1.3.8" } }, "sha512-GLPN0NewiX+grO9OoJ/G8MJZQQvpcA+D6xlhq5N8qqhr5ZKOx0hKUiei9dWEhhrZUiY2HZ8m7VbWubClKHLoBQ=="],
 
