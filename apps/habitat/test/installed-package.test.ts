@@ -336,8 +336,16 @@ async function packPublicProducts(): Promise<void> {
     if (packed.exitCode !== 0) {
       throw new Error(`Could not pack ${product.name}: ${packed.stderr || packed.stdout}`);
     }
-    const output = JSON.parse(packed.stdout) as readonly { readonly filename?: unknown }[];
-    if (output[0]?.filename !== product.filename) {
+    const output: unknown = JSON.parse(packed.stdout);
+    const entries = typeof output === "object" && output !== null ? Object.entries(output) : [];
+    const entry =
+      entries.length === 1 && entries[0]?.[0] === product.name ? entries[0][1] : undefined;
+    if (
+      typeof entry !== "object" ||
+      entry === null ||
+      !("filename" in entry) ||
+      entry.filename !== product.filename
+    ) {
       throw new Error(`npm packed an unexpected ${product.name} artifact: ${packed.stdout}`);
     }
   }
