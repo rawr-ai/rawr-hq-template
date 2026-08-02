@@ -6,5 +6,5 @@
     "outDir": "../dist",
     "rootDir": "."
   },
-  "include": ["application.ts", "composition.ts", "index.ts"]
+  "include": ["**/*.ts"]
 }

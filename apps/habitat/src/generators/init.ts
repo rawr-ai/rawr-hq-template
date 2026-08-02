@@ -1,5 +1,5 @@
 import { type GeneratorCallback, installPackagesTask, type Tree } from "@nx/devkit";
-import { initializeHabitatConsumer } from "../../../../plugins/nx/habitat/src/initialization.js";
+import { initializeHabitatConsumer } from "../nx/initialization.js";
 import { habitatConsumerBinding } from "../nx-generators.js";
 
 /** Initializes the installed Habitat package inside one Nx consumer. */

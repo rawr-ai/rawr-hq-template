@@ -1,5 +1,5 @@
 import type { Tree } from "@nx/devkit";
-import { removeHabitatHook } from "../../../../plugins/nx/habitat/src/initialization.js";
+import { removeHabitatHook } from "../nx/initialization.js";
 import { habitatConsumerBinding } from "../nx-generators.js";
 
 /** Removes only Habitat's named Codex hook contribution from one Nx consumer. */

@@ -1,9 +1,9 @@
-# Habitat App Router
+# Habitat CLI Router
 
 ## Purpose
 
-- Assemble the Habitat product from its public service, resource-provider, and
-  plugin faces.
+- Ship the ordinary Habitat Oclif application and its native Nx integration over
+  the public Habitat SDK.
 
 ## Scope
 
@@ -11,36 +11,39 @@
 
 ## Boundaries
 
-- This app is the sole owner of the production Node provider profile.
-- It constructs one workspace-bound Habitat client and supplies it to the
-  Oclif and Nx projections.
-- Domain behavior remains in `@habitat-ai/service`; mechanical capabilities remain
-  in resources and providers; argv and task projection remain in plugins.
+- `@habitat-ai/sdk` owns the workspace-bound production client and runtime
+  composition. This app consumes that public client without reaching into its
+  private implementation projects.
+- Oclif owns command discovery, argv parsing, dispatch, help, and the generated
+  command manifest. Habitat commands and their Oclif binding live in this app.
+- Nx owns consumer initialization, project inference, target hashing, caching,
+  and scheduling. The native Nx projection and generators live in this app.
 - The `@habitat-ai/cli` package is an ordinary Oclif distribution boundary, not a
   controller, runtime selector, service owner, or retained state authority.
 
 ## Behavior
 
-- Every activation constructs a fresh client bound to the caller's workspace
-  over the app process's one ready provider profile.
-- Oclif and Nx expose the same service semantics through their native host
+- Every activation asks the SDK for a fresh client bound to the caller's
+  workspace.
+- Oclif and Nx expose the same SDK semantics through their native host
   contracts.
 
 ## Concepts
 
-- **Composition** selects concrete providers for a ready service client.
+- **Composition** belongs to the SDK and selects concrete providers for a ready
+  workspace client.
 - **Projection** translates that client into a host-native command or task
   surface without acquiring domain authority.
 
 ## Flow
 
-- `composition.ts` selects ready Node capabilities and constructs the public
-  service client for one absolute workspace root.
-- `application.ts` binds that client into one Oclif invocation.
-- `nx-plugin.ts` supplies the same construction seam to the package-less Nx
-  projection and exports its native `createNodes` face.
-- `generators.json` exposes native Nx initialization and named-hook removal;
-  their app binding fixes the package-owned plugin, hook, and Grit identities.
+- `application.ts` acquires the SDK client and binds it into one Oclif
+  invocation; `src/commands/**` projects the three native commands.
+- `nx-plugin.ts` supplies the same SDK construction seam to `src/nx/**` and
+  exports its native `createNodes` face.
+- `generators.json` exposes the ESM Nx initialization and named-hook removal
+  emitted with the rest of the app; their binding fixes the package-owned
+  plugin, hook, and Grit identities.
 - `bin/run.js` activates compiled Oclif output; `src/index.ts` is the source
   development entrypoint.
 
@@ -49,14 +52,13 @@
 - Executable: `habitat`.
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
 - Nx generators: `@habitat-ai/cli:init` and `@habitat-ai/cli:remove-hook`.
+- Runtime SDK: `@habitat-ai/sdk`.
 - No root library export is admitted.
 
 ## Routing
 
 - [Apps router](../AGENTS.md) for executable-host boundaries.
-- [Habitat service router](../../services/habitat/AGENTS.md) for domain
-  operations and context.
-- [Plugins router](../../plugins/AGENTS.md) for Oclif and Nx projections.
+- [Packages router](../../packages/AGENTS.md) for the public SDK boundary.
 
 ## Validation
 

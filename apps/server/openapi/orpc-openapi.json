@@ -9,6 +9,38 @@
     }
   ],
   "openapi": "3.1.2",
+  "components": {
+    "schemas": {
+      "UndefinedError": {
+        "type": "object",
+        "properties": {
+          "defined": {
+            "const": false
+          },
+          "inferable": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {}
+        },
+        "required": [
+          "defined",
+          "inferable",
+          "code",
+          "status",
+          "message"
+        ]
+      }
+    }
+  },
   "paths": {
     "/exampleTodo/tasks/create": {
       "post": {

@@ -1,4 +1,4 @@
-import type { HabitatConsumerBinding } from "../../../plugins/nx/habitat/src/initialization.js";
+import type { HabitatConsumerBinding } from "./nx/initialization.js";
 
 /** Exact app-owned identities projected by the public Habitat Nx generators. */
 export const habitatConsumerBinding = {

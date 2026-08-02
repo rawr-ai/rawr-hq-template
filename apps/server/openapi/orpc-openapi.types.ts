@@ -41,7 +41,17 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        UndefinedError: {
+            /** @constant */
+            defined: false;
+            inferable: boolean;
+            code: string;
+            status: number;
+            message: string;
+            data?: unknown;
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;

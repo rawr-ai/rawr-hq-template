@@ -1,21 +1,19 @@
 import { fileURLToPath } from "node:url";
 
-import { NodeServices } from "@effect/platform-node";
-import { bindHabitatClient, habitatClientFrom } from "@habitat-ai/plugin-cli/binding";
-import { type Client, createClient } from "@habitat-ai/service/client";
+import type { HabitatClient } from "@habitat-ai/sdk";
 import { Config } from "@oclif/core";
-import { Effect, FileSystem, Path } from "effect";
 import { describe, expect, it, vi } from "vitest";
+import { bindHabitatClient, habitatClientFrom } from "../../src/lib/binding";
 
-type CheckInput = Parameters<Client["catalog"]["check"]>[0];
+type CheckInput = Parameters<HabitatClient["catalog"]["check"]>[0];
 
-const resolved: Awaited<ReturnType<Client["catalog"]["resolve"]>> = {
+const resolved: Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>> = {
   _tag: "Resolved",
   catalog: {
     schemaVersion: 3,
     policyPack: {
-      name: "@habitat-ai/blueprints",
-      version: "0.2.0",
+      name: "@habitat-ai/sdk",
+      version: "0.3.1",
       protocolVersion: 1,
       blueprints: [],
     },
@@ -26,16 +24,16 @@ const resolved: Awaited<ReturnType<Client["catalog"]["resolve"]>> = {
   },
 };
 
-const completed: Awaited<ReturnType<Client["catalog"]["check"]>> = {
+const completed: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
   _tag: "Completed",
   applications: [],
   ok: true,
 };
 
 function projectionClient(options?: {
-  readonly check?: Client["catalog"]["check"];
-  readonly resolve?: Client["catalog"]["resolve"];
-}): Client {
+  readonly check?: HabitatClient["catalog"]["check"];
+  readonly resolve?: HabitatClient["catalog"]["resolve"];
+}): HabitatClient {
   return {
     catalog: {
       check: options?.check ?? (async () => completed),
@@ -44,72 +42,29 @@ function projectionClient(options?: {
   };
 }
 
-async function loadProjection(client?: Client): Promise<Config> {
+async function loadProjection(client?: HabitatClient): Promise<Config> {
   const options: Config["options"] = {
     name: "habitat-projection-test",
-    root: fileURLToPath(new URL("..", import.meta.url)),
+    root: fileURLToPath(new URL("../..", import.meta.url)),
   };
   return Config.load(client === undefined ? options : bindHabitatClient(options, client));
 }
 
 describe("Habitat Oclif projection binding", () => {
   it("preserves the app-selected client through native Oclif config loading", async () => {
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const fileSystem = yield* FileSystem.FileSystem;
-          const path = yield* Path.Path;
-          const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
-            prefix: "habitat-oclif-projection-",
-          });
-          const policyPackRoot = path.join(workspaceRoot, ".test-policy-pack");
-          yield* fileSystem.makeDirectory(policyPackRoot);
-          yield* fileSystem.writeFileString(
-            path.join(policyPackRoot, "package.json"),
-            JSON.stringify({ name: "@habitat-ai/blueprints", version: "0.2.0" })
-          );
-          yield* fileSystem.writeFileString(
-            path.join(policyPackRoot, "habitat-pack.json"),
-            JSON.stringify({ protocolVersion: 1, blueprints: [] })
-          );
-          const client = createClient({
-            deps: {
-              fileSystem,
-              path,
-              ruleEvaluation: {
-                evaluate: () => Effect.die("empty catalog must not evaluate a rule"),
-              },
-              sourceInventory: {
-                observe: () => Effect.die("empty catalog must not acquire source inventory"),
-              },
-            },
-            scope: { workspaceRoot },
-            config: {
-              policyPack: {
-                name: "@habitat-ai/blueprints",
-                packageJsonPath: path.join(policyPackRoot, "package.json"),
-                manifestPath: path.join(policyPackRoot, "habitat-pack.json"),
-              },
-            },
-          });
-          const config = yield* Effect.promise(() => loadProjection(client));
+    const client = projectionClient();
+    const config = await loadProjection(client);
 
-          expect(habitatClientFrom(config)).toBe(client);
-          expect(config.commandIDs).toEqual(["check", "hook", "resolve"]);
-          const resolved = yield* Effect.promise(() => config.runCommand("resolve"));
-          const checked = yield* Effect.promise(() => config.runCommand("check"));
-          const hooked = yield* Effect.promise(() => config.runCommand("hook", ["agent-stop"]));
-          expect(resolved).toMatchObject({ _tag: "Resolved" });
-          expect(checked).toEqual({ _tag: "Completed", applications: [], ok: true });
-          expect(hooked).toEqual({ _tag: "Completed", applications: [], ok: true });
-        })
-      ).pipe(Effect.provide(NodeServices.layer))
-    );
+    expect(habitatClientFrom(config)).toBe(client);
+    expect(config.commandIDs).toEqual(["check", "hook", "resolve", "help"]);
+    await expect(config.runCommand("resolve")).resolves.toMatchObject({ _tag: "Resolved" });
+    await expect(config.runCommand("check")).resolves.toEqual(completed);
+    await expect(config.runCommand("hook", ["agent-stop"])).resolves.toEqual(completed);
   });
 
   it("projects native selector flags without widening explicit empty values", async () => {
     const inputs: CheckInput[] = [];
-    const check: Client["catalog"]["check"] = async (input) => {
+    const check: HabitatClient["catalog"]["check"] = async (input) => {
       inputs.push(input);
       return completed;
     };
@@ -147,24 +102,24 @@ describe("Habitat Oclif projection binding", () => {
   });
 
   it("prints total failures before native Oclif exits nonzero", async () => {
-    const rejected: Awaited<ReturnType<Client["catalog"]["resolve"]>> = {
+    const rejected: Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>> = {
       _tag: "Rejected",
       issues: [{ code: "authority-blueprint-missing", message: "missing", path: ".habitat" }],
     };
-    const failed: Awaited<ReturnType<Client["catalog"]["check"]>> = {
+    const failed: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
       _tag: "Completed",
       applications: [],
       ok: false,
     };
-    const catalogRejected: Awaited<ReturnType<Client["catalog"]["check"]>> = {
+    const catalogRejected: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
       _tag: "CatalogRejected",
       issues: [{ code: "authority-blueprint-missing", message: "missing", path: ".habitat" }],
     };
-    const selectionRejected: Awaited<ReturnType<Client["catalog"]["check"]>> = {
+    const selectionRejected: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
       _tag: "SelectionRejected",
       issues: [{ code: "selector-empty", message: "empty", selector: "owner" }],
     };
-    const resolveInputs: Parameters<Client["catalog"]["resolve"]>[0][] = [];
+    const resolveInputs: Parameters<HabitatClient["catalog"]["resolve"]>[0][] = [];
     const checkResults = [failed, catalogRejected, selectionRejected];
     let checkIndex = 0;
     const writes: string[] = [];

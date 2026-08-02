@@ -368,8 +368,6 @@ async function createOpenApiSpec(router: RawrOrpcRouter, baseUrl: string) {
     },
     errorStatusMap: RAWR_ERROR_STATUS_MAP,
     customErrorResponseBodySchema: createNativeErrorBodySchema,
-    // beta.20 constructs its status-bearing fallback even when a custom body schema is supplied.
-    shouldHoistDef: (name) => name !== "UndefinedError",
   });
 }
 

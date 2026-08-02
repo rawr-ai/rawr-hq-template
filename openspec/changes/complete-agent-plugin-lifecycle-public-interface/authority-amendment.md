@@ -27,9 +27,11 @@ store, retained versions, per-file manifest, and Oclif extension reconstruction
 look authoritative because later code was written to consume them. That is
 circular complexity, not a product requirement.
 
-The ordinary requirement is narrower: install one versioned RAWR Oclif CLI from
-RAWR HQ-Template, run one bounded agent-plugin reconciler inside it, and delegate
-provider mutation to the providers' native commands. Local accidental
+The ordinary requirement is narrower: run one normal RAWR Oclif application,
+keep one bounded agent-plugin reconciler inside it, and delegate provider
+mutation to the providers' native commands. Habitat's separately released SDK
+and Oclif CLI supply the repository substrate without making the private RAWR
+application graph public. Local accidental
 checkout/worktree confusion does not justify a private package manager or a
 hostile-local-tamper model.
 
@@ -200,15 +202,15 @@ independence and private-alias configuration/ownership. Civ7 release
 `d51e8c7454e301bcaba56c8364f5c714d5febca3` remain transfer evidence only.
 Template owns the Habitat product source and realizes it through the ordinary
 resource, provider, service, plugin, and app graph. Distribution composes those
-private owners into the target runtime SDK; the TypeBox bridge and blueprint catalog
-are SDK facets rather than separate public product identities. `@habitat-ai/cli`
-will be the ordinary Oclif release consuming that SDK.
+private owners into the target runtime SDK; the TypeBox bridge and blueprint
+catalog are SDK facets rather than separate public product identities.
+`@habitat-ai/cli` is the ordinary Oclif release candidate consuming that SDK.
 The Habitat Nx projection owns version-three application discovery, exact
 inputs, caching, and execution without acquiring service or provider authority.
 The idempotent consumer initializer, policy-pack construction, bootstrap
 publication, and native version-two service execution are landed. Version-two
-Nx projection and released-package adoption/cutover remain separately reviewed
-checkpoints. Nx owns the SDK/CLI release graph and npm trusted publishing; the
+Nx projection and the predecessor released-package cutover are landed migration
+evidence. Nx owns the SDK/CLI release graph and npm trusted publishing; the
 earlier multi-package substrate is migration evidence, not the target package
 model.
 

@@ -1,6 +1,6 @@
-import { bindHabitatClient } from "@habitat-ai/plugin-cli/binding";
+import { createHabitatClientForWorkspace } from "@habitat-ai/sdk";
 import { execute, settings } from "@oclif/core";
-import { createHabitatClientForWorkspace } from "./composition.js";
+import { bindHabitatClient } from "./lib/binding.js";
 
 /** Inputs fixed by one Habitat process activation. */
 export type ExecuteHabitatOptions = Readonly<{
@@ -14,7 +14,7 @@ export type ExecuteHabitatOptions = Readonly<{
  * Runs one native Oclif invocation over the app-selected Habitat client.
  *
  * Oclif owns command discovery and dispatch; this boundary supplies only the
- * ready workspace client required by the Habitat command plugin.
+ * ready workspace client required by the Habitat commands.
  */
 export async function executeHabitat({
   appRoot,

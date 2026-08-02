@@ -3,9 +3,7 @@ name: Publish Habitat
 on:
   push:
     tags:
-      - habitat-blueprints-v*
       - habitat-cli-v*
-      - typebox-adapter-v*
 
 permissions:
   contents: read
@@ -28,66 +26,25 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 24.18.1
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
 
       - name: Install locked dependencies
         run: bun install --frozen-lockfile --ignore-scripts
 
-      - name: Match TypeBox adapter tag
-        if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
-        run: >-
-          test "$(jq -r .version packages/typebox-adapter/package.json)"
-          = "${GITHUB_REF_NAME#typebox-adapter-v}"
-
       - name: Match Habitat CLI tag
-        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
         run: >-
           test "$(jq -r .version
           apps/habitat/package.json
-          plugins/cli/commands/habitat/package.json
-          resources/rule-evaluation/package.json
-          resources/source-inventory/package.json
-          services/habitat/package.json
+          packages/habitat-sdk/package.json
           | sort -u)"
           = "${GITHUB_REF_NAME#habitat-cli-v}"
-
-      - name: Match Habitat blueprints tag
-        if: startsWith(github.ref, 'refs/tags/habitat-blueprints-v')
-        run: >-
-          test "$(jq -r .version packages/habitat-blueprints/package.json)"
-          = "${GITHUB_REF_NAME#habitat-blueprints-v}"
-
-      - name: Materialize Habitat npm manifests with Nx
-        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
-        run: |
-          jq '
-            .release.groups["habitat-cli"].version =
-              ((.release.groups["habitat-cli"].version // {}) +
-                {preserveLocalDependencyProtocols: false}) |
-            .release.version =
-              ((.release.version // {}) +
-                {versionActionsOptions:
-                  (((.release.version // {}).versionActionsOptions // {}) +
-                    {skipLockFileUpdate: true})})
-          ' nx.json > nx.publish.json
-          mv nx.publish.json nx.json
-          bunx nx release version "${GITHUB_REF_NAME#habitat-cli-v}" \
-            --group=habitat-cli \
-            --git-commit=false \
-            --git-tag=false \
-            --git-push=false \
-            --stage-changes=false
-          ! grep -n '"workspace:' \
-            apps/habitat/package.json \
-            plugins/cli/commands/habitat/package.json \
-            resources/rule-evaluation/package.json \
-            resources/source-inventory/package.json \
-            services/habitat/package.json
 
       - name: Select npm OIDC publishing for Nx Release
         run: |
@@ -95,35 +52,26 @@ jobs:
           jq '.cli = ((.cli // {}) + {packageManager: "npm"})' nx.json > nx.publish.json
           mv nx.publish.json nx.json
 
-      - name: Build TypeBox adapter
-        if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
-        run: >-
-          bunx nx run @habitat-ai/typebox-adapter:build
-          --outputStyle=static
-
-      - name: Verify installed Habitat CLI
-        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
+      - name: Verify installed Habitat products
         run: >-
           bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package
+          --skip-nx-cache
           --outputStyle=static
 
-      - name: Publish TypeBox adapter
-        if: startsWith(github.ref, 'refs/tags/typebox-adapter-v')
-        run: >-
-          npx nx release publish
-          --group=typebox-adapter
-          --outputStyle=static
-
-      - name: Publish Habitat CLI
-        if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
+      - name: Publish Habitat SDK and CLI
         run: >-
           npx nx release publish
           --group=habitat-cli
           --outputStyle=static
 
-      - name: Publish Habitat blueprints
-        if: startsWith(github.ref, 'refs/tags/habitat-blueprints-v')
-        run: >-
-          npx nx release publish
-          --group=habitat-blueprints
-          --outputStyle=static
+      - name: Verify the registry release
+        shell: bash
+        run: |
+          release_version="${GITHUB_REF_NAME#habitat-cli-v}"
+          consumer_root="${RUNNER_TEMP}/habitat-registry-consumer"
+          mkdir -p "${consumer_root}"
+          cd "${consumer_root}"
+          npm init --yes >/dev/null
+          npm install --no-audit --no-fund "@habitat-ai/cli@${release_version}" "nx@23.1.0"
+          test "$(node -p "require('./node_modules/@habitat-ai/sdk/package.json').version")" = "${release_version}"
+          ./node_modules/.bin/habitat --help >/dev/null

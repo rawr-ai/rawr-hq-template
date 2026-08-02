@@ -1,13 +1,13 @@
-import type { Client } from "@habitat-ai/service/client";
+import type { HabitatClient } from "@habitat-ai/sdk";
 import type { CreateNodesFunction, CreateNodesResultArray } from "@nx/devkit";
 import { describe, expect, it, vi } from "vitest";
 import {
   createHabitatNxPlugin,
   type HabitatClientForWorkspace,
   type HabitatNxBinding,
-} from "../src";
+} from "../../src/nx/projection";
 
-type ResolveCatalogResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
+type ResolveCatalogResult = Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>>;
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedInstance = ResolvedCatalog["instances"][number];
@@ -204,8 +204,8 @@ function resolvedCatalog(
     catalog: {
       schemaVersion: 3,
       policyPack: {
-        name: "@habitat-ai/blueprints",
-        version: "0.2.0",
+        name: "@habitat-ai/sdk",
+        version: "0.3.1",
         protocolVersion: 1,
         blueprints: [],
       },

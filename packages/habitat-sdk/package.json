@@ -1,0 +1,66 @@
+{
+  "name": "@habitat-ai/sdk",
+  "version": "0.4.0",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "packages/habitat-sdk"
+  },
+  "description": "Habitat workspace client, runtime composition, and generic blueprints",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "engines": {
+    "node": "^24.18.1"
+  },
+  "files": [
+    "dist",
+    "habitat-pack.json"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./habitat-pack.json": "./habitat-pack.json",
+    "./blueprints/*": "./dist/blueprints/*",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0-beta.101",
+    "@getgrit/cli": "0.1.0-alpha.1743007075",
+    "@opentelemetry/api": "^1.9.0",
+    "@orpc/contract": "2.0.0-beta.23",
+    "@orpc/experimental-effect": "2.0.0-beta.23",
+    "@orpc/server": "2.0.0-beta.23",
+    "@standard-schema/spec": "1.1.0",
+    "effect": "4.0.0-beta.101",
+    "picomatch": "4.0.4",
+    "smol-toml": "1.7.0",
+    "typebox": "1.3.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/picomatch": "4.0.3",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:package",
+      "npm:public",
+      "capability:habitat",
+      "role:sdk"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
