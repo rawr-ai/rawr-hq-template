@@ -134,7 +134,7 @@ describe("installed Habitat products", () => {
       );
     }
 
-    const typecheck = await run("node", [
+    const typecheck = await run(process.execPath, [
       path.join(workspaceRoot, "node_modules/typescript/bin/tsc"),
       "-p",
       path.join(consumerRoot, "tsconfig.json"),
@@ -476,6 +476,7 @@ async function run(
     const child = spawn(executable, args, {
       cwd: options.cwd ?? workspaceRoot,
       env,
+      shell: process.platform === "win32",
     });
     const stdout: string[] = [];
     const stderr: string[] = [];

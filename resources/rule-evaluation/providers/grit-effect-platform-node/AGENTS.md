@@ -28,8 +28,9 @@
   unchanged subject set, attribute findings through provider-owned pattern
   identities, return results in caller order, then remove each catalog on every
   exit.
-- Execute only the caller-selected installed native binary with runtime
-  downloads disabled; acquisition wrappers are outside rule evaluation.
+- Execute only the caller-selected command and leading arguments. Package
+  entrypoint and native acquisition policy belong to the composing runtime,
+  not this provider.
 - Run at most one native process per evaluation request at a time with
   `RAYON_NUM_THREADS=2`. Output and timeout bounds apply independently to each
   program. Timeout, failure, and interruption cancel the active native process

@@ -37,9 +37,12 @@ const MAX_GRIT_BATCH_OUTPUT_BYTES = 16 * 1_024 * 1_024;
 /** Structural schema for Grit provider construction. */
 export const GritRuleEvaluationProviderConfigSchema = ReadonlyObject(
   Type.Object({
-    executable: Type.String({
+    command: Type.String({
       minLength: 1,
-      description: "Caller-selected Grit executable",
+      description: "Program invoked for Grit rule evaluation",
+    }),
+    args: Type.Array(Type.String(), {
+      description: "Arguments placed before the provider-owned Grit check arguments",
     }),
     timeoutMs: Type.Integer({
       minimum: 1,
@@ -244,8 +247,16 @@ function runGritCheck(
   const outputLimit = gritOutputLimit(programs.length);
   const observe = Effect.gen(function* () {
     const command = ChildProcess.make(
-      config.executable,
-      ["--json", "check", "--no-cache", "--grit-dir", catalog.gritDirectory, ...subjectPaths],
+      config.command,
+      [
+        ...config.args,
+        "--json",
+        "check",
+        "--no-cache",
+        "--grit-dir",
+        catalog.gritDirectory,
+        ...subjectPaths,
+      ],
       {
         cwd: catalog.root,
         env: {
