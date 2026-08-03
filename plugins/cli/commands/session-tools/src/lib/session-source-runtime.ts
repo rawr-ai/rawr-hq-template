@@ -2,16 +2,14 @@ import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type {
-  DiscoverSessionsInput,
-  SessionSourceRuntime,
-} from "@habitat-ai/rawr-session-intelligence/ports/session-source-runtime";
-import type {
   CodexSessionFile,
   CodexSessionSource,
+  DiscoverClaudeSessionsInput,
   DiscoveredSessionFile,
   SessionSource,
+  SessionSourceRuntime,
   SessionStatus,
-} from "@habitat-ai/rawr-session-intelligence/types";
+} from "@habitat-ai/rawr-session-intelligence/client";
 import { readJsonlObjects } from "./jsonl";
 import {
   codexDiscoveryMaxAgeMs,
@@ -119,38 +117,6 @@ async function collectCodexSources(): Promise<CodexSource[]> {
   return out;
 }
 
-async function discoverCodexFromFilesystem(
-  sources: CodexSource[],
-  max: number
-): Promise<SessionFileCandidate[]> {
-  /**
-   * This remains the monolithic discovery path for callers that do not opt into
-   * the service-owned Codex index. It keeps the newest bounded set in memory
-   * without forcing the service cache contract onto every runtime.
-   */
-  const out: SessionFileCandidate[] = [];
-  const seen = new Set<string>();
-  for (const src of sources) {
-    for await (const f of walkFiles(src.dir)) {
-      if (!f.endsWith(".jsonl") && !f.endsWith(".json")) continue;
-      if (seen.has(f)) continue;
-      seen.add(f);
-      const stat = await fs.stat(f).catch(() => null);
-      if (!stat) continue;
-      const next: SessionFileCandidate = {
-        filePath: f,
-        source: "codex",
-        status: src.status,
-        modifiedMs: stat.mtimeMs,
-        sizeBytes: stat.size,
-      };
-      if (max) pushNewestBounded(out, next, max);
-      else out.push(next);
-    }
-  }
-  return out.sort((a, b) => b.modifiedMs - a.modifiedMs);
-}
-
 async function discoverCodexFilesForSource(
   source: CodexSessionSource
 ): Promise<CodexSessionFile[]> {
@@ -172,13 +138,6 @@ async function discoverCodexFilesForSource(
     });
   }
   return files.sort((a, b) => b.modifiedMs - a.modifiedMs);
-}
-
-async function discoverCodexCandidates(limit?: number): Promise<SessionFileCandidate[]> {
-  const max = typeof limit === "number" && limit > 0 ? limit : 0;
-  const sources = await collectCodexSources();
-  if (!sources.length) return [];
-  return discoverCodexFromFilesystem(sources, max);
 }
 
 async function discoverClaudeCandidates(input: {
@@ -246,21 +205,11 @@ export function createSessionSourceRuntime(): SessionSourceRuntime {
     discoverCodexSessionFiles: discoverCodexFilesForSource,
     codexDiscoveryMaxAgeMs: ({ status }) => codexDiscoveryMaxAgeMs(status),
 
-    async discoverSessions(input: DiscoverSessionsInput): Promise<DiscoveredSessionFile[]> {
-      const out: DiscoveredSessionFile[] = [];
-      if (input.source === "claude" || input.source === "all") {
-        const candidates = await discoverClaudeCandidates({
-          project: input.project,
-          limit: input.limit,
-        });
-        out.push(...candidates.map(candidateToDiscovered));
-      }
-      if (input.source === "codex" || input.source === "all") {
-        const candidates = await discoverCodexCandidates(input.limit);
-        out.push(...candidates.map(candidateToDiscovered));
-      }
-      out.sort((a, b) => b.modifiedMs - a.modifiedMs);
-      return input.limit && input.limit > 0 ? out.slice(0, input.limit) : out;
+    async discoverClaudeSessions(
+      input: DiscoverClaudeSessionsInput
+    ): Promise<DiscoveredSessionFile[]> {
+      const candidates = await discoverClaudeCandidates(input);
+      return candidates.map(candidateToDiscovered);
     },
 
     async statFile(input: { path: string }) {
