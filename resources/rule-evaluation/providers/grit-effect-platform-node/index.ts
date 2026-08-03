@@ -11,15 +11,7 @@ import {
   MAX_RULE_EVALUATION_FAILURE_DETAIL,
   RuleEvaluationRequestSchema,
 } from "@habitat-ai/resource-rule-evaluation";
-import {
-  Effect,
-  Schema as EffectSchema,
-  FileSystem,
-  Path,
-  type PlatformError,
-  type Scope,
-  Stream,
-} from "effect";
+import { Effect, FileSystem, Path, type PlatformError, type Scope, Stream } from "effect";
 import { ChildProcess } from "effect/unstable/process";
 import type { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
 import { ReadonlyObject, type Static, Type } from "typebox";
@@ -321,21 +313,40 @@ function runGritCheck(
 }
 
 function decodeGritReport(stderr: string): Effect.Effect<GritReport, RuleEvaluationFailure> {
-  if (stderr.trim().length === 0) {
+  const lines = stderr
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+  if (lines.length === 0) {
     return fail("InvalidOutput", "Grit check emitted no stderr JSON report");
   }
-  return EffectSchema.decodeUnknownEffect(EffectSchema.UnknownFromJsonString)(stderr).pipe(
-    Effect.mapError((error) =>
-      failure("InvalidOutput", `Grit check emitted invalid JSON: ${errorMessage(error)}`)
-    ),
-    Effect.flatMap((decoded) =>
-      Effect.try({
-        try: () => Value.Parse(GritReportSchema, decoded),
-        catch: (error) =>
-          failure("InvalidOutput", `Grit check emitted an invalid report: ${errorMessage(error)}`),
-      })
-    )
-  );
+
+  const reports: GritReport[] = [];
+  for (const line of lines) {
+    let decoded: unknown;
+    try {
+      decoded = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    try {
+      reports.push(Value.Parse(GritReportSchema, decoded));
+    } catch (error) {
+      return fail(
+        "InvalidOutput",
+        `Grit check emitted unexpected structured output: ${errorMessage(error)}`
+      );
+    }
+  }
+
+  const [report, ...additionalReports] = reports;
+  if (report === undefined) {
+    return fail("InvalidOutput", "Grit check emitted no valid stderr JSON report");
+  }
+  if (additionalReports.length > 0) {
+    return fail("InvalidOutput", "Grit check emitted multiple stderr JSON reports");
+  }
+  return Effect.succeed(report);
 }
 
 function resultFromGritReport(

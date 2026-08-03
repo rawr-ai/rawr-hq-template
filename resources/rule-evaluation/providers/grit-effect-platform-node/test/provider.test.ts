@@ -234,6 +234,59 @@ describe("grit-effect-platform-node rule evaluation", () => {
     });
   });
 
+  test("accepts one JSON report framed by ordinary Grit diagnostics", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    await writeFile(subject, "allowed();\n");
+    const executable = await writeStderrExecutable(fixture, "diagnostic-report-grit", [
+      "Failed to submit analytics event",
+      JSON.stringify({ paths: [subject], results: [] }),
+      "Failed to flush analytics worker",
+    ]);
+
+    await expect(
+      Effect.runPromise(
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 1_000,
+        }).evaluate(
+          evaluationRequest("diagnostics", "language js(typescript)\n`forbidden()`", [subject])
+        )
+      )
+    ).resolves.toEqual({ results: [{ programId: "diagnostics", findings: [] }] });
+  });
+
+  test("rejects zero, multiple, or structurally invalid JSON reports", async () => {
+    const fixture = await makeFixture();
+    const subject = path.join(fixture, "subject.ts");
+    await writeFile(subject, "allowed();\n");
+    const report = JSON.stringify({ paths: [subject], results: [] });
+    const unexpectedJson = JSON.stringify({ message: "not a Grit report" });
+    const cases = [
+      ["diagnostic-only-grit", ["Failed to submit analytics event"]],
+      ["multiple-report-grit", [report, report]],
+      ["wrong-json-grit", [unexpectedJson]],
+      ["wrong-json-before-report-grit", [unexpectedJson, report]],
+      ["wrong-json-after-report-grit", [report, unexpectedJson]],
+    ] as const;
+
+    for (const [name, lines] of cases) {
+      const executable = await writeStderrExecutable(fixture, name, lines);
+      const rejected = await evaluationFailure(
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 1_000,
+        }).evaluate(evaluationRequest(name, "language js(typescript)\n`forbidden()`", [subject]))
+      );
+      expect(rejected).toMatchObject({
+        _tag: "RuleEvaluationFailure",
+        reason: "InvalidOutput",
+      });
+    }
+  });
+
   test("maps launch, nonzero exit, and malformed output failures", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
@@ -513,10 +566,18 @@ async function writeExecutable(root: string, name: string, source: string): Prom
 }
 
 async function writeReportExecutable(root: string, name: string, report: unknown): Promise<string> {
+  return writeStderrExecutable(root, name, [JSON.stringify(report)]);
+}
+
+async function writeStderrExecutable(
+  root: string,
+  name: string,
+  lines: readonly string[]
+): Promise<string> {
   return writeExecutable(
     root,
     name,
-    `#!/bin/sh\ncat >&2 <<'GRIT_REPORT'\n${JSON.stringify(report)}\nGRIT_REPORT\n`
+    `#!/bin/sh\ncat >&2 <<'GRIT_OUTPUT'\n${lines.join("\n")}\nGRIT_OUTPUT\n`
   );
 }
 
