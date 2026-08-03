@@ -1,6 +1,6 @@
 import type { EmbeddingResource, SemanticEmbeddingConfig } from "../../../../model/ports/resources";
-import type { JournalSnippet } from "../../entities";
 import type { JournalSearchRow } from "../dto/journal.dto";
+import type { JournalSnippet } from "../entities";
 import type { JournalIndex } from "../ports/journal-index";
 
 /** Renders the stable snippet facts used as semantic embedding input. */

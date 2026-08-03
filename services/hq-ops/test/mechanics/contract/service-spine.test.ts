@@ -1,8 +1,8 @@
 import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { describe, expect, it } from "vitest";
 import { createClient } from "../../../src/client";
-import { router } from "../../../src/router";
 import { contract } from "../../../src/service/contract";
+import { router } from "../../../src/service/router";
 
 describe("hq-ops service shell", () => {
   it("keeps the public boundary and root contract intact", () => {

@@ -1,5 +1,5 @@
-import { parseStaticDefaultConfig, pickConfigExport } from "../model/helpers/config-module";
-import { rawrConfigPath } from "../model/helpers/config-paths";
+import { parseStaticDefaultConfig, pickConfigExport } from "../model/policy/config-module";
+import { rawrConfigPath } from "../model/policy/config-paths";
 import { formatIssues, validateRawrConfig } from "../model/policy/config-validation";
 import { module } from "../module";
 

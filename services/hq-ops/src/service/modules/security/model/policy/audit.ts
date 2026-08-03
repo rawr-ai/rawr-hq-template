@@ -1,6 +1,4 @@
-import type { HqOpsResources } from "#hq-ops-service/model/ports/resources";
-import type { SecurityFinding } from "../entities";
-import { bytesToText } from "./process";
+import type { SecurityFinding } from "../dto/security.dto";
 
 type BunAuditAdvisory = {
   id?: number;
@@ -65,16 +63,9 @@ function bunAuditJsonToFindings(json: BunAuditJson): SecurityFinding[] {
   return findings;
 }
 
-export async function runBunAudit(
-  resources: HqOpsResources,
-  repoRoot: string
-): Promise<SecurityFinding[]> {
-  const result = await resources.process.exec("bun", ["audit", "--json"], {
-    cwd: repoRoot,
-    timeoutMs: 60_000,
-  });
-  const auditOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`;
-  const json = parseBunAuditJsonOutput(auditOutput);
+/** Normalizes one combined `bun audit --json` output stream into findings. */
+export function bunAuditFindings(output: string): SecurityFinding[] {
+  const json = parseBunAuditJsonOutput(output);
   return bunAuditJsonToFindings(json);
 }
 
@@ -84,18 +75,14 @@ function parseUntrustedCount(output: string): number | null {
   return Number(match[1]);
 }
 
-export async function runBunPmUntrusted(
-  resources: HqOpsResources,
-  repoRoot: string
-): Promise<SecurityFinding | null> {
-  const result = await resources.process.exec("bun", ["pm", "untrusted"], {
-    cwd: repoRoot,
-    timeoutMs: 60_000,
-  });
-  const untrustedOutput = `${bytesToText(result.stdout)}${bytesToText(result.stderr)}`.trim();
-  const count = parseUntrustedCount(untrustedOutput);
+/** Normalizes one `bun pm untrusted` observation into its domain finding. */
+export function untrustedDependencyFinding(
+  exitCode: number | null,
+  output: string
+): SecurityFinding | null {
+  const count = parseUntrustedCount(output.trim());
 
-  if (result.exitCode !== 0) {
+  if (exitCode !== 0) {
     return {
       kind: "untrustedDependencyScripts",
       severity: "high",

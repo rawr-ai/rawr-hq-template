@@ -6,11 +6,11 @@
  * Keep this focused on bootstrap concerns, not module behavior.
  *
  * @agents
- * Consumers should import `createClient` from package root (`index.ts`), not
+ * Consumers should import `createClient` from the package root, not
  * deep-link to this file directly unless explicitly needed for testing.
  */
 import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
-import { router } from "./router";
+import { router } from "./service/router";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
 type Invocation = RouterInitialContext["invocation"];
