@@ -2449,6 +2449,37 @@ services, resources, plugins, and packages remain private workspace projects.
   Habitat rules, strict OpenSpec validation, focused Biome, and diff hygiene
   pass. Fresh architecture/oRPC, TypeScript/TypeBox, and behavior-first reviews
   report no P0, P1, or P2.
+- [x] 5.7e41 Make the Habitat catalog publish faithful JSON Schema 2020-12
+  shapes without changing admitted catalog behavior. Replace draft-07 tuple
+  and executable refinement construction with projectable array schemas, move
+  glob and uniqueness decisions into Catalog policy, and keep all public types
+  TypeBox-derived. Candidate `01d778e176bdf7a6b1258bbfee17be5e91c59e79`
+  passes the complete 68-test Habitat service suite and uncached owner
+  typecheck. Fresh TypeBox, testing, and structural review reports no P0/P1.
+- [x] 5.7e42 Separate Lifecycle service-root wire schemas from semantic policy.
+  Keep JSON carriers projectable, derive branded/runtime values only after
+  policy admission, and preserve a precisely typed in-process client for the
+  five `Uint8Array` positions consumed by the CLI. Candidate
+  `595fc340369b8f4d667b01d44be79cf232ee935a` keeps real CLI consumers green and
+  adds compile-time and runtime byte-boundary oracles without `Type.Unsafe`,
+  `Refine`, a handwritten wire decoder, or a second schema authority.
+- [x] 5.7e43 Apply the same boundary to Packaging, Providers, Governance, and
+  Releases. Keep DTO structure TypeBox-owned; keep path, byte, ordering,
+  uniqueness, and cross-field decisions owner-local in model policy or inline
+  procedures. Candidate `6a3e46024f173ea6182c136a4fa1f8c3187da08f`
+  passes 430 Lifecycle tests, lifecycle source/test typechecks, the uncached CLI
+  consumer check, focused module contract tests, Biome, and diff hygiene. Fresh
+  behavior and TypeBox review reports no remaining P0/P1.
+- [x] 5.7e44 Split schema publication from native oRPC contract authority.
+  Keep the existing contract law focused on module entrypoints, operation
+  leaves, Standard Schema adaptation, and native public errors. Add one Habitat
+  source law that positively admits named root TypeBox imports and the
+  adapter-verified projectable constructor surface across service/API contracts,
+  DTOs, error-data leaves, and entities. Reject executable refinements/codecs, unsafe
+  overlays, BigInt values, computed Type access, subpath/default/aliased imports,
+  and legacy tuples without adding a scanner, SDK extension, or custom runner.
+  Exact contract and schema rules, real Grit finding-count probes, Catalog
+  compatibility, Lifecycle model publication, Biome, and diff hygiene pass.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,
