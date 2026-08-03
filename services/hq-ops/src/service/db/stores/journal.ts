@@ -6,14 +6,14 @@ import type {
   SqliteDatabase,
 } from "../../model/ports/resources";
 import {
-  type JournalEvent,
-  type JournalSnippet,
-  JournalSnippetSchema,
-} from "../../modules/journal/entities";
-import {
   type JournalSearchRow,
   JournalSearchRowSchema,
 } from "../../modules/journal/model/dto/journal.dto";
+import {
+  type JournalEvent,
+  type JournalSnippet,
+  JournalSnippetSchema,
+} from "../../modules/journal/model/entities/journal";
 import type {
   JournalEmbeddingCacheKey,
   JournalEmbeddingCacheWrite,

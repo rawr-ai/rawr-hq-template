@@ -1,6 +1,4 @@
-import type { HqOpsResources } from "#hq-ops-service/model/ports/resources";
-import type { SecurityFinding } from "../entities";
-import { bytesToText, listRepoFiles, listStagedPaths, readStagedBlob } from "./process";
+import type { SecurityFinding } from "../dto/security.dto";
 
 type SecretPattern = { id: string; re: RegExp; severity?: "high" | "critical" };
 
@@ -57,41 +55,13 @@ function scanTextForSecrets(text: string, filePath: string): SecurityFinding[] {
   return findings;
 }
 
-export async function scanSecretsStaged(
-  resources: HqOpsResources,
-  repoRoot: string
-): Promise<SecurityFinding[]> {
-  const maxFileBytes = 256_000;
-  const stagedPaths = await listStagedPaths(resources, repoRoot);
-
-  const findings: SecurityFinding[] = [];
-  for (const filePath of stagedPaths) {
-    const blob = await readStagedBlob(resources, repoRoot, filePath);
-    if (!blob) continue;
-    const buf = blob.subarray(0, Math.min(blob.length, maxFileBytes));
-    if (looksBinary(buf)) continue;
-    findings.push(...scanTextForSecrets(bytesToText(buf), filePath));
-  }
-
-  return findings;
-}
-
-export async function scanSecretsRepo(
-  resources: HqOpsResources,
-  repoRoot: string
-): Promise<SecurityFinding[]> {
-  const maxFileBytes = 256_000;
-  const files = await listRepoFiles(resources, repoRoot);
-
-  const findings: SecurityFinding[] = [];
-  for (const filePath of files) {
-    const absPath = resources.path.join(repoRoot, filePath);
-    const raw = await resources.fs.readText(absPath);
-    if (raw === null) continue;
-    const buf = Buffer.from(raw).subarray(0, maxFileBytes);
-    if (looksBinary(buf)) continue;
-    findings.push(...scanTextForSecrets(bytesToText(buf), filePath));
-  }
-
-  return findings;
+/** Scans one bounded file observation for known secret patterns. */
+export function secretFindings(
+  contents: Uint8Array,
+  filePath: string,
+  maxFileBytes = 256_000
+): SecurityFinding[] {
+  const bounded = contents.subarray(0, Math.min(contents.length, maxFileBytes));
+  if (looksBinary(bounded)) return [];
+  return scanTextForSecrets(new TextDecoder().decode(bounded), filePath);
 }

@@ -1,4 +1,4 @@
-import type { JournalEvent, JournalSnippet } from "../../entities";
+import type { JournalEvent, JournalSnippet } from "../entities";
 import type { JournalIndex } from "./journal-index";
 
 /** Canonical Journal records plus scoped access to the service-owned derived index. */

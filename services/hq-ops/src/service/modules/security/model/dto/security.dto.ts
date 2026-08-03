@@ -1,8 +1,10 @@
 import { type Static, Type } from "typebox";
 
+/** Repository surface selected for secret scanning. */
 export const SecurityModeSchema = Type.Union([Type.Literal("staged"), Type.Literal("repo")]);
 export type SecurityMode = Static<typeof SecurityModeSchema>;
 
+/** Normalized severity shared by all security findings. */
 export const FindingSeveritySchema = Type.Union([
   Type.Literal("info"),
   Type.Literal("low"),
@@ -12,6 +14,7 @@ export const FindingSeveritySchema = Type.Union([
 ]);
 export type FindingSeverity = Static<typeof FindingSeveritySchema>;
 
+/** Highest finding severity admitted without an explicit force decision. */
 export const RiskToleranceSchema = Type.Union([
   Type.Literal("strict"),
   Type.Literal("balanced"),
@@ -20,6 +23,7 @@ export const RiskToleranceSchema = Type.Union([
 ]);
 export type RiskTolerance = Static<typeof RiskToleranceSchema>;
 
+/** One normalized dependency, secret, or scanner finding. */
 export const SecurityFindingSchema = Type.Union([
   Type.Object(
     {
@@ -65,6 +69,7 @@ export const SecurityFindingSchema = Type.Union([
 ]);
 export type SecurityFinding = Static<typeof SecurityFindingSchema>;
 
+/** Repository and plugin facts attached to a projected security report. */
 export const SecurityReportMetaSchema = Type.Object(
   {
     pluginId: Type.Optional(Type.String({ minLength: 1 })),
@@ -73,6 +78,7 @@ export const SecurityReportMetaSchema = Type.Object(
   { additionalProperties: false }
 );
 
+/** Persisted security observation returned across the service boundary. */
 export const SecurityReportSchema = Type.Object(
   {
     ok: Type.Boolean(),
@@ -86,6 +92,7 @@ export const SecurityReportSchema = Type.Object(
 );
 export type SecurityReport = Static<typeof SecurityReportSchema>;
 
+/** Fresh security observation plus the path written by the operation. */
 export const SecurityReportWithPathSchema = Type.Object(
   {
     ok: Type.Boolean(),
@@ -99,6 +106,7 @@ export const SecurityReportWithPathSchema = Type.Object(
   { additionalProperties: false }
 );
 
+/** Admission decision projected from a fresh security observation. */
 export const SecurityGateEnableResultSchema = Type.Object(
   {
     allowed: Type.Boolean(),

@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { ORPCError } from "@orpc/server";
 import { afterEach, describe, expect, it } from "vitest";
-import type { HqOpsResources, SqliteDatabase } from "#hq-ops-service/model/ports/resources";
-import { createClient } from "../../../../src";
+import { createClient } from "../../../../src/client";
+import type { HqOpsResources, SqliteDatabase } from "../../../../src/service/model/ports/resources";
 import {
   type AnalyticsEntry,
   createClientOptions,
