@@ -13,8 +13,10 @@
 
 ## Boundaries
 
-- Consumers cross through declared package exports; module contracts, routers,
-  search policy, and index queries remain package-owned.
+- Consumers cross only through the declared `/client` package export. The
+  client exposes the callable surface, deliberate contract, DTO vocabulary,
+  and host port types; module contracts, routers, search policy, and index
+  queries remain private package-owned implementation.
 - Hosts provide session-source and generic index runtimes. They do not decide
   session interpretation, table shape, query policy, freshness, or pruning.
 - Concrete filesystem and SQLite construction belongs in the consuming
@@ -34,21 +36,24 @@
 
 ## Flow
 
-- A host supplies source and index capabilities; the public router selects the
-  catalog, transcript, or search module; that module interprets session data
-  and returns typed results through the service boundary.
+- A host binds source and index capabilities through the public client; the
+  private root router selects the catalog, transcript, or search module; that
+  module interprets session data and returns typed results through the client
+  boundary.
 
 ## Interfaces
 
-- Catalog, transcript, and search contracts form the public oRPC surface;
-  session-source and session-index ports are the handoffs to host-supplied
-  filesystem and SQLite implementations.
+- The public client exposes the catalog, transcript, and search contract as one
+  callable surface. Session-source and session-index port types describe the
+  handoffs to host-supplied filesystem and SQLite implementations.
 
 ## Routing
 
 - [Repository router](../../AGENTS.md)
-- [Public service contract](src/service/contract.ts)
-- [Common-area boundary](src/service/common/README.md)
+- [Public client face](src/client.ts)
+- [Private service contract](src/service/contract.ts)
+- [Service model DTO face](src/service/model/dto/index.ts)
+- [Service model port face](src/service/model/ports/index.ts)
 
 ## Validation
 
