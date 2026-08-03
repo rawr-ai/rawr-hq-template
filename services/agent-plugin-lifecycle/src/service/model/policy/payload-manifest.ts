@@ -10,7 +10,6 @@ import {
   PayloadManifestEntrySchema,
 } from "../dto/agent-plugin-payload";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
-import type { ReleaseRelativePath } from "../dto/release-identity";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
@@ -150,7 +149,7 @@ export function manifestFromPayloadEntries(
 
 /** Reports every adjacent duplicate after canonical payload-path ordering. */
 export function reportDuplicatePayloadPaths(
-  entries: readonly { readonly path: ReleaseRelativePath }[],
+  entries: readonly { readonly path: string }[],
   path: string,
   issues: ReleaseIssue[]
 ): void {

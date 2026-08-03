@@ -66,6 +66,17 @@ describe("observed-Git current-main v3 selection", () => {
     ]);
   });
 
+  it("selects a canonical source tag with Git-valid punctuation", async () => {
+    const sourceRef = "refs/tags/release+candidate";
+    const fixture = selectionFixture({ sourceRef });
+
+    await expect(select(fixture.resource)).resolves.toEqual({
+      kind: "CURRENT_ELIGIBLE",
+      selection: fixture.record,
+    });
+    expect(fixture.calls).toContain(`inspect:${sourceRef}`);
+  });
+
   it("rejects v2 record bytes before ancestry or selected-content reads", async () => {
     const fixture = selectionFixture({
       recordBytes: encoder.encode(
@@ -289,6 +300,7 @@ describe("observed-Git current-main v3 selection", () => {
 interface SelectionFixtureOptions {
   readonly recordBytes?: Uint8Array;
   readonly contentCommit?: string;
+  readonly sourceRef?: string;
   readonly recordContentAuthority?: CanonicalChannelSelection["contentAuthority"];
   readonly recordRepositoryIdentity?: CanonicalChannelSelection["sourceRepositoryIdentity"];
   readonly recordRepositoryUrl?: string;
@@ -307,13 +319,14 @@ interface SelectionFixtureOptions {
 
 function selectionFixture(options: SelectionFixtureOptions = {}) {
   const releaseInput = releaseInputFixture();
+  const sourceRef = options.sourceRef ?? CONTENT_REF;
   const record: CanonicalChannelSelection = {
     schemaVersion: 3,
     channel: "current-main",
     contentAuthority: options.recordContentAuthority ?? CONTENT_AUTHORITY,
     sourceRepositoryIdentity: options.recordRepositoryIdentity ?? REPOSITORY,
     sourceRepositoryUrl: options.recordRepositoryUrl ?? REPOSITORY_URL,
-    sourceRef: CONTENT_REF,
+    sourceRef,
     contentCommit: commit(options.contentCommit ?? CONTENT_COMMIT),
     contentTree: tree(CONTENT_TREE),
     releaseInputDigest: releaseInput.releaseInputDigest,
@@ -336,7 +349,7 @@ function selectionFixture(options: SelectionFixtureOptions = {}) {
       if (inspectionCount === 1 && options.openingFailure !== undefined) {
         return Effect.fail(options.openingFailure);
       }
-      const isContent = refName === CONTENT_REF;
+      const isContent = refName === sourceRef;
       const closingMain = options.changeClosingMain === true && inspectionCount === 4;
       return Effect.succeed({
         root: WORKSPACE,

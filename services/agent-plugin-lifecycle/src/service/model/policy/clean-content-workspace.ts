@@ -35,6 +35,7 @@ import {
   parseContentAuthority,
   parseGitCommitId,
   parseGitTreeId,
+  parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
 } from "./release-identity";
@@ -187,7 +188,14 @@ export function classifyCleanContentWorkspaceTree(
   try {
     const treeEntries = interpretTreeEntries(attempt.success);
     const entryByPath = new Map(treeEntries.map((entry) => [entry.path, entry]));
-    const releaseInputEntry = entryByPath.get(policy.releaseInputPath);
+    const releaseInputPath = parseReleaseRelativePath(
+      policy.releaseInputPath,
+      "policy.releaseInputPath"
+    );
+    if (!releaseInputPath.ok) {
+      return declined(ineligible("ReleaseInputMismatch", "release-input path is not canonical"));
+    }
+    const releaseInputEntry = entryByPath.get(releaseInputPath.value);
     if (releaseInputEntry === undefined) {
       return declined(
         ineligible(
@@ -246,14 +254,26 @@ export function classifyCleanReleaseInput(
       ineligible("ReleaseInputMismatch", "release input declares a different content authority")
     );
   }
+  const pluginRoot = parseReleaseRelativePath(policy.pluginRoot, "policy.pluginRoot");
+  const memberIds: PluginId[] = [];
+  for (const member of releaseInput.body.members) {
+    const pluginId = parsePluginId(member.pluginId, "releaseInput.members.pluginId");
+    if (!pluginId.ok) {
+      return declined(ineligible("ReleaseInputMismatch", "member identity is not canonical"));
+    }
+    memberIds.push(pluginId.value);
+  }
+  if (!pluginRoot.ok) {
+    return declined(ineligible("ReleaseInputMismatch", "plugin root is not canonical"));
+  }
   const declaredPluginIssue = validateDeclaredPluginTree({
-    pluginRoot: policy.pluginRoot,
+    pluginRoot: pluginRoot.value,
     paths: tree.treeEntries.map((entry) => entry.path),
-    declaredPluginIds: releaseInput.body.members.map((member) => member.pluginId),
+    declaredPluginIds: memberIds,
   });
   if (declaredPluginIssue !== undefined) return declined(ineligibleIssue(declaredPluginIssue));
 
-  const admittedPaths = new Set<ReleaseRelativePath>([policy.releaseInputPath]);
+  const admittedPaths = new Set<ReleaseRelativePath>([tree.releaseInputEntry.path]);
   const consumedRoots: ReleaseRelativePath[] = [];
   const memberPayloads: Array<
     Readonly<{
@@ -265,11 +285,9 @@ export function classifyCleanReleaseInput(
     }>
   > = [];
   const uniqueBlobEntries = new Map<string, CleanContentTreeEntry>();
-  for (const member of releaseInput.body.members) {
-    const rootResult = parseReleaseRelativePath(
-      `${policy.pluginRoot}/${member.pluginId}`,
-      "memberRoot"
-    );
+  for (const [index, member] of releaseInput.body.members.entries()) {
+    const pluginId = memberIds[index]!;
+    const rootResult = parseReleaseRelativePath(`${pluginRoot.value}/${pluginId}`, "memberRoot");
     if (!rootResult.ok) {
       return declined(ineligible("ReleaseInputMismatch", "member root is not canonical"));
     }
@@ -299,7 +317,7 @@ export function classifyCleanReleaseInput(
     }
     memberPayloads.push(
       Object.freeze({
-        pluginId: member.pluginId,
+        pluginId,
         entries: Object.freeze(entries),
       })
     );

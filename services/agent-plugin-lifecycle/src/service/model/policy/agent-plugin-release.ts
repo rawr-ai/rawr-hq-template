@@ -1,3 +1,4 @@
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import { type AgentPluginPayload, AgentPluginPayloadSchema } from "../dto/agent-plugin-payload";
 import {
@@ -14,7 +15,6 @@ import {
   ReleaseSourceIdentitySchema,
 } from "../dto/agent-plugin-release";
 import { MAX_OWNERSHIP_CLAIMS } from "../dto/distribution-ownership";
-import type { PayloadDigest } from "../dto/release-digest";
 import type { OwnershipIdentity } from "../dto/release-identity";
 import { type AgentPluginReleaseInput, AgentPluginReleaseInputSchema } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
@@ -233,7 +233,7 @@ export function verifyAgentPluginRelease(
       releaseDigest: claimedReleaseDigest,
       body,
       payload,
-    }) as AgentPluginRelease
+    })
   );
 }
 
@@ -487,7 +487,7 @@ function verifyReleasePayload(
 }
 
 function validatePayloadBinding(
-  expectedDigest: PayloadDigest,
+  expectedDigest: string,
   expectedManifest: AgentPluginReleaseBody["payloadManifest"],
   payload: AgentPluginPayload,
   path: string,
@@ -511,18 +511,22 @@ function freezeRelease(
   body: AgentPluginReleaseBody,
   payload: AgentPluginPayload
 ): AgentPluginRelease {
-  return Object.freeze({
+  const release = Object.freeze({
     schemaVersion: AGENT_PLUGIN_RELEASE_SCHEMA_VERSION,
     releaseDigest: releaseDigest(canonicalSerializeAgentPluginReleaseBody(body)),
     body,
     payload,
-  }) as AgentPluginRelease;
+  });
+  if (!isAgentPluginRelease(release)) {
+    throw new Error("Release construction did not produce a TypeBox-valid value");
+  }
+  return release;
 }
 
 function finishRelease(
-  release: AgentPluginRelease
+  release: Static<typeof AgentPluginReleaseSchema> & Readonly<{ payload: AgentPluginPayload }>
 ): ReleaseResult<AgentPluginRelease, ReleaseIssue> {
-  if (!Value.Check(AgentPluginReleaseSchema, release)) {
+  if (!isAgentPluginRelease(release)) {
     return failure([
       releaseIssue(
         "EXPECTED_OBJECT",
@@ -555,4 +559,10 @@ function finishRelease(
     ]);
   }
   return success(release);
+}
+
+function isAgentPluginRelease(
+  value: Static<typeof AgentPluginReleaseSchema> & Readonly<{ payload: AgentPluginPayload }>
+): value is AgentPluginRelease {
+  return Value.Check(AgentPluginReleaseSchema, value);
 }

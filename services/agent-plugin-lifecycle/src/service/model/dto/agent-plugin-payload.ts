@@ -1,8 +1,7 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
 import { ContentDigestSchema, PayloadDigestSchema } from "./release-digest";
-import { ReleaseRelativePathSchema } from "./release-identity";
-import { Uint8ArraySchema } from "./structural";
+import { type ReleaseRelativePath, ReleaseRelativePathSchema } from "./release-identity";
 
 declare const agentPluginPayloadBrand: unique symbol;
 
@@ -21,12 +20,12 @@ export const NormalizedFileModeSchema = Type.Union([Type.Literal(0o644), Type.Li
 /** TypeBox-derived normalized mode carried by one payload file. */
 export type NormalizedFileMode = Static<typeof NormalizedFileModeSchema>;
 
-/** Defines one closed raw file candidate admitted into payload construction. */
-export const PayloadEntryInputSchema = ReadonlyObject(
+/** Defines the closed projectable shape inspected before runtime byte admission. */
+export const PayloadEntryInputShapeSchema = ReadonlyObject(
   Type.Object({
     path: ReleaseRelativePathSchema,
     mode: NormalizedFileModeSchema,
-    bytes: Uint8ArraySchema,
+    bytes: Type.Unknown(),
   }),
   { additionalProperties: false }
 );
@@ -109,8 +108,15 @@ export const AgentPluginPayloadSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-/** TypeBox-derived raw file candidate admitted into payload construction. */
-export type PayloadEntryInput = Static<typeof PayloadEntryInputSchema>;
+/** Runtime construction input admitted by payload policy, not a JSON wire DTO. */
+export type PayloadEntryInput = Omit<
+  Static<typeof PayloadEntryInputShapeSchema>,
+  "path" | "bytes"
+> &
+  Readonly<{
+    path: ReleaseRelativePath;
+    bytes: Uint8Array;
+  }>;
 
 /** TypeBox-derived in-memory payload entry with policy-derived byte metadata. */
 export type PayloadEntry = Static<typeof PayloadEntrySchema>;

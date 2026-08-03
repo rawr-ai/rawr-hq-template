@@ -10,14 +10,47 @@ import {
 } from "../dto/current-main-selection";
 import { equalBytes } from "./byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "./canonical-json";
+import { parseCanonicalRef } from "./current-main-git";
+import { parseReleaseInputDigest } from "./release-digest";
+import {
+  parseContentAuthority,
+  parseGitCommitId,
+  parseGitTreeId,
+  parseRepositoryIdentity,
+} from "./release-identity";
 
 /** Validates and freezes the shared current-main record structure. */
 export function normalizeCurrentMainRecord(input: unknown): CanonicalChannelSelection | undefined {
   if (!Value.Check(CanonicalChannelSelectionSchema, input)) return undefined;
-  if (input.sourceRepositoryUrl !== canonicalRepositoryUrl(input.sourceRepositoryIdentity)) {
+  if (!isCanonicalHttpsGitUrl(input.sourceRepositoryUrl)) {
     return undefined;
   }
-  return Object.freeze({ ...input });
+  const contentAuthority = parseContentAuthority(input.contentAuthority);
+  const sourceRepositoryIdentity = parseRepositoryIdentity(input.sourceRepositoryIdentity);
+  const sourceRef = parseCanonicalRef(input.sourceRef, "currentMain.sourceRef");
+  const contentCommit = parseGitCommitId(input.contentCommit);
+  const contentTree = parseGitTreeId(input.contentTree);
+  const releaseInputDigest = parseReleaseInputDigest(input.releaseInputDigest);
+  if (
+    !contentAuthority.ok ||
+    !sourceRepositoryIdentity.ok ||
+    !sourceRef.ok ||
+    !contentCommit.ok ||
+    !contentTree.ok ||
+    !releaseInputDigest.ok ||
+    input.sourceRepositoryUrl !== canonicalRepositoryUrl(sourceRepositoryIdentity.value)
+  ) {
+    return undefined;
+  }
+  return Object.freeze({
+    ...input,
+    contentAuthority: contentAuthority.value,
+    sourceRepositoryIdentity: sourceRepositoryIdentity.value,
+    sourceRef: sourceRef.value,
+    contentCommit: contentCommit.value,
+    contentTree: contentTree.value,
+    releaseInputDigest: releaseInputDigest.value,
+  });
 }
 
 /** Serializes one validated current-main selection into its canonical Git bytes. */
@@ -64,6 +97,29 @@ function canonicalRepositoryUrl(repositoryIdentity: string): string | undefined 
   if (!repositoryIdentity.startsWith("git:")) return undefined;
   const repository = repositoryIdentity.slice("git:".length);
   return repository.includes("/") ? `https://${repository}.git` : undefined;
+}
+
+function isCanonicalHttpsGitUrl(value: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+  return (
+    parsed.protocol === "https:" &&
+    parsed.username === "" &&
+    parsed.password === "" &&
+    parsed.port === "" &&
+    parsed.search === "" &&
+    parsed.hash === "" &&
+    parsed.hostname === parsed.hostname.toLowerCase() &&
+    parsed.pathname.startsWith("/") &&
+    parsed.pathname.endsWith(".git") &&
+    !parsed.pathname.includes("//") &&
+    !parsed.pathname.split("/").some((part) => part === "." || part === "..") &&
+    parsed.toString() === value
+  );
 }
 
 function currentMainRecordValue(record: CanonicalChannelSelection): CanonicalJsonValue {

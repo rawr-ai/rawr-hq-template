@@ -1,9 +1,10 @@
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 import type { DistributionOwnershipIndex } from "../dto/distribution-ownership";
 import type { ReleaseInputDigest } from "../dto/release-digest";
-import type { PluginId } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
+  AgentPluginReleaseInputSchema,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
   RELEASE_INPUT_SCHEMA_VERSION,
@@ -381,18 +382,32 @@ function freezeReleaseInput(
   digest: ReleaseInputDigest,
   ownershipIndex: DistributionOwnershipIndex
 ): ReleaseResult<AgentPluginReleaseInput, ReleaseIssue> {
-  return success(
-    Object.freeze({
-      schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
-      releaseInputDigest: digest,
-      body,
-      ownershipIndex,
-    }) as AgentPluginReleaseInput
-  );
+  const releaseInput = Object.freeze({
+    schemaVersion: RELEASE_INPUT_SCHEMA_VERSION,
+    releaseInputDigest: digest,
+    body,
+    ownershipIndex,
+  });
+  if (!isAgentPluginReleaseInput(releaseInput)) {
+    return failure([
+      releaseIssue(
+        "EXPECTED_OBJECT",
+        "releaseInput",
+        "Release-input construction did not produce a TypeBox-valid value"
+      ),
+    ]);
+  }
+  return success(releaseInput);
+}
+
+function isAgentPluginReleaseInput(
+  value: Static<typeof AgentPluginReleaseInputSchema>
+): value is AgentPluginReleaseInput {
+  return Value.Check(AgentPluginReleaseInputSchema, value);
 }
 
 function reportDuplicateMembers(
-  memberIds: readonly PluginId[],
+  memberIds: readonly string[],
   path: string,
   issues: ReleaseIssue[]
 ): void {

@@ -11,15 +11,11 @@ import {
   type OwnershipClaim,
   type OwnershipClaimKind,
 } from "../dto/distribution-ownership";
-import {
-  type OwnershipIdentity,
-  OwnershipIdentitySchema,
-  type PluginId,
-} from "../dto/release-identity";
+import type { OwnershipIdentity, PluginId } from "../dto/release-identity";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
 import { compareCanonicalText } from "./canonical-text-ordering";
-import { parseOwnershipIdentity } from "./release-identity";
+import { parseOwnershipIdentity, parsePluginId } from "./release-identity";
 import { releaseIssue, sortReleaseIssues } from "./release-issue";
 import { asNonEmpty, failure, success } from "./release-result";
 import { admitTypeBoxRecordForTraversal, parseBoundedArray } from "./release-value-admission";
@@ -33,31 +29,41 @@ export interface AgentPluginPayloadInventory {
 
 /** Synthesizes plugin claims and admits one complete, conflict-free ownership index. */
 export function createDistributionOwnershipIndex(
-  memberIds: readonly PluginId[],
+  memberIds: readonly string[],
   declaredClaims: readonly DeclaredOwnershipClaim[]
 ): ReleaseResult<DistributionOwnershipIndex, ReleaseIssue> {
   const issues: ReleaseIssue[] = [];
   const claims: OwnershipClaim[] = [];
+  const admittedMemberIds: PluginId[] = [];
   for (const memberId of memberIds) {
-    if (!Value.Check(OwnershipIdentitySchema, memberId)) {
-      issues.push(
-        releaseIssue(
-          "INVALID_OWNERSHIP_IDENTITY",
-          `ownership.members.${memberId}`,
-          "Plugin identity cannot enter the ownership namespace"
-        )
-      );
+    const admittedMemberId = parsePluginId(memberId, `ownership.members.${memberId}`);
+    if (!admittedMemberId.ok) {
+      issues.push(...admittedMemberId.issues);
       continue;
     }
+    const identity = parseOwnershipIdentity(
+      admittedMemberId.value,
+      `ownership.members.${admittedMemberId.value}`
+    );
+    if (!identity.ok) {
+      issues.push(...identity.issues);
+      continue;
+    }
+    admittedMemberIds.push(admittedMemberId.value);
     claims.push(
       Object.freeze({
         kind: "plugin",
-        identity: memberId,
-        ownerPluginId: memberId,
+        identity: identity.value,
+        ownerPluginId: admittedMemberId.value,
       })
     );
   }
-  claims.push(...declaredClaims);
+  const admittedDeclaredClaims = parseDeclaredOwnershipClaims(
+    declaredClaims,
+    "ownership.claims",
+    issues
+  );
+  if (admittedDeclaredClaims !== undefined) claims.push(...admittedDeclaredClaims);
   if (claims.length > MAX_OWNERSHIP_CLAIMS) {
     issues.push(
       releaseIssue(
@@ -71,7 +77,7 @@ export function createDistributionOwnershipIndex(
       )
     );
   }
-  validateClaims(claims.slice(0, MAX_OWNERSHIP_CLAIMS), memberIds, issues);
+  validateClaims(claims.slice(0, MAX_OWNERSHIP_CLAIMS), admittedMemberIds, issues);
   const nonEmpty = asNonEmpty(sortReleaseIssues(issues));
   if (nonEmpty !== undefined) return failure(nonEmpty);
   return success(freezeIndex(claims));
@@ -156,7 +162,7 @@ export function ownershipClaimValue(claim: OwnershipClaim): CanonicalJsonValue {
 /** Returns a frozen owner-local view, optionally narrowed to one claim namespace. */
 export function ownershipClaimsFor(
   index: DistributionOwnershipIndex,
-  ownerPluginId: PluginId,
+  ownerPluginId: string,
   kind?: OwnershipClaimKind
 ): readonly OwnershipClaim[] {
   return Object.freeze(
@@ -222,7 +228,7 @@ export function deriveAgentPluginPayloadInventory(
  */
 export function validateAgentPluginPayloadOwnership(
   ownershipIndex: DistributionOwnershipIndex,
-  pluginId: PluginId,
+  pluginId: string,
   manifest: readonly PayloadManifestEntry[],
   path = "release.payload.manifest"
 ): readonly ReleaseIssue[] {
@@ -230,7 +236,7 @@ export function validateAgentPluginPayloadOwnership(
   if (!inventory.ok) return inventory.issues;
 
   const issues: ReleaseIssue[] = [];
-  const discovered = new Set(inventory.value.skillIdentities);
+  const discovered = new Set<string>(inventory.value.skillIdentities);
   const claims = ownershipClaimsFor(ownershipIndex, pluginId, "skill");
   const claimed = new Set(claims.map((claim) => claim.identity));
   for (const identity of discovered) {
@@ -274,11 +280,11 @@ export function validateAgentPluginPayloadOwnership(
 
 function validateClaims(
   claims: readonly OwnershipClaim[],
-  memberIds: readonly PluginId[],
+  memberIds: readonly string[],
   issues: ReleaseIssue[]
 ): void {
   const memberSet = new Set(memberIds);
-  const pluginOwners = new Set<PluginId>();
+  const pluginOwners = new Set<string>();
   for (const claim of claims) {
     if (!memberSet.has(claim.ownerPluginId)) {
       issues.push(

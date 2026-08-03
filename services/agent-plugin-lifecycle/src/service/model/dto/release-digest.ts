@@ -17,41 +17,31 @@ type ReleaseSetDigestBrand = string & {
 };
 
 /** Defines the SHA-256 identity of exact content bytes. */
-export const ContentDigestSchema = Type.Unsafe<ContentDigestBrand>(
-  Type.String({ pattern: "^sha256_[0-9a-f]{64}$" })
-);
+export const ContentDigestSchema = Type.String({ pattern: "^sha256_[0-9a-f]{64}$" });
 
 /** Defines the verification identity of one canonical digest-free release-input body. */
-export const ReleaseInputDigestSchema = Type.Unsafe<ReleaseInputDigestBrand>(
-  Type.String({ pattern: "^ri1_[0-9a-f]{64}$" })
-);
+export const ReleaseInputDigestSchema = Type.String({ pattern: "^ri1_[0-9a-f]{64}$" });
 
 /** Defines the verification identity of canonical plugin payload-entry bytes. */
-export const PayloadDigestSchema = Type.Unsafe<PayloadDigestBrand>(
-  Type.String({ pattern: "^pd1_[0-9a-f]{64}$" })
-);
+export const PayloadDigestSchema = Type.String({ pattern: "^pd1_[0-9a-f]{64}$" });
 
 /** Defines the verification identity of one canonical digest-free release body. */
-export const ReleaseDigestSchema = Type.Unsafe<ReleaseDigestBrand>(
-  Type.String({ pattern: "^rd1_[0-9a-f]{64}$" })
-);
+export const ReleaseDigestSchema = Type.String({ pattern: "^rd1_[0-9a-f]{64}$" });
 
 /** Defines the verification identity of one canonical digest-free complete-set body. */
-export const ReleaseSetDigestSchema = Type.Unsafe<ReleaseSetDigestBrand>(
-  Type.String({ pattern: "^rs1_[0-9a-f]{64}$" })
-);
+export const ReleaseSetDigestSchema = Type.String({ pattern: "^rs1_[0-9a-f]{64}$" });
 
 /** SHA-256 identity of exact content bytes. */
-export type ContentDigest = Static<typeof ContentDigestSchema>;
+export type ContentDigest = Static<typeof ContentDigestSchema> & ContentDigestBrand;
 
 /** Verification identity of one canonical digest-free release-input body. */
-export type ReleaseInputDigest = Static<typeof ReleaseInputDigestSchema>;
+export type ReleaseInputDigest = Static<typeof ReleaseInputDigestSchema> & ReleaseInputDigestBrand;
 
 /** Verification identity of canonical plugin payload-entry bytes. */
-export type PayloadDigest = Static<typeof PayloadDigestSchema>;
+export type PayloadDigest = Static<typeof PayloadDigestSchema> & PayloadDigestBrand;
 
 /** Verification identity of one canonical digest-free release body. */
-export type ReleaseDigest = Static<typeof ReleaseDigestSchema>;
+export type ReleaseDigest = Static<typeof ReleaseDigestSchema> & ReleaseDigestBrand;
 
 /** Verification identity of one canonical digest-free complete-set body. */
-export type ReleaseSetDigest = Static<typeof ReleaseSetDigestSchema>;
+export type ReleaseSetDigest = Static<typeof ReleaseSetDigestSchema> & ReleaseSetDigestBrand;

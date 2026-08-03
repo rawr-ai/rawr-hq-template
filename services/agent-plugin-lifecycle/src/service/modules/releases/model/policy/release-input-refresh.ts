@@ -26,6 +26,17 @@ import { releaseIssue } from "../../../../model/policy/release-issue";
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../../model/policy/release-payload-accounting";
 import type { ReleaseInputRefreshResult } from "../dto/release-lifecycle";
 
+type RuntimeReleaseInputRefreshSuccess = Omit<
+  Extract<ReleaseInputRefreshResult, { bytes: unknown }>,
+  "bytes"
+> &
+  Readonly<{ bytes: Uint8Array }>;
+
+/** Runtime-narrowed refresh result after Releases constructs the byte carrier. */
+export type ReleaseInputRefreshPolicyResult =
+  | RuntimeReleaseInputRefreshSuccess
+  | Exclude<ReleaseInputRefreshResult, { bytes: unknown }>;
+
 export interface ReleaseInputRefreshMemberSource {
   readonly pluginId: PluginId;
   readonly payloadEntries: readonly PayloadEntryInput[];
@@ -39,7 +50,7 @@ export interface ReleaseInputRefreshAuthoringInput {
 
 export function authorReleaseInputRefresh(
   input: ReleaseInputRefreshAuthoringInput
-): ReleaseInputRefreshResult {
+): ReleaseInputRefreshPolicyResult {
   const boundsFailure = preflightReleaseInputPayloadBounds(input.members);
   if (boundsFailure !== undefined) return boundsFailure;
 
@@ -64,7 +75,7 @@ export function authorReleaseInputRefresh(
   const existingMembers = new Map(
     existing?.body.members.map((member) => [member.pluginId, member] as const) ?? []
   );
-  const selectedMembers = new Set(input.members.map((member) => member.pluginId));
+  const selectedMembers = new Set<string>(input.members.map((member) => member.pluginId));
   const members: ReleaseMemberDeclaration[] = [];
   const skillClaims: DeclaredOwnershipClaim[] = [];
 

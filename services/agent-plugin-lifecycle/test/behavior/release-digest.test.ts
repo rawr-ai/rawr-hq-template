@@ -84,12 +84,18 @@ const digestCases = [
 }>;
 
 describe("release digest model", () => {
-  it("derives every digest type from its TypeBox schema", () => {
-    expectTypeOf<ContentDigest>().toEqualTypeOf<Static<typeof ContentDigestSchema>>();
-    expectTypeOf<ReleaseInputDigest>().toEqualTypeOf<Static<typeof ReleaseInputDigestSchema>>();
-    expectTypeOf<PayloadDigest>().toEqualTypeOf<Static<typeof PayloadDigestSchema>>();
-    expectTypeOf<ReleaseDigest>().toEqualTypeOf<Static<typeof ReleaseDigestSchema>>();
-    expectTypeOf<ReleaseSetDigest>().toEqualTypeOf<Static<typeof ReleaseSetDigestSchema>>();
+  it("keeps projectable wire strings separate from policy-admitted digest identities", () => {
+    expectTypeOf<Static<typeof ContentDigestSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof ReleaseInputDigestSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof PayloadDigestSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof ReleaseDigestSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof ReleaseSetDigestSchema>>().toEqualTypeOf<string>();
+
+    expectTypeOf<ContentDigest>().toMatchTypeOf<string>();
+    expectTypeOf<ReleaseInputDigest>().toMatchTypeOf<string>();
+    expectTypeOf<PayloadDigest>().toMatchTypeOf<string>();
+    expectTypeOf<ReleaseDigest>().toMatchTypeOf<string>();
+    expectTypeOf<ReleaseSetDigest>().toMatchTypeOf<string>();
   });
 
   it("admits only the exact lowercase prefix plus 64 hexadecimal digits", () => {

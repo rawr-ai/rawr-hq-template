@@ -8,8 +8,6 @@ import { contract as serviceContract } from "../../../src/service/contract";
 import {
   type CanonicalRef,
   CanonicalRefSchema,
-  type ExactGitBlobObservation,
-  ExactGitBlobObservationSchema,
   type ExactGitBlobPointer,
   ExactGitBlobPointerSchema,
   type GitBlobId,
@@ -27,6 +25,7 @@ import {
   type CurrentMainSelectionResult,
   MAX_CURRENT_MAIN_SELECTION_REASON_LENGTH,
 } from "../../../src/service/model/dto/current-main-selection";
+import { parseCanonicalRef } from "../../../src/service/model/policy/current-main-git";
 import { decodeGitLocator } from "../../../src/service/model/policy/current-main-locator";
 import { parseReleaseInputDigest } from "../../../src/service/model/policy/release-digest";
 import {
@@ -49,15 +48,14 @@ import {
 import { encodeCurrentMainBodyV3 } from "../../../src/service/modules/governance/model/policy/current-main-record";
 
 describe("governance procedure schema boundary", () => {
-  it("derives current-main Git collaboration types from their structural schemas", () => {
-    expectTypeOf<CanonicalRef>().toEqualTypeOf<Static<typeof CanonicalRefSchema>>();
-    expectTypeOf<GitBlobId>().toEqualTypeOf<Static<typeof GitBlobIdSchema>>();
+  it("separates policy-admitted Git identities from their projectable wire schemas", () => {
+    expectTypeOf<Static<typeof CanonicalRefSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof GitBlobIdSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<CanonicalRef>().toMatchTypeOf<string>();
+    expectTypeOf<GitBlobId>().toMatchTypeOf<string>();
     expectTypeOf<GitLocator>().toEqualTypeOf<Static<typeof GitLocatorSchema>>();
     expectTypeOf<GitBlobSelection>().toEqualTypeOf<Static<typeof GitBlobSelectionSchema>>();
     expectTypeOf<ExactGitBlobPointer>().toEqualTypeOf<Static<typeof ExactGitBlobPointerSchema>>();
-    expectTypeOf<ExactGitBlobObservation>().toEqualTypeOf<
-      Static<typeof ExactGitBlobObservationSchema>
-    >();
     expectTypeOf<CurrentMainSelectionLocator>().toEqualTypeOf<GitLocator>();
     expect(CurrentMainSelectionLocatorSchema).toBe(GitLocatorSchema);
   });
@@ -75,21 +73,26 @@ describe("governance procedure schema boundary", () => {
       path: "agent-plugins/current-main.json",
     };
     const pointer = { ...selection, blob: "c".repeat(40) };
-    const observation = { pointer, bytes: Uint8Array.of(0, 1, 2) };
-
-    for (const ref of ["refs/heads/main", "refs/tags/agent-plugins/content-2026-07-29"]) {
+    for (const ref of [
+      "refs/heads/main",
+      "refs/tags/agent-plugins/content-2026-07-29",
+      "refs/tags/release+candidate",
+    ]) {
       expect(Value.Check(CanonicalRefSchema, ref)).toBe(true);
+      expect(parseCanonicalRef(ref, "ref")).toEqual({ ok: true, value: ref });
     }
-    for (const invalid of [
-      "refs/remotes/main",
+    for (const invalid of ["refs/remotes/main", "refs/heads/main~next", null]) {
+      expect(Value.Check(CanonicalRefSchema, invalid)).toBe(false);
+    }
+    for (const semanticallyInvalid of [
       "refs/heads/.main",
       "refs/heads/main.lock",
       "refs/heads/main..next",
       "refs/heads/main//next",
-      "refs/heads/main~next",
-      null,
+      "refs/heads/main.",
     ]) {
-      expect(Value.Check(CanonicalRefSchema, invalid)).toBe(false);
+      expect(Value.Check(CanonicalRefSchema, semanticallyInvalid)).toBe(true);
+      expect(parseCanonicalRef(semanticallyInvalid, "ref").ok).toBe(false);
     }
 
     expect(Value.Check(GitBlobIdSchema, "d".repeat(40))).toBe(true);
@@ -101,13 +104,9 @@ describe("governance procedure schema boundary", () => {
     expect(Value.Check(GitLocatorSchema, locator)).toBe(true);
     expect(Value.Check(GitBlobSelectionSchema, selection)).toBe(true);
     expect(Value.Check(ExactGitBlobPointerSchema, pointer)).toBe(true);
-    expect(Value.Check(ExactGitBlobObservationSchema, observation)).toBe(true);
     expect(Value.Check(GitLocatorSchema, { ...locator, unexpected: true })).toBe(false);
     expect(Value.Check(GitBlobSelectionSchema, { ...selection, unexpected: true })).toBe(false);
     expect(Value.Check(ExactGitBlobPointerSchema, { ...pointer, unexpected: true })).toBe(false);
-    expect(Value.Check(ExactGitBlobObservationSchema, { ...observation, unexpected: true })).toBe(
-      false
-    );
     expect(
       Value.Check(GitLocatorSchema, {
         workspacePath: locator.workspacePath,
@@ -123,14 +122,6 @@ describe("governance procedure schema boundary", () => {
     ).toBe(false);
     expect(Value.Check(ExactGitBlobPointerSchema, selection)).toBe(false);
     expect(Value.Check(GitBlobSelectionSchema, pointer)).toBe(false);
-    expect(Value.Check(ExactGitBlobObservationSchema, { pointer })).toBe(false);
-    expect(Value.Check(ExactGitBlobObservationSchema, { pointer, bytes: [0, 1, 2] })).toBe(false);
-    expect(
-      Value.Check(ExactGitBlobObservationSchema, {
-        pointer,
-        bytes: new Uint16Array([1]),
-      })
-    ).toBe(false);
   });
 
   it("retains the 4096-byte locator policy behind the shared schema", () => {

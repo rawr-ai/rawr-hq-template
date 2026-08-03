@@ -21,6 +21,9 @@ describe("release-input record procedure", () => {
       value: { releaseInputDigest: fixture.releaseInput.releaseInputDigest },
     });
     if (!encoded.ok) throw new Error(JSON.stringify(encoded.issues));
+    if (!(encoded.value.bytes instanceof Uint8Array)) {
+      throw new Error("Release-input record policy did not return runtime bytes");
+    }
     expect(encoded.value.bytes).toEqual(
       canonicalSerializeAgentPluginReleaseInput(fixture.releaseInput)
     );
@@ -67,6 +70,15 @@ describe("release-input record procedure", () => {
     expect(noncanonical).toMatchObject({
       ok: false,
       issues: [{ code: "NON_CANONICAL_ENVELOPE", path: "releaseInput" }],
+    });
+
+    const nonBytes = await Reflect.apply(client.releases.releaseInputRecord, undefined, [
+      { kind: "validate-envelope", bytes: "{}\n" },
+      testInvocation,
+    ]);
+    expect(nonBytes).toMatchObject({
+      ok: false,
+      issues: [{ code: "EXPECTED_BYTES", path: "releaseInput" }],
     });
   });
 });
