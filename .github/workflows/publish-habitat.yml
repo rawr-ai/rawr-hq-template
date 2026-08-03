@@ -3,13 +3,19 @@ name: Publish Habitat
 on:
   pull_request:
     paths:
+      - .habitat/blueprints/**
       - .github/workflows/publish-habitat.yml
       - apps/habitat/**
       - packages/habitat-sdk/**
+      - packages/typebox-adapter/**
       - resources/rule-evaluation/**
+      - resources/source-inventory/**
+      - services/habitat/**
       - bun.lock
       - nx.json
       - package.json
+      - tsconfig.base.json
+      - vitest.config.ts
   push:
     tags:
       - habitat-cli-v*
@@ -120,6 +126,8 @@ jobs:
           mkdir -p "${consumer_root}"
           cd "${consumer_root}"
           npm init --yes >/dev/null
-          npm install --no-audit --no-fund "@habitat-ai/cli@${release_version}" "nx@23.1.0"
+          printf '%s\n' '{}' > nx.json
+          npm install --save-dev --no-audit --no-fund "nx@23.1.0"
+          npx nx add "@habitat-ai/cli@${release_version}" --no-interactive
           test "$(node -p "require('./node_modules/@habitat-ai/sdk/package.json').version")" = "${release_version}"
           ./node_modules/.bin/habitat --help >/dev/null
