@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import {
   MAX_CLEAN_CONTENT_TREE_ENTRIES,
   sourceEligibilityIssue,
-} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+} from "../../../model/dto/content-workspace";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -18,8 +18,8 @@ import {
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
   MAX_CLEAN_RELEASE_INPUT_BYTES,
   validateCleanContentWorkspacePolicy,
-} from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
+} from "../../../model/policy/clean-content-workspace";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../model/policy/release-payload-accounting";
 import { createRepositoryCheckSourceChangedResult } from "../model/policy/eligibility-result";
 import {
   classifyStagedMaterializationObservation,

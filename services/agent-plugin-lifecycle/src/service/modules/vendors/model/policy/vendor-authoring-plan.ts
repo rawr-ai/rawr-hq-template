@@ -2,12 +2,12 @@ import type {
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
 } from "@habitat-ai/rawr-resource-content-workspace";
-import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
-import type { ContentDigest } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
-import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
-import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
-import { createAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
-import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
+import type { CanonicalJsonValue } from "../../../../model/dto/canonical-json";
+import type { ContentDigest } from "../../../../model/dto/release-digest";
+import { canonicalJsonLine } from "../../../../model/policy/canonical-json";
+import { contentDigest } from "../../../../model/policy/release-digest";
+import { createAgentPluginReleaseInput } from "../../../../model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../../model/policy/release-input-codec";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,

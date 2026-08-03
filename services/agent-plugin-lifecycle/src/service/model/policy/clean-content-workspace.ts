@@ -9,18 +9,18 @@ import type {
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import type { Result } from "effect";
-import type {
-  ContentWorkspaceInspection,
-  ContentWorkspacePolicy,
-  SourceEligibilityIssue,
-  SourceEligibilityIssueCode,
-} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import { sourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
 import {
   type AgentPluginPayload,
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   type NormalizedFileMode,
 } from "../dto/agent-plugin-payload";
+import type {
+  ContentWorkspaceInspection,
+  ContentWorkspacePolicy,
+  SourceEligibilityIssue,
+  SourceEligibilityIssueCode,
+} from "../dto/content-workspace";
+import { sourceEligibilityIssue } from "../dto/content-workspace";
 import type { PluginId, ReleaseRelativePath } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,

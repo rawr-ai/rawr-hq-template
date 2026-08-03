@@ -1,13 +1,13 @@
 import { Value } from "typebox/value";
-import { RemoteUrlSchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+import { RemoteUrlSchema } from "../../../../model/dto/content-workspace";
+import { ContentDigestSchema } from "../../../../model/dto/release-digest";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { equalBytes } from "#agent-plugin-lifecycle-service/model/policy/byte-equality";
+} from "../../../../model/dto/release-identity";
+import { equalBytes } from "../../../../model/policy/byte-equality";
 import type { VendorStatusRequest, VendorUpdateIssue } from "../dto/vendor-operations";
 import type { VendorSourceIdentity } from "../dto/vendor-records";
 import {

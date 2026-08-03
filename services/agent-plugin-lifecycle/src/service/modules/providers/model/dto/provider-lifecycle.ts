@@ -4,24 +4,24 @@ import {
   NativeProviderHomeSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { ReadonlyObject, Refine, type Static, Type } from "typebox";
-import { ContentWorkspacePolicySchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import { CurrentMainSelectionLocatorSchema } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+import { ContentWorkspacePolicySchema } from "../../../../model/dto/content-workspace";
+import { CurrentMainSelectionLocatorSchema } from "../../../../model/dto/current-main-selection";
 import {
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+} from "../../../../model/dto/release-digest";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+} from "../../../../model/dto/release-identity";
+import { MAX_RELEASE_MEMBERS } from "../../../../model/dto/release-input";
 import {
   BoundedReadonlyArray,
   EmptyReadonlyArray,
   NonEmptyReadonlyArray,
-} from "#agent-plugin-lifecycle-service/model/dto/structural";
+} from "../../../../model/dto/structural";
 import { hasStrictDescendantHomes } from "../policy/disposable-root";
 
 const MAX_TARGETS = 16;

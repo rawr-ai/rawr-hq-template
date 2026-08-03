@@ -4,28 +4,25 @@ import {
   QualifiedHeadRefSchema,
   SourceEligibilityIssueSchema,
   WorkspaceBindingSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import { ReleaseSelectionSchema } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+} from "../../../../model/dto/content-workspace";
+import { ReleaseSelectionSchema } from "../../../../model/dto/release-derivation";
 import {
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+} from "../../../../model/dto/release-digest";
 import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+} from "../../../../model/dto/release-identity";
 import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-} from "#agent-plugin-lifecycle-service/model/dto/release-input";
-import { ReleaseIssueSchema } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
-import {
-  NonEmptyReadonlyArray,
-  Uint8ArraySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/structural";
+} from "../../../../model/dto/release-input";
+import { ReleaseIssueSchema } from "../../../../model/dto/release-issue";
+import { NonEmptyReadonlyArray, Uint8ArraySchema } from "../../../../model/dto/structural";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
 
 export const CheckInputSchema = ReadonlyObject(
