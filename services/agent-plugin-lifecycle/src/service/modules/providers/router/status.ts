@@ -11,8 +11,8 @@ import {
 } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
-import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { decodeGitLocator } from "#agent-plugin-lifecycle-service/model/policy/current-main-locator";
+import type { ReleaseRelativePath } from "../../../model/dto/release-identity";
+import { decodeGitLocator } from "../../../model/policy/current-main-locator";
 import {
   CURRENT_MAIN_SELECTION_REF,
   classifyCurrentMainAncestry,
@@ -25,9 +25,9 @@ import {
   currentMainReleaseInputSelection,
   finishCurrentMainSelection,
   MAX_CURRENT_MAIN_GIT_BLOB_BYTES,
-} from "#agent-plugin-lifecycle-service/model/policy/current-main-selection";
-import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
+} from "../../../model/policy/current-main-selection";
+import { deriveReleaseSelection } from "../../../model/policy/release-derivation";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../model/policy/release-payload-accounting";
 import type { ProviderStatusResult, ProviderTarget } from "../model/dto/provider-lifecycle";
 import type { SelectedContent } from "../model/dto/selected-content";
 import {

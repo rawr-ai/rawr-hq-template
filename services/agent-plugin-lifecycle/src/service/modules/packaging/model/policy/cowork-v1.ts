@@ -2,13 +2,13 @@ import type {
   CoworkV1ArchiveEncodingRequest,
   PackageArchiveEntry,
 } from "@habitat-ai/rawr-resource-agent-plugin-package-output";
-import type { AgentPluginRelease } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-release";
-import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import { payloadEntryBytes } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
-import { verifyCompleteReleaseSet } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-release-set";
-import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
-import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
-import { parseReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/policy/release-identity";
+import type { AgentPluginRelease } from "../../../../model/dto/agent-plugin-release";
+import type { DerivedReleaseSelection } from "../../../../model/dto/release-derivation";
+import { payloadEntryBytes } from "../../../../model/policy/agent-plugin-payload";
+import { verifyCompleteReleaseSet } from "../../../../model/policy/agent-plugin-release-set";
+import { compareCanonicalText } from "../../../../model/policy/canonical-text-ordering";
+import { contentDigest } from "../../../../model/policy/release-digest";
+import { parseReleaseRelativePath } from "../../../../model/policy/release-identity";
 import type { PackageDigest } from "../dto/packaging-lifecycle";
 
 /** Stable archive comment that identifies RAWR's Cowork v1 package profile. */

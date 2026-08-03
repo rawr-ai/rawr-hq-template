@@ -10,8 +10,8 @@ import {
   MAX_NATIVE_PROVIDER_PLUGIN_FILE_BYTES,
   MAX_NATIVE_PROVIDER_PLUGIN_FILES,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
-import { decodeBase64 } from "#agent-plugin-lifecycle-service/model/policy/canonical-base64";
-import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
+import { decodeBase64 } from "../../../../model/policy/canonical-base64";
+import { contentDigest } from "../../../../model/policy/release-digest";
 import type {
   ProviderId,
   ProviderIssue,

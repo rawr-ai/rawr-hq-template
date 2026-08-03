@@ -1,8 +1,8 @@
 import type { ContentWorkspaceIdentity } from "@habitat-ai/rawr-resource-content-workspace";
 
-import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
-import { canonicalJsonLine } from "#agent-plugin-lifecycle-service/model/policy/canonical-json";
-import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
+import type { CanonicalJsonValue } from "../../../../model/dto/canonical-json";
+import { canonicalJsonLine } from "../../../../model/policy/canonical-json";
+import { contentDigest } from "../../../../model/policy/release-digest";
 import type {
   VendorDeclaredSourceObservation,
   VendorDestinationObservation,

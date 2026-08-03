@@ -1,6 +1,6 @@
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
-import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { ContentWorkspaceSnapshot } from "../../../../model/dto/content-workspace";
 import {
   type ClaudeAgentPluginMarketplace,
   ClaudeAgentPluginMarketplaceSchema,

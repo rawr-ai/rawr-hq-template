@@ -9,17 +9,17 @@ import {
   PluginIdSchema,
   ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { CurrentMainRecordInputSchema } from "#agent-plugin-lifecycle-service/modules/governance/model/dto/current-main-record";
-import { router } from "#agent-plugin-lifecycle-service/router";
+} from "./service/model/dto/release-identity";
+import { CurrentMainRecordInputSchema } from "./service/modules/governance/model/dto/current-main-record";
+import { router } from "./service/router";
 
-export { type Contract, contract } from "#agent-plugin-lifecycle-service/contract";
+export { type Contract, contract } from "./service/contract";
 
 /** Public release-input byte and curated-member bounds admitted before dispatch. */
 export {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
-} from "#agent-plugin-lifecycle-service/model/dto/release-input";
+} from "./service/model/dto/release-input";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
 type Invocation = RouterInitialContext["invocation"];

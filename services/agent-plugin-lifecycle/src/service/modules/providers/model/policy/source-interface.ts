@@ -7,27 +7,27 @@ import type {
   TemporaryContentTreeEntry,
 } from "@habitat-ai/rawr-resource-content-workspace";
 import type { Result } from "effect";
-import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
-import type { ContentWorkspaceSnapshot } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "../../../../model/dto/agent-plugin-payload";
+import type { ContentWorkspaceSnapshot } from "../../../../model/dto/content-workspace";
 import type {
   CanonicalChannelSelection,
   CurrentMainSelectionLocator,
-} from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
-import type { ReleaseDerivationSource } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import type { ReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+} from "../../../../model/dto/current-main-selection";
+import type { ReleaseDerivationSource } from "../../../../model/dto/release-derivation";
+import type { ReleaseRelativePath } from "../../../../model/dto/release-identity";
+import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "../../../../model/dto/release-input";
 import {
   createAgentPluginPayload,
   payloadEntryBytes,
-} from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
-import { compareCanonicalText } from "#agent-plugin-lifecycle-service/model/policy/canonical-text-ordering";
-import { validateDeclaredPluginTree } from "#agent-plugin-lifecycle-service/model/policy/declared-plugin-tree";
-import { parseReleaseRelativePath } from "#agent-plugin-lifecycle-service/model/policy/release-identity";
-import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
+} from "../../../../model/policy/agent-plugin-payload";
+import { compareCanonicalText } from "../../../../model/policy/canonical-text-ordering";
+import { validateDeclaredPluginTree } from "../../../../model/policy/declared-plugin-tree";
+import { parseReleaseRelativePath } from "../../../../model/policy/release-identity";
+import { decodeAgentPluginReleaseInput } from "../../../../model/policy/release-input";
 import {
   MAX_RELEASE_SET_PAYLOAD_BYTES,
   totalReleaseSetPayloadBytes,
-} from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
+} from "../../../../model/policy/release-payload-accounting";
 import type { SelectedContentResolution } from "../dto/selected-content";
 import { validateNativeMarketplaces } from "./native-marketplace";
 import { selectedContentRejected } from "./selected-content";

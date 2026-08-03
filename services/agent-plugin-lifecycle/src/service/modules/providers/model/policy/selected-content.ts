@@ -1,11 +1,11 @@
 import type { NativeMarketplaceSource } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Value } from "typebox/value";
-import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { SourceEligibilityIssue } from "../../../../model/dto/content-workspace";
 import type {
   DerivedReleaseSelection,
   ReleaseDerivationFailure,
-} from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
-import { samePayloadManifest } from "#agent-plugin-lifecycle-service/model/policy/payload-manifest";
+} from "../../../../model/dto/release-derivation";
+import { samePayloadManifest } from "../../../../model/policy/payload-manifest";
 import type {
   ProviderIssue,
   ProviderIssueCode,
