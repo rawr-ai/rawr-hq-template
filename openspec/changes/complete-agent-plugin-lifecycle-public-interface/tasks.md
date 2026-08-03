@@ -530,6 +530,10 @@ services, resources, plugins, and packages remain private workspace projects.
     Because the SDK is a new npm package, land first, publish the exact `0.4.0`
     group once through authenticated Nx, bind the SDK's trusted publisher, then
     use a subsequent canonical patch tag to prove steady-state OIDC publication.
+    The tag workflow invokes the workspace's sole release group without a group
+    filter so Nx retains the SDK/CLI build, manifest, and installed-acceptance
+    predecessors of both inferred publish targets. Group selection must not
+    prune those required task-graph edges.
 - [ ] 3.7c Land the correction on canonical `main`, verify the required
   repository ratchet, and notify waiting consumer lanes of the one supported
   installation surface.

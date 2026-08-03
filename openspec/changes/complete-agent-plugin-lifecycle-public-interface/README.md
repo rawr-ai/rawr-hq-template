@@ -5900,9 +5900,11 @@ installer, retained release store, selector, or implementation-package cohort.
 The candidate passed the uncached 45-project TypeScript graph in 67 seconds,
 37 Habitat CLI tests, 47 server tests, and the installed two-tarball Oclif/Nx
 acceptance. An Nx publication dry-run selected and packed only the SDK (115
-files, 0.41 MB) and CLI (31 files, 45.79 KB). The tag workflow now invokes that
-same installed acceptance explicitly before Nx publication. Registry release,
-exact-version `nx add`, and canonical-main CI remain open.
+files, 0.41 MB) and CLI (31 files, 45.79 KB). Because this workspace has one
+release group, the tag workflow invokes Nx publication without a group filter;
+that preserves both inferred publish targets' build, manifest, and installed
+acceptance predecessors instead of pruning them during task selection. Registry
+release, exact-version `nx add`, and canonical-main CI remain open.
 
 Because `@habitat-ai/sdk` does not yet exist on npm, trusted publishing cannot
 authorize its first release. After this candidate lands, one authenticated Nx
