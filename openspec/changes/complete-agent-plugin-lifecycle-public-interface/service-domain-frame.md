@@ -217,10 +217,12 @@ Its source topology assumes exactly `source = project/src`; the current
 independent root declarations do not enforce that relation, so release-pack
 acceptance and instance activation wait for the blueprint to derive or
 positively bound it.
-All six service-construction laws remain staged candidates. Public-consumer
+All six service-construction laws are enforced together in the task 5.7e22
+candidate after the complete admitted corpus reached zero; activation remains
+unsettled until required admission and canonical landing pass. Public-consumer
 sealing is not a service-local v3 application until resolution can acquire
 foreign consumers across the workspace. The required Nx source-law target may
-invoke the laws only after source migration and the complete corpus are green.
+invoke the laws because source migration and the complete corpus are green.
 Empty baselines remain empty; no path exception, legacy inventory, or
 owner-specific forbidden list may make an invalid service green. See
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e]],
@@ -289,7 +291,7 @@ src/service/
       module.ts
       router.ts
       router/
-        <operation>.router.ts
+        <operation>.ts
       middleware/
         index.ts
         <capability>.ts
@@ -304,7 +306,7 @@ domain matter. The only model kinds are `dto`, `entities`, `errors`, `policy`,
 and `ports`. Every present kind exposes one `index.ts` import face over direct
 semantic leaves. There is no service-wide `model/index.ts`; `helpers`, `actors`,
 and `prompts` are not model destinations. A module exposes one
-`contract/index.ts`, authors operations in named `router/*.router.ts` leaves,
+`contract/index.ts`, authors operations in named `router/<name>.ts` leaves,
 and composes them through one module-root `router.ts`. Optional module
 middleware uses its indexed catalog shape. Service-root middleware is the
 intentional exception: it consists only of direct kebab-case leaves exporting

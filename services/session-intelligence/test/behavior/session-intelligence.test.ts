@@ -1,6 +1,6 @@
-import { createClient } from "../../src/client";
 import { safe } from "@orpc/server";
 import { describe, expect, it } from "vitest";
+import { createClient } from "../../src/client";
 import {
   CLAUDE_FIXTURE_PATH,
   CODEX_FIXTURE_PATH,

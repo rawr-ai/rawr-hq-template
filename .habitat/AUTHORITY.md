@@ -82,7 +82,7 @@ its recorded source-migration and activation gates pass.
 7. Required module `contract/` and `router/` directories expose declarative
    and executable semantic leaves. `contract/index.ts` is the contract
    composition face; module-root `router.ts` is the sole router composition
-   face over named `router/*.router.ts` leaves. Optional module `middleware/`
+   face over named `router/<name>.ts` leaves. Optional module `middleware/`
    retains its indexed catalog. Each contract or router leaf maps its
    kebab-case filename to one lower-camel export. Contract indexes prove
    canonical direct acquisition; module-root routers remain composition-only.

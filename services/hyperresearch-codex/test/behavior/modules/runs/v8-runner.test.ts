@@ -2,8 +2,8 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { createClient } from "../../../../src/client";
 import { afterEach, describe, expect, it } from "vitest";
+import { createClient } from "../../../../src/client";
 import type { HyperresearchAgentJob } from "../../../../src/service/model/entities";
 import { finalReportPath } from "../../../../src/service/modules/runs/model/policy/artifacts";
 import {

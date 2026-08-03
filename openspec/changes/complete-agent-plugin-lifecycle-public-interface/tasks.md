@@ -81,11 +81,11 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   oRPC context. Keep external acquisition resource/provider-owned, add both
   empty-baseline rules once to the existing source-law batch, and add no Nx
   project, target, scanner, wrapper, or implementation code.
-- [x] 1.2 Record the then-canonical service-module router topology. Keep module
-  `router.ts` as the plain public composition face, author operation leaves or
-  semantic groups in named `router/*.router.ts`, and do not admit
-  `router/index.ts` or a second public router form. Task 5.7e21k temporarily
-  superseded this topology; task 5.7e21x restores it as current authority.
+- [x] 1.2 Record the historical service-module router direction that first
+  separated one module-root composition face from named router authorship
+  leaves. Tasks 5.7e21k and 5.7e21x later superseded its exact leaf shape;
+  open task 5.7e22 owns the current `router/<name>.ts` authority and the final
+  rejection of `.router.ts`, `router/index.ts`, and a second public router form.
 - [x] 1.3 Add generic positive Oclif app and Oclif command-plugin blueprints.
   Constrain direct entrypoints, app identity/binary/dependency/command discovery,
   TypeScript source-to-output mapping, command-plugin manifest/package roots, no
@@ -1071,8 +1071,8 @@ services, resources, plugins, and packages remain private workspace projects.
   lifecycle source. Record why copied but inactive rules did not constrain the
   implementation; port the committed Magic Migration laws without weakening
   their positive closed topology; require one composition-only module
-  `router.ts` over named `router/*.router.ts` authoring leaves; admit no
-  `router/index.ts`; qualify every rule-private Grit helper; expand platform
+  `router.ts` over named `router/<name>.ts` authoring leaves; admit no
+  `.router.ts` or `router/index.ts`; qualify every rule-private Grit helper; expand platform
   independence to the complete production service surface; and preserve the
   module topology and qualified-helper law from Magic
   `52873620ffe0b8b6e60527cd399076fc13ab86a7`. Record that the initially adopted
@@ -1577,7 +1577,7 @@ services, resources, plugins, and packages remain private workspace projects.
   behavior, and close every lifecycle diagnostic from the six staged service
   laws. Prove lifecycle type and behavior boundaries. Do not acquire a resource,
   move policy, or change public contracts in this checkpoint.
-- [ ] 5.7e21 Burn the same law through the complete remaining standalone and
+- [x] 5.7e21 Burn the same law through the complete remaining standalone and
   embedded-API service corpus. Categorize Example Todo proof, then migrate
   ChatGPT Corpus, Dev, Hyperresearch Codex, HQ Ops, and Session Intelligence
   one owner at a time. Remove false `common` and `shared` owners, give genuine
@@ -1588,6 +1588,9 @@ services, resources, plugins, and packages remain private workspace projects.
   before claiming the admitted service corpus green; add no compatibility
   face, baseline, manual scanner, sibling service, or second orchestration
   plane merely to satisfy topology.
+  This completed owner migration does not claim source-law admission for the
+  production entity roots it encountered; task 5.7e21h remains their separate
+  bounded admission gate.
 - [x] 5.7e21a Curate HQ Ops config, journal, and security route context from the
   inherited resource and repository-scope lanes. Keep observability and
   analytics ordering unchanged, preserve exact resource identity, and make
@@ -1665,13 +1668,13 @@ services, resources, plugins, and packages remain private workspace projects.
   migration laws advisory with empty baselines and expose the current red
   corpus; move no production source and add no local Habitat SDK, graph owner,
   or runner.
-- [ ] 5.7e21h Before moving a production domain schema into `model/entities`,
-  extend the shared TypeBox contract and platform-neutral declaration laws to
-  service- and module-level entity roots. Preserve the common Magic/Template
-  law rather than adding a RAWR-only fork. Prove canonical TypeBox schema and
-  generated-type ownership, platform and persistence neutrality, and the
-  one-way DTO/contract/store-to-entity dependency direction before the new
-  kind becomes an active source destination.
+- [ ] 5.7e21h Before treating the existing production `model/entities` roots as
+  admitted source authority or adding another production entity, extend the
+  shared TypeBox contract and platform-neutral declaration laws to service- and
+  module-level entity roots. Preserve the common Magic/Template law rather than
+  adding a RAWR-only fork. Prove canonical TypeBox schema and generated-type
+  ownership, platform and persistence neutrality, and the one-way
+  DTO/contract/store-to-entity dependency direction before the kind can expand.
 - [ ] 5.7e21i Correct the shared public-consumer law's owner-local relative
   path classification before returning it to enforcement. Preserve owner-local
   `../../src/service` proof imports while rejecting actual sibling-service
@@ -1889,6 +1892,9 @@ services, resources, plugins, and packages remain private workspace projects.
   Keep public-consumer sealing staged until the application resolver can
   acquire foreign consumers across the workspace; do not model it as a
   service-local v3 application. Add
+  no redundant `.router` mid-fix: every authored leaf is exactly
+  `router/<name>.ts`, while module-root `router.ts` remains the sole composition
+  face. Add
   no local SDK fork, manifest generator, wrapper, raw Grit invocation,
   alternate runner, path exception, duplicated consumer wiring, or partial
   activation. Close this task only when the six laws are enforced by the

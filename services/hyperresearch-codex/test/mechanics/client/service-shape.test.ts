@@ -1,6 +1,6 @@
+import { describe, expect, it } from "vitest";
 import * as publicApi from "../../../src/client";
 import { createClient } from "../../../src/client";
-import { describe, expect, it } from "vitest";
 import { contract } from "../../../src/service/contract";
 import { router } from "../../../src/service/router";
 import { createClientOptions } from "../../support/service/helpers";

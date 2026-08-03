@@ -1,5 +1,5 @@
-import { createClient } from "../../src/client";
 import { describe, expect, it } from "vitest";
+import { createClient } from "../../src/client";
 import {
   createClientOptions,
   createInvocation,
