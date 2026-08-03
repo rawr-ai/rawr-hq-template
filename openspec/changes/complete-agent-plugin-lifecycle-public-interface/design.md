@@ -121,7 +121,7 @@ qualifying packet identity, the canonical TypeBox bridge, and Template's
 stronger entity, metadata, package-manifest, and module-router documentation
 law. Each module exposes a closed `contract/` catalog through its sole
 `index.ts` composition face, authors operations in named
-`router/*.router.ts` leaves, and composes those operations through one
+`router/<name>.ts` leaves, and composes those operations through one
 module-root `router.ts` face. Optional module middleware uses the equivalent
 indexed catalog; root contract and router composition remain in `contract.ts`
 and `router.ts`, while optional service-root middleware remains a direct leaf
@@ -149,10 +149,11 @@ projects them into their qualified owners' inferred policy targets. The one
 root Nx scheduler graph
 reaches repository admission and separation, Habitat policy, and CLI Oclif
 parity through those owners. The inferred targets include the required Oclif
-structure laws and lifecycle command-channel law. The six staged service rules
-remain governed by [[tasks]] 1.5e, 5.7e2, and 5.7e22 and join required
-admission only as their live-corpus violations are burned down and each law is
-activated in the registry. Public-consumer sealing additionally remains outside
+structure laws and lifecycle command-channel law. The six service-construction
+rules are enforced together in the task 5.7e22 candidate after the complete
+live-corpus burn-down; that task remains open until owner checks, standing
+review, required admission, and canonical landing prove the candidate.
+Public-consumer sealing remains outside
 service-local v3 application until resolution can acquire foreign consumers
 across the workspace.
 

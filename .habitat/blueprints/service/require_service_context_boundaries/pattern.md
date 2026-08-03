@@ -119,7 +119,7 @@ predicate require_service_context_boundaries_is_middleware_catalog_entry($statem
 
 // Selects operation leaves, whose vocabulary must already be curated.
 predicate require_service_context_boundaries_is_router_leaf() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.ts$"
 }
 
 // Selects the module spine that owns terminal handler-context curation.
@@ -149,46 +149,33 @@ predicate require_service_context_boundaries_is_canonical_middleware_catalog_sou
   }
 }
 
-// Checks that a configured module branch matches its module filename.
-function require_service_context_boundaries_attachment_branch_status($filename, $branch) js {
-  const match = $filename.text.match(
-    /\/modules\/([^/]+)\/(?:module|router\/([^/]+)\.router)\.ts$/,
-  );
+// Confirms that module middleware descends through the configured native service branch.
+function require_service_context_boundaries_module_receiver_status($filename, $receiver) js {
+  const match = $filename.text.match(/\/modules\/([^/]+)\/module\.ts$/);
   if (!match) return "wrong-destination";
-  const segment = match[2] ?? match[1];
-  const expected = segment.replace(
+  const branch = match[1].replace(
     /-([a-z0-9])/g,
     (_all, value) => value.toUpperCase(),
   );
-  return expected === $branch.text ? "ok" : "wrong-branch";
-}
+  const receiver = $receiver.text.replace(/\s+/g, "");
+  const root = `service.${branch}`;
+  if (!receiver.startsWith(root)) return "wrong-root";
 
-// Recognizes a native middleware chain rooted at one configured module branch.
-predicate require_service_context_boundaries_is_module_attachment_receiver($receiver, $branch) {
-  or {
-    $receiver <: `service.$branch`,
-    $receiver <: `$prior.use($middleware)` where {
-      require_service_context_boundaries_is_module_attachment_receiver(
-        receiver=$prior,
-        branch=$branch
-      )
-    }
-  }
+  const middlewareChain = receiver.slice(root.length);
+  return /^(?:\.use\([A-Za-z_$][A-Za-z0-9_$]*\))*$/.test(middlewareChain)
+    ? "ok"
+    : "non-native-chain";
 }
 
 // Recognizes a native operation chain without duplicating router path ownership.
-predicate require_service_context_boundaries_is_operation_attachment_receiver($receiver) {
+private pattern require_service_context_boundaries_is_operation_attachment_receiver() {
   or {
-    $receiver <: `module.$branch`,
-    $receiver <: `$prior.$member` where {
-      require_service_context_boundaries_is_operation_attachment_receiver(
-        receiver=$prior
-      )
+    `module.$branch`,
+    `$prior.$member` where {
+      $prior <: require_service_context_boundaries_is_operation_attachment_receiver()
     },
-    $receiver <: `$prior.use($middleware)` where {
-      require_service_context_boundaries_is_operation_attachment_receiver(
-        receiver=$prior
-      )
+    `$prior.use($middleware)` where {
+      $prior <: require_service_context_boundaries_is_operation_attachment_receiver()
     }
   }
 }
@@ -200,13 +187,9 @@ predicate require_service_context_boundaries_is_attached_catalog_binding($name, 
       require_service_context_boundaries_is_module(),
       $body <: contains `export const module = $value` where {
         $value <: contains `$receiver.use($name)` where {
-          require_service_context_boundaries_is_module_attachment_receiver(
-            receiver=$receiver,
-            branch=$branch
-          ),
-          $status = require_service_context_boundaries_attachment_branch_status(
+          $status = require_service_context_boundaries_module_receiver_status(
             filename=$filename,
-            branch=$branch
+            receiver=$receiver
           ),
           $status <: includes "ok"
         }
@@ -217,9 +200,7 @@ predicate require_service_context_boundaries_is_attached_catalog_binding($name, 
       $body <: contains `export const $operation = $value` where {
         $operation <: r"^[a-z][A-Za-z0-9]*$",
         $value <: contains `$receiver.use($name)` where {
-          require_service_context_boundaries_is_operation_attachment_receiver(
-            receiver=$receiver
-          )
+          $receiver <: require_service_context_boundaries_is_operation_attachment_receiver()
         }
       }
     }
@@ -288,27 +269,15 @@ function require_service_context_boundaries_contract_policy_status($filename, $b
   return expected === $branch.text ? "ok" : "wrong-branch";
 }
 
-// Recognizes any unconfigured router descendant rooted at the owning module.
-predicate require_service_context_boundaries_is_contract_policy_author($receiver, $branch) {
-  or {
-    $receiver <: `impl.$branch`,
-    $receiver <: `$prior.$member` where {
-      require_service_context_boundaries_is_contract_policy_author(
-        receiver=$prior,
-        branch=$branch
-      )
-    }
-  }
-}
-
 // Recognizes documented contract-aware policy authored from an owning router implementer.
 predicate require_service_context_boundaries_has_contract_policy($body) {
   $body <: contains `import { impl } from $source`,
-  $body <: contains `export const middleware = $receiver.middleware($callback)` as $export,
-  require_service_context_boundaries_is_contract_policy_author(
-    receiver=$receiver,
-    branch=$branch
+  $body <: contains `export const middleware = $call` as $export,
+  $call <: call_expression(
+    function=`$receiver.middleware`,
+    arguments=[$callback]
   ),
+  $receiver <: r"^impl\.([A-Za-z_$][A-Za-z0-9_$]*)(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*$"($branch),
   $status = require_service_context_boundaries_contract_policy_status(
     filename=$filename,
     branch=$branch
@@ -322,13 +291,25 @@ predicate require_service_context_boundaries_has_terminal_curation($body) {
   or {
     $body <: contains `export const module = $receiver.use(
       ({ context, next }) => next({ context: { $properties } })
-    )`,
+    )` where {
+      $status = require_service_context_boundaries_module_receiver_status(
+        filename=$filename,
+        receiver=$receiver
+      ),
+      $status <: includes "ok"
+    },
     $body <: contains `export const module = $receiver.use(
       ({ context, next }) => {
         $...
         return next({ context: { $properties } });
       }
-    )`
+    )` where {
+      $status = require_service_context_boundaries_module_receiver_status(
+        filename=$filename,
+        receiver=$receiver
+      ),
+      $status <: includes "ok"
+    }
   }
 }
 
@@ -347,6 +328,48 @@ predicate require_service_context_boundaries_has_non_single_block_next($body) {
 // Detects raw ownership lanes destructured from handler context.
 predicate require_service_context_boundaries_is_raw_destructure($binding) {
   $binding <: r"^\{(?s:.*)(?:deps|scope|config|invocation|provided)(?s:.*)\}$"
+}
+
+// Detects a module projection that forwards raw service context authority.
+private pattern require_service_context_boundaries_forbidden_module_projection() {
+  or {
+    `$key: context.$lane` where {
+      $lane <: r"^(?:deps|scope|config|invocation|provided)$"
+    },
+    `$lane: $value` where {
+      $lane <: r"^(?:deps|scope|config|invocation|provided)$"
+    },
+    `$key: context[$lane]` where {
+      $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
+    },
+    `$key: context`,
+    `...context`,
+    `...context.$lane` where {
+      $lane <: r"^(?:deps|scope|config|invocation|provided)$"
+    },
+    `...context[$lane]` where {
+      $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
+    },
+    `next({ context })`
+  }
+}
+
+// Detects an operation that reopens the raw service context lanes.
+private pattern require_service_context_boundaries_forbidden_router_lane() {
+  or {
+    `context.$lane` where {
+      $lane <: r"^(?:deps|scope|config|invocation|provided)$"
+    },
+    `context[$lane]` where {
+      $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
+    },
+    or {
+      `const $binding = context`,
+      `let $binding = context`
+    } where {
+      require_service_context_boundaries_is_raw_destructure(binding=$binding)
+    }
+  }
 }
 
 or {
@@ -500,52 +523,16 @@ or {
     require_service_context_boundaries_is_module(),
     require_service_context_boundaries_has_non_single_block_next(body=$body)
   },
-  `$key: context.$lane` where {
+  program() as $program where {
     require_service_context_boundaries_is_module(),
-    $lane <: r"^(?:deps|scope|config|invocation|provided)$"
+    $program <: contains require_service_context_boundaries_forbidden_module_projection()
   },
-  `$lane: $value` where {
-    require_service_context_boundaries_is_module(),
-    $lane <: r"^(?:deps|scope|config|invocation|provided)$"
-  },
-  `$key: context[$lane]` where {
-    require_service_context_boundaries_is_module(),
-    $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
-  },
-  `$key: context` where {
-    require_service_context_boundaries_is_module()
-  },
-  `...context` where {
-    require_service_context_boundaries_is_module()
-  },
-  `...context.$lane` where {
-    require_service_context_boundaries_is_module(),
-    $lane <: r"^(?:deps|scope|config|invocation|provided)$"
-  },
-  `...context[$lane]` where {
-    require_service_context_boundaries_is_module(),
-    $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
-  },
-  `next({ context })` where {
-    require_service_context_boundaries_is_module()
-  },
-  `context.$lane` where {
+  program() as $program where {
     require_service_context_boundaries_is_router_leaf(),
-    $lane <: r"^(?:deps|scope|config|invocation|provided)$"
-  },
-  `context[$lane]` where {
-    require_service_context_boundaries_is_router_leaf(),
-    $lane <: r"^[\"'](?:deps|scope|config|invocation|provided)[\"']$"
-  },
-  or {
-    `const $binding = context`,
-    `let $binding = context`
-  } where {
-    require_service_context_boundaries_is_router_leaf(),
-    require_service_context_boundaries_is_raw_destructure(binding=$binding)
+    $program <: contains require_service_context_boundaries_forbidden_router_lane()
   },
   `$receiver.use<$types>($middleware, $...)` where {
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl|modules/[^/]+/(?:module|router/[^/]+\.router))\.ts$"
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl|modules/[^/]+/(?:module|router/[^/]+))\.ts$"
   }
 }
 ```
@@ -600,7 +587,7 @@ export const middleware = os.middleware(({ next }) => next());
 ## Matches a handler that reopens raw context
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { module } from "../module";
 export const get = module.get.handler(({ context }) => context.deps.jobs.get());
 ```
@@ -608,7 +595,7 @@ export const get = module.get.handler(({ context }) => context.deps.jobs.get());
 ## Matches raw lane destructuring and bracket access
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { module } from "../module";
 export const get = module.get.handler(({ context }) => {
   const { scope } = context;
@@ -651,7 +638,7 @@ export const module = service.catalog.use(middleware);
 ## Matches a reusable group policy imported without operation attachment
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
 import { admitCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit.handler(submit),
@@ -668,10 +655,78 @@ export const module = service.queue
   .use(({ context, next }) => next({ context: { jobs: context.provided.jobs } }));
 ```
 
+## Matches module middleware attached through a receiver wrapper
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { requireCatalogAuthority } from "./middleware";
+export const module = wrap(service.catalog)
+  .use(requireCatalogAuthority)
+  .use(({ context, next }) => next({ context: { jobs: context.provided.jobs } }));
+```
+
+## Matches an outer wrapper around a native module attachment
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { requireCatalogAuthority } from "./middleware";
+export const module = wrap(service.catalog.use(requireCatalogAuthority))
+  .use(({ context, next }) => next({ context: { jobs: context.provided.jobs } }));
+```
+
+## Matches a non-native fluent hop inside the module chain
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/module.ts
+import { provideAdmin, requireCatalogAuthority } from "./middleware";
+export const module = service.catalog
+  .use(requireCatalogAuthority)
+  .admin.use(provideAdmin)
+  .use(({ context, next }) => next({ context: { jobs: context.provided.jobs } }));
+```
+
+## Ignores multiple module middleware attachments on the owning native chain
+
+```typescript
+// @filename: services/example-todo/src/service/modules/assignments/module.ts
+/**
+ * @fileoverview Assignments module runtime composition.
+ *
+ * @remarks
+ * This file owns module composition only:
+ * - start from the configured package-level service branch
+ * - attach qualified Assignments telemetry once
+ * - curate the assignment route context from inherited service capabilities
+ * - export configured `module` for handler implementations
+ */
+import { service } from "../../impl";
+import { telemetry } from "./middleware";
+
+/**
+ * SECTION: Module Composition (Always Present)
+ *
+ * Keep module-wide composition here so procedure handlers can stay focused on business logic.
+ */
+export const module = service.assignments.use(telemetry).use(async ({ context, next }) =>
+  next({
+    context: {
+      clock: context.deps.clock,
+      identifierGenerator: context.deps.identifierGenerator,
+      workspaceId: context.scope.workspaceId,
+      maxAssignmentsPerTask: context.config.limits.maxAssignmentsPerTask,
+      readOnly: context.config.readOnly,
+      assignmentsStore: context.provided.assignmentsStore,
+      tasksStore: context.provided.tasksStore,
+      tagsStore: context.provided.tagsStore,
+    },
+  })
+);
+```
+
 ## Matches middleware nested inside another operation attachment
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.ts
 import { authorizeCatalogUpdate } from "../middleware";
 export const update = module.update
   .use(other.use(authorizeCatalogUpdate))
@@ -681,7 +736,7 @@ export const update = module.update
 ## Matches a middleware catalog alias from an operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.ts
 import { authorizeCatalogUpdate } from "#jobs-service/modules/catalog/middleware";
 export const update = module.update.use(authorizeCatalogUpdate).handler(handler);
 ```
@@ -767,7 +822,7 @@ export const module = service.catalog.use<CatalogContext>(provideCatalog);
 ## Matches explicit middleware composition types on an operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.ts
 export const update = module.update
   .use<ValidatedCatalogInput>(authorizeCatalogUpdate)
   .handler(handler);
@@ -783,7 +838,7 @@ export const middleware = impl.collect.jobs.middleware(({ errors, next }) => {
   if (!mayCollect()) throw errors.FORBIDDEN();
   return next();
 });
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
 import { admitCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit.use(admitCollectJobs).handler(submit),
@@ -794,7 +849,7 @@ export const jobs = {
 ## Ignores combined group policies attached below the filename-owned router
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
 import { auditCollectJobs, authorizeCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit
@@ -811,7 +866,7 @@ export const jobs = {
 ## Matches a combined group import with one unattached binding
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/jobs.ts
 import { auditCollectJobs, authorizeCollectJobs } from "../middleware";
 export const jobs = {
   submit: module.jobs.submit.use(authorizeCollectJobs).handler(submit),
@@ -822,7 +877,7 @@ export const jobs = {
 ## Ignores catalog policy attached at the post-schema procedure point
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/collect/router/submit.ts
 import { admitCollectJobs } from "../middleware";
 export const submit = module.jobs.submit
   .use(admitCollectJobs)
@@ -832,7 +887,7 @@ export const submit = module.jobs.submit
 ## Ignores catalog policy attached to a deliberate native operation group
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/search.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/search.ts
 import { authorizeCatalogSearch } from "../middleware";
 export const search = {
   available: module.search.available.use(authorizeCatalogSearch).handler(searchAvailable),
@@ -843,7 +898,7 @@ export const search = {
 ## Ignores inline validated-input policy that uses curated context
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.ts
 export const update = module.update
   .use(({ context, errors, next }, input) => {
     if (!mayUpdate(context.actor, input.id)) throw errors.FORBIDDEN();
@@ -854,7 +909,7 @@ export const update = module.update
 ## Ignores exact-leaf policy kept inline on the native procedure
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/update.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/update.ts
 export const update = module.catalog.update
   .use(({ context, errors, next }, input) => {
     if (!mayUpdate(context.actor, input.id)) throw errors.FORBIDDEN();
@@ -992,7 +1047,7 @@ export const module = service.catalog
       jobs: context.provided.jobs,
     },
   }));
-// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { module } from "../module";
 export const get = module.get.handler(({ context }) => context.jobs.get());
 ```

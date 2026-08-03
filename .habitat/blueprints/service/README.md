@@ -10,7 +10,7 @@ package-root proof tree, and the root and module interior spines. Optional
 service-root middleware is closed to direct simple kebab-case `.ts` leaves;
 it has no barrel, nesting, or role suffix. A module exposes its required closed
 `contract/` directory through `contract/index.ts`, authors operations in a
-closed `router/` directory of named `*.router.ts` leaves, and composes them
+closed `router/` directory of named `<name>.ts` leaves, and composes them
 through one module-root `router.ts`. An optional closed `middleware/` directory
 retains its indexed catalog only when middleware exists. A module-level
 `contract.ts` and `router/index.ts` are not part of the kind. Root service
@@ -33,9 +33,10 @@ remain specific to one subdomain. A standalone service spine admits the optional
 `db` child whose entire topology and import funnel belong to the independent
 [[../database/README|database blueprint]]; modules and embedded API service
 interiors do not own database placement. Entity placement is structurally
-advisory until the shared TypeBox and platform-neutral source laws cover the
-new kind; production source does not use it before that law lands. The
-independent source packets own
+admitted, but its source-law authority remains open until the shared TypeBox
+and platform-neutral laws cover the new kind. Existing production entity roots
+are retained migration evidence and must not expand before that bounded law
+lands. The independent source packets own
 positive generic-anchor presence, the native declaration-to-implementation
 lineage and exact service-branch module hop, context boundaries, configured router
 authorship, the canonical module import surface,
@@ -46,11 +47,22 @@ Effect failure slots at service capability boundaries. The
 [[skill|service capability funnel]] is the authoring frame for these rules.
 
 Standalone service proof lives only under optional package-root `test/`.
+Service-owned behavior suites live directly at `behavior/*.test.ts`, while
+module-owned behavior follows its production owner at
+`behavior/modules/<module>/*.test.ts`. Client and database mechanics use
+`mechanics/{client,db}/*.test.ts`; contract mechanics admit both
+`mechanics/contract/*.test.ts` and `mechanics/contract/*.typecheck.ts`.
+Integration suites live at `integration/*.test.ts`; separately scheduled
+environment-qualified acceptance suites live directly at
+`acceptance/*.test.ts`; and reusable non-suite assets remain at
+`support/{db,service,modules/<module>}/*.ts`.
+Categories remain optional and need not exist when a service has no proof of
+that kind.
 The source catalog schema-admits the v3 service definition, but no service
 instance exists and the definition has no release-pack acceptance. Its current
-generic rule set is structure-only: the active RAWR-path-qualified v2 Grit
-rules remain outside the definition, and the separate staged construction laws
-remain path-qualified candidates pending a location-independent recut.
+generic rule set is structure-only: the enforced RAWR-path-qualified v2 Grit
+construction laws remain outside the definition pending a location-independent
+recut.
 Release-pack acceptance waits until finite contract, operation-semantic, and
 root-execution member axes are frozen and the application resolver can reject
 unselected members. No open support, helper, runtime, fixture, or case-by-case
@@ -118,14 +130,14 @@ documented named policy reused by several operations and requiring validated
 input remains in the module middleware catalog and is attached by every
 consuming procedure leaf through native `.use(...)`; reuse does not promote it
 to module-wide or group attachment. Review owns both genuine reuse and exact
-descendant scope. Pinned oRPC 2 beta.20 router implementers expose
+descendant scope. Pinned oRPC 2 beta.23 router implementers expose
 `.middleware(...)`, while procedure implementers expose only `.use(...)` and
 `.handler(...)`; TypeScript proves that native distinction. None of these lanes uses
 `base.<module>`, `decorateMiddleware`, `.use` parameter extraction, or
 configured `.middleware(...)` feedback, and no helper or decorator simulates
 an oRPC operation-policy surface. Review owns that semantic simulation check.
 
-On pinned oRPC 2 beta.20, router/module middleware is augmented at
+On pinned oRPC 2 beta.23, router/module middleware is augmented at
 `inputSchemasLengthAtUse: 0`, while procedure attachment records a point after
 the schemas already present. Any policy that consumes validated input therefore
 attaches through procedure `.use(...)`, whether local to one operation or
@@ -218,14 +230,10 @@ inferred failure channels. Effect diagnostics own catch construction and
 failure composition. Behavior tests own actual adapter translation and
 procedure mapping.
 
-The spine topology, anchor, context, composition, module-isolation,
-router-authorship, and public-consumer packets are intentionally staged under
-`.habitat/staged/blueprints/service` while their live corpora are migrated.
-Their empty baselines and candidate manifests record the exact destination
-without adding unfinished work to the required graph. A burn-down branch moves
-the six service-construction packets back into this affirmed blueprint,
-enforces them, and lands only at zero; public-consumer sealing follows its own
-zero-red proof after its relative-path classifier is corrected. Habitat
+The spine topology, anchor, context, composition, module-isolation, and
+router-authorship packets are enforced together with empty baselines after the
+complete live corpus reached zero. Public-consumer sealing remains staged and
+follows its own zero-red proof after its relative-path classifier is corrected. Habitat
 structure owns topology, including the package-root proof
 categories and the absence of source-owned test directories and suite files;
 Grit owns the declared source relations; Nx production inputs exclude

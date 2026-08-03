@@ -255,7 +255,7 @@ export const router = impl.catalog.router({ get });
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
 import type { Router } from "./contract";
-import { get } from "./router/get.router";
+import { get } from "./router/get";
 export const router = { get } as Router;
 ```
 
@@ -271,7 +271,7 @@ const preview = impl.router({ catalog });
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
-import { get } from "./router/get.router";
+import { get } from "./router/get";
 export const router = { get };
 ```
 

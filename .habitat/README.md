@@ -54,9 +54,10 @@ The current generic kinds are:
 The seven v3 definitions for `package`, `resource`, `provider`, `service`,
 `plugin`, `plugin-nx`, and `app` currently have no instances or resolved
 applications. Their blueprint-root schema-2 structures are schema-admitted but
-execution-inert while the released evaluator continues to execute only the 33
-registered v2 compatibility rules. The six service-construction packets remain
-staged. Exact blueprint-root relations, nested-member closure, and
+execution-inert while the installed evaluator executes the 40 registered v2
+compatibility rules. The six v2 service-construction packets are now enforced
+with empty baselines against the complete admitted service corpus;
+public-consumer sealing remains staged. Exact blueprint-root relations, nested-member closure, and
 workspace-wide foreign-consumer acquisition remain Habitat-owned constructibility
 requirements; see the active OpenSpec handoff before creating the first v3
 instance.
@@ -139,7 +140,7 @@ entity source moves before that shared law lands.
 
 Required module `contract/` and `router/` directories have distinct faces.
 `contract/` exposes `index.ts` plus semantic leaves. `router/` contains named
-`*.router.ts` operation-authoring leaves without a barrel; the module-root
+`<name>.ts` operation-authoring leaves without a barrel; the module-root
 `router.ts` composes them as the module's sole router face. Optional
 `middleware/` exposes `index.ts` plus semantic leaves. Service-root contract
 and router files remain the service composition spines. Optional service-root
@@ -154,8 +155,9 @@ for technology-specific physical mappings. Database-owned source and direct
 named root middleware leaves may import database source. Those leaves attach
 through `impl.ts` without a root barrel; modules consume projected stores
 through inherited context. The unfinished service spine, anchor, context,
-composition, isolation, router-authorship, and public-consumer laws remain
-explicit staged packets until their production burn-down reaches zero.
+composition, isolation, and router-authorship laws are enforced together after
+their production burn-down reached zero. Public-consumer sealing remains an
+explicit staged packet until foreign-consumer acquisition is owner-complete.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed
