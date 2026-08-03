@@ -663,6 +663,7 @@ describe("Habitat catalog resolve", () => {
       "require_service_orpc_composition",
       "require_service_proof_isolation",
       "require_service_router_authorship",
+      "require_service_schema_publication",
       "require_service_spine_topology",
       "require_web_public_environment_funnel",
       "require_workstream_plugin_pack_hook_configuration",

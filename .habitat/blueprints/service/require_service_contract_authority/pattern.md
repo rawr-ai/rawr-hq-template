@@ -15,14 +15,6 @@ Procedure input, output, and public error-data envelopes adapt TypeBox with
 binding may preserve portable declaration names without creating another schema
 owner.
 
-Contract and reusable DTO schema owners use TypeBox's native JSON Schema
-builders. Executable refinements, codecs, native-only builders and literals,
-unsafe schemas, and tuple syntax from an older JSON Schema dialect do not enter
-a public contract. TypeBox remains responsible for the schemas its JSON
-builders produce; this law rejects the known non-projectable capability
-families instead of making the adapter traverse and reinterpret arbitrary
-schema graphs at runtime.
-
 Public procedure failures are declared with native `.errors(...)` maps in the
 owning contract. A map may be inline or a private local object literal, and a
 shorthand item in an inline map is likewise private and local. Neither map nor
@@ -203,24 +195,6 @@ predicate require_service_contract_authority_is_leaf_export($export) {
   $status <: includes "ok"
 }
 
-// Scopes TypeBox publication law to contracts and reusable public schema owners.
-predicate require_service_contract_authority_is_schema_owner() {
-  or {
-    require_service_contract_authority_is_module_contract_source(),
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/(?:dto/.*\.dto|errors/[^/]+)\.ts$"
-  }
-}
-
-// Recognizes TypeBox capabilities with runtime or non-2020-12 semantics.
-predicate require_service_contract_authority_is_non_projectable_constructor($constructor) {
-  $constructor <: r"^[\"']?(?:BigInt|Call|Codec|Constructor|Deferred|Function|Generic|Identifier|Infer|Parameter|Refine|Rest|Symbol|Tuple|Undefined|Unsafe|Void)[\"']?$"
-}
-
-// Recognizes a BigInt literal that JSON Schema cannot represent.
-predicate require_service_contract_authority_is_bigint_literal($value) {
-  $value <: r"^-?(?:0|[1-9][0-9]*)n$"
-}
-
 // Recognizes Habitat's TypeBox-to-Standard-Schema adapter at either the
 // public SDK boundary or its private producer source boundary.
 predicate require_service_contract_authority_is_standard_schema($value) {
@@ -392,23 +366,6 @@ or {
     require_service_contract_authority_is_module_contract_leaf(),
     require_service_contract_authority_is_own_index_source(source=$source)
   },
-  import_statement(source=$source) as $import where {
-    require_service_contract_authority_is_schema_owner(),
-    $source <: r"^[\"']typebox[\"']$",
-    $import <: `import * as $namespace from $source`
-  },
-  import_statement(source=$source) as $import where {
-    require_service_contract_authority_is_schema_owner(),
-    $source <: r"^[\"']typebox[\"']$",
-    $import <: contains import_specifier(name=$name) where {
-      ! $name <: r"^[\"']?(?:Static|Type)[\"']?$"
-    }
-  },
-  variable_declarator(value=$typebox) where {
-    require_service_contract_authority_is_schema_owner(),
-    $typebox <: `Type`,
-    $program <: contains `import { $..., Type, $... } from "typebox"`
-  },
   `$builder.errors($argument)` where {
     require_service_contract_authority_is_module_contract_source(),
     not {
@@ -442,32 +399,6 @@ or {
     not {
       require_service_contract_authority_is_standard_schema_value(value=$schema)
     }
-  },
-  `$typebox.$constructor` where {
-    require_service_contract_authority_is_schema_owner(),
-    or {
-      and {
-        $typebox <: `Type`,
-        $program <: contains `import { $..., Type, $... } from "typebox"`
-      },
-      $program <: contains `import { $..., Type as $typebox, $... } from "typebox"`,
-      $program <: contains `import $typebox from "typebox"`
-    },
-    require_service_contract_authority_is_non_projectable_constructor(
-      constructor=$constructor
-    )
-  },
-  `$typebox.Literal($value, $...)` where {
-    require_service_contract_authority_is_schema_owner(),
-    or {
-      and {
-        $typebox <: `Type`,
-        $program <: contains `import { $..., Type, $... } from "typebox"`
-      },
-      $program <: contains `import { $..., Type as $typebox, $... } from "typebox"`,
-      $program <: contains `import $typebox from "typebox"`
-    },
-    require_service_contract_authority_is_bigint_literal(value=$value)
   }
 }
 ```
@@ -949,29 +880,6 @@ import { Type } from "typebox";
 import { standard } from "@habitat-ai/sdk";
 const CatalogRequestSchema = Type.Object({ data: Type.String() });
 export const get = oc.input(standard(CatalogRequestSchema));
-```
-
-## Matches non-projectable shared error-data schema authority
-
-```typescript
-// @filename: services/jobs/src/service/model/errors/catalog.ts
-import { Type } from "typebox";
-export const CatalogErrorDataSchema = Type.Refine(
-  Type.Object({ reason: Type.String() }),
-  (value) => value.reason.length > 0,
-);
-```
-
-## Matches executable TypeBox semantics that cannot be published faithfully
-
-```typescript
-// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
-import { oc } from "@orpc/contract";
-import { Type } from "typebox";
-import { standard } from "@habitat-ai/sdk";
-export const get = oc.input(
-  standard(Type.Refine(Type.String(), (value) => value === "accepted")),
-);
 ```
 
 ## Ignores native JSON Schema composition

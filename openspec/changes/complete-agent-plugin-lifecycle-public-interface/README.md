@@ -5961,6 +5961,26 @@ service-corpus burn-down moved all six construction laws into the enforced
 candidate with empty baselines and zero findings. Task 5.7e22 remains open for
 required admission, standing review, and canonical landing.
 
+## TypeBox Publication Closure
+
+Three semantic checkpoints separate public structure from runtime policy
+without changing lifecycle behavior. Habitat catalog checkpoint `01d778e17`
+publishes draft-2020-12 arrays and leaves glob and uniqueness decisions in
+Catalog policy. Lifecycle core checkpoint `595fc3403` makes service-root wire
+schemas projectable while retaining a policy-derived, byte-precise local client.
+Lifecycle module checkpoint `6a3e46024` applies the same ownership to Packaging,
+Providers, Governance, and Releases.
+
+The accompanying Habitat rule split keeps native oRPC contract construction and
+public error authority in `require_service_contract_authority`. The new
+`require_service_schema_publication` law owns the projectable TypeBox authoring
+surface for service and embedded-API contracts, DTOs, and error data. Runtime
+and cross-field semantics remain in model policy or procedure authorship. Exact
+Habitat rules, real Grit finding counts, Catalog compatibility, 430 Lifecycle
+tests, the uncached CLI consumer check, TypeScript checks, Biome, and diff
+hygiene pass. No scanner, custom runner, schema facade, or additional state
+owner was introduced.
+
 ## Settlement Oracles
 
 The final product must prove:
