@@ -1,8 +1,8 @@
-import type { HyperresearchCliBackend } from "@habitat-ai/rawr-hyperresearch-codex/resources";
 import type {
+  HyperresearchCliBackend,
   HyperresearchCliOperation,
   HyperresearchCliResult,
-} from "@habitat-ai/rawr-hyperresearch-codex/types";
+} from "@habitat-ai/rawr-hyperresearch-codex/client";
 
 export class FixtureHyperresearchCliBackend implements HyperresearchCliBackend {
   readonly calls: Array<{ operation: HyperresearchCliOperation; args: string[]; cwd: string }> = [];

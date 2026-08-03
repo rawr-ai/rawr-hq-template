@@ -2,7 +2,32 @@
  * @fileoverview In-process client factory for the hyperresearch-codex package boundary.
  */
 import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
-import { router } from "./router";
+import { router } from "./service/router";
+
+export type {
+  HyperresearchAgentArtifactWrite,
+  HyperresearchAgentJob,
+  HyperresearchAgentJobStatus,
+  HyperresearchAgentOutput,
+  HyperresearchCliCall,
+  HyperresearchCliOperation,
+  HyperresearchCliResult,
+  HyperresearchFailure,
+  HyperresearchIntegrityFinding,
+  HyperresearchPatchGuard,
+  HyperresearchReportSnapshot,
+  HyperresearchResumeEvent,
+  HyperresearchReviewDisposition,
+  HyperresearchRunLedger,
+  HyperresearchSourceCapture,
+  HyperresearchStepLoad,
+  HyperresearchStepRecord,
+  HyperresearchStepStatus,
+  HyperresearchTier,
+  HyperresearchV8RunLedger,
+  V8RunStatus,
+} from "./service/model/entities";
+export type { HyperresearchCliBackend, HyperresearchCodexIO } from "./service/model/ports";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
 type Invocation = RouterInitialContext["invocation"];
