@@ -9,7 +9,7 @@ import {
   SessionSourceSchema,
   SessionStatusSchema,
 } from "../../../model/dto";
-import { SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT } from "../../../model/errors";
+import { ErrorMessageSchema } from "../../../model/errors";
 
 const SessionFiltersSchema = Type.Object(
   {
@@ -113,5 +113,14 @@ export const catalog = {
       )
     )
     .output(standard(ResolveResultSchema))
-    .errors({ SESSION_NOT_FOUND, UNKNOWN_SESSION_FORMAT }),
+    .errors({
+      SESSION_NOT_FOUND: {
+        message: "Session not found",
+        data: standard(ErrorMessageSchema),
+      },
+      UNKNOWN_SESSION_FORMAT: {
+        message: "Unknown session format",
+        data: standard(ErrorMessageSchema),
+      },
+    }),
 };

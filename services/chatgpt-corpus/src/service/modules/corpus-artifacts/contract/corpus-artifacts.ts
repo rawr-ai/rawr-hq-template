@@ -1,10 +1,9 @@
 import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
 import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
-import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
 import { SourceSnapshotSchema } from "../../../model/entities";
-import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../../model/errors";
+import { CorpusErrorDataSchema } from "../../../model/errors";
 import {
   AmbiguityFlagSchema,
   AnomalySchema,
@@ -31,11 +30,6 @@ const ValidationFailedData = standard(
     { additionalProperties: false }
   )
 );
-
-const CORPUS_ARTIFACT_VALIDATION_FAILED: ErrorMapItem<typeof ValidationFailedData> = {
-  message: "Corpus artifact validation failed",
-  data: ValidationFailedData,
-} as const;
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const BuildArtifactsInputSchema = Type.Object(
@@ -147,8 +141,17 @@ export const corpusArtifacts = {
     .input(standard(EmptyInputSchema))
     .output(standard(MaterializeArtifactsOutputSchema))
     .errors({
-      CORPUS_ARTIFACT_VALIDATION_FAILED,
-      INVALID_CONVERSATION_JSON,
-      INVALID_CONVERSATION_EXPORT,
+      CORPUS_ARTIFACT_VALIDATION_FAILED: {
+        message: "Corpus artifact validation failed",
+        data: ValidationFailedData,
+      },
+      INVALID_CONVERSATION_JSON: {
+        message: "Conversation JSON could not be parsed",
+        data: standard(CorpusErrorDataSchema),
+      },
+      INVALID_CONVERSATION_EXPORT: {
+        message: "Conversation export shape is invalid",
+        data: standard(CorpusErrorDataSchema),
+      },
     }),
 };

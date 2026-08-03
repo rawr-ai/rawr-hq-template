@@ -3,7 +3,7 @@ import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import { Type } from "typebox";
 import { SourceSnapshotSchema } from "../../../model/entities";
-import { INVALID_CONVERSATION_EXPORT, INVALID_CONVERSATION_JSON } from "../../../model/errors";
+import { CorpusErrorDataSchema } from "../../../model/errors";
 
 const EmptyInputSchema = Type.Object({}, { additionalProperties: false });
 const ReadSourceSnapshotOutputSchema = Type.Object(
@@ -43,7 +43,13 @@ export const sourceMaterials = {
     .input(standard(EmptyInputSchema))
     .output(standard(ReadSourceSnapshotOutputSchema))
     .errors({
-      INVALID_CONVERSATION_JSON,
-      INVALID_CONVERSATION_EXPORT,
+      INVALID_CONVERSATION_JSON: {
+        message: "Conversation JSON could not be parsed",
+        data: standard(CorpusErrorDataSchema),
+      },
+      INVALID_CONVERSATION_EXPORT: {
+        message: "Conversation export shape is invalid",
+        data: standard(CorpusErrorDataSchema),
+      },
     }),
 };

@@ -3,7 +3,7 @@ import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import { type Static, Type } from "typebox";
 import { RoleFilterSchema, SessionMessageSchema, SessionSourceSchema } from "../../../model/dto";
-import { UNKNOWN_SESSION_FORMAT } from "../../../model/errors";
+import { ErrorMessageSchema } from "../../../model/errors";
 
 const ExtractOptionsSchema = Type.Object(
   {
@@ -128,5 +128,10 @@ export const transcripts = {
       )
     )
     .output(standard(ExtractedSessionSchema))
-    .errors({ UNKNOWN_SESSION_FORMAT }),
+    .errors({
+      UNKNOWN_SESSION_FORMAT: {
+        message: "Unknown session format",
+        data: standard(ErrorMessageSchema),
+      },
+    }),
 };

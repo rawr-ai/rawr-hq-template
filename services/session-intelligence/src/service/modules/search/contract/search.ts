@@ -3,7 +3,7 @@ import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import { type Static, Type } from "typebox";
 import { RoleFilterSchema, SessionSourceFilterSchema } from "../../../model/dto";
-import { INVALID_REGEX } from "../../../model/errors";
+import { ErrorMessageSchema } from "../../../model/errors";
 import {
   DEFAULT_FACET_CANDIDATE_LIMIT,
   FacetSearchHitSchema,
@@ -149,7 +149,12 @@ export const search = {
         )
       )
     )
-    .errors({ INVALID_REGEX }),
+    .errors({
+      INVALID_REGEX: {
+        message: "Invalid search regex",
+        data: standard(ErrorMessageSchema),
+      },
+    }),
   facets: oc
     .meta(procedureMetadata({ idempotent: true, entity: "search" }))
     .input(
