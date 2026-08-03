@@ -55,7 +55,6 @@ jobs:
       - name: Publish Habitat SDK and CLI
         run: >-
           npx nx release publish
-          --group=habitat-cli
           --outputStyle=static
 
       - name: Verify the registry release
