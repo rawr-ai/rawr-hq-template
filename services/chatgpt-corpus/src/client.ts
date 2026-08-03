@@ -1,5 +1,21 @@
 import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
-import { router } from "./router";
+import { router } from "./service/router";
+
+export { type Contract, contract } from "./service/contract";
+export type {
+  RawSourceMaterials,
+  WorkspaceArtifactBundle,
+  WorkspaceArtifactFile,
+  WorkspaceDirectoryEntry,
+  WorkspaceFileEntry,
+  WorkspaceManagedFile,
+  WorkspaceMaterializeResult,
+  WorkspaceScaffoldResult,
+  WorkspaceSourceDirectories,
+  WorkspaceStore,
+  WorkspaceTemplate,
+  WorkspaceTextEntry,
+} from "./service/model/ports";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
 type Invocation = RouterInitialContext["invocation"];
