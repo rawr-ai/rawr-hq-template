@@ -1,6 +1,6 @@
 import type { AnalyticsClient, Logger } from "@habitat-ai/rawr-hq-sdk";
 import { os } from "@orpc/server";
-import type { WorkspaceStore } from "../orpc/ports/workspace-store";
+import type { WorkspaceStore } from "./model/ports";
 
 type Deps = {
   analytics: AnalyticsClient;
