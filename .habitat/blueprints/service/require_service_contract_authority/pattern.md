@@ -203,11 +203,11 @@ predicate require_service_contract_authority_is_leaf_export($export) {
   $status <: includes "ok"
 }
 
-// Scopes TypeBox publication law to contracts and reusable DTO schema owners.
+// Scopes TypeBox publication law to contracts and reusable public schema owners.
 predicate require_service_contract_authority_is_schema_owner() {
   or {
     require_service_contract_authority_is_module_contract_source(),
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/dto/.*\.dto\.ts$"
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/(?:dto/.*\.dto|errors/[^/]+)\.ts$"
   }
 }
 
@@ -260,6 +260,23 @@ predicate require_service_contract_authority_is_local_error_map($map) {
   $program <: contains `const $map = { $properties }`
 }
 
+// Recognizes one error item authored directly at its contract boundary.
+predicate require_service_contract_authority_is_inline_error_item($item) {
+  or {
+    $item <: `{ message: $message }`,
+    $item <: `{ message: $message, data: $data }` where {
+      require_service_contract_authority_is_standard_schema_value(value=$data)
+    },
+    $item <: `$object as const` where {
+      $object <: `{ message: $message }`
+    },
+    $item <: `$object as const` where {
+      $object <: `{ message: $message, data: $data }`,
+      require_service_contract_authority_is_standard_schema_value(value=$data)
+    }
+  }
+}
+
 // Recognizes one private object-literal item with adapted public data.
 predicate require_service_contract_authority_is_local_error_item($item) {
   $item <: r"^[A-Za-z_$][A-Za-z0-9_$]*$",
@@ -267,21 +284,18 @@ predicate require_service_contract_authority_is_local_error_item($item) {
     name=$item,
     value=$definition
   ),
+  require_service_contract_authority_is_inline_error_item(item=$definition)
+}
+
+// Recognizes one property in the closed native error-map shape.
+predicate require_service_contract_authority_is_error_map_property($property) {
   or {
-    $definition <: `{ $properties }`,
-    $definition <: `$object as const` where {
-      $object <: `{ $properties }`
-    }
-  },
-  not {
-    or {
-      $definition <: `{ $..., data: $data, $... }`,
-      $definition <: `$object as const` where {
-        $object <: `{ $..., data: $data, $... }`
-      }
+    and {
+      $property <: shorthand_property_identifier(),
+      require_service_contract_authority_is_local_error_item(item=$property)
     },
-    not {
-      require_service_contract_authority_is_standard_schema_value(value=$data)
+    $property <: `$code: $item` where {
+      require_service_contract_authority_is_inline_error_item(item=$item)
     }
   }
 }
@@ -404,34 +418,22 @@ or {
       }
     }
   },
-  `$builder.errors({ $..., $item, $... })` where {
+  `$builder.errors({ $properties })` where {
     require_service_contract_authority_is_module_contract_source(),
-    $item <: shorthand_property_identifier(),
-    not {
-      require_service_contract_authority_is_local_error_item(item=$item)
+    $properties <: some $property where {
+      not {
+        require_service_contract_authority_is_error_map_property(property=$property)
+      }
     }
   },
   `$builder.errors($map)` where {
     require_service_contract_authority_is_module_contract_source(),
     require_service_contract_authority_is_local_error_map(map=$map),
-    $program <: contains `const $map = { $..., $item, $... }`,
-    $item <: shorthand_property_identifier(),
-    not {
-      require_service_contract_authority_is_local_error_item(item=$item)
-    }
-  },
-  `$builder.errors({ $..., $code: { $..., data: $data, $... }, $... })` where {
-    require_service_contract_authority_is_module_contract_source(),
-    not {
-      require_service_contract_authority_is_standard_schema_value(value=$data)
-    }
-  },
-  `$builder.errors($map)` where {
-    require_service_contract_authority_is_module_contract_source(),
-    require_service_contract_authority_is_local_error_map(map=$map),
-    $program <: contains `const $map = { $..., $code: { $..., data: $data, $... }, $... }`,
-    not {
-      require_service_contract_authority_is_standard_schema_value(value=$data)
+    $program <: contains `const $map = { $properties }`,
+    $properties <: some $property where {
+      not {
+        require_service_contract_authority_is_error_map_property(property=$property)
+      }
     }
   },
   `$procedure.$direction($schema)` where {
@@ -554,6 +556,256 @@ export const get = oc
   .input(standard(Type.Object({ query: Type.String() })));
 ```
 
+## Matches an imported explicit native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { BAD_REQUEST } from "./errors";
+export const get = oc.errors({ BAD_REQUEST: BAD_REQUEST });
+```
+
+## Matches an inline spread of native error items
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { errors } from "./errors";
+export const get = oc.errors({ ...errors });
+```
+
+## Matches a computed native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+const code = "BAD_REQUEST";
+export const get = oc.errors({ [code]: { message: "Bad request" } });
+```
+
+## Matches a named map with a computed native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+const code = "BAD_REQUEST";
+const errors = { [code]: { message: "Bad request" } };
+export const get = oc.errors(errors);
+```
+
+## Matches a getter-owned native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { BAD_REQUEST } from "./errors";
+export const get = oc.errors({
+  get BAD_REQUEST() {
+    return BAD_REQUEST;
+  },
+});
+```
+
+## Matches a named map with a computed getter-owned error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { BAD_REQUEST } from "./errors";
+const code = "BAD_REQUEST";
+const errors = {
+  get [code]() {
+    return BAD_REQUEST;
+  },
+};
+export const get = oc.errors(errors);
+```
+
+## Matches a constructed native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { makeError } from "./errors";
+export const get = oc.errors({ BAD_REQUEST: makeError() });
+```
+
+## Matches a member-owned native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { errors } from "./errors";
+export const get = oc.errors({ BAD_REQUEST: errors.BAD_REQUEST });
+```
+
+## Matches a spread inside an inline native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { BAD_REQUEST } from "./errors";
+export const get = oc.errors({ BAD_REQUEST: { ...BAD_REQUEST } });
+```
+
+## Matches a spread inside a private shorthand native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { importedError } from "./errors";
+const BAD_REQUEST = { ...importedError } as const;
+export const get = oc.errors({ BAD_REQUEST });
+```
+
+## Matches raw data inside an inline const native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+export const get = oc.errors({
+  BAD_REQUEST: { data: Type.Object({ reason: Type.String() }) } as const,
+});
+```
+
+## Matches raw shorthand data inside an inline native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+const data = Type.Object({ reason: Type.String() });
+export const get = oc.errors({ BAD_REQUEST: { data } });
+```
+
+## Matches raw shorthand data inside a private native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+const data = Type.Object({ reason: Type.String() });
+const BAD_REQUEST = { data } as const;
+export const get = oc.errors({ BAD_REQUEST });
+```
+
+## Matches computed data authority inside an inline native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+export const get = oc.errors({
+  BAD_REQUEST: { ["data"]: Type.Object({ reason: Type.String() }) },
+});
+```
+
+## Matches getter-owned data authority inside an inline native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { ImportedSchema } from "./errors";
+export const get = oc.errors({
+  BAD_REQUEST: {
+    get data() {
+      return ImportedSchema;
+    },
+  },
+});
+```
+
+## Matches computed getter-owned data authority inside an inline native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { ImportedSchema } from "./errors";
+const data = "data";
+export const get = oc.errors({
+  BAD_REQUEST: {
+    get [data]() {
+      return ImportedSchema;
+    },
+  },
+});
+```
+
+## Matches an imported shorthand after a valid local item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { standard } from "@habitat-ai/sdk";
+import { Type } from "typebox";
+import { IMPORTED_A, IMPORTED_B } from "./errors";
+const Data = standard(Type.Object({ reason: Type.String() }));
+const LOCAL = { message: "Local", data: Data };
+export const get = oc.errors({ LOCAL, IMPORTED_A, IMPORTED_B });
+```
+
+## Matches a named map with imported shorthand after a valid local item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { standard } from "@habitat-ai/sdk";
+import { Type } from "typebox";
+import { IMPORTED_A, IMPORTED_B } from "./errors";
+const Data = standard(Type.Object({ reason: Type.String() }));
+const LOCAL = { message: "Local", data: Data };
+const errors = { LOCAL, IMPORTED_A, IMPORTED_B };
+export const get = oc.errors(errors);
+```
+
+## Matches a named map with an imported explicit native error item
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { BAD_REQUEST } from "./errors";
+const errors = { BAD_REQUEST: BAD_REQUEST };
+export const get = oc.errors(errors);
+```
+
+## Matches a named map with a spread of native error items
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { importedErrors } from "./errors";
+const errors = { ...importedErrors };
+export const get = oc.errors(errors);
+```
+
+## Ignores multiple local shorthand native error items
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { standard } from "@habitat-ai/sdk";
+import { Type } from "typebox";
+const Data = standard(Type.Object({ reason: Type.String() }));
+const LOCAL_A = { message: "Local A", data: Data };
+const LOCAL_B = { message: "Local B", data: Data };
+export const get = oc.errors({ LOCAL_A, LOCAL_B });
+```
+
+## Ignores a named map with multiple local shorthand items
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { standard } from "@habitat-ai/sdk";
+import { Type } from "typebox";
+const Data = standard(Type.Object({ reason: Type.String() }));
+const LOCAL_A = { message: "Local A", data: Data };
+const LOCAL_B = { message: "Local B", data: Data };
+const errors = { LOCAL_A, LOCAL_B };
+export const get = oc.errors(errors);
+```
+
 ## Matches a contract leaf whose export does not match its filename
 
 ```typescript
@@ -644,6 +896,32 @@ export const get = oc
   .input(standard(Type.Object({ query: Type.String() })));
 ```
 
+## Ignores inline const native error data
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@habitat-ai/sdk";
+export const get = oc.errors({
+  BAD_REQUEST: {
+    message: "Bad request",
+    data: standard(Type.Object({ reason: Type.String() })),
+  } as const,
+});
+```
+
+## Ignores inline shorthand native error data
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+import { standard } from "@habitat-ai/sdk";
+const data = standard(Type.Object({ reason: Type.String() }));
+export const get = oc.errors({ BAD_REQUEST: { data } });
+```
+
 ## Ignores private named native error data
 
 ```typescript
@@ -671,6 +949,17 @@ import { Type } from "typebox";
 import { standard } from "@habitat-ai/sdk";
 const CatalogRequestSchema = Type.Object({ data: Type.String() });
 export const get = oc.input(standard(CatalogRequestSchema));
+```
+
+## Matches non-projectable shared error-data schema authority
+
+```typescript
+// @filename: services/jobs/src/service/model/errors/catalog.ts
+import { Type } from "typebox";
+export const CatalogErrorDataSchema = Type.Refine(
+  Type.Object({ reason: Type.String() }),
+  (value) => value.reason.length > 0,
+);
 ```
 
 ## Matches executable TypeBox semantics that cannot be published faithfully

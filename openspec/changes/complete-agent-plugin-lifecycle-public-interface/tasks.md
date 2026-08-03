@@ -2112,6 +2112,17 @@ services, resources, plugins, and packages remain private workspace projects.
   registry release landed through PR #752 and became the repository consumer
   through PR #758 at canonical merge
   `b040e316d7089890d4e59c52af93ea2f9a4b08cc`.
+- [x] 5.7e22h Close public error authority at the native contract boundary.
+  Keep shared TypeBox error-data schemas in the service model, declare each
+  oRPC error-map item privately in its owning contract, and leave procedures on
+  the handler-injected error constructors. Correct the contract law so every
+  shorthand item in inline and named maps is classified rather than only the
+  first item. Classify explicit, computed, and spread items as well, and include
+  shared error-data schemas in the TypeBox publication boundary. Prove
+  local-first imported-item rejection, all-local admission, the complete packet
+  and live contract corpora, both affected
+  service typechecks, and all 24 affected behavior tests. Add no error bridge,
+  compatibility export, runtime wrapper, or alternate schema owner.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
