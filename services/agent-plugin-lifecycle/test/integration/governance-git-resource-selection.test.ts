@@ -202,6 +202,9 @@ async function commitCurrentMainRecord(
     testInvocation
   );
   if (!encoded.ok) throw new Error(encoded.failure.message);
+  if (!(encoded.value.bytes instanceof Uint8Array)) {
+    throw new Error("Governance record policy did not return runtime bytes");
+  }
   const recordPath = input.recordPath ?? CURRENT_MAIN_V3_RECORD_PATH;
   const recordFile = join(input.repositoryRoot, ...recordPath.split("/"));
   await mkdir(dirname(recordFile), { recursive: true });

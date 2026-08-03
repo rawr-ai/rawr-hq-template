@@ -117,6 +117,34 @@ describe("distribution ownership", () => {
     }
   });
 
+  it("refuses unadmitted member and declared-claim strings before branding an index", () => {
+    expect(createDistributionOwnershipIndex(["foo/bar"], [])).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "INVALID_PLUGIN_ID",
+          path: "ownership.members.foo/bar",
+          message: "Invalid plugin identity",
+        },
+      ],
+    });
+    expect(
+      createDistributionOwnershipIndex(
+        ["alpha"],
+        [{ kind: "alias", identity: "../bad", ownerPluginId: "alpha" }]
+      )
+    ).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "EXPECTED_OBJECT",
+          path: "ownership.claims",
+          message: "Declared ownership claims must match the closed TypeBox schema",
+        },
+      ],
+    });
+  });
+
   it("parses a closed index and reports semantic plugin mismatches", () => {
     const created = mustIndex(
       createDistributionOwnershipIndex(

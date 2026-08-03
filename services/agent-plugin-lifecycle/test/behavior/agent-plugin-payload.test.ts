@@ -8,7 +8,7 @@ import {
   type NormalizedFileMode,
   NormalizedFileModeSchema,
   type PayloadEntryInput,
-  PayloadEntryInputSchema,
+  PayloadEntryInputShapeSchema,
   PayloadEntryRecordSchema,
   type PayloadManifestEntry,
   PayloadManifestEntrySchema,
@@ -32,14 +32,15 @@ import { must, productFixture, wire } from "../support/service/release-fixtures"
 const encoder = new TextEncoder();
 
 describe("agent-plugin payload", () => {
-  it("derives raw entry types and closes every payload record with its owner schema", () => {
-    expectTypeOf<PayloadEntryInput>().toEqualTypeOf<Static<typeof PayloadEntryInputSchema>>();
+  it("keeps runtime bytes outside the projectable input shape and closes every record", () => {
+    expectTypeOf<Static<typeof PayloadEntryInputShapeSchema>["bytes"]>().toEqualTypeOf<unknown>();
+    expectTypeOf<PayloadEntryInput["bytes"]>().toEqualTypeOf<Uint8Array>();
 
     const payload = productFixture().alphaPayload;
     const payloadWire = wire(canonicalSerializeAgentPluginPayload(payload));
     const cases = [
       {
-        schema: PayloadEntryInputSchema,
+        schema: PayloadEntryInputShapeSchema,
         value: {
           path: payload.entries[0]!.path,
           mode: payload.entries[0]!.mode,
@@ -58,6 +59,22 @@ describe("agent-plugin payload", () => {
       expect(Value.Check(schema, missing)).toBe(false);
       expect(Value.Check(schema, { ...value, extra: true })).toBe(false);
     }
+  });
+
+  it("admits the runtime byte container at payload policy rather than through a wire schema", () => {
+    const candidate = { path: "a", mode: 0o644, bytes: [0, 1, 2] };
+
+    expect(Value.Check(PayloadEntryInputShapeSchema, candidate)).toBe(true);
+    expect(createAgentPluginPayload([candidate])).toEqual({
+      ok: false,
+      issues: [
+        {
+          code: "EXPECTED_BYTES",
+          path: "payload.entries[0].bytes",
+          message: "Payload bytes must be a Uint8Array",
+        },
+      ],
+    });
   });
 
   it("derives normalized file modes from one closed TypeBox authority", () => {

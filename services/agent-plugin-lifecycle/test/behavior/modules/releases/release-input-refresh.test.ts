@@ -70,6 +70,9 @@ describe("releases.refreshReleaseInput", () => {
     });
     if (first.kind !== "ReleaseInputCandidateReady")
       throw new Error("Fresh refresh did not produce a candidate");
+    if (!(first.bytes instanceof Uint8Array)) {
+      throw new Error("Release-input refresh did not return runtime bytes");
+    }
     const decoded = decodeAgentPluginReleaseInput(first.bytes);
     expect(decoded.ok).toBe(true);
     if (!decoded.ok) throw new Error("Generated refresh bytes did not decode");
@@ -172,6 +175,9 @@ describe("releases.refreshReleaseInput", () => {
     const fresh = await refreshWith(initialEntries, ["cognition"]);
     if (fresh.kind !== "ReleaseInputCandidateReady")
       throw new Error("Fresh fixture did not produce a candidate");
+    if (!(fresh.bytes instanceof Uint8Array)) {
+      throw new Error("Release-input refresh did not return runtime bytes");
+    }
     const changedEntries = [
       stagedEntry(
         "plugins/agents/cognition/skills/cognition/SKILL.md",

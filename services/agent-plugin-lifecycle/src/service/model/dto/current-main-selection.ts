@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { GitLocatorSchema } from "./current-main-git";
 import { ReleaseInputDigestSchema } from "./release-digest";
 import {
@@ -22,16 +22,16 @@ export const CanonicalChannelSelectionSchema = ReadonlyObject(
     channel: Type.Literal(CURRENT_MAIN_V3_CHANNEL),
     contentAuthority: ContentAuthoritySchema,
     sourceRepositoryIdentity: RepositoryIdentitySchema,
-    sourceRepositoryUrl: Refine(
-      Type.String({ minLength: 14, maxLength: 2_048 }),
-      isCanonicalHttpsGitUrl,
-      () => "Expected a canonical HTTPS Git repository URL"
-    ),
-    sourceRef: Refine(
-      Type.String({ minLength: "refs/tags/a".length, maxLength: 1_024 }),
-      isCanonicalTagRef,
-      () => "Expected a canonical fully qualified Git tag ref"
-    ),
+    sourceRepositoryUrl: Type.String({
+      minLength: 14,
+      maxLength: 2_048,
+      pattern: "^https://[^/?#]+/[^?#]+\\.git$",
+    }),
+    sourceRef: Type.String({
+      minLength: "refs/tags/a".length,
+      maxLength: 1_024,
+      pattern: "^refs/tags/",
+    }),
     contentCommit: GitCommitIdSchema,
     contentTree: GitTreeIdSchema,
     releaseInputDigest: ReleaseInputDigestSchema,
@@ -77,42 +77,3 @@ export type CurrentMainSelectionFailureKind = Exclude<
   CurrentMainSelectionResult["kind"],
   "CURRENT_ELIGIBLE"
 >;
-
-function isCanonicalTagRef(value: string): boolean {
-  return (
-    value.startsWith("refs/tags/") &&
-    value.length <= 1_024 &&
-    !/[\u0000-\u0020~^:?*\\[]/u.test(value) &&
-    !value.includes("..") &&
-    !value.includes("@{") &&
-    !value.includes("//") &&
-    !value.endsWith("/") &&
-    !value.endsWith(".") &&
-    value
-      .split("/")
-      .every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"))
-  );
-}
-
-function isCanonicalHttpsGitUrl(value: string): boolean {
-  let parsed: URL;
-  try {
-    parsed = new URL(value);
-  } catch {
-    return false;
-  }
-  return (
-    parsed.protocol === "https:" &&
-    parsed.username === "" &&
-    parsed.password === "" &&
-    parsed.port === "" &&
-    parsed.search === "" &&
-    parsed.hash === "" &&
-    parsed.hostname === parsed.hostname.toLowerCase() &&
-    parsed.pathname.startsWith("/") &&
-    parsed.pathname.endsWith(".git") &&
-    !parsed.pathname.includes("//") &&
-    !parsed.pathname.split("/").some((part) => part === "." || part === "..") &&
-    parsed.toString() === value
-  );
-}

@@ -1,4 +1,4 @@
-import type { Static, TSchema } from "typebox";
+import type { TSchema } from "typebox";
 import { Value } from "typebox/value";
 
 import {
@@ -8,6 +8,7 @@ import {
   GitCommitIdSchema,
   type GitTreeId,
   GitTreeIdSchema,
+  MAX_RELEASE_RELATIVE_PATH_BYTES,
   type OwnershipIdentity,
   OwnershipIdentitySchema,
   type PluginId,
@@ -22,6 +23,8 @@ import type { ReleaseResult } from "../dto/release-result";
 import { releaseIssue } from "./release-issue";
 import { failure, success } from "./release-result";
 
+const encoder = new TextEncoder();
+
 /** Admits one curated content-authority identity with release diagnostics. */
 export function parseContentAuthority(
   value: unknown,
@@ -29,6 +32,7 @@ export function parseContentAuthority(
 ): ReleaseResult<ContentAuthority, ReleaseIssue> {
   return parseStringSchema(
     ContentAuthoritySchema,
+    isContentAuthority,
     value,
     path,
     "INVALID_CONTENT_AUTHORITY",
@@ -43,6 +47,7 @@ export function parseRepositoryIdentity(
 ): ReleaseResult<RepositoryIdentity, ReleaseIssue> {
   return parseStringSchema(
     RepositoryIdentitySchema,
+    isRepositoryIdentity,
     value,
     path,
     "INVALID_REPOSITORY_IDENTITY",
@@ -57,6 +62,7 @@ export function parseGitCommitId(
 ): ReleaseResult<GitCommitId, ReleaseIssue> {
   return parseStringSchema(
     GitCommitIdSchema,
+    isGitCommitId,
     value,
     path,
     "INVALID_GIT_OBJECT_ID",
@@ -71,6 +77,7 @@ export function parseGitTreeId(
 ): ReleaseResult<GitTreeId, ReleaseIssue> {
   return parseStringSchema(
     GitTreeIdSchema,
+    isGitTreeId,
     value,
     path,
     "INVALID_GIT_OBJECT_ID",
@@ -85,6 +92,7 @@ export function parsePluginId(
 ): ReleaseResult<PluginId, ReleaseIssue> {
   return parseStringSchema(
     PluginIdSchema,
+    isPluginId,
     value,
     path,
     "INVALID_PLUGIN_ID",
@@ -99,6 +107,7 @@ export function parseOwnershipIdentity(
 ): ReleaseResult<OwnershipIdentity, ReleaseIssue> {
   return parseStringSchema(
     OwnershipIdentitySchema,
+    isOwnershipIdentity,
     value,
     path,
     "INVALID_OWNERSHIP_IDENTITY",
@@ -113,6 +122,7 @@ export function parseReleaseRelativePath(
 ): ReleaseResult<ReleaseRelativePath, ReleaseIssue> {
   return parseStringSchema(
     ReleaseRelativePathSchema,
+    isReleaseRelativePath,
     value,
     path,
     "INVALID_RELATIVE_PATH",
@@ -120,17 +130,52 @@ export function parseReleaseRelativePath(
   );
 }
 
-function parseStringSchema<T extends TSchema>(
-  schema: T,
+function parseStringSchema<T extends string>(
+  schema: TSchema,
+  admits: (value: string) => value is T,
   value: unknown,
   path: string,
   invalidCode: ReleaseIssueCode,
   invalidMessage: string
-): ReleaseResult<Static<T>, ReleaseIssue> {
-  if (Value.Check(schema, value)) return success(value);
+): ReleaseResult<T, ReleaseIssue> {
+  if (typeof value === "string" && Value.Check(schema, value) && admits(value)) {
+    return success(value);
+  }
   return failure([
     typeof value === "string"
       ? releaseIssue(invalidCode, path, invalidMessage)
       : releaseIssue("EXPECTED_STRING", path, "Value must be a string"),
   ]);
+}
+
+function isContentAuthority(value: string): value is ContentAuthority {
+  return Value.Check(ContentAuthoritySchema, value);
+}
+
+function isRepositoryIdentity(value: string): value is RepositoryIdentity {
+  return Value.Check(RepositoryIdentitySchema, value);
+}
+
+function isGitCommitId(value: string): value is GitCommitId {
+  return Value.Check(GitCommitIdSchema, value);
+}
+
+function isGitTreeId(value: string): value is GitTreeId {
+  return Value.Check(GitTreeIdSchema, value);
+}
+
+function isPluginId(value: string): value is PluginId {
+  return Value.Check(PluginIdSchema, value);
+}
+
+function isOwnershipIdentity(value: string): value is OwnershipIdentity {
+  return Value.Check(OwnershipIdentitySchema, value);
+}
+
+function isReleaseRelativePath(value: string): value is ReleaseRelativePath {
+  return (
+    Value.Check(ReleaseRelativePathSchema, value) &&
+    value.normalize("NFC") === value &&
+    encoder.encode(value).byteLength <= MAX_RELEASE_RELATIVE_PATH_BYTES
+  );
 }

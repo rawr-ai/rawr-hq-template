@@ -29,6 +29,9 @@ describe("current-main record procedure", () => {
       },
     });
     if (!encoded.ok) throw new Error(encoded.failure.message);
+    if (!(encoded.value.bytes instanceof Uint8Array)) {
+      throw new Error("Governance record policy did not return runtime bytes");
+    }
 
     await expect(
       client.governance.currentMainRecord(
@@ -39,6 +42,20 @@ describe("current-main record procedure", () => {
         testInvocation
       )
     ).resolves.toEqual(encoded);
+  });
+
+  it("rejects a non-byte runtime carrier through Governance record policy", async () => {
+    const client = createLifecycleTestClient();
+
+    await expect(
+      Reflect.apply(client.governance.currentMainRecord, undefined, [
+        { kind: "validate-record", bytes: "{}\n" },
+        testInvocation,
+      ])
+    ).resolves.toMatchObject({
+      ok: false,
+      failure: { code: "InvalidSchema" },
+    });
   });
 });
 

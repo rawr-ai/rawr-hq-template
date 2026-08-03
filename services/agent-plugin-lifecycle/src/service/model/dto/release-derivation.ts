@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { type AgentPluginPayload, AgentPluginPayloadSchema } from "./agent-plugin-payload";
 import { type AgentPluginRelease, AgentPluginReleaseSchema } from "./agent-plugin-release";
 import {
@@ -51,11 +51,10 @@ export type ReleaseSelection = Static<typeof ReleaseSelectionSchema>;
 export const ReleaseSubsetSelectionSchema = ReadonlyObject(
   Type.Object({
     kind: Type.Literal("subset"),
-    pluginIds: Refine(
-      NonEmptyReadonlyArray(PluginIdSchema, { maxItems: MAX_RELEASE_MEMBERS }),
-      (pluginIds) => new Set(pluginIds).size === pluginIds.length,
-      () => "Release subset plugin identities must be distinct"
-    ),
+    pluginIds: NonEmptyReadonlyArray(PluginIdSchema, {
+      maxItems: MAX_RELEASE_MEMBERS,
+      uniqueItems: true,
+    }),
   }),
   { additionalProperties: false }
 );

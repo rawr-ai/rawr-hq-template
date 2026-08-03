@@ -827,7 +827,7 @@ function reportDuplicateReleaseMembers(
   releases: readonly AgentPluginRelease[],
   issues: ReleaseIssue[]
 ): void {
-  const counts = new Map<PluginId, number>();
+  const counts = new Map<string, number>();
   for (const release of releases) {
     const pluginId = release.body.pluginId;
     counts.set(pluginId, (counts.get(pluginId) ?? 0) + 1);
