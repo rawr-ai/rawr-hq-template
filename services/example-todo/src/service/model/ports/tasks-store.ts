@@ -1,5 +1,4 @@
-import type { TodoIdentifierType } from "../dto/identifier";
-import type { TaskType } from "../dto/task";
+import type { TaskType, TodoIdentifierType } from "../dto";
 
 /** Workspace-bound persistence contract for task records. */
 export interface TasksStore {

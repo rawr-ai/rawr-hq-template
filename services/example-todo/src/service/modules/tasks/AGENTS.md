@@ -48,8 +48,8 @@
 - [Example Todo service router](../../../../AGENTS.md)
 - [[../../model/dto/task|Task record DTO]]
 - [[../../model/ports/tasks-store|Task store contract]]
-- [[router/create.router|Task creation]]
-- [[router/get.router|Task retrieval]]
+- [[router/create|Task creation]]
+- [[router/get|Task retrieval]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

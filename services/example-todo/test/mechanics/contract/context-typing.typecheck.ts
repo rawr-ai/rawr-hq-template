@@ -6,7 +6,7 @@ import { contract } from "../../../src/service/contract";
 import {
   getTodoProcedureMetadata,
   type TodoProcedureMetadata,
-} from "../../../src/service/model/policy/procedure-metadata";
+} from "../../../src/service/model/policy";
 import { router } from "../../../src/service/router";
 import { createClientOptions, invocation } from "../../support/service/helpers";
 

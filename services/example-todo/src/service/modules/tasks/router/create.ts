@@ -1,5 +1,5 @@
-import type { TaskType } from "#example-todo-service/model/dto/task";
-import { admitGeneratedIdentifier } from "#example-todo-service/model/policy/identifier";
+import type { TaskType } from "../../../model/dto";
+import { admitGeneratedIdentifier } from "../../../model/policy";
 import { module } from "../module";
 
 /** Creates a normalized task through the module-curated capability context. */

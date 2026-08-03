@@ -48,8 +48,8 @@
 - [[../../model/dto/tag|Tag record DTO]]
 - [[../../model/ports/tags-store|Tag store contract]]
 - [[middleware/telemetry|Tag telemetry]]
-- [[router/create.router|Tag creation]]
-- [[router/list.router|Tag catalog]]
+- [[router/create|Tag creation]]
+- [[router/list|Tag catalog]]
 - [Assignment module](../assignments/AGENTS.md)
 
 ## Validation

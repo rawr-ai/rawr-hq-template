@@ -14,11 +14,8 @@ import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
-import { TagSchema } from "#example-todo-service/model/dto/tag";
-import {
-  type TodoProcedureMetadata,
-  todoProcedureMetadata,
-} from "#example-todo-service/model/policy/procedure-metadata";
+import { TagSchema } from "../../../model/dto";
+import { type TodoProcedureMetadata, todoProcedureMetadata } from "../../../model/policy";
 
 const ReadOnlyModeData = standard(
   Type.Object(

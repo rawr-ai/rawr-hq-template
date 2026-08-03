@@ -1,8 +1,6 @@
 import type { Sql } from "@habitat-ai/rawr-hq-sdk";
-import type { TodoIdentifierType } from "../../model/dto/identifier";
-import type { TaskType } from "../../model/dto/task";
-import type { WorkspaceIdType } from "../../model/dto/workspace-id";
-import type { TasksStore } from "../../model/ports/tasks-store";
+import type { TaskType, TodoIdentifierType, WorkspaceIdType } from "../../model/dto";
+import type { TasksStore } from "../../model/ports";
 
 /**
  * Binds task persistence to the SQL capability and workspace selected by the
