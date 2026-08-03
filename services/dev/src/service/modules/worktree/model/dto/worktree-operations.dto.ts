@@ -4,11 +4,11 @@ import {
   DevExecutionSchema,
   DevopsActionSchema,
   DevPreflightSchema,
-} from "#dev-service/model/dto/operation-outcomes.dto";
+} from "../../../../model/dto/operation-outcomes.dto";
 import {
   ScratchPolicyCheckSchema,
   ScratchPolicyInputSchema,
-} from "#dev-service/model/dto/scratch-policy.dto";
+} from "../../../../model/dto/scratch-policy.dto";
 
 /** Controls for selecting and optionally removing qualified Git worktrees. */
 export const WorktreeCleanupInputSchema = Type.Object(

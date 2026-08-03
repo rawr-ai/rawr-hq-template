@@ -1,12 +1,10 @@
 import { service } from "../../impl";
 
-/** Curates only workspace filesystem observation for scratch-policy operations. */
+/** Curates only the service-derived scratch admission capability. */
 export const module = service.scratchPolicy.use(async ({ context, next }) =>
   next({
     context: {
-      workspaceRoot: context.scope.workspaceRoot,
-      fs: context.deps.resources.fs,
-      path: context.deps.resources.path,
+      checkScratchPolicy: context.provided.checkScratchPolicy,
     },
   })
 );

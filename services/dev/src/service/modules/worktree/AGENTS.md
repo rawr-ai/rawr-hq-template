@@ -34,7 +34,7 @@
 - `contract/cleanup.ts` declares the operation boundary and
   `contract/index.ts` composes the module contract.
 - `module.ts` curates the Worktree operation context from the service base.
-- `router/cleanup.router.ts` authors candidate admission, planning, and
+- `router/cleanup.ts` authors candidate admission, planning, and
   removal behavior.
 - Module-root `router.ts` composes the completed operation for the service
   router.

@@ -1,16 +1,29 @@
-import { execStep } from "#dev-service/model/helpers/command-execution";
-import { parseWorktrees } from "#dev-service/model/helpers/git-output";
+import { parseWorktrees } from "../../../model/policy/git-output";
 import {
   execution,
   executionIssueFromStep,
   issue,
+  observedStep,
   preflight,
+  rejectedStep,
   warning,
-} from "#dev-service/model/policy/operation-outcomes";
+} from "../../../model/policy/operation-outcomes";
 import { module } from "../module";
 
 /** Plans or applies only worktree removals admitted by the cleanup policy. */
 export const cleanup = module.cleanup.handler(async ({ context, input }) => {
+  const execStep = async (command: string, args: string[], timeoutMs?: number) => {
+    try {
+      const result = await context.process.exec(command, args, {
+        cwd: context.workspaceRoot,
+        timeoutMs,
+      });
+      return observedStep(command, args, result);
+    } catch (error) {
+      return rejectedStep(command, args, error);
+    }
+  };
+
   const apply = Boolean(input.apply);
   const mergedOnly = input.mergedOnly ?? true;
   const trunk = input.trunk ?? "main";
@@ -24,13 +37,9 @@ export const cleanup = module.cleanup.handler(async ({ context, input }) => {
   const candidates = [];
   const skipped = [];
 
-  const currentRun = await execStep(context.process, context.workspaceRoot, "pwd", ["-P"]);
+  const currentRun = await execStep("pwd", ["-P"]);
   const currentPath = (currentRun.stdout ?? "").trim() || context.workspaceRoot;
-  const listRun = await execStep(context.process, context.workspaceRoot, "git", [
-    "worktree",
-    "list",
-    "--porcelain",
-  ]);
+  const listRun = await execStep("git", ["worktree", "list", "--porcelain"]);
   if (listRun.status !== "succeeded") {
     issues.push(
       issue("WORKTREE_LIST_FAILED", "Git worktree list was not readable.", {
@@ -64,7 +73,7 @@ export const cleanup = module.cleanup.handler(async ({ context, input }) => {
       continue;
     }
     if (mergedOnly) {
-      const mergedRun = await execStep(context.process, context.workspaceRoot, "git", [
+      const mergedRun = await execStep("git", [
         "branch",
         "--merged",
         trunk,
@@ -110,15 +119,7 @@ export const cleanup = module.cleanup.handler(async ({ context, input }) => {
 
   const removed = [];
   for (const candidate of candidates) {
-    removed.push(
-      await execStep(
-        context.process,
-        context.workspaceRoot,
-        "git",
-        ["worktree", "remove", candidate.path],
-        120_000
-      )
-    );
+    removed.push(await execStep("git", ["worktree", "remove", candidate.path], 120_000));
   }
   const executionIssues = removed
     .map((step) =>

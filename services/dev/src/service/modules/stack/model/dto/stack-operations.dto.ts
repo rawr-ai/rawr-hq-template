@@ -4,11 +4,11 @@ import {
   DevExecutionSchema,
   DevopsActionSchema,
   DevPreflightSchema,
-} from "#dev-service/model/dto/operation-outcomes.dto";
+} from "../../../../model/dto/operation-outcomes.dto";
 import {
   ScratchPolicyCheckSchema,
   ScratchPolicyInputSchema,
-} from "#dev-service/model/dto/scratch-policy.dto";
+} from "../../../../model/dto/scratch-policy.dto";
 
 /** Inputs used to inspect one workspace's Git and Graphite stack health. */
 export const StackDoctorInputSchema = Type.Object(

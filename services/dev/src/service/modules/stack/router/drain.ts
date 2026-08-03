@@ -1,18 +1,31 @@
-import { execStep } from "#dev-service/model/helpers/command-execution";
-import { parseGitStatus } from "#dev-service/model/helpers/git-output";
+import { parseGitStatus } from "../../../model/policy/git-output";
 import {
   execution,
   executionIssueFromStep,
   issue,
+  observedStep,
   planned,
   preflight,
+  rejectedStep,
   warning,
-} from "#dev-service/model/policy/operation-outcomes";
+} from "../../../model/policy/operation-outcomes";
 import { stackLooksConverged } from "../model/policy/stack-convergence";
 import { module } from "../module";
 
 /** Plans or applies an ordered Graphite stack drain until convergence or failure. */
 export const drain = module.drain.handler(async ({ context, input }) => {
+  const execStep = async (command: string, args: string[], timeoutMs?: number) => {
+    try {
+      const result = await context.process.exec(command, args, {
+        cwd: context.workspaceRoot,
+        timeoutMs,
+      });
+      return observedStep(command, args, result);
+    } catch (error) {
+      return rejectedStep(command, args, error);
+    }
+  };
+
   const apply = Boolean(input.apply);
   const scratchPolicy = await context.checkScratchPolicy({
     ...input.scratchPolicy,
@@ -26,11 +39,7 @@ export const drain = module.drain.handler(async ({ context, input }) => {
   ];
 
   const issues = [];
-  const gitStatus = await execStep(context.process, context.workspaceRoot, "git", [
-    "status",
-    "--short",
-    "--branch",
-  ]);
+  const gitStatus = await execStep("git", ["status", "--short", "--branch"]);
   const gitStatusReadable = gitStatus.status === "succeeded";
   const parsedStatus = gitStatusReadable
     ? parseGitStatus(gitStatus.stdout ?? "")
@@ -45,7 +54,7 @@ export const drain = module.drain.handler(async ({ context, input }) => {
     issues.push(issue("DIRTY_WORKING_TREE", "Working tree must be clean before stack drain."));
   if (parsedStatus.detached)
     issues.push(issue("DETACHED_HEAD_UNSUPPORTED", "Stack drain requires a named branch."));
-  const gtLs = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
+  const gtLs = await execStep("gt", ["ls"]);
   if (gtLs.status !== "succeeded")
     issues.push(
       issue("GRAPHITE_UNAVAILABLE", "Graphite stack state is not readable.", {
@@ -86,8 +95,6 @@ export const drain = module.drain.handler(async ({ context, input }) => {
   const sleepSeconds = input.sleepSeconds ?? 8;
   for (let cycle = 1; cycle <= maxCycles; cycle += 1) {
     const publish = await execStep(
-      context.process,
-      context.workspaceRoot,
       "gt",
       ["ss", "--publish", "--stack", "--ai", "--no-interactive"],
       300_000
@@ -108,13 +115,7 @@ export const drain = module.drain.handler(async ({ context, input }) => {
       });
       break;
     }
-    const merge = await execStep(
-      context.process,
-      context.workspaceRoot,
-      "gt",
-      ["merge", "--no-interactive"],
-      300_000
-    );
+    const merge = await execStep("gt", ["merge", "--no-interactive"], 300_000);
     const mergeIssue = executionIssueFromStep(
       merge,
       "STACK_DRAIN_COMMAND_FAILED",
@@ -131,13 +132,7 @@ export const drain = module.drain.handler(async ({ context, input }) => {
       });
       break;
     }
-    const sync = await execStep(
-      context.process,
-      context.workspaceRoot,
-      "gt",
-      ["sync", "--no-restack", "--no-interactive"],
-      300_000
-    );
+    const sync = await execStep("gt", ["sync", "--no-restack", "--no-interactive"], 300_000);
     const syncIssue = executionIssueFromStep(
       sync,
       "STACK_DRAIN_COMMAND_FAILED",
@@ -146,7 +141,7 @@ export const drain = module.drain.handler(async ({ context, input }) => {
     if (syncIssue) {
       executionIssues.push(syncIssue);
     }
-    const gtLsRun = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
+    const gtLsRun = await execStep("gt", ["ls"]);
     const gtLsIssue = executionIssueFromStep(
       gtLsRun,
       "STACK_DRAIN_COMMAND_FAILED",
