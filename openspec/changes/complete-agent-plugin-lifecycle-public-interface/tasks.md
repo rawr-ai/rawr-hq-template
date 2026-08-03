@@ -625,7 +625,7 @@ services, resources, plugins, and packages remain private workspace projects.
   `implementEffect` roots, require root context before middleware, and preserve
   `service` as the embedded API-plugin interior name. Keep the remaining module
   router migration under task 5.2 and owner-local sealing under task 5.7.
-- [ ] 5.2b Supersede the relaxed task 5.2a shape with the committed generic
+- [x] 5.2b Supersede the relaxed task 5.2a shape with the committed generic
   service law: `base.ts` declares `Context` and exports
   `os.$context<Context>()` only when context-authored middleware consumes it.
   `impl.ts` owns the sole native `implement(contract).$context<Context>()`, the

@@ -5929,9 +5929,36 @@ typecheck passed with its test contract check, and the focused canonical
 encoding suite passed eight cases. The staged
 `require_service_spine_topology` packet produced zero lifecycle diagnostics
 when evaluated through Habitat's native structure policy against the live
-Git-visible tree. The packet remains staged: task 5.2b still owns the native
-context funnel, and task 5.7e22 still owns activation of the complete zero-red
-service-law set.
+Git-visible tree. The packet remains staged: task 5.2b closes the native
+context funnel below, while task 5.7e22 still owns activation of the complete
+zero-red service-law set.
+
+## Lifecycle Native Context Funnel Closure
+
+Task 5.2b is complete without a production source change. `base.ts` declares
+the five service context lanes and owns the sole native
+`os.$context<Context>()` middleware author. `impl.ts` owns the sole
+`implement(contract).$context<Context>()`, the official Effect-oRPC extension,
+the unconfigured `impl`, and the root-configured `service`. Each of the five
+modules descends from its exact `service.<module>` branch and terminally curates
+the smallest handler vocabulary in `module.ts`; the root router composes the
+completed module routers through the unconfigured implementer.
+
+The installed vendor lane is `@orpc/*@2.0.0-beta.23` with
+`effect@4.0.0-beta.101`. Its native context merge is additive and right-biased,
+so module curation seals the operation authoring vocabulary without claiming
+that inherited runtime lanes disappear. A categorical source audit found no
+router leaf reopening the five broad lanes, sibling-module import, module use
+of the raw base or root middleware, or alternate runtime authority. The one
+service-base type import of the host-bound Vendors clock port remains the
+explicit type-only isolation exception established by task 5.7e21l.
+
+The focused service-spine and Effect-oRPC admission suites passed two files and
+four tests. They prove five-module composition, curated provider-resource flow,
+exactly-once root observability around an Effect procedure, exact-vendor
+execution, and TypeBox request/result validation. This evidence closes the
+native context funnel only; activation of the complete staged service-law set
+remains open under task 5.7e22.
 
 ## Settlement Oracles
 
