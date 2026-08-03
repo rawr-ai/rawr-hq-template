@@ -10,6 +10,7 @@ import {
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
+import { ORPCError } from "@orpc/server";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "../../../model/dto/release-identity";
@@ -38,6 +39,7 @@ import type {
   VerificationFact,
 } from "../model/dto/provider-lifecycle";
 import type { SelectedContent } from "../model/dto/selected-content";
+import { hasCanonicalProviderHomes } from "../model/policy/disposable-root";
 import {
   classifyNativeMutationStep,
   completedMutationTarget,
@@ -114,6 +116,11 @@ export const sync = module.sync.effect(function* ({ context, input }) {
     ...input,
     targets: canonicalProviderTargets(input.targets),
   });
+  if (!hasCanonicalProviderHomes(canonicalRequest.targets)) {
+    return new ORPCError("BAD_REQUEST", {
+      message: "Expected a canonical non-root absolute path",
+    });
+  }
   const locator = decodeGitLocator(canonicalRequest.locator);
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: true });
 

@@ -57,6 +57,11 @@ export function sourceChangedTargets(
 export function collectTargetIssues(
   targets: readonly ProviderTargetResult[]
 ): readonly ProviderIssue[] {
+  for (const target of targets) {
+    if (target.classification !== "Drifted" && !hasPossibleConfirmedOperationHistory(target)) {
+      throw new Error("Provider mutation result has an impossible confirmed-operation history");
+    }
+  }
   return Object.freeze(targets.flatMap((target) => target.issues).slice(0, 256));
 }
 
@@ -64,6 +69,9 @@ export function collectTargetIssues(
 export function mutationClassification(
   targets: readonly ProviderMutationTargetResult[]
 ): ProviderTestResult["classification"] {
+  if (targets.some((target) => !hasPossibleConfirmedOperationHistory(target))) {
+    throw new Error("Provider mutation result has an impossible confirmed-operation history");
+  }
   if (targets.some((target) => target.classification === "Uncertain")) return "Uncertain";
   const changed = targets.some(
     (target) => target.classification === "Changed" || target.operations.length > 0
@@ -108,10 +116,14 @@ export function blockedProviderTestResult(
 export function canonicalProviderTargets(
   targets: readonly ProviderTarget[]
 ): readonly [ProviderTarget, ...ProviderTarget[]] {
-  const sorted = [...targets].sort((left, right) => {
-    const provider = compareText(left.provider, right.provider);
-    return provider === 0 ? compareText(left.home, right.home) : provider;
-  });
+  const sorted = targets
+    .map(
+      (target): ProviderTarget => Object.freeze({ provider: target.provider, home: target.home })
+    )
+    .sort((left, right) => {
+      const provider = compareText(left.provider, right.provider);
+      return provider === 0 ? compareText(left.home, right.home) : provider;
+    });
   const first = sorted[0];
   if (first === undefined) throw new Error("Provider targets must be nonempty");
   return Object.freeze([first, ...sorted.slice(1)]);
@@ -119,4 +131,15 @@ export function canonicalProviderTargets(
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+function hasPossibleConfirmedOperationHistory(
+  result: Readonly<{
+    classification: Exclude<ProviderTargetResult["classification"], "Drifted">;
+    operations: readonly unknown[];
+  }>
+): boolean {
+  if (result.classification === "Changed") return result.operations.length > 0;
+  if (result.classification === "Failed" || result.classification === "Uncertain") return true;
+  return result.operations.length === 0;
 }

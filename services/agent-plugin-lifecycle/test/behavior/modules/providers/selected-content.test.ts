@@ -107,36 +107,98 @@ describe("selected provider content", () => {
       }),
     });
 
-    expect(Value.Check(SelectedContentSchema, mismatched)).toBe(false);
-    expect(validateSelectedContent(mismatched as SelectedContent)).toContainEqual(
+    expect(Value.Check(SelectedContentSchema, mismatched)).toBe(true);
+    expect(validateSelectedContent(mismatched)).toContainEqual(
       expect.objectContaining({ code: "DesiredContentInvalid" })
     );
   });
 
-  it("makes canonical member, alias, and manifest order part of the TypeBox boundary", () => {
+  it("keeps canonical member, alias, and manifest order in Provider policy", () => {
     const cognition = member("cognition");
     const docs = member("docs");
     const selected = selectedContent(["cognition", "docs"]);
-    expect(
-      Value.Check(SelectedContentSchema, {
+    const candidates = [
+      {
         ...selected,
         members: [docs, cognition],
-      })
-    ).toBe(false);
-    expect(
-      Value.Check(SelectedContentSchema, {
+      },
+      {
         ...selectedContent(),
         members: [
           { ...cognition, aliases: [ownershipIdentity("zulu"), ownershipIdentity("alpha")] },
         ],
-      })
-    ).toBe(false);
-    expect(
-      Value.Check(SelectedContentSchema, {
+      },
+      {
         ...selectedContent(),
         members: [{ ...cognition, manifest: [...cognition.manifest].reverse() }],
+      },
+    ];
+
+    for (const candidate of candidates) {
+      expect(Value.Check(SelectedContentSchema, candidate)).toBe(true);
+      expect(validateSelectedContent(candidate)).toContainEqual(
+        expect.objectContaining({ code: "DesiredContentInvalid" })
+      );
+    }
+  });
+
+  it("rejects duplicate member identities and manifest paths in Provider policy", () => {
+    const cognition = member("cognition");
+    const docs = member("docs");
+    const firstManifestEntry = cognition.manifest[0];
+    if (firstManifestEntry === undefined) throw new Error("Expected a selected manifest entry");
+
+    const duplicateMember = {
+      ...selectedContent(["cognition", "docs"]),
+      members: [cognition, { ...docs, pluginId: cognition.pluginId }],
+    };
+    const duplicateManifestPath = {
+      ...selectedContent(),
+      members: [
+        {
+          ...cognition,
+          manifest: [
+            firstManifestEntry,
+            {
+              ...firstManifestEntry,
+              byteLength: firstManifestEntry.byteLength + 1,
+              contentDigest: `sha256_${"f".repeat(64)}`,
+            },
+            ...cognition.manifest.slice(1),
+          ],
+        },
+      ],
+    };
+
+    for (const candidate of [duplicateMember, duplicateManifestPath]) {
+      expect(Value.Check(SelectedContentSchema, candidate)).toBe(true);
+      expect(validateSelectedContent(candidate)).toContainEqual(
+        expect.objectContaining({ code: "DesiredContentInvalid" })
+      );
+    }
+  });
+
+  it("admits manifest path structure before Provider path policy", () => {
+    const cognition = member("cognition");
+    const firstManifestEntry = cognition.manifest[0];
+    if (firstManifestEntry === undefined) throw new Error("Expected a selected manifest entry");
+    const candidate = {
+      ...selectedContent(),
+      members: [
+        {
+          ...cognition,
+          manifest: [{ ...firstManifestEntry, path: "cafe\u0301/skill.md" }],
+        },
+      ],
+    };
+
+    expect(Value.Check(SelectedContentSchema, candidate)).toBe(true);
+    expect(validateSelectedContent(candidate)).toContainEqual(
+      expect.objectContaining({
+        code: "DesiredContentInvalid",
+        detail: "Selected manifest paths must be canonical release-relative paths.",
       })
-    ).toBe(false);
+    );
   });
 
   it("compares canonical semantic fields independently of object key order", () => {

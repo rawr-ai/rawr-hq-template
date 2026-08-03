@@ -9,6 +9,7 @@ import {
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
+import { ORPCError } from "@orpc/server";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "../../../model/dto/release-identity";
@@ -30,6 +31,7 @@ import { deriveReleaseSelection } from "../../../model/policy/release-derivation
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../model/policy/release-payload-accounting";
 import type { ProviderStatusResult, ProviderTarget } from "../model/dto/provider-lifecycle";
 import type { SelectedContent } from "../model/dto/selected-content";
+import { hasCanonicalProviderHomes } from "../model/policy/disposable-root";
 import {
   assessNativePluginFiles,
   assessNativeTarget,
@@ -80,7 +82,16 @@ import { module } from "../module";
  * selection followed by live native observation.
  */
 export const status = module.status.effect(function* ({ context, input }) {
-  const locator = decodeGitLocator(input.locator);
+  const canonicalRequest = Object.freeze({
+    ...input,
+    targets: canonicalProviderTargets(input.targets),
+  });
+  if (!hasCanonicalProviderHomes(canonicalRequest.targets)) {
+    return new ORPCError("BAD_REQUEST", {
+      message: "Expected a canonical non-root absolute path",
+    });
+  }
+  const locator = decodeGitLocator(canonicalRequest.locator);
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: true });
 
   /**
@@ -288,10 +299,6 @@ export const status = module.status.effect(function* ({ context, input }) {
         return finishCurrentMainSelection(opening.value, closing.value, record.value.record);
       });
 
-  const canonicalRequest = Object.freeze({
-    ...input,
-    targets: canonicalProviderTargets(input.targets),
-  });
   const selected =
     currentMain.kind !== "CURRENT_ELIGIBLE"
       ? {

@@ -82,6 +82,50 @@ describe("provider disposable-home test", () => {
     expect(finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
   });
 
+  it("owns one admitted target snapshot across deferred source observation", async () => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: TEMPORARY_MARKETPLACE_ROOT,
+    });
+    const admittedHome = testRequest.targets[0]!.home;
+    const mutatedHome = "/tmp/provider-home-outside-disposable-root";
+    const target = { provider: "codex" as const, home: admittedHome };
+    const session = fakeNativeSession({ target, content, installed: ["cognition"] });
+    const nativeProviders = new FakeNativeProviders([session]);
+    const observationStarted = Promise.withResolvers<void>();
+    const resumeObservation = Promise.withResolvers<void>();
+    let deferFirstObservation = true;
+    const { client } = createProviderLifecycleClient(content, nativeProviders, {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          inspectGitWorkspace: (
+            input: Parameters<ContentWorkspaceResource<never>["inspectGitWorkspace"]>[0]
+          ) =>
+            Effect.gen(function* () {
+              if (deferFirstObservation) {
+                deferFirstObservation = false;
+                observationStarted.resolve();
+                yield* Effect.promise(() => resumeObservation.promise);
+              }
+              return yield* delegate.inspectGitWorkspace(input);
+            }),
+        }),
+    });
+    const request = { ...testRequest, targets: [target] };
+
+    const pending = client.providers.test(request, testInvocation);
+    await observationStarted.promise;
+    target.home = mutatedHome;
+    resumeObservation.resolve();
+
+    const result = await pending;
+    expect(result.targets.map(({ target: observed }) => observed.home)).toEqual([admittedHome]);
+    expect(nativeProviders.acquisitionCalls.length).toBeGreaterThan(0);
+    expect(new Set(nativeProviders.acquisitionCalls)).toEqual(new Set([`codex:${admittedHome}`]));
+    expect(nativeProviders.acquisitionCalls).not.toContain(`codex:${mutatedHome}`);
+  });
+
   it("selects the complete release set through the public operation", async () => {
     const content = selectedContent(
       ["cognition", "docs"],

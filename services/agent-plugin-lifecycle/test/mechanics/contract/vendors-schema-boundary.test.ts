@@ -32,16 +32,6 @@ import {
   VendorSourceDeclarationSchema,
 } from "../../../src/service/modules/vendors/model/dto/vendor-records";
 
-type VendorStatusIssues = Extract<VendorStatusResult, { kind: "Rejected" }>["issues"];
-type VendorUpdateIssues = Extract<VendorUpdateResult, { kind: "Rejected" }>["issues"];
-
-// @ts-expect-error Rejected status always reports at least one issue.
-const emptyStatusIssues: VendorStatusIssues = [];
-// @ts-expect-error Rejected update always reports at least one issue.
-const emptyUpdateIssues: VendorUpdateIssues = [];
-void emptyStatusIssues;
-void emptyUpdateIssues;
-
 const contentWorkspace = Object.freeze({
   locator: "/tmp/content-workspace",
   repositoryIdentity: "git:personal-rawr-hq",
