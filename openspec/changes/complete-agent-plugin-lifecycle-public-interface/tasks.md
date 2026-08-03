@@ -2480,6 +2480,15 @@ services, resources, plugins, and packages remain private workspace projects.
   and legacy tuples without adding a scanner, SDK extension, or custom runner.
   Exact contract and schema rules, real Grit finding-count probes, Catalog
   compatibility, Lifecycle model publication, Biome, and diff hygiene pass.
+- [x] 5.7e45 Close Lifecycle's remaining native public-error and exported-value
+  findings exposed by the complete repository gate. Declare `BAD_REQUEST` at
+  the owning Packaging and Provider contracts, raise only the handler-supplied
+  `errors.BAD_REQUEST` constructors from Effect procedure authorship, and
+  document the local client implementation declaration without adding an error
+  bridge or alternate runtime owner. Candidate
+  `01fae1f0e60c6ba3960f88825394e4afd530760f` passes the exact error, contract,
+  schema-publication, and JSDoc laws plus 432 Lifecycle behavior cases and both
+  Lifecycle TypeScript checks.
 - [x] 5.7f Implement, review, land, and consume one bounded app-owned
   production profile and command-local service binding. Keep the profile cold
   and limited to exact factory references. After closed CLI input admission,

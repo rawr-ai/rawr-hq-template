@@ -5986,6 +5986,20 @@ tests, the uncached CLI consumer check, TypeScript checks, Biome, and diff
 hygiene pass. No scanner, custom runner, schema facade, or additional state
 owner was introduced.
 
+## Native Error Closure
+
+The complete repository gate then exposed five Lifecycle branches that still
+constructed `ORPCError` directly and one overloaded client implementation without
+its own declaration-site documentation. Checkpoint
+`01fae1f0e60c6ba3960f88825394e4afd530760f` declares each `BAD_REQUEST` at its
+owning Packaging or Provider contract and raises the injected native constructor
+from the Effect procedure. It adds no error adapter, shared map, dispatch portal,
+or middleware authority.
+
+The exact native-error, contract-authority, schema-publication, and JSDoc Habitat
+rules pass. The uncached Lifecycle graph passes source and test typechecks plus 432
+behavior cases, including existing BAD_REQUEST code and message observations.
+
 ## Settlement Oracles
 
 The final product must prove:

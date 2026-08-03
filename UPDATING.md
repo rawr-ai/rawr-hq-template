@@ -17,15 +17,17 @@ bun run test
 bun run rawr -- --version
 ```
 
-The fixed nineteen-package Nx Release group and ordinary packed-package
-installation acceptance are landed on Template `main`. Registry publication
-remains an explicit post-landing release operation and requires npm scope
-authorization; until version `0.1.0` is published and smoke-tested from the
-registry, use the repository-local command above. Do not invent another package
-version or restore the removed custom installer, selector, release store, or
-launcher. A previously installed custom distribution may remain executable on a
-workstation, but it is obsolete, is not updated, and is not authority for
-development or acceptance.
+The fixed Habitat Nx Release group contains exactly `@habitat-ai/sdk` and
+`@habitat-ai/cli`. Version `0.4.1` is the current published release of the
+reusable substrate and its Oclif entrypoint through ordinary package
+dependencies and installed-package acceptance;
+internal RAWR services, resources, plugins, and applications remain private
+workspace projects. The `@habitat-ai/rawr` Oclif application uses the
+repository-local command above until its own conventional release is complete.
+Do not restore the removed custom installer, selector, release store, or launcher.
+A previously installed custom distribution may remain executable on a workstation,
+but it is obsolete, is not updated, and is not authority for development or
+acceptance.
 
 ## Personal Repository
 
