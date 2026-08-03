@@ -2,31 +2,28 @@ import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   type PayloadEntryInput,
-} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
+} from "../../../../model/dto/agent-plugin-payload";
 import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
-} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import type { DeclaredOwnershipClaim } from "#agent-plugin-lifecycle-service/model/dto/distribution-ownership";
-import type {
-  ContentAuthority,
-  PluginId,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+} from "../../../../model/dto/content-workspace";
+import type { DeclaredOwnershipClaim } from "../../../../model/dto/distribution-ownership";
+import type { ContentAuthority, PluginId } from "../../../../model/dto/release-identity";
 import {
   RELEASE_INPUT_SCHEMA_VERSION,
   type ReleaseMemberDeclaration,
-} from "#agent-plugin-lifecycle-service/model/dto/release-input";
-import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
-import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
-import { equalBytes } from "#agent-plugin-lifecycle-service/model/policy/byte-equality";
-import { deriveAgentPluginPayloadInventory } from "#agent-plugin-lifecycle-service/model/policy/distribution-ownership";
+} from "../../../../model/dto/release-input";
+import type { ReleaseIssue } from "../../../../model/dto/release-issue";
+import { createAgentPluginPayload } from "../../../../model/policy/agent-plugin-payload";
+import { equalBytes } from "../../../../model/policy/byte-equality";
+import { deriveAgentPluginPayloadInventory } from "../../../../model/policy/distribution-ownership";
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
-} from "#agent-plugin-lifecycle-service/model/policy/release-input";
-import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
-import { releaseIssue } from "#agent-plugin-lifecycle-service/model/policy/release-issue";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
+} from "../../../../model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../../model/policy/release-input-codec";
+import { releaseIssue } from "../../../../model/policy/release-issue";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../../model/policy/release-payload-accounting";
 import type { ReleaseInputRefreshResult } from "../dto/release-lifecycle";
 
 export interface ReleaseInputRefreshMemberSource {

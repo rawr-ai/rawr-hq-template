@@ -1,10 +1,7 @@
 import { type Static, Type } from "typebox";
 
-import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
-import {
-  GitCommitIdSchema,
-  GitTreeIdSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
+import { ContentDigestSchema } from "../../../../model/dto/release-digest";
+import { GitCommitIdSchema, GitTreeIdSchema } from "../../../../model/dto/release-identity";
 
 export const VENDOR_SOURCE_PROTOCOL = "rawr-vendor-source@v1" as const;
 export const VENDOR_PROVENANCE_PROTOCOL = "rawr-vendor-provenance@v1" as const;

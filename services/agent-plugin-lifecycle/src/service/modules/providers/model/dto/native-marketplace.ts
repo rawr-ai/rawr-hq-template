@@ -1,12 +1,6 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
-import {
-  ContentAuthoritySchema,
-  PluginIdSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import {
-  BoundedReadonlyArray,
-  NonEmptyReadonlyArray,
-} from "#agent-plugin-lifecycle-service/model/dto/structural";
+import { ContentAuthoritySchema, PluginIdSchema } from "../../../../model/dto/release-identity";
+import { BoundedReadonlyArray, NonEmptyReadonlyArray } from "../../../../model/dto/structural";
 
 const ProviderTextSchema = Type.String({
   minLength: 1,

@@ -15,8 +15,8 @@ import { Value } from "typebox/value";
 import {
   type ContentWorkspaceSnapshot,
   MAX_CLEAN_CONTENT_TREE_ENTRIES,
-} from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
-import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+} from "../../../model/dto/content-workspace";
+import type { DerivedReleaseSelection } from "../../../model/dto/release-derivation";
 import {
   classifyCleanContentWorkspaceAnchor,
   classifyCleanContentWorkspaceTree,
@@ -32,9 +32,9 @@ import {
   MAX_CLEAN_MEMBER_PAYLOAD_BYTES,
   MAX_CLEAN_RELEASE_INPUT_BYTES,
   validateCleanContentWorkspacePolicy,
-} from "#agent-plugin-lifecycle-service/model/policy/clean-content-workspace";
-import { deriveReleaseSelection } from "#agent-plugin-lifecycle-service/model/policy/release-derivation";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "#agent-plugin-lifecycle-service/model/policy/release-payload-accounting";
+} from "../../../model/policy/clean-content-workspace";
+import { deriveReleaseSelection } from "../../../model/policy/release-derivation";
+import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../model/policy/release-payload-accounting";
 import type {
   ConfirmedNativeOperation,
   ProviderIssue,

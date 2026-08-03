@@ -1,6 +1,6 @@
 import type { PackageOutputFailure } from "@habitat-ai/rawr-resource-agent-plugin-package-output";
 
-import type { DerivedReleaseSelection } from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+import type { DerivedReleaseSelection } from "../../../../model/dto/release-derivation";
 import {
   MAX_PACKAGING_FAILURE_MESSAGE_LENGTH,
   MAX_PACKAGING_FAILURE_PHASE_LENGTH,

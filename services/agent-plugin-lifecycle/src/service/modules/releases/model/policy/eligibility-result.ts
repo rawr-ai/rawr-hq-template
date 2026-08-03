@@ -1,8 +1,8 @@
-import type { SourceEligibilityIssue } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import type { SourceEligibilityIssue } from "../../../../model/dto/content-workspace";
 import type {
   DerivedReleaseSelection,
   ReleaseSelection,
-} from "#agent-plugin-lifecycle-service/model/dto/release-derivation";
+} from "../../../../model/dto/release-derivation";
 import type {
   CheckResult,
   ReleaseDerivationIdentity,
