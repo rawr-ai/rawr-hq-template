@@ -2,6 +2,14 @@
 import * as retiredRootSurface from "@habitat-ai/rawr-dev";
 // @ts-expect-error The executable router remains private behind client construction.
 import type { Router } from "@habitat-ai/rawr-dev/client";
+// @ts-expect-error Dev host types are exposed through the client, not a parallel facade.
+import * as retiredResourcesSurface from "@habitat-ai/rawr-dev/resources";
+// @ts-expect-error The executable router is not a public package axis.
+import * as retiredRouterSurface from "@habitat-ai/rawr-dev/router";
+// @ts-expect-error The contract is re-exported only through the client face.
+import * as retiredContractSurface from "@habitat-ai/rawr-dev/service/contract";
+// @ts-expect-error Dev DTOs are exposed through the client, not a parallel facade.
+import * as retiredTypesSurface from "@habitat-ai/rawr-dev/types";
 import {
   type Client,
   type Config,
@@ -33,15 +41,7 @@ import {
   type StackDrainResult,
   type WorktreeCleanupInput,
   type WorktreeCleanupResult,
-} from "@habitat-ai/rawr-dev/client";
-// @ts-expect-error Dev host types are exposed through the client, not a parallel facade.
-import * as retiredResourcesSurface from "@habitat-ai/rawr-dev/resources";
-// @ts-expect-error The executable router is not a public package axis.
-import * as retiredRouterSurface from "@habitat-ai/rawr-dev/router";
-// @ts-expect-error The contract is re-exported only through the client face.
-import * as retiredContractSurface from "@habitat-ai/rawr-dev/service/contract";
-// @ts-expect-error Dev DTOs are exposed through the client, not a parallel facade.
-import * as retiredTypesSurface from "@habitat-ai/rawr-dev/types";
+} from "../../../src/client";
 
 type PreservedTypeSurface = {
   client: Client;
