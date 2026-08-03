@@ -582,7 +582,8 @@ function resolveCompatibility(
           )
         );
       }
-      for (const pattern of rule.pathCoverage[0].patterns) {
+      const coveragePatterns = rule.pathCoverage.flatMap(({ patterns }) => patterns);
+      for (const pattern of coveragePatterns) {
         issues.push(...repositoryPatternIssues(pattern, source.relativePath, path));
       }
       const baselinePath = rule.supportFiles.baseline;
@@ -627,7 +628,7 @@ function resolveCompatibility(
         message: rule.message,
         remediate: rule.remediate,
         provenance,
-        coveragePatterns: [...rule.pathCoverage[0].patterns],
+        coveragePatterns,
         baseline: asset(baselinePath),
       };
       if (rule.runner.name === "habitat") {

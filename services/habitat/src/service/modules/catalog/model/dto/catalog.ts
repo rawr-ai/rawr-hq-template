@@ -554,7 +554,9 @@ const CompatibilityRuleSourceCommon = {
     description: "Operator remediation for one finding.",
   }),
   message: RuleMessageSchema,
-  pathCoverage: Type.Tuple([CompatibilityPathCoverageSchema], {
+  pathCoverage: Type.Array(CompatibilityPathCoverageSchema, {
+    minItems: 1,
+    maxItems: 1,
     description: "Single exact-path cache boundary for the compatibility rule.",
   }),
   supportFiles: CompatibilitySupportFilesSchema,
@@ -659,7 +661,8 @@ export const CompatibilityRuleSourceSchema = Type.Union(
 );
 
 /** Closed empty baseline admitted during compatibility resolution. */
-export const CompatibilityBaselineSchema = Type.Tuple([], {
+export const CompatibilityBaselineSchema = Type.Array(Type.Never(), {
+  maxItems: 0,
   description: "Empty compatibility baseline; every observed finding remains live.",
 });
 

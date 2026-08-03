@@ -812,15 +812,15 @@ describe("Habitat catalog resolve", () => {
         },
       ],
     });
-    expect(nonempty).toMatchObject({
-      _tag: "Rejected",
-      issues: [
-        {
-          code: "authority-schema-invalid",
-          path: ".habitat/legacy/checked/baseline.json",
-        },
-      ],
-    });
+    expect(nonempty._tag).toBe("Rejected");
+    if (nonempty._tag !== "Rejected") throw new Error("Expected a rejected nonempty baseline.");
+    expect(nonempty.issues).not.toHaveLength(0);
+    expect(
+      nonempty.issues.every(
+        ({ code, path }) =>
+          code === "authority-schema-invalid" && path === ".habitat/legacy/checked/baseline.json"
+      )
+    ).toBe(true);
     expect(malformed).toMatchObject({
       _tag: "Rejected",
       issues: [
