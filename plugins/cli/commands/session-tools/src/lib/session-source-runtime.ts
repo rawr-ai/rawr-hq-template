@@ -2,16 +2,14 @@ import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type {
-  DiscoverSessionsInput,
-  SessionSourceRuntime,
-} from "@habitat-ai/rawr-session-intelligence/ports/session-source-runtime";
-import type {
   CodexSessionFile,
   CodexSessionSource,
   DiscoveredSessionFile,
+  DiscoverSessionsInput,
   SessionSource,
+  SessionSourceRuntime,
   SessionStatus,
-} from "@habitat-ai/rawr-session-intelligence/types";
+} from "@habitat-ai/rawr-session-intelligence/client";
 import { readJsonlObjects } from "./jsonl";
 import {
   codexDiscoveryMaxAgeMs,

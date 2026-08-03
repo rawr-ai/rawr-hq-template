@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { SessionStatus } from "@habitat-ai/rawr-session-intelligence/types";
+import type { SessionStatus } from "@habitat-ai/rawr-session-intelligence/client";
 
 const DEFAULT_CODEX_DISCOVERY_LIVE_MAX_AGE_MS = 15_000;
 const DEFAULT_CODEX_DISCOVERY_ARCHIVED_MAX_AGE_MS = 5 * 60_000;
