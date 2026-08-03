@@ -1,5 +1,4 @@
-import type { TodoIdentifierType } from "../dto/identifier";
-import type { TagType } from "../dto/tag";
+import type { TagType, TodoIdentifierType } from "../dto";
 
 /** Workspace-bound persistence contract for tag records. */
 export interface TagsStore {

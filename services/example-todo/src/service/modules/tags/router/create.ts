@@ -1,5 +1,5 @@
-import type { TagType } from "#example-todo-service/model/dto/tag";
-import { admitGeneratedIdentifier } from "#example-todo-service/model/policy/identifier";
+import type { TagType } from "../../../model/dto";
+import { admitGeneratedIdentifier } from "../../../model/policy";
 import { module } from "../module";
 
 /** Creates a normalized unique tag through the curated Tags context. */

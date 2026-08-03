@@ -3,9 +3,6 @@
   "private": true,
   "type": "module",
   "packageManager": "bun@1.3.7",
-  "imports": {
-    "#example-todo-service/*": "./src/service/*.ts"
-  },
   "exports": {
     "./client": {
       "types": "./src/client.ts",

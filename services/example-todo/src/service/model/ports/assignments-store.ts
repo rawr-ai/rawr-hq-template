@@ -1,5 +1,4 @@
-import type { AssignmentType } from "../dto/assignment";
-import type { TodoIdentifierType } from "../dto/identifier";
+import type { AssignmentType, TodoIdentifierType } from "../dto";
 
 /** Workspace-bound persistence contract for task-tag assignments. */
 export interface AssignmentsStore {

@@ -1,6 +1,6 @@
 import { createAnalyticsMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../model/policy/procedure-metadata";
+import { metadataDefaults } from "../model/policy";
 
 /** Emits one service-owned analytics event with its qualified operation identity. */
 export const middleware = base.middleware(

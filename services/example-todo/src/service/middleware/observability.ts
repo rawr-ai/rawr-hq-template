@@ -1,6 +1,6 @@
 import { createObservabilityMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../model/policy/procedure-metadata";
+import { metadataDefaults } from "../model/policy";
 
 const policyEvents = {
   readOnlyRejected: "todo.policy.read_only_rejected",

@@ -1,8 +1,6 @@
 import type { Sql } from "@habitat-ai/rawr-hq-sdk";
-import type { AssignmentType } from "../../model/dto/assignment";
-import type { TodoIdentifierType } from "../../model/dto/identifier";
-import type { WorkspaceIdType } from "../../model/dto/workspace-id";
-import type { AssignmentsStore } from "../../model/ports/assignments-store";
+import type { AssignmentType, TodoIdentifierType, WorkspaceIdType } from "../../model/dto";
+import type { AssignmentsStore } from "../../model/ports";
 
 /**
  * Binds assignment persistence to the SQL capability and workspace selected by

@@ -1,8 +1,6 @@
 import type { Sql } from "@habitat-ai/rawr-hq-sdk";
-import type { TodoIdentifierType } from "../../model/dto/identifier";
-import type { TagType } from "../../model/dto/tag";
-import type { WorkspaceIdType } from "../../model/dto/workspace-id";
-import type { TagsStore } from "../../model/ports/tags-store";
+import type { TagType, TodoIdentifierType, WorkspaceIdType } from "../../model/dto";
+import type { TagsStore } from "../../model/ports";
 
 /**
  * Binds tag persistence to the SQL capability and workspace selected by the
