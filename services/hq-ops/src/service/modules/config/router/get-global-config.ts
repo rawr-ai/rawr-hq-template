@@ -1,4 +1,4 @@
-import { rawrGlobalConfigPath } from "../model/helpers/config-paths";
+import { rawrGlobalConfigPath } from "../model/policy/config-paths";
 import { formatIssues, validateRawrConfig } from "../model/policy/config-validation";
 import { module } from "../module";
 
