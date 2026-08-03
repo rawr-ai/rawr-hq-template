@@ -18,6 +18,7 @@ export type HabitatClient = Client;
 
 const require = createRequire(import.meta.url);
 const HABITAT_SDK_PACKAGE_NAME = "@habitat-ai/sdk";
+const gritPackageJsonPath = require.resolve("@getgrit/cli/package.json");
 const sdkPackageJsonPath = fileURLToPath(new URL("../package.json", import.meta.url));
 const sdkManifestPath = fileURLToPath(new URL("../habitat-pack.json", import.meta.url));
 const CommandTimeoutSchema = Type.Integer({ minimum: 1, maximum: 600_000 });
@@ -53,7 +54,12 @@ function getDependencies(): Promise<Deps> {
         fileSystem,
         path,
         ruleEvaluation: makeNodeGritRuleEvaluationResource({
-          executable: require.resolve("@getgrit/cli/run-grit.js"),
+          executable: path.join(
+            path.dirname(gritPackageJsonPath),
+            "node_modules",
+            ".bin_real",
+            process.platform === "win32" ? "grit.exe" : "grit"
+          ),
           timeoutMs: decodeCommandTimeout(process.env.HABITAT_COMMAND_TIMEOUT_MS),
         }),
         sourceInventory: makeNodeGitSourceInventoryResource(),
@@ -64,7 +70,7 @@ function getDependencies(): Promise<Deps> {
 }
 
 function decodeCommandTimeout(input: string | undefined): number {
-  if (input === undefined) return 30_000;
+  if (input === undefined) return 600_000;
   const value = Number(input);
   if (!commandTimeoutValidator.Check(value)) {
     throw new Error("HABITAT_COMMAND_TIMEOUT_MS must be an integer from 1 through 600000.");

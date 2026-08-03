@@ -249,11 +249,14 @@ function runGritCheck(
       {
         cwd: catalog.root,
         env: {
-          FORCE_COLOR: undefined,
+          CLICOLOR: "0",
+          FORCE_COLOR: "0",
           GRIT_CACHE_DIR: catalog.cacheDirectory,
+          GRIT_DOWNLOADS_DISABLED: "true",
+          GRIT_MAX_FILE_SIZE_BYTES: "0",
           GRIT_USER_CONFIG: catalog.userConfigDirectory,
           GRIT_TELEMETRY_DISABLED: "true",
-          NO_COLOR: undefined,
+          NO_COLOR: "1",
           RAYON_NUM_THREADS: "2",
         },
         extendEnv: true,

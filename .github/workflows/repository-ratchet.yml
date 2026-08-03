@@ -20,6 +20,11 @@ jobs:
     name: Required lint, typecheck, and topology
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      CLICOLOR: "0"
+      GRIT_DOWNLOADS_DISABLED: "true"
+      GRIT_MAX_FILE_SIZE_BYTES: "0"
+      HABITAT_COMMAND_TIMEOUT_MS: "600000"
     steps:
       - name: Check out exact candidate
         uses: actions/checkout@v4
