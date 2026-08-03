@@ -1,5 +1,5 @@
 import { Value } from "typebox/value";
-import { TodoIdentifierSchema, type TodoIdentifierType } from "../dto/identifier";
+import { TodoIdentifierSchema, type TodoIdentifierType } from "../dto";
 
 /**
  * Admits one host-generated identifier before any domain record is persisted.

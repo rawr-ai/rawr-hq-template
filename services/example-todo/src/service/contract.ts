@@ -7,10 +7,7 @@
  * their implementer subtrees from `service.<module>`.
  */
 import { oc } from "@orpc/contract";
-import {
-  metadataDefaults,
-  todoProcedureMetadata,
-} from "#example-todo-service/model/policy/procedure-metadata";
+import { metadataDefaults, todoProcedureMetadata } from "./model/policy";
 import { contract as assignments } from "./modules/assignments/contract";
 import { contract as tags } from "./modules/tags/contract";
 import { contract as tasks } from "./modules/tasks/contract";

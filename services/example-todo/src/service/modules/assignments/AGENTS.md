@@ -54,8 +54,8 @@
 - [[../../model/ports/tasks-store|Task store contract]]
 - [[../../model/ports/tags-store|Tag store contract]]
 - [[middleware/telemetry|Assignment telemetry]]
-- [[router/assign.router|Assignment mutation]]
-- [[router/list-for-task.router|Assigned-tag query]]
+- [[router/assign|Assignment mutation]]
+- [[router/list-for-task|Assigned-tag query]]
 - [Tasks module](../tasks/AGENTS.md)
 - [Tags module](../tags/AGENTS.md)
 

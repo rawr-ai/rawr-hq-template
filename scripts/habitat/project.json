@@ -5,6 +5,9 @@
   "projectType": "application",
   "tags": ["type:tool", "role:architecture-policy"],
   "targets": {
+    "check:policy": {
+      "parallelism": false
+    },
     "lint": {
       "executor": "nx:run-commands",
       "cache": true,

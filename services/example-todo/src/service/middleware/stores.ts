@@ -2,9 +2,7 @@ import { base } from "../base";
 import { createAssignmentsStore } from "../db/stores/assignments";
 import { createTagsStore } from "../db/stores/tags";
 import { createTasksStore } from "../db/stores/tasks";
-import type { AssignmentsStore } from "../model/ports/assignments-store";
-import type { TagsStore } from "../model/ports/tags-store";
-import type { TasksStore } from "../model/ports/tasks-store";
+import type { AssignmentsStore, TagsStore, TasksStore } from "../model/ports";
 
 type ProvidedStores = {
   tasksStore: TasksStore;

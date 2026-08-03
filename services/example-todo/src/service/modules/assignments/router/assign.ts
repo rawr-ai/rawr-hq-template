@@ -1,5 +1,5 @@
-import type { AssignmentType } from "#example-todo-service/model/dto/assignment";
-import { admitGeneratedIdentifier } from "#example-todo-service/model/policy/identifier";
+import type { AssignmentType } from "../../../model/dto";
+import { admitGeneratedIdentifier } from "../../../model/policy";
 import { module } from "../module";
 
 /** Creates one valid task-tag assignment through the curated module context. */

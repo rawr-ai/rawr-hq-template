@@ -19,12 +19,8 @@ import { standard } from "@habitat-ai/typebox-adapter";
 import { oc } from "@orpc/contract";
 import type { ErrorMapItem } from "@orpc/server";
 import { Type } from "typebox";
-import { TodoIdentifierSchema } from "#example-todo-service/model/dto/identifier";
-import { TaskSchema } from "#example-todo-service/model/dto/task";
-import {
-  type TodoProcedureMetadata,
-  todoProcedureMetadata,
-} from "#example-todo-service/model/policy/procedure-metadata";
+import { TaskSchema, TodoIdentifierSchema } from "../../../model/dto";
+import { type TodoProcedureMetadata, todoProcedureMetadata } from "../../../model/policy";
 
 const ResourceNotFoundData = standard(
   Type.Object(
