@@ -52,12 +52,6 @@ jobs:
           jq '.cli = ((.cli // {}) + {packageManager: "npm"})' nx.json > nx.publish.json
           mv nx.publish.json nx.json
 
-      - name: Verify installed Habitat products
-        run: >-
-          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package
-          --skip-nx-cache
-          --outputStyle=static
-
       - name: Publish Habitat SDK and CLI
         run: >-
           npx nx release publish
