@@ -1,4 +1,4 @@
-import { createClient } from "@habitat-ai/rawr-chatgpt-corpus/client";
+import { createClient } from "../../src/client";
 import { describe, expect, it } from "vitest";
 import {
   createClientOptions,
@@ -10,7 +10,7 @@ import {
 describe("@habitat-ai/rawr-chatgpt-corpus", () => {
   it("keeps the public client entrypoint stable", async () => {
     const workspaceStore = createMemoryWorkspaceStore();
-    const pkg = await import("@habitat-ai/rawr-chatgpt-corpus/client");
+    const pkg = await import("../../src/client");
     const client = pkg.createClient(createClientOptions(workspaceStore));
 
     expect(pkg.contract).toBeDefined();

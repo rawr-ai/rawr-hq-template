@@ -33,7 +33,7 @@ import {
   type StackDrainResult,
   type WorktreeCleanupInput,
   type WorktreeCleanupResult,
-} from "@habitat-ai/rawr-dev/client";
+} from "../../../src/client";
 // @ts-expect-error Dev host types are exposed through the client, not a parallel facade.
 import * as retiredResourcesSurface from "@habitat-ai/rawr-dev/resources";
 // @ts-expect-error The executable router is not a public package axis.

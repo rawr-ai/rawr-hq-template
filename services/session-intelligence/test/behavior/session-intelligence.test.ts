@@ -1,4 +1,4 @@
-import { createClient } from "@habitat-ai/rawr-session-intelligence/client";
+import { createClient } from "../../src/client";
 import { safe } from "@orpc/server";
 import { describe, expect, it } from "vitest";
 import {

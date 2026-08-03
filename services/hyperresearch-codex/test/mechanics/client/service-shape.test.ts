@@ -1,5 +1,5 @@
-import * as publicApi from "@habitat-ai/rawr-hyperresearch-codex/client";
-import { createClient } from "@habitat-ai/rawr-hyperresearch-codex/client";
+import * as publicApi from "../../../src/client";
+import { createClient } from "../../../src/client";
 import { describe, expect, it } from "vitest";
 import { contract } from "../../../src/service/contract";
 import { router } from "../../../src/service/router";

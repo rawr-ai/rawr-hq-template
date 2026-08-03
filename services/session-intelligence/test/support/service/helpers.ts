@@ -10,7 +10,7 @@ import type {
   SessionSource,
   SessionSourceRuntime,
   SessionStatus,
-} from "@habitat-ai/rawr-session-intelligence/client";
+} from "../../../src/client";
 import {
   CLAUDE_FIXTURE,
   CLAUDE_FIXTURE_PATH,
