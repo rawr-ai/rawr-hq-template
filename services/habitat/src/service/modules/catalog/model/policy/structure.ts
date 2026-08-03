@@ -4,10 +4,17 @@ import { Validator } from "typebox/schema";
 import type { HabitatCatalog } from "../dto/catalog.js";
 import type { StructureCheckFinding } from "../dto/check.js";
 import {
+  type CompatibilityStructureDocument,
   CompatibilityStructureDocumentSchema,
-  STRUCTURE_PICOMATCH_OPTIONS,
+  type StructureDocument,
   StructureDocumentSchema,
 } from "../dto/structure.js";
+
+const STRUCTURE_PICOMATCH_OPTIONS: Readonly<picomatch.PicomatchOptions> = Object.freeze({
+  contains: false,
+  dot: true,
+  strictBrackets: true,
+});
 
 type RuleApplication =
   | HabitatCatalog["applications"][number]
@@ -40,7 +47,7 @@ type BoundStructureScope = {
   readonly bindingPath: string;
 };
 
-/** Schema-admitted structure application with inapplicable unbound scopes removed. */
+/** Structure- and policy-admitted application with inapplicable unbound scopes removed. */
 export type AdmittedStructureApplication = {
   readonly application: HabitatStructureApplication;
   readonly scopes: readonly BoundStructureScope[];
@@ -77,7 +84,7 @@ export type StructureDiagnostic = Pick<StructureCheckFinding, "code" | "path" | 
 const structureValidator = new Validator({}, StructureDocumentSchema);
 const compatibilityStructureValidator = new Validator({}, CompatibilityStructureDocumentSchema);
 
-/** Admits TypeBox-valid structure authority and resolves its root-role applicability. */
+/** Admits structural and runtime structure policy, then resolves root-role applicability. */
 export function admitStructureDocument(
   value: unknown,
   application: HabitatStructureApplication
@@ -96,6 +103,8 @@ export function admitStructureDocument(
             .join("; ") || "Structure document does not satisfy compatibility schema version 1.",
       };
     }
+    const semanticIssue = compatibilityStructureSemanticIssue(value);
+    if (semanticIssue !== undefined) return { ok: false, detail: semanticIssue };
     return {
       ok: true,
       admitted: {
@@ -126,6 +135,8 @@ export function admitStructureDocument(
           .join("; ") || "Structure document does not satisfy schema version 2.",
     };
   }
+  const semanticIssue = structureSemanticIssue(value);
+  if (semanticIssue !== undefined) return { ok: false, detail: semanticIssue };
 
   const bindings = new Map(
     application.runner.rootBindings.map(
@@ -166,6 +177,89 @@ export function admitStructureDocument(
     });
   }
   return { ok: true, admitted: { application, scopes } };
+}
+
+type StructurePatternScope = {
+  readonly name: string;
+  readonly required?: readonly string[];
+  readonly allowed?: readonly string[];
+  readonly forbidden?: readonly string[];
+};
+
+function structureSemanticIssue(document: StructureDocument): string | undefined {
+  return scopeSemanticIssue(
+    document.scopes,
+    (scope) => scope.relativePath,
+    "Expected unique structure scope names"
+  );
+}
+
+function compatibilityStructureSemanticIssue(
+  document: CompatibilityStructureDocument
+): string | undefined {
+  return scopeSemanticIssue(
+    document.scopes,
+    (scope) => scope.root,
+    "Expected unique compatibility structure scope names"
+  );
+}
+
+function scopeSemanticIssue<Scope extends StructurePatternScope>(
+  scopes: readonly Scope[],
+  rootPattern: (scope: Scope) => string,
+  duplicateMessage: string
+): string | undefined {
+  const patternIssues: string[] = [];
+  for (const scope of scopes) {
+    if (!isSafeRootRelativePattern(rootPattern(scope))) {
+      patternIssues.push("Expected a safe, valid root-relative path or glob");
+    }
+    for (const patterns of [scope.required, scope.allowed, scope.forbidden]) {
+      for (const pattern of patterns ?? []) {
+        if (!isSafeDirectChildPattern(pattern)) {
+          patternIssues.push("Expected a safe, valid direct-child glob");
+        }
+      }
+    }
+  }
+  if (patternIssues.length > 0) return patternIssues.slice(0, 20).join("; ");
+
+  return new Set(scopes.map((scope) => scope.name)).size === scopes.length
+    ? undefined
+    : duplicateMessage;
+}
+
+function isSafeRootRelativePattern(value: string): boolean {
+  if (!isValidGlob(value)) return false;
+  if (value === ".") return true;
+  return (
+    !value.startsWith("/") &&
+    !value.endsWith("/") &&
+    !value.includes("\\") &&
+    !/^[A-Za-z]:\//u.test(value) &&
+    !/[\u0000-\u001f\u007f]/u.test(value) &&
+    value.split("/").every((segment) => segment !== "" && segment !== "." && segment !== "..")
+  );
+}
+
+function isSafeDirectChildPattern(value: string): boolean {
+  return (
+    isValidGlob(value) &&
+    value !== "." &&
+    value !== ".." &&
+    !value.includes("/") &&
+    !value.includes("\\") &&
+    !/[\u0000-\u001f\u007f]/u.test(value)
+  );
+}
+
+function isValidGlob(value: string): boolean {
+  try {
+    picomatch(value, STRUCTURE_PICOMATCH_OPTIONS);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function isCompatibilityStructureApplication(
