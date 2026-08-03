@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { HyperresearchCodexIO } from "@habitat-ai/rawr-hyperresearch-codex/resources";
+import type { HyperresearchCodexIO } from "@habitat-ai/rawr-hyperresearch-codex/client";
 
 async function pathExists(filePath: string): Promise<boolean> {
   try {
