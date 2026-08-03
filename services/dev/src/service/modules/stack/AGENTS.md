@@ -40,7 +40,7 @@
 ## Interfaces
 
 - `contract/doctor.ts` and `contract/drain.ts` declare the two service
-  operations. Their matching `router/*.router.ts` leaves author behavior
+  operations. Their matching `router/*.ts` leaves author behavior
   against the workspace root, process resource, and service-owned scratch
   policy checker curated by the module; structured reports are the caller
   result. Root construction lanes remain service-internal and are not an

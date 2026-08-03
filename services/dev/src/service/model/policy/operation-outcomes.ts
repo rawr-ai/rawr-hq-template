@@ -4,6 +4,9 @@ import type {
   DevIssue,
   DevPreflight,
 } from "../dto/operation-outcomes.dto";
+import type { DevExecResult } from "../ports/dev-resources";
+
+const textDecoder = new TextDecoder();
 
 /** Renders one command and its arguments for operator diagnostics. */
 export function commandText(command: string, args: string[]): string {
@@ -18,6 +21,34 @@ export function planned(command: string, args: string[]): DevCommandStep {
 /** Describes an external command deliberately omitted from the applied prefix. */
 export function skipped(command: string, args: string[], stderr?: string): DevCommandStep {
   return { command, args, status: "skipped", stderr };
+}
+
+/** Projects one completed host process observation into an operation step. */
+export function observedStep(
+  command: string,
+  args: string[],
+  result: DevExecResult
+): DevCommandStep {
+  return {
+    command,
+    args,
+    status: result.exitCode === 0 ? "succeeded" : "failed",
+    exitCode: result.exitCode,
+    stdout: textDecoder.decode(result.stdout),
+    stderr: textDecoder.decode(result.stderr),
+  };
+}
+
+/** Projects a thrown host process failure into the same operation step vocabulary. */
+export function rejectedStep(command: string, args: string[], error: unknown): DevCommandStep {
+  return {
+    command,
+    args,
+    status: "failed",
+    exitCode: null,
+    stdout: "",
+    stderr: error instanceof Error ? error.message : String(error),
+  };
 }
 
 /** Constructs an error that blocks admission or records failed execution. */

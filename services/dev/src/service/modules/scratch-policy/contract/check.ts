@@ -4,7 +4,7 @@ import { oc } from "@orpc/contract";
 import {
   ScratchPolicyCheckSchema,
   ScratchPolicyInputSchema,
-} from "#dev-service/model/dto/scratch-policy.dto";
+} from "../../../model/dto/scratch-policy.dto";
 
 /** Declares scratch-policy observation as an idempotent Dev operation. */
 export const check = oc
