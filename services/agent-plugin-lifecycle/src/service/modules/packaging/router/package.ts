@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { Effect } from "effect";
 
 import {
@@ -47,12 +46,14 @@ import { module } from "../module";
  * @behavior Inspect, derive, encode, revalidate, publish, and classify one closed result.
  * @relation Keep Packaging's transition inside its authored router rather than model policy.
  */
-const packageOperation = module.package.effect(function* ({ context, input: request }) {
+const packageOperation = module.package.effect(function* ({ context, errors, input: request }) {
   const outputPath = request.outputPath;
   if (!isCanonicalPackageOutputPath(outputPath)) {
-    return new ORPCError("BAD_REQUEST", {
-      message: "Expected a canonical non-root absolute package output path",
-    });
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Expected a canonical non-root absolute package output path",
+      })
+    );
   }
   const policy = request.contentWorkspace;
   const inspectContentWorkspace: Effect.Effect<ContentWorkspaceInspection> = Effect.gen(

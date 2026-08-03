@@ -94,6 +94,7 @@ export type Client = Omit<WireClient, "releases" | "governance"> &
 
 /** Constructs the sole public local client over the private lifecycle router. */
 export function createClient(options: CreateClientOptions): Client;
+/** Implements local client construction through the service's native in-process router client. */
 export function createClient(options: CreateClientOptions): Client | WireClient {
   return createWireClient(options);
 }
