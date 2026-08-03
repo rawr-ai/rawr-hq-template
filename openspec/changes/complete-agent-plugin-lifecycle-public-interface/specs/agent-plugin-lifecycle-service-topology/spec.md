@@ -59,7 +59,7 @@ broad DTO barrels MUST remain private.
 Each module MUST expose a closed `contract/` directory through
 `contract/index.ts`, a closed `router/` authorship directory, and one
 module-root `router.ts` composition face. Operation handlers MUST be authored
-directly in named `router/<operation>.router.ts` leaves or deliberate semantic
+directly in named `router/<operation>.ts` leaves or deliberate semantic
 groups and composed as a plain router object by module-root `router.ts`. A
 handler MAY call module-owned pure policy or
 ready resource capabilities, but MUST NOT delegate its operation to a parallel

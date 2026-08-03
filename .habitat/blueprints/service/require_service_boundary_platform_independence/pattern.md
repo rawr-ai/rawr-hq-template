@@ -127,7 +127,7 @@ export const JobSchema = {};
 ## Ignores executable router implementation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
 import { randomUUID } from "node:crypto";
 export const router = { randomUUID };
 ```

@@ -626,8 +626,48 @@ describe("Habitat catalog resolve", () => {
     const compatibility = result.catalog.compatibility;
     const ruleIds = compatibility.rules.map(({ ruleId }) => ruleId);
     expect(Object.keys(compatibility.ownerRoots)).toHaveLength(6);
-    expect(compatibility.rules).toHaveLength(34);
-    expect(new Set(ruleIds).size).toBe(34);
+    expect(ruleIds).toEqual([
+      "require_agent_plugin_command_channel_source_relationships",
+      "require_agent_plugin_command_channel_topology",
+      "require_agent_router_placement",
+      "require_agent_router_shape",
+      "require_api_server_plugin_boundary",
+      "require_api_service_contract_property_descriptions",
+      "require_blueprint_packet_topology",
+      "require_exported_value_declarations_have_jsdoc",
+      "require_grit_helper_comments",
+      "require_hq_app_server_import_funnel",
+      "require_nx_workspace_scheduler_scripts",
+      "require_oclif_app_configuration",
+      "require_oclif_app_entrypoints",
+      "require_oclif_app_topology",
+      "require_oclif_command_plugin_configuration",
+      "require_oclif_command_plugin_topology",
+      "require_oclif_command_source_relationships",
+      "require_orpc_error_authority",
+      "require_package_publication_coherence",
+      "require_provider_package_boundary",
+      "require_repository_script_topology",
+      "require_resource_package_boundary",
+      "require_runtime_realization_lab_source_relationships",
+      "require_runtime_realization_lab_topology",
+      "require_service_anchor_exports",
+      "require_service_boundary_platform_independence",
+      "require_service_context_boundaries",
+      "require_service_contract_authority",
+      "require_service_contract_property_descriptions",
+      "require_service_database_import_funnel",
+      "require_service_database_topology",
+      "require_service_effect_error_authority",
+      "require_service_module_isolation",
+      "require_service_orpc_composition",
+      "require_service_proof_isolation",
+      "require_service_router_authorship",
+      "require_service_spine_topology",
+      "require_web_public_environment_funnel",
+      "require_workstream_plugin_pack_hook_configuration",
+      "require_workstream_plugin_pack_topology",
+    ]);
   });
 
   test("resolves executable version 2 Grit authority without retaining asset bytes", async () => {

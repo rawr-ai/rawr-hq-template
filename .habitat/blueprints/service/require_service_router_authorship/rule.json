@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_router_authorship",
+  "title": "Require Service Router Authorship",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a named router leaf whose filename and sole runtime export disagree; an operation that does not descend from the configured module through native procedure middleware; an export alias except the language-required binding for a reserved public name; a detached callable supplied as a native effect or handler instead of an inline operation callback; operation authorship in a service-root or module-root router composition face; or a module-root router that imports outside direct local named router leaves and type-only contracts or exports anything except one bare plain router object",
+  "why": "Handlers are the operation authoring sites: they consume the configured module context and perform the transition where oRPC owns the boundary. Filename-to-export alignment gives each standalone operation or cohesive group one declared leaf identity, every contained operation remains rooted in the configured module, and one module-root router.ts keeps public composition visible without acquiring behavior or creating a second index face.",
+  "remediate": "Author each operation directly inside an inline effect(...) or handler(...) callback in modules/<module>/router/<name>.ts. Export only the matching lower-camel <name> value; that value may be one operation or one cohesive operation group, while every operation descends from its own configured module branch. Use `<name>Operation` exported as `<name>` only when the public name is an ECMAScript reserved word. Leaf-local pure builders may prepare values for the inline callback; move reusable decisions to qualified model policy and keep outside calls on context-provided ports. Import completed named router values into module-root router.ts and export one bare plain router object; do not add router/index.ts, runtime helpers, middleware, or procedure authorship there.",
+  "message": "Named router leaves author operations; module-root router.ts only composes them.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "services/*/src/service/router.ts",
+        "services/*/src/service/modules/*/router.ts",
+        "services/*/src/service/modules/*/router/*.ts",
+        "plugins/server/api/*/src/service/router.ts",
+        "plugins/server/api/*/src/service/modules/*/router.ts",
+        "plugins/server/api/*/src/service/modules/*/router/*.ts"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_router_authorship/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_router_authorship/pattern.md"
+    },
+    "patternName": "require_service_router_authorship",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services", "plugins/server/api"]
+    }
+  }
+}
