@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
-import type { CreateClientOptions } from "@habitat-ai/rawr-hyperresearch-codex/client";
+import type { CreateClientOptions } from "../../../src/client";
 import type { Context } from "../../../src/service/base";
 import type {
   HyperresearchCliOperation,
