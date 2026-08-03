@@ -5,7 +5,7 @@ import {
   type RawrConfigV1,
   RawrConfigV1Schema,
 } from "../dto/config.dto";
-import { clampInteger } from "../helpers/integer";
+import { clampInteger } from "./integer";
 
 function clampJournalCandidateLimit(value: number | undefined): number {
   return clampInteger(value ?? 200, 1, 500);

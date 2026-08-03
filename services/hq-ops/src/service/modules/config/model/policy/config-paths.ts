@@ -1,4 +1,4 @@
-import type { PathResource } from "#hq-ops-service/model/ports/resources";
+import type { PathResource } from "../../../../model/ports/resources";
 
 /** Resolves the workspace configuration module path. */
 export function rawrConfigPath(path: PathResource, repoRoot: string): string {

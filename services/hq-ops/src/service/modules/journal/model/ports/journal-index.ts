@@ -1,5 +1,5 @@
-import type { JournalSnippet } from "../../entities";
 import type { JournalSearchRow } from "../dto/journal.dto";
+import type { JournalSnippet } from "../entities";
 
 /** Identity of one cached semantic embedding in the derived Journal index. */
 export type JournalEmbeddingCacheKey = {

@@ -98,8 +98,10 @@ describe("hq-ops service resource-backed behavior", () => {
 
   it("owns security scan, report, and risk gate policy over process resources", async () => {
     const repoRoot = await tempRoot("hq-ops-security-");
+    const calls: Array<{ command: string; args: string[] }> = [];
     const resources = createTestHqOpsResources({
       exec: async (cmd, args) => {
+        calls.push({ command: cmd, args });
         if (cmd === "git" && args[0] === "rev-parse") {
           return {
             exitCode: 0,
@@ -179,5 +181,16 @@ describe("hq-ops service resource-backed behavior", () => {
 
     const latest = await client.security.getSecurityReport({}, invocation("trace-report"));
     expect(latest?.meta?.repoRoot).toBe(repoRoot);
+    expect(calls).toEqual([
+      { command: "git", args: ["rev-parse", "--show-toplevel"] },
+      { command: "bun", args: ["audit", "--json"] },
+      { command: "bun", args: ["pm", "untrusted"] },
+      { command: "git", args: ["ls-files"] },
+      { command: "git", args: ["rev-parse", "--show-toplevel"] },
+      { command: "bun", args: ["audit", "--json"] },
+      { command: "bun", args: ["pm", "untrusted"] },
+      { command: "git", args: ["ls-files"] },
+      { command: "git", args: ["rev-parse", "--show-toplevel"] },
+    ]);
   });
 });

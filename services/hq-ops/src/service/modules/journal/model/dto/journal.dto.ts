@@ -1,5 +1,5 @@
 import { type Static, Type } from "typebox";
-import { JournalRecordIdSchema, JournalSnippetSchema } from "../../entities";
+import { JournalRecordIdSchema, JournalSnippetSchema } from "../entities";
 
 /** Ranked or recent snippet projection returned by Journal queries. */
 export const JournalSearchRowSchema = Type.Interface(

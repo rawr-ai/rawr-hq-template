@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { createClient } from "../../../../src";
+import { createClient } from "../../../../src/client";
 import { validateRawrConfig } from "../../../../src/service/modules/config/model/policy/config-validation.js";
 import {
   type AnalyticsEntry,

@@ -1,86 +1,10 @@
-/**
- * hq-ops: security module.
- *
- * This router owns security scanning and reporting as a service capability:
- * running dependency audits, scanning for secrets, and producing a stable
- * report format with tolerance gates. Projections should not shell out or
- * decide severity policy independently.
- */
-import type { HqOpsResources } from "#hq-ops-service/model/ports/resources";
-import type { SecurityFinding, SecurityMode } from "./entities";
-import { runBunAudit, runBunPmUntrusted } from "./helpers/audit";
-import { getRepoRoot } from "./helpers/process";
-import { securityReport, severityRank, sortFindings } from "./helpers/report-format";
-import { readLatestSecurityReport, writeSecurityReport } from "./helpers/report-io";
-import { maxFindingSeverity, toleranceToMaxSeverity } from "./helpers/report-risk";
-import { scanSecretsRepo, scanSecretsStaged } from "./helpers/secrets";
-import { module } from "./module";
+import { gateEnable } from "./router/gate-enable";
+import { getSecurityReport } from "./router/get-security-report";
+import { securityCheck } from "./router/security-check";
 
-async function collectSecurityFindings(
-  resources: HqOpsResources,
-  repoRoot: string,
-  mode: SecurityMode
-): Promise<SecurityFinding[]> {
-  const findings: SecurityFinding[] = [];
-  findings.push(...(await runBunAudit(resources, repoRoot)));
-
-  const untrusted = await runBunPmUntrusted(resources, repoRoot);
-  if (untrusted) findings.push(untrusted);
-
-  if (mode === "staged") {
-    findings.push(...(await scanSecretsStaged(resources, repoRoot)));
-  } else {
-    findings.push(...(await scanSecretsRepo(resources, repoRoot)));
-  }
-
-  return sortFindings(findings);
-}
-
-const securityCheck = module.securityCheck.handler(async ({ context, input }) => {
-  const repoRoot = (await getRepoRoot(context.resources, context.repoRoot)) ?? context.repoRoot;
-  const timestamp = new Date().toISOString();
-  const findings = await collectSecurityFindings(context.resources, repoRoot, input.mode);
-  const report = securityReport({ findings, mode: input.mode, timestamp, repoRoot });
-  const { reportPath } = await writeSecurityReport(context.resources, { repoRoot, report });
-  return { ...report, reportPath };
-});
-
-const gateEnable = module.gateEnable.handler(async ({ context, input }) => {
-  const repoRoot = (await getRepoRoot(context.resources, context.repoRoot)) ?? context.repoRoot;
-  const timestamp = new Date().toISOString();
-  const findings = await collectSecurityFindings(context.resources, repoRoot, input.mode);
-  const baseReport = securityReport({ findings, mode: input.mode, timestamp, repoRoot });
-  const { reportPath } = await writeSecurityReport(context.resources, {
-    repoRoot,
-    report: baseReport,
-  });
-  const report = {
-    ok: baseReport.ok,
-    findings: baseReport.findings,
-    summary: baseReport.summary,
-    timestamp: baseReport.timestamp,
-    mode: input.mode,
-    meta: { pluginId: input.pluginId, repoRoot: baseReport.meta?.repoRoot },
-    reportPath,
-  };
-
-  if (report.ok) return { allowed: true, report, requiresForce: false };
-  if (input.riskTolerance === "strict") return { allowed: false, report, requiresForce: true };
-
-  const maxAllowed = toleranceToMaxSeverity(input.riskTolerance);
-  if (!maxAllowed) return { allowed: false, report, requiresForce: true };
-
-  const allowed = severityRank(maxFindingSeverity(report.findings)) <= severityRank(maxAllowed);
-  return { allowed, report, requiresForce: !allowed };
-});
-
-const getSecurityReport = module.getSecurityReport.handler(async ({ context }) => {
-  const repoRoot = (await getRepoRoot(context.resources, context.repoRoot)) ?? context.repoRoot;
-  return await readLatestSecurityReport(context.resources, repoRoot);
-});
-
-export const router = module.router({
+/** Completed Security operation tree consumed by the HQ Ops service router. */
+export const router = {
   securityCheck,
   gateEnable,
   getSecurityReport,
-});
+};

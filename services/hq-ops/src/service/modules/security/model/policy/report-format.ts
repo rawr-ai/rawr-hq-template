@@ -1,4 +1,7 @@
-import type { SecurityFinding, SecurityMode, SecurityReport } from "../entities";
+import type { SecurityFinding, SecurityMode, SecurityReport } from "../dto/security.dto";
+
+const DEFAULT_MAX_REPORT_BYTES = 250_000;
+const textEncoder = new TextEncoder();
 
 export function severityRank(severity: SecurityFinding["severity"]): number {
   switch (severity) {
@@ -73,4 +76,49 @@ export function securityReport(input: {
     mode: input.mode,
     meta: { repoRoot: input.repoRoot },
   };
+}
+
+function estimateSizeBytes(value: unknown): number {
+  return textEncoder.encode(JSON.stringify(value)).byteLength;
+}
+
+function capFindings(report: SecurityReport, maxBytes: number): SecurityReport {
+  if (estimateSizeBytes(report) <= maxBytes) return report;
+
+  const capped: SecurityReport = {
+    ...report,
+    findings: report.findings.slice(),
+    summary: `${report.summary} (truncated)`,
+  };
+  if (estimateSizeBytes(capped) <= maxBytes) return capped;
+
+  let count = Math.min(capped.findings.length, 50);
+  for (; count >= 1; count = Math.floor(count / 2)) {
+    const attempt: SecurityReport = { ...capped, findings: capped.findings.slice(0, count) };
+    if (estimateSizeBytes(attempt) <= maxBytes) return attempt;
+  }
+
+  return { ...capped, findings: [] };
+}
+
+/** Builds the bounded persisted document and timestamp-derived report filename. */
+export function securityReportDocument(
+  report: SecurityReport,
+  maxBytes = DEFAULT_MAX_REPORT_BYTES
+): { fileName: string; contents: string } {
+  const capped = capFindings(report, maxBytes);
+  const timestamp = capped.timestamp.replaceAll(":", "-").replaceAll(".", "-");
+  return {
+    fileName: `report-${timestamp}.json`,
+    contents: JSON.stringify(capped, null, 2),
+  };
+}
+
+/** Parses the persisted report projection without manufacturing missing data. */
+export function parseSecurityReport(raw: string): SecurityReport | null {
+  try {
+    return JSON.parse(raw) as SecurityReport;
+  } catch {
+    return null;
+  }
 }

@@ -1,4 +1,4 @@
-import type { RiskTolerance, SecurityFinding } from "../entities";
+import type { RiskTolerance, SecurityFinding } from "../dto/security.dto";
 import { severityRank } from "./report-format";
 
 export function toleranceToMaxSeverity(
