@@ -419,7 +419,7 @@ async function installConsumer(): Promise<void> {
   const installed = await run(
     "npm",
     ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"],
-    { cwd: consumerRoot, timeoutMs: 120_000 }
+    { cwd: consumerRoot, timeoutMs: 180_000 }
   );
   if (installed.exitCode !== 0) {
     throw new Error(`Could not install Habitat products: ${installed.stderr || installed.stdout}`);
