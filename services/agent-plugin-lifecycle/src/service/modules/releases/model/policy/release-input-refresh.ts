@@ -17,8 +17,8 @@ import {
   type ReleaseMemberDeclaration,
 } from "#agent-plugin-lifecycle-service/model/dto/release-input";
 import type { ReleaseIssue } from "#agent-plugin-lifecycle-service/model/dto/release-issue";
-import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
 import { createAgentPluginPayload } from "#agent-plugin-lifecycle-service/model/policy/agent-plugin-payload";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/policy/byte-equality";
 import { deriveAgentPluginPayloadInventory } from "#agent-plugin-lifecycle-service/model/policy/distribution-ownership";
 import {
   createAgentPluginReleaseInput,

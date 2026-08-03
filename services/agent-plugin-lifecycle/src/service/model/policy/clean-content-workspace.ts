@@ -26,8 +26,8 @@ import {
   type AgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
 } from "../dto/release-input";
-import { equalBytes } from "../helpers/byte-equality";
 import { createAgentPluginPayload } from "./agent-plugin-payload";
+import { equalBytes } from "./byte-equality";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { validateDeclaredPluginTree } from "./declared-plugin-tree";
 import { validateAgentPluginPayloadOwnership } from "./distribution-ownership";

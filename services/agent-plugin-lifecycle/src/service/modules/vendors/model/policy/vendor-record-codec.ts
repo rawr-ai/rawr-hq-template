@@ -3,7 +3,7 @@ import { Value } from "typebox/value";
 
 import type { CanonicalJsonValue } from "#agent-plugin-lifecycle-service/model/dto/canonical-json";
 import type { ContentDigest } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
-import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/policy/byte-equality";
 import {
   canonicalJsonLine,
   decodeCanonicalJson,

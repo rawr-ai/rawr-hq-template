@@ -596,7 +596,7 @@ services, resources, plugins, and packages remain private workspace projects.
   one qualified Oclif command used by content maintainers, CI, package callers,
   or provider operators. No operation remains solely for historical settlement
   machinery.
-- [ ] 5.2 Bring the service onto the positive topology: root
+- [x] 5.2 Bring the service onto the positive topology: root
   `base.ts`, `contract.ts`, `impl.ts`, `router.ts`; module
   `contract/index.ts`, `module.ts`, module-root `router.ts`, direct semantic
   contract leaves, named `router/*.router.ts` authoring leaves, optional

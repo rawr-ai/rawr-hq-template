@@ -8,7 +8,7 @@ import {
   type CanonicalChannelSelection,
   CanonicalChannelSelectionSchema,
 } from "../dto/current-main-selection";
-import { equalBytes } from "../helpers/byte-equality";
+import { equalBytes } from "./byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "./canonical-json";
 
 /** Validates and freezes the shared current-main record structure. */

@@ -7,7 +7,7 @@ import {
   GitTreeIdSchema,
   RepositoryIdentitySchema,
 } from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { equalBytes } from "#agent-plugin-lifecycle-service/model/helpers/byte-equality";
+import { equalBytes } from "#agent-plugin-lifecycle-service/model/policy/byte-equality";
 import type { VendorStatusRequest, VendorUpdateIssue } from "../dto/vendor-operations";
 import type { VendorSourceIdentity } from "../dto/vendor-records";
 import {
