@@ -11,8 +11,8 @@ import {
   type Client,
   type CreateClientOptions,
   createClient,
-} from "@habitat-ai/rawr-hyperresearch-codex";
-import type { HyperresearchCliBackend } from "@habitat-ai/rawr-hyperresearch-codex/resources";
+  type HyperresearchCliBackend,
+} from "@habitat-ai/rawr-hyperresearch-codex/client";
 import { FixtureHyperresearchCliBackend } from "./fixture-cli";
 import { NodeHyperresearchCliBackend } from "./hyperresearch-codex-resources/cli";
 import { createNodeHyperresearchIO } from "./hyperresearch-codex-resources/io";

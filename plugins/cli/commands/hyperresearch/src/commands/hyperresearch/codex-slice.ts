@@ -1,5 +1,5 @@
 import { RawrCommand } from "@habitat-ai/rawr-core";
-import { type HyperresearchTier } from "@habitat-ai/rawr-hyperresearch-codex/types";
+import type { HyperresearchTier } from "@habitat-ai/rawr-hyperresearch-codex/client";
 import { Flags } from "@oclif/core";
 import { FixtureHyperresearchCliBackend } from "../../lib/fixture-cli";
 import { createHyperresearchCodexClient } from "../../lib/hyperresearch-codex-binding";

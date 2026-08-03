@@ -1669,13 +1669,16 @@ services, resources, plugins, and packages remain private workspace projects.
   migration laws advisory with empty baselines and expose the current red
   corpus; move no production source and add no local Habitat SDK, graph owner,
   or runner.
-- [ ] 5.7e21h Before moving a production domain schema into `model/entities`,
+- [x] 5.7e21h Before moving a production domain schema into `model/entities`,
   extend the shared TypeBox contract and platform-neutral declaration laws to
   service- and module-level entity roots. Preserve the common Magic/Template
   law rather than adding a RAWR-only fork. Prove canonical TypeBox schema and
   generated-type ownership, platform and persistence neutrality, and the
   one-way DTO/contract/store-to-entity dependency direction before the new
-  kind becomes an active source destination.
+  kind becomes an active source destination. Hyperresearch now supplies the
+  first production admission: its cross-module run ledger owns stable identity,
+  while Runs-owned V8 lifecycle, boundary DTOs, host ports, and step policy
+  remain with their smallest truthful owners.
 - [ ] 5.7e21i Correct the shared public-consumer law's owner-local relative
   path classification before returning it to enforcement. Preserve owner-local
   `../../src/service` proof imports while rejecting actual sibling-service

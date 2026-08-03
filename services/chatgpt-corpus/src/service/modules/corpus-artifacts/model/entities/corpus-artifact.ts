@@ -1,13 +1,17 @@
-import { type Static, type TSchema, Type } from "typebox";
+import { type Static, Type } from "typebox";
 import {
   ARTIFACT_OUTPUT_DIRECTORIES,
   STATIC_ARTIFACT_FILE_REFS,
 } from "../../../../model/policy/layout";
 
-function literalUnion(values: readonly string[]): TSchema {
+function literalUnion(values: readonly string[]) {
   if (values.length === 1) return Type.Literal(values[0]!);
   return Type.Union(
-    values.map((value) => Type.Literal(value)) as unknown as [TSchema, TSchema, ...TSchema[]]
+    values.map((value) => Type.Literal(value)) as [
+      ReturnType<typeof Type.Literal>,
+      ReturnType<typeof Type.Literal>,
+      ...ReturnType<typeof Type.Literal>[],
+    ]
   );
 }
 

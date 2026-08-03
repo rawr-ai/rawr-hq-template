@@ -29,13 +29,15 @@ canonical entity schema and generated type. A DTO is an operation or boundary
 projection and may compose, pick, omit, or refine an entity without acquiring
 its authority. Service-root entities own identity or invariants that genuinely
 span modules; access alone never promotes module meaning. Module entities
-remain specific to one subdomain. A standalone service spine admits the optional
-`db` child whose entire topology and import funnel belong to the independent
-[[../database/README|database blueprint]]; modules and embedded API service
-interiors do not own database placement. Entity placement is structurally
-advisory until the shared TypeBox and platform-neutral source laws cover the
-new kind; production source does not use it before that law lands. The
-independent source packets own
+remain specific to one subdomain. A port describes an external capability
+seam, while policy owns decisions and definitions; neither becomes an entity
+because several callers can reach it. A standalone service spine admits the
+optional `db` child whose entire topology and import funnel belong to the
+independent [[../database/README|database blueprint]]; modules and embedded API
+service interiors do not own database placement. The shared TypeBox authority and
+platform-independence laws cover service- and module-owned entity leaves.
+Entities remain upstream of DTO, contract, database, store, transport, and
+persistence concerns. The independent source packets own
 positive generic-anchor presence, the native declaration-to-implementation
 lineage and exact service-branch module hop, context boundaries, configured router
 authorship, the canonical module import surface,
@@ -182,11 +184,12 @@ imports implementation, middleware never imports `module.ts`, and module-root
 routers only import their operation leaves. No runtime discovery, loader,
 generator, or module SDK is
 part of the kind. An `entities` category is
-admitted only for stable domain identity and transition invariants, subject to
-the pending shared source law. Entity declarations are platform-, transport-,
-provider-, and persistence-neutral. Wire-shaped requests and results remain
-DTOs; physical mappings and private persistence implementations remain in the
-database boundary. DTOs and contracts may depend on entities, and stores may
+admitted only for stable domain identity and transition invariants under the
+shared TypeBox and platform-independence source laws. Entity declarations are
+platform-, transport-, provider-, and persistence-neutral. Wire-shaped requests
+and results remain DTOs; physical mappings and private persistence
+implementations remain in the database boundary. DTOs and contracts may depend
+on entities, and stores may
 map database records to entities when the domain models continuing identity,
 but entities never import from those downstream owners.
 
