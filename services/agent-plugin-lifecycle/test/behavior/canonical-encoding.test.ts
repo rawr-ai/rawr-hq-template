@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { equalBytes } from "../../src/service/model/helpers/byte-equality";
+import { equalBytes } from "../../src/service/model/policy/byte-equality";
 import { decodeBase64, encodeBase64 } from "../../src/service/model/policy/canonical-base64";
 import {
   canonicalJsonLine,

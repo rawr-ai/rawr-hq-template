@@ -19,7 +19,6 @@ import type { OwnershipIdentity } from "../dto/release-identity";
 import { type AgentPluginReleaseInput, AgentPluginReleaseInputSchema } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
-import { equalBytes } from "../helpers/byte-equality";
 import { verifyAgentPluginPayload } from "./agent-plugin-payload";
 import { payloadValue } from "./agent-plugin-payload-codec";
 import {
@@ -27,6 +26,7 @@ import {
   canonicalSerializeAgentPluginRelease,
   canonicalSerializeAgentPluginReleaseBody,
 } from "./agent-plugin-release-codec";
+import { equalBytes } from "./byte-equality";
 import { decodeCanonicalJson } from "./canonical-json";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import { ownershipClaimsFor, validateAgentPluginPayloadOwnership } from "./distribution-ownership";

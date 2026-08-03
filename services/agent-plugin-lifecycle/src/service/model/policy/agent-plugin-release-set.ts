@@ -25,13 +25,13 @@ import {
 } from "../dto/release-input";
 import type { ReleaseIssue } from "../dto/release-issue";
 import type { ReleaseResult } from "../dto/release-result";
-import { equalBytes } from "../helpers/byte-equality";
 import { verifyAgentPluginRelease } from "./agent-plugin-release";
 import { agentPluginReleaseValue } from "./agent-plugin-release-codec";
 import {
   canonicalSerializeAgentPluginReleaseSet,
   canonicalSerializeAgentPluginReleaseSetBody,
 } from "./agent-plugin-release-set-codec";
+import { equalBytes } from "./byte-equality";
 import { canonicalJsonLine, decodeCanonicalJson } from "./canonical-json";
 import { compareCanonicalText } from "./canonical-text-ordering";
 import {

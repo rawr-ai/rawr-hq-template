@@ -5912,6 +5912,27 @@ a normal patch version whose `habitat-cli-v*` tag proves the steady-state OIDC
 path. The bootstrap does not select packages outside Nx or create another
 publisher, release group, or installation surface.
 
+## Lifecycle Model Topology Closure
+
+Task 5.2 is complete. Every one of the lifecycle service's thirteen present
+root or module model kinds now exposes its required `index.ts` import face over
+direct semantic leaves. The model root still has no aggregate barrel, and no
+empty `entities` or `errors` category was introduced. The byte-equality policy
+moved byte-for-byte from the invalid `helpers` kind into the existing
+service-root `policy` kind; all nine consumers now name that single qualified
+owner without an alias or compatibility path.
+
+Independent architecture and structural reviews found no remaining root versus
+module ownership violation in this task's scope, no sibling-module production
+import, and no second byte-equality owner. The workspace lint passed, lifecycle
+typecheck passed with its test contract check, and the focused canonical
+encoding suite passed eight cases. The staged
+`require_service_spine_topology` packet produced zero lifecycle diagnostics
+when evaluated through Habitat's native structure policy against the live
+Git-visible tree. The packet remains staged: task 5.2b still owns the native
+context funnel, and task 5.7e22 still owns activation of the complete zero-red
+service-law set.
+
 ## Settlement Oracles
 
 The final product must prove:
