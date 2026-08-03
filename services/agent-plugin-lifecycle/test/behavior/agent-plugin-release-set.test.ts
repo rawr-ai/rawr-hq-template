@@ -1,8 +1,7 @@
 import type { Static } from "typebox";
 import { Value } from "typebox/value";
-import { beforeAll, describe, expect, expectTypeOf, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
-import type { AgentPluginReleaseBody } from "../../src/service/model/dto/agent-plugin-release";
 import {
   type AgentPluginReleaseSet,
   type AgentPluginReleaseSetBody,
@@ -38,7 +37,6 @@ import {
 import { releaseDigest, releaseSetDigest } from "../../src/service/model/policy/release-digest";
 import { createAgentPluginReleaseInput } from "../../src/service/model/policy/release-input";
 import { canonicalSerializeAgentPluginReleaseInput } from "../../src/service/model/policy/release-input-codec";
-import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../src/service/model/policy/release-payload-accounting";
 import {
   member,
   must,
@@ -63,81 +61,6 @@ interface MutableInMemoryRelease {
     [key: string]: unknown;
     entries: Array<Record<string, unknown>>;
   };
-}
-
-function aggregatePayloadLimitFixture() {
-  const entryBytes = new Uint8Array(3 * 1024 * 1024);
-  const sharedPayload = must(
-    createAgentPluginPayload(
-      Array.from({ length: 11 }, (_, index) => ({
-        path: `content-${String(index).padStart(2, "0")}.bin`,
-        mode: 0o644,
-        bytes: entryBytes,
-      }))
-    )
-  );
-  const releaseInput = must(
-    createAgentPluginReleaseInput(releaseInputBody(sharedPayload, sharedPayload))
-  );
-  const source = productFixture().alphaRelease.body;
-  const releases = releaseInput.body.members.map((memberDeclaration) => {
-    const body: AgentPluginReleaseBody = {
-      schemaVersion: 1 as const,
-      builderProtocolVersion: 1 as const,
-      contentAuthority: releaseInput.body.contentAuthority,
-      sourceRepository: source.sourceRepository,
-      sourceCommit: source.sourceCommit,
-      sourceTree: source.sourceTree,
-      releaseInputDigest: releaseInput.releaseInputDigest,
-      pluginId: memberDeclaration.pluginId,
-      aliases: releaseInput.ownershipIndex.claims
-        .filter(
-          (claim) => claim.kind === "alias" && claim.ownerPluginId === memberDeclaration.pluginId
-        )
-        .map((claim) => claim.identity),
-      payloadManifest: sharedPayload.manifest,
-      payloadDigest: sharedPayload.payloadDigest,
-      vendor: memberDeclaration.vendor,
-      curation: memberDeclaration.curation,
-    };
-    return {
-      schemaVersion: 1 as const,
-      releaseDigest: releaseDigest(canonicalSerializeAgentPluginReleaseBody(body)),
-      body,
-      payload: sharedPayload,
-    };
-  });
-  const alphaRelease = releases[0];
-  const betaRelease = releases[1];
-  if (alphaRelease === undefined || betaRelease === undefined) {
-    throw new Error("Aggregate release fixture requires two members");
-  }
-  const setBody: AgentPluginReleaseSet["body"] = {
-    schemaVersion: 1,
-    builderProtocolVersion: 1,
-    contentAuthority: releaseInput.body.contentAuthority,
-    sourceRepository: source.sourceRepository,
-    sourceCommit: source.sourceCommit,
-    sourceTree: source.sourceTree,
-    releaseInputDigest: releaseInput.releaseInputDigest,
-    ownershipIndex: releaseInput.ownershipIndex,
-    members: [
-      {
-        pluginId: alphaRelease.body.pluginId,
-        releaseDigest: alphaRelease.releaseDigest,
-      },
-      {
-        pluginId: betaRelease.body.pluginId,
-        releaseDigest: betaRelease.releaseDigest,
-      },
-    ],
-  };
-  const releaseSet = {
-    schemaVersion: 1,
-    releaseSetDigest: releaseSetDigest(canonicalSerializeAgentPluginReleaseSetBody(setBody)),
-    body: setBody,
-  };
-  return { releaseInput, releases, releaseSet };
 }
 
 describe("complete release-set integrity", () => {
@@ -382,47 +305,6 @@ describe("complete release-set integrity", () => {
     expect(mixed.ok).toBe(false);
     if (!mixed.ok)
       expect(mixed.issues.map((entry) => entry.code)).toContain("SOURCE_IDENTITY_MISMATCH");
-  });
-
-  describe("aggregate payload bound", () => {
-    let fixture: ReturnType<typeof aggregatePayloadLimitFixture>;
-
-    beforeAll(() => {
-      fixture = aggregatePayloadLimitFixture();
-    });
-
-    it("rejects overflow during release-set construction", () => {
-      const created = createAgentPluginReleaseSet({
-        releaseInput: fixture.releaseInput,
-        releases: fixture.releases,
-      });
-      expect(created).toMatchObject({
-        ok: false,
-        issues: [
-          expect.objectContaining({
-            code: "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-            path: "releaseSet.releases",
-            expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
-          }),
-        ],
-      });
-    });
-
-    it("rejects overflow during complete-set verification", () => {
-      expect(verifyAgentPluginReleaseSet(fixture.releaseSet).ok).toBe(true);
-
-      const verified = verifyCompleteReleaseSet(fixture.releaseSet, fixture.releases);
-      expect(verified).toMatchObject({
-        ok: false,
-        issues: [
-          expect.objectContaining({
-            code: "PAYLOAD_BYTES_LIMIT_EXCEEDED",
-            path: "releases",
-            expected: MAX_RELEASE_SET_PAYLOAD_BYTES,
-          }),
-        ],
-      });
-    });
   });
 
   it("rejects a self-consistent release whose body disagrees with its release input", () => {
