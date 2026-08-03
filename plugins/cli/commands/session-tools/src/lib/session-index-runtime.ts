@@ -3,7 +3,7 @@ import type {
   SessionIndexBatch,
   SessionIndexRuntime,
   SessionIndexStatement,
-} from "@habitat-ai/rawr-session-intelligence/ports/session-index-runtime";
+} from "@habitat-ai/rawr-session-intelligence/client";
 import { defaultSessionIndexPathSync } from "./session-paths";
 import { openSqliteDb } from "./sqlite";
 
