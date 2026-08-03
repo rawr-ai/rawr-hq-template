@@ -10,13 +10,7 @@ import { Cause, Effect, Exit, Fiber } from "effect";
 import { makeNodeGritRuleEvaluationResource } from "../index";
 
 const require = createRequire(import.meta.url);
-const gritPackageJsonPath = require.resolve("@getgrit/cli/package.json");
-const gritExecutable = path.join(
-  path.dirname(gritPackageJsonPath),
-  "node_modules",
-  ".bin_real",
-  process.platform === "win32" ? "grit.exe" : "grit"
-);
+const gritEntrypoint = require.resolve("@getgrit/cli/run-grit.js");
 const fixtureRoots: string[] = [];
 
 afterEach(async () => {
@@ -38,7 +32,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
     const resource = makeNodeGritRuleEvaluationResource({
-      executable: gritExecutable,
+      command: process.execPath,
+      args: [gritEntrypoint],
       timeoutMs: 30_000,
     });
     const program = "language js(typescript)\n`forbidden()`";
@@ -76,7 +71,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     const result = await Effect.runPromise(
       makeNodeGritRuleEvaluationResource({
-        executable: gritExecutable,
+        command: process.execPath,
+        args: [gritEntrypoint],
         timeoutMs: 30_000,
       }).evaluate({
         programs: [
@@ -127,7 +123,11 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     await expect(
       Effect.runPromise(
-        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_500 }).evaluate({
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 1_500,
+        }).evaluate({
           programs: [
             { id: "deadline-a", program: "language js(typescript)\n`first()`" },
             { id: "deadline-b", program: "language js(typescript)\n`second()`" },
@@ -172,7 +172,11 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     expect(
       await Effect.runPromise(
-        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate(
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 1_000,
+        }).evaluate(
           evaluationRequest("ordered", "language js(typescript)\n`forbidden()`", [subject])
         )
       )
@@ -218,9 +222,11 @@ describe("grit-effect-platform-node rule evaluation", () => {
     });
 
     const rejected = await evaluationFailure(
-      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate(
-        evaluationRequest("wrong", "language js(typescript)\n`forbidden()`", [subject])
-      )
+      makeNodeGritRuleEvaluationResource({
+        command: executable,
+        args: [],
+        timeoutMs: 1_000,
+      }).evaluate(evaluationRequest("wrong", "language js(typescript)\n`forbidden()`", [subject]))
     );
     expect(rejected).toMatchObject({
       _tag: "RuleEvaluationFailure",
@@ -235,7 +241,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     const unavailable = await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: path.join(fixture, "missing-grit"),
+        command: path.join(fixture, "missing-grit"),
+        args: [],
         timeoutMs: 1_000,
       }).evaluate(
         evaluationRequest("unavailable", "language js(typescript)\n`forbidden()`", [subject])
@@ -253,7 +260,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     );
     const nonzero = await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: nonzeroExecutable,
+        command: nonzeroExecutable,
+        args: [],
         timeoutMs: 1_000,
       }).evaluate(evaluationRequest("nonzero", "language js(typescript)\n`forbidden()`", [subject]))
     );
@@ -270,7 +278,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     );
     const malformed = await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: malformedExecutable,
+        command: malformedExecutable,
+        args: [],
         timeoutMs: 1_000,
       }).evaluate(
         evaluationRequest("malformed", "language js(typescript)\n`forbidden()`", [subject])
@@ -286,7 +295,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     const fixture = await makeFixture();
     const rejected = await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: path.join(fixture, "missing-grit"),
+        command: path.join(fixture, "missing-grit"),
+        args: [],
         timeoutMs: 1_000,
       }).evaluate(
         evaluationRequest("relative", "language js(typescript)\n`forbidden()`", ["subject.ts"])
@@ -304,7 +314,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     await writeFile(subject, "allowed();\n");
     const rejected = await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: path.join(fixture, "missing-grit"),
+        command: path.join(fixture, "missing-grit"),
+        args: [],
         timeoutMs: 1_000,
       }).evaluate({
         programs: [
@@ -335,7 +346,11 @@ describe("grit-effect-platform-node rule evaluation", () => {
 
     await expect(
       Effect.runPromise(
-        makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 1_000 }).evaluate({
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 1_000,
+        }).evaluate({
           programs: [
             { id: "rayon-a", program: "language js(typescript)\n`first()`" },
             { id: "rayon-b", program: "language js(typescript)\n`second()`" },
@@ -365,7 +380,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     );
     await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: malformedExecutable,
+        command: malformedExecutable,
+        args: [],
         timeoutMs: 1_000,
       }).evaluate(
         evaluationRequest("malformed", "language js(typescript)\n`forbidden()`", [subject])
@@ -376,7 +392,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
     const slowExecutable = await writeExecutable(fixture, "slow-grit", "#!/bin/sh\nsleep 10\n");
     const timedOut = await evaluationFailure(
       makeNodeGritRuleEvaluationResource({
-        executable: slowExecutable,
+        command: slowExecutable,
+        args: [],
         timeoutMs: 50,
       }).evaluate({
         programs: [
@@ -402,7 +419,11 @@ describe("grit-effect-platform-node rule evaluation", () => {
     );
 
     const result = await Effect.runPromise(
-      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 5_000 }).evaluate({
+      makeNodeGritRuleEvaluationResource({
+        command: executable,
+        args: [],
+        timeoutMs: 5_000,
+      }).evaluate({
         programs: [
           { id: "large", program: "language js(typescript)\n`large()`" },
           { id: "clean", program: "language js(typescript)\n`clean()`" },
@@ -427,7 +448,11 @@ describe("grit-effect-platform-node rule evaluation", () => {
     );
 
     const overflow = await evaluationFailure(
-      makeNodeGritRuleEvaluationResource({ executable, timeoutMs: 5_000 }).evaluate(
+      makeNodeGritRuleEvaluationResource({
+        command: executable,
+        args: [],
+        timeoutMs: 5_000,
+      }).evaluate(
         evaluationRequest("overflow", "language js(typescript)\n`forbidden()`", [subject])
       )
     );
@@ -450,7 +475,8 @@ describe("grit-effect-platform-node rule evaluation", () => {
       `#!/usr/bin/env node\nrequire("node:fs").writeFileSync(${JSON.stringify(pidPath)}, String(process.pid));\nprocess.on("SIGTERM", () => process.exit(0));\nsetInterval(() => {}, 30_000);\n`
     );
     const resource = makeNodeGritRuleEvaluationResource({
-      executable: slowExecutable,
+      command: slowExecutable,
+      args: [],
       timeoutMs: 30_000,
     });
     const baseline = await temporaryCatalogs();
