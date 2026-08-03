@@ -30,7 +30,10 @@
 - Each client construction resolves one absolute workspace root over the ready
   Node provider profile and the SDK's packaged policy envelope.
 - `HABITAT_COMMAND_TIMEOUT_MS` retains the production integer range of 1 through
-  600000 milliseconds and defaults to 30000.
+  600000 milliseconds and defaults to 600000.
+- Production resolves the postinstall-realized native binary from the exact
+  pinned `@getgrit/cli` package. Rule evaluation disables downloads and never
+  routes the JSON protocol through the package's acquisition wrapper.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` remains the closed protocol-1 policy envelope. The shipped
   blueprint files do not become active pack members merely by being present.

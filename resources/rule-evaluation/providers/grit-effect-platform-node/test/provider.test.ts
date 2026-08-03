@@ -10,7 +10,13 @@ import { Cause, Effect, Exit, Fiber } from "effect";
 import { makeNodeGritRuleEvaluationResource } from "../index";
 
 const require = createRequire(import.meta.url);
-const gritExecutable = require.resolve("@getgrit/cli/run-grit.js");
+const gritPackageJsonPath = require.resolve("@getgrit/cli/package.json");
+const gritExecutable = path.join(
+  path.dirname(gritPackageJsonPath),
+  "node_modules",
+  ".bin_real",
+  process.platform === "win32" ? "grit.exe" : "grit"
+);
 const fixtureRoots: string[] = [];
 
 afterEach(async () => {
@@ -324,7 +330,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
     const executable = await writeExecutable(
       fixture,
       "rayon-grit",
-      `#!/bin/sh\nif ! mkdir '${lockPath}' 2>/dev/null; then\n  printf 'concurrent grit process\\n' >&2\n  exit 43\nfi\ntrap 'rmdir "${lockPath}"' EXIT\nprintf x >> '${invocationPath}'\nif [ "$RAYON_NUM_THREADS" != "2" ]; then\n  printf 'wrong rayon pool: %s\\n' "$RAYON_NUM_THREADS" >&2\n  exit 42\nfi\nsleep 0.05\nprintf '%s\\n' '${JSON.stringify({ paths: [subject], results: [] })}' >&2\n`
+      `#!/bin/sh\nif ! mkdir '${lockPath}' 2>/dev/null; then\n  printf 'concurrent grit process\\n' >&2\n  exit 43\nfi\ntrap 'rmdir "${lockPath}"' EXIT\nprintf x >> '${invocationPath}'\nif [ "$RAYON_NUM_THREADS" != "2" ]; then\n  printf 'wrong rayon pool: %s\\n' "$RAYON_NUM_THREADS" >&2\n  exit 42\nfi\nif [ "$GRIT_DOWNLOADS_DISABLED" != "true" ]; then\n  printf 'runtime downloads are not disabled\\n' >&2\n  exit 41\nfi\nsleep 0.05\nprintf '%s\\n' '${JSON.stringify({ paths: [subject], results: [] })}' >&2\n`
     );
 
     await expect(
