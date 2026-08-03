@@ -1,6 +1,6 @@
 import { createAnalyticsMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy";
 
 /** Authors corpus analytics through the service's complete context. */
 export const middleware = base.middleware(

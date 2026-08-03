@@ -2,7 +2,7 @@ import {
   type Client,
   type CreateClientOptions,
   createClient,
-} from "@habitat-ai/rawr-chatgpt-corpus";
+} from "@habitat-ai/rawr-chatgpt-corpus/client";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import {

@@ -6,10 +6,7 @@ import CorpusConsolidate from "../src/commands/corpus/consolidate";
 import CorpusInit from "../src/commands/corpus/init";
 
 const tempPaths: string[] = [];
-const FIXTURES_ROOT = path.resolve(
-  path.dirname(new URL(import.meta.url).pathname),
-  "../../../../../services/chatgpt-corpus/test/fixtures"
-);
+const FIXTURES_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "fixtures");
 
 afterEach(async () => {
   vi.restoreAllMocks();

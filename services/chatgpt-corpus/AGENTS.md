@@ -14,7 +14,7 @@
 ## Boundaries
 
 - Consumers cross through declared package exports; module contracts, routers,
-  and helpers remain package-owned.
+  and policy remain package-owned.
 - The service owns corpus interpretation and artifact layout. A host-supplied
   `WorkspaceStore` owns the underlying workspace I/O mechanics.
 - Do not move provider filesystem behavior or unrelated research orchestration
@@ -48,7 +48,7 @@
 
 - [Repository router](../../AGENTS.md)
 - [Public service contract](src/service/contract.ts)
-- [Workspace store port](src/orpc/ports/workspace-store.ts)
+- [Workspace store port](src/service/model/ports/workspace-store.ts)
 
 ## Validation
 
