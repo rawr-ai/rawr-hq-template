@@ -22,8 +22,12 @@ import {
   MAX_RELEASE_MEMBERS,
 } from "../../../../model/dto/release-input";
 import { ReleaseIssueSchema } from "../../../../model/dto/release-issue";
-import { NonEmptyReadonlyArray, Uint8ArraySchema } from "../../../../model/dto/structural";
+import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
 import { StagedContentWorkspacePolicySchema } from "./staged-content-workspace";
+
+const RuntimeBytesSchema = Type.Unknown({
+  description: "Runtime byte carrier admitted or constructed by Releases policy",
+});
 
 export const CheckInputSchema = ReadonlyObject(
   Type.Object({
@@ -45,7 +49,7 @@ export const ReleaseInputRecordInputSchema = Type.Union([
     additionalProperties: false,
   }),
   ReadonlyObject(
-    Type.Object({ kind: Type.Literal("validate-envelope"), bytes: Uint8ArraySchema }),
+    Type.Object({ kind: Type.Literal("validate-envelope"), bytes: RuntimeBytesSchema }),
     { additionalProperties: false }
   ),
 ]);
@@ -61,7 +65,7 @@ export const ReleaseInputRecordResultSchema = Type.Union([
             minimum: 1,
             maximum: MAX_RELEASE_INPUT_ENVELOPE_BYTES,
           }),
-          bytes: Uint8ArraySchema,
+          bytes: RuntimeBytesSchema,
         }),
         { additionalProperties: false }
       ),
@@ -105,7 +109,7 @@ const ReleaseInputRefreshSuccessSchema = ReadonlyObject(
       minimum: 1,
       maximum: MAX_RELEASE_INPUT_ENVELOPE_BYTES,
     }),
-    bytes: Uint8ArraySchema,
+    bytes: RuntimeBytesSchema,
   }),
   { additionalProperties: false }
 );

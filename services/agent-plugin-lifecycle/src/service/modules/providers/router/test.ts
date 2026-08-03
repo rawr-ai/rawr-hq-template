@@ -10,6 +10,7 @@ import {
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
+import { ORPCError } from "@orpc/server";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import {
@@ -44,6 +45,11 @@ import type {
   VerificationFact,
 } from "../model/dto/provider-lifecycle";
 import type { SelectedContent, SelectedContentResolution } from "../model/dto/selected-content";
+import {
+  hasCanonicalProviderHomes,
+  hasStrictDescendantHomes,
+  isCanonicalProviderHome,
+} from "../model/policy/disposable-root";
 import {
   classifyNativeMutationStep,
   completedMutationTarget,
@@ -115,6 +121,19 @@ export const test = module.test.effect(function* ({ context, input: request }) {
     ...request,
     targets: canonicalProviderTargets(request.targets),
   });
+  if (
+    !isCanonicalProviderHome(canonicalRequest.disposableRoot) ||
+    !hasCanonicalProviderHomes(canonicalRequest.targets)
+  ) {
+    return new ORPCError("BAD_REQUEST", {
+      message: "Expected a canonical non-root absolute path",
+    });
+  }
+  if (!hasStrictDescendantHomes(canonicalRequest.disposableRoot, canonicalRequest.targets)) {
+    return new ORPCError("BAD_REQUEST", {
+      message: "Every provider test home must be a strict descendant of the disposable root",
+    });
+  }
   const policy = canonicalRequest.contentWorkspace;
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: false });
 

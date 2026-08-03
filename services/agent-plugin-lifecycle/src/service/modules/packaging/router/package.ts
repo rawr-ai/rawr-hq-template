@@ -1,3 +1,4 @@
+import { ORPCError } from "@orpc/server";
 import { Effect } from "effect";
 
 import {
@@ -25,7 +26,10 @@ import { deriveReleaseSelection } from "../../../model/policy/release-derivation
 import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../model/policy/release-payload-accounting";
 import { COWORK_PACKAGE_FORMAT } from "../model/dto/packaging-lifecycle";
 import { coworkV1PackageDigest, createCoworkV1ArchiveRequest } from "../model/policy/cowork-v1";
-import { priorOutputObservationLimit } from "../model/policy/package-output";
+import {
+  isCanonicalPackageOutputPath,
+  priorOutputObservationLimit,
+} from "../model/policy/package-output";
 import {
   createPackagingFailure,
   mapPackageOutputFailure,
@@ -44,6 +48,12 @@ import { module } from "../module";
  * @relation Keep Packaging's transition inside its authored router rather than model policy.
  */
 const packageOperation = module.package.effect(function* ({ context, input: request }) {
+  const outputPath = request.outputPath;
+  if (!isCanonicalPackageOutputPath(outputPath)) {
+    return new ORPCError("BAD_REQUEST", {
+      message: "Expected a canonical non-root absolute package output path",
+    });
+  }
   const policy = request.contentWorkspace;
   const inspectContentWorkspace: Effect.Effect<ContentWorkspaceInspection> = Effect.gen(
     function* () {
@@ -211,13 +221,13 @@ const packageOperation = module.package.effect(function* ({ context, input: requ
     sourceTree: inspected.snapshot.sourceTree,
     release: packagedReleaseIdentity(derivation.value),
     format: COWORK_PACKAGE_FORMAT,
-    outputPath: request.outputPath,
+    outputPath,
     packageDigest,
   } as const;
   const outputAttempt = yield* Effect.result(
     Effect.uninterruptible(
       context.packageOutput.publish({
-        outputPath: request.outputPath,
+        outputPath,
         bytes: new Uint8Array(bytes),
         maxPriorOutputBytes: priorOutputObservationLimit(bytes.byteLength),
       })

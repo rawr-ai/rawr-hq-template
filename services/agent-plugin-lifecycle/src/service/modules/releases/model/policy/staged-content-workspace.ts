@@ -18,7 +18,12 @@ import {
   type SourceEligibilityIssueCode,
   sourceEligibilityIssue,
 } from "../../../../model/dto/content-workspace";
-import type { PluginId, ReleaseRelativePath } from "../../../../model/dto/release-identity";
+import type {
+  ContentAuthority,
+  PluginId,
+  ReleaseRelativePath,
+  RepositoryIdentity,
+} from "../../../../model/dto/release-identity";
 import {
   type AgentPluginReleaseInput,
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
@@ -49,7 +54,11 @@ import type {
   StagedContentWorkspaceInspection,
   StagedContentWorkspacePolicy,
 } from "../dto/staged-content-workspace";
-import { authorReleaseInputRefresh, releaseInputRefreshIneligible } from "./release-input-refresh";
+import {
+  authorReleaseInputRefresh,
+  type ReleaseInputRefreshPolicyResult,
+  releaseInputRefreshIneligible,
+} from "./release-input-refresh";
 
 const encoder = new TextEncoder();
 
@@ -77,6 +86,21 @@ interface StagedMemberRoot {
   readonly pluginId: PluginId;
   readonly root: ReleaseRelativePath;
 }
+
+interface AdmittedStagedContentWorkspacePolicy
+  extends Omit<
+    StagedContentWorkspacePolicy,
+    "repositoryIdentity" | "contentAuthority" | "releaseInputPath" | "pluginRoot"
+  > {
+  readonly repositoryIdentity: RepositoryIdentity;
+  readonly contentAuthority: ContentAuthority;
+  readonly releaseInputPath: ReleaseRelativePath;
+  readonly pluginRoot: ReleaseRelativePath;
+}
+
+type StagedContentWorkspacePolicyAdmission =
+  | Readonly<{ ok: true; value: AdmittedStagedContentWorkspacePolicy }>
+  | Readonly<{ ok: false; issue: SourceEligibilityIssue }>;
 
 type ObserveStagedIndexInput = Parameters<
   ContentWorkspaceResource<never>["observeGitStagedIndex"]
@@ -110,27 +134,81 @@ export function addStagedObservationByteLimits(
 export function validateStagedContentWorkspacePolicy(
   policy: StagedContentWorkspacePolicy
 ): SourceEligibilityIssue | undefined {
-  if (!parseRepositoryIdentity(policy.repositoryIdentity).ok) {
-    return sourceIssue("WrongRepository", "repository identity is not canonical");
+  const admitted = admitStagedContentWorkspacePolicy(policy);
+  return admitted.ok ? undefined : admitted.issue;
+}
+
+function admitStagedContentWorkspacePolicy(
+  policy: StagedContentWorkspacePolicy
+): StagedContentWorkspacePolicyAdmission {
+  const repositoryIdentity = parseRepositoryIdentity(
+    policy.repositoryIdentity,
+    "contentWorkspace.repositoryIdentity"
+  );
+  if (!repositoryIdentity.ok) {
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("WrongRepository", "repository identity is not canonical"),
+    });
   }
-  if (!parseContentAuthority(policy.contentAuthority).ok) {
-    return sourceIssue("ReleaseInputMismatch", "content authority is not canonical");
+  const contentAuthority = parseContentAuthority(
+    policy.contentAuthority,
+    "contentWorkspace.contentAuthority"
+  );
+  if (!contentAuthority.ok) {
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("ReleaseInputMismatch", "content authority is not canonical"),
+    });
+  }
+  const releaseInputPath = parseReleaseRelativePath(
+    policy.releaseInputPath,
+    "contentWorkspace.releaseInputPath"
+  );
+  const pluginRoot = parseReleaseRelativePath(policy.pluginRoot, "contentWorkspace.pluginRoot");
+  if (!releaseInputPath.ok || !pluginRoot.ok) {
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("ReleaseInputMismatch", "content workspace paths are not canonical"),
+    });
   }
   if (
-    !parseReleaseRelativePath(policy.releaseInputPath).ok ||
-    !parseReleaseRelativePath(policy.pluginRoot).ok
+    releaseInputPath.value === pluginRoot.value ||
+    releaseInputPath.value.startsWith(`${pluginRoot.value}/`)
   ) {
-    return sourceIssue("ReleaseInputMismatch", "content workspace paths are not canonical");
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("ReleaseInputMismatch", "release input must be outside the plugin root"),
+    });
   }
   if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(policy.remoteName)) {
-    return sourceIssue("WrongRepository", "remote name is not canonical");
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("WrongRepository", "remote name is not canonical"),
+    });
   }
-  if (!isCanonicalHeadRef(policy.refName))
-    return sourceIssue("WrongRef", "ref name is not a canonical branch ref");
+  if (!isCanonicalHeadRef(policy.refName)) {
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("WrongRef", "ref name is not a canonical branch ref"),
+    });
+  }
   if (policy.remoteUrl.length === 0 || /[\u0000-\u001f\u007f]/u.test(policy.remoteUrl)) {
-    return sourceIssue("WrongRepository", "remote URL policy is not canonical");
+    return Object.freeze({
+      ok: false,
+      issue: sourceIssue("WrongRepository", "remote URL policy is not canonical"),
+    });
   }
-  return undefined;
+  return Object.freeze({
+    ok: true,
+    value: Object.freeze({
+      ...policy,
+      repositoryIdentity: repositoryIdentity.value,
+      contentAuthority: contentAuthority.value,
+      releaseInputPath: releaseInputPath.value,
+      pluginRoot: pluginRoot.value,
+    }),
+  });
 }
 
 export function releaseInputObservationRequest(
@@ -183,6 +261,10 @@ export type ReleaseInputRefreshObservationPlan =
 export function planReleaseInputRefreshObservation(
   request: ReleaseInputRefreshRequest
 ): ReleaseInputRefreshObservationPlan {
+  const admittedPolicy = admitStagedContentWorkspacePolicy(request.contentWorkspace);
+  if (!admittedPolicy.ok) {
+    return releaseInputRefreshIneligible(admittedPolicy.issue.code, admittedPolicy.issue.detail);
+  }
   const memberRoots = refreshMemberRoots(request);
   if (!memberRoots.ok) {
     return releaseInputRefreshIneligible("ReleaseInputMismatch", memberRoots.detail);
@@ -190,13 +272,13 @@ export function planReleaseInputRefreshObservation(
   return Object.freeze({
     kind: "Ready",
     observationRequest: Object.freeze({
-      locator: request.contentWorkspace.locator,
+      locator: admittedPolicy.value.locator,
       remoteSelection: Object.freeze({
         kind: "Named",
-        remoteName: request.contentWorkspace.remoteName,
+        remoteName: admittedPolicy.value.remoteName,
       }),
-      refName: request.contentWorkspace.refName,
-      materializedPaths: Object.freeze([request.contentWorkspace.releaseInputPath]),
+      refName: admittedPolicy.value.refName,
+      materializedPaths: Object.freeze([admittedPolicy.value.releaseInputPath]),
       materializedRoots: Object.freeze(
         memberRoots.value.map((entry) => entry.root).sort(compareCanonicalText)
       ),
@@ -212,7 +294,7 @@ export function classifyReleaseInputRefreshObservation(
   request: ReleaseInputRefreshRequest,
   memberRoots: readonly StagedMemberRoot[],
   observation: GitStagedIndexObservation
-): ReleaseInputRefreshResult {
+): ReleaseInputRefreshPolicyResult {
   if (!sameStagedIndexBinding(observation.opening, observation.closing)) {
     return refreshSourceChanged(
       "Git HEAD, ref, repository, or index changed during staged observation"
@@ -220,20 +302,11 @@ export function classifyReleaseInputRefreshObservation(
   }
 
   try {
-    const policy = request.contentWorkspace;
-    const policyIssue = validateStagedContentWorkspacePolicy(policy);
-    if (policyIssue !== undefined) {
-      return releaseInputRefreshIneligible(policyIssue.code, policyIssue.detail);
+    const admittedPolicy = admitStagedContentWorkspacePolicy(request.contentWorkspace);
+    if (!admittedPolicy.ok) {
+      return releaseInputRefreshIneligible(admittedPolicy.issue.code, admittedPolicy.issue.detail);
     }
-    if (
-      policy.releaseInputPath === policy.pluginRoot ||
-      policy.releaseInputPath.startsWith(`${policy.pluginRoot}/`)
-    ) {
-      return releaseInputRefreshIneligible(
-        "ReleaseInputMismatch",
-        "release input must be outside the plugin root"
-      );
-    }
+    const policy = admittedPolicy.value;
     const anchorIssue = validateAnchor(observation.opening.anchor, policy);
     if (anchorIssue !== undefined) {
       return releaseInputRefreshIneligible(anchorIssue.code, anchorIssue.detail);
@@ -314,22 +387,27 @@ export function classifyStagedReleaseInputObservation(
   }
 
   try {
-    const anchorIssue = validateAnchor(observation.opening.anchor, policy);
+    const admittedPolicy = admitStagedContentWorkspacePolicy(policy);
+    if (!admittedPolicy.ok) {
+      return stagedIneligible(admittedPolicy.issue.code, admittedPolicy.issue.detail);
+    }
+    const workspace = admittedPolicy.value;
+    const anchorIssue = validateAnchor(observation.opening.anchor, workspace);
     if (anchorIssue !== undefined) return stagedIneligible(anchorIssue.code, anchorIssue.detail);
     const openingEntries = classifyStagedIndexEntries(observation.opening.entries);
     const openingBlobByObjectId = stagedBlobMap(
       observation,
       openingEntries,
-      [policy.releaseInputPath],
+      [workspace.releaseInputPath],
       []
     );
     const releaseInputEntry = openingEntries.find(
-      (entry) => entry.path === policy.releaseInputPath
+      (entry) => entry.path === workspace.releaseInputPath
     );
     if (releaseInputEntry === undefined) {
       return stagedIneligible(
         "MissingReleaseInput",
-        `missing staged release input ${policy.releaseInputPath}`
+        `missing staged release input ${workspace.releaseInputPath}`
       );
     }
     const releaseInputBytes = requireStagedBlob(openingBlobByObjectId, releaseInputEntry);
@@ -347,29 +425,36 @@ export function classifyStagedReleaseInputObservation(
       );
     }
     const releaseInput = releaseInputResult.value;
-    if (releaseInput.body.contentAuthority !== policy.contentAuthority) {
+    if (releaseInput.body.contentAuthority !== workspace.contentAuthority) {
       return stagedIneligible(
         "ReleaseInputMismatch",
         "release input declares a different content authority"
       );
     }
     const memberRoots: StagedMemberRoot[] = [];
-    for (const member of releaseInput.body.members) {
+    for (const [memberIndex, member] of releaseInput.body.members.entries()) {
+      const pluginIdResult = parsePluginId(
+        member.pluginId,
+        `releaseInput.body.members[${memberIndex}].pluginId`
+      );
+      if (!pluginIdResult.ok) {
+        return stagedIneligible("ReleaseInputMismatch", "member identity is not canonical");
+      }
       const memberRootResult = parseReleaseRelativePath(
-        `${policy.pluginRoot}/${member.pluginId}`,
+        `${workspace.pluginRoot}/${pluginIdResult.value}`,
         "memberRoot"
       );
       if (!memberRootResult.ok)
         return stagedIneligible("ReleaseInputMismatch", "member root is not canonical");
       memberRoots.push(
         Object.freeze({
-          pluginId: member.pluginId,
+          pluginId: pluginIdResult.value,
           root: memberRootResult.value,
         })
       );
     }
     const declaredPluginIssue = validateDeclaredPluginTree({
-      pluginRoot: policy.pluginRoot,
+      pluginRoot: workspace.pluginRoot,
       paths: openingEntries.map((entry) => entry.path),
       declaredPluginIds: memberRoots.map((entry) => entry.pluginId),
     });
@@ -404,24 +489,30 @@ export function classifyStagedMaterializationObservation(
     );
 
   try {
+    const admittedPolicy = admitStagedContentWorkspacePolicy(policy);
+    if (!admittedPolicy.ok) {
+      return stagedIneligible(admittedPolicy.issue.code, admittedPolicy.issue.detail);
+    }
+    const workspace = admittedPolicy.value;
     const anchor = observation.opening.anchor;
     const entries = classifyStagedIndexEntries(observation.opening.entries);
     const materializedRoots = releaseInputClassification.memberRoots.map((entry) => entry.root);
     const blobByObjectId = stagedBlobMap(
       observation,
       entries,
-      [policy.releaseInputPath],
+      [workspace.releaseInputPath],
       materializedRoots
     );
 
-    const admitted = new Set<ReleaseRelativePath>([policy.releaseInputPath]);
+    const admitted = new Set<ReleaseRelativePath>([workspace.releaseInputPath]);
     const payloads: Array<Readonly<{ pluginId: PluginId; payload: AgentPluginPayload }>> = [];
     for (const member of releaseInputClassification.releaseInput.body.members) {
-      const memberRoot = releaseInputClassification.memberRoots.find(
+      const admittedMember = releaseInputClassification.memberRoots.find(
         (entry) => entry.pluginId === member.pluginId
-      )?.root;
-      if (memberRoot === undefined)
+      );
+      if (admittedMember === undefined)
         return stagedIneligible("ReleaseInputMismatch", "member root is missing");
+      const memberRoot = admittedMember.root;
       const payloadEntries: PayloadEntryInput[] = [];
       const entriesUnderRoot = entries
         .filter((entry) => entry.path.startsWith(`${memberRoot}/`))
@@ -455,7 +546,7 @@ export function classifyStagedMaterializationObservation(
       }
       const ownershipIssues = validateAgentPluginPayloadOwnership(
         releaseInputClassification.releaseInput.ownershipIndex,
-        member.pluginId,
+        admittedMember.pluginId,
         payloadResult.value.manifest,
         `release.payloads.${member.pluginId}.manifest`
       );
@@ -467,7 +558,7 @@ export function classifyStagedMaterializationObservation(
       }
       payloads.push(
         Object.freeze({
-          pluginId: member.pluginId,
+          pluginId: admittedMember.pluginId,
           payload: payloadResult.value,
         })
       );
@@ -493,10 +584,10 @@ export function classifyStagedMaterializationObservation(
     const commit = parsedGitCommit(anchor.commit);
     const tree = parsedGitTree(anchor.tree);
     const stagedBinding = digestBinding({
-      repositoryIdentity: policy.repositoryIdentity,
-      remoteName: policy.remoteName,
-      remoteUrl: policy.remoteUrl,
-      refName: policy.refName,
+      repositoryIdentity: workspace.repositoryIdentity,
+      remoteName: workspace.remoteName,
+      remoteUrl: workspace.remoteUrl,
+      refName: workspace.refName,
       headCommit: commit,
       headTree: tree,
       entries: observation.opening.entries,
@@ -512,8 +603,8 @@ export function classifyStagedMaterializationObservation(
       kind: "StagedContentWorkspaceEligible",
       snapshot: Object.freeze({
         kind: "StagedContentWorkspaceSnapshot",
-        repositoryIdentity: policy.repositoryIdentity,
-        refName: policy.refName,
+        repositoryIdentity: workspace.repositoryIdentity,
+        refName: workspace.refName,
         headCommit: commit,
         headTree: tree,
         releaseInput: releaseInputClassification.releaseInput,
@@ -550,7 +641,7 @@ export function classifyStagedObservationFailure(
 /** Maps a staged resource failure into the refresh operation's public domain result. */
 export function classifyReleaseInputRefreshObservationFailure(
   failure: ContentWorkspaceFailure
-): ReleaseInputRefreshResult {
+): ReleaseInputRefreshPolicyResult {
   return refreshInspectionFailure(classifyStagedObservationFailure(failure, "payloads"));
 }
 
@@ -750,7 +841,7 @@ function classificationFailure(
 
 function refreshInspectionFailure(
   failure: Exclude<StagedContentWorkspaceInspection, { kind: "StagedContentWorkspaceEligible" }>
-): ReleaseInputRefreshResult {
+): ReleaseInputRefreshPolicyResult {
   return failure.kind === "SourceChanged"
     ? refreshSourceChanged(failure.detail)
     : releaseInputRefreshIneligible(failure.issues[0].code, failure.issues[0].detail);
