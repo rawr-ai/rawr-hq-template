@@ -34,7 +34,7 @@
 ## Flow
 
 - `contract/check.ts` declares the TypeBox-backed operation. `module.ts`
-  curates workspace observation capabilities. `router/check.router.ts` authors
+  curates workspace observation capabilities. `router/check.ts` authors
   discovery and policy evaluation, and module-root `router.ts` composes the
   completed operation without replaying module middleware.
 - The caller submits roots, filename sets, and policy controls; the operation

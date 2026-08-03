@@ -33,7 +33,7 @@
 - `contract/sync-upstream.ts` declares the operation boundary and
   `contract/index.ts` composes the module contract.
 - `module.ts` curates the Repo operation context from the service base.
-- `router/sync-upstream.router.ts` authors target resolution, admission,
+- `router/sync-upstream.ts` authors target resolution, admission,
   planning, and ordered execution.
 - Module-root `router.ts` composes the completed operation for the service
   router.

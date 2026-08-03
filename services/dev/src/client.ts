@@ -1,5 +1,5 @@
 import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
-import { router } from "#dev-service/router";
+import { router } from "./service/router";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
 type Invocation = RouterInitialContext["invocation"];
@@ -36,7 +36,7 @@ export function createClient({ deps, scope, config }: CreateClientOptions) {
 export type Client = ReturnType<typeof createClient>;
 
 /** Public declarative contract for development-operation consumers. */
-export { type Contract, contract } from "#dev-service/contract";
+export { type Contract, contract } from "./service/contract";
 
 /** Shared operation-report types returned across the Dev capability suite. */
 export type {
@@ -44,13 +44,13 @@ export type {
   DevIssue,
   DevopsAction,
   DevPreflight,
-} from "#dev-service/model/dto/operation-outcomes.dto";
+} from "./service/model/dto/operation-outcomes.dto";
 
 /** Shared scratch-policy request and observation types used by guarded operations. */
 export type {
   ScratchPolicyCheck,
   ScratchPolicyInput,
-} from "#dev-service/model/dto/scratch-policy.dto";
+} from "./service/model/dto/scratch-policy.dto";
 
 /** Host capability contracts implemented by the concrete Dev environment adapter. */
 export type {
@@ -62,13 +62,13 @@ export type {
   DevPathResource,
   DevProcessResource,
   DevResources,
-} from "#dev-service/model/ports/dev-resources";
+} from "./service/model/ports/dev-resources";
 
 /** Repository synchronization request and result types. */
 export type {
   RepoSyncUpstreamInput,
   RepoSyncUpstreamResult,
-} from "#dev-service/modules/repo/model/dto/repo-operations.dto";
+} from "./service/modules/repo/model/dto/repo-operations.dto";
 
 /** Stack diagnosis and drain request and result types. */
 export type {
@@ -76,10 +76,10 @@ export type {
   StackDoctorResult,
   StackDrainInput,
   StackDrainResult,
-} from "#dev-service/modules/stack/model/dto/stack-operations.dto";
+} from "./service/modules/stack/model/dto/stack-operations.dto";
 
 /** Worktree cleanup request and result types. */
 export type {
   WorktreeCleanupInput,
   WorktreeCleanupResult,
-} from "#dev-service/modules/worktree/model/dto/worktree-operations.dto";
+} from "./service/modules/worktree/model/dto/worktree-operations.dto";
