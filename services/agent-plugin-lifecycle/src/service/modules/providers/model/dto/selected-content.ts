@@ -4,14 +4,14 @@ import { ReadonlyObject, Refine, type Static, Type } from "typebox";
 import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   PayloadManifestEntrySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
-import { MAX_OWNERSHIP_CLAIMS } from "#agent-plugin-lifecycle-service/model/dto/distribution-ownership";
+} from "../../../../model/dto/agent-plugin-payload";
+import { MAX_OWNERSHIP_CLAIMS } from "../../../../model/dto/distribution-ownership";
 import {
   PayloadDigestSchema,
   ReleaseDigestSchema,
   ReleaseInputDigestSchema,
   ReleaseSetDigestSchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-digest";
+} from "../../../../model/dto/release-digest";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
@@ -20,9 +20,9 @@ import {
   OwnershipIdentitySchema,
   PluginIdSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { MAX_RELEASE_MEMBERS } from "#agent-plugin-lifecycle-service/model/dto/release-input";
-import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
+} from "../../../../model/dto/release-identity";
+import { MAX_RELEASE_MEMBERS } from "../../../../model/dto/release-input";
+import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
 
 const MAX_SELECTED_ISSUES = 256;
 const MAX_SELECTED_ISSUE_DETAIL = 4_096;

@@ -1,8 +1,8 @@
 import {
   createAgentPluginReleaseInput,
   decodeAgentPluginReleaseInput,
-} from "#agent-plugin-lifecycle-service/model/policy/release-input";
-import { canonicalSerializeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input-codec";
+} from "../../../model/policy/release-input";
+import { canonicalSerializeAgentPluginReleaseInput } from "../../../model/policy/release-input-codec";
 import { module } from "../module";
 
 /** Encodes or validates the canonical release-input record without acquiring resources. */

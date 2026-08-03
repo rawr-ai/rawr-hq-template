@@ -3,10 +3,10 @@ import type {
   ContentWorkspaceIdentity,
 } from "@habitat-ai/rawr-resource-content-workspace";
 import { Value } from "typebox/value";
-import { ContentDigestSchema } from "#agent-plugin-lifecycle-service/model/dto/release-digest";
-import type { ProvenanceBinding } from "#agent-plugin-lifecycle-service/model/dto/release-input";
-import { contentDigest } from "#agent-plugin-lifecycle-service/model/policy/release-digest";
-import { decodeAgentPluginReleaseInput } from "#agent-plugin-lifecycle-service/model/policy/release-input";
+import { ContentDigestSchema } from "../../../../model/dto/release-digest";
+import type { ProvenanceBinding } from "../../../../model/dto/release-input";
+import { contentDigest } from "../../../../model/policy/release-digest";
+import { decodeAgentPluginReleaseInput } from "../../../../model/policy/release-input";
 import type { VendorContentWorkspaceRef, VendorUpdateIssue } from "../dto/vendor-operations";
 import type {
   VendorLockRecord,

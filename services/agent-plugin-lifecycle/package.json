@@ -12,9 +12,6 @@
   ],
   "type": "module",
   "packageManager": "bun@1.3.14",
-  "imports": {
-    "#agent-plugin-lifecycle-service/*": "./src/service/*.ts"
-  },
   "exports": {
     "./client": {
       "types": "./src/client.ts",

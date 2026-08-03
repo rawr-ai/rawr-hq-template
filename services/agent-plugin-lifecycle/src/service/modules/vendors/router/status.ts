@@ -3,8 +3,8 @@ import { Effect } from "effect";
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
-} from "#agent-plugin-lifecycle-service/model/dto/agent-plugin-payload";
-import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "#agent-plugin-lifecycle-service/model/dto/release-input";
+} from "../../../model/dto/agent-plugin-payload";
+import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "../../../model/dto/release-input";
 import type { VendorSourceStatus } from "../model/dto/vendor-operations";
 import {
   VENDOR_LOCK_PROTOCOL,

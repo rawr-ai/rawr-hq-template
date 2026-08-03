@@ -1,14 +1,14 @@
 import {
   type CurrentMainRecordValidationCode,
   MAX_CURRENT_MAIN_V3_RECORD_BYTES,
-} from "#agent-plugin-lifecycle-service/model/dto/current-main-record";
-import type { CanonicalChannelSelection } from "#agent-plugin-lifecycle-service/model/dto/current-main-selection";
+} from "../../../../model/dto/current-main-record";
+import type { CanonicalChannelSelection } from "../../../../model/dto/current-main-selection";
 import {
   canonicalSerializeCurrentMainRecord,
   decodeCurrentMainRecord,
   describeCurrentMainRecordValidation,
   normalizeCurrentMainRecord,
-} from "#agent-plugin-lifecycle-service/model/policy/current-main-record";
+} from "../../../../model/policy/current-main-record";
 import {
   type CanonicalCurrentMainV3,
   CURRENT_MAIN_V3_PROTOCOL,

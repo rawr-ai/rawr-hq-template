@@ -1,13 +1,13 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import { RemoteUrlSchema } from "#agent-plugin-lifecycle-service/model/dto/content-workspace";
+import { RemoteUrlSchema } from "../../../../model/dto/content-workspace";
 import {
   ContentAuthoritySchema,
   GitCommitIdSchema,
   GitTreeIdSchema,
   RepositoryIdentitySchema,
-} from "#agent-plugin-lifecycle-service/model/dto/release-identity";
-import { NonEmptyReadonlyArray } from "#agent-plugin-lifecycle-service/model/dto/structural";
+} from "../../../../model/dto/release-identity";
+import { NonEmptyReadonlyArray } from "../../../../model/dto/structural";
 import {
   CanonicalAbsolutePathSchema,
   NormalizedRelativePathSchema,
