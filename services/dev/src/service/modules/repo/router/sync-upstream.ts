@@ -1,40 +1,46 @@
-import { execStep } from "#dev-service/model/helpers/command-execution";
-import { parseGitStatus, parseWorktrees } from "#dev-service/model/helpers/git-output";
+import { parseGitStatus, parseWorktrees } from "../../../model/policy/git-output";
 import {
   execution,
   executionIssueFromStep,
   issue,
+  observedStep,
   planned,
   preflight,
+  rejectedStep,
   skipped,
   warning,
-} from "#dev-service/model/policy/operation-outcomes";
-import type { DevProcessResource } from "#dev-service/model/ports/dev-resources";
+} from "../../../model/policy/operation-outcomes";
 import { timestampForBranch } from "../model/policy/sync-branch";
 import { module } from "../module";
 
-async function resolveUpstreamRef(
-  context: { workspaceRoot: string; process: DevProcessResource },
-  explicit?: string
-) {
-  if (explicit) return { ref: explicit, source: "flag" as const };
-  const config = await execStep(context.process, context.workspaceRoot, "git", [
-    "config",
-    "--get",
-    "rawr.upstreamRef",
-  ]);
-  const configured = (config.stdout ?? "").trim();
-  if (config.status === "succeeded" && configured)
-    return { ref: configured, source: "git-config" as const };
-  return { ref: "origin/main", source: "default" as const };
-}
-
 /** Synchronizes one admitted repository through its ordered Git and Graphite plan. */
 export const syncUpstream = module.syncUpstream.handler(async ({ context, input }) => {
+  const execStep = async (command: string, args: string[], timeoutMs?: number) => {
+    try {
+      const result = await context.process.exec(command, args, {
+        cwd: context.workspaceRoot,
+        timeoutMs,
+      });
+      return observedStep(command, args, result);
+    } catch (error) {
+      return rejectedStep(command, args, error);
+    }
+  };
+
   const apply = Boolean(input.apply);
   const branchPrefix = input.branchPrefix ?? "chore/upstream-sync";
   const branchName = `${branchPrefix}-${timestampForBranch(context.clock.now())}`;
-  const upstreamRef = await resolveUpstreamRef(context, input.upstreamRef);
+  let upstreamRef: { ref: string; source: "flag" | "git-config" | "default" };
+  if (input.upstreamRef) {
+    upstreamRef = { ref: input.upstreamRef, source: "flag" };
+  } else {
+    const config = await execStep("git", ["config", "--get", "rawr.upstreamRef"]);
+    const configured = (config.stdout ?? "").trim();
+    upstreamRef =
+      config.status === "succeeded" && configured
+        ? { ref: configured, source: "git-config" }
+        : { ref: "origin/main", source: "default" };
+  }
   const scratchPolicy = await context.checkScratchPolicy({
     ...input.scratchPolicy,
     enforce: apply,
@@ -48,22 +54,14 @@ export const syncUpstream = module.syncUpstream.handler(async ({ context, input 
   ];
   const issues = [];
 
-  const gitStatus = await execStep(context.process, context.workspaceRoot, "git", [
-    "status",
-    "--short",
-    "--branch",
-  ]);
+  const gitStatus = await execStep("git", ["status", "--short", "--branch"]);
   const parsedStatus = parseGitStatus(gitStatus.stdout ?? "");
   if (parsedStatus.dirty)
     issues.push(issue("DIRTY_WORKING_TREE", "Working tree must be clean before upstream sync."));
   if (parsedStatus.detached)
     issues.push(issue("DETACHED_HEAD_UNSUPPORTED", "Upstream sync requires a named branch."));
 
-  const refCheck = await execStep(context.process, context.workspaceRoot, "git", [
-    "rev-parse",
-    "--verify",
-    upstreamRef.ref,
-  ]);
+  const refCheck = await execStep("git", ["rev-parse", "--verify", upstreamRef.ref]);
   if (refCheck.status !== "succeeded") {
     issues.push(
       issue("UPSTREAM_REF_MISSING", "Configured upstream ref does not exist.", {
@@ -72,22 +70,14 @@ export const syncUpstream = module.syncUpstream.handler(async ({ context, input 
     );
   }
 
-  const branchCheck = await execStep(context.process, context.workspaceRoot, "git", [
-    "show-ref",
-    "--verify",
-    `refs/heads/${branchName}`,
-  ]);
+  const branchCheck = await execStep("git", ["show-ref", "--verify", `refs/heads/${branchName}`]);
   if (branchCheck.status === "succeeded") {
     issues.push(
       issue("BRANCH_ALREADY_EXISTS", "Generated sync branch already exists.", { branchName })
     );
   }
 
-  const worktreeList = await execStep(context.process, context.workspaceRoot, "git", [
-    "worktree",
-    "list",
-    "--porcelain",
-  ]);
+  const worktreeList = await execStep("git", ["worktree", "list", "--porcelain"]);
   if (worktreeList.status === "succeeded") {
     const occupied = parseWorktrees(worktreeList.stdout ?? "").find(
       (entry) => entry.branch === branchName
@@ -105,7 +95,7 @@ export const syncUpstream = module.syncUpstream.handler(async ({ context, input 
       );
     }
   }
-  const gtLs = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
+  const gtLs = await execStep("gt", ["ls"]);
   if (gtLs.status !== "succeeded") {
     issues.push(
       issue("GRAPHITE_UNAVAILABLE", "Graphite stack state is not readable.", {
@@ -143,13 +133,7 @@ export const syncUpstream = module.syncUpstream.handler(async ({ context, input 
   }
 
   const appliedSteps = [
-    await execStep(
-      context.process,
-      context.workspaceRoot,
-      "git",
-      ["fetch", "--all", "--prune"],
-      180_000
-    ),
+    await execStep("git", ["fetch", "--all", "--prune"], 180_000),
     skipped("git", ["switch", "-c", branchName]),
     skipped("git", ["merge", "--no-ff", upstreamRef.ref]),
     skipped("gt", ["sync", "--no-restack"]),
@@ -157,37 +141,15 @@ export const syncUpstream = module.syncUpstream.handler(async ({ context, input 
   ];
 
   if (appliedSteps[0].status === "succeeded") {
-    appliedSteps[1] = await execStep(context.process, context.workspaceRoot, "git", [
-      "switch",
-      "-c",
-      branchName,
-    ]);
+    appliedSteps[1] = await execStep("git", ["switch", "-c", branchName]);
   }
   if (appliedSteps[1].status === "succeeded") {
-    appliedSteps[2] = await execStep(
-      context.process,
-      context.workspaceRoot,
-      "git",
-      ["merge", "--no-ff", upstreamRef.ref],
-      300_000
-    );
+    appliedSteps[2] = await execStep("git", ["merge", "--no-ff", upstreamRef.ref], 300_000);
   }
   if (appliedSteps[2].status === "succeeded") {
-    appliedSteps[3] = await execStep(
-      context.process,
-      context.workspaceRoot,
-      "gt",
-      ["sync", "--no-restack"],
-      120_000
-    );
+    appliedSteps[3] = await execStep("gt", ["sync", "--no-restack"], 120_000);
     if (appliedSteps[3].status === "succeeded") {
-      appliedSteps[4] = await execStep(
-        context.process,
-        context.workspaceRoot,
-        "gt",
-        ["restack", "--upstack"],
-        120_000
-      );
+      appliedSteps[4] = await execStep("gt", ["restack", "--upstack"], 120_000);
     }
   }
   const executionIssues = appliedSteps

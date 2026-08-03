@@ -1,20 +1,24 @@
-import { execStep } from "#dev-service/model/helpers/command-execution";
-import { parseGitStatus } from "#dev-service/model/helpers/git-output";
+import { parseGitStatus } from "../../../model/policy/git-output";
+import { observedStep, rejectedStep } from "../../../model/policy/operation-outcomes";
 import { module } from "../module";
 
 /** Diagnoses Git, Graphite, and worktree observations for one workspace. */
 export const doctor = module.doctor.handler(async ({ context, input }) => {
-  const gitStatus = await execStep(context.process, context.workspaceRoot, "git", [
-    "status",
-    "--short",
-    "--branch",
-  ]);
-  const gtLs = await execStep(context.process, context.workspaceRoot, "gt", ["ls"]);
-  const worktreeList = await execStep(context.process, context.workspaceRoot, "git", [
-    "worktree",
-    "list",
-    "--porcelain",
-  ]);
+  const execStep = async (command: string, args: string[], timeoutMs?: number) => {
+    try {
+      const result = await context.process.exec(command, args, {
+        cwd: context.workspaceRoot,
+        timeoutMs,
+      });
+      return observedStep(command, args, result);
+    } catch (error) {
+      return rejectedStep(command, args, error);
+    }
+  };
+
+  const gitStatus = await execStep("git", ["status", "--short", "--branch"]);
+  const gtLs = await execStep("gt", ["ls"]);
+  const worktreeList = await execStep("git", ["worktree", "list", "--porcelain"]);
   const gitStatusReadable = gitStatus.status === "succeeded";
   const parsedStatus = gitStatusReadable
     ? parseGitStatus(gitStatus.stdout ?? "")

@@ -4,11 +4,11 @@ import {
   DevExecutionSchema,
   DevopsActionSchema,
   DevPreflightSchema,
-} from "#dev-service/model/dto/operation-outcomes.dto";
+} from "../../../../model/dto/operation-outcomes.dto";
 import {
   ScratchPolicyCheckSchema,
   ScratchPolicyInputSchema,
-} from "#dev-service/model/dto/scratch-policy.dto";
+} from "../../../../model/dto/scratch-policy.dto";
 
 /** Controls for synchronizing one clean workspace with its configured upstream ref. */
 export const RepoSyncUpstreamInputSchema = Type.Object(
