@@ -36,6 +36,7 @@
   },
   "dependencies": {
     "@effect/platform-node": "4.0.0-beta.101",
+    "@effect/platform-node-shared": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
     "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "2.0.0-beta.23",
