@@ -106,6 +106,7 @@ describe("installed Habitat products", () => {
     ) as { readonly dependencies?: Readonly<Record<string, string>> };
     expect(sdkManifest.dependencies).toMatchObject({
       "@effect/platform-node": "4.0.0-beta.101",
+      "@effect/platform-node-shared": "4.0.0-beta.101",
       "@orpc/contract": "2.0.0-beta.23",
       "@orpc/experimental-effect": "2.0.0-beta.23",
       "@orpc/server": "2.0.0-beta.23",
