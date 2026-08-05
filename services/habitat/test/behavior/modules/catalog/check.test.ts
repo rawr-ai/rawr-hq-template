@@ -34,6 +34,10 @@ type RecordingSourceInventory = {
 
 type Fixture = {
   readonly files: Readonly<Record<string, string>>;
+  readonly policyPack?: {
+    readonly packageJson?: string;
+    readonly manifest?: string;
+  };
   readonly directories?: readonly string[];
   readonly symlinks?: readonly {
     readonly path: string;
@@ -71,6 +75,37 @@ type InstanceSpec = {
 };
 
 describe("Habitat catalog check", () => {
+  test("executes an admitted Grit asset from the selected policy package", async () => {
+    const rule = { id: "package_rule" } satisfies RuleSpec;
+    const { calls, result } = await checkFixture(
+      {
+        files: {
+          [`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`]: blueprintToml("package", [rule]),
+          [`${POLICY_PACK_ROOT}/${POLICY_PACK_PATTERN_PATH}`]:
+            "# package_rule\n\n```grit\npackage_rule_from_selected_pack()\n```\n",
+          "packages/example/habitat.toml": instanceToml(exampleInstance()),
+        },
+        policyPack: {
+          manifest: JSON.stringify({
+            protocolVersion: 1,
+            blueprints: [{ id: "package", version: 1, path: POLICY_PACK_BLUEPRINT_PATH }],
+          }),
+        },
+      },
+      {}
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.programs).toEqual([
+      { id: "application-0", program: "package_rule_from_selected_pack()" },
+    ]);
+    expect(result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [{ ruleId: "package_rule", status: "pass" }],
+    });
+  });
+
   test("batches same-subject Grit programs and attributes clean, enforced, and advisory findings", async () => {
     const fixture = authorityFixture({
       blueprints: [
@@ -1541,8 +1576,8 @@ mode = "open"
     expect(JSON.stringify(checked.result)).not.toContain("packages/foo/target.ts");
   });
 
-  test("resolves the same relative pattern against distinct bound root-role bases", async () => {
-    const checked = await checkFixture(distinctRootStructureFixture(), {});
+  test("resolves distinct source and package paths from the project root", async () => {
+    const checked = await checkFixture(distinctProjectPathStructureFixture(), {});
 
     expect(checked.result).toMatchObject({
       _tag: "Completed",
@@ -1999,8 +2034,10 @@ async function withFixture<T>(
         });
         const fixtureFiles = {
           ...fixture.files,
-          [`${POLICY_PACK_ROOT}/package.json`]: DEFAULT_POLICY_PACK_PACKAGE_JSON,
-          [`${POLICY_PACK_ROOT}/habitat-pack.json`]: DEFAULT_POLICY_PACK_MANIFEST,
+          [`${POLICY_PACK_ROOT}/package.json`]:
+            fixture.policyPack?.packageJson ?? DEFAULT_POLICY_PACK_PACKAGE_JSON,
+          [`${POLICY_PACK_ROOT}/habitat-pack.json`]:
+            fixture.policyPack?.manifest ?? DEFAULT_POLICY_PACK_MANIFEST,
         };
         fixture.onWorkspaceRoot?.(workspaceRoot);
         for (const directory of [...(fixture.directories ?? [])].sort(textOrder)) {
@@ -2067,6 +2104,8 @@ async function withFixture<T>(
 
 const POLICY_PACK_NAME = "@fixture/habitat-blueprints";
 const POLICY_PACK_ROOT = ".test-policy-pack";
+const POLICY_PACK_BLUEPRINT_PATH = "dist/blueprints/package/blueprint.toml";
+const POLICY_PACK_PATTERN_PATH = "dist/blueprints/package/package_rule.md";
 const DEFAULT_POLICY_PACK_PACKAGE_JSON = JSON.stringify({
   name: POLICY_PACK_NAME,
   version: "1.2.3",
@@ -2322,7 +2361,7 @@ function reverseMixedRunnerFixture(): Fixture {
   });
 }
 
-function distinctRootStructureFixture(): Fixture {
+function distinctProjectPathStructureFixture(): Fixture {
   return {
     directories: ["packages/example/src"],
     files: {
@@ -2350,11 +2389,6 @@ selections = []
 id = "project"
 required = true
 kind = "directory"
-
-[[instance.roots]]
-id = "source"
-required = true
-kind = "directory"
 `,
       ".habitat/blueprints/package/distinct_roots.structure.toml": `schemaVersion = 2
 
@@ -2367,8 +2401,8 @@ mode = "open"
 
 [[scopes]]
 name = "source-base"
-rootRole = "source"
-relativePath = "base/missing.ts"
+rootRole = "project"
+relativePath = "src/base/missing.ts"
 kind = "file"
 mode = "open"
 `,
@@ -2380,7 +2414,6 @@ blueprintVersion = 1
 
 [roots]
 project = "packages/example"
-source = "packages/example/src"
 
 [selections]
 `,

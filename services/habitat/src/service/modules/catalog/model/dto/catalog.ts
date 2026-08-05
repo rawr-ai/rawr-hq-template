@@ -90,7 +90,6 @@ const CatalogIssueCodeSchema = Type.Union(
     Type.Literal("authority-path-kind-mismatch"),
     Type.Literal("authority-path-missing"),
     Type.Literal("authority-package-name-mismatch"),
-    Type.Literal("authority-policy-pack-members-unsupported"),
     Type.Literal("authority-resolution-failed"),
     Type.Literal("authority-rule-invalid"),
     Type.Literal("authority-schema-invalid"),
@@ -110,7 +109,8 @@ export const PolicyPackPackageJsonSchema = Type.Object(
   { additionalProperties: true, description: "Selected policy-pack npm metadata." }
 );
 
-const PolicyPackBlueprintMemberSchema = Type.Object(
+/** One exact blueprint member declared by the selected policy pack. */
+export const PolicyPackBlueprintMemberSchema = Type.Object(
   {
     id: IdSchema,
     version: Type.Integer({ minimum: 1, description: "Exact blueprint version." }),
@@ -233,7 +233,7 @@ export const BlueprintDefinitionSchema = Type.Object(
       { additionalProperties: false, description: "Instance vocabulary for this blueprint." }
     ),
   },
-  { additionalProperties: false, description: "Version 3 local blueprint definition authority." }
+  { additionalProperties: false, description: "Version 3 blueprint definition authority." }
 );
 
 /** Closed schema for one version 3 local instance document. */
@@ -264,7 +264,8 @@ export const HabitatInstanceManifestSchema = Type.Object(
   { additionalProperties: false, description: "Version 3 local Habitat instance authority." }
 );
 
-const LocalAuthorityProvenanceSchema = Type.Object(
+/** Repository-owned origin for a resolved Habitat fact. */
+export const LocalAuthorityProvenanceSchema = Type.Object(
   {
     kind: Type.Literal("local", { description: "Local repository authority kind." }),
     authorityRoot: AbsolutePathSchema,
@@ -273,12 +274,30 @@ const LocalAuthorityProvenanceSchema = Type.Object(
   { additionalProperties: false, description: "Local authority origin for a resolved fact." }
 );
 
+/** Selected-package origin for a resolved Habitat fact. */
+export const PolicyPackAuthorityProvenanceSchema = Type.Object(
+  {
+    kind: Type.Literal("policy-pack", { description: "Selected policy-pack authority kind." }),
+    packageName: PackageNameSchema,
+    packageVersion: PackageVersionSchema,
+    packageRoot: AbsolutePathSchema,
+    packageRelativePath: RelativePathSchema,
+  },
+  { additionalProperties: false, description: "Policy-pack origin for a resolved fact." }
+);
+
+/** Discriminated local or selected-package origin for a resolved Habitat fact. */
+export const AuthorityProvenanceSchema = Type.Union(
+  [LocalAuthorityProvenanceSchema, PolicyPackAuthorityProvenanceSchema],
+  { description: "Authority origin for a resolved Habitat fact." }
+);
+
 const BlueprintDefinitionRecordSchema = Type.Object(
   {
     definition: BlueprintDefinitionSchema,
-    provenance: LocalAuthorityProvenanceSchema,
+    provenance: AuthorityProvenanceSchema,
   },
-  { additionalProperties: false, description: "Admitted local blueprint with provenance." }
+  { additionalProperties: false, description: "Admitted blueprint with provenance." }
 );
 
 const ResolvedRootSchema = Type.Object(
@@ -332,11 +351,11 @@ const ResolvedBlueprintInstanceSchema = Type.Object(
 
 const ResolvedRuleAssetSchema = Type.Object(
   {
-    provenance: LocalAuthorityProvenanceSchema,
+    provenance: AuthorityProvenanceSchema,
     relativePath: RelativePathSchema,
     absolutePath: AbsolutePathSchema,
   },
-  { additionalProperties: false, description: "Resolved local runner asset." }
+  { additionalProperties: false, description: "Resolved runner asset." }
 );
 
 const ResolvedRootBindingSchema = Type.Object(
@@ -424,7 +443,7 @@ const ResolvedRuleApplicationSchema = Type.Object(
     lane: RuleLaneSchema,
     message: RuleMessageSchema,
     remediate: RuleRemediationSchema,
-    provenance: LocalAuthorityProvenanceSchema,
+    provenance: AuthorityProvenanceSchema,
     runner: Type.Union([ResolvedStructureRunnerSchema, ResolvedGritRunnerSchema], {
       description: "Fully resolved runner and acquisition facts.",
     }),
@@ -698,7 +717,7 @@ const HabitatCatalogSchema = Type.Object(
     schemaVersion: Type.Literal(3, { description: "Resolved authority catalog version." }),
     policyPack: ResolvedPolicyPackSchema,
     blueprints: Type.Array(BlueprintDefinitionRecordSchema, {
-      description: "Admitted local blueprints in stable identity/version order.",
+      description: "Admitted blueprints in stable identity/version order.",
     }),
     instances: Type.Array(ResolvedBlueprintInstanceSchema, {
       description: "Resolved instances in stable identity order.",
@@ -708,7 +727,7 @@ const HabitatCatalogSchema = Type.Object(
     }),
     compatibility: CompatibilityCatalogSchema,
   },
-  { additionalProperties: false, description: "Complete local Habitat authority catalog." }
+  { additionalProperties: false, description: "Complete Habitat authority catalog." }
 );
 
 /** Closed empty request; the service owns repository authority enumeration. */
@@ -758,8 +777,20 @@ export type BlueprintDefinition = Static<typeof BlueprintDefinitionSchema>;
 /** Selected npm package metadata admitted for a policy pack. */
 export type PolicyPackPackageJson = Static<typeof PolicyPackPackageJsonSchema>;
 
+/** One exact blueprint member declared by the selected policy pack. */
+export type PolicyPackBlueprintMember = Static<typeof PolicyPackBlueprintMemberSchema>;
+
 /** Closed selected policy-pack protocol manifest. */
 export type PolicyPackManifest = Static<typeof PolicyPackManifestSchema>;
+
+/** Repository-owned origin for one resolved Habitat fact. */
+export type LocalAuthorityProvenance = Static<typeof LocalAuthorityProvenanceSchema>;
+
+/** Selected-package origin for one resolved Habitat fact. */
+export type PolicyPackAuthorityProvenance = Static<typeof PolicyPackAuthorityProvenanceSchema>;
+
+/** Discriminated authority origin for one resolved Habitat fact. */
+export type AuthorityProvenance = Static<typeof AuthorityProvenanceSchema>;
 
 /** One admitted local instance manifest document. */
 export type HabitatInstanceManifest = Static<typeof HabitatInstanceManifestSchema>;

@@ -133,24 +133,302 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
-  test("rejects nonempty policy-pack membership explicitly", async () => {
+  test("resolves an exact package member, runner asset, application, and provenance", async () => {
+    const reads: string[] = [];
     const result = await resolveFixture({
+      ...policyPackInstanceFixture(),
+      clientFileSystem: (fileSystem, path, workspaceRoot) =>
+        FileSystem.makeNoop({
+          ...fileSystem,
+          readFileString: (candidate, encoding) => {
+            reads.push(toRepositoryPath(path.relative(workspaceRoot, candidate), path.sep));
+            return fileSystem.readFileString(candidate, encoding);
+          },
+        }),
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Resolved",
+      catalog: {
+        policyPack: {
+          blueprints: [{ id: "package", version: 1, path: POLICY_PACK_BLUEPRINT_PATH }],
+        },
+        blueprints: [
+          {
+            definition: { id: "package", version: 1 },
+            provenance: {
+              kind: "policy-pack",
+              packageName: POLICY_PACK_NAME,
+              packageVersion: "1.2.3",
+              packageRoot: expect.any(String),
+              packageRelativePath: POLICY_PACK_BLUEPRINT_PATH,
+            },
+          },
+        ],
+        applications: [
+          {
+            ruleId: "package_structure",
+            provenance: {
+              kind: "policy-pack",
+              packageName: POLICY_PACK_NAME,
+              packageVersion: "1.2.3",
+              packageRoot: expect.any(String),
+              packageRelativePath: POLICY_PACK_BLUEPRINT_PATH,
+            },
+            runner: {
+              structure: {
+                provenance: {
+                  kind: "policy-pack",
+                  packageName: POLICY_PACK_NAME,
+                  packageVersion: "1.2.3",
+                  packageRoot: expect.any(String),
+                  packageRelativePath: POLICY_PACK_STRUCTURE_PATH,
+                },
+                relativePath: POLICY_PACK_STRUCTURE_PATH,
+                absolutePath: expect.any(String),
+              },
+            },
+          },
+        ],
+      },
+    });
+    expect(
+      reads.filter((candidate) =>
+        candidate.endsWith(`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`)
+      )
+    ).toHaveLength(1);
+    expect(
+      reads.filter((candidate) =>
+        candidate.endsWith(`${POLICY_PACK_ROOT}/${POLICY_PACK_STRUCTURE_PATH}`)
+      )
+    ).toHaveLength(1);
+  });
+
+  test("rejects malformed, missing, and mismatched package members without local fallback", async () => {
+    const localFallback = packageInstanceFixture();
+    const malformed = await resolveFixture({
+      ...localFallback,
+      files: {
+        ...localFallback.files,
+        [`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`]: "not = [valid",
+      },
+      policyPack: { manifest: policyPackManifest() },
+    });
+    const missing = await resolveFixture({
+      ...localFallback,
+      policyPack: { manifest: policyPackManifest() },
+    });
+    const nonFile = await resolveFixture({
+      files: {},
+      directories: [`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`],
+      policyPack: { manifest: policyPackManifest() },
+    });
+    const missingAsset = await resolveFixture({
+      ...localFallback,
+      files: {
+        ...localFallback.files,
+        [`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`]: blueprintToml(),
+      },
+      policyPack: { manifest: policyPackManifest() },
+    });
+    const wrongId = await resolveFixture({
+      ...policyPackInstanceFixture({ definition: blueprintToml({ id: "service" }) }),
+    });
+    const wrongVersion = await resolveFixture({
+      ...policyPackInstanceFixture({ memberVersion: 2 }),
+    });
+
+    expect(malformed).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-toml-invalid",
+          path: `${POLICY_PACK_NAME}/${POLICY_PACK_BLUEPRINT_PATH}`,
+        },
+      ],
+    });
+    expect(missing).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-path-missing",
+          path: `${POLICY_PACK_NAME}/${POLICY_PACK_BLUEPRINT_PATH}`,
+        },
+      ],
+    });
+    expect(nonFile).toMatchObject({
+      _tag: "Rejected",
+      issues: [{ code: "authority-path-kind-mismatch" }],
+    });
+    expect(missingAsset).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-path-missing",
+          path: `${POLICY_PACK_NAME}/${POLICY_PACK_BLUEPRINT_PATH}#rule:package_structure`,
+        },
+      ],
+    });
+    expect(wrongId).toMatchObject({
+      _tag: "Rejected",
+      issues: [{ code: "authority-definition-kind-mismatch" }],
+    });
+    expect(wrongVersion).toMatchObject({
+      _tag: "Rejected",
+      issues: [{ code: "authority-version-mismatch" }],
+    });
+  });
+
+  test("rejects normalized and symbolic-link escapes for package members and assets", async () => {
+    const invalidPath = await resolveFixture({
       files: {},
       policyPack: {
-        manifest: JSON.stringify({
-          protocolVersion: 1,
-          blueprints: [{ id: "package", version: 1, path: "blueprints/package/blueprint.toml" }],
+        manifest: policyPackManifest([{ id: "package", version: 1, path: "../blueprint.toml" }]),
+      },
+    });
+    const escapingMember = await resolveFixture({
+      files: {},
+      symlinks: [
+        {
+          path: `${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`,
+          target: "file",
+          contents: blueprintToml(),
+        },
+      ],
+      policyPack: { manifest: policyPackManifest() },
+    });
+    const escapingAsset = await resolveFixture({
+      files: {
+        [`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`]: blueprintToml(),
+      },
+      symlinks: [
+        {
+          path: `${POLICY_PACK_ROOT}/${POLICY_PACK_STRUCTURE_PATH}`,
+          target: "file",
+          contents: structureToml(),
+        },
+      ],
+      policyPack: { manifest: policyPackManifest() },
+    });
+
+    expect(invalidPath).toMatchObject({
+      _tag: "Rejected",
+      issues: [expect.objectContaining({ code: "authority-path-invalid" })],
+    });
+    for (const result of [escapingMember, escapingAsset]) {
+      expect(result).toMatchObject({
+        _tag: "Rejected",
+        issues: [expect.objectContaining({ code: "authority-path-escape" })],
+      });
+    }
+  });
+
+  test("rejects duplicate and out-of-order package members", async () => {
+    for (const blueprints of [
+      [
+        { id: "package", version: 1, path: POLICY_PACK_BLUEPRINT_PATH },
+        { id: "package", version: 1, path: "dist/blueprints/other/blueprint.toml" },
+      ],
+      [
+        { id: "service", version: 1, path: "dist/blueprints/service/blueprint.toml" },
+        { id: "package", version: 1, path: POLICY_PACK_BLUEPRINT_PATH },
+      ],
+    ]) {
+      const result = await resolveFixture({
+        files: {},
+        policyPack: { manifest: policyPackManifest(blueprints) },
+      });
+      expect(result).toMatchObject({
+        _tag: "Rejected",
+        issues: [{ code: "authority-order-invalid" }],
+      });
+    }
+  });
+
+  test("keeps an exact redundant local definition inert with package provenance", async () => {
+    const fixture = policyPackInstanceFixture();
+    const result = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml(),
+      },
+    });
+
+    expect(result._tag).toBe("Resolved");
+    if (result._tag !== "Resolved") throw new Error("Expected exact redundant source to resolve.");
+    expect(result.catalog.blueprints).toHaveLength(1);
+    expect(result.catalog.blueprints[0]?.provenance).toMatchObject({ kind: "policy-pack" });
+    expect(result.catalog.applications).toHaveLength(1);
+    expect(result.catalog.applications[0]?.provenance).toMatchObject({ kind: "policy-pack" });
+  });
+
+  test("preserves local provenance for a unique repository definition and its asset", async () => {
+    const fixture = policyPackInstanceFixture();
+    const result = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        ".habitat/blueprints/service/blueprint.toml": blueprintToml({ id: "service" }),
+        ".habitat/blueprints/service/structure.toml": structureToml(),
+        "services/local/habitat.toml": instanceToml({
+          id: "local-service",
+          ownerProject: "@rawr/local-service",
+          blueprint: "service",
+          project: "services/local",
+        }),
+        "services/local/test/contract/api.typecheck.ts": "export {};\n",
+      },
+      directories: [...(fixture.directories ?? []), "services/local/src"],
+    });
+
+    expect(result._tag).toBe("Resolved");
+    if (result._tag !== "Resolved") throw new Error("Expected mixed package/local authority.");
+    const definition = result.catalog.blueprints.find(
+      ({ definition }) => definition.id === "service"
+    );
+    const application = result.catalog.applications.find(
+      ({ ruleId }) => ruleId === "service_structure"
+    );
+    expect(definition?.provenance).toMatchObject({
+      kind: "local",
+      authorityRoot: expect.any(String),
+      relativePath: ".habitat/blueprints/service/blueprint.toml",
+    });
+    expect(application?.provenance).toMatchObject({
+      kind: "local",
+      authorityRoot: expect.any(String),
+      relativePath: ".habitat/blueprints/service/blueprint.toml",
+    });
+    expect(application?.runner).toMatchObject({
+      structure: {
+        provenance: {
+          kind: "local",
+          authorityRoot: expect.any(String),
+          relativePath: ".habitat/blueprints/service/blueprint.toml",
+        },
+      },
+    });
+  });
+
+  test("rejects a conflicting local definition at a selected package identity", async () => {
+    const fixture = policyPackInstanceFixture();
+    const result = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml({
+          ruleId: "conflicting_structure",
         }),
       },
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       _tag: "Rejected",
       issues: [
         {
-          code: "authority-policy-pack-members-unsupported",
-          path: `${POLICY_PACK_NAME}/habitat-pack.json`,
-          message: "Policy-pack blueprint members are not admitted by this service version.",
+          code: "authority-duplicate-blueprint",
+          path: ".habitat/blueprints/package/blueprint.toml",
         },
       ],
     });
@@ -300,7 +578,7 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
-  test("resolves root bindings and selected members and rejects the wrong member kind", async () => {
+  test("resolves project-root bindings and selected members and rejects the wrong member kind", async () => {
     const fixture = packageInstanceFixture({ grit: true });
     const result = await resolveFixture(fixture);
     expect(result).toMatchObject({
@@ -308,10 +586,7 @@ describe("Habitat catalog resolve", () => {
       catalog: {
         instances: [
           {
-            roots: [
-              { id: "project", kind: "directory", path: "packages/example" },
-              { id: "source", kind: "directory", path: "packages/example/src" },
-            ],
+            roots: [{ id: "project", kind: "directory", path: "packages/example" }],
             selections: [
               {
                 id: "contract",
@@ -333,8 +608,8 @@ describe("Habitat catalog resolve", () => {
               acquisition: {
                 entries: [
                   {
-                    source: { kind: "root-role", id: "source" },
-                    path: "packages/example/src",
+                    source: { kind: "root-role", id: "project" },
+                    path: "packages/example",
                   },
                   {
                     source: { kind: "selection", id: "contract", member: "api" },
@@ -366,21 +641,44 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
+  test("refuses a caller-authored source root outside the blueprint vocabulary", async () => {
+    const fixture = packageInstanceFixture();
+    const result = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        "packages/example/habitat.toml": instanceToml().replace(
+          'project = "packages/example"\n',
+          'project = "packages/example"\nsource = "packages/redirected"\n'
+        ),
+      },
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        expect.objectContaining({
+          code: "authority-manifest-invalid",
+          message: 'Unknown root role "source".',
+        }),
+      ],
+    });
+  });
+
   test("rejects missing Grit acquisition root-role and selection bindings", async () => {
     const base = packageInstanceFixture({ grit: true });
-    const optionalSourceBlueprint = blueprintToml({ grit: true }).replace(
-      'id = "source"\nrequired = true',
-      'id = "source"\nrequired = false'
-    );
+    const optionalRootBlueprint = blueprintToml({ grit: true })
+      .replace('rootRoles = ["project"]', 'rootRoles = ["optional"]')
+      .replace(
+        '[[instance.roots]]\nid = "project"',
+        '[[instance.roots]]\nid = "optional"\nrequired = false\nkind = "directory"\n\n[[instance.roots]]\nid = "project"'
+      );
     const missingRoot = await resolveFixture({
       ...base,
       files: {
         ...base.files,
-        ".habitat/blueprints/package/blueprint.toml": optionalSourceBlueprint,
-        "packages/example/habitat.toml": instanceToml().replace(
-          'source = "packages/example/src"\n',
-          ""
-        ),
+        ".habitat/blueprints/package/blueprint.toml": optionalRootBlueprint,
+        "packages/example/habitat.toml": instanceToml(),
       },
     });
     expect(missingRoot).toMatchObject({
@@ -493,8 +791,12 @@ describe("Habitat catalog resolve", () => {
     const fixture = packageInstanceFixture();
     const result = await resolveFixture({
       ...fixture,
-      directories: [],
-      symlinks: [{ path: "packages/example/src", target: "directory" }],
+      files: Object.fromEntries(
+        Object.entries(fixture.files).filter(
+          ([candidate]) => candidate !== "packages/example/test/contract/api.typecheck.ts"
+        )
+      ),
+      symlinks: [{ path: "packages/example/test/contract/api.typecheck.ts", target: "file" }],
     });
 
     expect(result).toMatchObject({
@@ -948,12 +1250,47 @@ async function withFixture<T>(fixture: Fixture, use: (client: Client) => Promise
 
 const POLICY_PACK_NAME = "@fixture/habitat-blueprints";
 const POLICY_PACK_ROOT = ".test-policy-pack";
+const POLICY_PACK_BLUEPRINT_PATH = "dist/blueprints/package/blueprint.toml";
+const POLICY_PACK_STRUCTURE_PATH = "dist/blueprints/package/structure.toml";
 const DEFAULT_POLICY_PACK_PACKAGE_JSON = JSON.stringify({
   name: POLICY_PACK_NAME,
   version: "1.2.3",
   private: false,
 });
 const DEFAULT_POLICY_PACK_MANIFEST = JSON.stringify({ protocolVersion: 1, blueprints: [] });
+
+function policyPackManifest(
+  blueprints: readonly {
+    readonly id: string;
+    readonly version: number;
+    readonly path: string;
+  }[] = [{ id: "package", version: 1, path: POLICY_PACK_BLUEPRINT_PATH }]
+): string {
+  return JSON.stringify({ protocolVersion: 1, blueprints });
+}
+
+function policyPackInstanceFixture(
+  options: { readonly definition?: string; readonly memberVersion?: number } = {}
+): Fixture {
+  return {
+    files: {
+      [`${POLICY_PACK_ROOT}/${POLICY_PACK_BLUEPRINT_PATH}`]: options.definition ?? blueprintToml(),
+      [`${POLICY_PACK_ROOT}/${POLICY_PACK_STRUCTURE_PATH}`]: structureToml(),
+      "packages/example/habitat.toml": instanceToml(),
+      "packages/example/test/contract/api.typecheck.ts": "export {};\n",
+    },
+    directories: ["packages/example/src"],
+    policyPack: {
+      manifest: policyPackManifest([
+        {
+          id: "package",
+          version: options.memberVersion ?? 1,
+          path: POLICY_PACK_BLUEPRINT_PATH,
+        },
+      ]),
+    },
+  };
+}
 
 function packageInstanceFixture(options: { readonly grit?: boolean } = {}): Fixture {
   const asset = options.grit ? "pattern.md" : "structure.toml";
@@ -985,7 +1322,7 @@ patternName = "${ruleId}"
 
 [rules.runner.acquisition]
 kind = "check"
-rootRoles = ["source"]
+rootRoles = ["project"]
 selections = ["contract"]`
     : `[rules.runner]
 name = "habitat"
@@ -1009,11 +1346,6 @@ anchorRoot = "project"
 
 [[instance.roots]]
 id = "project"
-required = true
-kind = "directory"
-
-[[instance.roots]]
-id = "source"
 required = true
 kind = "directory"
 
@@ -1043,7 +1375,6 @@ blueprintVersion = 1
 
 [roots]
 project = "${project}"
-source = "${project}/src"
 
 [selections]
 contract = ["api"]
