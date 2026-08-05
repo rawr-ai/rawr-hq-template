@@ -134,12 +134,7 @@ jobs:
             fi
             sleep "$((attempt * 5))"
           done
-          consumer_root="${RUNNER_TEMP}/habitat-registry-consumer"
-          mkdir -p "${consumer_root}"
-          cd "${consumer_root}"
-          npm init --yes >/dev/null
-          printf '%s\n' '{}' > nx.json
-          npm install --save-dev --no-audit --no-fund "nx@23.1.0"
-          npx nx add "@habitat-ai/cli@${release_version}" --no-interactive
-          test "$(node -p "require('./node_modules/@habitat-ai/sdk/package.json').version")" = "${release_version}"
-          ./node_modules/.bin/habitat --help >/dev/null
+          HABITAT_ACCEPTANCE_REGISTRY_VERSION="${release_version}" \
+            bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package \
+            --skip-nx-cache \
+            --outputStyle=static

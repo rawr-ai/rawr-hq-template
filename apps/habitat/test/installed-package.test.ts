@@ -42,6 +42,15 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
   .filter((name) => name.length > 0);
 const sdkVersion = await readPackageVersion("packages/habitat-sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
+const registryVersion = process.env.HABITAT_ACCEPTANCE_REGISTRY_VERSION?.trim();
+if (
+  registryVersion !== undefined &&
+  (registryVersion.length === 0 || registryVersion !== sdkVersion || registryVersion !== cliVersion)
+) {
+  throw new Error(
+    "HABITAT_ACCEPTANCE_REGISTRY_VERSION must equal the SDK and CLI package versions."
+  );
+}
 const products: readonly PublicProduct[] = [
   {
     filename: `habitat-ai-sdk-${sdkVersion}.tgz`,
@@ -242,14 +251,12 @@ describe("installed Habitat products", () => {
     });
 
     const nx = path.join(consumerRoot, "node_modules/.bin/nx");
-    const cliTarball = path.join(
-      acceptanceRoot,
-      "packages",
-      publicProduct("@habitat-ai/cli").filename
-    );
+    const cliSpecifier =
+      registryVersion ??
+      `file:${path.join(acceptanceRoot, "packages", publicProduct("@habitat-ai/cli").filename)}`;
     const initialized = await run(
       nx,
-      ["add", `@habitat-ai/cli@file:${cliTarball}`, "--no-interactive"],
+      ["add", `@habitat-ai/cli@${cliSpecifier}`, "--no-interactive"],
       { cwd: consumerRoot, timeoutMs: 120_000 }
     );
     expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
@@ -464,6 +471,8 @@ async function listFiles(root: string, relativeRoot = ""): Promise<readonly stri
 }
 
 async function packPublicProducts(): Promise<void> {
+  if (registryVersion !== undefined) return;
+
   for (const product of products) {
     const packed = await run(
       "npm",
@@ -496,7 +505,10 @@ async function packPublicProducts(): Promise<void> {
 
 async function createConsumer(): Promise<void> {
   const dependencies = Object.fromEntries([
-    ...products.map((product) => [product.name, `file:../packages/${product.filename}`]),
+    ...products.map((product) => [
+      product.name,
+      registryVersion ?? `file:../packages/${product.filename}`,
+    ]),
     ["nx", "23.1.0"],
   ]);
   const files: Readonly<Record<string, string>> = {
