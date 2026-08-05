@@ -35,6 +35,7 @@ import {
   type ReleaseInputEnvelope,
   ReleaseInputEnvelopeSchema,
 } from "../../../src/service/model/dto/release-input";
+import { validateCleanContentWorkspacePolicy } from "../../../src/service/model/policy/clean-content-workspace";
 import { contract } from "../../../src/service/modules/releases/contract";
 import {
   type AgentPluginCheckRequest,
@@ -314,7 +315,7 @@ describe("release procedure schema boundary", () => {
     ).toBe(false);
   });
 
-  it("rejects non-canonical workspace and targeted-plugin authority at the callable boundary", async () => {
+  it("projects workspace structure and admits its remaining semantics in policy", async () => {
     const invalidWorkspaces = [
       { ...contentWorkspace, locator: "/" },
       { ...contentWorkspace, locator: "relative/content-workspace" },
@@ -333,19 +334,14 @@ describe("release procedure schema boundary", () => {
       { ...contentWorkspace, remoteUrl: "https://example.invalid/rawr-hq.git\n" },
       { ...contentWorkspace, remoteUrl: "u".repeat(513) },
       { ...contentWorkspace, refName: "main" },
-      { ...contentWorkspace, refName: "refs/heads/.hidden" },
-      { ...contentWorkspace, refName: "refs/heads/release.lock" },
-      { ...contentWorkspace, refName: "refs/heads/main..next" },
       { ...contentWorkspace, sourceCommit: "A".repeat(40) },
       { ...contentWorkspace, sourceCommit: "a".repeat(41) },
       { ...contentWorkspace, sourceTree: "b".repeat(63) },
       { ...contentWorkspace, releaseInputPath: "/.rawr/release-input.json" },
       { ...contentWorkspace, releaseInputPath: ".rawr/../release-input.json" },
       { ...contentWorkspace, releaseInputPath: "release:input.json" },
-      { ...contentWorkspace, releaseInputPath: "cafe\u0301/release-input.json" },
       { ...contentWorkspace, pluginRoot: "plugins\\agents" },
       { ...contentWorkspace, pluginRoot: "plugins/agents/" },
-      { ...contentWorkspace, pluginRoot: "\u{00e9}".repeat(513) },
     ];
 
     for (const invalid of invalidWorkspaces) {
@@ -353,6 +349,21 @@ describe("release procedure schema boundary", () => {
       expect(Value.Check(CheckInputSchema, request)).toBe(false);
       const validated = await standard(CheckInputSchema)["~standard"].validate(request);
       expect("issues" in validated).toBe(true);
+    }
+
+    const policyInvalidWorkspaces = [
+      { ...contentWorkspace, refName: "refs/heads/.hidden" },
+      { ...contentWorkspace, refName: "refs/heads/release.lock" },
+      { ...contentWorkspace, refName: "refs/heads/main..next" },
+      { ...contentWorkspace, releaseInputPath: "cafe\u0301/release-input.json" },
+      { ...contentWorkspace, pluginRoot: "\u{00e9}".repeat(513) },
+    ];
+    for (const invalid of policyInvalidWorkspaces) {
+      const request = { contentWorkspace: invalid, mode: { kind: "complete-set" } };
+      expect(Value.Check(CheckInputSchema, request)).toBe(true);
+      const validated = await standard(CheckInputSchema)["~standard"].validate(request);
+      expect("value" in validated).toBe(true);
+      expect(validateCleanContentWorkspacePolicy(invalid)).toBeDefined();
     }
 
     for (const pluginId of ["Cognition", "cognition/tools", "a".repeat(513)]) {
@@ -485,7 +496,7 @@ describe("release procedure schema boundary", () => {
         kind: "validate-envelope",
         bytes: "{}\n",
       })
-    ).toBe(false);
+    ).toBe(true);
     expect(
       Value.Check(ReleaseInputRecordInputSchema, {
         kind: "encode-body",
@@ -529,16 +540,19 @@ describe("release procedure schema boundary", () => {
       })
     ).toBe(false);
 
-    const invalidInputs = [
-      { kind: "encode-body", body: {}, path: ".rawr/release-input.json" },
-      { kind: "validate-envelope", bytes: "{}\n" },
-    ];
+    const invalidInputs = [{ kind: "encode-body", body: {}, path: ".rawr/release-input.json" }];
     for (const candidate of invalidInputs) {
       const validated = await standard(ReleaseInputRecordInputSchema)["~standard"].validate(
         candidate
       );
       expect("issues" in validated).toBe(true);
     }
+    expect(
+      await standard(ReleaseInputRecordInputSchema)["~standard"].validate({
+        kind: "validate-envelope",
+        bytes: "{}\n",
+      })
+    ).toHaveProperty("value");
 
     const invalidResults = [
       {

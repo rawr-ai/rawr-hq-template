@@ -14,7 +14,7 @@ import type {
   CurrentMainSelectionLocator,
 } from "../../../../model/dto/current-main-selection";
 import type { ReleaseDerivationSource } from "../../../../model/dto/release-derivation";
-import type { ReleaseRelativePath } from "../../../../model/dto/release-identity";
+import type { PluginId, ReleaseRelativePath } from "../../../../model/dto/release-identity";
 import { MAX_RELEASE_INPUT_ENVELOPE_BYTES } from "../../../../model/dto/release-input";
 import {
   createAgentPluginPayload,
@@ -22,7 +22,7 @@ import {
 } from "../../../../model/policy/agent-plugin-payload";
 import { compareCanonicalText } from "../../../../model/policy/canonical-text-ordering";
 import { validateDeclaredPluginTree } from "../../../../model/policy/declared-plugin-tree";
-import { parseReleaseRelativePath } from "../../../../model/policy/release-identity";
+import { parsePluginId, parseReleaseRelativePath } from "../../../../model/policy/release-identity";
 import { decodeAgentPluginReleaseInput } from "../../../../model/policy/release-input";
 import {
   MAX_RELEASE_SET_PAYLOAD_BYTES,
@@ -87,7 +87,6 @@ export const CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS = Object.freeze([
 
 type AgentPluginReleaseInput = ReleaseDerivationSource["releaseInput"];
 type AgentPluginPayload = ReleaseDerivationSource["payloads"][number]["payload"];
-type PluginId = ReleaseDerivationSource["payloads"][number]["pluginId"];
 
 interface SelectedContentTreeEntry {
   readonly mode: 0o644 | 0o755;
@@ -305,10 +304,30 @@ export function selectSelectedContentChannelManifestEntry(
 export function planSelectedContentChannelPayloadRead(
   source: ChannelReleaseInputFacts
 ): SelectedContentDecision<ChannelPayloadReadPlan> {
+  const declaredMembers: Array<
+    Readonly<{
+      pluginId: PluginId;
+    }>
+  > = [];
+  for (const [memberIndex, member] of source.releaseInput.body.members.entries()) {
+    const pluginId = parsePluginId(
+      member.pluginId,
+      `selectedContent.releaseInput.body.members[${memberIndex}].pluginId`
+    );
+    if (!pluginId.ok) {
+      return declined(
+        selectedContentRejected(
+          "SourceIneligible",
+          `Release input member identity is not canonical: ${member.pluginId}.`
+        )
+      );
+    }
+    declaredMembers.push(Object.freeze({ pluginId: pluginId.value }));
+  }
   const declaredTreeIssue = validateDeclaredPluginTree({
     pluginRoot: SELECTED_CONTENT_PLUGIN_ROOT,
     paths: source.treeEntries.map((entry) => entry.path),
-    declaredPluginIds: source.releaseInput.body.members.map((member) => member.pluginId),
+    declaredPluginIds: declaredMembers.map((member) => member.pluginId),
   });
   if (declaredTreeIssue !== undefined) {
     return declined(
@@ -321,7 +340,7 @@ export function planSelectedContentChannelPayloadRead(
 
   const uniqueBlobs = new Set<string>();
   const memberPayloads: ChannelPayloadReadPlan["memberPayloads"][number][] = [];
-  for (const member of source.releaseInput.body.members) {
+  for (const member of declaredMembers) {
     const memberRoot = requireReleasePath(`${SELECTED_CONTENT_PLUGIN_ROOT}/${member.pluginId}`);
     const entriesUnderRoot = source.treeEntries
       .filter((entry) => entry.path.startsWith(`${memberRoot}/`))

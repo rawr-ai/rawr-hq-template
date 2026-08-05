@@ -17,4 +17,7 @@ export const sync = oc
     })
   )
   .input(standard(ProviderSyncRequestSchema))
-  .output(standard(ProviderSyncResultSchema));
+  .output(standard(ProviderSyncResultSchema))
+  .errors({
+    BAD_REQUEST: { message: "Provider sync request is invalid" },
+  });

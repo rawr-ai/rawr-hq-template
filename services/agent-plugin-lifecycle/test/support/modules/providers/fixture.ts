@@ -1193,7 +1193,7 @@ function file(path: string, bytes: Uint8Array, mode: 0o644 | 0o755 = 0o644) {
   });
 }
 
-function expectedBytes(pluginId: PluginId, path: string): Uint8Array {
+function expectedBytes(pluginId: string, path: string): Uint8Array {
   if (path === ".codex-plugin/plugin.json") {
     return encoder.encode(`{"name":"${pluginId}","provider":"codex"}\n`);
   }

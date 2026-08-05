@@ -1,11 +1,12 @@
 import type { NativeMarketplaceSource } from "@habitat-ai/rawr-resource-native-agent-provider";
 import { Value } from "typebox/value";
 import type { SourceEligibilityIssue } from "../../../../model/dto/content-workspace";
+import { MAX_OWNERSHIP_CLAIMS } from "../../../../model/dto/distribution-ownership";
 import type {
   DerivedReleaseSelection,
   ReleaseDerivationFailure,
 } from "../../../../model/dto/release-derivation";
-import { samePayloadManifest } from "../../../../model/policy/payload-manifest";
+import { parseReleaseRelativePath } from "../../../../model/policy/release-identity";
 import type {
   ProviderIssue,
   ProviderIssueCode,
@@ -13,6 +14,7 @@ import type {
 } from "../dto/provider-lifecycle";
 import type {
   SelectedContent,
+  SelectedContentFile,
   SelectedContentIssueCode,
   SelectedContentMember,
   SelectedContentResolution,
@@ -135,11 +137,13 @@ export function selectedContentFromReleaseDerivationFailure(
 
 /** Maps concrete clean-source refusals into Provider selection vocabulary. */
 export function selectedContentFromSourceIssues(
-  issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]]
+  issues: readonly SourceEligibilityIssue[]
 ): Extract<SelectedContentResolution, { kind: "Rejected" }> {
   return selectedContentRejected(
     "SourceIneligible",
-    issues.map((issue) => `${issue.code}: ${issue.detail}`).join("; ")
+    issues.length === 0
+      ? "Source eligibility failed without a diagnostic."
+      : issues.map((issue) => `${issue.code}: ${issue.detail}`).join("; ")
   );
 }
 
@@ -205,8 +209,66 @@ export function validateSelectedContent(content: SelectedContent): readonly Prov
       ),
     ]);
   }
+  if (
+    content.marketplace.source.kind === "git" &&
+    content.marketplace.source.revision !== content.sourceCommit
+  ) {
+    issues.push(
+      providerIssue(
+        "DesiredContentInvalid",
+        "Selected Git marketplace revision does not match the selected source commit."
+      )
+    );
+  }
+  if (!isCanonicalDistinctOrder(content.members.map((member) => member.pluginId))) {
+    issues.push(
+      providerIssue(
+        "DesiredContentInvalid",
+        "Selected plugin identities must be distinct and canonically ordered."
+      )
+    );
+  }
+  const ownershipClaimCount = content.members.reduce(
+    (total, member) => total + member.aliases.length,
+    0
+  );
+  if (ownershipClaimCount > MAX_OWNERSHIP_CLAIMS) {
+    issues.push(
+      providerIssue(
+        "DesiredContentInvalid",
+        "Selected ownership aliases exceed the aggregate ownership bound."
+      )
+    );
+  }
   const ownedNames = new Map<string, string>();
   for (const member of content.members) {
+    if (!isCanonicalDistinctOrder(member.aliases)) {
+      issues.push(
+        providerIssue(
+          "DesiredContentInvalid",
+          "Selected aliases must be distinct and canonically ordered.",
+          member.pluginId
+        )
+      );
+    }
+    if (!isCanonicalDistinctOrder(member.manifest.map((file) => file.path))) {
+      issues.push(
+        providerIssue(
+          "DesiredContentInvalid",
+          "Selected manifest paths must be distinct and canonically ordered.",
+          member.pluginId
+        )
+      );
+    }
+    if (member.manifest.some((file) => !parseReleaseRelativePath(file.path).ok)) {
+      issues.push(
+        providerIssue(
+          "DesiredContentInvalid",
+          "Selected manifest paths must be canonical release-relative paths.",
+          member.pluginId
+        )
+      );
+    }
     collectOwnedName(ownedNames, member.pluginId, member.pluginId, issues);
     for (const alias of member.aliases)
       collectOwnedName(ownedNames, alias, member.pluginId, issues);
@@ -296,7 +358,26 @@ function sameMembers(
         member.payloadDigest === other.payloadDigest &&
         member.releaseDigest === other.releaseDigest &&
         sameTextArray(member.aliases, other.aliases) &&
-        samePayloadManifest(member.manifest, other.manifest)
+        sameSelectedContentManifest(member.manifest, other.manifest)
+      );
+    })
+  );
+}
+
+function sameSelectedContentManifest(
+  left: readonly SelectedContentFile[],
+  right: readonly SelectedContentFile[]
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every((entry, index) => {
+      const other = right[index];
+      return (
+        other !== undefined &&
+        entry.path === other.path &&
+        entry.mode === other.mode &&
+        entry.byteLength === other.byteLength &&
+        entry.contentDigest === other.contentDigest
       );
     })
   );
@@ -304,6 +385,13 @@ function sameMembers(
 
 function sameTextArray(left: readonly string[], right: readonly string[]): boolean {
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function isCanonicalDistinctOrder(values: readonly string[]): boolean {
+  for (let index = 1; index < values.length; index += 1) {
+    if (values[index - 1]! >= values[index]!) return false;
+  }
+  return true;
 }
 
 function boundedDetail(detail: string): string {

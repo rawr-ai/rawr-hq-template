@@ -1,4 +1,4 @@
-import { Refine, type Static, Type } from "typebox";
+import { type Static, Type } from "typebox";
 
 declare const contentAuthorityBrand: unique symbol;
 declare const repositoryIdentityBrand: unique symbol;
@@ -28,27 +28,20 @@ export const MAX_CANONICAL_ID_BYTES = 512;
 /** Bounds one canonical relative path carried by release-owned content. */
 export const MAX_RELEASE_RELATIVE_PATH_BYTES = 1_024;
 
-const encoder = new TextEncoder();
-const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/u;
-
 /** Identifies the curated content authority that owns one release input. */
-export const ContentAuthoritySchema = Type.Unsafe<ContentAuthorityBrand>(
-  Type.String({
-    minLength: 1,
-    maxLength: MAX_CANONICAL_ID_BYTES,
-    pattern: "^[a-z0-9][a-z0-9._:-]*$",
-  })
-);
+export const ContentAuthoritySchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_CANONICAL_ID_BYTES,
+  pattern: "^[a-z0-9][a-z0-9._:-]*$",
+});
 
 /** Identifies a logical source repository without treating a local path as identity. */
-export const RepositoryIdentitySchema = Type.Unsafe<RepositoryIdentityBrand>(
-  Type.String({
-    minLength: 3,
-    maxLength: MAX_CANONICAL_ID_BYTES,
-    pattern:
-      "^(?!file:)[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9._~-]+)*$",
-  })
-);
+export const RepositoryIdentitySchema = Type.String({
+  minLength: 3,
+  maxLength: MAX_CANONICAL_ID_BYTES,
+  pattern:
+    "^(?!file:)[a-z][a-z0-9+.-]*:[a-z0-9][a-z0-9._~-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9._~-]+)*$",
+});
 
 /** Identifies one lowercase SHA-1 or SHA-256 Git object. */
 export const GitObjectIdSchema = Type.String({
@@ -58,77 +51,50 @@ export const GitObjectIdSchema = Type.String({
 });
 
 /** Identifies the exact source commit admitted to release construction. */
-export const GitCommitIdSchema = Type.Unsafe<GitCommitIdBrand>(GitObjectIdSchema);
+export const GitCommitIdSchema = GitObjectIdSchema;
 
 /** Identifies the exact source tree admitted to release construction. */
-export const GitTreeIdSchema = Type.Unsafe<GitTreeIdBrand>(GitObjectIdSchema);
+export const GitTreeIdSchema = GitObjectIdSchema;
 
 /** Identifies one curated agent-plugin release member. */
-export const PluginIdSchema = Type.Unsafe<PluginIdBrand>(
-  Type.String({
-    minLength: 1,
-    maxLength: MAX_CANONICAL_ID_BYTES,
-    pattern: "^[a-z0-9][a-z0-9._-]*$",
-  })
-);
+export const PluginIdSchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_CANONICAL_ID_BYTES,
+  pattern: "^[a-z0-9][a-z0-9._-]*$",
+});
 
 /** Identifies one plugin, skill, or other declared ownership claim. */
-export const OwnershipIdentitySchema = Type.Unsafe<OwnershipIdentityBrand>(
-  Refine(
-    Type.String({
-      minLength: 1,
-      maxLength: MAX_CANONICAL_ID_BYTES,
-      pattern: "^[a-z0-9@][a-z0-9@._:/-]*$",
-    }),
-    hasSafeSegments,
-    () => "Expected a canonical ownership identity"
-  )
-);
+export const OwnershipIdentitySchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_CANONICAL_ID_BYTES,
+  pattern: "^[a-z0-9@][a-z0-9@._:-]*(?:/(?!\\.{1,2}(?:/|$))[a-z0-9@._:-]+)*$",
+});
 
 /** Identifies one canonical POSIX path inside release-owned content. */
-export const ReleaseRelativePathSchema = Type.Unsafe<ReleaseRelativePathBrand>(
-  Refine(
-    Type.String({ minLength: 1, maxLength: MAX_RELEASE_RELATIVE_PATH_BYTES }),
-    isCanonicalReleaseRelativePath,
-    () => "Expected a canonical POSIX release-relative path"
-  )
-);
+export const ReleaseRelativePathSchema = Type.String({
+  minLength: 1,
+  maxLength: MAX_RELEASE_RELATIVE_PATH_BYTES,
+  pattern: "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$",
+});
 
 /** TypeBox-derived curated content-authority identity. */
-export type ContentAuthority = Static<typeof ContentAuthoritySchema>;
+export type ContentAuthority = Static<typeof ContentAuthoritySchema> & ContentAuthorityBrand;
 
 /** TypeBox-derived logical repository identity. */
-export type RepositoryIdentity = Static<typeof RepositoryIdentitySchema>;
+export type RepositoryIdentity = Static<typeof RepositoryIdentitySchema> & RepositoryIdentityBrand;
 
 /** TypeBox-derived exact Git commit identity. */
-export type GitCommitId = Static<typeof GitCommitIdSchema>;
+export type GitCommitId = Static<typeof GitCommitIdSchema> & GitCommitIdBrand;
 
 /** TypeBox-derived exact Git tree identity. */
-export type GitTreeId = Static<typeof GitTreeIdSchema>;
+export type GitTreeId = Static<typeof GitTreeIdSchema> & GitTreeIdBrand;
 
 /** TypeBox-derived curated plugin identity. */
-export type PluginId = Static<typeof PluginIdSchema>;
+export type PluginId = Static<typeof PluginIdSchema> & PluginIdBrand;
 
 /** TypeBox-derived distribution ownership identity. */
-export type OwnershipIdentity = Static<typeof OwnershipIdentitySchema>;
+export type OwnershipIdentity = Static<typeof OwnershipIdentitySchema> & OwnershipIdentityBrand;
 
 /** TypeBox-derived canonical release-relative path. */
-export type ReleaseRelativePath = Static<typeof ReleaseRelativePathSchema>;
-
-function hasSafeSegments(value: string): boolean {
-  const segments = value.split("/");
-  return segments.every((segment) => segment.length > 0 && segment !== "." && segment !== "..");
-}
-
-function isCanonicalReleaseRelativePath(value: string): boolean {
-  return (
-    !value.startsWith("/") &&
-    !value.endsWith("/") &&
-    !value.includes("\\") &&
-    !value.includes(":") &&
-    !CONTROL_CHARACTER_PATTERN.test(value) &&
-    value.normalize("NFC") === value &&
-    hasSafeSegments(value) &&
-    encoder.encode(value).byteLength <= MAX_RELEASE_RELATIVE_PATH_BYTES
-  );
-}
+export type ReleaseRelativePath = Static<typeof ReleaseRelativePathSchema> &
+  ReleaseRelativePathBrand;

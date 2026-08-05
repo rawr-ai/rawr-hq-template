@@ -24,16 +24,35 @@ export function parseCanonicalRef(
   value: unknown,
   path: string
 ): ReleaseResult<CanonicalRef, ReleaseIssue> {
-  if (!Value.Check(CanonicalRefSchema, value)) {
+  if (typeof value !== "string" || !isCanonicalRef(value)) {
     return invalidGitIdentity(path, "Expected a qualified canonical Git ref");
   }
   return { ok: true, value };
 }
 
 function parseGitBlobId(value: unknown, path: string): ReleaseResult<GitBlobId, ReleaseIssue> {
-  return Value.Check(GitBlobIdSchema, value)
+  return typeof value === "string" && isGitBlobId(value)
     ? { ok: true, value }
     : invalidGitIdentity(path, "Expected an exact Git blob object ID");
+}
+
+function isCanonicalRef(value: string): value is CanonicalRef {
+  return (
+    Value.Check(CanonicalRefSchema, value) &&
+    !value.includes("..") &&
+    !value.includes("//") &&
+    !value.includes("@{") &&
+    !/[\u0000-\u0020~^:?*\\[]/u.test(value) &&
+    !value.endsWith("/") &&
+    !value.endsWith(".") &&
+    value
+      .split("/")
+      .every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"))
+  );
+}
+
+function isGitBlobId(value: string): value is GitBlobId {
+  return Value.Check(GitBlobIdSchema, value);
 }
 
 /** Admits and freezes one exact Git path selection. */

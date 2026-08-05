@@ -38,6 +38,7 @@ import type {
   VerificationFact,
 } from "../model/dto/provider-lifecycle";
 import type { SelectedContent } from "../model/dto/selected-content";
+import { hasCanonicalProviderHomes } from "../model/policy/disposable-root";
 import {
   classifyNativeMutationStep,
   completedMutationTarget,
@@ -109,11 +110,18 @@ import { module } from "../module";
  * Authors canonical Provider convergence from a lazily repeated governed
  * channel selection.
  */
-export const sync = module.sync.effect(function* ({ context, input }) {
+export const sync = module.sync.effect(function* ({ context, errors, input }) {
   const canonicalRequest = Object.freeze({
     ...input,
     targets: canonicalProviderTargets(input.targets),
   });
+  if (!hasCanonicalProviderHomes(canonicalRequest.targets)) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Expected a canonical non-root absolute path",
+      })
+    );
+  }
   const locator = decodeGitLocator(canonicalRequest.locator);
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: true });
 

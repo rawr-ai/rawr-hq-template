@@ -65,6 +65,17 @@ describe("current-main v3 codec", () => {
     ).toMatchObject({ ok: false, failure: { code: "InvalidSchema" } });
   });
 
+  it("preserves canonical tag punctuation admitted by the v3 record policy", () => {
+    const sourceRef = "refs/tags/release+candidate";
+    const encoded = mustEncode({ ...recordFixture(), sourceRef });
+
+    expect(encoded.record.sourceRef).toBe(sourceRef);
+    expect(validateCurrentMainRecordV3(encoded.bytes)).toEqual({
+      ok: true,
+      value: encoded,
+    });
+  });
+
   it("rejects v2 and every removed authority-shaped field", () => {
     const record = recordFixture();
     for (const candidate of [

@@ -31,8 +31,12 @@ import {
   MAX_PACKAGING_FAILURE_PHASE_LENGTH,
   MAX_PACKAGING_OUTPUT_PATH_LENGTH,
   PackageAgentPluginResultSchema,
+  PackageOutputPathSchema,
 } from "../../../../src/service/modules/packaging/model/dto/packaging-lifecycle";
-import { priorOutputObservationLimit } from "../../../../src/service/modules/packaging/model/policy/package-output";
+import {
+  isCanonicalPackageOutputPath,
+  priorOutputObservationLimit,
+} from "../../../../src/service/modules/packaging/model/policy/package-output";
 import {
   createLifecycleTestClient,
   testInvocation,
@@ -523,8 +527,82 @@ describe("package agent plugin application", () => {
         })
       ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     }
+    const semanticPaths = [
+      "/tmp/e\u0301.zip",
+      `/${"\u00e9".repeat(MAX_PACKAGING_OUTPUT_PATH_LENGTH / 2)}`,
+    ];
+    for (const outputPath of semanticPaths) {
+      expect(Value.Check(PackageOutputPathSchema, outputPath)).toBe(true);
+      expect(isCanonicalPackageOutputPath(outputPath)).toBe(false);
+      await expect(
+        application.package({
+          contentWorkspace: {
+            locator: "/tmp/content-workspace",
+            repositoryIdentity: "git:personal/rawr-hq",
+            contentAuthority: "personal-rawr-hq",
+            remoteName: "origin",
+            remoteUrl: "https://github.com/rawr-ai/rawr-hq.git",
+            refName: "refs/heads/main",
+            sourceCommit: "a".repeat(40),
+            sourceTree: "b".repeat(40),
+            releaseInputPath: ".rawr/release-input.json",
+            pluginRoot: "plugins/agents",
+          },
+          mode: { kind: "complete-set" },
+          format: COWORK_PACKAGE_FORMAT,
+          outputPath,
+        })
+      ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
     expect(output.encodeCalls).toBe(0);
     expect(output.publishCalls).toBe(0);
+  });
+
+  it("owns the admitted output path across deferred archive encoding", async () => {
+    const root = await fixtureRoot();
+    const repository = await createGeneratedGitRepository(root, "captured-output-path");
+    const admittedOutputPath = join(root.path, "admitted.zip");
+    const mutatedOutputPath = `${root.path}/./mutated.zip`;
+    expect(isCanonicalPackageOutputPath(mutatedOutputPath)).toBe(false);
+
+    const encodingStarted = Promise.withResolvers<void>();
+    const resumeEncoding = Promise.withResolvers<void>();
+    const publishedPaths: string[] = [];
+    const nodeOutput = makeNodeAgentPluginPackageOutputResource();
+    const packageOutput: AgentPluginPackageOutputResource<never> = Object.freeze({
+      encodeCoworkV1: (input: Parameters<AgentPluginPackageOutputResource["encodeCoworkV1"]>[0]) =>
+        Effect.gen(function* () {
+          encodingStarted.resolve();
+          yield* Effect.promise(() => resumeEncoding.promise);
+          return yield* nodeOutput.encodeCoworkV1(input);
+        }),
+      publish: (input: Parameters<AgentPluginPackageOutputResource["publish"]>[0]) => {
+        publishedPaths.push(input.outputPath);
+        return nodeOutput.publish(input);
+      },
+    });
+    const client = createLifecycleTestClient({
+      contentWorkspace: makeNodeContentWorkspaceResource({
+        gitExecutable: await realpath(GIT_EXECUTABLE),
+      }),
+      packageOutput,
+    });
+    const request = {
+      ...packageRequest(repository, admittedOutputPath, {
+        kind: "targeted",
+        pluginId: repository.pluginId,
+      }),
+    };
+
+    const pending = client.packaging.package(request, testInvocation);
+    await encodingStarted.promise;
+    request.outputPath = mutatedOutputPath;
+    resumeEncoding.resolve();
+
+    const result = await pending;
+    expect(result).toMatchObject({ outputPath: admittedOutputPath });
+    expect(publishedPaths).toEqual([admittedOutputPath]);
+    await expect(readFile(mutatedOutputPath)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("reports a closed unsettled result when the output resource fails after derivation", async () => {

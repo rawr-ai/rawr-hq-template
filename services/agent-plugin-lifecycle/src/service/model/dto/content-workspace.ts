@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { NormalizedFileModeSchema } from "./agent-plugin-payload";
 import { type ReleaseDerivationSource, ReleaseDerivationSourceSchema } from "./release-derivation";
 import {
@@ -20,16 +20,12 @@ export const MAX_CLEAN_CONTENT_TREE_ENTRIES = 200_000;
 const TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX = "...[truncated]";
 
 /** Admits one canonical non-root absolute content-workspace locator. */
-export const CanonicalAbsoluteLocatorSchema = Refine(
-  Type.String({
-    minLength: 2,
-    maxLength: 16_384,
-    pattern:
-      "^/(?!.*//)(?!.*(?:/\\.{1,2})(?:/|$))(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$",
-  }),
-  isCanonicalAbsoluteLocator,
-  () => "Expected a canonical non-root absolute workspace locator"
-);
+export const CanonicalAbsoluteLocatorSchema = Type.String({
+  minLength: 2,
+  maxLength: 16_384,
+  pattern:
+    "^/(?!.*//)(?!.*(?:/\\.{1,2})(?:/|$))(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$",
+});
 
 /** Admits one canonical Git remote name used by content-workspace policy. */
 export const RemoteNameSchema = Type.String({
@@ -46,15 +42,11 @@ export const RemoteUrlSchema = Type.String({
 });
 
 /** Admits one canonical fully qualified Git branch ref. */
-export const QualifiedHeadRefSchema = Refine(
-  Type.String({
-    minLength: "refs/heads/a".length,
-    maxLength: 512,
-    pattern: "^refs/heads/[^\\u0000-\\u0020~^:?*\\\\[]+$",
-  }),
-  isCanonicalHeadRef,
-  () => "Expected a canonical fully qualified branch ref"
-);
+export const QualifiedHeadRefSchema = Type.String({
+  minLength: "refs/heads/a".length,
+  maxLength: 512,
+  pattern: "^refs/heads/[^\\u0000-\\u0020~^:?*\\\\[]+$",
+});
 
 /** Admits one SHA-256 binding over an exact content-workspace observation. */
 export const WorkspaceBindingSchema = Type.String({
@@ -178,7 +170,10 @@ type ContentWorkspaceInspectionShape = Static<typeof ContentWorkspaceInspectionS
 export type ContentWorkspaceInspection =
   | (Extract<ContentWorkspaceInspectionShape, { readonly kind: "Eligible" }> &
       Readonly<{ snapshot: ContentWorkspaceSnapshot }>)
-  | Extract<ContentWorkspaceInspectionShape, { readonly kind: "Ineligible" }>;
+  | (Extract<ContentWorkspaceInspectionShape, { readonly kind: "Ineligible" }> &
+      Readonly<{
+        issues: readonly [SourceEligibilityIssue, ...SourceEligibilityIssue[]];
+      }>);
 
 /** Constructs one bounded clean-source eligibility diagnostic. */
 export function sourceEligibilityIssue(
@@ -194,34 +189,4 @@ export function sourceEligibilityIssue(
             TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX.length
         )}${TRUNCATED_SOURCE_ELIGIBILITY_DETAIL_SUFFIX}`;
   return Object.freeze({ code, detail: boundedDetail });
-}
-
-function isCanonicalAbsoluteLocator(value: string): boolean {
-  if (
-    value.length < 2 ||
-    !value.startsWith("/") ||
-    value.endsWith("/") ||
-    value.includes("\\") ||
-    /[\u0000-\u001f\u007f]/u.test(value)
-  )
-    return false;
-  return value
-    .split("/")
-    .slice(1)
-    .every((segment) => segment !== "" && segment !== "." && segment !== "..");
-}
-
-function isCanonicalHeadRef(value: string): boolean {
-  return (
-    value.startsWith("refs/heads/") &&
-    value.length <= 512 &&
-    !/[\u0000-\u0020~^:?*\\[]/u.test(value) &&
-    !value.includes("..") &&
-    !value.includes("@{") &&
-    !value.endsWith("/") &&
-    !value.endsWith(".") &&
-    value
-      .split("/")
-      .every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"))
-  );
 }

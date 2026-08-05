@@ -1,3 +1,4 @@
+import type { Static } from "typebox";
 import { Value } from "typebox/value";
 
 import {
@@ -8,7 +9,7 @@ import {
   MAX_PAYLOAD_ENTRIES_PER_MEMBER,
   PAYLOAD_PROTOCOL_VERSION,
   type PayloadEntry,
-  PayloadEntryInputSchema,
+  PayloadEntryInputShapeSchema,
   PayloadEntryRecordSchema,
   type PayloadManifestEntry,
 } from "../dto/agent-plugin-payload";
@@ -50,7 +51,9 @@ export function createAgentPluginPayload(
 
   rawEntries?.forEach((candidate, index) => {
     const path = `payload.entries[${index}]`;
-    if (!admitTypeBoxRecordForTraversal(PayloadEntryInputSchema, candidate, path, issues)) return;
+    if (!admitTypeBoxRecordForTraversal(PayloadEntryInputShapeSchema, candidate, path, issues)) {
+      return;
+    }
     const parsedPath = collectReleaseResult(
       parseReleaseRelativePath(candidate.path, `${path}.path`),
       issues
@@ -276,12 +279,22 @@ function freezePayload(
   manifest: readonly PayloadManifestEntry[],
   digest: PayloadDigest
 ): AgentPluginPayload {
-  return Object.freeze({
+  const payload = Object.freeze({
     protocolVersion: PAYLOAD_PROTOCOL_VERSION,
     manifest: Object.freeze([...manifest]),
     entries: Object.freeze([...entries]),
     payloadDigest: digest,
-  }) as AgentPluginPayload;
+  });
+  if (!isAgentPluginPayload(payload)) {
+    throw new Error("Payload construction did not produce a TypeBox-valid value");
+  }
+  return payload;
+}
+
+function isAgentPluginPayload(
+  value: Static<typeof AgentPluginPayloadSchema>
+): value is AgentPluginPayload {
+  return Value.Check(AgentPluginPayloadSchema, value);
 }
 
 function admitPayloadRecord(

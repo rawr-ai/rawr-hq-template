@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { CanonicalAbsoluteLocatorSchema } from "./content-workspace";
 import {
   GitCommitIdSchema,
@@ -7,7 +7,6 @@ import {
   ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
 } from "./release-identity";
-import { Uint8ArraySchema } from "./structural";
 
 declare const canonicalRefBrand: unique symbol;
 declare const gitBlobIdBrand: unique symbol;
@@ -18,18 +17,12 @@ type CanonicalRefBrand = string & {
 type GitBlobIdBrand = string & { readonly [gitBlobIdBrand]: "GitBlobId" };
 
 /** Identifies one qualified canonical branch or tag ref used by current-main selection. */
-export const CanonicalRefSchema = Type.Unsafe<CanonicalRefBrand>(
-  Refine(
-    Type.String({
-      pattern: "^refs/(?:heads|tags)/[A-Za-z0-9][A-Za-z0-9._/-]*$",
-    }),
-    isCanonicalRef,
-    () => "Expected a qualified canonical Git ref"
-  )
-);
+export const CanonicalRefSchema = Type.String({
+  pattern: "^refs/(?:heads|tags)/[^\\u0000-\\u0020~^:?*\\\\[]+$",
+});
 
 /** Identifies the exact Git blob object read for a current-main selection. */
-export const GitBlobIdSchema = Type.Unsafe<GitBlobIdBrand>(GitObjectIdSchema);
+export const GitBlobIdSchema = GitObjectIdSchema;
 
 /** Locates the expected logical repository behind one local content workspace. */
 export const GitLocatorSchema = ReadonlyObject(
@@ -61,20 +54,11 @@ export const ExactGitBlobPointerSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-/** Carries exact selected Git bytes together with their verified object identities. */
-export const ExactGitBlobObservationSchema = ReadonlyObject(
-  Type.Object({
-    pointer: ExactGitBlobPointerSchema,
-    bytes: Uint8ArraySchema,
-  }),
-  { additionalProperties: false }
-);
-
 /** TypeBox-derived qualified canonical branch or tag ref. */
-export type CanonicalRef = Static<typeof CanonicalRefSchema>;
+export type CanonicalRef = Static<typeof CanonicalRefSchema> & CanonicalRefBrand;
 
 /** TypeBox-derived exact Git blob object identity. */
-export type GitBlobId = Static<typeof GitBlobIdSchema>;
+export type GitBlobId = Static<typeof GitBlobIdSchema> & GitBlobIdBrand;
 
 /** TypeBox-derived content-workspace locator and expected repository identity. */
 export type GitLocator = Static<typeof GitLocatorSchema>;
@@ -84,20 +68,3 @@ export type GitBlobSelection = Static<typeof GitBlobSelectionSchema>;
 
 /** TypeBox-derived selected Git path bound to its exact blob object. */
 export type ExactGitBlobPointer = Static<typeof ExactGitBlobPointerSchema>;
-
-/** TypeBox-derived exact Git pointer and its observed bytes. */
-export type ExactGitBlobObservation = Static<typeof ExactGitBlobObservationSchema>;
-
-function isCanonicalRef(value: string): boolean {
-  return (
-    !value.includes("..") &&
-    !value.includes("//") &&
-    !value.includes("@{") &&
-    !/[\u0000-\u0020~^:?*\\[]/u.test(value) &&
-    !value.endsWith("/") &&
-    !value.endsWith(".") &&
-    value
-      .split("/")
-      .every((part) => part !== "" && !part.startsWith(".") && !part.endsWith(".lock"))
-  );
-}

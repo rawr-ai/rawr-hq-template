@@ -30,14 +30,22 @@ import {
 } from "../../src/service/model/policy/release-identity";
 
 describe("release identity model", () => {
-  it("derives all seven identity types from their TypeBox schemas", () => {
-    expectTypeOf<ContentAuthority>().toEqualTypeOf<Static<typeof ContentAuthoritySchema>>();
-    expectTypeOf<RepositoryIdentity>().toEqualTypeOf<Static<typeof RepositoryIdentitySchema>>();
-    expectTypeOf<GitCommitId>().toEqualTypeOf<Static<typeof GitCommitIdSchema>>();
-    expectTypeOf<GitTreeId>().toEqualTypeOf<Static<typeof GitTreeIdSchema>>();
-    expectTypeOf<PluginId>().toEqualTypeOf<Static<typeof PluginIdSchema>>();
-    expectTypeOf<OwnershipIdentity>().toEqualTypeOf<Static<typeof OwnershipIdentitySchema>>();
-    expectTypeOf<ReleaseRelativePath>().toEqualTypeOf<Static<typeof ReleaseRelativePathSchema>>();
+  it("keeps projectable wire strings separate from policy-admitted identities", () => {
+    expectTypeOf<Static<typeof ContentAuthoritySchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof RepositoryIdentitySchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof GitCommitIdSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof GitTreeIdSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof PluginIdSchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof OwnershipIdentitySchema>>().toEqualTypeOf<string>();
+    expectTypeOf<Static<typeof ReleaseRelativePathSchema>>().toEqualTypeOf<string>();
+
+    expectTypeOf<ContentAuthority>().toMatchTypeOf<string>();
+    expectTypeOf<RepositoryIdentity>().toMatchTypeOf<string>();
+    expectTypeOf<GitCommitId>().toMatchTypeOf<string>();
+    expectTypeOf<GitTreeId>().toMatchTypeOf<string>();
+    expectTypeOf<PluginId>().toMatchTypeOf<string>();
+    expectTypeOf<OwnershipIdentity>().toMatchTypeOf<string>();
+    expectTypeOf<ReleaseRelativePath>().toMatchTypeOf<string>();
   });
 
   it("admits canonical values through the same schemas and parsers", () => {

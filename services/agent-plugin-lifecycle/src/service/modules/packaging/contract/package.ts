@@ -16,6 +16,9 @@ const packageContract = oc
     })
   )
   .input(standard(PackageAgentPluginRequestSchema))
-  .output(standard(PackageAgentPluginResultSchema));
+  .output(standard(PackageAgentPluginResultSchema))
+  .errors({
+    BAD_REQUEST: { message: "Package request is invalid" },
+  });
 
 export { packageContract as package };

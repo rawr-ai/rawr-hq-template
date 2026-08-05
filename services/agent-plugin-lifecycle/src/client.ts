@@ -7,10 +7,19 @@ import {
   GitCommitIdSchema,
   GitTreeIdSchema,
   PluginIdSchema,
-  ReleaseRelativePathSchema,
   RepositoryIdentitySchema,
 } from "./service/model/dto/release-identity";
-import { CurrentMainRecordInputSchema } from "./service/modules/governance/model/dto/current-main-record";
+import { parseReleaseRelativePath as admitReleaseRelativePath } from "./service/model/policy/release-identity";
+import {
+  parseCurrentMainRecordInput as admitCurrentMainRecordInput,
+  type CurrentMainRecordPolicyInput,
+  type CurrentMainRecordPolicyResult,
+} from "./service/modules/governance/model/policy/current-main-record";
+import type {
+  ReleaseInputRecordPolicyInput,
+  ReleaseInputRecordPolicyResult,
+} from "./service/modules/releases/model/policy/release-input-record";
+import type { ReleaseInputRefreshPolicyResult } from "./service/modules/releases/model/policy/release-input-refresh";
 import { router } from "./service/router";
 
 export { type Contract, contract } from "./service/contract";
@@ -27,8 +36,7 @@ type Invocation = RouterInitialContext["invocation"];
 /** Host-supplied boundary required to construct one local lifecycle client. */
 export type CreateClientOptions = Pick<RouterInitialContext, "deps" | "scope" | "config">;
 
-/** Constructs the sole public local client over the private lifecycle router. */
-export function createClient({ deps, scope, config }: CreateClientOptions) {
+function createWireClient({ deps, scope, config }: CreateClientOptions) {
   return createRouterClient(router, {
     context: ({ invocation }: { invocation: Invocation }) =>
       ({
@@ -41,11 +49,58 @@ export function createClient({ deps, scope, config }: CreateClientOptions) {
   });
 }
 
-/** Typed local caller surface derived from the lifecycle service router. */
-export type Client = ReturnType<typeof createClient>;
+type WireClient = ReturnType<typeof createWireClient>;
+type Procedure = (...args: never[]) => Promise<unknown>;
+type Tail<T extends readonly unknown[]> = T extends readonly [unknown, ...infer Rest]
+  ? Rest
+  : never;
+type RuntimeProcedure<TProcedure extends Procedure, TInput, TOutput> = (
+  input: TInput,
+  ...options: Tail<Parameters<TProcedure>>
+) => Promise<TOutput>;
+
+type RuntimeReleasesClient = Omit<
+  WireClient["releases"],
+  "releaseInputRecord" | "refreshReleaseInput"
+> &
+  Readonly<{
+    releaseInputRecord: RuntimeProcedure<
+      WireClient["releases"]["releaseInputRecord"],
+      ReleaseInputRecordPolicyInput,
+      ReleaseInputRecordPolicyResult
+    >;
+    refreshReleaseInput: RuntimeProcedure<
+      WireClient["releases"]["refreshReleaseInput"],
+      Parameters<WireClient["releases"]["refreshReleaseInput"]>[0],
+      ReleaseInputRefreshPolicyResult
+    >;
+  }>;
+
+type RuntimeGovernanceClient = Omit<WireClient["governance"], "currentMainRecord"> &
+  Readonly<{
+    currentMainRecord: RuntimeProcedure<
+      WireClient["governance"]["currentMainRecord"],
+      CurrentMainRecordPolicyInput,
+      CurrentMainRecordPolicyResult
+    >;
+  }>;
+
+/** Typed in-process caller surface derived from wire procedures and policy-owned runtime values. */
+export type Client = Omit<WireClient, "releases" | "governance"> &
+  Readonly<{
+    releases: RuntimeReleasesClient;
+    governance: RuntimeGovernanceClient;
+  }>;
+
+/** Constructs the sole public local client over the private lifecycle router. */
+export function createClient(options: CreateClientOptions): Client;
+/** Implements local client construction through the service's native in-process router client. */
+export function createClient(options: CreateClientOptions): Client | WireClient {
+  return createWireClient(options);
+}
 
 /** Admits one caller-supplied current-main record operation request. */
-export const parseCurrentMainRecordInput = inputParser(CurrentMainRecordInputSchema);
+export const parseCurrentMainRecordInput = admitCurrentMainRecordInput;
 
 /** Admits one caller-supplied content authority before service dispatch. */
 export const parseContentAuthority = inputParser(ContentAuthoritySchema);
@@ -60,7 +115,10 @@ export const parseGitTreeId = inputParser(GitTreeIdSchema);
 export const parsePluginId = inputParser(PluginIdSchema);
 
 /** Admits one caller-supplied service-relative content path. */
-export const parseReleaseRelativePath = inputParser(ReleaseRelativePathSchema);
+export const parseReleaseRelativePath = (value: unknown) => {
+  const result = admitReleaseRelativePath(value);
+  return result.ok ? result.value : undefined;
+};
 
 /** Admits one caller-supplied logical repository identity. */
 export const parseRepositoryIdentity = inputParser(RepositoryIdentitySchema);

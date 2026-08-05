@@ -1,9 +1,8 @@
 import {
   MAX_NATIVE_PROVIDER_PLUGINS,
   NativeAgentProviderIdSchema,
-  NativeProviderHomeSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "../../../../model/dto/content-workspace";
 import { CurrentMainSelectionLocatorSchema } from "../../../../model/dto/current-main-selection";
 import {
@@ -22,7 +21,6 @@ import {
   EmptyReadonlyArray,
   NonEmptyReadonlyArray,
 } from "../../../../model/dto/structural";
-import { hasStrictDescendantHomes } from "../policy/disposable-root";
 
 const MAX_TARGETS = 16;
 export const MAX_CONFIRMED_NATIVE_OPERATIONS =
@@ -34,33 +32,38 @@ export const MAX_PROVIDER_ISSUES = 256;
 const MAX_DETAIL_LENGTH = 4_096;
 
 export const ProviderIdSchema = NativeAgentProviderIdSchema;
-export const ProviderHomeSchema = NativeProviderHomeSchema;
+/** Publishes the structural wire shape of an explicit native-provider home. */
+export const ProviderHomeSchema = Type.String({
+  minLength: 2,
+  maxLength: 16_384,
+  pattern: "^/(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/](?:.*[^/])?$",
+  description:
+    "Projectable non-root absolute path structure; native-provider policy owns canonical admission.",
+});
 export const ProviderTargetSchema = ReadonlyObject(
   Type.Object({
     provider: NativeAgentProviderIdSchema,
-    home: NativeProviderHomeSchema,
+    home: ProviderHomeSchema,
   }),
   { additionalProperties: false }
 );
-export const ProviderTestDisposableRootSchema = NativeProviderHomeSchema;
+export const ProviderTestDisposableRootSchema = ProviderHomeSchema;
 
-export const ProviderTargetsSchema = Refine(
-  NonEmptyReadonlyArray(ProviderTargetSchema, { maxItems: MAX_TARGETS }),
-  (targets) =>
-    new Set(targets.map((target) => `${target.provider}\u0000${target.home}`)).size ===
-    targets.length,
-  () => "Provider targets must be distinct"
-);
+export const ProviderTargetsSchema = ReadonlyObject(Type.Array(ProviderTargetSchema), {
+  minItems: 1,
+  maxItems: MAX_TARGETS,
+  uniqueItems: true,
+});
 
 export const ProviderTestModeSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
       kind: Type.Literal("targeted"),
-      pluginIds: Refine(
-        NonEmptyReadonlyArray(PluginIdSchema, { maxItems: MAX_RELEASE_MEMBERS }),
-        (pluginIds) => new Set(pluginIds).size === pluginIds.length,
-        () => "Targeted plugin identities must be distinct"
-      ),
+      pluginIds: ReadonlyObject(Type.Array(PluginIdSchema), {
+        minItems: 1,
+        maxItems: MAX_RELEASE_MEMBERS,
+        uniqueItems: true,
+      }),
     }),
     { additionalProperties: false }
   ),
@@ -69,18 +72,14 @@ export const ProviderTestModeSchema = Type.Union([
   }),
 ]);
 
-export const ProviderTestRequestSchema = Refine(
-  ReadonlyObject(
-    Type.Object({
-      contentWorkspace: ContentWorkspacePolicySchema,
-      disposableRoot: ProviderTestDisposableRootSchema,
-      mode: ProviderTestModeSchema,
-      targets: ProviderTargetsSchema,
-    }),
-    { additionalProperties: false }
-  ),
-  ({ disposableRoot, targets }) => hasStrictDescendantHomes(disposableRoot, targets),
-  () => "Every provider test home must be a strict descendant of the disposable root"
+export const ProviderTestRequestSchema = ReadonlyObject(
+  Type.Object({
+    contentWorkspace: ContentWorkspacePolicySchema,
+    disposableRoot: ProviderTestDisposableRootSchema,
+    mode: ProviderTestModeSchema,
+    targets: ProviderTargetsSchema,
+  }),
+  { additionalProperties: false }
 );
 
 const channelRequestProperties = {
@@ -206,31 +205,22 @@ const mutationTerminalResult = <const Classification extends string>(
     { additionalProperties: false }
   );
 
-export const ProviderMutationTargetResultSchema = Refine(
-  Type.Union([
-    mutationTerminalResult("Converged"),
-    mutationTerminalResult("Changed"),
-    mutationTerminalResult("Blocked"),
-    mutationTerminalResult("Failed"),
-    mutationTerminalResult("NotAttempted"),
-    ReadonlyObject(
-      Type.Object({
-        ...targetObservationProperties,
-        classification: Type.Literal("Uncertain"),
-        operations: boundedNativeOperations(),
-        attempted: NativeOperationAttemptSchema,
-      }),
-      { additionalProperties: false }
-    ),
-  ]),
-  (result) =>
-    result.classification === "Changed"
-      ? result.operations.length > 0
-      : result.classification === "Failed" || result.classification === "Uncertain"
-        ? true
-        : result.operations.length === 0,
-  () => "Mutation classifications require a possible confirmed-operation history"
-);
+export const ProviderMutationTargetResultSchema = Type.Union([
+  mutationTerminalResult("Converged"),
+  mutationTerminalResult("Changed"),
+  mutationTerminalResult("Blocked"),
+  mutationTerminalResult("Failed"),
+  mutationTerminalResult("NotAttempted"),
+  ReadonlyObject(
+    Type.Object({
+      ...targetObservationProperties,
+      classification: Type.Literal("Uncertain"),
+      operations: boundedNativeOperations(),
+      attempted: NativeOperationAttemptSchema,
+    }),
+    { additionalProperties: false }
+  ),
+]);
 
 const statusTargetResultProperties = {
   ...targetObservationProperties,
@@ -267,13 +257,11 @@ export const SelectedContentObservationSchema = ReadonlyObject(
     sourceTree: GitTreeIdSchema,
     releaseInputDigest: ReleaseInputDigestSchema,
     releaseSetDigest: Type.Union([ReleaseSetDigestSchema, Type.Null()]),
-    pluginIds: Refine(
-      NonEmptyReadonlyArray(PluginIdSchema, { maxItems: MAX_RELEASE_MEMBERS }),
-      (pluginIds) =>
-        new Set(pluginIds).size === pluginIds.length &&
-        pluginIds.every((pluginId, index) => index === 0 || pluginIds[index - 1]! < pluginId),
-      () => "Selected plugin identities must be distinct and canonically ordered"
-    ),
+    pluginIds: ReadonlyObject(Type.Array(PluginIdSchema), {
+      minItems: 1,
+      maxItems: MAX_RELEASE_MEMBERS,
+      uniqueItems: true,
+    }),
   }),
   { additionalProperties: false }
 );

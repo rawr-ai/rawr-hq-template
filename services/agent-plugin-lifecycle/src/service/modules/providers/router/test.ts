@@ -45,6 +45,11 @@ import type {
 } from "../model/dto/provider-lifecycle";
 import type { SelectedContent, SelectedContentResolution } from "../model/dto/selected-content";
 import {
+  hasCanonicalProviderHomes,
+  hasStrictDescendantHomes,
+  isCanonicalProviderHome,
+} from "../model/policy/disposable-root";
+import {
   classifyNativeMutationStep,
   completedMutationTarget,
   failedMutationTarget,
@@ -110,11 +115,28 @@ import { module } from "../module";
  * ready resources, passes typed facts into pure policy, and completes two
  * independent selections before admitting any native mutation.
  */
-export const test = module.test.effect(function* ({ context, input: request }) {
+export const test = module.test.effect(function* ({ context, errors, input: request }) {
   const canonicalRequest = Object.freeze({
     ...request,
     targets: canonicalProviderTargets(request.targets),
   });
+  if (
+    !isCanonicalProviderHome(canonicalRequest.disposableRoot) ||
+    !hasCanonicalProviderHomes(canonicalRequest.targets)
+  ) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Expected a canonical non-root absolute path",
+      })
+    );
+  }
+  if (!hasStrictDescendantHomes(canonicalRequest.disposableRoot, canonicalRequest.targets)) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Every provider test home must be a strict descendant of the disposable root",
+      })
+    );
+  }
   const policy = canonicalRequest.contentWorkspace;
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: false });
 

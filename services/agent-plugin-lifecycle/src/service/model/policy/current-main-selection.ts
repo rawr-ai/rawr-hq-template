@@ -7,7 +7,7 @@ import type { Result } from "effect";
 
 import type {
   CanonicalRef,
-  ExactGitBlobObservation,
+  ExactGitBlobPointer,
   GitBlobSelection,
   GitLocator,
 } from "../dto/current-main-git";
@@ -62,6 +62,12 @@ export interface CurrentMainInspection {
   readonly canonicalRef: CanonicalRef;
   readonly headCommit: GitCommitId;
   readonly headTree: GitTreeId;
+}
+
+/** Resource-owned binary observation retained only inside current-main policy. */
+export interface ExactGitBlobObservation {
+  readonly pointer: ExactGitBlobPointer;
+  readonly bytes: Uint8Array;
 }
 
 /** Parsed current-main record together with its exact selected content identities. */

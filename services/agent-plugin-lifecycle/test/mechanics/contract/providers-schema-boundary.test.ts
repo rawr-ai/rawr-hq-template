@@ -1,11 +1,13 @@
 import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
+import { standard } from "@habitat-ai/typebox-adapter";
 import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
-import type { Static } from "typebox";
+import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, expectTypeOf, it } from "vitest";
 import { contract as serviceContract } from "../../../src/service/contract";
 import { contract } from "../../../src/service/modules/providers/contract";
 import {
+  type ProviderMutationTargetResult,
   ProviderMutationTargetResultSchema,
   ProviderStatusRequestSchema,
   ProviderStatusResultSchema,
@@ -16,6 +18,7 @@ import {
   ProviderTestResultSchema,
   SelectedContentObservationSchema,
 } from "../../../src/service/modules/providers/model/dto/provider-lifecycle";
+import { mutationClassification } from "../../../src/service/modules/providers/model/policy/operation-result";
 import {
   channelRequest,
   createProviderLifecycleClient,
@@ -89,7 +92,7 @@ describe("provider public schema boundary", () => {
     }
   });
 
-  it("admits only closed requests with canonical distinct provider targets", () => {
+  it("admits only closed requests with structurally distinct provider targets", () => {
     expect(Value.Check(ProviderStatusRequestSchema, channelRequest)).toBe(true);
     expect(Value.Check(ProviderSyncRequestSchema, channelRequest)).toBe(true);
     expect(Value.Check(ProviderTestRequestSchema, testRequest)).toBe(true);
@@ -98,13 +101,24 @@ describe("provider public schema boundary", () => {
         ...testRequest,
         targets: [{ provider: "codex", home: testRequest.disposableRoot }],
       })
-    ).toBe(false);
+    ).toBe(true);
     expect(
       Value.Check(ProviderTestRequestSchema, {
         ...testRequest,
         targets: [{ provider: "codex", home: "/tmp/rawr-provider-test-sibling/codex-home" }],
       })
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      Value.Check(ProviderTestRequestSchema, {
+        ...testRequest,
+        targets: [
+          {
+            provider: "codex",
+            home: `${testRequest.disposableRoot}/nested/../codex-home`,
+          },
+        ],
+      })
+    ).toBe(true);
     expect(
       Value.Check(ProviderTestRequestSchema, {
         ...testRequest,
@@ -121,6 +135,73 @@ describe("provider public schema boundary", () => {
       ])
     ).toBe(false);
     expect(Value.Check(ProviderTargetsSchema, [{ provider: "codex", home: "/" }])).toBe(false);
+  });
+
+  it("publishes provider-home structure without losing noncanonical-path rejection", () => {
+    const request = {
+      ...testRequest,
+      targets: [
+        {
+          provider: "codex" as const,
+          home: "relative/provider-home",
+        },
+      ],
+    };
+    const projected = standard(ProviderTestRequestSchema)["~standard"].jsonSchema.input({
+      target: "draft-2020-12",
+    });
+    const published = JSON.parse(JSON.stringify(projected)) as TSchema;
+
+    expect(Value.Check(ProviderTestRequestSchema, request)).toBe(false);
+    expect(Value.Check(published, request)).toBe(false);
+  });
+
+  it("rejects semantic provider-home policy at every Provider procedure boundary", async () => {
+    const content = selectedContent();
+    const { client, resourceCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([])
+    );
+    const noncanonicalHome = `${testRequest.disposableRoot}/nested/../codex-home`;
+
+    for (const { home, message } of [
+      {
+        home: testRequest.disposableRoot,
+        message: "Every provider test home must be a strict descendant of the disposable root",
+      },
+      {
+        home: "/tmp/rawr-provider-test-sibling/codex-home",
+        message: "Every provider test home must be a strict descendant of the disposable root",
+      },
+      {
+        home: noncanonicalHome,
+        message: "Expected a canonical non-root absolute path",
+      },
+    ]) {
+      await expect(
+        client.providers.test(
+          { ...testRequest, targets: [{ provider: "codex", home }] },
+          testInvocation
+        )
+      ).rejects.toMatchObject({ code: "BAD_REQUEST", message });
+    }
+    const channelWithNoncanonicalHome = {
+      ...channelRequest,
+      targets: [{ provider: "codex" as const, home: noncanonicalHome }],
+    };
+    await expect(
+      client.providers.status(channelWithNoncanonicalHome, testInvocation)
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Expected a canonical non-root absolute path",
+    });
+    await expect(
+      client.providers.sync(channelWithNoncanonicalHome, testInvocation)
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Expected a canonical non-root absolute path",
+    });
+    expect(resourceCalls).toEqual([]);
   });
 
   it("validates a complete finite public status result from the handler", async () => {
@@ -169,7 +250,7 @@ describe("provider public schema boundary", () => {
     expect(Value.Check(ProviderTestResultSchema, { ...result, unexpected: true })).toBe(false);
   });
 
-  it("admits only mutation classifications with possible operation histories", () => {
+  it("keeps possible mutation histories in Provider result policy", () => {
     const operation = { kind: "plugin-installed", selector: "cognition@rawr-hq" } as const;
     const base = {
       target: channelRequest.targets[0],
@@ -190,14 +271,31 @@ describe("provider public schema boundary", () => {
         operations: [operation],
       })
     ).toBe(true);
+    expect(
+      Value.Check(ProviderMutationTargetResultSchema, {
+        ...base,
+        classification: "Drifted",
+        operations: [],
+      })
+    ).toBe(false);
     for (const candidate of [
-      { ...base, classification: "Drifted", operations: [] },
       { ...base, classification: "Changed", operations: [] },
       { ...base, classification: "Converged", operations: [operation] },
       { ...base, classification: "Blocked", operations: [operation] },
       { ...base, classification: "NotAttempted", operations: [operation] },
     ]) {
-      expect(Value.Check(ProviderMutationTargetResultSchema, candidate)).toBe(false);
+      expect(Value.Check(ProviderMutationTargetResultSchema, candidate)).toBe(true);
+    }
+    const impossibleCandidates: readonly ProviderMutationTargetResult[] = [
+      { ...base, classification: "Changed", operations: [] },
+      { ...base, classification: "Converged", operations: [operation] },
+      { ...base, classification: "Blocked", operations: [operation] },
+      { ...base, classification: "NotAttempted", operations: [operation] },
+    ];
+    for (const candidate of impossibleCandidates) {
+      expect(() => mutationClassification([candidate])).toThrow(
+        "impossible confirmed-operation history"
+      );
     }
   });
 

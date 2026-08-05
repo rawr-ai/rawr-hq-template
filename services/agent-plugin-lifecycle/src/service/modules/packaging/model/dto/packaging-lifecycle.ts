@@ -1,4 +1,4 @@
-import { ReadonlyObject, Refine, type Static, Type } from "typebox";
+import { ReadonlyObject, type Static, Type } from "typebox";
 import { ContentWorkspacePolicySchema } from "../../../../model/dto/content-workspace";
 import { ReleaseSelectionSchema } from "../../../../model/dto/release-derivation";
 import { ReleaseDigestSchema, ReleaseSetDigestSchema } from "../../../../model/dto/release-digest";
@@ -8,7 +8,6 @@ import {
   PluginIdSchema,
   RepositoryIdentitySchema,
 } from "../../../../model/dto/release-identity";
-import { isCanonicalAbsolutePath } from "../../../../model/dto/structural";
 
 /** Identifies the only package format accepted and emitted by this module. */
 export const COWORK_PACKAGE_FORMAT = "cowork-v1" as const;
@@ -53,17 +52,13 @@ export const PackagingFailureSchema = ReadonlyObject(
   { additionalProperties: false }
 );
 
-/** Admits a canonical non-root absolute destination for explicit package publication. */
-export const PackageOutputPathSchema = Refine(
-  Type.String({
-    minLength: 2,
-    maxLength: MAX_PACKAGING_OUTPUT_PATH_LENGTH,
-    pattern:
-      "^/(?!.*//)(?!.*(?:/\\.{1,2})(?:/|$))(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$",
-  }),
-  (value) => isCanonicalAbsolutePath(value, MAX_PACKAGING_OUTPUT_PATH_LENGTH),
-  () => "Expected a canonical non-root absolute package output path"
-);
+/** Describes the projectable structure of an absolute package destination. */
+export const PackageOutputPathSchema = Type.String({
+  minLength: 2,
+  maxLength: MAX_PACKAGING_OUTPUT_PATH_LENGTH,
+  pattern:
+    "^/(?!.*//)(?!.*(?:/\\.{1,2})(?:/|$))(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$",
+});
 
 /** Defines the complete caller input for deterministic package construction and publication. */
 export const PackageAgentPluginRequestSchema = ReadonlyObject(

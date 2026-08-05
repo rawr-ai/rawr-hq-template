@@ -16,4 +16,7 @@ export const status = oc
     })
   )
   .input(standard(ProviderStatusRequestSchema))
-  .output(standard(ProviderStatusResultSchema));
+  .output(standard(ProviderStatusResultSchema))
+  .errors({
+    BAD_REQUEST: { message: "Provider status request is invalid" },
+  });

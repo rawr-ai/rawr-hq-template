@@ -17,4 +17,7 @@ export const test = oc
     })
   )
   .input(standard(ProviderTestRequestSchema))
-  .output(standard(ProviderTestResultSchema));
+  .output(standard(ProviderTestResultSchema))
+  .errors({
+    BAD_REQUEST: { message: "Provider test request is invalid" },
+  });
