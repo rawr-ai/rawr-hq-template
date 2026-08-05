@@ -3,6 +3,14 @@
   "name": "@habitat-ai/rawr",
   "implicitDependencies": ["provider-versioned-content-git-effect-platform-node"],
   "targets": {
+    "rawr": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun src/index.ts",
+        "cwd": "apps/cli",
+        "forwardAllArgs": true
+      }
+    },
     "verify": {
       "executor": "nx:noop",
       "dependsOn": ["acceptance:oclif"]
