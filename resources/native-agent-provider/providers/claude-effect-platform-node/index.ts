@@ -29,12 +29,18 @@ import {
 } from "#native-agent-provider-effect-platform-node";
 
 const NullableStringSchema = Type.Union([Type.String(), Type.Null()]);
+const GitHubRepositorySchema = Type.String({
+  pattern: "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+  minLength: 3,
+  maxLength: 256,
+});
 const ClaudeMarketplaceListSchema = Type.Array(
   Type.Object(
     {
       name: Type.String(),
       source: Type.Optional(NullableStringSchema),
       url: Type.Optional(NullableStringSchema),
+      repo: Type.Optional(Type.Union([GitHubRepositorySchema, Type.Null()])),
       path: Type.Optional(NullableStringSchema),
       installLocation: Type.Optional(NullableStringSchema),
       revision: Type.Optional(NullableStringSchema),
@@ -277,11 +283,8 @@ function normalizeMarketplace(
 ): Effect.Effect<NativeProviderMarketplaceObservation, NativeAgentProviderFailure> {
   if (entry.source === "git") {
     const repositoryUrl = entry.url;
-    const revision = entry.ref ?? entry.revision;
-    return repositoryUrl !== null &&
-      repositoryUrl !== undefined &&
-      revision !== null &&
-      revision !== undefined
+    const revision = entry.ref ?? entry.revision ?? null;
+    return repositoryUrl !== null && repositoryUrl !== undefined
       ? Effect.succeed(
           Object.freeze({
             identity: entry.name,
@@ -290,11 +293,29 @@ function normalizeMarketplace(
           })
         )
       : Effect.fail(
+          providerFailure("inventory", "ProtocolFailed", "Claude Git marketplace omitted its URL")
+        );
+  }
+  if (entry.source === "github") {
+    const repository = entry.repo;
+    return repository === null || repository === undefined
+      ? Effect.fail(
           providerFailure(
             "inventory",
             "ProtocolFailed",
-            "Claude Git marketplace omitted its URL or ref"
+            "Claude GitHub marketplace omitted its repository"
           )
+        )
+      : Effect.succeed(
+          Object.freeze({
+            identity: entry.name,
+            source: Object.freeze({
+              kind: "git" as const,
+              repositoryUrl: `https://github.com/${repository}.git`,
+              revision: entry.ref ?? entry.revision ?? null,
+            }),
+            installedRoot: entry.installLocation ?? null,
+          })
         );
   }
   if (entry.source === "directory") {

@@ -4,6 +4,7 @@ import {
   lstat,
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
   realpath,
   rm,
@@ -100,88 +101,96 @@ describe("codex-effect-platform-node", () => {
       ],
       available: [],
     });
-    const session = await acquire(fixture);
+    const callerHome = path.join(fixture.root, "caller-home");
+    const claudeHome = path.join(fixture.root, "claude-home");
+    await mkdir(callerHome);
+    await mkdir(claudeHome);
+    await withEnvironment({ HOME: callerHome, CLAUDE_CONFIG_DIR: claudeHome }, async () => {
+      const session = await acquire(fixture);
 
-    const probe = await Effect.runPromise(session.probe());
-    const inventory = await Effect.runPromise(session.inventory());
-    await Effect.runPromise(session.addMarketplace({ kind: "local", root: localMarketplace }));
-    await Effect.runPromise(
-      session.addMarketplace({
-        kind: "git",
-        repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
-        revision: "0123456789abcdef",
-        sparsePaths: [".codex-plugin", "plugins/agents"],
-      })
-    );
-    await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
-    await Effect.runPromise(session.installPlugin({ selector: "cognition@rawr-hq" }));
-    await Effect.runPromise(session.removePlugin({ selector: "cognition@rawr-hq" }));
+      const probe = await Effect.runPromise(session.probe());
+      const inventory = await Effect.runPromise(session.inventory());
+      await Effect.runPromise(session.addMarketplace({ kind: "local", root: localMarketplace }));
+      await Effect.runPromise(
+        session.addMarketplace({
+          kind: "git",
+          repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+          revision: "agent-content-v2",
+          sparsePaths: [".codex-plugin", "plugins/agents"],
+        })
+      );
+      await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
+      await Effect.runPromise(session.installPlugin({ selector: "cognition@rawr-hq" }));
+      await Effect.runPromise(session.removePlugin({ selector: "cognition@rawr-hq" }));
 
-    expect(probe).toEqual({
-      provider: "codex",
-      home: fixture.home,
-      version: "codex-cli 0.144.6",
-      capabilities: [
-        "marketplace-list",
-        "marketplace-add",
-        "marketplace-remove",
-        "plugin-list",
-        "plugin-install",
-        "plugin-remove",
-      ],
-    });
-    expect(inventory).toEqual({
-      provider: "codex",
-      marketplaces: [
-        {
-          identity: "local-hq",
-          source: {
-            kind: "local",
-            root: localMarketplace,
+      expect(probe).toEqual({
+        provider: "codex",
+        home: fixture.home,
+        version: "codex-cli 0.144.6",
+        capabilities: [
+          "marketplace-list",
+          "marketplace-add",
+          "marketplace-remove",
+          "plugin-list",
+          "plugin-install",
+          "plugin-remove",
+        ],
+      });
+      expect(inventory).toEqual({
+        provider: "codex",
+        marketplaces: [
+          {
+            identity: "local-hq",
+            source: {
+              kind: "local",
+              root: localMarketplace,
+            },
+            installedRoot: path.join(fixture.home, "plugins", "marketplaces", "local-hq"),
           },
-          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "local-hq"),
-        },
-        {
-          identity: "rawr-hq",
-          source: {
-            kind: "git",
-            repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
-            revision: null,
+          {
+            identity: "rawr-hq",
+            source: {
+              kind: "git",
+              repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+              revision: null,
+            },
+            installedRoot: path.join(fixture.home, "plugins", "marketplaces", "rawr-hq"),
           },
-          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "rawr-hq"),
-        },
-        {
-          identity: "unknown-hq",
-          source: null,
-          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "unknown-hq"),
-        },
-      ],
-      plugins: [
-        {
-          selector: "cognition@rawr-hq",
-          marketplaceIdentity: "rawr-hq",
-          name: "cognition",
-          installed: true,
-          enabled: true,
-          version: "1.2.3",
-          root: null,
-        },
-      ],
+          {
+            identity: "unknown-hq",
+            source: null,
+            installedRoot: path.join(fixture.home, "plugins", "marketplaces", "unknown-hq"),
+          },
+        ],
+        plugins: [
+          {
+            selector: "cognition@rawr-hq",
+            marketplaceIdentity: "rawr-hq",
+            name: "cognition",
+            installed: true,
+            enabled: true,
+            version: "1.2.3",
+            root: null,
+          },
+        ],
+      });
+      expect(await commandLines(fixture.home)).toEqual([
+        "--version",
+        "plugin marketplace list --json",
+        "plugin list --json",
+        `plugin marketplace add ${localMarketplace} --json`,
+        "plugin marketplace add https://github.com/rawr-ai/rawr-hq.git --ref agent-content-v2 --sparse .codex-plugin --sparse plugins/agents --json",
+        "plugin marketplace remove rawr-hq --json",
+        "plugin add cognition@rawr-hq --json",
+        "plugin remove cognition@rawr-hq --json",
+      ]);
+      const environments = await lines(path.join(fixture.home, "env.log"));
+      expect(new Set(environments)).toEqual(
+        new Set([`${callerHome}|${fixture.home}|${claudeHome}|set`])
+      );
+      expect(await readdir(callerHome)).toEqual([]);
+      expect(await readdir(claudeHome)).toEqual([]);
     });
-    expect(await commandLines(fixture.home)).toEqual([
-      "--version",
-      "plugin marketplace list --json",
-      "plugin list --json",
-      `plugin marketplace add ${localMarketplace} --json`,
-      "plugin marketplace add https://github.com/rawr-ai/rawr-hq.git --ref 0123456789abcdef --sparse .codex-plugin --sparse plugins/agents --json",
-      "plugin marketplace remove rawr-hq --json",
-      "plugin add cognition@rawr-hq --json",
-      "plugin remove cognition@rawr-hq --json",
-    ]);
-    const environments = await lines(path.join(fixture.home, "env.log"));
-    expect(new Set(environments)).toEqual(
-      new Set([`${fixture.home}|${fixture.home}|${process.env.CLAUDE_CONFIG_DIR ?? ""}|set`])
-    );
   });
 
   it("rejects malformed native JSON instead of exposing a generic value", async () => {
@@ -448,6 +457,22 @@ async function withPathPrefix<A>(root: string, effect: () => Promise<A>): Promis
   }
 }
 
+async function withEnvironment<A>(
+  values: Readonly<Record<string, string>>,
+  effect: () => Promise<A>
+): Promise<A> {
+  const previous = new Map(Object.keys(values).map((name) => [name, process.env[name]]));
+  for (const [name, value] of Object.entries(values)) process.env[name] = value;
+  try {
+    return await effect();
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
+
 async function acquire(fixture: Readonly<{ command: string; home: string }>) {
   return Effect.runPromise(
     makeNodeCodexNativeAgentProviderResource({
@@ -536,30 +561,32 @@ function isErrnoException(cause: unknown): cause is NodeJS.ErrnoException {
 function fakeCodexScript(): string {
   return `#!/bin/sh
 set -eu
-printf '%s\\n' "$*" >> "$HOME/commands.log"
-printf '%s|%s|%s|%s\\n' "$HOME" "$CODEX_HOME" "\${CLAUDE_CONFIG_DIR:-}" "\${PATH:+set}" >> "$HOME/env.log"
-printf 'start:%s\\n' "$*" >> "$HOME/events.log"
+provider_home="$CODEX_HOME"
+test "$provider_home" = "$PWD" || exit 65
+printf '%s\\n' "$*" >> "$provider_home/commands.log"
+printf '%s|%s|%s|%s\\n' "$HOME" "$CODEX_HOME" "\${CLAUDE_CONFIG_DIR:-}" "\${PATH:+set}" >> "$provider_home/env.log"
+printf 'start:%s\\n' "$*" >> "$provider_home/events.log"
 sleep 0.02
 case "$*" in
   "--version") printf '%s\\n' 'codex-cli 0.144.6' ;;
   "plugin marketplace list --json")
-    if [ -f "$HOME/codex-marketplaces.json" ]; then cat "$HOME/codex-marketplaces.json"; else printf '%s\\n' '{"marketplaces":[]}'; fi ;;
+    if [ -f "$provider_home/codex-marketplaces.json" ]; then cat "$provider_home/codex-marketplaces.json"; else printf '%s\\n' '{"marketplaces":[]}'; fi ;;
   "plugin list --json")
-    if [ -f "$HOME/codex-plugins.json" ]; then cat "$HOME/codex-plugins.json"; else printf '%s\\n' '{"installed":[],"available":[]}'; fi ;;
+    if [ -f "$provider_home/codex-plugins.json" ]; then cat "$provider_home/codex-plugins.json"; else printf '%s\\n' '{"installed":[],"available":[]}'; fi ;;
   "plugin add fail@rawr-hq --json") printf '%s\\n' 'failed' >&2; exit 9 ;;
   "plugin add hang@rawr-hq --json") sleep 999 ;;
   "plugin add cancel@rawr-hq --json")
-    trap 'printf "%s\\n" "received:cancel" >> "$HOME/events.log"; exit 0' TERM
-    printf "pid:cancel:%s\\n" "$$" >> "$HOME/events.log"
-    printf "%s\\n" "ready:cancel" >> "$HOME/events.log"
+    trap 'printf "%s\\n" "received:cancel" >> "$provider_home/events.log"; exit 0' TERM
+    printf "pid:cancel:%s\\n" "$$" >> "$provider_home/events.log"
+    printf "%s\\n" "ready:cancel" >> "$provider_home/events.log"
     while :; do sleep 1; done ;;
   "plugin add ignore-term@rawr-hq --json")
-    trap 'printf "%s\\n" "received:SIGTERM" >> "$HOME/events.log"' TERM
-    printf "%s\\n" "ready:ignore-term" >> "$HOME/events.log"
+    trap 'printf "%s\\n" "received:SIGTERM" >> "$provider_home/events.log"' TERM
+    printf "%s\\n" "ready:ignore-term" >> "$provider_home/events.log"
     while :; do sleep 1; done ;;
   "plugin marketplace add "*|"plugin marketplace remove "*|"plugin add "*|"plugin remove "*) printf '%s\\n' '{}' ;;
   *) printf 'unexpected command: %s\\n' "$*" >&2; exit 64 ;;
 esac
-printf 'end:%s\\n' "$*" >> "$HOME/events.log"
+printf 'end:%s\\n' "$*" >> "$provider_home/events.log"
 `;
 }
