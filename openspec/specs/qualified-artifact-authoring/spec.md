@@ -3,9 +3,15 @@
 ## Purpose
 TBD - created by archiving change normalize-app-composition-authoring. Update Purpose after archive.
 ## Requirements
-### Requirement: Artifact creation has exactly three qualified command owners (B04, B05, B31)
+### Requirement: Source creation has exactly three qualified command owners (B04, B05, B31)
 
-The controller MUST expose exactly `rawr agent plugins create <id> --content-workspace <path>`, `rawr cli command create <topic> <name>`, and `rawr cli extension create <id> --destination <path>` for the retained source-output kinds. Each command MUST parse to a distinct request and invoke one distinct per-kind authoring application. Legacy `rawr plugins scaffold ...`, app-composition commands, and `rawr app projection create` MUST be undiscoverable in C4.
+The private Template Oclif application MUST expose exactly
+`rawr agent plugins create <id> --content-workspace <path>`,
+`rawr cli command create <topic> <name>`, and
+`rawr cli extension create <id> --destination <path>` for the retained source
+output kinds. Each command MUST parse to a distinct request and invoke one
+distinct per-kind authoring capability. Legacy scaffold and app-composition
+creation commands MUST be undiscoverable.
 
 #### Scenario: Command discovery is qualified by owner
 
@@ -25,23 +31,35 @@ Official command, external extension, and curated agent-plugin raw argument pars
 
 ### Requirement: Official command creation is Template-workspace authoring (B01, B31)
 
-`rawr cli command create` MUST verify exact RAWR HQ-Template repository identity, accept one safe topic and command name, and author one official command source, behavior test, and required command metadata inside that workspace. It MUST reject personal RAWR HQ, foreign repositories, and paths outside the verified Template root. It MUST NOT activate or select a controller release.
+`rawr cli command create` MUST verify exact RAWR HQ-Template repository identity,
+accept one safe topic and command name, and author one official command source,
+behavior test, and required command metadata inside that workspace. It MUST
+reject Personal and foreign repositories and paths outside the verified
+Template root. It MUST NOT install, update, or select a CLI version.
 
 #### Scenario: Personal repository cannot receive official command code
 
 - **WHEN** official command creation is pointed at personal RAWR HQ
 - **THEN** repository verification rejects before any planned write
-- **AND** no Template command implementation, manifest row, test, executable ancestry, or controller selection is added to personal
+- **AND** no Template command implementation, manifest row, test, executable
+  ancestry, or CLI installation state is added to Personal
 
 ### Requirement: External extension creation is portable outside Nx (B31)
 
-`rawr cli extension create` MUST operate from an installed Template controller in a foreign directory with no RAWR or Nx workspace. It MUST require one explicit destination and produce a self-contained genuine external Oclif extension package with no workspace-relative runtime dependency. It MUST NOT call native Oclif mutation, load generated code, or claim activation.
+`rawr cli extension create` MUST operate through the exact private Template
+application while its working directory is a foreign directory with no RAWR or
+Nx workspace. It MUST require one explicit destination and produce a
+self-contained genuine external Oclif extension package with no
+workspace-relative runtime dependency. It MUST NOT call Oclif extension
+mutation, load generated code, or claim activation.
 
 #### Scenario: Foreign-directory extension creation succeeds
 
-- **WHEN** the installed controller runs from a fresh foreign directory with isolated HOME/XDG roots, no Nx files, and an explicit empty destination
+- **WHEN** the exact Template application runs from a fresh foreign directory
+  with isolated HOME/XDG roots, no Nx files, and an explicit empty destination
 - **THEN** the extension package builds and its declared command tests pass using only its own package contract
-- **AND** Oclif registry, controller selection, personal content, provider, export, and runtime state remain unchanged
+- **AND** Oclif installed state, Personal content, provider state, and runtime
+  state remain unchanged
 
 #### Scenario: Extension collision blocks before write
 
@@ -51,18 +69,24 @@ Official command, external extension, and curated agent-plugin raw argument pars
 
 ### Requirement: Curated agent-plugin creation authors content only (B05, B31, I02, I17)
 
-`rawr agent plugins create` MUST use an explicit content workspace only as a locator and author one canonical curated agent-plugin source skeleton under `plugins/agents/<id>/**` plus its declarative content inputs. Its `package.json` MUST use the existing versioned personal content contract (`rawr.kind = agent`, `rawr.pluginContent.version = 1`, and the capability identity). It MUST NOT invent a second content root or source-manifest protocol and MUST NOT create Template implementation, app source, release artifacts, lifecycle records, provider state, export state, packages, Oclif entries, controller state, or runtime state.
+`rawr agent plugins create` MUST use an explicit Personal content workspace only
+as a locator and author one canonical curated source skeleton plus declarative
+content inputs. It MUST NOT create Template implementation, app source, derived
+release state, channel records, provider state, package output, Oclif entries,
+CLI installation state, or runtime state.
 
 #### Scenario: Agent-plugin creation has no lifecycle side effect
 
 - **WHEN** a valid curated plugin ID is created in a verified personal content workspace
 - **THEN** only the owned curated source and declarative content paths are authored
-- **AND** every build, package, export, sync, provider, promotion, Oclif, app, controller, record, and capsule mutation counter remains zero
+- **AND** every package, sync, provider, Oclif, channel, and runtime mutation
+  counter remains zero
 
 #### Scenario: Content path cannot select executable authority
 
 - **WHEN** the explicit content workspace is moved or later deleted after source authoring
-- **THEN** no controller, command, generated Template implementation, or runtime identity depends on its absolute path
+- **THEN** no CLI command, Template implementation, or runtime identity depends
+  on its absolute path
 - **AND** the authored repository change remains ordinary content subject to personal repository governance
 
 ### Requirement: Authoring plans are deterministic, collision-safe, and idempotent (B21, B31)
@@ -73,7 +97,8 @@ Each creator MUST compute its complete deterministic ordered write plan before t
 
 - **WHEN** any qualified create command is repeated after its exact output exists
 - **THEN** it validates and reports `AuthoringConverged`
-- **AND** output bytes, metadata, workspace membership, controller selection, and every adjacent authority remain unchanged
+- **AND** output bytes, metadata, workspace membership, CLI installation, and
+  every adjacent authority remain unchanged
 
 #### Scenario: Partial publication remains truthful
 
@@ -89,11 +114,19 @@ Each creator MUST compute its complete deterministic ordered write plan before t
 
 ### Requirement: Source authoring cannot install, compose, or synchronize output (B05, B31)
 
-No qualified create command may install/link an external extension, select or generate an app projection, edit app composition, build/test/package/export/sync an agent release, mutate a provider, promote a channel, restart a process, rewrite controller selection, or invoke another product application's mutation API. Every result MUST identify authored or converged source paths without claiming runtime availability.
+Qualified create commands MUST NOT install/link an external extension, select
+or generate an app projection, edit app composition,
+build/test/package/export/sync agent content, mutate a provider, select a
+channel, restart a process, install/update a CLI, or invoke another product
+application's mutation API.
+Every result MUST identify authored or converged source paths without claiming
+runtime availability.
 
 #### Scenario: Mutation boundaries remain zero
 
-- **WHEN** all three creators run against valid fixtures with install, composition, lifecycle, provider, export, process, controller, and Oclif mutation ports trapped
+- **WHEN** all three creators run against valid fixtures with install,
+  composition, lifecycle, provider, process, CLI-installation, and Oclif
+  mutation ports trapped
 - **THEN** every trapped counter remains zero
 - **AND** only the per-kind exact source write plan may mutate
 
@@ -106,4 +139,3 @@ Active code, help, docs, tests, manifests, and architecture inventories MUST NOT
 - **WHEN** active command code, help, docs, manifests, Nx graph inputs, and imports are scanned
 - **THEN** no legacy scaffold producer, alias, wrapper, forwarding example, mixed factory, obsolete positive test/export, or aggregate dispatch remains reachable
 - **AND** each retained source-authoring capability resolves to exactly one qualified owner
-

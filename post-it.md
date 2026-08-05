@@ -6,6 +6,27 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-05 - Obsolete Means Removed
+
+An obsolete executable is not an acceptable dormant state. Once the ordinary
+Nx/Oclif replacement is proven, the predecessor selector, launcher, retained
+releases, alias, and private stores leave both source and the known operational
+home. The cut preserves no compatibility path and creates no generalized cleanup
+service.
+
+Habitat remains the platform. The current private `rawr` application is a
+repository-local consumer composition, not a Habitat distribution or a product
+to promote from this workspace. Domain products may later move into an
+independent repository that consumes Habitat through its public SDK and CLI.
+
+### Bag Of Keywords
+
+Habitat, Oclif, Nx, application, store.
+
+platform, product, boundary, authority, closure.
+
+prove, remove, build, invoke, separate.
+
 ## 2026-08-05 - Habitat Is The Platform
 
 Habitat is the reusable platform and the only supported public distribution

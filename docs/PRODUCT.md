@@ -33,5 +33,10 @@ application for repository-specific lifecycle operations.
 Habitat SDK and CLI `0.4.1` publication and registry-installed acceptance are
 complete. Private `rawr` development and acceptance use
 `bun run rawr -- ...`; no RAWR release is pending. The predecessor custom
-distribution may remain executable on a workstation, but it is obsolete and is
-not product authority.
+distribution, selector, retained releases, and global alias have been removed.
+No compatibility or fallback path preserves them.
+
+Platform-native Habitat code remains in this repository. Domain products built
+on Habitat, including the current private `rawr` composition, are candidates for
+later extraction into an independent product repository rather than promotion
+from this workspace.

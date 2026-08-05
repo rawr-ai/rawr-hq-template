@@ -573,9 +573,10 @@ internal Template dependency graph remain private workspace projects.
   with another distribution authority read model.
 - [x] 4.5 Verify the complete controller-removal deltas against their exact
   canonical requirement names and record the exhaustive canonical disposition.
-  Task 8.3 applies those deltas atomically when this change archives; do not
-  hand-edit canonical specifications in parallel, add compatibility aliases, or
-  scan old local controller stores.
+  The later live retirement in task 4.6c supersedes the original archive-only
+  sequencing for controller and external-extension authority. Task 8.3 applies
+  only the remaining deltas and removes redundant already-synchronized deltas
+  before archive. Add no compatibility alias, state scanner, or cleanup service.
 - [x] 4.6 Prove direct source and built Oclif execution cover every retained
   command and that no tracked source imports or invokes the retired verticals.
   Run workspace lint plus affected typecheck/build/test/Habitat and standing deletion and
@@ -589,6 +590,20 @@ internal Template dependency graph remain private workspace projects.
   management under `rawr plugins` and the qualified lifecycle under
   `rawr agent plugins`; copy nothing to or from Personal and mutate no provider
   home.
+- [x] 4.6b After exact source and built Oclif replacement proof, remove the known
+  workstation predecessor selector, retained releases, global alias, Habitat SDK
+  release store, agent artifact store, provider projection store, and target
+  receipt store. Remove the known legacy `@rawr/cli` Oclif data root after
+  package-identity, literal-root, realpath, size, entry-count, and open-file
+  guards pass. Record the bounded preimages and outcomes without adding a
+  scanner, cleanup service, compatibility route, or replacement distribution.
+- [x] 4.6c Synchronize canonical product truth at the same retirement boundary.
+  Delete the controller-authority specification, replace the custom external
+  extension-manager specification with direct Oclif ownership, add the private
+  Oclif application capability, and remove installed-controller wording from
+  the surviving command, authoring, and native-state capabilities. Preserve
+  archived design evidence, but leave no active canonical requirement that can
+  authorize the deleted runtime.
 
 ## 5. Bounded Agent-Plugin Lifecycle Service
 
@@ -2627,12 +2642,13 @@ internal Template dependency graph remain private workspace projects.
   an invariant. The Personal-main Inngest review must confirm normal inclusion
   of the two accepted skill trees and exclusion of `inngest-orpc` plus
   research/candidate roots; it does not authorize a separate release path.
-- [ ] 8.3 Archive this change so its canonical deltas atomically delete the
-  six capabilities, rewrite the ten capabilities, retain vendor management, and
-  add the three capabilities recorded exactly in
+- [ ] 8.3 Archive this change so its remaining canonical deltas delete the
+  unsynchronized retired capabilities, rewrite the surviving capabilities,
+  retain vendor management, and add the capabilities recorded exactly in
   [[README#Canonical Spec Disposition|the canonical spec disposition]]. Generic
-  export remains owned by the dedicated destination architecture. Do not rewrite
-  historical Git evidence or leave duplicate active deltas.
+  export remains owned by the dedicated destination architecture. Remove the
+  redundant controller and direct-Oclif deltas already applied by task 4.6c;
+  do not rewrite historical Git evidence or leave duplicate active deltas.
 - [ ] 8.4 Land all Graphite nodes through required remote checks with `--ai`.
   Do not bypass externally blocked checks.
 - [ ] 8.5 Drain owned branches, PR stacks, temporary worktrees, package prefixes,

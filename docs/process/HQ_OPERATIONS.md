@@ -20,8 +20,8 @@ and independent cross-repository acceptance.
 - `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
 - Invoke the private `rawr` application from its exact Template revision with
   `bun run rawr -- ...`. Habitat `0.4.1` publication and registry-installed
-  smoke are complete. The obsolete predecessor distribution may remain
-  executable, but it is not invoked, updated, or accepted as authority.
+  smoke are complete. The predecessor distribution, global alias, and legacy
+  `@rawr/cli` data root are absent; do not reconstruct them.
 - App composition and repository hooks own no lifecycle mutation.
 
 ## Pre-Change Impact Check

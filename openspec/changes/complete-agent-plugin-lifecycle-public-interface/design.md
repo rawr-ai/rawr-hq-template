@@ -464,10 +464,11 @@ not widen this change.
 9. Run disposable-home and approved-home convergence, then the read-only repeat.
 10. Archive superseded records and drain owned stacks/worktrees.
 
-Direct source and built Oclif execution already provide the working development
-replacement before deletion. The old installed controller may remain inert
-during the source cut, but it is never an implementation prerequisite or
-authority for the replacement. No compatibility layer connects the two models.
+Direct source and built Oclif execution provide the working development
+replacement before operational deletion. The known installed controller,
+retained releases, and global alias are then removed completely. No
+compatibility layer connects the two models and no general cleanup authority is
+introduced.
 
 ## Rejected Alternatives
 

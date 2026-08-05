@@ -165,8 +165,9 @@ implementation-package versions remain registry-visible but unsupported.
 
 Delete each obsolete writer and reader in the same semantic change. Add no
 compatibility alias, dual format, migration state, cleanup authority, or
-fallback. Existing obsolete bytes on disk may become inert; the corrected
-product does not acquire a scanner merely to erase them.
+fallback. After the direct application replacement is proven, remove the known
+predecessor installation explicitly. The corrected product does not acquire a
+scanner or cleanup service merely to find historical copies.
 
 ## Positive Architecture Ratchet
 
