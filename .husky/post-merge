@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(git rev-parse --show-toplevel)"
 
+unset $(git rev-parse --local-env-vars)
 if ! "${ROOT_DIR}/scripts/dev/auto-refresh-main.sh" "${ORIG_HEAD:-}" "HEAD" "post-merge"; then
   echo "[rawr-auto-refresh] warning: post-merge dependency refresh failed; run bun install manually" >&2
 fi

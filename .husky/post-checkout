@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(git rev-parse --show-toplevel)"
 OLD_REF="${1:-}"
 NEW_REF="${2:-}"
 IS_BRANCH_SWITCH="${3:-0}"
@@ -10,6 +10,7 @@ if [ "${IS_BRANCH_SWITCH}" != "1" ]; then
   exit 0
 fi
 
+unset $(git rev-parse --local-env-vars)
 if ! "${ROOT_DIR}/scripts/dev/auto-refresh-main.sh" "${OLD_REF}" "${NEW_REF}" "post-checkout"; then
   echo "[rawr-auto-refresh] warning: post-checkout dependency refresh failed; run bun install manually" >&2
 fi

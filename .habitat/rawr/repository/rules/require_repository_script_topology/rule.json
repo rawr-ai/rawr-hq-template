@@ -12,14 +12,14 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a repository scripts root outside its closed mechanics and content topology, or a missing admitted script owner",
-  "why": "Repository scripts are bounded mechanics and content assets with explicit owners. Closing their root prevents orchestration, policy, and product concerns from accumulating in an unowned script namespace.",
-  "remediate": "Keep only AGENTS.md and the chatgpt-corpus-template, dev, githooks, and habitat roots directly under scripts. Move other concerns to their declared product, policy, or tool owner.",
-  "message": "Repository scripts must retain their closed mechanics and content topology.",
+  "forbids": "a repository scripts root outside its closed mechanics and content topology, or a repository hook surface outside its three owned events",
+  "why": "Repository scripts are bounded mechanics and content assets with explicit owners. Husky owns hook activation while the repository owns the three tracked event policies. Closing both roots prevents orchestration, policy, and product concerns from accumulating in an unowned script or hook namespace.",
+  "remediate": "Keep only AGENTS.md and the chatgpt-corpus-template, dev, and habitat roots directly under scripts. Keep post-checkout, post-merge, and pre-push as the only tracked Husky events, with Husky's generated dispatcher admitted under .husky/_. Move other concerns to their declared product, policy, or tool owner.",
+  "message": "Repository scripts and Husky events must retain their closed mechanics and content topology.",
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": ["scripts/**"]
+      "patterns": [".husky/**", "scripts/**"]
     }
   ],
   "supportFiles": {

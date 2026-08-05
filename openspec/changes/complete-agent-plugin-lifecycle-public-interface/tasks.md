@@ -531,7 +531,7 @@ internal Template dependency graph remain private workspace projects.
   plugin, adapter, or RAWR project may require a public package identity.
   - Canonical tag `habitat-cli-v0.4.1` publishes exactly
     `@habitat-ai/sdk@0.4.1` and `@habitat-ai/cli@0.4.1`. Both are the npm
-    `latest` versions, the exact-version `nx add` consumer path passes without
+    `latest` versions at that checkpoint, the exact-version `nx add` consumer path passes without
     a workspace source path, and Template consumes that release through its
     lockfile. No RAWR workspace project is a release member.
 - [x] 3.7c Land the correction on canonical `main`, verify the required
@@ -541,8 +541,9 @@ internal Template dependency graph remain private workspace projects.
     is an ancestor of canonical Template
     `093334ff22f47ce864e15b87dd6ca01b1ba0fb0b`. Release, tag-publish,
     registry-install, and canonical-main required checks are green. The durable
-    consumer handoff is: `npx nx add @habitat-ai/cli@0.4.1 --no-interactive`
-    acquires `@habitat-ai/sdk@0.4.1`; do not install or reconstruct any
+    consumer handoff for that release was: `npx nx add @habitat-ai/cli@0.4.1 --no-interactive`
+    acquires `@habitat-ai/sdk@0.4.1`; task 5.7e22i supersedes it with `0.4.2`.
+    Do not install or reconstruct any
     `@habitat-ai/rawr*` implementation cohort.
 
 ## 4. Custom Controller Deletion
@@ -1960,7 +1961,7 @@ internal Template dependency graph remain private workspace projects.
 - [ ] 5.7e22b1 Close the Habitat source graph against its own ordinary kind
   blueprints. Use the generic package, resource, provider, service, plugin,
   app, and missing Nx-projection definitions, but do not let candidate source
-  authorize its own gate. Installed `@habitat-ai/cli@0.4.1` remains the required
+  authorize its own gate. Installed `@habitat-ai/cli@0.4.2` is the required
   checker while candidate source implements missing version-three
   constructibility. Only a later installed Habitat release containing those
   changes may grant release-pack acceptance, activate version-three instances
@@ -2155,7 +2156,7 @@ internal Template dependency graph remain private workspace projects.
   and live contract corpora, both affected
   service typechecks, and all 24 affected behavior tests. Add no error bridge,
   compatibility export, runtime wrapper, or alternate schema owner.
-- [ ] 5.7e22i Move Git-hook activation into the native Habitat consumer
+- [x] 5.7e22i Move Git-hook activation into the native Habitat consumer
   initializer. Install Husky `9.1.7` as a direct consumer development
   dependency, use the vendor's canonical `prepare = husky` lifecycle, create
   the ordinary pre-push `bun run check` hook only when the consumer has none,
@@ -2171,6 +2172,13 @@ internal Template dependency graph remain private workspace projects.
   isolation, and unchanged outer identity. Land and publish this source before
   migrating Template, Personal, or Magic Migration off their current hook
   installers; add no hook manager, wrapper, policy runner, or second scheduler.
+  Template source landed through PR #812 at `b3d3255b5e3fd9558f0f2e836bcc2faca74d1bb4`.
+  The fixed SDK/CLI group published as `0.4.2` from canonical tag
+  `habitat-cli-v0.4.2`; GitHub run `30982694580` passed Linux and Windows
+  installed-package acceptance, repeat-safe Nx publication, and a fresh
+  registry-installed consumer. Template then consumed that exact release and
+  migrated its three repository-owned events to Husky without changing remote
+  merge authority or introducing another hook implementation.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
@@ -2600,7 +2608,7 @@ internal Template dependency graph remain private workspace projects.
   release tag. Do not commit a Template runtime, generated dependency closure,
   or duplicate plugin payload tree.
 - [ ] 6.4 Replace Personal lifecycle hooks/checks with repository-owned content
-  validation and the checks supplied by installed `@habitat-ai/cli@0.4.1`. The
+  validation and the checks supplied by installed `@habitat-ai/cli@0.4.2`. The
   private
   RAWR application remains Template-owned and consumes explicit Personal Git
   records during lifecycle acceptance; it is not installed into or sourced
@@ -2671,7 +2679,7 @@ internal Template dependency graph remain private workspace projects.
   and disposable homes using bounded non-destructive cleanup. Do not disturb
   unrelated user worktrees or dirty primary checkouts.
 - [ ] 8.6 Verify clean canonical `main` in both repositories, no reachable old
-  command/runtime path, healthy Habitat `0.4.1` installation and private Oclif
+  command/runtime path, healthy Habitat `0.4.2` installation and private Oclif
   application execution, exact closed content selection, provider convergence,
   and mutation-free repeat.
 - [ ] 8.7 Queue the research-bound oRPC corrective skill release only after this

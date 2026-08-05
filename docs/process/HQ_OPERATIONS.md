@@ -19,7 +19,7 @@ and independent cross-repository acceptance.
 - `rawr plugins ...` manages external Oclif extensions only.
 - `rawr agent plugins ...` manages curated agent-plugin lifecycle only.
 - Invoke the private `rawr` application from its exact Template revision with
-  `bun run rawr -- ...`. Habitat `0.4.1` publication and registry-installed
+  `bun run rawr -- ...`. Habitat `0.4.2` publication and registry-installed
   smoke are complete. The predecessor distribution, global alias, and legacy
   `@rawr/cli` data root are absent; do not reconstruct them.
 - App composition and repository hooks own no lifecycle mutation.
@@ -35,7 +35,7 @@ and independent cross-repository acceptance.
 ## Safety And Verification
 
 For Template changes, run the affected Nx targets and the relevant
-repository-local Oclif acceptance. Habitat `0.4.1` package and registry smoke
+repository-local Oclif acceptance. Habitat `0.4.2` package and registry smoke
 are already complete; the private `rawr` application remains source/Nx invoked.
 For Personal changes, run repository-owned content checks and exact-version
 Habitat/interface validation. Mutating provider/Oclif acceptance uses explicit

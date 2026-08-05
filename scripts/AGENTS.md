@@ -19,7 +19,9 @@
   leaving product and structural policy with their declared owners.
 
 ## Scope
-- Applies to `scripts/**`.
+- Applies to `scripts/**` and the tracked `.husky/pre-push`,
+  `.husky/post-checkout`, and `.husky/post-merge` event policies.
+- Husky owns the generated, ignored `.husky/_` dispatcher outside this router.
 - Keep scripts deterministic and fast (they often run in developer loops like hooks).
 
 ## Boundaries
@@ -46,7 +48,7 @@
 
 ## Flow
 
-- Dependency installation configures the repository-owned Git hooks.
+- Dependency installation activates the repository-owned Husky events.
 - Pre-push invokes `bun run check`, which schedules every admitted project's
   public check once through Nx.
 - Pull requests run `bun run ci:affected` against the exact checked-out merge
@@ -62,20 +64,23 @@
   that scripts relay.
 
 ## Git Hooks
-- Shipped hooks live in `scripts/githooks/**`.
-- `scripts/githooks/post-merge` and `scripts/githooks/post-checkout` run main-branch auto-refresh:
+- Shipped hook policies live in `.husky/**`; Husky owns their Git dispatcher.
+- `.husky/post-merge` and `.husky/post-checkout` run main-branch auto-refresh:
   - refresh dependencies when needed
   - never install, update, or relink the global CLI
-- `scripts/githooks/pre-push` enforces remote safety and then runs the complete
+- `.husky/pre-push` enforces remote safety and then runs the complete
   required repository check:
   - remote must be `origin`
   - origin must match this Template repository
   - every admitted project check and its declared prerequisites must pass
 - Do not ship a Template-managed path guard for personal. The repositories own
   separate trees and process configuration; there is no sync or equivalence relation.
-- The root `prepare` script installs `core.hooksPath=scripts/githooks` after a
-  dependency install. `--no-verify` remains a Git escape hatch, so local hooks
-  are feedback only; remote branch protection is merge authority.
+- The released Habitat initializer installs exact Husky as a direct consumer
+  development dependency and sets the root `prepare` script to the vendor's
+  ordinary `husky` activation. A repeated initializer repairs Husky's ignored
+  dispatcher and `core.hooksPath` while preserving the tracked nonempty event
+  policies. `--no-verify` remains a Git escape hatch, so local hooks are
+  feedback only; remote branch protection is merge authority.
 
 ## Required Repository Check
 - `bun run check` is the public required command. It invokes one

@@ -106,6 +106,13 @@ projects as product owners. Codex Stop invokes `habitat hook agent-stop`
 through the same package and catalog; it does not become a second admission
 graph.
 
+Repository hook contributions are a deferred Habitat realization capability.
+Their declarative source may live under `.habitat`, but the Habitat Nx plugin
+must realize it into ordinary consumer-owned Husky event files. Husky remains
+the sole Git event adapter; Habitat must not add a parallel dispatcher, symlink
+contract, or hidden hook state. The current `.husky` files therefore remain the
+executable consumer boundary until that capability is specified and released.
+
 The `plugin-server-api`, `agent-router`, `plugin`, and `plugin-server` packets
 follow Magic Migration commit
 `5a974f0047f0667c2e429fdb4193a0e237b067c4`. The current `service` and
