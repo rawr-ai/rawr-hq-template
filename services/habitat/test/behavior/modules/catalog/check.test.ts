@@ -1017,6 +1017,92 @@ forbidden = ["forbidden.txt"]
     });
   });
 
+  test("rejects duplicate structure scope names before inventory", async () => {
+    const fixture = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "duplicate_scopes",
+              runner: "structure",
+              structureContents: `${defaultStructureToml()}
+[[scopes]]
+name = "project"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "open"
+`,
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+
+    const checked = await checkFixture(fixture, {});
+
+    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "StructureInvalid",
+            detail: "Expected unique structure scope names",
+          },
+        },
+      ],
+    });
+  });
+
+  test("rejects duplicate compatibility structure scope names before inventory", async () => {
+    const fixture = compatibilityFixture();
+    const checked = await checkFixture(
+      {
+        ...fixture,
+        files: {
+          ...fixture.files,
+          ".habitat/legacy/legacy_structure/structure.toml": `schemaVersion = 1
+
+[[scopes]]
+name = "duplicate"
+root = "scripts/habitat/shape"
+kind = "directory"
+mode = "open"
+
+[[scopes]]
+name = "duplicate"
+root = "scripts/habitat/other"
+kind = "directory"
+mode = "open"
+`,
+        },
+      },
+      {}
+    );
+
+    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        { ruleId: "legacy_grit", status: "pass" },
+        {
+          ruleId: "legacy_structure",
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "StructureInvalid",
+            detail: "Expected unique compatibility structure scope names",
+          },
+        },
+      ],
+    });
+  });
+
   test("rejects an unknown structure root role before inventory", async () => {
     const fixture = authorityFixture({
       blueprints: [
