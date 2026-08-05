@@ -22,8 +22,3 @@ selections = []
 id = "project"
 required = true
 kind = "directory"
-
-[[instance.roots]]
-id = "source"
-required = true
-kind = "directory"
