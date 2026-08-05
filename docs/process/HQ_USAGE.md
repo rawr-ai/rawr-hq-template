@@ -31,9 +31,8 @@ bun run rawr -- --help
 The private RAWR Oclif application is built and verified through its Nx-owned
 targets. It is not part of the public Habitat release group. Use the
 repository-local command rather than fabricating an installed RAWR release. Do
-not run the removed custom installer, selector, release store, or launcher. A
-previously installed custom distribution may remain executable, but it is
-obsolete and is not invoked, updated, or accepted as current CLI authority.
+not reconstruct the removed custom installer, selector, release store, launcher,
+or global alias. There is no installed RAWR distribution or compatibility path.
 
 ## Plugin Boundaries
 

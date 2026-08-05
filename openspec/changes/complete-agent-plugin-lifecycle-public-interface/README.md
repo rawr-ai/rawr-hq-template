@@ -6057,9 +6057,34 @@ service topology, and test cases may be retained. Controller identities,
 launcher proofs, transfer mechanisms, export/undo machinery, issuer/promotion
 ceremony, and app-composition work are not preserved merely because they landed.
 
-No compatibility layer connects retired controller bytes to the private
-application. Those bytes are inert because the exact Template application does
-not read them; this initiative does not acquire authority to scan or erase them.
+No compatibility layer connects the retired controller model to the private
+application. Exact Nx build and manifest generation plus repository-local
+`--version` and `--help` invocation passed before the known live predecessor was
+removed. The uncached post-removal `@habitat-ai/rawr:acceptance:oclif` graph
+then passed all 25 build/manifest predecessors and its three source/compiled
+command-inventory tests in 34.1 seconds.
+
+The bounded operational preimage was
+`/Users/mateicanavra/.local/share/rawr/controller`, selected digest
+`3e1a8a4cc16640171ef546811eb6c922a6a0c59ac22300b08d9c9c79f2726d5d`,
+ten retained releases, 2,360,216 KiB, launcher SHA-256
+`1081f70d25fe7f36ff0e22a275088dce3a819d10bd7d60a5cd1d19de13399835`,
+and the exact `~/.bun/bin/rawr` symlink. Literal-root, realpath, directory,
+parent, release-count, selector-shape, and symlink-target guards passed before
+deletion. The alias, controller root, obsolete Habitat SDK release store,
+agent-plugin artifact store, provider projection store, target receipt store,
+and now-empty RAWR data root are absent. This was one explicit settlement, not
+a product scanner or cleanup authority.
+
+A standing review then found the separate legacy Oclif data root
+`/Users/mateicanavra/.local/share/@rawr/cli`: 4,664 KiB and 798 entries, with a
+root `package.json` identifying `@rawr/cli` and no open file handles. Exact
+literal-root, realpath, parent, directory, non-symlink, package-identity,
+entry-count, size, and open-file guards passed before bounded deletion. The
+root and its now-empty `@rawr` parent are absent. The same checkpoint removed
+the active controller-authority specification and synchronized surviving
+canonical command, authoring, native-state, private-application, and direct-Oclif
+requirements; historical archived specifications remain evidence only.
 
 ## Related
 

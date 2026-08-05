@@ -95,5 +95,5 @@ executable CLI code.
 
 Habitat SDK and CLI `0.4.1` are the released reusable substrate. Template
 lifecycle acceptance uses `bun run rawr -- ...` from the exact canonical
-Template revision; the obsolete predecessor distribution and a hypothetical
-RAWR package release are not interfaces.
+Template revision. The removed predecessor distribution, an installed RAWR
+alias, and a hypothetical RAWR package release are not interfaces.

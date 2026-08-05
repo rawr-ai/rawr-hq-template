@@ -4,12 +4,20 @@
 TBD - created by archiving change retire-mixed-plugin-lifecycle. Update Purpose after archive.
 ## Requirements
 ### Requirement: Curated lifecycle has one exact qualified command ontology
-The installed Template controller MUST expose curated lifecycle only as `rawr agent plugins check|create|vendors status|vendors update|build|test|package|export|sync|status|retire|undo|attest-promotion`. Every command and nested topic MUST be an immutable controller member. Bare `rawr plugins`, root `rawr undo`, `rawr agent sync`, and any alias or forwarding route MUST NOT expose curated lifecycle behavior.
+The private Template Oclif application MUST expose curated lifecycle only as
+`rawr agent plugins check|create|status vendors|update vendors|test|package|sync|status`.
+Every command and nested topic MUST be a declared first-party Oclif command.
+Bare `rawr plugins`, root `rawr undo`, `rawr agent sync`, retired
+`rawr agent plugins retire`, retired `rawr agent plugins attest-promotion`,
+retired `rawr agent plugins export`, retired `rawr agent plugins undo`, and any
+alias or forwarding route MUST NOT expose curated lifecycle behavior.
 
 #### Scenario: Discovery separates external and curated plugins
 - **WHEN** command, topic, alias, hidden-alias, help, and manifest discovery are enumerated
 - **THEN** the exact qualified curated family appears only below `rawr agent plugins`
-- **AND** bare `rawr plugins` contains only the seven external-extension operations
+- **AND** bare `rawr plugins` is owned directly by `@oclif/plugin-plugins`,
+  contains no curated lifecycle behavior, and every retired lifecycle command
+  is absent everywhere
 
 ### Requirement: CLI parsing preserves closed procedure requests
 Every lifecycle command MUST reject unknown, legacy, cross-mode, relative, noncanonical, or ambiguous inputs before constructing a Git, artifact, provider, receipt, destination, output, capsule, Oclif, or hosted-governance port. Artifact inputs MUST use only canonical domain-qualified release or release-set handles. Provider selection MUST use only repeatable `provider=absolute-home` tuples. A parsed request MUST retain the typed procedure's discriminated union and MUST NOT collapse into an optional-field bag.
@@ -19,7 +27,14 @@ Every lifecycle command MUST reject unknown, legacy, cross-mode, relative, nonca
 - **THEN** parsing exits as invalid input before every observable port call
 
 ### Requirement: Each service-backed command invokes one typed service procedure
-Each service-backed lifecycle transition command MUST perform command-local value adaptation and invoke exactly one `@rawr/agent-plugin-lifecycle` client procedure. CLI code MUST NOT import a module-local router handler or repository, resolve lifecycle prerequisites, sequence plan/apply/verify/retire across modules, aggregate procedure results, persist another ledger/receipt/capsule, or introduce another lifecycle service. The C4 `create` command remains source authoring. Qualified `undo` invokes only the controller-owned capsule application. Neither exception may invoke a retired peer service.
+Each service-backed lifecycle transition command MUST perform command-local
+value adaptation and invoke exactly one
+`@habitat-ai/rawr-agent-plugin-lifecycle` client procedure. CLI code MUST NOT
+import a module-local router handler or repository, resolve lifecycle
+prerequisites, sequence plan/apply/verify/retire across modules, aggregate
+procedure results, persist another ledger/receipt/capsule, or introduce another
+lifecycle service. The `create` command remains source authoring. No lifecycle
+export or undo exception remains, and provider operations emit no capsule.
 
 #### Scenario: Dispatch cannot become an aggregate
 - **WHEN** every command runs with all lifecycle procedures and module-local router handlers instrumented
@@ -34,11 +49,18 @@ Qualified status MUST preserve every canonical repository/provider classificatio
 - **THEN** it returns the same converged identity after live reads
 - **AND** every mutation counter is zero and tracked bytes and mtimes are unchanged
 
-### Requirement: Controller and repository identities never collapse
-Controller data paths MUST derive only from the verified installed-controller layout. Content and lifecycle records MUST be read only through an explicit absolute versioned Git locator. A repository path MUST NOT select a controller, artifact identity, provider home, export destination, channel, receipt, or executable implementation, and personal executable modules MUST never load.
+### Requirement: CLI installation and content repository identities remain separate
+Curated lifecycle MUST own no durable local data root. Oclif MAY use its
+ordinary host-provided application directories for its own installed
+extension/configuration state. Content and channel records MUST be read only
+through an explicit absolute versioned Git locator; provider homes and package
+outputs MUST remain explicit procedure inputs. A repository path MUST NOT
+select a CLI package version, provider home, channel, executable implementation,
+or Oclif application directory. Personal executable modules MUST never load.
 
 #### Scenario: Misleading personal runtime files have no authority
 - **WHEN** an explicit content workspace contains command, service, adapter, renderer, or controller-like executable files
-- **THEN** the controller reads only the admitted versioned data interface through fixed Git objects
-- **AND** command resolution and every implementation import remain inside the installed Template controller
-
+- **THEN** lifecycle reads only the admitted versioned data interface through
+  fixed Git objects
+- **AND** Oclif dispatch and implementation imports remain inside the exact
+  Template application revision

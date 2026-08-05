@@ -1,4 +1,11 @@
-## ADDED Requirements
+# Private RAWR Oclif Application Specification
+
+## Purpose
+
+Define the repository-local RAWR application as an ordinary private Oclif
+consumer of the Habitat platform.
+
+## Requirements
 
 ### Requirement: `rawr` is a private Oclif application
 
@@ -9,6 +16,7 @@ application MUST NOT require a controller selector, private release store,
 per-file runtime envelope, Personal repository, or worktree identity.
 
 #### Scenario: Nx and Oclif command discovery agree
+
 - **WHEN** the exact revision is built and invoked through its Nx-owned Oclif
   targets
 - **THEN** generated and live discovery expose the same first-party command IDs
@@ -16,6 +24,7 @@ per-file runtime envelope, Personal repository, or worktree identity.
 - **AND** neither reads a controller selector to dispatch
 
 #### Scenario: Application publication metadata is inspected
+
 - **WHEN** the `rawr` application and its internal workspace projects are
   inspected
 - **THEN** every project is private and absent from Nx Release
@@ -31,12 +40,14 @@ services, resources, plugins, or support packages. No route may introduce a
 RAWR-owned selector or retained local version store.
 
 #### Scenario: Application build is inspected
+
 - **WHEN** one clean source revision produces the Oclif application through Nx
 - **THEN** generated command metadata and command discovery verify
 - **AND** `rawr` adds no package cohort, private archive canonicalizer, per-file
   envelope, or metadata rewrite
 
 #### Scenario: Runtime compatibility is not proven
+
 - **WHEN** surviving first-party commands still require Bun runtime APIs
 - **THEN** the `rawr` application remains private
 - **AND** this change does not create a custom runtime manager, release group,
@@ -44,13 +55,14 @@ RAWR-owned selector or retained local version store.
 
 ### Requirement: Application diagnostics report ordinary state
 
-Application diagnostics MUST use standard application and Oclif concepts. They MAY
-report application version, source revision, executable path, Oclif
+Application diagnostics MUST use standard application and Oclif concepts. They
+MAY report application version, source revision, executable path, Oclif
 data/config/cache directories, loaded core and external plugins, and provider
 command reachability. They MUST NOT make a controller digest, release-store
 path, selector, or per-file verification envelope an operational prerequisite.
 
 #### Scenario: Private application is healthy
+
 - **WHEN** diagnostics run from an exact Nx-built Template revision
 - **THEN** they report the application and Oclif state without reading or
   reconstructing a controller store
@@ -64,6 +76,7 @@ The application MUST achieve the declared boundary through correct package and
 project metadata, not a release filter or manifest rewrite.
 
 #### Scenario: Shared SDK declares a server-only runtime
+
 - **WHEN** a shared package declaration would pull an otherwise unreachable
   server, workflow, or Inngest runtime into the private application graph
 - **THEN** validation fails until the package boundary or dependency metadata is
@@ -71,6 +84,7 @@ project metadata, not a release filter or manifest rewrite.
 - **AND** no release filter silently removes the dependency
 
 #### Scenario: Shared dependency metadata changes
+
 - **WHEN** CLI composition changes `@habitat-ai/rawr-hq-sdk` dependency or export
   boundaries
 - **THEN** the legitimate server project passes its typecheck and owning

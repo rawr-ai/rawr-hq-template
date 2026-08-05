@@ -84,9 +84,9 @@ and keeps the lifecycle behavior that solves the actual product problem.
   surface while retaining executable code and generic lifecycle tooling.
 - Personal RAWR HQ becomes independently content-focused; no Template merge,
   copy, equivalence, or executable pin is introduced.
-- Existing controller installations become obsolete local bytes. The corrected
-  product does not scan or mutate them after the private application and native
-  acceptance path are verified.
+- The known predecessor controller installation is removed after direct private
+  application proof. The corrected product contains no scanner, compatibility
+  layer, retained copy, or cleanup service for it.
 - Accepted `dev:inngest` and `dev:effect-inngest` content enters through the
   ordinary Personal closed release set; `inngest-orpc` and research/candidate
   roots remain excluded, with no protected-lane release exception.

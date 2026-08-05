@@ -190,10 +190,21 @@ Before the first native mutation at an explicitly selected provider/home pair, t
 - **WHEN** an export destination aliases any admitted native provider home
 - **THEN** the complete native-home snapshot exposes the overlap and export rejects without either owner mutating state
 
-### Requirement: Native state does not depend on a content checkout
-Native package staging and provider-visible state MUST derive from immutable artifacts and stable Template runtime roots. No marketplace, provider identity, receipt, package source, or installed state may use a disposable content or implementation worktree as operational authority.
+### Requirement: Native state does not depend on mutable checkout bytes
 
-#### Scenario: Worktrees disappear after convergence
-- **WHEN** content and implementation worktrees are removed after artifact publication and native convergence
-- **THEN** live provider verification, status, and repeated convergence remain correct from installed controller, immutable artifacts, governed records, and target state
+Provider-native input MUST derive from exact selected Git objects. Canonical
+mutation MUST use a provider-native Git marketplace source at the selected
+immutable Personal revision, and the provider MUST own its resulting snapshot
+inside the explicit native home. A local content workspace remains only a Git
+object locator and MUST NOT become package, provider, cache, or next-invocation
+identity. Local marketplace paths are test-only and MUST share the bounded
+lifetime of their test operation. The service MUST retire only the temporary
+source it allocated and MUST NOT infer deletion authority over the caller-owned
+disposable parent or provider home.
 
+#### Scenario: Mutable worktree differs from selected objects
+
+- **WHEN** worktree bytes differ from the reviewed selected commit and tree
+- **THEN** status or sync reads only the exact selected Git objects or returns
+  `Blocked` with a selection issue
+- **AND** it never substitutes mutable worktree bytes or a retained local copy

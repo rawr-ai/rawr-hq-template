@@ -26,9 +26,8 @@ workspace projects. The `@habitat-ai/rawr` Oclif application uses the
 repository-local command above; releasing that private application is outside
 this workstream.
 Do not restore the removed custom installer, selector, release store, or launcher.
-A previously installed custom distribution may remain executable on a workstation,
-but it is obsolete, is not updated, and is not authority for development or
-acceptance.
+The predecessor distribution, global alias, and legacy `@rawr/cli` data root
+are absent. Development and acceptance have no installed-RAWR fallback.
 
 ## Personal Repository
 

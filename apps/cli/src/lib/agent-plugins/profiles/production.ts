@@ -32,7 +32,7 @@ export type LifecycleProductionProfile = Readonly<{
 }>;
 
 /**
- * Exact production provider selection for the installed RAWR CLI.
+ * Exact production provider selection for the private Template Oclif application.
  *
  * @remarks
  * The profile stores factory references only. Operation-owned resources retain
