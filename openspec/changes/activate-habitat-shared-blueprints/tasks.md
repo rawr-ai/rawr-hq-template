@@ -22,7 +22,7 @@
 - [x] 4.1 Cover valid, invalid, escaping, mismatched, duplicate, and conflicting package members in catalog behavior tests.
 - [x] 4.2 Cover local and package provenance plus Nx workspace-input separation.
 - [x] 4.3 Replace the installed consumer's local blueprint fixture with a package-owned blueprint and prove resolve, check, inferred targets, and repeated initialization.
-- [ ] 4.4 Run focused service, SDK, CLI, Habitat policy, and repository checks.
+- [x] 4.4 Run focused service, SDK, CLI, Habitat policy, and repository checks.
 
 ## 5. Land And Release
 
