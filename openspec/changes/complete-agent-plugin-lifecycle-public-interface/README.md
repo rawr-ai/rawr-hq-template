@@ -5965,11 +5965,12 @@ environment before delegating to `bun run check`; it does not read or write Git
 identity. Existing nonempty hooks remain consumer-owned. Exact predecessor
 prepare scripts may be replaced, while incompatible Husky versions or
 dependency placement, prepare, or empty hook state refuses before the first Nx
-`Tree` write. This is source-candidate behavior only: `@habitat-ai/cli@0.4.1`
-remains the released authority, and no
-Template, Personal, or Magic Migration consumer has migrated yet. Landing,
-publication, registry-installed repeat proof, and consumer migration remain
-separate ordered checkpoints.
+`Tree` write. The source implementation landed on canonical Template `main` as
+`b3d3255b5e3fd9558f0f2e836bcc2faca74d1bb4` through PR #812. This checkpoint
+advances the fixed `@habitat-ai/sdk` and `@habitat-ai/cli` Nx release group to
+`0.4.2`; publication, registry-installed repeat proof, and consumer migration
+remain separate ordered checkpoints. `@habitat-ai/cli@0.4.1` remains the
+registry authority until the canonical `habitat-cli-v0.4.2` tag workflow passes.
 
 The source candidate passes 47 Habitat CLI behavior tests, the installed
 two-package `nx add` acceptance, the 18-task owner check, TypeScript, Biome, and
@@ -5978,8 +5979,10 @@ lockfile resolution, ignored-dispatcher and `core.hooksPath` repair on a
 byte-stable repeat, Windows-faithful `git hook run` execution, inherited
 absolute-`GIT_DIR` isolation, unchanged outer repository identity, and
 consumer-hook preservation. Architecture, TypeScript/structural, and
-behavior-first test reviews report no P0 or P1 findings. The candidate remains
-unlanded and unpublished at this record checkpoint.
+behavior-first test reviews report no P0 or P1 findings. The landed source
+candidate also passed the required remote repository ratchet and installed
+package acceptance on Ubuntu and Windows. No Template, Personal, or Magic
+Migration consumer has migrated at this release-version checkpoint.
 
 ## Lifecycle Model Topology Closure
 
