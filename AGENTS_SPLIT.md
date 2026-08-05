@@ -48,17 +48,18 @@ This file is the repository authority boundary. `RAWR HQ-Template` and personal
 - Curated agent lifecycle lives only under `rawr agent plugins`.
 - App composition is a consumer and never a lifecycle owner.
 
-## CLI Distribution Ownership
+## Platform Distribution Ownership
 
-- CLI contracts, Oclif package metadata, Nx Release configuration, ordinary
+- Habitat SDK/CLI contracts, package metadata, Nx Release configuration,
   publication, and installation are Template-owned.
-- The installed `rawr` executable resolves through the ordinary package or
-  installer, never a Template or Personal checkout or private release selector.
-- Personal checks may invoke an externally installed Template-owned tool at an
-  exact interface version. Personal does not vendor that tool.
-- Until public registry publication and registry-installed smoke complete,
-  Template development uses `bun run rawr -- ...`; that source command is not a
-  cross-repository release interface.
+- `@habitat-ai/sdk@0.4.1` and `@habitat-ai/cli@0.4.1` are the supported public
+  artifacts. Personal may invoke them at exact interface versions but does not
+  vendor their implementation.
+- The `rawr` executable remains a private Template Oclif application invoked
+  through its Nx-owned source/build targets. It is not installed into Personal
+  or published as a cross-repository interface.
+- No checkout, worktree, or private release selector becomes executable or
+  lifecycle identity.
 
 ## Repository Separation Rule (Hard)
 

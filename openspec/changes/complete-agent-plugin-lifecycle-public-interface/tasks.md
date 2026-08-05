@@ -143,7 +143,7 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
     Effect beta 102 and TypeScript 6/7 were rejected by strict package-consumer
     and full-repository proof rather than hidden with compatibility settings.
     Task 1.5d remains the separate compiler migration.
-- [ ] 1.5e After every selected service rule passes the admitted Template
+- [x] 1.5e After every selected service rule passes the admitted Template
   service corpus,
   activate the six staged laws only through the upstream Habitat Nx-plugin
   boundary in task 5.7e22. Let inferred owner-local targets provide exact
@@ -428,12 +428,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   and standing Oclif/TypeScript/testing reviews. Land this semantic node before
   packaging work.
 
-## 3. Conventional CLI Package And Release
+## 3. Habitat SDK And CLI Release
 
 Tasks 3.1 through 3.6b are retained as investigation history. They do not
-authorize publishing the RAWR workspace graph. The corrected product boundary
-is one installed Habitat substrate; RAWR applications and their internal
-services, resources, plugins, and packages remain private workspace projects.
+authorize publishing the RAWR workspace graph. The corrected distribution
+contains the Habitat SDK and CLI; the private `rawr` application and its
+internal Template dependency graph remain private workspace projects.
 
 - [x] 3.1 Inventory the current CLI runtime closure and classify Bun-only
   dependencies. Select a registry-published Oclif application whose fixed Nx
@@ -507,36 +507,43 @@ services, resources, plugins, and packages remain private workspace projects.
   namespace without making them public products. Package identity does not
   imply release membership.
 - [x] 3.7 Remove the `rawr-cli` Nx release group, tag trigger, workflow branch,
-  and package publication metadata. Mark every RAWR application, service,
-  resource, plugin, and support package private. A later application-release
-  change may choose a conventional Oclif distribution without publishing the
-  workspace graph or adding a custom installer. Enforce coherent package
+  and package publication metadata. Mark the private `rawr` application and its
+  internal Template dependency graph private. `rawr` remains outside public
+  distribution and Nx Release. Enforce coherent package
   visibility through Habitat: private projects carry no publication metadata;
   public projects of any kind require explicit npm classification.
-- [ ] 3.7a Retract the accidental `0.1.0` RAWR npm cohort and verify that none
-  of its eighteen names remains available from the public registry. Record the
-  exact preimage and outcome; do not create replacement versions or trusted
-  publishers.
-- [ ] 3.7b Collapse Habitat's public implementation cohort into one runtime SDK
+- [x] 3.7a Retract registry residue from the rejected eighteen-name `0.1.0`
+  RAWR candidate cohort and verify that none of its names remains available from
+  the public registry. Record the exact preimage and outcome; do not create
+  replacement versions or trusted publishers.
+  - Preimage commit `e78e5765302363aa632e9a213863114d2b430ef5`, tree
+    `3d26e3eb484952933086d450909cb4ca15585766`, declared the exact eighteen
+    names. Only `@habitat-ai/rawr-hq-sdk@0.1.0` historically escaped. Direct
+    unauthenticated npm package and version requests returned `404` for all
+    eighteen names on 2026-08-05 UTC. The current repository has no RAWR Nx
+    Release group or RAWR publication workflow, and no replacement package was
+    created.
+- [x] 3.7b Collapse Habitat's public implementation cohort into one runtime SDK
   containing the TypeBox bridge, blueprint catalog, and runtime capabilities.
   Keep the CLI as one ordinary Oclif release consuming that SDK. Release both
   through Nx, then prove the single consumer path in a disposable workspace:
   `nx add @habitat-ai/cli@<exact-version>`. No internal service, resource,
   plugin, adapter, or RAWR project may require a public package identity.
-  - Candidate `e4a47451` plus vendor checkpoint `c5206e64` produces exactly the
-    two `0.4.0` packages. The uncached installed two-tarball acceptance and Nx
-    publication dry-run are green. This task remains open until the canonical
-    registry release and exact-version `nx add` pass without a workspace path.
-    Because the SDK is a new npm package, land first, publish the exact `0.4.0`
-    group once through authenticated Nx, bind the SDK's trusted publisher, then
-    use a subsequent canonical patch tag to prove steady-state OIDC publication.
-    The tag workflow invokes the workspace's sole release group without a group
-    filter so Nx retains the SDK/CLI build, manifest, and installed-acceptance
-    predecessors of both inferred publish targets. Group selection must not
-    prune those required task-graph edges.
-- [ ] 3.7c Land the correction on canonical `main`, verify the required
+  - Canonical tag `habitat-cli-v0.4.1` publishes exactly
+    `@habitat-ai/sdk@0.4.1` and `@habitat-ai/cli@0.4.1`. Both are the npm
+    `latest` versions, the exact-version `nx add` consumer path passes without
+    a workspace source path, and Template consumes that release through its
+    lockfile. No RAWR workspace project is a release member.
+- [x] 3.7c Land the correction on canonical `main`, verify the required
   repository ratchet, and notify waiting consumer lanes of the one supported
   installation surface.
+  - Release commit `06c54e112df5c740e25e7f05cd4a8003c2239496`
+    is an ancestor of canonical Template
+    `093334ff22f47ce864e15b87dd6ca01b1ba0fb0b`. Release, tag-publish,
+    registry-install, and canonical-main required checks are green. The durable
+    consumer handoff is: `npx nx add @habitat-ai/cli@0.4.1 --no-interactive`
+    acquires `@habitat-ai/sdk@0.4.1`; do not install or reconstruct any
+    `@habitat-ai/rawr*` implementation cohort.
 
 ## 4. Custom Controller Deletion
 
@@ -573,8 +580,8 @@ services, resources, plugins, and packages remain private workspace projects.
   command and that no tracked source imports or invokes the retired verticals.
   Run workspace lint plus affected typecheck/build/test/Habitat and standing deletion and
   architecture reviews. Land coherent controller deletion nodes without
-  reopening the extension manager removed in task 2.2. Task 3.4 separately
-  proves the later conventional installed package.
+  reopening the extension manager removed in task 2.2. Task 3.4 records the
+  historical installed-package proof that preceded the private-app correction.
 - [x] 4.6a Retire Template's remaining curated agent-content compatibility
   workspace and its phase-one freeze gates. Remove active guidance and test
   fixtures that still grant lifecycle meaning to the deleted custom controller
@@ -1021,7 +1028,7 @@ services, resources, plugins, and packages remain private workspace projects.
   affected builds and types, focused native/Effect/schema/transport/telemetry
   behavior, workspace lint, Habitat, and standing native-authority,
   TypeScript, architecture, structural-quality, and testing reviews.
-- [ ] 5.7 Seal one module at a time with owner-local behavior, schema, and
+- [x] 5.7 Seal one module at a time with owner-local behavior, schema, and
   typecheck plus workspace lint and Habitat checks. Compose and gate the root router only after
   changed module routers are green. Use semantic Graphite checkpoints.
 - [x] 5.7a Record the historical governance checkpoint under the then-current
@@ -1089,7 +1096,7 @@ services, resources, plugins, and packages remain private workspace projects.
   positive and adversarial disposable fixtures, including one combined
   multi-rule catalog run. Do not modify the Habitat SDK or disguise staging as
   enforcement.
-- [ ] 5.7e2 Extract the service capability, owner, context, and import corpus,
+- [x] 5.7e2 Extract the service capability, owner, context, and import corpus,
   then burn every admitted service package and module shell to the sealed
   topology with no `shared`, `common`, sibling-module implementation import,
   upward implementation import, baseline, or path exception. For the lifecycle
@@ -1889,7 +1896,7 @@ services, resources, plugins, and packages remain private workspace projects.
   predecessor paths and one-use helpers without aliases. Add no generalized
   rule, resource, provider, middleware, compatibility face, Personal,
   live-state, or second operation path.
-- [ ] 5.7e22 Activate the six candidate service-construction laws through the
+- [x] 5.7e22 Activate the six candidate service-construction laws through the
   installed Habitat Nx boundary after tasks 5.7e19 through 5.7e21 and 5.7e24
   are green, task 5.7e2 proves the complete live corpus, and tasks 5.7e22b
   through 5.7e22f have landed. Consume the installed Template-owned package,
@@ -1921,29 +1928,29 @@ services, resources, plugins, and packages remain private workspace projects.
   controlled transfer corpus, active execution record, and rolling mental
   model together. Move no source, release, consumer, provider, or Personal
   state in this authority checkpoint.
-- [ ] 5.7e22b Intake and deproductize the Template-owned Habitat source through
-  the canonical product-realization graph as one reviewed Graphite stack.
-  Extract only generic behavior from exact committed Civ7 evidence; do not
-  transplant branch ancestry, Civ7 host policy, product roots,
-  generator/taxonomy/doc paths, generated output, manual consumer wiring, or a
-  wholesale `tools/habitat` tree. Keep support-only matter in packages,
-  provider-neutral lifecycle contracts in resources, concrete acquisition in
-  providers, semantic Habitat operations in one service, Oclif and Nx
-  projections in plugins, and provider/profile selection plus the executable
-  entrypoint in an app. Make the blueprint-aware authority catalog the
-  production service path. Admit an existing v2 registry only as compatibility
-  data inside that catalog, resolve its absence to one exact empty document,
-  and retain no separate predecessor startup or execution authority. Do not
-  create a composite `habitat-cli` source kind or bless one package as a
-  service/resource/plugin/app exception.
+- [x] 5.7e22b Intake and deproductize the Template-owned Habitat source through
+  the canonical Habitat implementation graph. Extract only generic behavior from
+  exact committed Civ7 evidence; do not transplant branch ancestry, Civ7 host
+  policy, product roots, generated output, manual consumer wiring, or a
+  wholesale `tools/habitat` tree. Preserve private package, resource, provider,
+  and service owners while assembling their runtime closure into
+  `@habitat-ai/sdk`; let the Habitat Oclif app own commands, Nx projection,
+  generators, profile selection, and executable entrypoint in
+  `@habitat-ai/cli`. Make the blueprint-aware authority catalog the production
+  path. Admit the v2 registry only as compatibility data inside that catalog
+  and retain no separate predecessor startup, execution authority, composite
+  source kind, or public implementation-package cohort. Canonical Habitat
+  `0.4.1` closes this two-artifact distribution; task 5.7e22b1 tracks later v3
+  constructibility and is not a lifecycle-settlement prerequisite.
 - [ ] 5.7e22b1 Close the Habitat source graph against its own ordinary kind
   blueprints. Use the generic package, resource, provider, service, plugin,
   app, and missing Nx-projection definitions, but do not let candidate source
-  authorize its own gate. The installed release checks the candidate until the
-  ordinary Habitat app can be released. Schema-admitted definitions may land
-  before that app, but only the installed successor may grant release-pack
-  acceptance, activate version-three instances and applications, or replace
-  the required merge checker. Until then, migrate source without `habitat.toml` instances
+  authorize its own gate. Installed `@habitat-ai/cli@0.4.1` remains the required
+  checker while candidate source implements missing version-three
+  constructibility. Only a later installed Habitat release containing those
+  changes may grant release-pack acceptance, activate version-three instances
+  and applications, or replace the required merge checker. Until then, migrate
+  source without `habitat.toml` instances
   rather than bypassing the required repository gate. One singular
   `structure.toml` remains at each blueprint root. Remove the rejected
   `habitat-cli` blueprint rather than teaching Habitat an exception for its own
@@ -2561,9 +2568,13 @@ services, resources, plugins, and packages remain private workspace projects.
   and prove each native source resolves to the selected immutable commit or
   release tag. Do not commit a Template runtime, generated dependency closure,
   or duplicate plugin payload tree.
-- [ ] 6.4 Replace Personal lifecycle hooks/checks with thin invocation of the
-  ordinarily installed Template CLI. No legacy `rawr plugins sync`, source
-  checkout fallback, or `--no-verify`.
+- [ ] 6.4 Replace Personal lifecycle hooks/checks with repository-owned content
+  validation and the checks supplied by installed `@habitat-ai/cli@0.4.1`. The
+  private
+  RAWR application remains Template-owned and consumes explicit Personal Git
+  records during lifecycle acceptance; it is not installed into or sourced
+  from Personal. No legacy `rawr plugins sync`, Template checkout fallback, or
+  `--no-verify`.
 - [ ] 6.5 Remove remaining Template-derived executable code, generic tooling,
   and synchronization process from Personal once unique useful content and
   governed records are accounted for. Preserve repository-local process config
@@ -2585,8 +2596,10 @@ services, resources, plugins, and packages remain private workspace projects.
 
 ## 7. Native Provider Acceptance And Settlement
 
-- [ ] 7.1 Install the conventional RAWR CLI by absolute path/version in an
-  isolated prefix. Do not rely on the old global selector or controller store.
+- [ ] 7.1 Build and invoke the exact canonical Template private Oclif
+  application through its Nx-owned targets in an isolated acceptance
+  environment. Do not publish or install RAWR, and do not rely on an ambient
+  global command, old selector, or controller store.
 - [ ] 7.2 Use explicit disposable Codex and Claude homes populated only through
   supported native commands. Seed one stale same-ID selected member, one omitted
   RAWR-managed member, one unmanaged member, and collision cases.
@@ -2626,8 +2639,9 @@ services, resources, plugins, and packages remain private workspace projects.
   and disposable homes using bounded non-destructive cleanup. Do not disturb
   unrelated user worktrees or dirty primary checkouts.
 - [ ] 8.6 Verify clean canonical `main` in both repositories, no reachable old
-  command/runtime path, healthy ordinary CLI installation, exact closed content
-  selection, provider convergence, and mutation-free repeat.
+  command/runtime path, healthy Habitat `0.4.1` installation and private Oclif
+  application execution, exact closed content selection, provider convergence,
+  and mutation-free repeat.
 - [ ] 8.7 Queue the research-bound oRPC corrective skill release only after this
   normalization and the first cognition settlement. Use the normal closed-world
   release/channel/provider path; never legacy sync.

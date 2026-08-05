@@ -23,10 +23,11 @@ package staging, update algorithm, or runtime module loader.
 normal Oclif dispatch.
 
 ### Requirement: Hermetic recovery survives source deletion (B02, B03, B32)
-**Reason**: Source independence is supplied by the installed CLI package, not a
-controller-root-only subprocess and private release store.
-**Migration**: Verify ordinary plugin recovery from the conventionally installed
-CLI after the source checkout is unavailable.
+**Reason**: Source-deletion survival is not required for the private `rawr`
+application and does not justify a controller-root subprocess or private
+release store.
+**Migration**: Verify ordinary plugin recovery through the exact Nx-built
+Template application.
 
 ### Requirement: Lifecycle paths cannot mutate Oclif authority (B01, I01, I08)
 **Reason**: The boundary remains valid but its controller-specific mechanism is

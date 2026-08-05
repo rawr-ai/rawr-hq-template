@@ -27,6 +27,6 @@ The previous plugin E2E workflow is preserved at `docs/process/quarantine/PLUGIN
 
 - `rawr plugins ...` is reserved for external Oclif extensions.
 - `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
-- Repository development uses `bun run rawr -- ...` from Template. The fixed Nx
-  Release group and packed-install acceptance are landed; registry-installed
-  acceptance follows public package publication.
+- Private `rawr` application development uses `bun run rawr -- ...` from the
+  exact Template revision. Habitat `0.4.1` publication and registry-installed
+  acceptance are complete; no RAWR package publication is pending.

@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-05 - Habitat Is The Platform
+
+Habitat is the reusable platform and the only supported public distribution
+owned by this workstream. Its current Nx Release group contains
+`@habitat-ai/sdk` and `@habitat-ai/cli`; older implementation-package versions
+remain registry-visible but unsupported. The `rawr` command remains a private Oclif application that
+assembles repository-specific capabilities; it is not a platform identity, a
+release objective, or a reason to publish the workspace graph.
+
+Lifecycle acceptance therefore starts from one exact canonical Template
+revision through its Nx-owned application targets. It selects Personal content
+through explicit Git records and delegates provider changes to native commands
+in explicit homes. Habitat distribution, private application execution,
+content selection, and provider state remain separate authorities. Earlier
+ledger entries proposing a public RAWR package cohort are superseded.
+
+### Bag Of Keywords
+
+Habitat, RAWR, Oclif, Nx, content.
+
+platform, application, boundary, authority, identity.
+
+build, select, inspect, reconcile, verify.
+
 ## 2026-08-02 - Service Authorship Narrows
 
 A service is a downward capability funnel, not a web of reachable helpers.

@@ -2,7 +2,7 @@
 
 ### Requirement: Legacy web membership commands are structurally absent (B04, B30)
 
-The installed Template Oclif CLI MUST NOT expose `rawr plugins web`,
+The private Template Oclif application MUST NOT expose `rawr plugins web`,
 `rawr plugins scaffold`, or any former child command, alias, forwarder, help row,
 tool entry, or active documentation route. No replacement curated-agent,
 app-composition, web-mounting, or aggregate source-scaffolding behavior may enter
@@ -11,7 +11,7 @@ through this retirement. Bare `rawr plugins` belongs only to
 `rawr agent plugins`.
 
 #### Scenario: Former mixed commands cannot resolve
-- **WHEN** installed Oclif discovery, command IDs, aliases, help, and metadata are
+- **WHEN** Nx-built Oclif discovery, command IDs, aliases, help, and metadata are
   enumerated
 - **THEN** every former web/scaffold command and compatibility route is absent
 

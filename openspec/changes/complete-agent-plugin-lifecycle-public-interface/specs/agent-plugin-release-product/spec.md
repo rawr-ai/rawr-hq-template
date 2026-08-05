@@ -166,7 +166,7 @@ projections, compatibility fallbacks, and Personal executable code MUST remain
 absent.
 
 #### Scenario: Qualified activation does not add another owner
-- **WHEN** installed Oclif discovery and dispatch are inspected
+- **WHEN** Nx-built Oclif discovery and dispatch are inspected
 - **THEN** each qualified command invokes exactly its lifecycle-service
   procedure
 - **AND** no aggregate, external Oclif extension, app composition, artifact

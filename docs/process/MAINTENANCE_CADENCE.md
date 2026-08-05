@@ -48,8 +48,8 @@ Interpretation:
 
 Use disposable homes and an exact content fixture to verify:
 
-1. the exact ordinarily installed Template CLI accepts the declared
-   schema/protocol version;
+1. the exact canonical Template private application accepts the declared
+   schema/protocol version through its Nx-owned execution path;
 2. the personal content commit/tree and governed record digests bind the result;
 3. no personal executable mirror or cross-repository workspace link exists;
 4. repeated convergence performs no writes.
