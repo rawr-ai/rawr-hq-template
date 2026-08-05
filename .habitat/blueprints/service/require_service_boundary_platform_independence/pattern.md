@@ -4,10 +4,10 @@ tags: [service, api, boundary, platform, resource]
 ---
 # Require Service Boundary Platform Independence
 
-Service contracts, schemas, and DTOs describe portable domain boundaries.
-They do not acquire concrete Node or Bun platform modules. Filesystem,
-process, storage, and runtime capabilities enter through service context and
-explicit resource providers instead.
+Service contracts, schemas, DTOs, and entities describe portable domain
+meaning and boundaries. They do not acquire concrete Node or Bun platform
+modules. Filesystem, process, storage, and runtime capabilities enter through
+service context and explicit resource providers instead.
 
 This rule intentionally does not classify router, module, or repository
 implementation files. TypeScript and behavior tests own those executable
@@ -58,16 +58,16 @@ predicate require_service_boundary_platform_independence_is_service_module_contr
   }
 }
 
-// Identifies DTO and schema declarations owned by a service root or module.
+// Identifies DTO, schema, and entity declarations owned by a service root or module.
 predicate require_service_boundary_platform_independence_is_service_model_declaration() {
   or {
     and {
       require_service_boundary_platform_independence_belongs_to_exact_standalone_service(),
-      $filename <: r".*services/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|schema)/.*\.ts$"
+      $filename <: r".*services/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|entities|schema)/.*\.ts$"
     },
     and {
       require_service_boundary_platform_independence_belongs_to_exact_api_service(),
-      $filename <: r".*plugins/server/api/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|schema)/.*\.ts$"
+      $filename <: r".*plugins/server/api/[^/]+/src/service/(?:modules/[^/]+/)?model/(?:dto|entities|schema)/.*\.ts$"
     }
   }
 }
@@ -116,6 +116,14 @@ const sqlite = import("bun:sqlite");
 export { sqlite };
 ```
 
+## Matches a module entity importing Node filesystem APIs
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/model/entities/job.ts
+import "node:fs";
+export const JobSchema = {};
+```
+
 ## Ignores executable router implementation
 
 ```typescript
@@ -132,4 +140,13 @@ import { Type } from "typebox";
 import { oc } from "@orpc/contract";
 import { ItemSchema } from "#jobs-service/modules/catalog/model/dto/item.dto";
 export const contract = oc.input(Type.Object({ item: ItemSchema }));
+```
+
+## Ignores a platform-neutral service entity
+
+```typescript
+// @filename: services/jobs/src/service/model/entities/job.ts
+import { type Static, Type } from "typebox";
+export const JobSchema = Type.Object({ id: Type.String({ minLength: 1 }) });
+export type Job = Static<typeof JobSchema>;
 ```

@@ -15,13 +15,14 @@ Procedure input, output, and public error-data envelopes adapt TypeBox with
 binding may preserve portable declaration names without creating another schema
 owner.
 
-Contract and reusable DTO schema owners use TypeBox's native JSON Schema
-builders. Executable refinements, codecs, native-only builders and literals,
-unsafe schemas, and tuple syntax from an older JSON Schema dialect do not enter
-a public contract. TypeBox remains responsible for the schemas its JSON
-builders produce; this law rejects the known non-projectable capability
-families instead of making the adapter traverse and reinterpret arbitrary
-schema graphs at runtime.
+Contract, reusable DTO, and entity schema owners use TypeBox's native JSON
+Schema builders. Entity leaves keep the canonical schema beside its
+`Static<typeof Schema>` generated type. Executable refinements, codecs,
+native-only builders and literals, unsafe schemas, and tuple syntax from an
+older JSON Schema dialect do not enter these shared declarations. TypeBox
+remains responsible for the schemas its JSON builders produce; this law
+rejects the known non-projectable capability families instead of making the
+adapter traverse and reinterpret arbitrary schema graphs at runtime.
 
 Public procedure failures are declared with native `.errors(...)` maps in the
 owning contract. A map may be inline or a private local object literal, and a
@@ -203,11 +204,15 @@ predicate require_service_contract_authority_is_leaf_export($export) {
   $status <: includes "ok"
 }
 
-// Scopes TypeBox publication law to contracts and reusable DTO schema owners.
+// Scopes TypeBox publication law to contracts, reusable DTOs, and entity leaves.
 predicate require_service_contract_authority_is_schema_owner() {
   or {
     require_service_contract_authority_is_module_contract_source(),
-    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/dto/.*\.dto\.ts$"
+    $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/dto/.*\.dto\.ts$",
+    and {
+      $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:model|modules/[^/]+/model)/entities/[^/]+\.ts$",
+      not { $filename <: r".*/entities/index\.ts$" }
+    }
   }
 }
 
@@ -700,4 +705,13 @@ export const get = oc
   .output(standard(Type.Object({
     accepted: Type.Boolean(),
   }, { additionalProperties: false })));
+```
+
+## Ignores a canonical TypeBox-derived entity
+
+```typescript
+// @filename: services/jobs/src/service/model/entities/job.ts
+import { type Static, Type } from "typebox";
+export const JobSchema = Type.Object({ id: Type.String({ minLength: 1 }) });
+export type Job = Static<typeof JobSchema>;
 ```

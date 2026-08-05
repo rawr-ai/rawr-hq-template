@@ -3,7 +3,7 @@ import type {
   HyperresearchIntegrityFinding,
   HyperresearchV8RunLedger,
   V8RunStatus,
-} from "@habitat-ai/rawr-hyperresearch-codex/types";
+} from "@habitat-ai/rawr-hyperresearch-codex/client";
 
 type V8RunnerSummaryInput = {
   ledgerPath: string;

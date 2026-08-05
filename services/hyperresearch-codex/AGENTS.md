@@ -48,7 +48,7 @@
 
 - [Repository router](../../AGENTS.md)
 - [Public service contract](src/service/contract.ts)
-- [Service I/O boundary](src/service/common/resources.ts)
+- [Service I/O boundary](src/service/model/ports/hyperresearch.ts)
 
 ## Validation
 

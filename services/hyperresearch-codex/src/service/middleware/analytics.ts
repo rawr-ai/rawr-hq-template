@@ -3,7 +3,7 @@
  */
 import { createAnalyticsMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
 import { base } from "../base";
-import { metadataDefaults } from "../contract";
+import { metadataDefaults } from "../model/policy";
 
 /** Authors run analytics through the Hyperresearch service context. */
 export const middleware = base.middleware(

@@ -1,9 +1,9 @@
 import { spawn } from "node:child_process";
-import type { HyperresearchCliBackend } from "@habitat-ai/rawr-hyperresearch-codex/resources";
 import type {
+  HyperresearchCliBackend,
   HyperresearchCliOperation,
   HyperresearchCliResult,
-} from "@habitat-ai/rawr-hyperresearch-codex/types";
+} from "@habitat-ai/rawr-hyperresearch-codex/client";
 
 export class NodeHyperresearchCliBackend implements HyperresearchCliBackend {
   constructor(private readonly binary = "hyperresearch") {}

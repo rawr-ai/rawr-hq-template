@@ -3333,13 +3333,15 @@ continuing identity, or return value and snapshot projections. Entities never
 import DTO, contract, database, store, transport, provider, or persistence
 concerns. There is no `db/dto` destination.
 
-Structural entity admission remains advisory: the imported TypeBox and
-platform-neutral patterns do not yet scan entity roots, so no production
-entity source moves until the shared laws are extended without a RAWR-local
-fork under [[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.7e21h]].
-Example Todo's Task, Tag, and Assignment identities are the first future
-migration corpus after that gate closes. `AgentPluginRelease` and
-`AgentPluginReleaseSet` remain immutable values or snapshots, not entities.
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|Task 5.7e21h]] closes the
+shared entity admission gate. The existing TypeBox authority and
+platform-independence laws now scan service- and module-owned entity leaves;
+no RAWR-local rule or scanner was added. Hyperresearch supplies the first
+production corpus: `HyperresearchRunLedger` is a cross-module identity-bearing
+aggregate, while the Runs-owned V8 ledger remains module-local. Integrity and
+agent-output results are DTOs, CLI execution is a port, and step definitions
+are policy. `AgentPluginRelease` and `AgentPluginReleaseSet` remain immutable
+values or snapshots, not entities.
 
 Authority lands before source movement on purpose. The native Habitat topology
 fixture admits the new directory entrypoints and entity destinations, then

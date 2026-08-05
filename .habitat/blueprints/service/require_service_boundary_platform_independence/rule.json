@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "a service contract, schema, or DTO declaration that directly acquires a Node or Bun platform module",
-  "why": "Domain declarations describe portable service boundaries; concrete platform acquisition belongs behind service context and resource providers.",
-  "remediate": "Keep contracts, schemas, and DTOs platform-neutral, and inject filesystem, process, storage, or runtime capabilities through the service context and an explicit resource provider.",
+  "forbids": "a service contract, schema, DTO, or entity declaration that directly acquires a Node or Bun platform module",
+  "why": "Domain and boundary declarations describe portable service meaning; concrete platform acquisition belongs behind service context and resource providers.",
+  "remediate": "Keep contracts, schemas, DTOs, and entities platform-neutral, and inject filesystem, process, storage, or runtime capabilities through the service context and an explicit resource provider.",
   "message": "Service boundary declarations must not import concrete Node or Bun platform modules.",
   "pathCoverage": [
     {
@@ -24,10 +24,14 @@
         "services/*/src/service/modules/*/{contract,schemas,model,types}.ts",
         "services/*/src/service/modules/*/contract/*.ts",
         "services/*/src/service/{model,modules/*/model}/{dto,schema}/**/*.ts",
+        "services/*/src/service/model/entities/**/*.ts",
+        "services/*/src/service/modules/*/model/entities/**/*.ts",
         "plugins/server/api/*/src/service/{contract,schemas,model,types}.ts",
         "plugins/server/api/*/src/service/modules/*/{contract,schemas,model,types}.ts",
         "plugins/server/api/*/src/service/modules/*/contract/*.ts",
-        "plugins/server/api/*/src/service/{model,modules/*/model}/{dto,schema}/**/*.ts"
+        "plugins/server/api/*/src/service/{model,modules/*/model}/{dto,schema}/**/*.ts",
+        "plugins/server/api/*/src/service/model/entities/**/*.ts",
+        "plugins/server/api/*/src/service/modules/*/model/entities/**/*.ts"
       ]
     }
   ],

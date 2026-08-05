@@ -109,9 +109,10 @@ its recorded source-migration and activation gates pass.
    and boundary projections. DTOs and contracts may compose entities, and
    stores may map records to entities when the domain models continuing
    identity; reverse imports are inadmissible. The structural entity
-   destination remains advisory until the shared TypeBox and platform-neutral
-   source laws cover it; production entity movement waits for that law rather
-   than creating a RAWR-only fork.
+   destination is active only under the shared TypeBox and platform-neutral
+   source laws, which cover service- and module-owned entity leaves without a
+   RAWR-only fork. Ports remain external capability seams, while policy owns
+   decisions and definitions rather than identity.
 10. Module-local imports remain inside their sealed module through owner-local
     routes. Habitat owns containment at the module root; contract, context, and
     router laws own executable direction inside it. A module does not reach
