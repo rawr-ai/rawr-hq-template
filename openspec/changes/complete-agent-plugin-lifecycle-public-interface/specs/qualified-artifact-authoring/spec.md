@@ -7,7 +7,7 @@
 
 ### Requirement: Source creation has exactly three qualified command owners (B04, B05, B31)
 
-The installed Template Oclif CLI MUST expose exactly
+The private Template Oclif application MUST expose exactly
 `rawr agent plugins create <id> --content-workspace <path>`,
 `rawr cli command create <topic> <name>`, and
 `rawr cli extension create <id> --destination <path>` for the retained source
@@ -16,7 +16,7 @@ per-kind authoring capability. Legacy scaffold and app-composition creation
 commands MUST be undiscoverable.
 
 #### Scenario: Command discovery is qualified by owner
-- **WHEN** installed Oclif discovery, aliases, help, and direct command IDs are
+- **WHEN** Nx-built Oclif discovery, aliases, help, and direct command IDs are
   enumerated
 - **THEN** only the three qualified create commands appear
 - **AND** no aggregate factory or compatibility forwarder appears
@@ -37,15 +37,16 @@ root. It MUST NOT install, update, or select a CLI version.
 
 ### Requirement: External extension creation is portable outside Nx (B31)
 
-`rawr cli extension create` MUST operate from an ordinarily installed Template
-CLI in a foreign directory with no RAWR or Nx workspace. It MUST require one
-explicit destination and produce a self-contained genuine external Oclif
-extension package with no workspace-relative runtime dependency. It MUST NOT
-call Oclif extension mutation, load generated code, or claim activation.
+`rawr cli extension create` MUST operate through the exact private Template
+application while its working directory is a foreign directory with no RAWR or
+Nx workspace. It MUST require one explicit destination and produce a
+self-contained genuine external Oclif extension package with no
+workspace-relative runtime dependency. It MUST NOT call Oclif extension
+mutation, load generated code, or claim activation.
 
 #### Scenario: Foreign-directory extension creation succeeds
-- **WHEN** the installed CLI runs from a fresh foreign directory with isolated
-  HOME/XDG roots, no Nx files, and an explicit empty destination
+- **WHEN** the exact Template application runs from a fresh foreign directory
+  with isolated HOME/XDG roots, no Nx files, and an explicit empty destination
 - **THEN** the extension package builds and its declared command tests pass from
   its own package contract
 - **AND** Oclif installed state, Personal content, provider state, and app

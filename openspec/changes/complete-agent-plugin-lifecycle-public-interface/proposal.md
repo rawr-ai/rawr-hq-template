@@ -1,6 +1,6 @@
 ## Why
 
-RAWR needs one normally installed CLI and one bounded desired-state reconciler
+The private `rawr` Oclif application needs one bounded desired-state reconciler
 for curated agent plugins. It does not need a private CLI package manager,
 runtime selector, retained content-addressed application store, per-file runtime
 attestation envelope, or reconstructed Oclif extension manager.
@@ -16,9 +16,9 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - Distribute Habitat as one runtime SDK containing its TypeBox bridge,
   blueprints, and runtime capabilities, plus one ordinary Oclif CLI release.
 - Restore `@oclif/plugin-plugins` as the direct owner of `rawr plugins`.
-- Keep Nx project targets for build and generated Oclif manifests. Public
-  distribution of the RAWR application is a separate product decision; this
-  change does not publish its internal workspace graph.
+- Keep Nx project targets for build and generated Oclif manifests. `rawr`
+  remains outside public distribution and Nx Release; this change does not
+  publish its internal workspace graph.
 - Delete the custom controller builder, archive format, release store, selector,
   launcher, installer, per-file runtime envelope, controller diagnostics, and
   release workflow.
@@ -69,7 +69,7 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - `agent-plugin-command-lifecycle`: `rawr agent plugins` remains the only curated
   lifecycle surface.
 - `agent-plugin-channel-selection`: one Personal Git-reviewed record selects one
-  closed release input without binding the installed CLI package.
+  closed release input without binding application or installation identity.
 - `agent-provider-projection`: retire the rejected renderer, projection digest,
   and stable materialization protocol in favor of direct native reconciliation.
 - `agent-provider-deployment`: explicit Codex and Claude homes converge through
@@ -85,8 +85,8 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - Personal RAWR HQ becomes independently content-focused; no Template merge,
   copy, equivalence, or executable pin is introduced.
 - Existing controller installations become obsolete local bytes. The corrected
-  product does not scan or mutate them after conventional CLI installation is
-  verified.
+  product does not scan or mutate them after the private application and native
+  acceptance path are verified.
 - Accepted `dev:inngest` and `dev:effect-inngest` content enters through the
   ordinary Personal closed release set; `inngest-orpc` and research/candidate
   roots remain excluded, with no protected-lane release exception.

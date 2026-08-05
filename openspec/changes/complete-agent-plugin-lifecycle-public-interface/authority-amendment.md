@@ -27,10 +27,10 @@ store, retained versions, per-file manifest, and Oclif extension reconstruction
 look authoritative because later code was written to consume them. That is
 circular complexity, not a product requirement.
 
-The ordinary requirement is narrower: run one normal RAWR Oclif application,
+The ordinary requirement is narrower: run one normal private `rawr` Oclif application,
 keep one bounded agent-plugin reconciler inside it, and delegate provider
 mutation to the providers' native commands. Habitat's separately released SDK
-and Oclif CLI supply the repository substrate without making the private RAWR
+and Oclif CLI supply the platform tooling without making the private `rawr`
 application graph public. Local accidental
 checkout/worktree confusion does not justify a private package manager or a
 hostile-local-tamper model.
@@ -45,10 +45,10 @@ successful native command.
 
 ## Director Frame
 
-- **Objective:** make RAWR HQ-Template a normal Nx-built Oclif application with
-  uniform command plugins and one bounded oRPC agent-plugin lifecycle service;
-  keep Personal RAWR HQ content-only; then prove native Codex and Claude
-  convergence and a mutation-free repeat.
+- **Objective:** keep `rawr` a private Nx-built Oclif application with uniform
+  command plugins and one bounded oRPC agent-plugin lifecycle service; keep
+  Personal RAWR HQ content-only; then prove native Codex and Claude convergence
+  and a mutation-free repeat.
 - **Hard core:** Oclif owns CLI dispatch and external extension mechanics; Nx
   owns project builds, checks, and releases; Habitat owns positive source and
   topology policy; Personal review selects desired curated membership; the
@@ -63,7 +63,7 @@ successful native command.
   provider mutation outside native commands; Template executable code in
   Personal; an omitted managed member left reachable; or a converged repeat
   that mutates.
-- **Closure:** conventional CLI package is landed and installable; custom
+- **Closure:** the private Oclif application builds and runs through Nx; custom
   controller and extension-manager code is unreachable and deleted; Habitat,
   lint, typecheck, and focused behavior checks are required and green; Personal
   contains only its content and governed records; disposable and approved homes
@@ -96,6 +96,9 @@ another standard term that names the actual thing.
 
 | Concern | Owner |
 | --- | --- |
+| Distributed product | Habitat |
+| Supported public distribution artifacts | `@habitat-ai/sdk` and `@habitat-ai/cli` only |
+| Private application and command namespace | `rawr`; built and tested through Nx, absent from Nx Release and public publication |
 | CLI command discovery and dispatch | Oclif package configuration, core-plugin composition, and installed plugin state |
 | External Oclif extension install/update/remove | `@oclif/plugin-plugins` |
 | Workspace build, task dependencies, and caching | Nx project targets |
@@ -133,9 +136,9 @@ RAWR HQ-Template source
 
 Development and application hosts use the same Oclif application through Nx
 without an installed controller. This workstream does not publish the RAWR
-workspace graph. A later application-distribution decision may use conventional
-Oclif packaging after its runtime requirements are known; it may not introduce
-another selector, version store, or internal-package release cohort.
+workspace graph or reserve a later RAWR distribution. Habitat SDK and CLI are
+the only supported public artifacts in the current Nx Release group; older
+implementation-package versions remain registry-visible but unsupported.
 
 ## Component Disposition
 
@@ -146,7 +149,7 @@ another selector, version store, or internal-package release cohort.
 | `resources/controller-authority/**` | Delete; rehome only narrow surviving checks at their actual owner |
 | `apps/cli/src/lib/controller/**` | Delete |
 | `packages/core/src/cli/controller-reentry.ts` | Delete |
-| Controller release workflow, installer, selector, launcher, diagnostics | Replace with ordinary Nx/Oclif build and host composition; distribution remains separate |
+| Controller release workflow, installer, selector, launcher, diagnostics | Replace with ordinary Nx/Oclif build and host composition; `rawr` remains private |
 | `apps/cli/src/lib/external-extensions/**` | Delete |
 | Local wrappers for Oclif `plugins` commands | Delete; enable `@oclif/plugin-plugins` directly |
 | `apps/cli/bin/run.js` and `apps/cli/src/index.ts` | Restore to ordinary Oclif entrypoints |
@@ -216,7 +219,7 @@ model.
 
 ## Behavioral Boundary
 
-Tests assert the product transitions:
+Tests assert the private application and lifecycle transitions:
 
 - ordinary Oclif development invocation and packaged invocation expose the
   same core commands;
@@ -253,11 +256,8 @@ Personal skill bytes move only through the governed closed release set.
 
 ## Execution Rule
 
-The next durable changes follow [[tasks]]. First land this correction and the
-positive Habitat/Nx ratchet, then restore conventional Oclif execution and native
-extension management. Inventory the release form, delete the superseded
-distribution and persistent lifecycle state, migrate the surviving resource
-family to Effect 4, and only then package the actual surviving runtime closure.
-Simplify Personal records after the ordinary CLI release lands. No provider or
-repository release mutation occurs until the replacement path is landed and its
-owning behavior checks pass.
+Remaining work follows [[tasks]]: close Personal content records independently;
+run the exact private `rawr` application through Nx against disposable provider
+homes; after explicit authorization, reconcile approved homes and verify a
+read-only repeat; then archive and drain the workstream. Habitat package
+publication is already complete and remains separate.

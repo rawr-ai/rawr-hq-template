@@ -1,21 +1,21 @@
 ## REMOVED Requirements
 
 ### Requirement: Atomic official controller closure (B01, I01)
-**Reason**: Oclif core-plugin composition and the released CLI package own the
-official command set. A private controller manifest is not required.
+**Reason**: Oclif core-plugin composition owns the official command set. A
+private controller manifest is not required.
 **Migration**: Declare first-party plugins in the Oclif configuration and build
-the released package through Nx.
+the private application through Nx.
 
 ### Requirement: Stable materialized controller authority (B02, B32, I02, I17)
 **Reason**: The selected release store, bundled runtime, and stable selector are
 a custom CLI package/version manager outside the product need.
-**Migration**: Install one conventional versioned Oclif CLI package through its
-ordinary installer or package manager.
+**Migration**: Run the private Oclif application through its exact Nx-built
+Template revision. Habitat SDK and CLI own public distribution.
 
 ### Requirement: Atomic activation and idempotent selection (B32, I01)
 **Reason**: A private digest selector is no longer an installed-state owner.
-**Migration**: Package-manager installation and executable resolution select the
-installed CLI version.
+**Migration**: The exact Template revision and Nx application target select the
+private application without a local version store.
 
 ### Requirement: Non-circular complete payload identity (B01, B32)
 **Reason**: Per-file hostile-local-tamper attestation exceeds the accidental
@@ -31,8 +31,8 @@ registry reconstruction.
 ### Requirement: Complete read-only controller provenance (B01, B32)
 **Reason**: Controller provenance exists only for the rejected distribution
 format.
-**Migration**: Report ordinary CLI package version, executable path, release
-provenance, and Oclif directories when diagnostics need them.
+**Migration**: Report ordinary application version, source revision, executable
+path, and Oclif directories when diagnostics need them.
 
 ### Requirement: Explicit complete command-package classification (B01)
 **Reason**: Oclif's core-plugin manifest already classifies official command

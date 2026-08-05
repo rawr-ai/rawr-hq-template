@@ -32,7 +32,7 @@ Template may operate on personal content only through an explicit versioned data
 interface. A complete binding names:
 
 - schema or protocol ID and version;
-- ordinary installed CLI package name and version, once published;
+- exact Template source revision used for private application acceptance;
 - exact personal repository identity, source commit and tree, and release-input
   record version;
 - governed record digests;
@@ -41,16 +41,15 @@ interface. A complete binding names:
 Personal Git commits and trees may be retained as audit provenance. They do not
 replace any interface field above.
 
-## Template Publication
+## Template Interface
 
 1. Implement and verify the generic behavior in Template.
 2. Land through Template's own Graphite stack and canonical `main`; the required
    repository gate must pass on the exact release source.
-3. Publish the versioned schema/protocol and ordinary Oclif CLI package through
-   the fixed Nx Release group.
-4. Repeat the version, help, and command-inventory smoke from a
-   registry-installed disposable prefix, then record the package version,
-   integrity, and compatibility declaration.
+3. Publish reusable Habitat schema/tooling through its fixed Nx Release group.
+4. Verify the private Oclif application through its Nx-owned source and build
+   targets, then record the exact Template revision and interface versions used
+   for cross-repository acceptance.
 
 No personal checkout participates in CLI build, packaging, or release identity.
 
@@ -58,8 +57,8 @@ No personal checkout participates in CLI build, packaging, or release identity.
 
 1. Start from clean personal `main` and its own repository process record.
 2. Author or update only curated content and governed content records.
-3. Invoke the ordinarily installed Template-owned CLI at the exact accepted
-   package and interface versions; do not vendor the tool.
+3. Run repository-owned content validation and the supported installed Habitat
+   checks; do not install or vendor Template's private RAWR application.
 4. Bind the accepted content identity and governed record digests.
 5. Land through personal's own Graphite stack and canonical `main`.
 
@@ -71,8 +70,9 @@ verify content identity from Git/data inputs rather than treating the path as au
 Cross-repository acceptance is a protocol compatibility check, not a Git integration:
 
 1. verify each repository is clean on its own canonical `main`;
-2. verify the ordinary installed CLI package and interface versions;
-3. verify personal content and governed records against that exact interface;
+2. verify the exact Template private application revision and interface
+   versions;
+3. verify Personal content and governed records against that exact interface;
 4. reconcile only the explicitly named provider home or export destination;
 5. repeat the operation and prove inspection may occur but no state changes;
 6. verify no executable mirror, workspace link, compatibility alias, or lifecycle
@@ -87,13 +87,13 @@ Cross-repository acceptance is a protocol compatibility check, not a Git integra
 
 ## Repository Promotion
 
-Promote repositories independently. A Template release may become a prerequisite
-for validating a personal interface version, but it is never merged into personal.
-A personal content release may become input data to Template tooling, but personal
-source is never imported as executable CLI code.
+Promote repositories independently. A released Habitat interface may become a
+prerequisite for Personal checks, but Template's private RAWR application is
+never installed into or merged with Personal. A Personal content release may
+become input data to Template tooling, but Personal source is never imported as
+executable CLI code.
 
-The fixed Nx Release package group and packed-install acceptance are active.
-Registry-installed cross-repository settlement remains pending public package
-publication and the registry-installed smoke. Until then Template development
-uses `bun run rawr -- ...`; the obsolete predecessor distribution is not an
-interface.
+Habitat SDK and CLI `0.4.1` are the released reusable substrate. Template
+lifecycle acceptance uses `bun run rawr -- ...` from the exact canonical
+Template revision; the obsolete predecessor distribution and a hypothetical
+RAWR package release are not interfaces.

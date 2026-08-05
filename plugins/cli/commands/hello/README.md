@@ -12,4 +12,5 @@ rawr hello --json
 
 `hello` is intentionally external-only. The native Oclif registry stores the
 absolute linked root. Removing that checkout makes only this extension
-unavailable; the installed RAWR CLI remains independently manageable.
+unavailable; the private RAWR application remains independently manageable
+through its owning Template revision.

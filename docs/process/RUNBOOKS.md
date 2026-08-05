@@ -36,10 +36,10 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 - Creation, packaging, vendor updates, and destination export remain qualified
   adjacent capabilities. They do not select a channel or create build,
   promotion, retirement, undo, or persistent local lifecycle authority.
-- CLI development uses repository-local Nx targets and `bun run rawr -- ...`.
-  The fixed Nx Release group and packed-install acceptance are landed. Ordinary
-  package installation becomes the operational path after public registry
-  publication and registry-installed smoke complete.
+- Private `rawr` application development uses repository-local Nx targets and
+  `bun run rawr -- ...`. Habitat `0.4.1` publication and registry-installed
+  smoke are complete; the private application is not a release-group member or
+  installed operational surface.
 
 Do not mix command families. App, web, and runtime composition are not lifecycle
 fallbacks.

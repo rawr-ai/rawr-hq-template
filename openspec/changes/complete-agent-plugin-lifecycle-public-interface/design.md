@@ -45,18 +45,19 @@ map, transition guarantees, and burn-down sequence are in
   curated content + provenance + policy/evaluation + governed records
 ```
 
-The wires stay visible. The CLI app composes Oclif plugins. Command plugins
+The wires stay visible. The private `rawr` application composes Oclif plugins. Command plugins
 project CLI input/output onto public service clients. Services own domain
 behavior. Resources expose host capabilities. Providers implement those
-capabilities. Nx builds and releases the components. Habitat constrains their
-topology.
+capabilities. Nx builds the workspace and releases only the Habitat SDK and CLI
+packages. Habitat constrains component topology.
 
 ## Decisions
 
 ### Oclif owns the CLI
 
-`apps/cli` has one ordinary entrypoint and one binary declaration. Development
-invocation and packaged invocation run the same Oclif application. Core
+The private `rawr` application under `apps/cli` has one ordinary entrypoint and
+one binary declaration. Development invocation and packaged invocation run the
+same Oclif application. Core
 first-party plugins are declared in `package.json#oclif.plugins`. The official
 `@oclif/plugin-plugins` package is a core plugin and directly owns install,
 update, remove, link, and list for external Oclif extensions.
@@ -72,26 +73,28 @@ configuration and may emit its own `oclif.manifest.json` cache. Generated
 manifests are build artifacts, not core-membership declarations or runtime
 authority records.
 
-### Nx owns build; Habitat owns the target released substrate
+### Nx owns build; Habitat owns the SDK and CLI
 
 Nx projects declare build, typecheck, behavior test, and generated-manifest
 targets. One workspace target owns ordinary lint. Habitat will be distributed as one
 runtime SDK containing the TypeBox bridge, blueprint catalog, and runtime
 capabilities, plus one ordinary Oclif CLI release consuming that SDK. Consumers
-install it through `nx add @habitat-ai/cli`. Current RAWR applications and their internal
-services, resources, plugins, adapters, and packages remain private workspace
-projects and are not members of an Nx release group.
+install it through `nx add @habitat-ai/cli`. The private `rawr` application and
+its internal Template dependency graph remain private workspace projects and
+are not members of an Nx release group.
 
-Project kind does not permanently prohibit publication. A future service,
-resource, plugin, or package may become a public product through an explicit
-Nx release classification and ordinary package metadata; workspace membership
-alone never implies publication.
+Project kind does not permanently prohibit publication. A future Habitat
+service, resource, plugin, or package may become a supported public artifact
+through an explicit product decision, Nx release classification, and ordinary
+package metadata; workspace membership alone never implies publication. This
+change neither reserves nor authorizes a public `rawr` distribution.
 
-Oclif's Node-bearing standalone archives and a whole-application Bun compiled
-executable are not release alternatives in this workstream. A later initiative
-may evaluate either only after proving runtime and Oclif plugin-discovery
-compatibility. Neither may reintroduce a local selector, retained private
-release store, or per-file runtime envelope.
+Under this architecture the `rawr` application and command namespace remain
+Nx-built internal tooling and MUST NOT be versioned, promoted, published, or
+installed as a distribution. Any future first-class RAWR product requires a
+separate authority amendment rather than an escape hatch in this lifecycle;
+it MUST NOT expose the private workspace graph or reintroduce a local selector,
+retained private release store, or per-file runtime envelope.
 
 Habitat release integrity remains ordinary npm integrity, provenance, package
 inventory, and installed behavior. RAWR app behavior is verified from its Nx
@@ -317,7 +320,7 @@ the namespaced raw `~orpc.meta` object is vendor storage rather than a public
 domain contract. Linked-client and OpenAPI proof exercises those native shapes
 directly.
 
-The canonical public product operations are:
+The bounded agent-plugin lifecycle operations are:
 
 - `status`: inspect selected membership and explicit native state without
   mutation;
@@ -407,24 +410,31 @@ content and its governed content records. Template reads Personal through an
 explicit content workspace and versioned record schemas. It does not share Git
 ancestry, executable paths, worktree identity, or release tooling with Personal.
 
-Personal CI may invoke an ordinarily installed released RAWR CLI. It does not
-pin a controller selector or vendor Template implementation. Once useful
-Personal-only content and records are preserved, remaining Template-derived
-code and process machinery are deleted from Personal rather than synchronized.
+Task 6.4 must replace Personal's current controller/Civ7 checks with
+repository-owned content validation and installed `@habitat-ai/cli@0.4.1`.
+Until that lands, the predecessor checks are not accepted authority. Template
+runs the private `rawr` lifecycle application against explicit Personal Git
+records during cross-repository acceptance; Personal does not install that
+private application, pin a controller selector, or vendor Template
+implementation. Once useful Personal-only content and records are preserved,
+remaining Template-derived code and process machinery are deleted from
+Personal rather than synchronized.
 
 ### Accepted subject content uses the normal release path
 
-The Inngest subject lane is `accepted-landed-read-only` on Personal `main`
-`1e7f346b9b0fb7b356675d3e837295256bda7d0d`. The accepted Inngest and
-Effect-Inngest skills live inside the legitimate Personal `dev` member and MUST
-enter the selected canonical tree and release input through that member's normal
-closed-world path. `inngest-orpc` and the declared research/tool candidate roots
-remain excluded. No separate member, materialization operation, package,
-projection, provider test, release, or settlement exception is introduced.
-Template does not add an Inngest lifecycle mode.
+The Inngest subject lane reached `accepted-landed-read-only` at historical
+Personal review input `1e7f346b9b0fb7b356675d3e837295256bda7d0d`; current
+canonical Personal `main` is `7c25bb4b09b3400f6c76913dccfa181171824fed`.
+The accepted Inngest and Effect-Inngest skills live inside the legitimate
+Personal `dev` member and MUST enter the selected canonical tree and release
+input through that member's normal closed-world path. `inngest-orpc` and the
+declared research/tool candidate roots remain excluded. No separate member,
+materialization operation, package, projection, provider test, release, or
+settlement exception is introduced. Template does not add an Inngest lifecycle
+mode.
 
 The removed custom controller's Inngest filter is not transplanted. The
-conventional CLI package graph MUST truthfully exclude server, workflow, and
+private application dependency graph MUST truthfully exclude server, workflow, and
 Inngest runtime packages. If shared `@habitat-ai/rawr-hq-sdk` dependency
 metadata changes, the legitimate `apps/server` Inngest runtime receives its own
 typecheck and behavior tests.
@@ -438,8 +448,8 @@ not widen this change.
 1. Land the corrected record and positive Habitat/Nx architecture checks.
 2. Restore ordinary Oclif development execution and direct external extension
    management.
-3. Inventory the current closure and select the conventional release form, but
-   do not make rejected predecessor projects publishable.
+3. Inventory the private application's current Nx dependency closure without
+   making it or rejected predecessor projects publishable.
 4. Delete the custom distribution, selector, embedded extension manager,
    controller identity, diagnostics, and their tests/workflows in bounded green
    nodes.
@@ -447,9 +457,10 @@ not widen this change.
    surviving resources behind stable public behavior.
 6. Migrate the complete surviving filesystem/process resource family and CLI
    adapter to one aligned Effect 4 family.
-7. Recompute the surviving runtime closure, then add and smoke-test the ordinary
-   Nx Release/Bun package in a disposable prefix.
-8. Recut Personal content records and required checks around the released CLI.
+7. Recompute the surviving private application closure, then build and
+   smoke-test it through its exact Nx-owned targets.
+8. Recut Personal content records and required checks around explicit Git data
+   interfaces and the supported Habitat packages.
 9. Run disposable-home and approved-home convergence, then the read-only repeat.
 10. Archive superseded records and drain owned stacks/worktrees.
 

@@ -37,10 +37,10 @@ Before changing docs:
 1. Check Graphite and Git state.
 2. Confirm trunk and current branch.
 3. Inspect staged and unstaged changes.
-4. During the distribution transition, use the repository-owned Oclif command
-   `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor distribution.
-   The fixed Nx Release group and packed-install acceptance are landed;
-   registry-installed acceptance follows public package publication.
+4. Use the private repository-owned Oclif application through
+   `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor
+   distribution. Habitat `0.4.1` publication and registry-installed acceptance
+   are complete; no RAWR package publication is pending.
 5. If the `bun run rawr -- sessions ...` surface is unavailable, extract transcript
    evidence directly from the session JSONL and record that tooling gap in the
    workstream notes. Do not repair it with an Oclif extension link.

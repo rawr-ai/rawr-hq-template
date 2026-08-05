@@ -28,12 +28,10 @@ bun run rawr -- --version
 bun run rawr -- --help
 ```
 
-The ordinary Oclif CLI package is built by one landed fixed Nx Release group,
-and its complete packed runtime closure passes installation acceptance in a
-disposable prefix. Public registry publication and registry-installed smoke
-remain pending npm scope authorization. Until those complete, use the
-repository-local command rather than fabricating an installed release. Do not
-run the removed custom installer, selector, release store, or launcher. A
+The private RAWR Oclif application is built and verified through its Nx-owned
+targets. It is not part of the public Habitat release group. Use the
+repository-local command rather than fabricating an installed RAWR release. Do
+not run the removed custom installer, selector, release store, or launcher. A
 previously installed custom distribution may remain executable, but it is
 obsolete and is not invoked, updated, or accepted as current CLI authority.
 
@@ -55,8 +53,9 @@ Before publishing a plugin:
 - Run `bun run test:web` if the change affects the web-only lane
 - Verify package metadata and docs.
 
-Personal content publication is independent and consumes only published versioned
-interfaces or immutable artifacts. Follow [[UPDATING]] for interface updates.
+Personal content publication is independent and consumes only versioned data
+interfaces or ordinary released Habitat tooling. Follow [[UPDATING]] for
+interface updates.
 
 ## Auto-Refresh On Main Updates
 

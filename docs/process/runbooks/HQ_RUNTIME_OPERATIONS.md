@@ -84,21 +84,21 @@ The managed runtime contract is backed by:
 
 ## CLI Command Resolution
 
-Official commands run from the Template checkout through the repository-owned
-Oclif script until the public registry release is installed:
+Private `rawr` commands run from the exact Template revision through the
+repository-owned Oclif script:
 
 ```bash
 bun run rawr -- --version
 bun run rawr -- hq status
 ```
 
-If an official `hq` command is missing there, verify the owning Nx build and Oclif
-composition instead of repairing it through Oclif user state. The conventional
-fixed Nx Release group and packed-install acceptance are landed; public registry
-publication and registry-installed smoke remain pending npm scope authorization.
-Do not run the removed custom installer or selector. A previously installed
-custom distribution may remain executable, but it is obsolete and is not
-invoked, updated, or used for acceptance.
+If an official `hq` command is missing there, verify the owning Nx build and
+Oclif composition instead of repairing it through Oclif user state. Habitat
+`0.4.1` publication and registry-installed smoke are complete; the private
+`rawr` application remains source/Nx invoked. Do not run the removed custom
+installer or selector. A previously installed custom distribution may remain
+executable, but it is obsolete and is not invoked, updated, or used for
+acceptance.
 
 ## Browser Behavior
 

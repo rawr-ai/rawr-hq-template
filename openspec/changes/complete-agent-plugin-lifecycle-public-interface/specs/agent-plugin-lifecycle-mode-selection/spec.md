@@ -63,7 +63,7 @@ producer of `CanonicalChannelSelection`.
 - **WHEN** canonical mode receives `current-main`, an explicit Git locator, and
   explicit homes
 - **THEN** one resolved selection supplies the exact content identity from which
-  the installed Template CLI derives the complete set and selected native
+  the private Template application derives the complete set and selected native
   marketplace content
 
 #### Scenario: Retired authority override rejects

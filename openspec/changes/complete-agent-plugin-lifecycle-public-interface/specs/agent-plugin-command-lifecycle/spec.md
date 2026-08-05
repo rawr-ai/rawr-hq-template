@@ -7,7 +7,7 @@
 
 ### Requirement: Curated lifecycle has one exact qualified command ontology
 
-The installed Template CLI MUST expose curated lifecycle only as
+The private Template Oclif application MUST expose curated lifecycle only as
 `rawr agent plugins check|create|status vendors|update vendors|test|package|sync|status`.
 Every command and nested topic MUST be a declared first-party Oclif command. Bare
 `rawr plugins`, root `rawr undo`, `rawr agent sync`, retired
@@ -99,8 +99,8 @@ application directory. Personal executable modules MUST never load.
   renderer, or CLI-like executable files
 - **THEN** lifecycle reads only the admitted versioned data interface through
   fixed Git objects
-- **AND** Oclif dispatch and implementation imports remain inside the ordinarily
-  installed Template package
+- **AND** Oclif dispatch and implementation imports remain inside the exact
+  Template application revision
 
 ## ADDED Requirements
 

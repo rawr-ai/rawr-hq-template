@@ -23,7 +23,8 @@ reusable substrate and its Oclif entrypoint through ordinary package
 dependencies and installed-package acceptance;
 internal RAWR services, resources, plugins, and applications remain private
 workspace projects. The `@habitat-ai/rawr` Oclif application uses the
-repository-local command above until its own conventional release is complete.
+repository-local command above; releasing that private application is outside
+this workstream.
 Do not restore the removed custom installer, selector, release store, or launcher.
 A previously installed custom distribution may remain executable on a workstation,
 but it is obsolete, is not updated, and is not authority for development or
@@ -31,21 +32,24 @@ acceptance.
 
 ## Personal Repository
 
-Update personal from its own `origin`. Once the ordinary Template-owned CLI
-package is published, personal may invoke that externally installed tool at an
-exact package and schema/protocol version accepted by its governed content
-records. Until then, installed-package cross-repository settlement remains
-pending; do not substitute a checkout link or the retired custom distribution.
+Update personal from its own `origin`. Task 6.4 must replace Personal's current
+controller/Civ7 checks with repository-owned content validation and installed
+`@habitat-ai/cli@0.4.1`. Until that lands, the predecessor checks are not
+accepted authority. Template performs lifecycle acceptance against explicit
+Personal Git records from its own exact revision; do not install the private
+`rawr` application into Personal or substitute a checkout link or retired
+custom distribution.
 
 Do not add a Template remote, merge or cherry-pick Template commits, copy runtime
 files, or use tree equivalence as compatibility proof.
 
 ## Interface Changes
 
-1. Publish the versioned schema/protocol and ordinary CLI package from Template.
-2. Record the exact accepted package and interface versions in personal.
-3. Validate personal declarative inputs with the installed Template-owned tool.
-4. Promote each repository through its own review, Graphite, and `main` process.
+1. Publish reusable Habitat schema and tooling interfaces from Template.
+2. Record the exact accepted interface versions in personal where consumed.
+3. Validate Personal declarative inputs with repository-owned checks.
+4. Run Template lifecycle acceptance against explicit Personal Git records.
+5. Promote each repository through its own review, Graphite, and `main` process.
 
 Git commit and tree IDs may be retained as audit provenance. They are never runtime
 identity, an interface version, or permission to share code.

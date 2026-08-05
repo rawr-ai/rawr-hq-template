@@ -66,7 +66,8 @@ that value without parsing raw record
 bytes. Governance verifies Git/record identity. Provider handling separately
 MUST derive the selected complete set, native marketplace source, declared
 provider-visible files, and operation-required native capabilities from the
-exact selected Git objects under the installed Template CLI. Those derived values MUST NOT require
+exact selected Git objects under the private Template application. Those
+derived values MUST NOT require
 another Personal record or review. Provider planning MUST require the derived
 content authority, repository identity, source commit, source tree, and
 release-input digest to equal the selector before native mutation. No local
@@ -107,7 +108,7 @@ or lifecycle port. The pure codec itself takes no dependency argument.
 
 ### Requirement: Retired promotion authority is unreachable
 
-The installed CLI MUST omit v1 current-main parsing, acceptance
+The private Template application MUST omit v1 current-main parsing, acceptance
 validation, promotion attestation, hosted-governance binding, and
 `attest-promotion` from service contracts, public exports, clients, CLI
 discovery, manifest, and command tree. Managed export, qualified `undo`, capsule
