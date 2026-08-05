@@ -122,6 +122,18 @@ jobs:
         shell: bash
         run: |
           release_version="${GITHUB_REF_NAME#habitat-cli-v}"
+          for attempt in 1 2 3 4 5 6; do
+            cli_version="$(npm view "@habitat-ai/cli@${release_version}" version 2>/dev/null || true)"
+            sdk_version="$(npm view "@habitat-ai/sdk@${release_version}" version 2>/dev/null || true)"
+            if [[ "${cli_version}" = "${release_version}" && "${sdk_version}" = "${release_version}" ]]; then
+              break
+            fi
+            if [[ "${attempt}" = 6 ]]; then
+              printf 'Habitat %s was not visible from the npm registry after %s attempts.\n' "${release_version}" "${attempt}" >&2
+              exit 1
+            fi
+            sleep "$((attempt * 5))"
+          done
           consumer_root="${RUNNER_TEMP}/habitat-registry-consumer"
           mkdir -p "${consumer_root}"
           cd "${consumer_root}"
