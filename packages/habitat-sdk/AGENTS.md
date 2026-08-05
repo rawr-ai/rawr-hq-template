@@ -36,8 +36,15 @@
   owns native acquisition when a consumer package manager has not run dependency
   install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
-- `habitat-pack.json` remains the closed protocol-1 policy envelope. The shipped
-  blueprint files do not become active pack members merely by being present.
+- `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
+  member set is `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
+  and `resource@1`; shipped files outside that declaration, including the
+  candidate `service` source, are not members merely by being present.
+- The selected package owns reusable definitions, versions, runner assets, and
+  policy-pack provenance. Repository manifests alone select instances and
+  qualified overlays remain repository-owned.
+- Each selected definition exposes only its required `project` anchor;
+  source-specific structure scopes carry blueprint-owned `src/**` paths.
 
 ## Flow
 
@@ -46,7 +53,9 @@
 - `tsdown` bundles workspace implementation owners into `dist` and leaves only
   declared third-party dependencies external.
 - The build copies `.habitat/blueprints` into `dist/blueprints` without
-  modifying the authority source.
+  modifying the canonical authoring source. Exact producer definitions resolve
+  as inert duplicates of the package authority; drift at the same identity is
+  rejected.
 
 ## Interfaces
 

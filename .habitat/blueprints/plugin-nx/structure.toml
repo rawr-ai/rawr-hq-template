@@ -19,8 +19,8 @@ allowed = [
 
 [[scopes]]
 name = "nx-plugin-source"
-rootRole = "source"
-relativePath = "."
+rootRole = "project"
+relativePath = "src"
 kind = "directory"
 mode = "closed"
 required = [

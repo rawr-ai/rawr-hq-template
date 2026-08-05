@@ -242,7 +242,7 @@ async function makeWorkspace(input: {
 }): Promise<WorkspaceFixture> {
   const root = await mkdtemp(path.join(tmpdir(), "habitat-app-test-"));
   fixtureRoots.push(root);
-  const blueprintPath = ".habitat/blueprints/package/blueprint.toml";
+  const blueprintPath = ".habitat/blueprints/fixture-package/blueprint.toml";
   const manifestPath = `${input.projectPath}/habitat.toml`;
   const files: Record<string, string> = {
     "package.json": `${JSON.stringify({ name: "habitat-app-fixture", private: true }, null, 2)}\n`,
@@ -252,7 +252,7 @@ async function makeWorkspace(input: {
   };
 
   for (const rule of input.rules) {
-    const blueprintRoot = ".habitat/blueprints/package";
+    const blueprintRoot = ".habitat/blueprints/fixture-package";
     files[`${blueprintRoot}/${rule.id}.${rule.runner === "grit" ? "md" : "structure.toml"}`] =
       rule.runner === "grit"
         ? `# ${rule.id}\n\n\`\`\`grit\nlanguage js(typescript)\n\`forbidden()\`\n\`\`\`\n`
@@ -285,7 +285,7 @@ function blueprintToml(rules: readonly RuleFixture[]): string {
     })
     .join("\n\n");
 
-  return `schemaVersion = 1\nid = "package"\nversion = 1\n\n${ruleDocuments}\n\n[instance]\nmanifest = "habitat.toml"\nanchorRoot = "project"\nselections = []\n\n[[instance.roots]]\nid = "project"\nrequired = true\nkind = "directory"\n`;
+  return `schemaVersion = 1\nid = "fixture-package"\nversion = 1\n\n${ruleDocuments}\n\n[instance]\nmanifest = "habitat.toml"\nanchorRoot = "project"\nselections = []\n\n[[instance.roots]]\nid = "project"\nrequired = true\nkind = "directory"\n`;
 }
 
 function instanceToml(input: {
@@ -293,7 +293,7 @@ function instanceToml(input: {
   readonly ownerProject: string;
   readonly projectPath: string;
 }): string {
-  return `schemaVersion = 1\nid = "${input.instanceId}"\nownerProject = "${input.ownerProject}"\nblueprint = "package"\nblueprintVersion = 1\n\n[roots]\nproject = "${input.projectPath}"\n\n[selections]\n`;
+  return `schemaVersion = 1\nid = "${input.instanceId}"\nownerProject = "${input.ownerProject}"\nblueprint = "fixture-package"\nblueprintVersion = 1\n\n[roots]\nproject = "${input.projectPath}"\n\n[selections]\n`;
 }
 
 function passingStructureToml(): string {

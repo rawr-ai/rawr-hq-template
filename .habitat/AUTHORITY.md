@@ -3,10 +3,19 @@
 RAWR HQ-Template owns both the constraints in this directory and the generic
 evaluation mechanics that execute them. [[AUTHORITY-ONTOLOGY|The Habitat
 authority ontology]] is the conceptual owner for blueprint, instance,
-capability, niche, and application meaning. Policy remains repository-owned
-data: the evaluator can resolve, schedule, and run admitted applications, but
-it cannot amend repository architecture or product behavior. Publication and
-consumer initialization remain separately reviewed release work.
+capability, niche, and application meaning. Reusable policy is split at the
+package/repository boundary: the selected `@habitat-ai/sdk` policy pack owns
+the definition, version, rule assets, and package provenance for its six
+admitted blueprint members, while each repository owns the instances that
+select them and any qualified overlays. The evaluator can resolve, schedule,
+and run admitted applications, but it cannot amend repository architecture or
+product behavior. Publication and consumer initialization remain separately
+reviewed release work.
+
+All six admitted definitions expose only their required `project` anchor.
+Source-specific structure scopes bind that root with blueprint-owned `src/**`
+relative paths, so repository manifests have no separate `source` root to
+author or redirect.
 
 This tree narrows reusable package kinds through positive structure and source
 relationships:
@@ -144,10 +153,14 @@ qualified owners and tests.
 
 The `resource` blueprint closes RAWR's package face around a provider-neutral
 contract, package and project metadata, build and source TypeScript boundaries,
-and the provider family. The `provider` blueprint closes each nested concrete
-realization around one typed public index while admitting vendor-specific
-TypeScript decomposition. Provider lifecycle mechanics remain inside that
-realization; the application retains selection while runtime owns scope.
+and the provider family. Its package-owned Effect failure rule rejects explicit
+global `Error` and same-source `Error` subclasses in resource and provider
+failure channels while leaving tagged failures, inferred channels, and native
+Effect catch construction to their proper owners. The `provider` blueprint
+closes each nested concrete realization around one typed public index while
+admitting vendor-specific TypeScript decomposition. Provider lifecycle
+mechanics remain inside that realization; the application retains selection
+while runtime owns scope.
 
 Rules under `.habitat/rawr` remain qualified repository, lifecycle, or host
 constraints rather than generic blueprints. That path is a current physical

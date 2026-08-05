@@ -39,6 +39,12 @@ not a support folder, execution mode, current defect, or product instance.
 Blueprint authority is a lower bound: later authority may add constraints but
 may not silently weaken the kind.
 
+When a selected policy pack admits a blueprint, that package owns the reusable
+definition, exact version, runner assets, and provenance. A repository may
+retain an exact authoring-source copy, but that copy is inert beside the
+selected package definition; drift at the same identity is a resolution
+failure rather than competing authority.
+
 One blueprint has one singular structural spine. That anchor lives directly at
 the blueprint root as `structure.toml`. A directory is earned only by a
 genuinely plural, context-bearing rule family; nesting is not a convention for
@@ -123,25 +129,32 @@ Application bounds execution.
 
 ## Current Realization
 
-The current definition checkpoint contains seven root v3 blueprint records:
-`package`, `resource`, `provider`, `service`, `plugin`, `plugin-nx`, and `app`.
-They describe `blueprint.toml`, instance-manifest roots and selections, and one
-root `structure.toml` per kind. The source catalog schema-admits these
-definitions, but they have no instances or resolved applications and are not
-accepted into a released policy pack.
+The selected `@habitat-ai/sdk` protocol-1 policy pack admits exactly six root
+v3 blueprint records, sorted as `app`, `package`, `plugin`, `plugin-nx`,
+`provider`, and `resource`. Each member identifies its exact
+package-relative `dist/blueprints/<id>/blueprint.toml` definition. Definitions
+and their runner assets resolve with policy-pack provenance; repository
+`habitat.toml` manifests remain the only instance-selection authority. Package
+installation alone creates no application.
 
-The repository's v2 compatibility registry and its 41 rules remain the sole
-execution authority.
+Template's tracked `.habitat/blueprints` tree is the canonical authoring input
+copied into the SDK build. Its exact duplicate definitions do not become local
+authority, while a drifted definition at an admitted identity fails closed.
+The repository's v2 compatibility registry and its 41 rules continue to
+execute beside resolved v3 applications until their qualified migrations are
+complete.
 Only the `package@1` proof-axis grammar is frozen: `contract` and `semantics`
-member ids map to exact files. `package@1` remains outside release-pack
-acceptance until resolution proves exact equality between selected ids and
-present proof members. Every other kind's proof axes remain candidates.
+member ids map to exact files. A `package@1` instance resolves only when its
+selected ids equal the present proof members exactly. Every other kind's proof
+axes remain candidates. The tracked `service` definition is still candidate
+source rather than a policy-pack member; its presence in the SDK does not make
+it selectable.
 
-Blueprint-declared root relations are also unresolved. Current manifests can
-name `project` and `source` independently even where the service, app, and
-plugin structures mean exactly `source = project/src`. First release-pack
-acceptance and instance activation must derive or positively bound that
-relation so an instance cannot redirect `source` elsewhere.
+Each selected definition exposes only its required `project` anchor root.
+Source-specific structure scopes bind that root directly and include `src` in
+their blueprint-owned relative paths. Instance manifests therefore supply no
+independent `source` root to redirect; a caller-authored `source` binding is an
+unknown root role and fails closed.
 
 This checkpoint also does not realize `capability.toml`, `niche.toml`,
 capability activation, niche admission, or cross-authority conflict resolution.
