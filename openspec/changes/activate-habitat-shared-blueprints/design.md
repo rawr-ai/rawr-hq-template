@@ -14,13 +14,18 @@ larger compatibility corpus. The repositories need one shared product, not
 three copies of its runtime or generic policy.
 
 The Magic peer compared this design against exact commit
-`8f40bdff34dde18680352a9b91ce7b953c385942` and accepted the disposition. Its
-current authority is `.habitat/index.json`, its service law still uses the
-predecessor router/index topology, and its hook installer remains
-`scripts/dev/install-repository-hooks.sh`. Those are migration inputs, not
-shared substrate authority. Magic also confirmed that `plugin-nx` replaces no
-Magic `nx-workspace` overlay and must be selected only for an actual qualified
-Nx-plugin instance.
+`8f40bdff34dde18680352a9b91ce7b953c385942`. A follow-up compared the current
+stack tip `3cce431b6298e51b829c5564c172bfe840427398`; its relevant service law and
+Jobs/Candidates implementations are unchanged, and the peer accepted the final
+disposition. Its current authority is `.habitat/index.json`, its service law
+still uses the predecessor router/index topology, and its hook installer
+remains `scripts/dev/install-repository-hooks.sh`. Those are migration inputs,
+not shared substrate authority. Template intentionally keeps named operation
+and operation-group leaves under `module/router/` and one composition-only
+`module/router.ts`; oRPC gives the two filesystem layouts identical runtime
+semantics, while Template's form separates authorship from module composition.
+Magic also confirmed that `plugin-nx` replaces no Magic `nx-workspace` overlay
+and must be selected only for an actual qualified Nx-plugin instance.
 
 The working classification is:
 
@@ -34,7 +39,7 @@ application: resolution, scope, runner, result
 
 **Goals:**
 
-- Make the selected SDK policy pack the versioned authority for the seven
+- Make the selected SDK policy pack the versioned authority for the six
   settled root blueprints.
 - Let a repository activate those blueprints only through its own
   `habitat.toml` instances.
@@ -44,6 +49,11 @@ application: resolution, scope, runner, result
   `resource` blueprint.
 - Release one fixed `@habitat-ai/sdk` and `@habitat-ai/cli` pair and provide
   exact Magic and Civ consumer handoffs.
+
+The tracked `service` definition is deliberately not a member of this release.
+Its own authority record still marks it structure-only and without
+release-pack acceptance. Omitting it is a truthful boundary, not a second
+service topology.
 
 **Non-Goals:**
 
@@ -88,6 +98,19 @@ cleaner for consumers but would make Template unable to validate the exact
 authoring source that its build publishes. Exact redundant admission keeps one
 semantic owner while still detecting drift.
 
+### Selected definitions use one project root
+
+All six selected definitions expose only their required `project` anchor.
+Source topology remains blueprint-owned inside each native structure asset:
+source-specific scopes bind `project` directly and use `src/**` relative
+paths. Instance manifests therefore supply only `project`, and any attempted
+`source` binding is rejected as an unknown root role.
+
+Alternative considered: retain independent `project` and `source` manifest
+roots and compare them. That preserves a redundant caller value. Putting the
+positive descendant path in the existing structure scope preserves released
+protocol compatibility and makes redirection unrepresentable.
+
 ### Provenance is part of resolved catalog data
 
 Blueprint records, applications, and runner assets use a discriminated
@@ -128,6 +151,20 @@ manufacture an unreviewed variant mechanism. The handoff records these exact
 dispositions so neither consumer mistakes retention for a competing shared
 law.
 
+### Magic service variance remains evidence, not copied authority
+
+The live Magic service corpus proves two missing semantic kinds for the later
+service release: actor vocabularies and provider-neutral prompts. Those will be
+absorbed as closed indexed model kinds. Magic's native public client binding is
+also reusable evidence for the positive service client face. Template retains
+the downward five-lane context funnel, required module `AGENTS.md`, indexed
+model kinds, module-root `router.ts` composition, and named `router/<name>.ts`
+authoring leaves. Magic's router barrels and missing package/module faces are
+consumer migrations, while `helpers` remains a rejected junk-drawer kind.
+API, workflow, app, Nx, and tool overlays remain with their qualified product
+kinds. None of those service decisions widens this six-member activation
+release.
+
 ### The first active pack is a minor release
 
 Changing `habitat-pack.json` from transport-only to executable membership is a
@@ -160,10 +197,9 @@ artifact is introduced.
    publish, and verify registry provenance.
 3. Update Template's own public dependency pin only after registry visibility.
 4. Give Magic an exact migration prompt: install `0.5.0`, initialize once,
-   declare project-local instances for settled kinds, retain qualified
-   overlays, and remove only generic copies proven replaced by package
-   applications. Selecting `service@1` and migrating the predecessor
-   router/index topology is one atomic Magic change.
+   declare project-local instances for the six settled kinds, retain qualified
+   overlays and its service law, and remove only generic copies proven replaced
+   by package applications. Do not select the candidate `service` definition.
 5. Give Civ an exact migration prompt after the release is consumable: remove
    the historical producer, adopt the public Nx plugin and Husky setup, convert
    admitted projects to instances, and retain unsupported local policy until it

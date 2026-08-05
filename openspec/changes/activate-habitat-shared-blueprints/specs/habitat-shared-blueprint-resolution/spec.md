@@ -33,6 +33,22 @@ blueprint definitions or runner assets into the repository.
 - **WHEN** an already initialized consumer repeats the Habitat initializer
 - **THEN** its repository policy and integration files remain byte-identical
 
+### Requirement: Selected blueprints bind source topology to project
+Each selected blueprint SHALL expose only its required `project` anchor root.
+Every source-specific native structure scope SHALL bind that root and SHALL
+carry its exact `src/**` path in the blueprint-owned `relativePath`. Instance
+manifests SHALL NOT supply an independent `source` root.
+
+#### Scenario: Source topology resolves from project
+- **WHEN** an admitted instance binds `project` and its selected blueprint
+  evaluates a source-specific structure scope
+- **THEN** the scope resolves its blueprint-owned `src/**` path below project
+  without a caller-authored source binding
+
+#### Scenario: Instance attempts source redirection
+- **WHEN** an instance manifest supplies a `source` root
+- **THEN** catalog resolution rejects it as an unknown root role
+
 ### Requirement: Conflicting definition copies fail closed
 An exact checked-in copy of a selected package definition SHALL be
 non-authoritative and resolve with package provenance. A local definition with
@@ -96,3 +112,9 @@ consumer.
 - **THEN** package resolution, checking, target inference, initialization, and
   repeated initialization pass without a repository checkout or private
   implementation package
+
+#### Scenario: Candidate source remains inactive
+- **WHEN** the SDK ships a blueprint authoring directory that is absent from
+  `habitat-pack.json`
+- **THEN** catalog resolution does not admit or expose that blueprint as
+  selectable package authority

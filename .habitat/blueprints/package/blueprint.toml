@@ -22,11 +22,6 @@ id = "project"
 required = true
 kind = "directory"
 
-[[instance.roots]]
-id = "source"
-required = true
-kind = "directory"
-
 [[instance.selections]]
 id = "contract"
 root = "project"
