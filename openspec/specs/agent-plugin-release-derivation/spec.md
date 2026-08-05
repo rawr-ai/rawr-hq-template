@@ -1,5 +1,10 @@
-## ADDED Requirements
+# agent-plugin-release-derivation Specification
 
+## Purpose
+Define how exact reviewed Personal Git content becomes a closed invocation-local
+release model for validation, packaging, testing, and native convergence without
+a persistent release store.
+## Requirements
 ### Requirement: Reviewed Git selection is the immutable content input
 
 Canonical lifecycle MUST accept one explicit Personal content locator and one
@@ -81,8 +86,10 @@ Template-owned persistent projection root may participate.
 
 #### Scenario: Converged status and sync are read-only
 - **WHEN** live provider state already matches the selected native content
-- **THEN** status and sync perform zero filesystem mutation and native mutating
-  commands
+- **THEN** status and sync dispatch zero lifecycle-owned filesystem writes and
+  zero native mutating commands
+- **AND** the managed semantic inventory is unchanged even if a provider-native
+  read updates observation residue outside lifecycle-owned state
 
 #### Scenario: Canonical mutation uses native Git distribution
 - **WHEN** canonical sync must install or refresh a selected member

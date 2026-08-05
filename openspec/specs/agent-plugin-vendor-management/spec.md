@@ -1,7 +1,8 @@
 # agent-plugin-vendor-management Specification
 
 ## Purpose
-TBD - created by archiving change retire-mixed-plugin-lifecycle. Update Purpose after archive.
+Define reviewable Git-backed status and update operations for explicitly
+declared vendor content without release, channel, or provider mutation.
 ## Requirements
 ### Requirement: Vendor state is explicit repository data
 Vendor management MUST derive its selected sources from versioned per-plugin declarations, provenance records, locks, and the canonical release input in an explicit content workspace. It MUST NOT scan arbitrary registries or infer sources from installed providers, toolkit packs, app composition, path names, or prior operation history.
@@ -40,4 +41,3 @@ A `held` source MUST reject before fetch or byte materialization. Update failure
 #### Scenario: Substituted temporary root is preserved
 - **WHEN** an operation-owned temporary directory is replaced, aliased, moved outside its parent, given the wrong prefix, or changed to a symlink/non-directory before cleanup
 - **THEN** recursive cleanup rejects before removal and reports the cleanup failure separately
-

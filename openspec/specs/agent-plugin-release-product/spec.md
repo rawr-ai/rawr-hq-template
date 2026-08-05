@@ -1,112 +1,173 @@
 # agent-plugin-release-product Specification
 
 ## Purpose
-TBD - created by archiving change establish-agent-plugin-release-product. Update Purpose after archive.
+Define provider-neutral releases and complete release sets derived
+deterministically from exact Git-selected content without a persistent release
+store.
 ## Requirements
 ### Requirement: Canonical provider-neutral release identity
-The system MUST define closed versioned `AgentPluginRelease` and release-input schemas whose parsers reject unknown fields and path-unsafe values and whose canonical serialization is independent of checkout path, filesystem traversal order, map insertion order, file mtime, and other ambient process state. Digests MUST be computed over digest-free canonical payload values and MUST be carried in a separate validated envelope so identity is non-circular. The release-input digest MUST cover every admitted byte and declaration that can affect payload or membership, including manifests, selected content, vendored inputs, locks, aliases, and declarative quality policy, while excluding lifecycle records that authorize already-built bytes. An `AgentPluginRelease` MUST bind content authority, source repository identity, source commit and tree, release-input digest, curated plugin ID and aliases, canonical payload manifest and digest, vendor and curation provenance, schema and builder protocol versions, and artifact digest.
+
+The system MUST define closed versioned `AgentPluginRelease` and release-input
+schemas whose TypeBox parsers reject unknown fields and path-unsafe values and
+whose canonical serialization is independent of checkout path, traversal order,
+map insertion order, mtime, and ambient process state. Digests MUST be computed
+over digest-free canonical bodies and carried in separately validated envelopes.
+Release input identity MUST cover declared membership, ownership, vendor, lock,
+provenance, and declarative quality-policy values while excluding selected
+content bytes and records that select an already-derived identity. The exact
+selected Git commit and tree close those bytes. A release input MUST NOT persist
+`skillInventory`, a payload or per-file manifest, payload or per-file digests,
+file path/mode/length rows, or a completeness witness. `AgentPluginRelease`
+MUST bind content authority, repository identity, selected commit/tree,
+release-input digest, curated plugin ID and aliases, the payload manifest and
+digest derived from every selected file below that member root,
+vendor/curation provenance, schema protocol, builder protocol, and release
+digest. It MUST NOT contain an artifact-store digest or local storage handle.
 
 #### Scenario: Equivalent inputs have one identity
-- **WHEN** equivalent release inputs are read from different absolute checkout paths with permuted traversal and declaration order and different mtimes
-- **THEN** canonical serialization produces identical release-input, payload, and artifact digests
-- **AND** neither checkout path nor ambient process state appears in release identity
+- **WHEN** equivalent selected Git inputs are read through different absolute
+  locators with permuted traversal/declaration order and different mtimes
+- **THEN** canonical serialization produces identical release-input, payload,
+  and release digests
+- **AND** neither locator path nor ambient process state appears in release
+  identity
 
-#### Scenario: Every admitted payload input affects identity
-- **WHEN** one admitted content byte, manifest field, vendor binding, lock, alias, or declarative quality input changes
-- **THEN** the release-input digest changes and the resulting release cannot retain the prior artifact digest
+#### Scenario: Content and declarations affect their owning identities
+- **WHEN** one selected content byte changes without changing membership,
+  ownership, provenance, locks, or declarative quality policy
+- **THEN** canonical release-input bytes and `ReleaseInputDigest` remain
+  unchanged
+- **AND** the selected tree plus each applicable payload, release, and
+  release-set identity changes
+- **WHEN** a release-input declaration changes
+- **THEN** `ReleaseInputDigest` and every resulting identity that binds it
+  change
 
-#### Scenario: Authorization records do not rewrite built identity
-- **WHEN** only acceptance, promotion, channel, or other lifecycle authorization records change
+#### Scenario: Selection records do not rewrite derived identity
+- **WHEN** only the reviewed current-main record changes without changing its
+  selected source content
 - **THEN** canonical release-input and release payload digests remain unchanged
-- **AND** the authorization record cannot substitute bytes or mint another release identity
+- **AND** the record cannot substitute bytes or mint another release identity
 
 #### Scenario: Unknown and unsafe schema values fail closed
-- **WHEN** a release input, release, or envelope contains an unknown field, an absolute payload path, path traversal, a malformed branded identity, or a self-referential digest claim
-- **THEN** parsing rejects before canonical bytes or a trusted digest are returned
-- **AND** no omitted or unsafe value can hide outside release identity
-
-### Requirement: Digest graph has exact non-circular preimages
-The release protocol MUST define these distinct opaque digest brands and exact canonical preimages:
-
-- `ReleaseInputDigest` hashes the digest-free canonical curated release-input body, excluding Git commit/tree provenance and lifecycle authorization records;
-- `PayloadDigest` hashes the digest-free ordered payload entries including relative path, normalized mode, and exact bytes;
-- `ReleaseDigest` hashes the digest-free release body containing source provenance, `ReleaseInputDigest`, curated identity and aliases, payload manifest and `PayloadDigest`, vendor/curation bindings, and schema/builder protocols;
-- `ArtifactDigest` hashes the digest-free artifact body containing the release body, `ReleaseDigest`, artifact protocol, canonical storage manifest, and every exact payload entry;
-- `ReleaseSetDigest` hashes the digest-free set body containing its authority/provenance, release-input identity, completeness witness, ownership index, and each ordered member's `ReleaseDigest` and `ArtifactDigest`.
-
-`AgentPluginRelease` MUST be the validated envelope carrying its release body, `ReleaseDigest`, and `ArtifactDigest`; each digest is verified by reconstructing only its declared digest-free preimage. The digest brands MUST NOT be assignable, comparable as authority, or accepted by one another's parser even if their encoded strings happen to match. No envelope digest field may enter its own direct or transitive preimage.
-
-Artifact requests MUST be the closed union `ReleaseArtifactRef | CompleteSetArtifactRef`. A `ReleaseArtifactRef` MUST bind one `ReleaseDigest` and its `ArtifactDigest`. A `CompleteSetArtifactRef` MUST bind one `ReleaseSetDigest`; its verified set envelope supplies the canonical ordered members, and the reader MUST verify every member's `ReleaseDigest` and `ArtifactDigest` before returning the complete immutable snapshot. `ReleaseSetDigest` directly addresses the canonical set envelope bytes; there is no implicit generic or caller-invented set artifact digest.
-
-#### Scenario: Digest brands cannot be substituted
-- **WHEN** a valid payload, release-input, release, artifact, or release-set digest is supplied in another digest domain
-- **THEN** parsing or type-negative compilation rejects it before lookup, construction, or publication
-- **AND** a string cast or coincidentally equal encoding cannot change the declared preimage domain
-
-#### Scenario: Artifact digest covers exact stored release bytes
-- **WHEN** any release-body field, release digest, artifact protocol field, manifest entry, relative path, normalized mode, or payload byte changes
-- **THEN** `ArtifactDigest` changes while remaining non-circular
-- **AND** artifact verification reconstructs that exact digest-free body rather than trusting the envelope claim
-
-#### Scenario: Complete-set reference verifies the full closed graph
-- **WHEN** a complete-set artifact reference is read
-- **THEN** the reader verifies the `ReleaseSetDigest` envelope, exact ordered membership, and every bound member release and artifact digest before returning any complete snapshot
-- **AND** a missing, extra, reordered, tampered, or mismatched member blocks the entire read without a partial or targeted fallback
+- **WHEN** a release input or release envelope contains an unknown field,
+  absolute payload path, traversal, malformed identity, or self-referential
+  digest claim
+- **THEN** parsing rejects before canonical bytes or a trusted digest return
 
 ### Requirement: Closed-world release-set identity
-The system MUST define a closed versioned `AgentPluginReleaseSet` as the only complete desired-state artifact. It MUST bind one content authority, source repository, source commit and tree, release-input digest, canonical ordered member plugin IDs plus release and artifact digests, complete skill and distribution ownership index, schema and builder protocol versions, and set digest. Construction MUST require a canonical completeness witness listing every expected member and ownership declaration from the same verified release input; the supplied releases MUST equal that expected membership exactly. Every member MUST share the set's authority, commit, tree, and release-input identity. Protocol v1 MUST reject before aggregate payload allocation when declared decoded payload bytes exceed 64 MiB for any member or across the complete set. A selected release or targeted subset MUST NOT claim complete membership, channel convergence, or authority to retire omitted members.
 
-#### Scenario: Complete build emits one closed set
-- **WHEN** a complete build receives valid releases from one content authority, commit, tree, and release-input digest
-- **THEN** it emits one canonically ordered release set whose ownership index covers every member, skill, alias, provider-facing identity, and declared export path
-- **AND** the set digest changes when membership or any member digest changes
+The system MUST define one closed versioned in-memory `AgentPluginReleaseSet` as
+the complete desired-content model. It MUST bind one content authority,
+repository identity, selected commit/tree, release-input digest, canonical
+ordered member IDs and release digests, complete skill/distribution ownership,
+schema/builder protocols, and set digest. Construction MUST verify that supplied
+members exactly equal the member declarations in the selected input, bind those
+exact releases through one ordered plugin-ID/release-digest list, share one
+authority, and remain within the protocol byte bounds. That ordered member list
+is the complete-set witness; the set MUST NOT carry a second member or content
+graph. A targeted subset MUST NOT claim completeness or authorize retirement of
+omitted members.
+
+#### Scenario: Complete derivation returns one closed set
+- **WHEN** exact selected Git objects contain the complete valid membership
+- **THEN** derivation returns one canonically ordered release set whose ownership
+  index covers every member, skill, alias, and provider-facing identity
+- **AND** no persistent set artifact is written
 
 #### Scenario: Mixed source authority is rejected
-- **WHEN** proposed set members differ in content authority, repository identity, source commit, source tree, or release-input digest
-- **THEN** set construction rejects before a release-set artifact is emitted
-- **AND** path or byte equality does not reconcile the conflicting identities
+- **WHEN** proposed members differ in authority, repository identity, selected
+  commit/tree, or release-input digest
+- **THEN** set derivation rejects before provider package materialization
 
-#### Scenario: Omitted expected member rejects complete construction
-- **WHEN** a complete-build plan omits one expected member from the verified release-input completeness witness or supplies an undeclared extra member
-- **THEN** release-set construction rejects before a release-set or member artifact is published and names the missing or extra identity deterministically
-- **AND** the caller cannot relabel the remaining targeted releases as a complete set
+#### Scenario: Omitted expected member rejects completeness
+- **WHEN** a complete derivation omits one expected member or supplies an extra
+  undeclared member
+- **THEN** it reports the deterministic missing/extra identities and returns no
+  complete set
 
 #### Scenario: Targeted selection has no omission authority
-- **WHEN** one release or a proper subset of a complete set is selected for a targeted operation
-- **THEN** the selection remains explicitly targeted and cannot be serialized or reported as a complete release set
-- **AND** omitted members receive no retirement or convergence meaning
+- **WHEN** one member or a proper subset is selected for a targeted test
+- **THEN** it remains explicitly targeted and omitted members receive no
+  retirement or convergence meaning
 
 ### Requirement: Complete and unique distribution ownership
-Release and release-set construction MUST reject duplicate curated plugin IDs, skill identities, ambiguous aliases, provider-facing IDs, destination claims, missing declared owners, toolkit packages, toolkit `agent-pack` content, and composition aliases before artifact publication. The rejection MUST report every conflicting claimant deterministically. Name, path, byte equality, traversal order, or a fallback owner MUST NOT resolve a conflict.
+
+Release derivation MUST reject duplicate curated plugin IDs, skill identities,
+ambiguous aliases, provider-facing IDs, missing declared owners, toolkit
+packages, toolkit `agent-pack` content, and composition aliases before provider
+package materialization. Rejection MUST report every claimant deterministically;
+name, path, equal bytes, traversal order, or a fallback owner cannot resolve it.
 
 #### Scenario: Conflicting ownership fails as one deterministic result
-- **WHEN** input contains duplicate plugin IDs, duplicate skills, aliases with multiple owners, conflicting provider IDs or destination paths, and an undeclared skill owner
-- **THEN** construction rejects before durable artifacts with a canonically ordered conflict report naming every claimant and conflict class
-- **AND** permuting input order produces the same report
+- **WHEN** selected input contains multiple claimants or a missing owner
+- **THEN** derivation reports every conflict in canonical order and materializes
+  no provider package
 
 #### Scenario: Toolkit and composition units cannot become releases
-- **WHEN** a CLI toolkit, toolkit-derived `agent-pack`, or composition alias is presented as a provider-facing release member
-- **THEN** release construction rejects that unit before artifact publication
-- **AND** useful byte-identical guidance receives no implicit second distribution owner
+- **WHEN** a CLI toolkit, toolkit-derived `agent-pack`, or composition alias is
+  presented as a provider-facing member
+- **THEN** derivation rejects it without assigning another distribution owner
 
 ### Requirement: Pure release authority boundary
-Release schemas, canonicalizers, ownership validation, and digest functions MUST be pure Template-owned logic. They MUST NOT discover Git state, read a provider home, mutate a destination, inspect or mutate Oclif state, select app composition, issue lifecycle acceptance, or import executable code from a personal content repository. A separate build application MUST accept a personal repository and checkout path only as an explicit versioned data locator; it MUST NOT become controller, release, artifact, channel, provider, destination, or skill identity.
+
+Release schemas, canonicalizers, ownership validation, and digest functions MUST
+be pure Template-owned logic. They MUST NOT discover Git state, read a
+provider home, mutate an output, inspect Oclif state, select app composition,
+authorize lifecycle selection, or import executable code from Personal. A
+ready Git reader MAY accept an explicit Personal repository locator solely to
+verify and read selected immutable objects before passing canonical data to the
+pure model. The locator is not release, package, provider, channel, or skill
+identity and does not authorize repository or symlink synchronization.
 
 #### Scenario: Personal checkout is data rather than executable authority
-- **WHEN** release construction is given already-verified canonical inputs from a personal content workspace containing misleading Template-like runtime files
-- **THEN** only the verified versioned data enters the pure release functions
-- **AND** no executable module, validator implementation, adapter, renderer, or command is loaded from that workspace
+- **WHEN** a Personal workspace contains misleading Template-like runtime files
+- **THEN** only exact selected Git data enters pure release functions
+- **AND** no Personal executable module, adapter, renderer, or command loads
 
-#### Scenario: Source removal leaves release identity usable
-- **WHEN** a release and release set have been constructed and their source checkout is moved or removed
-- **THEN** their schemas, manifests, digests, and ownership index remain fully verifiable from immutable artifact data
-- **AND** no repository ancestry or tree-equivalence mechanism is consulted
+#### Scenario: Selected Git objects become unavailable
+- **WHEN** the explicit repository locator cannot supply the reviewed commit,
+  tree, release input, or payload objects
+- **THEN** derivation returns a selection rejection before package materialization
+- **AND** it does not fall back to mutable worktree bytes or retained local copies
 
 ### Requirement: Release lifecycle activates only through qualified procedures
-Release construction MUST remain encapsulated by the lifecycle `releases` module and become operator-reachable only through qualified `check` and `build`. The typed `check|build|export|package` procedures MUST be composed by `@rawr/agent-plugin-lifecycle` and projected only at their exact qualified `rawr agent plugins` commands. Controller undo remains a separate typed controller application. None may be exposed through a `release` command, direct module-router imports, runtime scans, bare plugins, root undo, aliases, aggregate projections, compatibility fallbacks, or personal executable code.
+
+Release derivation MUST remain owned by the lifecycle `releases` module and
+become operator-reachable only through qualified `check`. Packaging and
+providers MAY consume its ready service-level derivation capability without
+making release procedures or module internals reachable. The retained typed
+`check|package|test|sync|status` procedures and qualified vendor
+operations MUST be projected only at their exact `rawr agent plugins` commands.
+Export, undo, direct module-router imports, runtime scans, aliases, aggregate
+projections, compatibility fallbacks, and Personal executable code MUST remain
+absent.
 
 #### Scenario: Qualified activation does not add another owner
-- **WHEN** controller command discovery and dispatch are inspected after C5
-- **THEN** the qualified command invokes the corresponding consolidated module behavior already tested in C2
-- **AND** no aggregate, Oclif, app-composition, or personal repository implementation becomes an alternate path
+- **WHEN** Nx-built Oclif discovery and dispatch are inspected
+- **THEN** each qualified command invokes exactly its lifecycle-service
+  procedure
+- **AND** no aggregate, external Oclif extension, app composition, artifact
+  store, or Personal implementation becomes an alternate path
 
+### Requirement: Digest identities have exact non-circular preimages
+
+The release protocol MUST define distinct opaque `ReleaseInputDigest`,
+`PayloadDigest`, `ReleaseDigest`, and `ReleaseSetDigest` brands with exact
+digest-free canonical preimages. `ReleaseSetDigest` MUST cover content
+authority/provenance, release-input identity, the ownership index, and each
+ordered member's plugin ID and `ReleaseDigest`. Every digest is a deterministic
+verification value; none addresses a local store, selects a package path, or
+serves as a lookup handle. Brands MUST NOT be assignable across domains, and no
+digest field may enter its own direct or transitive preimage.
+
+#### Scenario: Digest brands cannot be substituted
+- **WHEN** a valid digest from one domain is supplied in another digest domain
+- **THEN** parsing or type-negative compilation rejects it before derivation or
+  provider access
+
+#### Scenario: Derived values verify exact selected content
+- **WHEN** any release body field, payload entry, path, normalized mode, or byte
+  changes
+- **THEN** the applicable payload, release, and release-set verification values
+  change without publishing or looking up a local artifact

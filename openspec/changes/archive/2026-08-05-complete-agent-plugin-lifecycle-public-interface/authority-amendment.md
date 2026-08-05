@@ -48,7 +48,7 @@ successful native command.
 - **Objective:** keep `rawr` a private Nx-built Oclif application with uniform
   command plugins and one bounded oRPC agent-plugin lifecycle service; keep
   Personal RAWR HQ content-only; then prove native Codex and Claude convergence
-  and a mutation-free repeat.
+  and a lifecycle-owned mutation-free repeat.
 - **Hard core:** Oclif owns CLI dispatch and external extension mechanics; Nx
   owns project builds, checks, and releases; Habitat owns positive source and
   topology policy; Personal review selects desired curated membership; the

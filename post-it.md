@@ -4,7 +4,31 @@ This is a prepend-only mental-model ledger, not architecture authority, a
 backlog, or a second specification. Exact topology and source relationships
 belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
+
+## 2026-08-05 - Settlement Follows Native State
+
+Template owns the private Oclif application and generic lifecycle operations.
+Personal owns curated content and governed repository records. Each native
+provider home owns installed truth. Exact Git selection connects those owners
+without repository ancestry, executable copying, a retained release store, or
+another installed-state record.
+
+Full vendor repositories remain caller-owned source oracles. Portable skill
+fixtures remain regular files, and governed vendor content enters Personal
+through declared Git inputs. A symlink channel or generic repository-sync layer
+would merge distinct lifetimes and authorities, so neither belongs in this
+closure. A converged repeat may read live native state and produce
+provider-owned observation residue; it dispatches no native mutation and writes
+no lifecycle-owned state.
+
+### Bag Of Keywords
+
+content, release, channel, provider, command.
+
+authority, clarity, safety, repeat, closure.
+
+Git, TypeBox, Oclif, native, Habitat.
 
 ## 2026-08-05 - Hooks Follow Product Layers
 
@@ -222,7 +246,7 @@ orchestration. After the native packages publish,
 `nx add @habitat-ai/cli@<exact-version>` removes that bootstrap and completes
 the cutover without an alias or dual identity. See
 [[.habitat/AUTHORITY|Habitat authority]] and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
 ### Bag Of Keywords
 
@@ -809,8 +833,8 @@ release is not yet published, the obsolete shape is deleted in place without a
 version bridge, fallback, or compatibility reader.
 
 See
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/authority-amendment|the authority amendment]],
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/tasks#6. Personal Content-Only Settlement|the settlement tasks]],
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/authority-amendment|the authority amendment]],
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/tasks#6. Personal Content-Only Settlement|the settlement tasks]],
 and
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input model]].
 
@@ -896,7 +920,7 @@ makes the answer visible and keeps an invalid destination unavailable.
 
 See [[.habitat/blueprints/service/skill|the service capability frame]],
 [[.habitat/AUTHORITY#Service Source Law|the source-law summary]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/tasks#5. Bounded Agent-Plugin Lifecycle Service|the active burn-down]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/tasks#5. Bounded Agent-Plugin Lifecycle Service|the active burn-down]].
 
 ### Bag Of Keywords
 
@@ -921,7 +945,7 @@ behavior through real linked clients.
 
 See [[services/example-todo/src/service/model/policy/procedure-metadata|the typed service policy]],
 [[apps/server/src/orpc|the HTTP boundary]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/design|the runtime decision]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/design|the runtime decision]].
 
 ### Bag Of Keywords
 
@@ -964,7 +988,7 @@ No helper replaces the helper.
 
 See [[services/example-todo/src/client|the worked native client]],
 [[services/example-todo/test/todo-service.test|the lane isolation oracle]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Native Service Client Authority|the execution record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Native Service Client Authority|the execution record]].
 
 ### Bag Of Keywords
 
@@ -987,7 +1011,7 @@ Historical version evidence stays attached to the checkpoint that produced it.
 
 See [[package.json|the root vendor selection]],
 [[packages/hq-sdk/src/orpc/schema|the TypeBox adapter]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Effect And TypeBox Vendor Preparation|the execution record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Effect And TypeBox Vendor Preparation|the execution record]].
 
 ### Bag Of Keywords
 
@@ -1011,7 +1035,7 @@ Template.
 
 See [[scripts/habitat/project.json|the Habitat Nx owner]],
 [[.codex/hooks.json|the Codex hook composition]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Interim Habitat Structure Feedback Boundary|the execution record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Interim Habitat Structure Feedback Boundary|the execution record]].
 
 ### Bag Of Keywords
 
@@ -1049,7 +1073,7 @@ classification.
 
 See [[.habitat/blueprints/service/skill|the service frame]],
 [[.habitat/blueprints/database/skill|the database frame]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Magic Service And Database Authority|the execution record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Magic Service And Database Authority|the execution record]].
 
 ### Bag Of Keywords
 
@@ -1228,7 +1252,7 @@ field and every inherited lane together after native oRPC composition.
 
 See [[services/example-todo/AGENTS|the worked service]],
 [[services/example-todo/src/service/middleware/stores.middleware|the root store middleware]],
-and [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Service Database|the execution record]].
+and [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Example Todo Service Database|the execution record]].
 
 ### Bag Of Keywords
 
@@ -1275,7 +1299,7 @@ service-root ownership.
 See [[.habitat/blueprints/database/skill|the database frame]],
 [[.habitat/blueprints/database/require_service_database_topology/structure.toml|the closed topology]],
 [[.habitat/AUTHORITY|Habitat authority]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Schema-Optional Service Database|the checkpoint record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Schema-Optional Service Database|the checkpoint record]].
 
 ### Bag Of Keywords
 
@@ -1302,7 +1326,7 @@ retained migration evidence, not another lane and not a pattern to propagate.
 See [[services/example-todo/AGENTS#Context Lanes|the worked service]],
 [[.habitat/blueprints/service/skill#Context|the service frame]],
 [[packages/hq-sdk/src/orpc/context/types|the reusable context model]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Context Lanes|the checkpoint record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Example Todo Context Lanes|the checkpoint record]].
 
 ### Bag Of Keywords
 
@@ -1329,7 +1353,7 @@ See [[services/example-todo/AGENTS|the Example Todo service router]],
 [[services/example-todo/src/service/model/dto/tag|the tag record]],
 [[services/example-todo/src/service/model/dto/assignment|the assignment record]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Record Model|the active checkpoint record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Example Todo Record Model|the active checkpoint record]].
 
 ### Bag Of Keywords
 
@@ -1356,7 +1380,7 @@ package export.
 See [[services/example-todo/AGENTS|the Example Todo service router]],
 [[services/example-todo/src/service/model/dto/workspace-id|the workspace DTO]],
 [[services/example-todo/src/service/model/ports/clock|the clock port]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Example Todo Root Model|the active checkpoint record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Example Todo Root Model|the active checkpoint record]].
 
 ### Bag Of Keywords
 
@@ -1381,7 +1405,7 @@ its tests.
 
 See [[.habitat/blueprints/database/skill|the database frame]],
 [[.habitat/blueprints/service/skill|the service frame]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1405,7 +1429,7 @@ and authored operation handlers.
 See
 [[services/agent-plugin-lifecycle/src/client|the lifecycle client]],
 [[services/agent-plugin-lifecycle/AGENTS|the service router]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/specs/agent-plugin-lifecycle-service-topology/spec|the active topology contract]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/specs/agent-plugin-lifecycle-service-topology/spec|the active topology contract]].
 
 ### Bag Of Keywords
 
@@ -1429,7 +1453,7 @@ remain unchanged.
 
 See [[nx.json|the Nx workspace configuration]],
 [[scripts/habitat/project.json|the Habitat project]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/tasks|the active tasks]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/tasks|the active tasks]].
 
 ### Bag Of Keywords
 
@@ -1462,7 +1486,7 @@ See
 [[resources/content-workspace/AGENTS|the content-workspace resource router]],
 [[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module router]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/service-domain-frame|the lifecycle domain frame]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/service-domain-frame|the lifecycle domain frame]].
 
 ### Bag Of Keywords
 
@@ -1491,7 +1515,7 @@ See
 [[resources/native-agent-provider/providers/codex-effect-platform-node/AGENTS|the Codex provider router]],
 [[resources/native-agent-provider/providers/claude-effect-platform-node/AGENTS|the Claude provider router]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1547,7 +1571,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-digest|the release-digest DTO]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-digest|the release-digest policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1582,7 +1606,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/current-main-git|the current-main Git DTO]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/current-main-git|the current-main Git policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1610,7 +1634,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/payload-manifest|the payload-manifest policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1640,7 +1664,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release-set|the release-set policy]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release-set-codec|the release-set codec]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1668,7 +1692,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release|the individual-release policy]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-release-codec|the individual-release codec]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1694,7 +1718,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-input|the release-input policy]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-input-codec|the release-input codec]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1721,7 +1745,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/completeness-witness|the completeness-witness policy]],
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1746,7 +1770,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/provenance-binding|the provenance-binding policy]],
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1773,7 +1797,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-input|the release-input DTO]],
 [[services/agent-plugin-lifecycle/AGENTS|the lifecycle service router]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1801,7 +1825,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-value-admission|the value-admission policy]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-result|the release-result policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1830,7 +1854,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/distribution-ownership|the ownership DTO]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/distribution-ownership|the ownership policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1864,7 +1888,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-payload-codec|the payload codec]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/agent-plugin-payload|the payload policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1889,7 +1913,7 @@ still imports Node crypto.
 See
 [[services/agent-plugin-lifecycle/src/service/model/policy/canonical-text-ordering|the canonical text-ordering policy]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1917,7 +1941,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/policy/canonical-base64|the canonical Base64 policy]],
 [[services/agent-plugin-lifecycle/src/service/model/helpers/byte-equality|the byte comparison mechanic]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1942,7 +1966,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-result|the release result DTO]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-result|the release result policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1967,7 +1991,7 @@ See
 [[services/agent-plugin-lifecycle/src/service/model/dto/release-issue|the release diagnostic DTO]],
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-issue|the release diagnostic policy]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -1989,7 +2013,7 @@ in-flight request, and the module retains one obvious execution sequence.
 See
 [[services/agent-plugin-lifecycle/src/service/modules/releases/router/refresh-release-input.router|the refresh operation]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2012,7 +2036,7 @@ behavior remain unchanged.
 See
 [[services/agent-plugin-lifecycle/src/service/model/policy/release-payload-accounting|release payload accounting]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2037,7 +2061,7 @@ See
 [[resources/versioned-content/AGENTS|the versioned-content resource]],
 [[services/agent-plugin-lifecycle/src/service/modules/vendors/AGENTS|the Vendor module]],
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2062,7 +2086,7 @@ observe.
 See
 [[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2085,7 +2109,7 @@ and mutation remain the next separate operation-authorship cut.
 See
 [[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2114,7 +2138,7 @@ not a reason to mix two semantic stories.
 See
 [[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2146,7 +2170,7 @@ boundary.
 See
 [[services/agent-plugin-lifecycle/src/service/modules/providers/AGENTS|the Providers module]]
 and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2191,7 +2215,7 @@ index bytes never cross this public staged boundary.
 
 See [[resources/content-workspace/AGENTS|the content-workspace resource]],
 [[services/agent-plugin-lifecycle/src/service/modules/releases/AGENTS|the Releases module]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2214,7 +2238,7 @@ funnel.
 
 See [[resources/content-workspace/AGENTS|the content-workspace resource]],
 [[resources/content-workspace/providers/git-effect-platform-node/AGENTS|the Git provider]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the active lifecycle record]].
 
 ### Bag Of Keywords
 
@@ -2241,7 +2265,7 @@ their own resource; current-main persistence remains service-owned storage.
 
 See [[.habitat/blueprints/service/skill|the service frame]],
 [[resources/content-workspace/AGENTS|the workspace resource]], and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/service-domain-frame|the lifecycle domain frame]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/service-domain-frame|the lifecycle domain frame]].
 
 ### Bag Of Keywords
 
@@ -2263,7 +2287,7 @@ Effect operations. Vendor orchestration still hidden in policy is the next
 visible red boundary; this checkpoint does not bless it.
 
 See [[resources/content-workspace/AGENTS|the content-workspace boundary]] and
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the
 active lifecycle record]].
 
 ### Bag Of Keywords

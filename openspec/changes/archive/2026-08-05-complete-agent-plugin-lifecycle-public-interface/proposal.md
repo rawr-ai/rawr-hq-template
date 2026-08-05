@@ -46,7 +46,7 @@ and keeps the lifecycle behavior that solves the actual product problem.
   evaluation inputs, and its own governed release/channel records. Remove
   Template controller pins, executable copies, and per-file runtime envelopes.
 - Prove native Codex and Claude convergence in disposable homes, then approved
-  homes, followed by a mutation-free repeat.
+  homes, followed by a lifecycle-owned mutation-free repeat.
 
 ## Explicitly Removed
 

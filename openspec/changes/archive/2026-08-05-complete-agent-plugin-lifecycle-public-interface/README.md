@@ -2,7 +2,7 @@
 
 ## Status
 
-`EXECUTING_CONTENT_AND_PROVIDER_ACCEPTANCE`
+`CLOSED_CANONICAL_SETTLEMENT`
 
 The user rejected the custom controller distribution and custom Oclif extension
 manager after an installed-system audit showed that they form a private CLI
@@ -11,24 +11,24 @@ package/version manager rather than a necessary agent-plugin lifecycle boundary.
 [[service-domain-frame]] records the system-level service invariants, flows,
 state owners, failure boundaries, and deletion-first implementation sequence.
 
-The private `rawr` Oclif application and bounded lifecycle path are now landed on
+The private `rawr` Oclif application and bounded lifecycle path are landed on
 canonical Template `main`. Habitat is the platform distribution; the private
-`rawr` application is not a release objective. Disposable native-provider
-acceptance and independent Personal record closure are the next execution
-boundaries. Approved provider homes remain closed until explicit operational
-authorization.
+`rawr` application is not a release objective. Independent Personal content
+settlement, disposable native-provider acceptance, approved-home convergence,
+and the lifecycle-owned mutation-free repeat are complete.
 
 ## Canonical Repositories
 
 | Repository | Checkpoint base identity | Role |
 | --- | --- | --- |
-| RAWR HQ-Template | `main` / `093334ff22f47ce864e15b87dd6ca01b1ba0fb0b` | Habitat platform source, private Oclif application, services, resources, generic tooling |
-| Personal RAWR HQ | `main` / `7c25bb4b09b3400f6c76913dccfa181171824fed` | Curated agent content, provenance, policy/evaluation, governed records |
+| RAWR HQ-Template | `main` / `a54524dfabf365b0553cbca58e205d48f040de27` | Habitat platform source, private Oclif application, services, resources, generic tooling |
+| Personal RAWR HQ | `main` / `c76befb00915d08be32689f07efd364664753775` | Curated agent content, provenance, policy/evaluation, governed records |
 
 Active Template execution uses isolated Graphite worktrees descended from
 canonical Template `main`; Git and Graphite retain exact branch/worktree
-identity for each independently green checkpoint. The clean Personal primary
-and unrelated worktrees remain outside this initiative's write set.
+identity for each independently green checkpoint. The Personal primary's
+tracked tree and unrelated worktrees remain outside this initiative's write
+set; its ignored or untracked source-oracle cache is not lifecycle state.
 
 The packet provenance remains Personal commit
 `cc631f60c9254802be647d66662823ae47d5e7db`, project tree
@@ -1204,7 +1204,7 @@ read-only status uses `basic` audit, while disposable testing and canonical
 sync use `full` audit. TypeBox remains the request/result source, and the
 provider-local behavior keeps live status observation, disposable-home tests,
 canonical convergence, omitted-member retirement, partial-failure reporting,
-and mutation-free repeat under their existing owners. Native adapters and the
+and lifecycle-owned mutation-free repeat under their existing owners. Native adapters and the
 remaining providers shell stay open under
 [[tasks#5. Bounded Agent-Plugin Lifecycle Service|tasks 5.2 and 5.7]].
 
@@ -1677,20 +1677,20 @@ slice touches their boundary:
 
 The Inngest review uses historical accepted review input
 `1e7f346b9b0fb7b356675d3e837295256bda7d0d`, now contained by current
-canonical Personal `main` `7c25bb4b09b3400f6c76913dccfa181171824fed`, and reads
+canonical Personal `main` `c76befb00915d08be32689f07efd364664753775`, and reads
 `plugins/agents/dev/skills/inngest/SKILL.md`, then
 `plugins/agents/dev/skills/effect-inngest/SKILL.md` when Effect adaptation is
-present. Live provider caches remain stale until ordinary settlement. The
-review does not authorize a separate release path.
+present. Native provider homes are settled through the ordinary lifecycle path.
+The review does not authorize a separate release path.
 
 ## Current Gates
 
 | Gate | State |
 | --- | --- |
-| Corrected authority record | Landed; next boundaries are Personal content closure and provider acceptance |
+| Corrected authority record | Landed; independent Personal content and native-provider settlement are complete |
 | Generic Habitat blueprint port | Six service-construction laws are landed and enforced with empty baselines and zero findings across the admitted corpus |
-| Generic Oclif blueprint source | Source and built application conformance are landed; disposable provider acceptance remains |
-| Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
+| Generic Oclif blueprint source | Source and built application conformance plus disposable native-provider acceptance are complete |
+| Complete Nx check/typecheck population and shared lint | Complete, wired through one all-project Nx check graph, and green on exact Template main |
 | Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry publication, idempotent consumer initialization, native version-two execution, released consumer cutover, and the complete service-law admission are landed |
 | Workspace toolchain | Node 24.18.1, Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, Oclif 4.23.29/core 4.13.2, oRPC 2 beta 23, and Effect 4 beta 101 are explicit |
 | Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 41 inferred enforced Habitat rules across six owners are active; the required gate and canonical landing are green |
@@ -1699,14 +1699,14 @@ review does not authorize a separate release path.
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Public distribution | The private `rawr` application and its internal Template dependency graph are absent from Nx Release. Habitat SDK and CLI `0.4.2` are the only supported public distribution artifacts; all eighteen names in the rejected RAWR `0.1.0` candidate cohort return `404` from npm. |
-| Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
+| Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; canonical retirement deltas are applied |
 | Persistent agent artifact/projection store deletion | Complete; the store remains absent and task 5.5d1 proves the caller-root-bounded provider-test marketplace without adding replacement state |
-| oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 23, official Effect bridge beta 23, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
-| Bounded lifecycle simplification | Direct exact-Git native reconciliation, state deletion, positive module topology, the context funnel, operation-use audit, and disposable provider acceptance are complete; governed current-main and approved-home settlement remain |
-| Personal content-only recut | Pending |
-| Disposable provider acceptance | Complete; real Codex and Claude v1, targeted v2, retained-inventory, and mutation-free repeat proof passed in one caller-owned root |
-| Approved-home settlement and read-only repeat | Pending |
-| Repository/stack/worktree closure | Pending |
+| oRPC 2 and Effect 4 runtime realm | Complete and green on landed main: exact oRPC beta 23, official Effect bridge beta 23, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
+| Bounded lifecycle simplification | Direct exact-Git native reconciliation, state deletion, positive module topology, the context funnel, operation-use audit, governed current-main, and provider settlement are complete |
+| Personal content-only recut | Complete on independent Personal `main` `c76befb00915d08be32689f07efd364664753775` |
+| Disposable provider acceptance | Complete; real Codex and Claude v1, targeted v2, retained-inventory, and lifecycle-owned mutation-free repeat passed in one caller-owned root |
+| Approved-home settlement and read-only repeat | Complete through native Codex and Claude commands |
+| Repository/stack/worktree closure | At archive authoring, implementation stacks and lifecycle-owned disposable roots are drained; this archive node is the sole remaining merge-and-drain boundary |
 
 The initial generic Habitat blueprint port remains a separate historical
 checkpoint: twenty-six logical files followed Magic Migration commit
@@ -1723,11 +1723,11 @@ middleware remains a direct leaf set without a barrel. It puts domain matter in 
 modules from exact service branches, and closes alias traversal without
 baseline entries or compatibility paths. The shared current-main checkpoint moved its complete locator, record,
 exact-Git, and selection closure into the shared service model. The later
-provider ownership checkpoint removes the remaining release-owned
+provider ownership checkpoint removed the remaining release-owned
 selected-content import and root middleware edge without creating a third
-shared collaboration. Three sibling-module
-imports, other module-to-root domain leakage, and a public root release surface
-remain migration inputs, not accepted debt or baseline entries.
+shared collaboration. Three sibling-module imports, other module-to-root domain
+leakage, and a public root release surface were migration inputs at that
+checkpoint, not accepted debt or baseline entries.
 Central activation remains governed by
 [[tasks#1. Positive Habitat And Nx Checks]] task 1.5e, the complete task 5.7e2
 live-corpus burn-down, and task 5.7e22's upstream Habitat Nx-plugin boundary.
@@ -1993,25 +1993,27 @@ green; no command replacement or new state owner was introduced.
 
 The canonical-spec audit records this exact disposition:
 
-- Delete `rawr-controller-authority`, `agent-plugin-build-artifact-store`,
-  `agent-plugin-managed-export`, `agent-plugin-promotion`,
+- Delete `agent-plugin-build-artifact-store`, `agent-plugin-managed-export`,
+  `agent-plugin-promotion`,
   `agent-provider-projection`, and `agent-plugin-undo-capsule`.
 - Rewrite `agent-plugin-command-lifecycle`,
   `agent-plugin-lifecycle-mode-selection`,
   `agent-plugin-lifecycle-service-topology`, `agent-plugin-packaging`,
   `agent-plugin-release-product`, `agent-provider-deployment`,
-  `external-cli-extension-boundary`, `legacy-membership-retirement`,
-  `mixed-plugin-lifecycle-retirement`, and `qualified-artifact-authoring` so
+  `legacy-membership-retirement`, `mixed-plugin-lifecycle-retirement`, and
+  `qualified-artifact-authoring` so
   ownership belongs to native Oclif or provider state where applicable.
 - Retain `agent-plugin-vendor-management`.
-- Add `agent-plugin-channel-selection`, `agent-plugin-release-derivation`, and
-  `rawr-cli-application`.
+- Add `agent-plugin-channel-selection` and `agent-plugin-release-derivation`.
+- Preserve the newer canonical `external-cli-extension-boundary` and
+  `rawr-cli-application` specifications unchanged. The retired
+  `rawr-controller-authority` capability is already absent.
 
-The active removal deltas now use the canonical requirement names exactly.
-Canonical specs remain unchanged while this change is active;
-[[tasks#8. Closure|task 8.3]] applies the complete validated delta set atomically
-when the change archives instead of maintaining duplicate active and canonical
-edits.
+The archived removal deltas use the canonical requirement names exactly.
+Redundant controller, private-application, external-extension, rename, and
+already-applied command fragments are absent. [[tasks#8. Closure|Task 8.3]]
+applied the complete validated delta set atomically instead of maintaining
+duplicate active and canonical edits.
 
 The persistent-state audit found no remaining release/set repository,
 projection store, provider receipt or identity sidecar, custom evidence store,
@@ -6155,6 +6157,96 @@ Fresh-process visibility does not alone prove an already-running Codex Desktop
 task refreshed. Record that operational limit without building app/runtime
 composition.
 
+## Canonical Native Settlement
+
+The corrected lifecycle settled from two independent canonical repositories:
+
+- Template `main` `a54524dfabf365b0553cbca58e205d48f040de27`, tree
+  `43cb8c4c13bb44ee18d9e5e9c2448ec0820839ff`, contains the private Oclif
+  application, lifecycle service, and native provider adapters. PRs #818 and
+  #819 landed the final native-environment and immutable-release reobservation
+  corrections.
+- Personal `main` `c76befb00915d08be32689f07efd364664753775`, tree
+  `a805e7baed40d817b117536f799ef04dcc2818ac`, contains only curated content and
+  repository-owned records. PR #197 replaced the closed, unmerged controller-
+  coupled PRs #182 and #183.
+- The selected Personal input is annotated tag `agent-content-v2`, commit
+  `59bb297dd5ac1135c6f0e1d9f2595c46afd6975e`, tree
+  `07bce29358b96f5abaf2c9ffb1db4e2974c86cce`, release input
+  `ri1_3f5e3f76e3de192cc7b67abea2437b1167ee4eae9f1a3f14931de7bcd6ed814a`,
+  and derived complete release set
+  `rs1_38388d5673874c62e0010fe5cdbb934b82895b605b4cda3272cd9b1d20b9eb0d`.
+  Its eleven members have unique skill ownership.
+- GitHub immutable releases changed once from disabled to enabled for Personal.
+  Release `365648476` is published, non-draft, non-prerelease, and immutable at
+  <https://github.com/rawr-ai/rawr-hq/releases/tag/agent-content-v2>. Its
+  annotated tag object `4852da6b01070b416794949aa20267b1d3eacfa7` peels to the exact selected
+  commit. This uses GitHub's ordinary
+  [immutable-release contract](https://docs.github.com/en/enterprise-cloud@latest/code-security/concepts/supply-chain-security/immutable-releases),
+  not a RAWR release store.
+
+Exact landed-revision verification is green:
+
+- Template-main Repository Ratchet run `31022957310` and Personal-main Agent
+  Plugin Content Ratchet run `31000987318` passed for the exact commits above.
+- `@habitat-ai/rawr:acceptance:oclif` passed its 25 build/manifest predecessors
+  and three source/compiled inventory cases.
+- The uncached lifecycle/native/CLI Nx task graph passed 27 tasks in 72
+  seconds: 448 lifecycle cases, 89 CLI cases, seven native-contract cases, nine
+  Codex-provider cases, seven Claude-provider cases, and all selected
+  typechecks.
+- `@habitat-ai/cli:acceptance:oclif-installed-package` passed from exact main,
+  installing and initializing the public SDK/CLI pair in a fresh consumer.
+  Registry authority remains exactly `@habitat-ai/sdk@0.4.2` plus
+  `@habitat-ai/cli@0.4.2`; RAWR application projects remain private.
+
+Disposable Codex and Claude homes below
+`/private/tmp/habitat-canonical-settlement.csYWTf` converged through supported
+native commands. A repeated exact-main sync returned `Converged` for both. The
+Codex home hash remained
+`0fa9832dc4f1fe8acc7b3465d9749ec23d041bb0f191937817e3f3fcd687975a`.
+Claude's semantic hash, excluding native `.in_use` observation residue, remained
+`7cd1e458e1e57bb05daf418dab44f779c2c44187edb8d5327f9ffe0c74db6a30`.
+
+Approved-home settlement started from two stale native marketplace locators.
+Status refused them rather than inferring ownership. The operator removed only
+those `rawr-hq` marketplace registrations through the Codex and Claude native
+marketplace commands; no provider file, cache, or configuration was edited.
+Fresh status then reported drift. The first normalized sync returned `Partial`:
+Claude was converged while Codex had applied the marketplace transition but had
+not refreshed the selected plugin. Fresh inspection reported that exact
+confirmed prefix. A Codex-only retry returned `Changed`; subsequent combined
+status and sync returned `Converged`.
+
+The approved-home converged repeat preserved these exact semantic inventory
+hashes:
+
+- Codex marketplace `97ea122e103ab65ffe525a854e807b67b64b4a745aed1d6406de240eb8239967`;
+- Codex plugins `e26ef65e9f564bfd3478f52bcf14a519970816546d5063806aaf8ee489f73d1d`;
+- Claude marketplace `0786ee6277ac4da3a46b266fdbbf42857c03e94eace46d11d86ccc6972991a7d`;
+- Claude plugins `633c334d902ca80f095781dcd6989bb70d60c244e874182de62823e558dc65c2`.
+
+`cognition:state-machine-design` is enabled as `cognition@rawr-hq` version
+`1.0.0`. Personal source, Codex cache, and Claude cache contain byte-identical
+`SKILL.md` content with SHA-256
+`d2c0b2cd7ed8cbd50f9a94f089d796ed548d2f29de842d425e7b1b1aef650520`.
+
+Native acceptance owns real provider command and inventory behavior. Owner-local
+tests own deterministic collision noninvocation, exact failure position,
+applied-prefix truncation, fresh-read retry, and mutation-free dispatch because
+neither native CLI exposes a supported fault-injection or invocation-audit
+surface. No executable wrapper, provider cache edit, artificial Git history, or
+new acceptance framework was added to manufacture those observations. A running
+Codex Desktop task can retain an already-loaded skill body after native
+replacement; this remains an explicit observation limit, not an app-composition
+requirement.
+
+The research-bound oRPC correction from sealed vault commit
+`6c9203d1696d90126b6782708cb14fa036b1977a` is now queued as an ordinary future
+Personal content update. It must use the complete release-set, current-main, and
+native-provider path proven here; it has no legacy-sync or one-off deployment
+route.
+
 ## Historical Disposition
 
 Earlier C1-C6 commits and their tests remain Git history and migration evidence.
@@ -6198,4 +6290,4 @@ requirements; historical archived specifications remain evidence only.
 - Service domain frame: [[service-domain-frame]].
 - Target architecture and decisions: [[design]].
 - Change summary: [[proposal]].
-- Active execution: [[tasks]].
+- Execution record: [[tasks]].

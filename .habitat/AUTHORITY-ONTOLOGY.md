@@ -156,6 +156,6 @@ paths, catalogs, runners, or product inventories into peer concepts.
 - [[README|Habitat policy index]]
 - [[blueprints/skill|Blueprint direction]]
 - [[../docs/projects/shared-habitat-substrate/CORPUS|Shared Habitat substrate corpus]]
-- [[../openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|Definition checkpoint record]]
+- [[../openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|Definition checkpoint record]]
 - [[../docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec|Canonical architecture]]
 - [[../docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec|Runtime realization]]

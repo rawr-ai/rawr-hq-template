@@ -1,36 +1,41 @@
 # legacy-membership-retirement Specification
 
 ## Purpose
-TBD - created by archiving change normalize-app-composition-authoring. Update Purpose after archive.
+Retire legacy web membership, scaffolding commands, and repository-owned runtime
+membership without introducing replacement app-composition authority.
 ## Requirements
 ### Requirement: Legacy web membership commands are structurally absent (B04, B30)
 
-The Template controller MUST NOT expose `rawr plugins web`, `rawr plugins scaffold`, or any former child command, alias, hidden alias, forwarder, help row, tool-registry entry, or active documentation route for those command families. C4's command-surface claim is limited to retiring those web-membership and scaffold families without adding replacement curated-agent, app-composition, web-mounting, or source-scaffolding behavior. The inherited mixed sync aggregate and root undo remain migration evidence in C4; C5 owns the semantic cutover that makes bare `rawr plugins` external-only and moves curated lifecycle under `rawr agent plugins`.
+The private Template Oclif application MUST NOT expose `rawr plugins web`,
+`rawr plugins scaffold`, or any former child command, alias, forwarder, help row,
+tool entry, or active documentation route. No replacement curated-agent,
+app-composition, web-mounting, or aggregate source-scaffolding behavior may enter
+through this retirement. Bare `rawr plugins` belongs only to
+`@oclif/plugin-plugins`; curated lifecycle belongs only below
+`rawr agent plugins`.
 
 #### Scenario: Former mixed commands cannot resolve
-
-- **WHEN** official command discovery, direct command-ID resolution, aliases, help, and active command metadata are enumerated
-- **THEN** every former web and scaffold command is absent
-- **AND** no compatibility forwarder or renamed mixed owner can reach its implementation
-- **AND** no C4 acceptance claim treats the inherited aggregate as already cut over
+- **WHEN** Nx-built Oclif discovery, command IDs, aliases, help, and metadata are
+  enumerated
+- **THEN** every former web/scaffold command and compatibility route is absent
 
 ### Requirement: Repository state cannot own runtime membership (B05, B30, I08, I15)
 
-No active command, service, API, UI, browser client, server bootstrap, test helper, package export, or architecture inventory MAY produce or consume `.rawr/state/state.json`, `plugins.enabled`, `RepoState`/`repoState`, `enabledPluginIds`, or `state.getRuntimeState` as plugin or projection membership. The repo-state membership service, state API/plugin/client, and state-driven mounts UI MUST be deleted rather than wrapped or renamed.
-
-Existing stale state MUST be inert. A supported operation MUST NOT read, import, migrate, repair, synchronize, rewrite, or delete it as part of a compatibility path.
+Repository membership MUST NOT be produced or consumed from the retired
+repo-state fields by any active command, service, API, UI, server bootstrap,
+test helper, package export, or architecture inventory. Existing stale state is
+inert and MUST NOT be read, migrated, repaired, synchronized, rewritten, or
+deleted by a supported operation.
 
 #### Scenario: Stale membership state has no effect
-
-- **WHEN** a stale `.rawr/state/state.json` lists enabled plugin identities
-- **THEN** supported controller, server, web, and authoring operations behave identically to the state file being absent
-- **AND** read/write/delete traps for that file remain zero
+- **WHEN** stale repository state lists enabled plugin identities
+- **THEN** supported CLI, server, web, and authoring operations behave as if it
+  were absent and its filesystem mutation counters remain zero
 
 #### Scenario: Retired state procedure is absent
-
 - **WHEN** the composed RPC router and generated OpenAPI document are inspected
-- **THEN** the retired runtime-state procedure and path are absent
-- **AND** representative surviving procedures remain callable through the unchanged host boundary
+- **THEN** the retired runtime-state procedure/path is absent while representative
+  surviving procedures remain callable
 
 ### Requirement: Workspace discovery cannot recreate membership (B05, B30)
 
@@ -56,11 +61,15 @@ Future app composition and runtime realization MUST remain deferred to the canon
 
 ### Requirement: Retirement preserves adjacent authorities without entering them (B05, I08)
 
-Legacy retirement MUST NOT install or manage external Oclif extensions, create or deploy agent releases, mutate provider homes or receipts, write export ledgers, select controller releases, author personal lifecycle records, or alter protected-lane candidate bytes. Existing unrelated server/RPC/OpenAPI/Inngest behavior MAY be exercised as regression evidence only and MUST NOT become a new C4 composition or lifecycle owner.
+Legacy retirement MUST NOT install or manage external Oclif extensions, derive
+or reconcile agent content, mutate provider homes, write package outputs, select
+or install a RAWR CLI version, author Personal channel records, or alter
+protected-lane candidate bytes. Existing unrelated server/RPC/OpenAPI/Inngest
+behavior MAY be regression evidence only and cannot become a new composition or
+lifecycle owner.
 
 #### Scenario: Adjacent mutation ports remain zero
-
-- **WHEN** legacy membership paths are absent and surviving host regressions are exercised with adjacent authorities instrumented
-- **THEN** external Oclif, controller, release, artifact, provider, promotion, export, personal-record, and protected-lane mutation counters remain zero
-- **AND** no missing app/runtime capability is repaired through a C4 fallback
-
+- **WHEN** legacy membership paths are absent and surviving host regressions run
+- **THEN** Oclif, CLI installation, release derivation, provider, package-output,
+  Personal-record, and protected-lane mutation counters remain zero
+- **AND** no missing app/runtime capability is repaired through a fallback

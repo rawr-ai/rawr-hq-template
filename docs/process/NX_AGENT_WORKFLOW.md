@@ -81,7 +81,7 @@ Shared dependencies, cache inputs, and outputs belong in
 real graph behavior that differs from the shared kind. Otherwise let Nx infer
 the package script. Each resolved task has one command owner; a leaf command
 must not start another Nx scheduler. See
-[[../../openspec/changes/complete-agent-plugin-lifecycle-public-interface/design#Required checks follow the Nx graph|the active Nx design record]].
+[[../../openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/design#Required checks follow the Nx graph|the archived Nx design record]].
 
 ## Repo Documentation Policy
 
