@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_schema_publication",
+  "title": "Require Service Schema Publication",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a service contract, DTO, error-data, or entity schema that uses a noncanonical TypeBox import, computed or aliased Type member access, a constructor outside the verified projectable set, or a directly visible BigInt value",
+  "why": "Published service schemas are portable JSON Schema 2020-12 artifacts. Named-only root imports and direct admitted Type constructor access keep executable refinements, codecs, unsafe static overlays, directly visible BigInt values, and older tuple syntax from disappearing or changing meaning when oRPC publishes those artifacts.",
+  "remediate": "Import TypeBox names without aliases from the root typebox module, call admitted constructors directly through Type.<constructor>, and keep BigInt literals and direct BigInt-producing calls out of schema owners. Express structural constraints in TypeBox, move runtime and cross-field semantics to the owning model policy or procedure admission boundary, and extend this law only after verifying a constructor through the current JSON Schema 2020-12 adapter.",
+  "message": "Service contract, DTO, error-data, and entity schemas must use named root TypeBox imports and direct verified projectable constructors.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "services/*/src/service/modules/*/contract/*.ts",
+        "services/*/src/service/model/dto/*.ts",
+        "services/*/src/service/model/entities/*.ts",
+        "services/*/src/service/model/errors/*.ts",
+        "services/*/src/service/modules/*/model/dto/*.ts",
+        "services/*/src/service/modules/*/model/entities/*.ts",
+        "services/*/src/service/modules/*/model/errors/*.ts",
+        "plugins/server/api/*/src/service/modules/*/contract/*.ts",
+        "plugins/server/api/*/src/service/model/dto/*.ts",
+        "plugins/server/api/*/src/service/model/entities/*.ts",
+        "plugins/server/api/*/src/service/model/errors/*.ts",
+        "plugins/server/api/*/src/service/modules/*/model/dto/*.ts",
+        "plugins/server/api/*/src/service/modules/*/model/entities/*.ts",
+        "plugins/server/api/*/src/service/modules/*/model/errors/*.ts"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_schema_publication/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_schema_publication/pattern.md"
+    },
+    "patternName": "require_service_schema_publication",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services", "plugins/server/api"]
+    }
+  }
+}

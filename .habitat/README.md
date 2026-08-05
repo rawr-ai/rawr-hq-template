@@ -54,7 +54,7 @@ The current generic kinds are:
 The seven v3 definitions for `package`, `resource`, `provider`, `service`,
 `plugin`, `plugin-nx`, and `app` currently have no instances or resolved
 applications. Their blueprint-root schema-2 structures are schema-admitted but
-execution-inert while the installed evaluator executes the 40 registered v2
+execution-inert while the installed evaluator executes the 41 registered v2
 compatibility rules. The six v2 service-construction packets are now enforced
 with empty baselines against the complete admitted service corpus;
 public-consumer sealing remains staged. Exact blueprint-root relations, nested-member closure, and
@@ -134,9 +134,9 @@ generated types; DTOs remain operation or boundary projections, while database
 schema remains physical mapping. Stores privately realize persistence and may
 map records into entities when the domain models continuing identity. There is
 no database DTO category, and entity declarations do not import those
-downstream owners. That structural destination remains advisory until the
-shared TypeBox and platform-neutral source laws cover entities; no production
-entity source moves before that shared law lands.
+downstream owners. The service topology, schema-publication, and
+platform-neutral laws now enforce that destination; Hyperresearch is the first
+production entity corpus admitted through it.
 
 Required module `contract/` and `router/` directories have distinct faces.
 `contract/` exposes `index.ts` plus semantic leaves. `router/` contains named

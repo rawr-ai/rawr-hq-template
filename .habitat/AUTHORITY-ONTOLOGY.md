@@ -130,7 +130,7 @@ root `structure.toml` per kind. The source catalog schema-admits these
 definitions, but they have no instances or resolved applications and are not
 accepted into a released policy pack.
 
-The repository's v2 compatibility registry and its 40 rules remain the sole
+The repository's v2 compatibility registry and its 41 rules remain the sole
 execution authority.
 Only the `package@1` proof-axis grammar is frozen: `contract` and `semantics`
 member ids map to exact files. `package@1` remains outside release-pack

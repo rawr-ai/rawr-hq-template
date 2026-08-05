@@ -191,7 +191,7 @@ contract and reusable-DTO corpus and completed in 2.9 seconds; the complete
 uncached Habitat policy graph completed in 44.8 seconds, and an unchanged
 repeat restored from Nx cache in 18 milliseconds. Seven unfinished service
 laws then remained explicit candidate packets under `.habitat/staged/**`; they
-were not compatibility paths or active registry members. The current 40-rule
+were not compatibility paths or active registry members. The current 41-rule
 candidate state and its six-law activation gate are recorded in the gate table
 below; public-consumer sealing retains its independent classifier gate.
 
@@ -1656,7 +1656,7 @@ review does not authorize a separate release path.
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
 | Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry publication, idempotent consumer initialization, native version-two execution, and released consumer cutover are landed; the service-law candidate awaits required admission and canonical landing |
 | Workspace toolchain | Node 24.18.1, Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, Oclif 4.23.29/core 4.13.2, oRPC 2 beta 23, and Effect 4 beta 101 are explicit |
-| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 40 inferred enforced Habitat rules across six owners are active; the required gate and canonical landing remain open |
+| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 41 inferred enforced Habitat rules across six owners are active; the required gate and canonical landing remain open |
 | Mandatory module context curation | The complete standalone and embedded-API service corpus curates route vocabulary through the downward context funnel; all six shared service laws report zero findings in the candidate |
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; the service-law candidate awaits required admission and canonical landing |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
@@ -5965,6 +5965,26 @@ execution, and TypeBox request/result validation. The subsequent complete
 service-corpus burn-down moved all six construction laws into the enforced
 candidate with empty baselines and zero findings. Task 5.7e22 remains open for
 required admission, standing review, and canonical landing.
+
+## TypeBox Publication Closure
+
+Three semantic checkpoints separate public structure from runtime policy
+without changing lifecycle behavior. Habitat catalog checkpoint `01d778e17`
+publishes draft-2020-12 arrays and leaves glob and uniqueness decisions in
+Catalog policy. Lifecycle core checkpoint `595fc3403` makes service-root wire
+schemas projectable while retaining a policy-derived, byte-precise local client.
+Lifecycle module checkpoint `6a3e46024` applies the same ownership to Packaging,
+Providers, Governance, and Releases.
+
+The accompanying Habitat rule split keeps native oRPC contract construction and
+public error authority in `require_service_contract_authority`. The new
+`require_service_schema_publication` law owns the projectable TypeBox authoring
+surface for service and embedded-API contracts, DTOs, error data, and entities.
+Runtime and cross-field semantics remain in model policy or procedure authorship. Exact
+Habitat rules, real Grit finding counts, Catalog compatibility, 430 Lifecycle
+tests, the uncached CLI consumer check, TypeScript checks, Biome, and diff
+hygiene pass. No scanner, custom runner, schema facade, or additional state
+owner was introduced.
 
 ## Settlement Oracles
 
