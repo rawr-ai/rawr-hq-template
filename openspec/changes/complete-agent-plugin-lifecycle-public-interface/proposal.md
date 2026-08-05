@@ -31,7 +31,9 @@ and keeps the lifecycle behavior that solves the actual product problem.
 - Delete the persistent agent release/set repository, projection store,
   publication/retention machinery, and digest-addressed handles. Canonical
   mutation uses the selected Personal Git marketplace through native provider
-  commands; local marketplace materialization is disposable-test-only.
+  commands; local marketplace materialization is disposable-test-only and
+  bounded by an explicitly caller-owned root. Sequential tests may reuse that
+  root, while concurrent live tests require distinct roots.
 - Keep Codex and Claude mutation behind thin native provider adapters. Provider
   homes remain installed-state authority.
 - Replace lifecycle-specific source-shape scripts with positive Habitat

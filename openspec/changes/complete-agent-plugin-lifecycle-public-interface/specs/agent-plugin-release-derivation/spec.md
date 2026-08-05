@@ -71,10 +71,13 @@ Status MUST compare in-memory derived identity with live native state without
 materializing provider package bytes. Canonical sync MUST give the native
 provider an immutable Git marketplace source at the selected Personal revision;
 the provider owns any clone or cache below its explicit home. A disposable test
-MAY expose the selected Git bytes through an owner-created temporary marketplace
-only while the temporary source remains scoped to that test operation and its
-explicit disposable root. The caller retains ownership of the disposable home.
-No Template-owned persistent projection root may participate.
+MAY expose the selected Git bytes through one reserved marketplace child below
+its explicit disposable root. The caller MUST give each live test call exclusive
+use of that root. Sequential calls MAY reuse the root after the preceding call
+settles; concurrent calls MUST use distinct roots. The reserved child MAY remain
+stable until the caller removes the disposable root. It is derived test
+material, not Template channel, repository, or provider authority. No
+Template-owned persistent projection root may participate.
 
 #### Scenario: Converged status and sync are read-only
 - **WHEN** live provider state already matches the selected native content
@@ -88,16 +91,22 @@ No Template-owned persistent projection root may participate.
   provider-owned snapshot and visible state, and creates no Template-owned
   marketplace tree
 
-#### Scenario: Disposable local source shares the target lifetime
+#### Scenario: Disposable local source shares the caller-root lifetime
 - **WHEN** a not-yet-published exact selection is tested through a local native
   marketplace
 - **THEN** the source remains valid for the entire disposable-home test and both
   initial and final provider observation
-- **AND** the scoped source is retired before the operation returns without
-  claiming deletion authority over the caller-owned home
+- **AND** a later call can inspect or refresh the same path until the caller
+  removes its disposable root
 
-#### Scenario: Temporary cleanup candidate is unsafe
-- **WHEN** the bounded disposable parent or allocated child fails canonical
-  directory, owner-prefix, or direct-containment admission
+#### Scenario: Provider tests overlap
+- **WHEN** two provider-test calls are live at the same time
+- **THEN** their callers supply distinct disposable roots and reserved children
+- **AND** reuse of one root begins only after its preceding call settles
+
+#### Scenario: Disposable materialization candidate is unsafe
+- **WHEN** the bounded disposable parent or reserved child fails canonical
+  directory, direct-containment, non-alias, or provider-home-disjointness
+  admission
 - **THEN** materialization refuses without mutation of any provider, repository,
   caller-owned home, or unrelated path

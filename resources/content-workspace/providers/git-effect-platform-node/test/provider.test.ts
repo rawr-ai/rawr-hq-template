@@ -18,7 +18,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { NodeFileSystem } from "@effect/platform-node";
 import type { ContentWorkspaceFailure } from "@habitat-ai/rawr-resource-content-workspace";
-import { Effect, FileSystem, PlatformError } from "effect";
+import { Cause, Effect, Exit, Fiber, FileSystem, PlatformError } from "effect";
 import { makeContentWorkspaceResource, makeNodeContentWorkspaceResource } from "../index";
 
 type NodeContentWorkspaceResult<A> =
@@ -26,21 +26,33 @@ type NodeContentWorkspaceResult<A> =
   | Readonly<{ ok: false; failure: ContentWorkspaceFailure }>;
 
 function runNodeContentWorkspace<A>(
-  operation: Effect.Effect<A, ContentWorkspaceFailure, FileSystem.FileSystem>
+  operation: Effect.Effect<A, ContentWorkspaceFailure, FileSystem.FileSystem>,
+  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem = (base) => base
 ): Promise<NodeContentWorkspaceResult<A>> {
   return Effect.runPromise(
-    operation.pipe(
+    provideTransformedNodeFileSystem(operation, transform).pipe(
       Effect.map((value): NodeContentWorkspaceResult<A> => ({ ok: true, value })),
       Effect.catch((failure) =>
         Effect.succeed<NodeContentWorkspaceResult<A>>({ ok: false, failure })
-      ),
-      Effect.provide(NodeFileSystem.layer)
+      )
     )
   );
 }
 
+function provideTransformedNodeFileSystem<A, E>(
+  operation: Effect.Effect<A, E, FileSystem.FileSystem>,
+  transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem
+): Effect.Effect<A, E> {
+  return Effect.gen(function* () {
+    const base = yield* FileSystem.FileSystem;
+    return yield* operation.pipe(Effect.provideService(FileSystem.FileSystem, transform(base)));
+  }).pipe(Effect.provide(NodeFileSystem.layer));
+}
+
 const gitExecutable = requireExecutable("git");
 const FIXTURE_PREFIX = "rawr-content-workspace-test-";
+const DISPOSABLE_TREE_DIRECTORY = ".rawr-agent-plugin-marketplace";
+const CONTENT_TREE_STAGE_PREFIX = ".rawr-content-tree-stage-";
 interface FixtureOwner {
   readonly parent: string;
   readonly root: string;
@@ -84,129 +96,663 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(entries[0]?.blob).toMatch(/^[0-9a-f]{40}$/u);
   });
 
-  test("materializes exact bytes and modes in one fresh scoped direct child", async () => {
+  test("converges exact bytes and modes at one stable disposable child", async () => {
     const parentRoot = await createFixtureDirectory();
     const sibling = path.join(parentRoot, "sibling.txt");
     await writeFile(sibling, "preserved\n");
     const resource = makeNodeContentWorkspaceResource();
     const binary = new Uint8Array([0x00, 0xff, 0x01, 0x80, 0x0a]);
-    let firstRoot: string | undefined;
-
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const materialized = yield* resource.materializeTemporaryTree({
-            parentRoot,
-            entries: [
-              { path: "README.md", mode: "100644", bytes: bytes("read me\n") },
-              { path: "bin/run.sh", mode: "100755", bytes: bytes("#!/bin/sh\nexit 0\n") },
-              { path: "payload.bin", mode: "100644", bytes: binary },
-            ],
-            maxEntries: 3,
-            maxBytes: 1_024,
-          });
-          firstRoot = materialized.root;
-          expect(path.dirname(materialized.root)).toBe(parentRoot);
-          expect(path.basename(materialized.root).startsWith(".rawr-content-tree-")).toBe(true);
-          const readme = yield* Effect.promise(() =>
-            readFile(path.join(materialized.root, "README.md"), "utf8")
-          );
-          const executable = yield* Effect.promise(() =>
-            readFile(path.join(materialized.root, "bin", "run.sh"), "utf8")
-          );
-          const materializedBinary = yield* Effect.promise(() =>
-            readFile(path.join(materialized.root, "payload.bin"))
-          );
-          const readmeInfo = yield* Effect.promise(() =>
-            lstat(path.join(materialized.root, "README.md"))
-          );
-          const executableInfo = yield* Effect.promise(() =>
-            lstat(path.join(materialized.root, "bin", "run.sh"))
-          );
-          expect(readme).toBe("read me\n");
-          expect(executable).toBe("#!/bin/sh\nexit 0\n");
-          expect([...materializedBinary]).toEqual([...binary]);
-          expect(readmeInfo.mode & 0o777).toBe(0o644);
-          expect(executableInfo.mode & 0o777).toBe(0o755);
-        })
-      )
+    const firstEntries = [
+      { path: "README.md", mode: "100644" as const, bytes: bytes("read me\n") },
+      { path: "bin-index.md", mode: "100644" as const, bytes: bytes("bin index\n") },
+      { path: "bin/run.sh", mode: "100755" as const, bytes: bytes("#!/bin/sh\nexit 0\n") },
+      { path: "payload.bin", mode: "100644" as const, bytes: binary },
+      { path: "\uE000/a.txt", mode: "100644" as const, bytes: bytes("private\n") },
+      { path: "\u{10000}/b.txt", mode: "100644" as const, bytes: bytes("supplementary\n") },
+    ];
+    const first = await Effect.runPromise(
+      resource.materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: firstEntries,
+        maxEntries: 6,
+        maxBytes: 1_024,
+      })
     );
 
-    expect(firstRoot).toBeDefined();
-    expect(await pathExists(firstRoot ?? "")).toBe(false);
+    expect(first.root).toBe(path.join(parentRoot, DISPOSABLE_TREE_DIRECTORY));
+    expect(await readFile(path.join(first.root, "README.md"), "utf8")).toBe("read me\n");
+    expect(await readFile(path.join(first.root, "bin", "run.sh"), "utf8")).toBe(
+      "#!/bin/sh\nexit 0\n"
+    );
+    expect([...(await readFile(path.join(first.root, "payload.bin")))]).toEqual([...binary]);
+    expect((await lstat(path.join(first.root, "README.md"))).mode & 0o777).toBe(0o644);
+    expect((await lstat(path.join(first.root, "bin", "run.sh"))).mode & 0o777).toBe(0o755);
+
+    const fixedParentTime = new Date("2000-01-01T00:00:00.000Z");
+    await utimes(parentRoot, fixedParentTime, fixedParentTime);
+    const beforeRepeat = await lstat(path.join(first.root, "README.md"));
+    const parentBeforeRepeat = await lstat(parentRoot);
+    const reads: string[] = [];
+    const mutations: string[] = [];
+    const repeated = unwrap(
+      await runNodeContentWorkspace(
+        makeContentWorkspaceResource().materializeContentTree({
+          parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
+          entries: firstEntries,
+          maxEntries: 6,
+          maxBytes: 1_024,
+        }),
+        (base) => recordingFileSystem(base, reads, mutations)
+      )
+    );
+    const afterRepeat = await lstat(path.join(first.root, "README.md"));
+    const parentAfterRepeat = await lstat(parentRoot);
+    expect(repeated.root).toBe(first.root);
+    expect(afterRepeat.ino).toBe(beforeRepeat.ino);
+    expect(afterRepeat.mtimeMs).toBe(beforeRepeat.mtimeMs);
+    expect(parentAfterRepeat.mtimeMs).toBe(parentBeforeRepeat.mtimeMs);
+    expect(reads.length).toBeGreaterThan(0);
+    expect(mutations).toEqual([]);
+
+    const replaced = await Effect.runPromise(
+      resource.materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [
+          { path: "README.md", mode: "100755", bytes: bytes("second\n") },
+          { path: "value.txt", mode: "100644", bytes: bytes("value\n") },
+        ],
+        maxEntries: 2,
+        maxBytes: 13,
+      })
+    );
+    expect(replaced.root).toBe(first.root);
+    expect(await readFile(path.join(replaced.root, "README.md"), "utf8")).toBe("second\n");
+    expect((await lstat(path.join(replaced.root, "README.md"))).mode & 0o777).toBe(0o755);
+    expect(await pathExists(path.join(replaced.root, "payload.bin"))).toBe(false);
     expect(await readFile(sibling, "utf8")).toBe("preserved\n");
-
-    let secondRoot: string | undefined;
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          secondRoot = (yield* resource.materializeTemporaryTree({
-            parentRoot,
-            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("second\n") }],
-            maxEntries: 1,
-            maxBytes: 16,
-          })).root;
-        })
-      )
-    );
-    expect(secondRoot).toBeDefined();
-    expect(secondRoot).not.toBe(firstRoot);
-    expect(await pathExists(secondRoot ?? "")).toBe(false);
   });
 
-  test("closes a materialized tree after typed failure, defect, and interruption", async () => {
-    const parentRoot = await createFixtureDirectory();
-    const resource = makeNodeContentWorkspaceResource();
-    const endings = ["failure", "defect", "interrupt"] as const;
-
-    for (const ending of endings) {
-      let root: string | undefined;
-      const exit = await Effect.runPromiseExit(
-        Effect.scoped(
-          Effect.gen(function* () {
-            root = (yield* resource.materializeTemporaryTree({
-              parentRoot,
-              entries: [{ path: `${ending}.txt`, mode: "100644", bytes: bytes(ending) }],
-              maxEntries: 1,
-              maxBytes: 32,
-            })).root;
-            if (ending === "failure") return yield* Effect.fail("typed-use-failure" as const);
-            if (ending === "defect") return yield* Effect.die("use-defect");
-            return yield* Effect.interrupt;
-          })
-        )
-      );
-      expect(exit._tag).toBe("Failure");
-      expect(root).toBeDefined();
-      expect(await pathExists(root ?? "")).toBe(false);
-    }
-  });
-
-  test("cleans an allocated tree when exact-byte population fails", async () => {
+  test("preserves the prior tree when staged population fails", async () => {
     const parentRoot = await createFixtureDirectory();
     const sibling = path.join(parentRoot, "sibling.txt");
     await writeFile(sibling, "preserved\n");
-    const before = (await readdir(parentRoot)).sort();
+    const resource = makeNodeContentWorkspaceResource();
+    const stable = await Effect.runPromise(
+      resource.materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
 
     const result = await Effect.runPromise(
-      Effect.scoped(
-        Effect.result(
-          makeNodeContentWorkspaceResource().materializeTemporaryTree({
-            parentRoot,
-            entries: [{ path: "x".repeat(300), mode: "100644", bytes: bytes("cannot-populate") }],
-            maxEntries: 1,
-            maxBytes: 32,
-          })
-        )
+      Effect.result(
+        resource.materializeContentTree({
+          parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
+          entries: [{ path: "x".repeat(300), mode: "100644", bytes: bytes("cannot-populate") }],
+          maxEntries: 1,
+          maxBytes: 32,
+        })
       )
     );
 
     expect(result).toMatchObject({
       _tag: "Failure",
-      failure: { operation: "materialize-temporary-tree", reason: "FilesystemFailed" },
+      failure: { operation: "materialize-content-tree", reason: "FilesystemFailed" },
     });
-    expect((await readdir(parentRoot)).sort()).toEqual(before);
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("before\n");
+    expect(
+      (await readdir(parentRoot)).filter((entry) => entry.includes("content-tree-stage"))
+    ).toEqual([]);
     expect(await readFile(sibling, "utf8")).toBe("preserved\n");
+  });
+
+  test("cleans an allocated stage when stage admission defects", async () => {
+    const parentRoot = await createFixtureDirectory();
+    let stage: string | undefined;
+    let injected = false;
+    const exit = await Effect.runPromise(
+      Effect.exit(
+        provideTransformedNodeFileSystem(
+          makeContentWorkspaceResource().materializeContentTree({
+            parentRoot,
+            directoryName: DISPOSABLE_TREE_DIRECTORY,
+            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("value\n") }],
+            maxEntries: 1,
+            maxBytes: 32,
+          }),
+          (base) => ({
+            ...base,
+            makeTempDirectory: (options) =>
+              base
+                .makeTempDirectory(options)
+                .pipe(Effect.tap((candidate) => Effect.sync(() => (stage = candidate)))),
+            realPath: (candidate) => {
+              if (!injected && candidate === stage) {
+                injected = true;
+                return Effect.die("injected stage admission defect");
+              }
+              return base.realPath(candidate);
+            },
+          })
+        )
+      )
+    );
+
+    expect(injected).toBe(true);
+    expect(Exit.isFailure(exit)).toBe(true);
+    expect(privateContentTreeEntries(await readdir(parentRoot))).toEqual([]);
+  });
+
+  test("preserves typed, defect, and interrupt causes when failed-use cleanup defects", async () => {
+    const cases = ["typed", "defect", "interrupt"] as const;
+
+    for (const failureKind of cases) {
+      const parentRoot = await createFixtureDirectory();
+      const originalDefect = Object.freeze({ failureKind, phase: "use" });
+      const cleanupDefect = Object.freeze({ failureKind, phase: "cleanup" });
+      let stage: string | undefined;
+      let stageRealPathCalls = 0;
+      const exit = await Effect.runPromise(
+        Effect.exit(
+          provideTransformedNodeFileSystem(
+            makeContentWorkspaceResource().materializeContentTree({
+              parentRoot,
+              directoryName: DISPOSABLE_TREE_DIRECTORY,
+              entries: [{ path: "value.txt", mode: "100644", bytes: bytes("value\n") }],
+              maxEntries: 1,
+              maxBytes: 32,
+            }),
+            (base) => ({
+              ...base,
+              makeTempDirectory: (options) =>
+                base.makeTempDirectory(options).pipe(
+                  Effect.tap((candidate) =>
+                    Effect.sync(() => {
+                      stage = candidate;
+                    })
+                  )
+                ),
+              realPath: (candidate) => {
+                if (candidate !== stage) return base.realPath(candidate);
+                stageRealPathCalls += 1;
+                if (stageRealPathCalls > 1) return Effect.die(cleanupDefect);
+                if (failureKind === "typed") {
+                  return Effect.fail(
+                    PlatformError.systemError({
+                      _tag: "Busy",
+                      module: "FileSystem",
+                      method: "realPath",
+                      pathOrDescriptor: candidate,
+                    })
+                  );
+                }
+                return failureKind === "defect" ? Effect.die(originalDefect) : Effect.interrupt;
+              },
+            })
+          )
+        )
+      );
+
+      expect(Exit.isFailure(exit)).toBe(true);
+      if (Exit.isSuccess(exit)) throw new Error("Expected materialization to fail");
+      const defects = exit.cause.reasons.filter(Cause.isDieReason).map((reason) => reason.defect);
+      expect(defects).toContain(cleanupDefect);
+      if (failureKind === "typed") {
+        expect(
+          exit.cause.reasons
+            .filter(Cause.isFailReason)
+            .some((reason) => reason.error.reason === "FilesystemFailed")
+        ).toBe(true);
+      } else if (failureKind === "defect") {
+        expect(defects).toContain(originalDefect);
+      } else {
+        expect(Cause.hasInterrupts(exit.cause)).toBe(true);
+      }
+    }
+  });
+
+  test("does not probe an absent stage after a successful commit", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const root = path.join(parentRoot, DISPOSABLE_TREE_DIRECTORY);
+    let stage: string | undefined;
+    let committed = false;
+    let postCommitStageProbe = false;
+    const materialized = await Effect.runPromise(
+      provideTransformedNodeFileSystem(
+        makeContentWorkspaceResource().materializeContentTree({
+          parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
+          entries: [{ path: "value.txt", mode: "100644", bytes: bytes("value\n") }],
+          maxEntries: 1,
+          maxBytes: 32,
+        }),
+        (base) => ({
+          ...base,
+          makeTempDirectory: (options) =>
+            base.makeTempDirectory(options).pipe(
+              Effect.tap((candidate) =>
+                Effect.sync(() => {
+                  stage = candidate;
+                })
+              )
+            ),
+          exists: (candidate) => {
+            if (committed && candidate === stage) {
+              postCommitStageProbe = true;
+              return Effect.fail(
+                PlatformError.systemError({
+                  _tag: "Busy",
+                  module: "FileSystem",
+                  method: "exists",
+                  pathOrDescriptor: candidate,
+                })
+              );
+            }
+            return base.exists(candidate);
+          },
+          rename: (from, to) => {
+            const renamed = base.rename(from, to);
+            if (from !== stage || to !== root) return renamed;
+            return renamed.pipe(
+              Effect.tap(() =>
+                Effect.sync(() => {
+                  committed = true;
+                })
+              )
+            );
+          },
+        })
+      )
+    );
+
+    expect(committed).toBe(true);
+    expect(postCommitStageProbe).toBe(false);
+    expect(materialized.root).toBe(root);
+    expect(await readFile(path.join(root, "value.txt"), "utf8")).toBe("value\n");
+  });
+
+  test("restores the prior tree when the install rename fails", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    let injected = false;
+    const result = await runNodeContentWorkspace(
+      makeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      }),
+      (base) => ({
+        ...base,
+        rename: (from, to) => {
+          if (
+            !injected &&
+            to === stable.root &&
+            path.basename(from).startsWith(CONTENT_TREE_STAGE_PREFIX)
+          ) {
+            injected = true;
+            return Effect.fail(
+              PlatformError.systemError({
+                _tag: "Busy",
+                module: "FileSystem",
+                method: "rename",
+                pathOrDescriptor: from,
+              })
+            );
+          }
+          return base.rename(from, to);
+        },
+      })
+    );
+
+    expect(injected).toBe(true);
+    expect(result).toMatchObject({
+      ok: false,
+      failure: { operation: "materialize-content-tree", reason: "FilesystemFailed" },
+    });
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("before\n");
+    expect(privateContentTreeEntries(await readdir(parentRoot))).toEqual([]);
+  });
+
+  test("keeps a committed tree authoritative when private backup cleanup fails", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    let injected = false;
+    const replaced = await Effect.runPromise(
+      provideTransformedNodeFileSystem(
+        makeContentWorkspaceResource().materializeContentTree({
+          parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
+          entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+          maxEntries: 1,
+          maxBytes: 32,
+        }),
+        (base) => ({
+          ...base,
+          remove: (candidate, options) => {
+            if (!injected && candidate.endsWith(".previous")) {
+              injected = true;
+              return Effect.fail(
+                PlatformError.systemError({
+                  _tag: "Busy",
+                  module: "FileSystem",
+                  method: "remove",
+                  pathOrDescriptor: candidate,
+                })
+              );
+            }
+            return base.remove(candidate, options);
+          },
+        })
+      )
+    );
+
+    expect(injected).toBe(true);
+    expect(replaced.root).toBe(stable.root);
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("after\n");
+  });
+
+  test("propagates a post-commit backup cleanup defect", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    const cleanupDefect = Object.freeze({ phase: "post-commit-cleanup" });
+    let injected = false;
+    const exit = await Effect.runPromise(
+      Effect.exit(
+        provideTransformedNodeFileSystem(
+          makeContentWorkspaceResource().materializeContentTree({
+            parentRoot,
+            directoryName: DISPOSABLE_TREE_DIRECTORY,
+            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+            maxEntries: 1,
+            maxBytes: 32,
+          }),
+          (base) => ({
+            ...base,
+            remove: (candidate, options) => {
+              if (!injected && candidate.endsWith(".previous")) {
+                injected = true;
+                return Effect.die(cleanupDefect);
+              }
+              return base.remove(candidate, options);
+            },
+          })
+        )
+      )
+    );
+
+    expect(injected).toBe(true);
+    expect(Exit.isFailure(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) throw new Error("Expected cleanup defect to fail materialization");
+    expect(
+      exit.cause.reasons.some(
+        (reason) => Cause.isDieReason(reason) && reason.defect === cleanupDefect
+      )
+    ).toBe(true);
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("after\n");
+  });
+
+  test("does not suppress a defect combined with typed post-commit cleanup failure", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    const cleanupDefect = Object.freeze({ phase: "mixed-post-commit-cleanup" });
+    let injected = false;
+    const exit = await Effect.runPromise(
+      Effect.exit(
+        provideTransformedNodeFileSystem(
+          makeContentWorkspaceResource().materializeContentTree({
+            parentRoot,
+            directoryName: DISPOSABLE_TREE_DIRECTORY,
+            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+            maxEntries: 1,
+            maxBytes: 32,
+          }),
+          (base) => ({
+            ...base,
+            remove: (candidate, options) => {
+              if (!injected && candidate.endsWith(".previous")) {
+                injected = true;
+                return Effect.failCause(
+                  Cause.combine(
+                    Cause.fail(
+                      PlatformError.systemError({
+                        _tag: "Busy",
+                        module: "FileSystem",
+                        method: "remove",
+                        pathOrDescriptor: candidate,
+                      })
+                    ),
+                    Cause.die(cleanupDefect)
+                  )
+                );
+              }
+              return base.remove(candidate, options);
+            },
+          })
+        )
+      )
+    );
+
+    expect(injected).toBe(true);
+    expect(Exit.isFailure(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) throw new Error("Expected mixed cleanup cause to fail");
+    expect(exit.cause.reasons.some(Cause.isFailReason)).toBe(true);
+    expect(
+      exit.cause.reasons.some(
+        (reason) => Cause.isDieReason(reason) && reason.defect === cleanupDefect
+      )
+    ).toBe(true);
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("after\n");
+  });
+
+  test("restores the prior tree when cutover defects after moving it", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    let injected = false;
+    const exit = await Effect.runPromise(
+      Effect.exit(
+        provideTransformedNodeFileSystem(
+          makeContentWorkspaceResource().materializeContentTree({
+            parentRoot,
+            directoryName: DISPOSABLE_TREE_DIRECTORY,
+            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+            maxEntries: 1,
+            maxBytes: 32,
+          }),
+          (base) => ({
+            ...base,
+            rename: (from, to) => {
+              if (!injected && from === stable.root) {
+                injected = true;
+                return base
+                  .rename(from, to)
+                  .pipe(Effect.andThen(Effect.die("injected content tree cutover defect")));
+              }
+              return base.rename(from, to);
+            },
+          })
+        )
+      )
+    );
+
+    expect(injected).toBe(true);
+    expect(Exit.isFailure(exit) && Cause.hasDies(exit.cause)).toBe(true);
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("before\n");
+    expect(privateContentTreeEntries(await readdir(parentRoot))).toEqual([]);
+  });
+
+  test("combines the attempted cutover and rollback cleanup causes", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    const attemptedDefect = Object.freeze({ phase: "cutover" });
+    const rollbackDefect = Object.freeze({ phase: "rollback" });
+    let moved = false;
+    let rollbackAttempted = false;
+    const exit = await Effect.runPromise(
+      Effect.exit(
+        provideTransformedNodeFileSystem(
+          makeContentWorkspaceResource().materializeContentTree({
+            parentRoot,
+            directoryName: DISPOSABLE_TREE_DIRECTORY,
+            entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+            maxEntries: 1,
+            maxBytes: 32,
+          }),
+          (base) => ({
+            ...base,
+            rename: (from, to) => {
+              if (!moved && from === stable.root) {
+                moved = true;
+                return base.rename(from, to).pipe(Effect.andThen(Effect.die(attemptedDefect)));
+              }
+              if (moved && from.endsWith(".previous") && to === stable.root) {
+                rollbackAttempted = true;
+                return Effect.die(rollbackDefect);
+              }
+              return base.rename(from, to);
+            },
+          })
+        )
+      )
+    );
+
+    expect(moved).toBe(true);
+    expect(rollbackAttempted).toBe(true);
+    expect(Exit.isFailure(exit)).toBe(true);
+    if (Exit.isSuccess(exit)) throw new Error("Expected cutover and rollback to fail");
+    const defects = exit.cause.reasons.filter(Cause.isDieReason).map((reason) => reason.defect);
+    expect(defects).toContain(attemptedDefect);
+    expect(defects).toContain(rollbackDefect);
+  });
+
+  test("waits for a non-cancellable namespace rename before settling interruption", {
+    timeout: 10_000,
+  }, async () => {
+    const parentRoot = await createFixtureDirectory();
+    const stable = await Effect.runPromise(
+      makeNodeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("before\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      })
+    );
+    const renameStarted = Promise.withResolvers<void>();
+    const continueRename = Promise.withResolvers<void>();
+    const nativeRenameSettled = Promise.withResolvers<void>();
+    let nativeRenameHasSettled = false;
+    let interruptedBeforeNativeSettlement = false;
+    let injected = false;
+    const operation = provideTransformedNodeFileSystem(
+      makeContentWorkspaceResource().materializeContentTree({
+        parentRoot,
+        directoryName: DISPOSABLE_TREE_DIRECTORY,
+        entries: [{ path: "value.txt", mode: "100644", bytes: bytes("after\n") }],
+        maxEntries: 1,
+        maxBytes: 32,
+      }),
+      (base) => ({
+        ...base,
+        rename: (from, to) => {
+          if (!injected && from === stable.root) {
+            injected = true;
+            return Effect.callback<void>((resume) => {
+              renameStarted.resolve();
+              void continueRename.promise.then(async () => {
+                try {
+                  await rename(from, to);
+                  nativeRenameHasSettled = true;
+                  nativeRenameSettled.resolve();
+                  resume(Effect.void);
+                } catch (error) {
+                  nativeRenameHasSettled = true;
+                  nativeRenameSettled.resolve();
+                  resume(Effect.die(error));
+                }
+              });
+            }).pipe(
+              Effect.onInterrupt(() =>
+                Effect.sync(() => {
+                  interruptedBeforeNativeSettlement = !nativeRenameHasSettled;
+                })
+              )
+            );
+          }
+          return base.rename(from, to);
+        },
+      })
+    );
+    const fiber = Effect.runFork(operation);
+    await renameStarted.promise;
+    const interruptFiber = Effect.runFork(Fiber.interrupt(fiber));
+    await Promise.resolve();
+    continueRename.resolve();
+    await nativeRenameSettled.promise;
+    const exit = await Effect.runPromise(Fiber.await(fiber));
+    await Effect.runPromise(Fiber.await(interruptFiber));
+
+    expect(injected).toBe(true);
+    expect(interruptedBeforeNativeSettlement).toBe(false);
+    expect(Exit.isFailure(exit) && Cause.hasInterrupts(exit.cause)).toBe(true);
+    expect(await readFile(path.join(stable.root, "value.txt"), "utf8")).toBe("after\n");
+    expect(privateContentTreeEntries(await readdir(parentRoot))).toEqual([]);
   });
 
   test("rejects invalid parents, paths, collisions, and bounds before allocation", async () => {
@@ -220,6 +766,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot: path.join(parentRoot, "missing-invalid-bound"),
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [entry],
           maxEntries: 0,
           maxBytes: 16,
@@ -229,6 +776,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot: `${parentRoot}${path.sep}.`,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [entry],
           maxEntries: 1,
           maxBytes: 16,
@@ -236,12 +784,19 @@ describe("Git Effect Platform content workspace provider", () => {
       },
       {
         expectedReason: "UnsupportedEntry",
-        request: { parentRoot: sibling, entries: [entry], maxEntries: 1, maxBytes: 16 },
+        request: {
+          parentRoot: sibling,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
+          entries: [entry],
+          maxEntries: 1,
+          maxBytes: 16,
+        },
       },
       {
         expectedReason: "Missing",
         request: {
           parentRoot: path.join(parentRoot, "missing"),
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [entry],
           maxEntries: 1,
           maxBytes: 16,
@@ -251,6 +806,17 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot,
+          directoryName: "../escape",
+          entries: [entry],
+          maxEntries: 1,
+          maxBytes: 16,
+        },
+      },
+      {
+        expectedReason: "InvalidInput",
+        request: {
+          parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [{ ...entry, path: "../escape.txt" }],
           maxEntries: 1,
           maxBytes: 16,
@@ -260,6 +826,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [
             { ...entry, path: "b.txt" },
             { ...entry, path: "a.txt" },
@@ -272,6 +839,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [
             { ...entry, path: "a.txt" },
             { ...entry, path: "a.txt" },
@@ -284,6 +852,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [
             { ...entry, path: "tree" },
             { ...entry, path: "tree/value.txt" },
@@ -296,6 +865,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [
             { ...entry, path: "a.txt" },
             { ...entry, path: "b.txt" },
@@ -308,6 +878,7 @@ describe("Git Effect Platform content workspace provider", () => {
         expectedReason: "InvalidInput",
         request: {
           parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
           entries: [{ ...entry, bytes: bytes("too-large") }],
           maxEntries: 1,
           maxBytes: 1,
@@ -318,17 +889,44 @@ describe("Git Effect Platform content workspace provider", () => {
     for (const { expectedReason, request } of cases) {
       const before = (await readdir(parentRoot)).sort();
       const result = await Effect.runPromise(
-        Effect.scoped(Effect.result(resource.materializeTemporaryTree(request)))
+        Effect.result(resource.materializeContentTree(request))
       );
       expect(result._tag).toBe("Failure");
       if (result._tag !== "Failure") throw new Error("Expected materialization to fail");
       expect(result.failure).toMatchObject({
-        operation: "materialize-temporary-tree",
+        operation: "materialize-content-tree",
         reason: expectedReason,
       });
       expect((await readdir(parentRoot)).sort()).toEqual(before);
       expect(await readFile(sibling, "utf8")).toBe("preserved\n");
     }
+  });
+
+  test("refuses an aliased disposable tree without touching its target", async () => {
+    const parentRoot = await createFixtureDirectory();
+    const target = path.join(parentRoot, "foreign-tree");
+    const root = path.join(parentRoot, DISPOSABLE_TREE_DIRECTORY);
+    await mkdir(target);
+    await writeFile(path.join(target, "preserved.txt"), "preserved\n");
+    await symlink(target, root);
+
+    const result = await Effect.runPromise(
+      Effect.result(
+        makeNodeContentWorkspaceResource().materializeContentTree({
+          parentRoot,
+          directoryName: DISPOSABLE_TREE_DIRECTORY,
+          entries: [{ path: "value.txt", mode: "100644", bytes: bytes("replacement\n") }],
+          maxEntries: 2,
+          maxBytes: 32,
+        })
+      )
+    );
+
+    expect(result).toMatchObject({
+      _tag: "Failure",
+      failure: { operation: "materialize-content-tree", reason: "Aliased", path: root },
+    });
+    expect(await readFile(path.join(target, "preserved.txt"), "utf8")).toBe("preserved\n");
   });
 
   test("applies an exact ordered write plan and restores captured preimages", async () => {
@@ -1399,7 +1997,7 @@ describe("Git Effect Platform content workspace provider", () => {
     });
   });
 
-  test("admits SHA-256 tree facts and returns code-unit ordered entries", async () => {
+  test("admits SHA-256 tree facts and returns UTF-8 byte ordered entries", async () => {
     const root = await createRepository("sha256");
     await writeFile(path.join(root, "Alpha.txt"), "alpha\n");
     await writeFile(path.join(root, "zeta.txt"), "zeta\n");
@@ -2316,6 +2914,63 @@ function unwrap<A>(result: NodeContentWorkspaceResult<A>): A {
   throw new Error(`${result.failure.reason}: ${result.failure.detail}`);
 }
 
+function recordingFileSystem(
+  base: FileSystem.FileSystem,
+  reads: string[],
+  mutations: string[]
+): FileSystem.FileSystem {
+  const readMethods = new Set([
+    "access",
+    "exists",
+    "glob",
+    "readDirectory",
+    "readFile",
+    "readFileString",
+    "readLink",
+    "realPath",
+    "stat",
+    "stream",
+    "watch",
+  ]);
+  const mutationMethods = new Set([
+    "chmod",
+    "chown",
+    "copy",
+    "copyFile",
+    "link",
+    "makeDirectory",
+    "makeTempDirectory",
+    "makeTempDirectoryScoped",
+    "makeTempFile",
+    "makeTempFileScoped",
+    "open",
+    "remove",
+    "rename",
+    "sink",
+    "symlink",
+    "truncate",
+    "utimes",
+    "writeFile",
+    "writeFileString",
+  ]);
+  return new Proxy(base, {
+    get(target, property, receiver) {
+      const value = Reflect.get(target, property, receiver);
+      if (typeof property !== "string" || typeof value !== "function") return value;
+      const calls = readMethods.has(property)
+        ? reads
+        : mutationMethods.has(property)
+          ? mutations
+          : undefined;
+      if (calls === undefined) return value;
+      return (...args: readonly unknown[]) => {
+        calls.push(`${property}:${String(args[0] ?? "")}`);
+        return Reflect.apply(value, target, args);
+      };
+    },
+  });
+}
+
 function bytes(value: string): Uint8Array {
   return new TextEncoder().encode(value);
 }
@@ -2327,6 +2982,10 @@ async function pathExists(candidate: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+function privateContentTreeEntries(entries: readonly string[]): readonly string[] {
+  return entries.filter((entry) => entry.startsWith(CONTENT_TREE_STAGE_PREFIX));
 }
 
 function testGitBlobId(value: Uint8Array, objectFormat: "sha1" | "sha256"): string {

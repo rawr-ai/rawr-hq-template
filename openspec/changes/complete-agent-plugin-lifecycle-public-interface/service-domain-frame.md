@@ -123,13 +123,14 @@ Parent-Repo Migration authorizes that boundary.
 | Package state | Explicit caller-selected output file | Render, revalidate, publish, verify |
 | Codex installed state | Live native Codex inventory in one explicit home | Inspect, plan, invoke native commands, verify |
 | Claude installed state | Live native Claude inventory in one explicit home | Inspect, plan, invoke native commands, verify |
-| Disposable test state | Explicit disposable root and descendant homes | Create for one invocation and retire together |
+| Disposable provider-test source | Caller-owned disposable root and reserved child | Converge exact derived bytes while one live call owns the root exclusively; retain until the caller removes the root |
 | Operational evidence | Returned result or ordinary CI/release artifact | Return facts; persist nothing |
 
-A repository path is only a locator. A digest is an invocation-local
-verification value unless a named external format requires it. Neither becomes
-CLI identity, provider identity, lookup state, or authority for the next
-invocation.
+A Git checkout is a versioned-content and inspection input. Its path is not CLI,
+controller, provider, or release identity and cannot become a repository or
+symlink synchronization channel. A digest is an invocation-local verification
+value unless a named external format requires it. Neither becomes lookup state
+or authority for the next invocation.
 
 ## Capability Set
 
@@ -399,21 +400,23 @@ recovery.
 ### Disposable Test
 
 ```text
-explicit exact Git selection
+explicit exact Git selection and caller-owned exclusive disposable root
   -> derive targeted or complete content
-  -> materialize one transient marketplace below the disposable root
+  -> converge one reserved marketplace child below that root
   -> reconcile explicit descendant homes without omitted-member retirement
   -> inspect final state
-  -> retire the scoped marketplace before returning
+  -> return inline evidence and leave the caller-owned root intact
 ```
 
 Test does not select a channel, mutate an approved home, persist a receipt, or
-leave a marketplace backed by a mutable content checkout.
-Effect scope owns the one temporary child it allocated. The caller owns the
-disposable parent and provider homes, so the service neither deletes nor claims
-recovery authority over those paths. Allocation failure remains a typed
-resource failure; a scoped cleanup failure remains an Effect finalizer failure
-and cannot be reported as successful completion or invent a lifecycle record.
+leave a marketplace backed by mutable checkout bytes. The source tree is bounded
+by the caller-owned disposable root rather than the invocation scope. The caller
+gives one live call exclusive use of that root, may reuse it after the call
+settles, and supplies distinct roots for overlapping calls. Provider homes remain
+native installed-state authority. The service cleans only private staging paths;
+it neither deletes nor claims recovery authority over the reserved child,
+disposable parent, or provider homes. Materialization failure remains a typed
+resource failure and cannot invent a lifecycle record.
 
 ### Package
 
@@ -463,8 +466,8 @@ release content.
 - Targeted and complete tests preserve omitted members.
 - A repeated canonical convergence or exact package/vendor output performs zero
   mutation after its required observations.
-- A repeated disposable test creates a fresh invocation-owned environment; it
-  is deterministic and lifetime-bounded rather than globally mutation-free.
+- A repeated disposable test reuses one caller-owned marketplace path and
+  inspects it without rewriting exact bytes.
 - Public results expose terminal classification, bounded issues, exact confirmed
   mutations, and uncertainty, not internal plan or event structures.
 - No operation persists a release store, projection store, receipt, sidecar,
@@ -484,7 +487,7 @@ release content.
 | Vendor update | Held/diverged/invalid source, authoring failure, restoration failure | Converges read-only or reports exact changed/restored/unsettled paths |
 | Packaging | Invalid selection, unsafe output, changed source, encode/publish/verify failure | Exact output is not rewritten |
 | Provider status | Invalid selection, collision, capability or observation failure | Read-only |
-| Provider test | Invalid disposable containment, collision, native failure, cleanup refusal or failure | Fresh bounded environment; no omitted cleanup or lifecycle record |
+| Provider test | Invalid disposable containment, collision, native failure, or marketplace publication failure | Stable caller-owned marketplace; exact repeat writes nothing and creates no lifecycle record |
 | Provider sync | Invalid selection, collision, native failure, uncertain command, final verification failure | Fresh inspection; converged state produces no mutation |
 
 ## Burn-Down Design
@@ -507,7 +510,7 @@ in-place and deletion-first:
 | Provider tests encode provider-wide target preflight | Only invalid provider selection blocks every target; target-specific preflight and results remain independent | Restore target isolation |
 | Provider test delegates local source selection to a runner and workspace resolver | Its oRPC handler authors source selection over ready context; pure policy alone is extracted. Native reconciliation remains a separately open operation-authorship cut. | Seal disposable source selection |
 | Duplicate module telemetry adds no module fact | One cross-cutting service signal path; module telemetry exists only for a real owner-specific field | Compose root |
-| Disposable test uses mutable workspace marketplace | Invocation-owned exact-Git marketplace below disposable root | Complete disposable lifetime |
+| Disposable test uses mutable workspace marketplace | Caller-root-bounded exact-Git marketplace; one live call owns the root exclusively, sequential calls may reuse it, and concurrent calls use distinct roots | Complete disposable lifetime |
 | Service law is diagnostic only | Closed Habitat topology and source laws admit the complete service | Activate service law |
 
 Checkpoint order is governance, narrow public release boundary, TypeBox release

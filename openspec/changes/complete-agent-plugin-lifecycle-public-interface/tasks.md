@@ -940,11 +940,10 @@ internal Template dependency graph remain private workspace projects.
   target receipts/identity sidecars, and custom evidence store. Canonical
   operations read exact selected Git objects and derive the release model,
   native marketplace source, and declared provider-visible files in memory.
-  Canonical mutation uses the provider's native Git marketplace
-  source at the selected immutable Personal revision; a disposable local source
-  remains scoped to the test operation while the caller retains ownership of
-  the disposable home. Test returns inline results and ordinary CI may retain
-  them externally.
+  Canonical mutation uses the provider's native Git marketplace source at the
+  selected immutable Personal revision; a disposable local source remains
+  below the caller-owned disposable root for that root's lifetime. Test returns
+  inline results and ordinary CI may retain them externally.
 - [x] 5.5a Remove packaging's artifact-store reader and digest-addressed handle.
   `rawr agent plugins package` now accepts one exact Git selection plus a
   targeted or complete-set member selection, derives releases in memory,
@@ -956,7 +955,7 @@ internal Template dependency graph remain private workspace projects.
   resource. Provider test/status/sync now derive the selection and expected
   bytes from exact Git through service-owned context, inspect live native state,
   return bounded inline results, and retain no provider lifecycle state between
-  invocations. Task 5.5 still owns the invocation-local disposable test source
+  invocations. Task 5.5 still owns the caller-root-bounded disposable test source
   as well as persistent release/evidence/controller store deletion.
 - [x] 5.5c Delete the remaining persistent release/set repository, custom
   evidence publication, retention planner, controller-derived data root, and
@@ -969,12 +968,23 @@ internal Template dependency graph remain private workspace projects.
   in-memory derivation, and native provider delegation; retain destination
   export only as a separately owned capability and advertise no build,
   promotion, retirement, undo, or persistent lifecycle authority.
-- [x] 5.5d Materialize the exact selected provider-test marketplace below the
-  explicit disposable root, keep it alive through final provider observation,
-  and retire the exact scoped child before the operation returns. The caller
-  owns the disposable parent and provider homes; the service MUST NOT infer
-  deletion authority over those caller-created paths. Persist no projection,
-  receipt, or lifecycle handle.
+- [x] 5.5d Initially materialize the exact selected provider-test marketplace
+  below the explicit disposable root and keep it alive through final provider
+  observation. Its operation-lifetime child was an insufficient source contract
+  and is superseded by task 5.5d1. The caller owns the disposable parent and
+  provider homes; persist no projection, receipt, or lifecycle handle.
+- [x] 5.5d1 Converge provider-test bytes at one reserved direct child of the
+  explicit disposable root and retain that child for the disposable root's
+  caller-owned lifetime. An exact repeat MUST perform no filesystem write;
+  changed bytes, modes, or membership MUST replace only that reserved child;
+  and the checkout, reserved child, and provider homes MUST be pairwise
+  disjoint. Each live call MUST exclusively own its root; sequential calls MAY
+  reuse a root after settlement, while concurrent calls MUST use distinct
+  roots. Preserve stale same-ID refresh,
+  omitted-member preservation, foreign local-source collision refusal, and a
+  mutation-free repeat without adding a receipt, handle, symlink, projection
+  store, or cleanup authority over the disposable parent. Keep this task open
+  through standing review and real sequential native acceptance.
 - [x] 5.6 Keep native provider adapters thin and point-addressed. No provider
   home scan, direct cache/config write, rollback state, or ambient multi-home
   coordinator. Remove the orphan `.rawr-agent-plugin-owner.json` sentinel and

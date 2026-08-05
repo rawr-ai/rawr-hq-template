@@ -27,10 +27,13 @@ export destination, promotion, or CLI-install identity.
 
 Targeted test mode MUST require one explicit immutable Git selection, a
 nonempty duplicate-free member selection from that closed input, explicit
-disposable provider homes beneath one explicit non-root disposable root. It MUST derive the
-selected release state in memory, preserve omitted members, and return bounded
-inline verification facts without persisting a receipt, identity sidecar,
-evidence handle, artifact, or channel claim.
+disposable provider homes beneath one explicit non-root disposable root. The
+caller MUST give the live call exclusive use of that root. A later call MAY
+reuse it only after the preceding call settles; overlapping calls MUST use
+distinct roots. The operation MUST derive the selected release state in memory,
+preserve omitted members, and return bounded inline verification facts without
+persisting a receipt, identity sidecar, evidence handle, artifact, or channel
+claim.
 
 #### Scenario: Targeted test preserves omitted members
 - **WHEN** selected members are tested in a disposable home containing another
@@ -41,10 +44,12 @@ evidence handle, artifact, or channel claim.
 ### Requirement: Complete test mode is set-scoped but non-authorizing
 
 Complete test mode MUST require one explicit immutable Git selection, explicit
-provider homes beneath one explicit non-root disposable root. It MUST derive the exact
-closed set in memory, return bounded inline verification facts, and MUST NOT
-persist a receipt, sidecar, custom evidence artifact, release artifact,
-accepted outcome, promotion, or channel record.
+provider homes beneath one explicit non-root disposable root. The caller MUST
+give the live call exclusive use of that root. A later call MAY reuse it only
+after the preceding call settles; overlapping calls MUST use distinct roots.
+The operation MUST derive the exact closed set in memory, return bounded inline
+verification facts, and MUST NOT persist a receipt, sidecar, custom evidence
+artifact, release artifact, accepted outcome, promotion, or channel record.
 
 #### Scenario: Complete test verifies the set
 - **WHEN** every selected member and declared provider-visible file verifies

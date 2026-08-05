@@ -1,10 +1,10 @@
 import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
+  DisposableContentTreeEntry,
   GitBlobObservation,
   GitRefObservation,
-  MaterializedTemporaryTree,
-  TemporaryContentTreeEntry,
+  MaterializedContentTree,
 } from "@habitat-ai/rawr-resource-content-workspace";
 import type { Result } from "effect";
 import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "../../../../model/dto/agent-plugin-payload";
@@ -532,19 +532,19 @@ export function validateSelectedNativeMarketplaces(
 }
 
 /**
- * Builds the exact invocation-local marketplace tree from selected Git facts.
+ * Builds the exact marketplace plan for a caller-root-bounded disposable source.
  *
  * @remarks
  * Both native manifests describe the complete catalog, so targeted tests still
  * materialize every declared payload root. The selected subset remains a
  * native-operation concern and cannot make the marketplace internally partial.
  */
-export function planTemporarySelectedContentMarketplace(
+export function planDisposableSelectedContentMarketplace(
   snapshot: ContentWorkspaceSnapshot,
   selectedInterface: SelectedContentInterfaceFacts,
   manifests: ReadonlyMap<ReleaseRelativePath, Uint8Array>
-): SelectedContentDecision<readonly TemporaryContentTreeEntry[]> {
-  const entries: TemporaryContentTreeEntry[] = [];
+): SelectedContentDecision<readonly DisposableContentTreeEntry[]> {
+  const entries: DisposableContentTreeEntry[] = [];
   for (const manifest of selectedInterface.manifestEntries) {
     const bytes = manifests.get(manifest.path);
     if (bytes === undefined) {
@@ -558,7 +558,7 @@ export function planTemporarySelectedContentMarketplace(
     entries.push(
       Object.freeze({
         path: manifest.path,
-        mode: temporaryContentMode(manifest.mode),
+        mode: disposableContentMode(manifest.mode),
         bytes: new Uint8Array(bytes),
       })
     );
@@ -582,7 +582,7 @@ export function planTemporarySelectedContentMarketplace(
       entries.push(
         Object.freeze({
           path,
-          mode: temporaryContentMode(payloadEntry.mode),
+          mode: disposableContentMode(payloadEntry.mode),
           bytes: payloadEntryBytes(payloadEntry),
         })
       );
@@ -594,10 +594,10 @@ export function planTemporarySelectedContentMarketplace(
   );
 }
 
-/** Compares two ordered temporary marketplace plans by exact path, mode, and bytes. */
-export function sameTemporarySelectedContentMarketplace(
-  left: readonly TemporaryContentTreeEntry[],
-  right: readonly TemporaryContentTreeEntry[]
+/** Compares two ordered disposable marketplace plans by exact path, mode, and bytes. */
+export function sameDisposableSelectedContentMarketplace(
+  left: readonly DisposableContentTreeEntry[],
+  right: readonly DisposableContentTreeEntry[]
 ): boolean {
   return (
     left.length === right.length &&
@@ -614,13 +614,20 @@ export function sameTemporarySelectedContentMarketplace(
   );
 }
 
-/** Classifies invocation-scoped marketplace materialization without adding state authority. */
-export function classifyTemporarySelectedContentMarketplace(
-  attempt: Result.Result<MaterializedTemporaryTree, ContentWorkspaceFailure>
-): SelectedContentDecision<MaterializedTemporaryTree> {
-  return attempt._tag === "Failure"
-    ? declined(selectedContentResourceFailure(attempt.failure))
-    : admitted(attempt.success);
+/** Classifies disposable marketplace materialization without adding state authority. */
+export function classifyDisposableSelectedContentMarketplace(
+  attempt: Result.Result<MaterializedContentTree, ContentWorkspaceFailure>,
+  expectedRoot: string
+): SelectedContentDecision<MaterializedContentTree> {
+  if (attempt._tag === "Failure") return declined(selectedContentResourceFailure(attempt.failure));
+  return attempt.success.root === expectedRoot
+    ? admitted(attempt.success)
+    : declined(
+        selectedContentRejected(
+          "SourceReadFailed",
+          "Content workspace returned a different disposable marketplace root."
+        )
+      );
 }
 
 function classifySelectedContentTree(
@@ -722,6 +729,6 @@ function requireReleasePath(value: string): ReleaseRelativePath {
   return parsed.value;
 }
 
-function temporaryContentMode(mode: 0o644 | 0o755): TemporaryContentTreeEntry["mode"] {
+function disposableContentMode(mode: 0o644 | 0o755): DisposableContentTreeEntry["mode"] {
   return mode === 0o755 ? "100755" : "100644";
 }

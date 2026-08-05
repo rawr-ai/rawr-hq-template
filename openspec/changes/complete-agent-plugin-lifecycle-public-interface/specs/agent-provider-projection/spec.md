@@ -47,5 +47,8 @@ Only the native reconciliation handler may invoke provider mutations.
 release store and duplicates native provider snapshot/cache ownership.
 **Migration**: Canonical sync passes the exact selected Personal Git marketplace
 source to the native provider. Disposable tests use an explicit local workspace
-and a provider home strictly below an explicit disposable root; no Template
-projection is retained.
+and provider homes strictly below an explicit disposable root. One stable
+reserved child may retain derived test bytes for that root's lifetime. One live
+call owns the root exclusively; sequential calls may reuse it after settlement,
+while concurrent calls use distinct roots. The child is not a Template
+projection, channel record, or provider-state owner.

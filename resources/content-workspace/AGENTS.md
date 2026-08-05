@@ -19,12 +19,13 @@
   facts.
   Eligibility, release policy, provenance meaning, and content interpretation
   belong to the consuming service.
-- A repository path is a locator, not executable identity or code-sharing
-  authority.
+- A Git checkout is a versioned-content and inspection input. Its path is not
+  controller, provider, release, or executable identity, and this resource does
+  not turn it into a repository-sync or symlink channel.
 - Remote repository acquisition, source materialization, and ancestry belong
   to the versioned-content resource. This resource may materialize
-  caller-supplied exact bytes only as a fresh child of a caller-owned local
-  parent whose lifetime is bound to the surrounding Effect scope.
+  caller-supplied exact bytes only at one named child of a caller-owned
+  disposable parent. The caller owns that parent and its lifetime.
 - Git subprocess and filesystem implementation details stay in concrete
   providers.
 
@@ -32,9 +33,10 @@
 
 - The resource observes caller-selected refs, trees, blobs, indexes, and paths,
   performs a specifically requested workspace transition, or creates a bounded
-  invocation-scoped local tree from exact bytes. Tree and staged-index
-  observations return closed typed facts; providers own their native Git
-  protocol decoding and scoped filesystem cleanup.
+  stable disposable tree from exact bytes. Tree and staged-index observations
+  return closed typed facts; providers own native Git protocol decoding and
+  clean only private staging paths. Disposable materialization writes regular
+  files rather than links and leaves the caller-owned root intact.
 
 ## Concepts
 

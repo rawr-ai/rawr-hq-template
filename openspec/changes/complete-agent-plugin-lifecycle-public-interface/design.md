@@ -380,8 +380,10 @@ Status does not materialize provider package bytes. Sync first compares derived
 identity with live provider provenance. Canonical mutation passes the selected
 immutable Personal Git marketplace to the provider's native command, and the
 provider owns its snapshot below the explicit home. A local marketplace is
-test-only, remains scoped through the operation, and is retired independently
-of the caller-owned disposable home. No
+test-only and converges at one reserved child of the caller-owned disposable
+root. Each live test call has exclusive use of that root; sequential calls may
+reuse it after the preceding call settles, while concurrent calls require
+distinct roots. The child remains valid until the caller removes the root. No
 Template-owned persistent release/set store, projection store, publication
 index, or retention planner participates in the next invocation.
 
@@ -391,9 +393,9 @@ have a concrete product consumer. Their classification is explicit:
 - a release-set digest is an invocation-local derived verification value, not
   channel authority;
 - a native-provider snapshot is provider-owned installed support state;
-- a disposable local marketplace is transient test material scoped through the
-  test operation; its child lifetime does not confer ownership of the caller's
-  disposable home;
+- a disposable local marketplace is derived test material owned by the
+  caller's explicit disposable root; its stable child is not channel,
+  repository, or provider authority;
 - a test result retained by the caller or ordinary CI/release tooling is
   external evidence, never lifecycle state;
 - a publication index or cache is recomputable mechanics;
@@ -411,6 +413,15 @@ Template owns executable code and generic tooling. Personal owns curated
 content and its governed content records. Template reads Personal through an
 explicit content workspace and versioned record schemas. It does not share Git
 ancestry, executable paths, worktree identity, or release tooling with Personal.
+
+Git checkouts are versioned-content and inspection inputs, never controller or
+provider identities and never repository or symlink synchronization channels.
+Personal source skills reject repository-local `.repos` prerequisites and
+symlinks. Current Inngest guidance provides an explicit caller-owned cache-root
+source oracle; oRPC, effect-oRPC, and Effect accept exact caller-owned source
+roots only when a claim requires implementation inspection. Governed
+vendor-content sync copies only the redistributed skill bytes into reviewed
+Personal content; it does not synchronize repositories, checkouts, or links.
 
 Task 6.4 must replace Personal's current controller/Civ7 checks with
 repository-owned content validation and installed `@habitat-ai/cli@0.4.2`.
