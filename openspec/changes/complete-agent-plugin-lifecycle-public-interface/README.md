@@ -6081,6 +6081,15 @@ behavior cases, including existing BAD_REQUEST code and message observations.
 
 ## Settlement Oracles
 
+The current acceptance candidate makes the private application's `rawr` Nx
+target an explicit `nx:run-commands` boundary with native argument forwarding.
+This is required because Nx's inferred `nx:run-script` target expands an inline
+JSON flag into multiple arguments. The explicit target preserves this
+candidate's canonical current-main body as one Oclif flag without adding a
+wrapper, file transport, installed RAWR package, or second command path. A real
+`current-main-record` invocation through the candidate target returned the
+canonical 446-byte v3 record.
+
 The lifecycle settlement must prove:
 
 1. source and Nx-built private `rawr` application expose the same Oclif core
