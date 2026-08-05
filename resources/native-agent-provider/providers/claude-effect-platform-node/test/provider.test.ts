@@ -1,5 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  lstat,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -77,94 +87,163 @@ describe("claude-effect-platform-node", () => {
         installPath: pluginRoot,
       },
     ]);
+    const callerHome = path.join(fixture.root, "caller-home");
+    const codexHome = path.join(fixture.root, "codex-home");
+    await mkdir(callerHome);
+    await mkdir(codexHome);
+    await withEnvironment({ HOME: callerHome, CODEX_HOME: codexHome }, async () => {
+      const session = await acquire(fixture);
+
+      const probe = await Effect.runPromise(session.probe());
+      const inventory = await Effect.runPromise(session.inventory());
+      await Effect.runPromise(session.addMarketplace({ kind: "local", root: localMarketplace }));
+      await Effect.runPromise(
+        session.addMarketplace({
+          kind: "git",
+          repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+          revision: "v2026.2.8",
+          sparsePaths: [".claude-plugin", "plugins/agents"],
+        })
+      );
+      await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
+      await Effect.runPromise(session.installPlugin({ selector: "cognition@rawr-hq" }));
+      await Effect.runPromise(session.enablePlugin({ selector: "cognition@rawr-hq" }));
+      await Effect.runPromise(session.removePlugin({ selector: "cognition@rawr-hq" }));
+
+      expect(probe).toEqual({
+        provider: "claude",
+        home: fixture.home,
+        version: "2.1.215 (Claude Code)",
+        capabilities: [
+          "marketplace-list",
+          "marketplace-add",
+          "marketplace-remove",
+          "marketplace-update",
+          "plugin-list",
+          "plugin-install",
+          "plugin-enable",
+          "plugin-disable",
+          "plugin-remove",
+          "plugin-update",
+        ],
+      });
+      expect(inventory).toEqual({
+        provider: "claude",
+        marketplaces: [
+          {
+            identity: "local-hq",
+            source: {
+              kind: "local",
+              root: localMarketplace,
+            },
+            installedRoot: path.join(fixture.home, "plugins", "marketplaces", "local-hq"),
+          },
+          {
+            identity: "rawr-hq",
+            source: {
+              kind: "git",
+              repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+              revision: "v2026.2.8",
+            },
+            installedRoot: nativeMarketplace,
+          },
+          {
+            identity: "unknown-hq",
+            source: null,
+            installedRoot: path.join(fixture.home, "plugins", "marketplaces", "unknown-hq"),
+          },
+        ],
+        plugins: [
+          {
+            selector: "cognition@rawr-hq",
+            marketplaceIdentity: "rawr-hq",
+            name: "cognition",
+            installed: true,
+            enabled: true,
+            version: "1.2.3",
+            root: pluginRoot,
+          },
+        ],
+      });
+      expect(await commandLines(fixture.home)).toEqual([
+        "--version",
+        "plugin marketplace list --json",
+        "plugin list --json",
+        `plugin marketplace add ${localMarketplace} --scope user`,
+        "plugin marketplace add https://github.com/rawr-ai/rawr-hq.git#v2026.2.8 --scope user --sparse .claude-plugin plugins/agents",
+        "plugin marketplace remove rawr-hq --scope user",
+        "plugin install cognition@rawr-hq --scope user",
+        "plugin enable cognition@rawr-hq --scope user",
+        "plugin uninstall cognition@rawr-hq --scope user",
+      ]);
+      const environments = await lines(path.join(fixture.home, "env.log"));
+      expect(new Set(environments)).toEqual(
+        new Set([`${callerHome}|${codexHome}|${fixture.home}|set`])
+      );
+      expect(await readdir(callerHome)).toEqual([]);
+      expect(await readdir(codexHome)).toEqual([]);
+    });
+  });
+
+  it("normalizes native GitHub locators and unpinned Git sources", async () => {
+    const fixture = await makeFixture();
+    await writeProviderJson(fixture.home, "claude-marketplaces.json", [
+      {
+        name: "github-hq",
+        source: "github",
+        repo: "rawr-ai/rawr-hq",
+        installLocation: path.join(fixture.home, "plugins", "marketplaces", "github-hq"),
+      },
+      {
+        name: "github-ref-hq",
+        source: "github",
+        repo: "rawr-ai/rawr-hq",
+        ref: "agent-content-v2",
+        installLocation: path.join(fixture.home, "plugins", "marketplaces", "github-ref-hq"),
+      },
+      {
+        name: "git-hq",
+        source: "git",
+        url: "https://github.com/rawr-ai/rawr-hq.git",
+        installLocation: path.join(fixture.home, "plugins", "marketplaces", "git-hq"),
+      },
+    ]);
+    await writeProviderJson(fixture.home, "claude-plugins.json", []);
     const session = await acquire(fixture);
 
-    const probe = await Effect.runPromise(session.probe());
-    const inventory = await Effect.runPromise(session.inventory());
-    await Effect.runPromise(session.addMarketplace({ kind: "local", root: localMarketplace }));
-    await Effect.runPromise(
-      session.addMarketplace({
-        kind: "git",
-        repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
-        revision: "v2026.2.8",
-        sparsePaths: [".claude-plugin", "plugins/agents"],
-      })
-    );
-    await Effect.runPromise(session.removeMarketplace({ identity: "rawr-hq" }));
-    await Effect.runPromise(session.installPlugin({ selector: "cognition@rawr-hq" }));
-    await Effect.runPromise(session.enablePlugin({ selector: "cognition@rawr-hq" }));
-    await Effect.runPromise(session.removePlugin({ selector: "cognition@rawr-hq" }));
-
-    expect(probe).toEqual({
-      provider: "claude",
-      home: fixture.home,
-      version: "2.1.215 (Claude Code)",
-      capabilities: [
-        "marketplace-list",
-        "marketplace-add",
-        "marketplace-remove",
-        "marketplace-update",
-        "plugin-list",
-        "plugin-install",
-        "plugin-enable",
-        "plugin-disable",
-        "plugin-remove",
-        "plugin-update",
-      ],
-    });
-    expect(inventory).toEqual({
+    expect(await Effect.runPromise(session.inventory())).toEqual({
       provider: "claude",
       marketplaces: [
         {
-          identity: "local-hq",
-          source: {
-            kind: "local",
-            root: localMarketplace,
-          },
-          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "local-hq"),
-        },
-        {
-          identity: "rawr-hq",
+          identity: "git-hq",
           source: {
             kind: "git",
             repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
-            revision: "v2026.2.8",
+            revision: null,
           },
-          installedRoot: nativeMarketplace,
+          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "git-hq"),
         },
         {
-          identity: "unknown-hq",
-          source: null,
-          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "unknown-hq"),
+          identity: "github-hq",
+          source: {
+            kind: "git",
+            repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+            revision: null,
+          },
+          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "github-hq"),
         },
-      ],
-      plugins: [
         {
-          selector: "cognition@rawr-hq",
-          marketplaceIdentity: "rawr-hq",
-          name: "cognition",
-          installed: true,
-          enabled: true,
-          version: "1.2.3",
-          root: pluginRoot,
+          identity: "github-ref-hq",
+          source: {
+            kind: "git",
+            repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
+            revision: "agent-content-v2",
+          },
+          installedRoot: path.join(fixture.home, "plugins", "marketplaces", "github-ref-hq"),
         },
       ],
+      plugins: [],
     });
-    expect(await commandLines(fixture.home)).toEqual([
-      "--version",
-      "plugin marketplace list --json",
-      "plugin list --json",
-      `plugin marketplace add ${localMarketplace} --scope user`,
-      "plugin marketplace add https://github.com/rawr-ai/rawr-hq.git#v2026.2.8 --scope user --sparse .claude-plugin plugins/agents",
-      "plugin marketplace remove rawr-hq --scope user",
-      "plugin install cognition@rawr-hq --scope user",
-      "plugin enable cognition@rawr-hq --scope user",
-      "plugin uninstall cognition@rawr-hq --scope user",
-    ]);
-    const environments = await lines(path.join(fixture.home, "env.log"));
-    expect(new Set(environments)).toEqual(
-      new Set([`${fixture.home}|${process.env.CODEX_HOME ?? ""}|${fixture.home}|set`])
-    );
   });
 
   it("rejects malformed and contradictory native inventory", async () => {
@@ -183,6 +262,25 @@ describe("claude-effect-platform-node", () => {
     ]);
     const invalidSelector = await Effect.runPromiseExit(session.inventory());
     expect(failure(invalidSelector)).toMatchObject({
+      reason: "ProtocolFailed",
+      commandPhase: "command-returned",
+    });
+
+    await writeProviderJson(fixture.home, "claude-marketplaces.json", [
+      { name: "missing-repository", source: "github" },
+    ]);
+    await writeProviderJson(fixture.home, "claude-plugins.json", []);
+    const missingRepository = await Effect.runPromiseExit(session.inventory());
+    expect(failure(missingRepository)).toMatchObject({
+      reason: "ProtocolFailed",
+      commandPhase: "command-returned",
+    });
+
+    await writeProviderJson(fixture.home, "claude-marketplaces.json", [
+      { name: "unsupported-source", source: "registry" },
+    ]);
+    const unsupportedSource = await Effect.runPromiseExit(session.inventory());
+    expect(failure(unsupportedSource)).toMatchObject({
       reason: "ProtocolFailed",
       commandPhase: "command-returned",
     });
@@ -310,6 +408,22 @@ async function withPathPrefix<A>(root: string, effect: () => Promise<A>): Promis
   }
 }
 
+async function withEnvironment<A>(
+  values: Readonly<Record<string, string>>,
+  effect: () => Promise<A>
+): Promise<A> {
+  const previous = new Map(Object.keys(values).map((name) => [name, process.env[name]]));
+  for (const [name, value] of Object.entries(values)) process.env[name] = value;
+  try {
+    return await effect();
+  } finally {
+    for (const [name, value] of previous) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
+
 async function acquire(fixture: Readonly<{ command: string; home: string }>) {
   return Effect.runPromise(
     makeNodeClaudeNativeAgentProviderResource({
@@ -341,14 +455,16 @@ function failure<A>(exit: Exit.Exit<A, unknown>): Readonly<Record<string, unknow
 function fakeClaudeScript(): string {
   return `#!/bin/sh
 set -eu
-printf '%s\\n' "$*" >> "$HOME/commands.log"
-printf '%s|%s|%s|%s\\n' "$HOME" "\${CODEX_HOME:-}" "$CLAUDE_CONFIG_DIR" "\${PATH:+set}" >> "$HOME/env.log"
+provider_home="$CLAUDE_CONFIG_DIR"
+test "$provider_home" = "$PWD" || exit 65
+printf '%s\\n' "$*" >> "$provider_home/commands.log"
+printf '%s|%s|%s|%s\\n' "$HOME" "\${CODEX_HOME:-}" "$CLAUDE_CONFIG_DIR" "\${PATH:+set}" >> "$provider_home/env.log"
 case "$*" in
   "--version") printf '%s\\n' '2.1.215 (Claude Code)' ;;
   "plugin marketplace list --json")
-    if [ -f "$HOME/claude-marketplaces.json" ]; then cat "$HOME/claude-marketplaces.json"; else printf '%s\\n' '[]'; fi ;;
+    if [ -f "$provider_home/claude-marketplaces.json" ]; then cat "$provider_home/claude-marketplaces.json"; else printf '%s\\n' '[]'; fi ;;
   "plugin list --json")
-    if [ -f "$HOME/claude-plugins.json" ]; then cat "$HOME/claude-plugins.json"; else printf '%s\\n' '[]'; fi ;;
+    if [ -f "$provider_home/claude-plugins.json" ]; then cat "$provider_home/claude-plugins.json"; else printf '%s\\n' '[]'; fi ;;
   "plugin enable fail@rawr-hq --scope user") printf '%s\\n' 'failed' >&2; exit 7 ;;
   "plugin marketplace add "*|"plugin marketplace remove "*|"plugin install "*|"plugin enable "*|"plugin uninstall "*) printf '%s\\n' '{}' ;;
   *) printf 'unexpected command: %s\\n' "$*" >&2; exit 64 ;;

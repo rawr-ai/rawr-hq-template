@@ -266,7 +266,7 @@ export function requirePluginFilesReadInput(
  * @param provider - Provider that will consume the marketplace source.
  * @param operation - Native operation for typed failure attribution.
  * @param repositoryUrl - Canonical HTTPS Git repository URL.
- * @param revision - Immutable or versioned Git revision selected by the caller.
+ * @param revision - Cloneable provider selector selected by the caller.
  * @param sparsePaths - Bounded provider content roots to expose natively.
  */
 export function requireGitMarketplaceSource(
@@ -659,9 +659,7 @@ function providerEnvironment(
   provider: NativeAgentProviderId,
   home: string
 ): Record<string, string | undefined> {
-  return provider === "codex"
-    ? { HOME: home, CODEX_HOME: home }
-    : { HOME: home, CLAUDE_CONFIG_DIR: home };
+  return provider === "codex" ? { CODEX_HOME: home } : { CLAUDE_CONFIG_DIR: home };
 }
 
 function processSemaphore(provider: NativeAgentProviderId, home: string): Semaphore.Semaphore {
