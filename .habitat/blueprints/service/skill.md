@@ -53,7 +53,7 @@ semantic leaves. The barrel adds no policy or behavior, and `model/index.ts`
 does not exist because the service model is not one undifferentiated catalog.
 
 One module contract index exposes its generic contract anchor over direct
-semantic leaves. Named `*.router.ts` leaves author matching operations without
+semantic leaves. Named `router/<name>.ts` leaves author matching operations without
 a router barrel. Optional module middleware has an indexed catalog; optional
 service-root middleware has direct semantic leaves and no index. Production
 source remains sealed from package-root proof.

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "id": "require_service_module_isolation",
+  "title": "Require Service Module Isolation",
+  "placement": {
+    "niche": "rawr",
+    "blueprint": "service",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "service-root execution imports from module interiors, module re-exports, relative paths that cross a module root except depth-correct shared-model access, raw base acquisition outside module middleware, impl acquisition outside module.ts or owning module middleware, and sibling-module entry through the current owner's private alias",
+  "why": "Service roots compose contracts and operation trees while each module owns one sealed subdomain interior. Modules may consume inert shared service-model facts, and service-owned database adapters may depend inward on module model contracts; neither relationship creates a sibling execution edge. Habitat owns that containment boundary; contract, context, and router laws own executable direction inside it.",
+  "remediate": "Keep ordinary collaboration inside the owning module, and put genuinely shared inert facts in the service model. Cross to service base or impl only at their declared module boundaries, compose module contracts and routers only at the service root, and move sibling collaboration behind an intentional service-level interface.",
+  "message": "Service roots compose modules; modules own their implementation and do not enter siblings.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["services/*/src/service/**/*.ts", "plugins/server/api/*/src/service/**/*.ts"]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/service/require_service_module_isolation/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/blueprints/service/require_service_module_isolation/pattern.md"
+    },
+    "patternName": "require_service_module_isolation",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["services", "plugins/server/api"]
+    }
+  }
+}

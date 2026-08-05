@@ -152,8 +152,8 @@ module/
 ├── module.ts
 ├── router.ts
 └── router/
-    ├── inspect.router.ts
-    └── mutate.router.ts
+    ├── inspect.ts
+    └── mutate.ts
 ```
 
 Named router leaves author individual operations or cohesive operation groups.

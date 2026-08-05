@@ -171,29 +171,29 @@ The current service packet follows the later committed Magic lineage:
 `52873620ffe0b8b6e60527cd399076fc13ab86a7`, service-blueprint tree
 `e8f0d548fba17936bf39084607c3cf12c5c97ee0`.
 
-The portable evaluator is now available as Civ7 release
+At the historical Civ7 `0.1.0` consumer checkpoint, the portable evaluator was
+available as release
 `habitat-cli-v0.1.0`. Its reviewed source candidate is
 `d51e8c7454e301bcaba56c8364f5c714d5febca3`, tree
 `5b35c34f2fa13e0eece1ea4cea7e6b1000df71dc`; canonical Civ7 main is
-`ebf5bbcab1e754a17a63999747f80c5e60b28fb7`. Template pins the release asset
+`ebf5bbcab1e754a17a63999747f80c5e60b28fb7`. Template pinned the release asset
 `habitat-cli-0.1.0.tgz` by immutable GitHub URL and lockfile integrity; the
 asset SHA-256 is
 `d21f7ab85d9895666174003b7024aa2473e83db047f42bc2c801666e0dd448f5`.
-Template owns no copied Habitat SDK source, executable selector, or second rule
-inventory.
+Template owned no copied Habitat SDK source, executable selector, or second
+rule inventory at that checkpoint.
 
-The landed consumer installs `@habitat/cli/nx-plugin`, which infers one
+That landed consumer installed `@habitat/cli/nx-plugin`, which inferred one
 cacheable target per registered rule and one owner-local policy aggregate.
-Thirty-three active laws across six owners pass with zero findings; 25 belong
-to the `habitat` project. The contract-authority law now
-acquires only its contract and reusable-DTO corpus and completes in 2.9
-seconds; the complete uncached Habitat policy graph completes in 44.8 seconds,
-and an unchanged repeat is restored from Nx cache in 18 milliseconds. Seven
-unfinished service laws remain explicit candidate packets under
-`.habitat/staged/**`; they are not compatibility paths or active registry
-members. The six construction laws enter the graph together on the lifecycle
-burn-down branch, while public-consumer sealing retains its independent
-classifier gate.
+Thirty-three active laws across six owners passed with zero findings; 25
+belonged to the `habitat` project. The contract-authority law acquired only its
+contract and reusable-DTO corpus and completed in 2.9 seconds; the complete
+uncached Habitat policy graph completed in 44.8 seconds, and an unchanged
+repeat restored from Nx cache in 18 milliseconds. Seven unfinished service
+laws then remained explicit candidate packets under `.habitat/staged/**`; they
+were not compatibility paths or active registry members. The current 40-rule
+candidate state and its six-law activation gate are recorded in the gate table
+below; public-consumer sealing retains its independent classifier gate.
 
 Two further Magic boundary laws are now part of the enforced RAWR service
 packet. Commit `21497500629f6b77ccbd6b0e983f2cc7c16ca663` isolates production
@@ -567,7 +567,7 @@ The shared Magic semantics keep one direct standalone Effect-oRPC base, derive
 every module from its exact `service.<module>` branch, remove model `index.ts`
 authority, preserve direct semantic leaves, and close normalized owner-alias
 traversal. RAWR deliberately refines the single public module `router.ts` with
-named `router/*.router.ts` operation leaves or semantic groups beneath it;
+named `router/<name>.ts` operation leaves or semantic groups beneath it;
 module `router.ts` only composes their plain values, and `router/index.ts` is
 structurally inadmissible. The remaining user-authorized Template extensions
 require a completed-module-router-only root, make base and optional module
@@ -658,7 +658,7 @@ the releases module shell or the full service is sealed.
 
 The corrected service authority packet is now sealed as the first half of the
 categorical service-law repair. Every module has one public composition face at
-`router.ts` and named operation-authoring leaves under `router/*.router.ts`;
+`router.ts` and named operation-authoring leaves under `router/<name>.ts`;
 `router/index.ts`, `shared`, `internal`, `dependencies`, loose `schemas.ts`,
 and a service-wide `model/index.ts` are outside the positive shape. Magic
 `52873620ffe0b8b6e60527cd399076fc13ab86a7` initially supplied the direct local
@@ -1651,14 +1651,14 @@ review does not authorize a separate release path.
 | Gate | State |
 | --- | --- |
 | Corrected authority record | Landed on Template `main`; the workstream now advances through service-law delivery and lifecycle conformance |
-| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat source and released consumers now evaluate the corpus, while activation of the staged construction laws remains open |
+| Generic Habitat blueprint port | The committed Magic directory-based service authority is present with Template's qualified entity, metadata, documentation, alias, and platform extensions; Template-owned Habitat source and installed consumers evaluate the complete corpus, and the six construction laws are active in the candidate with required admission and canonical landing still open |
 | Generic Oclif blueprint source | Complete on the active Template stack; implementation conformance pending |
 | Complete Nx check/typecheck population and shared lint | Complete and wired through one all-project check graph on the active Template stack |
-| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry publication, idempotent consumer initialization, native version-two execution, and released consumer cutover are landed; service-law activation remains open |
+| Habitat product realization | Template-owned resource, provider, service, Oclif/Nx projections, app composition, policy-pack construction, registry publication, idempotent consumer initialization, native version-two execution, and released consumer cutover are landed; the service-law candidate awaits required admission and canonical landing |
 | Workspace toolchain | Node 24.18.1, Bun 1.3.14, Biome 2.5.3, Nx 23.1.0, TypeScript 5.9.3, TypeBox 1.3.8, Oclif 4.23.29/core 4.13.2, oRPC 2 beta 23, and Effect 4 beta 101 are explicit |
-| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 33 inferred enforced Habitat rules across six owners are active; staged service-law inclusion remains pending |
-| Mandatory module context curation | Lifecycle, HQ Ops, and Example Todo modules curate route vocabulary; the six shared service laws remain staged until topology, middleware authorship, and the complete admitted corpus reach zero |
-| Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; staged service-law activation remains open |
+| Required Habitat/Nx check hierarchy | Public `bun run check` schedules every project check once; one workspace lint task, owner-local typecheck/verification, and 40 inferred enforced Habitat rules across six owners are active; the required gate and canonical landing remain open |
+| Mandatory module context curation | The complete standalone and embedded-API service corpus curates route vocabulary through the downward context funnel; all six shared service laws report zero findings in the candidate |
+| Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; the service-law candidate awaits required admission and canonical landing |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Public distribution | RAWR applications and implementation projects are private and absent from Nx Release. The supported public surface is the Habitat CLI/runtime substrate; collapse to one runtime SDK plus the ordinary Oclif CLI is active, and accidental RAWR `0.1.0` retraction remains pending registry authorization. |
@@ -1677,11 +1677,12 @@ checkpoint: twenty-six logical files followed Magic Migration commit
 seven historical rule manifests adapt only RAWR identity, formatting, and the
 local canonical `pattern.md` source name. The committed service-law checkpoint
 identified above supersedes both that initial port and the later relaxed
-working-snapshot adaptation. The current packet requires closed module
-`contract/` and `router/` directories with `index.ts` composition faces and
-direct semantic leaves; optional module middleware uses the equivalent indexed
-catalog, while service-root middleware remains a direct leaf set without a
-barrel. It puts domain matter in direct owner-local model leaves, derives
+working-snapshot adaptation. The current packet requires a closed module
+`contract/` directory whose `index.ts` composes direct semantic leaves, a
+closed `router/` directory containing named operation-authoring leaves without
+a barrel, and module-root `router.ts` as the sole router composition face.
+Optional module middleware uses an indexed catalog, while service-root
+middleware remains a direct leaf set without a barrel. It puts domain matter in direct owner-local model leaves, derives
 modules from exact service branches, and closes alias traversal without
 baseline entries or compatibility paths. The shared current-main checkpoint moved its complete locator, record,
 exact-Git, and selection closure into the shared service model. The later
@@ -5960,9 +5961,10 @@ explicit type-only isolation exception established by task 5.7e21l.
 The focused service-spine and Effect-oRPC admission suites passed two files and
 four tests. They prove five-module composition, curated provider-resource flow,
 exactly-once root observability around an Effect procedure, exact-vendor
-execution, and TypeBox request/result validation. This evidence closes the
-native context funnel only; activation of the complete staged service-law set
-remains open under task 5.7e22.
+execution, and TypeBox request/result validation. The subsequent complete
+service-corpus burn-down moved all six construction laws into the enforced
+candidate with empty baselines and zero findings. Task 5.7e22 remains open for
+required admission, standing review, and canonical landing.
 
 ## Settlement Oracles
 

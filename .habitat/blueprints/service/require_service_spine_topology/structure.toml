@@ -156,15 +156,22 @@ root = "services/*/src/service/modules/*/router"
 kind = "directory"
 mode = "closed"
 required = [
-  "*.router.ts",
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
 ]
 allowed = []
+forbidden = [
+  "index.ts",
+  "*.router.ts",
+  "*.test.ts",
+  "*.spec.ts",
+]
 
 [[scopes]]
 name = "standalone-service-module-middleware-interiors"
 root = "services/*/src/service/modules/*/middleware"
 kind = "directory"
 mode = "closed"
+allowEmpty = true
 required = [
   "index.ts",
 ]
@@ -198,15 +205,22 @@ root = "plugins/server/api/*/src/service/modules/*/router"
 kind = "directory"
 mode = "closed"
 required = [
-  "*.router.ts",
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
 ]
 allowed = []
+forbidden = [
+  "index.ts",
+  "*.router.ts",
+  "*.test.ts",
+  "*.spec.ts",
+]
 
 [[scopes]]
 name = "api-service-module-middleware-interiors"
 root = "plugins/server/api/*/src/service/modules/*/middleware"
 kind = "directory"
 mode = "closed"
+allowEmpty = true
 required = [
   "index.ts",
 ]
@@ -351,14 +365,35 @@ kind = "directory"
 mode = "closed"
 allowEmpty = true
 required = [
-  "@(behavior|integration|mechanics|support)",
+  "@(acceptance|behavior|integration|mechanics|support)",
 ]
 allowed = [
+  "acceptance",
   "behavior",
   "integration",
   "mechanics",
   "support",
 ]
+
+[[scopes]]
+name = "standalone-service-acceptance-roots"
+root = "services/*/test/acceptance"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "standalone-service-acceptance-suites"
+root = "services/*/test/acceptance/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "standalone-service-behavior-roots"
@@ -378,7 +413,7 @@ allowed = [
 name = "standalone-service-direct-behavior-suites"
 root = "services/*/test/behavior/*.test.ts"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true
 
 [[scopes]]
@@ -411,7 +446,7 @@ allowed = [
 name = "standalone-service-behavior-module-suites"
 root = "services/*/test/behavior/modules/*/*.test.ts"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true
 
 [[scopes]]
@@ -446,7 +481,7 @@ allowed = [
 name = "standalone-service-runtime-mechanics-suites"
 root = "services/*/test/mechanics/@(client|db)/*.test.ts"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true
 
 [[scopes]]
@@ -467,7 +502,7 @@ allowed = [
 name = "standalone-service-contract-mechanics-files"
 root = "services/*/test/mechanics/contract/@(*.test.ts|*.typecheck.ts)"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true
 
 [[scopes]]
@@ -487,7 +522,7 @@ allowed = [
 name = "standalone-service-integration-suites"
 root = "services/*/test/integration/*.test.ts"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true
 
 [[scopes]]
@@ -526,7 +561,7 @@ forbidden = [
 name = "standalone-service-support-category-files"
 root = "services/*/test/support/@(db|service)/*.ts"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true
 
 [[scopes]]
@@ -563,5 +598,5 @@ forbidden = [
 name = "standalone-service-support-module-files"
 root = "services/*/test/support/modules/*/*.ts"
 kind = "file"
-mode = "open"
+mode = "closed"
 allowEmpty = true

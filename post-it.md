@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-02 - Service Authorship Narrows
+
+A service is a downward capability funnel, not a web of reachable helpers.
+The host supplies ready capabilities; `base.ts` names the complete context;
+`impl.ts` creates one implementation lineage; each `module.ts` descends from
+its configured branch and curates only what its handlers need. Service model
+facts exist only when their meaning spans modules. Module model facts remain
+inside their owning domain.
+
+The operation handler is the authoring site. A module-root `router.ts` only
+composes completed values from `router/<name>.ts`; the router directory has no
+index and no `.router.ts` suffix. Context moves downward, completed capability
+moves upward, and neither direction creates a side channel. Habitat closes the
+shape, TypeScript closes inference, Nx closes the graph, and behavior proof
+closes outcomes.
+
+### Bag Of Keywords
+
+service, module, context, contract, router.
+
+ownership, boundary, authorship, closure, flow.
+
+derive, curate, handle, compose, verify.
+
 ## 2026-08-02 - Runtime Is One Product
 
 Habitat must distribute one runtime SDK. The TypeBox bridge, blueprint catalog, and

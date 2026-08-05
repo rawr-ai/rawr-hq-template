@@ -30,7 +30,7 @@ predicate require_orpc_error_authority_is_governed_source() {
 
 // Selects executable interiors that must not acquire parallel error values.
 predicate require_orpc_error_authority_is_executable_interior() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl\.ts|router\.ts|middleware/[^/]+\.ts|modules/[^/]+/(?:module\.ts|router/[^/]+\.router\.ts|middleware/[^/]+\.ts))$",
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/(?:impl\.ts|router\.ts|middleware/[^/]+\.ts|modules/[^/]+/(?:module\.ts|router/[^/]+\.ts|middleware/[^/]+\.ts))$",
   ! $filename <: r".*/(?:test|tests|__tests__)/.*"
 }
 
@@ -116,7 +116,7 @@ class CatalogUnavailable extends ORPCTaggedError("CatalogUnavailable") {}
 ## Matches parallel runtime error vocabulary
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
 import { CatalogUnavailable } from "./model/errors/catalog.errors";
 export const router = base.catalog.router({
   list: module.list.effect(() => Effect.fail(new CatalogUnavailable())),
@@ -126,14 +126,14 @@ export const router = base.catalog.router({
 ## Matches a custom dispatch portal
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
 const dispatchError = (error: unknown) => mapError(error);
 ```
 
 ## Matches a direct public-error construction
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
 import { ORPCError } from "@orpc/server";
 export const router = base.catalog.router({
   list: module.list.effect(function* () {
@@ -161,7 +161,7 @@ export const middleware = os
 ## Ignores native handler constructors and type-only error facts
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/list.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/list.ts
 import type { CatalogFailure } from "./model/errors/catalog.errors";
 export const router = base.catalog.router({
   list: module.list.effect(function* ({ errors }) {

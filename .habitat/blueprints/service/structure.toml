@@ -137,11 +137,12 @@ relativePath = "service/modules/*/router"
 kind = "directory"
 mode = "closed"
 required = [
-  "*.router.ts",
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
 ]
 allowed = []
 forbidden = [
   "index.ts",
+  "*.router.ts",
   "*.test.ts",
   "*.spec.ts",
 ]
@@ -238,3 +239,267 @@ forbidden = [
   "*.test.ts",
   "*.spec.ts",
 ]
+
+[[scopes]]
+name = "service-test-root"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(acceptance|behavior|integration|mechanics|support)",
+]
+allowed = [
+  "acceptance",
+  "behavior",
+  "integration",
+  "mechanics",
+  "support",
+]
+
+[[scopes]]
+name = "service-acceptance-root"
+rootRole = "project"
+relativePath = "test/acceptance"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-acceptance-suites"
+rootRole = "project"
+relativePath = "test/acceptance/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-behavior-root"
+rootRole = "project"
+relativePath = "test/behavior"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(*.test.ts|modules)",
+]
+allowed = [
+  "*.test.ts",
+  "modules",
+]
+
+[[scopes]]
+name = "service-direct-behavior-suites"
+rootRole = "project"
+relativePath = "test/behavior/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-behavior-module-root"
+rootRole = "project"
+relativePath = "test/behavior/modules"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*",
+]
+allowed = [
+  "*",
+]
+
+[[scopes]]
+name = "service-behavior-module-shells"
+rootRole = "project"
+relativePath = "test/behavior/modules/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-behavior-module-suites"
+rootRole = "project"
+relativePath = "test/behavior/modules/*/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-mechanics-root"
+rootRole = "project"
+relativePath = "test/mechanics"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(client|contract|db)",
+]
+allowed = [
+  "client",
+  "contract",
+  "db",
+]
+
+[[scopes]]
+name = "service-runtime-mechanics-categories"
+rootRole = "project"
+relativePath = "test/mechanics/@(client|db)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-runtime-mechanics-suites"
+rootRole = "project"
+relativePath = "test/mechanics/@(client|db)/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-contract-mechanics"
+rootRole = "project"
+relativePath = "test/mechanics/contract"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(*.test.ts|*.typecheck.ts)",
+]
+allowed = [
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-contract-mechanics-files"
+rootRole = "project"
+relativePath = "test/mechanics/contract/@(*.test.ts|*.typecheck.ts)"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-integration-root"
+rootRole = "project"
+relativePath = "test/integration"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-integration-suites"
+rootRole = "project"
+relativePath = "test/integration/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-support-root"
+rootRole = "project"
+relativePath = "test/support"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(db|modules|service)",
+]
+allowed = [
+  "db",
+  "modules",
+  "service",
+]
+
+[[scopes]]
+name = "service-support-categories"
+rootRole = "project"
+relativePath = "test/support/@(db|service)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.ts",
+]
+allowed = [
+  "*.ts",
+]
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-support-category-files"
+rootRole = "project"
+relativePath = "test/support/@(db|service)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-support-module-root"
+rootRole = "project"
+relativePath = "test/support/modules"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*",
+]
+allowed = [
+  "*",
+]
+
+[[scopes]]
+name = "service-support-module-shells"
+rootRole = "project"
+relativePath = "test/support/modules/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.ts",
+]
+allowed = [
+  "*.ts",
+]
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-support-module-files"
+rootRole = "project"
+relativePath = "test/support/modules/*/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true

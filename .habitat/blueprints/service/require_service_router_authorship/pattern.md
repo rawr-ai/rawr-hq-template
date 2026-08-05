@@ -4,9 +4,12 @@ tags: [orpc, service, router, authorship]
 ---
 # Require Service Router Authorship
 
-Named router leaves author operations from their matching configured module
-descendant. Module-root routers compose those completed values; the service-root
-router composes the completed module routers.
+Named router leaves acquire the configured `module` value directly from the
+canonical `../module` source and author one operation or one cohesive operation
+group through that binding. The leaf's exported group name matches its
+filename. Module-root routers compose those completed values; the service-root
+router composes the completed module routers. TypeScript owns the contract-key
+and procedure-type relation across that composition.
 
 The oRPC handler is the operation authoring site. It receives the curated
 context and owns the transition directly rather than delegating to a parallel
@@ -19,7 +22,7 @@ language js(typescript)
 
 // Selects a named module operation leaf or cohesive subrouter.
 predicate require_service_router_authorship_is_named_router() {
-  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.router\.ts$"
+  $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router/[^/]+\.ts$"
 }
 
 // Selects the service and module router composition faces.
@@ -32,9 +35,16 @@ predicate require_service_router_authorship_is_module_composer() {
   $filename <: r".*(?:services/[^/]+|plugins/server/api/[^/]+)/src/service/modules/[^/]+/router\.ts$"
 }
 
+// Proves the leaf directly acquires the canonical configured module binding.
+predicate require_service_router_authorship_has_canonical_module_import($body) {
+  $body <: some `import { $..., module, $... } from $source` where {
+    $source <: r"^[\"']\.\./module(?:\.[cm]?[jt]s)?[\"']$"
+  }
+}
+
 // Checks that a named router's public export matches its filename.
 function require_service_router_authorship_leaf_name_status($filename, $name) js {
-  const match = $filename.text.match(/\/router\/([^/]+)\.router\.ts$/);
+  const match = $filename.text.match(/\/router\/([^/]+)\.ts$/);
   if (!match || !/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(match[1])) {
     return "noncanonical-filename";
   }
@@ -43,27 +53,6 @@ function require_service_router_authorship_leaf_name_status($filename, $name) js
     (_all, value) => value.toUpperCase(),
   );
   return expected === $name.text ? "ok" : "wrong-export";
-}
-
-// Checks that every authored operation descends from the filename-mapped branch.
-function require_service_router_authorship_leaf_root_status($filename, $body) js {
-  const match = $filename.text.match(/\/router\/([^/]+)\.router\.ts$/);
-  if (!match) return "noncanonical-filename";
-  const expected = match[1].replace(
-    /-([a-z0-9])/g,
-    (_all, value) => value.toUpperCase(),
-  );
-  const source = $body.text.replace(/\s+/g, "");
-  const roots = [
-    ...source.matchAll(
-      /module((?:\.[A-Za-z_$][A-Za-z0-9_$]*)+)\.(?:use|effect|handler)\(/g,
-    ),
-  ].map((entry) => entry[1].slice(1).split("."));
-  if (roots.length === 0) return "missing-handler";
-
-  return roots.every((properties) => properties[0] === expected)
-    ? "ok"
-    : "wrong-root";
 }
 
 // Admits the one local binding required by an ECMAScript-reserved public name.
@@ -128,13 +117,26 @@ predicate require_service_router_authorship_is_inline_handler($handler) {
   }
 }
 
+// Recognizes a configured module branch through native procedure middleware.
+private pattern require_service_router_authorship_module_receiver() {
+  or {
+    `module.$member`,
+    `$prior.$member` where {
+      $prior <: require_service_router_authorship_module_receiver()
+    },
+    `$prior.use($middleware)` where {
+      $prior <: require_service_router_authorship_module_receiver()
+    }
+  }
+}
+
 // Admits type-only imports and values from direct local named router leaves.
 predicate require_service_router_authorship_is_module_router_import($import, $source) {
   or {
     $import <: import_statement(type=type()),
     and {
       $import <: `import { $... } from $source`,
-      $source <: r"^[\"']\./router/[^/\"']+\.router[\"']$"
+      $source <: r"^[\"']\./router/[^/\"']+[\"']$"
     }
   }
 }
@@ -163,6 +165,14 @@ predicate require_service_router_authorship_is_module_router_statement($statemen
 }
 
 or {
+  program(statements=$statements) where {
+    require_service_router_authorship_is_named_router(),
+    not {
+      require_service_router_authorship_has_canonical_module_import(
+        body=$statements
+      )
+    }
+  },
   program(statements=$statements) as $body where {
     require_service_router_authorship_is_named_router(),
     not {
@@ -170,14 +180,6 @@ or {
         require_service_router_authorship_is_canonical_export(export=$export)
       }
     }
-  },
-  program() as $body where {
-    require_service_router_authorship_is_named_router(),
-    $status = require_service_router_authorship_leaf_root_status(
-      filename=$filename,
-      body=$body
-    ),
-    not { $status <: includes "ok" }
   },
   export_statement() as $export where {
     require_service_router_authorship_is_named_router(),
@@ -198,6 +200,15 @@ or {
   },
   `export default $value` where {
     require_service_router_authorship_is_named_router()
+  },
+  or {
+    `$receiver.effect($handler)`,
+    `$receiver.handler($handler)`
+  } where {
+    require_service_router_authorship_is_named_router(),
+    not {
+      $receiver <: require_service_router_authorship_module_receiver()
+    }
   },
   or {
     `$receiver.effect($handler)`,
@@ -227,37 +238,70 @@ or {
 }
 ```
 
-## Matches a leaf authored from the wrong operation
+## Matches a local module binding without canonical acquisition
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
-import { module } from "../module";
-export const find = module.list.effect(({ context }) => context.catalog.list());
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
+const module = makeModule();
+export const find = module.find.effect(({ context }) => context.catalog.find());
 ```
 
-## Matches a grouped leaf rooted outside its filename
+## Matches a decorated module wrapper acquired through an alias
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
+import { module as configuredModule } from "../module";
+const module = configuredModule.use(requireReadAccess);
+export const find = module.find.effect(({ context }) => context.catalog.find());
+```
+
+## Matches a module binding acquired from the wrong source
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
+import { module } from "../testing/module";
+export const find = module.find.effect(({ context }) => context.catalog.find());
+```
+
+## Matches a leaf whose export does not match its filename
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { module } from "../module";
-const find = module.catalog.find.effect(({ context }) => context.catalog.find());
-const list = module.catalog.list.effect(({ context }) => context.catalog.list());
+export const list = module.list.effect(({ context }) => context.catalog.list());
+```
+
+## Ignores a cohesive group whose operation names differ from its group name
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/read.ts
+import { module } from "../module";
+const find = module.find.effect(({ context }) => context.catalog.find());
+const list = module.list.effect(({ context }) => context.catalog.list());
 export const read = { find, list };
 ```
 
 ## Matches a detached operation implementation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/sync.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/sync.ts
 import { module } from "../module";
 const runSync = ({ context, input }) => context.catalog.sync(input);
 export const sync = module.sync.effect(runSync);
 ```
 
+## Matches a handler rooted outside the configured module
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
+import { preview } from "../model/policy/preview";
+export const find = preview.find.handler(({ context }) => context.catalog.find());
+```
+
 ## Matches a detached native handler implementation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { module } from "../module";
 const runFind = ({ context, input }) => context.catalog.find(input);
 export const find = module.find.handler(runFind);
@@ -266,7 +310,7 @@ export const find = module.find.handler(runFind);
 ## Ignores a leaf-local pure builder used by an inline handler
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { module } from "../module";
 const buildLookup = (input: { id: string }) => ({ id: input.id.trim() });
 export const find = module.find.effect(({ context, input }) =>
@@ -287,15 +331,26 @@ export const router = {
 ## Ignores a standalone inline operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { module } from "../module";
 export const find = module.find.effect(({ context }) => context.catalog.find());
+```
+
+## Ignores validated-input policy on the configured procedure
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
+import { module } from "../module";
+import { admitFind } from "../middleware";
+export const find = module.find
+  .use(admitFind)
+  .effect(({ context }) => context.catalog.find());
 ```
 
 ## Ignores an inline function operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { module } from "../module";
 export const find = module.find.handler(function ({ context }) {
   return context.catalog.find();
@@ -305,7 +360,7 @@ export const find = module.find.handler(function ({ context }) {
 ## Ignores an inline async function operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { module } from "../module";
 export const find = module.find.handler(async function ({ context }) {
   return context.catalog.find();
@@ -315,7 +370,7 @@ export const find = module.find.handler(async function ({ context }) {
 ## Ignores an inline Effect generator operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { Effect } from "effect";
 import { module } from "../module";
 export const find = module.find.effect(function* ({ context }) {
@@ -326,7 +381,7 @@ export const find = module.find.effect(function* ({ context }) {
 ## Matches a detached Effect generator operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { Effect } from "effect";
 import { module } from "../module";
 const runFind = function* ({ context }) {
@@ -338,7 +393,7 @@ export const find = module.find.effect(runFind);
 ## Matches a detached named Effect generator operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/find.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/find.ts
 import { Effect } from "effect";
 import { module } from "../module";
 function* runFind({ context }) {
@@ -350,7 +405,7 @@ export const find = module.find.effect(runFind);
 ## Ignores a cohesive grouped router
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/read.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/read.ts
 import { module } from "../module";
 const find = module.read.find.effect(({ context }) => context.catalog.find());
 const list = module.read.list.effect(({ context }) => context.catalog.list());
@@ -360,7 +415,7 @@ export const read = { find, list };
 ## Ignores the language-required reserved binding
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/package.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/package.ts
 import { module } from "../module";
 const packageOperation = module.package.effect(
   ({ context, input }) => context.catalog.package(input),
@@ -373,7 +428,7 @@ export { packageOperation as package };
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
 import type { Router } from "./contract";
-import { read } from "./router/read.router";
+import { read } from "./router/read";
 export const router = { read } as Router;
 ```
 
@@ -381,8 +436,8 @@ export const router = { read } as Router;
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/router.ts
-import { read } from "./router/read.router";
-import { package as packageOperation } from "./router/package.router";
+import { read } from "./router/read";
+import { package as packageOperation } from "./router/package";
 export const router = {
   ...read,
   package: packageOperation,

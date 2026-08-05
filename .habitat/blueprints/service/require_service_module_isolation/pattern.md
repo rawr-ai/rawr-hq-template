@@ -5,9 +5,11 @@ tags: [service, module, ownership, imports]
 # Require Service Module Isolation
 
 A module may collaborate anywhere inside its own sealed interior and use the
-service's declared anchors. It may not escape into a sibling module. Service
-roots compose module contracts and operation trees, and may name a module port
-only as a type in `base.ts` when the host must bind that dependency. The
+service's shared model and declared anchors. It may not escape into a sibling
+module. Service roots compose module contracts and operation trees, and may
+name a module port as a type in `base.ts` when the host must bind that
+dependency. A service-owned database adapter may depend inward on one module's
+model while implementing the store capabilities projected through context. The
 database blueprint independently owns database placement and the database
 import funnel.
 
@@ -47,6 +49,24 @@ predicate require_service_module_isolation_is_relative_escape($source) {
     and {
       $filename <: r".*/src/service/modules/[^/]+/[^/]+/[^/]+/[^/]+\.ts$",
       $source <: r"^[\"']\.\./\.\./\.\./[^\"']+[\"']$"
+    }
+  }
+}
+
+// Admits a module's depth-correct ascent into the service-wide shared model.
+predicate require_service_module_isolation_is_service_model_import($source) {
+  or {
+    and {
+      $filename <: r".*/src/service/modules/[^/]+/[^/]+\.ts$",
+      $source <: r"^[\"']\.\./\.\./model(?:/[^\"']*)?[\"']$"
+    },
+    and {
+      $filename <: r".*/src/service/modules/[^/]+/[^/]+/[^/]+\.ts$",
+      $source <: r"^[\"']\.\./\.\./\.\./model(?:/[^\"']*)?[\"']$"
+    },
+    and {
+      $filename <: r".*/src/service/modules/[^/]+/[^/]+/[^/]+/[^/]+\.ts$",
+      $source <: r"^[\"']\.\./\.\./\.\./\.\./model(?:/[^\"']*)?[\"']$"
     }
   }
 }
@@ -167,6 +187,15 @@ predicate require_service_module_isolation_is_allowed_root_import($import, $sour
       $filename <: r".*/src/service/base\.ts$",
       $source <: r"^[\"'](?:#(?:[^/]+)-(?:service|api)/modules/[^/]+|\./modules/[^/]+)/model/ports/[^\"']+[\"']$",
       $import <: contains type()
+    },
+    and {
+      $filename <: r".*/src/service/db/.*\.ts$",
+      $source <: r"^[\"'](?:\.\.?/)+(?:[^/\"']+/)*modules/[^/]+/model/[^\"']+[\"']$"
+    },
+    and {
+      $filename <: r".*services/([^/]+)/src/service/db/.*\.ts$"($owner),
+      $source <: r"^[\"']#([^/]+)-service/modules/[^/]+/model/[^\"']+[\"']$"($alias_owner),
+      $alias_owner <: $owner
     }
   }
 }
@@ -203,6 +232,9 @@ or {
   import_statement(source=$source) as $import where {
     require_service_module_isolation_is_module_source(),
     require_service_module_isolation_is_relative_escape(source=$source),
+    not {
+      require_service_module_isolation_is_service_model_import(source=$source)
+    },
     not { require_service_module_isolation_is_allowed_base_import(source=$source) },
     not { require_service_module_isolation_is_allowed_impl_import(source=$source) }
   },
@@ -275,14 +307,14 @@ import { publicJobFacts } from "../../legacy/modules/catalog/model/dto/job-facts
 ## Matches sibling module entry
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { queuePolicy } from "#jobs-service/modules/queue/model/policy/queue-policy";
 ```
 
 ## Matches embedded API sibling module entry
 
 ```typescript
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.ts
 import { collectPolicy } from "#pipeline-api/modules/collect/model/policy/collect-policy";
 ```
 
@@ -295,12 +327,29 @@ import { publicJobFacts } from "../model/dto/job-facts.dto";
 import type { CatalogQuery } from "../dto/catalog-query";
 ```
 
+## Ignores depth-correct module imports from the shared service model
+
+```typescript
+// @filename: services/jobs/src/service/modules/catalog/contract/get.ts
+import { SharedJobSchema } from "../../../model/entities/job";
+// @filename: services/jobs/src/service/modules/catalog/model/policy/catalog.ts
+import type { ServiceClock } from "../../../../model/ports/clock";
+```
+
+## Ignores a service database adapter depending inward on module model
+
+```typescript
+// @filename: services/jobs/src/service/db/stores/catalog.ts
+import { CatalogRecordSchema } from "../../modules/catalog/model/entities/catalog-record";
+import type { CatalogStore } from "../../modules/catalog/model/ports/catalog-store";
+```
+
 ## Matches traversal that escapes a module
 
 ```typescript
 // @filename: services/jobs/src/service/modules/catalog/module.ts
 import { queue } from "../queue/module";
-// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.router.ts
+// @filename: plugins/server/api/pipeline/src/service/modules/jobs/router/get.ts
 import { service } from "../../../impl";
 // @filename: services/jobs/src/service/modules/catalog/model/policy/catalog.ts
 import { queuePolicy } from "../../../queue/model/policy/queue-policy";
@@ -333,7 +382,7 @@ export const middleware = impl.catalog.middleware(({ errors, next }) => {
   if (!mayRead()) throw errors.FORBIDDEN();
   return next();
 });
-// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { module } from "../module";
 import { requireCatalogAuthority } from "../middleware";
 // @filename: plugins/server/api/pipeline/src/service/modules/jobs/middleware/provider.ts
@@ -345,7 +394,7 @@ import { service } from "#pipeline-api/impl";
 ## Matches a deep middleware catalog route from an operation
 
 ```typescript
-// @filename: services/jobs/src/service/modules/catalog/router/get.router.ts
+// @filename: services/jobs/src/service/modules/catalog/router/get.ts
 import { requireCatalogAuthority } from "../../middleware";
 export const get = module.get.use(requireCatalogAuthority).handler(handler);
 ```
