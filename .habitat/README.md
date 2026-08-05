@@ -183,8 +183,10 @@ build TypeScript faces to the resource shell. From Magic commit
 `8f40bdff34dde18680352a9b91ce7b953c385942`, only the provider-neutral
 resource Effect failure semantics enter `resource@1`, as one package-native
 Grit pattern acquired from the instance project root. The predecessor v2
-manifest, baseline, consumer paths, and Magic's API, workflow, app, Nx, and tool
-overlays remain outside the shared definition.
+manifest, baseline, and consumer paths remain outside the shared definition.
+Magic's API, workflow, app, Nx, and tool overlays remain outside this package
+release. Their exercised variance informs later generic Habitat kinds; the
+product instances, adapters, policy, and qualified overlay rules remain local.
 
 The Oclif and Nx workspace packets are RAWR-authored. They apply the same
 positive, closed-kind posture to the executable app, its command plugins, and

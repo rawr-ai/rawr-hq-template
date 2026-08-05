@@ -54,5 +54,7 @@ paths; a caller-authored `source` binding is rejected as an unknown root role.
 `resource@1` includes the provider-neutral Effect failure law promoted from
 the Magic Migration evidence at commit
 `8f40bdff34dde18680352a9b91ce7b953c385942`. Only its generic Grit semantics
-ship: the Magic v2 rule manifest, baseline, consumer paths, and unrelated API,
-workflow, app, Nx, and tool overlays are not package members.
+ship: the Magic v2 rule manifest, baseline, and consumer paths are not package
+members. Their exercised API, workflow, app, Nx, and tool variance informs
+later generic Habitat kinds, while Magic-specific instances, adapters, policy,
+and qualified overlay rules remain local.

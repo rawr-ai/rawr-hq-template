@@ -135,7 +135,8 @@ Magic's resource Effect-failure rule is provider-neutral, operates on a
 resource instance root, and does not depend on Magic product identities. Its
 Grit pattern becomes a second rule of `resource@1`.
 
-The other compared laws remain local evidence:
+The other compared Magic laws remain local overlays and evidence for later
+generic substrate kinds:
 
 - API, async-workflow, and server-app proof structures admit open filename or
   support cabinets and depend on specialized kind composition that version 3
@@ -161,9 +162,10 @@ the downward five-lane context funnel, required module `AGENTS.md`, indexed
 model kinds, module-root `router.ts` composition, and named `router/<name>.ts`
 authoring leaves. Magic's router barrels and missing package/module faces are
 consumer migrations, while `helpers` remains a rejected junk-drawer kind.
-API, workflow, app, Nx, and tool overlays remain with their qualified product
-kinds. None of those service decisions widens this six-member activation
-release.
+Generic API, workflow, app, Nx, and tool seals belong in Habitat once each kind
+is reconciled with its native vendor model. Magic's product instances,
+adapters, policy, and qualified overlay rules remain Magic-local. None of those
+later generic kind admissions widens this six-member activation release.
 
 ### The first active pack is a minor release
 
@@ -186,9 +188,10 @@ artifact is introduced.
 - **Consumers may expect installation alone to select every project** -> Keep
   instance creation repository-owned and make the migration prompts name every
   required manifest explicitly.
-- **Deferred Magic laws may look like missed convergence** -> Record their
-  precise semantic blockers and retain them as local overlays until a generic
-  blueprint kind can own them without copying or weakening law.
+- **Deferred Magic laws may look like missed convergence** -> Record what
+  generic kind variance they demonstrate while retaining the qualified Magic
+  overlays locally. Later Habitat kinds absorb only the reusable seal, not the
+  consumer's instances, adapters, or policy.
 
 ## Migration Plan
 
