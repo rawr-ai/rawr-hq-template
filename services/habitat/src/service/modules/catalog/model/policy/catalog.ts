@@ -1,7 +1,9 @@
 import type { Path } from "effect";
 import type { Static, TSchema } from "typebox";
 import { Validator } from "typebox/schema";
+import { Equal } from "typebox/value";
 import {
+  type AuthorityProvenance,
   type BlueprintDefinition,
   BlueprintDefinitionSchema,
   type CatalogIssue,
@@ -15,6 +17,7 @@ import {
   type HabitatInstanceManifest,
   HabitatInstanceManifestSchema,
   MAX_CATALOG_ISSUES,
+  type PolicyPackBlueprintMember,
   type PolicyPackManifest,
   PolicyPackManifestSchema,
   type PolicyPackPackageJson,
@@ -32,18 +35,41 @@ const compatibilityIndexValidator = new Validator({}, CompatibilityIndexSchema);
 const compatibilityRuleValidator = new Validator({}, CompatibilityRuleSourceSchema);
 const compatibilityBaselineValidator = new Validator({}, CompatibilityBaselineSchema);
 
-/** One schema-admitted local blueprint source. */
-export type BlueprintSource = {
+/** One schema-admitted repository-owned blueprint source. */
+export type LocalBlueprintSource = {
+  readonly kind: "local";
   readonly definition: BlueprintDefinition;
   readonly relativePath: string;
 };
+
+/** One package runner asset admitted before catalog policy is evaluated. */
+export type PolicyPackRunnerAssetSource = {
+  readonly ruleId: string;
+  readonly relativePath: string;
+  readonly absolutePath: string;
+};
+
+/** One schema-admitted selected-package blueprint source. */
+export type PolicyPackBlueprintSource = {
+  readonly kind: "policy-pack";
+  readonly definition: BlueprintDefinition;
+  readonly relativePath: string;
+  readonly packageName: string;
+  readonly packageVersion: string;
+  readonly packageRoot: string;
+  readonly runnerAssets: readonly PolicyPackRunnerAssetSource[];
+};
+
+/** One schema-admitted local or selected-package blueprint source. */
+export type BlueprintSource = LocalBlueprintSource | PolicyPackBlueprintSource;
 
 /** One admitted selected npm policy-pack envelope. */
 export type PolicyPackSource = {
   readonly name: string;
   readonly version: string;
+  readonly packageRoot: string;
   readonly protocolVersion: 1;
-  readonly blueprints: readonly [];
+  readonly blueprints: readonly PolicyPackBlueprintMember[];
 };
 
 /** App-selected absolute package locators interpreted before filesystem I/O. */
@@ -145,27 +171,38 @@ export function admitPolicyPackPackageJson(
       };
 }
 
-/** Admits the closed protocol envelope and refuses future member activation explicitly. */
+/** Admits the closed protocol envelope and its ordered unique member declarations. */
 export function admitPolicyPackManifest(
   value: unknown,
-  sourcePath: string
+  sourcePath: string,
+  path: Path.Path
 ):
   | { readonly ok: true; readonly value: PolicyPackManifest }
   | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
   const admitted = admit(policyPackManifestValidator, value, sourcePath);
   if (!admitted.ok) return admitted;
-  return admitted.value.blueprints.length === 0
-    ? admitted
-    : {
-        ok: false,
-        issues: [
-          issue(
-            "authority-policy-pack-members-unsupported",
-            sourcePath,
-            "Policy-pack blueprint members are not admitted by this service version."
-          ),
-        ],
-      };
+  const issues = admitted.value.blueprints.flatMap((member) =>
+    policyPackMemberPathIssues(member, sourcePath, path)
+  );
+  const expected = [...admitted.value.blueprints].sort(comparePolicyPackMembers);
+  const identities = new Set(
+    admitted.value.blueprints.map((member) => `${member.id}@${member.version}`)
+  );
+  const paths = new Set(admitted.value.blueprints.map((member) => member.path));
+  if (
+    identities.size !== admitted.value.blueprints.length ||
+    paths.size !== admitted.value.blueprints.length ||
+    !admitted.value.blueprints.every((member, index) => member === expected[index])
+  ) {
+    issues.push(
+      issue(
+        "authority-order-invalid",
+        sourcePath,
+        "Policy-pack blueprint members must be ordered by id, version, and path with unique identities and paths."
+      )
+    );
+  }
+  return issues.length === 0 ? admitted : { ok: false, issues };
 }
 
 /** Service-observed filesystem facts for one referenced repository path. */
@@ -187,8 +224,89 @@ export function admitBlueprintSource(
   | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
   const admitted = admit(blueprintValidator, value, relativePath);
   return admitted.ok
-    ? { ok: true, source: { definition: admitted.value, relativePath } }
+    ? { ok: true, source: { kind: "local", definition: admitted.value, relativePath } }
     : admitted;
+}
+
+/** Admits a package blueprint and verifies its declared member identity. */
+export function admitPolicyPackBlueprintSource(
+  value: unknown,
+  member: PolicyPackBlueprintMember,
+  policyPack: Pick<PolicyPackSource, "name" | "version" | "packageRoot">,
+  runnerAssets: readonly PolicyPackRunnerAssetSource[]
+):
+  | { readonly ok: true; readonly source: PolicyPackBlueprintSource }
+  | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
+  const sourcePath = `${policyPack.name}/${member.path}`;
+  const admitted = admit(blueprintValidator, value, sourcePath);
+  if (!admitted.ok) return admitted;
+  const issues: CatalogIssue[] = [];
+  if (admitted.value.id !== member.id) {
+    issues.push(
+      issue(
+        "authority-definition-kind-mismatch",
+        sourcePath,
+        `Policy-pack member id "${member.id}" does not equal blueprint id "${admitted.value.id}".`
+      )
+    );
+  }
+  if (admitted.value.version !== member.version) {
+    issues.push(
+      issue(
+        "authority-version-mismatch",
+        sourcePath,
+        `Policy-pack member version ${member.version} does not equal blueprint version ${admitted.value.version}.`
+      )
+    );
+  }
+  return issues.length > 0
+    ? { ok: false, issues }
+    : {
+        ok: true,
+        source: {
+          kind: "policy-pack",
+          definition: admitted.value,
+          relativePath: member.path,
+          packageName: policyPack.name,
+          packageVersion: policyPack.version,
+          packageRoot: policyPack.packageRoot,
+          runnerAssets,
+        },
+      };
+}
+
+/** Resolves normalized package-relative runner asset locators for one member. */
+export function policyPackRunnerAssetPaths(
+  definition: BlueprintDefinition,
+  member: PolicyPackBlueprintMember,
+  packageName: string,
+  path: Path.Path
+):
+  | {
+      readonly ok: true;
+      readonly assets: readonly { readonly ruleId: string; readonly relativePath: string }[];
+    }
+  | { readonly ok: false; readonly issues: readonly CatalogIssue[] } {
+  const sourcePath = `${packageName}/${member.path}`;
+  const assets: { readonly ruleId: string; readonly relativePath: string }[] = [];
+  const issues: CatalogIssue[] = [];
+  for (const rule of definition.rules) {
+    const declared = rule.runner.name === "habitat" ? rule.runner.structure : rule.runner.pattern;
+    const declaredIssues = relativePathIssues(declared, `${sourcePath}#rule:${rule.id}`, path);
+    if (declaredIssues.length > 0) {
+      issues.push(...declaredIssues);
+      continue;
+    }
+    const relativePath = toRepositoryPath(path.join(path.dirname(member.path), declared), path);
+    const assetIssues = packageRelativePathIssues(
+      relativePath,
+      `${sourcePath}#rule:${rule.id}`,
+      path
+    );
+    if (assetIssues.length > 0) issues.push(...assetIssues);
+    else assets.push({ ruleId: rule.id, relativePath });
+  }
+  return issues.length > 0 ? { ok: false, issues } : { ok: true, assets };
 }
 
 /** Admits unknown TOML output as one closed instance manifest. */
@@ -239,6 +357,7 @@ export function referencedRepositoryPaths(
   path: Path.Path
 ): readonly string[] {
   const references = new Set<string>();
+  const blueprints = reconcileBlueprintSources(documents.blueprints).sources;
   for (const root of Object.values(documents.compatibilityIndex?.ownerRoots ?? {})) {
     if (relativePathIssues(root, ".habitat/index.json", path).length === 0) {
       references.add(toRepositoryPath(root, path));
@@ -257,7 +376,8 @@ export function referencedRepositoryPaths(
       }
     }
   }
-  for (const source of documents.blueprints) {
+  for (const source of blueprints) {
+    if (source.kind === "policy-pack") continue;
     const directory = path.dirname(source.relativePath);
     for (const rule of source.definition.rules) {
       const asset = rule.runner.name === "habitat" ? rule.runner.structure : rule.runner.pattern;
@@ -275,7 +395,7 @@ export function referencedRepositoryPaths(
   }
 
   const definitions = new Map(
-    documents.blueprints.map((source) => [blueprintIdentity(source.definition), source] as const)
+    blueprints.map((source) => [blueprintIdentity(source.definition), source] as const)
   );
   for (const source of documents.manifests) {
     const definition = definitions.get(
@@ -312,21 +432,13 @@ export function resolveCatalog(
   path: Path.Path
 ): ResolveCatalogResult {
   const issues: CatalogIssue[] = [];
-  const blueprints = [...documents.blueprints].sort(compareBlueprintSources);
+  const reconciledBlueprints = reconcileBlueprintSources(documents.blueprints);
+  const blueprints = reconciledBlueprints.sources;
   const manifests = [...documents.manifests].sort((left, right) =>
     textOrder(left.manifest.id, right.manifest.id)
   );
 
-  issues.push(
-    ...duplicateIssues(
-      blueprints.map((source) => ({
-        identity: blueprintIdentity(source.definition),
-        path: source.relativePath,
-      })),
-      "authority-duplicate-blueprint",
-      "blueprint"
-    )
-  );
+  issues.push(...reconciledBlueprints.issues);
   issues.push(
     ...duplicateIssues(
       manifests.map((source) => ({ identity: source.manifest.id, path: source.relativePath })),
@@ -335,7 +447,7 @@ export function resolveCatalog(
     )
   );
 
-  for (const source of blueprints) {
+  for (const source of documents.blueprints) {
     issues.push(...validateBlueprint(source, path));
   }
 
@@ -393,6 +505,22 @@ export function resolveCatalog(
   for (const source of blueprints) {
     for (const rule of source.definition.rules) {
       const assetPath = ruleAssetPath(source, rule, path);
+      if (source.kind === "policy-pack") {
+        if (
+          !source.runnerAssets.some(
+            (asset) => asset.ruleId === rule.id && asset.relativePath === assetPath
+          )
+        ) {
+          issues.push(
+            issue(
+              "authority-resolution-failed",
+              blueprintSourcePath(source),
+              `Policy-pack runner asset for rule "${rule.id}" was not admitted.`
+            )
+          );
+        }
+        continue;
+      }
       issues.push(
         ...pathFactIssues(
           assetPath,
@@ -415,16 +543,8 @@ export function resolveCatalog(
     const definitionSource = definitions.get(`${instance.blueprint}@${instance.blueprintVersion}`);
     if (!definitionSource) continue;
     for (const rule of definitionSource.definition.rules) {
-      const assetPath = ruleAssetPath(definitionSource, rule, path);
-      const asset = {
-        provenance: {
-          kind: "local" as const,
-          authorityRoot: workspaceRoot,
-          relativePath: definitionSource.relativePath,
-        },
-        relativePath: assetPath,
-        absolutePath: path.resolve(workspaceRoot, assetPath),
-      };
+      const asset = resolvedRuleAsset(definitionSource, rule, workspaceRoot, path);
+      if (asset === undefined) continue;
       const common = {
         ownerProject: instance.ownerProject,
         instanceId: instance.id,
@@ -435,7 +555,7 @@ export function resolveCatalog(
         lane: rule.lane,
         message: rule.message,
         remediate: rule.remediate,
-        provenance: asset.provenance,
+        provenance: blueprintProvenance(definitionSource, workspaceRoot),
       };
       if (rule.runner.name === "habitat") {
         applications.push({
@@ -507,15 +627,11 @@ export function resolveCatalog(
         name: documents.policyPack.name,
         version: documents.policyPack.version,
         protocolVersion: documents.policyPack.protocolVersion,
-        blueprints: [],
+        blueprints: [...documents.policyPack.blueprints],
       },
       blueprints: blueprints.map((source) => ({
         definition: source.definition,
-        provenance: {
-          kind: "local",
-          authorityRoot: workspaceRoot,
-          relativePath: source.relativePath,
-        },
+        provenance: blueprintProvenance(source, workspaceRoot),
       })),
       instances,
       applications,
@@ -670,12 +786,13 @@ function resolveCompatibility(
 
 function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIssue[] {
   const issues: CatalogIssue[] = [];
-  const kind = source.relativePath.split("/")[2];
-  if (kind !== source.definition.id) {
+  const definitionPath = blueprintSourcePath(source);
+  const kind = source.kind === "local" ? source.relativePath.split("/")[2] : undefined;
+  if (source.kind === "local" && kind !== source.definition.id) {
     issues.push(
       issue(
         "authority-definition-kind-mismatch",
-        source.relativePath,
+        definitionPath,
         `Blueprint path kind "${kind ?? ""}" does not equal definition id "${source.definition.id}".`
       )
     );
@@ -683,17 +800,17 @@ function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIss
   issues.push(
     ...sortedUniqueIssues(
       source.definition.instance.roots.map((root) => root.id),
-      source.relativePath,
+      definitionPath,
       "root roles"
     ),
     ...sortedUniqueIssues(
       source.definition.instance.selections.map((selection) => selection.id),
-      source.relativePath,
+      definitionPath,
       "selection axes"
     ),
     ...sortedUniqueIssues(
       source.definition.rules.map((rule) => rule.id),
-      source.relativePath,
+      definitionPath,
       "rule ids"
     )
   );
@@ -703,13 +820,13 @@ function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIss
     issues.push(
       issue(
         "authority-definition-invalid",
-        source.relativePath,
+        definitionPath,
         `anchorRoot "${source.definition.instance.anchorRoot}" must name a required directory root role.`
       )
     );
   }
   for (const selection of source.definition.instance.selections) {
-    const sourcePath = `${source.relativePath}#selection:${selection.id}`;
+    const sourcePath = `${definitionPath}#selection:${selection.id}`;
     if (roots.get(selection.root)?.kind !== "directory") {
       issues.push(
         issue(
@@ -736,7 +853,7 @@ function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIss
     source.definition.instance.selections.map((selection) => selection.id)
   );
   for (const rule of source.definition.rules) {
-    const sourcePath = `${source.relativePath}#rule:${rule.id}`;
+    const sourcePath = `${definitionPath}#rule:${rule.id}`;
     const asset = rule.runner.name === "habitat" ? rule.runner.structure : rule.runner.pattern;
     issues.push(...relativePathIssues(asset, sourcePath, path));
     if (rule.runner.name === "habitat") continue;
@@ -1101,6 +1218,68 @@ function ruleAssetPath(
   return toRepositoryPath(path.join(path.dirname(source.relativePath), asset), path);
 }
 
+function resolvedRuleAsset(
+  source: BlueprintSource,
+  rule: BlueprintDefinition["rules"][number],
+  workspaceRoot: string,
+  path: Path.Path
+):
+  | Extract<
+      HabitatCatalog["applications"][number]["runner"],
+      { readonly name: "habitat" }
+    >["structure"]
+  | undefined {
+  const relativePath = ruleAssetPath(source, rule, path);
+  if (source.kind === "local") {
+    return {
+      provenance: {
+        kind: "local",
+        authorityRoot: workspaceRoot,
+        relativePath: source.relativePath,
+      },
+      relativePath,
+      absolutePath: path.resolve(workspaceRoot, relativePath),
+    };
+  }
+  const admitted = source.runnerAssets.find(
+    (asset) => asset.ruleId === rule.id && asset.relativePath === relativePath
+  );
+  if (admitted === undefined) return undefined;
+  return {
+    provenance: {
+      kind: "policy-pack",
+      packageName: source.packageName,
+      packageVersion: source.packageVersion,
+      packageRoot: source.packageRoot,
+      packageRelativePath: admitted.relativePath,
+    },
+    relativePath: admitted.relativePath,
+    absolutePath: admitted.absolutePath,
+  };
+}
+
+function blueprintProvenance(source: BlueprintSource, workspaceRoot: string): AuthorityProvenance {
+  return source.kind === "local"
+    ? {
+        kind: "local",
+        authorityRoot: workspaceRoot,
+        relativePath: source.relativePath,
+      }
+    : {
+        kind: "policy-pack",
+        packageName: source.packageName,
+        packageVersion: source.packageVersion,
+        packageRoot: source.packageRoot,
+        packageRelativePath: source.relativePath,
+      };
+}
+
+function blueprintSourcePath(source: BlueprintSource): string {
+  return source.kind === "local"
+    ? source.relativePath
+    : `${source.packageName}/${source.relativePath}`;
+}
+
 function relativePathIssues(
   candidate: string,
   sourcePath: string,
@@ -1124,6 +1303,49 @@ function relativePathIssues(
         ),
       ]
     : [];
+}
+
+function packageRelativePathIssues(
+  candidate: string,
+  sourcePath: string,
+  path: Path.Path
+): CatalogIssue[] {
+  const invalid =
+    candidate.includes("\\") ||
+    path.isAbsolute(candidate) ||
+    candidate.includes("//") ||
+    candidate.endsWith("/") ||
+    toRepositoryPath(path.normalize(candidate), path) !== candidate ||
+    candidate.split("/").some((segment) => segment === "" || segment === "..") ||
+    GLOB_CHARACTERS.test(candidate) ||
+    /[{}]/.test(candidate);
+  return invalid
+    ? [
+        issue(
+          "authority-path-invalid",
+          sourcePath,
+          `Path must be normalized, package-relative, traversal-free, and non-glob: "${candidate}".`
+        ),
+      ]
+    : [];
+}
+
+function policyPackMemberPathIssues(
+  member: PolicyPackBlueprintMember,
+  sourcePath: string,
+  path: Path.Path
+): CatalogIssue[] {
+  const issues = packageRelativePathIssues(member.path, sourcePath, path);
+  if (path.basename(member.path) !== "blueprint.toml") {
+    issues.push(
+      issue(
+        "authority-path-invalid",
+        sourcePath,
+        `Policy-pack member "${member.id}@${member.version}" must name a blueprint.toml file.`
+      )
+    );
+  }
+  return issues;
 }
 
 function repositoryPatternIssues(
@@ -1217,10 +1439,82 @@ function admit<T extends TSchema>(
   };
 }
 
+function reconcileBlueprintSources(sources: readonly BlueprintSource[]): {
+  readonly sources: readonly BlueprintSource[];
+  readonly issues: readonly CatalogIssue[];
+} {
+  const byIdentity = new Map<string, BlueprintSource[]>();
+  for (const source of [...sources].sort(compareBlueprintSources)) {
+    const identity = blueprintIdentity(source.definition);
+    byIdentity.set(identity, [...(byIdentity.get(identity) ?? []), source]);
+  }
+
+  const reconciled: BlueprintSource[] = [];
+  const issues: CatalogIssue[] = [];
+  for (const [identity, candidates] of byIdentity) {
+    const packageSources = candidates.filter(
+      (source): source is PolicyPackBlueprintSource => source.kind === "policy-pack"
+    );
+    const localSources = candidates.filter(
+      (source): source is LocalBlueprintSource => source.kind === "local"
+    );
+    const packageSource = packageSources[0];
+    if (packageSource === undefined) {
+      reconciled.push(...localSources);
+      issues.push(
+        ...duplicateIssues(
+          localSources.map((source) => ({
+            identity,
+            path: source.relativePath,
+          })),
+          "authority-duplicate-blueprint",
+          "blueprint"
+        )
+      );
+      continue;
+    }
+    reconciled.push(packageSource);
+    if (packageSources.length > 1) {
+      issues.push(
+        ...duplicateIssues(
+          packageSources.map((source) => ({
+            identity,
+            path: blueprintSourcePath(source),
+          })),
+          "authority-duplicate-blueprint",
+          "policy-pack blueprint"
+        )
+      );
+    }
+    for (const local of localSources) {
+      if (Equal(packageSource.definition, local.definition)) continue;
+      issues.push(
+        issue(
+          "authority-duplicate-blueprint",
+          local.relativePath,
+          `Local blueprint identity "${identity}" conflicts with selected policy-pack definition "${blueprintSourcePath(packageSource)}".`
+        )
+      );
+    }
+  }
+  return { sources: reconciled.sort(compareBlueprintSources), issues };
+}
+
 function compareBlueprintSources(left: BlueprintSource, right: BlueprintSource): number {
   return (
     textOrder(left.definition.id, right.definition.id) ||
-    left.definition.version - right.definition.version
+    left.definition.version - right.definition.version ||
+    textOrder(left.kind, right.kind) ||
+    textOrder(blueprintSourcePath(left), blueprintSourcePath(right))
+  );
+}
+
+function comparePolicyPackMembers(
+  left: PolicyPackBlueprintMember,
+  right: PolicyPackBlueprintMember
+): number {
+  return (
+    textOrder(left.id, right.id) || left.version - right.version || textOrder(left.path, right.path)
   );
 }
 

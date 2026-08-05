@@ -17,6 +17,7 @@ import {
   admitCompatibilityIndex,
   admitCompatibilityRule,
   admitInstanceSource,
+  admitPolicyPackBlueprintSource,
   admitPolicyPackManifest,
   admitPolicyPackPackageJson,
   admitPolicyPackSelection,
@@ -25,8 +26,10 @@ import {
   type CatalogPathFact,
   type CompatibilityRuleDocument,
   type InstanceSource,
+  type PolicyPackRunnerAssetSource,
   type PolicyPackSelection,
   type PolicyPackSource,
+  policyPackRunnerAssetPaths,
   referencedRepositoryPaths,
   rejected,
   resolveCatalog,
@@ -191,16 +194,115 @@ function resolveCurrentCatalog(context: CatalogOperationContext) {
       selection.name,
       packageSourcePath
     );
-    const admittedManifest = admitPolicyPackManifest(parsedManifest.success, manifestSourcePath);
+    const admittedManifest = admitPolicyPackManifest(
+      parsedManifest.success,
+      manifestSourcePath,
+      path
+    );
     if (!admittedPackage.ok) policyPackIssues.push(...admittedPackage.issues);
     if (!admittedManifest.ok) policyPackIssues.push(...admittedManifest.issues);
     if (!admittedPackage.ok || !admittedManifest.ok) return rejected(policyPackIssues);
+    const selectedPackageRoot = path.dirname(selection.packageJsonPath);
+    const packageRealPathAttempt = yield* Effect.result(fileSystem.realPath(selectedPackageRoot));
+    if (packageRealPathAttempt._tag === "Failure") {
+      return rejected([
+        filesystemIssue(
+          packageRealPathAttempt.failure,
+          selection.name,
+          "resolve selected policy-pack root",
+          "Selected policy-pack root does not exist."
+        ),
+      ]);
+    }
+    const packageRoot = packageRealPathAttempt.success;
     const policyPack: PolicyPackSource = {
       name: admittedPackage.value.name,
       version: admittedPackage.value.version,
+      packageRoot,
       protocolVersion: admittedManifest.value.protocolVersion,
-      blueprints: [],
+      blueprints: admittedManifest.value.blueprints,
     };
+    const packageBlueprints: BlueprintSource[] = [];
+    for (const member of policyPack.blueprints) {
+      const memberSourcePath = `${policyPack.name}/${member.path}`;
+      const memberRead = yield* readPolicyPackFile({
+        fileSystem,
+        path,
+        packageRoot: selectedPackageRoot,
+        packageRealRoot: packageRoot,
+        relativePath: member.path,
+        sourcePath: memberSourcePath,
+        label: "blueprint member",
+      });
+      if (!memberRead.ok) {
+        policyPackIssues.push(memberRead.issue);
+        continue;
+      }
+      const parsedMember = yield* Effect.result(
+        Effect.try({ try: () => parseToml(memberRead.contents), catch: (cause) => cause })
+      );
+      if (parsedMember._tag === "Failure") {
+        policyPackIssues.push({
+          code: "authority-toml-invalid",
+          path: memberSourcePath,
+          message: "Policy-pack blueprint member is not valid TOML.",
+        });
+        continue;
+      }
+      const admittedMember = admitPolicyPackBlueprintSource(
+        parsedMember.success,
+        member,
+        policyPack,
+        []
+      );
+      if (!admittedMember.ok) {
+        policyPackIssues.push(...admittedMember.issues);
+        continue;
+      }
+      const declaredAssets = policyPackRunnerAssetPaths(
+        admittedMember.source.definition,
+        member,
+        policyPack.name,
+        path
+      );
+      if (!declaredAssets.ok) {
+        policyPackIssues.push(...declaredAssets.issues);
+        continue;
+      }
+
+      const admittedAssetsByPath = new Map<
+        string,
+        { readonly relativePath: string; readonly absolutePath: string }
+      >();
+      const runnerAssets: PolicyPackRunnerAssetSource[] = [];
+      for (const asset of declaredAssets.assets) {
+        let admittedAsset = admittedAssetsByPath.get(asset.relativePath);
+        if (admittedAsset === undefined) {
+          const assetRead = yield* readPolicyPackFile({
+            fileSystem,
+            path,
+            packageRoot: selectedPackageRoot,
+            packageRealRoot: packageRoot,
+            relativePath: asset.relativePath,
+            sourcePath: `${memberSourcePath}#rule:${asset.ruleId}`,
+            label: "runner asset",
+          });
+          if (!assetRead.ok) {
+            policyPackIssues.push(assetRead.issue);
+            continue;
+          }
+          admittedAsset = {
+            relativePath: assetRead.relativePath,
+            absolutePath: assetRead.absolutePath,
+          };
+          admittedAssetsByPath.set(asset.relativePath, admittedAsset);
+        }
+        runnerAssets.push({ ruleId: asset.ruleId, ...admittedAsset });
+      }
+      if (runnerAssets.length !== declaredAssets.assets.length) continue;
+      packageBlueprints.push({ ...admittedMember.source, runnerAssets });
+    }
+    if (policyPackIssues.length > 0) return rejected(policyPackIssues);
 
     if (!path.isAbsolute(workspaceRoot)) {
       return rejected([
@@ -618,7 +720,7 @@ function resolveCurrentCatalog(context: CatalogOperationContext) {
     if (issues.length > 0) return rejected(issues);
     const documents: CatalogDocuments = {
       policyPack,
-      blueprints,
+      blueprints: [...packageBlueprints, ...blueprints],
       manifests,
       compatibilityIndex,
       compatibilityRules,
@@ -1016,6 +1118,100 @@ function catalogRejected(issues: readonly CatalogIssue[]): CheckCatalogResult {
 function selectionRejected(issues: readonly CheckSelectionIssue[]): CheckCatalogResult {
   return { _tag: "SelectionRejected", issues: [...issues] };
 }
+
+type PolicyPackFileReadInput = {
+  readonly fileSystem: FileSystem.FileSystem;
+  readonly path: Path.Path;
+  readonly packageRoot: string;
+  readonly packageRealRoot: string;
+  readonly relativePath: string;
+  readonly sourcePath: string;
+  readonly label: "blueprint member" | "runner asset";
+};
+
+const readPolicyPackFile = Effect.fn("habitat.catalog.readPolicyPackFile")(function* ({
+  fileSystem,
+  path,
+  packageRoot,
+  packageRealRoot,
+  relativePath,
+  sourcePath,
+  label,
+}: PolicyPackFileReadInput) {
+  const absolutePath = path.resolve(packageRoot, relativePath);
+  if (!isContained(packageRoot, absolutePath, path)) {
+    return {
+      ok: false as const,
+      issue: {
+        code: "authority-path-escape" as const,
+        path: sourcePath,
+        message: `Policy-pack ${label} escapes the selected package root.`,
+      },
+    };
+  }
+  const realPathAttempt = yield* Effect.result(fileSystem.realPath(absolutePath));
+  if (realPathAttempt._tag === "Failure") {
+    return {
+      ok: false as const,
+      issue: filesystemIssue(
+        realPathAttempt.failure,
+        sourcePath,
+        `resolve policy-pack ${label}`,
+        `Policy-pack ${label} does not exist.`
+      ),
+    };
+  }
+  if (!isContained(packageRealRoot, realPathAttempt.success, path)) {
+    return {
+      ok: false as const,
+      issue: {
+        code: "authority-path-escape" as const,
+        path: sourcePath,
+        message: `Policy-pack ${label} escapes the selected package root through a symbolic link.`,
+      },
+    };
+  }
+  const statAttempt = yield* Effect.result(fileSystem.stat(realPathAttempt.success));
+  if (statAttempt._tag === "Failure") {
+    return {
+      ok: false as const,
+      issue: filesystemIssue(
+        statAttempt.failure,
+        sourcePath,
+        `inspect policy-pack ${label}`,
+        `Policy-pack ${label} does not exist.`
+      ),
+    };
+  }
+  if (statAttempt.success.type !== "File") {
+    return {
+      ok: false as const,
+      issue: {
+        code: "authority-path-kind-mismatch" as const,
+        path: sourcePath,
+        message: `Policy-pack ${label} must be a regular file.`,
+      },
+    };
+  }
+  const readAttempt = yield* Effect.result(fileSystem.readFileString(realPathAttempt.success));
+  if (readAttempt._tag === "Failure") {
+    return {
+      ok: false as const,
+      issue: filesystemIssue(
+        readAttempt.failure,
+        sourcePath,
+        `read policy-pack ${label}`,
+        `Policy-pack ${label} does not exist.`
+      ),
+    };
+  }
+  return {
+    ok: true as const,
+    relativePath,
+    absolutePath: realPathAttempt.success,
+    contents: readAttempt.success,
+  };
+});
 
 function filesystemIssue(
   error: PlatformError.PlatformError,
