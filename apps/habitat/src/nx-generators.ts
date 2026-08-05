@@ -2,7 +2,24 @@ import type { HabitatConsumerBinding } from "./nx/initialization.js";
 
 /** Exact app-owned identities projected by the public Habitat Nx generators. */
 export const habitatConsumerBinding = {
+  defaultCheckScript: "nx run-many -t check",
+  gitHook: {
+    path: ".husky/pre-push",
+    contents: `# Nested Git work must discover its own repository.
+unset $(git rev-parse --local-env-vars)
+bun run check
+`,
+  },
   gritPackage: "@getgrit/cli",
+  husky: {
+    package: "husky",
+    version: "9.1.7",
+    prepare: "husky",
+    predecessorPrepareScripts: [
+      "./scripts/dev/install-repository-hooks.sh",
+      "git config core.hooksPath scripts/githooks",
+    ],
+  },
   nxPlugin: "@habitat-ai/cli/nx-plugin",
   predecessorNxPlugins: [
     {

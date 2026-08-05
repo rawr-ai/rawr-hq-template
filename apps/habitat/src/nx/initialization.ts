@@ -85,6 +85,31 @@ const CodexHooksSchema = Type.Object(
 
 const ConsumerPackageSchema = Type.Object(
   {
+    dependencies: Type.Optional(
+      Type.Record(Type.String(), Type.String(), {
+        description: "Runtime dependencies installed directly in the Nx consumer.",
+      })
+    ),
+    scripts: Type.Optional(
+      Type.Record(Type.String(), Type.String(), {
+        description: "Consumer-owned package lifecycle and command scripts.",
+      })
+    ),
+    devDependencies: Type.Optional(
+      Type.Record(Type.String(), Type.String(), {
+        description: "Development tools installed directly in the Nx consumer.",
+      })
+    ),
+    optionalDependencies: Type.Optional(
+      Type.Record(Type.String(), Type.String(), {
+        description: "Optional runtime dependencies installed in the Nx consumer.",
+      })
+    ),
+    peerDependencies: Type.Optional(
+      Type.Record(Type.String(), Type.String(), {
+        description: "Peer dependency contracts declared by the Nx consumer.",
+      })
+    ),
     trustedDependencies: Type.Optional(
       Type.Array(Type.String({ minLength: 1 }), {
         description: "Package lifecycle scripts explicitly trusted by the Bun consumer.",
@@ -105,20 +130,31 @@ const packageValidator = new Validator({}, ConsumerPackageSchema);
 
 /** App-owned identities and exact predecessor states consumed by native Nx initialization. */
 export type HabitatConsumerBinding = Readonly<{
+  defaultCheckScript: string;
+  gitHook: Readonly<{
+    contents: string;
+    path: string;
+  }>;
   gritPackage: string;
   hook: HabitatOwnedHookGroup;
+  husky: Readonly<{
+    package: string;
+    prepare: string;
+    predecessorPrepareScripts: readonly string[];
+    version: string;
+  }>;
   nxPlugin: string;
   predecessorHooks: readonly HookGroup[];
   predecessorNxPlugins: readonly PluginConfiguration[];
 }>;
 
-/** Observable generator decision needed to schedule the consumer package manager once. */
+/** Reports whether dependency installation must precede local Husky activation. */
 export type HabitatInitializationResult = Readonly<{
   packageChanged: boolean;
 }>;
 
 /**
- * Converges one Nx consumer on the app-owned Habitat plugin, hook, and Grit trust.
+ * Converges one Nx consumer on Habitat's app-owned Nx, Codex, package, and Git-hook state.
  *
  * Every admission and compatibility decision completes before the first Tree
  * write, so an incompatible consumer remains byte-for-byte unchanged.
@@ -132,11 +168,13 @@ export function initializeHabitatConsumer(
   const packageJson = readPackage(tree);
   const nxPlan = planNxInitialization(nxJson, binding);
   const hookPlan = planHookInitialization(hooks, binding);
-  const packagePlan = planPackageInitialization(packageJson, binding.gritPackage);
+  const packagePlan = planPackageInitialization(packageJson, binding);
+  const gitHookPlan = planGitHookInitialization(tree, binding.gitHook);
 
   if (nxPlan.changed) updateNxJson(tree, nxPlan.value);
   if (hookPlan.changed) writeJson(tree, CODEX_HOOKS_PATH, hookPlan.value);
   if (packagePlan.changed) writeJson(tree, PACKAGE_PATH, packagePlan.value);
+  if (gitHookPlan.changed) tree.write(binding.gitHook.path, gitHookPlan.value);
 
   return { packageChanged: packagePlan.changed };
 }
@@ -264,18 +302,79 @@ function planHookRemoval(
 
 function planPackageInitialization(
   packageJson: ConsumerPackage,
-  gritPackage: string
+  binding: HabitatConsumerBinding
 ): PlannedValue<ConsumerPackage> {
+  const { gritPackage, husky } = binding;
   const trusted = packageJson.trustedDependencies ?? [];
   const matches = trusted.filter((dependency) => dependency === gritPackage);
   if (matches.length > 1) {
     throw new Error(`package.json contains duplicate ${gritPackage} trust entries.`);
   }
-  if (matches.length === 1) return { changed: false, value: packageJson };
+
+  const currentHuskyVersion = packageJson.devDependencies?.[husky.package];
+  const invalidHuskyPlacement = (
+    ["dependencies", "optionalDependencies", "peerDependencies"] as const
+  ).find((bucket) => packageJson[bucket]?.[husky.package] !== undefined);
+  if (invalidHuskyPlacement !== undefined) {
+    throw new Error(
+      `package.json must declare ${husky.package} only in devDependencies; found ${invalidHuskyPlacement}.`
+    );
+  }
+  if (currentHuskyVersion !== undefined && currentHuskyVersion !== husky.version) {
+    throw new Error(
+      `package.json contains an incompatible ${husky.package} version: ${currentHuskyVersion}.`
+    );
+  }
+
+  const currentPrepare = packageJson.scripts?.prepare;
+  if (
+    currentPrepare !== undefined &&
+    currentPrepare !== husky.prepare &&
+    !husky.predecessorPrepareScripts.includes(currentPrepare)
+  ) {
+    throw new Error("package.json contains an incompatible prepare script.");
+  }
+
+  const trustedChanged = matches.length === 0;
+  const huskyChanged = currentHuskyVersion === undefined;
+  const prepareChanged = currentPrepare !== husky.prepare;
+  const currentCheck = packageJson.scripts?.check;
+  if (currentCheck !== undefined && currentCheck.trim().length === 0) {
+    throw new Error("package.json contains an empty check script.");
+  }
+  const checkChanged = currentCheck === undefined;
+  if (!trustedChanged && !huskyChanged && !prepareChanged && !checkChanged) {
+    return { changed: false, value: packageJson };
+  }
+
   return {
     changed: true,
-    value: { ...packageJson, trustedDependencies: [...trusted, gritPackage] },
+    value: {
+      ...packageJson,
+      scripts: {
+        ...packageJson.scripts,
+        check: currentCheck ?? binding.defaultCheckScript,
+        prepare: husky.prepare,
+      },
+      devDependencies: {
+        ...packageJson.devDependencies,
+        [husky.package]: husky.version,
+      },
+      trustedDependencies: trustedChanged ? [...trusted, gritPackage] : trusted,
+    },
   };
+}
+
+function planGitHookInitialization(
+  tree: Tree,
+  hook: HabitatConsumerBinding["gitHook"]
+): PlannedValue<string> {
+  if (!tree.exists(hook.path)) return { changed: true, value: hook.contents };
+  const contents = tree.read(hook.path, "utf8");
+  if (contents === null || contents.trim().length === 0) {
+    throw new Error(`${hook.path} is empty.`);
+  }
+  return { changed: false, value: contents };
 }
 
 function oneOwnedHookLocation(

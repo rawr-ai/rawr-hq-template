@@ -8,7 +8,21 @@ import {
 } from "../../src/nx/initialization";
 
 const binding = {
+  defaultCheckScript: "nx run-many -t check",
+  gitHook: {
+    path: ".husky/pre-push",
+    contents: "unset $(git rev-parse --local-env-vars)\nbun run check\n",
+  },
   gritPackage: "@getgrit/cli",
+  husky: {
+    package: "husky",
+    version: "9.1.7",
+    prepare: "husky",
+    predecessorPrepareScripts: [
+      "./scripts/dev/install-repository-hooks.sh",
+      "git config core.hooksPath scripts/githooks",
+    ],
+  },
   nxPlugin: "@habitat-ai/cli/nx-plugin",
   predecessorNxPlugins: [
     {
@@ -42,7 +56,14 @@ const binding = {
 } as const satisfies HabitatConsumerBinding;
 
 function consumerTree(input?: {
+  readonly check?: string;
+  readonly dependencies?: Readonly<Record<string, string>>;
+  readonly devDependencies?: Readonly<Record<string, string>>;
+  readonly gitHook?: string;
   readonly nxPlugins?: readonly unknown[];
+  readonly optionalDependencies?: Readonly<Record<string, string>>;
+  readonly peerDependencies?: Readonly<Record<string, string>>;
+  readonly prepare?: string;
   readonly sessionStart?: readonly unknown[];
   readonly stop?: readonly unknown[];
   readonly trustedDependencies?: readonly string[];
@@ -55,6 +76,20 @@ function consumerTree(input?: {
   writeJson(tree, "package.json", {
     name: "consumer",
     private: true,
+    ...(input?.dependencies === undefined ? {} : { dependencies: input.dependencies }),
+    ...(input?.prepare === undefined && input?.check === undefined
+      ? {}
+      : {
+          scripts: {
+            ...(input?.check === undefined ? {} : { check: input.check }),
+            ...(input?.prepare === undefined ? {} : { prepare: input.prepare }),
+          },
+        }),
+    ...(input?.devDependencies === undefined ? {} : { devDependencies: input.devDependencies }),
+    ...(input?.optionalDependencies === undefined
+      ? {}
+      : { optionalDependencies: input.optionalDependencies }),
+    ...(input?.peerDependencies === undefined ? {} : { peerDependencies: input.peerDependencies }),
     trustedDependencies: input?.trustedDependencies ?? ["unrelated-native-package"],
   });
   writeJson(tree, ".codex/hooks.json", {
@@ -74,6 +109,7 @@ function consumerTree(input?: {
       ],
     },
   });
+  if (input?.gitHook !== undefined) tree.write(binding.gitHook.path, input.gitHook);
   return tree;
 }
 
@@ -88,8 +124,11 @@ describe("Habitat Nx consumer initialization", () => {
     });
     expect(readJson(tree, "package.json")).toMatchObject({
       name: "consumer",
+      scripts: { check: "nx run-many -t check", prepare: "husky" },
+      devDependencies: { husky: "9.1.7" },
       trustedDependencies: ["unrelated-native-package", "@getgrit/cli"],
     });
+    expect(tree.read(binding.gitHook.path, "utf8")).toBe(binding.gitHook.contents);
     expect(readJson(tree, ".codex/hooks.json")).toMatchObject({
       owner: "consumer",
       hooks: {
@@ -121,6 +160,15 @@ describe("Habitat Nx consumer initialization", () => {
     });
   });
 
+  it("preserves a consumer-owned Git hook", () => {
+    const consumerHook = "bun run consumer-pre-push\n";
+    const tree = consumerTree({ gitHook: consumerHook });
+
+    initializeHabitatConsumer(tree, binding);
+
+    expect(tree.read(binding.gitHook.path, "utf8")).toBe(consumerHook);
+  });
+
   it("replaces the exact root bootstrap predecessor in place and repeats byte-stably", () => {
     const tree = consumerTree({
       nxPlugins: ["before", binding.predecessorNxPlugins[0], "after"],
@@ -130,6 +178,9 @@ describe("Habitat Nx consumer initialization", () => {
         { hooks: [{ type: "command", command: "echo after" }] },
       ],
       trustedDependencies: ["@getgrit/cli"],
+      check: "nx run-many -t check",
+      devDependencies: { husky: "9.1.7" },
+      prepare: "husky",
     });
 
     expect(initializeHabitatConsumer(tree, binding)).toEqual({ packageChanged: false });
@@ -156,6 +207,18 @@ describe("Habitat Nx consumer initialization", () => {
     expect(write).not.toHaveBeenCalled();
     expect(tree.read("nx.json")).toEqual(nxAfterFirst);
     expect(tree.listChanges()).toEqual(changesAfterFirst);
+  });
+
+  it.each(
+    binding.husky.predecessorPrepareScripts
+  )("replaces the exact predecessor prepare script %s", (prepare) => {
+    const tree = consumerTree({ prepare });
+
+    initializeHabitatConsumer(tree, binding);
+
+    expect(
+      readJson<{ readonly scripts: { readonly prepare: string } }>(tree, "package.json")
+    ).toMatchObject({ scripts: { prepare: "husky" } });
   });
 
   it("makes no Tree write when initialization is already converged", () => {
@@ -226,6 +289,31 @@ describe("Habitat Nx consumer initialization", () => {
         }),
       message: "duplicate @getgrit/cli trust entries",
     },
+    {
+      label: "incompatible Husky version",
+      tree: () => consumerTree({ devDependencies: { husky: "8.0.0" } }),
+      message: "incompatible husky version",
+    },
+    ...(["dependencies", "optionalDependencies", "peerDependencies"] as const).map((bucket) => ({
+      label: `Husky in ${bucket}`,
+      tree: () => consumerTree({ [bucket]: { husky: "9.1.7" } }),
+      message: `only in devDependencies; found ${bucket}`,
+    })),
+    {
+      label: "incompatible prepare script",
+      tree: () => consumerTree({ prepare: "consumer-prepare" }),
+      message: "incompatible prepare script",
+    },
+    {
+      label: "empty check script",
+      tree: () => consumerTree({ check: "" }),
+      message: "empty check script",
+    },
+    {
+      label: "empty Git hook",
+      tree: () => consumerTree({ gitHook: "" }),
+      message: ".husky/pre-push is empty",
+    },
   ])("refuses $label before the first Tree write", ({ tree: createTree, message }) => {
     const tree = createTree();
     const write = vi.spyOn(tree, "write");
@@ -244,6 +332,8 @@ describe("Habitat Nx consumer initialization", () => {
       plugins: ["unrelated-plugin", "@habitat-ai/cli/nx-plugin"],
     });
     expect(readJson(tree, "package.json")).toMatchObject({
+      scripts: { check: "nx run-many -t check", prepare: "husky" },
+      devDependencies: { husky: "9.1.7" },
       trustedDependencies: ["unrelated-native-package", "@getgrit/cli"],
     });
     expect(readJson(tree, ".codex/hooks.json")).toMatchObject({

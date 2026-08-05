@@ -137,10 +137,12 @@ lives under `rawr/repository` because it relates heterogeneous package and
 service-module roots without defining any of their constructible topologies.
 
 Template owns one checked-in Codex hook composition. Generic workstream hook
-sources remain in their tool package and are invoked directly; no local
-installer may replace the repository's Habitat feedback or create another hook
-source copy. Stop-time feedback is narrower than repository admission, which
-remains the pre-push and protected-CI responsibility.
+sources remain in their tool package and are invoked directly. Habitat's native
+Nx initializer installs Husky for Git-hook activation and supplies a default
+consumer pre-push check without owning repository-specific event policy. No
+repository-local hook installer may replace that vendor path or create another
+hook source copy. Stop-time feedback is narrower than repository admission,
+which remains the pre-push and protected-CI responsibility.
 
 The API-plugin boundary is active now rather than waiting for the wider service
 corpus migration. Its closed source faces are `client.ts`, `api.ts`, and one

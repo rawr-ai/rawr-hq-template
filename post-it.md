@@ -6,6 +6,28 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
 
+## 2026-08-05 - Hooks Follow Product Layers
+
+Husky owns Git-hook activation. Habitat's native Nx initializer installs that
+vendor and supplies the ordinary pre-push check for a new consumer. The
+consumer repository remains free to author additional event policy in its
+tracked Husky hook while Nx remains the one scheduler and Habitat remains the
+one structural checker.
+
+Git's repository-local hook environment is invocation context, never consumer
+configuration. A hook may read its arguments, then clear Git-local variables
+before launching nested repository work. It never writes identity, rewrites
+Git configuration, or adds another hook installer. Agent feedback remains a
+separate checked-in Codex contribution.
+
+### Bag Of Keywords
+
+Husky, Habitat, Nx, hook, policy.
+
+activation, ownership, isolation, portability, closure.
+
+install, delegate, sanitize, check, preserve.
+
 ## 2026-08-05 - Obsolete Means Removed
 
 An obsolete executable is not an acceptable dormant state. Once the ordinary
