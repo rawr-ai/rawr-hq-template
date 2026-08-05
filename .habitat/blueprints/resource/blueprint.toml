@@ -3,6 +3,22 @@ id = "resource"
 version = 1
 
 [[rules]]
+id = "resource_v1_effect_error_authority"
+lane = "enforced"
+message = "Resource Effect failure channels do not admit global Error or a same-source Error subclass."
+remediate = "Define a tagged failure at the resource or provider boundary and translate foreign exceptions there."
+
+[rules.runner]
+name = "grit"
+pattern = "resource_v1_effect_error_authority.md"
+patternName = "resource_v1_effect_error_authority"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = ["project"]
+selections = []
+
+[[rules]]
 id = "resource_v1_structure"
 lane = "enforced"
 message = "Resources must preserve one closed provider-neutral project shell."
@@ -20,10 +36,5 @@ selections = []
 
 [[instance.roots]]
 id = "project"
-required = true
-kind = "directory"
-
-[[instance.roots]]
-id = "source"
 required = true
 kind = "directory"

@@ -1,10 +1,13 @@
 # RAWR Habitat Authority
 
-This tree is RAWR HQ-Template's repository-local structural authority.
+This tree is RAWR HQ-Template's canonical blueprint authoring source and
+repository-local qualified authority.
 [[AUTHORITY-ONTOLOGY|Habitat's authority ontology]] distinguishes kinds,
 instances, capabilities, governed communities, and resolved execution. The
-current evaluator realizes only the documented blueprint/instance slice and
-cannot amend these packets. Publication and consumer initialization remain
+SDK build copies its admitted reusable definitions and runner assets into the
+selected policy pack; repositories retain authority for their own instances
+and overlays. The evaluator realizes the documented blueprint/instance slice
+but cannot amend these packets. Publication and consumer initialization remain
 separate release checkpoints.
 
 ```text
@@ -51,16 +54,23 @@ The current generic kinds are:
 - `plugin-server`: a documented ontology node whose current corpus proves no
   additional universal structure beyond `plugin`.
 
-The seven v3 definitions for `package`, `resource`, `provider`, `service`,
-`plugin`, `plugin-nx`, and `app` currently have no instances or resolved
-applications. Their blueprint-root schema-2 structures are schema-admitted but
-execution-inert while the installed evaluator executes the 41 registered v2
-compatibility rules. The six v2 service-construction packets are now enforced
-with empty baselines against the complete admitted service corpus;
-public-consumer sealing remains staged. Exact blueprint-root relations, nested-member closure, and
-workspace-wide foreign-consumer acquisition remain Habitat-owned constructibility
-requirements; see the active OpenSpec handoff before creating the first v3
-instance.
+The SDK protocol-1 policy pack admits exactly six v3 definitions, sorted as
+`app`, `package`, `plugin`, `plugin-nx`, `provider`, and `resource`.
+Each member resolves its definition and runner assets from the selected
+package with policy-pack provenance. A repository activates one only through
+its own `habitat.toml` instance; an exact producer-source copy is inert, and a
+different definition at the same identity fails resolution. The 41 registered
+v2 compatibility rules continue to execute beside resolved package
+applications. The six v2 service-construction packets are now enforced with
+empty baselines against the complete admitted service corpus;
+public-consumer sealing remains staged. The v3 `service` source remains an
+unselected candidate until its portable source law and finite release proof
+are accepted. Each selected definition exposes only
+its required `project` anchor; source-specific scopes use blueprint-owned
+`src/**` paths below that root, so repository manifests cannot redirect source
+independently.
+Nested-member closure and workspace-wide foreign-consumer acquisition remain
+Habitat-owned constructibility requirements.
 
 The `rawr/` tree carries owner-qualified constraints that are not generic
 package laws. It is the current physical overlay for repository governance,
@@ -169,7 +179,12 @@ explicit staged packet until foreign-consumer acquisition is owner-complete.
 The `resource` and `provider` boundary packets derive from Magic Migration
 commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed
 contract/realization split and adds its existing workspace package manifest and
-build TypeScript faces to the resource shell.
+build TypeScript faces to the resource shell. From Magic commit
+`8f40bdff34dde18680352a9b91ce7b953c385942`, only the provider-neutral
+resource Effect failure semantics enter `resource@1`, as one package-native
+Grit pattern acquired from the instance project root. The predecessor v2
+manifest, baseline, consumer paths, and Magic's API, workflow, app, Nx, and tool
+overlays remain outside the shared definition.
 
 The Oclif and Nx workspace packets are RAWR-authored. They apply the same
 positive, closed-kind posture to the executable app, its command plugins, and

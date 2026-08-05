@@ -1,4 +1,35 @@
 {
   "protocolVersion": 1,
-  "blueprints": []
+  "blueprints": [
+    {
+      "id": "app",
+      "version": 1,
+      "path": "dist/blueprints/app/blueprint.toml"
+    },
+    {
+      "id": "package",
+      "version": 1,
+      "path": "dist/blueprints/package/blueprint.toml"
+    },
+    {
+      "id": "plugin",
+      "version": 1,
+      "path": "dist/blueprints/plugin/blueprint.toml"
+    },
+    {
+      "id": "plugin-nx",
+      "version": 1,
+      "path": "dist/blueprints/plugin-nx/blueprint.toml"
+    },
+    {
+      "id": "provider",
+      "version": 1,
+      "path": "dist/blueprints/provider/blueprint.toml"
+    },
+    {
+      "id": "resource",
+      "version": 1,
+      "path": "dist/blueprints/resource/blueprint.toml"
+    }
+  ]
 }

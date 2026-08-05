@@ -5,22 +5,23 @@
 
 ## 2. Activate Package Blueprints
 
-- [ ] 2.1 Derive package-member and provenance types from TypeBox schemas.
-- [ ] 2.2 Admit exact package blueprint members and runner assets with ordinary package-root containment.
-- [ ] 2.3 Merge exact producer-source duplicates as inert and reject conflicting identities.
-- [ ] 2.4 Project package provenance through resolved catalogs, checking, and Nx cache inputs.
+- [x] 2.1 Derive package-member and provenance types from TypeBox schemas.
+- [x] 2.2 Admit exact package blueprint members and runner assets with ordinary package-root containment.
+- [x] 2.3 Merge exact producer-source duplicates as inert and reject conflicting identities.
+- [x] 2.4 Project package provenance through resolved catalogs, checking, and Nx cache inputs.
+- [x] 2.5 Bind source-specific structure scopes to the sole project root and refuse caller redirection.
 
 ## 3. Reconcile Shared Law
 
-- [ ] 3.1 Add the provider-neutral Effect failure pattern to the `resource@1` definition.
-- [ ] 3.2 Declare the seven settled blueprint definitions in the SDK policy pack.
-- [ ] 3.3 Update Habitat authority and SDK documentation for the first active package policy set.
+- [x] 3.1 Add the provider-neutral Effect failure pattern to the `resource@1` definition.
+- [x] 3.2 Declare the six settled blueprint definitions in the SDK policy pack and leave `service` unselected.
+- [x] 3.3 Update Habitat authority and SDK documentation for the first active package policy set.
 
 ## 4. Prove Installed Behavior
 
-- [ ] 4.1 Cover valid, invalid, escaping, mismatched, duplicate, and conflicting package members in catalog behavior tests.
-- [ ] 4.2 Cover local and package provenance plus Nx workspace-input separation.
-- [ ] 4.3 Replace the installed consumer's local blueprint fixture with a package-owned blueprint and prove resolve, check, inferred targets, and repeated initialization.
+- [x] 4.1 Cover valid, invalid, escaping, mismatched, duplicate, and conflicting package members in catalog behavior tests.
+- [x] 4.2 Cover local and package provenance plus Nx workspace-input separation.
+- [x] 4.3 Replace the installed consumer's local blueprint fixture with a package-owned blueprint and prove resolve, check, inferred targets, and repeated initialization.
 - [ ] 4.4 Run focused service, SDK, CLI, Habitat policy, and repository checks.
 
 ## 5. Land And Release

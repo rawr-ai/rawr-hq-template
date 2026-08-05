@@ -33,7 +33,26 @@ policy envelope, and constructs a fresh client for each workspace binding. It
 does not own a controller, package manager, retained store, compatibility
 surface, or public implementation cohort.
 
-`habitat-pack.json` is the closed protocol-1 policy envelope. Its member array
-remains empty because this runtime version does not activate package-carried
-blueprint members. Shipping the canonical generic blueprint bytes makes them
-portable package assets without changing that admission behavior.
+`habitat-pack.json` is the closed protocol-1 policy envelope. It declares
+exactly six sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+`provider@1`, and `resource@1`. Each member points to its installed
+package-relative `dist/blueprints/<id>/blueprint.toml` definition. The shipped
+`service` authoring source is not a member until its portable source law and
+release proof are accepted; presence in `dist/blueprints` grants no authority.
+
+The selected SDK package owns each reusable definition, version, runner asset,
+and its policy-pack provenance. A repository remains the authority for its own
+`habitat.toml` instances and qualified overlays; installing the package does
+not select an instance or create an application. Template's exact tracked
+authoring copy is inert during resolution, while a different local definition
+at the same identity is rejected as drift.
+
+Each selected definition exposes only its required `project` anchor.
+Source-specific structure scopes carry blueprint-owned `src/**` relative
+paths; a caller-authored `source` binding is rejected as an unknown root role.
+
+`resource@1` includes the provider-neutral Effect failure law promoted from
+the Magic Migration evidence at commit
+`8f40bdff34dde18680352a9b91ce7b953c385942`. Only its generic Grit semantics
+ship: the Magic v2 rule manifest, baseline, consumer paths, and unrelated API,
+workflow, app, Nx, and tool overlays are not package members.
