@@ -23,8 +23,8 @@ allowed = [
 
 [[scopes]]
 name = "service-source"
-rootRole = "source"
-relativePath = "."
+rootRole = "project"
+relativePath = "src"
 kind = "directory"
 mode = "closed"
 required = [
@@ -40,8 +40,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-spine"
-rootRole = "source"
-relativePath = "service"
+rootRole = "project"
+relativePath = "src/service"
 kind = "directory"
 mode = "closed"
 required = [
@@ -64,8 +64,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-root-middleware"
-rootRole = "source"
-relativePath = "service/middleware"
+rootRole = "project"
+relativePath = "src/service/middleware"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
@@ -82,8 +82,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-modules"
-rootRole = "source"
-relativePath = "service/modules"
+rootRole = "project"
+relativePath = "src/service/modules"
 kind = "directory"
 mode = "closed"
 required = [
@@ -93,8 +93,8 @@ allowed = []
 
 [[scopes]]
 name = "service-module-shells"
-rootRole = "source"
-relativePath = "service/modules/*"
+rootRole = "project"
+relativePath = "src/service/modules/*"
 kind = "directory"
 mode = "closed"
 required = [
@@ -116,8 +116,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-module-contracts"
-rootRole = "source"
-relativePath = "service/modules/*/contract"
+rootRole = "project"
+relativePath = "src/service/modules/*/contract"
 kind = "directory"
 mode = "closed"
 required = [
@@ -132,8 +132,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-module-routers"
-rootRole = "source"
-relativePath = "service/modules/*/router"
+rootRole = "project"
+relativePath = "src/service/modules/*/router"
 kind = "directory"
 mode = "closed"
 required = [
@@ -149,8 +149,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-module-middleware"
-rootRole = "source"
-relativePath = "service/modules/*/middleware"
+rootRole = "project"
+relativePath = "src/service/modules/*/middleware"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
@@ -166,8 +166,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-root-model"
-rootRole = "source"
-relativePath = "service/model"
+rootRole = "project"
+relativePath = "src/service/model"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
@@ -187,8 +187,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-module-models"
-rootRole = "source"
-relativePath = "service/modules/*/model"
+rootRole = "project"
+relativePath = "src/service/modules/*/model"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
@@ -208,8 +208,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-root-model-kinds"
-rootRole = "source"
-relativePath = "service/model/@(dto|entities|errors|policy|ports)"
+rootRole = "project"
+relativePath = "src/service/model/@(dto|entities|errors|policy|ports)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true
@@ -225,8 +225,8 @@ forbidden = [
 
 [[scopes]]
 name = "service-module-model-kinds"
-rootRole = "source"
-relativePath = "service/modules/*/model/@(dto|entities|errors|policy|ports)"
+rootRole = "project"
+relativePath = "src/service/modules/*/model/@(dto|entities|errors|policy|ports)"
 kind = "directory"
 mode = "closed"
 allowEmpty = true

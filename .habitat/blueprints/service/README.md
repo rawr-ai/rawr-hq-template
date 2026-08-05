@@ -64,6 +64,9 @@ instance exists and the definition has no release-pack acceptance. Its current
 generic rule set is structure-only: the enforced RAWR-path-qualified v2 Grit
 construction laws remain outside the definition pending a location-independent
 recut.
+The candidate already exposes only its `project` root and binds every source
+scope through blueprint-owned `src/**` paths. That simplification prevents
+source redirection but does not promote the candidate into the policy pack.
 Release-pack acceptance waits until finite contract, operation-semantic, and
 root-execution member axes are frozen and the application resolver can reject
 unselected members. No open support, helper, runtime, fixture, or case-by-case
