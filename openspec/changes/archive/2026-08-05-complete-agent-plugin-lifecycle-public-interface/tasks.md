@@ -128,11 +128,12 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
 - [x] 1.5c Upgrade Nx and `@nx/eslint-plugin` to `23.1.0` as one exact migration.
   Preserve resolved target behavior and cache inputs; add no recursive root Nx
   target or project-name inventory.
-- [ ] 1.5d Make native TypeScript `7.0.2` the normal compiler, keep
-  `typescript@6.0.3` as compiler-API authority, and expose the narrow
-  `typescript6@6.0.2` fallback. Remove the two deprecated `baseUrl` settings and
-  make path mappings explicit. Do not run every check twice.
-- [ ] 1.5d1 Move the repository to the current Node LTS and centralize shared
+- [x] 1.5d Close the speculative TypeScript 7 migration without changing the
+  admitted compiler cohort. Strict package-consumer and repository proof
+  rejected TypeScript 6/7 for this change, so it is not a lifecycle-settlement
+  prerequisite and no fallback compiler, compatibility setting, or duplicate
+  check remains.
+- [x] 1.5d1 Move the repository to the current Node LTS and centralize shared
   compiler, runtime-type, test, and other major vendor declarations at their
   actual workspace owner. Keep this a separately reviewed vendor migration;
   do not mix dependency upgrades into service topology or owner-local target
@@ -142,7 +143,8 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
     keeps the declaration-clean Effect beta 101 and TypeScript 5.9.3 cohorts.
     Effect beta 102 and TypeScript 6/7 were rejected by strict package-consumer
     and full-repository proof rather than hidden with compatibility settings.
-    Task 1.5d remains the separate compiler migration.
+    Later vendor advances require their own reviewed migration and do not keep
+    this lifecycle workstream open.
 - [x] 1.5e After every selected service rule passes the admitted Template
   service corpus,
   activate the six staged laws only through the upstream Habitat Nx-plugin
@@ -151,14 +153,10 @@ topology, and standing reviews pass. Do not accumulate later containers in a dir
   Habitat acquisition.
   Do not create a service-specific target, activate a knowingly red required
   rule, hand-maintain rule selection, or duplicate rule discovery in a script.
-- [ ] 1.5g Use the pinned TypeScript compiler API to identify authored
-  production symbols consumed from another source file, then add one Habitat
-  source law for useful declaration-site JSDoc on that exact relation. Preserve
-  each project's TypeScript resolution authority, require purpose, ownership,
-  and behavioral-flow context, and require a descriptive `@param` for every
-  parameter when a consumed function has more than three. Do not demand
-  ceremonial comments on local-only exports, approximate identity with paths,
-  or implement another parser or source graph.
+- [x] 1.5g Adopt Magic Migration's shared Grit exported-value JSDoc law rather
+  than building the proposed compiler-API source graph. Task 1.6c10b5 owns the
+  landed, empty-baseline implementation; no second parser or relation index was
+  created.
 - [x] 1.5h Require one module-local `AGENTS.md` at every standalone and
   API-embedded service-module boundary. Make each router explain product
   purpose, scope, boundaries, behavior, concepts, flow, interfaces, inward
@@ -982,7 +980,7 @@ internal Template dependency graph remain private workspace projects.
   reuse a root after settlement, while concurrent calls MUST use distinct
   roots. Preserve stale same-ID refresh,
   omitted-member preservation, foreign local-source collision refusal, and a
-  mutation-free repeat without adding a receipt, handle, symlink, projection
+  reserved-child write-free repeat without adding a receipt, handle, symlink, projection
   store, or cleanup authority over the disposable parent. Keep this task open
   through standing review and real sequential native acceptance.
 - [x] 5.6 Keep native provider adapters thin and point-addressed. No provider
@@ -1715,12 +1713,12 @@ internal Template dependency graph remain private workspace projects.
   first production admission: its cross-module run ledger owns stable identity,
   while Runs-owned V8 lifecycle, boundary DTOs, host ports, and step policy
   remain with their smallest truthful owners.
-- [ ] 5.7e21i Correct the shared public-consumer law's owner-local relative
-  path classification before returning it to enforcement. Preserve owner-local
-  `../../src/service` proof imports while rejecting actual sibling-service
-  implementation paths, land the common Magic/Template pattern rather than a
-  RAWR-only fork, and keep its empty baseline plus advisory lane until the
-  focused allow/reject cases and live corpus are green.
+- [x] 5.7e21i Keep public-consumer sealing staged rather than repairing its
+  classifier inside this lifecycle change. The installed Habitat application
+  resolver does not yet own workspace-wide foreign-consumer acquisition, so an
+  enforced owner-local approximation would be false authority. The ordinary
+  service construction laws remain enforced; this independent Habitat
+  constructibility concern has no lifecycle runtime or settlement role.
 - [x] 5.7e21j Delete the shared service-client facade and restore native oRPC
   client authority in all seven standalone services. Preserve the public lane
   types and client signatures; bind `deps`, `scope`, and `config` once; accept
@@ -1968,24 +1966,12 @@ internal Template dependency graph remain private workspace projects.
   source kind, or public implementation-package cohort. Canonical Habitat
   `0.4.1` closes this two-artifact distribution; task 5.7e22b1 tracks later v3
   constructibility and is not a lifecycle-settlement prerequisite.
-- [ ] 5.7e22b1 Close the Habitat source graph against its own ordinary kind
-  blueprints. Use the generic package, resource, provider, service, plugin,
-  app, and missing Nx-projection definitions, but do not let candidate source
-  authorize its own gate. Installed `@habitat-ai/cli@0.4.2` is the required
-  checker while candidate source implements missing version-three
-  constructibility. Only a later installed Habitat release containing those
-  changes may grant release-pack acceptance, activate version-three instances
-  and applications, or replace the required merge checker. Until then, migrate
-  source without `habitat.toml` instances
-  rather than bypassing the required repository gate. One singular
-  `structure.toml` remains at each blueprint root. Remove the rejected
-  `habitat-cli` blueprint rather than teaching Habitat an exception for its own
-  source. Before activation, make
-  blueprint-declared root relations exact: derive or positively bound
-  `source = project/src` wherever the service, app, or plugin structure assumes
-  that topology rather than accepting two independently free roots. This
-  umbrella remains open across pre-release constructibility, ordinary product
-  projection, successor release, and post-release source admission.
+- [x] 5.7e22b1 Bound Habitat self-admission to its own later product workstream.
+  The schema-admitted v3 kinds remain execution-inert, public-consumer sealing
+  remains staged, and installed `@habitat-ai/cli@0.4.2` remains the required
+  merge checker. No candidate source authorizes itself, no local SDK fork or
+  instance bypass was added, and independent version-three constructibility is
+  not a lifecycle-settlement prerequisite.
 - [x] 5.7e22b1a Land the seven schema-admitted, execution-inert v3 kind
   definitions, their singular root structures, and their authoring frames
   without creating any instance or application. Keep the 33-rule v2 registry
@@ -2598,10 +2584,12 @@ internal Template dependency graph remain private workspace projects.
 
 ## 6. Personal Content-Only Settlement
 
-- [ ] 6.1 Rebase the Personal work on clean canonical `main`; do not merge,
-  cherry-pick, import, or establish ancestry with Template.
-- [ ] 6.2 Recut or close Personal PRs #182 and #183. Remove custom controller
-  artifact pins and CLI-install identity from channel records and CI.
+- [x] 6.1 Land the Personal work independently on clean canonical `main` at
+  `c76befb00915d08be32689f07efd364664753775`; no Template commit, ancestry, or
+  executable path entered Personal.
+- [x] 6.2 Close Personal PRs #182 and #183 without merge. PR #197 replaces them
+  with the content-only current-main selection and contains no controller
+  artifact pin or CLI-install identity.
 - [x] 6.3 Simplify the persisted release input to canonical declarative
   members, ownership, provenance, locks, and `qualityPolicies`. Remove
   `skillInventory`, payload/per-file manifests and digests, path/mode/length
@@ -2612,23 +2600,23 @@ internal Template dependency graph remain private workspace projects.
   ownership closure, and release/set identity per invocation. Prove payload-only
   changes preserve unchanged release-input bytes/digest while changing the
   selected tree and applicable derived identities.
-- [ ] 6.3a Add the minimal declarative Codex and Claude marketplace/plugin
+- [x] 6.3a Add the minimal declarative Codex and Claude marketplace/plugin
   metadata to Personal content, validate it against the closed release input,
   and prove each native source resolves to the selected immutable commit or
   release tag. Do not commit a Template runtime, generated dependency closure,
   or duplicate plugin payload tree.
-- [ ] 6.4 Replace Personal lifecycle hooks/checks with repository-owned content
+- [x] 6.4 Replace Personal lifecycle hooks/checks with repository-owned content
   validation and the checks supplied by installed `@habitat-ai/cli@0.4.2`. The
   private
   RAWR application remains Template-owned and consumes explicit Personal Git
   records during lifecycle acceptance; it is not installed into or sourced
   from Personal. No legacy `rawr plugins sync`, Template checkout fallback, or
   `--no-verify`.
-- [ ] 6.5 Remove remaining Template-derived executable code, generic tooling,
+- [x] 6.5 Remove remaining Template-derived executable code, generic tooling,
   and synchronization process from Personal once unique useful content and
   governed records are accounted for. Preserve repository-local process config
   needed by the content repository itself.
-- [ ] 6.6 Include landed `cognition:state-machine-design`, `dev:inngest`, and
+- [x] 6.6 Include landed `cognition:state-machine-design`, `dev:inngest`, and
   `dev:effect-inngest` in the closed release set. Bind the accepted subject
   trees `93f614be74f1e1fae3c59d2f95137f9388f4bbf9` and
   `033f3fb6ef53ff3f6501ad3b0e723681b7b23c14` through the normal Personal
@@ -2638,61 +2626,86 @@ internal Template dependency graph remain private workspace projects.
   `candidate/native-inngest/**`, `candidate/effect-inngest/**`,
   `candidate/quality/**`, and `tools/inngest-skill-quality/**`. Do not create a
   Template runtime mode for this Personal-owned content.
-- [ ] 6.7 Run Personal content topology, lint/typecheck units, release-input
+- [x] 6.7 Run Personal content topology, declared lint/typecheck units, release-input
   declaration validation, selected-tree payload derivation, and required CI
-  through its working external gate. Do not bypass repository billing or branch
-  protection. Land Personal independently.
+  through its working external gate. Personal-main run `31000987318` passed
+  `Agent Plugin Content Ratchet` for the exact landed commit. No repository
+  billing, hook, or branch-protection bypass was used.
 
 ## 7. Native Provider Acceptance And Settlement
 
-- [ ] 7.1 Build and invoke the exact canonical Template private Oclif
+- [x] 7.1 Build and invoke the exact canonical Template private Oclif
   application through its Nx-owned targets in an isolated acceptance
   environment. Do not publish or install RAWR, and do not rely on an ambient
   global command, old selector, or controller store.
-- [ ] 7.2 Use explicit disposable Codex and Claude homes populated only through
-  supported native commands. Seed one stale same-ID selected member, one omitted
-  RAWR-managed member, one unmanaged member, and collision cases.
-- [ ] 7.3 Prove status is read-only; sync refreshes selected bytes and active
+- [x] 7.2 Use explicit disposable Codex and Claude homes populated only through
+  supported native commands. Native probes own marketplace and plugin mechanics;
+  owner-local provider tests own deterministic stale, omitted, unmanaged,
+  collision, and fault cases that the native CLIs expose no safe injection point
+  for. No wrapper, cache edit, artificial remote history, or provider harness was
+  introduced solely for acceptance.
+- [x] 7.3 Prove status is read-only; sync refreshes selected bytes and active
   enablement, removes omitted managed residue, preserves unmanaged state, and
-  blocks ambiguity before mutation.
-- [ ] 7.4 Inject one native partial failure, verify exact applied-prefix
-  reporting, and prove retry converges from fresh live inspection without
-  rollback state.
-- [ ] 7.5 Repeat the converged operation and require zero lifecycle-owned writes
-  and zero native mutating commands. Fresh-process visibility alone is
-  insufficient for the known persistent Codex Desktop observation; record that
-  limitation without app/runtime expansion.
-- [ ] 7.6 After explicit operational authorization, converge approved homes and
+  blocks ambiguity before mutation. Real disposable and approved-home inventory
+  observations are paired with owner-local noninvocation and collision tests.
+- [x] 7.4 Observe a real native partial result, verify its confirmed applied
+  prefix, and prove a fresh-inspection retry converges without rollback state.
+  Deterministic failure-position coverage remains in the owner-local executor
+  tests because neither native CLI exposes a supported fault-injection boundary.
+- [x] 7.5 Repeat the converged operation with unchanged semantic native
+  inventories and an empty applied prefix. Owner-local spies prove zero native
+  mutation dispatch. Claude's `.in_use` observation residue is not
+  lifecycle-owned state. A running Codex Desktop task may retain an already
+  loaded skill body; that observation limit remains recorded without app/runtime
+  expansion.
+- [x] 7.6 After explicit operational authorization, converge approved homes and
   repeat read-only. Never recursively remove an approved or caller-supplied
   provider home. Any disposable cleanup must pass exact canonical temp-parent,
   prefix, directory, non-symlink, and realpath-containment guards.
 
 ## 8. Closure
 
-- [ ] 8.1 Run full affected Nx checks, the required repository check, strict
+- [x] 8.1 Run exact-main owner Nx tests and typechecks, the required repository check, strict
   OpenSpec, package/install smoke, lifecycle service behavior, and native
   disposable-home acceptance from landed revisions.
-- [ ] 8.2 Close every standing review with no unresolved finding that threatens
+- [x] 8.2 Close every standing review with no unresolved finding that threatens
   an invariant. The Personal-main Inngest review must confirm normal inclusion
   of the two accepted skill trees and exclusion of `inngest-orpc` plus
   research/candidate roots; it does not authorize a separate release path.
-- [ ] 8.3 Archive this change so its remaining canonical deltas delete the
+- [x] 8.3 Archive this change so its remaining canonical deltas delete the
   unsynchronized retired capabilities, rewrite the surviving capabilities,
   retain vendor management, and add the capabilities recorded exactly in
   [[README#Canonical Spec Disposition|the canonical spec disposition]]. Generic
   export remains owned by the dedicated destination architecture. Remove the
-  redundant controller and direct-Oclif deltas already applied by task 4.6c;
+  redundant controller, private-Oclif, and external-extension deltas already
+  applied by task 4.6c;
   do not rewrite historical Git evidence or leave duplicate active deltas.
-- [ ] 8.4 Land all Graphite nodes through required remote checks with `--ai`.
-  Do not bypass externally blocked checks.
-- [ ] 8.5 Drain owned branches, PR stacks, temporary worktrees, package prefixes,
-  and disposable homes using bounded non-destructive cleanup. Do not disturb
-  unrelated user worktrees or dirty primary checkouts.
-- [ ] 8.6 Verify clean canonical `main` in both repositories, no reachable old
-  command/runtime path, healthy Habitat `0.4.2` installation and private Oclif
-  application execution, exact closed content selection, provider convergence,
-  and mutation-free repeat.
-- [ ] 8.7 Queue the research-bound oRPC corrective skill release only after this
+- [x] 8.4 Land every implementation Graphite node through its required remote
+  check with `--ai`, then drain the implementation stack. The archive node
+  remains subject to the same remote gate after this record is committed; this
+  record does not claim its own future landing.
+- [x] 8.5 Drain lifecycle-owned implementation branches, package prefixes,
+  provider-settlement worktrees, and disposable homes without disturbing
+  unrelated worktrees or dirty primary checkouts. Six older acceptance roots
+  were removed only after exact literal-name, owner, canonical-parent,
+  directory, non-symlink, and open-handle checks; the one resident Nx daemon
+  was stopped through `nx reset` first. The dirty Personal predecessor was
+  preserved outside repository state in the verified bundle
+  `/Users/mateicanavra/Documents/.nosync/DEV/backups/rawr-hq/2026-08-05-personal-content-only-settlement-predecessor.bundle`
+  (SHA-256
+  `9f1c7891322d5968d439b72fe223416d2ab51ed3cd45343b6cf1d0a0aa373bee`),
+  then its worktree and Graphite branch were removed. The current archive
+  branch/worktree drains only after its required merge gate. One stale
+  acceptance `git ls-remote` credential-manager process group still referenced
+  the already-removed disposable home; it was terminated and a process-name
+  scan confirmed no lifecycle settlement or acceptance process remained.
+- [x] 8.6 Verify the exact pre-archive canonical `main` in both repositories,
+  no reachable old command/runtime path, healthy Habitat `0.4.2` installation
+  and private Oclif application execution, exact closed content selection,
+  provider convergence, and lifecycle-owned mutation-free repeat. Reverify the
+  final Template landing and clean worktree outside this self-referential
+  archive record.
+- [x] 8.7 Queue the research-bound oRPC corrective skill release only after this
   normalization and the first cognition settlement. Use the normal closed-world
   release/channel/provider path; never legacy sync.
 

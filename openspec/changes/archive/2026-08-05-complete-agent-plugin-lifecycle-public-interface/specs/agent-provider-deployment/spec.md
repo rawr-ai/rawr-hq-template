@@ -4,8 +4,6 @@
 - TO: `### Requirement: Native replacement precedes omitted-member cleanup`
 - FROM: `### Requirement: Ownership proof bounds all native retirement`
 - TO: `### Requirement: Verified native provenance bounds all retirement`
-- FROM: `### Requirement: Native state does not depend on a content checkout`
-- TO: `### Requirement: Native state does not depend on mutable checkout bytes`
 
 ## MODIFIED Requirements
 
@@ -81,18 +79,27 @@ For a Git marketplace, the native association MUST include the exact marketplace
 identity and canonical repository URL. A provider-reported revision MUST equal
 the unqualified release tag projected from the verified current-main
 `sourceRef`; the selected commit and tree remain the exact content authority.
-The selected tag MUST belong to a published release whose repository owner
-enforces release immutability, so the native selector cannot move during or
-after convergence.
-Immediately before a native mutation, the controller MUST reobserve that remote
-tag and refuse mutation unless it still resolves to the selected commit and
-tree. The native provider MAY then use the tag as its cloneable selector and
+Before approved-home settlement is authorized, the governed operational gate
+MUST verify that the selected tag belongs to a published release and that the
+repository owner enforces release immutability. This external precondition is
+settlement evidence; the lifecycle operation MUST NOT infer, persist, or replay
+it as another channel authority.
+Immediately before a native mutation, the lifecycle operation MUST reobserve
+that remote tag and refuse mutation unless it still resolves to the selected
+commit and tree. The native provider MAY then use the tag as its cloneable selector and
 MUST still verify selected member files from live installed state.
 When the provider does not expose a revision, the same-home repository
 association MAY establish marketplace ownership only while the selected members
 are independently verified from their declared files before omitted-member
 retirement. An absent revision never excuses a conflicting URL, ambiguous
 marketplace observation, or selected-file mismatch.
+
+#### Scenario: Immutable-release admission remains external
+- **WHEN** approved-home sync is authorized for a selected Git tag
+- **THEN** operator evidence verifies the published immutable release before
+  invocation
+- **AND** the lifecycle operation reobserves the exact tag commit and tree
+  without creating another release or channel record
 
 #### Scenario: Proven omitted member retires
 - **WHEN** the reviewed complete set omits a live selector associated with the
@@ -127,13 +134,15 @@ convergence.
 
 A converged repeat MUST re-read its desired selection, selected native content,
 capabilities, live native inventory, and provider-visible state. It MUST perform
-zero native mutation and MUST NOT publish or update a receipt, sidecar, evidence
-artifact, cache, export record, undo state, or projection.
+zero lifecycle-owned writes and dispatch zero native mutating commands. It MUST
+NOT publish or update a receipt, sidecar, evidence artifact, cache, export
+record, undo state, or projection. Provider-native observation residue produced
+by those reads remains outside lifecycle-owned state.
 
 #### Scenario: Second canonical sync makes no changes
 - **WHEN** canonical sync repeats with unchanged desired and live state
-- **THEN** it returns `Converged` after positive reads with every
-  lifecycle and native mutation counter at zero
+- **THEN** it returns `Converged` after positive reads with every lifecycle
+  write and native mutating-command counter at zero
 
 ### Requirement: Multi-home results preserve partial truth and isolation
 

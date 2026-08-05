@@ -17,7 +17,7 @@ They do not contribute product names or instance inventories to RAWR
 HQ-Template's generic blueprints.
 
 This corpus is evidence for
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README|the active OpenSpec]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 It is not a second plan or normative design.
 
 ## Authority Boundary
@@ -90,7 +90,7 @@ catalog schema-admits them, but no v3 instance or resolved application exists
 and none is accepted into a released policy pack. The byte-stable 33-rule v2
 registry remains the sole execution authority.
 This is the definition-only checkpoint recorded in
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|the active execution record]] and
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|the archived execution record]] and
 [[.habitat/AUTHORITY-ONTOLOGY#Current Realization|the authority ontology]].
 
 ## Kind Rows
@@ -185,4 +185,4 @@ plugin. The pack may include the six service-construction laws only after
 source migration and a green complete corpus. Public-consumer sealing
 additionally waits for the workspace-wide foreign-consumer acquisition
 recorded in
-[[openspec/changes/complete-agent-plugin-lifecycle-public-interface/HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF|the Habitat capability handoff]].
+[[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/HABITAT_BLUEPRINT_VARIANT_CAPABILITY_HANDOFF|the Habitat capability handoff]].

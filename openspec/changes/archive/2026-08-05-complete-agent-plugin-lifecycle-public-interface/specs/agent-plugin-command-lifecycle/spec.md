@@ -1,28 +1,4 @@
-## RENAMED Requirements
-
-- FROM: `### Requirement: Controller and repository identities never collapse`
-- TO: `### Requirement: CLI installation and content repository identities remain separate`
-
 ## MODIFIED Requirements
-
-### Requirement: Curated lifecycle has one exact qualified command ontology
-
-The private Template Oclif application MUST expose curated lifecycle only as
-`rawr agent plugins check|create|status vendors|update vendors|test|package|sync|status`.
-Every command and nested topic MUST be a declared first-party Oclif command. Bare
-`rawr plugins`, root `rawr undo`, `rawr agent sync`, retired
-`rawr agent plugins retire`, retired `rawr agent plugins attest-promotion`,
-retired `rawr agent plugins export`, retired `rawr agent plugins undo`, and any
-alias or forwarding route MUST NOT expose curated lifecycle behavior.
-
-#### Scenario: Discovery separates external and curated plugins
-- **WHEN** command, topic, alias, hidden-alias, help, and manifest discovery are
-  enumerated
-- **THEN** the exact qualified curated family appears only below
-  `rawr agent plugins`
-- **AND** bare `rawr plugins` is owned directly by `@oclif/plugin-plugins`,
-  contains no curated lifecycle behavior, and every retired lifecycle command
-  is absent everywhere
 
 ### Requirement: CLI parsing preserves closed procedure requests
 
@@ -69,15 +45,17 @@ Qualified status MUST preserve every canonical repository/provider
 classification and exit `0` only when every selected target is `Converged`, `1`
 for a valid observed non-converged state, and `2` for invalid input or authority
 binding. A converged canonical operation MAY inspect live state but MUST NOT
-  publish lifecycle state, write receipts/ledgers/capsules/outputs, invoke
-native mutation, or change bytes or metadata.
+publish lifecycle state, write receipts/ledgers/capsules/outputs, invoke a
+native mutating command, or change lifecycle-owned managed content or
+configuration. Provider-native observation residue outside the lifecycle
+mutation surface MAY change without becoming lifecycle state.
 
 #### Scenario: Repeated convergence stutters
 - **WHEN** a qualified canonical operation is repeated after its exact desired
   state is already visible and verified
 - **THEN** it returns the same converged identity after live reads
-- **AND** every lifecycle/native mutation counter is zero and tracked bytes and
-  mtimes are unchanged
+- **AND** every lifecycle write and native mutating-command counter is zero and
+  the managed semantic inventory is unchanged
 
 #### Scenario: Selection failure and provider drift use distinct exits
 - **WHEN** status observes `Blocked` with a selection issue versus a valid selected target

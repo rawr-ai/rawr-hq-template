@@ -1,37 +1,75 @@
 # mixed-plugin-lifecycle-retirement Specification
 
 ## Purpose
-TBD - created by archiving change retire-mixed-plugin-lifecycle. Update Purpose after archive.
+Make obsolete mixed lifecycle owners, commands, flags, and state unreachable
+while preserving retained behavior under qualified owners.
 ## Requirements
 ### Requirement: The mixed executable owners are absent
-`@rawr/plugin-plugins`, `@rawr/agent-plugin-release`, `services/agent-config-sync`, `packages/agent-config-sync-node`, the five peer services `@rawr/agent-plugin-build|export|packaging|promotion` and `@rawr/agent-provider-deployment`, HQ Ops plugin-catalog/plugin-install/plugin-lifecycle and workspace-plugin-catalog modules, and every active import, package dependency, project, command, router, contract, entity, repository, test, hook, or guard that requires their existence MUST be deleted. Retained C2-C3 behavior MUST live only in the domain modules of `@rawr/agent-plugin-lifecycle`, except controller-owned undo. No renamed aggregate, wrapper, dormant copy, forwarding package, or compatibility facade may replace them.
+
+The repository MUST contain none of `@rawr/plugin-plugins`,
+`@rawr/agent-plugin-release`, the former mixed sync service/package, the five
+peer lifecycle services, HQ Ops plugin-lifecycle and workspace-plugin-catalog
+modules, or an active import, dependency, project, command, router, contract,
+repository, test, hook, or guard that requires them. Retained behavior MUST live
+only in the five bounded modules of
+`@habitat-ai/rawr-agent-plugin-lifecycle` or in the separately owned `create`
+source-authoring command. No renamed aggregate,
+controller application, wrapper, dormant copy, forwarding package, or
+compatibility facade may replace them.
 
 #### Scenario: Repository inventory has no mixed owner
-- **WHEN** source, package manifests, lock data, Nx projects, generated command inventory, tests, hooks, docs, and active guards are scanned semantically
+- **WHEN** source, manifests, Nx projects, generated commands, tests, hooks,
+  docs, and active guards are scanned semantically
 - **THEN** no mixed owner or import is reachable
-- **AND** every retained lifecycle behavior maps to exactly one typed procedure and one qualified state boundary inside the lifecycle service, or the separate controller-owned undo application
+- **AND** every retained lifecycle behavior maps to one typed procedure and its
+  qualified Git, provider, vendor, or explicit package-output boundary
 
 ### Requirement: Legacy commands, flags, and state claims are unreachable
-The system MUST reject or omit `rawr agent sync`, root `rawr undo`, every removed `rawr plugins` lifecycle/export/provider/doctor/CLI-install/improve/sweep/converge command, and the legacy agent/scope/source/repair/provider/install/projection/partial/Cowork flag bags. Old environment switches, source registries, persisted enablement, aggregate health, workspace undo, worktree marketplace, and source-path provider claims MUST NOT influence supported behavior.
+
+The system MUST reject or omit `rawr agent sync`, root `rawr undo`, every
+removed `rawr plugins` lifecycle/export/provider/doctor/CLI-install/improve/
+sweep/converge command, and the legacy flag bags. Old environment switches,
+source registries, persisted enablement, aggregate health, workspace undo,
+worktree marketplace, controller identity, artifact handles, and source-path
+provider claims MUST NOT influence supported behavior.
 
 #### Scenario: No compatibility path survives
-- **WHEN** each deleted ID, topic, alias, hidden alias, flag, environment variable, state key, and historical invocation shape is exercised
-- **THEN** it is undiscoverable or rejects before every lifecycle and state mutation port
-- **AND** no message or documentation directs the operator to a deprecated forwarding route
+- **WHEN** a deleted command, alias, flag, environment variable, state key, or
+  historical invocation shape is exercised
+- **THEN** it is undiscoverable or rejects before every lifecycle and native
+  mutation port
+- **AND** no operator guidance directs users to a forwarding route
 
 ### Requirement: Distribution and state authorities remain disjoint
-Automatic install reconciliation, arbitrary content source registries, direct projection fallback, toolkit provider units, toolkit composition aliases, and synthetic toolkit `tools` distribution ownership MUST be absent. Curated content may be distributed only as an explicit release-set member owned by one agent plugin. Repository, artifact, provider, export, Oclif, controller, app, and undo status MUST remain separate read models and MUST NOT be combined into an aggregate repair authority.
+
+The system MUST keep desired content, installed provider state, package output,
+and external Oclif extension state disjoint. Automatic source-registry
+reconciliation, direct projection fallback, toolkit provider units, composition
+aliases, and synthetic toolkit distribution ownership MUST be absent. Reviewed Personal Git records select desired curated
+content; one derived ownership index assigns each skill to one member; explicit
+native provider homes own installed truth; explicit package outputs own only
+their bytes; Oclif owns external CLI extension state. These views MUST NOT be
+combined into an aggregate repair authority or persisted through a parallel
+lifecycle store.
 
 #### Scenario: Equal bytes do not create a second owner
-- **WHEN** toolkit-derived and curated-agent paths contain equal guidance bytes or matching names
-- **THEN** no toolkit/composition/provider alias becomes a release member or cleanup authority
-- **AND** only the explicit curated ownership index determines distribution
+- **WHEN** toolkit-derived and curated-agent paths contain equal guidance bytes
+  or matching names
+- **THEN** no toolkit, composition, or provider alias becomes a release member
+  or cleanup authority
+- **AND** only the closed derived ownership index determines distribution
 
 ### Requirement: Legacy app mounting remains retired without replacement
-C5 MUST preserve the absence of `rawr plugins web`, persisted plugin enablement, web plugin scans, mounting orchestration, and app-composition command or state implementations. It MUST NOT add `AppDefinition` editing, runtime compilation, provisioning, process runtime, adapter, harness, or runtime-catalog behavior. Future app/runtime realization belongs only to the dedicated canonical architecture migration.
+
+The change MUST preserve the absence of `rawr plugins web`, persisted app-plugin
+enablement, web-plugin scans, mounting orchestration, and app-composition command
+or state implementations. It MUST NOT add `AppDefinition` editing, runtime
+compilation, provisioning, process runtime, adapter, harness, or runtime-catalog
+behavior. Future app/runtime realization belongs only to the dedicated canonical
+architecture migration.
 
 #### Scenario: Lifecycle cutover does not build an app engine
-- **WHEN** the C5 diff and dependency graph are reviewed
-- **THEN** no new app/web composition, mounting, realization, or runtime-observation source path or dependency exists
-- **AND** qualified agent lifecycle commands operate independently of app composition
-
+- **WHEN** the implementation and dependency graph are reviewed
+- **THEN** no new app/web composition, mounting, realization, or runtime
+  observation path exists
+- **AND** agent lifecycle commands operate independently of app composition

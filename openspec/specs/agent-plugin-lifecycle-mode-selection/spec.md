@@ -1,58 +1,79 @@
 # agent-plugin-lifecycle-mode-selection Specification
 
 ## Purpose
-TBD - created by archiving change establish-agent-plugin-native-convergence. Update Purpose after archive.
+Define the closed targeted-test, complete-test, and canonical-sync modes,
+including each mode's authority, lifetime, mutation, and result boundaries.
 ## Requirements
 ### Requirement: Exactly one lifecycle desired-state mode
-The system MUST parse every provider-test or convergence request into `ProviderDeploymentRequest = TargetedTest | CompleteTest | CanonicalSync` before invoking any Git, artifact, provider, receipt, capsule, export, Oclif, or record port. Fields belonging to another mode MUST reject rather than be ignored.
+
+The system MUST parse every provider request as exactly `TargetedTest`,
+`CompleteTest`, or `CanonicalSync` before Git, provider, Oclif, or
+record access. Fields belonging to another mode MUST reject rather than be
+ignored. No mode may accept a receipt, target sidecar, evidence handle, capsule,
+export destination, promotion, or CLI-install identity.
 
 #### Scenario: Pairwise mixed modes reject without calls
-- **WHEN** any pairwise combination of targeted release refs, a complete-set ref, a canonical channel, acceptance override, or promotion override is supplied
+- **WHEN** a request mixes a targeted member selection, an explicit complete
+  selection, or the canonical channel
 - **THEN** parsing rejects before every observable port call or state mutation
 
 #### Scenario: One legal mode is selected
-- **WHEN** a request supplies exactly the required fields for one mode and no foreign fields
-- **THEN** parsing returns the corresponding discriminated mode with no optional alternate authority
+- **WHEN** a request supplies exactly the required fields for one mode
+- **THEN** parsing returns that discriminated request with no optional alternate
+  authority
 
 ### Requirement: Targeted test mode is member-scoped
-Targeted test mode MUST require one or more explicit immutable release artifact refs, one or more explicit provider targets, and an evaluation profile. It MUST NOT claim complete-set convergence, authorize channel state, or retire an omitted member.
+
+Targeted test mode MUST require one explicit immutable Git selection, a
+nonempty duplicate-free member selection from that closed input, explicit
+disposable provider homes beneath one explicit non-root disposable root. The
+caller MUST give the live call exclusive use of that root. A later call MAY
+reuse it only after the preceding call settles; overlapping calls MUST use
+distinct roots. The operation MUST derive the selected release state in memory,
+preserve omitted members, and return bounded inline verification facts without
+persisting a receipt, identity sidecar, evidence handle, artifact, or channel
+claim.
 
 #### Scenario: Targeted test preserves omitted members
-- **WHEN** selected release members are tested in a provider home that contains another managed member
-- **THEN** the plan contains no retirement or complete-channel claim for the omitted member
+- **WHEN** selected members are tested in a disposable home containing another
+  managed member
+- **THEN** no native retirement or complete-channel claim is produced for the
+  omitted member
 
 ### Requirement: Complete test mode is set-scoped but non-authorizing
-Complete test mode MUST require exactly one complete release-set artifact ref, one or more explicit provider targets, and an evaluation profile. It MAY emit complete mechanical evidence, but MUST NOT author an accepted outcome, promotion attestation, or channel record.
 
-#### Scenario: Complete test emits evidence only
-- **WHEN** every member and provider-visible projection verifies in all selected test targets
-- **THEN** the result contains digest-bound mechanical evidence and no accepted or promoted lifecycle state
+Complete test mode MUST require one explicit immutable Git selection, explicit
+provider homes beneath one explicit non-root disposable root. The caller MUST
+give the live call exclusive use of that root. A later call MAY reuse it only
+after the preceding call settles; overlapping calls MUST use distinct roots.
+The operation MUST derive the exact closed set in memory, return bounded inline
+verification facts, and MUST NOT persist a receipt, sidecar, custom evidence
+artifact, release artifact, accepted outcome, promotion, or channel record.
+
+#### Scenario: Complete test verifies the set
+- **WHEN** every selected member and declared provider-visible file verifies
+- **THEN** the result reports exact per-target verification facts with no
+  accepted, promoted, or canonical state
 
 ### Requirement: Canonical sync resolves fixed repository authority
-`CanonicalSync` MUST require the fixed policy-enumerated `current-main` channel, an explicit read-only content/record Git locator, and one or more explicit provider targets. It MUST reject caller-supplied release, set, acceptance, projection, promotion, or receipt overrides.
+
+`CanonicalSync` MUST require the fixed `current-main` channel, one explicit
+read-only content Git locator, and explicit provider homes. It MUST reject
+caller-supplied release, set, acceptance, evidence, projection, promotion,
+receipt, sidecar, or alternate-channel overrides. Governance is the sole
+producer of `CanonicalChannelSelection`.
 
 #### Scenario: Canonical authority is resolved rather than overridden
-- **WHEN** canonical mode is parsed with `current-main`, an explicit Git locator, and explicit homes
-- **THEN** the release set, acceptance, projections, and promotion facts are obtainable only through the governed channel resolver
+- **WHEN** canonical mode receives `current-main`, an explicit Git locator, and
+  explicit homes
+- **THEN** one resolved selection supplies the exact content identity from which
+  the private Template application derives the complete set and selected native
+  marketplace content
 
-#### Scenario: Canonical override rejects
-- **WHEN** canonical mode also supplies a release ref, acceptance path, evidence object, projection digest, or promotion attestation
-- **THEN** parsing rejects before reading the canonical repository or a provider target
-
-### Requirement: Status and retirement use separate exact requests
-Read-only status MUST use `CanonicalStatusRequest` containing only the fixed channel, explicit Git locator, and selected targets. Explicit retirement MUST use `ManagedRetireRequest` containing one curated plugin ID and one or more explicit selected targets. Neither request MUST be represented as a fourth deployment mode or accept release, set, acceptance, projection, promotion, channel-override, receipt, or generic path inputs.
-
-#### Scenario: Canonical status remains read-only and exact
-- **WHEN** status receives its fixed channel, Git locator, and selected targets with no foreign field
-- **THEN** it parses as `CanonicalStatusRequest` and cannot be dispatched to a mutating deployment operation
-
-#### Scenario: Managed retire is owner-scoped
-- **WHEN** retirement receives a curated plugin ID and one or more canonical provider targets
-- **THEN** it parses as `ManagedRetireRequest` whose application must obtain ownership independently from every target's live receipt and preserve per-target partial truth
-
-#### Scenario: Cross-operation fields reject
-- **WHEN** status or retire receives a deployment selector, artifact/evidence override, alternate channel, receipt object, destination, or filesystem path
-- **THEN** parsing rejects before every observable port call
+#### Scenario: Retired authority override rejects
+- **WHEN** canonical mode also supplies a release ref, evidence object,
+  projection digest, promotion, receipt, or CLI-install identity
+- **THEN** parsing rejects before canonical Git or provider access
 
 ### Requirement: Channel and target syntax is closed and path-safe
 Channel input MUST be an exact enumerated identifier and MUST NOT be interpreted as a path or ref expression. Every provider target MUST pair a supported provider ID with a canonical absolute home. Targets MUST be distinct after canonicalization and sorted deterministically.
@@ -65,3 +86,20 @@ Channel input MUST be an exact enumerated identifier and MUST NOT be interpreted
 - **WHEN** a target has an unsupported provider, relative/noncanonical home, or duplicates another canonical provider-home pair
 - **THEN** parsing rejects the entire request before target inspection
 
+### Requirement: Status uses one separate exact request
+
+Read-only status MUST use `CanonicalStatusRequest` containing only the fixed
+channel, explicit Git locator, and selected homes. `ManagedRetireRequest` and
+its procedure/command MUST be absent. Status MUST NOT accept deployment,
+artifact/evidence override, alternate channel, receipt, sidecar, destination,
+or generic path inputs.
+
+#### Scenario: Canonical status remains read-only and exact
+- **WHEN** status receives its exact fields and no foreign input
+- **THEN** it parses as `CanonicalStatusRequest` and cannot dispatch a mutating
+  provider operation
+
+#### Scenario: Retired explicit cleanup is requested
+- **WHEN** a caller supplies `rawr agent plugins retire`, its procedure, or its
+  request shape
+- **THEN** discovery or parsing rejects before provider access

@@ -1,8 +1,3 @@
-## RENAMED Requirements
-
-- FROM: `### Requirement: Artifact creation has exactly three qualified command owners (B04, B05, B31)`
-- TO: `### Requirement: Source creation has exactly three qualified command owners (B04, B05, B31)`
-
 ## MODIFIED Requirements
 
 ### Requirement: Source creation has exactly three qualified command owners (B04, B05, B31)
