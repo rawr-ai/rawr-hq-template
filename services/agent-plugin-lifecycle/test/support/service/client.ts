@@ -53,7 +53,7 @@ export function unavailableContentWorkspace(): ContentWorkspaceResource<never> {
     inspectWorkspace: () => unavailableEffect("vendor workspace inspection"),
     readFile: () => unavailableEffect("vendor workspace file read"),
     readTree: () => unavailableEffect("vendor workspace tree read"),
-    materializeTemporaryTree: () => unavailableEffect("temporary content tree materialization"),
+    materializeContentTree: () => unavailableEffect("disposable content tree materialization"),
     capture: () => unavailableEffect("vendor preimage capture"),
     apply: () => unavailableEffect("vendor authoring"),
     restore: () => unavailableEffect("vendor restoration"),

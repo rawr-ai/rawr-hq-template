@@ -39,9 +39,21 @@
 - Disposable test convergence never retires unrelated installed content;
   canonical sync may retire omitted targets according to its declared policy.
 - Disposable tests materialize one complete provider-native marketplace from
-  exact Git bytes below the caller's disposable root. The content-workspace
-  resource owns that scoped filesystem lifetime; no checkout path, receipt,
-  handle, or persisted projection becomes native desired state.
+  exact Git bytes at one reserved child below the caller's disposable root.
+  The child remains stable for that disposable root's lifetime so native
+  providers can inspect and refresh it across calls. No checkout path,
+  receipt, handle, or canonical projection becomes native desired state.
+- The content checkout, reserved marketplace child, and every provider home
+  are pairwise disjoint. Admission refuses equal, ancestor, and descendant
+  relationships before Git inspection, materialization, or native acquisition.
+- Each live Provider test call has exclusive use of its explicit disposable
+  root. The same caller may reuse that root only after the preceding call has
+  settled; overlapping calls must use distinct roots. This is a caller
+  ownership contract, not a service lock, receipt, or root registry.
+- Provider homes below the disposable root remain the native installed-state
+  authority. The reserved marketplace child is caller-root-bounded derived
+  content, not invocation-local cleanup state, provider identity, repository
+  identity, or a symlink synchronization channel.
 
 ## Behavior
 
@@ -62,12 +74,15 @@
 - Status performs one complete governed channel selection from the ready
   content-workspace resource. Sync repeats that complete selection only when
   mutation may be required. Test selects exact local Git bytes, materializes
-  one full marketplace closure for the surrounding Effect scope, and repeats
-  selection against the same scoped root before mutation. Targeted mode narrows
+  one full marketplace closure at the caller-owned stable root while the call
+  owns that root exclusively, and repeats selection against that same root
+  before mutation. Sequential calls may converge the same reserved child;
+  concurrent calls use distinct disposable roots. Targeted mode narrows
   native actions, not the catalog bytes named by its exact manifests. A
-  mutating operation reacquires every target for one final all-target preflight,
-  then reuses only that final session for ordered mutation and immediate
-  confirmation.
+  mutating operation retains each operation-local admission through the final
+  all-target preflight, ordered mutation, and immediate confirmation. Repeated
+  inventory observes live native state through the same scoped session; it does
+  not create a second provider-session lifecycle inside the operation.
 
 ## Interfaces
 

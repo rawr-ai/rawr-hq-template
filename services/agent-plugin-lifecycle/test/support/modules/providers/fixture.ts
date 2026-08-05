@@ -2,8 +2,8 @@ import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
-  MaterializeTemporaryTreeInput,
-  TemporaryContentTreeEntry,
+  DisposableContentTreeEntry,
+  MaterializeContentTreeInput,
 } from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   ClaudeNativeAgentProviderSession,
@@ -76,8 +76,8 @@ const SOURCE_REF = "refs/tags/agent-plugins-v1";
 const NATIVE_SOURCE_REVISION = COMMIT;
 const workspaceFixtures = new WeakMap<SelectedContent, ProviderWorkspaceFixture>();
 
-/** Deterministic scoped root returned by the owner-local content-workspace fake. */
-export const TEMPORARY_MARKETPLACE_ROOT = "/tmp/rawr-provider-test/marketplace-fixture";
+/** Stable disposable root returned by the owner-local content-workspace fake. */
+export const DISPOSABLE_MARKETPLACE_ROOT = "/tmp/rawr-provider-test/.rawr-agent-plugin-marketplace";
 
 export const channelRequest: ProviderSyncRequest & ProviderStatusRequest = {
   channel: "current-main",
@@ -321,9 +321,9 @@ export function createCurrentMainSelection(
 export interface ProviderLifecycleClientFixture {
   readonly client: Client;
   readonly resourceCalls: string[];
-  readonly gitMarketplaceEntries: readonly TemporaryContentTreeEntry[];
-  readonly materializationCalls: MaterializeTemporaryTreeInput[];
-  readonly finalizedTemporaryRoots: string[];
+  readonly gitMarketplaceEntries: readonly DisposableContentTreeEntry[];
+  readonly materializationCalls: MaterializeContentTreeInput[];
+  readonly materializedRoots: string[];
 }
 
 interface ProviderLifecycleFixtureOptions {
@@ -332,7 +332,7 @@ interface ProviderLifecycleFixtureOptions {
   readonly transformContentWorkspace?: (
     resource: ContentWorkspaceResource<never>
   ) => ContentWorkspaceResource<never>;
-  readonly onTemporaryTreeEvent?: (event: "materialized" | "finalized", root: string) => void;
+  readonly onContentTreeEvent?: (event: "materialized", root: string) => void;
 }
 
 export function createProviderLifecycleClient(
@@ -352,14 +352,14 @@ export function createProviderLifecycleClient(
     throw new Error("Second Provider content was not created by the owner-local fixture");
   }
   const resourceCalls: string[] = [];
-  const materializationCalls: MaterializeTemporaryTreeInput[] = [];
-  const finalizedTemporaryRoots: string[] = [];
+  const materializationCalls: MaterializeContentTreeInput[] = [];
+  const materializedRoots: string[] = [];
   const baseContentWorkspace = providerContentWorkspace(
     fixture,
     secondFixture,
     resourceCalls,
     materializationCalls,
-    finalizedTemporaryRoots,
+    materializedRoots,
     options
   );
   const contentWorkspace =
@@ -369,7 +369,7 @@ export function createProviderLifecycleClient(
     resourceCalls,
     gitMarketplaceEntries: fixture.marketplaceEntries,
     materializationCalls,
-    finalizedTemporaryRoots,
+    materializedRoots,
   };
 }
 
@@ -378,7 +378,7 @@ interface ProviderWorkspaceFixture {
   readonly releaseInputBytes: Uint8Array;
   readonly treeEntries: readonly ContentTreeEntry[];
   readonly bytesByBlob: ReadonlyMap<string, Uint8Array>;
-  readonly marketplaceEntries: readonly TemporaryContentTreeEntry[];
+  readonly marketplaceEntries: readonly DisposableContentTreeEntry[];
 }
 
 function createProviderWorkspaceFixture(
@@ -388,7 +388,7 @@ function createProviderWorkspaceFixture(
   members: readonly ReturnType<typeof member>[]
 ): ProviderWorkspaceFixture {
   const bytesByPath = new Map<string, Uint8Array>();
-  const modeByPath = new Map<string, TemporaryContentTreeEntry["mode"]>();
+  const modeByPath = new Map<string, DisposableContentTreeEntry["mode"]>();
   const releaseInputBytes = canonicalSerializeAgentPluginReleaseInput(releaseInput);
   bytesByPath.set(CURRENT_MAIN_V3_RELEASE_INPUT_PATH, releaseInputBytes);
   bytesByPath.set(
@@ -487,8 +487,8 @@ function providerContentWorkspace(
   fixture: ProviderWorkspaceFixture,
   secondFixture: ProviderWorkspaceFixture | undefined,
   calls: string[],
-  materializations: MaterializeTemporaryTreeInput[],
-  finalizedRoots: string[],
+  materializations: MaterializeContentTreeInput[],
+  materializedRoots: string[],
   options: ProviderLifecycleFixtureOptions
 ): ContentWorkspaceResource<never> {
   let activeFixture = fixture;
@@ -627,25 +627,17 @@ function providerContentWorkspace(
         if (bytes === undefined) throw new Error(`Missing provider fixture file ${input.path}`);
         return bytes;
       }),
-    materializeTemporaryTree: (
-      input: Parameters<ContentWorkspaceResource<never>["materializeTemporaryTree"]>[0]
-    ) => {
-      const root = `${input.parentRoot}/marketplace-fixture`;
-      return Effect.acquireRelease(
-        Effect.sync(() => {
-          calls.push("materialize-tree");
-          materializations.push(input);
-          options.onTemporaryTreeEvent?.("materialized", root);
-          return Object.freeze({ root });
-        }),
-        () =>
-          Effect.sync(() => {
-            calls.push("finalize-tree");
-            finalizedRoots.push(root);
-            options.onTemporaryTreeEvent?.("finalized", root);
-          })
-      );
-    },
+    materializeContentTree: (
+      input: Parameters<ContentWorkspaceResource<never>["materializeContentTree"]>[0]
+    ) =>
+      Effect.sync(() => {
+        const root = `${input.parentRoot}/${input.directoryName}`;
+        calls.push("materialize-tree");
+        materializations.push(input);
+        materializedRoots.push(root);
+        options.onContentTreeEvent?.("materialized", root);
+        return Object.freeze({ root });
+      }),
   });
 }
 
@@ -660,7 +652,7 @@ function contentWorkspaceFailure(
 interface FakeNativeSessionInput {
   readonly target: ProviderTarget;
   readonly content: SelectedContent;
-  readonly marketplace?: "exact" | "stale" | "unrelated" | "ambiguous" | "absent";
+  readonly marketplace?: "exact" | "stale" | "unrelated" | "foreign-local" | "ambiguous" | "absent";
   readonly installed?: readonly string[];
   readonly disabled?: readonly string[];
   readonly omitted?: readonly string[];
@@ -1130,7 +1122,7 @@ function acquireFakeSession<Session extends Readonly<{ home: string }>>(
 
 function marketplace(
   content: SelectedContent,
-  kind: "exact" | "stale" | "unrelated" | "ambiguous",
+  kind: "exact" | "stale" | "unrelated" | "foreign-local" | "ambiguous",
   provider: ProviderTarget["provider"]
 ) {
   if (kind === "ambiguous") {
@@ -1150,6 +1142,13 @@ function marketplace(
         revision: "v1",
       },
       installedRoot: "/tmp/provider-home/marketplaces/rawr-hq",
+    };
+  }
+  if (kind === "foreign-local") {
+    return {
+      identity: "rawr-hq",
+      source: { kind: "local" as const, root: "/tmp/foreign-agent-plugin-marketplace" },
+      installedRoot: "/tmp/foreign-agent-plugin-marketplace",
     };
   }
   if (source.kind === "local") {

@@ -140,7 +140,7 @@ authorize lifecycle selection, or import executable code from Personal. A
 ready Git reader MAY accept an explicit Personal repository locator solely to
 verify and read selected immutable objects before passing canonical data to the
 pure model. The locator is not release, package, provider, channel, or skill
-identity.
+identity and does not authorize repository or symlink synchronization.
 
 #### Scenario: Personal checkout is data rather than executable authority
 - **WHEN** a Personal workspace contains misleading Template-like runtime files

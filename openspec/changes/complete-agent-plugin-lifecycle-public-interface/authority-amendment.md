@@ -114,8 +114,16 @@ another standard term that names the actual thing.
 | Operational evidence | Caller or ordinary CI/release tooling; never a lifecycle store or selector |
 | Inngest skills | `accepted-landed-read-only` on Personal `main`; `dev:inngest` and `dev:effect-inngest` enter only through the normal closed release set, while `inngest-orpc` and research/candidate roots remain excluded |
 
-A repository path is a content locator. It is never CLI identity, provider
-identity, release identity, or Git ancestry between repositories.
+A Git checkout is a versioned-content and inspection input. Its path is never
+CLI, controller, provider, or release identity; Git ancestry between repositories
+and repository or symlink synchronization are not lifecycle channels.
+
+Personal source skills reject repository-local `.repos` prerequisites and
+symlinks. Current Inngest guidance provides an explicit caller-owned cache-root
+source oracle; oRPC, effect-oRPC, and Effect accept exact caller-owned source
+roots only when a claim requires implementation inspection. Governed
+vendor-content sync copies only redistributed skill bytes. None of these bounded
+inputs creates a checkout, repository, or symlink synchronization subsystem.
 
 ## Target Flow
 

@@ -25,7 +25,8 @@ export const providerTargetFlag = Flags.string({
 });
 
 export const providerTestDisposableRootFlag = Flags.string({
-  description: "Canonical absolute root containing every disposable provider home",
+  description:
+    "Canonical absolute root exclusively owned by this live test; sequential reuse is allowed",
 });
 
 export const releaseMemberFlag = Flags.string({

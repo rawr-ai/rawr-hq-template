@@ -1653,6 +1653,15 @@ URL/GitHub marketplace sources, but exact immutable tag/SHA resolution remains a
 required Personal-settlement proof before approved-home mutation. A disposable
 local source is valid only for the same bounded lifetime as its disposable home.
 
+Personal source skills keep repository mechanics outside content authority:
+they reject repository-local `.repos` prerequisites and symlinks. Current
+Inngest guidance provides an explicit caller-owned cache-root source oracle;
+oRPC, effect-oRPC, and Effect accept exact caller-owned source roots only when a
+claim requires implementation inspection. Governed vendor-content sync copies
+only redistributed skill bytes into reviewed Personal content. None of those
+inputs is a controller, provider identity, repository synchronization path, or
+symlink channel.
+
 ## Standing Reviews
 
 Architecture, TypeScript/structural quality, and behavior/testing review every
@@ -1691,11 +1700,11 @@ review does not authorize a separate release path.
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
 | Public distribution | The private `rawr` application and its internal Template dependency graph are absent from Nx Release. Habitat SDK and CLI `0.4.2` are the only supported public distribution artifacts; all eighteen names in the rejected RAWR `0.1.0` candidate cohort return `404` from npm. |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
-| Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
+| Persistent agent artifact/projection store deletion | Complete; the store remains absent and task 5.5d1 proves the caller-root-bounded provider-test marketplace without adding replacement state |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 23, official Effect bridge beta 23, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
-| Bounded lifecycle simplification | Direct exact-Git native reconciliation, state deletion, positive module topology, the context funnel, and operation-use audit are landed; provider acceptance and settlement remain |
+| Bounded lifecycle simplification | Direct exact-Git native reconciliation, state deletion, positive module topology, the context funnel, operation-use audit, and disposable provider acceptance are complete; governed current-main and approved-home settlement remain |
 | Personal content-only recut | Pending |
-| Disposable provider acceptance | Pending |
+| Disposable provider acceptance | Complete; real Codex and Claude v1, targeted v2, retained-inventory, and mutation-free repeat proof passed in one caller-owned root |
 | Approved-home settlement and read-only repeat | Pending |
 | Repository/stack/worktree closure | Pending |
 
@@ -2006,11 +2015,13 @@ edits.
 
 The persistent-state audit found no remaining release/set repository,
 projection store, provider receipt or identity sidecar, custom evidence store,
-retention planner, or controller data root. Provider testing now materializes
-the exact selected marketplace below the explicit disposable root, retains the
-scoped child through final native observation, and retires that child before
-the invocation returns. The caller's checkout, disposable parent, and provider
-homes remain outside service deletion authority; no handle or store is created.
+retention planner, or controller data root. Task 5.5d1 is closed: provider tests
+converge the exact selected marketplace at one reserved child below the explicit
+disposable root and perform no write when the exact tree already exists. Each
+live call exclusively owns that root; sequential calls may reuse it after
+settlement, while concurrent calls use distinct roots. The caller's Git checkout,
+disposable parent, and provider homes remain outside service deletion authority;
+no handle or store is created.
 
 The earlier owner-qualified lifecycle dependency mega-pattern is retired rather
 than carried into the corrected required check. It enumerated package names, exact
@@ -2952,33 +2963,65 @@ reviews are complete. The TypeScript review's stale capability-probe router
 language and the testing review's two missing behavioral oracles were repaired;
 no P0-P3 finding remains.
 
-The disposable provider-marketplace checkpoint completes
-[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.5d]]. Test derives one
-complete Codex-and-Claude marketplace closure from the exact selected Git tree,
-then asks the content-workspace resource to materialize those path, mode, and
-byte facts as one Effect-scoped child below the caller's explicit root. Targeted
-mode narrows native actions only; it does not create a partial catalog. The
-checkout locator is never passed to a native marketplace command, and no
-persistent projection, receipt, handle, or provider identity is created.
+The disposable provider-marketplace checkpoint completed
+[[tasks#5. Bounded Agent-Plugin Lifecycle Service|task 5.5d]] with an
+operation-lifetime source. Test derives one complete Codex-and-Claude marketplace
+closure from the exact selected Git tree; targeted mode narrows native actions
+only and does not create a partial catalog. The checkout locator is a
+versioned-content and inspection input. It is never passed as controller or
+provider identity and never becomes a repository or symlink synchronization
+channel. No persistent projection, receipt, handle, or provider identity is
+created.
 
-The same scoped marketplace remains valid through the second Git selection,
-final all-target preflight, admitted mutation, and terminal native observation.
-Exact path, mode, or byte drift blocks before mutation. Typed source refusal is
-preserved, while defects and interruption propagate through Effect finalization.
-The resource retires only its allocated child; the caller continues to own its
-disposable parent and provider homes.
+Standing review found that an operation-lifetime source was too narrow for a
+provider that can retain a local marketplace path. Task 5.5d1 replaces that
+shape and is complete. TypeScript/structural, oRPC/behavioral, Effect/resource,
+and final architecture reviews report no remaining P0-P3 finding.
 
-The content-workspace resource passes 35 tests. The complete lifecycle service
-passes 43 files and 373 tests; its Providers module contributes 82 tests,
-including exact executable-mode materialization, targeted and complete
-omission preservation, source drift, materialization failure, native defect and
-interruption cleanup, and final-observation ordering. The Vendors module passes
-36 tests after its diagnostic-label map was decoupled from Provider-only
-operations. Resource and lifecycle source/test typechecks pass. Biome checks
-all 1,088 files; Habitat passes all 18 enforced source laws; strict OpenSpec
-validation and diff hygiene pass. Standing architecture, behavior/testing, and
-TypeScript/structural reviews report no unresolved P0, P1, or P2 finding.
-Repository landing remains open.
+The correction converges one reserved marketplace child at a stable path below
+the caller-owned disposable root. Each live test call exclusively owns its
+root. A later call may reuse that root only after the preceding call settles;
+overlapping calls use distinct roots. Exact repeats compare without rewriting;
+changed path, mode, or bytes replace only the reserved child through private
+same-parent staging; and provider homes remain disjoint native installed-state
+authorities. The caller removes the whole disposable root only after no call is
+live. No receipt, handle, symlink, projection store, cleanup service, or
+next-invocation authority is introduced.
+
+Focused automated coverage exercises exact executable-mode materialization,
+flat canonical UTF-8 ordering, targeted and complete omission preservation,
+source drift, materialization failure, full Effect-cause preservation, stage
+cleanup, prior-tree restoration, final-observation ordering, and sequential
+repeat behavior. The service owns no cleanup authority over the reserved child
+or disposable root; those remain caller-owned.
+
+Real native acceptance ran from source against absolute Codex
+`/opt/homebrew/bin/codex` 0.146.0 and Claude
+`/Users/mateicanavra/.local/bin/claude` 2.1.220 in
+`/private/tmp/habitat-agent-plugin-final2-acceptance.RRHCvE`. V1 selected commit
+`52938874a09c195d64c20480b8feba040ce0242b`, tree
+`dedd8396901afaa574b6880603d9f37e3ca8986b`, release input
+`ri1_6eb743cc1b240ed880cce224d1cc47a76b5098d02fb4d2a5c720cd091efd2cab`,
+and complete set
+`rs1_c091bca45407c69aed1dd0e78cde46f5795ea25182deea00a4dd7ce11913788c`.
+Both providers added `rawr-hq` and installed the same eleven members. V2 selected
+commit `59bb297dd5ac1135c6f0e1d9f2595c46afd6975e`, tree
+`07bce29358b96f5abaf2c9ffb1db4e2974c86cce`, and release input
+`ri1_3f5e3f76e3de192cc7b67abea2437b1167ee4eae9f1a3f14931de7bcd6ed814a`.
+Its targeted `dev` transition removed and reinstalled only `dev@rawr-hq` on
+each provider. Direct native inventory then retained all eleven installed
+members on both providers. The exact V2 repeat returned `Converged` with zero
+operations and preserved the reserved marketplace directory's inode, mtime,
+ctime, and mode exactly.
+
+The final closure gate passes without cache reuse: the content-workspace
+provider passes 45 tests with 275 assertions; the complete lifecycle suite
+passes 45 files and 444 tests; the CLI passes 25 files and 89 tests; and the
+four affected owners plus their 27 Nx prerequisites pass test and typecheck in
+1 minute 13 seconds. Repository Biome checks 1,245 files, the complete native
+Habitat owner policy passes every enforced application in 2 minutes 29 seconds,
+strict OpenSpec validation passes, and diff hygiene is clean. Repository
+landing remains open.
 
 ## Lifecycle Public Face
 
@@ -3151,8 +3194,11 @@ by their route handlers. Qualified acquisition, guard, and enrichment
 middleware remains available where behavior needs it; projection-only
 middleware is retired. Every operation is authored directly as an Effect-oRPC
 handler. Ready filesystem, Git, package-output, and native-provider Effects
-remain resource-owned. The provider-test marketplace is scoped, and its
-temporary tree closes before the operation returns.
+remain resource-owned. The provider-test marketplace is bounded to the caller's
+disposable root rather than the invocation scope. One live call owns that root
+exclusively; sequential calls may reuse it after settlement and overlapping
+calls use distinct roots. Its stable derived tree remains until the caller
+removes the root.
 
 The lifecycle owner typecheck and test-typecheck prerequisites pass. Focused
 service-spine and Effect-oRPC admission pass 2 files and 4 tests, Habitat lint

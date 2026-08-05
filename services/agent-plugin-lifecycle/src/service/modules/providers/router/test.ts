@@ -1,4 +1,4 @@
-import type { TemporaryContentTreeEntry } from "@habitat-ai/rawr-resource-content-workspace";
+import type { DisposableContentTreeEntry } from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
@@ -45,7 +45,12 @@ import type {
 } from "../model/dto/provider-lifecycle";
 import type { SelectedContent, SelectedContentResolution } from "../model/dto/selected-content";
 import {
+  areDisjointPaths,
+  DISPOSABLE_MARKETPLACE_DIRECTORY,
+  disposableMarketplaceRoot,
   hasCanonicalProviderHomes,
+  hasDisjointMarketplaceRoot,
+  hasPairwiseDisjointProviderHomes,
   hasStrictDescendantHomes,
   isCanonicalProviderHome,
 } from "../model/policy/disposable-root";
@@ -94,15 +99,15 @@ import {
   selectedContentRejected,
 } from "../model/policy/selected-content";
 import {
+  classifyDisposableSelectedContentMarketplace,
   classifySelectedContentInterfaceTree,
   classifySelectedContentManifestBlob,
-  classifyTemporarySelectedContentMarketplace,
   MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
   NATIVE_MARKETPLACE_INTERFACE_PATHS,
-  planTemporarySelectedContentMarketplace,
+  planDisposableSelectedContentMarketplace,
   SELECTED_CONTENT_PLUGIN_ROOT,
   SELECTED_CONTENT_RELEASE_INPUT_PATH,
-  sameTemporarySelectedContentMarketplace,
+  sameDisposableSelectedContentMarketplace,
   validateSelectedNativeMarketplaces,
 } from "../model/policy/source-interface";
 import { module } from "../module";
@@ -137,6 +142,39 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
       })
     );
   }
+  if (!hasPairwiseDisjointProviderHomes(canonicalRequest.targets)) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Provider test homes must be pairwise disjoint",
+      })
+    );
+  }
+  if (!hasDisjointMarketplaceRoot(canonicalRequest.disposableRoot, canonicalRequest.targets)) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Provider test homes must be disjoint from the disposable marketplace root",
+      })
+    );
+  }
+  const marketplaceRoot = disposableMarketplaceRoot(canonicalRequest.disposableRoot);
+  if (!areDisjointPaths(marketplaceRoot, canonicalRequest.contentWorkspace.locator)) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Content workspace and disposable marketplace must be disjoint",
+      })
+    );
+  }
+  if (
+    !canonicalRequest.targets.every((target) =>
+      areDisjointPaths(target.home, canonicalRequest.contentWorkspace.locator)
+    )
+  ) {
+    return yield* Effect.fail(
+      errors.BAD_REQUEST({
+        message: "Content workspace and provider test homes must be pairwise disjoint",
+      })
+    );
+  }
   const policy = canonicalRequest.contentWorkspace;
   const nativePolicy: NativeReconciliationPolicy = Object.freeze({ retireOmitted: false });
 
@@ -145,7 +183,7 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
         kind: "Prepared";
         eligibilityBinding: ContentWorkspaceSnapshot["eligibilityBinding"];
         derivation: DerivedReleaseSelection;
-        marketplaceEntries: readonly TemporaryContentTreeEntry[];
+        marketplaceEntries: readonly DisposableContentTreeEntry[];
       }>
     | Readonly<{ kind: "Rejected"; issues: readonly ProviderIssue[] }>;
 
@@ -322,7 +360,7 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
         return preparedRejection(marketplaceIssue);
       }
 
-      const marketplaceEntries = planTemporarySelectedContentMarketplace(
+      const marketplaceEntries = planDisposableSelectedContentMarketplace(
         inspected.snapshot,
         interfaceTree.value,
         manifestBytes
@@ -351,7 +389,7 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
       });
     });
 
-  /** Constructs Provider desired state over the one scoped marketplace root. */
+  /** Constructs Provider desired state over the one stable disposable marketplace root. */
   const constructPreparedContent = (prepared: PreparedWorkspaceSelection, root: string) => {
     if (prepared.kind === "Rejected") return prepared;
     return providerSelectionResolution(
@@ -376,6 +414,53 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
         kind: "Unavailable";
         assessment: NativeUnavailableTargetAssessment;
       }>;
+
+  type NativeTargetAdmission =
+    | Readonly<{
+        kind: "Admitted";
+        target: ProviderTarget;
+        session: NativeAgentProviderSession;
+      }>
+    | Extract<NativeTargetObservation, { kind: "Unavailable" }>;
+
+  /** Acquires and admits one invocation-local native session without observing provider state. */
+  const acquireTarget = (target: ProviderTarget): Effect.Effect<NativeTargetAdmission> =>
+    Effect.gen(function* () {
+      const acquire: Effect.Effect<NativeAgentProviderSession, NativeAgentProviderFailure> =
+        target.provider === "codex"
+          ? context.nativeProviders.codex
+              .acquire({ home: target.home })
+              .pipe(Effect.map((session): NativeAgentProviderSession => session))
+          : context.nativeProviders.claude
+              .acquire({ home: target.home })
+              .pipe(Effect.map((session): NativeAgentProviderSession => session));
+      const acquisition = yield* Effect.result(acquire);
+      if (Result.isFailure(acquisition)) {
+        return Object.freeze({
+          kind: "Unavailable" as const,
+          assessment: unavailableNativeTarget(
+            target,
+            `Native provider acquisition failed: ${acquisition.failure.detail}`
+          ),
+        });
+      }
+      const session: NativeAgentProviderSession = acquisition.success;
+      return session.provider !== target.provider || session.home !== target.home
+        ? Object.freeze({
+            kind: "Unavailable" as const,
+            assessment: unavailableNativeTarget(
+              target,
+              "Native provider acquisition returned a session for a different target."
+            ),
+          })
+        : Object.freeze({ kind: "Admitted" as const, target, session });
+    });
+
+  /** Acquires every target in canonical order before disposable marketplace materialization. */
+  const acquireTargets = (targets: readonly ProviderTarget[]) =>
+    Effect.forEach(targets, acquireTarget, { concurrency: 1 }).pipe(
+      Effect.map((admissions) => Object.freeze(admissions))
+    );
 
   /**
    * Reads and structurally admits one native inventory observation.
@@ -497,46 +582,15 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
       )
     );
 
-  /**
-   * Acquires and completely observes one disposable provider target.
-   *
-   * Probe and inventory run concurrently inside the target. Targets themselves
-   * remain sequential so a full preflight has one deterministic order.
-   */
+  /** Completely observes one admitted disposable provider target. */
   const observeTarget = (
     content: SelectedContent,
-    target: ProviderTarget,
+    admission: NativeTargetAdmission,
     mutationIntent: boolean
   ): Effect.Effect<NativeTargetObservation> =>
     Effect.gen(function* () {
-      const acquire: Effect.Effect<NativeAgentProviderSession, NativeAgentProviderFailure> =
-        target.provider === "codex"
-          ? context.nativeProviders.codex
-              .acquire({ home: target.home })
-              .pipe(Effect.map((session): NativeAgentProviderSession => session))
-          : context.nativeProviders.claude
-              .acquire({ home: target.home })
-              .pipe(Effect.map((session): NativeAgentProviderSession => session));
-      const acquisition = yield* Effect.result(acquire);
-      if (Result.isFailure(acquisition)) {
-        return Object.freeze({
-          kind: "Unavailable" as const,
-          assessment: unavailableNativeTarget(
-            target,
-            `Native provider acquisition failed: ${acquisition.failure.detail}`
-          ),
-        });
-      }
-      const session: NativeAgentProviderSession = acquisition.success;
-      if (session.provider !== target.provider || session.home !== target.home) {
-        return Object.freeze({
-          kind: "Unavailable" as const,
-          assessment: unavailableNativeTarget(
-            target,
-            "Native provider acquisition returned a session for a different target."
-          ),
-        });
-      }
+      if (admission.kind === "Unavailable") return admission;
+      const { session, target } = admission;
 
       const inspection: Effect.Effect<
         readonly [NativeProviderCapabilities, NativeProviderInventory],
@@ -586,10 +640,10 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
   /** Observes all targets sequentially while retaining only invocation-local sessions. */
   const observeTargets = (
     content: SelectedContent,
-    targets: readonly ProviderTarget[],
+    admissions: readonly NativeTargetAdmission[],
     mutationIntent: boolean
   ) =>
-    Effect.forEach(targets, (target) => observeTarget(content, target, mutationIntent), {
+    Effect.forEach(admissions, (admission) => observeTarget(content, admission, mutationIntent), {
       concurrency: 1,
     }).pipe(Effect.map((observations) => Object.freeze(observations)));
 
@@ -791,9 +845,34 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
 
   return yield* Effect.scoped(
     Effect.gen(function* () {
+      const selectedBeforeMaterialization = constructPreparedContent(prepared, marketplaceRoot);
+      if (selectedBeforeMaterialization.kind === "Rejected") {
+        return {
+          operation: "test",
+          classification: "Blocked",
+          selection: null,
+          targets: rejectedTargets(canonicalRequest.targets, selectedBeforeMaterialization.issues),
+          issues: selectedBeforeMaterialization.issues,
+        } satisfies ProviderTestResult;
+      }
+
+      const admissions = yield* acquireTargets(canonicalRequest.targets);
+      if (admissions.some((admission) => admission.kind === "Unavailable")) {
+        const observations = yield* observeTargets(
+          selectedBeforeMaterialization.content,
+          admissions,
+          true
+        );
+        return completedProviderTestResult(
+          selectedBeforeMaterialization.content,
+          blockedTargetResults(Object.freeze(observations.map(({ assessment }) => assessment)))
+        );
+      }
+
       const materializationAttempt = yield* Effect.result(
-        context.contentWorkspace.materializeTemporaryTree({
+        context.contentWorkspace.materializeContentTree({
           parentRoot: canonicalRequest.disposableRoot,
+          directoryName: DISPOSABLE_MARKETPLACE_DIRECTORY,
           entries: prepared.marketplaceEntries,
           maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES + NATIVE_MARKETPLACE_INTERFACE_PATHS.length,
           maxBytes:
@@ -801,7 +880,10 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
             NATIVE_MARKETPLACE_INTERFACE_PATHS.length * MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
         })
       );
-      const materialized = classifyTemporarySelectedContentMarketplace(materializationAttempt);
+      const materialized = classifyDisposableSelectedContentMarketplace(
+        materializationAttempt,
+        marketplaceRoot
+      );
       if (!materialized.ok) {
         const rejected = preparedRejection(materialized.result);
         return {
@@ -824,7 +906,7 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
         } satisfies ProviderTestResult;
       }
 
-      const initial = yield* observeTargets(selected.content, canonicalRequest.targets, true);
+      const initial = yield* observeTargets(selected.content, admissions, true);
       const initialAssessments = Object.freeze(initial.map(({ assessment }) => assessment));
       if (hasBlockingAssessment(initialAssessments)) {
         return completedProviderTestResult(
@@ -848,7 +930,7 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
       }
       if (
         revalidated.eligibilityBinding !== prepared.eligibilityBinding ||
-        !sameTemporarySelectedContentMarketplace(
+        !sameDisposableSelectedContentMarketplace(
           prepared.marketplaceEntries,
           revalidated.marketplaceEntries
         )
@@ -869,11 +951,7 @@ export const test = module.test.effect(function* ({ context, errors, input: requ
         );
       }
 
-      const finalPreflight = yield* observeTargets(
-        revalidatedContent.content,
-        canonicalRequest.targets,
-        true
-      );
+      const finalPreflight = yield* observeTargets(revalidatedContent.content, admissions, true);
       const finalAssessments = Object.freeze(finalPreflight.map(({ assessment }) => assessment));
       if (hasBlockingAssessment(finalAssessments)) {
         return completedProviderTestResult(

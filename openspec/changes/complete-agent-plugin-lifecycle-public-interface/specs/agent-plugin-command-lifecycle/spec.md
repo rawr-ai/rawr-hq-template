@@ -91,8 +91,9 @@ ordinary host-provided application directories for its own installed
 extension/configuration state. Content and channel records MUST be read only through an
 explicit absolute versioned Git locator; provider homes and package outputs
 MUST remain explicit procedure inputs. A repository path MUST NOT select a CLI
-package version, provider home, channel, executable implementation, or Oclif
-application directory. Personal executable modules MUST never load.
+package version, controller, provider home, channel, executable implementation,
+or Oclif application directory, and MUST NOT become a repository or symlink
+synchronization channel. Personal executable modules MUST never load.
 
 #### Scenario: Misleading Personal runtime files have no authority
 - **WHEN** an explicit content workspace contains command, service, adapter,

@@ -27,26 +27,27 @@ import type {
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
   GitWorktreeObjectId,
+  MaterializeContentTreeInput,
+  MaterializedContentTree,
   MaterializedContentTreeEntry,
-  MaterializedTemporaryTree,
-  MaterializeTemporaryTreeInput,
 } from "@habitat-ai/rawr-resource-content-workspace";
 import {
   ContentTreeEntrySchema,
   GitStagedIndexEntrySchema,
   GitTrackedPathFlagSchema,
-  MaterializeTemporaryTreeInputSchema,
+  MaterializeContentTreeInputSchema,
 } from "@habitat-ai/rawr-resource-content-workspace";
-import { Effect, Equal, FileSystem, Option, PlatformError, type Scope } from "effect";
+import { Cause, Effect, Equal, Exit, FileSystem, Option, PlatformError } from "effect";
 import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
+const encoder = new TextEncoder();
 const contentTreeEntryValidator = Schema.Compile(ContentTreeEntrySchema);
 const gitStagedIndexEntryValidator = Schema.Compile(GitStagedIndexEntrySchema);
 const gitTrackedPathFlagValidator = Schema.Compile(GitTrackedPathFlagSchema);
-const materializeTemporaryTreeInputValidator = Schema.Compile(MaterializeTemporaryTreeInputSchema);
+const materializeContentTreeInputValidator = Schema.Compile(MaterializeContentTreeInputSchema);
 const ATOMIC_FILE_PREFIX = ".rawr-content-workspace-";
-const TEMPORARY_TREE_PREFIX = ".rawr-content-tree-";
+const CONTENT_TREE_STAGE_PREFIX = ".rawr-content-tree-stage-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
 
@@ -138,7 +139,7 @@ function makeCaptureBudget(
 /**
  * Builds the Git-backed content-workspace resource with resource-instance capture authority.
  * The returned operations expose bounded repository facts and mutations while this provider owns
- * Git execution, identity rechecks, and temporary-tree cleanup.
+ * Git execution, path admission, and disposable-tree cleanup.
  *
  * @param options - Provider command configuration, primarily for controlled test runtimes.
  * @returns The platform-requiring resource consumed by lifecycle service composition.
@@ -622,51 +623,48 @@ export function makeContentWorkspaceResource(
     );
   });
 
-  const materializeTemporaryTree = Effect.fn("contentWorkspace.materializeTemporaryTree")(
-    function* (input: MaterializeTemporaryTreeInput) {
-      const fs = yield* FileSystem.FileSystem;
-      if (!materializeTemporaryTreeInputValidator.Check(input)) {
-        return yield* fail(
-          "materialize-temporary-tree",
-          "InvalidInput",
-          undefined,
-          "Temporary tree input does not match the bounded resource contract"
+  const materializeContentTree = Effect.fn("contentWorkspace.materializeContentTree")(function* (
+    input: MaterializeContentTreeInput
+  ) {
+    const fs = yield* FileSystem.FileSystem;
+    if (!materializeContentTreeInputValidator.Check(input)) {
+      return yield* fail(
+        "materialize-content-tree",
+        "InvalidInput",
+        undefined,
+        "Content tree input does not match the bounded resource contract"
+      );
+    }
+    yield* checked("materialize-content-tree", () => validateContentTreeInput(input));
+    const parent = yield* requireContentTreeParent(fs, input.parentRoot);
+    const root = path.join(parent, input.directoryName);
+    const present = yield* fs.exists(root).pipe(mapPlatform("materialize-content-tree", root));
+    if (present) yield* requireContentTreeDirectory(fs, parent, root);
+    if (present && (yield* contentTreeMatches(fs, parent, root, input))) {
+      return Object.freeze({ root }) satisfies MaterializedContentTree;
+    }
+
+    return yield* Effect.acquireUseRelease(
+      fs
+        .makeTempDirectory({ directory: parent, prefix: CONTENT_TREE_STAGE_PREFIX })
+        .pipe(mapPlatform("materialize-content-tree", parent)),
+      (stage) =>
+        Effect.gen(function* () {
+          yield* requireContentTreeStage(fs, parent, stage);
+          yield* populateContentTree(fs, stage, input);
+          yield* cutOverContentTree(fs, parent, root, stage, present);
+          return Object.freeze({ root }) satisfies MaterializedContentTree;
+        }),
+      (stage, useExit) => {
+        if (Exit.isSuccess(useExit)) return Effect.void;
+        return cleanupContentTreeStage(fs, parent, stage).pipe(
+          Effect.catchCause((cleanupCause) =>
+            Effect.failCause(Cause.combine(useExit.cause, cleanupCause))
+          )
         );
       }
-      yield* checked("materialize-temporary-tree", () => validateTemporaryTreeInput(input));
-      const parent = yield* requireTemporaryTreeParent(fs, input.parentRoot);
-      const root = yield* fs
-        .makeTempDirectoryScoped({ directory: parent, prefix: TEMPORARY_TREE_PREFIX })
-        .pipe(mapPlatform("materialize-temporary-tree", parent));
-
-      const createdDirectories = new Set<string>([""]);
-      for (const entry of input.entries) {
-        const segments = entry.path.split("/");
-        for (let index = 1; index < segments.length; index += 1) {
-          const relativeDirectory = segments.slice(0, index).join("/");
-          if (createdDirectories.has(relativeDirectory)) continue;
-          const directory = path.join(root, ...relativeDirectory.split("/"));
-          yield* fs
-            .makeDirectory(directory, { recursive: false, mode: 0o700 })
-            .pipe(mapPlatform("materialize-temporary-tree", directory));
-          yield* fs
-            .chmod(directory, 0o700)
-            .pipe(mapPlatform("materialize-temporary-tree", directory));
-          createdDirectories.add(relativeDirectory);
-        }
-        const destination = path.join(root, ...segments);
-        const mode = fileMode(entry.mode);
-        yield* fs
-          .writeFile(destination, entry.bytes, { flag: "wx", mode })
-          .pipe(mapPlatform("materialize-temporary-tree", destination));
-        yield* fs
-          .chmod(destination, mode)
-          .pipe(mapPlatform("materialize-temporary-tree", destination));
-      }
-
-      return Object.freeze({ root }) satisfies MaterializedTemporaryTree;
-    }
-  );
+    );
+  });
 
   const capture = Effect.fn("contentWorkspace.capture")(function* (
     input: Readonly<{
@@ -1112,7 +1110,7 @@ export function makeContentWorkspaceResource(
     listGitChangedPaths,
     readFile,
     readTree,
-    materializeTemporaryTree,
+    materializeContentTree,
     capture,
     apply,
     restore,
@@ -1160,8 +1158,8 @@ export function makeNodeContentWorkspaceResource(
       provideNodeFileSystem(resource.readFile(input)),
     readTree: (input: Parameters<typeof resource.readTree>[0]) =>
       provideNodeFileSystem(resource.readTree(input)),
-    materializeTemporaryTree: (input: Parameters<typeof resource.materializeTemporaryTree>[0]) =>
-      provideNodeFileSystemScoped(resource.materializeTemporaryTree(input)),
+    materializeContentTree: (input: Parameters<typeof resource.materializeContentTree>[0]) =>
+      provideNodeFileSystem(resource.materializeContentTree(input)),
     capture: (input: Parameters<typeof resource.capture>[0]) =>
       provideNodeFileSystem(resource.capture(input)),
     apply: (input: Parameters<typeof resource.apply>[0]) =>
@@ -1178,12 +1176,6 @@ export function makeNodeContentWorkspaceResource(
 function provideNodeFileSystem<A>(
   operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
 ): Effect.Effect<A, ContentWorkspaceFailure> {
-  return operation.pipe(Effect.provide(NodeFileSystem.layer));
-}
-
-function provideNodeFileSystemScoped<A>(
-  operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements | Scope.Scope>
-): Effect.Effect<A, ContentWorkspaceFailure, Scope.Scope> {
   return operation.pipe(Effect.provide(NodeFileSystem.layer));
 }
 
@@ -1259,7 +1251,11 @@ function readLocalTree(
         );
       }
     });
-  return walk(root, "").pipe(Effect.map(() => Object.freeze(entries)));
+  return walk(root, "").pipe(
+    Effect.map(() =>
+      Object.freeze(entries.sort((left, right) => compareText(left.path, right.path)))
+    )
+  );
 }
 
 function captureTree(
@@ -1456,10 +1452,10 @@ function validateDistinctPaths(paths: readonly string[], operation: "capture"): 
   }
 }
 
-function validateTemporaryTreeInput(input: MaterializeTemporaryTreeInput): void {
-  const operation = "materialize-temporary-tree" as const;
+function validateContentTreeInput(input: MaterializeContentTreeInput): void {
+  const operation = "materialize-content-tree" as const;
   if (input.entries.length > input.maxEntries) {
-    throw invalidInput(operation, undefined, "Temporary tree entries exceed maxEntries");
+    throw invalidInput(operation, undefined, "Content tree entries exceed maxEntries");
   }
 
   let previousPath: string | undefined;
@@ -1470,7 +1466,7 @@ function validateTemporaryTreeInput(input: MaterializeTemporaryTreeInput): void 
       throw invalidInput(
         operation,
         entry.path,
-        "Temporary tree entries must be in strict canonical path order"
+        "Content tree entries must be in strict canonical path order"
       );
     }
     previousPath = entry.path;
@@ -1478,7 +1474,7 @@ function validateTemporaryTreeInput(input: MaterializeTemporaryTreeInput): void 
 
     totalBytes += entry.bytes.byteLength;
     if (!Number.isSafeInteger(totalBytes) || totalBytes > input.maxBytes) {
-      throw invalidInput(operation, entry.path, "Temporary tree bytes exceed maxBytes");
+      throw invalidInput(operation, entry.path, "Content tree bytes exceed maxBytes");
     }
   }
 
@@ -1490,15 +1486,15 @@ function validateTemporaryTreeInput(input: MaterializeTemporaryTreeInput): void 
         throw invalidInput(
           operation,
           exactPath,
-          `Temporary tree file descends from file ${ancestor}`
+          `Content tree file descends from file ${ancestor}`
         );
       }
     }
   }
 }
 
-function requireTemporaryTreeParent(fs: FileSystem.FileSystem, candidate: string) {
-  const operation = "materialize-temporary-tree" as const;
+function requireContentTreeParent(fs: FileSystem.FileSystem, candidate: string) {
+  const operation = "materialize-content-tree" as const;
   return Effect.gen(function* () {
     if (
       !path.isAbsolute(candidate) ||
@@ -1509,7 +1505,16 @@ function requireTemporaryTreeParent(fs: FileSystem.FileSystem, candidate: string
         operation,
         "InvalidInput",
         candidate,
-        "Temporary tree parent must be a normalized non-root absolute path"
+        "Content tree parent must be a normalized non-root absolute path"
+      );
+    }
+    const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
+    if (canonical !== candidate) {
+      return yield* fail(
+        operation,
+        "Aliased",
+        candidate,
+        "Content tree parent must be an exact non-symbolic path"
       );
     }
     const info = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
@@ -1518,10 +1523,313 @@ function requireTemporaryTreeParent(fs: FileSystem.FileSystem, candidate: string
         operation,
         "UnsupportedEntry",
         candidate,
-        "Temporary tree parent must be a directory"
+        "Content tree parent must be a directory"
       );
     }
     return candidate;
+  });
+}
+
+function revalidateContentTreeParent(fs: FileSystem.FileSystem, parent: string) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    const canonical = yield* fs.realPath(parent).pipe(mapPlatform(operation, parent));
+    const info = yield* fs.stat(parent).pipe(mapPlatform(operation, parent));
+    if (canonical !== parent || info.type !== "Directory") {
+      return yield* fail(operation, "IdentityChanged", parent, "Content tree parent path changed");
+    }
+  });
+}
+
+function requireContentTreeDirectory(fs: FileSystem.FileSystem, parent: string, candidate: string) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    yield* revalidateContentTreeParent(fs, parent);
+    if (path.dirname(candidate) !== parent) {
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        candidate,
+        "Disposable content tree must remain one direct child of its caller-owned parent"
+      );
+    }
+    const canonical = yield* fs.realPath(candidate).pipe(mapPlatform(operation, candidate));
+    if (canonical !== candidate) {
+      return yield* fail(
+        operation,
+        "Aliased",
+        candidate,
+        "Disposable content tree must be one exact non-symbolic directory"
+      );
+    }
+    const info = yield* fs.stat(candidate).pipe(mapPlatform(operation, candidate));
+    if (info.type !== "Directory") {
+      return yield* fail(
+        operation,
+        "UnsupportedEntry",
+        candidate,
+        "Disposable content tree must be a directory"
+      );
+    }
+  });
+}
+
+function requireContentTreeStage(fs: FileSystem.FileSystem, parent: string, candidate: string) {
+  const operation = "materialize-content-tree" as const;
+  if (!path.basename(candidate).startsWith(CONTENT_TREE_STAGE_PREFIX)) {
+    return fail(
+      operation,
+      "IdentityChanged",
+      candidate,
+      "Allocated content tree stage does not have the private stage prefix"
+    );
+  }
+  return requireContentTreeDirectory(fs, parent, candidate);
+}
+
+function populateContentTree(
+  fs: FileSystem.FileSystem,
+  root: string,
+  input: MaterializeContentTreeInput
+) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    const createdDirectories = new Set<string>([""]);
+    for (const entry of input.entries) {
+      const segments = entry.path.split("/");
+      for (let index = 1; index < segments.length; index += 1) {
+        const relativeDirectory = segments.slice(0, index).join("/");
+        if (createdDirectories.has(relativeDirectory)) continue;
+        const directory = path.join(root, ...relativeDirectory.split("/"));
+        yield* fs
+          .makeDirectory(directory, { recursive: false, mode: 0o700 })
+          .pipe(mapPlatform(operation, directory));
+        yield* fs.chmod(directory, 0o700).pipe(mapPlatform(operation, directory));
+        createdDirectories.add(relativeDirectory);
+      }
+      const destination = path.join(root, ...segments);
+      const mode = fileMode(entry.mode);
+      yield* fs
+        .writeFile(destination, entry.bytes, { flag: "wx", mode })
+        .pipe(mapPlatform(operation, destination));
+      yield* fs.chmod(destination, mode).pipe(mapPlatform(operation, destination));
+    }
+  });
+}
+
+function contentTreeMatches(
+  fs: FileSystem.FileSystem,
+  parent: string,
+  root: string,
+  input: MaterializeContentTreeInput
+) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    yield* requireContentTreeDirectory(fs, parent, root);
+    const expectedBytes = input.entries.reduce((total, entry) => total + entry.bytes.byteLength, 0);
+    const attempted = yield* Effect.result(
+      readLocalTree(fs, root, "sha256", input.entries.length, expectedBytes).pipe(
+        Effect.mapError((failure) => Object.freeze({ ...failure, operation }))
+      )
+    );
+    if (attempted._tag === "Failure") {
+      if (attempted.failure.reason === "LimitExceeded") return false;
+      return yield* Effect.fail(attempted.failure);
+    }
+    const observed = attempted.success;
+    yield* requireContentTreeDirectory(fs, parent, root);
+    if (observed.length !== input.entries.length) return false;
+    return observed.every((entry, index) => {
+      const expected = input.entries[index];
+      return (
+        expected !== undefined &&
+        entry.path === expected.path &&
+        entry.mode === expected.mode &&
+        entry.blob === gitBlobId(expected.bytes, "sha256")
+      );
+    });
+  });
+}
+
+function removeContentTreeDirectory(fs: FileSystem.FileSystem, parent: string, candidate: string) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    yield* requireContentTreeDirectory(fs, parent, candidate);
+    yield* fs
+      .remove(candidate, { recursive: true, force: false })
+      .pipe(mapPlatform(operation, candidate));
+    yield* revalidateContentTreeParent(fs, parent);
+  });
+}
+
+function cleanupContentTreeStage(fs: FileSystem.FileSystem, parent: string, stage: string) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    const present = yield* fs.exists(stage).pipe(mapPlatform(operation, stage));
+    if (!present) return;
+    yield* requireContentTreeStage(fs, parent, stage);
+    yield* removeContentTreeDirectory(fs, parent, stage);
+  });
+}
+
+function cutOverContentTree(
+  fs: FileSystem.FileSystem,
+  parent: string,
+  root: string,
+  stage: string,
+  hadPreimage: boolean
+) {
+  const operation = "materialize-content-tree" as const;
+  const backup = `${stage}.previous`;
+
+  return Effect.uninterruptibleMask((restore) =>
+    Effect.gen(function* () {
+      const attempted = yield* Effect.exit(
+        Effect.gen(function* () {
+          yield* revalidateContentTreeParent(fs, parent);
+          yield* requireContentTreeStage(fs, parent, stage);
+          yield* revalidateContentTreePreimage(fs, parent, root, hadPreimage);
+          const backupPresent = yield* fs.exists(backup).pipe(mapPlatform(operation, backup));
+          if (backupPresent) {
+            return yield* fail(
+              operation,
+              "IdentityChanged",
+              backup,
+              "Private content tree backup path became occupied before cutover"
+            );
+          }
+
+          // Namespace callbacks cannot be cancelled once Node accepts them. Admit
+          // interruption here, before mutation, then let every rename settle.
+          yield* restore(Effect.yieldNow);
+
+          if (hadPreimage) {
+            yield* fs.rename(root, backup).pipe(mapPlatform(operation, root));
+            yield* requireContentTreeDirectory(fs, parent, backup);
+          }
+
+          yield* fs.rename(stage, root).pipe(mapPlatform(operation, root));
+          yield* requireContentTreeDirectory(fs, parent, root);
+          yield* revalidateContentTreeParent(fs, parent);
+        })
+      );
+
+      if (attempted._tag === "Failure") {
+        const restored = yield* Effect.exit(
+          restoreContentTreeCutover(fs, parent, root, stage, backup, hadPreimage)
+        );
+        if (restored._tag === "Failure") {
+          return yield* Effect.failCause(Cause.combine(attempted.cause, restored.cause));
+        }
+        return yield* Effect.failCause(attempted.cause);
+      }
+
+      // The admitted root is the commit point. A stale private backup is inert
+      // scratch below the disposable parent and must not turn success into a lie.
+      if (hadPreimage) {
+        yield* removeContentTreeDirectory(fs, parent, backup).pipe(
+          Effect.catchCause((cleanupCause) =>
+            cleanupCause.reasons.every(Cause.isFailReason)
+              ? Effect.void
+              : Effect.failCause(cleanupCause)
+          )
+        );
+      }
+    })
+  );
+}
+
+function revalidateContentTreePreimage(
+  fs: FileSystem.FileSystem,
+  parent: string,
+  root: string,
+  hadPreimage: boolean
+) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    const present = yield* fs.exists(root).pipe(mapPlatform(operation, root));
+    if (!hadPreimage) {
+      if (present) {
+        return yield* fail(
+          operation,
+          "IdentityChanged",
+          root,
+          "Absent disposable content tree became occupied before cutover"
+        );
+      }
+      return;
+    }
+    if (!present) {
+      return yield* fail(
+        operation,
+        "IdentityChanged",
+        root,
+        "Prior disposable content tree disappeared before cutover"
+      );
+    }
+    yield* requireContentTreeDirectory(fs, parent, root);
+  });
+}
+
+function restoreContentTreeCutover(
+  fs: FileSystem.FileSystem,
+  parent: string,
+  root: string,
+  stage: string,
+  backup: string,
+  hadPreimage: boolean
+) {
+  const operation = "materialize-content-tree" as const;
+  return Effect.gen(function* () {
+    yield* revalidateContentTreeParent(fs, parent);
+    const rootPresent = yield* fs.exists(root).pipe(mapPlatform(operation, root));
+    const stagePresent = yield* fs.exists(stage).pipe(mapPlatform(operation, stage));
+
+    if (!hadPreimage) {
+      if (rootPresent) {
+        if (stagePresent) {
+          return yield* fail(
+            operation,
+            "CleanupFailed",
+            root,
+            "Cannot distinguish an installed tree while its private stage also exists"
+          );
+        }
+        yield* removeContentTreeDirectory(fs, parent, root);
+      }
+      yield* revalidateContentTreeParent(fs, parent);
+      return;
+    }
+
+    const backupPresent = yield* fs.exists(backup).pipe(mapPlatform(operation, backup));
+    if (!backupPresent) {
+      if (!rootPresent) {
+        return yield* fail(
+          operation,
+          "CleanupFailed",
+          root,
+          "Prior content tree and its private backup are both absent"
+        );
+      }
+      yield* requireContentTreeDirectory(fs, parent, root);
+      return;
+    }
+    yield* requireContentTreeDirectory(fs, parent, backup);
+
+    if (rootPresent) {
+      if (stagePresent) {
+        return yield* fail(
+          operation,
+          "CleanupFailed",
+          root,
+          "Cannot replace an unexpected root while the private stage still exists"
+        );
+      }
+      yield* removeContentTreeDirectory(fs, parent, root);
+    }
+    yield* fs.rename(backup, root).pipe(mapPlatform(operation, root));
+    yield* requireContentTreeDirectory(fs, parent, root);
+    yield* revalidateContentTreeParent(fs, parent);
   });
 }
 
@@ -3337,7 +3645,13 @@ function pathsOverlap(left: string, right: string): boolean {
 
 function mapPlatform(operation: ContentWorkspaceFailure["operation"], candidate: string) {
   return <A, R>(effect: Effect.Effect<A, PlatformError.PlatformError, R>) =>
-    effect.pipe(Effect.mapError((cause) => platformFailure(operation, candidate, cause)));
+    effect.pipe(
+      Effect.catchCause((cause) =>
+        Effect.failCause(
+          Cause.map(cause, (failure) => platformFailure(operation, candidate, failure))
+        )
+      )
+    );
 }
 
 function platformFailure(
@@ -3409,5 +3723,12 @@ function errorMessage(error: unknown): string {
 }
 
 function compareText(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
+  const leftBytes = encoder.encode(left);
+  const rightBytes = encoder.encode(right);
+  const length = Math.min(leftBytes.length, rightBytes.length);
+  for (let index = 0; index < length; index += 1) {
+    const difference = leftBytes[index]! - rightBytes[index]!;
+    if (difference !== 0) return difference;
+  }
+  return leftBytes.length - rightBytes.length;
 }

@@ -18,12 +18,12 @@ import { MAX_RELEASE_SET_PAYLOAD_BYTES } from "../../../../src/service/model/pol
 import { MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES } from "../../../../src/service/modules/providers/model/policy/source-interface";
 import {
   createProviderLifecycleClient,
+  DISPOSABLE_MARKETPLACE_ROOT,
   FakeNativeProviders,
   fakeNativeSession,
   selectedContent,
   selectedContentWithAliases,
   selectedContentWithExecutableScript,
-  TEMPORARY_MARKETPLACE_ROOT,
   testRequest,
 } from "../../../support/modules/providers/fixture";
 import { testInvocation } from "../../../support/service/client";
@@ -32,10 +32,198 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 describe("provider disposable-home test", () => {
+  it("rejects provider homes that overlap the reserved marketplace root", async () => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const target = {
+      provider: "codex" as const,
+      home: `${DISPOSABLE_MARKETPLACE_ROOT}/codex-home`,
+    };
+    const session = fakeNativeSession({ target, content });
+    const nativeProviders = new FakeNativeProviders([session]);
+    const fixture = createProviderLifecycleClient(content, nativeProviders);
+
+    await expect(
+      fixture.client.providers.test({ ...testRequest, targets: [target] }, testInvocation)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(fixture.materializationCalls).toEqual([]);
+    expect(nativeProviders.acquisitionCalls).toEqual([]);
+  });
+
+  it.each([
+    { name: "equal", locator: DISPOSABLE_MARKETPLACE_ROOT },
+    { name: "ancestor", locator: testRequest.disposableRoot },
+    { name: "descendant", locator: `${DISPOSABLE_MARKETPLACE_ROOT}/content` },
+  ])("rejects a $name content workspace before resource work", async ({ locator }) => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const nativeProviders = new FakeNativeProviders([]);
+    const fixture = createProviderLifecycleClient(content, nativeProviders);
+
+    await expect(
+      fixture.client.providers.test(
+        {
+          ...testRequest,
+          contentWorkspace: { ...testRequest.contentWorkspace, locator },
+        },
+        testInvocation
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(fixture.resourceCalls).toEqual([]);
+    expect(fixture.materializationCalls).toEqual([]);
+    expect(nativeProviders.acquisitionCalls).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: "equal",
+      locator: "/tmp/rawr-provider-test/native/codex-home",
+    },
+    {
+      name: "ancestor",
+      locator: "/tmp/rawr-provider-test/native",
+    },
+    {
+      name: "descendant",
+      locator: "/tmp/rawr-provider-test/native/codex-home/content",
+    },
+  ])("rejects a content workspace $name to a provider home before resource work", async ({
+    locator,
+  }) => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const targets = [
+      {
+        provider: "codex" as const,
+        home: "/tmp/rawr-provider-test/native/codex-home",
+      },
+    ];
+    const nativeProviders = new FakeNativeProviders([]);
+    const fixture = createProviderLifecycleClient(content, nativeProviders);
+
+    await expect(
+      fixture.client.providers.test(
+        {
+          ...testRequest,
+          contentWorkspace: { ...testRequest.contentWorkspace, locator },
+          targets,
+        },
+        testInvocation
+      )
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(fixture.resourceCalls).toEqual([]);
+    expect(fixture.materializationCalls).toEqual([]);
+    expect(nativeProviders.acquisitionCalls).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: "equal",
+      targets: [
+        { provider: "codex" as const, home: "/tmp/rawr-provider-test/shared-home" },
+        { provider: "claude" as const, home: "/tmp/rawr-provider-test/shared-home" },
+      ],
+    },
+    {
+      name: "nested",
+      targets: [
+        { provider: "codex" as const, home: "/tmp/rawr-provider-test/codex-home" },
+        { provider: "claude" as const, home: "/tmp/rawr-provider-test/codex-home/claude" },
+      ],
+    },
+  ])("rejects $name provider homes before resource work", async ({ targets }) => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const nativeProviders = new FakeNativeProviders([]);
+    const fixture = createProviderLifecycleClient(content, nativeProviders);
+
+    await expect(
+      fixture.client.providers.test({ ...testRequest, targets }, testInvocation)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(fixture.resourceCalls).toEqual([]);
+    expect(fixture.materializationCalls).toEqual([]);
+    expect(nativeProviders.acquisitionCalls).toEqual([]);
+  });
+
+  it("attempts every native session admission before refusing materialization", async () => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const targets = [
+      { provider: "codex" as const, home: "/tmp/rawr-provider-test/codex-home" },
+      { provider: "claude" as const, home: "/tmp/rawr-provider-test/claude-home" },
+    ];
+    const codex = fakeNativeSession({
+      target: targets[0],
+      content,
+      installed: ["cognition"],
+    });
+    const events: string[] = [];
+    const nativeProviders = new FakeNativeProviders([codex], (target) => {
+      events.push(`acquire:${target.provider}:${target.home}`);
+    });
+    const fixture = createProviderLifecycleClient(content, nativeProviders, {
+      onContentTreeEvent: (event) => events.push(event),
+    });
+
+    const result = await fixture.client.providers.test({ ...testRequest, targets }, testInvocation);
+
+    expect(nativeProviders.acquisitionCalls).toEqual([
+      "claude:/tmp/rawr-provider-test/claude-home",
+      "codex:/tmp/rawr-provider-test/codex-home",
+    ]);
+    expect(events).toEqual([
+      "acquire:claude:/tmp/rawr-provider-test/claude-home",
+      "acquire:codex:/tmp/rawr-provider-test/codex-home",
+    ]);
+    expect(fixture.materializationCalls).toEqual([]);
+    expect(result.selection).not.toBeNull();
+    expect(result.classification).toBe("Failed");
+    expect(result.targets.map((target) => target.classification)).toEqual([
+      "Failed",
+      "NotAttempted",
+    ]);
+    expect(result.issues).toContainEqual(expect.objectContaining({ code: "TargetUnavailable" }));
+    expect(codex.mutationCalls()).toEqual([]);
+  });
+
+  it("blocks a same-identity marketplace owned by another local root", async () => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const session = fakeNativeSession({
+      target: testRequest.targets[0],
+      content,
+      marketplace: "foreign-local",
+      installed: ["cognition"],
+    });
+    const fixture = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await fixture.client.providers.test(testRequest, testInvocation);
+
+    expect(result.classification).toBe("Blocked");
+    expect(result.issues).toContainEqual({
+      code: "MarketplaceCollision",
+      detail: "Marketplace rawr-hq is owned by an unrelated source.",
+    });
+    expect(session.mutationCalls()).toEqual([]);
+    expect(fixture.materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
+  });
+
   it("selects exactly the requested member without acting on unselected content", async () => {
     const content = selectedContentWithExecutableScript(
       ["cognition", "docs"],
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
       "targeted"
     );
     const session = fakeNativeSession({
@@ -43,7 +231,7 @@ describe("provider disposable-home test", () => {
       content,
       installed: ["cognition", "docs"],
     });
-    const { client, finalizedTemporaryRoots, gitMarketplaceEntries, materializationCalls } =
+    const { client, materializedRoots, gitMarketplaceEntries, materializationCalls } =
       createProviderLifecycleClient(content, new FakeNativeProviders([session]));
 
     const result = await client.providers.test(
@@ -78,14 +266,14 @@ describe("provider disposable-home test", () => {
         mode: "100755",
       })
     );
-    expect(TEMPORARY_MARKETPLACE_ROOT).not.toBe(testRequest.contentWorkspace.locator);
-    expect(finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
+    expect(DISPOSABLE_MARKETPLACE_ROOT).not.toBe(testRequest.contentWorkspace.locator);
+    expect(materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
   });
 
   it("owns one admitted target snapshot across deferred source observation", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     const admittedHome = testRequest.targets[0]!.home;
     const mutatedHome = "/tmp/provider-home-outside-disposable-root";
@@ -121,15 +309,14 @@ describe("provider disposable-home test", () => {
 
     const result = await pending;
     expect(result.targets.map(({ target: observed }) => observed.home)).toEqual([admittedHome]);
-    expect(nativeProviders.acquisitionCalls.length).toBeGreaterThan(0);
-    expect(new Set(nativeProviders.acquisitionCalls)).toEqual(new Set([`codex:${admittedHome}`]));
+    expect(nativeProviders.acquisitionCalls).toEqual([`codex:${admittedHome}`]);
     expect(nativeProviders.acquisitionCalls).not.toContain(`codex:${mutatedHome}`);
   });
 
   it("selects the complete release set through the public operation", async () => {
     const content = selectedContent(
       ["cognition", "docs"],
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
       "complete-set"
     );
     const session = fakeNativeSession({
@@ -155,7 +342,7 @@ describe("provider disposable-home test", () => {
   it("preserves managed installed members omitted from a complete release set", async () => {
     const content = selectedContent(
       ["cognition"],
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
       "complete-set"
     );
     const session = fakeNativeSession({
@@ -173,10 +360,10 @@ describe("provider disposable-home test", () => {
     expect(session.mutationCalls()).not.toContain("mutate:plugin-remove:docs@rawr-hq");
   });
 
-  it("authors two complete bounded source selections before the first native mutation", async () => {
+  it("reuses one admitted session across both bounded source selections", async () => {
     const content = selectedContent(
       ["cognition"],
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
       "targeted"
     );
     const treeLimits: Array<
@@ -197,13 +384,7 @@ describe("provider disposable-home test", () => {
     const lifecycleEvents: string[] = [];
     let resourceCallsAtFirstMutation: readonly string[] | undefined;
     let resourceCalls: string[] = [];
-    const initialSession = fakeNativeSession({
-      target: testRequest.targets[0],
-      content,
-      marketplace: "absent",
-      onInventory: () => lifecycleEvents.push("initial-observation"),
-    });
-    const finalSession = fakeNativeSession({
+    const session = fakeNativeSession({
       target: testRequest.targets[0],
       content,
       marketplace: "absent",
@@ -213,9 +394,11 @@ describe("provider disposable-home test", () => {
           resourceCallsAtFirstMutation = [...resourceCalls];
         }
       },
-      onInventory: () => lifecycleEvents.push("final-observation"),
+      onInventory: () => lifecycleEvents.push("observation"),
     });
-    const nativeProviders = new FakeNativeProviders([initialSession, finalSession]);
+    const nativeProviders = new FakeNativeProviders([session], () => {
+      lifecycleEvents.push("acquired");
+    });
     const fixture = createProviderLifecycleClient(content, nativeProviders, {
       transformContentWorkspace: (delegate) =>
         Object.freeze({
@@ -260,7 +443,7 @@ describe("provider disposable-home test", () => {
               })
             ),
         }),
-      onTemporaryTreeEvent: (event) => lifecycleEvents.push(event),
+      onContentTreeEvent: (event) => lifecycleEvents.push(event),
     });
     resourceCalls = fixture.resourceCalls;
 
@@ -279,7 +462,6 @@ describe("provider disposable-home test", () => {
     expect(
       resourceCallsAtFirstMutation?.filter((call) => call === "materialize-tree")
     ).toHaveLength(1);
-    expect(resourceCallsAtFirstMutation).not.toContain("finalize-tree");
     expect(treeLimits.length).toBeGreaterThan(0);
     expect(new Set(treeLimits.map(({ paths }) => paths.join("\0")))).toEqual(
       new Set([
@@ -319,25 +501,24 @@ describe("provider disposable-home test", () => {
     expect(fixture.materializationCalls).toHaveLength(1);
     expect(fixture.materializationCalls[0]).toMatchObject({
       parentRoot: testRequest.disposableRoot,
+      directoryName: ".rawr-agent-plugin-marketplace",
       maxEntries: MAX_CLEAN_CONTENT_TREE_ENTRIES + 2,
       maxBytes: MAX_RELEASE_SET_PAYLOAD_BYTES + 2 * MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES,
     });
-    expect(fixture.finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
-    expect(lifecycleEvents[0]).toBe("materialized");
+    expect(fixture.materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
+    expect(nativeProviders.acquisitionCalls).toEqual(["codex:/tmp/rawr-provider-test/codex-home"]);
+    expect(lifecycleEvents.slice(0, 2)).toEqual(["acquired", "materialized"]);
     expect(lifecycleEvents.lastIndexOf("mutation")).toBeLessThan(
-      lifecycleEvents.lastIndexOf("final-observation")
+      lifecycleEvents.lastIndexOf("observation")
     );
-    expect(lifecycleEvents.lastIndexOf("final-observation")).toBeLessThan(
-      lifecycleEvents.lastIndexOf("finalized")
-    );
-    expect(initialSession.mutationCalls()).toEqual([]);
-    expect(finalSession.mutationCalls()).not.toEqual([]);
+    expect(lifecycleEvents.at(-1)).toBe("observation");
+    expect(session.mutationCalls()).not.toEqual([]);
   });
 
   it("blocks exact marketplace byte drift before native mutation", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     const manifestPathsByBlob = new Map<string, string>();
     const manifestReads = new Map<string, number>();
@@ -383,13 +564,13 @@ describe("provider disposable-home test", () => {
       },
     ]);
     expect(session.mutationCalls()).toEqual([]);
-    expect(fixture.finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
+    expect(fixture.materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
   });
 
   it("returns the concrete second clean refusal before comparing bindings", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     const failure: ContentWorkspaceFailure = {
       _tag: "ContentWorkspaceFailure",
@@ -435,7 +616,7 @@ describe("provider disposable-home test", () => {
   it("blocks a changed clean binding without native mutation", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     let captures = 0;
     const session = fakeNativeSession({
@@ -474,13 +655,13 @@ describe("provider disposable-home test", () => {
     ]);
     expect(nativeProviders.acquisitionCalls).toEqual(["codex:/tmp/rawr-provider-test/codex-home"]);
     expect(session.mutationCalls()).toEqual([]);
-    expect(fixture.finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
+    expect(fixture.materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
   });
 
   it("maps typed source failure but preserves defects, interruption, and finalization", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     const failure: ContentWorkspaceFailure = {
       _tag: "ContentWorkspaceFailure",
@@ -539,10 +720,10 @@ describe("provider disposable-home test", () => {
     expect(session.mutationCalls()).toEqual([]);
   });
 
-  it("finalizes a materialized marketplace after native defects and interruption", async () => {
+  it("leaves the disposable marketplace owned by its caller after defects and interruption", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     const defect = new Error("provider capability defect");
     const defectiveSession = fakeNativeSession({
@@ -556,7 +737,7 @@ describe("provider disposable-home test", () => {
     );
 
     await expect(defective.client.providers.test(testRequest, testInvocation)).rejects.toBe(defect);
-    expect(defective.finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
+    expect(defective.materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
 
     const started = Promise.withResolvers<void>();
     const interruptedSession = fakeNativeSession({
@@ -576,19 +757,19 @@ describe("provider disposable-home test", () => {
     await started.promise;
     controller.abort();
     await expect(operation).rejects.toBeDefined();
-    expect(interrupted.finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
+    expect(interrupted.materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
   });
 
-  it("blocks a materialization failure before native acquisition", async () => {
+  it("blocks a materialization failure after native admission", async () => {
     const content = selectedContent(["cognition"], {
       kind: "local",
-      root: TEMPORARY_MARKETPLACE_ROOT,
+      root: DISPOSABLE_MARKETPLACE_ROOT,
     });
     const failure: ContentWorkspaceFailure = {
       _tag: "ContentWorkspaceFailure",
-      operation: "materialize-temporary-tree",
+      operation: "materialize-content-tree",
       reason: "FilesystemFailed",
-      detail: "temporary marketplace materialization failed",
+      detail: "disposable marketplace materialization failed",
     };
     let attempts = 0;
     const session = fakeNativeSession({ target: testRequest.targets[0], content });
@@ -597,7 +778,7 @@ describe("provider disposable-home test", () => {
       transformContentWorkspace: (delegate) =>
         Object.freeze({
           ...delegate,
-          materializeTemporaryTree: () =>
+          materializeContentTree: () =>
             Effect.sync(() => {
               attempts += 1;
             }).pipe(Effect.andThen(Effect.fail(failure))),
@@ -612,10 +793,41 @@ describe("provider disposable-home test", () => {
     expect(result.issues).toEqual([
       {
         code: "SelectionRejected",
-        detail: "SourceReadFailed: temporary marketplace materialization failed",
+        detail: "SourceReadFailed: disposable marketplace materialization failed",
       },
     ]);
-    expect(nativeProviders.acquisitionCalls).toEqual([]);
+    expect(nativeProviders.acquisitionCalls).toEqual(["codex:/tmp/rawr-provider-test/codex-home"]);
+    expect(session.calls).toEqual([]);
+  });
+
+  it("blocks a content workspace that returns a different marketplace root", async () => {
+    const content = selectedContent(["cognition"], {
+      kind: "local",
+      root: DISPOSABLE_MARKETPLACE_ROOT,
+    });
+    const session = fakeNativeSession({ target: testRequest.targets[0], content });
+    const nativeProviders = new FakeNativeProviders([session]);
+    const { client } = createProviderLifecycleClient(content, nativeProviders, {
+      transformContentWorkspace: (delegate) =>
+        Object.freeze({
+          ...delegate,
+          materializeContentTree: () =>
+            Effect.succeed(Object.freeze({ root: testRequest.targets[0]!.home })),
+        }),
+    });
+
+    const result = await client.providers.test(testRequest, testInvocation);
+
+    expect(result.classification).toBe("Blocked");
+    expect(result.selection).toBeNull();
+    expect(result.issues).toEqual([
+      {
+        code: "SelectionRejected",
+        detail:
+          "SourceReadFailed: Content workspace returned a different disposable marketplace root.",
+      },
+    ]);
+    expect(nativeProviders.acquisitionCalls).toEqual(["codex:/tmp/rawr-provider-test/codex-home"]);
     expect(session.calls).toEqual([]);
   });
 
@@ -638,7 +850,7 @@ describe("provider disposable-home test", () => {
   ])("rejects $name before native observation", async ({ replacements, detail }) => {
     const content = selectedContent(
       ["cognition", "docs"],
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
       "complete-set"
     );
     const session = fakeNativeSession({ target: testRequest.targets[0], content });
@@ -678,11 +890,11 @@ describe("provider disposable-home test", () => {
     expect(session.calls).toEqual([]);
   });
 
-  it("keeps the full scoped catalog while mutating only a targeted member", async () => {
+  it("keeps the full stable catalog while mutating only a targeted member", async () => {
     const events: string[] = [];
     const content = selectedContent(
       ["cognition", "docs"],
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
       "targeted"
     );
     const session = fakeNativeSession({
@@ -692,11 +904,12 @@ describe("provider disposable-home test", () => {
       omitted: ["docs"],
       onInventory: () => events.push("inventory"),
     });
-    const { client, finalizedTemporaryRoots, materializationCalls } = createProviderLifecycleClient(
+    const nativeProviders = new FakeNativeProviders([session], () => events.push("acquired"));
+    const { client, materializedRoots, materializationCalls } = createProviderLifecycleClient(
       content,
-      new FakeNativeProviders([session]),
+      nativeProviders,
       {
-        onTemporaryTreeEvent: (event) => events.push(event),
+        onContentTreeEvent: (event) => events.push(event),
       }
     );
 
@@ -720,23 +933,62 @@ describe("provider disposable-home test", () => {
       )
     ).toBe(true);
     expect(session.marketplaceAddSources()).toEqual([
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT },
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
     ]);
     expect(session.marketplaceAddSources()[0]).not.toEqual({
       kind: "local",
       root: testRequest.contentWorkspace.locator,
     });
-    expect(events[0]).toBe("materialized");
-    expect(events.at(-1)).toBe("finalized");
-    expect(events.lastIndexOf("inventory")).toBeLessThan(events.lastIndexOf("finalized"));
-    expect(finalizedTemporaryRoots).toEqual([TEMPORARY_MARKETPLACE_ROOT]);
+    expect(events.slice(0, 2)).toEqual(["acquired", "materialized"]);
+    expect(events.at(-1)).toBe("inventory");
+    expect(materializedRoots).toEqual([DISPOSABLE_MARKETPLACE_ROOT]);
+  });
+
+  it("refreshes one stale targeted member and stutters on an identical repeat", async () => {
+    const content = selectedContent(
+      ["cognition", "docs"],
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT },
+      "targeted"
+    );
+    const session = fakeNativeSession({
+      target: testRequest.targets[0],
+      content,
+      installed: ["cognition", "docs"],
+      staleFiles: ["cognition"],
+    });
+    const fixture = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+    const request = {
+      ...testRequest,
+      mode: { kind: "targeted" as const, pluginIds: [content.members[0]!.pluginId] },
+    };
+
+    const changed = await fixture.client.providers.test(request, testInvocation);
+    const mutationsAfterChange = [...session.mutationCalls()];
+    const callsAfterChange = session.calls.length;
+    const repeated = await fixture.client.providers.test(request, testInvocation);
+
+    expect(changed.classification).toBe("Changed");
+    expect(mutationsAfterChange).toEqual([
+      "mutate:plugin-remove:cognition@rawr-hq",
+      "mutate:plugin-install:cognition@rawr-hq",
+    ]);
+    expect(mutationsAfterChange.some((call) => call.includes("docs@rawr-hq"))).toBe(false);
+    expect(mutationsAfterChange.some((call) => call.includes("marketplace"))).toBe(false);
+    expect(repeated.classification).toBe("Converged");
+    expect(repeated.targets.flatMap((target) => target.operations)).toEqual([]);
+    expect(session.mutationCalls()).toEqual(mutationsAfterChange);
+    expect(session.calls.length).toBeGreaterThan(callsAfterChange);
+    expect(fixture.materializedRoots).toEqual([
+      DISPOSABLE_MARKETPLACE_ROOT,
+      DISPOSABLE_MARKETPLACE_ROOT,
+    ]);
   });
 
   it("preserves alias-shaped managed residue in a disposable home", async () => {
     const content = selectedContentWithAliases(
       ["cognition"],
       { cognition: ["cog"] },
-      { kind: "local", root: TEMPORARY_MARKETPLACE_ROOT }
+      { kind: "local", root: DISPOSABLE_MARKETPLACE_ROOT }
     );
     const session = fakeNativeSession({
       target: testRequest.targets[0],

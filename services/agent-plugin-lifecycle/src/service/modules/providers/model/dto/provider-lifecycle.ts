@@ -47,7 +47,18 @@ export const ProviderTargetSchema = ReadonlyObject(
   }),
   { additionalProperties: false }
 );
-export const ProviderTestDisposableRootSchema = ProviderHomeSchema;
+/**
+ * Defines the caller-owned filesystem boundary for one live provider test.
+ * Sequential calls may reuse the root to verify convergence, while concurrent
+ * calls require distinct roots so each native provider reads one stable source.
+ */
+export const ProviderTestDisposableRootSchema = Type.String({
+  minLength: 2,
+  maxLength: 16_384,
+  pattern: "^/(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])[^/](?:.*[^/])?$",
+  description:
+    "Projectable non-root absolute path exclusively owned by one live provider-test call; sequential calls may reuse it.",
+});
 
 export const ProviderTargetsSchema = ReadonlyObject(Type.Array(ProviderTargetSchema), {
   minItems: 1,
