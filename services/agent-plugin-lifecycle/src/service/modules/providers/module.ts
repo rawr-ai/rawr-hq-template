@@ -9,6 +9,7 @@ export const module = service.providers.use(async ({ context, next }) =>
     context: {
       contentWorkspace: context.deps.contentWorkspace,
       nativeProviders: context.deps.nativeProviders,
+      versionedContent: context.deps.versionedContent,
     },
   })
 );

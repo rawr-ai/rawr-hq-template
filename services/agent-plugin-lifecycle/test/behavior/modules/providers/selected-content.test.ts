@@ -91,26 +91,16 @@ describe("selected provider content", () => {
     ).toBe(false);
   });
 
-  it("rejects a Git marketplace revision that does not pin the selected commit", () => {
+  it("keeps the native Git tag distinct from the exact selected commit", () => {
     const selected = selectedContent();
     if (selected.marketplace.source.kind !== "git") {
       throw new Error("Expected the Git marketplace fixture");
     }
-    const mismatched = Object.freeze({
-      ...selected,
-      marketplace: Object.freeze({
-        ...selected.marketplace,
-        source: Object.freeze({
-          ...selected.marketplace.source,
-          revision: "f".repeat(40),
-        }),
-      }),
-    });
 
-    expect(Value.Check(SelectedContentSchema, mismatched)).toBe(true);
-    expect(validateSelectedContent(mismatched)).toContainEqual(
-      expect.objectContaining({ code: "DesiredContentInvalid" })
-    );
+    expect(selected.marketplace.source.revision).toBe("agent-plugins-v1");
+    expect(selected.marketplace.source.revision).not.toBe(selected.sourceCommit);
+    expect(Value.Check(SelectedContentSchema, selected)).toBe(true);
+    expect(validateSelectedContent(selected)).toEqual([]);
   });
 
   it("keeps canonical member, alias, and manifest order in Provider policy", () => {

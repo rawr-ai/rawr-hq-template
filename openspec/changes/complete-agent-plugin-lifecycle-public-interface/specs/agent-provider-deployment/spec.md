@@ -79,11 +79,20 @@ collisions MUST be preserved and block before mutation.
 
 For a Git marketplace, the native association MUST include the exact marketplace
 identity and canonical repository URL. A provider-reported revision MUST equal
-the selected content commit. When the provider does not expose a revision, the
-same-home repository association MAY establish marketplace ownership only while
-the selected members are independently verified from their declared files before
-omitted-member retirement. An absent revision never excuses a conflicting URL,
-ambiguous marketplace observation, or selected-file mismatch.
+the unqualified release tag projected from the verified current-main
+`sourceRef`; the selected commit and tree remain the exact content authority.
+The selected tag MUST belong to a published release whose repository owner
+enforces release immutability, so the native selector cannot move during or
+after convergence.
+Immediately before a native mutation, the controller MUST reobserve that remote
+tag and refuse mutation unless it still resolves to the selected commit and
+tree. The native provider MAY then use the tag as its cloneable selector and
+MUST still verify selected member files from live installed state.
+When the provider does not expose a revision, the same-home repository
+association MAY establish marketplace ownership only while the selected members
+are independently verified from their declared files before omitted-member
+retirement. An absent revision never excuses a conflicting URL, ambiguous
+marketplace observation, or selected-file mismatch.
 
 #### Scenario: Proven omitted member retires
 - **WHEN** the reviewed complete set omits a live selector associated with the

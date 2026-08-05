@@ -85,6 +85,20 @@ export const CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS = Object.freeze([
   "plugins/agents",
 ]);
 
+const QUALIFIED_TAG_PREFIX = "refs/tags/";
+
+/**
+ * Projects the already-verified current-main tag into the spelling accepted by native providers.
+ *
+ * The qualified ref remains the Git inspection authority. Native Codex and Claude receive only
+ * its tag name after the channel has bound that ref to the selected commit and tree.
+ */
+export function nativeMarketplaceRevision(
+  sourceRef: CanonicalChannelSelection["sourceRef"]
+): string {
+  return sourceRef.slice(QUALIFIED_TAG_PREFIX.length);
+}
+
 type AgentPluginReleaseInput = ReleaseDerivationSource["releaseInput"];
 type AgentPluginPayload = ReleaseDerivationSource["payloads"][number]["payload"];
 

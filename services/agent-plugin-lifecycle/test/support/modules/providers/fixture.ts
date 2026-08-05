@@ -17,6 +17,11 @@ import type {
   NativeProviderPluginFilesReadInput,
   NativeProviderPluginObservation,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
+import type {
+  ObserveRemoteInput,
+  VersionedContentFailure,
+  VersionedContentResource,
+} from "@habitat-ai/rawr-resource-versioned-content";
 import { Effect } from "effect";
 
 import type { Client } from "../../../../src/client";
@@ -58,6 +63,7 @@ import {
   createLifecycleTestClient,
   testInvocation,
   unavailableContentWorkspace,
+  unavailableVersionedContent,
 } from "../../service/client";
 
 const encoder = new TextEncoder();
@@ -73,7 +79,7 @@ const RELEASE_INPUT_PATH = requireParsed(parseReleaseRelativePath(".rawr/release
 const PLUGIN_ROOT = requireParsed(parseReleaseRelativePath("plugins/agents"));
 const REPOSITORY_URL = "https://github.com/rawr-ai/rawr-hq.git";
 const SOURCE_REF = "refs/tags/agent-plugins-v1";
-const NATIVE_SOURCE_REVISION = COMMIT;
+const NATIVE_SOURCE_REVISION = "agent-plugins-v1";
 const workspaceFixtures = new WeakMap<SelectedContent, ProviderWorkspaceFixture>();
 
 /** Stable disposable root returned by the owner-local content-workspace fake. */
@@ -324,6 +330,7 @@ export interface ProviderLifecycleClientFixture {
   readonly gitMarketplaceEntries: readonly DisposableContentTreeEntry[];
   readonly materializationCalls: MaterializeContentTreeInput[];
   readonly materializedRoots: string[];
+  readonly remoteObservationCalls: ObserveRemoteInput[];
 }
 
 interface ProviderLifecycleFixtureOptions {
@@ -333,6 +340,9 @@ interface ProviderLifecycleFixtureOptions {
     resource: ContentWorkspaceResource<never>
   ) => ContentWorkspaceResource<never>;
   readonly onContentTreeEvent?: (event: "materialized", root: string) => void;
+  readonly remoteCommit?: string;
+  readonly remoteFailure?: VersionedContentFailure;
+  readonly remoteTree?: string;
 }
 
 export function createProviderLifecycleClient(
@@ -354,6 +364,7 @@ export function createProviderLifecycleClient(
   const resourceCalls: string[] = [];
   const materializationCalls: MaterializeContentTreeInput[] = [];
   const materializedRoots: string[] = [];
+  const remoteObservationCalls: ObserveRemoteInput[] = [];
   const baseContentWorkspace = providerContentWorkspace(
     fixture,
     secondFixture,
@@ -364,13 +375,38 @@ export function createProviderLifecycleClient(
   );
   const contentWorkspace =
     options.transformContentWorkspace?.(baseContentWorkspace) ?? baseContentWorkspace;
+  const versionedContent = providerVersionedContent(content, remoteObservationCalls, options);
   return {
-    client: createLifecycleTestClient({ contentWorkspace, nativeProviders }),
+    client: createLifecycleTestClient({ contentWorkspace, nativeProviders, versionedContent }),
     resourceCalls,
     gitMarketplaceEntries: fixture.marketplaceEntries,
     materializationCalls,
     materializedRoots,
+    remoteObservationCalls,
   };
+}
+
+function providerVersionedContent(
+  content: SelectedContent,
+  calls: ObserveRemoteInput[],
+  options: ProviderLifecycleFixtureOptions
+): VersionedContentResource<never> {
+  return Object.freeze({
+    ...unavailableVersionedContent(),
+    observeRemote: (input: ObserveRemoteInput) => {
+      calls.push(input);
+      if (options.remoteFailure !== undefined) return Effect.fail(options.remoteFailure);
+      return Effect.succeed(
+        Object.freeze({
+          ...input,
+          commit: options.remoteCommit ?? content.sourceCommit,
+          tree: options.remoteTree ?? content.sourceTree,
+          objectFormat: "sha1" as const,
+          entries: Object.freeze([]),
+        })
+      );
+    },
+  });
 }
 
 interface ProviderWorkspaceFixture {

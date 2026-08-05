@@ -10,6 +10,7 @@ import {
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
+import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "../../../model/dto/release-identity";
@@ -100,6 +101,7 @@ import {
   MAX_SELECTED_CONTENT_TREE_BYTES,
   MAX_SELECTED_CONTENT_TREE_ENTRIES,
   NATIVE_MARKETPLACE_MANIFESTS,
+  nativeMarketplaceRevision,
   planSelectedContentChannelPayloadRead,
   selectSelectedContentChannelManifestEntry,
   validateSelectedNativeMarketplaces,
@@ -809,7 +811,7 @@ export const sync = module.sync.effect(function* ({ context, errors, input }) {
                 source: Object.freeze({
                   kind: "git",
                   repositoryUrl: channel.value.sourceRepositoryUrl,
-                  revision: channel.value.contentCommit,
+                  revision: nativeMarketplaceRevision(channel.value.sourceRef),
                   sparsePaths: [...CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS],
                 }),
               }),
@@ -829,7 +831,11 @@ export const sync = module.sync.effect(function* ({ context, errors, input }) {
             channelClosingAttempt
           );
           return channelClosing.ok
-            ? constructed
+            ? Object.freeze({
+                ...constructed,
+                sourceRepositoryUrl: channel.value.sourceRepositoryUrl,
+                sourceRef: channel.value.sourceRef,
+              })
             : providerSelectionResolution(channelClosing.result);
         });
 
@@ -904,6 +910,35 @@ export const sync = module.sync.effect(function* ({ context, errors, input }) {
       targets,
       issues: collectTargetIssues(targets),
     } satisfies ProviderSyncResult;
+  }
+  if (!allTargetsConverged(finalAssessments)) {
+    const remoteAttempt = yield* Effect.result(
+      context.versionedContent.observeRemote({
+        repositoryIdentity: revalidated.sourceRepositoryUrl,
+        refName: revalidated.sourceRef,
+        sourcePath: "",
+        maxEntries: MAX_VERSIONED_CONTENT_ENTRIES,
+      })
+    );
+    if (
+      Result.isFailure(remoteAttempt) ||
+      remoteAttempt.success.commit !== revalidated.content.sourceCommit ||
+      remoteAttempt.success.tree !== revalidated.content.sourceTree
+    ) {
+      const targets = sourceChangedTargets(
+        canonicalRequest.targets,
+        Result.isFailure(remoteAttempt)
+          ? `Native marketplace source could not be revalidated immediately before mutation: ${remoteAttempt.failure.detail}`
+          : "Native marketplace tag no longer resolves to the selected commit and tree."
+      );
+      return {
+        operation: "sync",
+        classification: "Blocked",
+        selection: selectedContentObservation(revalidated.content),
+        targets,
+        issues: collectTargetIssues(targets),
+      } satisfies ProviderSyncResult;
+    }
   }
   const targets: readonly ProviderMutationTargetResult[] = allTargetsConverged(finalAssessments)
     ? Object.freeze(finalAssessments.map(convergedMutationTargetResult))

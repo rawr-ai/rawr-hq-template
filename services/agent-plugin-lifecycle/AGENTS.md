@@ -96,6 +96,9 @@
   selected-content projection, and native-state policy because no other module
   consumes those meanings. Provider status, sync, and disposable test handlers
   directly sequence the ready content-workspace and native-provider resources;
+  sync additionally uses the ready versioned-content resource to bind the
+  repository-enforced release tag to the selected commit and tree immediately
+  before native mutation.
   sessions stay operation-local and pure policy sees only admitted facts.
 - The Releases module owns clean and staged eligibility operations and directly
   consumes one ready content-workspace resource. Its handlers own observation

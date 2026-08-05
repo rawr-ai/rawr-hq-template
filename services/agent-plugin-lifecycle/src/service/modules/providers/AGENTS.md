@@ -23,6 +23,9 @@
   content-workspace and native-provider resources in their oRPC handlers. They
   do not delegate selection, observation, or mutation to an exported runner,
   resolver, engine, narrowed port, dependency bag, or workspace branch.
+- Sync also consumes the ready versioned-content resource to reobserve the
+  selected immutable release tag immediately before mutation and refuses a
+  remote commit or root-tree mismatch.
 - A native-provider session remains local to the operation that acquired it.
   Pure module policy receives TypeBox-admitted capabilities, inventory, file
   observations, and command outcomes; it returns assessments, bounded plans,
@@ -80,7 +83,8 @@
   concurrent calls use distinct disposable roots. Targeted mode narrows
   native actions, not the catalog bytes named by its exact manifests. A
   mutating operation retains each operation-local admission through the final
-  all-target preflight, ordered mutation, and immediate confirmation. Repeated
+  all-target preflight, reobserves the repository-enforced release tag, then
+  performs ordered mutation and immediate confirmation. Repeated
   inventory observes live native state through the same scoped session; it does
   not create a second provider-session lifecycle inside the operation.
 
@@ -88,8 +92,8 @@
 
 - The `status`, `test`, and `sync` operations are caller boundaries. Status and
   sync consume current-main; test consumes an explicit workspace. The ready
-  content-workspace and native-provider resources are mechanics handoffs, not
-  competing authorities.
+  content-workspace, versioned-content, and native-provider resources are
+  mechanics handoffs, not competing authorities.
 
 ## Routing
 

@@ -209,17 +209,6 @@ export function validateSelectedContent(content: SelectedContent): readonly Prov
       ),
     ]);
   }
-  if (
-    content.marketplace.source.kind === "git" &&
-    content.marketplace.source.revision !== content.sourceCommit
-  ) {
-    issues.push(
-      providerIssue(
-        "DesiredContentInvalid",
-        "Selected Git marketplace revision does not match the selected source commit."
-      )
-    );
-  }
   if (!isCanonicalDistinctOrder(content.members.map((member) => member.pluginId))) {
     issues.push(
       providerIssue(
