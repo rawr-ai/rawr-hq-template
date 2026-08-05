@@ -66,6 +66,25 @@ describe("provider status and preflight", () => {
     );
   });
 
+  it("converges Claude when its observable marketplace revision matches the selected tag", async () => {
+    const content = selectedContent();
+    const target = { provider: "claude" as const, home: "/tmp/claude-home" };
+    const session = fakeNativeSession({
+      target,
+      content,
+      installed: ["cognition"],
+    });
+    const { client } = createProviderLifecycleClient(content, new FakeNativeProviders([session]));
+
+    const result = await client.providers.status(
+      { ...channelRequest, targets: [target] },
+      testInvocation
+    );
+
+    expect(result.classification).toBe("Converged");
+    expect(result.targets[0]?.operations).toEqual([]);
+  });
+
   it("blocks every target before mutation when any target has an ownership collision", async () => {
     const content = selectedContent();
     const targets = [

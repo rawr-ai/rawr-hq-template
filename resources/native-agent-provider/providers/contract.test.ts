@@ -55,7 +55,7 @@ describe("native agent provider contract", () => {
       Value.Check(NativeMarketplaceSourceSchema, {
         kind: "git",
         repositoryUrl: "https://github.com/rawr-ai/rawr-hq.git",
-        revision: "0123456789abcdef",
+        revision: "agent-content-v2",
         sparsePaths: [".codex-plugin", "plugins/agents"],
       })
     ).toBe(true);

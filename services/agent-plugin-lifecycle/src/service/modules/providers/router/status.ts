@@ -70,6 +70,7 @@ import {
   MAX_SELECTED_CONTENT_TREE_BYTES,
   MAX_SELECTED_CONTENT_TREE_ENTRIES,
   NATIVE_MARKETPLACE_MANIFESTS,
+  nativeMarketplaceRevision,
   planSelectedContentChannelPayloadRead,
   selectSelectedContentChannelManifestEntry,
   validateSelectedNativeMarketplaces,
@@ -425,7 +426,7 @@ export const status = module.status.effect(function* ({ context, errors, input }
                 source: Object.freeze({
                   kind: "git",
                   repositoryUrl: channel.value.sourceRepositoryUrl,
-                  revision: channel.value.contentCommit,
+                  revision: nativeMarketplaceRevision(channel.value.sourceRef),
                   sparsePaths: [...CHANNEL_NATIVE_MARKETPLACE_SPARSE_PATHS],
                 }),
               }),

@@ -2949,8 +2949,9 @@ than one second, and Habitat passes all 18 enforced rules with zero findings in
 27.9 seconds. Strict OpenSpec validation and diff hygiene pass. Implementation
 and repository proof landed on Template `main` as PR #596 at `11e79950`.
 
-The adapter supplies `HOME` plus `CODEX_HOME` or `CLAUDE_CONFIG_DIR` and does
-not discover another home. It deliberately trusts the operator-selected PATH
+The adapter preserves the caller's ordinary `HOME` and supplies only
+`CODEX_HOME` or `CLAUDE_CONFIG_DIR` for provider-owned state. It deliberately
+trusts the operator-selected PATH
 command to honor that native contract rather than reintroducing executable
 identity or wrapper admission. The current local `~/.codex-switch/bin/codex`
 selector overwrites a supplied `CODEX_HOME`; it is therefore ineligible for

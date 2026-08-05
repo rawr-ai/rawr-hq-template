@@ -2,6 +2,7 @@ import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
 } from "@habitat-ai/rawr-resource-content-workspace";
+import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {
@@ -46,7 +47,7 @@ describe("provider sync", () => {
       content,
       marketplace: "absent",
     });
-    const { client, resourceCalls } = createProviderLifecycleClient(
+    const { client, remoteObservationCalls, resourceCalls } = createProviderLifecycleClient(
       content,
       new FakeNativeProviders([session])
     );
@@ -55,11 +56,13 @@ describe("provider sync", () => {
     let selectionsAtFirstMutation = -1;
     let channelSelectionsAtFirstMutation = -1;
     let resourceCallsAtFirstMutation = -1;
+    let remoteObservationsAtFirstMutation = -1;
     session.addMarketplace = (source) =>
       Effect.suspend(() => {
         selectionsAtFirstMutation = countCompleteCurrentMainSelections(resourceCalls);
         channelSelectionsAtFirstMutation = countCompleteChannelSelections(resourceCalls);
         resourceCallsAtFirstMutation = resourceCalls.length;
+        remoteObservationsAtFirstMutation = remoteObservationCalls.length;
         return originalAddMarketplace(source);
       });
 
@@ -69,8 +72,20 @@ describe("provider sync", () => {
     expect(selectionsAtFirstMutation).toBe(2);
     expect(channelSelectionsAtFirstMutation).toBe(2);
     expect(resourceCallsAtFirstMutation).toBe(COMPLETE_CHANNEL_SELECTION_CALLS.length * 2);
+    expect(remoteObservationsAtFirstMutation).toBe(1);
     expect(countCompleteCurrentMainSelections(resourceCalls)).toBe(2);
     expect(countCompleteChannelSelections(resourceCalls)).toBe(2);
+    expect(remoteObservationCalls).toEqual([
+      {
+        repositoryIdentity: "https://github.com/rawr-ai/rawr-hq.git",
+        refName: "refs/tags/agent-plugins-v1",
+        sourcePath: "",
+        maxEntries: MAX_VERSIONED_CONTENT_ENTRIES,
+      },
+    ]);
+    expect(session.marketplaceAddSources()).toEqual([
+      expect.objectContaining({ kind: "git", revision: "agent-plugins-v1" }),
+    ]);
   });
 
   it("acquires once per target when the initial native preflight is converged", async () => {
@@ -701,6 +716,68 @@ describe("provider sync", () => {
       issues: [expect.objectContaining({ code: "SourceChanged" })],
     });
     expect(sourceInspections).toBe(6);
+    expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it("refuses a remote marketplace tag that no longer resolves to the selected tree", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const { client, remoteObservationCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session]),
+      { remoteTree: "9".repeat(40) }
+    );
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result).toMatchObject({
+      classification: "Blocked",
+      selection: {
+        sourceCommit: content.sourceCommit,
+        sourceTree: content.sourceTree,
+      },
+      issues: [expect.objectContaining({ code: "SourceChanged" })],
+    });
+    expect(remoteObservationCalls).toHaveLength(1);
+    expect(session.mutationCalls()).toEqual([]);
+  });
+
+  it("blocks a typed remote observation failure before native mutation", async () => {
+    const content = selectedContent();
+    const session = fakeNativeSession({
+      target: channelRequest.targets[0],
+      content,
+      marketplace: "absent",
+    });
+    const { client, remoteObservationCalls } = createProviderLifecycleClient(
+      content,
+      new FakeNativeProviders([session]),
+      {
+        remoteFailure: {
+          _tag: "VersionedContentFailure",
+          operation: "observe-remote",
+          reason: "CommandFailed",
+          detail: "Selected release tag was unavailable",
+        },
+      }
+    );
+
+    const result = await client.providers.sync(channelRequest, testInvocation);
+
+    expect(result).toMatchObject({
+      classification: "Blocked",
+      issues: [
+        expect.objectContaining({
+          code: "SourceChanged",
+          detail: expect.stringContaining("Selected release tag was unavailable"),
+        }),
+      ],
+    });
+    expect(remoteObservationCalls).toHaveLength(1);
     expect(session.mutationCalls()).toEqual([]);
   });
 

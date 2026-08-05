@@ -20,6 +20,7 @@ import {
   MAX_SELECTED_CONTENT_TREE_BYTES,
   MAX_SELECTED_CONTENT_TREE_ENTRIES,
   NATIVE_MARKETPLACE_MANIFESTS,
+  nativeMarketplaceRevision,
   SELECTED_CONTENT_PLUGIN_ROOT,
   SELECTED_CONTENT_RELEASE_INPUT_PATH,
 } from "../../../../src/service/modules/providers/model/policy/source-interface";
@@ -33,6 +34,13 @@ import {
 import { testInvocation } from "../../../support/service/client";
 
 describe("provider channel selected content", () => {
+  it("projects verified qualified tags into native clone selectors", () => {
+    expect(nativeMarketplaceRevision("refs/tags/agent-content-v2")).toBe("agent-content-v2");
+    expect(nativeMarketplaceRevision("refs/tags/releases/agent-content-v2")).toBe(
+      "releases/agent-content-v2"
+    );
+  });
+
   it("resolves exact current-main content through the public status operation", async () => {
     const content = selectedContent();
     const session = fakeNativeSession({
