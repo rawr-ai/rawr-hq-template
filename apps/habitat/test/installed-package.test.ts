@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import {
   lstat,
   mkdir,
@@ -6,6 +6,7 @@ import {
   readdir,
   readFile,
   realpath,
+  rename,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -32,6 +33,13 @@ type PublicProduct = Readonly<{
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const temporaryParent = await realpath(tmpdir());
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
+const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-env-vars"], {
+  cwd: workspaceRoot,
+  encoding: "utf8",
+})
+  .trim()
+  .split("\n")
+  .filter((name) => name.length > 0);
 const sdkVersion = await readPackageVersion("packages/habitat-sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
 const products: readonly PublicProduct[] = [
@@ -224,12 +232,40 @@ describe("installed Habitat products", () => {
 
     const nxPath = path.join(consumerRoot, "nx.json");
     const hooksPath = path.join(consumerRoot, ".codex/hooks.json");
+    const prePushPath = path.join(consumerRoot, ".husky/pre-push");
     const packagePath = path.join(consumerRoot, "package.json");
     const firstNx = await readFile(nxPath, "utf8");
     const firstHooks = await readFile(hooksPath, "utf8");
+    const firstPrePush = await readFile(prePushPath, "utf8");
     const firstPackage = await readFile(packagePath, "utf8");
     expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat-ai/cli/nx-plugin"] });
-    expect(JSON.parse(firstPackage)).toMatchObject({ trustedDependencies: ["@getgrit/cli"] });
+    expect(JSON.parse(firstPackage)).toMatchObject({
+      scripts: { check: "node hook-check.mjs", prepare: "husky" },
+      devDependencies: { husky: "9.1.7" },
+      trustedDependencies: ["@getgrit/cli"],
+    });
+    const huskyManifest = JSON.parse(
+      await readFile(path.join(consumerRoot, "node_modules/husky/package.json"), "utf8")
+    ) as { readonly version?: string };
+    expect(huskyManifest.version).toBe("9.1.7");
+    const packageLock = JSON.parse(
+      await readFile(path.join(consumerRoot, "package-lock.json"), "utf8")
+    ) as {
+      readonly packages?: Readonly<Record<string, { readonly version?: string }>>;
+    };
+    expect(packageLock.packages?.["node_modules/husky"]?.version).toBe("9.1.7");
+    expect(firstPrePush).toBe(
+      "# Nested Git work must discover its own repository.\n" +
+        "unset $(git rev-parse --local-env-vars)\n" +
+        "bun run check\n"
+    );
+    const hookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
+      cwd: consumerRoot,
+    });
+    expect(hookConfig, hookConfig.stderr || hookConfig.stdout).toMatchObject({
+      exitCode: 0,
+      stdout: ".husky/_\n",
+    });
     expect(JSON.parse(firstHooks)).toMatchObject({
       hooks: {
         Stop: [
@@ -246,6 +282,13 @@ describe("installed Habitat products", () => {
       },
     });
 
+    await rename(path.join(consumerRoot, ".husky/_"), path.join(consumerRoot, ".husky/_disabled"));
+    const brokeHookConfig = await run("git", ["config", "core.hooksPath", ".broken-hooks"], {
+      cwd: consumerRoot,
+    });
+    expect(brokeHookConfig, brokeHookConfig.stderr || brokeHookConfig.stdout).toMatchObject({
+      exitCode: 0,
+    });
     const repeated = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
       cwd: consumerRoot,
       timeoutMs: 120_000,
@@ -253,7 +296,51 @@ describe("installed Habitat products", () => {
     expect(repeated, repeated.stderr || repeated.stdout).toMatchObject({ exitCode: 0 });
     expect(await readFile(nxPath, "utf8")).toBe(firstNx);
     expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
+    expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
     expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
+    expect((await lstat(path.join(consumerRoot, ".husky/_/pre-push"))).isFile()).toBe(true);
+    const repairedHookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
+      cwd: consumerRoot,
+    });
+    expect(
+      repairedHookConfig,
+      repairedHookConfig.stderr || repairedHookConfig.stdout
+    ).toMatchObject({
+      exitCode: 0,
+      stdout: ".husky/_\n",
+    });
+
+    const prePush = await run("git", ["hook", "run", "pre-push", "--", "origin"], {
+      cwd: consumerRoot,
+      env: { GIT_DIR: path.join(consumerRoot, ".git") },
+      timeoutMs: 60_000,
+    });
+    expect(prePush, prePush.stderr || prePush.stdout).toMatchObject({ exitCode: 0 });
+    const outerIdentity = await run("git", ["config", "--local", "--get", "user.name"], {
+      cwd: consumerRoot,
+    });
+    expect(outerIdentity.stdout).toBe("outer-fixture\n");
+    const nestedIdentity = await run("git", ["config", "--local", "--get", "user.name"], {
+      cwd: path.join(consumerRoot, ".hook-check-repository"),
+    });
+    expect(nestedIdentity.stdout).toBe("nested-fixture\n");
+
+    const customPrePush = 'printf "%s\\n" "consumer-hook" > .consumer-hook-ran\n';
+    await writeFile(prePushPath, customPrePush);
+    const preserved = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
+      cwd: consumerRoot,
+      timeoutMs: 120_000,
+    });
+    expect(preserved, preserved.stderr || preserved.stdout).toMatchObject({ exitCode: 0 });
+    expect(await readFile(prePushPath, "utf8")).toBe(customPrePush);
+    const customHook = await run("git", ["hook", "run", "pre-push", "--", "origin"], {
+      cwd: consumerRoot,
+      timeoutMs: 60_000,
+    });
+    expect(customHook, customHook.stderr || customHook.stdout).toMatchObject({ exitCode: 0 });
+    expect(await readFile(path.join(consumerRoot, ".consumer-hook-ran"), "utf8")).toBe(
+      "consumer-hook\n"
+    );
 
     const projected = await run(nx, ["show", "project", "@fixture/package", "--json"], {
       cwd: consumerRoot,
@@ -367,6 +454,14 @@ async function createConsumer(): Promise<void> {
       2
     )}\n`,
     "consumer.ts": consumerSource(),
+    "hook-check.mjs": `import { execFileSync } from "node:child_process";
+import { mkdirSync } from "node:fs";
+
+const root = new URL(".hook-check-repository/", import.meta.url);
+mkdirSync(root, { recursive: true });
+execFileSync("git", ["init", "--quiet"], { cwd: root });
+execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
+`,
     "nx.json": "{}\n",
     "package.json": `${JSON.stringify(
       {
@@ -374,6 +469,7 @@ async function createConsumer(): Promise<void> {
         private: true,
         type: "module",
         workspaces: ["packages/*"],
+        scripts: { check: "node hook-check.mjs" },
         dependencies,
       },
       null,
@@ -413,6 +509,12 @@ async function createConsumer(): Promise<void> {
   const initialized = await run("git", ["init", "--quiet"], { cwd: consumerRoot });
   if (initialized.exitCode !== 0) {
     throw new Error(`Could not initialize installed fixture: ${initialized.stderr}`);
+  }
+  const configured = await run("git", ["config", "user.name", "outer-fixture"], {
+    cwd: consumerRoot,
+  });
+  if (configured.exitCode !== 0) {
+    throw new Error(`Could not configure installed fixture: ${configured.stderr}`);
   }
 }
 
@@ -467,8 +569,9 @@ async function run(
     XDG_CACHE_HOME: path.join(runtimeRoot, "cache"),
     XDG_CONFIG_HOME: path.join(runtimeRoot, "config"),
     XDG_DATA_HOME: path.join(runtimeRoot, "data"),
-    ...options.env,
   };
+  for (const name of gitLocalEnvironmentVariables) delete env[name];
+  Object.assign(env, options.env);
   delete env.FORCE_COLOR;
   // Release dry-runs must not turn disposable consumer initialization into a no-op.
   delete env.NX_DRY_RUN;

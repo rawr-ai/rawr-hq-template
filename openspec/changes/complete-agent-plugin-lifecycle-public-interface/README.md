@@ -5946,6 +5946,41 @@ the GitHub Actions publisher, and advanced the same two-package group to
 green. The bootstrap selected no package outside Nx and created no second
 publisher, release group, or installation surface.
 
+### Habitat Husky Activation Candidate
+
+Task 5.7e22i extends the existing native `@habitat-ai/cli:init` generator rather
+than adding another installer. The candidate installs exact Husky `9.1.7` as a
+direct consumer development dependency, uses the vendor's ordinary
+`prepare = husky` lifecycle, and invokes bare Husky after dependency installation
+so the local dispatcher and `core.hooksPath` converge even when package scripts
+are disabled. A consumer without a `check` command receives the normalized Nx
+default `nx run-many -t check`; an existing nonempty command remains the
+repository's scheduler authority. npm, pnpm, and Bun use Husky's supported
+`prepare` lifecycle; Yarn refuses before any initializer write rather than
+silently receiving a lifecycle it does not execute.
+
+The initializer supplies `.husky/pre-push` only when that event has no tracked
+consumer policy. The default clears Git's documented repository-local
+environment before delegating to `bun run check`; it does not read or write Git
+identity. Existing nonempty hooks remain consumer-owned. Exact predecessor
+prepare scripts may be replaced, while incompatible Husky versions or
+dependency placement, prepare, or empty hook state refuses before the first Nx
+`Tree` write. This is source-candidate behavior only: `@habitat-ai/cli@0.4.1`
+remains the released authority, and no
+Template, Personal, or Magic Migration consumer has migrated yet. Landing,
+publication, registry-installed repeat proof, and consumer migration remain
+separate ordered checkpoints.
+
+The source candidate passes 47 Habitat CLI behavior tests, the installed
+two-package `nx add` acceptance, the 18-task owner check, TypeScript, Biome, and
+strict OpenSpec validation. Installed acceptance verifies exact local Husky and
+lockfile resolution, ignored-dispatcher and `core.hooksPath` repair on a
+byte-stable repeat, Windows-faithful `git hook run` execution, inherited
+absolute-`GIT_DIR` isolation, unchanged outer repository identity, and
+consumer-hook preservation. Architecture, TypeScript/structural, and
+behavior-first test reviews report no P0 or P1 findings. The candidate remains
+unlanded and unpublished at this record checkpoint.
+
 ## Lifecycle Model Topology Closure
 
 Task 5.2 is complete. Every one of the lifecycle service's thirteen present

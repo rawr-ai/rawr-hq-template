@@ -42,8 +42,10 @@
 - `nx-plugin.ts` supplies the same SDK construction seam to `src/nx/**` and
   exports its native `createNodes` face.
 - `generators.json` exposes the ESM Nx initialization and named-hook removal
-  emitted with the rest of the app; their binding fixes the package-owned
-  plugin, hook, and Grit identities.
+  emitted with the rest of the app; their binding fixes the package-owned Nx
+  and Codex contributions, installs Husky as consumer development tooling, and
+  supplies the default consumer-owned pre-push check without replacing a
+  repository's existing nonempty hook.
 - `bin/run.js` activates compiled Oclif output; `src/index.ts` is the source
   development entrypoint.
 
@@ -52,6 +54,9 @@
 - Executable: `habitat`.
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
 - Nx generators: `@habitat-ai/cli:init` and `@habitat-ai/cli:remove-hook`.
+- Git-hook activation: consumer-root Husky installed by `@habitat-ai/cli:init`.
+- Consumer package managers: npm, pnpm, and Bun; Yarn requires a different
+  Husky lifecycle and is refused before initialization writes.
 - Runtime SDK: `@habitat-ai/sdk`.
 - No root library export is admitted.
 

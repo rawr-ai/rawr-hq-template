@@ -2155,6 +2155,22 @@ internal Template dependency graph remain private workspace projects.
   and live contract corpora, both affected
   service typechecks, and all 24 affected behavior tests. Add no error bridge,
   compatibility export, runtime wrapper, or alternate schema owner.
+- [ ] 5.7e22i Move Git-hook activation into the native Habitat consumer
+  initializer. Install Husky `9.1.7` as a direct consumer development
+  dependency, use the vendor's canonical `prepare = husky` lifecycle, create
+  the ordinary pre-push `bun run check` hook only when the consumer has none,
+  and run bare Husky after dependency installation so ignored local dispatchers
+  and `core.hooksPath` converge. Admit npm, pnpm, and Bun consumers; refuse Yarn
+  before writes because it does not execute `prepare`. Preserve a consumer's
+  existing nonempty hook, replace only the two exact repository-owned
+  predecessor prepare scripts, and refuse incompatible version or dependency
+  placement, prepare, or empty-hook state before the first Tree write. Clear
+  Git's documented repository-local environment before nested check work
+  without writing Git identity or configuration. Prove an
+  installed Nx consumer, byte-stable repeat initialization, poisoned-environment
+  isolation, and unchanged outer identity. Land and publish this source before
+  migrating Template, Personal, or Magic Migration off their current hook
+  installers; add no hook manager, wrapper, policy runner, or second scheduler.
 - [x] 5.7e23 Reassess the five lifecycle modules against consumers, semantic
   ownership, change coupling, dependency subsets, mutation destinations,
   request lifetime, and plugin/workflow placement. Keep one service because the
