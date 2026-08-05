@@ -62,10 +62,12 @@ interface updates.
 repair a clone that installed with lifecycle scripts disabled, run:
 
 ```bash
-git config core.hooksPath scripts/githooks
+bunx nx generate @habitat-ai/cli:init --no-interactive
 ```
 
-Then `post-merge` and `post-checkout` may refresh repository dependencies. They do
+The installed initializer activates Husky and repairs its ignored dispatcher
+without replacing the repository's tracked nonempty event policies. Then
+`post-merge` and `post-checkout` may refresh repository dependencies. They do
 not publish or install the CLI. `pre-push` preserves
 the remote-identity guard and runs `bun run check`. The root command starts one
 Nx graph over every admitted non-root project's public check. Shared defaults

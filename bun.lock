@@ -28,7 +28,7 @@
         "@catenarycloud/linteffect": "0.0.6",
         "@effect/platform-node": "4.0.0-beta.101",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
-        "@habitat-ai/cli": "0.4.1",
+        "@habitat-ai/cli": "0.4.2",
         "@habitat-ai/rawr-agent-plugin-lifecycle": "workspace:*",
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
@@ -43,6 +43,7 @@
         "bun-types": "1.3.14",
         "cytoscape": "^3.33.2",
         "effect": "4.0.0-beta.101",
+        "husky": "9.1.7",
         "nx": "23.1.0",
         "oclif": "4.23.29",
         "tar": "7.5.7",
@@ -932,7 +933,7 @@
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
 
-    "@habitat-ai/cli": ["@habitat-ai/cli@0.4.1", "", { "dependencies": { "@habitat-ai/sdk": "0.4.1", "@nx/devkit": "23.1.0", "@oclif/core": "^4.13.2", "@oclif/plugin-help": "^6.2.27", "typebox": "1.3.8" }, "bin": { "habitat": "bin/run.js" } }, "sha512-2WxuIJuSfcv7vwnjXTiG4n+8VHS/Ic7JB6jJJXV1vaLYV2vn6ay/E84+m0tqUsuK6f6IvceWNOvMKa0MQIL48w=="],
+    "@habitat-ai/cli": ["@habitat-ai/cli@0.4.2", "", { "dependencies": { "@habitat-ai/sdk": "0.4.2", "@nx/devkit": "23.1.0", "@oclif/core": "^4.13.2", "@oclif/plugin-help": "^6.2.27", "typebox": "1.3.8" }, "bin": { "habitat": "bin/run.js" } }, "sha512-D2hL509lLZ8OeWIs/6WAP67OFYohahvbLu4TrkIAfx9q8A4rPPe5ZTGBKwybjgprIJ0yujLEW1poLa+fZzfYLg=="],
 
     "@habitat-ai/rawr": ["@habitat-ai/rawr@workspace:apps/cli"],
 
@@ -2116,6 +2117,8 @@
 
     "https-proxy-agent": ["https-proxy-agent@5.0.1", "", { "dependencies": { "agent-base": "6", "debug": "4" } }, "sha512-dFcAjpTQFgoLMzC2VwU+C/CbS7uRL0lWmxDITmqm7C+7F0Odmj6s9l6alZc6AELXhrnggM2CeWSXHGOdX2YtwA=="],
 
+    "husky": ["husky@9.1.7", "", { "bin": { "husky": "bin.js" } }, "sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA=="],
+
     "iconv-lite": ["iconv-lite@0.6.3", "", { "dependencies": { "safer-buffer": ">= 2.1.2 < 3.0.0" } }, "sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw=="],
 
     "ieee754": ["ieee754@1.2.1", "", {}, "sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA=="],
@@ -2844,7 +2847,7 @@
 
     "@babel/preset-modules/@babel/types": ["@babel/types@7.29.7", "", { "dependencies": { "@babel/helper-string-parser": "^7.29.7", "@babel/helper-validator-identifier": "^7.29.7" } }, "sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA=="],
 
-    "@habitat-ai/cli/@habitat-ai/sdk": ["@habitat-ai/sdk@0.4.1", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effect/platform-node-shared": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.23", "@orpc/experimental-effect": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@standard-schema/spec": "1.1.0", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-liauw0uVHWt8DsgbkrKmE4Oyeu3dvCY9EIv7F6cPeMIcOzVA5OOW7NeZWpR1+aZnJo8c2BG2/yR0nlG8xY0ZQQ=="],
+    "@habitat-ai/cli/@habitat-ai/sdk": ["@habitat-ai/sdk@0.4.2", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effect/platform-node-shared": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.23", "@orpc/experimental-effect": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@standard-schema/spec": "1.1.0", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-3+3kFmbUdbT+pHAQSL674X1SNr89E5srBl04UO9l27sHKGoEPeCdetJX21DVOmR8gQIx4t8qG/AO+dYmaRaXKA=="],
 
     "@inngest/ai/@types/node": ["@types/node@22.19.11", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-BH7YwL6rA93ReqeQS1c4bsPpcfOmJasG+Fkr6Y59q83f9M1WcBRHR2vM+P9eOisYRcN3ujQoiZY8uk5W+1WL8w=="],
 

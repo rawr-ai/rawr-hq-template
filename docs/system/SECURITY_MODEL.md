@@ -33,7 +33,7 @@ Reports are written to:
 
 ## Git hook boundary
 
-The repo does not run dependency or staged security checks from `scripts/githooks/pre-commit`.
+The repo does not run dependency or staged security checks from `.husky/pre-commit`.
 Security checks remain explicit command and plugin-enablement gates.
 
 Repository hooks do not run CLI lifecycle commands or preserve a mirrored

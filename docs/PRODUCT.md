@@ -30,7 +30,7 @@ application for repository-specific lifecycle operations.
 - Exchange only versioned data and ordinary published interfaces across
   repository boundaries.
 
-Habitat SDK and CLI `0.4.1` publication and registry-installed acceptance are
+Habitat SDK and CLI `0.4.2` publication and registry-installed acceptance are
 complete. Private `rawr` development and acceptance use
 `bun run rawr -- ...`; no RAWR release is pending. The predecessor custom
 distribution, selector, retained releases, and global alias have been removed.

@@ -1,7 +1,7 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/usr/bin/env sh
+set -eu
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(git rev-parse --show-toplevel)"
 REMOTE_NAME="${1:-}"
 
 "${ROOT_DIR}/scripts/dev/check-remotes.sh"
@@ -11,4 +11,5 @@ if [ "${REMOTE_NAME}" != "origin" ]; then
   exit 1
 fi
 
+unset $(git rev-parse --local-env-vars)
 bun run --cwd "${ROOT_DIR}" check

@@ -413,7 +413,7 @@ explicit content workspace and versioned record schemas. It does not share Git
 ancestry, executable paths, worktree identity, or release tooling with Personal.
 
 Task 6.4 must replace Personal's current controller/Civ7 checks with
-repository-owned content validation and installed `@habitat-ai/cli@0.4.1`.
+repository-owned content validation and installed `@habitat-ai/cli@0.4.2`.
 Until that lands, the predecessor checks are not accepted authority. Template
 runs the private `rawr` lifecycle application against explicit Personal Git
 records during cross-repository acceptance; Personal does not install that

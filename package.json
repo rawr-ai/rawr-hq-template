@@ -18,7 +18,7 @@
     "plugins/async/schedules/*"
   ],
   "scripts": {
-    "prepare": "./scripts/dev/install-repository-hooks.sh",
+    "prepare": "husky",
     "dev": "bunx nx run-many -t dev --projects=@rawr/hq-app,@rawr/web --parallel",
     "dev:server": "bunx nx run @rawr/hq-app:dev:server",
     "dev:web": "bunx nx run @rawr/web:dev",
@@ -101,7 +101,7 @@
     "@catenarycloud/linteffect": "0.0.6",
     "@effect/platform-node": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
-    "@habitat-ai/cli": "0.4.1",
+    "@habitat-ai/cli": "0.4.2",
     "@habitat-ai/rawr-agent-plugin-lifecycle": "workspace:*",
     "@habitat-ai/resource-rule-evaluation": "workspace:*",
     "@habitat-ai/resource-source-inventory": "workspace:*",
@@ -116,6 +116,7 @@
     "bun-types": "1.3.14",
     "cytoscape": "^3.33.2",
     "effect": "4.0.0-beta.101",
+    "husky": "9.1.7",
     "nx": "23.1.0",
     "oclif": "4.23.29",
     "tar": "7.5.7",

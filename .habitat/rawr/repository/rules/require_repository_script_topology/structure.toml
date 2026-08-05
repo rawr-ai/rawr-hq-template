@@ -9,7 +9,18 @@ required = [
   "AGENTS.md",
   "chatgpt-corpus-template",
   "dev",
-  "githooks",
   "habitat",
 ]
 allowed = []
+
+[[scopes]]
+name = "repository-hook-topology"
+root = ".husky"
+kind = "directory"
+mode = "closed"
+required = [
+  "post-checkout",
+  "post-merge",
+  "pre-push",
+]
+allowed = ["_"]

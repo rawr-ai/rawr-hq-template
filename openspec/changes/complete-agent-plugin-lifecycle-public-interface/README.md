@@ -50,16 +50,16 @@ baselines and the complete admitted service corpus reports zero findings. All
 OpenSpec items, and standing architecture, oRPC/TypeBox, TypeScript, testing,
 and structural reviews are green.
 
-Habitat SDK and CLI `0.4.1` are the supported public distribution artifacts. npm reports
-`@habitat-ai/sdk@0.4.1` and `@habitat-ai/cli@0.4.1` as `latest`; Template
+Habitat SDK and CLI `0.4.2` are the supported public distribution artifacts. npm reports
+`@habitat-ai/sdk@0.4.2` and `@habitat-ai/cli@0.4.2` as `latest`; Template
 consumes the same exact CLI release through its lockfile. The private `rawr`
 application and its internal Template dependency graph remain private and
 absent from Nx Release. This closes the platform release boundary without
 creating or promising a RAWR distribution.
 
 The supported consumer handoff is exactly
-`npx nx add @habitat-ai/cli@0.4.1 --no-interactive`; it acquires
-`@habitat-ai/sdk@0.4.1`. The release, tag-publish, registry-install, and
+`npx nx add @habitat-ai/cli@0.4.2 --no-interactive`; it acquires
+`@habitat-ai/sdk@0.4.2`. The release, tag-publish, registry-install, and
 canonical-main checks are green. All eighteen names in the rejected RAWR
 `0.1.0` cohort, including the sole historically published
 `@habitat-ai/rawr-hq-sdk`, now return `404` from the public npm package and
@@ -167,7 +167,7 @@ release store, selector, per-file envelope, or source-checkout renaming.
 | Destination/export realization | Separate architecture migration |
 | Inngest content | Accepted and landed on Personal `main`; `dev:inngest` and `dev:effect-inngest` use the normal closed release set, while `inngest-orpc` and research/candidate roots remain excluded |
 
-The public Oclif package decision belongs to Habitat CLI `0.4.1`. The private
+The public Oclif package decision belongs to Habitat CLI `0.4.2`. The private
 `rawr` application remains Nx-built internal tooling; this lifecycle neither
 publishes nor installs it. Any future first-class RAWR product requires a
 separate authority amendment and may not revive a selector, release store, or
@@ -1689,7 +1689,7 @@ review does not authorize a separate release path.
 | Habitat execution normalization | The portable package removes the provisioner, hand-maintained selectors, and second Stop graph on canonical `main`; the service-law admission is landed |
 | TypeBox contract property descriptions | Complete; one shared Magic pattern, bounded standalone/API applications, empty baselines, and zero live findings |
 | Direct Oclif development and external extension path | Complete; source/built entrypoints, native ownership, disposable round trip, and controller-embedded custom-manager deletion are green |
-| Public distribution | The private `rawr` application and its internal Template dependency graph are absent from Nx Release. Habitat SDK and CLI `0.4.1` are the only supported public distribution artifacts; all eighteen names in the rejected RAWR `0.1.0` candidate cohort return `404` from npm. |
+| Public distribution | The private `rawr` application and its internal Template dependency graph are absent from Nx Release. Habitat SDK and CLI `0.4.2` are the only supported public distribution artifacts; all eighteen names in the rejected RAWR `0.1.0` candidate cohort return `404` from npm. |
 | Custom controller/extension deletion | Distribution, selector, release package, authority resource, reentry, workflow, diagnostics, and persistent data root deleted; exact canonical deltas are aligned and archive-time application plus aggregate absence proof remain |
 | Persistent agent artifact/projection store deletion | Complete; persistent stores are absent and disposable provider testing owns only one operation-scoped marketplace child below the caller's root |
 | oRPC 2 and Effect 4 runtime realm | Complete and green on the active node: exact oRPC beta 23, official Effect bridge beta 23, Effect/Platform beta 101, TypeBox 1.3.8, and Standard Schema 1.1.0 form one native realm with no community bridge, predecessor facade, or mixed checkpoint |
@@ -5968,9 +5968,13 @@ dependency placement, prepare, or empty hook state refuses before the first Nx
 `Tree` write. The source implementation landed on canonical Template `main` as
 `b3d3255b5e3fd9558f0f2e836bcc2faca74d1bb4` through PR #812. This checkpoint
 advances the fixed `@habitat-ai/sdk` and `@habitat-ai/cli` Nx release group to
-`0.4.2`; publication, registry-installed repeat proof, and consumer migration
-remain separate ordered checkpoints. `@habitat-ai/cli@0.4.1` remains the
-registry authority until the canonical `habitat-cli-v0.4.2` tag workflow passes.
+`0.4.2`. The canonical `habitat-cli-v0.4.2` tag workflow is green in run
+`30982694580`: Linux and Windows installed-package acceptance, repeat-safe OIDC
+Nx publication, and a fresh registry-installed `nx add` consumer all passed.
+`@habitat-ai/cli@0.4.2` and its exact SDK dependency are now the registry
+authority. Template consumes that release directly and uses Husky for its three
+repository-owned events; Personal and Magic Migration remain independent
+consumer checkpoints.
 
 The source candidate passes 47 Habitat CLI behavior tests, the installed
 two-package `nx add` acceptance, the 18-task owner check, TypeScript, Biome, and
@@ -5978,11 +5982,19 @@ strict OpenSpec validation. Installed acceptance verifies exact local Husky and
 lockfile resolution, ignored-dispatcher and `core.hooksPath` repair on a
 byte-stable repeat, Windows-faithful `git hook run` execution, inherited
 absolute-`GIT_DIR` isolation, unchanged outer repository identity, and
-consumer-hook preservation. Architecture, TypeScript/structural, and
+consumer-hook preservation. Template's cutover additionally preserves its
+remote guard, main-branch dependency refresh, and exact public Nx check while
+deleting the predecessor hook installer and script root. Architecture,
+TypeScript/structural, and
 behavior-first test reviews report no P0 or P1 findings. The landed source
 candidate also passed the required remote repository ratchet and installed
-package acceptance on Ubuntu and Windows. No Template, Personal, or Magic
-Migration consumer has migrated at this release-version checkpoint.
+package acceptance on Ubuntu and Windows.
+
+The Template consumer cutover passes the focused closed hook/script topology,
+shell syntax, repeated byte-stable initializer, native Husky dispatch and
+non-origin refusal, strict OpenSpec validation, and the complete 46-project Nx
+check graph. Independent architecture/Nx, behavior-first testing, and
+structural/code-quality reviews found no remaining P0 or P1 issue.
 
 ## Lifecycle Model Topology Closure
 
