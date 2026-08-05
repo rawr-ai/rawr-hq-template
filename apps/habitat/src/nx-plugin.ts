@@ -8,6 +8,7 @@ const clientForWorkspace = createHabitatClientForWorkspace satisfies (
 const plugin = createHabitatNxPlugin({
   clientForWorkspace,
   runtimeInputs: [
+    { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
     "{workspaceRoot}/bun.lock",
     "{workspaceRoot}/package.json",
     { env: "HABITAT_COMMAND_TIMEOUT_MS" },
