@@ -22,6 +22,12 @@ type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["cata
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedInstance = ResolvedCatalog["instances"][number];
 type CompatibilityRule = ResolvedCatalog["compatibility"]["rules"][number];
+type ResolvedRuleAsset =
+  | Extract<ResolvedApplication["runner"], { name: "grit" }>["pattern"]
+  | Extract<ResolvedApplication["runner"], { name: "habitat" }>["structure"]
+  | CompatibilityRule["baseline"]
+  | Extract<CompatibilityRule["runner"], { name: "grit" }>["pattern"]
+  | Extract<CompatibilityRule["runner"], { name: "habitat" }>["structure"];
 type TargetInput = NonNullable<TargetConfiguration["inputs"]>[number];
 
 type ProjectProjection = {
@@ -372,12 +378,12 @@ function applicationInputs(
   const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
 
   if (application.runner.name === "grit") {
-    files.add(workspaceInput(application.runner.pattern.relativePath));
+    addLocalAssetInput(files, application.runner.pattern);
     for (const entry of application.runner.acquisition.entries) {
       addSubjectInputs(files, entry.path, entry.kind);
     }
   } else {
-    files.add(workspaceInput(application.runner.structure.relativePath));
+    addLocalAssetInput(files, application.runner.structure);
     for (const binding of application.runner.rootBindings) {
       if (binding.path !== undefined) addSubjectInputs(files, binding.path, binding.kind);
     }
@@ -393,18 +399,22 @@ function compatibilityInputs(
   const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
   files.add(workspaceInput(".habitat/**"));
   files.add(workspaceInput(rule.manifestPath));
-  files.add(workspaceInput(rule.baseline.relativePath));
+  addLocalAssetInput(files, rule.baseline);
   for (const pattern of rule.coveragePatterns) files.add(workspaceInput(pattern));
   if (rule.runner.name === "grit") {
-    files.add(workspaceInput(rule.runner.pattern.relativePath));
+    addLocalAssetInput(files, rule.runner.pattern);
     for (const entry of rule.runner.acquisition.entries) {
       addSubjectInputs(files, entry.path, entry.kind);
     }
   } else {
-    files.add(workspaceInput(rule.runner.structure.relativePath));
+    addLocalAssetInput(files, rule.runner.structure);
   }
 
   return [...runtimeInputs, ...[...files].sort(compareText)];
+}
+
+function addLocalAssetInput(target: Set<string>, asset: ResolvedRuleAsset): void {
+  if (asset.provenance.kind === "local") target.add(workspaceInput(asset.relativePath));
 }
 
 function addSubjectInputs(target: Set<string>, path: string, kind: "directory" | "file"): void {

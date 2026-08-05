@@ -81,6 +81,7 @@ afterAll(async () => {
 
 describe("installed Habitat products", () => {
   it("installs, executes, and initializes the public SDK and CLI boundary", async () => {
+    const consumerBlueprintRoot = path.join(consumerRoot, ".habitat/blueprints");
     for (const product of products) {
       const packageRoot = path.join(consumerRoot, "node_modules", product.name);
       const stats = await lstat(packageRoot);
@@ -176,12 +177,14 @@ describe("installed Habitat products", () => {
     expect(help.stdout).toContain("hook");
     expect(help.stdout).toContain("resolve");
 
+    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
     const resolved = await run(habitat, ["resolve"], { cwd: consumerRoot });
     expect(resolved, resolved.stderr || resolved.stdout).toMatchObject({
       exitCode: 0,
       stderr: "",
     });
-    expect(JSON.parse(resolved.stdout)).toMatchObject({
+    const resolvedCatalog = JSON.parse(resolved.stdout);
+    expect(resolvedCatalog).toMatchObject({
       _tag: "Resolved",
       catalog: {
         policyPack: {
@@ -189,9 +192,36 @@ describe("installed Habitat products", () => {
           protocolVersion: 1,
           version: productVersion("@habitat-ai/sdk"),
         },
-        instances: [{ id: "installed-package", ownerProject: "@fixture/package" }],
+        instances: [
+          {
+            id: "installed-package",
+            ownerProject: "@fixture/package",
+            roots: [{ id: "project", path: "packages/example" }],
+          },
+        ],
+        applications: [
+          {
+            instanceId: "installed-package",
+            ruleId: "package_v1_structure",
+            provenance: { kind: "policy-pack" },
+            runner: {
+              structure: { provenance: { kind: "policy-pack" } },
+            },
+          },
+        ],
       },
     });
+    expect(resolvedCatalog.catalog.policyPack.blueprints).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "package", version: 1 })])
+    );
+    expect(resolvedCatalog.catalog.blueprints).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "package", version: 1 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+      ])
+    );
 
     const checked = await run(habitat, ["check"], { cwd: consumerRoot });
     expect(checked, checked.stderr || checked.stdout).toMatchObject({
@@ -203,13 +233,7 @@ describe("installed Habitat products", () => {
       applications: [
         {
           instanceId: "installed-package",
-          ruleId: "source_pattern",
-          runner: "grit",
-          status: "pass",
-        },
-        {
-          instanceId: "installed-package",
-          ruleId: "source_shape",
+          ruleId: "package_v1_structure",
           runner: "habitat",
           status: "pass",
         },
@@ -234,10 +258,16 @@ describe("installed Habitat products", () => {
     const hooksPath = path.join(consumerRoot, ".codex/hooks.json");
     const prePushPath = path.join(consumerRoot, ".husky/pre-push");
     const packagePath = path.join(consumerRoot, "package.json");
+    const packageLockPath = path.join(consumerRoot, "package-lock.json");
+    const instancePath = path.join(consumerRoot, "packages/example/habitat.toml");
     const firstNx = await readFile(nxPath, "utf8");
     const firstHooks = await readFile(hooksPath, "utf8");
     const firstPrePush = await readFile(prePushPath, "utf8");
     const firstPackage = await readFile(packagePath, "utf8");
+    const firstPackageLock = await readFile(packageLockPath, "utf8");
+    const firstInstance = await readFile(instancePath, "utf8");
+    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(firstInstance).not.toContain("source =");
     expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat-ai/cli/nx-plugin"] });
     expect(JSON.parse(firstPackage)).toMatchObject({
       scripts: { check: "node hook-check.mjs", prepare: "husky" },
@@ -248,9 +278,7 @@ describe("installed Habitat products", () => {
       await readFile(path.join(consumerRoot, "node_modules/husky/package.json"), "utf8")
     ) as { readonly version?: string };
     expect(huskyManifest.version).toBe("9.1.7");
-    const packageLock = JSON.parse(
-      await readFile(path.join(consumerRoot, "package-lock.json"), "utf8")
-    ) as {
+    const packageLock = JSON.parse(firstPackageLock) as {
       readonly packages?: Readonly<Record<string, { readonly version?: string }>>;
     };
     expect(packageLock.packages?.["node_modules/husky"]?.version).toBe("9.1.7");
@@ -282,6 +310,19 @@ describe("installed Habitat products", () => {
       },
     });
 
+    const inertRepeat = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
+      cwd: consumerRoot,
+      timeoutMs: 120_000,
+    });
+    expect(inertRepeat, inertRepeat.stderr || inertRepeat.stdout).toMatchObject({ exitCode: 0 });
+    expect(await readFile(nxPath, "utf8")).toBe(firstNx);
+    expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
+    expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
+    expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
+    expect(await readFile(packageLockPath, "utf8")).toBe(firstPackageLock);
+    expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
+    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
+
     await rename(path.join(consumerRoot, ".husky/_"), path.join(consumerRoot, ".husky/_disabled"));
     const brokeHookConfig = await run("git", ["config", "core.hooksPath", ".broken-hooks"], {
       cwd: consumerRoot,
@@ -298,6 +339,9 @@ describe("installed Habitat products", () => {
     expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
     expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
     expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
+    expect(await readFile(packageLockPath, "utf8")).toBe(firstPackageLock);
+    expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
+    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
     expect((await lstat(path.join(consumerRoot, ".husky/_/pre-push"))).isFile()).toBe(true);
     const repairedHookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
       cwd: consumerRoot,
@@ -351,16 +395,27 @@ describe("installed Habitat products", () => {
       stderr: "",
     });
     const project = JSON.parse(projected.stdout) as {
-      readonly targets?: Readonly<Record<string, unknown>>;
+      readonly targets?: Readonly<
+        Record<string, { readonly inputs?: readonly unknown[] } | undefined>
+      >;
     };
     const targets = Object.keys(project.targets ?? {})
       .filter((name) => name.startsWith("habitat:application:"))
       .sort();
-    expect(targets).toEqual([
-      "habitat:application:installed-package:source_pattern",
-      "habitat:application:installed-package:source_shape",
-    ]);
-    const target = "habitat:application:installed-package:source_pattern";
+    expect(targets).toEqual(["habitat:application:installed-package:package_v1_structure"]);
+    const target = "habitat:application:installed-package:package_v1_structure";
+    const targetInputs = project.targets?.[target]?.inputs ?? [];
+    expect(
+      targetInputs.filter(
+        (input) => typeof input === "object" && input !== null && "externalDependencies" in input
+      )
+    ).toEqual([{ externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] }]);
+    expect(targetInputs).toContain("{workspaceRoot}/packages/example");
+    expect(
+      targetInputs.some(
+        (input) => typeof input === "string" && input.includes("blueprints/package/structure.toml")
+      )
+    ).toBe(false);
 
     const executed = await run(
       nx,
@@ -445,14 +500,6 @@ async function createConsumer(): Promise<void> {
     ["nx", "23.1.0"],
   ]);
   const files: Readonly<Record<string, string>> = {
-    ".habitat/blueprints/package/blueprint.toml": blueprintToml(),
-    ".habitat/blueprints/package/source_pattern.md": sourcePattern(),
-    ".habitat/blueprints/package/source_shape.structure.toml": structureToml(),
-    ".habitat/index.json": `${JSON.stringify(
-      { schemaVersion: 2, ownerRoots: { "@fixture/package": "packages/example" } },
-      null,
-      2
-    )}\n`,
     "consumer.ts": consumerSource(),
     "hook-check.mjs": `import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -481,7 +528,29 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
-    "packages/example/source.ts": "export const installed = true;\n",
+    "packages/example/project.json": `${JSON.stringify(
+      {
+        name: "@fixture/package",
+        projectType: "library",
+        sourceRoot: "packages/example/src",
+      },
+      null,
+      2
+    )}\n`,
+    "packages/example/src/index.ts": "export const installed = true;\n",
+    "packages/example/tsconfig.json": `${JSON.stringify(
+      {
+        compilerOptions: {
+          module: "NodeNext",
+          moduleResolution: "NodeNext",
+          strict: true,
+          target: "ES2022",
+        },
+        include: ["src/**/*.ts"],
+      },
+      null,
+      2
+    )}\n`,
     "tsconfig.json": `${JSON.stringify(
       {
         compilerOptions: {
@@ -628,74 +697,6 @@ const createClient: (workspaceRoot: string) => Promise<HabitatClient> =
 
 void readySchema;
 void createClient;
-`;
-}
-
-function blueprintToml(): string {
-  return `schemaVersion = 1
-id = "package"
-version = 1
-
-[[rules]]
-id = "source_pattern"
-lane = "enforced"
-message = "Source pattern must remain valid."
-remediate = "Restore the declared source pattern."
-
-[rules.runner]
-name = "grit"
-pattern = "source_pattern.md"
-patternName = "source_pattern"
-
-[rules.runner.acquisition]
-kind = "check"
-rootRoles = ["project"]
-selections = []
-
-[[rules]]
-id = "source_shape"
-lane = "enforced"
-message = "Source shape must remain valid."
-remediate = "Restore the declared source shape."
-
-[rules.runner]
-name = "habitat"
-mode = "structure"
-structure = "source_shape.structure.toml"
-
-[instance]
-manifest = "habitat.toml"
-anchorRoot = "project"
-selections = []
-
-[[instance.roots]]
-id = "project"
-required = true
-kind = "directory"
-`;
-}
-
-function sourcePattern(): string {
-  return `# source_pattern
-
-\`\`\`grit
-language js(typescript)
-\`forbidden()\`
-\`\`\`
-`;
-}
-
-function structureToml(): string {
-  return `schemaVersion = 2
-
-[[scopes]]
-name = "source"
-rootRole = "project"
-relativePath = "."
-kind = "directory"
-mode = "closed"
-required = ["habitat.toml", "package.json", "source.ts"]
-allowed = []
 `;
 }
 

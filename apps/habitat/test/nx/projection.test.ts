@@ -108,6 +108,58 @@ const structureApplication: ResolvedApplication = {
   },
 };
 
+const policyPackProvenance: Extract<ResolvedApplication["provenance"], { kind: "policy-pack" }> = {
+  kind: "policy-pack",
+  packageName: "@habitat-ai/sdk",
+  packageVersion: "0.5.0",
+  packageRoot: "/workspace/node_modules/@habitat-ai/sdk",
+  packageRelativePath: "dist/blueprints/package/blueprint.toml",
+};
+
+const packagedInstance: ResolvedInstance = {
+  id: "installed-package",
+  ownerProject: "@fixture/package",
+  blueprint: "package",
+  blueprintVersion: 1,
+  manifestPath: "packages/example/habitat.toml",
+  roots: [{ id: "project", required: true, kind: "directory", path: "packages/example" }],
+  selections: [],
+};
+
+const packagedStructureApplication: ResolvedApplication = {
+  ownerProject: "@fixture/package",
+  instanceId: "installed-package",
+  blueprint: "package",
+  blueprintVersion: 1,
+  ruleId: "package_v1_structure",
+  manifestPath: "packages/example/habitat.toml",
+  lane: "enforced",
+  message: "Package projects must preserve the closed reusable-support shell.",
+  remediate: "Restore the package project shell.",
+  provenance: policyPackProvenance,
+  runner: {
+    name: "habitat",
+    mode: "structure",
+    structure: {
+      provenance: {
+        ...policyPackProvenance,
+        packageRelativePath: "dist/blueprints/package/structure.toml",
+      },
+      relativePath: "dist/blueprints/package/structure.toml",
+      absolutePath:
+        "/workspace/node_modules/@habitat-ai/sdk/dist/blueprints/package/structure.toml",
+    },
+    rootBindings: [
+      {
+        rootRole: "project",
+        required: true,
+        kind: "directory",
+        path: "packages/example",
+      },
+    ],
+  },
+};
+
 const compatibilityProvenance: CompatibilityRule["provenance"] = {
   kind: "local",
   authorityRoot: "/workspace",
@@ -218,7 +270,7 @@ function resolvedCatalog(
 }
 
 const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
-  { externalDependencies: ["@habitat-ai/cli"] },
+  { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
   "{workspaceRoot}/bun.lock",
   "{workspaceRoot}/package.json",
   { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -283,7 +335,7 @@ describe("Habitat Nx projection", () => {
     });
     expect(serviceLeaf?.command).not.toContain("nx");
     expect(serviceLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli"] },
+      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -310,7 +362,7 @@ describe("Habitat Nx projection", () => {
     const pluginTargets = projects["plugins/b"]?.targets;
     const structureLeaf = pluginTargets?.["habitat:application:@scope/plugin-b:plugin-structure"];
     expect(structureLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli"] },
+      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -323,6 +375,52 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/plugins/b/**/*",
       "{workspaceRoot}/plugins/b/habitat.toml",
     ]);
+  });
+
+  it("hashes package authority through public dependencies without projecting package assets", async () => {
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () =>
+          resolvedCatalog(
+            [gritApplication, packagedStructureApplication],
+            [serviceInstance, packagedInstance]
+          ),
+      },
+    }));
+
+    const result = await createNodes(
+      [
+        ".habitat/blueprints/service/blueprint.toml",
+        serviceInstance.manifestPath,
+        packagedInstance.manifestPath,
+      ],
+      undefined,
+      { workspaceRoot: "/workspace", nxJsonConfiguration: {} }
+    );
+    const projects = projectMap(result);
+    const localInputs =
+      projects["services/a"]?.targets?.["habitat:application:service-a:source-law"]?.inputs;
+    const packageInputs =
+      projects["packages/example"]?.targets?.[
+        "habitat:application:installed-package:package_v1_structure"
+      ]?.inputs;
+
+    expect(localInputs).toContain(
+      "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md"
+    );
+    expect(packageInputs).toEqual([
+      ...runtimeInputs,
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/packages/example",
+      "{workspaceRoot}/packages/example/**/*",
+    ]);
+    expect(packageInputs).not.toContain("{workspaceRoot}/dist/blueprints/package/structure.toml");
+    expect(JSON.stringify(projects["packages/example"])).not.toContain(
+      policyPackProvenance.packageRoot
+    );
   });
 
   it("projects compatibility-only Grit and structure leaves on exact owner roots", async () => {
@@ -360,7 +458,7 @@ describe("Habitat Nx projection", () => {
     });
     expect(gritLeaf?.command).not.toContain("--instance");
     expect(gritLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli"] },
+      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -399,7 +497,7 @@ describe("Habitat Nx projection", () => {
       options: { cwd: "{workspaceRoot}" },
     });
     expect(structureLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli"] },
+      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
