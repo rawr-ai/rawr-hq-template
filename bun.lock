@@ -90,6 +90,7 @@
         "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
         "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
         "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
+        "@habitat-ai/resource-telemetry": "workspace:*",
         "@oclif/core": "^4.13.2",
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",

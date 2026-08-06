@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
 
-import { execute } from "@oclif/core";
+import { runRawrCli } from "../dist/run.js";
 
-await execute({ dir: import.meta.url });
+await runRawrCli({ dir: import.meta.url });

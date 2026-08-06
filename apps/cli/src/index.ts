@@ -1,3 +1,3 @@
-import { execute } from "@oclif/core";
+import { runRawrCli } from "./run.js";
 
-await execute({ development: true, dir: import.meta.url });
+await runRawrCli({ development: true, dir: import.meta.url });
