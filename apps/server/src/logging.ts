@@ -7,7 +7,7 @@ import {
   TelemetryCorrelationAttributesSchema,
   type TelemetryResource,
 } from "@habitat-ai/resource-telemetry";
-import { type SpanContext, trace } from "@opentelemetry/api";
+import { trace } from "@opentelemetry/api";
 import { Effect } from "effect";
 import pino, { type DestinationStream, type Logger as PinoLogger } from "pino";
 import { Value } from "typebox/value";
@@ -30,7 +30,6 @@ export type HostLoggingContext = {
 };
 
 const hostLoggingContext = new AsyncLocalStorage<HostLoggingContext>();
-const hostLoggingSpanContext = new AsyncLocalStorage<Pick<SpanContext, "traceId" | "spanId">>();
 
 // Keep one destination-backed logger per repo root so HQ writes a single
 // runtime log stream even when many routed requests pass through the host.
@@ -92,10 +91,7 @@ function flushHostLogger(): void {
 
 function getCorrelationFields(): Record<string, unknown> {
   const context = hostLoggingContext.getStore();
-  const storedSpanContext = hostLoggingSpanContext.getStore();
   const activeSpan = trace.getActiveSpan()?.spanContext();
-  const traceId = storedSpanContext?.traceId ?? activeSpan?.traceId;
-  const spanId = storedSpanContext?.spanId ?? activeSpan?.spanId;
 
   return {
     ...(context
@@ -108,8 +104,8 @@ function getCorrelationFields(): Record<string, unknown> {
           ...(context.callerSurface ? { callerSurface: context.callerSurface } : {}),
         }
       : {}),
-    ...(traceId ? { traceId } : {}),
-    ...(spanId ? { spanId } : {}),
+    ...(activeSpan?.traceId ? { traceId: activeSpan.traceId } : {}),
+    ...(activeSpan?.spanId ? { spanId: activeSpan.spanId } : {}),
   };
 }
 
@@ -218,19 +214,6 @@ export async function withHostLoggingContext<T>(
   fn: () => Promise<T>
 ): Promise<T> {
   return hostLoggingContext.run(context, fn);
-}
-
-export async function withHostLoggingSpanContext<T>(
-  spanContext: Pick<SpanContext, "traceId" | "spanId"> | undefined,
-  fn: () => Promise<T>
-): Promise<T> {
-  if (!spanContext) {
-    return fn();
-  }
-
-  // The route span is the canonical host-owned correlation seam, so persist
-  // its identifiers even if downstream code switches active tracing context.
-  return hostLoggingSpanContext.run(spanContext, fn);
 }
 
 export function __configureHostLoggerForTests(
