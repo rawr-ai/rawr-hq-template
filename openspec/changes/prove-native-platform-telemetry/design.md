@@ -146,6 +146,14 @@ only provider-neutral operations or the active runtime context already
 sanctioned by the platform; they never construct exporters or select a
 provider.
 
+The neutral contract and disabled branch landed at `167aba76c`. Every public
+data shape derives from a closed bounded TypeBox schema, every operation uses
+the exact `Effect.Effect<A, E, R>` channel, and the production build contains
+only the contract and provider entrypoint. The fallback operation scope is
+closed to Oclif commands and Inngest attempts. Its first finish wins; later
+enrichment and every repeated finish are inert. Independent TypeScript/Effect/
+TypeBox and structural reviews found no remaining P0 or P1 issue.
+
 The current direct core telemetry singleton is retired after both consumers
 move. It is not retained as an alias or fallback because that would preserve a
 second state and lifecycle owner. The provider does not register its own
