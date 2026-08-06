@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "id": "require_server_host_telemetry_context_authority",
+  "title": "Require Server Host Telemetry Context Authority",
+  "placement": {
+    "niche": "rawr/app-host",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@rawr/server",
+  "lane": "enforced",
+  "forbids": "a second parser-visible AsyncLocalStorage constructor authority in server host source",
+  "why": "The server host has one request-scoped logging context store. Keeping its construction in logging.ts preserves one host-owned correlation authority while OpenTelemetry remains the active-span authority.",
+  "remediate": "Consume the host logging context authority from apps/server/src/logging.ts instead of constructing another AsyncLocalStorage in server source.",
+  "message": "Server source may construct AsyncLocalStorage only as the canonical hostLoggingContext in logging.ts.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": ["apps/server/src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}"]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/rawr/app-host/rules/require_server_host_telemetry_context_authority/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/rawr/app-host/rules/require_server_host_telemetry_context_authority/pattern.md"
+    },
+    "patternName": "require_server_host_telemetry_context_authority",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps/server/src"]
+    }
+  }
+}
