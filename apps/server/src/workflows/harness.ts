@@ -1,8 +1,10 @@
+import { TelemetryIdentityTextSchema } from "@habitat-ai/resource-telemetry";
 import { type Counter, type Histogram, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Context, Router } from "@orpc/server";
+import { Value } from "typebox/value";
+import type { HostServiceLogger } from "../host-satisfiers";
 import {
-  createHostLoggerAdapter,
   createHostLoggingContext,
   withHostLoggingContext,
   withHostLoggingSpanContext,
@@ -46,11 +48,20 @@ function getRouteTracer() {
 function recordWorkflowRequestMetrics(args: {
   statusCode: number;
   durationMs: number;
+  requestId?: string;
+  correlationId?: string;
   attributes?: Record<string, string | boolean>;
 }) {
   const telemetryAttributes = {
     "rawr.workflow.surface": "published",
     "http.response.status_code": args.statusCode,
+    ...(args.requestId !== undefined && Value.Check(TelemetryIdentityTextSchema, args.requestId)
+      ? { "request.id": args.requestId }
+      : {}),
+    ...(args.correlationId !== undefined &&
+    Value.Check(TelemetryIdentityTextSchema, args.correlationId)
+      ? { "correlation.id": args.correlationId }
+      : {}),
     ...args.attributes,
   };
   const { workflowRequestsCounter, workflowRequestDurationHistogram } = getTelemetryInstruments();
@@ -100,15 +111,19 @@ async function withWorkflowRouteSpan(
 export function createWorkflowRouteHarness<TContext extends RawrBoundaryContext & Context>(input: {
   workflows: WorkflowRouteSurface<TContext>;
   contextFactory: (request: Request, initial: RawrInitialContext) => TContext;
+  hostLogger: HostServiceLogger;
 }) {
   const workflowOpenApiHandler = new OpenAPIHandler<TContext>(input.workflows.publishedRouter);
-  const hostLogger = createHostLoggerAdapter();
 
   return {
     async handle(request: Request, initial: RawrInitialContext): Promise<Response> {
       const startedAt = Date.now();
+      let metricRequestId = request.headers.get("x-request-id")?.trim() || undefined;
+      let metricCorrelationId = request.headers.get("x-correlation-id")?.trim() || metricRequestId;
       return withWorkflowRouteSpan(request, async () => {
         const context = input.contextFactory(request, initial);
+        metricRequestId = context.invocation.requestId;
+        metricCorrelationId = context.invocation.correlationId;
         const loggingContext = createHostLoggingContext({
           request,
           repoRoot: context.scope.repoRoot,
@@ -125,7 +140,7 @@ export function createWorkflowRouteHarness<TContext extends RawrBoundaryContext 
           const nextResponse = result.matched
             ? result.response
             : new Response("not found", { status: 404 });
-          hostLogger.info("workflow.route", {
+          input.hostLogger.info("workflow.route", {
             outcome: nextResponse.status >= 400 ? "error" : "success",
             statusCode: nextResponse.status,
             durationMs: Date.now() - startedAt,
@@ -135,6 +150,8 @@ export function createWorkflowRouteHarness<TContext extends RawrBoundaryContext 
         recordWorkflowRequestMetrics({
           statusCode: response.status,
           durationMs: Date.now() - startedAt,
+          requestId: metricRequestId,
+          correlationId: metricCorrelationId,
           attributes: {
             "rawr.workflow.router": "published",
           },
@@ -144,6 +161,8 @@ export function createWorkflowRouteHarness<TContext extends RawrBoundaryContext 
         recordWorkflowRequestMetrics({
           statusCode: 500,
           durationMs: Date.now() - startedAt,
+          requestId: metricRequestId,
+          correlationId: metricCorrelationId,
           attributes: {
             "rawr.workflow.router": "published",
           },

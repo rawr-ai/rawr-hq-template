@@ -10,8 +10,14 @@ import {
   type RawrHostRolePlan,
 } from "./host-seam";
 
+/**
+ * One server-owned realization of app declarations and their process bindings.
+ * Keeping the host logger on this value makes service and workflow logs share
+ * the same acquired telemetry resource by construction.
+ */
 export type RawrHostComposition = Readonly<{
   declarations: RawrHostDeclarations;
+  hostLogger: HostServiceLogger;
   satisfiers: RawrHostSatisfiers;
   rolePlan: RawrHostRolePlan;
   realization: ReturnType<typeof materializeRawrHostRolePlan>;
@@ -49,6 +55,7 @@ export function createRawrHostComposition(input: {
 
   return {
     declarations,
+    hostLogger: input.hostLogger,
     satisfiers,
     rolePlan,
     realization,

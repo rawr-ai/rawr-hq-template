@@ -23,9 +23,10 @@ export type RawrServerHostInput = Readonly<{
 
 function createRouteRegistrar(declarations: RawrHostDeclarations): ServerRouteRegistrar {
   return (app, options) => {
+    const hostLogger = createHostLoggerAdapter(options.telemetry.telemetry);
     const hostComposition = createRawrHostComposition({
       declarations,
-      hostLogger: createHostLoggerAdapter(),
+      hostLogger,
     });
 
     return registerRawrRoutes(app, {

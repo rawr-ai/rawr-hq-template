@@ -1,3 +1,4 @@
+import { MAX_TELEMETRY_IDENTITY_TEXT_LENGTH } from "@habitat-ai/resource-telemetry";
 import { describe, expect, it, vi } from "vitest";
 import { selectRawrHqTelemetryConfig } from "../telemetry";
 
@@ -74,6 +75,24 @@ describe("HQ telemetry selection", () => {
     expect(config.metricExportIntervalMilliseconds).toBe(60_000);
     expect(config.shutdownFallbackMilliseconds).toBe(10_000);
     expect(config.defaultAttributes).toEqual({});
+  });
+
+  it("admits one bounded app receipt id into enabled default attributes", () => {
+    const selected = select({
+      OTEL_EXPORTER_OTLP_ENDPOINT: "https://collector.example.test:4318",
+      RAWR_TELEMETRY_RECEIPT_ID: " receipt-native-telemetry-001 ",
+    });
+    const invalid = select({
+      OTEL_EXPORTER_OTLP_ENDPOINT: "https://collector.example.test:4318",
+      RAWR_TELEMETRY_RECEIPT_ID: "x".repeat(MAX_TELEMETRY_IDENTITY_TEXT_LENGTH + 1),
+    });
+
+    if (!selected.enabled || !invalid.enabled) throw new Error("expected enabled telemetry");
+
+    expect(selected.defaultAttributes).toEqual({
+      "receipt.id": "receipt-native-telemetry-001",
+    });
+    expect(invalid.defaultAttributes).toEqual({});
   });
 
   it("uses complete signal-specific endpoints and lets them override the base", () => {

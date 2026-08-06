@@ -1,8 +1,16 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 import process from "node:process";
+import {
+  EmitTechnicalLogInputSchema,
+  type TelemetryCorrelationAttributes,
+  TelemetryCorrelationAttributesSchema,
+  type TelemetryResource,
+} from "@habitat-ai/resource-telemetry";
 import { type SpanContext, trace } from "@opentelemetry/api";
+import { Effect } from "effect";
 import pino, { type DestinationStream, type Logger as PinoLogger } from "pino";
+import { Value } from "typebox/value";
 
 type ServiceLogger = {
   info(message: string, meta?: Record<string, unknown>): void;
@@ -105,7 +113,57 @@ function getCorrelationFields(): Record<string, unknown> {
   };
 }
 
-function emit(level: "info" | "error", event: string, meta?: Record<string, unknown>): void {
+function getTechnicalLogAttributes(meta: Record<string, unknown>): TelemetryCorrelationAttributes {
+  const context = hostLoggingContext.getStore();
+  const candidates = [
+    ["request.id", context?.requestId],
+    ["correlation.id", context?.correlationId],
+    ["request.method", context?.requestMethod],
+    ["request.path", context?.requestPath],
+    ["http.response.status_code", meta.statusCode ?? meta.status],
+    ["duration.ms", meta.durationMs],
+  ] as const;
+  let attributes: TelemetryCorrelationAttributes = Object.freeze({});
+
+  for (const [key, value] of candidates) {
+    if (value === undefined) continue;
+    const candidate = Object.freeze({ ...attributes, [key]: value });
+    if (Value.Check(TelemetryCorrelationAttributesSchema, candidate)) {
+      attributes = candidate;
+    }
+  }
+
+  return attributes;
+}
+
+function emitTechnicalLog(
+  telemetry: TelemetryResource | undefined,
+  level: "info" | "error",
+  event: string,
+  meta: Record<string, unknown>
+): void {
+  if (telemetry === undefined) return;
+
+  try {
+    const input = Object.freeze({
+      severity: level,
+      eventName: event,
+      message: event,
+      attributes: getTechnicalLogAttributes(meta),
+    });
+    if (!Value.Check(EmitTechnicalLogInputSchema, input)) return;
+    Effect.runSync(telemetry.emitTechnicalLog(input));
+  } catch {
+    // The existing synchronous host logger remains behavior authority.
+  }
+}
+
+function emit(
+  telemetry: TelemetryResource | undefined,
+  level: "info" | "error",
+  event: string,
+  meta?: Record<string, unknown>
+): void {
   const payload = meta ?? {};
   resolveHostLogger()[level](
     {
@@ -115,15 +173,21 @@ function emit(level: "info" | "error", event: string, meta?: Record<string, unkn
     },
     event
   );
+  emitTechnicalLog(telemetry, level, event, payload);
 }
 
-export function createHostLoggerAdapter(): ServiceLogger {
+/**
+ * Adapts the established synchronous host logger to optional neutral telemetry.
+ * Pino remains the behavior owner; bounded technical-log emission follows it
+ * and cannot change the caller's result.
+ */
+export function createHostLoggerAdapter(telemetry?: TelemetryResource): ServiceLogger {
   return {
     info(event, meta) {
-      emit("info", event, meta);
+      emit(telemetry, "info", event, meta);
     },
     error(event, meta) {
-      emit("error", event, meta);
+      emit(telemetry, "error", event, meta);
     },
   };
 }

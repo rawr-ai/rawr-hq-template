@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { TelemetryIdentityTextSchema } from "@habitat-ai/resource-telemetry";
 import {
   type Counter,
   type Histogram,
@@ -23,6 +24,7 @@ import { COMMON_ERROR_STATUS_MAP, type Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { BatchHandlerPlugin } from "@orpc/server/plugins";
 import type { DrainContext, EnrichContext } from "evlog";
+import { Value } from "typebox/value";
 import type { RawrServerApp } from "./app";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import {
@@ -231,12 +233,20 @@ function recordRoutedRequestMetrics(args: {
   surface: "rpc" | "openapi";
   statusCode: number;
   durationMs: number;
+  requestId?: string;
+  correlationId?: string;
   attributes?: Record<string, string | boolean>;
 }) {
-  const { surface, statusCode, durationMs, attributes } = args;
+  const { surface, statusCode, durationMs, requestId, correlationId, attributes } = args;
   const telemetryAttributes = {
     "rawr.orpc.surface": surface,
     "http.response.status_code": statusCode,
+    ...(requestId !== undefined && Value.Check(TelemetryIdentityTextSchema, requestId)
+      ? { "request.id": requestId }
+      : {}),
+    ...(correlationId !== undefined && Value.Check(TelemetryIdentityTextSchema, correlationId)
+      ? { "correlation.id": correlationId }
+      : {}),
     ...attributes,
   };
   const { routedRequestsCounter, routedRequestDurationHistogram } = getTelemetryInstruments();
@@ -293,6 +303,8 @@ async function handleRpcRoute(args: {
   const { request, rpcHandler, contextFactory, initialContext, rpcAuthPolicy, onContextCreated } =
     args;
   const startedAt = Date.now();
+  let metricRequestId = request.headers.get("x-request-id")?.trim() || undefined;
+  let metricCorrelationId = request.headers.get("x-correlation-id")?.trim() || metricRequestId;
   return withRouteSpan(
     request,
     "rawr.orpc.rpc.request",
@@ -307,12 +319,16 @@ async function handleRpcRoute(args: {
           surface: "rpc",
           statusCode: response.status,
           durationMs: Date.now() - startedAt,
+          requestId: metricRequestId,
+          correlationId: metricCorrelationId,
           attributes: { "rawr.orpc.authorized": false, "rawr.orpc.router": "rpc" },
         });
         return response;
       }
 
       const context = contextFactory(request, initialContext);
+      metricRequestId = context.invocation.requestId;
+      metricCorrelationId = context.invocation.correlationId;
       assertRpcAuthDedupeMarker(context);
       onContextCreated?.(context);
       // Request-scoped logging context is established at the shared host boundary,
@@ -335,6 +351,8 @@ async function handleRpcRoute(args: {
         surface: "rpc",
         statusCode: response.status,
         durationMs: Date.now() - startedAt,
+        requestId: metricRequestId,
+        correlationId: metricCorrelationId,
         attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
       });
       return response;
@@ -344,6 +362,8 @@ async function handleRpcRoute(args: {
       surface: "rpc",
       statusCode: 500,
       durationMs: Date.now() - startedAt,
+      requestId: metricRequestId,
+      correlationId: metricCorrelationId,
       attributes: { "rawr.orpc.authorized": true, "rawr.orpc.router": "rpc" },
     });
     throw error;
@@ -359,6 +379,8 @@ async function handleOpenApiRoute(args: {
 }): Promise<Response> {
   const { request, openapiHandler, contextFactory, initialContext, onContextCreated } = args;
   const startedAt = Date.now();
+  let metricRequestId = request.headers.get("x-request-id")?.trim() || undefined;
+  let metricCorrelationId = request.headers.get("x-correlation-id")?.trim() || metricRequestId;
   return withRouteSpan(
     request,
     "rawr.orpc.openapi.request",
@@ -368,6 +390,8 @@ async function handleOpenApiRoute(args: {
     },
     async () => {
       const context = contextFactory(request, initialContext);
+      metricRequestId = context.invocation.requestId;
+      metricCorrelationId = context.invocation.correlationId;
       onContextCreated?.(context);
       // OpenAPI requests must carry the same host-owned logging correlation model
       // as RPC so the two public surfaces stay observably consistent.
@@ -387,6 +411,8 @@ async function handleOpenApiRoute(args: {
         surface: "openapi",
         statusCode: response.status,
         durationMs: Date.now() - startedAt,
+        requestId: metricRequestId,
+        correlationId: metricCorrelationId,
         attributes: { "rawr.orpc.router": "openapi" },
       });
       return response;
@@ -396,6 +422,8 @@ async function handleOpenApiRoute(args: {
       surface: "openapi",
       statusCode: 500,
       durationMs: Date.now() - startedAt,
+      requestId: metricRequestId,
+      correlationId: metricCorrelationId,
       attributes: { "rawr.orpc.router": "openapi" },
     });
     throw error;
