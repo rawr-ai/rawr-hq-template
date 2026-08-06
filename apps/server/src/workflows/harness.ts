@@ -1,15 +1,19 @@
 import { TelemetryIdentityTextSchema } from "@habitat-ai/resource-telemetry";
-import { type Counter, type Histogram, metrics, SpanStatusCode, trace } from "@opentelemetry/api";
+import {
+  type Counter,
+  type Histogram,
+  metrics,
+  context as otelContext,
+  SpanStatusCode,
+  trace,
+} from "@opentelemetry/api";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import type { Context, Router } from "@orpc/server";
 import { Value } from "typebox/value";
 import type { HostServiceLogger } from "../host-satisfiers";
-import {
-  createHostLoggingContext,
-  withHostLoggingContext,
-  withHostLoggingSpanContext,
-} from "../logging";
+import { createHostLoggingContext, withHostLoggingContext } from "../logging";
 import type { RawrBoundaryContext, RawrInitialContext } from "../request-context";
+import { extractIngressTelemetryContext } from "../telemetry-ingress";
 
 export const WORKFLOW_BASE_PATH = "/api/workflows" as const;
 
@@ -74,25 +78,28 @@ async function withWorkflowRouteSpan(
   request: Request,
   fn: () => Promise<Response>
 ): Promise<Response> {
-  return getRouteTracer().startActiveSpan("rawr.workflow.request", async (span) => {
-    span.setAttribute("rawr.workflow.surface", "published");
-    span.setAttribute("url.full", request.url);
+  const parentContext = extractIngressTelemetryContext(request.headers);
+  return otelContext.with(parentContext, () =>
+    getRouteTracer().startActiveSpan("rawr.workflow.request", async (span) => {
+      span.setAttribute("rawr.workflow.surface", "published");
+      span.setAttribute("url.full", request.url);
 
-    try {
-      const response = await withHostLoggingSpanContext(span.spanContext(), fn);
-      span.setAttribute("http.response.status_code", response.status);
-      if (response.status >= 400) {
+      try {
+        const response = await fn();
+        span.setAttribute("http.response.status_code", response.status);
+        if (response.status >= 400) {
+          span.setStatus({ code: SpanStatusCode.ERROR });
+        }
+        return response;
+      } catch (error) {
+        span.recordException(error as Error);
         span.setStatus({ code: SpanStatusCode.ERROR });
+        throw error;
+      } finally {
+        span.end();
       }
-      return response;
-    } catch (error) {
-      span.recordException(error as Error);
-      span.setStatus({ code: SpanStatusCode.ERROR });
-      throw error;
-    } finally {
-      span.end();
-    }
-  });
+    })
+  );
 }
 
 /**

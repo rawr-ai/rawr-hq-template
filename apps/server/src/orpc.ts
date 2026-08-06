@@ -5,9 +5,7 @@ import {
   type Histogram,
   metrics,
   context as otelContext,
-  propagation,
   SpanStatusCode,
-  type TextMapGetter,
   trace,
 } from "@opentelemetry/api";
 import { EvlogHandlerPlugin } from "@orpc/evlog";
@@ -27,11 +25,7 @@ import type { DrainContext, EnrichContext } from "evlog";
 import { Value } from "typebox/value";
 import type { RawrServerApp } from "./app";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
-import {
-  createHostLoggingContext,
-  withHostLoggingContext,
-  withHostLoggingSpanContext,
-} from "./logging";
+import { createHostLoggingContext, withHostLoggingContext } from "./logging";
 import {
   assertHeavyMiddlewareDedupeMarkers,
   assertRequestScopedMiddlewareMarker,
@@ -42,6 +36,7 @@ import {
   type RawrInitialContext,
   resolveRequestScopedMiddlewareDecision,
 } from "./request-context";
+import { extractIngressTelemetryContext } from "./telemetry-ingress";
 import { createTestingRawrHostSeam } from "./testing-host";
 
 type RawrOrpcContext = RawrBoundaryContext;
@@ -63,17 +58,6 @@ const RAWR_ERROR_STATUS_MAP = {
   SESSION_NOT_FOUND: 404,
   UNKNOWN_SESSION_FORMAT: 422,
 } satisfies Record<string, number>;
-
-const requestHeaderGetter: TextMapGetter<Headers> = {
-  get(carrier, key) {
-    return carrier.get(key) ?? undefined;
-  },
-  keys(carrier) {
-    const keys: string[] = [];
-    carrier.forEach((_value, key) => keys.push(key));
-    return keys;
-  },
-};
 
 function closedErrorObject(
   entries: Parameters<typeof combineJsonObjectSchemaEntries>[0]
@@ -263,11 +247,7 @@ async function withRouteSpan(
 ): Promise<Response> {
   // Every caller-facing proof path must cross this host span so traces, metrics,
   // and runtime logs describe the same routed execution.
-  const parentContext = propagation.extract(
-    otelContext.active(),
-    request.headers,
-    requestHeaderGetter
-  );
+  const parentContext = extractIngressTelemetryContext(request.headers);
   return otelContext.with(parentContext, () =>
     getRouteTracer().startActiveSpan(name, async (span) => {
       for (const [key, value] of Object.entries(attributes)) {
@@ -275,7 +255,7 @@ async function withRouteSpan(
       }
 
       try {
-        const response = await withHostLoggingSpanContext(span.spanContext(), fn);
+        const response = await fn();
         span.setAttribute("http.response.status_code", response.status);
         if (response.status >= 400) {
           span.setStatus({ code: SpanStatusCode.ERROR });
