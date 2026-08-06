@@ -270,7 +270,7 @@ function resolvedCatalog(
 }
 
 const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
-  { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
+  { externalDependencies: ["@habitat-ai/cli"] },
   "{workspaceRoot}/bun.lock",
   "{workspaceRoot}/package.json",
   { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -335,7 +335,7 @@ describe("Habitat Nx projection", () => {
     });
     expect(serviceLeaf?.command).not.toContain("nx");
     expect(serviceLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
+      { externalDependencies: ["@habitat-ai/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -362,7 +362,7 @@ describe("Habitat Nx projection", () => {
     const pluginTargets = projects["plugins/b"]?.targets;
     const structureLeaf = pluginTargets?.["habitat:application:@scope/plugin-b:plugin-structure"];
     expect(structureLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
+      { externalDependencies: ["@habitat-ai/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -458,7 +458,7 @@ describe("Habitat Nx projection", () => {
     });
     expect(gritLeaf?.command).not.toContain("--instance");
     expect(gritLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
+      { externalDependencies: ["@habitat-ai/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
@@ -497,7 +497,7 @@ describe("Habitat Nx projection", () => {
       options: { cwd: "{workspaceRoot}" },
     });
     expect(structureLeaf?.inputs).toEqual([
-      { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
+      { externalDependencies: ["@habitat-ai/cli"] },
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },

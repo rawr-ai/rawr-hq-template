@@ -8,7 +8,8 @@ const clientForWorkspace = createHabitatClientForWorkspace satisfies (
 const plugin = createHabitatNxPlugin({
   clientForWorkspace,
   runtimeInputs: [
-    { externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] },
+    // The CLI pins its SDK exactly, so the CLI node and lockfile identify the runtime closure.
+    { externalDependencies: ["@habitat-ai/cli"] },
     "{workspaceRoot}/bun.lock",
     "{workspaceRoot}/package.json",
     { env: "HABITAT_COMMAND_TIMEOUT_MS" },
