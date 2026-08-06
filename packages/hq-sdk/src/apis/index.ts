@@ -5,7 +5,7 @@ import { mergeNamedSurfaceTrees } from "../composition/merge-named-surface-trees
 type ContractTree = { [key: string]: RouterContract };
 type RouterTree = { [key: string]: AnyRouter };
 
-export { createInternalTraceForwardingOptions as createApiTraceForwardingOptions } from "../orpc/boundary/trace-forwarding";
+export { createInternalCorrelationForwardingOptions as createApiCorrelationForwardingOptions } from "../orpc/boundary/correlation-forwarding";
 
 export type ApiSurfaceContribution<
   TContract extends ContractTree = ContractTree,

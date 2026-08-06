@@ -111,12 +111,16 @@ describe("example-todo observability", () => {
       expect(span.attributes["rawr.orpc.audience"]).toBe("internal");
       expect(span.attributes["rawr.todo.module"]).toBe("tags");
       expect(span.attributes["rawr.todo.workspace_id"]).toBe("workspace-default");
-      expect(span.attributes["rawr.todo.invocation_trace_id"]).toBe("trace-observability");
+      expect(span.attributes["rawr.todo.invocation_correlation_id"]).toBe("trace-observability");
       expect(span.events.map((event) => event.name)).toEqual([
         "todo.procedure.started",
         "todo.tags.module.observed",
         "todo.procedure.succeeded",
       ]);
+      expect(span.events[0]?.attributes).toMatchObject({
+        correlationId: "trace-observability",
+      });
+      expect(span.events[0]?.attributes).not.toHaveProperty("traceId");
     });
 
     expect(
@@ -240,7 +244,7 @@ describe("example-todo observability", () => {
           entry.payload.module === "assignments" &&
           entry.payload.path === "assignments.assign" &&
           entry.payload.workspaceId === "workspace-default" &&
-          entry.payload.invocationTraceId === "trace-procedure-local"
+          entry.payload.invocationCorrelationId === "trace-procedure-local"
       )
     ).toBe(true);
     expect(
@@ -253,7 +257,7 @@ describe("example-todo observability", () => {
           entry.payload.analytics_path === "assignments.assign" &&
           entry.payload.analytics_outcome === "success" &&
           entry.payload.analytics_workspace_id === "workspace-default" &&
-          entry.payload.analytics_trace_id === "trace-procedure-local"
+          entry.payload.analytics_correlation_id === "trace-procedure-local"
       )
     ).toBe(true);
   });

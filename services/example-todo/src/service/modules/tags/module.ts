@@ -23,7 +23,6 @@ export const module = service.tags.use(telemetry).use(async ({ context, next }) 
       identifierGenerator: context.deps.identifierGenerator,
       logger: context.deps.logger,
       workspaceId: context.scope.workspaceId,
-      traceId: context.invocation.traceId,
       readOnly: context.config.readOnly,
       tagsStore: context.provided.tagsStore,
     },

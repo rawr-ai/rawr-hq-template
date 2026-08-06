@@ -35,7 +35,7 @@ export const middleware = base.middleware(async ({ context, path, next }) => {
     span?.setAttributes({
       "rawr.todo.module": "tags",
       "rawr.todo.workspace_id": context.scope.workspaceId,
-      "rawr.todo.invocation_trace_id": context.invocation.traceId,
+      "rawr.todo.invocation_correlation_id": context.invocation.correlationId,
     });
     span?.addEvent("todo.tags.module.observed", {
       module: "tags",
@@ -47,7 +47,7 @@ export const middleware = base.middleware(async ({ context, path, next }) => {
       module: "tags",
       path: pathLabel,
       workspaceId: context.scope.workspaceId,
-      invocationTraceId: context.invocation.traceId,
+      invocationCorrelationId: context.invocation.correlationId,
     });
 
     if (pathLabel === "tags.create") {

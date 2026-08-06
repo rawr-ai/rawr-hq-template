@@ -26,11 +26,11 @@ type ExampleTodoRpcTaskPayload = {
   json?: ExampleTodoTask;
 };
 
-export function createExampleTodoInvocation(traceId: string) {
+export function createExampleTodoInvocation(correlationId: string) {
   return {
     context: {
       invocation: {
-        traceId,
+        correlationId,
       },
     },
   } as const;

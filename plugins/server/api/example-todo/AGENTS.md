@@ -23,7 +23,7 @@
 - The host supplies a ready Todo client resolver under `deps`; this package must not
   construct concrete repositories, providers, Elysia handlers, or application
   runtime state.
-- Router handlers forward trace context and delegate directly to the sealed
+- Router handlers forward correlation context and delegate directly to the sealed
   service client. HTTP projection must not absorb service lifecycle behavior.
 
 ## Behavior
@@ -37,7 +37,7 @@
 
 - An **API projection** adds HTTP route identity to a domain operation. A
   **client resolver** selects the sealed Todo client for request scope; a
-  **trace-forwarding context** preserves observability across the handoff.
+  **correlation-forwarding context** preserves request identity across the handoff.
 
 ## Flow
 

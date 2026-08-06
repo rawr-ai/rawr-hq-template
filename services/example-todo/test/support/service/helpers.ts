@@ -75,8 +75,8 @@ export function createClientOptions(options: ClientOptions = {}): CreateClientOp
   };
 }
 
-export function createInvocation(traceId = "trace-default") {
-  const invocation: Invocation = { traceId };
+export function createInvocation(correlationId = "trace-default") {
+  const invocation: Invocation = { correlationId };
 
   return {
     context: {

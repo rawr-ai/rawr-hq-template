@@ -19,7 +19,7 @@
 ## Behavior
 
 - The module preserves the domain contract, adds HTTP route metadata, forwards
-  trace context, and returns domain results unchanged.
+  correlation context, and returns domain results unchanged.
 
 ## Concepts
 
