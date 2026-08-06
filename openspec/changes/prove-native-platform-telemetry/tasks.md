@@ -22,8 +22,8 @@
 
 ## 4. Wire The HQ Server And Inngest Process
 
-- [ ] 4.1 Move process-owned Inngest client construction ahead of telemetry acquisition and pass that same object to both the workflow harness and `InngestSpanProcessor`.
-- [ ] 4.2 Select the telemetry resource from the existing HQ app/server entry seam and acquire its one app lifecycle before route mounting without adding a generic runtime profile compiler, app role, or alternate host composition.
+- [x] 4.1 Move process-owned Inngest client construction ahead of telemetry acquisition and pass that same object to both the workflow harness and `InngestSpanProcessor`; the server identity/order boundary landed at `ede4f03fc` and its focused bootstrap oracle proves the acquired and route-mounted client are the same object.
+- [x] 4.2 Select the telemetry resource from the existing HQ app/server entry seam and acquire its one app lifecycle before route mounting without adding a generic runtime profile compiler, app role, or alternate host composition; `ede4f03fc` is green for HQ/server lint, typecheck, build, 62 focused behavior tests, and two independent no-P0/P1 reviews.
 - [ ] 4.3 Install the exact `EvlogHandlerPlugin` as sole owner of one product event per oRPC operation attempt, including unmatched routes and each batch item; let host and service layers enrich its logger and create no HTTP-envelope event or outcome filter.
 - [ ] 4.4 Emit existing host technical logs through the neutral technical-log operation and request metrics through the native global meter, with receipt and transport request ids as bounded correlation attributes; derive trace context from the active provider context rather than passing provider handles or caller-authored trace identity.
 - [ ] 4.5 Make the host edge the single ingress extraction point, configure native oRPC not to repeat extraction, remove `hostLoggingSpanContext` and its parallel async-local trace identity, derive logging correlation from active OpenTelemetry context, and prove HTTP, oRPC, and Effect child spans share the expected trace lineage with a guard against the removed store.
