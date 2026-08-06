@@ -89,6 +89,13 @@ OpenTelemetry LogRecords, and completes flush/shutdown. It asserts the runtime
 package versions and the trace/correlation identity observed at each boundary.
 Type-only compatibility or a successful package install is not admission.
 
+The executable admission landed at `de6d1aff8`. It also records the Inngest
+package realm's participating OpenTelemetry exporter at `0.211.0` and
+resource/trace SDK packages at `2.5.0`, then TypeBox-decodes the processor's
+actual OTLP request and binds its exported span identity to the native Inngest
+span. This is explicit multi-realm interoperability evidence, not a claim that
+the two OpenTelemetry package families are interchangeable.
+
 If the tuple fails, implementation stops. The correction is a new exact tuple
 decision, not a compatibility wrapper, package patch, manual transport, or
 second provider. This is important because Inngest 3.51.0 exposes an
@@ -111,17 +118,25 @@ architecture debugging indistinguishable from package incompatibility.
 ### Put neutral capability in the resource and vendor mechanics in the provider
 
 `resources/telemetry/contract.ts` owns only provider-neutral values and
-operations: process identity, correlation attributes, spans/events/annotations,
-one native-operation event scope, non-throwing flush, and lifecycle state. It
-does not import OpenTelemetry, EVlog, oRPC, Inngest, Effect, ClickHouse, or
-Langfuse types. Product and service owners choose event names and semantic
-fields; the resource transports observations without deciding their meaning.
+operations: process identity, bounded flat correlation attributes, a narrow
+native-operation event scope for hosts without a native event binding,
+technical-log emission, availability, non-throwing flush, and bounded
+diagnostics. It does not expose a generic span, event, annotation, meter,
+tracer, active-context, exporter, SDK, registry, or mutable lifecycle-state
+API, and it does not import OpenTelemetry, EVlog, oRPC, Inngest, Effect,
+ClickHouse, Langfuse, or PostHog types. Product and service owners choose event
+names and semantic fields; the resource transports observations without
+deciding their meaning.
 
 `resources/telemetry/providers/opentelemetry-node/index.ts` is the single
 concrete realization face. Its private implementation owns `NodeSDK`, trace,
 metric, and log providers/processors, OTLP HTTP exporters, native framework
-instrumentation, the EVlog-to-OpenTelemetry-Logs drain, redaction at the
-transport boundary, and provider release.
+instrumentation selection and lifecycle attachment, the
+EVlog-to-OpenTelemetry-Logs drain, redaction at the transport boundary, and
+provider release. Native OpenTelemetry globals and the exact Effect, oRPC, and
+Inngest bindings own instrumentation behavior, spans, metrics, active context,
+and propagation. Those bindings remain attached to the one provider lifecycle;
+they are not parallel neutral-resource operations or lifecycle owners.
 
 Apps select provider config once per process. Existing process bootstraps
 acquire the value and pass it to host integrations. Services and plugins see
@@ -168,6 +183,9 @@ may perform one extraction or injection at its physical edge through the
 global propagator, but it does not parse or persist a parallel trace context.
 Native oRPC, Inngest, HTTP, and Effect integrations consume the resulting
 active context and are configured not to repeat ingress extraction.
+The host technical logger derives correlation from that active context; the
+current `hostLoggingSpanContext` async-local trace copy is removed with its
+reader and writer in the server wiring node rather than retained as a fallback.
 
 Alternative considered: let every framework configure its preferred provider,
 propagator, and exporter. Rejected because duplicate extraction and peer
@@ -279,16 +297,17 @@ provider does not reach upward to stop them. One monotonic deadline covers this
 sequence:
 
 1. Stop accepting new command, HTTP, and Inngest work.
-2. Drain already admitted native operations within the remaining budget.
-3. Finalize every admitted EVlog event that can still finish.
-4. Close the EVlog/event intake so no new event can enter the log pipeline.
-5. Force-flush the OpenTelemetry log, trace, metric, Inngest, and optional
+2. Drain already admitted native operations within the remaining budget; each
+   operation's native owner finalizes its own event as part of that drain.
+3. Close observation intake so no new event can enter the log pipeline.
+4. Force-flush the OpenTelemetry log, trace, metric, Inngest, and optional
    processor set within the remaining budget.
-6. Shut down the one app telemetry lifecycle, including its tracer, meter, and
+5. Shut down the one app telemetry lifecycle, including its tracer, meter, and
    logger providers, processors, and exporters.
 
 Concurrent or repeated shutdown calls share one promise and do not repeat any
-stage. A stage failure is recorded, later stages are still attempted, and the
+provider stage. No app or provider event registry re-finalizes native events.
+A stage failure is recorded, later stages are still attempted, and the
 deadline prevents a stuck exporter from keeping the process alive. Signal
 handling preserves the product-derived exit status; flush or shutdown failure
 cannot replace it.
@@ -329,10 +348,10 @@ serialization callbacks, not backend ingestion and queryability.
 
 ### Keep Langfuse as a filtered later processor
 
-The core provider exposes an internal processor-extension point only as needed
-to attach admitted native processors to the process tracer provider under the
-same app lifecycle. A later optional slice may use it for one Langfuse
-processor that accepts only spans carrying an explicit bounded AI/research
+A later optional provider slice may construct one admitted Langfuse processor
+inside the existing process tracer-provider lifecycle. The core resource and
+provider add no public processor-extension point in anticipation of that work.
+The processor accepts only spans carrying an explicit bounded AI/research
 semantic marker. Ordinary HTTP, Oclif, provider, service, and Inngest
 infrastructure spans are excluded.
 
@@ -348,8 +367,8 @@ platform telemetry to a specialized research backend.
 
 ### Keep PostHog analytics outside the core telemetry boundary
 
-The placement audit admits PostHog only as a separate post-core product
-analytics slice. A provider-neutral `AnalyticsSinkResource` receives the same
+The placement audit classifies PostHog as a separate post-core product
+analytics change. A provider-neutral `AnalyticsSinkResource` would receive the same
 immutable finalized product-event snapshot that enters OpenTelemetry Logs; a
 `posthog-node` provider may translate that snapshot into one PostHog event.
 Services enrich the active product event and never call PostHog or create a
@@ -409,9 +428,13 @@ PostHog slice without changing native telemetry completion.
    activate the retired helper as a runtime fallback.
 7. Treat the filtered Langfuse processor as a separate optional node after the
    core receipt is green.
+8. Defer the PostHog analytics sink, identity policy, and existing analytics
+   owner migration to a separate OpenSpec change after the core receipt is
+   green.
 
 ## Open Questions
 
 None for the core slice. The optional Langfuse node must select and admit its
-exact SDK version in its own compatibility fixture; that deferred choice does
-not block native platform telemetry.
+exact SDK version in a focused compatibility fixture. PostHog requires a
+separate OpenSpec change before package admission or production wiring. Neither
+deferred choice blocks native platform telemetry.

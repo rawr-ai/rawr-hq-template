@@ -30,9 +30,16 @@ The system SHALL define telemetry as a provider-neutral resource under
 `resources/telemetry`, SHALL place the concrete Node implementation at
 `resources/telemetry/providers/opentelemetry-node`, and SHALL let the app select
 provider configuration once for each process. The resource contract MUST NOT
-expose OpenTelemetry, EVlog, oRPC, Inngest, Effect, ClickHouse, or Langfuse
-types. The concrete provider MUST remain the only owner of vendor construction,
-export, and release mechanics.
+expose OpenTelemetry, EVlog, oRPC, Inngest, Effect, ClickHouse, Langfuse, or
+PostHog types. Its complete positive surface SHALL consist of process identity,
+bounded flat correlation attributes, a native-operation event scope gated to
+hosts without an admitted native event binding, technical-log emission,
+availability, never-reject flush, and bounded diagnostics. It MUST NOT expose generic span,
+metric, active-context, exporter, SDK, registry, mutable lifecycle-state,
+generic event, or generic annotation operations. oRPC MUST use its exact
+`EvlogHandlerPlugin` without a resource-owned wrapper event. The concrete
+provider and its native framework bindings MUST remain the only owners of
+vendor construction, signal APIs, propagation, export, and release mechanics.
 
 #### Scenario: Consumer uses the neutral resource
 - **WHEN** a service, plugin, native host integration, or app process consumes telemetry
@@ -89,6 +96,11 @@ store, or propagate a parallel trace identity.
 - **WHEN** an Inngest invocation carries its admitted trace context
 - **THEN** the Inngest attempt and its child Effect spans use that lineage through the global tracer provider
 - **AND** the workflow harness does not register another propagator
+
+#### Scenario: Host logging derives active correlation
+- **WHEN** the host emits a technical log during an active request or operation
+- **THEN** trace and span correlation are derived from the active OpenTelemetry context
+- **AND** no parallel async-local trace identity or caller-authored trace field is stored
 
 ### Requirement: Each native product operation owns one wide event
 The system SHALL open and finalize exactly one EVlog product/business event for
@@ -207,16 +219,18 @@ callbacks MUST settle without unhandled rejections.
 
 ### Requirement: Shutdown is ordered bounded and idempotent
 The app/process owner SHALL perform shutdown in this order: stop new intake,
-drain admitted work, finalize admitted EVlog events, close event intake,
-force-flush every attached telemetry processor/exporter, then shut down the one
-app telemetry lifecycle and its tracer, meter, and logger providers. One
-monotonic deadline SHALL bound the complete sequence. Concurrent or repeated
-shutdown requests MUST share one completion and MUST NOT repeat stages.
+drain admitted work through each native owner's own event finalizer, close
+observation intake, force-flush every attached telemetry processor/exporter,
+then shut down the one app telemetry lifecycle and its tracer, meter, and logger
+providers. The app and provider MUST NOT maintain an active-event registry or
+re-finalize native events. One monotonic deadline SHALL bound the complete
+sequence. Concurrent or repeated shutdown requests MUST share one completion
+and MUST NOT repeat provider stages.
 
 #### Scenario: Normal shutdown preserves final observations
 - **WHEN** shutdown begins with admitted requests, commands, or Inngest attempts in flight
 - **THEN** new intake stops before admitted work drains
-- **AND** admitted EVlog events finalize before event intake closes and telemetry flushes
+- **AND** each native owner finalizes its admitted event during work drain before observation intake closes and telemetry flushes
 - **AND** signal-provider shutdown occurs last under the app lifecycle
 
 #### Scenario: Repeated shutdown is idempotent

@@ -32,8 +32,8 @@ receipt before it can be treated as settled.
   enrichment, export, flush, and shutdown failures do not change HTTP results,
   command exit semantics, Effect results, or Inngest retry outcomes.
 - Add one ordered, bounded, idempotent shutdown path: stop intake, drain
-  admitted work, finalize EVlog events, close event intake, flush, then shut
-  down.
+  admitted work through each native owner's own finalizer, close observation
+  intake, flush, then shut down.
 - Prove backend receipt in a disposable ClickStack/ClickHouse fixture by
   querying run-unique trace, metric, technical-log, and product-event rows. An
   HTTP 200 from an OTLP endpoint is only transport liveness and cannot satisfy
@@ -44,6 +44,10 @@ receipt before it can be treated as settled.
 - Leave a filtered Langfuse processor for AI/research spans as an optional
   later slice on the process tracer provider under the same app lifecycle; it
   is not part of the core receipt gate.
+- Record PostHog's placement as a separate post-core analytics change for
+  finalized, allowlisted product events, then leave package admission,
+  identity policy, existing analytics-owner migration, and production wiring
+  outside this change.
 - Exclude a manual OTLP framework, custom telemetry distribution or
   controller, second lifecycle/state owner, hostile-environment hardening, and
   expansion of generic app/runtime composition.
