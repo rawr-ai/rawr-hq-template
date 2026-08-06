@@ -1,6 +1,7 @@
 import { flush, handle, run } from "@oclif/core";
 
-import { bindRawrCliTelemetry } from "./process-telemetry.js";
+import { bindRawrCliTelemetry, shutdownRawrCliTelemetry } from "./process-telemetry.js";
+import { installRawrCliSignalHandlers } from "./signal.js";
 import { acquireRawrCliTelemetry, selectRawrCliTelemetryConfig } from "./telemetry.js";
 
 /** Native Oclif entrypoint inputs shared by source and compiled launchers. */
@@ -18,6 +19,7 @@ export async function runRawrCli(options: RawrCliRunOptions): Promise<unknown> {
 
   const lifecycle = await acquireRawrCliTelemetry(selectRawrCliTelemetryConfig());
   bindRawrCliTelemetry(lifecycle);
+  const removeSignalHandlers = installRawrCliSignalHandlers(shutdownRawrCliTelemetry);
   let result: unknown;
   let failure: unknown;
   let failed = false;
@@ -28,7 +30,8 @@ export async function runRawrCli(options: RawrCliRunOptions): Promise<unknown> {
     failed = true;
     failure = error;
   } finally {
-    await lifecycle.shutdown().catch(() => undefined);
+    await shutdownRawrCliTelemetry().catch(() => undefined);
+    removeSignalHandlers();
     await flush().catch(() => undefined);
   }
 
