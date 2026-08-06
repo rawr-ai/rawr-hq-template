@@ -99,3 +99,10 @@ admitted.
 - **Cold checks remain slow after false misses are removed** -> record the
   improvement as cache precision only and profile the native process path in a
   separate change.
+
+## Release Settlement
+
+Habitat `0.5.2` is the fixed CLI and SDK release that carries the narrowed Nx
+projection and its native cache-behavior proof. Publication and Template
+self-consumption remain separate settlement gates: source landing alone does
+not make the installed `0.5.1` consumer authoritative for this behavior.
