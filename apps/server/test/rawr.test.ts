@@ -182,9 +182,11 @@ describe("rawr server routes", () => {
     const { inngestClient } = createTestingServerProcessRuntime();
     const hostInngest = createHostInngestBundle({
       client: inngestClient,
+      telemetry: createTestingServerTelemetry().telemetry,
       repoRoot: tempRoot,
       hostComposition: host,
     });
+    expect(hostInngest.client).toBe(inngestClient);
     const resolveClient = vi.fn(host.satisfiers.exampleTodo.resolveClient);
     const invocations: Array<{ requestId: string; correlationId: string }> = [];
     const app = registerOrpcRoutes(createServerApp(), {

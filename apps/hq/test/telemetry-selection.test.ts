@@ -1,4 +1,7 @@
-import { MAX_TELEMETRY_IDENTITY_TEXT_LENGTH } from "@habitat-ai/resource-telemetry";
+import {
+  MAX_TELEMETRY_ATTRIBUTES,
+  MAX_TELEMETRY_IDENTITY_TEXT_LENGTH,
+} from "@habitat-ai/resource-telemetry";
 import { describe, expect, it, vi } from "vitest";
 import { selectRawrHqTelemetryConfig } from "../telemetry";
 
@@ -147,7 +150,7 @@ describe("HQ telemetry selection", () => {
 
     if (!config.enabled) throw new Error("expected enabled telemetry");
 
-    expect(config.exportedAttributePaths.length).toBeLessThanOrEqual(26);
+    expect(config.exportedAttributePaths.length).toBeLessThanOrEqual(MAX_TELEMETRY_ATTRIBUTES);
     expect(new Set(config.exportedAttributePaths).size).toBe(config.exportedAttributePaths.length);
     expect(config.exportedAttributePaths).toEqual(
       expect.arrayContaining([
@@ -157,6 +160,7 @@ describe("HQ telemetry selection", () => {
         "rpc.method",
         "inngest.run.id",
         "inngest.attempt.id",
+        "inngest.step.id",
         "inngest.traceparent",
         "sdk.run.id",
       ])

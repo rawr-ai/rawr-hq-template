@@ -5,6 +5,7 @@ import { Inngest } from "inngest";
 import { serve as inngestServe } from "inngest/bun";
 import type { RawrServerApp } from "./app";
 import type { RawrHostComposition } from "./host-composition";
+import { observeInngestAttempts, requireNativeInngestFunctions } from "./inngest-telemetry";
 import { registerOrpcRoutes } from "./orpc";
 import { createRequestScopedBoundaryContext, type RawrInitialContext } from "./request-context";
 import type { ServerTelemetryLifecycle } from "./telemetry";
@@ -170,6 +171,7 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
  */
 export function createHostInngestBundle(input: {
   client: Inngest;
+  telemetry: ServerTelemetryLifecycle["telemetry"];
   repoRoot: string;
   hostComposition: RawrHostComposition;
 }): HostInngestBundle {
@@ -179,13 +181,22 @@ export function createHostInngestBundle(input: {
   });
   // The app manifest owns which registrations exist. The host binds them into
   // an executable role plan, then materializes runtime surfaces explicitly.
-  const functions = input.hostComposition.realization.workflows.createInngestFunctions({
+  const functions = requireNativeInngestFunctions(
+    input.hostComposition.realization.workflows.createInngestFunctions({
+      client,
+      runtime,
+    })
+  );
+  const nativeHandler = inngestServe({
     client,
-    runtime,
+    functions,
+    streaming: false,
   });
-  const handler = inngestServe({
+  const handler = observeInngestAttempts({
     client,
-    functions: functions as any,
+    functions,
+    handler: nativeHandler,
+    telemetry: input.telemetry,
   });
 
   return {
@@ -219,6 +230,7 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(
 
   const hostInngest = createHostInngestBundle({
     client: opts.inngestClient,
+    telemetry: opts.telemetry.telemetry,
     repoRoot: authorityRepoRoot,
     hostComposition: opts.hostComposition,
   });
