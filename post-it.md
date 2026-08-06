@@ -6,6 +6,28 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-05 - Cache Precision Precedes Engine Work
+
+Habitat has two performance domains. Nx decides whether work is necessary;
+Grit performs cold source evaluation. A 0.54-second unchanged owner check proves
+the first path works, while a 152.33-second cold check proves the second path is
+substantial. Treating both as one problem invites a new engine when the first
+correction is only a truer input boundary.
+
+Project the rule's actual narrowing relation into Nx: authority, coverage,
+workspace, runtime. Do not hash files the rule cannot inspect. Preserve the
+owner batch and Grit's program-local lifecycle. Profile true-cold cost only
+after false cold runs are removed; no Biome substitution, Effect rewrite, or
+Rust fork enters without a measured capability gap.
+
+### Bag Of Keywords
+
+input, cache, coverage, root, process.
+
+precision, speed, soundness, isolation, evidence.
+
+Nx, Grit, trace, narrow, measure.
+
 ## 2026-08-05 - Settlement Follows Native State
 
 Template owns the private Oclif application and generic lifecycle operations.
