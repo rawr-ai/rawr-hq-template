@@ -239,3 +239,23 @@ version 2 retirement remain separately bounded future design work.
   evaluated all 33 applications successfully in a 152.33-second cold run. The
   unchanged repeat completed in 0.54 seconds with a 100% Nx cache hit and no
   additional repository changes.
+
+## Consumer Handoff Evidence
+
+- Magic Migration thread `019f767a-a299-7d81-a893-1da32974af61` received the
+  exact `0.5.1` install and initialization contract. Its product instances,
+  adapters, policy, qualified overlays, and product-specific rules remain
+  repository-local; the handoff does not select `service@1`.
+- Civ7 thread `019f57cc-61ae-7f21-9515-66256fa8da9f` received the exact
+  producer-to-consumer migration contract. It installs only
+  `@habitat-ai/cli@0.5.1`, receives `@habitat-ai/sdk@0.5.1` through the package
+  dependency, and retains unsupported policy locally.
+- The original Inngest and oRPC skill stewards received the same substrate
+  readiness boundary in threads `019f6329-ba9a-7cb2-9cac-885fb31da16a` and
+  `019f6229-1211-7102-aedd-aa999c992bc4`. The notice clears no independent
+  provider-settlement, service-law, or protected-lane gate.
+- PR #830 landed Template self-consumption at
+  `0f61751cbab8ba41c0fbbe0b12fb4a3129cc7b58`. The required
+  `gt sync --force --no-restack --no-interactive` pass then pruned the merged
+  consumer branch and left this worktree clean on canonical `main` before the
+  closure record opened.

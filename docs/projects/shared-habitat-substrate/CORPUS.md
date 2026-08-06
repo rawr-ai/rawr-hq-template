@@ -1,7 +1,12 @@
 # Shared Habitat Substrate Corpus
 
-**Status:** Controlled transfer evidence
+**Status:** Historical controlled transfer evidence; superseded for current realization
 **Date:** 2026-07-31
+
+The current released disposition is recorded in
+[[openspec/changes/archive/2026-08-06-activate-habitat-shared-blueprints/design#Release Evidence|the Habitat 0.5.1 release evidence]]. This corpus preserves the
+pre-release transfer state and must not be read as current package, application,
+or release status.
 
 ## Authority
 
@@ -82,7 +87,10 @@ npm. A Bun-native artifact is neither a transfer input nor a release
 prerequisite; it remains a later distribution evaluation that may not create a
 second Habitat identity.
 
-## Definition Checkpoint
+## Historical Definition Checkpoint
+
+The following checkpoint is preserved as the state from which activation began.
+Its present-tense statements are historical evidence, not current authority.
 
 The repository now carries seven root v3 definition records: `package`,
 `resource`, `provider`, `service`, `plugin`, `plugin-nx`, and `app`. The source

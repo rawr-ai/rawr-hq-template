@@ -32,6 +32,6 @@
 
 ## 6. Hand Off Consumers
 
-- [ ] 6.1 Send Magic Migration the exact release, retained-overlay disposition, and bounded migration prompt.
-- [ ] 6.2 Send Civ7 the exact release and producer-to-consumer migration prompt only after the public release is ready.
-- [ ] 6.3 Record consumer readiness, drain completed Graphite/worktree state, and close the OpenSpec change.
+- [x] 6.1 Send Magic Migration the exact release, retained-overlay disposition, and bounded migration prompt.
+- [x] 6.2 Send Civ7 the exact release and producer-to-consumer migration prompt only after the public release is ready.
+- [x] 6.3 Record consumer readiness, drain completed Graphite/worktree state, and close the OpenSpec change.
