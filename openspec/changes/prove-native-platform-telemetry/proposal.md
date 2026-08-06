@@ -31,9 +31,11 @@ receipt before it can be treated as settled.
   readers, drains, timers, or telemetry network clients. Telemetry startup,
   enrichment, export, flush, and shutdown failures do not change HTTP results,
   command exit semantics, Effect results, or Inngest retry outcomes.
-- Add one ordered, bounded, idempotent shutdown path: stop intake, drain
-  admitted work through each native owner's own finalizer, close observation
-  intake, flush, then shut down.
+- Add one ordered, idempotent shutdown path: stop intake, drain cooperative
+  admitted work through each native owner's own finalizer until one monotonic
+  deadline, close observation intake, flush, then shut down. An expired
+  deadline bounds coordinator waiting; it does not claim forced cancellation
+  or OS-process termination for permanently stuck native work.
 - Prove backend receipt in a disposable ClickStack/ClickHouse fixture by
   querying run-unique trace, metric, technical-log, and product-event rows. An
   HTTP 200 from an OTLP endpoint is only transport liveness and cannot satisfy
