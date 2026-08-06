@@ -12,9 +12,9 @@
 
 ## 3. Bound Native Nx Acceptance
 
-- [ ] 3.1 Reduce the native cache fixture from 22 Nx CLI processes to the ten distinct cache behavior transitions while preserving add/change/delete, authority, tool, environment, warm, unrelated, and sibling-selectivity coverage.
-- [ ] 3.2 Preserve daemon isolation and the existing canonical-parent, directory, non-symlink, prefix, suffix, and realpath cleanup guards.
-- [ ] 3.3 Run the Habitat CLI test and typecheck targets and obtain independent behavior-test/TypeScript review.
+- [x] 3.1 Reduce the native cache fixture from 22 Nx CLI processes to the ten distinct cache behavior transitions while preserving add/change/delete, authority, tool, environment, warm, unrelated, and sibling-selectivity coverage.
+- [x] 3.2 Preserve daemon isolation and the existing canonical-parent, directory, non-symlink, prefix, suffix, and realpath cleanup guards.
+- [x] 3.3 Run the Habitat CLI test and typecheck targets and obtain independent behavior-test/TypeScript review.
 
 ## 4. Land And Settle
 
