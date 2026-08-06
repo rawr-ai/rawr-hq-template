@@ -406,6 +406,8 @@ export function registerOrpcRoutes<TApp extends RawrServerApp>(
   const rpcAuthPolicy =
     options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.config.baseUrl });
   const initialContext: RawrInitialContext = {
+    "effect/context": options["effect/context"],
+    ...(options["effect/wrap"] === undefined ? {} : { "effect/wrap": options["effect/wrap"] }),
     deps: options.deps,
     scope: options.scope,
     config: options.config,

@@ -1,3 +1,5 @@
+import type { LoggerContext } from "@orpc/evlog";
+import type { WithEffectContext } from "@orpc/experimental-effect";
 import type {
   BoundaryMiddlewareSupportState,
   BoundaryRequestSupportContext,
@@ -51,7 +53,8 @@ export type RawrInitialContext<TRuntime = unknown> = HostRuntimeSupportContext<
   RawrHostDependencies<TRuntime>,
   RawrHostScope,
   RawrHostConfig
->;
+> &
+  WithEffectContext<never>;
 
 type ExampleTodoCompatibleContext<TContext extends ExampleTodoApiContext> = TContext;
 
@@ -63,7 +66,9 @@ export type RawrBoundaryContext<TRuntime = unknown> = ExampleTodoCompatibleConte
     RawrHostConfig,
     RawrInvocation
   >
->;
+> &
+  WithEffectContext<never> &
+  LoggerContext;
 
 const requestScopedMiddlewareStateCache = new WeakMap<Request, RawrBoundaryMiddlewareState>();
 

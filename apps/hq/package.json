@@ -16,6 +16,7 @@
     }
   },
   "dependencies": {
+    "@habitat-ai/resource-telemetry": "workspace:*",
     "@orpc/contract": "2.0.0-beta.23",
     "@orpc/server": "2.0.0-beta.23",
     "@rawr/example-todo": "workspace:*",

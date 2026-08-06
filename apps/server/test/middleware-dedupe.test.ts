@@ -15,6 +15,7 @@ import {
   resolveRequestScopedMiddlewareDecision,
 } from "../src/request-context";
 import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerTelemetry } from "./support/process-runtime";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -23,6 +24,7 @@ const FIRST_PARTY_RPC_HEADERS = {
 } as const;
 
 const TEST_INITIAL: RawrInitialContext = {
+  ...createTestingServerTelemetry().effectContext,
   deps: {
     runtime: {},
     inngestClient: {} as Inngest,
@@ -46,6 +48,7 @@ async function createRouteInitialContext(): Promise<RawrInitialContext> {
   } as unknown as Inngest;
 
   return {
+    ...createTestingServerTelemetry().effectContext,
     deps: {
       runtime,
       inngestClient,

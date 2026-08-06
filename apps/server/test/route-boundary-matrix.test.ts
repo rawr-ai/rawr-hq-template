@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes } from "../src/rawr";
 import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -120,6 +121,7 @@ const MATRIX_CASES: MatrixCase[] = [
 
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
+    ...createTestingServerProcessRuntime(),
     repoRoot,
     baseUrl: "http://localhost:3000",
     hostComposition: createTestingRawrHostSeam(),

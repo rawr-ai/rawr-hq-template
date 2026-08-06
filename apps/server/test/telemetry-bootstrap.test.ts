@@ -1,41 +1,47 @@
 import { describe, expect, it, vi } from "vitest";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 vi.mock("../src/rawr", () => ({
+  createHostInngestClient: vi.fn(),
   registerRawrRoutes: (app: unknown) => app,
 }));
 
 describe("server telemetry bootstrap", () => {
-  it("installs telemetry before app creation and route registration", {
+  it("acquires telemetry with the route-mounted Inngest client before app assembly", {
     timeout: 15000,
   }, async () => {
     const { bootstrapServer } = await import("../src/bootstrap");
     const order: string[] = [];
     const app = { label: "app" } as never;
-    const telemetry = {
-      instrumentationNames: ["ORPCInstrumentation", "HttpInstrumentation"],
-      options: {
-        serviceName: "@rawr/server",
-        environment: "test",
-        serviceVersion: undefined,
-        exporter: { url: undefined, headers: undefined },
-        traceExporter: undefined,
-        metrics: { url: undefined, headers: undefined, exportIntervalMillis: 1000 },
-      },
-      sdk: {} as never,
-      shutdown: async () => {},
-    };
+    const processRuntime = createTestingServerProcessRuntime();
 
     const bootstrapped = await bootstrapServer({
-      registerRoutes: (currentApp) => {
+      telemetryConfig: {
+        enabled: false,
+        processIdentity: {
+          serviceName: "rawr-hq-test",
+          deploymentEnvironment: "test",
+          processRole: "server-test",
+          processInstanceId: "server-test-1",
+        },
+      },
+      registerRoutes: (currentApp, options) => {
         order.push("register-routes");
+        expect(options.inngestClient).toBe(processRuntime.inngestClient);
+        expect(options.telemetry).toBe(processRuntime.telemetry);
         return currentApp;
       },
       overrides: {
         env: { NODE_ENV: "test" } as NodeJS.ProcessEnv,
         resolveRepoRoot: () => "/tmp/rawr-test-repo",
-        installTelemetry: async () => {
+        createInngestClient: () => {
+          order.push("create-inngest-client");
+          return processRuntime.inngestClient;
+        },
+        acquireTelemetry: async ({ inngestClient }) => {
           order.push("telemetry");
-          return telemetry;
+          expect(inngestClient).toBe(processRuntime.inngestClient);
+          return processRuntime.telemetry;
         },
         createApp: () => {
           order.push("create-app");
@@ -45,7 +51,7 @@ describe("server telemetry bootstrap", () => {
       },
     });
 
-    expect(order).toEqual(["telemetry", "create-app", "register-routes"]);
-    expect(bootstrapped.telemetry).toBe(telemetry);
+    expect(order).toEqual(["create-inngest-client", "telemetry", "create-app", "register-routes"]);
+    expect(bootstrapped.telemetry).toBe(processRuntime.telemetry);
   });
 });

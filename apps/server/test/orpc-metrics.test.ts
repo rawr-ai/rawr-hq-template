@@ -10,6 +10,7 @@ import {
   registerOrpcRoutes,
 } from "../src/orpc";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerTelemetry } from "./support/process-runtime";
 
 afterAll(() => resetTestingRawrHostSeam());
 
@@ -36,6 +37,7 @@ async function createTestApp(args: {
   const runtime = { repoRoot: tempRoot, inngestBaseUrl: "http://localhost:8288" };
 
   const app = registerOrpcRoutes(createServerApp(), {
+    ...createTestingServerTelemetry().effectContext,
     deps: {
       runtime,
       inngestClient: { send: vi.fn() } as never,

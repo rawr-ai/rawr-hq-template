@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { type BootstrapServerInput, startServer } from "../src/bootstrap";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 function createInput(input: {
   app: { listen(port: number): unknown };
@@ -7,7 +8,17 @@ function createInput(input: {
   loadConfig?: () => Promise<unknown>;
   registerRoutes?: BootstrapServerInput["registerRoutes"];
 }): BootstrapServerInput {
+  const processRuntime = createTestingServerProcessRuntime();
   return {
+    telemetryConfig: {
+      enabled: false,
+      processIdentity: {
+        serviceName: "rawr-hq-test",
+        deploymentEnvironment: "test",
+        processRole: "server-test",
+        processInstanceId: "server-test-1",
+      },
+    },
     registerRoutes: input.registerRoutes ?? ((app) => app),
     overrides: {
       env: {
@@ -15,7 +26,17 @@ function createInput(input: {
         RAWR_SERVER_BASE_URL: "http://localhost:3100",
       },
       resolveRepoRoot: () => "/tmp/rawr-server-host-test",
-      installTelemetry: async () => ({ shutdown: input.shutdown }) as never,
+      createInngestClient: () => processRuntime.inngestClient,
+      acquireTelemetry: async () => ({
+        ...processRuntime.telemetry,
+        shutdown: async () => {
+          await input.shutdown();
+          return {
+            outcome: "flushed" as const,
+            diagnostics: [],
+          };
+        },
+      }),
       createApp: () => input.app as never,
       loadConfig: (input.loadConfig ?? (async () => ({ config: {} }))) as never,
     },

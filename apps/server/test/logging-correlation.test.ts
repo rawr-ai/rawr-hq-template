@@ -11,6 +11,7 @@ import {
 } from "../src/logging";
 import { registerRawrRoutes } from "../src/rawr";
 import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 const FIRST_PARTY_RPC_HEADERS = {
   "content-type": "application/json",
@@ -28,6 +29,7 @@ type LoggedLine = Record<string, unknown>;
 async function createTestApp() {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-server-logging-"));
   const app = registerRawrRoutes(createServerApp(), {
+    ...createTestingServerProcessRuntime(),
     repoRoot,
     baseUrl: "http://localhost:3000",
     hostComposition: createRawrHostComposition({
