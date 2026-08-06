@@ -12,9 +12,9 @@ cold even when no inspected subject changed.
 Runtime evaluation first admits each acquisition root and then intersects exact
 coverage matches with those roots. Cache inputs can represent that same
 narrowing without changing rule behavior. True-cold execution remains a
-different concern: the provider deliberately runs each Grit program in its own
-native process so timeout, output, attribution, failure, cancellation, and
-cleanup remain program-local.
+different concern: the provider performs 23 isolated native Grit evaluations,
+each reached through the JavaScript wrapper, so timeout, output, attribution,
+failure, cancellation, and cleanup remain program-local.
 
 Single-run stage samples separate that cold cost from the false invalidation:
 catalog resolution completed in 0.70 seconds, all ten native structure rules in
@@ -76,11 +76,31 @@ focused inputs.
 
 ### Separate invalidation from engine cost
 
-The raw `bun.lock` input and the 23-process Grit cold path remain measured
-follow-ups, not hidden parts of this implementation. Lockfile narrowing requires
-an exact installed CLI/SDK/tool closure fingerprint. Grit batching requires a
-discriminating proof that preserves every program-local lifecycle guarantee.
-Neither follows from the coverage-input defect.
+The raw `bun.lock` input and the cold path across 23 isolated native Grit
+evaluations remain measured follow-ups, not hidden parts of this
+implementation. Each evaluation is reached through the JavaScript wrapper;
+the evaluation count is not a process count. Lockfile narrowing requires an
+exact installed CLI/SDK/tool closure fingerprint. Grit batching requires a
+discriminating case that preserves every per-law lifecycle guarantee. Neither
+follows from the coverage-input defect.
+
+Grit's negative-result cache is keyed by content and pattern but omits the path,
+while these laws use `$filename`. Cold diagnostics therefore continue to
+require `--no-cache`.
+
+### Bound the next cold-path diagnostic
+
+The next diagnostic will run only the heavy law against fresh catalogs for an
+empty corpus, one file, and 25%, 50%, and 100% of the corpus, plus a trivial
+pattern against the full corpus. Each point records the three-run median for
+wall time, user time, system time, and peak RSS.
+
+If fixed overhead is below 2 seconds or 10% of the 34.02-second sample, stop
+work on Nx, Effect, and the JavaScript wrapper. If native compile/match accounts
+for more than 80%, focus on law decomposition and vendor matcher profiling.
+Reconsider batching only if fixed per-program overhead is at least 20%, with the
+per-law lifecycle preserved. Do not reopen Biome, cache, or Rust work without a
+change in vendor capabilities.
 
 ### Retain the native vendors
 
@@ -97,12 +117,27 @@ admitted.
   covered, added, changed, and deleted files with projection and native Nx
   cache tests before landing.
 - **Cold checks remain slow after false misses are removed** -> record the
-  improvement as cache precision only and profile the native process path in a
+  improvement as cache precision only and profile the native Grit path in a
   separate change.
 
 ## Release Settlement
 
-Habitat `0.5.2` is the fixed CLI and SDK release that carries the narrowed Nx
-projection and its native cache-behavior proof. Publication and Template
-self-consumption remain separate settlement gates: source landing alone does
-not make the installed `0.5.1` consumer authoritative for this behavior.
+Release tag `habitat-cli-v0.5.2` points to canonical `main` commit
+`92482052a7878d47085a14831bf3d6098f2b2d5d`, and GitHub workflow run
+`31070676131` was green. The public packages are:
+
+- `@habitat-ai/cli@0.5.2`, integrity
+  `sha512-/gDZg9sWYkOxoYpzMS/XqSIJ8QxfOWffYjPDWTc7ALIsOWuQ8LafPRrB61YueQXH/V9fKdR2z//3ol65kMh/nw==`
+- `@habitat-ai/sdk@0.5.2`, integrity
+  `sha512-xz/bRXej6swKJLRruo7Bj/UZLxcZGVCGKtpiaue3dALmcHK2aMtT5kKrtEb04nYPFx3twd70AVoPLY8bOYimsw==`
+
+Both registry records carry `gitHead`
+`92482052a7878d47085a14831bf3d6098f2b2d5d`. The installed public `0.5.2`
+owner check succeeded cold. Only the Nx daemon target interval survived for the
+cold run: 154.779 seconds, from `04:24:21.836Z` to `04:26:56.615Z`; no exact
+`/usr/bin/time` cold `real` value is claimed. The unchanged replay succeeded in
+`real 0.80s`, with an Nx run duration of 13 milliseconds and a 1/1 cache hit.
+
+Publication, canonical-main, and installed-consumer settlement are complete.
+Landing this settlement record and archiving the change remain open in task
+4.2.
