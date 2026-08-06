@@ -266,10 +266,15 @@ still enrich their enclosing operation rather than opening peer events.
 
 The HQ server path acquires telemetry before route mounting. Its host request
 span and technical log own transport observation; the native oRPC plugin owns
-each operation-attempt event, and the Inngest function wrapper owns its attempt
-event. oRPC and Effect spans remain children of the extracted request context.
-Success, expected caller errors, unexpected failures, and cancellation
-finalize the native operation event without changing response mapping.
+each operation-attempt event, and the host observes the terminal response from
+the one native Inngest Serve handler to own its attempt event. For the pinned
+Inngest 3.51.0 contract, `200` is terminal success, `400` or `500` with the
+public `NoRetry` header is terminal failure, and `206` or a response without
+that execution-result signal remains unclassified. The observer does not alter
+function registration, execution, middleware, retries, or results. oRPC and
+Effect spans remain children of the extracted request context. Success,
+expected caller errors, unexpected failures, and cancellation finalize the
+native operation event without changing response mapping.
 
 Both Oclif entrypoints use one shared app-owned bootstrap around native
 `execute(...)`. Oclif lifecycle hooks begin the event only after a native
