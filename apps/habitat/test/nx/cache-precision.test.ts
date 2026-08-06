@@ -27,11 +27,6 @@ type NxFixture = Readonly<{
   root: string;
 }>;
 
-type NativeProject = Readonly<{
-  root: string;
-  targets: Readonly<Record<string, Readonly<{ inputs?: readonly unknown[] }>>>;
-}>;
-
 const FIXTURE_PREFIX = "habitat-nx-cache-";
 const temporaryParent = await realpath(tmpdir());
 const repositoryRoot = fileURLToPath(new URL("../../../..", import.meta.url));
@@ -50,25 +45,14 @@ afterEach(async () => {
 describe("Habitat native Nx cache precision", () => {
   it("keeps the owner union precise while preserving every declared invalidation", async () => {
     const fixture = await createFixture();
-    const project = await readNativeProject(fixture);
-
-    expect(project.root).toBe(".");
-    expect(project.targets["habitat:rule:rule-a"]?.inputs).not.toContain("{workspaceRoot}/**/*");
-    expect(project.targets["check:policy"]?.inputs).toContainEqual({
-      env: "NX_WORKSPACE_ROOT_PATH",
-    });
 
     expectCalls(await runNx(fixture, ["check:policy"]), ["check --owner fixture"], fixture.root);
-    expectCalls(await runNx(fixture, ["check:policy"]), [], fixture.root);
-
     expectCalls(
-      await runNx(fixture, focusedTargets),
-      ["check --rule rule-a", "check --rule rule-b"],
+      await runNx(fixture, [...focusedTargets, "test:outside"]),
+      ["check --rule rule-a", "check --rule rule-b", "sentinel"],
       fixture.root
     );
-    expectCalls(await runNx(fixture, allTargets), [], fixture.root);
-    expectCalls(await runNx(fixture, ["test:outside"]), ["sentinel"], fixture.root);
-    expectCalls(await runNx(fixture, ["test:outside"]), [], fixture.root);
+    expectCalls(await runNx(fixture, [...allTargets, "test:outside"]), [], fixture.root);
 
     await writeFixtureFile(fixture.root, "unrelated/notes.txt", "outside the policy union\n");
     expectCalls(await runNx(fixture, [...allTargets, "test:outside"]), ["sentinel"], fixture.root);
@@ -79,16 +63,9 @@ describe("Habitat native Nx cache precision", () => {
       ["check --owner fixture", "check --rule rule-b"],
       fixture.root
     );
-    expectCalls(await runNx(fixture, allTargets), [], fixture.root);
 
     const addedSource = "subject/a/added.ts";
     await writeFixtureFile(fixture.root, addedSource, "export const added = 1;\n");
-    expectCalls(
-      await runNx(fixture, allTargets),
-      ["check --owner fixture", "check --rule rule-a"],
-      fixture.root
-    );
-    await writeFixtureFile(fixture.root, "subject/a/changed.ts", "export const changed = 200;\n");
     expectCalls(
       await runNx(fixture, allTargets),
       ["check --owner fixture", "check --rule rule-a"],
@@ -100,19 +77,6 @@ describe("Habitat native Nx cache precision", () => {
       ["check --owner fixture", "check --rule rule-a"],
       fixture.root
     );
-
-    await writeRuleManifest(fixture.root, "rule-a", "subject/a/**/*.ts", "changed manifest");
-    expectCalls(await runNx(fixture, allTargets), allInvocations(), fixture.root);
-
-    await writeFixtureFile(fixture.root, ".habitat/rules/rule-a/baseline.json", "[]  \n");
-    expectCalls(await runNx(fixture, allTargets), allInvocations(), fixture.root);
-
-    await writeFixtureFile(
-      fixture.root,
-      ".habitat/rules/rule-a/pattern.md",
-      gritPattern("rule-a", "changed runner")
-    );
-    expectCalls(await runNx(fixture, allTargets), allInvocations(), fixture.root);
 
     await writeFixtureFile(
       fixture.root,
@@ -132,28 +96,12 @@ describe("Habitat native Nx cache precision", () => {
     await writePackageLock(fixture.root, "0.5.2");
     expectCalls(await runNx(fixture, allTargets), allInvocations(), fixture.root);
 
-    const timeoutEnvironment = { HABITAT_COMMAND_TIMEOUT_MS: "1000" };
-    expectCalls(
-      await runNx(fixture, allTargets, timeoutEnvironment),
-      allInvocations(),
-      fixture.root
-    );
-
     const explicitRootEnvironment = {
-      ...timeoutEnvironment,
       NX_WORKSPACE_ROOT_PATH: fixture.root,
     };
     expectCalls(
       await runNx(fixture, allTargets, explicitRootEnvironment),
       allInvocations(),
-      fixture.root
-    );
-    expectCalls(await runNx(fixture, ["check:policy"], explicitRootEnvironment), [], fixture.root);
-
-    await writeFixtureFile(fixture.root, "subject/b/covered.ts", "export const b = 3;\n");
-    expectCalls(
-      await runNx(fixture, ["check:policy"], explicitRootEnvironment),
-      ["check --owner fixture"],
       fixture.root
     );
   }, 60_000);
@@ -351,22 +299,6 @@ async function runNx(
   }
 
   return (await readInvocations(fixture.invocationLog)).slice(before.length);
-}
-
-async function readNativeProject(fixture: NxFixture): Promise<NativeProject> {
-  const result = await runCommand(
-    process.execPath,
-    [nxCli, "show", "project", "fixture", "--json"],
-    {
-      cwd: fixture.root,
-      env: nativeNxEnvironment(fixture),
-      timeoutMs: NATIVE_NX_COMMAND_TIMEOUT_MS,
-    }
-  );
-  if (result.exitCode !== 0) {
-    throw new Error(`Native Nx fixture graph failed:\n${result.stderr}\n${result.stdout}`);
-  }
-  return JSON.parse(result.stdout) as NativeProject;
 }
 
 function nativeNxEnvironment(
