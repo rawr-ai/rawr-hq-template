@@ -171,9 +171,12 @@ later generic kind admissions widens this six-member activation release.
 
 Changing `habitat-pack.json` from transport-only to executable membership is a
 new public capability. The fixed SDK/CLI release group advances together to
-`0.5.0`. Publication remains the existing Nx release plus npm trusted-publisher
-workflow; no private release store, extra package cohort, or consumer-specific
-artifact is introduced.
+`0.5.0`, then to corrective patch `0.5.1` so the Nx plugin hashes its installed
+CLI dependency closure without requiring the SDK to appear as a separate
+external Nx node. Publication remains the existing Nx release plus npm
+trusted-publisher workflow; no private release store, extra package cohort, or
+consumer-specific artifact is introduced. Consumers admit `0.5.1`, not the
+superseded `0.5.0` projection.
 
 ## Risks / Trade-offs
 
@@ -183,8 +186,9 @@ artifact is introduced.
   machinery.
 - **Producer and package copies could drift** -> Admit only exact redundant
   definitions; conflicting duplicate identity fails resolution.
-- **Nx could cache across an SDK policy change** -> Hash the exact public CLI
-  and SDK dependencies and exclude package asset paths from workspace inputs.
+- **Nx could cache across an SDK policy change** -> Hash the installed public
+  CLI node and its lockfile-resolved exact SDK dependency closure, and exclude
+  package asset paths from workspace inputs.
 - **Consumers may expect installation alone to select every project** -> Keep
   instance creation repository-owned and make the migration prompts name every
   required manifest explicitly.
@@ -196,10 +200,10 @@ artifact is introduced.
 ## Migration Plan
 
 1. Land and verify package-member resolution plus the shared resource law.
-2. Advance the fixed SDK/CLI group to `0.5.0`, merge to canonical `main`, tag,
-   publish, and verify registry provenance.
+2. Publish `0.5.0`, correct the installed Nx dependency identity in `0.5.1`,
+   merge to canonical `main`, tag, publish, and verify registry provenance.
 3. Update Template's own public dependency pin only after registry visibility.
-4. Give Magic an exact migration prompt: install `0.5.0`, initialize once,
+4. Give Magic an exact migration prompt: install `0.5.1`, initialize once,
    declare project-local instances for the six settled kinds, retain qualified
    overlays and its service law, and remove only generic copies proven replaced
    by package applications. Do not select the candidate `service` definition.
