@@ -416,7 +416,7 @@ describe("installed Habitat products", () => {
       targetInputs.filter(
         (input) => typeof input === "object" && input !== null && "externalDependencies" in input
       )
-    ).toEqual([{ externalDependencies: ["@habitat-ai/cli", "@habitat-ai/sdk"] }]);
+    ).toEqual([{ externalDependencies: ["@habitat-ai/cli"] }]);
     expect(targetInputs).toContain("{workspaceRoot}/packages/example");
     expect(
       targetInputs.some(
@@ -560,6 +560,11 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
         },
         include: ["src/**/*.ts"],
       },
+      null,
+      2
+    )}\n`,
+    "packages/producer-sdk/project.json": `${JSON.stringify(
+      { name: "@habitat-ai/sdk", projectType: "library", targets: {} },
       null,
       2
     )}\n`,
