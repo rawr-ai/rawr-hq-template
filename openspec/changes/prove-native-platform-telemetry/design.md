@@ -331,10 +331,15 @@ sequence:
 
 Concurrent or repeated shutdown calls share one promise and do not repeat any
 provider stage. No app or provider event registry re-finalizes native events.
-A stage failure is recorded, later stages are still attempted, and the
-deadline prevents a stuck exporter from keeping the process alive. Signal
-handling preserves the product-derived exit status; flush or shutdown failure
-cannot replace it.
+A stage failure is recorded and later stages are still attempted. Cooperative
+native work that settles within the deadline completes the full ordered drain.
+If the native host has not settled when the deadline expires, the coordinator
+stops awaiting it and still starts telemetry shutdown with that same expired
+deadline; it does not maintain an active-request registry, cancel the native
+operation, or claim to terminate the OS process. The deadline bounds
+coordinator waiting and telemetry stages, while the native host remains the
+owner of any still-running work. Signal handling preserves the product-derived
+exit status; flush or shutdown failure cannot replace it.
 
 A `flushed` provider result means every admitted local flush stage settled
 within its deadline. OpenTelemetry exporters do not expose backend persistence
@@ -428,9 +433,10 @@ PostHog slice without changing native telemetry completion.
 - **Telemetry failures leak into product behavior** -> use non-throwing
   resource operations, settle exporter callbacks, and compare product outcomes
   under injected telemetry failures.
-- **Shutdown loses the final events or hangs** -> stop intake before drain,
-  close event intake before flush, share one shutdown promise, and apply one
-  deadline to the full sequence.
+- **Shutdown loses final events or waits forever** -> stop intake before drain,
+  close event intake before flush on the cooperative path, share one shutdown
+  promise, and stop coordinator waiting at one deadline without claiming that
+  Bun force-cancelled a stuck native request.
 - **ClickStack schema or image changes invalidate queries** -> pin the
   disposable image and exact trace, metric, and log table names in the fixture
   and record them in the receipt.

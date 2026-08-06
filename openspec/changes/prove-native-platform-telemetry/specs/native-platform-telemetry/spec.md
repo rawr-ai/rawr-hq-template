@@ -225,8 +225,11 @@ observation intake, force-flush every attached telemetry processor/exporter,
 then shut down the one app telemetry lifecycle and its tracer, meter, and logger
 providers. The app and provider MUST NOT maintain an active-event registry or
 re-finalize native events. One monotonic deadline SHALL bound the complete
-sequence. Concurrent or repeated shutdown requests MUST share one completion
-and MUST NOT repeat provider stages.
+coordinator wait and every telemetry stage. Concurrent or repeated shutdown
+requests MUST share one completion and MUST NOT repeat provider stages. If a
+native host has not settled at the deadline, the coordinator MUST stop waiting
+and still attempt telemetry shutdown with the same expired deadline; it MUST
+NOT claim forced native cancellation or OS-process termination.
 
 #### Scenario: Normal shutdown preserves final observations
 - **WHEN** shutdown begins with admitted requests, commands, or Inngest attempts in flight
@@ -239,10 +242,15 @@ and MUST NOT repeat provider stages.
 - **THEN** every stage runs at most once through one shared completion
 - **AND** the product-derived exit status is preserved
 
+#### Scenario: Native drain exceeds the deadline
+- **WHEN** admitted native work does not settle before the monotonic deadline
+- **THEN** the coordinator stops awaiting the native host and still attempts telemetry shutdown with the expired deadline
+- **AND** the system records no claim that the native work was cancelled or that the OS process terminated
+
 #### Scenario: Exporter cannot hang shutdown
-- **WHEN** finalization, flush, or an exporter stalls or fails
+- **WHEN** telemetry flush or an exporter stalls or fails
 - **THEN** later shutdown stages are attempted within the remaining deadline
-- **AND** the process lifecycle settles within the configured bound
+- **AND** the shutdown coordinator settles within the configured bound
 
 ### Requirement: Acceptance queries disposable backend tables
 The system SHALL prove enabled telemetry with a pinned disposable
