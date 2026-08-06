@@ -4,9 +4,10 @@
 **Date:** 2026-07-31
 
 The current released disposition is recorded in
-[[openspec/changes/archive/2026-08-06-activate-habitat-shared-blueprints/design#Release Evidence|the Habitat 0.5.1 release evidence]]. This corpus preserves the
-pre-release transfer state and must not be read as current package, application,
-or release status.
+[[docs/PRODUCT|the canonical product overview]]. The
+[[openspec/changes/archive/2026-08-06-activate-habitat-shared-blueprints/design#Release Evidence|Habitat 0.5.1 release evidence]] remains historical provenance.
+This corpus preserves the pre-release transfer state and must not be read as
+current package, application, or release status.
 
 ## Authority
 

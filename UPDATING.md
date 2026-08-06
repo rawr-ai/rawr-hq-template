@@ -18,7 +18,7 @@ bun run rawr -- --version
 ```
 
 The fixed Habitat Nx Release group contains exactly `@habitat-ai/sdk` and
-`@habitat-ai/cli`. Version `0.5.1` is the current published release of the
+`@habitat-ai/cli`. Version `0.5.2` is the current published release of the
 reusable substrate and its Oclif entrypoint through ordinary package
 dependencies and installed-package acceptance;
 internal RAWR services, resources, plugins, and applications remain private
@@ -31,13 +31,13 @@ are absent. Development and acceptance have no installed-RAWR fallback.
 
 ## Personal Repository
 
-Update personal from its own `origin`. Task 6.4 must replace Personal's current
-controller/Civ7 checks with repository-owned content validation and installed
-`@habitat-ai/cli@0.5.1`. Until that lands, the predecessor checks are not
-accepted authority. Template performs lifecycle acceptance against explicit
-Personal Git records from its own exact revision; do not install the private
-`rawr` application into Personal or substitute a checkout link or retired
-custom distribution.
+Update Personal from its own `origin`. Personal owns repository-local content
+validation and must consume an exact supported `@habitat-ai/cli` release rather
+than copy Template tooling or executable code. The current supported release is
+`0.5.2`. Template performs lifecycle acceptance against explicit Personal Git
+records from its own exact revision; do not install the private `rawr`
+application into Personal or substitute a checkout link or retired custom
+distribution.
 
 Do not add a Template remote, merge or cherry-pick Template commits, copy runtime
 files, or use tree equivalence as compatibility proof.
