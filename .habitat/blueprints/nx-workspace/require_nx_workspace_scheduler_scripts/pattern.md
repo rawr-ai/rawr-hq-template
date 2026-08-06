@@ -8,8 +8,11 @@ The repository root schedules foundational work but does not own foundational
 Nx targets. Its six public scripts are exact single-command schedulers. Every
 project check reaches ordinary lint through exactly one explicit
 `habitat:lint` dependency; package and project manifests cannot declare another
-lint owner, and competing lint edges are closed. Unrelated root scripts, root
-metadata, and non-lint check dependencies remain outside this rule.
+lint owner, competing lint edges are closed, and the owner hashes exactly the
+positive filename classes recognized by Biome plus its root formatter
+configuration. Biome remains the path-exclusion owner. Unrelated root scripts,
+root metadata, Markdown, and non-lint check dependencies remain outside this
+rule.
 
 ```grit
 language json
@@ -19,6 +22,20 @@ predicate is_workspace_check_dependencies($properties, $depends_on) {
   $properties <: some pair(key=`"targetDefaults"`, value=`{ $target_defaults }`),
   $target_defaults <: some pair(key=`"check"`, value=`{ $check }`),
   $check <: some pair(key=`"dependsOn"`, value=`[$depends_on]`)
+}
+
+// Asserts the exact positive Biome 2.5.3 filename and configuration input set.
+predicate has_exact_workspace_lint_inputs($properties) {
+  $properties <: some pair(key=`"targets"`, value=`{ $targets }`),
+  $targets <: some pair(key=`"lint"`, value=`{ $lint }`),
+  $lint <: some pair(
+    key=`"inputs"`,
+    value=`[
+      "{workspaceRoot}/**/*.{js,mjs,jsx,cjs,ts,mts,cts,tsx,json,jsonld,webapp,webmanifest,jsonc,code-snippets,code-workspace,sublime-build,sublime-commands,sublime-completions,sublime-keymap,sublime-macro,sublime-menu,sublime-mousemap,sublime-project,sublime-settings,sublime-theme,sublime-workspace,sublime_metrics,sublime_session,css,graphqls,graphql,gql,html,svg,astro,vue,svelte,grit}",
+      "{workspaceRoot}/**/{.all-contributorsrc,.arcconfig,.auto-changelog,.bowerrc,.c8rc,.htmlhintrc,.imgbotconfig,.jslintrc,.nycrc,.tern-config,.tern-project,.vuerc,.watchmanconfig,.ember-cli,.jscsrc,.jshintrc,.babelrc,.hintrc,.swcrc,mcmod.info}",
+      "{workspaceRoot}/.editorconfig"
+    ]`
+  )
 }
 
 or {
@@ -92,6 +109,11 @@ or {
     $root <: `{ $properties }`,
     $properties <: some pair(key=`"targets"`, value=`{ $targets }`),
     $targets <: some pair(key=`"lint"`, value=$_)
+  },
+  document(value=$root) where {
+    $filename <: r".*scripts/habitat/project\.json$",
+    $root <: `{ $properties }`,
+    not { has_exact_workspace_lint_inputs($properties) }
   },
   document(value=$root) where {
     $filename <: r".*nx\.json$",
@@ -275,6 +297,22 @@ or {
 }
 ```
 
+## Matches an imprecise shared lint input
+
+```json
+// @filename: scripts/habitat/project.json
+{
+  "name": "habitat",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": ["{workspaceRoot}/**/*"],
+      "options": { "command": "biome ci --diagnostic-level=error ." }
+    }
+  }
+}
+```
+
 ## Matches a root project target owner
 
 ```json
@@ -317,6 +355,24 @@ or {
         "check:policy",
         "^check"
       ]
+    }
+  }
+}
+```
+
+```json
+// @filename: scripts/habitat/project.json
+{
+  "name": "habitat",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "{workspaceRoot}/**/*.{js,mjs,jsx,cjs,ts,mts,cts,tsx,json,jsonld,webapp,webmanifest,jsonc,code-snippets,code-workspace,sublime-build,sublime-commands,sublime-completions,sublime-keymap,sublime-macro,sublime-menu,sublime-mousemap,sublime-project,sublime-settings,sublime-theme,sublime-workspace,sublime_metrics,sublime_session,css,graphqls,graphql,gql,html,svg,astro,vue,svelte,grit}",
+        "{workspaceRoot}/**/{.all-contributorsrc,.arcconfig,.auto-changelog,.bowerrc,.c8rc,.htmlhintrc,.imgbotconfig,.jslintrc,.nycrc,.tern-config,.tern-project,.vuerc,.watchmanconfig,.ember-cli,.jscsrc,.jshintrc,.babelrc,.hintrc,.swcrc,mcmod.info}",
+        "{workspaceRoot}/.editorconfig"
+      ],
+      "options": { "command": "biome ci --diagnostic-level=error ." }
     }
   }
 }
