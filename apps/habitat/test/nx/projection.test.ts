@@ -274,6 +274,7 @@ const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
   "{workspaceRoot}/bun.lock",
   "{workspaceRoot}/package.json",
   { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+  { env: "NX_WORKSPACE_ROOT_PATH" },
 ];
 
 function createHandler(
@@ -339,6 +340,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      { env: "NX_WORKSPACE_ROOT_PATH" },
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
@@ -366,6 +368,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      { env: "NX_WORKSPACE_ROOT_PATH" },
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
@@ -462,6 +465,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      { env: "NX_WORKSPACE_ROOT_PATH" },
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",
@@ -501,6 +505,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/bun.lock",
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      { env: "NX_WORKSPACE_ROOT_PATH" },
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",
@@ -574,7 +579,7 @@ describe("Habitat Nx projection", () => {
     ]);
   });
 
-  it("projects a workspace-root acquisition as one valid recursive Nx input", async () => {
+  it("uses declared compatibility coverage instead of recursively hashing the workspace", async () => {
     if (gritCompatibilityRule.runner.name !== "grit") {
       throw new Error("Expected the Grit compatibility fixture.");
     }
@@ -604,10 +609,38 @@ describe("Habitat Nx projection", () => {
     );
     const targets = projectMap(result)["."]?.targets;
 
-    expect(targets?.["habitat:rule:source-compat"]?.inputs).toContain("{workspaceRoot}/**/*");
-    expect(targets?.["habitat:rule:source-compat"]?.inputs).not.toContain("{workspaceRoot}");
-    expect(targets?.["check:policy"]?.inputs).toContain("{workspaceRoot}/**/*");
-    expect(targets?.["check:policy"]?.inputs).not.toContain("{workspaceRoot}");
+    const focusedInputs = targets?.["habitat:rule:source-compat"]?.inputs;
+    const ownerInputs = targets?.["check:policy"]?.inputs;
+
+    expect(focusedInputs).toContain("{workspaceRoot}/services/a/src/**/*.ts");
+    expect(focusedInputs).toContain("{workspaceRoot}/services/a/package.json");
+    expect(focusedInputs).toContainEqual({ env: "NX_WORKSPACE_ROOT_PATH" });
+    expect(focusedInputs).not.toContain("{workspaceRoot}/**/*");
+    expect(focusedInputs).not.toContain("{workspaceRoot}");
+    expect(ownerInputs).toEqual(focusedInputs);
+  });
+
+  it("keeps non-workspace compatibility directories recursively admitted", async () => {
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () =>
+          resolvedCatalog(
+            [],
+            [],
+            compatibilityCatalog([gritCompatibilityRule], { "service-a": "services/a" })
+          ),
+      },
+    }));
+
+    const result = await createNodes(compatibilityConfigFiles, undefined, {
+      workspaceRoot: "/workspace",
+      nxJsonConfiguration: {},
+    });
+    const inputs =
+      projectMap(result)["services/a"]?.targets?.["habitat:rule:source-compat"]?.inputs;
+
+    expect(inputs).toContain("{workspaceRoot}/services/a");
+    expect(inputs).toContain("{workspaceRoot}/services/a/**/*");
   });
 
   it("rejects an owner identity that cannot be one portable command argument", async () => {
