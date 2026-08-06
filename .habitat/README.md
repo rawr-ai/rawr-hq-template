@@ -109,8 +109,8 @@ The Template-owned `@habitat-ai/cli` release resolves applications into one
 cacheable focused target per application or compatibility rule plus one
 cacheable owner-local `check:policy` command. The owner command executes one
 native owner-selected Habitat check without scheduling the focused leaves;
-selected Grit applications share a native process only when their final
-ordered prepared subject paths are identical.
+each selected Grit program executes in its own native process so timeout,
+failure, cancellation, and cleanup remain program-local.
 The workspace consumes that released Nx plugin while retaining the source
 projects as product owners. Codex Stop invokes `habitat hook agent-stop`
 through the same package and catalog; it does not become a second admission

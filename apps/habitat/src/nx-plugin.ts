@@ -13,6 +13,7 @@ const plugin = createHabitatNxPlugin({
     "{workspaceRoot}/bun.lock",
     "{workspaceRoot}/package.json",
     { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+    { env: "NX_WORKSPACE_ROOT_PATH" },
   ],
 });
 

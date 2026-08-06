@@ -404,6 +404,7 @@ function compatibilityInputs(
   if (rule.runner.name === "grit") {
     addLocalAssetInput(files, rule.runner.pattern);
     for (const entry of rule.runner.acquisition.entries) {
+      if (entry.kind === "directory" && entry.path === ".") continue;
       addSubjectInputs(files, entry.path, entry.kind);
     }
   } else {
