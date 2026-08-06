@@ -16,6 +16,14 @@ different concern: the provider deliberately runs each Grit program in its own
 native process so timeout, output, attribution, failure, cancellation, and
 cleanup remain program-local.
 
+Single-run stage samples separate that cold cost from the false invalidation:
+catalog resolution completed in 0.70 seconds, all ten native structure rules in
+0.90 seconds, a two-file Grit rule in 0.96 seconds, and the large
+`require_service_context_boundaries` Grit rule in 34.02 seconds. These are
+diagnostic samples rather than benchmark claims. They identify native Grit
+program/corpus evaluation as the cold-path long tail and leave engine work
+behind a later profiling gate.
+
 ## Goals / Non-Goals
 
 **Goals:**
