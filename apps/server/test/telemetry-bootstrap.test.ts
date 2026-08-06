@@ -43,6 +43,10 @@ describe("server telemetry bootstrap", () => {
           expect(inngestClient).toBe(processRuntime.inngestClient);
           return processRuntime.telemetry;
         },
+        configureProductEvents: (enabled) => {
+          order.push("configure-product-events");
+          expect(enabled).toBe(false);
+        },
         createApp: () => {
           order.push("create-app");
           return app;
@@ -51,7 +55,13 @@ describe("server telemetry bootstrap", () => {
       },
     });
 
-    expect(order).toEqual(["create-inngest-client", "telemetry", "create-app", "register-routes"]);
+    expect(order).toEqual([
+      "create-inngest-client",
+      "telemetry",
+      "configure-product-events",
+      "create-app",
+      "register-routes",
+    ]);
     expect(bootstrapped.telemetry).toBe(processRuntime.telemetry);
   });
 });

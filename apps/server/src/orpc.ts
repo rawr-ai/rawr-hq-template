@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   type Counter,
   type Histogram,
@@ -8,6 +9,7 @@ import {
   type TextMapGetter,
   trace,
 } from "@opentelemetry/api";
+import { EvlogHandlerPlugin } from "@orpc/evlog";
 import {
   combineJsonObjectSchemaEntries,
   combineJsonSchemasWithComposition,
@@ -19,6 +21,8 @@ import { type OpenAPIErrorBodyDefinition, OpenAPIGenerator } from "@orpc/openapi
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { COMMON_ERROR_STATUS_MAP, type Router } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import { BatchHandlerPlugin } from "@orpc/server/plugins";
+import type { DrainContext, EnrichContext } from "evlog";
 import type { RawrServerApp } from "./app";
 import { createRpcAuthPolicy, isRpcRequestAllowed, type RpcAuthPolicy } from "./auth/rpc-auth";
 import {
@@ -107,6 +111,7 @@ export type RegisterOrpcRoutesOptions = RawrInitialContext & {
   contextFactory?: (request: Request, initial: RawrInitialContext) => RawrBoundaryContext;
   onContextCreated?: (context: RawrBoundaryContext) => void;
   rpcAuthPolicy?: RpcAuthPolicy;
+  evlogDrain?: (context: DrainContext) => Promise<void>;
 };
 
 export function __resetOrpcRouteTelemetryForTests() {
@@ -177,6 +182,49 @@ function getTelemetryInstruments() {
 
 function getRouteTracer() {
   return trace.getTracer("@rawr/server");
+}
+
+function recordValue(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function canonicalOperationName(value: unknown): string {
+  if (typeof value !== "string") return "unmatched";
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/gu, ".")
+    .replace(/^[._-]+|[._-]+$/gu, "")
+    .slice(0, 256)
+    .replace(/[._-]+$/gu, "");
+  return normalized || "unmatched";
+}
+
+function enrichNativeOrpcEvent({ event, response }: EnrichContext): void {
+  const rpc = recordValue(event.rpc);
+  const matched = typeof rpc?.method === "string" && rpc.method.trim() !== "";
+  const aborted = recordValue(event.abort) !== undefined;
+  const failed = !matched || event.error !== undefined || (response?.status ?? 200) >= 400;
+
+  event.operation = {
+    id: randomUUID(),
+    name: canonicalOperationName(rpc?.method),
+    outcome: aborted ? "cancelled" : failed ? "failed" : "succeeded",
+  };
+}
+
+function createNativeEvlogPlugin(
+  drain: NonNullable<RegisterOrpcRoutesOptions["evlogDrain"]>
+): EvlogHandlerPlugin<RawrBoundaryContext> {
+  return new EvlogHandlerPlugin<RawrBoundaryContext>({
+    drain,
+    enrich: enrichNativeOrpcEvent,
+    logAbort: true,
+    redact: true,
+  });
 }
 
 function recordRoutedRequestMetrics(args: {
@@ -397,11 +445,19 @@ export function registerOrpcRoutes<TApp extends RawrServerApp>(
 ): TApp {
   const router = options.router ?? createOrpcRouter();
   const openApiRouter = options.openApiRouter ?? router;
+  const rpcPlugins = [
+    ...(options.evlogDrain === undefined ? [] : [createNativeEvlogPlugin(options.evlogDrain)]),
+    new BatchHandlerPlugin<RawrBoundaryContext>(),
+  ];
+  const openApiPlugins =
+    options.evlogDrain === undefined ? undefined : [createNativeEvlogPlugin(options.evlogDrain)];
   const rpcHandler = new RPCHandler<RawrBoundaryContext>(router, {
     errorStatusMap: RAWR_ERROR_STATUS_MAP,
+    plugins: rpcPlugins,
   });
   const openapiHandler = new OpenAPIHandler<RawrBoundaryContext>(openApiRouter, {
     errorStatusMap: RAWR_ERROR_STATUS_MAP,
+    ...(openApiPlugins === undefined ? {} : { plugins: openApiPlugins }),
   });
   const rpcAuthPolicy =
     options.rpcAuthPolicy ?? createRpcAuthPolicy({ baseUrl: options.config.baseUrl });
