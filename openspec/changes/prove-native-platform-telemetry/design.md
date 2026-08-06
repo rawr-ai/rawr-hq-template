@@ -131,7 +131,7 @@ names and semantic fields; the resource transports observations without
 deciding their meaning.
 
 `resources/telemetry/providers/opentelemetry-node/index.ts` is the single
-concrete realization face. Its private implementation owns `NodeSDK`, trace,
+concrete realization face. Its private implementation directly owns the trace,
 metric, and log providers/processors, OTLP HTTP exporters, native framework
 instrumentation selection and lifecycle attachment, the
 EVlog-to-OpenTelemetry-Logs drain, redaction at the transport boundary, and
@@ -139,6 +139,14 @@ provider release. Native OpenTelemetry globals and the exact Effect, oRPC, and
 Inngest bindings own instrumentation behavior, spans, metrics, active context,
 and propagation. Those bindings remain attached to the one provider lifecycle;
 they are not parallel neutral-resource operations or lifecycle owners.
+
+The exact admitted `NodeSDK` convenience constructor cannot prove which global
+slots it registered: its startup path does not surface failed OpenTelemetry
+global registration. The provider therefore constructs the same vendor-native
+tracer, meter, logger, context, propagator, processors, readers, exporters, and
+instrumentations directly. It retains each successful registration result and
+releases only those slots. This is a bounded realization of the admitted
+topology, not a second SDK, registry, launcher, or generic telemetry framework.
 
 Apps select provider config once per process. Existing process bootstraps
 acquire the value and pass it to host integrations. Services and plugins see
@@ -167,10 +175,10 @@ app selection boundaries cosmetic.
 ### Share one app lifecycle, one provider per signal, one Inngest client, and one propagator
 
 An enabled OS process constructs one app-owned telemetry lifecycle. The
-OpenTelemetry Node SDK coordinates exactly one tracer provider, one meter
-provider, and one logger provider for the enabled trace, metric, and log
-signals. The lifecycle also registers one process-global context manager and
-W3C Trace Context plus Baggage propagator. Processors and native
+OpenTelemetry Node provider realization coordinates exactly one tracer
+provider, one meter provider, and one logger provider for the enabled trace,
+metric, and log signals. The lifecycle also registers one process-global
+context manager and W3C Trace Context plus Baggage propagator. Processors and native
 instrumentations attach to the provider for their signal; no integration
 creates a peer provider for the same signal.
 
@@ -284,7 +292,8 @@ or second runtime assembly.
 
 Provider selection normalizes disabled mode before importing or invoking
 vendor construction factories. The disabled branch returns a provider-neutral
-no-op value and constructs no `NodeSDK`, exporters, span/log processors,
+no-op value and constructs no OpenTelemetry signal provider, exporter,
+span/log processor,
 periodic metric readers, EVlog drain, Inngest processor, Langfuse client,
 telemetry timers, process hooks, or telemetry network requests.
 
@@ -321,6 +330,12 @@ A stage failure is recorded, later stages are still attempted, and the
 deadline prevents a stuck exporter from keeping the process alive. Signal
 handling preserves the product-derived exit status; flush or shutdown failure
 cannot replace it.
+
+A `flushed` provider result means every admitted local flush stage settled
+within its deadline. OpenTelemetry exporters do not expose backend persistence
+through that result, so it is not a delivery receipt. Only the later
+query-backed ClickHouse acceptance establishes that exported rows became
+queryable.
 
 Alternative considered: let each integration register process hooks and flush
 itself. Rejected because ordering becomes nondeterministic and one stalled

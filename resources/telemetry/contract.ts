@@ -22,12 +22,14 @@ export const MAX_TELEMETRY_DIAGNOSTICS = 32;
 /** Maximum length of one retained provider diagnostic. */
 export const MAX_TELEMETRY_DIAGNOSTIC_DETAIL_LENGTH = 2_048;
 
-const IdentityTextSchema = Type.String({
+/** Bounded identity text used for process and operation identifiers. */
+export const TelemetryIdentityTextSchema = Type.String({
   minLength: 1,
   maxLength: MAX_TELEMETRY_IDENTITY_TEXT_LENGTH,
   description: "Bounded telemetry identity text",
 });
-const AttributeKeySchema = Type.String({
+/** Lowercase dotted key admitted for one provider-neutral telemetry attribute. */
+export const TelemetryAttributeKeySchema = Type.String({
   minLength: 1,
   maxLength: MAX_TELEMETRY_ATTRIBUTE_KEY_LENGTH,
   pattern: "^[a-z][a-z0-9_.-]*$",
@@ -54,17 +56,26 @@ const TelemetryAttributeValueSchema = Type.Union([
   FiniteAttributeNumberSchema,
   Type.Boolean(),
 ]);
-const OperationTextSchema = Type.String({
+/** Bounded lowercase name for one native product operation. */
+export const TelemetryOperationNameSchema = Type.String({
   minLength: 1,
   maxLength: MAX_TELEMETRY_IDENTITY_TEXT_LENGTH,
   pattern: "^[a-z0-9][a-z0-9._-]*$",
   description: "Bounded lowercase operation identity",
 });
 
+/** Terminal outcome owned by one native product operation. */
+export const TelemetryOperationOutcomeSchema = Type.Union(
+  [Type.Literal("succeeded"), Type.Literal("failed"), Type.Literal("cancelled")],
+  {
+    description: "Terminal product outcome observed from the native host",
+  }
+);
+
 /** Structural process identity attached to every observation from one resource value. */
 export const TelemetryProcessIdentitySchema = ReadonlyObject(
   Type.Object({
-    serviceName: IdentityTextSchema,
+    serviceName: TelemetryIdentityTextSchema,
     serviceVersion: Type.Optional(
       Type.String({
         minLength: 1,
@@ -79,21 +90,21 @@ export const TelemetryProcessIdentitySchema = ReadonlyObject(
         description: "Deployment environment when one is known",
       })
     ),
-    processRole: IdentityTextSchema,
-    processInstanceId: IdentityTextSchema,
+    processRole: TelemetryIdentityTextSchema,
+    processInstanceId: TelemetryIdentityTextSchema,
   }),
   { additionalProperties: false }
 );
 
 /** Flat bounded scalar attributes used to correlate observations across native signals. */
 export const TelemetryCorrelationAttributesSchema = ReadonlyObject(
-  Type.Record(AttributeKeySchema, TelemetryAttributeValueSchema, {
+  Type.Record(TelemetryAttributeKeySchema, TelemetryAttributeValueSchema, {
     description: "Flat correlation and semantic attributes",
   }),
   {
     additionalProperties: false,
     maxProperties: MAX_TELEMETRY_ATTRIBUTES,
-    propertyNames: AttributeKeySchema,
+    propertyNames: TelemetryAttributeKeySchema,
     description: "Flat bounded correlation and semantic attributes",
   }
 );
@@ -107,8 +118,8 @@ export const TelemetryAvailabilitySchema = Type.Union(
 );
 
 const NativeOperationPropertiesSchema = Type.Object({
-  operation: OperationTextSchema,
-  operationId: IdentityTextSchema,
+  operation: TelemetryOperationNameSchema,
+  operationId: TelemetryIdentityTextSchema,
   attributes: TelemetryCorrelationAttributesSchema,
 });
 
@@ -154,12 +165,7 @@ export const EnrichNativeOperationInputSchema = ReadonlyObject(
 /** Structural input for idempotently finalizing one fallback native-operation event. */
 export const FinishNativeOperationInputSchema = ReadonlyObject(
   Type.Object({
-    outcome: Type.Union(
-      [Type.Literal("succeeded"), Type.Literal("failed"), Type.Literal("cancelled")],
-      {
-        description: "Terminal product outcome observed from the native host",
-      }
-    ),
+    outcome: TelemetryOperationOutcomeSchema,
     attributes: TelemetryCorrelationAttributesSchema,
   }),
   { additionalProperties: false }
@@ -179,7 +185,7 @@ export const TelemetryLogSeveritySchema = Type.Union([
 export const EmitTechnicalLogInputSchema = ReadonlyObject(
   Type.Object({
     severity: TelemetryLogSeveritySchema,
-    eventName: OperationTextSchema,
+    eventName: TelemetryOperationNameSchema,
     message: Type.String({
       minLength: 1,
       maxLength: MAX_TELEMETRY_LOG_MESSAGE_LENGTH,
