@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const host = vi.hoisted(() => ({
-  bootstrap: vi.fn(async () => ({
+const host = vi.hoisted(() => {
+  const shutdown = vi.fn(async () => {});
+  const result = () => ({
     app: {},
     config: {
       port: 3100,
@@ -10,25 +11,43 @@ const host = vi.hoisted(() => ({
     telemetry: {
       shutdown: async () => {},
     },
-  })),
-  start: vi.fn(async () => ({
-    app: {},
-    config: {
-      port: 3100,
-      baseUrl: "http://localhost:3100",
-    },
-    telemetry: {
-      shutdown: async () => {},
-    },
-  })),
-}));
+    shutdown,
+  });
+  return {
+    shutdown,
+    bootstrap: vi.fn(async () => result()),
+    start: vi.fn(async () => result()),
+  };
+});
 
 vi.mock("@rawr/server/host", () => ({
   bootstrapServerHost: host.bootstrap,
   startServerHost: host.start,
 }));
 
-import { bootstrapRawrHqServer, startRawrHqServer } from "../server";
+import {
+  bootstrapRawrHqServer,
+  installRawrHqServerShutdownSignals,
+  startRawrHqServer,
+} from "../server";
+
+type TestSignal = "SIGINT" | "SIGTERM";
+
+function createSignalHost(exitCode?: number) {
+  const listeners = new Map<TestSignal, () => void>();
+  return {
+    listeners,
+    host: {
+      exitCode,
+      once(signal: TestSignal, listener: () => void) {
+        listeners.set(signal, listener);
+      },
+      off(signal: TestSignal, listener: () => void) {
+        if (listeners.get(signal) === listener) listeners.delete(signal);
+      },
+    },
+  };
+}
 
 describe("HQ server entrypoint", () => {
   const telemetryOptions = {
@@ -47,6 +66,8 @@ describe("HQ server entrypoint", () => {
   beforeEach(() => {
     host.bootstrap.mockClear();
     host.start.mockClear();
+    host.shutdown.mockClear();
+    host.shutdown.mockResolvedValue(undefined);
   });
 
   it("projects the selected declarations through the non-listening host boundary", async () => {
@@ -77,5 +98,35 @@ describe("HQ server entrypoint", () => {
     });
     expect(host.bootstrap).not.toHaveBeenCalled();
     expect(result.role).toBe("server");
+  });
+
+  it("shares one shutdown and selects the first signal status", async () => {
+    const result = await startRawrHqServer(telemetryOptions);
+    const signal = createSignalHost();
+    installRawrHqServerShutdownSignals(result.bootstrapped, signal.host);
+    const onSigint = signal.listeners.get("SIGINT");
+    const onSigterm = signal.listeners.get("SIGTERM");
+    if (onSigint === undefined || onSigterm === undefined) {
+      throw new Error("expected both server signal handlers");
+    }
+
+    onSigint();
+    onSigterm();
+    await vi.waitFor(() => expect(host.shutdown).toHaveBeenCalledOnce());
+
+    expect(signal.host.exitCode).toBe(130);
+    expect(signal.listeners.size).toBe(0);
+  });
+
+  it("preserves an existing process status and contains shutdown failure", async () => {
+    host.shutdown.mockRejectedValueOnce(new Error("host stop failed"));
+    const result = await startRawrHqServer(telemetryOptions);
+    const signal = createSignalHost(17);
+    installRawrHqServerShutdownSignals(result.bootstrapped, signal.host);
+
+    signal.listeners.get("SIGTERM")?.();
+    await vi.waitFor(() => expect(host.shutdown).toHaveBeenCalledOnce());
+
+    expect(signal.host.exitCode).toBe(17);
   });
 });

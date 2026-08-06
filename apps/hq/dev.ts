@@ -1,5 +1,10 @@
 import { type RawrHqAsyncReservation, selectRawrHqAsyncRole } from "./async";
-import { bootstrapRawrHqServer, type RawrHqServerBoot, startRawrHqServer } from "./server";
+import {
+  bootstrapRawrHqServer,
+  installRawrHqServerShutdownSignals,
+  type RawrHqServerBoot,
+  startRawrHqServer,
+} from "./server";
 
 export type RawrHqDevBoot = Readonly<{
   roles: readonly ["server", "async"];
@@ -41,5 +46,6 @@ export async function startRawrHqDev(): Promise<RawrHqDevBoot> {
 
 if (import.meta.main) {
   const dev = await startRawrHqDev();
+  installRawrHqServerShutdownSignals(dev.server.bootstrapped);
   console.log(`@rawr/hq-app dev server listening on ${dev.server.bootstrapped.config.baseUrl}`);
 }

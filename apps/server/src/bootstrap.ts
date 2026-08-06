@@ -25,7 +25,68 @@ export type BootstrappedServer = {
     baseUrl: string;
   };
   telemetry: ServerTelemetryLifecycle;
+  shutdown(deadlineMonotonicMilliseconds?: number): Promise<void>;
 };
+
+type HostStopOutcome =
+  | Readonly<{ kind: "settled" }>
+  | Readonly<{ kind: "failed"; error: unknown }>
+  | Readonly<{ kind: "deadline" }>;
+
+const DISABLED_SHUTDOWN_FALLBACK_MILLISECONDS = 1_000;
+
+function waitForHostStop(
+  stopping: Promise<unknown>,
+  deadlineMonotonicMilliseconds: number
+): Promise<HostStopOutcome> {
+  const settled = stopping.then<HostStopOutcome, HostStopOutcome>(
+    () => ({ kind: "settled" }),
+    (error: unknown) => ({ kind: "failed", error })
+  );
+  const remainingMilliseconds = Math.max(0, deadlineMonotonicMilliseconds - performance.now());
+  if (remainingMilliseconds === 0) return Promise.resolve({ kind: "deadline" });
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => resolve({ kind: "deadline" }), remainingMilliseconds);
+    void settled.then((outcome) => {
+      clearTimeout(timeout);
+      resolve(outcome);
+    });
+  });
+}
+
+function createServerShutdown(input: {
+  app: ReturnType<typeof createServerApp>;
+  telemetry: ServerTelemetryLifecycle;
+  fallbackMilliseconds: number;
+}): BootstrappedServer["shutdown"] {
+  let shutdownPromise: Promise<void> | undefined;
+
+  return (deadlineMonotonicMilliseconds) => {
+    const deadline =
+      deadlineMonotonicMilliseconds ?? performance.now() + input.fallbackMilliseconds;
+    shutdownPromise ??= (async () => {
+      let hostFailed = false;
+      let hostFailure: unknown;
+      if (input.app.server != null) {
+        try {
+          const outcome = await waitForHostStop(input.app.stop(false), deadline);
+          if (outcome.kind === "failed") {
+            hostFailed = true;
+            hostFailure = outcome.error;
+          }
+        } catch (error) {
+          hostFailed = true;
+          hostFailure = error;
+        }
+      }
+
+      await input.telemetry.shutdown(deadline).catch(() => undefined);
+      if (hostFailed) throw hostFailure;
+    })();
+    return shutdownPromise;
+  };
+}
 
 type LoadConfig = (
   repoRoot: string
@@ -141,10 +202,15 @@ export async function bootstrapServer(input: BootstrapServerInput): Promise<Boot
       telemetry,
     });
 
+    const fallbackMilliseconds = input.telemetryConfig.enabled
+      ? input.telemetryConfig.shutdownFallbackMilliseconds
+      : DISABLED_SHUTDOWN_FALLBACK_MILLISECONDS;
+
     return {
       app,
       config,
       telemetry,
+      shutdown: createServerShutdown({ app, telemetry, fallbackMilliseconds }),
     };
   } catch (error) {
     await telemetry.shutdown().catch(() => undefined);
@@ -163,7 +229,7 @@ export async function startServer(input: BootstrapServerInput): Promise<Bootstra
     server.app.listen(server.config.port);
     return server;
   } catch (error) {
-    await server.telemetry.shutdown().catch(() => undefined);
+    await server.shutdown().catch(() => undefined);
     throw error;
   }
 }
