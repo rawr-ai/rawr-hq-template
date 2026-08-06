@@ -20,4 +20,4 @@
 ## 4. Review And Land
 
 - [x] 4.1 Complete independent Nx, behavior-test, TypeScript, and structural-code-quality review with no unresolved P0/P1 finding.
-- [ ] 4.2 Land the reviewed Graphite stack on canonical `main`, drain the merged branch, and archive this change.
+- [x] 4.2 Land the reviewed Graphite stack on canonical `main`, drain the merged branch, and archive this change.
