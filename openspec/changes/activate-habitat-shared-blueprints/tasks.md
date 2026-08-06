@@ -27,8 +27,8 @@
 ## 5. Land And Release
 
 - [x] 5.1 Land reviewed semantic Graphite checkpoints on canonical Template `main`.
-- [ ] 5.2 Publish the fixed SDK/CLI group through the trusted npm workflow, advance the corrected consumer projection to `0.5.1`, and verify registry version, provenance, and installed smoke.
-- [ ] 5.3 Update Template's consumer pin after registry visibility and prove the repeated check is inert.
+- [x] 5.2 Publish the fixed SDK/CLI group through the trusted npm workflow, advance the corrected consumer projection to `0.5.1`, and verify registry version, provenance, and installed smoke.
+- [x] 5.3 Update Template's consumer pin after registry visibility and prove the repeated check is inert.
 
 ## 6. Hand Off Consumers
 

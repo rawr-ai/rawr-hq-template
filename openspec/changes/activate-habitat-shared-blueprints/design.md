@@ -219,3 +219,23 @@ Repository manifests remain data and no generated policy copy requires cleanup.
 
 None for this release. Blueprint composition, specialized kinds, and complete
 version 2 retirement remain separately bounded future design work.
+
+## Release Evidence
+
+- The reviewed source checkpoints landed on canonical Template `main` through
+  PRs #821, #822, #824-#829, and #831. PR #832 advanced the corrected SDK/CLI
+  group at merged-main commit
+  `75d816fbece0be47edc6a45b0c05957321d1fc25`.
+- Tag `habitat-cli-v0.5.1` ran the trusted-publisher workflow as GitHub run
+  `31063179505`. Linux and Windows installed-package acceptance, npm OIDC
+  publication, registry visibility, and registry verification all passed.
+- npm reports `@habitat-ai/sdk@0.5.1` and `@habitat-ai/cli@0.5.1` as `latest`,
+  each with SLSA provenance. Their integrity values are
+  `sha512-sR3OU/6vqhZ2dJJMFy+CLlmB6LlAewu68X6iVF4aXJivLRmNT1TD4QDLKS+3cX+AVX/lkrkksDGsS9RrmH0UwQ==`
+  and
+  `sha512-EcpjzMSLKMlQ1FkAbhdrDS761HWLE5USE45Y42m7RsrXhP61DlTVU+5WzopquOmt6oklML3Rr+GA1Ki9BMyVvg==`,
+  respectively.
+- Template consumes those exact registry versions. Its installed Nx owner gate
+  evaluated all 33 applications successfully in a 152.33-second cold run. The
+  unchanged repeat completed in 0.54 seconds with a 100% Nx cache hit and no
+  additional repository changes.
