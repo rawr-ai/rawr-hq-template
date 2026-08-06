@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Client as HqOpsClient } from "@habitat-ai/rawr-hq-ops";
 import type { OpenTelemetryNodeConfig } from "@habitat-ai/resource-telemetry/providers/opentelemetry-node";
+import { initLogger } from "evlog";
 import type { Inngest } from "inngest";
 import { createServerApp, type RawrServerApp } from "./app";
 import { getServerConfig } from "./config";
@@ -53,10 +54,20 @@ type BootstrapServerDependencies = {
   resolveRepoRoot(): string;
   createInngestClient: typeof createHostInngestClient;
   acquireTelemetry: typeof acquireServerTelemetry;
+  configureProductEvents(enabled: boolean): void;
   createApp: typeof createServerApp;
   loadConfig: LoadConfig;
   registerRoutes: ServerRouteRegistrar;
 };
+
+function configureServerProductEvents(enabled: boolean): void {
+  initLogger({
+    enabled,
+    silent: true,
+    redact: true,
+    _suppressDrainWarning: true,
+  });
+}
 
 /** Internal test seam for replacing bootstrap resources without exposing them to app callers. */
 export type BootstrapServerInput = Readonly<{
@@ -87,6 +98,7 @@ export async function bootstrapServer(input: BootstrapServerInput): Promise<Boot
     resolveRepoRoot: defaultRepoRoot,
     createInngestClient: createHostInngestClient,
     acquireTelemetry: acquireServerTelemetry,
+    configureProductEvents: configureServerProductEvents,
     createApp: createServerApp,
     loadConfig: loadWorkspaceConfigFromHost,
     ...input.overrides,
@@ -120,6 +132,7 @@ export async function bootstrapServer(input: BootstrapServerInput): Promise<Boot
   });
 
   try {
+    deps.configureProductEvents(telemetry.telemetry.availability !== "disabled");
     let app = deps.createApp();
     app = deps.registerRoutes(app, {
       repoRoot,

@@ -265,6 +265,9 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(
 
   registerOrpcRoutes(app, {
     ...initialContext,
+    ...(opts.telemetry.telemetry.availability === "disabled"
+      ? {}
+      : { evlogDrain: opts.telemetry.evlogDrain }),
     router: rawrHostSeam.orpc.router,
     openApiRouter: rawrHostSeam.orpc.published.router,
     contextFactory: (request, deps) => createRequestScopedBoundaryContext(request, deps),
