@@ -1,4 +1,4 @@
-import { flush, handle, run, settings } from "@oclif/core";
+import { flush, handle, run } from "@oclif/core";
 
 import { bindRawrCliTelemetry } from "./process-telemetry.js";
 import { acquireRawrCliTelemetry, selectRawrCliTelemetryConfig } from "./telemetry.js";
@@ -14,7 +14,6 @@ export type RawrCliRunOptions = Readonly<{
 export async function runRawrCli(options: RawrCliRunOptions): Promise<unknown> {
   if (options.development === true) {
     process.env.NODE_ENV = "development";
-    settings.debug = true;
   }
 
   const lifecycle = await acquireRawrCliTelemetry(selectRawrCliTelemetryConfig());

@@ -51,6 +51,10 @@
     "bin": "rawr",
     "dirname": "rawr",
     "commands": "./dist/commands",
+    "hooks": {
+      "finally": "./dist/hooks/finally.js",
+      "prerun": "./dist/hooks/prerun.js"
+    },
     "topicSeparator": " ",
     "plugins": [
       "@oclif/plugin-help",
