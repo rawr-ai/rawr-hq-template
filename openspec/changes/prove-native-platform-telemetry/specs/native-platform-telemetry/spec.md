@@ -29,9 +29,10 @@ package installation or typechecking alone MUST NOT constitute admission.
 The system SHALL define telemetry as a provider-neutral resource under
 `resources/telemetry`, SHALL place the concrete Node implementation at
 `resources/telemetry/providers/opentelemetry-node`, and SHALL let the app select
-provider configuration once for each process. The resource contract MUST NOT
-expose OpenTelemetry, EVlog, oRPC, Inngest, Effect, ClickHouse, Langfuse, or
-PostHog types. Its complete positive surface SHALL consist of process identity,
+provider configuration once for each process. The resource contract MAY use
+core `Effect.Effect` for its provider-neutral operations, but MUST NOT expose
+OpenTelemetry, EVlog, oRPC, Inngest, ClickHouse, Langfuse, PostHog, or
+`@effect/opentelemetry` types. Its complete positive surface SHALL consist of process identity,
 bounded flat correlation attributes, a native-operation event scope gated to
 hosts without an admitted native event binding, technical-log emission,
 availability, never-reject flush, and bounded diagnostics. It MUST NOT expose generic span,
