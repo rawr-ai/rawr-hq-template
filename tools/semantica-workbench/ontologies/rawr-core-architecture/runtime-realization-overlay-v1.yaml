@@ -10,16 +10,16 @@ entities:
   definition: Import-safe declaration phase for services, plugins, resources, providers, apps, and profiles.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - import-safety
-  - sdk-derivation-input
+  - runtime-derivation-input
   classifier_readiness:
     status: locked
     consequence:
     - generator-output
-    - sdk-derivation
+    - runtime-derivation
   notes: ''
 - id: runtime.phase.selection
   label: selection
@@ -29,7 +29,7 @@ entities:
   definition: App membership, runtime profile, provider selections, process roles, and selected harnesses.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - app-selection
@@ -47,19 +47,19 @@ entities:
   type: RuntimePhase
   layer: runtime-realization-overlay
   status: locked
-  definition: SDK phase that emits normalized authoring graph, service binding plans, surface runtime plans, workflow dispatcher
+  definition: Private runtime-derivation phase that emits normalized authoring graph, service binding plans, surface runtime plans, workflow dispatcher
     descriptors, and portable plan artifacts.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
-  - sdk-artifact-emission
+  - runtime-derivation-artifact-emission
   - runtime-compiler-input
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - runtime-compiler
   notes: ''
 - id: runtime.phase.compilation
@@ -71,7 +71,7 @@ entities:
     plans.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - provider-coverage-validation
@@ -89,11 +89,11 @@ entities:
   type: RuntimePhase
   layer: runtime-realization-overlay
   status: locked
-  definition: Bootgraph/provisioning-kernel phase that produces provisioned process, live process access, live role access,
-    and startup records.
+  definition: Bootgraph orders provider/resource lifecycle while the Effect substrate acquires resources and produces ProvisionedProcess;
+    process runtime creates live access later in the mounting phase.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - resource-acquisition
@@ -113,7 +113,7 @@ entities:
   definition: Phase where services are bound, surfaces mounted, payloads adapter-lowered, and harness handles started.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - service-binding
@@ -133,7 +133,7 @@ entities:
   definition: Phase that emits runtime catalog, diagnostics, telemetry, topology records, and finalization records.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - runtime-catalog
@@ -146,17 +146,56 @@ entities:
     - diagnostic
     - verification-gate
   notes: ''
-- id: runtime.machine.sdk-derivation
-  label: SDK derivation
+- id: runtime.machine.runtime-schema
+  label: runtime schema
   type: RuntimeMachinery
   layer: runtime-realization-overlay
   status: locked
-  definition: '@rawr/sdk normalization and plan derivation.'
-  aliases:
-  - '@rawr/sdk derivation'
+  definition: Private TypeBox and Standard Schema adaptation owner exposed through the @habitat-ai/sdk facade.
+  aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 3.3 Runtime realization nouns; 10.4 SDK derivation
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3.3 Ownership matrix
+  operational_consequence:
+  - schema-adaptation
+  - structural-validation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - runtime-compiler
+    - verification-gate
+  notes: ''
+- id: runtime.machine.runtime-definition
+  label: runtime definition
+  type: RuntimeMachinery
+  layer: runtime-realization-overlay
+  status: locked
+  definition: Private import-safe authoring, policy, execution-descriptor, and observation-port contract owner exposed through the @habitat-ai/sdk facade.
+  aliases: []
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3.3 Ownership matrix
+  operational_consequence:
+  - import-safe-authoring
+  - execution-descriptors
+  - observation-port
+  classifier_readiness:
+    status: locked
+    consequence:
+    - runtime-derivation
+    - runtime-compiler
+  notes: ''
+- id: runtime.machine.runtime-derivation
+  label: runtime derivation
+  type: RuntimeMachinery
+  layer: runtime-realization-overlay
+  status: locked
+  definition: Private normalization and plan-derivation owner exposed through the @habitat-ai/sdk facade.
+  aliases:
+  - private runtime derivation
+  source_refs:
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 3.3 Runtime realization nouns; 10.4 Runtime derivation and SDK facade
   operational_consequence:
   - normalized-authoring-graph
   - service-binding-plan
@@ -164,7 +203,7 @@ entities:
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - runtime-compiler
   notes: ''
 - id: runtime.machine.runtime-compiler
@@ -175,9 +214,9 @@ entities:
   definition: Compiler that turns selected app composition into one compiled process plan.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - compiled-process-plan
@@ -190,21 +229,21 @@ entities:
     - provider-coverage
     - verification-gate
   notes: ''
-- id: runtime.machine.bootgraph
-  label: bootgraph
+- id: runtime.machine.runtime-bootgraph
+  label: runtime bootgraph
   type: RuntimeMachinery
   layer: runtime-realization-overlay
   status: locked
-  definition: RAWR-owned lifecycle graph above provider acquisition.
+  definition: Habitat-owned lifecycle graph above provider acquisition.
   aliases:
   - Bootgraph
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns; bootgraph definition
   operational_consequence:
   - lifecycle-ordering
-  - rollback
-  - reverse-finalization
+  - rollback-metadata
+  - release-order
   - provisioning-input
   classifier_readiness:
     status: locked
@@ -212,18 +251,18 @@ entities:
     - runtime-compiler
     - diagnostic
   notes: ''
-- id: runtime.machine.provisioning-kernel
-  label: provisioning kernel
+- id: runtime.machine.runtime-substrate-effect
+  label: runtime Effect substrate
   type: RuntimeMachinery
   layer: runtime-realization-overlay
   status: locked
-  definition: Effect-backed process-local acquisition and release substrate.
+  definition: Effect-backed process-local acquisition, release, rollback, managed-runtime, and HabitatEffect execution owner.
   aliases:
   - Effect provisioning kernel
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - resource-acquisition
@@ -236,7 +275,7 @@ entities:
     - runtime-compiler
     - diagnostic
   notes: Effect-backed but not a peer public ontology layer.
-- id: runtime.machine.process-runtime
+- id: runtime.machine.runtime-process-runtime
   label: process runtime
   type: RuntimeMachinery
   layer: runtime-realization-overlay
@@ -244,13 +283,13 @@ entities:
   definition: Process-local binding, projection, adapter coordination, and harness handoff layer.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns; process runtime definition
   operational_consequence:
   - service-binding
   - binding-cache
   - workflow-dispatcher-materialization
-  - mounted-surface-records
+  - mount-ready-surface-records
   - harness-handoff
   classifier_readiness:
     status: locked
@@ -266,7 +305,7 @@ entities:
   definition: Runtime adapter that lowers compiled surface plans to harness-facing payloads.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - adapter-lowering
@@ -276,40 +315,59 @@ entities:
     consequence:
     - runtime-compiler
     - diagnostic
-  notes: ''
-- id: runtime.machine.harness
-  label: harness
+  notes: Owned by runtime-process-runtime; not a separate private owner or Nx project.
+- id: runtime.machine.runtime-harnesses
+  label: runtime harnesses
   type: RuntimeMachinery
   layer: runtime-realization-overlay
   status: locked
-  definition: Native host or execution backend for one surface family.
+  definition: Private generic harness contract and non-CLI native harness realization owner.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - native-mounting
   - host-boundary
-  - finalization
+  - native-stop-handle
   classifier_readiness:
     status: locked
     consequence:
     - harness-selection
     - diagnostic
-  notes: Harnesses do not define ontology.
-- id: runtime.machine.diagnostics
-  label: diagnostics
+  notes: Harnesses do not define ontology or coordinate cross-owner finalization.
+- id: runtime.machine.runtime-mounting
+  label: runtime mounting
   type: RuntimeMachinery
   layer: runtime-realization-overlay
   status: locked
-  definition: Observation machinery that records and explains selected, derived, provisioned, bound, projected, mounted, and
-    finalized runtime state.
+  definition: Private startApp, harness invocation, StartedHarness collection, reverse stop, and cross-owner finalization owner.
+  aliases: []
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3.3 Ownership matrix
+  operational_consequence:
+  - start-app
+  - harness-invocation
+  - cross-owner-finalization
+  classifier_readiness:
+    status: locked
+    consequence:
+    - harness-selection
+    - diagnostic
+  notes: ''
+- id: runtime.machine.runtime-observation
+  label: runtime observation
+  type: RuntimeMachinery
+  layer: runtime-realization-overlay
+  status: locked
+  definition: Private non-authorizing projection owner for runtime diagnostics, telemetry, topology records, and catalog read models.
   aliases:
   - runtime diagnostics
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 10.2 Runtime realization lifecycle
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - runtime-catalog
@@ -321,7 +379,7 @@ entities:
     consequence:
     - diagnostic
     - verification-gate
-  notes: ''
+  notes: Observation cannot start, stop, or mutate runtime state.
 - id: runtime.machine.process
   label: process
   type: RuntimeMachinery
@@ -330,7 +388,7 @@ entities:
   definition: One running program.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - runtime-assembly-boundary
@@ -350,7 +408,7 @@ entities:
   definition: The computer or node running one or more processes.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - placement-separation
@@ -365,18 +423,18 @@ entities:
   type: RuntimeArtifact
   layer: runtime-realization-overlay
   status: locked
-  definition: SDK-derived normalized graph of app authoring declarations.
+  definition: Normalized graph of app authoring declarations produced by private runtime derivation and exposed through the SDK facade.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.2 Runtime realization lifecycle; 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.2 Runtime realization lifecycle; 10.4 Runtime derivation and SDK facade
   operational_consequence:
   - runtime-compiler-input
-  - sdk-derivation-output
+  - runtime-derivation-output
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - runtime-compiler
   notes: ''
 - id: runtime.artifact.service-binding-plan
@@ -384,11 +442,11 @@ entities:
   type: RuntimeArtifact
   layer: runtime-realization-overlay
   status: locked
-  definition: SDK-derived plan for service binding.
+  definition: Service-binding plan produced by private runtime derivation and exposed through the SDK facade.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.2 Runtime realization lifecycle; 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.2 Runtime realization lifecycle; 10.4 Runtime derivation and SDK facade
   operational_consequence:
   - service-binding
   - process-runtime-input
@@ -403,11 +461,11 @@ entities:
   type: RuntimeArtifact
   layer: runtime-realization-overlay
   status: locked
-  definition: SDK-derived plan descriptor for surface runtime assembly.
+  definition: Surface-runtime plan descriptor produced by private runtime derivation and exposed through the SDK facade.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.2 Runtime realization lifecycle; 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.2 Runtime realization lifecycle; 10.4 Runtime derivation and SDK facade
   operational_consequence:
   - compiled-surface-plan-input
   - adapter-lowering
@@ -422,10 +480,10 @@ entities:
   type: RuntimeArtifact
   layer: runtime-realization-overlay
   status: locked
-  definition: SDK-derived descriptor for workflow dispatcher materialization.
+  definition: Workflow-dispatcher descriptor produced by private runtime derivation and exposed through the SDK facade.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - dispatcher-materialization
@@ -441,18 +499,18 @@ entities:
   type: RuntimeArtifact
   layer: runtime-realization-overlay
   status: locked
-  definition: Portable plan artifact emitted by SDK derivation.
+  definition: Portable plan artifact emitted by private runtime derivation and exposed through the SDK facade.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.2 Runtime realization lifecycle; 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.2 Runtime realization lifecycle; 10.4 Runtime derivation and SDK facade
   operational_consequence:
   - runtime-compiler-input
   - diagnostic-inspection
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - runtime-compiler
   notes: ''
 - id: runtime.artifact.compiled-process-plan
@@ -463,9 +521,9 @@ entities:
   definition: Compiled plan for one selected process shape.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - bootgraph-input
@@ -486,7 +544,7 @@ entities:
   definition: Runtime compiler output describing provider dependency closure.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - provider-dependency-closure
@@ -497,6 +555,26 @@ entities:
     - provider-coverage
     - runtime-compiler
   notes: ''
+- id: runtime.artifact.provisioned-process
+  label: ProvisionedProcess
+  type: RuntimeArtifact
+  layer: runtime-realization-overlay
+  status: locked
+  definition: Effect-substrate output containing the managed runtime handle, acquired process and role resources, finalizer registry, and owner-local provisioning findings.
+  aliases: []
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 17.4 `ProvisionedProcess`
+  operational_consequence:
+  - process-runtime-input
+  - scoped-resource-access
+  - deterministic-disposal
+  classifier_readiness:
+    status: locked
+    consequence:
+    - diagnostic
+    - finalization
+  notes: Runtime access, service bindings, adapter payloads, and harness handles are not provisioning outputs.
 - id: runtime.artifact.managed-runtime-handle
   label: ManagedRuntimeHandle
   type: RuntimeArtifact
@@ -506,8 +584,8 @@ entities:
   aliases:
   - root managed runtime
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 28 Canonical runtime realization picture; 26.5 Runtime/provisioning violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 28 Canonical runtime realization picture; 25.4 Runtime/provisioning
   operational_consequence:
   - one-root-managed-runtime-per-process
   - deterministic-disposal
@@ -525,7 +603,7 @@ entities:
   definition: Live process-plus-role runtime access wrapper.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - service-binding
@@ -545,7 +623,7 @@ entities:
   definition: Live process runtime access.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - process-scope-access
@@ -563,7 +641,7 @@ entities:
   definition: Live role runtime access.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
   operational_consequence:
   - role-scope-access
@@ -581,8 +659,8 @@ entities:
   definition: Process-runtime service binding cache.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 25.5 Service binding
   operational_consequence:
   - binding-cache
   - invocation-exclusion
@@ -601,8 +679,8 @@ entities:
   definition: Cache key for construction-time service binding; excludes invocation.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - binding-cache-validation
   - invocation-exclusion
@@ -620,8 +698,8 @@ entities:
   definition: Process-runtime materialized workflow dispatcher for server/internal and async harness integration.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - dispatch-status-cancel-diagnostics
   - async-server-handoff
@@ -631,18 +709,18 @@ entities:
     - diagnostic
     - runtime-compiler
   notes: ''
-- id: runtime.artifact.mounted-surface-runtime-record
-  label: MountedSurfaceRuntimeRecord
+- id: runtime.artifact.mount-ready-surface-runtime-record
+  label: MountReadySurfaceRuntimeRecord
   type: RuntimeArtifact
   layer: runtime-realization-overlay
   status: locked
-  definition: Mounted surface runtime record assembled by process runtime.
+  definition: Mount-ready surface runtime record assembled by process runtime before harness invocation.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
-  - surface-mount-record
+  - mount-ready-surface-record
   - harness-catalog-input
   classifier_readiness:
     status: locked
@@ -658,8 +736,8 @@ entities:
   definition: Async adapter/harness artifact containing lowered workflow, schedule, and consumer plans.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - async-lowering
   - inngest-harness-input
@@ -678,16 +756,16 @@ entities:
   definition: Native host handle returned by harness mount.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 19 Harness and native boundary contracts
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 21 Harness and native boundary contracts
   operational_consequence:
-  - harness-finalization
+  - native-stop-handle
   - catalog-record
   classifier_readiness:
     status: locked
     consequence:
     - diagnostic
-    - finalization
+    - native-stop-handle
   notes: ''
 - id: runtime.artifact.runtime-catalog
   label: RuntimeCatalog
@@ -697,10 +775,10 @@ entities:
   definition: Diagnostic read model of runtime state.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.3 Runtime realization nouns
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 20.3 RuntimeCatalog
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 22.3 RuntimeCatalog
   operational_consequence:
   - observation
   - diagnostics
@@ -719,8 +797,8 @@ entities:
   definition: Boundary, phase, and finalization finding emitted by runtime diagnostics.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 20.1 RuntimeDiagnostic
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 22.1 RuntimeDiagnostic
   operational_consequence:
   - diagnostic-coverage
   - invalid-path-reporting
@@ -738,8 +816,8 @@ entities:
   definition: Runtime spans, events, annotations, and correlation records.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 20.2 RuntimeTelemetry
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 22.2 RuntimeTelemetry
   operational_consequence:
   - telemetry-correlation
   - observation
@@ -748,41 +826,59 @@ entities:
     consequence:
     - diagnostic
   notes: ''
-- id: law.ownership.sdk-derives
-  label: The SDK derives
+- id: runtime.artifact.runtime-topology-record
+  label: RuntimeTopologyRecord
+  type: RuntimeArtifact
+  layer: runtime-realization-overlay
+  status: locked
+  definition: Observation-only structure and lifecycle read-model record that cannot change runtime state.
+  aliases: []
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3.2 Ownership definitions
+  operational_consequence:
+  - topology-observation
+  - runtime-catalog-input
+  classifier_readiness:
+    status: locked
+    consequence:
+    - diagnostic
+  notes: ''
+- id: law.ownership.runtime-derivation-derives
+  label: Runtime derivation derives
   type: ConstructionLaw
   layer: runtime-realization-overlay
   status: locked
-  definition: The SDK derives normalized authoring graphs and plan artifacts without acquiring live values.
+  definition: Private runtime derivation derives normalized authoring graphs and plan artifacts without acquiring live values;
+    the SDK exposes the public authoring and start facade.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 4.1 Ownership law; 4.6 Projection and assembly law; 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 4.1 Ownership law; 4.6 Projection and assembly law; 10.4 Runtime derivation and SDK facade
   operational_consequence:
-  - sdk-derivation
+  - runtime-derivation
   - no-resource-acquisition
   - runtime-compiler-input
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - verification-gate
   notes: ''
-- id: law.ownership.runtime-realizes
-  label: The runtime realizes
+- id: law.ownership.runtime-owner-chain
+  label: Private runtime owners narrow realization
   type: ConstructionLaw
   layer: runtime-realization-overlay
   status: locked
-  definition: Runtime realization owns the bridge from selected declarations to one running process.
+  definition: The exact private schema, definition, derivation, compiler, bootgraph, Effect-substrate, process-runtime, harness, observation, and mounting owners narrow selected declarations into one running process without a generic runtime owner.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.1 Runtime realization stance
   operational_consequence:
-  - runtime-compiler
-  - provisioning
-  - mounting
-  - diagnostics
+  - exact-private-owner-chain
+  - one-way-artifact-handoffs
+  - no-generic-runtime-owner
   classifier_readiness:
     status: locked
     consequence:
@@ -797,27 +893,47 @@ entities:
   definition: Harnesses mount native hosts after runtime adapter handoff; they do not define ontology or acquire providers.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 4.6 Projection and assembly law
   operational_consequence:
   - harness-boundary
   - native-host-separation
-  - finalization
+  - native-stop-handle
   classifier_readiness:
     status: locked
     consequence:
     - diagnostic
     - harness-selection
   notes: ''
-- id: law.ownership.diagnostics-observe
-  label: Diagnostics observe
+- id: law.ownership.runtime-mounting-finalizes
+  label: Runtime mounting finalizes
   type: ConstructionLaw
   layer: runtime-realization-overlay
   status: locked
-  definition: Diagnostics record and explain; they do not compose, acquire, or mutate.
+  definition: Runtime mounting invokes selected harnesses, collects StartedHarness handles, and coordinates reverse harness stop followed by the process-runtime stop handle.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3.3 Ownership matrix
+  operational_consequence:
+  - start-app
+  - reverse-harness-stop
+  - process-stop-invocation
+  classifier_readiness:
+    status: locked
+    consequence:
+    - diagnostic
+    - harness-selection
+  notes: ''
+- id: law.ownership.runtime-observation-projects
+  label: Runtime observation projects read models
+  type: ConstructionLaw
+  layer: runtime-realization-overlay
+  status: locked
+  definition: Runtime observation projects admitted records into diagnostics, telemetry, topology, and catalog read models; it does not compose, acquire, start, stop, or mutate runtime state.
+  aliases: []
+  source_refs:
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 4.6 Projection and assembly law
   operational_consequence:
   - observation
@@ -847,8 +963,8 @@ entities:
   - import-time acquisition
   - cold declaration violation
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.5 Runtime/provisioning violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.4 Runtime/provisioning
   operational_consequence:
   - import-safety
   - provisioning-boundary
@@ -877,8 +993,8 @@ entities:
   aliases:
   - same-process HTTP self-call
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - service-binding
   - process-runtime-access
@@ -898,7 +1014,7 @@ entities:
     composition, or mount native hosts on import.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.3 Import safety and declaration discipline
   operational_consequence:
   - import-boundary
@@ -918,7 +1034,7 @@ entities:
     process runtime internals, harness mount code, raw provider acquisition, or unredacted provider config.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - import-boundary
@@ -937,7 +1053,7 @@ entities:
   definition: Runtime compiler validates provider coverage for selected resources and profiles.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.4 Runtime profiles and process defaults; 10.2 Runtime realization lifecycle
   operational_consequence:
   - runtime-compiler
@@ -957,7 +1073,7 @@ entities:
   definition: Runtime compiler validates provider dependency closure.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.4 Runtime profiles and process defaults; 10.2 Runtime realization lifecycle
   operational_consequence:
   - runtime-compiler
@@ -977,10 +1093,10 @@ entities:
     runtime boundaries.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.8 Runtime access
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 16.1 RuntimeAccess
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 18.1 Runtime access
   operational_consequence:
   - service-binding
   - adapter-lowering
@@ -999,8 +1115,8 @@ entities:
   definition: ServiceBindingCacheKey must exclude invocation and binding collisions must be diagnosable.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - service-binding-cache
   - invocation-separation
@@ -1018,8 +1134,8 @@ entities:
   definition: RuntimeCatalog and diagnostics must emit redacted read models of runtime state.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - observation
   - diagnostics
@@ -1038,7 +1154,7 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.5 Entrypoints
   operational_consequence:
   - process-runtime-assembly
@@ -1051,7 +1167,7 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.5 Service-boundary lanes
   operational_consequence:
   - construction-time-binding
@@ -1063,8 +1179,8 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 10.3 Context lanes; 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 11.3 Context lanes and service context projection; 25.5 Service binding
   operational_consequence:
   - construction-time-binding
   - binding-cache
@@ -1075,8 +1191,8 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 10.3 Context lanes; 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 11.3 Context lanes and service context projection; 25.5 Service binding
   operational_consequence:
   - construction-time-binding
   - binding-cache
@@ -1087,59 +1203,59 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - service-binding-cache-validation
   - per-call-boundary
 - id: rel.runtime-not-seed-provided
-  subject: runtime.machine.process-runtime
+  subject: runtime.machine.runtime-process-runtime
   predicate: does_not_own
   object: core.lane.provided
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - runtime-boundary
   - binding-validation
   - diagnostic
-- id: rel.sdk-derives-normalized-authoring-graph
-  subject: runtime.machine.sdk-derivation
+- id: rel.runtime-derivation-derives-normalized-authoring-graph
+  subject: runtime.machine.runtime-derivation
   predicate: derives
   object: runtime.artifact.normalized-authoring-graph
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.4 Runtime derivation and SDK facade
   operational_consequence:
-  - sdk-output
+  - runtime-derivation-output
   - runtime-compiler-input
-- id: rel.sdk-derives-service-binding-plan
-  subject: runtime.machine.sdk-derivation
+- id: rel.runtime-derivation-derives-service-binding-plan
+  subject: runtime.machine.runtime-derivation
   predicate: derives
   object: runtime.artifact.service-binding-plan
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.4 Runtime derivation and SDK facade
   operational_consequence:
-  - sdk-output
+  - runtime-derivation-output
   - process-runtime-binding
-- id: rel.sdk-derives-surface-runtime-plan
-  subject: runtime.machine.sdk-derivation
+- id: rel.runtime-derivation-derives-surface-runtime-plan
+  subject: runtime.machine.runtime-derivation
   predicate: derives
   object: runtime.artifact.surface-runtime-plan
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
-    section: 10.4 SDK derivation
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 10.4 Runtime derivation and SDK facade
   operational_consequence:
-  - sdk-output
+  - runtime-derivation-output
   - runtime-compiler-input
   - adapter-lowering-input
 - id: rel.runtime-compiler-compiles-process-plan
@@ -1149,7 +1265,7 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - bootgraph-input
@@ -1162,7 +1278,7 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.2 Runtime realization lifecycle
   operational_consequence:
   - provider-dependency-closure
@@ -1174,107 +1290,120 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.4 Runtime profiles and process defaults
   operational_consequence:
   - provider-coverage
   - runtime-preflight
   - diagnostic
 - id: rel.bootgraph-orders-provider-acquisition
-  subject: runtime.machine.bootgraph
+  subject: runtime.machine.runtime-bootgraph
   predicate: orders
   object: runtime.artifact.provider-dependency-graph
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - lifecycle-ordering
-  - rollback
-  - finalization
-- id: rel.provisioning-kernel-provisions-runtime-access
-  subject: runtime.machine.provisioning-kernel
-  predicate: provisions
-  object: runtime.artifact.runtime-access
+  - rollback-metadata
+  - release-order
+- id: rel.runtime-substrate-effect-produces-provisioned-process
+  subject: runtime.machine.runtime-substrate-effect
+  predicate: produces
+  object: runtime.artifact.provisioned-process
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - resource-acquisition
-  - live-access
-  - process-role-scope
+  - managed-runtime
+  - process-runtime-input
 - id: rel.provisioning-produces-managed-runtime
-  subject: runtime.machine.provisioning-kernel
+  subject: runtime.machine.runtime-substrate-effect
   predicate: produces
   object: runtime.artifact.managed-runtime-handle
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.5 Runtime/provisioning violations; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.4 Runtime/provisioning; 28 Canonical runtime realization picture
   operational_consequence:
   - one-root-managed-runtime
   - deterministic-disposal
+- id: rel.process-runtime-produces-runtime-access
+  subject: runtime.machine.runtime-process-runtime
+  predicate: produces
+  object: runtime.artifact.runtime-access
+  layer: runtime-realization-overlay
+  status: locked
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 18.1 Runtime access
+  operational_consequence:
+  - live-access
+  - process-role-scope
+  - plugin-projection
 - id: rel.process-runtime-binds-services
-  subject: runtime.machine.process-runtime
+  subject: runtime.machine.runtime-process-runtime
   predicate: binds
   object: core.kind.service
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - service-binding
   - service-binding-cache
   - live-client-creation
 - id: rel.process-runtime-produces-binding-cache
-  subject: runtime.machine.process-runtime
+  subject: runtime.machine.runtime-process-runtime
   predicate: produces
   object: runtime.artifact.service-binding-cache
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 16.3 ServiceBindingCache and ServiceBindingCacheKey
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 18.5 ServiceBindingCache and ServiceBindingCacheKey
   operational_consequence:
   - binding-cache
   - cache-collision-diagnostics
 - id: rel.process-runtime-materializes-dispatcher
-  subject: runtime.machine.process-runtime
+  subject: runtime.machine.runtime-process-runtime
   predicate: produces
   object: runtime.artifact.workflow-dispatcher
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - workflow-dispatcher-materialization
   - async-server-handoff
 - id: rel.process-runtime-produces-mounted-surface-record
-  subject: runtime.machine.process-runtime
+  subject: runtime.machine.runtime-process-runtime
   predicate: produces
-  object: runtime.artifact.mounted-surface-runtime-record
+  object: runtime.artifact.mount-ready-surface-runtime-record
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
-  - surface-mount-record
+  - mount-ready-surface-record
   - runtime-catalog-input
 - id: rel.surface-adapter-lowers-to-mounted-record
   subject: runtime.machine.surface-adapter
   predicate: lowers_to
-  object: runtime.artifact.mounted-surface-runtime-record
+  object: runtime.artifact.mount-ready-surface-runtime-record
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 28 Canonical runtime realization picture
   operational_consequence:
   - adapter-lowering
@@ -1286,48 +1415,72 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - async-lowering
   - function-bundle-gate
 - id: rel.harness-mounts-started-harness
-  subject: runtime.machine.harness
+  subject: runtime.machine.runtime-harnesses
   predicate: mounts
   object: runtime.artifact.started-harness
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - native-host-mounting
-  - harness-finalization
-- id: rel.diagnostics-observes-runtime-catalog
-  subject: runtime.machine.diagnostics
-  predicate: observes
+  - native-stop-handle
+- id: rel.runtime-observation-produces-runtime-catalog
+  subject: runtime.machine.runtime-observation
+  predicate: produces
   object: runtime.artifact.runtime-catalog
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: Runtime artifact table; 28 Canonical runtime realization picture
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 27 Runtime realization component contract summary; 28 Canonical runtime realization picture
   operational_consequence:
   - observation
   - diagnostic-read-model
   - control-plane-touchpoints
-- id: rel.diagnostics-produce-runtime-diagnostic
-  subject: runtime.machine.diagnostics
+- id: rel.runtime-observation-produces-runtime-diagnostic
+  subject: runtime.machine.runtime-observation
   predicate: produces
   object: runtime.artifact.runtime-diagnostic
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 20.1 RuntimeDiagnostic
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 22.1 RuntimeDiagnostic
   operational_consequence:
   - diagnostic-coverage
   - invalid-path-reporting
+- id: rel.runtime-observation-produces-runtime-telemetry
+  subject: runtime.machine.runtime-observation
+  predicate: produces
+  object: runtime.artifact.runtime-telemetry
+  layer: runtime-realization-overlay
+  status: locked
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 22.2 RuntimeTelemetry
+  operational_consequence:
+  - telemetry-correlation
+  - runtime-observation
+- id: rel.runtime-observation-produces-runtime-topology
+  subject: runtime.machine.runtime-observation
+  predicate: produces
+  object: runtime.artifact.runtime-topology-record
+  layer: runtime-realization-overlay
+  status: locked
+  source_refs:
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3.2 Ownership definitions
+  operational_consequence:
+  - topology-observation
+  - runtime-catalog-input
 - id: rel.runtime-telemetry-observes-all-phases
   subject: runtime.artifact.runtime-telemetry
   predicate: observes
@@ -1335,22 +1488,23 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 20.2 RuntimeTelemetry
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 22.2 RuntimeTelemetry
   operational_consequence:
   - telemetry-correlation
   - runtime-observation
-- id: rel.runtime-finalization-not-eighth-phase
-  subject: runtime.machine.process-runtime
+- id: rel.runtime-mounting-coordinates-finalization
+  subject: runtime.machine.runtime-mounting
   predicate: finalizes
-  object: runtime.phase.observation
+  object: runtime.artifact.started-harness
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.1 Runtime realization stance
   operational_consequence:
-  - finalization-observation
+  - reverse-harness-stop
+  - process-stop-invocation
   - lifecycle-phase-integrity
 - id: rel.import-safety-forbids-preprovisioning-acquisition
   subject: gate.import-safety
@@ -1359,23 +1513,23 @@ relations:
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 10.3 Import safety and declaration discipline
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.5 Runtime/provisioning violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.4 Runtime/provisioning
   operational_consequence:
   - import-safety
   - provisioning-boundary
   - diagnostic
 - id: rel.same-process-service-client-replaces-http-self-call
-  subject: runtime.machine.process-runtime
+  subject: runtime.machine.runtime-process-runtime
   predicate: replaces
   object: forbidden.pattern.local-http-self-call-same-process
   layer: runtime-realization-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - service-binding
   - trusted-caller-path

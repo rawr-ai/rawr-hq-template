@@ -1,7 +1,9 @@
-# RAWR Habitat Authority
+# Habitat Authority
 
-This tree is RAWR HQ-Template's canonical blueprint authoring source and
-repository-local qualified authority.
+This repository's `.habitat/blueprints/**` tree is the canonical authoring
+source copied into the selected Habitat policy-pack artifact. Repository-owned
+overlays and `habitat.toml` selections are local policy input; they do not
+become a second reusable blueprint authority.
 [[AUTHORITY-ONTOLOGY|Habitat's authority ontology]] distinguishes kinds,
 instances, capabilities, governed communities, and resolved execution. The
 SDK build copies its admitted reusable definitions and runner assets into the
@@ -18,7 +20,7 @@ separate release checkpoints.
 
 The current generic kinds are:
 
-- `package`: one closed product-free support shell whose proof members are
+- `package`: one closed product-free support shell whose test members are
   declared by the owning instance.
 - `resource`: one closed provider-neutral capability contract and its nested
   provider-family boundary.
@@ -29,16 +31,16 @@ The current generic kinds are:
 - `service`: the reusable contract-first oRPC service spine, with independent
   laws for generic anchors, native oRPC composition, context boundaries,
   module isolation, operation authorship, standalone production source
-  isolation from proof, public-consumer sealing, platform-independent service
+  isolation from tests, public-consumer sealing, platform-independent service
   implementation, declarative TypeBox contracts, and typed failure authority.
 - `database`: the optional closed persistence interior at a standalone service
   root, limited to migrations, schema, and stores whose capabilities enter
   modules only through named root middleware and inherited context. Its own
   closed placement scopes exclude module and embedded API ownership.
 - `plugin`: one closed generic projection project shell. Narrower plugin kinds
-  own their role-specific source and proof faces.
+  own their role-specific source and test layout.
 - `plugin-nx`: the independent closed Nx projection kind whose public index
-  projects resolved applications into scheduler facts.
+  projects resolved rule applications into scheduler facts.
 - `app`: one closed product-composition shell. Narrower app kinds own their
   host-specific runtime and entrypoint faces.
 - `plugin-server-api`: the additional `client.ts` and `api.ts` surfaces that
@@ -60,12 +62,12 @@ Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
 its own `habitat.toml` instance; an exact producer-source copy is inert, and a
 different definition at the same identity fails resolution. The 41 registered
-v2 compatibility rules continue to execute beside resolved package
+v2 compatibility rules continue to execute beside resolved package rule
 applications. The six v2 service-construction packets are now enforced with
 empty baselines against the complete admitted service corpus;
 public-consumer sealing remains staged. The v3 `service` source remains an
-unselected candidate until its portable source law and finite release proof
-are accepted. Each selected definition exposes only
+unselected candidate until its portable source law and finite release
+verification evidence are accepted. Each selected definition exposes only
 its required `project` anchor; source-specific scopes use blueprint-owned
 `src/**` paths below that root, so repository manifests cannot redirect source
 independently.
@@ -92,29 +94,29 @@ not duplicate generic laws as package-name or path blacklists.
 
 Every v2 `rule.json` under `.habitat/blueprints/**` is affirmed and enforced. An
 intentionally unfinished law lives under `.habitat/staged/blueprints/**` with
-a `staged-rule.json` candidate manifest. It enters the required graph only when
+a `staged-rule.json` candidate manifest. It enters the required check set only when
 a burn-down branch moves it into the active blueprint and enforces it.
 
 Each enforced v2 compatibility rule has a stable `rule.json` plus a locked `baseline.json`
 beside its `structure.toml` or Grit pattern. Structure rules own filesystem
 topology. Every Grit packet exposes its executable source as `pattern.md`;
 rule-specific semantics belong in the packet directory and rule metadata, not
-in a second filename convention. Grit rules own source relationships. Template
+in a second filename convention. Grit rules own source relationships. This repository
 currently admits no script-backed Habitat rule. A future native capability gap
 requires a named authority decision before the packet topology can change.
 Behavioral semantics stay in TypeScript tests and owner review rather than
 being approximated as source shape.
 
-The Template-owned `@habitat-ai/cli` release resolves applications into one
-cacheable focused target per application or compatibility rule plus one
+The Habitat-owned `@habitat-ai/cli` release resolves rule applications into one
+cacheable focused target per rule application or compatibility rule plus one
 cacheable owner-local `check:policy` command. The owner command executes one
 native owner-selected Habitat check without scheduling the focused leaves;
 each selected Grit program executes in its own native process so timeout,
 failure, cancellation, and cleanup remain program-local.
 The workspace consumes that released Nx plugin while retaining the source
 projects as product owners. Codex Stop invokes `habitat hook agent-stop`
-through the same package and catalog; it does not become a second admission
-graph.
+through the same package and catalog; it does not become a second rule-selection
+path.
 
 Repository hook contributions are a deferred Habitat realization capability.
 Their declarative source may live under `.habitat`, but the Habitat Nx plugin
@@ -135,15 +137,16 @@ reviewed service migrations through
 The imported agent-router placement relation retains that provenance but now
 lives under `rawr/repository`: it relates repository-owned roots and is not a
 constructible document-kind topology.
-The `rawr/app-host` niche keeps the HQ application-to-server dependency
+The current `rawr/app-host` repository overlay keeps the predecessor
+app-to-server dependency
 directional: the declaration manifest stays cold, and only the app-owned
 server entrypoint crosses through the server's public host export.
 The port preserves Magic's service-law lineage rather than claiming continuing
-byte identity. Template deliberately refines the module router face, package
-metadata, module `AGENTS.md`, API paths, and the qualified RAWR niche; those
-differences are owned and proved here instead of being described as upstream
-copies. The strengthened consumer-sealing law remains advisory while its
-owner-local relative-path case is corrected. RAWR also records one generic
+byte identity. Habitat owns the admitted module router face, package metadata,
+module `AGENTS.md`, API paths, and the qualified repository niche; differences
+are verified here instead of being described as continuing upstream copies. The
+strengthened consumer-sealing law remains advisory while its
+owner-local relative-path case is corrected. Habitat also records one generic
 model distinction: optional closed `entities` directories own stable domain
 identity that survives attribute changes and participates in transitions.
 Persistence alone is insufficient. TypeBox owns canonical entity schemas and
@@ -177,7 +180,7 @@ their production burn-down reached zero. Public-consumer sealing remains an
 explicit staged packet until foreign-consumer acquisition is owner-complete.
 
 The `resource` and `provider` boundary packets derive from Magic Migration
-commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. RAWR retains the same closed
+commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. Habitat retains the same closed
 contract/realization split and adds its existing workspace package manifest and
 build TypeScript faces to the resource shell. From Magic commit
 `8f40bdff34dde18680352a9b91ce7b953c385942`, only the provider-neutral
@@ -188,7 +191,7 @@ Magic's API, workflow, app, Nx, and tool overlays remain outside this package
 release. Their exercised variance informs later generic Habitat kinds; the
 product instances, adapters, policy, and qualified overlay rules remain local.
 
-The Oclif and Nx workspace packets are RAWR-authored. They apply the same
+The Oclif and Nx workspace packets are Habitat-authored. They apply the same
 positive, closed-kind posture to the executable app, its command plugins, and
 the repository scheduler without claiming Magic Migration provenance.
 

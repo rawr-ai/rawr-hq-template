@@ -1,8 +1,13 @@
 # Runtime Realization Core-Spine Audit
 
-Status: investigative audit report.  
+Status: superseded source-snapshot evidence; not current system authority.
 Scope: critical risk-reduction pass before runtime migration planning.  
 Authority snapshot: `/Users/mateicanavra/Downloads/RAWR-temp/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md` at 5,264 lines, SHA-256 `483044fa2082b75a89bc2a9da086e35a9fdd9cb91fd582415d8b3744f3e4f94b`.
+
+Current authority: `docs/system/HABITAT_ARCHITECTURE.md` and
+`docs/system/HABITAT_RUNTIME_REALIZATION.md`. The findings below preserve the
+historical audit against its named snapshot; they do not describe current drift
+or reopen resolved decisions.
 
 This report treats the downloaded `RAWR-temp` spec as the content authority. The repo-local spec remains an important drift risk because active repo routing still points at `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`, which is a different 3,483-line file with SHA-256 `4d7d19d2064574a7ad07a1e43013681b75eae788081ad0558cc87ca475b8d654`.
 

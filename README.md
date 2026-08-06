@@ -1,11 +1,15 @@
-# RAWR HQ-Template
+# Habitat Platform
 
-`RAWR HQ-Template` owns the executable Oclif `rawr` application and generic
-lifecycle tooling for local-first AI headquarters.
+This repository owns the Habitat platform: core SDK, runtime realization,
+foundational Oclif/Nx CLI, architecture law, and reusable platform capabilities.
+`RAWR HQ-Template` is a legacy remote locator, not the platform's semantic name.
 
-Personal `RAWR HQ` is a separate curated-content repository. It owns agent-plugin
-source, provenance, policy/evaluation inputs, and governed content lifecycle
-records. It does not inherit, mirror, or merge this repository's runtime code.
+Rawr is the first downstream product built on Habitat. Its private app, domain
+services, resources, plugins, and CLI topics remain co-located only during
+extraction. Marketplace (legacy remote `RAWR HQ`) is a separate curated-content
+repository that owns agent-plugin source, provenance, policy/evaluation inputs,
+and governed content lifecycle records. Neither downstream owner inherits,
+mirrors, or merges Habitat implementation.
 
 ## Quickstart
 
@@ -45,37 +49,42 @@ Use the Nx CLI first for most workspace graph and target questions:
 
 ```bash
 bunx nx show projects
-bunx nx show project @rawr/server --json
+bunx nx show project @habitat-ai/cli --json
 bunx nx graph
 ```
 
 - Keep Narsil as the primary code-intel MCP for symbol search, references, and call-path work.
 - Do not add repo-local `.mcp.json` here.
-- Do not treat this template repo as the canonical source for managed global Nx skill installation.
+- Do not treat this Habitat repository as the canonical source for managed global Nx skill installation.
 - Nx MCP is intentionally out of scope for the current repo posture. If we bring it back later, it should be as a hosted/managed service rather than per-client local stdio wiring.
 - For the integrated agent workflow, see [`docs/process/NX_AGENT_WORKFLOW.md`](docs/process/NX_AGENT_WORKFLOW.md).
 
 ## Authority Boundaries
 
-- The Oclif application, official commands, provider adapters, generic lifecycle services,
-  schemas/tooling implementations, and generic validators live here.
-- External Oclif extensions are managed only by `rawr plugins ...`.
-- Curated agent-plugin lifecycle is managed only by `rawr agent plugins ...`.
-- Personal curated content enters through explicit versioned data or ordinary
+- Habitat owns the foundational Oclif/Nx CLI, core runtime, generic adapters,
+  schemas/tooling implementations, validators, reusable platform law, and the
+  generic agent-plugin lifecycle.
+- Rawr owns its private app, selected product topics, and domain services.
+- External Oclif extensions are currently managed only by `rawr plugins ...`.
+- Curated agent-plugin lifecycle is currently managed only by
+  `rawr agent plugins ...`. Their accepted Habitat command destinations are
+  migration targets, not current operator guidance.
+- Marketplace curated content enters through explicit versioned data or ordinary
   package/artifact interfaces. A repository path is only a locator.
 - App composition consumes declared outputs; it does not own lifecycle state.
 
 ## Contribution Boundaries
 
-- Executable and generic tooling changes belong in `RAWR HQ-Template`.
-- Curated agent content and governed content records belong in personal `RAWR HQ`.
+- Reusable platform machinery and law belong to Habitat.
+- Rawr product behavior belongs to Rawr owners, even while co-located here.
+- Curated agent content and governed content records belong in Marketplace.
 - A concept may be reimplemented intentionally on either side of a published
   interface, but code is never copied or synchronized between repositories.
 
 ## Agent Routing
 
 - If you are deciding where to implement a change, use [`AGENTS_SPLIT.md`](AGENTS_SPLIT.md).
-- Template-side contribution rules are defined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- Repository contribution rules are defined in [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - CLI and interface update rules are defined in [`UPDATING.md`](UPDATING.md).
 
 ## Operational Runbooks
@@ -86,11 +95,12 @@ bunx nx graph
 
 ## Canonical Docs
 
+- [`docs/system/HABITAT_ARCHITECTURE.md`](docs/system/HABITAT_ARCHITECTURE.md)
+- [`docs/system/HABITAT_RUNTIME_REALIZATION.md`](docs/system/HABITAT_RUNTIME_REALIZATION.md)
 - [`docs/PROCESS.md`](docs/PROCESS.md)
 - [`docs/PRODUCT.md`](docs/PRODUCT.md)
 - [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - [`docs/DOCS.md`](docs/DOCS.md)
 - [`docs/process/CROSS_REPO_WORKFLOWS.md`](docs/process/CROSS_REPO_WORKFLOWS.md)
-- [`docs/system/SECURITY_MODEL.md`](docs/system/SECURITY_MODEL.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - [`UPDATING.md`](UPDATING.md)

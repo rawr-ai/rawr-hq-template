@@ -130,3 +130,21 @@ active. `RAWR HQ-Template` and personal `RAWR HQ` are fully separate repositorie
 
 This report remains archived provenance; its earlier validation results are not
 current operating guidance.
+
+## Addendum (2026-08-06: Habitat Authority Promotion)
+
+The existing root and docs routers were updated in place for the Habitat
+platform, independent Rawr product, and independent Marketplace content
+boundaries. No new router location was added.
+
+- [[../../../../AGENTS|the root router]] owns repository and command-surface
+  routing while keeping the currently reachable Rawr command names truthful
+  until their Habitat migration lands.
+- [[../../../AGENTS|the docs router]] routes canonical system work to
+  [[../../../system/HABITAT_ARCHITECTURE|Habitat Architecture]] and
+  [[../../../system/HABITAT_RUNTIME_REALIZATION|Habitat Runtime Realization]].
+- [[../../../system/quarantine/RAWR_SECURITY_MODEL|the Rawr security model]] is
+  quarantined as co-location provenance rather than routed as Habitat law.
+
+The associated pointer update is recorded in
+[[AGENTS_COVERAGE_MATRIX|the coverage matrix]].

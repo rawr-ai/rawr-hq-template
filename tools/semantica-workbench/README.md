@@ -1,6 +1,12 @@
 # Semantica Workbench
 
-Repository-local workbench for using Semantica against RAWR HQ-Template architecture and migration documents.
+Repository-local workbench for using Semantica against Habitat architecture and migration documents.
+
+The existing `rawr-core-architecture` directory and `rawr-*` ontology ids are
+stable machine compatibility identifiers. They do not assign platform authority
+to Rawr. Canonical document references resolve to
+`docs/system/HABITAT_ARCHITECTURE.md` and
+`docs/system/HABITAT_RUNTIME_REALIZATION.md`.
 
 The workbench is intentionally single-repo:
 
@@ -59,7 +65,7 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:doc:extract` parses a comparison document into source-backed evidence claims with polarity, modality, assertion scope, resolved IDs, and review state.
 - `semantica:doc:compare` resolves those evidence claims against the ontology baseline and emits `aligned`, `conflict`, `deprecated-use`, `candidate-new`, `ambiguous`, `outside-scope`, and `informational` findings.
 - `semantica:doc:frame` maps source-backed evidence into an evidence-only `ArchitectureChangeFrame` and validation artifact. Extraction-only frames carry `not-evaluated` claim verdicts and no review actions.
-- `semantica:doc:proposal-compare` runs RAWR-owned deterministic comparison over the frame and writes noun mappings, proposal graph TTL, claim comparisons, verdict/repair JSON, provenance, and a review report.
+- `semantica:doc:proposal-compare` runs repository-owned deterministic comparison over the frame and writes noun mappings, proposal graph TTL, claim comparisons, verdict/repair JSON, provenance, and a review report.
 - `semantica:doc:sweep` analyzes active Markdown docs, writes per-document semantic comparison artifacts, and emits a corpus-level sweep evidence index plus an agent-facing query manifest.
 - `semantica:doc:index` rebuilds the corpus-level `sweep-evidence-index.json`, JSONL, HTML, TTL, summary, and agent manifest artifacts for an existing sweep run.
 - `semantica:doc:augment-llm` writes an optional `sweep-llm-evidence-augmentation.json` sidecar over selected ambiguous, unresolved, and candidate evidence rows. It is fail-closed without provider/model availability, and it never changes deterministic verdicts, index rows, ontology facts, or candidate promotion state.
@@ -94,13 +100,13 @@ bun run semantica:core:query -- --named aligned-rejections
 bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/relation-samples.rq
 ```
 
-Named queries use the richer JSON graph and diff outputs. Core SPARQL examples run against `semantica-data-graph.ttl`, which is produced by `semantica:core:export`. Evidence-specific SPARQL examples named `evidence-*.rq` run against the generated `sweep-evidence-index.ttl` projection from `semantica:doc:sweep` / `semantica:doc:index`; that projection is review evidence, not canonical RAWR truth.
+Named queries use the richer JSON graph and diff outputs. Core SPARQL examples run against `semantica-data-graph.ttl`, which is produced by `semantica:core:export`. Evidence-specific SPARQL examples named `evidence-*.rq` run against the generated `sweep-evidence-index.ttl` projection from `semantica:doc:sweep` / `semantica:doc:index`; that projection is review evidence, not canonical Habitat truth.
 
 ## Extraction Modes
 
 The legacy manifest command family (`semantica:extract`, `semantica:run`) keeps its existing `--mode auto|heuristic|llm` behavior for packet-source ontology extraction.
 
-The architecture proposal/document comparison commands default to deterministic RAWR evidence extraction:
+The architecture proposal/document comparison commands default to deterministic repository evidence extraction:
 
 ```bash
 bun run semantica:doc:extract -- --fixture
@@ -114,8 +120,8 @@ bun run semantica:doc:extract -- --fixture --extraction-mode semantica-pattern
 bun run semantica:doc:extract -- --fixture --extraction-mode semantica-llm --llm-provider openai --llm-model <model>
 ```
 
-- `deterministic` is the safe default and produces decision-grade evidence for RAWR-owned comparison policy.
-- `semantica-pattern` records Semantica non-LLM extraction as an evidence sidecar while deterministic RAWR extraction remains the oracle.
+- `deterministic` is the safe default and produces decision-grade evidence for repository-owned comparison policy.
+- `semantica-pattern` records Semantica non-LLM extraction as an evidence sidecar while deterministic repository extraction remains the reference result.
 - `semantica-llm` is explicit and fail-closed. It requires the provider dependency, credentials, and `--llm-model`; blocked LLM output is recorded separately and deterministic evidence is not relabeled as LLM evidence.
 - Any Semantica/LLM output remains evidence-only with exact source re-anchoring, confidence, review state, and `promotion_allowed: false`.
 
@@ -147,12 +153,12 @@ The frame pipeline schema lives at:
 tools/semantica-workbench/schemas/architecture-change-frame.schema.json
 ```
 
-It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps RAWR ownership explicit: semantica output is evidence, the reviewed ontology remains truth authority, reference geometry is comparison-only, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
+It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps evidence ownership explicit: Semantica output is evidence, the reviewed Habitat ontology remains canonical, reference geometry is comparison-only, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
 
 The first executable path is deterministic and evidence-backed:
 
 ```text
-RAWR evidence claims
+source evidence claims
   -> ArchitectureChangeFrame
   -> noun mappings
   -> proposal graph TTL
@@ -161,7 +167,7 @@ RAWR evidence claims
   -> review report
 ```
 
-`doc:frame` stops at an extraction-only frame. `doc:proposal-compare` applies RAWR-owned verdict policy and review-action generation. Generated artifacts are review aids; they do not promote ontology truth.
+`doc:frame` stops at an extraction-only frame. `doc:proposal-compare` applies repository-owned verdict policy and review-action generation. Generated artifacts are review aids; they do not promote ontology truth.
 
 ## Source Scope
 

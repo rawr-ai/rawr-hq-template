@@ -1,72 +1,97 @@
-# Agent Routing: Template vs Personal Repo
+# Agent Routing: Habitat, Rawr, And Marketplace
 
-This file is the repository authority boundary. `RAWR HQ-Template` and personal
-`RAWR HQ` are independent repositories, not an upstream/downstream fork pair.
+This file is the repository authority boundary. Habitat is the platform, Rawr
+is its first downstream product app, and Marketplace is the independent curated
+agent-plugin repository. The legacy remote names `RAWR HQ-Template` and
+`RAWR HQ` do not transfer authority and do not form an upstream/downstream fork
+pair.
 
-## Modify `RAWR HQ-Template` (`rawr-ai/rawr-hq-template`) when:
+## Modify Habitat (legacy remote `rawr-ai/rawr-hq-template`) when:
 
-- You are changing the installed Oclif CLI or official command set.
-- You are changing generic lifecycle behavior, native provider adapters, schemas,
-  tooling implementations, or generic validators. Destination/export realization
-  remains with its dedicated architecture.
-- You are changing Template-owned packages, services, fixtures, repository
+- You are changing the Habitat SDK, foundational Oclif CLI, runtime, Nx
+  integration, generic resource/provider/service/plugin law, or platform tools.
+- You are changing reusable platform/package/resource lifecycle mechanics,
+  native host adapters, schemas, tooling implementations, or generic
+  validators. Destination/export realization remains with its dedicated
+  architecture.
+- You are changing Habitat-owned packages, services, fixtures, repository
   process, or ordinary CLI package/release/install mechanics.
-- You are changing Oclif package composition for the native external extension
-  surface under `rawr plugins`.
+- You are changing reusable Oclif loading, external-extension mechanics, or the
+  Habitat CLI host interface, including migration of the current `rawr plugins`
+  surface into its foundational Habitat destination.
 
-## Do NOT put in Template:
+## Modify Rawr product source when:
 
-- Personal curated agent-plugin source or release/channel decisions.
-- Personal vendor provenance, policy, evaluation inputs, or lifecycle records.
+- You are changing Rawr domain services, resources, providers, plugins, topics,
+  profiles, app composition, or product policy.
+- You are changing a command that expresses Rawr product behavior rather than
+  Habitat platform operation.
+- Until extraction completes, predecessor product owners may remain co-located
+  in this repository only as migration input. They do not receive new behavior
+  and may consume only public Habitat faces and qualified non-core platform
+  capabilities.
+
+## Do NOT put in Habitat platform owners:
+
+- Marketplace curated agent-plugin source or release/channel decisions.
+- Marketplace vendor provenance, policy, evaluation inputs, or lifecycle records.
+- Rawr domain semantics, topic membership, app profiles, or product policy.
 - Machine-specific settings and personal workflows.
-- A Personal checkout locator encoded as CLI installation, package, channel,
+- A Marketplace checkout locator encoded as CLI installation, package, channel,
   receipt, provider, or release identity.
 
-## Modify personal `RAWR HQ` (`rawr-ai/rawr-hq`) when:
+## Modify Marketplace (legacy remote `rawr-ai/rawr-hq`) when:
 
 - You are authoring curated agent-plugin source/content.
 - You are recording content vendor provenance, policy, evaluation, acceptance,
   release, or channel state.
-- You are changing personal repository process or configuration.
-- You are updating declarative inputs consumed by an exact released version of a
-  Template-owned tool.
+- You are changing Marketplace repository process or configuration.
+- You are updating declarative inputs consumed by an exact released version of
+  a Habitat-owned tool.
 
 ## Quick Decision Rule
 
-- "Does this execute or implement generic lifecycle behavior?" -> Template.
-- "Is this curated agent content or a governed decision about that content?" -> personal.
+- "Is this reusable platform machinery or law?" -> Habitat.
+- "Is this Rawr domain behavior or product composition?" -> Rawr.
+- "Is this curated agent content or a governed decision about that content?" -> Marketplace.
 - If one change appears to require both repositories, split it at a versioned
   data/schema or ordinary package interface; never copy implementation across
   the boundary.
 
 ## Plugin Ownership Rule (Hard)
 
-- Oclif owns external CLI extension mechanics; Template owns Oclif application
-  composition and generic agent lifecycle tooling.
-- Personal owns the closed curated agent-plugin content set and its governance records.
-- External Oclif extensions live only under `rawr plugins`.
-- Curated agent lifecycle lives only under `rawr agent plugins`.
+- Oclif owns external CLI extension mechanics; Habitat owns the foundational
+  Oclif loader, runtime bridges, SDK contracts, generic provider mechanics, and
+  the agent-plugin lifecycle service plus its control-plane and CLI projections.
+  Rawr owns only downstream product topics.
+- Marketplace owns the closed curated agent-plugin content set and its governance records.
+- External Oclif extensions currently live only under `rawr plugins`.
+- Curated agent lifecycle currently lives only under `rawr agent plugins`.
+- Their accepted Habitat command destinations become operational only when the
+  command, manifest, and policy migration lands together.
 - App composition is a consumer and never a lifecycle owner.
 
 ## Platform Distribution Ownership
 
 - Habitat SDK/CLI contracts, package metadata, Nx Release configuration,
-  publication, and installation are Template-owned.
-- `@habitat-ai/sdk@0.5.2` and `@habitat-ai/cli@0.5.2` are the supported public
-  artifacts. Personal may invoke them at exact interface versions but does not
-  vendor their implementation.
-- The `rawr` executable remains a private Template Oclif application invoked
-  through its Nx-owned source/build targets. It is not installed into Personal
+  publication, and installation are Habitat-owned.
+- `@habitat-ai/sdk` and `@habitat-ai/cli` are the supported public artifacts.
+  Registry publication and package metadata establish current released
+  versions; Nx Release configuration defines release membership; release
+  records preserve evidence. Marketplace and Rawr may consume exact released
+  interfaces but do not vendor their implementation.
+- The `rawr` executable remains a private downstream Rawr Oclif application invoked
+  through its Nx-owned source/build targets. It is not installed into Marketplace
   or published as a cross-repository interface.
 - No checkout, worktree, or private release selector becomes executable or
   lifecycle identity.
 
 ## Repository Separation Rule (Hard)
 
-- No Template-to-personal merge, cherry-pick, transplant, or ancestry relationship.
-- No manual duplicate implementation or personal fork/copy of Template runtime code.
-- No standing tree-equivalence guard or Template-managed executable path manifest
-  in personal.
+- No Habitat-to-Marketplace merge, cherry-pick, transplant, or ancestry relationship.
+- No manual duplicate implementation or Marketplace fork/copy of Habitat runtime code.
+- No standing tree-equivalence guard or Habitat-managed executable path manifest
+  in Marketplace.
 - Each repository owns its own hooks, Graphite state, docs, and process records.
 - Cross-repository acceptance binds versioned schema/protocol IDs, exact selected
   Git commit/tree identities, governed record digests, and the ordinary installed
@@ -75,6 +100,6 @@ This file is the repository authority boundary. `RAWR HQ-Template` and personal
 
 ## Graphite Policy
 
-- Graphite is enabled in this template repo.
+- Graphite is enabled in this Habitat repository.
 - Trunk must remain `main`.
-- Use stacked branches for template/core work; keep stacks clean and close superseded PR branches after landing.
+- Use stacked branches for Habitat platform work; keep stacks clean and close superseded PR branches after landing.

@@ -1,6 +1,6 @@
 # Nx Agent Workflow
 
-This document defines the intended Nx posture for agents working in `RAWR HQ-Template`.
+This document defines the intended Nx posture for agents working in Habitat.
 
 ## Core Rule
 
@@ -18,7 +18,7 @@ the first hop should be the Nx CLI and the official vendored Nx skills, not ad h
 
 Use the official Nx skills if your downstream agent environment installs them globally.
 
-This template repo does not own the canonical managed distribution path for those skills.
+This repository does not own the canonical managed distribution path for those skills.
 
 ## First-Hop Commands
 
@@ -52,7 +52,7 @@ If the behavior still looks wrong after that, rerun once with `NX_DAEMON=false` 
 ## Division Of Labor
 
 - **Nx CLI + official Nx skills**: workspace/project truth, targets, generators, task execution conventions
-- **AGENTS lattice**: repo routing, ownership boundaries, template-vs-personal destination rules, domain-specific guardrails
+- **AGENTS lattice**: repository routing, Habitat-vs-Rawr-vs-Marketplace destination rules, domain-specific guardrails
 - **Narsil**: source-level code intelligence, symbol lookups, references, call paths, semantic/code search
 
 Do not add repo-local `.mcp.json` here.
@@ -87,7 +87,7 @@ must not start another Nx scheduler. See
 
 - Keep repo-owned routing and invariants in `AGENTS.md` and nested `AGENTS.md` files.
 - Do not add a repo `CLAUDE.md` just because Nx can generate one.
-- Do not turn this template repo into the canonical managed source for globally installed Nx skills.
+- Do not turn this repository into the canonical managed source for globally installed Nx skills.
 - Integrate Nx guidance into the existing lattice rather than letting Nx-generated docs overwrite repo-owned router documents.
 
 ## Future Seam

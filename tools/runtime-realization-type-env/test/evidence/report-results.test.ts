@@ -9,8 +9,7 @@ import {
   renderReport,
 } from "../../scripts/report-results";
 
-const canonicalSpecPath =
-  "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md";
+const canonicalSpecPath = "docs/system/HABITAT_RUNTIME_REALIZATION.md";
 const temporaryRoots: string[] = [];
 const temporaryRootPrefix = "runtime-evidence-manifest-";
 

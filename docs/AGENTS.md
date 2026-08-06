@@ -37,13 +37,11 @@ Applies to `docs/**`.
 - `docs/PRODUCT.md`
 - `docs/PROCESS.md`
 - `docs/ROADMAP.md`
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
+- `docs/system/HABITAT_ARCHITECTURE.md`
+- `docs/system/HABITAT_RUNTIME_REALIZATION.md`
 
 ## Core Supporting Docs
 
-- `docs/system/SECURITY_MODEL.md`
 - `docs/process/NX_AGENT_WORKFLOW.md`
 - `docs/process/GRAPHITE.md`
 - `docs/process/RUNBOOKS.md`
@@ -57,8 +55,11 @@ Applies to `docs/**`.
 ## Naming Invariant
 
 Use these names consistently:
-- Template repo: `RAWR HQ-Template`
-- Personal repo: `RAWR HQ`
+- Platform: `Habitat`; the current remote/directory may retain the legacy
+  `RAWR HQ-Template` locator until repository rename.
+- First downstream product: `Rawr`.
+- Curated agent-plugin repository: `Marketplace`; the current remote/directory
+  may retain the legacy `RAWR HQ` locator until repository rename.
 
 ## Directory Map
 

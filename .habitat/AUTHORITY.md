@@ -1,14 +1,14 @@
 # Habitat Authority Boundary
 
-RAWR HQ-Template owns both the constraints in this directory and the generic
+The Habitat platform repository owns both the constraints in this directory and the generic
 evaluation mechanics that execute them. [[AUTHORITY-ONTOLOGY|The Habitat
 authority ontology]] is the conceptual owner for blueprint, instance,
-capability, niche, and application meaning. Reusable policy is split at the
+capability, niche, and rule-application meaning. Reusable policy is split at the
 package/repository boundary: the selected `@habitat-ai/sdk` policy pack owns
 the definition, version, rule assets, and package provenance for its six
 admitted blueprint members, while each repository owns the instances that
 select them and any qualified overlays. The evaluator can resolve, schedule,
-and run admitted applications, but it cannot amend repository architecture or
+and run admitted rule applications, but it cannot amend repository architecture or
 product behavior. Publication and consumer initialization remain separately
 reviewed release work.
 
@@ -29,10 +29,10 @@ relationships:
    database source.
 3. A `resource` has one closed provider-neutral capability contract and
    provider family. Each nested `provider` has one typed public realization
-   face. The application selects providers and lifetimes; runtime acquisition
+   face. The app runtime profile selects providers and lifetimes; runtime acquisition
    scopes, releases, and binds ready resources into service context.
 4. An API plugin adds one public `client.ts`/`api.ts` pair around an embedded
-   service. The API surface exposes operations while its application host retains
+   service. The API surface exposes operations while its app-owned host retains
    transport ownership.
 5. The repository requires one concise `AGENTS.md` operator router at each
    admitted package and service-module boundary; the generic document kind
@@ -120,7 +120,7 @@ its recorded source-migration and activation gates pass.
    identity; reverse imports are inadmissible. The structural entity
    destination is active only under the shared TypeBox and platform-neutral
    source laws, which cover service- and module-owned entity leaves without a
-   RAWR-only fork. Ports remain external capability seams, while policy owns
+   product-specific fork. Ports remain external capability seams, while policy owns
    decisions and definitions rather than identity.
 10. Module-local imports remain inside their sealed module through owner-local
     routes. Habitat owns containment at the module root; contract, context, and
@@ -130,13 +130,13 @@ its recorded source-migration and activation gates pass.
 11. Service source remains independent of concrete Node, Bun, and provider
    implementations; outside capabilities arrive through context and resource
    contracts, while execution frameworks remain outside model source.
-12. Standalone production service source never imports its package-owned proof
+12. Standalone production service source never imports its package-owned test
     corpus; tests may consume production behavior, but the dependency never
     reverses.
 13. Foreign consumers cross a standalone service through its public client;
     literal `src/service` paths remain sealed.
 14. TypeBox schemas remain the declarative input and output authority in module
-   contracts, adapted through the one canonical RAWR bridge.
+   contracts, adapted through the one canonical Habitat TypeBox bridge.
 15. Module contracts own attached public oRPC error constructors; handlers use
    injected error constructors rather than importing or translating a parallel
    error authority. Typed capability failures map once at that boundary.
@@ -151,7 +151,7 @@ state, or one lifecycle service's current file list. Behavior, caller
 compatibility, package admission, and provider effects remain with their
 qualified owners and tests.
 
-The `resource` blueprint closes RAWR's package face around a provider-neutral
+The `resource` blueprint closes the resource package face around a provider-neutral
 contract, package and project metadata, build and source TypeScript boundaries,
 and the provider family. Its package-owned Effect failure rule rejects explicit
 global `Error` and same-source `Error` subclasses in resource and provider
@@ -159,7 +159,7 @@ failure channels while leaving tagged failures, inferred channels, and native
 Effect catch construction to their proper owners. The `provider` blueprint
 closes each nested concrete realization around one typed public index while
 admitting vendor-specific TypeScript decomposition. Provider lifecycle
-mechanics remain inside that realization; the application retains selection
+mechanics remain inside that realization; the app runtime profile retains selection
 while runtime owns scope.
 
 Rules under `.habitat/rawr` remain qualified repository, lifecycle, or host
@@ -183,8 +183,8 @@ former coarse project-kind matrix is retired, not represented as another
 source pattern. Nx observes and schedules the graph.
 
 The `nx-workspace` blueprint owns the root scheduler contract and the single
-workspace lint relationship. Grit owns that scheduler source law. The
-Template-owned Habitat Nx plugin owns application discovery, inferred rule and
+workspace lint relationship. Grit owns that scheduler source law. The Habitat
+Nx plugin owns rule-application discovery, inferred rule and
 owner targets, exact cache inputs, caching, and graph dependencies. Codex Stop
 delegates through the repository-owned hook composition to the Habitat
 projection rather than maintaining another selector.
@@ -195,4 +195,4 @@ that separate graph law is admitted.
 See [[README|the Habitat blueprint index]],
 [[AUTHORITY-ONTOLOGY|the authority ontology]], [[AGENTS|the repository
 router]], and
-[[docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec#11. Service runtime boundary contract|the service runtime boundary]].
+[[docs/system/HABITAT_RUNTIME_REALIZATION#11. Service runtime boundary contract|the service runtime boundary]].

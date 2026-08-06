@@ -1,6 +1,9 @@
 # DOCS
 
-This file is the documentation architecture contract for `RAWR HQ-Template`.
+This file is the documentation architecture contract for the Habitat platform
+repository. Its remote/directory may retain the legacy `RAWR HQ-Template`
+locator until repository rename; that locator transfers no platform authority
+to Rawr.
 
 ## Gateway Docs
 
@@ -10,11 +13,15 @@ Canonical gateway docs at `docs/` root:
 - `ROADMAP.md`
 - `DOCS.md`
 
-Current architecture authority for M2 migration planning lives in:
+Current Habitat system authority is scoped, not duplicated:
 
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
+- `docs/system/HABITAT_ARCHITECTURE.md` owns platform architecture, product
+  boundaries, layers, kinds, and distribution authority.
+- `docs/system/HABITAT_RUNTIME_REALIZATION.md` owns runtime realization
+  mechanics, artifact handoffs, execution, and settlement.
+
+The M2 planning packet under `docs/projects/rawr-final-architecture-migration`
+is temporal provenance and execution context, not current platform authority.
 
 The previous `docs/SYSTEM.md` is preserved at `docs/quarantine/SYSTEM.md` and is not active system authority.
 
@@ -30,8 +37,8 @@ The previous `docs/SYSTEM.md` is preserved at `docs/quarantine/SYSTEM.md` and is
 - `docs/projects/<project>/issues/`: project-scoped issue specs.
 - `docs/projects/<project>/.context/`: active execution packets, scratchpads, handoffs, and hot context for the project.
 - `docs/projects/spikes/`: retained spike investigations and feasibility notes. Promote lasting decisions into `docs/system/`, `docs/process/`, or the owning project `resources/spec/`.
-- `docs/_templates/`: document scaffolds.
-- `docs/_archive/`: archived historical docs not part of active template guidance.
+- `docs/_templates/`: document scaffolds owned by the Habitat repository.
+- `docs/_archive/`: archived historical docs not part of active Habitat platform guidance.
 - `quarantine/` directories: path-obvious quarantine for docs preserved intact but removed from active authority.
 - `quarantine/AGENTS.md`: transient migration ledgers marked with `<!-- quarantine-ledger: true -->`.
 
@@ -66,5 +73,8 @@ Docs SHOULD state their intent early, for example:
 ## Naming Rules
 
 Use these names consistently:
-- Template repo: `RAWR HQ-Template`
-- Personal repo: `RAWR HQ`
+- Platform: `Habitat`.
+- First downstream product: `Rawr`.
+- Curated agent-plugin repository: `Marketplace`.
+- `RAWR HQ-Template` and `RAWR HQ` are legacy repository locators pending
+  their separate rename operations, not product-authority names.

@@ -1,7 +1,7 @@
 # Resource
 
 `resource` is the provider-neutral contract for one external or runtime
-capability. Its enforced packet closes the RAWR workspace package around that
+capability. Its enforced packet closes the owning workspace project around that
 contract, its build boundary, and its provider family. Product policy, provider
 selection, and concrete vendor mechanics have no destination in the resource
 root.
@@ -20,7 +20,7 @@ owns implementation assignability and inferred channels; native Effect
 diagnostics own catch construction and failure composition.
 
 That law is the one generic rule promoted from the Magic Migration evidence at
-commit `8f40bdff34dde18680352a9b91ce7b953c385942`. Template retained its
+commit `8f40bdff34dde18680352a9b91ce7b953c385942`. Habitat retained its
 semantics as one package-native v3 pattern; Magic's v2 manifest, baseline,
 consumer paths, and API, async-workflow, server-app, Nx, and tool overlays did
 not cross the package boundary.

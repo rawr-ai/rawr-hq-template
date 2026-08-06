@@ -2,15 +2,17 @@
 
 ## Current Focus
 
-- Harden `RAWR HQ-Template` governance and naming.
+- Complete the Habitat platform / Rawr product / Marketplace authority split.
 - Stabilize plugin channel separation.
 - Complete repository separation and versioned artifact interfaces.
 
 ## Near-Term Milestones
 
-1. Publish the official Oclif application and preserve native external-extension authority.
-2. Publish curated agent lifecycle schemas, protocols, and ordinary release artifacts.
-3. Complete independent personal content migration and provider/export settlement.
+1. Separate surviving Rawr product source into its independent repository and
+   replace workspace edges with published Habitat interfaces.
+2. Stabilize the foundational Habitat Oclif/Nx CLI and runtime substrate.
+3. Complete independent Marketplace content migration and reconcile its
+   provider, provenance, and export records through Habitat lifecycle interfaces.
 
 ## Later (Parked / Future)
 

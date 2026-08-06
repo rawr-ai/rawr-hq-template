@@ -11,7 +11,7 @@ entities:
   aliases:
   - packages
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.1 Canonical repository roots
   operational_consequence:
   - file-placement
@@ -29,12 +29,12 @@ entities:
   type: ArchitectureRoot
   layer: core
   status: locked
-  definition: Top-level runtime-realization authoring root for provisionable capability contracts and provider selectors;
-    first-class but not a business-capability owner.
+  definition: Top-level runtime-realization authoring root for provisionable capability contracts and closed provider families;
+    first-class but not a business-capability owner. App runtime profiles own provider selection records.
   aliases:
   - resources
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.1 Canonical repository roots
   operational_consequence:
   - file-placement
@@ -56,7 +56,7 @@ entities:
   aliases:
   - services
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.1 Canonical repository roots
   operational_consequence:
   - file-placement
@@ -79,7 +79,7 @@ entities:
   aliases:
   - plugins
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.1 Canonical repository roots
   operational_consequence:
   - file-placement
@@ -101,7 +101,7 @@ entities:
   aliases:
   - apps
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.1 Canonical repository roots
   operational_consequence:
   - app-membership
@@ -122,7 +122,7 @@ entities:
   definition: Support matter or platform machinery.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns
   operational_consequence:
   - support-boundary
@@ -144,7 +144,7 @@ entities:
   aliases:
   - RuntimeResource when referring to authored resource descriptor
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 3.4 Resource and boundary nouns
   operational_consequence:
   - resource-contract
@@ -166,7 +166,7 @@ entities:
   aliases:
   - RuntimeProvider
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 3.4 Resource and boundary nouns
   operational_consequence:
   - provider-implementation
@@ -187,7 +187,7 @@ entities:
   definition: A semantic capability boundary.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 3.7 Core definitions
   operational_consequence:
   - ownership
@@ -211,7 +211,7 @@ entities:
   aliases:
   - family namespace
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 4.8 Namespace is not ownership
   operational_consequence:
   - namespace-review
@@ -230,7 +230,7 @@ entities:
   definition: Runtime projection package.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 3.7 Core definitions
   operational_consequence:
   - projection-ownership
@@ -251,7 +251,7 @@ entities:
   definition: Top-level product/runtime identity.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 9.1 App posture
   operational_consequence:
   - app-identity
@@ -270,22 +270,22 @@ entities:
   type: AppStructure
   layer: core
   status: locked
-  definition: App-owned selection file at apps/<app>/rawr.<app>.ts.
+  definition: App-owned selection file at apps/<app>/<app>.app.ts.
   aliases:
   - manifest
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 9.2 App composition posture
   operational_consequence:
   - app-membership
   - selected-plugin-membership
-  - sdk-role-surface-index-derivation
+  - runtime-derivation-role-surface-index
   classifier_readiness:
     status: locked
     consequence:
     - app-membership
     - generator-target
-    - sdk-derivation
+    - runtime-derivation
   notes: Manifest is accepted as broad architecture alias, not a separate runtime artifact.
 - id: core.kind.manifest
   label: manifest
@@ -296,7 +296,7 @@ entities:
   aliases:
   - app composition file
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 1 Scope
   operational_consequence:
   - semantic-drift-detection
@@ -315,7 +315,7 @@ entities:
   definition: Semantic execution class inside an app.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns
   operational_consequence:
   - process-role-selection
@@ -336,7 +336,7 @@ entities:
   definition: What a role exposes or runs.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 9.6 App selection, process shape, and surface remain distinct
   operational_consequence:
   - surface-mounting
@@ -357,7 +357,7 @@ entities:
   definition: Service-internal persistence mechanic under semantic ownership.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns
   operational_consequence:
   - service-internal-file-placement
@@ -378,7 +378,7 @@ entities:
   definition: Executable file that calls startApp(...) for one process shape.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns; 9.5 Entrypoints
   operational_consequence:
   - process-shape-selection
@@ -399,11 +399,11 @@ entities:
   definition: App authoring operation that declares app identity and selected plugin membership.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.3 App authoring law
   operational_consequence:
   - app-membership
-  - sdk-derivation
+  - runtime-derivation-input
   classifier_readiness:
     status: locked
     consequence:
@@ -418,15 +418,15 @@ entities:
   definition: Concrete runtime authoring authority produced by defineApp(...).
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 1 Scope
   operational_consequence:
   - app-membership-authority
-  - sdk-runtime-input
+  - runtime-derivation-input
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - runtime-compiler
   notes: Manifest/app composition is not a second runtime artifact above AppDefinition.
 - id: core.app.runtime-profile
@@ -438,7 +438,7 @@ entities:
   aliases:
   - runtime profile
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns; 9.4 Runtime profiles and process defaults
   operational_consequence:
   - provider-selection
@@ -461,7 +461,7 @@ entities:
   - providerSelections
   - providers field in RuntimeProfile
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns; 9.4 Runtime profiles and process defaults
   operational_consequence:
   - provider-coverage
@@ -482,7 +482,7 @@ entities:
   aliases:
   - selected process role set
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.5 Entrypoints; 9.6 App selection, process shape, and surface remain distinct
   operational_consequence:
   - process-start
@@ -503,10 +503,10 @@ entities:
   definition: Canonical app start operation; each invocation starts exactly one process runtime assembly.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.5 Entrypoints
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - app-start
   - entrypoint-validation
@@ -525,7 +525,7 @@ entities:
   definition: Transport-neutral, placement-neutral boundary that owns service truth.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.4 Service boundary first
   operational_consequence:
   - ownership
@@ -546,7 +546,7 @@ entities:
   definition: Construction-time dependencies declared by the service and satisfied by runtime binding.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.5 Service-boundary lanes
   operational_consequence:
   - construction-time-binding
@@ -567,7 +567,7 @@ entities:
   definition: Construction-time business or client-instance identity.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.5 Service-boundary lanes
   operational_consequence:
   - construction-time-binding
@@ -587,7 +587,7 @@ entities:
   definition: Construction-time service behavior configuration.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.5 Service-boundary lanes
   operational_consequence:
   - construction-time-binding
@@ -609,10 +609,10 @@ entities:
   aliases:
   - invocation context
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.5 Service-boundary lanes
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - per-call-input
   - excluded-from-service-binding-cache-key
@@ -631,10 +631,10 @@ entities:
   definition: Execution-derived values produced by service middleware/module composition.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.5 Service-boundary lanes
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - middleware-output
   - forbidden-runtime-seeding
@@ -653,8 +653,8 @@ entities:
   definition: Service dependency declaration on a provisionable host capability.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 10.4 Dependency helper rules
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 11.4 Dependency helper rules
   operational_consequence:
   - resource-requirement
   - service-binding-plan
@@ -673,8 +673,8 @@ entities:
   definition: Service-to-service client dependency declaration.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 10.4 Dependency helper rules
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 11.4 Dependency helper rules
   operational_consequence:
   - service-dependency
   - binding-plan
@@ -693,8 +693,8 @@ entities:
   definition: Explicit semantic adapter dependency; not a runtime resource, provider selection, or sibling repository import.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 10.4 Dependency helper rules; Reserved boundaries table
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 11.4 Dependency helper rules; 23.5 Reserved detail boundaries
   operational_consequence:
   - semantic-adapter-boundary
   - unresolved-diagnostic
@@ -713,12 +713,12 @@ entities:
   aliases:
   - plugin factory
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 6 Layered naming and artifact ownership
   operational_consequence:
   - plugin-authoring
   - app-selection
-  - sdk-derivation
+  - runtime-derivation-input
   classifier_readiness:
     status: locked
     consequence:
@@ -730,11 +730,11 @@ entities:
   type: ProjectionLane
   layer: core
   status: locked
-  definition: Cold plugin projection definition selected by an app and derived by the SDK.
+  definition: Cold plugin projection definition selected by an app and consumed by private runtime derivation through the SDK facade.
   aliases:
   - plugin definition
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 6 Layered naming and artifact ownership
   operational_consequence:
   - app-selection
@@ -743,7 +743,7 @@ entities:
   classifier_readiness:
     status: locked
     consequence:
-    - sdk-derivation
+    - runtime-derivation
     - runtime-compiler
   notes: ''
 - id: core.plugin.use-service
@@ -754,8 +754,8 @@ entities:
   definition: Plugin declaration of service use.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.3 Service boundary violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.2 Service boundary
   operational_consequence:
   - service-use-declaration
   - service-binding-plan
@@ -775,7 +775,7 @@ entities:
   aliases:
   - projection lane
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 8.12 Plugin authoring invariants
   operational_consequence:
   - projection-classification
@@ -796,7 +796,7 @@ entities:
   definition: Role for public and trusted callable request/response ingress by default.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law
   operational_consequence:
   - ingress-selection
@@ -816,7 +816,7 @@ entities:
   definition: Role for durable background work and governed execution.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law
   operational_consequence:
   - durable-work-placement
@@ -835,7 +835,7 @@ entities:
   definition: Role for browser-facing web projection.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 2.1 Universal shape; 5 Canonical repo topology
   operational_consequence:
   - web-projection
@@ -854,7 +854,7 @@ entities:
   definition: Role for terminal-facing command projection.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 2.1 Universal shape; 5 Canonical repo topology
   operational_consequence:
   - command-projection
@@ -873,7 +873,7 @@ entities:
   definition: Role for human-facing shell/channel/tool projection; durable steward execution remains on async.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.6 Agent subsystem nouns; 4.10 Ingress and execution law
   operational_consequence:
   - agent-surface-selection
@@ -895,7 +895,7 @@ entities:
     on async.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 8.11 Desktop projection
   operational_consequence:
   - desktop-surface-selection
@@ -916,7 +916,7 @@ entities:
   aliases:
   - plugins/server/api/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - plugin-file-placement
@@ -938,7 +938,7 @@ entities:
   aliases:
   - plugins/server/internal/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - plugin-file-placement
@@ -960,7 +960,7 @@ entities:
   aliases:
   - plugins/async/workflows/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - durable-execution
@@ -982,7 +982,7 @@ entities:
   aliases:
   - plugins/async/schedules/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - scheduled-durable-work
@@ -1003,7 +1003,7 @@ entities:
   aliases:
   - plugins/async/consumers/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - event-consumption
@@ -1022,9 +1022,9 @@ entities:
   status: locked
   definition: Terminal-facing command projection lane.
   aliases:
-  - plugins/cli/commands/<capability>
+  - plugins/cli/topics/<topic>/commands
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - command-harness-mounting
@@ -1044,7 +1044,7 @@ entities:
   aliases:
   - plugins/web/app/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - web-harness-mounting
@@ -1064,9 +1064,9 @@ entities:
   aliases:
   - plugins/agent/channels/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.6 Agent subsystem nouns
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - agent-channel-mounting
@@ -1086,9 +1086,9 @@ entities:
   aliases:
   - plugins/agent/shell/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.6 Agent subsystem nouns
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - shell-runtime-mounting
@@ -1108,9 +1108,9 @@ entities:
   aliases:
   - plugins/agent/tools/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.6 Agent subsystem nouns
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
     section: 4 Canonical topology and package authority
   operational_consequence:
   - tool-surface-mounting
@@ -1131,7 +1131,7 @@ entities:
   aliases:
   - plugins/desktop/menubar/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 8.11 Desktop projection
   operational_consequence:
   - desktop-harness-mounting
@@ -1151,7 +1151,7 @@ entities:
   aliases:
   - plugins/desktop/windows/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 8.11 Desktop projection
   operational_consequence:
   - desktop-harness-mounting
@@ -1171,7 +1171,7 @@ entities:
   aliases:
   - plugins/desktop/background/<capability>
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 8.11 Desktop projection; 4.10 Ingress and execution law
   operational_consequence:
   - process-local-loop-boundary
@@ -1191,7 +1191,7 @@ entities:
   aliases:
   - resource descriptor
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - resource-contract
@@ -1212,7 +1212,7 @@ entities:
   definition: Declaration that a boundary needs a resource.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - runtime-compiler-coverage
@@ -1232,7 +1232,7 @@ entities:
   definition: Process or role lifetime for a runtime resource.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - process-vs-role-lifetime
@@ -1253,7 +1253,7 @@ entities:
   aliases:
   - provider
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - provider-implementation
@@ -1274,7 +1274,7 @@ entities:
   definition: Resource acquired once per started process.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - process-lifetime
@@ -1294,7 +1294,7 @@ entities:
   definition: Resource acquired once per mounted role in a process.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - role-lifetime
@@ -1315,7 +1315,7 @@ entities:
   aliases:
   - invocation
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - per-call-schema
@@ -1334,7 +1334,7 @@ entities:
   definition: Temporary value created inside one handler or execution chain.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns
   operational_consequence:
   - non-resource
@@ -1353,7 +1353,7 @@ entities:
   definition: Services own semantic capability truth.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law
   operational_consequence:
   - ownership
@@ -1374,7 +1374,7 @@ entities:
   definition: Plugins project service truth or host capability into runtime surfaces.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 8.12 Plugin authoring invariants
   operational_consequence:
   - projection-classification
@@ -1394,7 +1394,7 @@ entities:
   definition: Apps select plugins, profiles, provider selections, and entrypoints.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 4.6 Projection and assembly law
   operational_consequence:
   - app-membership
@@ -1415,7 +1415,7 @@ entities:
   definition: Resources declare provisionable capability contracts but do not implement or acquire themselves.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 4.6 Projection and assembly law
   operational_consequence:
   - resource-contract
@@ -1435,10 +1435,10 @@ entities:
   definition: Providers implement resource contracts but do not become service truth or select themselves.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 4.6 Projection and assembly law
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - provider-implementation
   - provider-selection-validation
@@ -1459,7 +1459,7 @@ entities:
   aliases:
   - semantic direction
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.2 Semantic direction
   operational_consequence:
   - legal-dependency-direction
@@ -1481,7 +1481,7 @@ entities:
     selection -> derivation -> compilation -> provisioning -> mounting -> observation.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.3 Stable architecture versus runtime realization
   operational_consequence:
   - ontology-layer-separation
@@ -1503,7 +1503,7 @@ entities:
     and native host details downstream.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.4 Service boundary first
   operational_consequence:
   - construction-order
@@ -1526,7 +1526,7 @@ entities:
   aliases:
   - platform chain
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.5 Bind, project, compose, realize, observe law
   operational_consequence:
   - construction-order
@@ -1549,7 +1549,7 @@ entities:
   aliases:
   - shared infrastructure != shared semantic ownership
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.7 Shared infrastructure is not shared semantic ownership
   operational_consequence:
   - ownership-drift-detection
@@ -1571,7 +1571,7 @@ entities:
   aliases:
   - namespace != owner
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.8 Namespace is not ownership
   operational_consequence:
   - service-family-validation
@@ -1592,7 +1592,7 @@ entities:
   - harness choice != semantic meaning
   - substrate choice != semantic meaning
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.9 Harness and substrate choice are downstream
   operational_consequence:
   - native-framework-boundary
@@ -1612,7 +1612,7 @@ entities:
     system work runs on async.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law
   operational_consequence:
   - role-selection
@@ -1633,7 +1633,7 @@ entities:
   definition: The shell drives what; stewards drive how; governance decides whether.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.11 Shell versus steward authority law
   operational_consequence:
   - agent-async-handoff
@@ -1663,8 +1663,8 @@ entities:
   aliases:
   - core/ root
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - file-placement-rejection
   - document-drift-repair
@@ -1694,8 +1694,8 @@ entities:
   aliases:
   - runtime/ root
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - file-placement-rejection
   - document-drift-repair
@@ -1711,17 +1711,17 @@ entities:
   type: ForbiddenPattern
   layer: core
   status: forbidden
-  definition: Superseded SDK package names are invalid target names; @rawr/sdk is the public SDK.
+  definition: Superseded SDK package names are invalid target names; @habitat-ai/sdk is the public SDK.
   constraint:
     kind: deprecated-or-prohibited-target-name
     prohibited_action: use-target-package-name
     terms:
     - superseded SDK package name
-    replacement: '@rawr/sdk'
+    replacement: '@habitat-ai/sdk'
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - import-boundary
   - document-drift-repair
@@ -1754,8 +1754,8 @@ entities:
   - startAgent(...)
   - startDesktop(...)
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - entrypoint-validation
   - app-start-canonicalization
@@ -1790,8 +1790,8 @@ entities:
   - adapter.kind projection field
   - public/internal projection fields
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.2 Projection classification violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.1 Projection classification
   operational_consequence:
   - projection-classification-rejection
   - topology-builder-agreement
@@ -1820,8 +1820,8 @@ entities:
   aliases:
   - service-private import
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.3 Service boundary violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.2 Service boundary
   operational_consequence:
   - import-boundary
   - service-truth-protection
@@ -1852,9 +1852,9 @@ entities:
   - shared repository across unrelated services
   - shared migration authority
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.3 Service boundary violations
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.2 Service boundary
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.7 Shared infrastructure is not shared semantic ownership
   operational_consequence:
   - write-authority
@@ -1883,8 +1883,8 @@ entities:
   aliases:
   - resources profile field
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - provider-selection-validation
   - runtime-profile-schema
@@ -1912,8 +1912,8 @@ entities:
   aliases:
   - workflow as public API
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.7 Async violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.6 Async
   operational_consequence:
   - ingress-role-selection
   - async-surface-boundary
@@ -1934,8 +1934,8 @@ entities:
   aliases:
   - topology-builder agreement gate
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.2 Projection classification violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.1 Projection classification
   operational_consequence:
   - plugin-file-placement
   - lane-builder-selection
@@ -1954,7 +1954,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.6 Projection and assembly law
   operational_consequence:
   - legal-dependency-direction
@@ -1967,7 +1967,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.6 Projection and assembly law
   operational_consequence:
   - support-boundary
@@ -1979,7 +1979,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law
   operational_consequence:
   - ownership
@@ -1992,8 +1992,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 10.1 Service ownership
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 11.1 Service ownership
   operational_consequence:
   - schema-ownership
   - migration-authority
@@ -2005,7 +2005,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.2 Stable semantic nouns
   operational_consequence:
   - service-internal-file-placement
@@ -2018,7 +2018,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.8 Namespace is not ownership
   operational_consequence:
   - ownership-drift-detection
@@ -2030,7 +2030,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 8.12 Plugin authoring invariants
   operational_consequence:
   - projection
@@ -2043,8 +2043,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 3 Ownership laws
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 3 Owners And Lifecycle Boundaries
   operational_consequence:
   - lane-classification
   - topology-builder-agreement
@@ -2056,8 +2056,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.3 Service boundary violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.2 Service boundary
   operational_consequence:
   - service-use-declaration
   - service-binding-plan
@@ -2069,11 +2069,11 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.2 App composition posture; 9.3 App authoring law
   operational_consequence:
   - app-membership
-  - sdk-derivation
+  - runtime-derivation-input
   - semantic-drift-detection
 - id: rel.apps-own-selection
   subject: core.kind.app
@@ -2082,12 +2082,12 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.2 App composition posture
   operational_consequence:
   - app-composition-authority
   - app-membership
-  - sdk-derivation
+  - runtime-derivation-input
 - id: rel.define-app-produces-app-definition
   subject: core.app.define-app
   predicate: produces
@@ -2095,11 +2095,11 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 1 Scope; 9.3 App authoring law
   operational_consequence:
   - app-authoring
-  - sdk-derivation-input
+  - runtime-derivation-input
 - id: rel.runtime-profile-selects-provider-selection
   subject: core.app.runtime-profile
   predicate: selects
@@ -2107,7 +2107,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.4 Runtime profiles and process defaults
   operational_consequence:
   - provider-selection
@@ -2120,7 +2120,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.5 Entrypoints
   operational_consequence:
   - process-shape
@@ -2133,7 +2133,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 9.5 Entrypoints; 9.6 App selection, process shape, and surface remain distinct
   operational_consequence:
   - app-membership-protection
@@ -2145,7 +2145,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 3.4 Resource and boundary nouns; 4.6 Projection and assembly law
   operational_consequence:
   - resource-contract
@@ -2158,7 +2158,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.1 Ownership law; 4.6 Projection and assembly law
   operational_consequence:
   - provider-implementation
@@ -2170,8 +2170,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - provider-selection-validation
   - forbidden-path-rejection
@@ -2182,8 +2182,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - provisioning-boundary
   - runtime-compiler
@@ -2194,8 +2194,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - resource-requirement
   - provider-coverage
@@ -2207,8 +2207,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - resource-requirement
   - provider-coverage
@@ -2220,8 +2220,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.6 Service binding violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.5 Service binding
   operational_consequence:
   - service-pipeline-validation
   - runtime-seeding-rejection
@@ -2232,8 +2232,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.2 Projection classification violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.1 Projection classification
   operational_consequence:
   - plugin-file-placement
   - builder-agreement
@@ -2245,8 +2245,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.2 Projection classification violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.1 Projection classification
   operational_consequence:
   - plugin-file-placement
   - builder-agreement
@@ -2258,7 +2258,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 2.1 Universal shape; 4.10 Ingress and execution law
   operational_consequence:
   - durable-execution
@@ -2270,7 +2270,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 2.1 Universal shape; 4.10 Ingress and execution law
   operational_consequence:
   - scheduled-durable-work
@@ -2282,7 +2282,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 2.1 Universal shape
   operational_consequence:
   - event-consumption
@@ -2294,7 +2294,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 8.11 Desktop projection; 4.10 Ingress and execution law
   operational_consequence:
   - process-local-loop-boundary
@@ -2306,7 +2306,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law; 4.11 Shell versus steward authority law
   operational_consequence:
   - durable-steward-execution-boundary
@@ -2318,8 +2318,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - file-placement-rejection
   - generator-target-rejection
@@ -2330,8 +2330,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - file-placement-rejection
   - generator-target-rejection
@@ -2342,8 +2342,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.1 Topology and naming violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 4 Canonical topology and package authority
   operational_consequence:
   - entrypoint-authoring
   - forbidden-term-repair
@@ -2354,8 +2354,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.2 Projection classification violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.1 Projection classification
   operational_consequence:
   - projection-classification
   - topology-builder-agreement
@@ -2367,8 +2367,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.3 Service boundary violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.2 Service boundary
   operational_consequence:
   - import-boundary
   - service-truth-protection
@@ -2379,8 +2379,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.3 Service boundary violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.2 Service boundary
   operational_consequence:
   - write-authority
   - migration-authority
@@ -2392,8 +2392,8 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
-    section: 26.4 Resource/provider/profile violations
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 25.3 Resource/provider/profile
   operational_consequence:
   - runtime-profile-schema
   - provider-selection-validation
@@ -2404,7 +2404,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law
   operational_consequence:
   - ingress-role-selection
@@ -2416,7 +2416,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law
   operational_consequence:
   - conversational-ingress
@@ -2428,7 +2428,7 @@ relations:
   layer: core
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 4.10 Ingress and execution law
   operational_consequence:
   - durable-system-work
