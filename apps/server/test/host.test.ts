@@ -3,8 +3,12 @@ import { type BootstrapServerInput, startServer } from "../src/bootstrap";
 import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 function createInput(input: {
-  app: { listen(port: number): unknown };
-  shutdown: () => Promise<void>;
+  app: {
+    server?: unknown;
+    listen(port: number): unknown;
+    stop?(closeActiveConnections?: boolean): Promise<unknown>;
+  };
+  shutdown: (deadlineMonotonicMilliseconds?: number) => Promise<void>;
   loadConfig?: () => Promise<unknown>;
   registerRoutes?: BootstrapServerInput["registerRoutes"];
 }): BootstrapServerInput {
@@ -29,8 +33,8 @@ function createInput(input: {
       createInngestClient: () => processRuntime.inngestClient,
       acquireTelemetry: async () => ({
         ...processRuntime.telemetry,
-        shutdown: async () => {
-          await input.shutdown();
+        shutdown: async (deadlineMonotonicMilliseconds) => {
+          await input.shutdown(deadlineMonotonicMilliseconds);
           return {
             outcome: "flushed" as const,
             diagnostics: [],
@@ -107,6 +111,86 @@ describe("server process host", () => {
       )
     ).rejects.toThrow("address in use");
 
+    expect(shutdown).toHaveBeenCalledOnce();
+  });
+
+  it("stops intake once, drains admitted work, and shares the first deadline", async () => {
+    let settleStop: (() => void) | undefined;
+    const stopping = new Promise<void>((resolve) => {
+      settleStop = resolve;
+    });
+    const stop = vi.fn(() => stopping);
+    const shutdown = vi.fn(async () => {});
+    const server = await startServer(
+      createInput({
+        app: { server: {}, listen: vi.fn(), stop },
+        shutdown,
+      })
+    );
+    const deadline = performance.now() + 5_000;
+
+    const first = server.shutdown(deadline);
+    const repeated = server.shutdown(deadline + 1_000);
+
+    expect(first).toBe(repeated);
+    expect(stop).toHaveBeenCalledOnce();
+    expect(stop).toHaveBeenCalledWith(false);
+    expect(shutdown).not.toHaveBeenCalled();
+
+    settleStop?.();
+    await first;
+
+    expect(shutdown).toHaveBeenCalledOnce();
+    expect(shutdown).toHaveBeenCalledWith(deadline);
+  });
+
+  it("stops waiting at an expired deadline and still attempts telemetry release", async () => {
+    const stop = vi.fn(() => new Promise<never>(() => {}));
+    const shutdown = vi.fn(async () => {});
+    const server = await startServer(
+      createInput({
+        app: { server: {}, listen: vi.fn(), stop },
+        shutdown,
+      })
+    );
+    const deadline = performance.now() - 1;
+
+    await server.shutdown(deadline);
+
+    expect(stop).toHaveBeenCalledWith(false);
+    expect(shutdown).toHaveBeenCalledWith(deadline);
+  });
+
+  it("contains telemetry failure after host drain", async () => {
+    const server = await startServer(
+      createInput({
+        app: { server: {}, listen: vi.fn(), stop: vi.fn(async () => {}) },
+        shutdown: vi.fn(async () => {
+          throw new Error("telemetry shutdown failed");
+        }),
+      })
+    );
+
+    await expect(server.shutdown()).resolves.toBeUndefined();
+  });
+
+  it("releases telemetry before preserving a native host-stop failure", async () => {
+    const hostFailure = new Error("host stop failed");
+    const shutdown = vi.fn(async () => {});
+    const server = await startServer(
+      createInput({
+        app: {
+          server: {},
+          listen: vi.fn(),
+          stop: vi.fn(async () => {
+            throw hostFailure;
+          }),
+        },
+        shutdown,
+      })
+    );
+
+    await expect(server.shutdown()).rejects.toBe(hostFailure);
     expect(shutdown).toHaveBeenCalledOnce();
   });
 });
