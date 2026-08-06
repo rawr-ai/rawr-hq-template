@@ -33,7 +33,7 @@
 
 ## 5. Wire The Oclif Process
 
-- [ ] 5.1 Add one app-owned telemetry bootstrap used by both the source-development and compiled Oclif entrypoints; individual command classes must not acquire telemetry.
+- [x] 5.1 Add one app-owned telemetry bootstrap used by both the source-development and compiled Oclif entrypoints; `48c2e36fd` replaces the convenience `execute` wrappers with one shared native Oclif runner, selects and acquires the process telemetry resource once before discovery, preserves the vendor's development settings and error handler, and closes the same lifecycle before returning or handing the exact command failure to Oclif. The source and compiled entrypoints, 92 CLI behavior tests, uncached build/typecheck, Biome, and the disabled repeated-shutdown oracle are green; individual command classes do not acquire telemetry.
 - [ ] 5.2 Use native Oclif lifecycle hooks to open one product event after command resolution, enrich it with bounded command/outcome fields and technical logs while the provider derives active trace context, and finalize it once for success, declared error, or cancellation.
 - [ ] 5.3 On command completion or signal, stop new command intake, drain the admitted invocation through its native event owner, close observation intake, flush each signal, and shut down through the shared bounded lifecycle without replacing the command exit classification or introducing an active-event registry.
 - [ ] 5.4 Prove source/compiled parity, nested service-call deduplication, disabled zero construction, exporter/finalizer failure non-interference, repeated shutdown, and no background handle after exit.
