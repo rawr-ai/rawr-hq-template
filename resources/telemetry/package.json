@@ -1,0 +1,45 @@
+{
+  "name": "@habitat-ai/resource-telemetry",
+  "version": "0.1.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "resources/telemetry"
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/contract.js",
+  "types": "./dist/contract.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
+    },
+    "./providers/opentelemetry-node": {
+      "types": "./dist/providers/opentelemetry-node/index.d.ts",
+      "default": "./dist/providers/opentelemetry-node/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test test/contract.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "effect": "4.0.0-beta.101",
+    "typebox": "1.3.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:telemetry"
+    ]
+  }
+}

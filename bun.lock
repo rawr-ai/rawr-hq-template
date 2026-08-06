@@ -419,6 +419,17 @@
         "typescript": "^5.9.3",
       },
     },
+    "resources/telemetry": {
+      "name": "@habitat-ai/resource-telemetry",
+      "version": "0.1.0",
+      "dependencies": {
+        "effect": "4.0.0-beta.101",
+        "typebox": "1.3.8",
+      },
+      "devDependencies": {
+        "typescript": "^5.9.3",
+      },
+    },
     "resources/versioned-content": {
       "name": "@habitat-ai/rawr-resource-versioned-content",
       "version": "0.1.0",
@@ -994,6 +1005,8 @@
     "@habitat-ai/resource-rule-evaluation": ["@habitat-ai/resource-rule-evaluation@workspace:resources/rule-evaluation"],
 
     "@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@workspace:resources/source-inventory"],
+
+    "@habitat-ai/resource-telemetry": ["@habitat-ai/resource-telemetry@workspace:resources/telemetry"],
 
     "@habitat-ai/sdk": ["@habitat-ai/sdk@workspace:packages/habitat-sdk"],
 
