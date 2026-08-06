@@ -52,7 +52,7 @@ This file is the repository authority boundary. `RAWR HQ-Template` and personal
 
 - Habitat SDK/CLI contracts, package metadata, Nx Release configuration,
   publication, and installation are Template-owned.
-- `@habitat-ai/sdk@0.4.2` and `@habitat-ai/cli@0.4.2` are the supported public
+- `@habitat-ai/sdk@0.5.1` and `@habitat-ai/cli@0.5.1` are the supported public
   artifacts. Personal may invoke them at exact interface versions but does not
   vendor their implementation.
 - The `rawr` executable remains a private Template Oclif application invoked

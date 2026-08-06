@@ -37,7 +37,7 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
   adjacent capabilities. They do not select a channel or create build,
   promotion, retirement, undo, or persistent local lifecycle authority.
 - Private `rawr` application development uses repository-local Nx targets and
-  `bun run rawr -- ...`. Habitat `0.4.2` publication and registry-installed
+  `bun run rawr -- ...`. Habitat `0.5.1` publication and registry-installed
   smoke are complete; the private application is not a release-group member or
   installed operational surface.
 

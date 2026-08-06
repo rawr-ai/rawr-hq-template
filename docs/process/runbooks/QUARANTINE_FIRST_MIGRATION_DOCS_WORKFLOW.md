@@ -39,7 +39,7 @@ Before changing docs:
 3. Inspect staged and unstaged changes.
 4. Use the private repository-owned Oclif application through
    `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor
-   distribution. Habitat `0.4.2` publication and registry-installed acceptance
+   distribution. Habitat `0.5.1` publication and registry-installed acceptance
    are complete; no RAWR package publication is pending.
 5. If the `bun run rawr -- sessions ...` surface is unavailable, extract transcript
    evidence directly from the session JSONL and record that tooling gap in the
