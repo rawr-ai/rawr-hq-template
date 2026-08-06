@@ -6,6 +6,36 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-06 - Observation Follows Runtime Ownership
+
+Telemetry observes product execution; it never controls it. An app selects one
+process lifecycle and the native providers for traces, metrics, and logs. The
+resource names the neutral capability, the provider owns vendor construction
+and release, and each host contributes only its native boundary. Effect, oRPC,
+Inngest, and Oclif join the active process context instead of creating peer
+providers, exporters, propagators, or shutdown paths.
+
+EVLog describes one native product operation: an oRPC operation attempt, Oclif
+command, or Inngest attempt. A batched oRPC transport therefore carries one
+event per item, including unmatched outcomes, while the HTTP envelope remains
+technical telemetry.
+OpenTelemetry transports each final event, and ClickHouse receipt establishes
+queryability. Correlation joins these signals without merging their meanings.
+No observation becomes domain truth, workflow history, retry policy, or a
+second state owner. Disabled telemetry constructs nothing; failed telemetry
+changes no product result; shutdown stops intake, drains work, finalizes
+events, flushes signals, and releases the provider under one deadline.
+
+### Bag Of Keywords
+
+runtime, trace, metric, log.
+
+product, event, outcome, provenance.
+
+context, correlate, export, query.
+
+owner, scope, drain, receipt.
+
 ## 2026-08-05 - Cache Precision Precedes Engine Work
 
 Habitat has two performance domains. Nx decides whether work is necessary;
