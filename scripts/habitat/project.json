@@ -11,7 +11,11 @@
     "lint": {
       "executor": "nx:run-commands",
       "cache": true,
-      "inputs": ["{workspaceRoot}/**/*"],
+      "inputs": [
+        "{workspaceRoot}/**/*.{js,mjs,jsx,cjs,ts,mts,cts,tsx,json,jsonld,webapp,webmanifest,jsonc,code-snippets,code-workspace,sublime-build,sublime-commands,sublime-completions,sublime-keymap,sublime-macro,sublime-menu,sublime-mousemap,sublime-project,sublime-settings,sublime-theme,sublime-workspace,sublime_metrics,sublime_session,css,graphqls,graphql,gql,html,svg,astro,vue,svelte,grit}",
+        "{workspaceRoot}/**/{.all-contributorsrc,.arcconfig,.auto-changelog,.bowerrc,.c8rc,.htmlhintrc,.imgbotconfig,.jslintrc,.nycrc,.tern-config,.tern-project,.vuerc,.watchmanconfig,.ember-cli,.jscsrc,.jshintrc,.babelrc,.hintrc,.swcrc,mcmod.info}",
+        "{workspaceRoot}/.editorconfig"
+      ],
       "outputs": [],
       "options": {
         "command": "biome ci --diagnostic-level=error ."

@@ -5,10 +5,10 @@
 
 ## 2. Narrow Foundational Lint Ownership
 
-- [ ] 2.1 Replace the workspace-wide `habitat:lint` input with the exact positive Biome 2.5.3 filename/configuration set without duplicating Biome path exclusions.
-- [ ] 2.2 Extend the existing Habitat Nx-workspace law to require that input contract without a manual structure or source-check script.
-- [ ] 2.3 Prove through native Nx affected selection and resolved target inputs that Markdown is excluded while supported source, a supported Biome-excluded path, and Biome configuration are included.
-- [ ] 2.4 Run the shared lint and Habitat policy gates and obtain independent Nx/structural review.
+- [x] 2.1 Replace the workspace-wide `habitat:lint` input with the exact positive Biome 2.5.3 filename/configuration set without duplicating Biome path exclusions.
+- [x] 2.2 Extend the existing Habitat Nx-workspace law to require that input contract without a manual structure or source-check script.
+- [x] 2.3 Prove through native Nx affected selection and resolved target inputs that Markdown is excluded while supported source, a supported Biome-excluded path, and Biome configuration are included.
+- [x] 2.4 Run the shared lint and Habitat policy gates and obtain independent Nx/structural review.
 
 ## 3. Bound Native Nx Acceptance
 
