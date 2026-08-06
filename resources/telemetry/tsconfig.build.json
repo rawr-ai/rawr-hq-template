@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "include": [],
+  "files": ["contract.ts", "providers/opentelemetry-node/index.ts"]
+}
