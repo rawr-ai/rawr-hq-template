@@ -6,5 +6,12 @@
     "rootDir": "."
   },
   "include": [],
-  "files": ["contract.ts", "providers/opentelemetry-node/index.ts"]
+  "files": [
+    "contract.ts",
+    "providers/opentelemetry-node/index.ts",
+    "providers/opentelemetry-node/degraded.ts",
+    "providers/opentelemetry-node/enabled.ts",
+    "providers/opentelemetry-node/lifecycle.ts",
+    "providers/opentelemetry-node/records.ts"
+  ]
 }

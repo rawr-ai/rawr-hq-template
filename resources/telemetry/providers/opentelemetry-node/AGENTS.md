@@ -9,14 +9,18 @@
 ## Scope
 
 - Applies to `resources/telemetry/providers/opentelemetry-node/**`.
-- The current implementation owns only the disabled branch.
+- The provider owns the admitted OpenTelemetry Node topology and the disabled
+  branch selected before vendor loading.
 
 ## Boundaries
 
-- Disabled construction returns before creating SDKs, signal providers,
+- Disabled construction returns before creating signal providers,
   exporters, processors, readers, drains, timers, hooks, or network clients.
-- Application process ownership, shutdown ordering, and provider selection do
-  not move into this package.
+- Enabled construction registers one provider for each signal, one global
+  W3C Trace Context plus Baggage propagator, the global Effect tracer binding,
+  and at most one processor for the process-owned Inngest client.
+- The application owns process intake and native-owner drain. This provider
+  owns signal flush and release but never process hooks or exit semantics.
 
 ## Routing
 
