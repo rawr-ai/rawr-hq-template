@@ -24,6 +24,7 @@ const EXPORTED_ATTRIBUTE_PATHS = Object.freeze([
   "rpc.authorization.decision",
   "inngest.run.id",
   "inngest.attempt.id",
+  "inngest.step.id",
   "inngest.function.id",
   "inngest.event.id",
   "inngest.traceparent",
