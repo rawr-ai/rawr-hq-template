@@ -11,6 +11,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerOrpcRoutes } from "../src/orpc";
 import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerTelemetry } from "./support/process-runtime";
 
 afterEach(async () => {
   delete process.env.OTEL_BSP_SCHEDULE_DELAY;
@@ -41,6 +42,7 @@ describe("oRPC trace propagation", () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-orpc-propagation-"));
     const host = createTestingRawrHostSeam();
     const app = registerOrpcRoutes(createServerApp(), {
+      ...createTestingServerTelemetry().effectContext,
       deps: {
         runtime: {},
         inngestClient: {} as Inngest,

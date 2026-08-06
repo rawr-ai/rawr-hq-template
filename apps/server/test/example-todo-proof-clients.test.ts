@@ -10,6 +10,7 @@ import {
   createExampleTodoInvocation,
   createExampleTodoProofClients,
 } from "./support/example-todo-proof-clients";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 afterAll(() => resetTestingRawrHostSeam());
 
@@ -17,6 +18,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
+    ...createTestingServerProcessRuntime(),
     repoRoot,
     baseUrl: "http://localhost:3000",
     hostComposition: createTestingRawrHostSeam(),

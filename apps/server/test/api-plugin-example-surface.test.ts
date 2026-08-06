@@ -13,6 +13,7 @@ import { createServerApp } from "../src/app";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";
 import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -29,6 +30,7 @@ const EXTERNAL_API_HEADERS = {
 
 function createApp() {
   return registerRawrRoutes(createServerApp(), {
+    ...createTestingServerProcessRuntime(),
     repoRoot,
     baseUrl: "http://localhost:3000",
     hostComposition: createTestingRawrHostSeam(),

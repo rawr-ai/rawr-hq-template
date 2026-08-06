@@ -1,3 +1,4 @@
+import type { OpenTelemetryNodeConfig } from "@habitat-ai/resource-telemetry/providers/opentelemetry-node";
 import {
   type BootstrappedServer,
   bootstrapServer,
@@ -17,19 +18,21 @@ export type { BootstrappedServer, RawrHostDeclarations };
  */
 export type RawrServerHostInput = Readonly<{
   declarations: RawrHostDeclarations;
+  telemetryConfig: OpenTelemetryNodeConfig;
 }>;
 
 function createRouteRegistrar(declarations: RawrHostDeclarations): ServerRouteRegistrar {
-  const hostComposition = createRawrHostComposition({
-    declarations,
-    hostLogger: createHostLoggerAdapter(),
-  });
+  return (app, options) => {
+    const hostComposition = createRawrHostComposition({
+      declarations,
+      hostLogger: createHostLoggerAdapter(),
+    });
 
-  return (app, options) =>
-    registerRawrRoutes(app, {
+    return registerRawrRoutes(app, {
       ...options,
       hostComposition,
     });
+  };
 }
 
 /**
@@ -39,6 +42,7 @@ function createRouteRegistrar(declarations: RawrHostDeclarations): ServerRouteRe
 export async function bootstrapServerHost(input: RawrServerHostInput): Promise<BootstrappedServer> {
   return await bootstrapServer({
     registerRoutes: createRouteRegistrar(input.declarations),
+    telemetryConfig: input.telemetryConfig,
   });
 }
 
@@ -49,5 +53,6 @@ export async function bootstrapServerHost(input: RawrServerHostInput): Promise<B
 export async function startServerHost(input: RawrServerHostInput): Promise<BootstrappedServer> {
   return await startServer({
     registerRoutes: createRouteRegistrar(input.declarations),
+    telemetryConfig: input.telemetryConfig,
   });
 }

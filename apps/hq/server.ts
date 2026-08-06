@@ -1,5 +1,6 @@
 import { bootstrapServerHost, startServerHost } from "@rawr/server/host";
 import { createRawrHqManifest, type RawrHqManifest } from "./rawr.hq";
+import { type RawrHqTelemetrySelectionOptions, selectRawrHqTelemetryConfig } from "./telemetry";
 
 /** The selected HQ server role together with its server-owned realized host. */
 export type RawrHqServerBoot = Readonly<{
@@ -18,10 +19,13 @@ function selectServerDeclarations(manifest: RawrHqManifest) {
 /**
  * Selects the HQ server role and assembles its host without opening a socket.
  */
-export async function bootstrapRawrHqServer(): Promise<RawrHqServerBoot> {
+export async function bootstrapRawrHqServer(
+  telemetryOptions: RawrHqTelemetrySelectionOptions = {}
+): Promise<RawrHqServerBoot> {
   const manifest = createRawrHqManifest();
   const bootstrapped = await bootstrapServerHost({
     declarations: selectServerDeclarations(manifest),
+    telemetryConfig: selectRawrHqTelemetryConfig(telemetryOptions),
   });
 
   return {
@@ -34,10 +38,13 @@ export async function bootstrapRawrHqServer(): Promise<RawrHqServerBoot> {
 /**
  * Starts the HQ server process selected by this application entrypoint.
  */
-export async function startRawrHqServer(): Promise<RawrHqServerBoot> {
+export async function startRawrHqServer(
+  telemetryOptions: RawrHqTelemetrySelectionOptions = {}
+): Promise<RawrHqServerBoot> {
   const manifest = createRawrHqManifest();
   const bootstrapped = await startServerHost({
     declarations: selectServerDeclarations(manifest),
+    telemetryConfig: selectRawrHqTelemetryConfig(telemetryOptions),
   });
 
   return {

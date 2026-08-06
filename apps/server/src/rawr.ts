@@ -7,12 +7,15 @@ import type { RawrServerApp } from "./app";
 import type { RawrHostComposition } from "./host-composition";
 import { registerOrpcRoutes } from "./orpc";
 import { createRequestScopedBoundaryContext, type RawrInitialContext } from "./request-context";
+import type { ServerTelemetryLifecycle } from "./telemetry";
 import { createWorkflowRouteHarness } from "./workflows/harness";
 import { createRawrWorkflowRuntime } from "./workflows/runtime";
 
 export type RawrRoutesOptions = {
   repoRoot: string;
   hostComposition: RawrHostComposition;
+  inngestClient: Inngest;
+  telemetry: ServerTelemetryLifecycle;
   baseUrl?: string;
 };
 
@@ -32,6 +35,11 @@ export type HostInngestBundle = Readonly<{
   functions: readonly unknown[];
   handler: ReturnType<typeof inngestServe>;
 }>;
+
+/** Constructs the server process's sole native Inngest client. */
+export function createHostInngestClient(): Inngest {
+  return new Inngest({ id: "rawr-hq" });
+}
 
 const INNGEST_SIGNATURE_HEADERS = ["x-inngest-signature", "inngest-signature"] as const;
 const INNGEST_SIGNATURE_MAX_AGE_MS = 5 * 60 * 1000;
@@ -161,10 +169,11 @@ function resolveAuthorityRepoRoot(repoRoot: string): string {
  * - alternate executable composition entrypoints
  */
 export function createHostInngestBundle(input: {
+  client: Inngest;
   repoRoot: string;
   hostComposition: RawrHostComposition;
 }): HostInngestBundle {
-  const client = new Inngest({ id: "rawr-hq" });
+  const client = input.client;
   const runtime = createRawrWorkflowRuntime({
     repoRoot: input.repoRoot,
   });
@@ -209,10 +218,12 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(
   const rawrHostSeam = opts.hostComposition.realization;
 
   const hostInngest = createHostInngestBundle({
+    client: opts.inngestClient,
     repoRoot: authorityRepoRoot,
     hostComposition: opts.hostComposition,
   });
   const initialContext: RawrInitialContext = {
+    ...opts.telemetry.effectContext,
     deps: {
       runtime: hostInngest.runtime,
       inngestClient: hostInngest.client,

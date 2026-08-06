@@ -10,6 +10,10 @@ import { registerOrpcRoutes } from "../src/orpc";
 import { createHostInngestBundle, PHASE_A_HOST_MOUNT_ORDER, registerRawrRoutes } from "../src/rawr";
 import { createRequestScopedBoundaryContext } from "../src/request-context";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+import {
+  createTestingServerProcessRuntime,
+  createTestingServerTelemetry,
+} from "./support/process-runtime";
 
 afterAll(() => resetTestingRawrHostSeam());
 
@@ -42,6 +46,7 @@ function collectProcedureRoutes(node: unknown, namespace: string[] = []): string
 describe("rawr server routes", () => {
   it("does not expose retired web modules or an interim composition endpoint", async () => {
     const app = registerRawrRoutes(createServerApp(), {
+      ...createTestingServerProcessRuntime(),
       repoRoot,
       hostComposition: createTestingRawrHostSeam(),
     });
@@ -89,6 +94,7 @@ describe("rawr server routes", () => {
       const response = await (async () => {
         try {
           const app = registerRawrRoutes(createServerApp(), {
+            ...createTestingServerProcessRuntime(),
             repoRoot: tempRoot,
             hostComposition: createTestingRawrHostSeam(),
           });
@@ -113,6 +119,7 @@ describe("rawr server routes", () => {
 
   it("no-legacy-composition-authority: rejects unsigned ingress before runtime dispatch", async () => {
     const app = registerRawrRoutes(createServerApp(), {
+      ...createTestingServerProcessRuntime(),
       repoRoot,
       hostComposition: createTestingRawrHostSeam(),
     });
@@ -127,6 +134,7 @@ describe("rawr server routes", () => {
     process.env.INNGEST_SIGNING_KEY = "signkey-test-rawr-ingress";
     try {
       const app = registerRawrRoutes(createServerApp(), {
+        ...createTestingServerProcessRuntime(),
         repoRoot,
         hostComposition: createTestingRawrHostSeam(),
       });
@@ -171,13 +179,16 @@ describe("rawr server routes", () => {
     const primaryRepoRoot = path.join(tempRoot, "primary");
     const alternateRepoRoot = path.join(tempRoot, "alternate");
     const host = createTestingRawrHostSeam();
+    const { inngestClient } = createTestingServerProcessRuntime();
     const hostInngest = createHostInngestBundle({
+      client: inngestClient,
       repoRoot: tempRoot,
       hostComposition: host,
     });
     const resolveClient = vi.fn(host.satisfiers.exampleTodo.resolveClient);
     const invocations: Array<{ requestId: string; correlationId: string }> = [];
     const app = registerOrpcRoutes(createServerApp(), {
+      ...createTestingServerTelemetry().effectContext,
       deps: {
         runtime: hostInngest.runtime,
         inngestClient: hostInngest.client,

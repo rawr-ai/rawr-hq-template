@@ -1,10 +1,13 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { type InstalledTelemetry, installRawrOrpcTelemetry } from "@habitat-ai/rawr-core/telemetry";
 import type { Client as HqOpsClient } from "@habitat-ai/rawr-hq-ops";
+import type { OpenTelemetryNodeConfig } from "@habitat-ai/resource-telemetry/providers/opentelemetry-node";
+import type { Inngest } from "inngest";
 import { createServerApp, type RawrServerApp } from "./app";
 import { getServerConfig } from "./config";
 import { resolveServerHqOpsClient } from "./hq-ops-binding";
+import { createHostInngestClient } from "./rawr";
+import { acquireServerTelemetry, type ServerTelemetryLifecycle } from "./telemetry";
 
 function defaultRepoRoot() {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -20,7 +23,7 @@ export type BootstrappedServer = {
     port: number;
     baseUrl: string;
   };
-  telemetry: InstalledTelemetry;
+  telemetry: ServerTelemetryLifecycle;
 };
 
 type LoadConfig = (
@@ -33,7 +36,12 @@ type LoadConfig = (
  */
 export type ServerRouteRegistrar = (
   app: RawrServerApp,
-  options: { repoRoot: string; baseUrl?: string }
+  options: {
+    repoRoot: string;
+    baseUrl?: string;
+    inngestClient: Inngest;
+    telemetry: ServerTelemetryLifecycle;
+  }
 ) => RawrServerApp;
 
 /**
@@ -43,7 +51,8 @@ export type ServerRouteRegistrar = (
 type BootstrapServerDependencies = {
   env: NodeJS.ProcessEnv;
   resolveRepoRoot(): string;
-  installTelemetry: typeof installRawrOrpcTelemetry;
+  createInngestClient: typeof createHostInngestClient;
+  acquireTelemetry: typeof acquireServerTelemetry;
   createApp: typeof createServerApp;
   loadConfig: LoadConfig;
   registerRoutes: ServerRouteRegistrar;
@@ -52,6 +61,7 @@ type BootstrapServerDependencies = {
 /** Internal test seam for replacing bootstrap resources without exposing them to app callers. */
 export type BootstrapServerInput = Readonly<{
   registerRoutes: ServerRouteRegistrar;
+  telemetryConfig: OpenTelemetryNodeConfig;
   overrides?: Partial<Omit<BootstrapServerDependencies, "registerRoutes">>;
 }>;
 
@@ -75,7 +85,8 @@ export async function bootstrapServer(input: BootstrapServerInput): Promise<Boot
   const deps: BootstrapServerDependencies = {
     env: process.env,
     resolveRepoRoot: defaultRepoRoot,
-    installTelemetry: installRawrOrpcTelemetry,
+    createInngestClient: createHostInngestClient,
+    acquireTelemetry: acquireServerTelemetry,
     createApp: createServerApp,
     loadConfig: loadWorkspaceConfigFromHost,
     ...input.overrides,
@@ -102,10 +113,10 @@ export async function bootstrapServer(input: BootstrapServerInput): Promise<Boot
       ? cfgBaseUrl
       : `http://localhost:${port}`;
   const config = { port, baseUrl };
-  const telemetry = await deps.installTelemetry({
-    serviceName: "@rawr/server",
-    environment: deps.env.NODE_ENV,
-    serviceVersion: deps.env.RAWR_SERVER_VERSION,
+  const inngestClient = deps.createInngestClient();
+  const telemetry = await deps.acquireTelemetry({
+    config: input.telemetryConfig,
+    inngestClient,
   });
 
   try {
@@ -113,6 +124,8 @@ export async function bootstrapServer(input: BootstrapServerInput): Promise<Boot
     app = deps.registerRoutes(app, {
       repoRoot,
       baseUrl: config.baseUrl,
+      inngestClient,
+      telemetry,
     });
 
     return {

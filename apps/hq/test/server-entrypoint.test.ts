@@ -31,13 +31,26 @@ vi.mock("@rawr/server/host", () => ({
 import { bootstrapRawrHqServer, startRawrHqServer } from "../server";
 
 describe("HQ server entrypoint", () => {
+  const telemetryOptions = {
+    env: {},
+    generateProcessInstanceId: () => "server-entrypoint-test-instance",
+  };
+  const telemetryConfig = {
+    enabled: false,
+    processIdentity: {
+      serviceName: "rawr-hq",
+      processRole: "server",
+      processInstanceId: "server-entrypoint-test-instance",
+    },
+  };
+
   beforeEach(() => {
     host.bootstrap.mockClear();
     host.start.mockClear();
   });
 
   it("projects the selected declarations through the non-listening host boundary", async () => {
-    const result = await bootstrapRawrHqServer();
+    const result = await bootstrapRawrHqServer(telemetryOptions);
 
     expect(host.bootstrap).toHaveBeenCalledOnce();
     expect(host.bootstrap).toHaveBeenCalledWith({
@@ -45,13 +58,14 @@ describe("HQ server entrypoint", () => {
         api: result.manifest.roles.server.api,
         workflows: result.manifest.roles.async.workflows,
       },
+      telemetryConfig,
     });
     expect(host.start).not.toHaveBeenCalled();
     expect(result.role).toBe("server");
   });
 
   it("projects the selected declarations through the listening host boundary", async () => {
-    const result = await startRawrHqServer();
+    const result = await startRawrHqServer(telemetryOptions);
 
     expect(host.start).toHaveBeenCalledOnce();
     expect(host.start).toHaveBeenCalledWith({
@@ -59,6 +73,7 @@ describe("HQ server entrypoint", () => {
         api: result.manifest.roles.server.api,
         workflows: result.manifest.roles.async.workflows,
       },
+      telemetryConfig,
     });
     expect(host.bootstrap).not.toHaveBeenCalled();
     expect(result.role).toBe("server");

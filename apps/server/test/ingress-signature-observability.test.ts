@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createServerApp } from "../src/app";
 import { registerRawrRoutes, verifyInngestIngressRequest } from "../src/rawr";
 import { createTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 async function pathExists(targetPath: string): Promise<boolean> {
   try {
@@ -68,6 +69,7 @@ describe("ingress signature observability", () => {
 
     try {
       const app = registerRawrRoutes(createServerApp(), {
+        ...createTestingServerProcessRuntime(),
         repoRoot: fixtureRoot,
         hostComposition: createTestingRawrHostSeam(),
       });
@@ -106,6 +108,7 @@ describe("ingress signature observability", () => {
 
     try {
       const app = registerRawrRoutes(createServerApp(), {
+        ...createTestingServerProcessRuntime(),
         repoRoot: fixtureRoot,
         hostComposition: createTestingRawrHostSeam(),
       });

@@ -5,6 +5,7 @@ import { createServerApp } from "../src/app";
 import { generateOrpcOpenApiSpec } from "../src/orpc";
 import { registerRawrRoutes } from "../src/rawr";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
+import { createTestingServerProcessRuntime } from "./support/process-runtime";
 
 afterAll(() => resetTestingRawrHostSeam());
 
@@ -53,6 +54,7 @@ describe("orpc openapi", () => {
 
   it("serves openapi spec at /api/orpc/openapi.json", async () => {
     const app = registerRawrRoutes(createServerApp(), {
+      ...createTestingServerProcessRuntime(),
       repoRoot,
       hostComposition: rawrHqHostSeam,
     });
