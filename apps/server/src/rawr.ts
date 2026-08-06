@@ -241,6 +241,7 @@ export function registerRawrRoutes<TApp extends RawrServerApp>(
       publishedRouter: rawrHostSeam.workflows.published.router,
     },
     contextFactory: createRequestScopedBoundaryContext,
+    hostLogger: opts.hostComposition.hostLogger,
   });
 
   app.all(

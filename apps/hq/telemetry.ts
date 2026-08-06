@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { MAX_TELEMETRY_IDENTITY_TEXT_LENGTH } from "@habitat-ai/resource-telemetry";
 import type { OpenTelemetryNodeConfig } from "@habitat-ai/resource-telemetry/providers/opentelemetry-node";
 
 const DEFAULT_SERVICE_NAME = "rawr-hq";
 const SERVER_PROCESS_ROLE = "server";
-const MAX_IDENTITY_TEXT_LENGTH = 256;
 const MAX_OTLP_ENDPOINT_LENGTH = 2_048;
 const EXPORT_TIMEOUT_MILLISECONDS = 10_000;
 const METRIC_EXPORT_INTERVAL_MILLISECONDS = 60_000;
@@ -60,7 +60,7 @@ function boundedIdentity(value: string | undefined): string | undefined {
   const selected = value?.trim();
   return selected !== undefined &&
     selected.length > 0 &&
-    selected.length <= MAX_IDENTITY_TEXT_LENGTH
+    selected.length <= MAX_TELEMETRY_IDENTITY_TEXT_LENGTH
     ? selected
     : undefined;
 }
@@ -135,6 +135,7 @@ export function selectRawrHqTelemetryConfig(
   const traces = selectSignalEndpoint(env, base, "traces");
   const metrics = selectSignalEndpoint(env, base, "metrics");
   const logs = selectSignalEndpoint(env, base, "logs");
+  const receiptId = boundedIdentity(env.RAWR_TELEMETRY_RECEIPT_ID);
 
   if (traces === undefined || metrics === undefined || logs === undefined) {
     return Object.freeze({ enabled: false, processIdentity });
@@ -143,7 +144,8 @@ export function selectRawrHqTelemetryConfig(
   return Object.freeze({
     enabled: true,
     processIdentity,
-    defaultAttributes: EMPTY_ATTRIBUTES,
+    defaultAttributes:
+      receiptId === undefined ? EMPTY_ATTRIBUTES : Object.freeze({ "receipt.id": receiptId }),
     exportedAttributePaths: EXPORTED_ATTRIBUTE_PATHS,
     traces: exporterConfig(traces),
     metrics: exporterConfig(metrics),

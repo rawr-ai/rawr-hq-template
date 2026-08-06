@@ -9,8 +9,13 @@ import {
   type RegisterOrpcRoutesOptions,
   registerOrpcRoutes,
 } from "../src/orpc";
+import { registerRawrRoutes } from "../src/rawr";
 import { createTestingRawrHostSeam, resetTestingRawrHostSeam } from "../src/testing-host";
-import { createTestingServerTelemetry } from "./support/process-runtime";
+import { __resetWorkflowRouteTelemetryForTests } from "../src/workflows/harness";
+import {
+  createTestingServerProcessRuntime,
+  createTestingServerTelemetry,
+} from "./support/process-runtime";
 
 afterAll(() => resetTestingRawrHostSeam());
 
@@ -52,6 +57,18 @@ async function createTestApp(args: {
   return { app, tempRoot };
 }
 
+async function createWorkflowTestApp() {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rawr-workflow-metrics-"));
+  const app = registerRawrRoutes(createServerApp(), {
+    ...createTestingServerProcessRuntime(),
+    repoRoot: tempRoot,
+    baseUrl: "http://localhost:3100",
+    hostComposition: rawrHqHostSeam,
+  });
+
+  return { app, tempRoot };
+}
+
 beforeEach(() => {
   counterAdd.mockReset();
   histogramRecord.mockReset();
@@ -62,6 +79,7 @@ beforeEach(() => {
   spanContext.mockReset();
   startActiveSpan.mockReset();
   __resetOrpcRouteTelemetryForTests();
+  __resetWorkflowRouteTelemetryForTests();
 
   vi.spyOn(otelApi.metrics, "getMeter").mockReturnValue({
     createCounter: () => ({ add: counterAdd }),
@@ -102,6 +120,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.restoreAllMocks();
   __resetOrpcRouteTelemetryForTests();
+  __resetWorkflowRouteTelemetryForTests();
 });
 
 describe("host oRPC route metrics", () => {
@@ -112,7 +131,11 @@ describe("host oRPC route metrics", () => {
       const response = await app.handle(
         new Request("http://localhost:3100/rpc/exampleTodo/tasks/create", {
           method: "POST",
-          headers: FIRST_PARTY_RPC_HEADERS,
+          headers: {
+            ...FIRST_PARTY_RPC_HEADERS,
+            "x-request-id": "metric-request-rpc",
+            "x-correlation-id": "metric-correlation-rpc",
+          },
           body: JSON.stringify({ json: { title: "Metrics proof" } }),
         })
       );
@@ -125,6 +148,8 @@ describe("host oRPC route metrics", () => {
           "rawr.orpc.router": "rpc",
           "rawr.orpc.authorized": true,
           "http.response.status_code": 200,
+          "request.id": "metric-request-rpc",
+          "correlation.id": "metric-correlation-rpc",
         })
       );
       expect(histogramRecord).toHaveBeenCalledWith(
@@ -134,6 +159,8 @@ describe("host oRPC route metrics", () => {
           "rawr.orpc.router": "rpc",
           "rawr.orpc.authorized": true,
           "http.response.status_code": 200,
+          "request.id": "metric-request-rpc",
+          "correlation.id": "metric-correlation-rpc",
         })
       );
       expect(startActiveSpan).toHaveBeenCalledWith("rawr.orpc.rpc.request", expect.any(Function));
@@ -245,6 +272,8 @@ describe("host oRPC route metrics", () => {
           headers: {
             "content-type": "application/json",
             "x-rawr-caller-surface": "external",
+            "x-request-id": "metric-request-openapi",
+            "x-correlation-id": "metric-correlation-openapi",
           },
           body: JSON.stringify({
             title: "Metrics proof route",
@@ -259,6 +288,8 @@ describe("host oRPC route metrics", () => {
           "rawr.orpc.surface": "openapi",
           "rawr.orpc.router": "openapi",
           "http.response.status_code": 200,
+          "request.id": "metric-request-openapi",
+          "correlation.id": "metric-correlation-openapi",
         })
       );
       expect(startActiveSpan).toHaveBeenCalledWith(
@@ -269,6 +300,41 @@ describe("host oRPC route metrics", () => {
 
       const attributes = counterAdd.mock.calls[0]?.[1] as Record<string, unknown>;
       expect(attributes).not.toHaveProperty("rawr.orpc.authorized");
+    } finally {
+      await fs.rm(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("records workflow request metrics with the same bounded transport correlation", async () => {
+    const { app, tempRoot } = await createWorkflowTestApp();
+
+    try {
+      const response = await app.handle(
+        new Request("http://localhost:3100/api/workflows/exampleTodo/missing", {
+          method: "GET",
+          headers: {
+            "x-request-id": "metric-request-workflow",
+            "x-correlation-id": "metric-correlation-workflow",
+          },
+        })
+      );
+
+      expect(response.status).toBe(404);
+      expect(counterAdd).toHaveBeenCalledWith(1, {
+        "rawr.workflow.surface": "published",
+        "http.response.status_code": 404,
+        "request.id": "metric-request-workflow",
+        "correlation.id": "metric-correlation-workflow",
+        "rawr.workflow.router": "published",
+      });
+      expect(histogramRecord).toHaveBeenCalledWith(
+        expect.any(Number),
+        expect.objectContaining({
+          "request.id": "metric-request-workflow",
+          "correlation.id": "metric-correlation-workflow",
+        })
+      );
+      expect(startActiveSpan).toHaveBeenCalledWith("rawr.workflow.request", expect.any(Function));
     } finally {
       await fs.rm(tempRoot, { recursive: true, force: true });
     }
