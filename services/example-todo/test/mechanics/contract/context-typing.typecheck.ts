@@ -51,11 +51,17 @@ const boundary: CreateClientOptions = {
 };
 const client = createClient(boundary);
 
-const callContext: Invocation = { traceId: "trace-typing" };
+const callContext: Invocation = { correlationId: "trace-typing" };
 void client.tasks.get(
   { id: "00000000-0000-4000-8000-000000000001" },
   { context: { invocation: callContext } }
 );
+
+const callerAuthoredTraceContext: Invocation = {
+  // @ts-expect-error Invocation admits correlation identity, not caller-authored trace identity.
+  traceId: "trace-typing",
+};
+void callerAuthoredTraceContext;
 
 // @ts-expect-error Invocation context is a per-call lane and cannot be omitted.
 void client.tasks.get({ id: "00000000-0000-4000-8000-000000000001" });

@@ -47,7 +47,7 @@
 | `Deps` | host | client | Database pool, clock, identifier generator, logger, and analytics capabilities. |
 | `Scope` | host binding | client | Workspace identity shared by every operation on that client. |
 | `Config` | host binding | client | Read-only policy and assignment limits selected from outside the service. |
-| `Invocation` | caller | call | Request facts; the current client requires a trace id, while request and idempotency identities belong here when a capability needs them. |
+| `Invocation` | caller | call | Request facts; the current client requires a correlation id, while request and idempotency identities belong here when a capability needs them. |
 | `provided` | middleware | execution | Workspace-bound task, tag, and assignment stores acquired once for the operation. |
 
 Procedure metadata is static service-authored meaning, not another execution

@@ -16,7 +16,7 @@ type Config = {
   readOnly: boolean;
   limits: { maxAssignmentsPerTask: number };
 };
-type Invocation = { traceId: string };
+type Invocation = { correlationId: string };
 /** Complete host and invocation context admitted at the service boundary. */
 export type Context = {
   deps: Deps;

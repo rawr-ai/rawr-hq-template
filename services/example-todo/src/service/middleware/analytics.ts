@@ -9,7 +9,7 @@ export const middleware = base.middleware(
       const classification = meta.analytics;
       return {
         analytics_workspace_id: context.scope.workspaceId,
-        analytics_trace_id: context.invocation.traceId,
+        analytics_correlation_id: context.invocation.correlationId,
         analytics_read_only: context.config.readOnly,
         ...(classification
           ? {

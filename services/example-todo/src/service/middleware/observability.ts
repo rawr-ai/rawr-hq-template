@@ -14,17 +14,17 @@ export const middleware = base.middleware(
     spanAttributes: ({ context }) => ({
       workspace_id: context.scope.workspaceId,
       read_only: context.config.readOnly,
-      invocation_trace_id: context.invocation.traceId,
+      invocation_correlation_id: context.invocation.correlationId,
     }),
     logFields: ({ context, spanTraceId }) => ({
       spanTraceId,
-      invocationTraceId: context.invocation.traceId,
+      invocationCorrelationId: context.invocation.correlationId,
       workspaceId: context.scope.workspaceId,
       readOnly: context.config.readOnly,
     }),
     startEventAttributes: ({ context }) => ({
       workspaceId: context.scope.workspaceId,
-      traceId: context.invocation.traceId,
+      correlationId: context.invocation.correlationId,
     }),
     successEventAttributes: ({ context }) => ({
       workspaceId: context.scope.workspaceId,

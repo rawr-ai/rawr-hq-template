@@ -123,7 +123,7 @@ describe("example-todo service", () => {
     let widerLaneReads = 0;
     const widerCallOptions = {
       context: {
-        invocation: { traceId: "trace-fixed-construction" },
+        invocation: { correlationId: "trace-fixed-construction" },
         get deps() {
           widerLaneReads += 1;
           return replacementDeps;
@@ -405,8 +405,12 @@ describe("example-todo service", () => {
     expect(
       logs.some((entry) => entry.event === "todo.procedure" && entry.payload.outcome === "error")
     ).toBe(true);
-    expect(logs.some((entry) => entry.payload.invocationTraceId === "trace-error")).toBe(true);
-    expect(logs.some((entry) => entry.payload.invocationTraceId === "trace-success")).toBe(true);
+    expect(logs.some((entry) => entry.payload.invocationCorrelationId === "trace-error")).toBe(
+      true
+    );
+    expect(logs.some((entry) => entry.payload.invocationCorrelationId === "trace-success")).toBe(
+      true
+    );
     expect(
       analytics.some(
         (entry) => entry.event === "orpc.procedure" && entry.payload.outcome === "error"
@@ -437,7 +441,7 @@ describe("example-todo service", () => {
       expect(entry.payload.analytics_layer).toBe("module");
       expect(entry.payload.analytics_module).toBe("tags");
       expect(entry.payload.analytics_workspace_id).toBe("workspace-default");
-      expect(entry.payload.analytics_trace_id).toBe("trace-shared");
+      expect(entry.payload.analytics_correlation_id).toBe("trace-shared");
     }
   });
 
@@ -450,7 +454,7 @@ describe("example-todo service", () => {
         {},
         {
           context: {
-            invocation: Object.freeze({ traceId: "trace-frozen" }),
+            invocation: Object.freeze({ correlationId: "trace-frozen" }),
           },
         }
       )
