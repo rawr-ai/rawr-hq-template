@@ -41,10 +41,11 @@ export function createRawrCliCommandTelemetry(
   telemetry: TelemetryResource
 ): RawrCliCommandTelemetry {
   let activeCommand: ActiveCommand | undefined;
+  let accepting = true;
 
   return Object.freeze({
     async begin(input) {
-      if (activeCommand !== undefined) return;
+      if (!accepting || activeCommand !== undefined) return;
       const operationId = randomUUID();
       const attributes = Object.freeze({
         "cli.command.id": input.commandId,
@@ -81,6 +82,7 @@ export function createRawrCliCommandTelemetry(
     },
     async finish(outcome) {
       const command = activeCommand;
+      accepting = false;
       if (command === undefined) return;
       activeCommand = undefined;
       const attributes = Object.freeze({
