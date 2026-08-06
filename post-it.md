@@ -6,6 +6,30 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-06 - Signals Stay Native
+
+The resource names the smallest neutral observation capability. It does not
+restate the signal systems beneath it. OpenTelemetry owns spans, metrics,
+context, propagation, processing, and export; oRPC, Effect, Inngest, and Oclif
+own their native boundaries; EVLog owns the finalized product event. The
+provider binds those vendors into one app lifecycle, while the neutral resource
+exposes only identity, bounded attributes, native-operation observation where
+no vendor binding exists, technical logs, availability, flush, and diagnostics.
+
+Analytics consumes a finalized event after the core path. PostHog may be one
+optional sink, but it cannot become telemetry infrastructure, request truth, or
+a completion gate. Langfuse is likewise a filtered research processor, not a
+second tracing runtime. The narrow contract prevents convenience APIs from
+becoming another provider, registry, or state owner.
+
+### Bag Of Keywords
+
+signal, context, event, analytics, runtime.
+
+resource, provider, boundary, owner, sink.
+
+observe, finalize, export, flush, query.
+
 ## 2026-08-06 - Observation Follows Runtime Ownership
 
 Telemetry observes product execution; it never controls it. An app selects one
