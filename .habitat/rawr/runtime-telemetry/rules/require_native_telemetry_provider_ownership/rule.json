@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "id": "require_native_telemetry_provider_ownership",
+  "title": "Require Native Telemetry Provider Ownership",
+  "placement": {
+    "niche": "rawr/runtime-telemetry",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "@habitat-ai/resource-telemetry",
+  "lane": "enforced",
+  "forbids": "a production source import of the retired core telemetry singleton or native telemetry construction packages outside the OpenTelemetry provider",
+  "why": "The app selects one neutral telemetry resource and the OpenTelemetry provider owns vendor construction for that process. Keeping construction imports inside the provider prevents another singleton, exporter, processor, or signal-provider lifecycle from becoming reachable.",
+  "remediate": "Consume @habitat-ai/resource-telemetry or the active @opentelemetry/api context from application code. Keep SDK, exporter, processor, propagation, and native instrumentation construction inside resources/telemetry/providers/opentelemetry-node.",
+  "message": "Native telemetry construction belongs only to the OpenTelemetry provider.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "apps/*/src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
+        "packages/*/src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
+        "plugins/*/src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
+        "resources/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}",
+        "services/*/src/**/*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/rawr/runtime-telemetry/rules/require_native_telemetry_provider_ownership/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/rawr/runtime-telemetry/rules/require_native_telemetry_provider_ownership/pattern.md"
+    },
+    "patternName": "require_native_telemetry_provider_ownership",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["apps", "packages", "plugins", "resources", "services"]
+    }
+  }
+}

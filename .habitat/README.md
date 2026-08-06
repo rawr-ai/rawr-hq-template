@@ -138,6 +138,9 @@ constructible document-kind topology.
 The `rawr/app-host` niche keeps the HQ application-to-server dependency
 directional: the declaration manifest stays cold, and only the app-owned
 server entrypoint crosses through the server's public host export.
+The `rawr/runtime-telemetry` niche keeps vendor construction inside the
+OpenTelemetry provider. Applications consume the neutral telemetry resource
+or the active OpenTelemetry API rather than creating another process owner.
 The port preserves Magic's service-law lineage rather than claiming continuing
 byte identity. Template deliberately refines the module router face, package
 metadata, module `AGENTS.md`, API paths, and the qualified RAWR niche; those

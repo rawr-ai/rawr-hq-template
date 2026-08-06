@@ -7,6 +7,7 @@
     "@rawr/hq-app": "apps/hq",
     "@rawr/server": "apps/server",
     "@rawr/web": "apps/web",
+    "@habitat-ai/resource-telemetry": "resources/telemetry",
     "runtime-realization-type-env": "tools/runtime-realization-type-env",
     "workstream-plugin-pack": "tools/workstream-plugin-pack"
   }
