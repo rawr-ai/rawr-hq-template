@@ -123,8 +123,10 @@ native-operation event scope for hosts without a native event binding,
 technical-log emission, availability, non-throwing flush, and bounded
 diagnostics. It does not expose a generic span, event, annotation, meter,
 tracer, active-context, exporter, SDK, registry, or mutable lifecycle-state
-API, and it does not import OpenTelemetry, EVlog, oRPC, Inngest, Effect,
-ClickHouse, Langfuse, or PostHog types. Product and service owners choose event
+API, and it does not import OpenTelemetry, EVlog, oRPC, Inngest, ClickHouse,
+Langfuse, PostHog, or `@effect/opentelemetry` types. Core `Effect.Effect` is the
+repository's provider-neutral operation substrate; no other Effect runtime or
+telemetry handle crosses the contract. Product and service owners choose event
 names and semantic fields; the resource transports observations without
 deciding their meaning.
 
