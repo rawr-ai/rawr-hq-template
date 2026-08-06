@@ -18,5 +18,5 @@
 
 ## 4. Land And Settle
 
-- [ ] 4.1 Land the lint-input and native-test corrections as separate semantic Graphite nodes.
-- [ ] 4.2 Allow the composed canonical-main repository ratchet to finish green, drain the merged stack, and archive this OpenSpec change.
+- [x] 4.1 Land the lint-input and native-test corrections as separate semantic Graphite nodes.
+- [x] 4.2 Allow the composed canonical-main repository ratchet to finish green, drain the merged stack, and archive this OpenSpec change.

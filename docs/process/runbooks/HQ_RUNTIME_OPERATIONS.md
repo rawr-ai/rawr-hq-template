@@ -94,7 +94,7 @@ bun run rawr -- hq status
 
 If an official `hq` command is missing there, verify the owning Nx build and
 Oclif composition instead of repairing it through Oclif user state. Habitat
-`0.5.1` publication and registry-installed smoke are complete; the private
+`0.5.2` publication and registry-installed smoke are complete; the private
 `rawr` application remains source/Nx invoked. Do not run the removed custom
 installer or selector. The predecessor distribution and global alias are absent;
 do not reconstruct them for development or acceptance.

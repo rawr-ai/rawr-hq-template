@@ -93,7 +93,7 @@ never installed into or merged with Personal. A Personal content release may
 become input data to Template tooling, but Personal source is never imported as
 executable CLI code.
 
-Habitat SDK and CLI `0.5.1` are the released reusable substrate. Template
+Habitat SDK and CLI `0.5.2` are the released reusable substrate. Template
 lifecycle acceptance uses `bun run rawr -- ...` from the exact canonical
 Template revision. The removed predecessor distribution, an installed RAWR
 alias, and a hypothetical RAWR package release are not interfaces.
