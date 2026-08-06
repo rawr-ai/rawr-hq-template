@@ -1,0 +1,26 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "native-platform-telemetry-admission",
+  "root": "tools/native-platform-telemetry-admission",
+  "sourceRoot": "tools/native-platform-telemetry-admission/test",
+  "projectType": "application",
+  "tags": ["type:tool", "migration-slice:native-platform-telemetry", "spec-conformance"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsc -p tools/native-platform-telemetry-admission/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test --max-concurrency 1 tools/native-platform-telemetry-admission/test/exact-tuple.test.ts"
+      }
+    },
+    "admit": {
+      "executor": "nx:noop",
+      "dependsOn": ["typecheck", "test"]
+    }
+  }
+}
