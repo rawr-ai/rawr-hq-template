@@ -5,6 +5,7 @@
     "habitat": "scripts/habitat",
     "@habitat-ai/rawr-agent-plugin-lifecycle": "services/agent-plugin-lifecycle",
     "@rawr/hq-app": "apps/hq",
+    "@rawr/server": "apps/server",
     "@rawr/web": "apps/web",
     "runtime-realization-type-env": "tools/runtime-realization-type-env",
     "workstream-plugin-pack": "tools/workstream-plugin-pack"
