@@ -7,7 +7,7 @@
 
 - [x] 2.1 Project exact workspace-root compatibility coverage, rule authority, runner assets, and runtime inputs without recursive unrelated descendants.
 - [x] 2.2 Update projection behavior tests for unrelated files, sibling-only coverage, and covered additions, changes, and deletions.
-- [x] 2.3 Correct Habitat execution-topology documentation to describe the current per-program Grit process boundary.
+- [x] 2.3 Correct Habitat execution-topology documentation to describe each isolated native Grit evaluation reached through the JavaScript wrapper.
 
 ## 3. Verify Cache Behavior
 
@@ -15,7 +15,7 @@
 - [x] 3.2 Use a command-recording Habitat shim under native Nx to prove that an edit outside the owner-wide input union invokes neither focused nor owner checks, while a sibling-only covered edit leaves the unrelated focus hot and invalidates the sibling plus owner.
 - [x] 3.3 Use the same native Nx fixture to prove covered add/change/delete and representative manifest, baseline, runner, catalog, and runtime invalidation.
 - [x] 3.4 Prove that a cold or invalidated owner adds exactly one `--owner` call, a warm repeat adds none, and no focused `--rule` call is scheduled.
-- [ ] 3.5 Run the real owner Habitat policy check, repeat it unchanged, and record cold versus cache-hit evidence without clearing unrelated caches.
+- [x] 3.5 Run the real owner Habitat policy check, repeat it unchanged, and record cold versus cache-hit evidence without clearing unrelated caches.
 
 ## 4. Review And Land
 
