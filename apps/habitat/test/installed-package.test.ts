@@ -373,7 +373,7 @@ describe("installed Habitat products", () => {
 
   it("migrates the CLI and SDK as one native Nx package group", async () => {
     const root = path.join(acceptanceRoot, "migration-consumer");
-    const previousReleaseVersion = "0.5.2";
+    const previousReleaseVersion = "0.5.3";
     await mkdir(root, { recursive: true });
     await writeFile(path.join(root, "nx.json"), "{}\n");
     await writeFile(
