@@ -53,8 +53,8 @@ function bunRepository(input?: {
       : { patchedDependencies: input.patchedDependencies }),
     ...(input?.resolutions === undefined ? {} : { resolutions: input.resolutions }),
     devDependencies: {
-      nx: "23.1.0",
-      "@nx/workspace": "23.1.0",
+      nx: "23.1.1",
+      "@nx/workspace": "23.1.1",
     },
   });
   if (input?.biome !== undefined) tree.write("biome.json", input.biome);
@@ -101,7 +101,7 @@ describe("Habitat Bun repository preset", () => {
         "@biomejs/biome": "2.5.3",
         "@types/node": "24.13.3",
         "bun-types": "1.3.14",
-        nx: "23.1.0",
+        nx: "23.1.1",
         typescript: "5.9.3",
       },
     });
