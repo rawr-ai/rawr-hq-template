@@ -259,6 +259,27 @@ const standardTypeScriptCompilerOptions = {
   types: ["bun-types", "node"],
 } as const;
 
+/**
+ * Admits package-owned initialization only for the canonical Bun consumer shape.
+ * The check runs before the generator plans package, Nx, hook, or policy changes.
+ */
+export function assertHabitatBunConsumer(tree: Tree): void {
+  assertBunRepositoryArtifacts(tree);
+  const packageJson = readRootPackage(tree);
+  const requiredManager = `bun@${BUN_VERSION}`;
+  if (packageJson.packageManager !== requiredManager) {
+    throw new Error(
+      `Habitat initialization requires packageManager '${requiredManager}'; received '${packageJson.packageManager}'.`
+    );
+  }
+  const nxPackageManager = requireNxJson(tree).cli?.packageManager;
+  if (nxPackageManager !== undefined && nxPackageManager !== "bun") {
+    throw new Error(
+      `Habitat initialization requires Nx package manager 'bun'; received '${nxPackageManager}'.`
+    );
+  }
+}
+
 const biomeConfig = jsonDocument({
   $schema: `https://biomejs.dev/schemas/${BIOME_VERSION}/schema.json`,
   vcs: {

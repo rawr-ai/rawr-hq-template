@@ -375,8 +375,15 @@ describe("installed Habitat products", () => {
     for (const product of products) {
       const packageRoot = path.join(consumerRoot, "node_modules", product.name);
       const stats = await lstat(packageRoot);
-      expect(stats.isDirectory()).toBe(true);
-      expect(stats.isSymbolicLink()).toBe(false);
+      expect(stats.isDirectory() || stats.isSymbolicLink()).toBe(true);
+      const installedRoot = await realpath(packageRoot);
+      const installedRelativePath = path.relative(
+        path.join(consumerRoot, "node_modules"),
+        installedRoot
+      );
+      expect(path.isAbsolute(installedRelativePath)).toBe(false);
+      expect(installedRelativePath).not.toBe("..");
+      expect(installedRelativePath.startsWith(`..${path.sep}`)).toBe(false);
 
       const manifestText = await readFile(path.join(packageRoot, "package.json"), "utf8");
       expect(manifestText).not.toContain("workspace:");
@@ -542,13 +549,13 @@ describe("installed Habitat products", () => {
     const hooksPath = path.join(consumerRoot, ".codex/hooks.json");
     const prePushPath = path.join(consumerRoot, ".husky/pre-push");
     const packagePath = path.join(consumerRoot, "package.json");
-    const packageLockPath = path.join(consumerRoot, "package-lock.json");
+    const lockPath = path.join(consumerRoot, "bun.lock");
     const instancePath = path.join(consumerRoot, "packages/example/habitat.toml");
     const firstNx = await readFile(nxPath, "utf8");
     const firstHooks = await readFile(hooksPath, "utf8");
     const firstPrePush = await readFile(prePushPath, "utf8");
     const firstPackage = await readFile(packagePath, "utf8");
-    const firstPackageLock = await readFile(packageLockPath, "utf8");
+    const firstLock = await readFile(lockPath, "utf8");
     const firstInstance = await readFile(instancePath, "utf8");
     await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
     expect(firstInstance).not.toContain("source =");
@@ -562,10 +569,7 @@ describe("installed Habitat products", () => {
       await readFile(path.join(consumerRoot, "node_modules/husky/package.json"), "utf8")
     ) as { readonly version?: string };
     expect(huskyManifest.version).toBe("9.1.7");
-    const packageLock = JSON.parse(firstPackageLock) as {
-      readonly packages?: Readonly<Record<string, { readonly version?: string }>>;
-    };
-    expect(packageLock.packages?.["node_modules/husky"]?.version).toBe("9.1.7");
+    expect(firstLock).toContain('"husky": ["husky@9.1.7"');
     expect(firstPrePush).toBe(
       "# Nested Git work must discover its own repository.\n" +
         "unset $(git rev-parse --local-env-vars)\n" +
@@ -603,7 +607,7 @@ describe("installed Habitat products", () => {
     expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
     expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
     expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
-    expect(await readFile(packageLockPath, "utf8")).toBe(firstPackageLock);
+    expect(await readFile(lockPath, "utf8")).toBe(firstLock);
     expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
     await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
 
@@ -623,7 +627,7 @@ describe("installed Habitat products", () => {
     expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
     expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
     expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
-    expect(await readFile(packageLockPath, "utf8")).toBe(firstPackageLock);
+    expect(await readFile(lockPath, "utf8")).toBe(firstLock);
     expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
     await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
     expect((await lstat(path.join(consumerRoot, ".husky/_/pre-push"))).isFile()).toBe(true);
@@ -899,6 +903,7 @@ async function createConsumer(): Promise<void> {
   const dependencies = Object.fromEntries([
     ...products.map((product) => [product.name, installVersion]),
     ["nx", "23.1.0"],
+    ["typebox", "1.3.8"],
   ]);
   const files: Readonly<Record<string, string>> = {
     "consumer.ts": consumerSource(),
@@ -916,6 +921,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
         name: "habitat-installed-consumer",
         private: true,
         type: "module",
+        packageManager: "bun@1.3.14",
         workspaces: ["packages/*"],
         scripts: { check: "node hook-check.mjs" },
         dependencies,
@@ -960,7 +966,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
     "tsconfig.json": `${JSON.stringify(
       {
         compilerOptions: {
-          lib: ["ES2022", "DOM", "DOM.Iterable"],
+          lib: ["ES2022", "ESNext.Disposable", "DOM", "DOM.Iterable"],
           module: "NodeNext",
           moduleResolution: "NodeNext",
           noEmit: true,
@@ -994,11 +1000,10 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
 }
 
 async function installConsumer(): Promise<void> {
-  const installed = await run(
-    "npm",
-    ["install", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"],
-    { cwd: consumerRoot, timeoutMs: 180_000 }
-  );
+  const installed = await run("bun", ["install", "--ignore-scripts"], {
+    cwd: consumerRoot,
+    timeoutMs: 180_000,
+  });
   if (installed.exitCode !== 0) {
     throw new Error(`Could not install Habitat products: ${installed.stderr || installed.stdout}`);
   }
