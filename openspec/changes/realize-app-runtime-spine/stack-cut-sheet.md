@@ -92,7 +92,7 @@ destination adoption units:
 
 | Source capability | Destination and status | Admission rule |
 |---|---|---|
-| Provider-neutral telemetry resource, OpenTelemetry Node provider, vendor admission, and provider conformance through `codex/record-native-telemetry-provider` | Habitat telemetry resource/provider sink; needs adoption | Restack the path-qualified source onto current resource/provider law, remove predecessor app coupling, run the resource/provider behavior targets, and merge the sink as a small Habitat stack. |
+| Provider-neutral telemetry resource, OpenTelemetry Node provider, vendor admission, and provider conformance through `codex/record-native-telemetry-provider` | Habitat telemetry resource/provider sink; needs adoption | Re-author the path-qualified implementation onto current resource/provider law, remove predecessor app coupling, run the resource/provider behavior targets, and land the fresh destination-owned sink as a small Habitat stack. Do not restack or merge the mixed predecessor root. |
 | oRPC, Inngest, Oclif, correlation, shutdown, delivery/drop, and receipt behavior after `codex/record-native-telemetry-provider` | Fresh Habitat runtime-harness acceptance; source branches retire after adoption | Preserve the behavior as named acceptance obligations in [[classification-ledger#behavioral-acceptance-matrix]]. Do not merge changes to deleted HQ/server/example owners or copy their host wiring. Re-author each obligation beside its qualified app/process/harness owner once that owner exists. |
 | `codex/retire-core-telemetry-singleton` and `codex/record-core-telemetry-retirement` | Habitat core-deletion sink; needs adoption immediately after the qualified provider | Move every surviving reader to the telemetry resource/provider, delete `packages/core/src/telemetry.ts` and its predecessor tests, and replace the Rawr-named retirement rule with qualified owner law. Adopt these exact deletion semantics without merging the obsolete host chain that precedes them. |
 | Staged files at `codex/prove-native-telemetry-receipt` | Held by the current writer | No edit, restack, cleanup, or source admission occurs until the writer returns an exact clean handoff. |
@@ -124,15 +124,17 @@ acceptance become its authority.
 - Architecture review passed after the two release checkpoints, later Rawr
   adoption order, SDK resource integrations, and specification-toolbox timing
   were made explicit.
-- Behavior-first review passed after every retained, moved, adopted, or
-  behavior-preserving deletion received an owner-local Nx oracle, observable
-  result, and falsifier in [[classification-ledger#behavioral-acceptance-matrix]].
-- TypeScript, structural-quality, Nx, and Graphite review passed the ten-owner
-  private graph, terminal SDK assembly, three optional integration pairs,
-  two-package release group, initial `nx add`, later `nx migrate`, and one
-  disposition per Graphite root.
+- TypeScript review passed after the pre-separation interface cut was narrowed
+  to admitted readers and condemned reader closures were deleted rather than
+  adapted.
+- Structural-quality and behavior-first reviews passed after bounded P1s in
+  source-adoption wording, final identities, predecessor Oclif law, executable
+  command/deletion oracles, prepublication `nx add`, and fresh-owner versus
+  preserved behavior were corrected. The final cumulative absence inventory
+  covers every renamed, transferred, dissolved, and deleted predecessor from
+  the 47-project ledger plus condemned commands, readers, and state paths.
 
-No P0 or P1 remains open on this classification node.
+No P0 or P1 remains open on this classification stack.
 
 ## Execution Order
 

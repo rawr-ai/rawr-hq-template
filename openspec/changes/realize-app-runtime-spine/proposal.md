@@ -53,15 +53,15 @@ The exact sectional source ledger is [[authority-amendment]].
   public Oclif executable package and expose its one consumer Oclif host
   entrypoint for private downstream apps; do not publish internal runtime phases
   or harnesses as a package cohort.
-- Before core reservation, land the native telemetry companion's qualified
-  non-core OpenTelemetry resource/provider and retire the current Rawr-named
-  singleton. Distribute that selected provider through the optional
-  `@habitat-ai/sdk/telemetry` integration subpath rather than another package or
-  the CLI host. Replace only its generic observation contracts in Habitat core;
-  after runtime lands, the companion consumes the exact checkpoint for Habitat
-  profile wiring. Downstream products select only the released integration from
-  their own repositories. This change does not duplicate that provider or
-  backend implementation.
+- Hold the mixed native-telemetry source root as adoption evidence. Before core
+  reservation, re-author its path-qualified OpenTelemetry resource/provider and
+  core-singleton retirement into fresh Habitat-owned nodes; do not restack or
+  merge the predecessor root. Distribute that selected provider through the
+  optional `@habitat-ai/sdk/telemetry` integration subpath rather than another
+  package or the CLI host. After runtime lands, re-author each admitted profile,
+  process, and harness obligation beside its final owner, then retire the held
+  source only after destination acceptance. Downstream products select only the
+  released integration from their own repositories.
 
 ## Capabilities
 
