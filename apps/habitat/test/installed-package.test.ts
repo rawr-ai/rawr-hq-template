@@ -10,11 +10,13 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+import type { Server } from "node:http";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { runServer } from "verdaccio";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 type CommandResult = Readonly<{
@@ -42,10 +44,12 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
   .filter((name) => name.length > 0);
 const sdkVersion = await readPackageVersion("packages/habitat-sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
-const registryVersion = process.env.HABITAT_ACCEPTANCE_REGISTRY_VERSION?.trim();
+const publishedRegistryVersion = process.env.HABITAT_ACCEPTANCE_REGISTRY_VERSION?.trim();
 if (
-  registryVersion !== undefined &&
-  (registryVersion.length === 0 || registryVersion !== sdkVersion || registryVersion !== cliVersion)
+  publishedRegistryVersion !== undefined &&
+  (publishedRegistryVersion.length === 0 ||
+    publishedRegistryVersion !== sdkVersion ||
+    publishedRegistryVersion !== cliVersion)
 ) {
   throw new Error(
     "HABITAT_ACCEPTANCE_REGISTRY_VERSION must equal the SDK and CLI package versions."
@@ -69,6 +73,13 @@ const products: readonly PublicProduct[] = [
 let acceptanceRoot = "";
 let adoptionRoot = "";
 let consumerRoot = "";
+let localRegistry: Server | undefined;
+const originalRegistryEnvironment = new Map(
+  ["BUN_CONFIG_REGISTRY", "BUN_CONFIG_TOKEN", "NPM_CONFIG_USERCONFIG", "npm_config_registry"].map(
+    (name) => [name, process.env[name]]
+  )
+);
+const installVersion = publishedRegistryVersion ?? sdkVersion;
 
 beforeAll(async () => {
   acceptanceRoot = await realpath(await mkdtemp(path.join(temporaryParent, FIXTURE_PREFIX)));
@@ -83,6 +94,10 @@ beforeAll(async () => {
   await mkdir(adoptionRoot, { recursive: true });
   await mkdir(consumerRoot, { recursive: true });
   await packPublicProducts();
+  if (publishedRegistryVersion === undefined) {
+    await startCandidateRegistry();
+    await publishCandidateProducts();
+  }
   await createAdoptionConsumer();
   await installAdoptionConsumer();
   await createConsumer();
@@ -90,7 +105,15 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-  if (acceptanceRoot !== "") await removeOwnedFixture(acceptanceRoot);
+  try {
+    await stopCandidateRegistry();
+  } finally {
+    for (const [name, value] of originalRegistryEnvironment) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+    if (acceptanceRoot !== "") await removeOwnedFixture(acceptanceRoot);
+  }
 });
 
 describe("installed Habitat products", () => {
@@ -99,10 +122,7 @@ describe("installed Habitat products", () => {
     await expect(lstat(cliRoot)).rejects.toMatchObject({ code: "ENOENT" });
 
     const nx = path.join(adoptionRoot, "node_modules/.bin/nx");
-    const cliSpecifier =
-      registryVersion ??
-      `file:${path.join(acceptanceRoot, "packages", publicProduct("@habitat-ai/cli").filename)}`;
-    const added = await run(nx, ["add", `@habitat-ai/cli@${cliSpecifier}`, "--no-interactive"], {
+    const added = await run(nx, ["add", `@habitat-ai/cli@${installVersion}`, "--no-interactive"], {
       cwd: adoptionRoot,
       env: {
         PATH: `${path.join(adoptionRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
@@ -188,14 +208,7 @@ describe("installed Habitat products", () => {
   it("creates the portable Bun repository before activating post-Git hooks", async () => {
     const name = "preset-consumer";
     const root = path.join(acceptanceRoot, name);
-    const cliSpecifier =
-      registryVersion === undefined
-        ? `@habitat-ai/cli@file:${path.join(
-            acceptanceRoot,
-            "packages",
-            publicProduct("@habitat-ai/cli").filename
-          )}`
-        : `@habitat-ai/cli@${registryVersion}`;
+    const cliSpecifier = `@habitat-ai/cli@${installVersion}`;
     const created = await run(
       "bunx",
       [
@@ -735,7 +748,7 @@ async function listFiles(root: string, relativeRoot = ""): Promise<readonly stri
 }
 
 async function packPublicProducts(): Promise<void> {
-  if (registryVersion !== undefined) return;
+  if (publishedRegistryVersion !== undefined) return;
 
   for (const product of products) {
     const packed = await run(
@@ -767,9 +780,85 @@ async function packPublicProducts(): Promise<void> {
   }
 }
 
+async function startCandidateRegistry(): Promise<void> {
+  const registry = (await runServer(
+    {
+      configPath: path.join(acceptanceRoot, "registry.config.yml"),
+      storage: path.join(acceptanceRoot, "registry"),
+      uplinks: { npmjs: { maxage: "60m", url: "https://registry.npmjs.org" } },
+      packages: {
+        "@habitat-ai/*": { access: "$all", publish: "$all", unpublish: "$all" },
+        "**": { access: "$all", proxy: "npmjs", publish: "$all", unpublish: "$all" },
+      },
+      log: { format: "pretty", level: "warn", type: "stdout" },
+      publish: { allow_offline: true },
+    },
+    { listenArg: "http://127.0.0.1:0" }
+  )) as Server;
+  localRegistry = registry;
+  await new Promise<void>((resolve, reject) => {
+    const onError = (error: Error) => reject(error);
+    registry.once("error", onError);
+    registry.listen(0, "127.0.0.1", () => {
+      registry.off("error", onError);
+      resolve();
+    });
+  });
+  const address = registry.address();
+  if (address === null || typeof address === "string") {
+    throw new Error("Verdaccio did not bind a local TCP address.");
+  }
+  const registryUrl = `http://127.0.0.1:${address.port}`;
+  const npmConfig = path.join(acceptanceRoot, "runtime", "config", "npmrc");
+  await writeFile(
+    npmConfig,
+    [
+      `registry=${registryUrl}/`,
+      `//127.0.0.1:${address.port}/:_authToken=habitat-acceptance`,
+      "",
+    ].join("\n")
+  );
+  process.env.NPM_CONFIG_USERCONFIG = npmConfig;
+  process.env.npm_config_registry = registryUrl;
+  process.env.BUN_CONFIG_REGISTRY = registryUrl;
+  process.env.BUN_CONFIG_TOKEN = "habitat-acceptance";
+}
+
+async function stopCandidateRegistry(): Promise<void> {
+  const registry = localRegistry;
+  localRegistry = undefined;
+  if (registry === undefined || !registry.listening) return;
+  await new Promise<void>((resolve, reject) => {
+    registry.close((error) => {
+      if (error !== undefined) reject(error);
+      else resolve();
+    });
+    registry.closeAllConnections();
+  });
+}
+
+async function publishCandidateProducts(): Promise<void> {
+  for (const product of products) {
+    const published = await run(
+      "npm",
+      [
+        "publish",
+        path.join(acceptanceRoot, "packages", product.filename),
+        "--access",
+        "public",
+        "--ignore-scripts",
+      ],
+      { cwd: acceptanceRoot, timeoutMs: 120_000 }
+    );
+    if (published.exitCode !== 0) {
+      throw new Error(
+        `Could not publish candidate ${product.name}: ${published.stderr || published.stdout}`
+      );
+    }
+  }
+}
+
 async function createAdoptionConsumer(): Promise<void> {
-  const sdkSpecifier =
-    registryVersion ?? `file:../packages/${publicProduct("@habitat-ai/sdk").filename}`;
   const files: Readonly<Record<string, string>> = {
     "nx.json": "{}\n",
     "package.json": `${JSON.stringify(
@@ -778,7 +867,7 @@ async function createAdoptionConsumer(): Promise<void> {
         private: true,
         type: "module",
         packageManager: "bun@1.3.14",
-        dependencies: { "@habitat-ai/sdk": sdkSpecifier },
+        dependencies: { "@habitat-ai/sdk": installVersion },
         devDependencies: { nx: "23.1.0" },
       },
       null,
@@ -808,10 +897,7 @@ async function installAdoptionConsumer(): Promise<void> {
 
 async function createConsumer(): Promise<void> {
   const dependencies = Object.fromEntries([
-    ...products.map((product) => [
-      product.name,
-      registryVersion ?? `file:../packages/${product.filename}`,
-    ]),
+    ...products.map((product) => [product.name, installVersion]),
     ["nx", "23.1.0"],
   ]);
   const files: Readonly<Record<string, string>> = {
@@ -949,6 +1035,7 @@ async function run(
   const runtimeRoot = path.join(acceptanceRoot, "runtime");
   const env: NodeJS.ProcessEnv = {
     ...process.env,
+    BUN_INSTALL_CACHE_DIR: path.join(runtimeRoot, "cache", "bun"),
     HOME: path.join(runtimeRoot, "home"),
     NO_COLOR: "1",
     NX_DAEMON: "false",
