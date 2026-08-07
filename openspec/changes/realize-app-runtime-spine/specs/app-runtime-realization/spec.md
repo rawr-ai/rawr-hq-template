@@ -297,7 +297,10 @@ exports MUST be exactly
 `./plugins/agent`, `./plugins/agent/effect`, `./plugins/agent/schema`,
 `./plugins/desktop`, `./plugins/desktop/effect`, `./runtime/resources`,
 `./runtime/providers`, `./runtime/providers/effect`, `./runtime/profiles`, and
-`./runtime/schema`, plus the optional integration export `./telemetry` and the data exports `./habitat-pack.json`,
+`./runtime/schema`; the optional integration exports `./telemetry`,
+`./resources/semantic-ledger`, `./resources/semantic-ledger/fluree`,
+`./resources/temporal-inquiry`, and `./resources/temporal-inquiry/fluree`; and
+the data exports `./habitat-pack.json`,
 `./blueprints/*`, and `./package.json`. The closed private runtime inventory and
 completed direct dependency graph MUST be exactly:
 
@@ -324,6 +327,19 @@ listed project and MUST remain the sole downstream assembler of their outputs
 into one package. Real source/build references MUST establish the edges;
 `implicitDependencies` and publication metadata are not substitutes. No private
 runtime project may import the public facade.
+
+The SDK MAY additionally assemble only these qualified source-owned integration
+pairs: telemetry resource/OpenTelemetry Node provider, semantic-ledger
+resource/Fluree HTTP provider, and temporal-inquiry resource/Fluree HTTP
+provider. Their exact project IDs are `@habitat-ai/resource-telemetry` and
+`provider-telemetry-opentelemetry-node`,
+`@habitat-ai/resource-semantic-ledger` and
+`provider-semantic-ledger-fluree-http`, and
+`@habitat-ai/resource-temporal-inquiry` and
+`provider-temporal-inquiry-fluree-http`. These assembly edges terminate at the
+SDK but do not join the private runtime inventory or release group. Each
+provider is reachable only from its own optional conditional-import subpath,
+and packed output contains no unresolved workspace dependency.
 
 Reusable private runtime code MUST stay within one of the ten named capability
 owners whose invariant it implements. The inventory is closed.
@@ -359,10 +375,12 @@ the expected dependent work.
 
 The SDK root is a terminal core-authoring facade, and every subpath is its own
 terminal entry module; neither may load every subpath or vendor.
-The optional `./telemetry` entry assembles the qualified Habitat telemetry
-resource/provider without transferring its source ownership, selecting it for
-an app, or loading it from any other SDK entry. It MUST NOT become a third
-package or move into the CLI host.
+Each optional integration entry assembles only its qualified Habitat
+resource/provider without transferring source ownership, selecting it for an
+app, or loading it from any other SDK entry. It MUST NOT become a third package
+or move into the CLI host. Installed-package acceptance MUST cold-import every
+provider-neutral and optional provider subpath, prove absent optional peers do
+not break unrelated imports, and reject any unresolved workspace dependency.
 `@habitat-ai/cli` remains a separate public Oclif executable package, not a
 second runtime distribution.
 
@@ -383,6 +401,8 @@ second runtime distribution.
   specified acyclic dependency graph terminating at the SDK build
 - **AND** adapter code is owner-local to process-runtime or harnesses and no
   generic adapter project exists
+- **AND** the only non-runtime SDK assembly edges are the three exact qualified
+  resource/provider integration pairs
 - **AND** only `@habitat-ai/sdk` is a public runtime or authoring package
 
 #### Scenario: A private owner lands its first implementation

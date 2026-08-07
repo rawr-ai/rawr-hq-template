@@ -9,38 +9,39 @@ authority.
 
 ## Reviewed Normative Parent
 
-The reviewed canonical candidate is the current
-`agent-codex-runtime-source-authority-amendment` branch directly above
-predecessor commit `3c84248e59de6bbf0de1a31e09ddc8456eae6aee`.
-Task 1.1 records the candidate's exact commit and two canonical blob identities
-after the docs checkpoint is created; the predecessor commit and its blobs are
-provenance, not the completed recut authority.
+The reviewed canonical Habitat authority landed on `main` at merge commit
+`f920232efbcb10cc4a7220e3b6be4b81a393009d`. This execution record landed
+directly above it at `7457505fc5dc068c1ff80a06ca78f713ebe3a954`.
+The earlier candidate branch, source commit, and two canonical blob identities
+recorded by task 1.1 remain ordinary Git provenance, not alternate authority.
 
-The candidate's canonical files are
+The landed authority's canonical files are
 `docs/system/HABITAT_ARCHITECTURE.md` and
 `docs/system/HABITAT_RUNTIME_REALIZATION.md`. The predecessor Rawr-named project
 paths are provenance pointers only and cannot satisfy the two blob checks.
 
-The candidate reconciles the frozen runtime lineage with the accepted Habitat
-identity, public SDK and CLI boundaries, app and entrypoint law, CLI topic
+The landed authority reconciles the frozen runtime lineage with the accepted
+Habitat identity, public SDK and CLI boundaries, app and entrypoint law, CLI topic
 topology, TypeBox adaptation, resource/provider public-face law, and the
-repository boundary between the Habitat platform and downstream products. It
-becomes the complete normative input to this OpenSpec only
-after task 1.1 records its exact identities. Task 1.5 remains open until that
-exact commit lands on canonical `main`; source
-implementation does not open before that landing.
+repository boundary between the Habitat platform and downstream products. Its
+contents on canonical `main` are the complete normative input to this OpenSpec.
+Branch names, transient restack commits, and byte comparison do not create a
+second authority.
 
 Habitat is the platform, substrate, runtime, and architecture law. Rawr is an
 independent downstream product, not a reference application housed in Habitat.
 `apps/habitat` is Habitat's self-hosted realization for non-core platform
 capabilities, not a peer product or a second platform identity. `packages/core`
-is reserved exclusively for Habitat core. Before any new runtime implementation
-begins, the repository MUST classify every current capability, move the proven
-Rawr closure to the independent Rawr repository, move retained Habitat
-capabilities to their exact platform owners, and delete all product, dead, and
-mixed source from Habitat. No `apps/rawr` path or other compatibility app may be
-created in Habitat. Marketplace remains the separate curated-content repository;
-it does not become the Rawr application repository.
+is reserved exclusively for Habitat core. Before separation, Habitat MAY land
+only the bounded non-live `runtime-schema` adaptation and public service/CLI
+interfaces required to compile the destination projects. Before any other
+private runtime implementation begins, the repository MUST classify every
+current capability, move the proven Rawr closure to the independent Rawr
+repository, move retained Habitat capabilities to their exact platform owners,
+and delete all product, dead, and mixed source from Habitat. No `apps/rawr` path
+or other compatibility app may be created in Habitat. Marketplace remains the
+separate curated-content repository; it does not become the Rawr application
+repository.
 
 ## Frozen Runtime Authority
 
@@ -94,10 +95,12 @@ The following later landed sources supersede only the named frozen clauses:
    does not own their contracts or implementations. Product-specific resources
    and providers remain product assets governed only in shape by Habitat law.
 10. `@habitat-ai/cli` owns foundational Habitat commands, native Oclif plugin
-    mechanics, initialization, generators, and self-host projections. The Rawr
-    CLI owns only the ChatGPT corpus and Hyperresearch domain topics that survive
-    its owner-local review. A common Oclif loader or current repository path
-    transfers no topic ownership.
+    mechanics, initialization, generators, and self-host projections. At the
+    initial separation gate, the Rawr CLI owns the ChatGPT corpus,
+    Hyperresearch, and session-intelligence domain topics that survive its
+    owner-local review. A later Rawr product topic requires a separate
+    owner-local admission after its released Habitat prerequisites exist. A
+    common Oclif loader or current repository path transfers no topic ownership.
 11. Rawr application identity and composition belong only in the independent
     Rawr repository. The current `@habitat-ai/rawr`, `@rawr/hq-app`,
     `@rawr/server`, and `@rawr/web` identities are migration inputs, not
@@ -136,10 +139,14 @@ demonstrates that non-core platform capabilities obey those same contracts.
 Downstream products consume released Habitat interfaces and own their ids,
 selected providers, plugin membership, config sources, role sets, deployment,
 and executable bodies. This OpenSpec does not define a Rawr reference app.
-Only the proven ChatGPT corpus and Hyperresearch domain services and topics move
-to Rawr, and their application composition is governed by the Rawr repository's
-owner-local OpenSpec after separation. Services own domain semantics, apps own
-composition, plugins own projection, and Habitat owns the execution grammar and
+Only the proven ChatGPT corpus, Hyperresearch, and session-intelligence domain
+services and topics enter the initial finite source migration. Later stack-only
+Rawr product capabilities, including workstream and research experimentation,
+may enter only through separate Rawr owner-local admission after their released
+Habitat prerequisites exist; they are not part of the initial separation gate.
+Application composition is governed by the Rawr repository's owner-local
+OpenSpec after separation. Services own domain semantics, apps own composition,
+plugins own projection, and Habitat owns the execution grammar and
 handoffs.
 
 ## Experiment Admission

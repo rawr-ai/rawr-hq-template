@@ -6,6 +6,55 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-07 - Service Law Is Portable
+
+`service@1` is a generic construction law, not repository-local repair. A
+service owns one runtime capability through one public contract, in-process
+client, router, and private implementation. Another service crosses that
+boundary through the client. Resources and providers enter from app
+composition; transport and orchestration remain plugin or app concerns.
+
+The kind contains no Civ7, Magic, Rawr, or inventory vocabulary. oRPC 2 and
+Effect 4 supply the vendor substrate while Habitat closes ownership and
+topology. A rule that cannot govern both Civ7 and Magic without product terms
+does not belong to `service@1`. Consumers refuse construction until the
+versioned Habitat pack makes this kind constructible and proven; they do not
+copy or fork a substitute.
+
+### Bag Of Keywords
+
+service, contract, client, router, implementation.
+
+context, resource, provider, plugin, app.
+
+public, private, downward, closed, portable.
+
+## 2026-08-07 - Board Before Branch
+
+Canonical `main` is the semantic ledger. Graphite branches are delivery lanes,
+not alternate authorities, and restack commit identities are not product
+evidence. Before another branch moves, the repository-wide board is classified
+once by capability ownership and each stack receives one terminal disposition:
+retain and restack in Habitat, prepare and export once to Rawr or Marketplace,
+or retire. A live worktree owned by another lane is coordinated rather than
+silently manipulated.
+
+Habitat work absorbs current platform law, finishes against the released
+substrate, and merges here. Rawr or Marketplace work is made coherent only to
+the point required for a finite owner transfer, then continues under the
+destination repository's own graph and records. Merged residue and superseded
+experiments do not become migration inputs. This whole-board cut prevents
+branch mechanics, byte comparison, or visual `gt ls` fanout from substituting
+for product judgment.
+
+### Bag Of Keywords
+
+board, stack, owner, lineage, main.
+
+retain, restack, transfer, retire, merge.
+
+Habitat, Rawr, Marketplace, evidence, closure.
+
 ## 2026-08-06 - Separate Before Realizing
 
 Repository separation is the first source operation, not terminal cleanup.

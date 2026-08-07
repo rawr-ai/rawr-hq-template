@@ -22,8 +22,9 @@ The exact sectional source ledger is [[authority-amendment]].
   conveys no ownership. Retain reusable platform capability in Habitat, move
   only proven downstream product capability to Rawr, and delete duplicate,
   obsolete, weak, or unclear machinery.
-- Move only the proven ChatGPT corpus and Hyperresearch product closure to the
-  existing independent Rawr repository before the Habitat runtime spine opens.
+- Move the proven ChatGPT corpus, Hyperresearch, and Codex/Claude session
+  intelligence product closures to the existing independent Rawr repository
+  before the Habitat runtime spine opens.
   Use native Nx history-preserving import, retire Habitat-side Rawr application
   law, and leave Marketplace as an independent content repository.
 - Implement the minimum generic runtime spine that preserves every canonical
@@ -39,13 +40,14 @@ The exact sectional source ledger is [[authority-amendment]].
   compatibility app, alias, fallback, or duplicate Nx identity.
 - Delete `RawrCommand` and `RawrResult`, consolidate their reusable output
   behavior with the duplicate Habitat output support into one Habitat command
-  contract, and replace `RAWR_*` workspace discovery with explicit Habitat
-  host/workspace binding. Agent-plugin lifecycle, config inspection, journal,
-  security checks and reports, development/repository operations, session
-  intelligence, native Oclif plugin mechanics, and CLI generators are Habitat
+  contract, and replace Habitat-side Rawr workspace discovery with explicit
+  Habitat workspace input. Product-owned Rawr configuration transfers with its
+  product owner. Agent-plugin lifecycle, development/repository
+  operations, native Oclif plugin mechanics, and CLI generators are Habitat
   capabilities. Current doctor, HQ graph, reflect, routine, tools-export,
-  workflow-harden, security-posture, hello, and the predecessor agent-plugin
-  creation surfaces are deleted rather than renamed.
+  workflow-harden, config, journal, security, hello, and the predecessor
+  agent-plugin creation surfaces are deleted rather than renamed when their
+  current implementation has no generic Habitat owner.
 - Keep the runtime substrate inside the sole public runtime and authoring
   distribution, `@habitat-ai/sdk`. Keep `@habitat-ai/cli` as the separate
   public Oclif executable package and expose its one consumer Oclif host
