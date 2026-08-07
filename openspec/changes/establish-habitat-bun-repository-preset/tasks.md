@@ -32,6 +32,6 @@
   resolve every P0/P1 and land the preset as a truthful Graphite checkpoint.
 - [x] 3.3 Include the preset in the next ordinary fixed CLI/SDK Nx release and pass
   registry-installed smoke without publishing another package.
-- [ ] 3.4 Apply the released generator to Rawr through native Nx, remove its
+- [x] 3.4 Apply the released generator to Rawr through native Nx, remove its
   temporary generic wiring in the same checkpoint, and publish the exact migration
-  handoff to blocked consumers.
+  handoff to blocked consumers in [[consumer-handoff]].
