@@ -1,6 +1,11 @@
 {
   "$schema": "https://json-schema.org/schema",
   "generators": {
+    "preset": {
+      "factory": "./dist/generators/preset.js",
+      "schema": "./preset.schema.json",
+      "description": "Create the portable Habitat Bun/Nx repository spine."
+    },
     "init": {
       "factory": "./dist/generators/init.js",
       "schema": "./generators.schema.json",

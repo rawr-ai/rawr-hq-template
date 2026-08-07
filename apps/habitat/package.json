@@ -20,6 +20,8 @@
     "dist",
     "generators.json",
     "generators.schema.json",
+    "preset.schema.json",
+    "README.md",
     "oclif.manifest.json",
     "package.json"
   ],

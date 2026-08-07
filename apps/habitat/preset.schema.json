@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "packageManager": {
+      "type": "string",
+      "enum": ["bun"],
+      "description": "Package manager selected by create-nx-workspace; Habitat accepts Bun only."
+    }
+  },
+  "required": ["packageManager"],
+  "additionalProperties": true
+}

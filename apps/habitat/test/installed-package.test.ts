@@ -67,10 +67,12 @@ const products: readonly PublicProduct[] = [
 ];
 
 let acceptanceRoot = "";
+let adoptionRoot = "";
 let consumerRoot = "";
 
 beforeAll(async () => {
   acceptanceRoot = await realpath(await mkdtemp(path.join(temporaryParent, FIXTURE_PREFIX)));
+  adoptionRoot = path.join(acceptanceRoot, "adoption");
   consumerRoot = path.join(acceptanceRoot, "consumer");
   await mkdir(path.join(acceptanceRoot, "packages"), { recursive: true });
   await Promise.all(
@@ -78,8 +80,11 @@ beforeAll(async () => {
       mkdir(path.join(acceptanceRoot, "runtime", directory), { recursive: true })
     )
   );
+  await mkdir(adoptionRoot, { recursive: true });
   await mkdir(consumerRoot, { recursive: true });
   await packPublicProducts();
+  await createAdoptionConsumer();
+  await installAdoptionConsumer();
   await createConsumer();
   await installConsumer();
 }, 180_000);
@@ -89,6 +94,269 @@ afterAll(async () => {
 });
 
 describe("installed Habitat products", () => {
+  it("adopts the packed CLI and preset into a bare Bun Nx repository", async () => {
+    const cliRoot = path.join(adoptionRoot, "node_modules/@habitat-ai/cli");
+    await expect(lstat(cliRoot)).rejects.toMatchObject({ code: "ENOENT" });
+
+    const nx = path.join(adoptionRoot, "node_modules/.bin/nx");
+    const cliSpecifier =
+      registryVersion ??
+      `file:${path.join(acceptanceRoot, "packages", publicProduct("@habitat-ai/cli").filename)}`;
+    const added = await run(nx, ["add", `@habitat-ai/cli@${cliSpecifier}`, "--no-interactive"], {
+      cwd: adoptionRoot,
+      env: {
+        PATH: `${path.join(adoptionRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
+      },
+      timeoutMs: 120_000,
+    });
+    expect(added, added.stderr || added.stdout).toMatchObject({ exitCode: 0 });
+
+    const cliStats = await lstat(cliRoot);
+    expect(cliStats.isDirectory()).toBe(true);
+    expect(cliStats.isSymbolicLink()).toBe(false);
+    expect(await readFile(path.join(cliRoot, "preset.schema.json"), "utf8")).toContain(
+      '"additionalProperties": true'
+    );
+    expect(JSON.parse(await readFile(path.join(adoptionRoot, "nx.json"), "utf8"))).toMatchObject({
+      plugins: ["@habitat-ai/cli/nx-plugin"],
+    });
+    expect(
+      JSON.parse(await readFile(path.join(adoptionRoot, "package.json"), "utf8"))
+    ).toMatchObject({
+      packageManager: "bun@1.3.14",
+      scripts: { prepare: "husky" },
+      devDependencies: { husky: "9.1.7" },
+      trustedDependencies: ["@getgrit/cli"],
+    });
+    const hookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
+      cwd: adoptionRoot,
+    });
+    expect(hookConfig, hookConfig.stderr || hookConfig.stdout).toMatchObject({
+      exitCode: 0,
+      stdout: ".husky/_\n",
+    });
+
+    const fixturePath = `${path.join(adoptionRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`;
+    const preset = await run(
+      nx,
+      ["generate", "@habitat-ai/cli:preset", "--packageManager=bun", "--no-interactive"],
+      { cwd: adoptionRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+    );
+    expect(preset, preset.stderr || preset.stdout).toMatchObject({ exitCode: 0 });
+    expect(JSON.parse(await readFile(path.join(adoptionRoot, "nx.json"), "utf8"))).toMatchObject({
+      namedInputs: {
+        production: [
+          "default",
+          "!{projectRoot}/test/**",
+          "!{projectRoot}/**/*.test.*",
+          "!{projectRoot}/**/*.spec.*",
+        ],
+      },
+    });
+
+    const exampleRoot = path.join(adoptionRoot, "packages/example");
+    await mkdir(path.join(exampleRoot, "src"), { recursive: true });
+    await writeFile(path.join(exampleRoot, "src/index.ts"), "export const answer = 42;\n");
+    await writeFile(
+      path.join(exampleRoot, "project.json"),
+      `${JSON.stringify(
+        {
+          name: "adoption-example",
+          targets: {
+            build: {
+              executor: "nx:run-commands",
+              options: {
+                command: "bun build src/index.ts --outdir dist",
+                cwd: "packages/example",
+              },
+            },
+          },
+        },
+        null,
+        2
+      )}\n`
+    );
+    const built = await run(nx, ["run", "adoption-example:build", "--outputStyle=static"], {
+      cwd: adoptionRoot,
+      env: { PATH: fixturePath },
+      timeoutMs: 60_000,
+    });
+    expect(built, built.stderr || built.stdout).toMatchObject({ exitCode: 0 });
+    expect(await readFile(path.join(exampleRoot, "dist/index.js"), "utf8")).toContain("answer");
+  });
+
+  it("creates the portable Bun repository before activating post-Git hooks", async () => {
+    const name = "preset-consumer";
+    const root = path.join(acceptanceRoot, name);
+    const cliSpecifier =
+      registryVersion === undefined
+        ? `@habitat-ai/cli@file:${path.join(
+            acceptanceRoot,
+            "packages",
+            publicProduct("@habitat-ai/cli").filename
+          )}`
+        : `@habitat-ai/cli@${registryVersion}`;
+    const created = await run(
+      "bunx",
+      [
+        "--bun",
+        "create-nx-workspace@23.1.0",
+        name,
+        `--preset=${cliSpecifier}`,
+        "--packageManager=bun",
+        "--nxCloud=skip",
+        "--interactive=false",
+        "--skipGitHubPush=true",
+        "--trustThirdPartyPreset=true",
+      ],
+      {
+        cwd: acceptanceRoot,
+        env: { PATH: process.env.PATH ?? "" },
+        timeoutMs: 180_000,
+      }
+    );
+    expect(created, created.stderr || created.stdout).toMatchObject({ exitCode: 0 });
+
+    const packagePath = path.join(root, "package.json");
+    const nxPath = path.join(root, "nx.json");
+    const projectPath = path.join(root, "scripts/habitat/project.json");
+    const firstPackage = await readFile(packagePath, "utf8");
+    const firstNx = await readFile(nxPath, "utf8");
+    const firstProject = await readFile(projectPath, "utf8");
+    const presetPackage = JSON.parse(firstPackage) as {
+      readonly name: string;
+      readonly scripts?: Readonly<Record<string, string>>;
+    };
+    expect(presetPackage).toMatchObject({
+      private: true,
+      type: "module",
+      packageManager: expect.stringMatching(/^bun@/u),
+      nx: { includedScripts: [] },
+      scripts: {
+        build: "nx run-many -t build",
+        check: "nx run-many -t check",
+        lint: "nx run habitat:lint",
+      },
+      devDependencies: { "@biomejs/biome": "2.5.3" },
+    });
+    expect(JSON.parse(firstPackage)).not.toHaveProperty("scripts.prepare");
+    expect(JSON.parse(firstNx)).toMatchObject({
+      plugins: ["@habitat-ai/cli/nx-plugin"],
+    });
+    expect(JSON.parse(firstProject)).toMatchObject({
+      name: "habitat",
+      tags: ["type:tool", "role:architecture-policy"],
+    });
+    expect(JSON.parse(firstProject)).not.toHaveProperty("projectType");
+    await expect(lstat(path.join(root, ".habitat/blueprints"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    const inactiveHooks = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
+      cwd: root,
+    });
+    expect(inactiveHooks.exitCode).not.toBe(0);
+
+    const nx = path.join(root, "node_modules/.bin/nx");
+    const fixturePath = `${path.join(root, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`;
+    const biome = await run(path.join(root, "node_modules/.bin/biome"), ["--version"], {
+      cwd: root,
+    });
+    expect(biome, biome.stderr || biome.stdout).toMatchObject({ exitCode: 0 });
+    const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
+      cwd: root,
+      env: { PATH: fixturePath },
+      timeoutMs: 120_000,
+    });
+    expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
+    const activatedPackage = await readFile(packagePath, "utf8");
+    const activeHooks = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
+      cwd: root,
+    });
+    expect(activeHooks, activeHooks.stderr || activeHooks.stdout).toMatchObject({
+      exitCode: 0,
+      stdout: ".husky/_\n",
+    });
+
+    const projects = await run(nx, ["show", "projects", "--json"], {
+      cwd: root,
+      env: { PATH: fixturePath },
+      timeoutMs: 60_000,
+    });
+    expect(projects, projects.stderr || projects.stdout).toMatchObject({ exitCode: 0 });
+    expect([...(JSON.parse(projects.stdout) as readonly string[])].sort()).toEqual(
+      [presetPackage.name, "habitat"].sort()
+    );
+    const rootProject = await run(nx, ["show", "project", presetPackage.name, "--json"], {
+      cwd: root,
+      env: { PATH: fixturePath },
+      timeoutMs: 60_000,
+    });
+    expect(rootProject, rootProject.stderr || rootProject.stdout).toMatchObject({ exitCode: 0 });
+    const rootTargets = (
+      JSON.parse(rootProject.stdout) as {
+        readonly targets?: Readonly<Record<string, unknown>>;
+      }
+    ).targets;
+    for (const target of [
+      "build",
+      "check",
+      "ci",
+      "ci:affected",
+      "format",
+      "lint",
+      "test",
+      "typecheck",
+    ]) {
+      expect(rootTargets).not.toHaveProperty(target);
+    }
+
+    const repeated = await run(
+      nx,
+      ["generate", "@habitat-ai/cli:preset", "--packageManager=bun", "--no-interactive"],
+      { cwd: root, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+    );
+    expect(repeated, repeated.stderr || repeated.stdout).toMatchObject({ exitCode: 0 });
+    expect(await readFile(nxPath, "utf8")).toBe(firstNx);
+    expect(await readFile(projectPath, "utf8")).toBe(firstProject);
+    expect(await readFile(packagePath, "utf8")).toBe(activatedPackage);
+
+    const firstLint = await run(nx, ["run", "habitat:lint", "--outputStyle=static"], {
+      cwd: root,
+      env: {
+        ...process.env,
+        NX_DAEMON: "false",
+        NX_SKIP_NX_CACHE: "false",
+        PATH: fixturePath,
+      },
+      timeoutMs: 60_000,
+    });
+    expect(firstLint, `${firstLint.stdout}\n${firstLint.stderr}`).toMatchObject({ exitCode: 0 });
+    const repeatedLint = await run(nx, ["run", "habitat:lint", "--outputStyle=static"], {
+      cwd: root,
+      env: {
+        ...process.env,
+        NX_DAEMON: "false",
+        NX_SKIP_NX_CACHE: "false",
+        PATH: fixturePath,
+      },
+      timeoutMs: 60_000,
+    });
+    expect(repeatedLint, repeatedLint.stderr || repeatedLint.stdout).toMatchObject({ exitCode: 0 });
+    expect(repeatedLint.stdout).toContain("existing outputs match the cache");
+
+    const generatedAuthority = [
+      await readFile(nxPath, "utf8"),
+      await readFile(packagePath, "utf8"),
+      await readFile(path.join(root, "biome.json"), "utf8"),
+      await readFile(path.join(root, "bunfig.toml"), "utf8"),
+      await readFile(projectPath, "utf8"),
+      await readFile(path.join(root, "tsconfig.base.json"), "utf8"),
+    ].join("\n");
+    expect(generatedAuthority).not.toContain("rawr");
+    expect(generatedAuthority).not.toContain("pnpm");
+    expect(generatedAuthority).not.toContain(workspaceRoot);
+  });
+
   it("installs, executes, and initializes the public SDK and CLI boundary", async () => {
     const consumerBlueprintRoot = path.join(consumerRoot, ".habitat/blueprints");
     for (const product of products) {
@@ -251,14 +519,10 @@ describe("installed Habitat products", () => {
     });
 
     const nx = path.join(consumerRoot, "node_modules/.bin/nx");
-    const cliSpecifier =
-      registryVersion ??
-      `file:${path.join(acceptanceRoot, "packages", publicProduct("@habitat-ai/cli").filename)}`;
-    const initialized = await run(
-      nx,
-      ["add", `@habitat-ai/cli@${cliSpecifier}`, "--no-interactive"],
-      { cwd: consumerRoot, timeoutMs: 120_000 }
-    );
+    const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
+      cwd: consumerRoot,
+      timeoutMs: 120_000,
+    });
     expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
 
     const nxPath = path.join(consumerRoot, "nx.json");
@@ -500,6 +764,45 @@ async function packPublicProducts(): Promise<void> {
     ) {
       throw new Error(`npm packed an unexpected ${product.name} artifact: ${packed.stdout}`);
     }
+  }
+}
+
+async function createAdoptionConsumer(): Promise<void> {
+  const sdkSpecifier =
+    registryVersion ?? `file:../packages/${publicProduct("@habitat-ai/sdk").filename}`;
+  const files: Readonly<Record<string, string>> = {
+    "nx.json": "{}\n",
+    "package.json": `${JSON.stringify(
+      {
+        name: "habitat-adoption-consumer",
+        private: true,
+        type: "module",
+        packageManager: "bun@1.3.14",
+        dependencies: { "@habitat-ai/sdk": sdkSpecifier },
+        devDependencies: { nx: "23.1.0" },
+      },
+      null,
+      2
+    )}\n`,
+  };
+
+  for (const [relativePath, contents] of Object.entries(files)) {
+    await writeFile(path.join(adoptionRoot, relativePath), contents);
+  }
+
+  const initialized = await run("git", ["init", "--quiet"], { cwd: adoptionRoot });
+  if (initialized.exitCode !== 0) {
+    throw new Error(`Could not initialize adoption fixture: ${initialized.stderr}`);
+  }
+}
+
+async function installAdoptionConsumer(): Promise<void> {
+  const installed = await run("bun", ["install", "--ignore-scripts"], {
+    cwd: adoptionRoot,
+    timeoutMs: 180_000,
+  });
+  if (installed.exitCode !== 0) {
+    throw new Error(`Could not install adoption fixture: ${installed.stderr || installed.stdout}`);
   }
 }
 

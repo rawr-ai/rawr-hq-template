@@ -6,6 +6,32 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-07 - Habitat Has Gravity
+
+Habitat is the platform and substrate, not a bag of files that consumers copy.
+It owns generic repository law, generation, runtime contracts, architecture
+policy, and distribution. A consumer receives those capabilities through the
+released CLI and SDK, then supplies only its domain inventory and policy. When
+the platform owns a foundation, every ordinary path to that foundation must
+converge on the same truth or refuse before mutation; partial ownership is not
+compatibility.
+
+Rawr is one Habitat product. Marketplace is one content authority. Neither can
+carry a local substitute for Habitat wiring, package authority, blueprints, or
+release machinery. The implementation test is therefore categorical: keep the
+single native Bun and Nx path, delete parallel setup, and land each complete
+capability before building on it.
+
+### Bag Of Keywords
+
+Habitat, platform, substrate, law, gravity.
+
+Bun, Nx, TypeBox, Biome, Oclif.
+
+generate, install, realize, release, migrate.
+
+Rawr, product, consumer, domain, instance.
+
 ## 2026-08-07 - Service Law Is Portable
 
 `service@1` is a generic construction law, not repository-local repair. A
