@@ -6,6 +6,13 @@
       "executor": "nx:noop"
     },
     "test": {
+      "dependsOn": [
+        "^build",
+        {
+          "projects": ["@habitat-ai/sdk"],
+          "target": "build"
+        }
+      ],
       "inputs": [
         "default",
         "^default",

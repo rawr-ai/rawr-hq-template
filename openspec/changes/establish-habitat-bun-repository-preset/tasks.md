@@ -28,7 +28,7 @@
 
 - [x] 3.1 Pass CLI typecheck, unit tests, build, Oclif manifest, installed-package
   acceptance, strict OpenSpec validation, and unchanged Nx cache replay.
-- [ ] 3.2 Obtain Nx/Bun, architecture, TypeScript, and structural-quality reviews;
+- [x] 3.2 Obtain Nx/Bun, architecture, TypeScript, and structural-quality reviews;
   resolve every P0/P1 and land the preset as a truthful Graphite checkpoint.
 - [ ] 3.3 Include the preset in the next ordinary fixed CLI/SDK Nx release and pass
   registry-installed smoke without publishing another package.

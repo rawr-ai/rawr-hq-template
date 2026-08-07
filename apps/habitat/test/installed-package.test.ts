@@ -371,6 +371,71 @@ describe("installed Habitat products", () => {
     expect(generatedAuthority).not.toContain(workspaceRoot);
   });
 
+  it("migrates the CLI and SDK as one native Nx package group", async () => {
+    const root = path.join(acceptanceRoot, "migration-consumer");
+    await mkdir(root, { recursive: true });
+    await writeFile(path.join(root, "nx.json"), "{}\n");
+    await writeFile(
+      path.join(root, "package.json"),
+      `${JSON.stringify(
+        {
+          name: "habitat-migration-consumer",
+          private: true,
+          packageManager: "bun@1.3.14",
+          devDependencies: {
+            "@habitat-ai/cli": "0.5.2",
+            "@habitat-ai/sdk": "0.5.2",
+            nx: "23.1.0",
+          },
+        },
+        null,
+        2
+      )}\n`
+    );
+
+    const installedPreviousPair = await run("bun", ["install", "--ignore-scripts"], {
+      cwd: root,
+      timeoutMs: 120_000,
+    });
+    expect(
+      installedPreviousPair,
+      installedPreviousPair.stderr || installedPreviousPair.stdout
+    ).toMatchObject({ exitCode: 0 });
+
+    const migrated = await run(
+      "bun",
+      ["x", "nx", "migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
+      {
+        cwd: root,
+        env: publishedRegistryVersion === undefined ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {},
+        timeoutMs: 120_000,
+      }
+    );
+    expect(migrated, migrated.stderr || migrated.stdout).toMatchObject({ exitCode: 0 });
+    expect(JSON.parse(await readFile(path.join(root, "package.json"), "utf8"))).toMatchObject({
+      devDependencies: {
+        "@habitat-ai/cli": installVersion,
+        "@habitat-ai/sdk": installVersion,
+      },
+    });
+
+    const installedMigratedPair = await run("bun", ["install", "--ignore-scripts"], {
+      cwd: root,
+      timeoutMs: 120_000,
+    });
+    expect(
+      installedMigratedPair,
+      installedMigratedPair.stderr || installedMigratedPair.stdout
+    ).toMatchObject({ exitCode: 0 });
+    for (const product of products) {
+      expect(
+        JSON.parse(
+          await readFile(path.join(root, "node_modules", product.name, "package.json"), "utf8")
+        )
+      ).toMatchObject({ name: product.name, version: installVersion });
+    }
+  });
+
   it("installs, executes, and initializes the public SDK and CLI boundary", async () => {
     const consumerBlueprintRoot = path.join(consumerRoot, ".habitat/blueprints");
     const consumerBlueprintInventory = [
@@ -838,7 +903,12 @@ async function startCandidateRegistry(): Promise<void> {
       storage: path.join(acceptanceRoot, "registry"),
       uplinks: { npmjs: { maxage: "60m", url: "https://registry.npmjs.org" } },
       packages: {
-        "@habitat-ai/*": { access: "$all", publish: "$all", unpublish: "$all" },
+        "@habitat-ai/*": {
+          access: "$all",
+          proxy: "npmjs",
+          publish: "$all",
+          unpublish: "$all",
+        },
         "**": { access: "$all", proxy: "npmjs", publish: "$all", unpublish: "$all" },
       },
       log: { format: "pretty", level: "warn", type: "stdout" },
