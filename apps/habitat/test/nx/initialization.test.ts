@@ -1,6 +1,7 @@
 import { readJson, type Tree, writeJson } from "@nx/devkit";
 import { createTreeWithEmptyWorkspace } from "@nx/devkit/testing";
 import { describe, expect, it, vi } from "vitest";
+import initializeHabitat from "../../src/generators/init";
 import {
   type HabitatConsumerBinding,
   initializeHabitatConsumer,
@@ -60,8 +61,10 @@ function consumerTree(input?: {
   readonly dependencies?: Readonly<Record<string, string>>;
   readonly devDependencies?: Readonly<Record<string, string>>;
   readonly gitHook?: string;
+  readonly nxPackageManager?: string;
   readonly nxPlugins?: readonly unknown[];
   readonly optionalDependencies?: Readonly<Record<string, string>>;
+  readonly packageManager?: string;
   readonly peerDependencies?: Readonly<Record<string, string>>;
   readonly prepare?: string;
   readonly sessionStart?: readonly unknown[];
@@ -71,11 +74,15 @@ function consumerTree(input?: {
   const tree = createTreeWithEmptyWorkspace({ layout: "apps-libs" });
   writeJson(tree, "nx.json", {
     $schema: "./node_modules/nx/schemas/nx-schema.json",
+    ...(input?.nxPackageManager === undefined
+      ? {}
+      : { cli: { packageManager: input.nxPackageManager } }),
     plugins: input?.nxPlugins ?? ["unrelated-plugin"],
   });
   writeJson(tree, "package.json", {
     name: "consumer",
     private: true,
+    packageManager: input?.packageManager ?? "bun@1.3.14",
     ...(input?.dependencies === undefined ? {} : { dependencies: input.dependencies }),
     ...(input?.prepare === undefined && input?.check === undefined
       ? {}
@@ -114,6 +121,34 @@ function consumerTree(input?: {
 }
 
 describe("Habitat Nx consumer initialization", () => {
+  it.each([
+    {
+      label: "a non-Bun package-manager declaration",
+      tree: () => consumerTree({ packageManager: "npm@11.7.0" }),
+      message: "requires packageManager 'bun@1.3.14'; received 'npm@11.7.0'",
+    },
+    {
+      label: "an alternate package-manager artifact",
+      tree: () => {
+        const tree = consumerTree();
+        tree.write("package-lock.json", "{}\n");
+        return tree;
+      },
+      message: "refuses alternate package-manager artifact 'package-lock.json'",
+    },
+    {
+      label: "a conflicting Nx package-manager selection",
+      tree: () => consumerTree({ nxPackageManager: "npm" }),
+      message: "requires Nx package manager 'bun'; received 'npm'",
+    },
+  ])("refuses $label before the first Tree write", ({ tree: createTree, message }) => {
+    const tree = createTree();
+    const write = vi.spyOn(tree, "write");
+
+    expect(() => initializeHabitat(tree)).toThrow(message);
+    expect(write).not.toHaveBeenCalled();
+  });
+
   it("adds exact package-owned contributions while preserving consumer configuration", () => {
     const tree = consumerTree();
 

@@ -7,8 +7,8 @@
   and package metadata; refuse an explicit non-Bun manager before the first Tree
   write.
 - [x] 1.3 Share the pure Nx registration planner between `preset` and `init` while
-  retaining the existing post-Git Husky activation callback and established
-  non-Bun adoption behavior.
+  retaining the existing post-Git Husky activation callback and one Bun-only
+  consumer lifecycle.
 - [x] 1.4 Update the CLI router and package documentation to distinguish preset
   creation, post-Git activation, and ordinary later `nx migrate` upgrades.
 

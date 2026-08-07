@@ -25,7 +25,7 @@ The preset creates generic Bun, Nx, TypeScript, Biome, and Habitat scheduler
 configuration. It does not copy blueprints, select product policy, or author the
 repository's `AGENTS.md` hierarchy.
 
-## Adopt An Existing Nx Repository
+## Adopt An Existing Bun Nx Repository
 
 ```sh
 bunx nx add @habitat-ai/cli --no-interactive

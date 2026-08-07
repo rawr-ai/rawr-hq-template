@@ -58,8 +58,7 @@
 - New repository lifecycle: run the Bun-only `preset` through
   `create-nx-workspace`, then invoke `init` after Nx has initialized Git.
 - Git-hook activation: consumer-root Husky installed by `@habitat-ai/cli:init`.
-- Repository creation is Bun-only. Existing-repository initialization retains
-  its separate established package-manager contract.
+- Repository creation and existing-repository initialization are Bun-only.
 - Runtime SDK: `@habitat-ai/sdk`.
 - No root library export is admitted.
 

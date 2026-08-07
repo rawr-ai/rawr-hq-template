@@ -1,7 +1,6 @@
 import { execSync } from "node:child_process";
 
 import {
-  detectPackageManager,
   type GeneratorCallback,
   getPackageManagerCommand,
   installPackagesTask,
@@ -9,17 +8,15 @@ import {
   type Tree,
 } from "@nx/devkit";
 import { initializeHabitatConsumer } from "../nx/initialization.js";
+import { assertHabitatBunConsumer } from "../nx/repository-preset.js";
 import { habitatConsumerBinding } from "../nx-generators.js";
 
 /** Initializes the installed Habitat package inside one Nx consumer. */
 export default function initializeHabitat(tree: Tree): GeneratorCallback {
-  const packageManager = detectPackageManager(tree.root);
-  if (packageManager === "yarn") {
-    throw new Error("Habitat Husky initialization supports npm, pnpm, and Bun consumers.");
-  }
+  assertHabitatBunConsumer(tree);
   const result = initializeHabitatConsumer(tree, habitatConsumerBinding);
   const activateHusky = () => {
-    const command = `${getPackageManagerCommand(packageManager).exec} husky`;
+    const command = `${getPackageManagerCommand("bun").exec} husky`;
     execSync(command, {
       cwd: tree.root,
       stdio: "inherit",
@@ -27,5 +24,5 @@ export default function initializeHabitat(tree: Tree): GeneratorCallback {
   };
 
   if (!result.packageChanged) return activateHusky;
-  return runTasksInSerial(() => installPackagesTask(tree), activateHusky);
+  return runTasksInSerial(() => installPackagesTask(tree, false, "", "bun"), activateHusky);
 }

@@ -92,9 +92,9 @@ Rejected alternatives:
 
 The published preset schema permits additional Nx options. The generator requires
 `packageManager` equal to `bun`, refuses alternate package-manager artifacts
-before its first Tree write, and ignores unrelated framework options. The normal `init` generator
-retains its established-repository package-manager compatibility; the Bun-only
-preset does not broaden or narrow that separate contract.
+before its first Tree write, and ignores unrelated framework options. The normal
+`init` generator refuses a non-Bun repository before planning package or hook
+changes, leaving one package-manager contract across creation and adoption.
 
 ### Acceptance follows the real host lifecycle
 
