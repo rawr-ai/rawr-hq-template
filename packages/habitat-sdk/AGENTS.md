@@ -32,9 +32,10 @@
 - `HABITAT_COMMAND_TIMEOUT_MS` retains the production integer range of 1 through
   600000 milliseconds and defaults to 600000.
 - Production invokes the published JavaScript command entrypoint from the exact
-  pinned `@getgrit/cli` package through the current runtime. The vendor command
-  owns native acquisition when a consumer package manager has not run dependency
-  install scripts.
+  pinned `@getgrit/cli` package directly on POSIX so its vendor-owned Node shebang
+  selects the runtime. Windows invokes the same entrypoint through PATH-resolved
+  Node. The vendor command owns native acquisition when a consumer package
+  manager has not run dependency install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
   member set is `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,

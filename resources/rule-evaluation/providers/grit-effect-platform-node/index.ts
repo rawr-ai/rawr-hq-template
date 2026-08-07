@@ -22,9 +22,9 @@ type ProviderRequirements = FileSystem.FileSystem | Path.Path | ChildProcessSpaw
 
 const TEMP_CATALOG_PREFIX = "habitat-rule-evaluation-";
 const GRIT_PATTERN_PREFIX = "habitat_rule_evaluation_";
-/** Output retained per program, capped so an untrusted batch cannot allocate without bound. */
-const MAX_GRIT_OUTPUT_BYTES_PER_PROGRAM = 256 * 1_024;
-const MAX_GRIT_BATCH_OUTPUT_BYTES = 16 * 1_024 * 1_024;
+const MAX_GRIT_STDOUT_BYTES = 256 * 1_024;
+const GRIT_REPORT_HEADROOM_BYTES = 256 * 1_024;
+const MAX_GRIT_STDERR_BYTES = 16 * 1_024 * 1_024;
 
 /** Structural schema for Grit provider construction. */
 export const GritRuleEvaluationProviderConfigSchema = ReadonlyObject(
@@ -236,7 +236,7 @@ function runGritCheck(
   programs: readonly [MaterializedProgram, ...MaterializedProgram[]],
   subjectPaths: readonly string[]
 ): Effect.Effect<RuleEvaluationResult, RuleEvaluationFailure, ChildProcessSpawner | Scope.Scope> {
-  const outputLimit = gritOutputLimit(programs.length);
+  const stderrLimit = gritStderrLimit(subjectPaths);
   const observe = Effect.gen(function* () {
     const command = ChildProcess.make(
       config.command,
@@ -271,8 +271,8 @@ function runGritCheck(
     const process = yield* command.pipe(mapPlatform("ExecutionFailed", "Failed to start Grit"));
     const output = yield* Effect.all(
       {
-        stdout: collectBoundedOutput(process.stdout, "stdout", outputLimit),
-        stderr: collectBoundedOutput(process.stderr, "stderr", outputLimit),
+        stdout: collectBoundedOutput(process.stdout, "stdout", MAX_GRIT_STDOUT_BYTES),
+        stderr: collectBoundedOutput(process.stderr, "stderr", stderrLimit),
         exitCode: process.exitCode.pipe(
           Effect.map(Number),
           mapPlatform("ExecutionFailed", "Failed to observe Grit exit")
@@ -457,8 +457,9 @@ function collectBoundedOutput(
   );
 }
 
-function gritOutputLimit(programCount: number): number {
-  return Math.min(MAX_GRIT_BATCH_OUTPUT_BYTES, MAX_GRIT_OUTPUT_BYTES_PER_PROGRAM * programCount);
+function gritStderrLimit(subjectPaths: readonly string[]): number {
+  const encodedSubjectPaths = Buffer.byteLength(JSON.stringify(subjectPaths), "utf8");
+  return Math.min(MAX_GRIT_STDERR_BYTES, encodedSubjectPaths + GRIT_REPORT_HEADROOM_BYTES);
 }
 
 function mapPlatform(reason: RuleEvaluationFailure["reason"], context: string) {

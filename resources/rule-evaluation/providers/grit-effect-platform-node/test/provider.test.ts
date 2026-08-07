@@ -31,11 +31,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
   test("returns clean and finding results from the real Grit executable", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
-    const resource = makeNodeGritRuleEvaluationResource({
-      command: process.execPath,
-      args: [gritEntrypoint],
-      timeoutMs: 30_000,
-    });
+    const resource = makeNodeGritRuleEvaluationResource(gritProviderConfig());
     const program = "language js(typescript)\n`forbidden()`";
 
     await writeFile(subject, "allowed();\n");
@@ -70,11 +66,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
     await writeFile(subject, "first_forbidden();\nsecond_forbidden();\n");
 
     const result = await Effect.runPromise(
-      makeNodeGritRuleEvaluationResource({
-        command: process.execPath,
-        args: [gritEntrypoint],
-        timeoutMs: 30_000,
-      }).evaluate({
+      makeNodeGritRuleEvaluationResource(gritProviderConfig()).evaluate({
         programs: [
           {
             id: "first-rule",
@@ -489,31 +481,74 @@ describe("grit-effect-platform-node rule evaluation", () => {
     expect(result.results[1]?.findings[0]?.message?.length).toBe(200 * 1024);
   });
 
+  test("admits a valid report whose encoded subject inventory exceeds fixed headroom", async () => {
+    const fixture = await makeFixture();
+    const subjectPaths = Array.from({ length: 1_815 }, (_, index) =>
+      path.join(
+        fixture,
+        "subjects",
+        `subject-${String(index).padStart(4, "0")}-${"x".repeat(96)}.ts`
+      )
+    );
+    const report = JSON.stringify({ paths: subjectPaths, results: [] });
+    expect(new TextEncoder().encode(report).byteLength).toBeGreaterThan(256 * 1_024);
+    const executable = await writeExecutable(
+      fixture,
+      "large-valid-report-grit",
+      `#!/usr/bin/env node
+const gritDirectory = process.argv.indexOf("--grit-dir");
+const subjects = process.argv.slice(gritDirectory + 2);
+process.stderr.write(JSON.stringify({ paths: subjects, results: [] }));
+`
+    );
+
+    await expect(
+      Effect.runPromise(
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 5_000,
+        }).evaluate(
+          evaluationRequest(
+            "large-valid-report",
+            "language js(typescript)\n`forbidden()`",
+            subjectPaths
+          )
+        )
+      )
+    ).resolves.toEqual({ results: [{ programId: "large-valid-report", findings: [] }] });
+  });
+
   test("bounds native output and cleans its scoped catalog after overflow", async () => {
     const fixture = await makeFixture();
     const subject = path.join(fixture, "subject.ts");
     await writeFile(subject, "allowed();\n");
     const baseline = await temporaryCatalogs();
-    const executable = await writeExecutable(
-      fixture,
-      "overflow-grit",
-      "#!/usr/bin/env node\nprocess.stderr.write('x'.repeat(512 * 1024));\n"
-    );
+    for (const channel of ["stderr", "stdout"] as const) {
+      const executable = await writeExecutable(
+        fixture,
+        `overflow-${channel}-grit`,
+        `#!/usr/bin/env node\nprocess.${channel}.write('x'.repeat(512 * 1024));\n`
+      );
 
-    const overflow = await evaluationFailure(
-      makeNodeGritRuleEvaluationResource({
-        command: executable,
-        args: [],
-        timeoutMs: 5_000,
-      }).evaluate(
-        evaluationRequest("overflow", "language js(typescript)\n`forbidden()`", [subject])
-      )
-    );
-    expect(overflow).toMatchObject({
-      _tag: "RuleEvaluationFailure",
-      reason: "InvalidOutput",
-    });
-    expect(overflow.detail).toContain("output limit");
+      const overflow = await evaluationFailure(
+        makeNodeGritRuleEvaluationResource({
+          command: executable,
+          args: [],
+          timeoutMs: 5_000,
+        }).evaluate(
+          evaluationRequest(`overflow-${channel}`, "language js(typescript)\n`forbidden()`", [
+            subject,
+          ])
+        )
+      );
+      expect(overflow).toMatchObject({
+        _tag: "RuleEvaluationFailure",
+        reason: "InvalidOutput",
+      });
+      expect(overflow.detail).toContain(`Grit ${channel} exceeded`);
+      expect(overflow.detail).toContain("output limit");
+    }
     expect(await temporaryCatalogs()).toEqual(baseline);
   });
 
@@ -556,6 +591,14 @@ async function makeFixture(): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), "rule-evaluation-test-"));
   fixtureRoots.push(root);
   return root;
+}
+
+function gritProviderConfig() {
+  return {
+    command: process.platform === "win32" ? "node" : gritEntrypoint,
+    args: process.platform === "win32" ? [gritEntrypoint] : [],
+    timeoutMs: 30_000,
+  } as const;
 }
 
 async function writeExecutable(root: string, name: string, source: string): Promise<string> {
