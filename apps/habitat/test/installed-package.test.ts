@@ -73,6 +73,7 @@ const products: readonly PublicProduct[] = [
 let acceptanceRoot = "";
 let adoptionRoot = "";
 let consumerRoot = "";
+let gritSubjectPaths: readonly string[] = [];
 let localRegistry: Server | undefined;
 const originalRegistryEnvironment = new Map(
   ["BUN_CONFIG_REGISTRY", "BUN_CONFIG_TOKEN", "NPM_CONFIG_USERCONFIG", "npm_config_registry"].map(
@@ -372,6 +373,10 @@ describe("installed Habitat products", () => {
 
   it("installs, executes, and initializes the public SDK and CLI boundary", async () => {
     const consumerBlueprintRoot = path.join(consumerRoot, ".habitat/blueprints");
+    const consumerBlueprintInventory = [
+      "grit-acceptance/blueprint.toml",
+      "grit-acceptance/no-forbidden.md",
+    ];
     for (const product of products) {
       const packageRoot = path.join(consumerRoot, "node_modules", product.name);
       const stats = await lstat(packageRoot);
@@ -474,7 +479,7 @@ describe("installed Habitat products", () => {
     expect(help.stdout).toContain("hook");
     expect(help.stdout).toContain("resolve");
 
-    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
     const resolved = await run(habitat, ["resolve"], { cwd: consumerRoot });
     expect(resolved, resolved.stderr || resolved.stdout).toMatchObject({
       exitCode: 0,
@@ -489,23 +494,39 @@ describe("installed Habitat products", () => {
           protocolVersion: 1,
           version: productVersion("@habitat-ai/sdk"),
         },
-        instances: [
-          {
+        instances: expect.arrayContaining([
+          expect.objectContaining({
+            id: "grit-acceptance",
+            ownerProject: "@fixture/grit-acceptance",
+            roots: expect.arrayContaining([
+              expect.objectContaining({ id: "project", path: "packages/grit-acceptance" }),
+            ]),
+          }),
+          expect.objectContaining({
             id: "installed-package",
             ownerProject: "@fixture/package",
-            roots: [{ id: "project", path: "packages/example" }],
-          },
-        ],
-        applications: [
-          {
+            roots: expect.arrayContaining([
+              expect.objectContaining({ id: "project", path: "packages/example" }),
+            ]),
+          }),
+        ]),
+        applications: expect.arrayContaining([
+          expect.objectContaining({
+            instanceId: "grit-acceptance",
+            ruleId: "grit_acceptance_no_forbidden",
+            runner: expect.objectContaining({ name: "grit" }),
+          }),
+          expect.objectContaining({
             instanceId: "installed-package",
             ruleId: "package_v1_structure",
-            provenance: { kind: "policy-pack" },
-            runner: {
-              structure: { provenance: { kind: "policy-pack" } },
-            },
-          },
-        ],
+            provenance: expect.objectContaining({ kind: "policy-pack" }),
+            runner: expect.objectContaining({
+              structure: expect.objectContaining({
+                provenance: expect.objectContaining({ kind: "policy-pack" }),
+              }),
+            }),
+          }),
+        ]),
       },
     });
     expect(resolvedCatalog.catalog.policyPack.blueprints).toEqual(
@@ -527,16 +548,42 @@ describe("installed Habitat products", () => {
     });
     expect(JSON.parse(checked.stdout)).toMatchObject({
       _tag: "Completed",
-      applications: [
-        {
+      applications: expect.arrayContaining([
+        expect.objectContaining({
+          instanceId: "grit-acceptance",
+          ruleId: "grit_acceptance_no_forbidden",
+          runner: "grit",
+          status: "pass",
+        }),
+        expect.objectContaining({
           instanceId: "installed-package",
           ruleId: "package_v1_structure",
           runner: "habitat",
           status: "pass",
-        },
-      ],
+        }),
+      ]),
       ok: true,
     });
+
+    if (process.platform !== "win32") {
+      const expectedReport = JSON.stringify({ paths: gritSubjectPaths, results: [] });
+      expect(Buffer.byteLength(expectedReport, "utf8")).toBeGreaterThan(256 * 1_024);
+    }
+
+    const installedEntrypoint = path.join(consumerRoot, "node_modules/@habitat-ai/cli/bin/run.js");
+    const [nodeChecked, bunChecked] = await Promise.all([
+      run("node", [installedEntrypoint, "check"], { cwd: consumerRoot }),
+      run("bun", [installedEntrypoint, "check"], { cwd: consumerRoot }),
+    ]);
+    expect(nodeChecked, nodeChecked.stderr || nodeChecked.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(bunChecked, bunChecked.stderr || bunChecked.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(JSON.parse(bunChecked.stdout)).toEqual(JSON.parse(nodeChecked.stdout));
 
     const nx = path.join(consumerRoot, "node_modules/.bin/nx");
     const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
@@ -557,7 +604,7 @@ describe("installed Habitat products", () => {
     const firstPackage = await readFile(packagePath, "utf8");
     const firstLock = await readFile(lockPath, "utf8");
     const firstInstance = await readFile(instancePath, "utf8");
-    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
     expect(firstInstance).not.toContain("source =");
     expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat-ai/cli/nx-plugin"] });
     expect(JSON.parse(firstPackage)).toMatchObject({
@@ -609,7 +656,7 @@ describe("installed Habitat products", () => {
     expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
     expect(await readFile(lockPath, "utf8")).toBe(firstLock);
     expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
-    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
 
     await rename(path.join(consumerRoot, ".husky/_"), path.join(consumerRoot, ".husky/_disabled"));
     const brokeHookConfig = await run("git", ["config", "core.hooksPath", ".broken-hooks"], {
@@ -629,7 +676,7 @@ describe("installed Habitat products", () => {
     expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
     expect(await readFile(lockPath, "utf8")).toBe(firstLock);
     expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
-    await expect(lstat(consumerBlueprintRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
     expect((await lstat(path.join(consumerRoot, ".husky/_/pre-push"))).isFile()).toBe(true);
     const repairedHookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
       cwd: consumerRoot,
@@ -742,7 +789,7 @@ async function listFiles(root: string, relativeRoot = ""): Promise<readonly stri
   const entries = await readdir(path.join(root, relativeRoot), { withFileTypes: true });
   const files = await Promise.all(
     entries.map(async (entry) => {
-      const relativePath = path.join(relativeRoot, entry.name);
+      const relativePath = path.posix.join(relativeRoot, entry.name);
       if (entry.isDirectory()) return listFiles(root, relativePath);
       if (entry.isFile()) return [relativePath];
       throw new Error(`Unexpected non-file blueprint entry: ${relativePath}`);
@@ -880,7 +927,9 @@ async function createAdoptionConsumer(): Promise<void> {
   };
 
   for (const [relativePath, contents] of Object.entries(files)) {
-    await writeFile(path.join(adoptionRoot, relativePath), contents);
+    const absolutePath = path.join(adoptionRoot, relativePath);
+    await mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeFile(absolutePath, contents);
   }
 
   const initialized = await run("git", ["init", "--quiet"], { cwd: adoptionRoot });
@@ -905,7 +954,21 @@ async function createConsumer(): Promise<void> {
     ["nx", "23.1.0"],
     ["typebox", "1.3.8"],
   ]);
+  const subjectCount = process.platform === "win32" ? 64 : 1_815;
+  const subjectIds = Array.from(
+    { length: subjectCount },
+    (_, index) => `subject-${String(index).padStart(4, "0")}-${"x".repeat(64)}`
+  );
+  const relativeSubjectPaths = subjectIds.map(
+    (subjectId) => `packages/grit-acceptance/src/${subjectId}.ts`
+  );
+  gritSubjectPaths = relativeSubjectPaths.map((relativePath) =>
+    path.join(consumerRoot, relativePath)
+  );
   const files: Readonly<Record<string, string>> = {
+    ".habitat/blueprints/grit-acceptance/blueprint.toml": gritAcceptanceBlueprintToml(),
+    ".habitat/blueprints/grit-acceptance/no-forbidden.md":
+      "# No forbidden calls\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
     "consumer.ts": consumerSource(),
     "hook-check.mjs": `import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
@@ -958,6 +1021,21 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
+    "packages/grit-acceptance/habitat.toml": gritAcceptanceInstanceToml(subjectIds),
+    "packages/grit-acceptance/package.json": `${JSON.stringify(
+      { name: "@fixture/grit-acceptance", private: true, version: "0.0.0" },
+      null,
+      2
+    )}\n`,
+    "packages/grit-acceptance/project.json": `${JSON.stringify(
+      {
+        name: "@fixture/grit-acceptance",
+        projectType: "library",
+        sourceRoot: "packages/grit-acceptance/src",
+      },
+      null,
+      2
+    )}\n`,
     "packages/producer-sdk/project.json": `${JSON.stringify(
       { name: "@habitat-ai/sdk", projectType: "library", targets: {} },
       null,
@@ -985,6 +1063,16 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
     const absolutePath = path.join(consumerRoot, relativePath);
     await mkdir(path.dirname(absolutePath), { recursive: true });
     await writeFile(absolutePath, contents);
+  }
+
+  for (let index = 0; index < relativeSubjectPaths.length; index += 128) {
+    await Promise.all(
+      relativeSubjectPaths.slice(index, index + 128).map(async (relativePath) => {
+        const absolutePath = path.join(consumerRoot, relativePath);
+        await mkdir(path.dirname(absolutePath), { recursive: true });
+        await writeFile(absolutePath, "allowed();\n");
+      })
+    );
   }
 
   const initialized = await run("git", ["init", "--quiet"], { cwd: consumerRoot });
@@ -1123,5 +1211,59 @@ blueprintVersion = 1
 project = "packages/example"
 
 [selections]
+`;
+}
+
+function gritAcceptanceBlueprintToml(): string {
+  return `schemaVersion = 1
+id = "grit-acceptance"
+version = 1
+
+[[rules]]
+id = "grit_acceptance_no_forbidden"
+lane = "enforced"
+message = "Grit acceptance subjects must not call forbidden()."
+remediate = "Remove the forbidden call."
+
+[rules.runner]
+name = "grit"
+pattern = "no-forbidden.md"
+patternName = "grit_acceptance_no_forbidden"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = ["subjects"]
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+
+[[instance.selections]]
+id = "subjects"
+root = "project"
+kind = "file"
+memberPattern = "^[a-z][a-z0-9-]*$"
+pathTemplate = "src/{member}.ts"
+`;
+}
+
+function gritAcceptanceInstanceToml(subjectIds: readonly string[]): string {
+  return `schemaVersion = 1
+id = "grit-acceptance"
+ownerProject = "@fixture/grit-acceptance"
+blueprint = "grit-acceptance"
+blueprintVersion = 1
+
+[roots]
+project = "packages/grit-acceptance"
+
+[selections]
+subjects = ${JSON.stringify(subjectIds)}
 `;
 }
