@@ -33,7 +33,7 @@ The execution ownership law is:
 
 File: `specification://runtime-realization/execution-ownership-law.txt`  
 Layer: execution ownership  
-Exactness: normative grammar split.
+Exactness: normative grammar split. Canonical source of this law: `RAWR_Canonical_Architecture_Spec.md`, §4.0. This section reproduces the law as runtime-realization context; arch-spec §4.0 is authoritative if the two diverge.
 
 ```text
 RAWR owns semantic/runtime boundaries.
