@@ -166,7 +166,7 @@ export function initializeHabitatConsumer(
   const nxJson = requireNxJson(tree);
   const hooks = readHooks(tree);
   const packageJson = readPackage(tree);
-  const nxPlan = planNxInitialization(nxJson, binding);
+  const nxPlan = planHabitatNxRegistration(nxJson, binding);
   const hookPlan = planHookInitialization(hooks, binding);
   const packagePlan = planPackageInitialization(packageJson, binding);
   const gitHookPlan = planGitHookInitialization(tree, binding.gitHook);
@@ -214,7 +214,8 @@ function readPackage(tree: Tree): ConsumerPackage {
   return input;
 }
 
-function planNxInitialization(
+/** Plans the one package-owned Nx plugin registration without mutating a Tree. */
+export function planHabitatNxRegistration(
   nxJson: NxJsonConfiguration,
   binding: HabitatConsumerBinding
 ): PlannedValue<NxJsonConfiguration> {

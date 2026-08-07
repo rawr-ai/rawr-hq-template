@@ -41,11 +41,11 @@
   invocation; `src/commands/**` projects the three native commands.
 - `nx-plugin.ts` supplies the same SDK construction seam to `src/nx/**` and
   exports its native `createNodes` face.
-- `generators.json` exposes the ESM Nx initialization and named-hook removal
-  emitted with the rest of the app; their binding fixes the package-owned Nx
-  and Codex contributions, installs Husky as consumer development tooling, and
-  supplies the default consumer-owned pre-push check without replacing a
-  repository's existing nonempty hook.
+- `generators.json` exposes the ESM Bun repository preset, post-Git
+  initialization, and named-hook removal emitted with the rest of the app. The
+  preset creates only the portable Bun/Nx scheduler and source-quality spine;
+  `init` then installs and activates the package-owned Nx, Codex, and Husky
+  contributions without replacing a repository's existing nonempty hook.
 - `bin/run.js` activates compiled Oclif output; `src/index.ts` is the source
   development entrypoint.
 
@@ -53,10 +53,13 @@
 
 - Executable: `habitat`.
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
-- Nx generators: `@habitat-ai/cli:init` and `@habitat-ai/cli:remove-hook`.
+- Nx generators: `@habitat-ai/cli:preset`, `@habitat-ai/cli:init`, and
+  `@habitat-ai/cli:remove-hook`.
+- New repository lifecycle: run the Bun-only `preset` through
+  `create-nx-workspace`, then invoke `init` after Nx has initialized Git.
 - Git-hook activation: consumer-root Husky installed by `@habitat-ai/cli:init`.
-- Consumer package managers: npm, pnpm, and Bun; Yarn requires a different
-  Husky lifecycle and is refused before initialization writes.
+- Repository creation is Bun-only. Existing-repository initialization retains
+  its separate established package-manager contract.
 - Runtime SDK: `@habitat-ai/sdk`.
 - No root library export is admitted.
 
