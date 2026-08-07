@@ -33,6 +33,7 @@ type PublicProduct = Readonly<{
 }>;
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
+const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
 const temporaryParent = await realpath(tmpdir());
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-env-vars"], {
@@ -395,10 +396,18 @@ describe("installed Habitat products", () => {
       )}\n`
     );
 
-    const installedPreviousPair = await run("bun", ["install", "--ignore-scripts"], {
-      cwd: root,
-      timeoutMs: 120_000,
-    });
+    const installedPreviousPair = await run(
+      "bun",
+      ["install", "--ignore-scripts", `--registry=${PUBLIC_NPM_REGISTRY}`],
+      {
+        cwd: root,
+        env: {
+          BUN_CONFIG_TOKEN: "",
+          BUN_INSTALL_CACHE_DIR: path.join(acceptanceRoot, "runtime", "cache", "bun-public"),
+        },
+        timeoutMs: 120_000,
+      }
+    );
     expect(
       installedPreviousPair,
       installedPreviousPair.stderr || installedPreviousPair.stdout
@@ -909,11 +918,11 @@ async function startCandidateRegistry(): Promise<void> {
     {
       configPath: path.join(acceptanceRoot, "registry.config.yml"),
       storage: path.join(acceptanceRoot, "registry"),
-      uplinks: { npmjs: { maxage: "60m", url: "https://registry.npmjs.org" } },
+      uplinks: { npmjs: { maxage: "60m", url: PUBLIC_NPM_REGISTRY } },
       packages: {
+        // Candidate artifacts own this namespace even after their version is public.
         "@habitat-ai/*": {
           access: "$all",
-          proxy: "npmjs",
           publish: "$all",
           unpublish: "$all",
         },
