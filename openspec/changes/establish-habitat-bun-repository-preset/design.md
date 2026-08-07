@@ -6,7 +6,7 @@ and writing a missing pre-push hook. It does not create the portable repository
 configuration shared by Habitat consumers. Rawr exposed that gap when its Bun/Nx
 conversion required hand-authored copies of generic producer configuration.
 
-Nx 23.1.0 invokes a third-party generator named `preset` after writing and
+Nx 23.1.1 invokes a third-party generator named `preset` after writing and
 installing the base workspace but before initializing Git. It forwards a broad and
 version-dependent option bag. A preset callback therefore cannot activate Husky
 truthfully: `.git` does not exist yet, and Nx deliberately withholds `skipGit` from

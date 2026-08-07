@@ -214,7 +214,7 @@ describe("installed Habitat products", () => {
       "bunx",
       [
         "--bun",
-        "create-nx-workspace@23.1.0",
+        "create-nx-workspace@23.1.1",
         name,
         `--preset=${cliSpecifier}`,
         "--packageManager=bun",
@@ -373,6 +373,7 @@ describe("installed Habitat products", () => {
 
   it("migrates the CLI and SDK as one native Nx package group", async () => {
     const root = path.join(acceptanceRoot, "migration-consumer");
+    const previousReleaseVersion = "0.5.2";
     await mkdir(root, { recursive: true });
     await writeFile(path.join(root, "nx.json"), "{}\n");
     await writeFile(
@@ -381,11 +382,12 @@ describe("installed Habitat products", () => {
         {
           name: "habitat-migration-consumer",
           private: true,
+          type: "module",
           packageManager: "bun@1.3.14",
           devDependencies: {
-            "@habitat-ai/cli": "0.5.2",
-            "@habitat-ai/sdk": "0.5.2",
-            nx: "23.1.0",
+            "@habitat-ai/cli": previousReleaseVersion,
+            "@habitat-ai/sdk": previousReleaseVersion,
+            nx: "23.1.1",
           },
         },
         null,
@@ -403,11 +405,14 @@ describe("installed Habitat products", () => {
     ).toMatchObject({ exitCode: 0 });
 
     const migrated = await run(
-      "bun",
-      ["x", "nx", "migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
+      "bunx",
+      ["--bun", "nx", "migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
       {
         cwd: root,
-        env: publishedRegistryVersion === undefined ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {},
+        env: {
+          NX_MIGRATE_CLI_VERSION: "23.1.1",
+          ...(publishedRegistryVersion === undefined ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
+        },
         timeoutMs: 120_000,
       }
     );
@@ -417,6 +422,9 @@ describe("installed Habitat products", () => {
         "@habitat-ai/cli": installVersion,
         "@habitat-ai/sdk": installVersion,
       },
+    });
+    await expect(lstat(path.join(root, "migrations.json"))).rejects.toMatchObject({
+      code: "ENOENT",
     });
 
     const installedMigratedPair = await run("bun", ["install", "--ignore-scripts"], {
@@ -989,7 +997,7 @@ async function createAdoptionConsumer(): Promise<void> {
         type: "module",
         packageManager: "bun@1.3.14",
         dependencies: { "@habitat-ai/sdk": installVersion },
-        devDependencies: { nx: "23.1.0" },
+        devDependencies: { nx: "23.1.1" },
       },
       null,
       2
@@ -1021,7 +1029,7 @@ async function installAdoptionConsumer(): Promise<void> {
 async function createConsumer(): Promise<void> {
   const dependencies = Object.fromEntries([
     ...products.map((product) => [product.name, installVersion]),
-    ["nx", "23.1.0"],
+    ["nx", "23.1.1"],
     ["typebox", "1.3.8"],
   ]);
   const subjectCount = process.platform === "win32" ? 64 : 1_815;

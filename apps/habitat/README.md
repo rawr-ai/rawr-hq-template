@@ -8,7 +8,7 @@ repository preset, Habitat policy projection, and the public `habitat` command.
 Nx invokes the package's Bun-only `preset` generator while creating the workspace:
 
 ```sh
-bunx create-nx-workspace@23.1.0 my-workspace \
+bunx create-nx-workspace@23.1.1 my-workspace \
   --preset=@habitat-ai/cli \
   --packageManager=bun
 ```

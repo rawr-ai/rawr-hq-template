@@ -26,7 +26,7 @@ const ALTERNATE_PACKAGE_MANAGER_PATHS = [
 ] as const;
 const BUN_VERSION = "1.3.14";
 const BIOME_VERSION = "2.5.3";
-const NX_VERSION = "23.1.0";
+const NX_VERSION = "23.1.1";
 
 const RootPackageSchema = Type.Object(
   {
