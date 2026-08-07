@@ -180,8 +180,9 @@ the owner, and native acceptance proves that an instance cannot bypass it.
   package after cutover.
 - Making telemetry, PostHog, Langfuse, HyperDX, or EVLog a prerequisite for the
   generic runtime spine. Runtime observation contracts are required; backend
-  implementation and profile wiring remain in the native-telemetry companion
-  workstream, which consumes the landed spine before final repository closure.
+  implementation and profile wiring are re-authored by the telemetry adoption
+  owner beside their fresh Habitat destinations. The mixed source root remains
+  evidence until those destinations pass and it can retire.
 
 ## Decisions
 
@@ -383,9 +384,10 @@ Other than the bounded non-live `runtime-schema` adaptation required for the
 initial product transfer, no private runtime project lands before independent
 Rawr separation and the Habitat semantic sieve have passed exact-main gates. `RawrCommand`,
 `RawrResult`, Rawr workspace discovery, all downstream product source, and all
-dead or mixed owners are absent. The native-telemetry companion has landed its
-qualified resource/provider and deleted the singleton, and the remaining empty
-mixed-core package/project identity is removed.
+dead or mixed owners are absent. Fresh Habitat-owned telemetry nodes have
+re-authored the qualified resource/provider and singleton retirement from the
+held source evidence, and the remaining empty mixed-core package/project
+identity is removed.
 The predecessor `packages/habitat-sdk` path then moves atomically to
 `packages/core/sdk`, leaving `packages/core` as a namespace rather than a
 package. No alias or compatibility facade survives.
