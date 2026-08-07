@@ -969,6 +969,138 @@ forbidden = ["forbidden.txt"]
     }
   });
 
+  test("enforces the unselected service blueprint as a closed file-kind topology", async () => {
+    const structureContents = await Bun.file(
+      new URL("../../../../../../.habitat/blueprints/service/structure.toml", import.meta.url)
+    ).text();
+    const valid = await checkFixture(serviceStructureFixture(structureContents), {});
+
+    expect(valid.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [
+        {
+          ruleId: "service_v1_structure",
+          runner: "habitat",
+          status: "pass",
+          findings: [],
+        },
+      ],
+    });
+
+    const violations = [
+      {
+        file: "packages/example/src/service/db/state.ts",
+        code: "unexpected-child",
+        path: "packages/example/src/service/db",
+      },
+      {
+        file: "packages/example/src/service/middleware/index.ts",
+        code: "forbidden-child",
+        path: "packages/example/src/service/middleware/index.ts",
+      },
+      ...["greet.test.ts", "greet.typecheck.ts"].map((name) => ({
+        file: `packages/example/src/service/modules/greeting/contract/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/src/service/modules/greeting/contract/${name}`,
+      })),
+      ...["authorization.spec.ts", "authorization.typecheck.ts"].map((name) => ({
+        file: `packages/example/src/service/modules/greeting/middleware/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/src/service/modules/greeting/middleware/${name}`,
+      })),
+      ...["greet.spec.ts", "greet.typecheck.ts"].map((name) => ({
+        file: `packages/example/src/service/modules/greeting/model/dto/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/src/service/modules/greeting/model/dto/${name}`,
+      })),
+      {
+        file: "packages/example/src/service/modules/greeting/router/index.ts",
+        code: "forbidden-child",
+        path: "packages/example/src/service/modules/greeting/router/index.ts",
+      },
+      ...["retention.test.ts", "retention.typecheck.ts"].map((name) => ({
+        file: `packages/example/src/service/model/policy/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/src/service/model/policy/${name}`,
+      })),
+      ...["fixture.spec.ts", "fixture.typecheck.ts"].map((name) => ({
+        file: `packages/example/test/support/modules/greeting/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/test/support/modules/greeting/${name}`,
+      })),
+      ...["fixture.test.ts", "fixture.typecheck.ts"].map((name) => ({
+        file: `packages/example/test/support/service/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/test/support/service/${name}`,
+      })),
+    ] as const;
+    const forbidden = await checkFixture(
+      serviceStructureFixture(structureContents, {
+        extraFiles: {
+          ...Object.fromEntries(violations.map(({ file }) => [file, "export {};\n"])),
+          "packages/example/src/service/modules/greeting/middleware/index.ts": "export {};\n",
+          "packages/example/src/service/modules/greeting/model/dto/index.ts": "export {};\n",
+          "packages/example/src/service/model/policy/index.ts": "export {};\n",
+        },
+      }),
+      {}
+    );
+    expect(forbidden.result).toMatchObject({ _tag: "Completed", ok: false });
+    if (forbidden.result._tag === "Completed") {
+      const application = forbidden.result.applications[0];
+      expect(application?.runner).toBe("habitat");
+      if (application?.runner === "habitat") {
+        expect(
+          application.findings
+            .map(({ code, path }) => ({ code, path }))
+            .sort((left, right) => textOrder(left.path, right.path))
+        ).toEqual(
+          violations
+            .map(({ code, path }) => ({ code, path }))
+            .sort((left, right) => textOrder(left.path, right.path))
+        );
+      }
+    }
+
+    const wrongKind = await checkFixture(
+      serviceStructureFixture(structureContents, {
+        omitFiles: [
+          "packages/example/package.json",
+          "packages/example/src/client.ts",
+          "packages/example/src/service/modules/greeting/router/greet.ts",
+        ],
+        extraFiles: {
+          "packages/example/package.json/escape.ts": "export {};\n",
+          "packages/example/src/client.ts/escape.ts": "export {};\n",
+          "packages/example/src/service/modules/greeting/router/greet.ts/escape.ts": "export {};\n",
+        },
+      }),
+      {}
+    );
+    expect(wrongKind.result).toMatchObject({ _tag: "Completed", ok: false });
+    if (wrongKind.result._tag === "Completed") {
+      const application = wrongKind.result.applications[0];
+      expect(application?.runner).toBe("habitat");
+      if (application?.runner === "habitat") {
+        expect(
+          application.findings
+            .map(({ code, path }) => ({ code, path }))
+            .sort((left, right) => textOrder(left.path, right.path))
+        ).toEqual(
+          [
+            { code: "wrong-root-kind" as const, path: "packages/example/package.json" },
+            { code: "wrong-root-kind" as const, path: "packages/example/src/client.ts" },
+            {
+              code: "wrong-root-kind" as const,
+              path: "packages/example/src/service/modules/greeting/router/greet.ts",
+            },
+          ].sort((left, right) => textOrder(left.path, right.path))
+        );
+      }
+    }
+  });
+
   test("does not observe inventory for invalid or wholly unbound structure applications", async () => {
     const invalid = authorityFixture({
       blueprints: [
@@ -2193,6 +2325,45 @@ function authorityFixture(options: {
   )) {
     files[`${instance.projectPath}/habitat.toml`] = instanceToml(instance);
   }
+  return { files };
+}
+
+function serviceStructureFixture(
+  structureContents: string,
+  options: {
+    readonly extraFiles?: Readonly<Record<string, string>>;
+    readonly omitFiles?: readonly string[];
+  } = {}
+): Fixture {
+  const authority = authorityFixture({
+    blueprints: [
+      {
+        id: "service",
+        rules: [{ id: "service_v1_structure", runner: "structure", structureContents }],
+      },
+    ],
+    instances: [exampleInstance({ blueprint: "service" })],
+  });
+  const files: Record<string, string> = {
+    ...authority.files,
+    "packages/example/AGENTS.md": "# Example service\n",
+    "packages/example/package.json": "{}\n",
+    "packages/example/project.json": "{}\n",
+    "packages/example/src/client.ts": "export {};\n",
+    "packages/example/src/service/base.ts": "export {};\n",
+    "packages/example/src/service/contract.ts": "export {};\n",
+    "packages/example/src/service/impl.ts": "export {};\n",
+    "packages/example/src/service/modules/greeting/AGENTS.md": "# Greeting\n",
+    "packages/example/src/service/modules/greeting/contract/greet.ts": "export {};\n",
+    "packages/example/src/service/modules/greeting/contract/index.ts": "export {};\n",
+    "packages/example/src/service/modules/greeting/module.ts": "export {};\n",
+    "packages/example/src/service/modules/greeting/router.ts": "export {};\n",
+    "packages/example/src/service/modules/greeting/router/greet.ts": "export {};\n",
+    "packages/example/src/service/router.ts": "export {};\n",
+    "packages/example/tsconfig.json": "{}\n",
+    ...options.extraFiles,
+  };
+  for (const path of options.omitFiles ?? []) delete files[path];
   return { files };
 }
 

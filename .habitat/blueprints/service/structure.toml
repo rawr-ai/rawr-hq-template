@@ -7,6 +7,7 @@ relativePath = "."
 kind = "directory"
 mode = "closed"
 required = [
+  "AGENTS.md",
   "habitat.toml",
   "package.json",
   "project.json",
@@ -14,12 +15,26 @@ required = [
   "tsconfig.json",
 ]
 allowed = [
-  "AGENTS.md",
   "test",
   "tsconfig.build.json",
   "tsconfig.test.json",
   "vitest.config.ts",
 ]
+
+[[scopes]]
+name = "service-required-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|package.json|project.json|tsconfig.json)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-optional-project-files"
+rootRole = "project"
+relativePath = "@(tsconfig.build.json|tsconfig.test.json|vitest.config.ts)"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "service-source"
@@ -32,11 +47,13 @@ required = [
   "service",
 ]
 allowed = []
-forbidden = [
-  "test",
-  "tests",
-  "__tests__",
-]
+
+[[scopes]]
+name = "service-client-face"
+rootRole = "project"
+relativePath = "src/client.ts"
+kind = "file"
+mode = "closed"
 
 [[scopes]]
 name = "service-spine"
@@ -52,15 +69,16 @@ required = [
   "router.ts",
 ]
 allowed = [
-  "db",
   "middleware",
   "model",
 ]
-forbidden = [
-  "test",
-  "tests",
-  "__tests__",
-]
+
+[[scopes]]
+name = "service-spine-faces"
+rootRole = "project"
+relativePath = "src/service/@(base.ts|contract.ts|impl.ts|router.ts)"
+kind = "file"
+mode = "closed"
 
 [[scopes]]
 name = "service-root-middleware"
@@ -75,10 +93,15 @@ required = [
 allowed = []
 forbidden = [
   "index.ts",
-  "*.test.ts",
-  "*.spec.ts",
-  "*.middleware.ts",
 ]
+
+[[scopes]]
+name = "service-root-middleware-files"
+rootRole = "project"
+relativePath = "src/service/middleware/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "service-modules"
@@ -108,11 +131,13 @@ allowed = [
   "middleware",
   "model",
 ]
-forbidden = [
-  "test",
-  "tests",
-  "__tests__",
-]
+
+[[scopes]]
+name = "service-module-faces"
+rootRole = "project"
+relativePath = "src/service/modules/*/@(AGENTS.md|module.ts|router.ts)"
+kind = "file"
+mode = "closed"
 
 [[scopes]]
 name = "service-module-contracts"
@@ -126,9 +151,17 @@ required = [
 ]
 allowed = []
 forbidden = [
-  "*.test.ts",
   "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
 ]
+
+[[scopes]]
+name = "service-module-contract-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/contract/*.ts"
+kind = "file"
+mode = "closed"
 
 [[scopes]]
 name = "service-module-routers"
@@ -142,10 +175,14 @@ required = [
 allowed = []
 forbidden = [
   "index.ts",
-  "*.router.ts",
-  "*.test.ts",
-  "*.spec.ts",
 ]
+
+[[scopes]]
+name = "service-module-router-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/router/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
 
 [[scopes]]
 name = "service-module-middleware"
@@ -160,9 +197,18 @@ required = [
 ]
 allowed = []
 forbidden = [
-  "*.test.ts",
   "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
 ]
+
+[[scopes]]
+name = "service-module-middleware-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/middleware/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "service-root-model"
@@ -177,12 +223,6 @@ allowed = [
   "errors",
   "policy",
   "ports",
-]
-forbidden = [
-  "dependencies",
-  "helpers",
-  "internal",
-  "shared",
 ]
 
 [[scopes]]
@@ -199,12 +239,6 @@ allowed = [
   "policy",
   "ports",
 ]
-forbidden = [
-  "dependencies",
-  "helpers",
-  "internal",
-  "shared",
-]
 
 [[scopes]]
 name = "service-root-model-kinds"
@@ -219,9 +253,18 @@ required = [
 ]
 allowed = []
 forbidden = [
-  "*.test.ts",
   "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
 ]
+
+[[scopes]]
+name = "service-root-model-files"
+rootRole = "project"
+relativePath = "src/service/model/@(dto|entities|errors|policy|ports)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "service-module-model-kinds"
@@ -236,9 +279,18 @@ required = [
 ]
 allowed = []
 forbidden = [
-  "*.test.ts",
   "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
 ]
+
+[[scopes]]
+name = "service-module-model-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/model/@(dto|entities|errors|policy|ports)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "service-test-root"
@@ -454,6 +506,7 @@ allowed = [
 forbidden = [
   "*.spec.ts",
   "*.test.ts",
+  "*.typecheck.ts",
 ]
 
 [[scopes]]
@@ -494,6 +547,7 @@ allowed = [
 forbidden = [
   "*.spec.ts",
   "*.test.ts",
+  "*.typecheck.ts",
 ]
 
 [[scopes]]
