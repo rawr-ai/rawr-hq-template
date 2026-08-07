@@ -6,6 +6,145 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-06 - Separate Before Realizing
+
+Repository separation is the first source operation, not terminal cleanup.
+Habitat must become platform-only before new runtime owners land. The semantic
+sieve moves only proven product behavior to Rawr, retains reusable platform
+behavior in Habitat, and deletes everything that survives only through legacy
+naming or weak implementation. Marketplace remains content-only.
+
+After separation, Habitat implements its ten private owners in dependency
+order: schema, definition, derivation, compiler, bootgraph, Effect substrate,
+process runtime, harnesses, observation, then mounting. The separate
+realization flow remains definition, selection, derivation, compilation,
+provisioning, mounting, and observation. Downstream repositories receive
+released interfaces; none remains co-located as a reference implementation.
+
+### Bag Of Keywords
+
+separate, sieve, retain, move, delete.
+
+schema, define, derive, compile, order.
+
+acquire, execute, mount, observe, expose.
+
+seal, release, install, consume, settle.
+
+## 2026-08-06 - Semantics Decide Ownership
+
+Rawr naming carries no ownership presumption. Every co-located capability is
+classified by the invariant it contains and the consumer it serves. Habitat
+owns reusable platform control, repository operations, lifecycle mechanics,
+command primitives, and the control-plane API that composes them. Rawr owns
+only product behavior whose meaning remains after Habitat is removed from its
+name. A cheap, duplicate, obsolete, or unclear capability is deleted rather
+than promoted to either owner.
+
+`RawrCommand` is predecessor evidence, not an admitted primitive. A retained
+command crosses the Habitat command contract and lands with its platform or
+product owner; no Rawr-branded command base, compatibility export, parallel
+router, or semantic alias survives. Doctor, agent-plugin lifecycle, journal,
+and repository operations are therefore evaluated as platform capabilities
+first, not retained as Rawr topics by default.
+
+### Bag Of Keywords
+
+Habitat, platform, control, command, service.
+
+Rawr, product, domain, app, topic.
+
+keep, move, replace, delete, prove.
+
+## 2026-08-06 - Facade, Runtime, And Product Stay Distinct
+
+Habitat, Rawr, and Marketplace are three steady-state repository authorities.
+Habitat owns platform law, the SDK facade, the Oclif host, private runtime
+owners, the self-host, and reusable platform capabilities. Rawr owns the full
+downstream product closure and consumes published Habitat interfaces.
+Marketplace owns curated agent-plugin content and governed content records.
+Co-location is migration state, never a final topology or an authority transfer.
+
+The SDK exposes public authoring and start contracts; it does not derive,
+compile, provision, bind, mount, or observe. Runtime definition owns cold
+contracts. Runtime derivation derives facts. The compiler plans. Bootgraph
+orders and emits rollback metadata. The Effect substrate acquires, releases,
+and rolls back. Process runtime binds execution and returns mount-ready records
+plus its own stop handle. Runtime mounting invokes harnesses and owns
+cross-owner shutdown. Runtime observation projects bounded read models. The Oclif host supplies
+shared loader and harness mechanics but selects no topic for Habitat or Rawr.
+This entry supersedes earlier shorthand below that assigned derivation to the
+SDK or combined mounting and observation under a generic coordinator; topology
+is structure or a read-model relation, not an execution owner.
+
+### Bag Of Keywords
+
+Habitat, substrate, law, facade, runtime.
+
+Rawr, product, domain, app, topic.
+
+Marketplace, content, provenance, record, channel.
+
+define, derive, compile, order, acquire.
+
+bind, lower, mount, observe, settle.
+
+## 2026-08-06 - Habitat Is Platform, Rawr Is Product
+
+Habitat is the platform: substrate, core SDK, runtime, tooling, law, adapters,
+and harnesses. Rawr is the first downstream product built on that platform: it
+owns its domains, services, plugins, topics, profiles, selections, and app
+instances. Generic capability contracts and reusable providers may be Habitat
+assets; Rawr owns only their product selection and configuration. No Rawr name
+or example becomes core merely because it currently shares this repository.
+This entry supersedes the earlier Template/Personal authority and public
+`@habitat-ai/rawr*` package classifications retained below as reasoning history;
+private Rawr source is a product to realize, not a Habitat distribution to
+publish from this workspace.
+
+The self-hosted `apps/habitat` realization is not a second platform identity.
+It is the Habitat platform using its own app contract to run non-core catalog,
+policy, Nx, generator, and CLI capabilities. `apps/rawr` exists only inside the
+independent downstream Rawr repository.
+`packages/core` means Habitat core exclusively. Mixed predecessor code must
+move to a qualified Habitat owner, a qualified Rawr owner, or disappear.
+
+### Bag Of Keywords
+
+Habitat, platform, substrate, runtime, SDK.
+
+Rawr, app, domain, plugin, profile.
+
+generic, reusable, concrete, downstream, closure.
+
+## 2026-08-06 - Kinds Precede Instances
+
+Runtime realization is a narrowing causal chain, not a web of entrypoint
+helpers. The app declares selection. Runtime derivation derives. The compiler
+proves. The bootgraph orders. The Effect substrate acquires. Process runtime binds and assembles execution. The
+execution runtime invokes. An adapter lowers. A harness mounts. Observation
+records. Release walks dependencies in reverse. Every boundary receives the
+qualified output of the boundary above it; none reconstructs an earlier
+decision or reaches upward for live state.
+
+Define each owner boundary and runtime kind before admitting its first
+instance. The Habitat platform defines the app law; its self-hosted app
+exercises it. Rawr is an independent downstream product whose currently proven
+closure is the ChatGPT corpus and Hyperresearch services/topics. Broader Oclif,
+Elysia, Inngest, web, and desktop variance belongs to indispensable Habitat
+owner-local conformance fixtures until a downstream product proves ownership.
+Their native interiors do not leak into generic mounting or observation.
+Narrow scope by implementing fewer selected instances through every phase,
+never by deleting phases or fusing owners.
+
+### Bag Of Keywords
+
+kind, authority, phase, artifact, closure.
+
+select, derive, compile, provision, mount.
+
+native, process, harness, observe, release.
+
 ## 2026-08-05 - Cache Precision Precedes Engine Work
 
 Habitat has two performance domains. Nx decides whether work is necessary;
