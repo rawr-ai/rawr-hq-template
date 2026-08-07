@@ -95,7 +95,7 @@ conformance fixtures.
 | `RawrCommand`, `RawrResult`, and duplicate Habitat output support | Habitat CLI mechanics after deletion of the Rawr symbols | Consolidate retained result, error, and output behavior into one Habitat command contract owned by `@habitat-ai/cli`; do not preserve or rename either Rawr symbol. |
 | `findWorkspaceRoot` and Habitat-side Rawr workspace-discovery lookups | no retained owner | Delete product-named workspace discovery and bind explicit Habitat workspace input at the CLI boundary. Product-owned Rawr configuration transfers unchanged with its product owner. |
 | Generic runtime observation contracts | Habitat core | Define through `@habitat-ai/sdk`; they carry correlation and observation law but select no backend. |
-| Current Rawr-named telemetry singleton and signal hooks | no valid final owner | An early native-telemetry companion slice moves the concrete OpenTelemetry Node implementation to the qualified Habitat telemetry resource/provider and deletes the mixed-core singleton and hooks before core reservation. The selected provider remains resource-owned source and is distributed through one optional `@habitat-ai/sdk/telemetry` integration subpath rather than a third package or the CLI host. After runtime lands, the companion adds Habitat profile selection without moving provider ownership again; downstream products select only the released integration in their own repositories. |
+| Current Rawr-named telemetry singleton and signal hooks | adoption evidence, not a merge owner | Hold the mixed telemetry root. Re-author its path-qualified OpenTelemetry Node resource/provider and singleton retirement into fresh Habitat-owned nodes before core reservation; do not restack or merge the predecessor root. Assemble the selected provider through one optional `@habitat-ai/sdk/telemetry` integration subpath, re-author later profile/process/harness obligations beside their final owners, and retire the source only after destination acceptance. |
 | `packages/habitat-sdk` | Habitat core | Move wholly to `packages/core/sdk` while retaining the sole public package identity `@habitat-ai/sdk`. |
 | `packages/hq-sdk` API/workflow declarations and composition | predecessor evidence | Do not move the current self-classifying API builders or Inngest-shaped workflow builders into the public SDK. After the canonical runtime owners exist, implement the accepted topology-specific server/internal faces and host-neutral async faces fresh, reusing only proven generic algorithms. |
 | `packages/hq-sdk` service metadata and generic middleware/dependency contracts | Habitat authoring | Move `BaseMetadata`, `ServiceMetadataOf`, `procedureMetadata`, `getProcedureMetadata`, analytics/observability middleware factories, `AnalyticsClient`, and `Logger` to `@habitat-ai/sdk/service` with their retained platform readers. Product policy wrappers do not remain in Habitat. |
@@ -116,7 +116,7 @@ conformance fixtures.
 | `tools/workstream-plugin-pack` | Habitat tooling | Retain as qualified non-public Habitat tooling; it remains outside Rawr and outside the public SDK/runtime package closure. |
 | `apps/cli`, `apps/hq`, `apps/server`, and `apps/web` plus their private package identities | no retained application owner in Habitat | Move their retained platform capabilities to the exact Habitat owner, import only the proven Rawr services/topics into Rawr, and delete every app root and all remaining composition. Do not create `apps/rawr`, a compatibility app, or an alias in Habitat. |
 | `services/agent-plugin-lifecycle` | Habitat platform | Retain as the service behind `habitat agent plugins ...`; select `content-workspace`, package-output, native-provider, and versioned-content resources through the Habitat self-host. |
-| `services/dev`, `packages/dev-node`, and the DevOps CLI topic | Habitat platform | Retain development, Git, Graphite, repository, stack, and worktree operations under qualified Habitat service/package/topic owners, including the scoped `dev stack doctor`; do not confuse it with the deleted root `doctor` command. |
+| `services/dev`, `packages/dev-node`, and the DevOps CLI topic | Habitat platform | Retain development, Git, Graphite, repository, stack, and worktree operations under the qualified Habitat service and CLI-topic owners, including the scoped `dev stack doctor`; do not confuse it with the deleted root `doctor` command. Dissolve `packages/dev-node`: scratch policy moves into the development service, while filesystem, path, process, and clock mechanics come from the app-selected Effect Platform Node provider. |
 | `services/session-intelligence` and Session Tools commands | proven Rawr product | Import the cohesive service/topic projects into Rawr. Their closed Codex/Claude transcript discovery, parsing, indexing, search, and projection semantics are product behavior, not a provider-neutral Habitat session substrate. |
 | `services/chatgpt-corpus` and the ChatGPT corpus topic | proven Rawr product | Import the cohesive service/topic projects into the independent Rawr repository and govern them there. No copy remains in Habitat. |
 | `services/hyperresearch-codex` and genuine Hyperresearch topics | proven Rawr product | Import the cohesive service/topic projects into the independent Rawr repository; remove synthetic `codex-slice` and `run-fixture` commands from production membership and retain only indispensable owner-local test fixtures. |
@@ -615,7 +615,7 @@ single vendor substrate; no compatibility blueprint or legacy construction
 branch survives. Habitat law asserts durable ownership and topology rather than
 vendor-syntax snapshots.
 
-The app and SDK blueprint packets plus the exact `runtime-schema`,
+The app, SDK, complete Oclif-app, and complete CLI-topic blueprint packets plus the exact `runtime-schema`,
 `runtime-definition`, `runtime-derivation`, `runtime-compiler`,
 `runtime-bootgraph`, `runtime-substrate-effect`, `runtime-process-runtime`,
 `runtime-harnesses`, `runtime-observation`, and `runtime-mounting` private-owner packets define one
@@ -683,18 +683,18 @@ absent.
 This change implements `RuntimeDiagnostic`, `RuntimeCatalog`, and
 `RuntimeTelemetry` in `runtime-observation` as non-authorizing process
 observation. It does not choose a backend or wire production exporters. The
-current Rawr-named singleton is not an admitted provider: an early companion
-slice replaces it with the qualified Habitat OpenTelemetry Node
-resource/provider and retires its process-global signal hooks before
-`packages/core` is reserved. The provider stays source-owned by that resource,
-while the optional public integration is assembled into
+current Rawr-named singleton is not an admitted provider. The mixed telemetry
+root remains held source evidence while its path-qualified OpenTelemetry Node
+resource/provider and singleton retirement are re-authored into fresh
+Habitat-owned nodes before `packages/core` is reserved. The provider stays
+resource-owned, while the optional public integration is assembled into
 `@habitat-ai/sdk/telemetry`; it is not a third package and is not hidden in
-`@habitat-ai/cli/host`. After the runtime spine lands, the native telemetry
-workstream consumes the exact checkpoint through the canonical
-`RuntimeProvider -> ProviderEffectPlan` input and adds the required Habitat
-profile integration. A downstream product may later select the released
-integration in its own repository; the companion owns only the generic
-telemetry provider and integration.
+`@habitat-ai/cli/host`. After the runtime spine lands, each admitted profile,
+process, and harness obligation is re-authored beside its final owner through
+the canonical `RuntimeProvider -> ProviderEffectPlan` input. The mixed root is
+never restacked or merged and retires only after destination acceptance. A
+downstream product may later select the released integration in its own
+repository.
 Oclif, Elysia/oRPC,
 Inngest, EVLog, ClickStack, and shutdown integration remain downstream.
 
@@ -814,9 +814,9 @@ project, or downstream product as another package.
    indispensable owner-local Habitat conformance fixtures. No fixture becomes a
    production app, service, plugin, or package.
 11. Audit unreachable residue and pass the complete local Habitat gate. Publish
-   each sealed runtime checkpoint to the native-telemetry companion so its
-   Habitat profile selection restacks against the qualified resource/provider
-   established before core reservation.
+   each sealed runtime checkpoint to the telemetry adoption owner so it can
+   re-author the admitted profile, process, and harness obligations beside the
+   qualified runtime owners without restacking or merging the mixed source root.
 12. Land the complete Habitat stack on canonical `main`, pass exact-main CI,
     and use `nx release` for the second and final initiative checkpoint to tag, publish, and registry-smoke
     `@habitat-ai/sdk` plus the separate `@habitat-ai/cli` executable. Assemble

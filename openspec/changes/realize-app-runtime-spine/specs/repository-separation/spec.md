@@ -59,6 +59,7 @@ fixture outside production membership.
 
 - **WHEN** Habitat and Rawr exact-main project and command inventories are compared with the classification ledger
 - **THEN** every retained capability has exactly one listed owner and acceptance target
+- **AND** `nx run habitat:acceptance:product-separation-absence` passes against the cumulative exact predecessor inventory
 - **AND** every deleted capability, predecessor owner, production example, reader, and compatibility path is absent
 - **AND** agent-plugin export behavior remains available without the unreachable export-destination resource/provider
 
@@ -142,7 +143,7 @@ commit authorizes only that checkpoint.
 #### Scenario: Public artifacts are admitted before publication
 
 - **WHEN** an exact Habitat-main SDK and CLI candidate is ready for release
-- **THEN** the local installed-package Nx acceptance packs both public tarballs and installs them into a disposable consumer before any tag or registry mutation
+- **THEN** the local installed-package Nx acceptance packs both public tarballs, installs the exact SDK candidate, and invokes native `nx add @habitat-ai/cli@file:<absolute-packed-cli-tarball>` in a disposable consumer before any tag or registry mutation
 - **AND** that consumer proves generated `service@1` construction, cold public imports, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
 - **AND** artifact inspection proves the packed `dist/blueprints/service` subtree contains only the positive closed kind and no product vocabulary or legacy service rule packet
 - **AND** any workspace import, missing public face, unpublished dependency, or source/installed divergence blocks publication

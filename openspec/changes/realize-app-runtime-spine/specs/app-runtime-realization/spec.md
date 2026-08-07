@@ -288,8 +288,8 @@ order.
 ### Requirement: Habitat distributes one SDK with sealed internal owners
 
 The public runtime and authoring facade MUST be distributed as the single
-`@habitat-ai/sdk` package from the Nx project at `packages/core/sdk`. Its stable
-exports MUST be exactly
+`@habitat-ai/sdk` package from the Nx project at `packages/core/sdk`. Its exact
+public export set MUST comprise the stable authoring and runtime exports
 `.`, `./app`, `./effect`, `./execution`, `./service`, `./service/schema`,
 `./plugins/server`, `./plugins/server/effect`, `./plugins/async`,
 `./plugins/async/effect`, `./plugins/cli`, `./plugins/cli/effect`,
@@ -301,7 +301,9 @@ exports MUST be exactly
 `./resources/semantic-ledger`, `./resources/semantic-ledger/fluree`,
 `./resources/temporal-inquiry`, and `./resources/temporal-inquiry/fluree`; and
 the data exports `./habitat-pack.json`,
-`./blueprints/*`, and `./package.json`. The closed private runtime inventory and
+`./blueprints/*`, and `./package.json`. Every name in those three groups MUST be
+present in the packed export map; "optional" describes conditional provider
+loading, not export-path membership. The closed private runtime inventory and
 completed direct dependency graph MUST be exactly:
 
 | Exact project root | Nx-only project ID | Direct private dependencies |
@@ -364,8 +366,8 @@ Each private owner MUST define cacheable `typecheck`, `test`, and `build` throug
 the shared target defaults. The SDK MUST inherit that vocabulary and add only
 packed-subpath acceptance. The Habitat and selected downstream app projects MUST add their
 native manifest and exact `acceptance:<capability>` targets, including
-`acceptance:oclif-native-runtime`, installed-package acceptance, and
-`acceptance:cli-runtime`. The cacheable policy target MUST declare only its
+`acceptance:oclif-native-runtime` and installed-package acceptance. The
+cacheable policy target MUST declare only its
 exact closed owner/policy/toolchain/environment inputs and outputs `[]`.
 Project creation, direct edges, SDK assembly edge, and target realization MUST
 land with the first conforming implementation rather than as an empty topology
