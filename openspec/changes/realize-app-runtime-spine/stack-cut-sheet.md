@@ -33,6 +33,11 @@ absent `service@1` member is correct: it neither leaves services ungoverned nor
 authors a local generic substitute. Task 2.8 owns the next versioned Habitat
 handoff and its installed-consumer evidence.
 
+Rawr task 2.7 landed independently on `rawr-ai/rawr` canonical `main` at
+`749e344a49e454b075f80914d420488be3f40119`. That checkpoint contains the
+owner-local migration record and Nx consumer scaffold only; no product source
+or unpublished Habitat dependency crossed the repository boundary.
+
 ## Stack Dispositions
 
 | Stack | Semantic destination | Disposition | Landing condition |
