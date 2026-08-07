@@ -84,8 +84,8 @@ The managed runtime contract is backed by:
 
 ## CLI Command Resolution
 
-Private `rawr` commands run from the exact Template revision through the
-repository-owned Oclif script:
+Private `rawr` commands run from the exact Rawr product revision through its
+repository-owned Oclif target. During co-location, the temporary script is:
 
 ```bash
 bun run rawr -- --version
@@ -94,10 +94,12 @@ bun run rawr -- hq status
 
 If an official `hq` command is missing there, verify the owning Nx build and
 Oclif composition instead of repairing it through Oclif user state. Habitat
-`0.5.2` publication and registry-installed smoke are complete; the private
-`rawr` application remains source/Nx invoked. Do not run the removed custom
-installer or selector. The predecessor distribution and global alias are absent;
-do not reconstruct them for development or acceptance.
+registry publication and package metadata establish released versions, Nx
+Release configuration defines membership, and release records preserve
+evidence; the private `rawr` application remains source/Nx invoked.
+Do not run the removed custom installer or selector. The predecessor
+distribution and global alias are absent; do not reconstruct them for
+development or acceptance.
 
 ## Browser Behavior
 

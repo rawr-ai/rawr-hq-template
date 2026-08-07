@@ -24,7 +24,7 @@ gt sync --no-restack
 3. Apply repository boundary policy from `docs/process/HQ_OPERATIONS.md`:
 - Do not run CLI publication, content lifecycle, or provider mutation as part of stack mechanics.
 - Keep stack mutation Graphite-first (`gt`), not ad-hoc `git rebase`.
-- Promote Template and personal independently; never merge one repository into the other.
+- Promote Habitat, Rawr, and Marketplace independently; never merge one repository into another.
 
 ## Canonical drain loop
 

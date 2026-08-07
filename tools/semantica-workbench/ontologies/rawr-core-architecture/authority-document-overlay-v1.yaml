@@ -94,16 +94,16 @@ entities:
     - none
   notes: ''
 - id: authority.doc.canonical-architecture-spec
-  label: RAWR_Canonical_Architecture_Spec.md
+  label: HABITAT_ARCHITECTURE.md
   type: DocumentAuthority
   layer: authority-and-document-overlay
   status: locked
-  definition: Primary authority for durable core ontology, repository roots, semantic nouns, ownership laws, semantic direction,
+  definition: Primary Habitat platform authority for durable core ontology, repository roots, semantic nouns, ownership laws, semantic direction,
     and stable architecture versus runtime realization.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
-    section: Source Map
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 1 Scope
   operational_consequence:
   - source-of-truth-baseline
   - semantic-diff
@@ -112,16 +112,16 @@ entities:
     consequence: []
   notes: ''
 - id: authority.doc.effect-runtime-realization-spec
-  label: RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md
+  label: HABITAT_RUNTIME_REALIZATION.md
   type: DocumentAuthority
   layer: authority-and-document-overlay
   status: locked
-  definition: Primary authority for runtime realization ownership, lifecycle, runtime artifacts, producer/consumer handoffs,
+  definition: Primary Habitat runtime authority for runtime realization ownership, lifecycle, runtime artifacts, producer/consumer handoffs,
     and forbidden runtime patterns.
   aliases: []
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
-    section: Source Map
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 1 Purpose and scope
   operational_consequence:
   - source-of-truth-baseline
   - runtime-diff
@@ -176,7 +176,7 @@ relations:
   layer: authority-and-document-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md
+  - path: docs/system/HABITAT_ARCHITECTURE.md
     section: 1 Scope; 3.2 Stable semantic nouns
   operational_consequence:
   - alias-resolution
@@ -189,8 +189,8 @@ relations:
   layer: authority-and-document-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
-    section: Source Map
+  - path: docs/system/HABITAT_ARCHITECTURE.md
+    section: 1 Scope
   operational_consequence:
   - source-of-truth-baseline
   - semantic-diff
@@ -201,8 +201,8 @@ relations:
   layer: authority-and-document-overlay
   status: locked
   source_refs:
-  - path: docs/projects/rawr-final-architecture-migration/.context/core-architecture-ontology-workflow/ontology-design.md
-    section: Source Map
+  - path: docs/system/HABITAT_RUNTIME_REALIZATION.md
+    section: 1 Purpose and scope
   operational_consequence:
   - source-of-truth-baseline
   - runtime-diff

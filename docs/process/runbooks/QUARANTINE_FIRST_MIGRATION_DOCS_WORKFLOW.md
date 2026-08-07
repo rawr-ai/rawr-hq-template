@@ -18,8 +18,8 @@ Do not make a mixed document safer by adding temporal migration notes inside it.
 
 For M2 architecture migration work, the conflict winners are:
 
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- `docs/system/HABITAT_ARCHITECTURE.md`
+- `docs/system/HABITAT_RUNTIME_REALIZATION.md`
 - the active migration plan once generated
 
 Ontology, Semantica, semantic-diff, and claim-extraction outputs are evidence adapters. They help find candidate conflicts; they do not become architecture truth or verdicts by themselves.
@@ -39,8 +39,9 @@ Before changing docs:
 3. Inspect staged and unstaged changes.
 4. Use the private repository-owned Oclif application through
    `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor
-   distribution. Habitat `0.5.2` publication and registry-installed acceptance
-   are complete; no RAWR package publication is pending.
+   distribution. Registry publication and package metadata establish released
+   Habitat versions, Nx Release configuration defines membership, and release
+   records preserve evidence; this runbook carries no version or inventory.
 5. If the `bun run rawr -- sessions ...` surface is unavailable, extract transcript
    evidence directly from the session JSONL and record that tooling gap in the
    workstream notes. Do not repair it with an Oclif extension link.

@@ -100,3 +100,19 @@ or the `plugins web` lifecycle route are superseded.
 - No Template-to-personal sync runbook or Template-managed executable-path guard is active.
 - This archived inventory remains provenance only and must not be used to recreate
   mirrored routers or executable paths in personal.
+
+## Habitat Authority Promotion (2026-08-06 Addendum)
+
+The root and docs routers remain in their existing locations; this update
+changes their authority destinations rather than adding another router layer.
+
+- [[../../../../AGENTS|the root router]] now distinguishes Habitat platform, Rawr
+  product, and Marketplace content ownership.
+- [[../../../AGENTS|the docs router]] names
+  [[../../../system/HABITAT_ARCHITECTURE|Habitat Architecture]] and
+  [[../../../system/HABITAT_RUNTIME_REALIZATION|Habitat Runtime Realization]] as
+  the two canonical system documents.
+- The co-located Rawr security model moved to
+  [[../../../system/quarantine/RAWR_SECURITY_MODEL|system quarantine]] and is not
+  Habitat authority.
+- Existing router placement and the parent-router policy remain unchanged.

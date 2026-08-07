@@ -6,7 +6,7 @@ membership without introducing replacement app-composition authority.
 ## Requirements
 ### Requirement: Legacy web membership commands are structurally absent (B04, B30)
 
-The private Template Oclif application MUST NOT expose `rawr plugins web`,
+The private Rawr Oclif application MUST NOT expose `rawr plugins web`,
 `rawr plugins scaffold`, or any former child command, alias, forwarder, help row,
 tool entry, or active documentation route. No replacement curated-agent,
 app-composition, web-mounting, or aggregate source-scaffolding behavior may enter
@@ -51,7 +51,7 @@ Server and web startup MUST NOT scan workspace packages, filter package inventor
 
 C4 MUST NOT expose app composition show/select/unselect/check, app-projection generation, an AppDefinition source editor, a parallel composition registry, a composition snapshot/domain, app role materialization, web mount orchestration/readiness, live composition observation, or runtime composition status.
 
-Future app composition and runtime realization MUST remain deferred to the canonical architecture-migration chain `defineApp(...) -> SDK derivation -> compiler -> process runtime -> adapters -> harness -> RuntimeCatalog`, entered through `startApp(...)`, as specified by `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md` and `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`. C4 MUST NOT partially implement or compatibility-wrap that chain.
+Future app composition and runtime realization MUST remain deferred to the canonical architecture-migration chain `defineApp(...) -> runtime derivation -> compiler -> process runtime -> adapters -> harness -> RuntimeCatalog`, entered through the public SDK `startApp(...)` facade, as specified by `docs/system/HABITAT_ARCHITECTURE.md` and `docs/system/HABITAT_RUNTIME_REALIZATION.md`. C4 MUST NOT partially implement or compatibility-wrap that chain.
 
 #### Scenario: Semantic absence includes the superseded mini-runtime
 
@@ -63,7 +63,7 @@ Future app composition and runtime realization MUST remain deferred to the canon
 
 Legacy retirement MUST NOT install or manage external Oclif extensions, derive
 or reconcile agent content, mutate provider homes, write package outputs, select
-or install a RAWR CLI version, author Personal channel records, or alter
+or install a Rawr CLI version, author Marketplace channel records, or alter
 protected-lane candidate bytes. Existing unrelated server/RPC/OpenAPI/Inngest
 behavior MAY be regression evidence only and cannot become a new composition or
 lifecycle owner.
@@ -71,5 +71,5 @@ lifecycle owner.
 #### Scenario: Adjacent mutation ports remain zero
 - **WHEN** legacy membership paths are absent and surviving host regressions run
 - **THEN** Oclif, CLI installation, release derivation, provider, package-output,
-  Personal-record, and protected-lane mutation counters remain zero
+  Marketplace-record, and protected-lane mutation counters remain zero
 - **AND** no missing app/runtime capability is repaired through a fallback

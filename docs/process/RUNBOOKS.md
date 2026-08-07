@@ -19,27 +19,29 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 | Operate the managed local HQ runtime | [[docs/process/runbooks/HQ_RUNTIME_OPERATIONS]] |
 | Contain migration-doc drift with quarantine-first topology | [[docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW]] |
 | Drain Graphite stacks safely (publish/merge/prune loop) | [[docs/process/runbooks/STACK_DRAIN_LOOP]] |
-| Validate Template/personal separation and artifact bindings | [[docs/process/CROSS_REPO_WORKFLOWS]] |
+| Validate Habitat/Rawr/Marketplace separation and released interfaces | [[docs/process/CROSS_REPO_WORKFLOWS]] |
 | Canonical repo-boundary + transient retry + final acceptance policy | [[docs/process/HQ_OPERATIONS]] |
 
 ## Command Surface Invariant
 
 - External Oclif extensions: `rawr plugins ...`
 - Curated agent-plugin lifecycle: `rawr agent plugins ...`
-- Personal owns agent-plugin source, provenance, policy/evaluation inputs, and
+- Marketplace owns agent-plugin source, provenance, policy/evaluation inputs, and
   governed release, acceptance, and channel records. Reviewed `current-main`
   selects the exact Git and release-input identity for the canonical channel.
-- The Template lifecycle verifies that selection, derives the closed release set
-  in memory, and delegates provider `status`, `test`, and `sync` to native
-  commands. Test callers own the explicit disposable root and provider homes;
-  the service owns only its scoped projection child.
+- Habitat owns the lifecycle service that verifies that selection, derives
+  the closed release set in memory, and delegates provider `status`, `test`, and
+  `sync` to native commands. Test callers
+  own the explicit disposable root and provider homes; the service owns only its
+  scoped projection child.
 - Creation, packaging, vendor updates, and destination export remain qualified
   adjacent capabilities. They do not select a channel or create build,
   promotion, retirement, undo, or persistent local lifecycle authority.
 - Private `rawr` application development uses repository-local Nx targets and
-  `bun run rawr -- ...`. Habitat `0.5.2` publication and registry-installed
-  smoke are complete; the private application is not a release-group member or
-  installed operational surface.
+  `bun run rawr -- ...`. Registry publication and package metadata establish
+  released Habitat versions, Nx Release configuration defines membership, and
+  release records preserve evidence; the private Rawr application is not a
+  Habitat release-group member.
 
 Do not mix command families. App, web, and runtime composition are not lifecycle
 fallbacks.
@@ -63,11 +65,11 @@ fallbacks.
   Git-visible tree the rule inspects. Domain behavior tests remain explicit
   owner `test` targets and enter protected admission through the root `ci`
   graph. See [[NX_AGENT_WORKFLOW]].
-- Habitat evaluates the RAWR-owned positive `.habitat` topology through the
-  exact Template-owned `@habitat-ai/cli` npm release. Workspace source remains
+- Habitat evaluates repository-owned positive `.habitat` topology through the
+  exact Habitat-owned `@habitat-ai/cli` npm release. Workspace source remains
   the producer, never an Nx-bootstrap fallback.
 - Every current non-root project owns a public check. The installed Habitat Nx
-  plugin projects registered laws into that graph; Template keeps no
+  plugin projects registered laws into that graph; the repository keeps no
   script-backed adapter or hand-maintained selector.
 - Foundational project targets use `build`, `typecheck`, `test`, and `check`;
   ordinary lint has one workspace owner. Separately compiled test and tool
@@ -92,7 +94,7 @@ Scratch-first policy for mutating multi-phase commands:
 
 ## Related Process Docs
 
-- [[docs/process/WORKSTREAMS]] (Template-owned generic coordination pack)
+- [[docs/process/WORKSTREAMS]] (Habitat-owned generic coordination pack)
 - [[docs/process/PLUGIN_AUTONOMY_READINESS_SCORECARD]] (autonomy readiness and
   drift scorecard)
 - [[docs/process/CROSS_REPO_WORKFLOWS]] (repository separation and artifact

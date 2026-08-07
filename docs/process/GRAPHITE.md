@@ -1,6 +1,7 @@
-# Graphite workflow (RAWR HQ-Template)
+# Graphite Workflow (Habitat)
 
-This repo uses **Graphite** (`gt`) for stacked-PR workflows in `RAWR HQ-Template`.
+The Habitat repository uses **Graphite** (`gt`) for stacked-PR workflows. The
+legacy remote name does not change repository authority.
 
 ## Core invariants
 

@@ -18,7 +18,7 @@ Use these names consistently:
 
 Pinned authority for the current lab:
 
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- `docs/system/HABITAT_RUNTIME_REALIZATION.md`
 - The SHA-256 is recorded in `evidence/proof-manifest.json`.
 
 The SDK facade in `src/sdk/**` exists only to make the spec authoring model executable by TypeScript. Canonical-looking imports such as `@rawr/sdk/effect` are local `tsconfig` aliases and must not be treated as production package exports.

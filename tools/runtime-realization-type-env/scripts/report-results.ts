@@ -88,8 +88,7 @@ export interface ManifestValidationRoots {
 }
 
 const manifestValidator = Compile(ManifestSchema);
-const canonicalSpecPath =
-  "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md";
+const canonicalSpecPath = "docs/system/HABITAT_RUNTIME_REALIZATION.md";
 const gatedProofStatuses = new Set<ManifestStatus>(["proof", "vendor-proof", "simulation-proof"]);
 const nonBehaviorGateTargets = new Set<EvidenceGate>(["gate", "report", "evidence-manifest"]);
 const simulationBehaviorTargets = new Set<EvidenceGate>(["oracle", "middle-spine", "simulate"]);

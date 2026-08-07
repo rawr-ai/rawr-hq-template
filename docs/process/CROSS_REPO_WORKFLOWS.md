@@ -1,99 +1,129 @@
 # Repository Separation And Interface Workflows
 
-This document is canonical and normative for interactions between
-`RAWR HQ-Template` and personal `RAWR HQ`.
+This document is canonical and normative for interactions among the Habitat
+platform, Rawr product, and Marketplace content repositories.
 
 ## Repository Authorities
 
-`RAWR HQ-Template` owns the executable Oclif CLI, official commands, provider
-adapters, generic lifecycle services, schemas/tooling implementations, and generic
-validators.
+The Habitat repository owns the core SDK, foundational Oclif CLI, private
+runtime implementation, architecture law, generic tools, blueprints,
+validators, and reusable platform services/resources/providers.
 
-Personal `RAWR HQ` owns curated agent-plugin source/content, vendor provenance,
-declarative policy/evaluation inputs, and its own governed acceptance, release, and
-channel records.
+The Rawr repository owns the first downstream product built on Habitat: its app
+composition, profiles, entrypoints, domain services/resources/providers,
+plugins, topics, policy, tests, product records, and private Oclif application.
 
-Each repository owns its own Git history, `main`, Graphite state, worktrees, hooks,
-configuration, and process records.
+Marketplace owns curated agent-plugin content, vendor provenance, declarative
+policy/evaluation inputs, and its governed acceptance, release, and channel
+records.
+
+Each repository owns its own Git history, canonical `main`, Graphite state,
+worktrees, hooks, configuration, OpenSpec records, and process records.
 
 ## Forbidden Relationships
 
-- Do not merge, rebase, cherry-pick, transplant, or establish ancestry between the repositories.
-- Do not copy, fork, vendor, or manually duplicate Template runtime code in personal.
-- Do not preserve Template-managed executable paths in personal through a guard,
-  manifest, tree-equivalence check, or compatibility layer.
-- Do not use a checkout path as CLI package, channel, ledger, receipt,
+- Do not merge, rebase, cherry-pick, transplant, mirror, or establish required
+  ancestry between the repositories.
+- Do not copy, fork, vendor, or manually duplicate Habitat implementation in
+  Rawr or Marketplace.
+- Do not preserve Habitat-managed source paths through a guard, manifest,
+  tree-equivalence check, compatibility layer, or Git synchronization process.
+- Do not use a checkout path as package, executable, channel, ledger, receipt,
   release, provider, or export identity.
-- Do not make upstream synchronization a product or repository-process dependency.
+- Do not make upstream synchronization a product or repository-process
+  dependency.
 
-## Allowed Interface
+## Released Habitat Interface
 
-Template may operate on personal content only through an explicit versioned data
-interface. A complete binding names:
+Rawr and Marketplace may consume Habitat only through ordinary released package
+interfaces. A complete binding names:
 
-- schema or protocol ID and version;
-- exact Template source revision used for private application acceptance;
-- exact personal repository identity, source commit and tree, and release-input
-  record version;
-- governed record digests;
-- provider/export destination identity when mutation is requested.
+- package identity and exact version;
+- package provenance and integrity supplied by the release system;
+- schema or protocol identity and version when data crosses the boundary;
+- the consuming repository revision and owner-local acceptance result.
 
-Personal Git commits and trees may be retained as audit provenance. They do not
-replace any interface field above.
+Registry publication and package metadata establish released Habitat versions,
+Nx Release configuration defines membership, and release records preserve
+evidence. Routers and runbooks must point to those sources rather than repeat
+versions or release inventory.
 
-## Template Interface
+## Marketplace Content Interface
 
-1. Implement and verify the generic behavior in Template.
-2. Land through Template's own Graphite stack and canonical `main`; the required
+Rawr may operate on Marketplace content only through an explicit versioned data
+interface. A complete content binding names:
+
+- schema or protocol identity and version;
+- exact Marketplace repository identity, source commit and tree;
+- release-input and governed-record identities;
+- provider or export destination when mutation is requested;
+- the exact Rawr revision and Habitat interfaces used for acceptance.
+
+The Marketplace repository path is only a content-workspace locator. Git commit
+and tree identities are audit provenance; neither the path nor Git ancestry
+becomes executable or lifecycle authority.
+
+## Habitat Release
+
+1. Implement and verify reusable platform behavior in Habitat.
+2. Land through Habitat's Graphite stack and canonical `main`; the required
    repository gate must pass on the exact release source.
-3. Publish reusable Habitat schema/tooling through its fixed Nx Release group.
-4. Verify the private Oclif application through its Nx-owned source and build
-   targets, then record the exact Template revision and interface versions used
-   for cross-repository acceptance.
+3. Publish supported packages through Habitat's Nx Release configuration.
+4. Registry-install-smoke the exact release artifacts and retain normal release
+   provenance and integrity.
+5. Record the exact package interfaces for downstream acceptance.
 
-No personal checkout participates in CLI build, packaging, or release identity.
+No Rawr or Marketplace checkout participates in a Habitat build or release.
 
-## Personal Acceptance
+## Rawr Integration
 
-1. Start from clean personal `main` and its own repository process record.
+1. Start from clean Rawr canonical `main` and an owner-local OpenSpec.
+2. Install exact released Habitat interfaces through package metadata.
+3. Select Rawr app profiles, domain services/resources/providers, plugins, and
+   topics without importing Habitat implementation paths.
+4. Run Rawr's Nx graph plus native Oclif and product acceptance.
+5. Land through Rawr's Graphite stack and canonical `main`.
+
+Rawr may depend on Habitat package contracts. It must not depend on Habitat
+workspace layout, worktrees, source commits as executable inputs, or release
+internals.
+
+## Marketplace Acceptance
+
+1. Start from clean Marketplace canonical `main` and its own repository record.
 2. Author or update only curated content and governed content records.
-3. Run repository-owned content validation and the supported installed Habitat
-   checks; do not install or vendor Template's private RAWR application.
-4. Bind the accepted content identity and governed record digests.
-5. Land through personal's own Graphite stack and canonical `main`.
-
-Repository location may be supplied as a content-workspace locator. The tool must
-verify content identity from Git/data inputs rather than treating the path as authority.
+3. Run repository-owned content validation through exact installed Habitat
+   interfaces; do not install or vendor the Rawr application.
+4. Bind the accepted content identity and governed record identities.
+5. Land through Marketplace's own Graphite stack and canonical `main`.
 
 ## Operational Acceptance
 
-Cross-repository acceptance is a protocol compatibility check, not a Git integration:
+Cross-repository acceptance is protocol compatibility, not Git integration:
 
-1. verify each repository is clean on its own canonical `main`;
-2. verify the exact Template private application revision and interface
-   versions;
-3. verify Personal content and governed records against that exact interface;
+1. verify each repository is clean on canonical `main`;
+2. verify exact Habitat package interfaces and the Rawr product revision;
+3. verify Marketplace content and governed records against those interfaces;
 4. reconcile only the explicitly named provider home or export destination;
 5. repeat the operation and prove inspection may occur but no state changes;
-6. verify no executable mirror, workspace link, compatibility alias, or lifecycle
-   override connects the repositories.
+6. verify no executable mirror, workspace link, compatibility alias, or
+   synchronization relationship connects the repositories.
 
 ## Command Boundaries
 
-- `rawr plugins ...` owns external Oclif extension operations.
-- `rawr agent plugins ...` owns curated agent-plugin lifecycle operations.
-- Provider/export commands mutate only the named destination through its declared owner.
-- App composition consumes declared outputs and owns no lifecycle state.
+- `rawr plugins ...` currently owns external Oclif extension operations.
+- `rawr agent plugins ...` currently owns curated agent-plugin lifecycle
+  operations. The accepted Habitat command destinations become operational only
+  with their command, manifest, and policy migration.
+- Provider and export commands mutate only the named destination through its
+  declared owner.
+- Habitat supplies reusable mechanics; Rawr selects product behavior;
+  Marketplace supplies versioned content. App composition owns no lifecycle
+  state.
 
 ## Repository Promotion
 
 Promote repositories independently. A released Habitat interface may become a
-prerequisite for Personal checks, but Template's private RAWR application is
-never installed into or merged with Personal. A Personal content release may
-become input data to Template tooling, but Personal source is never imported as
-executable CLI code.
-
-Habitat SDK and CLI `0.5.2` are the released reusable substrate. Template
-lifecycle acceptance uses `bun run rawr -- ...` from the exact canonical
-Template revision. The removed predecessor distribution, an installed RAWR
-alias, and a hypothetical RAWR package release are not interfaces.
+prerequisite for Rawr or Marketplace checks. A Marketplace content release may
+become input data to Rawr. Neither relationship transfers source ownership,
+Git ancestry, executable identity, or repository lifecycle authority.

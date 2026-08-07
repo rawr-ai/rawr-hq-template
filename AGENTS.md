@@ -1,9 +1,9 @@
-# RAWR HQ-Template Router
+# Habitat Platform Router
 
 ## Purpose
 
-- Orient work in the reusable Template repository and keep executable product
-  capabilities on the side of the Template/Personal boundary that owns them.
+- Orient work in the Habitat platform repository and keep platform machinery,
+  the downstream Rawr app, and Marketplace content with their exact owners.
 
 ## Scope
 
@@ -22,19 +22,22 @@
 
 ## Boundaries
 
-- `RAWR HQ-Template` owns the executable Oclif CLI, official commands, provider
-  adapters, generic lifecycle services, schemas/tooling implementations, and
-  generic validators.
-- Personal `RAWR HQ` owns curated agent-plugin content, vendor provenance,
+- Habitat owns the platform SDK, foundational Oclif CLI, runtime, adapters,
+  generic services/resources, schemas, tooling, blueprints, and validators.
+- Rawr is the first downstream app built on Habitat. Its domain services,
+  plugins, topics, profiles, and composition remain product source even while
+  co-located here pending repository extraction.
+- Marketplace (legacy repository locator `RAWR HQ`) owns curated agent-plugin content, vendor provenance,
   declarative policy/evaluation inputs, and its own governed release/channel records.
-- The repositories are independent. Do not merge, cherry-pick, transplant, mirror, or
-  preserve Template executable paths in personal.
+- The Habitat and Marketplace repositories are independent. Rawr remains
+  product-owned while co-located pending extraction. No executable
+  implementation or repository ownership crosses the Habitat/Marketplace
+  boundary.
 - Cross-repository use is limited to explicit versioned data interfaces and
-  ordinary package artifacts. A Personal repository path is a Git content
-  locator, never CLI installation identity, executable ancestry, or code-sharing
-  authority.
+  ordinary package artifacts. A Marketplace repository path is a Git content
+  locator, never CLI installation identity or executable ancestry.
 - Use [the repository destination guide](AGENTS_SPLIT.md) first for
-  Template-vs-personal destination decisions.
+  Habitat-vs-Rawr-vs-Marketplace destination decisions.
 
 ## Behavior
 
@@ -46,19 +49,23 @@
 
 ## Concepts
 
-- **Template** is the reusable executable product; **Personal** is a separate
-  curated-content repository connected only through declared data and package
-  interfaces.
+- **Habitat** is the reusable platform and substrate. **Rawr** is a downstream
+  product app. **Marketplace** is a separate curated-content repository
+  connected only through declared data and package interfaces.
 - An **owning project** is the Nx project responsible for a capability and its
   checks. A **command channel** is an operator-facing namespace with one
   lifecycle owner.
 
 ## Command Surface Policy
 
-- External CLI plugin channel: `rawr plugins ...`
-- Curated agent-plugin lifecycle channel: `rawr agent plugins ...`
-- App, web, and runtime composition are outside these lifecycle command
-  surfaces and must not become a fallback owner for either one.
+- Current external CLI plugin channel: `rawr plugins ...`
+- Current curated agent-plugin lifecycle channel: `rawr agent plugins ...`
+- Their accepted destination is the foundational Habitat CLI, but that command
+  migration is not current operational truth until its source and policy land
+  together. The later private Rawr CLI may contain only downstream product
+  topics and must not duplicate or alias either Habitat channel.
+- Product composition, web hosts, and runtime mounting consume these lifecycle
+  commands and cannot own either channel.
 - Do not mix these command surfaces in guidance or examples.
 
 ## Flow
@@ -67,7 +74,7 @@
   inward before reading implementation details.
 - Oclif routes commands into their owning packages and services; concrete
   filesystem and provider effects stay behind their declared resources.
-- Template tooling may read Personal through explicit data interfaces, but no
+- Habitat or Rawr tooling may read Marketplace through explicit data interfaces, but no
   executable implementation or repository authority crosses that boundary.
 - Repository changes move through Graphite and the required repository check
   before branch protection admits them to `main`.
@@ -100,7 +107,8 @@
   deployment, or acceptance authority and has no root aggregate.
 - `habitat:check` composes workspace lint and the inferred Habitat policy
   target. Codex Stop delegates to `habitat hook agent-stop`, which selects the
-  registered hook rules through the same package and authority tree; it does
+  registered hook rules through the same selected policy package and repository
+  selection records; it does
   not schedule lint or the complete repository graph.
 - The ordinary `pull_request`, `merge_group`, and `push`-to-`main` workflow
   named `Repository Ratchet` publishes the job context
@@ -111,7 +119,7 @@
 ## Routing
 
 - [Repository destination guide](AGENTS_SPLIT.md) for "where should this
-  change land?" (Template vs personal).
+  change land?" (Habitat vs Rawr vs Marketplace).
 - [Apps router](apps/AGENTS.md) for runtime surfaces (`cli`, `hq`, `server`,
   `web`).
 - [Packages router](packages/AGENTS.md) for shared libraries and dependency

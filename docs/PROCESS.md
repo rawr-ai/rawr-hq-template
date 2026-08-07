@@ -2,8 +2,11 @@
 
 ## Contribution Model
 
-- Executable Oclif CLI and generic lifecycle/tooling changes go to `RAWR HQ-Template`.
-- Curated agent-plugin content and governed content records go to personal `RAWR HQ`.
+- Habitat SDK/runtime, foundational Oclif/Nx CLI, reusable tooling, and platform
+  law changes go to Habitat owners in this repository.
+- Rawr domain services, plugins, topics, profiles, and app composition go to
+  Rawr product owners, even while co-located here.
+- Curated agent-plugin content and governed content records go to Marketplace.
 - The repositories exchange only versioned data and ordinary published interfaces; there is
   no merge, copy, or upstream-sync workflow.
 
@@ -25,8 +28,12 @@ The previous plugin E2E workflow is preserved at `docs/process/quarantine/PLUGIN
 
 ## Command Channel Model
 
-- `rawr plugins ...` is reserved for external Oclif extensions.
-- `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
+- `rawr plugins ...` is currently reserved for external Oclif extensions.
+- `rawr agent plugins ...` is currently reserved for curated agent-plugin
+  lifecycle. Their Habitat command destinations remain migration targets until
+  the executable manifest and policy land together.
 - Private `rawr` application development uses `bun run rawr -- ...` from the
-  exact Template revision. Habitat `0.5.2` publication and registry-installed
-  acceptance are complete; no RAWR package publication is pending.
+  exact repository revision. Habitat package metadata, Nx Release
+  configuration, and registry publication are the distribution sources;
+  release records preserve evidence. This gateway does not duplicate versions
+  or release inventory.

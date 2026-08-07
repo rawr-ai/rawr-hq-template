@@ -1,6 +1,6 @@
 # RAWR HQ Usage Guide
 
-This guide targets maintainers working inside `RAWR HQ-Template`.
+This is the co-located Rawr product usage guide during extraction from Habitat.
 
 ## Daily Workflow
 
@@ -10,7 +10,7 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
      `rawr hq up|down|status|restart|attach`, browser behavior, and runtime checks
    - use [[docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW]]
      before relying on quarantined telemetry proof docs
-3. Maintain shared core/template contracts.
+3. Keep Habitat platform contracts distinct from Rawr product behavior.
 4. Run tests for touched areas:
    - `bun run test` for the complete project-owned behavior graph.
    - `bun run test:web` for a focused web-only run.
@@ -20,8 +20,8 @@ This guide targets maintainers working inside `RAWR HQ-Template`.
 
 ## CLI Development And Installation
 
-Run the Oclif application from a clean Template checkout through the
-repository-owned script:
+Run the Oclif application from a clean Rawr source revision through its
+Nx-owned entrypoint. During co-location, the temporary repository script is:
 
 ```bash
 bun run rawr -- --version
@@ -36,11 +36,12 @@ or global alias. There is no installed RAWR distribution or compatibility path.
 
 ## Plugin Boundaries
 
-- Template fixtures validate official Oclif commands and generic lifecycle behavior; they are not
-  personal curated content.
+- Habitat fixtures validate foundational Oclif mechanics; Rawr fixtures validate
+  product commands and lifecycle behavior. Neither is Marketplace content.
 - External Oclif extension management uses `rawr plugins ...` only.
-- Curated agent-plugin source and records live in personal `RAWR HQ`; their
-  lifecycle uses `rawr agent plugins ...` only.
+- Curated agent-plugin source and records live in Marketplace; their
+  lifecycle currently uses `rawr agent plugins ...` only. The Habitat command
+  destination is not operator guidance until its migration lands.
 - App, web, and runtime composition remain outside this lifecycle and cannot
   repair, rewrite, or substitute for it.
 
@@ -52,7 +53,7 @@ Before publishing a plugin:
 - Run `bun run test:web` if the change affects the web-only lane
 - Verify package metadata and docs.
 
-Personal content publication is independent and consumes only versioned data
+Marketplace content publication is independent and consumes only versioned data
 interfaces or ordinary released Habitat tooling. Follow [[UPDATING]] for
 interface updates.
 
@@ -86,8 +87,8 @@ plugin infers rule targets, owner-local policy composition, inputs, caching,
 and graph dependencies from `.habitat/**`; do not add a script-backed graph
 rule or hand-maintained selector.
 
-Habitat evaluation uses the exact Template-owned `@habitat-ai/cli` npm release
-pinned by package version and lockfile integrity. Template owns both the
+Habitat evaluation uses the exact Habitat-owned `@habitat-ai/cli` npm release
+pinned by package version and lockfile integrity. Habitat owns both the
 released package source and its `.habitat` policy tree, while Nx bootstrap
 loads only the installed package face.
 

@@ -1,7 +1,7 @@
 # Runtime Spine Verification Diagnostic
 
 Status: current Lab V2 diagnostic.
-Authority: `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`.
+Authority: `docs/system/HABITAT_RUNTIME_REALIZATION.md`.
 Migration input: `docs/projects/rawr-final-architecture-migration/resources/quarantine/RAWR_Architecture_Migration_Plan.md` is directional provenance only.
 
 ## Reading Key
@@ -122,7 +122,7 @@ placement, or Lab-Production Proof.
 | oRPC `.effect(...)` testing | Do not test this. RAWR `.effect(...)` is SDK-owned; oRPC native proof is contract/router/handler/request-boundary behavior only where explicitly gated. |
 | Raw vendor primitive tests | Do not count direct vendor primitive demos as spine proof. They must pass through RAWR-owned wrappers or be removed. |
 | Vendor-proof label | Treat `vendor-proof` as vendor compatibility evidence, not Lab-Production Proof. |
-| Stale migration plan language | Mine sequencing intent only. Target names come from the current runtime realization spec: `@rawr/sdk`, `startApp(...)`, `packages/core/runtime/*`. |
+| Stale migration plan language | Mine sequencing intent only. Target names come from the current runtime realization spec: `@habitat-ai/sdk`, `startApp(...)`, `packages/core/runtime/*`. |
 
 ### Container Experiments
 

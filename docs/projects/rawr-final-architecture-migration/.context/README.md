@@ -4,16 +4,18 @@ This directory is the active context router for final-architecture migration pla
 
 For M2 migration planning, start from:
 
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Architecture_Spec.md`
-- `docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Effect_Runtime_Realization_System_Canonical_Spec.md`
+- `docs/system/HABITAT_ARCHITECTURE.md`
+- `docs/system/HABITAT_RUNTIME_REALIZATION.md`
 - `docs/projects/rawr-final-architecture-migration/.context/M2-migration-planning-packet/`
 - a fresh current-repo audit
 
 ## Active Packet
 
-Current phase-scoped execution packet:
+Current phase-scoped migration-provenance packet:
 
-- `M2-migration-planning-packet/`: active packet for M2 migration planning authority, scope, and reference boundaries.
+- `M2-migration-planning-packet/`: retained M2 planning context subordinate to the
+  canonical Habitat specifications. Its audits describe source snapshots and do
+  not override current system authority.
 
 ## Archived Context
 
