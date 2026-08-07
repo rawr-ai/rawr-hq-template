@@ -39,8 +39,10 @@
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
   member set is `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
-  and `resource@1`; shipped files outside that declaration, including the
-  candidate `service` source, are not members merely by being present.
+  and `resource@1`. The positive `service@1` root definition is copied as an
+  unselected candidate until its portable source rules, native Nx generator,
+  and packed-consumer construction proof land with pack admission; shipped files
+  are not members merely by being present.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
   qualified overlays remain repository-owned.
