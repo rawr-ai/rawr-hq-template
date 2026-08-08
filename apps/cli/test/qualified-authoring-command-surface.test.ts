@@ -20,7 +20,6 @@ describe("qualified authoring command surface", () => {
     for (const args of [
       ["cli", "command", "create", "--help"],
       ["cli", "extension", "create", "--help"],
-      ["agent", "plugins", "create", "--help"],
     ]) {
       const result = runRawr(args);
       expect(result.status, `${args.join(" ")}\n${result.stderr}`).toBe(0);
@@ -75,7 +74,7 @@ describe("qualified authoring command surface", () => {
     timeout: 30_000,
   }, () => {
     const workspaceRoot = path.resolve(cliRoot, "../..");
-    const sentinel = path.join(workspaceRoot, "apps", "hq", "rawr.hq.ts");
+    const sentinel = path.join(workspaceRoot, "package.json");
     const destination = path.join(
       os.tmpdir(),
       `rawr-invalid-authoring-${process.pid}-${randomUUID()}`
@@ -106,17 +105,6 @@ describe("qualified authoring command surface", () => {
         destination,
         "--json",
       ],
-      [
-        "agent",
-        "plugins",
-        "create",
-        "invalid",
-        "--content-workspace",
-        destination,
-        "--destination",
-        destination,
-        "--json",
-      ],
     ]) {
       const result = runRawr(args);
       expect(result.status, `${args.join(" ")}\n${result.stdout}\n${result.stderr}`).not.toBe(0);
@@ -130,10 +118,6 @@ describe("qualified authoring command surface", () => {
   it("dry-runs, applies, and converges each creator through the operator command surface", {
     timeout: 120_000,
   }, async () => {
-    const personal = await gitFixture({
-      origin: "https://github.com/rawr-ai/rawr-hq.git",
-      packageName: "rawr-hq",
-    });
     const template = await gitFixture({
       origin: "https://github.com/rawr-ai/rawr-hq-template.git",
       packageName: "rawr-hq-template",
@@ -141,8 +125,7 @@ describe("qualified authoring command surface", () => {
     });
     const extensionParent = await commandTempRoot();
     const extension = path.join(extensionParent, "portable-extension");
-    const [officialAuthorities, agentAuthorities, extensionAuthorities] = await Promise.all([
-      adjacentAuthorityFixture(),
+    const [officialAuthorities, extensionAuthorities] = await Promise.all([
       adjacentAuthorityFixture(),
       adjacentAuthorityFixture(),
     ]);
@@ -153,12 +136,6 @@ describe("qualified authoring command surface", () => {
         args: ["cli", "command", "create", "sample", "inspect"],
         outputRoot: path.join(template, "apps", "cli"),
         authorities: officialAuthorities,
-      },
-      {
-        cwd: cliRoot,
-        args: ["agent", "plugins", "create", "research-kit", "--content-workspace", personal],
-        outputRoot: path.join(personal, "plugins", "agents", "research-kit"),
-        authorities: agentAuthorities,
       },
       {
         cwd: extensionParent,

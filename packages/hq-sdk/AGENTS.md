@@ -58,8 +58,6 @@
 ## Routing
 
 - [Packages router](../AGENTS.md)
-- [HQ application declarations](../../apps/hq/AGENTS.md)
-- [Server host](../../apps/server/AGENTS.md)
 - [[../typebox-adapter/AGENTS|TypeBox adapter]]
 
 ## Validation

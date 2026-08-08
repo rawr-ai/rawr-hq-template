@@ -927,7 +927,7 @@ describe("Habitat catalog resolve", () => {
 
     const compatibility = result.catalog.compatibility;
     const ruleIds = compatibility.rules.map(({ ruleId }) => ruleId);
-    expect(Object.keys(compatibility.ownerRoots)).toHaveLength(6);
+    expect(Object.keys(compatibility.ownerRoots)).toHaveLength(5);
     expect(ruleIds).toEqual([
       "require_agent_plugin_command_channel_source_relationships",
       "require_agent_plugin_command_channel_topology",
@@ -938,7 +938,6 @@ describe("Habitat catalog resolve", () => {
       "require_blueprint_packet_topology",
       "require_exported_value_declarations_have_jsdoc",
       "require_grit_helper_comments",
-      "require_hq_app_server_import_funnel",
       "require_nx_workspace_scheduler_scripts",
       "require_oclif_app_configuration",
       "require_oclif_app_entrypoints",

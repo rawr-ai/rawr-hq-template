@@ -26,7 +26,6 @@
     "@orpc/client": "2.0.0-beta.23",
     "@habitat-ai/rawr-agent-plugin-lifecycle": "workspace:*",
     "@habitat-ai/rawr-core": "workspace:*",
-    "@habitat-ai/rawr-hq-ops": "workspace:*",
     "@habitat-ai/rawr-hq-sdk": "workspace:*",
     "@habitat-ai/rawr-plugin-chatgpt-corpus": "workspace:*",
     "@habitat-ai/rawr-plugin-devops": "workspace:*",

@@ -45,7 +45,6 @@
 ## Routing
 
 - [Packages router](../AGENTS.md)
-- [Server host](../../apps/server/AGENTS.md)
 - [HQ SDK](../hq-sdk/AGENTS.md)
 
 ## Validation
