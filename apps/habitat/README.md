@@ -48,12 +48,18 @@ Habitat migrations. The final command applies those package-owned repository
 changes; no consumer copies or independently maintains the preset wiring.
 
 Habitat `0.5.3` used Nx `23.1.0`, whose provenance reader predates npm 12. When
-that exact historical pair is upgraded under npm 12, scope Nx's documented
-compatibility flag to the migration-generation command only:
+that exact historical pair is upgraded under npm 12, pin the migration CLI and
+scope Nx's documented compatibility flag to both migration commands. The first
+command generates the migration; the install materializes the released pair;
+the final command applies the repository changes:
 
 ```sh
 NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
-  bunx nx migrate @habitat-ai/cli@0.5.9
+  bunx nx migrate @habitat-ai/cli@0.5.10
+bun install
+NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
+  bunx nx migrate --run-migrations=migrations.json --no-interactive
 ```
 
-Nx `23.1.1` and later verify provenance normally.
+Only the historical Nx `23.1.0` upgrade needs that compatibility scope. Nx
+`23.1.1` and later verify provenance normally.

@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.9";
+const CANDIDATE_VERSION = "0.5.10";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -429,6 +429,11 @@ describe("installed Habitat products", () => {
       acceptanceRoot,
       `migration-consumer-${previousVersion.replaceAll(".", "-")}`
     );
+    // Nx 23.1.0 cannot parse npm 12's one-item provenance response. The
+    // 23.1.1 row verifies the same target artifact without this documented
+    // compatibility flag. Local Verdaccio candidates have no provenance.
+    const skipNxProvenance =
+      publishedRegistryVersion === undefined || previousNxVersion === "23.1.0";
     await mkdir(root, { recursive: true });
     await writeFile(
       path.join(root, "nx.json"),
@@ -497,12 +502,7 @@ describe("installed Habitat products", () => {
         cwd: root,
         env: {
           NX_MIGRATE_CLI_VERSION: "23.1.1",
-          // Nx 23.1.0 cannot parse npm 12's one-item provenance response. The
-          // 23.1.1 row below verifies the same target artifact without this
-          // vendor-documented compatibility flag.
-          ...(publishedRegistryVersion === undefined || previousNxVersion === "23.1.0"
-            ? { NX_SKIP_PROVENANCE_CHECK: "true" }
-            : {}),
+          ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
         },
         timeoutMs: 120_000,
       }
@@ -534,7 +534,8 @@ describe("installed Habitat products", () => {
         cwd: root,
         env: {
           NX_DAEMON: "false",
-          ...(publishedRegistryVersion === undefined ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
+          NX_MIGRATE_CLI_VERSION: "23.1.1",
+          ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
         },
         timeoutMs: 120_000,
       }
