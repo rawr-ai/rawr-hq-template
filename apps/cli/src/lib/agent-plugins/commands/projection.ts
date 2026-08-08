@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { Client } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
+import type { Client } from "@habitat-ai/agent-plugin-lifecycle-service/client";
 import {
   type LifecycleOperation,
   type LifecycleOperationClient,

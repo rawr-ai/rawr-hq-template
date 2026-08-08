@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@habitat-ai/rawr-agent-plugin-lifecycle",
+  "ownerProject": "@habitat-ai/agent-plugin-lifecycle-service",
   "lane": "enforced",
   "forbids": "lifecycle host composition or curated commands outside their one closed root, or nested curated command aliases",
   "why": "The CLI has one cold production profile, one lifecycle service binding root, one native-provider binding root, and one curated command root under rawr agent plugins; native Oclif extension commands are composed from @oclif/plugin-plugins rather than authored in this source tree.",

@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { Client } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
+import type { Client } from "@habitat-ai/agent-plugin-lifecycle-service/client";
 import {
   MAX_RELEASE_INPUT_ENVELOPE_BYTES,
   MAX_RELEASE_MEMBERS,
@@ -10,7 +10,7 @@ import {
   parsePluginId,
   parseReleaseRelativePath,
   parseRepositoryIdentity,
-} from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
+} from "@habitat-ai/agent-plugin-lifecycle-service/client";
 
 import { CHECK_MODES, type CheckMode } from "./flags";
 

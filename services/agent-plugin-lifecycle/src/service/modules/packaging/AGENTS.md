@@ -55,6 +55,6 @@
 
 ## Validation
 
-- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:typecheck`.
-- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:test` for package derivation,
+- Run `bunx nx run @habitat-ai/agent-plugin-lifecycle-service:typecheck`.
+- Run `bunx nx run @habitat-ai/agent-plugin-lifecycle-service:test` for package derivation,
   Cowork v1 bytes, source revalidation, and output settlement behavior.

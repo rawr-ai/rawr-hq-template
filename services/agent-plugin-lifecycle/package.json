@@ -1,5 +1,5 @@
 {
-  "name": "@habitat-ai/rawr-agent-plugin-lifecycle",
+  "name": "@habitat-ai/agent-plugin-lifecycle-service",
   "version": "0.1.0",
   "private": true,
   "repository": {

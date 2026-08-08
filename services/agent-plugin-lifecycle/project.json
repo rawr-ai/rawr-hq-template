@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@habitat-ai/rawr-agent-plugin-lifecycle",
+  "name": "@habitat-ai/agent-plugin-lifecycle-service",
   "implicitDependencies": ["@habitat-ai/resource-versioned-content"],
   "targets": {
     "check": {
