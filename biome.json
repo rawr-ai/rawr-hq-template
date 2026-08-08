@@ -23,7 +23,6 @@
       "!**/.context/**",
       "!.claude/settings.local.json",
       "!.claude/launch.json",
-      "!apps/server/openapi/**",
       "!docs/_archive/**",
       "!docs/quarantine/**",
       "!docs/**/_archive/**",

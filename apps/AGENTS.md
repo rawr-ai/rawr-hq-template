@@ -2,8 +2,8 @@
 
 ## Purpose
 
-- Own the executable hosts that turn declared RAWR capabilities into CLI,
-  server, HQ-process, and browser experiences.
+- Own executable application hosts. Habitat platform composition remains
+  distinct from downstream product applications awaiting owner transfer.
 
 ## Scope
 
@@ -19,8 +19,6 @@
 
 - Habitat CLI application and Nx entrypoint: `apps/habitat/`
 - CLI runtime and command entrypoint: `apps/cli/`
-- HQ application shell: `apps/hq/`
-- Local server runtime: `apps/server/`
 - Web host shell runtime: `apps/web/`
 
 ## Boundaries
@@ -64,8 +62,6 @@
   Oclif composition, and the published Nx entrypoint.
 - [CLI router](cli/AGENTS.md) for command topology and CLI-specific
   invariants.
-- [HQ app router](hq/AGENTS.md) for the HQ application shell.
-- [Server router](server/AGENTS.md) for the local server runtime.
 - [Web router](web/AGENTS.md) for the web host shell.
 - [Packages router](../packages/AGENTS.md) for shared package boundaries.
 - [Plugins router](../plugins/AGENTS.md) for plugin contracts consumed by

@@ -48,7 +48,6 @@ kind = "directory"
 mode = "closed"
 required = [
   "check.ts",
-  "create.ts",
   "package.ts",
   "status",
   "status.ts",
