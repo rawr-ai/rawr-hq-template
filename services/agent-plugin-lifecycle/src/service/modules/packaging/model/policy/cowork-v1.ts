@@ -1,7 +1,7 @@
 import type {
   CoworkV1ArchiveEncodingRequest,
   PackageArchiveEntry,
-} from "@habitat-ai/rawr-resource-agent-plugin-package-output";
+} from "@habitat-ai/resource-agent-plugin-package-output";
 import type { AgentPluginRelease } from "../../../../model/dto/agent-plugin-release";
 import type { DerivedReleaseSelection } from "../../../../model/dto/release-derivation";
 import { payloadEntryBytes } from "../../../../model/policy/agent-plugin-payload";

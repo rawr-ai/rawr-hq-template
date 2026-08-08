@@ -1,6 +1,6 @@
 schemaVersion = 1
-id = "@habitat-ai/rawr-resource-agent-plugin-package-output"
-ownerProject = "@habitat-ai/rawr-resource-agent-plugin-package-output"
+id = "@habitat-ai/resource-agent-plugin-package-output"
+ownerProject = "@habitat-ai/resource-agent-plugin-package-output"
 blueprint = "resource"
 blueprintVersion = 1
 

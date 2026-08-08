@@ -64,10 +64,10 @@
         "@habitat-ai/rawr-plugin-devops": "workspace:*",
         "@habitat-ai/rawr-plugin-hyperresearch": "workspace:*",
         "@habitat-ai/rawr-plugin-session-tools": "workspace:*",
-        "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
         "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
         "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
         "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
+        "@habitat-ai/resource-agent-plugin-package-output": "workspace:*",
         "@oclif/core": "^4.13.2",
         "@oclif/plugin-help": "^6.2.27",
         "@oclif/plugin-plugins": "^5.4.36",
@@ -282,7 +282,7 @@
       },
     },
     "resources/agent-plugin-package-output": {
-      "name": "@habitat-ai/rawr-resource-agent-plugin-package-output",
+      "name": "@habitat-ai/resource-agent-plugin-package-output",
       "version": "0.1.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
@@ -359,10 +359,10 @@
       "name": "@habitat-ai/rawr-agent-plugin-lifecycle",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
         "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
         "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
         "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
+        "@habitat-ai/resource-agent-plugin-package-output": "workspace:*",
         "@habitat-ai/sdk": "workspace:*",
         "@noble/hashes": "2.2.0",
         "@opentelemetry/api": "^1.9.0",
@@ -866,8 +866,6 @@
 
     "@habitat-ai/rawr-plugin-session-tools": ["@habitat-ai/rawr-plugin-session-tools@workspace:plugins/cli/commands/session-tools"],
 
-    "@habitat-ai/rawr-resource-agent-plugin-package-output": ["@habitat-ai/rawr-resource-agent-plugin-package-output@workspace:resources/agent-plugin-package-output"],
-
     "@habitat-ai/rawr-resource-content-workspace": ["@habitat-ai/rawr-resource-content-workspace@workspace:resources/content-workspace"],
 
     "@habitat-ai/rawr-resource-native-agent-provider": ["@habitat-ai/rawr-resource-native-agent-provider@workspace:resources/native-agent-provider"],
@@ -875,6 +873,8 @@
     "@habitat-ai/rawr-resource-versioned-content": ["@habitat-ai/rawr-resource-versioned-content@workspace:resources/versioned-content"],
 
     "@habitat-ai/rawr-session-intelligence": ["@habitat-ai/rawr-session-intelligence@workspace:services/session-intelligence"],
+
+    "@habitat-ai/resource-agent-plugin-package-output": ["@habitat-ai/resource-agent-plugin-package-output@workspace:resources/agent-plugin-package-output"],
 
     "@habitat-ai/resource-rule-evaluation": ["@habitat-ai/resource-rule-evaluation@workspace:resources/rule-evaluation"],
 

@@ -9,7 +9,7 @@ import type {
   PackageOutputPublicationPoint,
   PackageOutputPublicationRequest,
   PackageOutputPublicationResult,
-} from "@habitat-ai/rawr-resource-agent-plugin-package-output";
+} from "@habitat-ai/resource-agent-plugin-package-output";
 import { Effect, FileSystem, Option, Path, PlatformError, Random, Semaphore } from "effect";
 import yazl from "yazl";
 
