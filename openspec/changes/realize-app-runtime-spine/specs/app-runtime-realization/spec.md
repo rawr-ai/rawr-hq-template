@@ -232,18 +232,33 @@ descriptor table, and one `ProvisionedProcess`. It MUST assemble runtime access,
 bound service clients, the service binding cache, execution registry,
 `ProcessExecutionRuntime`, adapter-lowered mount-ready surface records, and an
 idempotent process stop handle. It MUST NOT invoke a harness or project
-observation-owned read models. Every app-, service-, or
-plugin-owned Effect body invoked from a native callback through Habitat runtime
-MUST execute through `ProcessExecutionRuntime`.
+observation-owned read models. Every app- or plugin-owned Effect body in a
+non-oRPC descriptor lane invoked from a native callback through Habitat runtime
+MUST execute through `ProcessExecutionRuntime`. An Effect-backed oRPC operation
+MUST instead execute through exact `@orpc/experimental-effect@2.0.0-beta.23`
+`handlerGen(...)` or an admitted official `.effect(...)` extension that
+delegates to it. `ProcessExecutionRuntime` MUST NOT execute that oRPC Effect or
+insert a second runner around it. The application/process MUST construct the
+Effect Context, resource lifetime, policy, telemetry, and shutdown behavior
+supplied through native `effect/context` and `effect/wrap`; the official bridge
+MUST own the request fiber, signal, Cause mapping, and Promise boundary.
 Runtime access MUST NOT expose raw Effect layers, contexts, scopes, managed
 runtimes, provider leases, provider internals, or unredacted secrets.
 
-#### Scenario: Native callback invokes an Effect body
+#### Scenario: Non-oRPC native callback invokes an Effect body
 
-- **WHEN** an adapter-lowered Promise callback is invoked by a native host
+- **WHEN** a non-oRPC adapter-lowered Promise callback is invoked by a native host
 - **THEN** it resolves the matching compiled executable boundary through the
   execution registry
 - **AND** delegates the body to the one process execution runtime
+
+#### Scenario: Native oRPC callback invokes an Effect body
+
+- **WHEN** an Effect-backed oRPC operation is invoked
+- **THEN** native oRPC invokes the selected official bridge with the request
+  signal and application/process-owned `effect/context` and `effect/wrap`
+- **AND** no Habitat descriptor runner, manual `Effect.run*`, custom runner, or
+  `ProcessExecutionRuntime` execution path invokes that Effect
 
 #### Scenario: Two OS processes start
 
@@ -367,8 +382,10 @@ the shared target defaults. The SDK MUST inherit that vocabulary and add only
 packed-subpath acceptance. The Habitat and selected downstream app projects MUST add their
 native manifest and exact `acceptance:<capability>` targets, including
 `acceptance:oclif-native-runtime` and installed-package acceptance. The
-cacheable policy target MUST declare only its
-exact closed owner/policy/toolchain/environment inputs and outputs `[]`.
+generated `check:policy` target MUST be a non-cacheable `nx:noop` composition
+target whose deterministic dependencies are the owner's cacheable policy leaves.
+Each leaf MUST declare only its exact closed owner/policy/toolchain/environment
+inputs and outputs `[]`.
 Project creation, direct edges, SDK assembly edge, and target realization MUST
 land with the first conforming implementation rather than as an empty topology
 slice. One unchanged rerun MUST restore every cacheable task without invoking
@@ -386,11 +403,12 @@ not break unrelated imports, and reject any unresolved workspace dependency.
 `@habitat-ai/cli` remains a separate public Oclif executable package, not a
 second runtime distribution.
 
-#### Scenario: Consumer installs the Habitat substrate
+#### Scenario: Consumer adds the Habitat substrate
 
-- **WHEN** a consumer installs `@habitat-ai/sdk`
-- **THEN** every supported authoring and runtime subpath resolves from that one
-  package and its ordinary dependency closure
+- **WHEN** a Bun/Nx consumer runs `bunx nx add @habitat-ai/cli --no-interactive`
+- **THEN** the shipped initializer installs the exact paired `@habitat-ai/sdk`
+  and every supported authoring and runtime subpath resolves from that package
+  and its ordinary dependency closure
 - **AND** the consumer does not install internal runtime owners individually
 
 #### Scenario: Nx and release inspect runtime owners

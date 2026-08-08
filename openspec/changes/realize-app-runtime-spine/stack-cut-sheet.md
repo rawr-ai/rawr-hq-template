@@ -33,6 +33,21 @@ absent `service@1` member is correct: it neither leaves services ungoverned nor
 authors a local generic substitute. Task 2.8 owns the next versioned Habitat
 handoff and its installed-consumer evidence.
 
+Habitat itself must also retain registry `@habitat-ai/cli@0.5.2` as the root Nx
+bootstrap while `apps/habitat` remains outside the Bun workspaces. Vendor proof
+with Bun 1.3.14 rejects every candidate source-link: a `file:` snapshot omits
+build output, `link:` is nonportable, and admitting the candidate as a second
+workspace identity produces an invalid duplicate-package-path frozen lock.
+Task 2.8 therefore uses a three-gate publication barrier rather than claiming an
+atomic producer-and-reader deletion on a false main.
+
+The same foundation accepts native oRPC execution authority. A generated
+`service@1` uses `.handler` for non-Effect operations and official
+`@orpc/experimental-effect` `handlerGen` or `.effect` for Effect-backed
+operations. Exact beta.23/beta.25 source shows `.effect` delegates to
+`handlerGen`, whose native request bridge owns `Effect.runPromiseExit`; Habitat
+supplies process-owned `effect/context` and `effect/wrap` but no custom runner.
+
 Rawr task 2.7 landed independently on `rawr-ai/rawr` canonical `main` at
 `749e344a49e454b075f80914d420488be3f40119`. That checkpoint contains the
 owner-local migration record and Nx consumer scaffold only; no product source
@@ -98,7 +113,7 @@ destination adoption units:
 | Source capability | Destination and status | Admission rule |
 |---|---|---|
 | Provider-neutral telemetry resource, OpenTelemetry Node provider, vendor admission, and provider conformance through `codex/record-native-telemetry-provider` | Habitat telemetry resource/provider sink; needs adoption | Re-author the path-qualified implementation onto current resource/provider law, remove predecessor app coupling, run the resource/provider behavior targets, and land the fresh destination-owned sink as a small Habitat stack. Do not restack or merge the mixed predecessor root. |
-| oRPC, Inngest, Oclif, correlation, shutdown, delivery/drop, and receipt behavior after `codex/record-native-telemetry-provider` | Fresh Habitat runtime-harness acceptance; source branches retire after adoption | Preserve the behavior as named acceptance obligations in [[classification-ledger#behavioral-acceptance-matrix]]. Do not merge changes to deleted HQ/server/example owners or copy their host wiring. Re-author each obligation beside its qualified app/process/harness owner once that owner exists. |
+| oRPC, Inngest, Oclif, correlation, shutdown, delivery/drop, and receipt behavior after `codex/record-native-telemetry-provider` | Fresh Habitat runtime-harness acceptance; source branches retire after adoption | Preserve the behavior as named acceptance obligations in [[classification-ledger#behavioral-acceptance-matrix]]. For oRPC, re-author context/wrap and telemetry around the official `handlerGen`/`.effect` request bridge and prove abort, Cause/Promise reconciliation, resource release, and one module realm; do not route service Effects through `ProcessExecutionRuntime`. Do not merge changes to deleted HQ/server/example owners or copy their host wiring. Re-author each obligation beside its qualified app/process/harness owner once that owner exists. |
 | `codex/retire-core-telemetry-singleton` and `codex/record-core-telemetry-retirement` | Habitat core-deletion sink; needs adoption immediately after the qualified provider | Move every surviving reader to the telemetry resource/provider, delete `packages/core/src/telemetry.ts` and its predecessor tests, and replace the Rawr-named retirement rule with qualified owner law. Adopt these exact deletion semantics without merging the obsolete host chain that precedes them. |
 | Staged files at `codex/prove-native-telemetry-receipt` | Held by the current writer | No edit, restack, cleanup, or source admission occurs until the writer returns an exact clean handoff. |
 
@@ -129,9 +144,15 @@ acceptance become its authority.
 - Architecture review passed after the two release checkpoints, later Rawr
   adoption order, SDK resource integrations, and specification-toolbox timing
   were made explicit.
-- TypeScript review passed after the pre-separation interface cut was narrowed
-  to admitted readers and condemned reader closures were deleted rather than
-  adapted.
+- TypeScript review was amended after vendor proof showed that the command
+  producer and reader deletion cannot share one truthful frozen-lock main. Gate
+  A now leaves existing private readers untouched, Gate B records the fixed
+  SDK/CLI registry release, and Gate C deletes those readers rather than
+  adapting them.
+- Effect/oRPC review was amended after exact beta.23/beta.25 source established
+  the official bridge as request-fiber terminal owner. Process-owned Context,
+  lifetime, policy, and telemetry now enter through `effect/context` and
+  `effect/wrap`; `ProcessExecutionRuntime` excludes oRPC service Effects.
 - Structural-quality and behavior-first reviews passed after bounded P1s in
   source-adoption wording, final identities, predecessor Oclif law, executable
   command/deletion oracles, prepublication `nx add`, and fresh-owner versus
@@ -147,16 +168,28 @@ No P0 or P1 remains open on this classification stack.
    structural-quality, and behavior-first reviews of the cut.
 2. Coordinate the recorded disposition with each occupied lane. Freeze its
    accepted intent; do not edit another owner's worktree.
-3. Land the stable Habitat service/schema and CLI contracts required by
-   downstream projects and make `service@1` constructible and selected in the
-   SDK Habitat pack. Before any registry mutation, run
-   `nx run @habitat-ai/cli:acceptance:oclif-installed-package` locally so the
-   exact SDK and CLI tarballs are packed, installed in a disposable Nx
-   consumer, and exercised through the generated service and installed Oclif
-   paths. Only that accepted exact-main revision may release
-   `@habitat-ai/sdk` and `@habitat-ai/cli` and then prove registry installation.
-   Publish one exact version/commit/policy-pack/acceptance handoff to Civ7 and
-   every waiting consumer; no consumer authors a local `service@1` substitute.
+3. Cross the task 2.8 publication barrier in order. **Gate A** produces stable
+   Habitat service/schema faces, selected constructible `service@1`, and the
+   sole public/candidate `HabitatCommand` producer while the root retains
+   registry CLI `0.5.2` and existing private predecessor readers remain
+   untouched. Before any public-registry mutation, run
+   `nx run @habitat-ai/cli:acceptance:oclif-installed-package` so the exact SDK
+   and CLI candidates publish only to an isolated registry and a fresh Bun/Nx
+   consumer exercises the sole `nx add` flow through generated service and
+   installed Oclif paths, including native `.handler` for a non-Effect operation
+   and official `handlerGen` or `.effect` for an Effect-backed operation. Gate A
+   rejects manual/custom Effect runners, then lands the accepted producer on
+   exact main.
+   **Gate B** uses the existing fixed Nx Release group from that exact revision
+   to publish and registry-smoke only
+   `@habitat-ai/sdk` and `@habitat-ai/cli`, and records one exact
+   version/commit/integrity/policy-pack/acceptance receipt. **Gate C** begins
+   only from that receipt, replaces the root bootstrap with the exact registry
+   CLI, migrates surviving readers, deletes condemned reader
+   closures, and removes `RawrCommand`, `RawrResult`, and every predecessor
+   reader with no shim, alias, fallback, or dual public authority. Publish the
+   receipt to Civ7 and every waiting consumer only after Gate C closes; no
+   consumer authors a local `service@1` substitute.
 4. Restack the Session Metrics lineage onto the current session implementation,
    import the six admitted Rawr service/topic projects through the finite Nx
    migration, and land Rawr without a Habitat source dependency. Later
@@ -166,7 +199,10 @@ No P0 or P1 remains open on this classification stack.
    Habitat. Pass exact-main separation before private runtime implementation.
 6. Land the generic telemetry resource/provider and exact core-singleton
    retirement without merging obsolete host changes.
-7. Build and land the runtime spine one owner at a time. After the provider-plan
+7. Build and land the runtime spine one owner at a time. Keep app/process-owned
+   Effect Context, resource lifetime, policy, and telemetry in `effect/context`
+   plus `effect/wrap`; keep selected native bridge execution outside any custom
+   runner. After the provider-plan
    checkpoint, adopt the path-qualified semantic-ledger and temporal-inquiry
    resource/provider behavior, assemble their provider-neutral contracts and
    optional Fluree integrations through the sole SDK package, and remove their

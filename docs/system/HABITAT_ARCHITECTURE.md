@@ -1164,6 +1164,23 @@ A service declaration may depend on resource contracts from `resources/*`. It mu
 
 Service callable contracts are service-owned schema-backed contracts. They may be expressed through oRPC primitives. oRPC owns procedure and transport mechanics; the service owns the meaning.
 
+Native `.handler(...)` is valid for synchronous and Promise-returning oRPC
+operations. An Effect-backed oRPC operation uses exact
+`@orpc/experimental-effect@2.0.0-beta.23` `handlerGen(...)` or an admitted
+official `.effect(...)` extension, which is only prototype sugar for
+`.handler(handlerGen(...))`. The official bridge owns the request fiber,
+`effect/context`, `effect/wrap`, request signal, Cause mapping, and Promise
+boundary. A manual `Effect.run*`, custom runner, Habitat imitation, or
+`ProcessExecutionRuntime` is not an alternate executor for an oRPC Effect.
+
+The application and process own Effect Context construction, resource lifetime,
+policy, telemetry, and shutdown through those native hooks. If the optional
+extension is selected, it must patch the same physical oRPC module realm used by
+the mounted procedure. `ProcessExecutionRuntime` remains available for
+non-oRPC descriptor lanes only. The exact selected published source and hashes
+are recorded in the runtime-spine authority amendment; runtime claims require
+the corresponding abort, context/wrap, release, and realm acceptance proof.
+
 Service procedure schemas belong to the service package. Runtime-carried lane schemas use `RuntimeSchema`. Plugin API payloads, workflow payloads, command arguments, agent tool inputs, and desktop host payloads belong to their owning projection or harness boundary.
 
 Plain string labels may name capabilities, routes, ids, triggers, cron expressions, policies, event names, and diagnostic codes. They must not stand in for data schemas.
@@ -2028,6 +2045,12 @@ They do not lower raw authoring declarations, normalized authoring graphs, or un
 
 Surface adapters are the only runtime layer that translates compiled surface plans into harness-facing native payloads. Harnesses consume mount-ready surface runtime records or adapter-lowered payloads. Harnesses never consume raw authoring declarations, normalized authoring graphs, or compiler plans directly.
 
+For Effect-backed oRPC operations, lowering preserves the native oRPC
+procedure and supplies application/process-owned native `effect/context` and
+`effect/wrap`; the official Effect bridge remains the invocation executor.
+Surface adapters do not route those Effects through `ProcessExecutionRuntime`.
+That runtime continues to execute non-oRPC descriptor lanes.
+
 ### 10.12 Harness and native boundary
 
 Harnesses own native mounting after runtime realization and adapter lowering. Runtime mounting invokes them after the process runtime returns mount-ready records. Every harness implementation must satisfy the `HarnessDescriptor` interface defined in the runtime realization specification, §21.
@@ -2472,7 +2495,7 @@ services/*
 
 Elysia owns HTTP host lifecycle and request routing. It does not own public API meaning, service construction, provider selection, app membership, or runtime provisioning.
 
-**Integration contract.** The Elysia harness receives `MountReadySurfaceRuntimeRecord[]` carrying adapter-lowered oRPC/Elysia route payloads, server harness configuration, and `ProcessRuntimeAccess`. It must return a `StartedHarness`. The service and server plugin retain their semantic and executable-body authority; Habitat owns compiled surface plans, generated route payload bridges, and delegation to the process execution runtime at invocation time; Elysia owns HTTP host lifecycle and request routing. The complete input/output contract is defined in the runtime realization specification, §21.1.
+**Integration contract.** The Elysia harness receives `MountReadySurfaceRuntimeRecord[]` carrying adapter-lowered oRPC/Elysia route payloads, server harness configuration, and `ProcessRuntimeAccess`. It must return a `StartedHarness`. The service and server plugin retain their semantic and executable-body authority; Habitat owns compiled surface plans and application/process-owned Effect Context, wrap, resource, telemetry, and shutdown composition; the exact official Effect-oRPC bridge owns execution of Effect-backed oRPC operations; and Elysia owns HTTP host lifecycle and request routing. `ProcessExecutionRuntime` remains the executor only for non-oRPC descriptor lanes. The complete input/output contract is defined in the runtime realization specification, §21.1.
 
 ### 13.2 Async harness posture
 
