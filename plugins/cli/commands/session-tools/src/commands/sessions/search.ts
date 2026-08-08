@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import type { Client } from "@habitat-ai/rawr-session-intelligence/client";
 import { Flags } from "@oclif/core";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
@@ -43,13 +43,13 @@ function hasFacetFilters(filters: SessionFacetFilters): boolean {
   );
 }
 
-export default class SessionsSearch extends RawrCommand {
+export default class SessionsSearch extends HabitatCommand {
   static description = "Search sessions by metadata or transcript content";
   private static readonly DEFAULT_SAFE_LIMIT = 5;
   private static readonly DEFAULT_FACET_CANDIDATE_LIMIT = 250;
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     source: Flags.string({
       description: "Session source",
       options: ["claude", "codex", "all"],
@@ -149,8 +149,8 @@ export default class SessionsSearch extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(SessionsSearch);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(SessionsSearch);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const source = String(flags.source) as SessionSourceFilter;
 
     const metadataQuery = flags["query-metadata"] ? String(flags["query-metadata"]) : null;
@@ -186,7 +186,7 @@ export default class SessionsSearch extends RawrCommand {
       const result = this.fail("--reindex is only supported for content search (use --query)", {
         code: "REINDEX_WITH_METADATA_QUERY",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -195,7 +195,7 @@ export default class SessionsSearch extends RawrCommand {
       const result = this.fail("Use only one of --query-metadata or --query", {
         code: "AMBIGUOUS_QUERY",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -203,7 +203,7 @@ export default class SessionsSearch extends RawrCommand {
       const result = this.fail("--reindex with structured facet filters requires --query", {
         code: "REINDEX_WITH_FACET_FILTERS",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -213,7 +213,7 @@ export default class SessionsSearch extends RawrCommand {
         "Provide either --query-metadata, --query, --reindex, or at least one --has-* facet filter",
         { code: "MISSING_QUERY" }
       );
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -287,7 +287,7 @@ export default class SessionsSearch extends RawrCommand {
           }
 
           const result = this.ok({ query: null, hits: [], outDir, reindex: reindexResult });
-          this.outputResult(result, {
+          await this.outputResult(result, {
             flags: baseFlags,
             human: () => {
               if (flags.quiet) return;
@@ -347,7 +347,7 @@ export default class SessionsSearch extends RawrCommand {
     }
 
     const result = this.ok({ query: metadataQuery ?? contentQuery, hits, outDir });
-    this.outputResult(result, {
+    await this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         if (flags.quiet) return;

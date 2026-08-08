@@ -1,13 +1,13 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Flags } from "@oclif/core";
 import { createHyperresearchCodexClientForBackend } from "../../../lib/hyperresearch-codex-binding";
 import { summarizeV8ValidationResult } from "../../../lib/v8-result";
 
-export default class HyperresearchCodexValidate extends RawrCommand {
+export default class HyperresearchCodexValidate extends HabitatCommand {
   static description = "Validate Hyperresearch Codex V8 integrity gates";
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     ledger: Flags.string({
       required: true,
       description: "Path to research/temp/hyperresearch-codex-run.json",
@@ -21,8 +21,8 @@ export default class HyperresearchCodexValidate extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(HyperresearchCodexValidate);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(HyperresearchCodexValidate);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const client = createHyperresearchCodexClientForBackend({
       repoRoot: process.cwd(),
       backend: String(flags.backend) as "fixture" | "real",
@@ -48,7 +48,7 @@ export default class HyperresearchCodexValidate extends RawrCommand {
             details: responseData,
           })
         : this.ok(responseData);
-      this.outputResult(result, {
+      await this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           this.log(`hyperresearch codex v8: ${resultData.status}`);
@@ -61,7 +61,7 @@ export default class HyperresearchCodexValidate extends RawrCommand {
       const result = this.fail(error instanceof Error ? error.message : String(error), {
         code: "HYPERRESEARCH_CODEX_V8_VALIDATE_FAILED",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }
   }

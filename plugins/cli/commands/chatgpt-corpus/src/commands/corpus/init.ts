@@ -1,5 +1,5 @@
 import path from "node:path";
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Args } from "@oclif/core";
 import {
   type CorpusInitializeOptions,
@@ -8,7 +8,7 @@ import {
 } from "../../lib/client";
 import { projectInitResult } from "../../lib/projection";
 
-export default class CorpusInit extends RawrCommand {
+export default class CorpusInit extends HabitatCommand {
   static description = "Initialize a ChatGPT corpus workspace";
 
   static args = {
@@ -16,12 +16,12 @@ export default class CorpusInit extends RawrCommand {
   } as const;
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(CorpusInit);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { args, flags } = await this.parse(CorpusInit);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const workspaceRoot = path.resolve(args.path ? String(args.path) : process.cwd());
     const client = createCorpusClient(workspaceRoot);
 
@@ -32,7 +32,7 @@ export default class CorpusInit extends RawrCommand {
       const data = await client.workspace.initialize({}, options);
       const resultData = projectInitResult(workspaceRoot, data);
       const result = this.ok(resultData);
-      this.outputResult(result, {
+      await this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           this.log(`initialized corpus workspace at ${workspaceRoot}`);
@@ -44,7 +44,7 @@ export default class CorpusInit extends RawrCommand {
     } catch (error) {
       const parsed = describeServiceError(error);
       const result = this.fail(parsed.message, { code: parsed.code, details: parsed.details });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }
   }

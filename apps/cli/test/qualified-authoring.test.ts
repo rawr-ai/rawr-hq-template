@@ -247,7 +247,7 @@ describe("qualified authoring owners", () => {
         path.join(commandRoot, "apps", "cli", "src", "commands", "1demo", "inspect.ts"),
         "utf8"
       )
-    ).toContain("class Rawr1demoInspectCommand extends RawrCommand");
+    ).toContain("class Rawr1demoInspectCommand extends HabitatCommand");
 
     const extensionParent = await tempRoot();
     const extensionRoot = path.join(extensionParent, "extension");

@@ -2,47 +2,44 @@
 
 ## Purpose
 
-- Standardize CLI bootstrap, results, workspace discovery, and telemetry
-  installation across command and process entrypoints.
+- Provide neutral workspace discovery and reusable telemetry installation
+  across process entrypoints.
 
 ## Scope
 
-- Applies to the shared CLI bootstrap and telemetry primitives in
+- Applies to the workspace discovery and telemetry primitives in
   `packages/core/**`.
 
 ## Boundaries
 
-- Owns `RawrCommand`, common CLI result/output conventions, neutral workspace
-  discovery, and the exported telemetry installer.
-- Must not own command-specific behavior, plugin lifecycle policy, workspace
-  manifest semantics, or application composition.
+- Owns neutral workspace discovery and the exported oRPC telemetry installer.
+- Must not own CLI command lifecycle, parsing, result rendering,
+  command-specific behavior, plugin lifecycle policy, workspace manifest
+  semantics, or application composition.
 - Workspace discovery may locate a workspace for bootstrap; it does not make a
   checkout the identity of an installed command.
 
 ## Behavior
 
-- Core normalizes shared command lifecycle and process support while leaving
-  every command's domain operation and every host's composition decision with
-  its owner.
+- Core provides shared process support while leaving every command's lifecycle
+  and domain operation, and every host's composition decision, with its owner.
 
 ## Concepts
 
-- `RawrCommand` is the common CLI lifecycle base; `RawrResult` is the neutral
-  command outcome; **workspace discovery** locates bootstrap context without
-  assigning product identity.
+- **Workspace discovery** locates bootstrap context without assigning product
+  identity. **Telemetry installation** configures one compatible OpenTelemetry
+  SDK instance at a process boundary.
 
 ## Flow
 
-- CLI commands inherit `RawrCommand`, parse the shared base flags, and render a
-  `RawrResult`.
 - Entrypoints use `findWorkspaceRoot` before binding workspace-owned services.
 - Runtime hosts import the dedicated telemetry export and install it at their
   process boundary.
 
 ## Interfaces
 
-- Commands extend the CLI base and return common results; entrypoints consume
-  the workspace locator; process hosts consume the telemetry installer.
+- Entrypoints consume the workspace locator; process hosts consume the
+  telemetry installer.
 
 ## Routing
 

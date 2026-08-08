@@ -209,6 +209,8 @@ const REQUIRED_EXTERNAL_PLUGIN_COMMANDS = [
 
 const RETIRED_COMMANDS = [
   "doctor:global",
+  "hyperresearch:codex-slice",
+  "hyperresearch:codex:run-fixture",
   "agent:sync",
   "agent:plugins:attest-promotion",
   "agent:plugins:export",

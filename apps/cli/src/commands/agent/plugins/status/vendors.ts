@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 
 import { AgentPluginLifecycleCommand } from "../../../../lib/agent-plugins/commands/command";
 import { contentWorkspaceFlags } from "../../../../lib/agent-plugins/commands/flags";
@@ -13,13 +13,13 @@ export default class AgentPluginsStatusVendors extends AgentPluginLifecycleComma
   static description = "Inspect declared vendor sources without authoring repository bytes";
 
   static flags = {
-    json: RawrCommand.baseFlags.json,
+    json: HabitatCommand.baseFlags.json,
     ...contentWorkspaceFlags,
   } as const;
 
   async run(): Promise<void> {
-    const { flags } = await this.parseRawr(AgentPluginsStatusVendors);
-    const input = this.parseInput(flags, parseVendorStatusRequest);
+    const { flags } = await this.parse(AgentPluginsStatusVendors);
+    const input = await this.parseInput(flags, parseVendorStatusRequest);
     if (input !== undefined) await this.project({ operation: "vendors.status", input }, flags);
   }
 }

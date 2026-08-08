@@ -1,5 +1,5 @@
 import path from "node:path";
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Args } from "@oclif/core";
 import {
   type CorpusMaterializeOptions,
@@ -8,7 +8,7 @@ import {
 } from "../../lib/client";
 import { projectConsolidateResult } from "../../lib/projection";
 
-export default class CorpusConsolidate extends RawrCommand {
+export default class CorpusConsolidate extends HabitatCommand {
   static description = "Consolidate a ChatGPT corpus workspace";
 
   static args = {
@@ -16,12 +16,12 @@ export default class CorpusConsolidate extends RawrCommand {
   } as const;
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(CorpusConsolidate);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { args, flags } = await this.parse(CorpusConsolidate);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const workspaceRoot = path.resolve(args.path ? String(args.path) : process.cwd());
     const client = createCorpusClient(workspaceRoot);
 
@@ -36,7 +36,7 @@ export default class CorpusConsolidate extends RawrCommand {
         undefined,
         resultData.warnings.length > 0 ? resultData.warnings : undefined
       );
-      this.outputResult(result, {
+      await this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           for (const warning of resultData.warnings) this.warn(warning);
@@ -49,7 +49,7 @@ export default class CorpusConsolidate extends RawrCommand {
     } catch (error) {
       const parsed = describeServiceError(error);
       const result = this.fail(parsed.message, { code: parsed.code, details: parsed.details });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }
   }
