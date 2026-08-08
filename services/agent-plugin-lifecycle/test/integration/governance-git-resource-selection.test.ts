@@ -1,6 +1,6 @@
 import { mkdir, readFile, realpath, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { makeNodeContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platform-node";
+import { makeNodeContentWorkspaceResource } from "@habitat-ai/resource-content-workspace/providers/git-effect-platform-node";
 import { afterEach, describe, expect, it } from "vitest";
 import { CURRENT_MAIN_V3_RECORD_PATH } from "../../src/service/model/dto/current-main-record";
 import {

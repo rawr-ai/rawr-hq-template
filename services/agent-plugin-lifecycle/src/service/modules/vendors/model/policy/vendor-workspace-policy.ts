@@ -1,7 +1,7 @@
 import type {
   ContentTreeEntry,
   ContentWorkspaceIdentity,
-} from "@habitat-ai/rawr-resource-content-workspace";
+} from "@habitat-ai/resource-content-workspace";
 import { Value } from "typebox/value";
 import { ContentDigestSchema } from "../../../../model/dto/release-digest";
 import type { ProvenanceBinding } from "../../../../model/dto/release-input";

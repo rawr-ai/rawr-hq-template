@@ -1,4 +1,4 @@
-import type { ContentWorkspaceFailure } from "@habitat-ai/rawr-resource-content-workspace";
+import type { ContentWorkspaceFailure } from "@habitat-ai/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import { parseReleaseRelativePath } from "../../../src/service/model/policy/release-identity";

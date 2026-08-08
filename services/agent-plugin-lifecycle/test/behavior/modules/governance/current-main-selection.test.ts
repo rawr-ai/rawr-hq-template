@@ -1,7 +1,7 @@
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
-} from "@habitat-ai/rawr-resource-content-workspace";
+} from "@habitat-ai/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 

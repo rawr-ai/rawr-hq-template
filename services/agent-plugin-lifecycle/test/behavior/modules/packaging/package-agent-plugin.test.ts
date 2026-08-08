@@ -1,16 +1,16 @@
 import { lstat, readFile, realpath, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type {
-  ContentWorkspaceFailure,
-  ContentWorkspaceResource,
-} from "@habitat-ai/rawr-resource-content-workspace";
-import { makeNodeContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platform-node";
-import type {
   AgentPluginPackageOutputResource,
   PackageOutputFailure,
   PackageOutputPublicationResult,
 } from "@habitat-ai/resource-agent-plugin-package-output";
 import { makeNodeAgentPluginPackageOutputResource } from "@habitat-ai/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import type {
+  ContentWorkspaceFailure,
+  ContentWorkspaceResource,
+} from "@habitat-ai/resource-content-workspace";
+import { makeNodeContentWorkspaceResource } from "@habitat-ai/resource-content-workspace/providers/git-effect-platform-node";
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { afterEach, describe, expect, it } from "vitest";

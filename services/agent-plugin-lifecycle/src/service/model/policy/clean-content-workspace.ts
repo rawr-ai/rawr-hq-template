@@ -5,7 +5,7 @@ import type {
   GitTrackedPathFlag,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
-} from "@habitat-ai/rawr-resource-content-workspace";
+} from "@habitat-ai/resource-content-workspace";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import type { Result } from "effect";

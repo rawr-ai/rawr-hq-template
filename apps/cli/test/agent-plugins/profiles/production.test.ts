@@ -16,7 +16,7 @@ vi.mock("@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder", () 
 vi.mock("@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder", () => ({
   createEmbeddedPlaceholderAnalyticsAdapter: selected.analytics,
 }));
-vi.mock("@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platform-node", () => ({
+vi.mock("@habitat-ai/resource-content-workspace/providers/git-effect-platform-node", () => ({
   makeNodeContentWorkspaceResource: selected.contentWorkspace,
 }));
 vi.mock(

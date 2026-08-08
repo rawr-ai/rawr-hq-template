@@ -65,4 +65,4 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @habitat-ai/rawr-resource-content-workspace:typecheck`.
+  `bunx nx run @habitat-ai/resource-content-workspace:typecheck`.
