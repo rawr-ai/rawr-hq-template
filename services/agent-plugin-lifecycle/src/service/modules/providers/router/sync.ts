@@ -1,4 +1,3 @@
-import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
@@ -11,6 +10,7 @@ import {
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
 } from "@habitat-ai/resource-native-agent-provider";
+import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/resource-versioned-content";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "../../../model/dto/release-identity";

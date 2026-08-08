@@ -3,7 +3,7 @@ import type {
   MaterializeRemoteInput,
   ObserveRemoteInput,
   RemoteContentTree,
-} from "@habitat-ai/rawr-resource-versioned-content";
+} from "@habitat-ai/resource-versioned-content";
 
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,

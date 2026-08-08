@@ -1,9 +1,4 @@
 import type {
-  ObserveRemoteInput,
-  VersionedContentFailure,
-  VersionedContentResource,
-} from "@habitat-ai/rawr-resource-versioned-content";
-import type {
   ContentTreeEntry,
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
@@ -22,6 +17,11 @@ import type {
   NativeProviderPluginFilesReadInput,
   NativeProviderPluginObservation,
 } from "@habitat-ai/resource-native-agent-provider";
+import type {
+  ObserveRemoteInput,
+  VersionedContentFailure,
+  VersionedContentResource,
+} from "@habitat-ai/resource-versioned-content";
 import { Effect } from "effect";
 
 import type { Client } from "../../../../src/client";

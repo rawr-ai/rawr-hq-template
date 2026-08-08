@@ -1,18 +1,18 @@
 import { createHash } from "node:crypto";
 import type {
-  MaterializedRemoteContentTree,
-  RemoteContentTree,
-  VersionedContentFailure,
-  VersionedContentResource,
-  VersionedContentTreeEntry,
-} from "@habitat-ai/rawr-resource-versioned-content";
-import type {
   ContentWorkspaceFailure,
   ContentWorkspaceIdentity,
   ContentWorkspaceResource,
   ContentWorkspaceWrite,
   MaterializedContentTreeEntry,
 } from "@habitat-ai/resource-content-workspace";
+import type {
+  MaterializedRemoteContentTree,
+  RemoteContentTree,
+  VersionedContentFailure,
+  VersionedContentResource,
+  VersionedContentTreeEntry,
+} from "@habitat-ai/resource-versioned-content";
 import { Effect } from "effect";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";

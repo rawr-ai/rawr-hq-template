@@ -1,9 +1,9 @@
+import type { MaterializedContentTreeEntry } from "@habitat-ai/resource-content-workspace";
 import type {
   MaterializedRemoteContentTree,
   MaterializedVersionedContentTreeEntry,
   VersionedContentTreeEntry,
-} from "@habitat-ai/rawr-resource-versioned-content";
-import type { MaterializedContentTreeEntry } from "@habitat-ai/resource-content-workspace";
+} from "@habitat-ai/resource-versioned-content";
 
 import type {
   VendorDeclaredSourceObservation,
