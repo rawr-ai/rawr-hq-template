@@ -129,24 +129,6 @@ describe("bin/run.js", () => {
     expect(result.stderr).toBe("");
   });
 
-  it("re-enters source and built Oclif entrypoints directly", () => {
-    for (const entrypoint of ["src/index.ts", "bin/run.js"] as const) {
-      const result = runCli(entrypoint, ["routine", "check", "--json", "--dry-run"]);
-
-      expect(result.status, result.stderr).toBe(0);
-      const output = JSON.parse(result.stdout) as {
-        ok: boolean;
-        data: { steps: readonly { cmd: string; args: readonly string[]; cwd: string }[] };
-      };
-      expect(output.ok).toBe(true);
-      expect(output.data.steps[0]).toMatchObject({
-        cmd: process.execPath,
-        args: [path.join(cliRoot, entrypoint), "doctor", "--json"],
-        cwd: cliRoot,
-      });
-    }
-  });
-
   it("loads the same manifest-backed application inventory from source and compiled entrypoints", () => {
     const source = runCli("src/index.ts", ["--help"]);
     const built = runCli("bin/run.js", ["--help"]);
@@ -206,12 +188,12 @@ describe("bin/run.js", () => {
     }
   });
 
-  it("rejects the retired global installation diagnostic", () => {
-    const result = runCli("bin/run.js", ["doctor", "global", "--help"]);
+  it("delegates unknown-command failure to Oclif", () => {
+    const result = runCli("bin/run.js", ["not-a-command"]);
 
     expect(result.status).toBe(2);
     expect(result.stdout).toBe("");
-    expect(result.stderr).toContain("Command doctor:global not found");
+    expect(result.stderr).toContain("command not-a-command not found");
   });
 });
 

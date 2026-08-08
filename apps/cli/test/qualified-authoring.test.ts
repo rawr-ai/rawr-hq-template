@@ -6,12 +6,6 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
-  authorCuratedAgentPlugin,
-  CONTENT_WORKSPACE_PROTOCOL,
-  parseCuratedAgentPluginAuthoringRequest,
-  verifyContentWorkspaceV1,
-} from "../src/lib/authoring/agent-plugin";
-import {
   authorOfficialCommand,
   parseOfficialCommandAuthoringRequest,
   verifyOfficialCommandTemplateWorkspace,
@@ -347,98 +341,6 @@ describe("qualified authoring owners", () => {
       issues: [{ code: "INVALID_DESTINATION", path: "destination" }],
     });
     await expect(fs.access(path.join(outside, "existing", "extension"))).rejects.toThrow();
-  });
-
-  it("authors content-only agent source through the versioned content-workspace interface", async () => {
-    const root = verifiedDestinationRoot(await tempRoot());
-    const request = must(
-      parseCuratedAgentPluginAuthoringRequest({
-        pluginId: "research-kit",
-        contentWorkspace: root,
-        dryRun: false,
-      })
-    );
-    const verifyContentWorkspace = async () =>
-      Object.freeze({
-        protocol: CONTENT_WORKSPACE_PROTOCOL,
-        root,
-        repositoryIdentity: "rawr-ai/rawr-hq" as const,
-      });
-    const authored = await authorCuratedAgentPlugin(request, { verifyContentWorkspace });
-    expect(authored.kind).toBe("AuthoringAuthored");
-    const pluginRoot = path.join(root, "plugins", "agents", "research-kit");
-    const files = await recursiveFiles(pluginRoot);
-    expect(files).toEqual([
-      "agents/research-kit.md",
-      "evaluation/policy.json",
-      "package.json",
-      "skills/research-kit/SKILL.md",
-      "vendor/provenance.json",
-    ]);
-    expect(
-      JSON.parse(await fs.readFile(path.join(pluginRoot, "package.json"), "utf8"))
-    ).toMatchObject({
-      name: "@rawr/plugin-research-kit",
-      rawr: {
-        kind: "agent",
-        pluginContent: { version: 1 },
-        capability: "research-kit",
-      },
-    });
-    expect(files.some((file) => file.includes("release") || file.includes("provider"))).toBe(false);
-    const firstSnapshot = await treeSnapshot(pluginRoot);
-    expect((await authorCuratedAgentPlugin(request, { verifyContentWorkspace })).kind).toBe(
-      "AuthoringConverged"
-    );
-    expect(await treeSnapshot(pluginRoot)).toEqual(firstSnapshot);
-  });
-
-  it("rejects an agent plugin leaf already owned by another plugin root", async () => {
-    const root = verifiedDestinationRoot(await tempRoot());
-    await fs.mkdir(path.join(root, "plugins", "cli", "research-kit"), { recursive: true });
-    const request = must(
-      parseCuratedAgentPluginAuthoringRequest({
-        pluginId: "research-kit",
-        contentWorkspace: root,
-        dryRun: false,
-      })
-    );
-    const verifyContentWorkspace = async () =>
-      Object.freeze({
-        protocol: CONTENT_WORKSPACE_PROTOCOL,
-        root,
-        repositoryIdentity: "rawr-ai/rawr-hq" as const,
-      });
-
-    expect(await authorCuratedAgentPlugin(request, { verifyContentWorkspace })).toMatchObject({
-      kind: "AuthoringRejected",
-      issues: [{ code: "IDENTITY_COLLISION", path: "id" }],
-    });
-    await expect(fs.access(path.join(root, "plugins", "agents", "research-kit"))).rejects.toThrow();
-  });
-
-  it("accepts only the exact personal content repository identity", async () => {
-    const personal = await gitFixture({
-      origin: "https://github.com/rawr-ai/rawr-hq.git",
-      packageName: "rawr-hq",
-    });
-    const template = await gitFixture({
-      origin: "https://github.com/rawr-ai/rawr-hq-template.git",
-      packageName: "rawr-hq-template",
-      cliPackageName: "@habitat-ai/rawr",
-    });
-    const foreign = await gitFixture({
-      origin: "https://github.com/example/foreign.git",
-      packageName: "rawr-hq",
-    });
-
-    await expect(verifyContentWorkspaceV1(personal)).resolves.toMatchObject({
-      protocol: CONTENT_WORKSPACE_PROTOCOL,
-      repositoryIdentity: "rawr-ai/rawr-hq",
-      root: personal,
-    });
-    await expect(verifyContentWorkspaceV1(template)).rejects.toThrow(/exact personal/u);
-    await expect(verifyContentWorkspaceV1(foreign)).rejects.toThrow(/exact personal/u);
   });
 
   it("accepts only the exact Template executable repository identity", async () => {
