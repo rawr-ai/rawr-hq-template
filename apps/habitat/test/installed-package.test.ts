@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.8";
+const CANDIDATE_VERSION = "0.5.9";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",

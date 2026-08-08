@@ -53,7 +53,7 @@ compatibility flag to the migration-generation command only:
 
 ```sh
 NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
-  bunx nx migrate @habitat-ai/cli@0.5.8
+  bunx nx migrate @habitat-ai/cli@0.5.9
 ```
 
 Nx `23.1.1` and later verify provenance normally.
