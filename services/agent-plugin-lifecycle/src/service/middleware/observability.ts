@@ -1,10 +1,11 @@
-import { createObservabilityMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
+import { createObservabilityMiddlewareCallback } from "@habitat-ai/sdk/service";
 import { base } from "../base";
 import { metadataDefaults } from "../model/policy/procedure-metadata";
 
 /** Adds lifecycle invocation fields to the native observability boundary. */
 export const middleware = base.middleware(
   createObservabilityMiddlewareCallback(metadataDefaults, {
+    attributeNamespace: "rawr",
     spanAttributes: ({ context }) => ({
       invocation_trace_id: context.invocation.traceId,
       invocation_command_id: context.invocation.commandId,

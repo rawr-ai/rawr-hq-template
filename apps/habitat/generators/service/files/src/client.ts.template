@@ -1,0 +1,35 @@
+import type { RouterContractClient } from "@orpc/contract";
+import { createRouterClient } from "@orpc/server";
+import type { Context } from "./service/base.js";
+import { type Contract, contract } from "./service/contract.js";
+import { router } from "./service/router.js";
+
+export { type Contract, contract };
+
+/** Host-supplied ready capabilities used by service operations. */
+export type Deps = Context["deps"];
+
+/** Stable caller scope fixed at client construction. */
+export type Scope = Context["scope"];
+
+/** App-selected service policy fixed at client construction. */
+export type Config = Context["config"];
+
+/** Public construction boundary for one in-process client. */
+export type CreateClientOptions = Pick<Context, "deps" | "scope" | "config">;
+
+/** Typed caller surface derived from the public contract. */
+export type Client = RouterContractClient<Contract>;
+
+/** Constructs the sole public client over the private service router. */
+export function createClient({ deps, scope, config }: CreateClientOptions): Client {
+  return createRouterClient(router, {
+    context: {
+      deps,
+      scope,
+      config,
+      invocation: {},
+      provided: {},
+    } satisfies Context,
+  });
+}

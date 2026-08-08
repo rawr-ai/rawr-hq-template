@@ -1,11 +1,3 @@
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-  type EmbeddedPlaceholderAnalyticsEntry,
-} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-  type EmbeddedPlaceholderLogEntry,
-} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { ContentWorkspaceFailure } from "@habitat-ai/rawr-resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
@@ -14,6 +6,10 @@ import { router } from "../../../src/service/router";
 import { testRequest } from "../../support/modules/providers/fixture";
 import {
   createLifecycleTestClient,
+  createTestAnalytics,
+  createTestLogger,
+  type TestAnalyticsEntry,
+  type TestLogEntry,
   testInvocation,
   unavailableContentWorkspace,
 } from "../../support/service/client";
@@ -89,11 +85,11 @@ describe("agent plugin lifecycle oRPC service spine", () => {
   });
 
   it("preserves baseline analytics and logging around Effect-backed procedures", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const client = createLifecycleTestClient({
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-      logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+      analytics: createTestAnalytics({ sink: analyticsEntries }),
+      logger: createTestLogger({ sink: logEntries }),
     });
 
     await client.releases.releaseInputRecord(

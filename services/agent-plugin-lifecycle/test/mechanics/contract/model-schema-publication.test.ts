@@ -1,4 +1,4 @@
-import { standard } from "@habitat-ai/typebox-adapter";
+import { standard } from "@habitat-ai/sdk/service/schema";
 import { type TSchema, Type } from "typebox";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";

@@ -1,0 +1,9 @@
+import { implement } from "@orpc/server";
+import type { Context } from "./base.js";
+import { contract } from "./contract.js";
+
+/** Unconfigured implementer retained for aggregate router completion. */
+export const impl = implement(contract).$context<Context>();
+
+/** Configured service lineage from which modules descend. */
+export const service = impl;

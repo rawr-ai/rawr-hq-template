@@ -1,0 +1,15 @@
+import { standard } from "@habitat-ai/sdk/service/schema";
+import { oc } from "@orpc/contract";
+import { Type } from "typebox";
+
+const InputSchema = Type.Object(
+  {},
+  { additionalProperties: false, description: "Empty <%= operationName %> operation input." }
+);
+const OutputSchema = Type.Object(
+  {},
+  { additionalProperties: false, description: "Empty <%= operationName %> operation output." }
+);
+
+/** Minimal TypeBox-backed <%= operationName %> operation contract. */
+export const <%= operationName %> = oc.input(standard(InputSchema)).output(standard(OutputSchema));

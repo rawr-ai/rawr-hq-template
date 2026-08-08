@@ -4,11 +4,16 @@ const privateWorkspacePackages = [
   "@habitat-ai/resource-rule-evaluation",
   "@habitat-ai/resource-source-inventory",
   "@habitat-ai/service",
-  "@habitat-ai/typebox-adapter",
 ];
 
+const blueprintIds = ["app", "package", "plugin", "plugin-nx", "provider", "resource", "service"];
+
 export default defineConfig({
-  entry: "src/index.ts",
+  entry: {
+    index: "src/index.ts",
+    "service/index": "src/service/index.ts",
+    "service/schema": "src/service/schema.ts",
+  },
   outDir: "dist",
   format: "esm",
   platform: "node",
@@ -22,6 +27,7 @@ export default defineConfig({
     onlyImport: [
       "@effect/platform-node",
       "@getgrit/cli",
+      "@opentelemetry/api",
       "@orpc/contract",
       "@orpc/experimental-effect",
       "@orpc/server",
@@ -32,5 +38,8 @@ export default defineConfig({
       "typebox",
     ],
   },
-  copy: "../../.habitat/blueprints",
+  copy: blueprintIds.map((id) => ({
+    from: `../../.habitat/blueprints/${id}`,
+    to: "dist/blueprints",
+  })),
 });

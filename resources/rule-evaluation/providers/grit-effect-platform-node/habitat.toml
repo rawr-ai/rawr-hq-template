@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "provider-rule-evaluation-grit-effect-platform-node"
+ownerProject = "provider-rule-evaluation-grit-effect-platform-node"
+blueprint = "provider"
+blueprintVersion = 1
+
+[roots]
+project = "resources/rule-evaluation/providers/grit-effect-platform-node"
+
+[selections]

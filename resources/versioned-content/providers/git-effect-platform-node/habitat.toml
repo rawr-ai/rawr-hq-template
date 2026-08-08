@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "provider-versioned-content-git-effect-platform-node"
+ownerProject = "provider-versioned-content-git-effect-platform-node"
+blueprint = "provider"
+blueprintVersion = 1
+
+[roots]
+project = "resources/versioned-content/providers/git-effect-platform-node"
+
+[selections]

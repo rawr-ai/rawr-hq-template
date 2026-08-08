@@ -6,13 +6,14 @@
 
 ## Scope
 
-- Applies to the catalog module's contract, model, and grouped router handlers.
+- Applies to the catalog module's contract, model, middleware, and operation handlers.
 
 ## Boundaries
 
-- Router handlers own filesystem observation and operation sequencing. Module
-  policy owns deterministic classification, schema admission, path semantics,
-  duplicate refusal, application resolution, selection, and result meaning.
+- Module middleware owns shared current-catalog filesystem observation. Router
+  handlers own operation-specific I/O and sequencing. Module policy owns
+  deterministic classification, schema admission, path semantics, duplicate
+  refusal, application resolution, selection, and result meaning.
 - The module consumes ready evaluator and source-inventory resources but does
   not select or construct providers or persist a catalog. The admitted version
   2 subset resolves into the same provider-neutral runner model as version 3.
@@ -36,9 +37,10 @@
 
 ## Flow
 
-- The module curates filesystem, path, evaluator, inventory, and workspace-root
-  vocabulary. The grouped router leaf resolves exact sources before either
-  returning the catalog or selecting and evaluating applications.
+- The module middleware derives one request-local current-catalog capability
+  from the service base. Terminal curation projects that capability plus the
+  evaluator, inventory, filesystem, path, and workspace-root values needed by
+  the separate resolve and check operation leaves.
 
 ## Interfaces
 

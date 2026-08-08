@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = <%- nameLiteral %>
+ownerProject = <%- nameLiteral %>
+blueprint = "service"
+blueprintVersion = 1
+
+[roots]
+project = <%- directoryLiteral %>
+
+[selections]

@@ -17,7 +17,6 @@ import {
   MAX_AGENT_PLUGIN_RELEASE_SET_ENVELOPE_BYTES,
 } from "../dto/agent-plugin-release-set";
 import type { CanonicalJsonValue } from "../dto/canonical-json";
-import type { PluginId } from "../dto/release-identity";
 import {
   type AgentPluginReleaseInput,
   AgentPluginReleaseInputSchema,

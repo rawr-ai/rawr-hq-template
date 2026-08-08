@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-resource-versioned-content"
+ownerProject = "@habitat-ai/rawr-resource-versioned-content"
+blueprint = "resource"
+blueprintVersion = 1
+
+[roots]
+project = "resources/versioned-content"
+
+[selections]

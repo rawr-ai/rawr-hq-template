@@ -1,10 +1,10 @@
-import type { AnalyticsClient, Logger } from "@habitat-ai/rawr-hq-sdk";
 import type { AgentPluginPackageOutputResource } from "@habitat-ai/rawr-resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace";
 import type { NativeAgentProviderResources } from "@habitat-ai/rawr-resource-native-agent-provider";
 import type { VersionedContentResource } from "@habitat-ai/rawr-resource-versioned-content";
+import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import { os } from "@orpc/server";
-import type { VendorClockPort } from "./modules/vendors/model/ports/clock";
+import type { ClockPort } from "./model/ports";
 
 type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
 
@@ -12,7 +12,7 @@ type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
 export type Context = {
   readonly deps: {
     readonly analytics: AnalyticsClient;
-    readonly clock: VendorClockPort;
+    readonly clock: ClockPort;
     readonly contentWorkspace: ContentWorkspaceResource<never>;
     readonly logger: Logger;
     readonly nativeProviders: NativeAgentProviderResources;

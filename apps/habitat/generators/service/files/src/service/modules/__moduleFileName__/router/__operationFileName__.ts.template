@@ -1,0 +1,7 @@
+import { module } from "../module.js";
+
+/** Authors the <%= operationName %> operation at its named router leaf. */
+export const <%= operationName %> = module.<%= operationName %>.handler(({ context }) => {
+  void context.<%= moduleName %>;
+  return {};
+});

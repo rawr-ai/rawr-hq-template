@@ -1,0 +1,6 @@
+import { <%= operationName %> } from "./<%= operationFileName %>.js";
+
+/** Module contract composed from its semantic operation leaves. */
+export const contract = {
+  <%= operationName %>,
+};

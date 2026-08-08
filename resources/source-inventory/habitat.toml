@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/resource-source-inventory"
+ownerProject = "@habitat-ai/resource-source-inventory"
+blueprint = "resource"
+blueprintVersion = 1
+
+[roots]
+project = "resources/source-inventory"
+
+[selections]

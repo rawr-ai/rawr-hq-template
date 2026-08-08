@@ -1,4 +1,4 @@
-import type { BaseMetadata } from "@habitat-ai/rawr-hq-sdk";
+import type { BaseMetadata } from "@habitat-ai/sdk/service";
 
 /** Service-wide metadata policy inherited by every development operation contract. */
 export const metadataDefaults = {

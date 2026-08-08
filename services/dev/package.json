@@ -27,8 +27,7 @@
     "@opentelemetry/api": "^1.9.0",
     "@orpc/contract": "2.0.0-beta.23",
     "@orpc/server": "2.0.0-beta.23",
-    "@habitat-ai/rawr-hq-sdk": "workspace:*",
-    "@habitat-ai/typebox-adapter": "workspace:*",
+    "@habitat-ai/sdk": "workspace:*",
     "typebox": "1.3.8"
   },
   "devDependencies": {

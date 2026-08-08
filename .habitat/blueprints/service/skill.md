@@ -36,10 +36,10 @@ Context flows downward by owner and lifetime:
 | `invocation` | caller | Per-call facts |
 | `provided` | middleware | Acquired or derived execution capabilities |
 
-Each descent removes knowledge. A module does not recover root assembly, enter
-a sibling, construct a provider, or pass whole context lanes to a handler.
-Terminal curation projects explicit values. Native oRPC may retain additive
-runtime context; that possession does not grant authorship.
+Each descent narrows authored vocabulary. A module does not recover root
+assembly, enter a sibling, construct a provider, or pass whole context lanes to
+a handler. Terminal curation projects explicit values. Native oRPC may retain
+additive runtime context; that possession does not grant authorship.
 
 Context merging is shallow. Middleware that replaces a nested lane preserves
 the members required below it rather than assuming a recursive merge. A
@@ -53,6 +53,12 @@ domain roles: DTOs, entities, errors, policy, and ports. Vague `shared`,
 `internal`, `dependencies`, and `helpers` folders erase authorship and are not
 neutral destinations.
 
+An optional database is the service's private persistence interior. Migrations
+own physical evolution, schema owns storage mapping when needed, and stores
+project ready database capabilities into domain values. Only root middleware
+enters that interior; modules receive curated store capabilities through
+context. Entities and contracts never derive their authority from persistence.
+
 Transport, host startup, and orchestration live above the service in plugins
 and applications. The service remains request-bound and cohesive; it does not
 grow a hidden control plane between sibling modules.
@@ -62,23 +68,37 @@ semantic leaves. The barrel adds no policy or behavior, and `model/index.ts`
 does not exist because the service model is not one undifferentiated catalog.
 
 One module contract index exposes its generic contract anchor over direct
-semantic leaves. Named `router/<name>.ts` leaves author matching operations without
-a router barrel. Optional module middleware has an indexed catalog; optional
-service-root middleware has direct semantic leaves and no index. Production
-source remains sealed from package-root proof.
+semantic leaves. Named `router/<name>.ts` leaves author matching operations
+without a router barrel. Optional module middleware has an indexed catalog;
+optional service-root middleware has direct semantic leaves and no index.
+Production source remains sealed from package-root proof.
 
-Habitat structure proves the closed topology. TypeScript proves source
-assignability, inference, and router completeness. Behavior proof owns
+Habitat structure proves the closed filesystem topology. TypeScript proves
+source assignability, inference, composed router compatibility, and rejects
+unused adjacent child imports. Grit proves ordinary adjacent binding projection,
+without replacing TypeScript data-flow analysis. Behavior proof owns the callable operation set,
 middleware order, once-only execution, outcomes, and resource lifecycle.
 
-The service kind does not prescribe a per-service Effect prototype extension.
-The selected runtime adapter owns how Effect execution enters the oRPC handler
-boundary.
+Native `.handler(...)` is the ordinary oRPC terminal for synchronous or Promise
+operations. An Effect-backed operation uses official
+`@orpc/experimental-effect` `.effect(...)`; `src/service/impl.ts` is its sole
+production bootstrap role. The extension delegates to `handlerGen(...)`; that bridge
+owns the request fiber, native signal, Effect Context and wrap application,
+Cause mapping, and returned Promise. Manual `Effect.run*`, a custom runner, and
+a Habitat imitation are not alternate terminals. TypeScript proves the
+extension is present when an operation uses it, and the module lineage
+guarantees bootstrap order.
+
+The application and process own Effect Context construction, resource lifetime,
+policy, telemetry, and shutdown through native `effect/context` and
+`effect/wrap` hooks. `ProcessExecutionRuntime` remains available for non-oRPC
+descriptor lanes; it does not execute oRPC service Effects. A plain generated
+handler does not need the experimental bridge dependency.
 
 ## Vocabulary
 
-**What:** capability, client, context, contract, handler, module, router, service
+**What:** client, contract, module, operation, service
 
-**Why:** clarity, closure, locality, ownership, reuse
+**Why:** closure, locality, ownership, reuse
 
-**How:** Effect, Habitat, oRPC, structure, TypeBox
+**How:** Effect, Habitat, Nx, oRPC, TypeBox

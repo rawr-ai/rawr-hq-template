@@ -4,15 +4,14 @@
 
 ## Purpose
 
-This document names the durable Habitat authority concepts and their
-relationships. Physical layouts, parsers, catalogs, and release protocols
-realize this model; they do not redefine it.
-
-The core nouns are:
+This document names Habitat's durable authority concepts. Physical layouts,
+catalogs, runners, and release protocols realize this model; they do not
+redefine it.
 
 ```text
 Habitat
 Blueprint
+Rule packet
 Instance
 Capability
 Niche
@@ -21,156 +20,129 @@ Rule application
 
 ## Habitat
 
-Habitat is the platform for defining, admitting, evaluating, repairing,
-constructing, and governing software kinds. Inside one repository, the
-repository-owned `.habitat` source and its selected policy pack form the local
-policy-selection boundary; they do not create a second platform identity.
-
-Habitat is not only the CLI, one policy tree, a generated index, or a runner.
-Those are platform realizations that serve the repository's selected policy.
+Habitat is the platform for defining, admitting, evaluating, constructing, and
+governing software kinds. The CLI, SDK, policy pack, catalog, and runners are
+realizations of that platform rather than competing authorities.
 
 ## Blueprint
 
-A blueprint defines one constructible architectural kind. It owns that kind's
-identity, version, anchor grammar, positive topology, source relationships,
-construction, migration, and governance.
+A blueprint defines one constructible architectural kind. It owns the kind's
+identity, version, instance grammar, complete positive topology, source
+relationships, construction, migration, and governance.
 
-Blueprint nesting is monotonic kind narrowing. A child is a more specific kind,
-not a support folder, execution mode, current defect, or product instance.
-Blueprint authority is a lower bound: later authority may add constraints but
-may not silently weaken the kind.
+One blueprint has one required structural anchor. Its sorted rule list is the
+native composition surface for the rest of its law. Rules may be arranged in
+context-bearing authoring directories without creating another kind or runtime
+concept. Directory nesting has no execution semantics.
 
 When a selected policy pack admits a blueprint, that package owns the reusable
-definition, exact version, runner assets, and provenance. A repository may
-retain an exact authoring-source copy, but that copy is inert beside the
-selected package definition; drift at the same identity is a resolution
-failure rather than competing authority.
+definition, runner assets, version, and provenance. A repository may retain an
+exact authoring-source copy, but drift at the same identity is a resolution
+failure rather than a second authority.
 
-One blueprint has one singular structural spine. That anchor lives directly at
-the blueprint root as `structure.toml`. A directory is earned only by a
-genuinely plural, context-bearing rule family; nesting is not a convention for
-singular relations.
+## Rule Packet
+
+A rule packet states one qualified policy claim inside one blueprint. It is the
+smallest reviewable unit of blueprint authoring and owns one natural evaluator
+relation. A packet is not a kind, instance, capability, niche, project, or
+baseline.
+
+An authoring component is merely a directory that groups ordinary packets
+around one stable part of a kind. It has no manifest, schema identity,
+application, or target. The blueprint's declared rule list remains the only
+activation surface.
 
 ## Instance
 
 An instance is concrete repository matter admitted under one primary
 blueprint. Its `habitat.toml` declares facts: identity, blueprint version,
-roots, selections, and later capability requests. It does not author policy.
+roots, and selections. It does not author policy or restate the definition's
+rule inventory.
 
 Manifest placement is blueprint-defined. A multi-root instance still has one
-blueprint-owned anchor and one manifest; its other roots are declared or
-derived facts.
+anchor, one owner, and one manifest.
 
 ## Capability
 
 A capability is an additive reusable facet that an admitted instance may
-possess. It names behavior or participation that can cross blueprint kinds.
-It is not a constructible kind, provider implementation, or generated shape.
+possess. It names behavior or participation that can cross blueprint kinds. It
+is not a constructible kind, provider implementation, or generated shape.
 
-Capabilities add facts, requirements, checks, and relationships. They cannot
-erase blueprint authority or another capability's accepted facts. Capability
-nesting is explicit namespacing and relation, not implicit inheritance.
-
-When realized, one capability definition has one singular root anchor,
-`capability.toml`. That file and its schema are a reserved future definition
-format; the current release slice does not discover or interpret them.
+The `capability.toml` definition surface is reserved future work. The current
+release does not discover or interpret it.
 
 ## Niche
 
 A niche is a governed community of admitted instances selected by accepted
-facts. It may govern any combination of kinds, capabilities, ownership,
-metadata, or explicit membership.
+facts. It may govern combinations of kinds, capabilities, ownership, metadata,
+or explicit membership. It does not construct a kind or redefine a capability.
 
-A niche is not a blueprint. It does not construct a kind, redefine a
-capability, or admit raw folders without instance identity. Niche nesting is
-community containment, not type inheritance. Overlap is valid only when
-governance is additive or the conflict is explicit.
-
-When realized, one niche definition has one singular root anchor,
-`niche.toml`. That file, admission grammar, and derived-membership protocol are
-reserved future definition formats. Current `.habitat/rawr/**` paths are physical
-repository-policy overlays; they are not the complete definition of a niche.
+The `niche.toml` definition and derived-membership protocol are reserved future
+work. Current `.habitat/rawr/**` paths are repository-qualified policy overlays,
+not the complete semantic definition of a niche.
 
 ## Rule Application
 
-A resolved rule application is evaluator output:
+A rule application is bounded execution derived from one declared blueprint
+rule and one admitted instance:
 
 ```text
-blueprint rule + admitted instance facts -> bounded execution
+blueprint rule + instance facts -> application
 ```
 
-The resulting rule-execution record carries provenance and exact scope. It is
-not a new policy owner, instance, kind, capability, or niche. Nx may schedule
-it and a runner may execute it without changing policy ownership.
+It carries provenance and exact acquisition facts. It is not a policy owner,
+instance, kind, capability, or niche. Nx may schedule it and a runner may
+execute it without changing ownership.
 
-## Definition And Resolution Order
+## Blueprint Relations
 
-Definitions narrow additively before evaluation produces an execution record:
+`include` and `contains` are reserved future relations between independently
+constructible kinds. `include` would add same-anchor law; `contains` would bind
+a closed child kind below a parent-owned mount. Neither is active in the
+current release, and neither is needed to organize one blueprint's own rules.
+
+## Definition And Resolution
 
 ```text
 Habitat
   -> Blueprint
-    -> Instance
-      -> Capability
-        -> Niche
-          -> Rule application
-```
+    -> Rule packet
+      -> Instance
+        -> Rule application
 
-The final arrow produces a rule-execution record; it is not another definition
-or governance layer.
+Capability -> additive facet
+Niche      -> governed community
+```
 
 The governing distinctions are:
 
 ```text
 Blueprint defines kind.
+Packet states claim.
 Instance declares facts.
 Capability adds facets.
 Niche governs community.
-Rule application bounds execution.
+Application bounds execution.
 ```
 
 ## Current Realization
 
-The selected `@habitat-ai/sdk` protocol-1 policy pack admits exactly six root
-v3 blueprint records, sorted as `app`, `package`, `plugin`, `plugin-nx`,
-`provider`, and `resource`. Each member identifies its exact
-package-relative `dist/blueprints/<id>/blueprint.toml` definition. Definitions
-and runner assets resolve with policy-pack provenance; the repository-owned
-`habitat.toml` remains the only instance-selection source record. Package
-installation alone creates no rule application.
+The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits the
+version-1 `app`, `package`, `plugin`, `plugin-nx`, `provider`, `resource`, and
+`service` definitions. The selected `service@1` definition co-lands its
+positive law, construction path, recursive package closure, and installed
+consumer proof.
 
-The Habitat platform repository's tracked `.habitat/blueprints` tree is the canonical authoring input
-copied into the SDK build. Its exact duplicate definitions do not become local
-authority, while a drifted definition at an admitted identity fails closed.
-The repository's v2 compatibility registry and its 41 rules continue to
-execute beside resolved v3 rule applications until their qualified migrations are
-complete.
-Only the `package@1` test-category grammar is frozen: `contract` and `semantics`
-test-member ids map to exact files. A `package@1` instance resolves only when its
-selected ids equal the present test members exactly. Every other kind's test
-categories remain candidates. The tracked `service` definition is still candidate
-source rather than a policy-pack member; its presence in the SDK does not make
-it selectable.
-
-Each selected definition exposes only its required `project` anchor root.
-Source-specific structure scopes bind that root directly and include `src` in
-their blueprint-owned relative paths. Instance manifests therefore supply no
-independent `source` root to redirect; a caller-authored `source` binding is an
-unknown root role and fails closed.
-
-This checkpoint also does not realize `capability.toml`, `niche.toml`,
-capability activation, niche admission, or cross-authority conflict resolution.
-
-That narrow protocol is a release boundary, not the whole Habitat ontology.
-Later realization must extend this model without turning transitional packet
-paths, catalogs, runners, or product inventories into peer concepts.
+Protocol 1 already supports nested declared rule assets. It does not realize
+blueprint relations, capability activation, niche admission, inheritance, or
+implicit directory discovery. That narrow protocol is a release boundary, not
+the whole ontology.
 
 ## Relations
 
 - [[AUTHORITY|Habitat authority]]
+- [[BLUEPRINT-COMPOSITION|Blueprint composition]]
 - [[README|Habitat policy index]]
 - [[blueprints/skill|Blueprint direction]]
-- [[../docs/projects/shared-habitat-substrate/CORPUS|Shared Habitat substrate corpus]]
-- [[../openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README#Habitat Blueprint Definition Checkpoint|Definition checkpoint record]]
 - [[../docs/system/HABITAT_ARCHITECTURE|Canonical architecture]]
 - [[../docs/system/HABITAT_RUNTIME_REALIZATION|Runtime realization]]

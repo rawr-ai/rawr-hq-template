@@ -31,12 +31,11 @@
     "@orpc/contract": "2.0.0-beta.23",
     "@orpc/experimental-effect": "2.0.0-beta.23",
     "@orpc/server": "2.0.0-beta.23",
-    "@habitat-ai/rawr-hq-sdk": "workspace:*",
+    "@habitat-ai/sdk": "workspace:*",
     "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
     "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
     "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
     "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
-    "@habitat-ai/typebox-adapter": "workspace:*",
     "effect": "4.0.0-beta.101",
     "typebox": "1.3.8"
   },

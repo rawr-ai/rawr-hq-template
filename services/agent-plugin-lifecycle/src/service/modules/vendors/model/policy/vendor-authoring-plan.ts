@@ -10,9 +10,6 @@ import { createAgentPluginReleaseInput } from "../../../../model/policy/release-
 import { canonicalSerializeAgentPluginReleaseInput } from "../../../../model/policy/release-input-codec";
 import type { VendorContentWorkspaceRef } from "../dto/vendor-operations";
 import {
-  VENDOR_LOCK_PROTOCOL,
-  VENDOR_PROVENANCE_PROTOCOL,
-  VENDOR_SOURCE_PROTOCOL,
   type VendorLockRecord,
   type VendorProvenanceRecord,
   type VendorRecordBinding,

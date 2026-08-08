@@ -34,13 +34,6 @@ root = "plugins/server/api/!(*.*)"
 kind = "directory"
 mode = "open"
 required = ["AGENTS.md"]
-
-[[scopes]]
-name = "api-embedded-service-module-routers"
-root = "plugins/server/api/!(*.*)/src/service/modules/*"
-kind = "directory"
-mode = "open"
-required = ["AGENTS.md"]
 allowEmpty = true
 
 [[scopes]]

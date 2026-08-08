@@ -21,12 +21,7 @@ import type {
   VendorWorkspaceObservation,
 } from "../dto/vendor-workspace";
 import { vendorPayloadLayoutIssue } from "./vendor-payload-policy";
-import {
-  policyFailure,
-  policySuccess,
-  type VendorPolicyResult,
-  vendorIssue,
-} from "./vendor-policy-result";
+import { policyFailure, policySuccess, vendorIssue } from "./vendor-policy-result";
 import { vendorPayloadDigest } from "./vendor-record-codec";
 import { vendorWorkspaceReadToken } from "./vendor-workspace-token";
 

@@ -1,5 +1,5 @@
-import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
-import { standard } from "@habitat-ai/typebox-adapter";
+import { procedureMetadata } from "@habitat-ai/sdk/service";
+import { standard } from "@habitat-ai/sdk/service/schema";
 import { oc } from "@orpc/contract";
 import {
   RepositoryCheckInputSchema,

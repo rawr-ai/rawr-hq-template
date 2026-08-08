@@ -1,5 +1,6 @@
 import type { RuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation";
 import type { SourceInventoryResource } from "@habitat-ai/resource-source-inventory";
+import { os } from "@orpc/server";
 import type { FileSystem, Path } from "effect";
 
 type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
@@ -28,3 +29,6 @@ export type Context = {
   readonly invocation: EmptyContextLane;
   readonly provided: EmptyContextLane;
 };
+
+/** Native middleware author rooted in the complete Habitat catalog context. */
+export const base = os.$context<Context>();

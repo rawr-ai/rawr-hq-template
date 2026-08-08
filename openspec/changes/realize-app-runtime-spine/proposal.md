@@ -33,8 +33,9 @@ The exact sectional source ledger is [[authority-amendment]].
 - Keep Effect lifetime authority with the app/process and native execution
   authority with the selected bridge. Public `effect/context` and `effect/wrap`
   carry the process-owned Context, resource lifetime, policy, and telemetry;
-  plain oRPC operations use `.handler`, Effect-backed operations use official
-  `@orpc/experimental-effect` `handlerGen` or `.effect`, and
+  plain oRPC operations use inline `.handler`, Effect-backed operations use
+  the official `@orpc/experimental-effect` `.effect` extension installed once
+  in the service implementation, and
   `ProcessExecutionRuntime` never executes oRPC service Effects. Reject manual
   or custom Effect runners.
 - Define harness as one platform kind with a shared lifecycle contract, then
@@ -47,11 +48,13 @@ The exact sectional source ledger is [[authority-amendment]].
   compatibility app, alias, fallback, or duplicate Nx identity.
 - Cross one bounded publication barrier for the command migration: Gate A
   accepts and lands the sole public/candidate `HabitatCommand` contract while
-  existing private `RawrCommand`/`RawrResult` readers remain untouched; Gate B
-  publishes and registry-smokes only the exact SDK/CLI pair from accepted main;
-  Gate C starts only from that receipt, moves the root Nx bootstrap to that
-  exact registry CLI, migrates surviving readers, and deletes both Rawr symbols
-  and every reader without a shim, alias, fallback, or dual public authority.
+  the remaining private `RawrCommand`/`RawrResult` source and readers remain
+  unchanged; an earlier semantic sieve deletes only condemned closures with no
+  retained capability and Gate A revives none of them. Gate B publishes and
+  registry-smokes only the exact SDK/CLI pair from accepted main; Gate C starts
+  only from that receipt, moves the root Nx bootstrap to that exact registry
+  CLI, migrates surviving readers, and deletes both Rawr symbols and every
+  predecessor reader without a shim, alias, fallback, or dual public authority.
   This is release ordering, not retained compatibility. Replace Habitat-side
   Rawr workspace discovery with explicit Habitat workspace input. Product-owned
   Rawr configuration transfers with its product owner. Agent-plugin lifecycle,
@@ -80,6 +83,10 @@ The exact sectional source ledger is [[authority-amendment]].
 
 ### New Capabilities
 
+- `blueprint-definition-composition`: Blueprint-owned authoring directories
+  organize the existing ordered schema-v1 rule surface, recursively ship every
+  referenced asset with byte parity, and reserve `include` / `contains` for a
+  separately gated future extension without expanding instance authoring.
 - `app-runtime-realization`: The constitutional app, profile, compiler,
   provisioning, process-runtime, adapter, and observation lifecycle.
 - `runtime-harness-boundary`: The generic native-host mount and stop contract

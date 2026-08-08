@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { standard } from "@habitat-ai/typebox-adapter";
+import { standard } from "@habitat-ai/sdk/service/schema";
 import type { TSchema } from "typebox";
 import { Value } from "typebox/value";
 import {

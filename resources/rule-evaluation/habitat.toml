@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/resource-rule-evaluation"
+ownerProject = "@habitat-ai/resource-rule-evaluation"
+blueprint = "resource"
+blueprintVersion = 1
+
+[roots]
+project = "resources/rule-evaluation"
+
+[selections]

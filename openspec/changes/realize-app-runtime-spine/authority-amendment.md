@@ -143,17 +143,18 @@ This exact vendor source supersedes any frozen or reviewed wording that assigns
 execution of an Effect-backed oRPC operation to `ProcessExecutionRuntime`, a
 Habitat Effect imitation, a manual `Effect.run*` call, or a custom runner.
 Native `.handler(...)` remains valid for synchronous and Promise operations.
-Effect-backed oRPC operations MUST use official `handlerGen(...)` or an admitted
-official `.effect(...)` extension. The application/process owns Effect Context
+Effect-backed Habitat service operations MUST use the official `.effect(...)`
+extension installed once in `src/service/impl.ts`; the extension delegates to
+official `handlerGen(...)`. The application/process owns Effect Context
 construction, resource lifetime, policy, telemetry, and shutdown through the
 native context and wrap hooks; the selected bridge alone owns the request
 fiber/signal/Cause/Promise boundary. `ProcessExecutionRuntime` remains available
 only for non-oRPC descriptor lanes.
 
-If `.effect(...)` is selected, its side-effect import and the native oRPC
-builders it patches MUST resolve to one physical module realm. Source identity
-proves the mechanism, not the application lifecycle, abort behavior, resource
-release, or module realm; those remain executable acceptance obligations.
+The extension and native oRPC builders it patches MUST resolve to one physical
+module realm. Source identity proves the mechanism, not the application
+lifecycle, abort behavior, resource release, or module realm; those remain
+executable acceptance obligations.
 
 ## Explicit Rejections
 

@@ -3,7 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["node"]
+    "types": ["node"],
+    "noUnusedLocals": true
   },
-  "include": ["src", "test"]
+  "include": ["src", "test"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
 }

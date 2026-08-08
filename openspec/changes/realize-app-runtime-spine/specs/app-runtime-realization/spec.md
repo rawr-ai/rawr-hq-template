@@ -236,8 +236,9 @@ observation-owned read models. Every app- or plugin-owned Effect body in a
 non-oRPC descriptor lane invoked from a native callback through Habitat runtime
 MUST execute through `ProcessExecutionRuntime`. An Effect-backed oRPC operation
 MUST instead execute through exact `@orpc/experimental-effect@2.0.0-beta.23`
-`handlerGen(...)` or an admitted official `.effect(...)` extension that
-delegates to it. `ProcessExecutionRuntime` MUST NOT execute that oRPC Effect or
+`.effect(...)`, installed once in the service implementation and delegated by
+the official extension to `handlerGen(...)`.
+`ProcessExecutionRuntime` MUST NOT execute that oRPC Effect or
 insert a second runner around it. The application/process MUST construct the
 Effect Context, resource lifetime, policy, telemetry, and shutdown behavior
 supplied through native `effect/context` and `effect/wrap`; the official bridge

@@ -3,5 +3,6 @@
   "compilerOptions": {
     "rootDir": "."
   },
-  "include": ["test/**/*.ts"]
+  "include": ["test/**/*.ts"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
 }

@@ -64,7 +64,6 @@
 
 - [[../.habitat/blueprints/service/skill|Service capability funnel]]
 - [[../.habitat/blueprints/service/README|Service structure law]]
-- [[../.habitat/blueprints/database/skill|Database capability funnel]]
 - [[../.habitat/AUTHORITY|Habitat authority]]
 
 ## Validation

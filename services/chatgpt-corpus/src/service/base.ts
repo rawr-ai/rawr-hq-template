@@ -1,4 +1,4 @@
-import type { AnalyticsClient, Logger } from "@habitat-ai/rawr-hq-sdk";
+import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import { os } from "@orpc/server";
 import type { WorkspaceStore } from "./model/ports";
 
@@ -13,11 +13,11 @@ type Config = Record<never, never>;
 type Invocation = { traceId: string };
 /** Complete host and invocation context admitted at the service boundary. */
 export type Context = {
-  deps: Deps;
-  scope: Scope;
-  config: Config;
-  invocation: Invocation;
-  provided: Record<never, never>;
+  readonly deps: Deps;
+  readonly scope: Scope;
+  readonly config: Config;
+  readonly invocation: Invocation;
+  readonly provided: Record<never, never>;
 };
 
 /** Native middleware author rooted in the complete service context. */

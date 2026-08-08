@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "require_blueprint_packet_topology",
-  "title": "Require Habitat Rule Packet Topology",
+  "title": "Require Habitat Authority Packet Topology",
   "placement": {
     "niche": "rawr",
     "blueprint": "blueprint-packet",
@@ -12,10 +12,10 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an open blueprint or repository-niche rule packet, a missing rule or baseline, or an executable source outside the canonical pattern.md and structure.toml names",
-  "why": "Every reusable blueprint rule and repository-local niche rule is one closed policy packet. Stable packet names keep source and topology authority inside Habitat's native rule forms.",
-  "remediate": "Keep rule.json and baseline.json in every blueprint or repository-niche rule packet, add only the selected pattern.md or structure.toml source, and remove unrelated files from the packet.",
-  "message": "Habitat rule packets must retain one closed canonical policy surface.",
+  "forbids": "an open legacy compatibility packet, an unqualified blueprint component group, or an executable source outside Habitat's native rule forms",
+  "why": "Versioned blueprints compose declared rules from one structural anchor and focused Markdown source assets. Remaining v2 compatibility packets retain their closed rule and baseline envelope until they migrate into that model.",
+  "remediate": "Keep component source under components/<role>/*.md and register it from blueprint.toml. Keep rule.json and baseline.json only in remaining v2 compatibility packets, alongside their selected pattern.md or structure.toml source.",
+  "message": "Habitat authority packets must retain one closed native policy surface.",
   "pathCoverage": [
     {
       "kind": "exact-path",

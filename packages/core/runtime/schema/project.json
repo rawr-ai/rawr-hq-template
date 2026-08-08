@@ -1,0 +1,34 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "runtime-schema",
+  "root": "packages/core/runtime/schema",
+  "sourceRoot": "packages/core/runtime/schema/src",
+  "projectType": "library",
+  "tags": ["type:runtime", "capability:habitat", "role:runtime-schema"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bunx tsc -p packages/core/runtime/schema/tsconfig.json --noEmit",
+          "bunx tsc -p packages/core/runtime/schema/tsconfig.test.json --noEmit"
+        ]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test packages/core/runtime/schema/test"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsdown --config packages/core/runtime/schema/tsdown.config.ts"
+      }
+    },
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}

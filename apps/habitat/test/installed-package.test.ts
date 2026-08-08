@@ -6,7 +6,6 @@ import {
   readdir,
   readFile,
   realpath,
-  rename,
   rm,
   writeFile,
 } from "node:fs/promises";
@@ -34,6 +33,36 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
+const CANDIDATE_VERSION = "0.5.6";
+const PREVIOUS_RELEASE_VERSION = "0.5.5";
+const PACKED_BLUEPRINT_DIRECTORIES = [
+  "app",
+  "package",
+  "plugin",
+  "plugin-nx",
+  "provider",
+  "resource",
+  "service",
+] as const;
+const GENERATED_SERVICE_INVENTORY = [
+  "AGENTS.md",
+  "habitat.toml",
+  "package.json",
+  "project.json",
+  "src/client.ts",
+  "src/service/base.ts",
+  "src/service/contract.ts",
+  "src/service/impl.ts",
+  "src/service/modules/greeting/AGENTS.md",
+  "src/service/modules/greeting/contract/greet.ts",
+  "src/service/modules/greeting/contract/index.ts",
+  "src/service/modules/greeting/module.ts",
+  "src/service/modules/greeting/router.ts",
+  "src/service/modules/greeting/router/greet.ts",
+  "src/service/router.ts",
+  "tsconfig.build.json",
+  "tsconfig.json",
+] as const;
 const temporaryParent = await realpath(tmpdir());
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-env-vars"], {
@@ -45,6 +74,9 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
   .filter((name) => name.length > 0);
 const sdkVersion = await readPackageVersion("packages/habitat-sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
+if (sdkVersion !== CANDIDATE_VERSION || cliVersion !== CANDIDATE_VERSION) {
+  throw new Error(`Habitat acceptance requires the exact ${CANDIDATE_VERSION} CLI/SDK pair.`);
+}
 const publishedRegistryVersion = process.env.HABITAT_ACCEPTANCE_REGISTRY_VERSION?.trim();
 if (
   publishedRegistryVersion !== undefined &&
@@ -72,7 +104,6 @@ const products: readonly PublicProduct[] = [
 ];
 
 let acceptanceRoot = "";
-let adoptionRoot = "";
 let consumerRoot = "";
 let gritSubjectPaths: readonly string[] = [];
 let localRegistry: Server | undefined;
@@ -81,11 +112,10 @@ const originalRegistryEnvironment = new Map(
     (name) => [name, process.env[name]]
   )
 );
-const installVersion = publishedRegistryVersion ?? sdkVersion;
+const installVersion = publishedRegistryVersion ?? CANDIDATE_VERSION;
 
 beforeAll(async () => {
   acceptanceRoot = await realpath(await mkdtemp(path.join(temporaryParent, FIXTURE_PREFIX)));
-  adoptionRoot = path.join(acceptanceRoot, "adoption");
   consumerRoot = path.join(acceptanceRoot, "consumer");
   await mkdir(path.join(acceptanceRoot, "packages"), { recursive: true });
   await Promise.all(
@@ -93,15 +123,12 @@ beforeAll(async () => {
       mkdir(path.join(acceptanceRoot, "runtime", directory), { recursive: true })
     )
   );
-  await mkdir(adoptionRoot, { recursive: true });
   await mkdir(consumerRoot, { recursive: true });
   await packPublicProducts();
   if (publishedRegistryVersion === undefined) {
     await startCandidateRegistry();
     await publishCandidateProducts();
   }
-  await createAdoptionConsumer();
-  await installAdoptionConsumer();
   await createConsumer();
   await installConsumer();
 }, 180_000);
@@ -119,53 +146,90 @@ afterAll(async () => {
 });
 
 describe("installed Habitat products", () => {
-  it("adopts the packed CLI and preset into a bare Bun Nx repository", async () => {
-    const cliRoot = path.join(adoptionRoot, "node_modules/@habitat-ai/cli");
+  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add", async () => {
+    const cliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
+    const directSdkRoot = path.join(consumerRoot, "node_modules/@habitat-ai/sdk");
+    const initialManifest = JSON.parse(
+      await readFile(path.join(consumerRoot, "package.json"), "utf8")
+    ) as Readonly<Record<string, unknown>>;
+    expect(JSON.stringify(initialManifest)).not.toContain("@habitat-ai/cli");
+    expect(JSON.stringify(initialManifest)).not.toContain("@habitat-ai/sdk");
     await expect(lstat(cliRoot)).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(lstat(directSdkRoot)).rejects.toMatchObject({ code: "ENOENT" });
 
-    const nx = path.join(adoptionRoot, "node_modules/.bin/nx");
-    const added = await run(nx, ["add", `@habitat-ai/cli@${installVersion}`, "--no-interactive"], {
-      cwd: adoptionRoot,
-      env: {
-        PATH: `${path.join(adoptionRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
-      },
-      timeoutMs: 120_000,
-    });
+    const nx = path.join(consumerRoot, "node_modules/.bin/nx");
+    const added = await run(
+      nx,
+      ["add", `@habitat-ai/cli@${CANDIDATE_VERSION}`, "--no-interactive"],
+      {
+        cwd: consumerRoot,
+        env: {
+          PATH: `${path.join(consumerRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`,
+        },
+        timeoutMs: 120_000,
+      }
+    );
     expect(added, added.stderr || added.stdout).toMatchObject({ exitCode: 0 });
 
     const cliStats = await lstat(cliRoot);
-    expect(cliStats.isDirectory()).toBe(true);
-    expect(cliStats.isSymbolicLink()).toBe(false);
+    expect(cliStats.isDirectory() || cliStats.isSymbolicLink()).toBe(true);
+    const resolvedCliRoot = await realpath(cliRoot);
+    expect(resolvedCliRoot.startsWith(path.join(consumerRoot, "node_modules"))).toBe(true);
+    expect(resolvedCliRoot.startsWith(workspaceRoot)).toBe(false);
+    const cliRequire = createRequire(path.join(resolvedCliRoot, "package.json"));
+    const sdkRoot = path.dirname(cliRequire.resolve("@habitat-ai/sdk/package.json"));
+    const resolvedSdkRoot = await realpath(sdkRoot);
+    expect(resolvedSdkRoot.startsWith(path.join(consumerRoot, "node_modules"))).toBe(true);
+    expect(resolvedSdkRoot.startsWith(workspaceRoot)).toBe(false);
     expect(await readFile(path.join(cliRoot, "preset.schema.json"), "utf8")).toContain(
       '"additionalProperties": true'
     );
-    expect(JSON.parse(await readFile(path.join(adoptionRoot, "nx.json"), "utf8"))).toMatchObject({
-      plugins: ["@habitat-ai/cli/nx-plugin"],
+    expect(JSON.parse(await readFile(path.join(cliRoot, "generators.json"), "utf8"))).toMatchObject(
+      {
+        generators: {
+          init: { factory: "./dist/generators/init.js" },
+          service: { factory: "./dist/generators/service.js" },
+        },
+      }
+    );
+    expect((await lstat(path.join(cliRoot, "dist/generators/init.js"))).isFile()).toBe(true);
+    expect((await lstat(path.join(cliRoot, "dist/generators/service.js"))).isFile()).toBe(true);
+    expect(JSON.parse(await readFile(path.join(consumerRoot, "nx.json"), "utf8"))).toMatchObject({
+      plugins: [
+        "@habitat-ai/cli/nx-plugin",
+        { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
+      ],
     });
     expect(
-      JSON.parse(await readFile(path.join(adoptionRoot, "package.json"), "utf8"))
+      JSON.parse(await readFile(path.join(consumerRoot, "package.json"), "utf8"))
     ).toMatchObject({
       packageManager: "bun@1.3.14",
-      scripts: { prepare: "husky" },
-      devDependencies: { husky: "9.1.7" },
+      scripts: {
+        check: "nx run-many -t check",
+        lint: "nx run habitat:lint",
+        prepare: "husky",
+      },
+      devDependencies: {
+        "@habitat-ai/cli": CANDIDATE_VERSION,
+        "@nx/eslint": "23.1.1",
+        "@nx/eslint-plugin": "23.1.1",
+        "@typescript-eslint/parser": "8.66.0",
+        eslint: "10.0.3",
+        husky: "9.1.7",
+        typescript: "5.9.3",
+      },
       trustedDependencies: ["@getgrit/cli"],
     });
     const hookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
-      cwd: adoptionRoot,
+      cwd: consumerRoot,
     });
     expect(hookConfig, hookConfig.stderr || hookConfig.stdout).toMatchObject({
       exitCode: 0,
       stdout: ".husky/_\n",
     });
 
-    const fixturePath = `${path.join(adoptionRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`;
-    const preset = await run(
-      nx,
-      ["generate", "@habitat-ai/cli:preset", "--packageManager=bun", "--no-interactive"],
-      { cwd: adoptionRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
-    );
-    expect(preset, preset.stderr || preset.stdout).toMatchObject({ exitCode: 0 });
-    expect(JSON.parse(await readFile(path.join(adoptionRoot, "nx.json"), "utf8"))).toMatchObject({
+    const fixturePath = `${path.join(consumerRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`;
+    expect(JSON.parse(await readFile(path.join(consumerRoot, "nx.json"), "utf8"))).toMatchObject({
       namedInputs: {
         production: [
           "default",
@@ -175,36 +239,11 @@ describe("installed Habitat products", () => {
         ],
       },
     });
-
-    const exampleRoot = path.join(adoptionRoot, "packages/example");
-    await mkdir(path.join(exampleRoot, "src"), { recursive: true });
-    await writeFile(path.join(exampleRoot, "src/index.ts"), "export const answer = 42;\n");
-    await writeFile(
-      path.join(exampleRoot, "project.json"),
-      `${JSON.stringify(
-        {
-          name: "adoption-example",
-          targets: {
-            build: {
-              executor: "nx:run-commands",
-              options: {
-                command: "bun build src/index.ts --outdir dist",
-                cwd: "packages/example",
-              },
-            },
-          },
-        },
-        null,
-        2
-      )}\n`
+    expect(await readFile(path.join(consumerRoot, "eslint.config.mjs"), "utf8")).toContain(
+      '"@nx/enforce-module-boundaries"'
     );
-    const built = await run(nx, ["run", "adoption-example:build", "--outputStyle=static"], {
-      cwd: adoptionRoot,
-      env: { PATH: fixturePath },
-      timeoutMs: 60_000,
-    });
-    expect(built, built.stderr || built.stdout).toMatchObject({ exitCode: 0 });
-    expect(await readFile(path.join(exampleRoot, "dist/index.js"), "utf8")).toContain("answer");
+
+    await assertInstalledServiceConsumer(nx, fixturePath);
   });
 
   it("creates the portable Bun repository before activating post-Git hooks", async () => {
@@ -252,11 +291,21 @@ describe("installed Habitat products", () => {
         check: "nx run-many -t check",
         lint: "nx run habitat:lint",
       },
-      devDependencies: { "@biomejs/biome": "2.5.3" },
+      devDependencies: {
+        "@biomejs/biome": "2.5.3",
+        "@nx/eslint": "23.1.1",
+        "@nx/eslint-plugin": "23.1.1",
+        "@typescript-eslint/parser": "8.66.0",
+        eslint: "10.0.3",
+        typescript: "5.9.3",
+      },
     });
     expect(JSON.parse(firstPackage)).not.toHaveProperty("scripts.prepare");
     expect(JSON.parse(firstNx)).toMatchObject({
-      plugins: ["@habitat-ai/cli/nx-plugin"],
+      plugins: [
+        "@habitat-ai/cli/nx-plugin",
+        { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
+      ],
     });
     expect(JSON.parse(firstProject)).toMatchObject({
       name: "habitat",
@@ -364,6 +413,7 @@ describe("installed Habitat products", () => {
       await readFile(packagePath, "utf8"),
       await readFile(path.join(root, "biome.json"), "utf8"),
       await readFile(path.join(root, "bunfig.toml"), "utf8"),
+      await readFile(path.join(root, "eslint.config.mjs"), "utf8"),
       await readFile(projectPath, "utf8"),
       await readFile(path.join(root, "tsconfig.base.json"), "utf8"),
     ].join("\n");
@@ -374,7 +424,6 @@ describe("installed Habitat products", () => {
 
   it("migrates the CLI and SDK as one native Nx package group", async () => {
     const root = path.join(acceptanceRoot, "migration-consumer");
-    const previousReleaseVersion = "0.5.4";
     await mkdir(root, { recursive: true });
     await writeFile(path.join(root, "nx.json"), "{}\n");
     await writeFile(
@@ -386,8 +435,8 @@ describe("installed Habitat products", () => {
           type: "module",
           packageManager: "bun@1.3.14",
           devDependencies: {
-            "@habitat-ai/cli": previousReleaseVersion,
-            "@habitat-ai/sdk": previousReleaseVersion,
+            "@habitat-ai/cli": PREVIOUS_RELEASE_VERSION,
+            "@habitat-ai/sdk": PREVIOUS_RELEASE_VERSION,
             nx: "23.1.1",
           },
         },
@@ -459,8 +508,19 @@ describe("installed Habitat products", () => {
       "grit-acceptance/blueprint.toml",
       "grit-acceptance/no-forbidden.md",
     ];
+    const installedCliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
+    const resolvedInstalledCliRoot = await realpath(installedCliRoot);
+    const installedCliRequire = createRequire(path.join(resolvedInstalledCliRoot, "package.json"));
+    const installedProductRoots = new Map<PublicProduct["name"], string>([
+      ["@habitat-ai/cli", installedCliRoot],
+      [
+        "@habitat-ai/sdk",
+        path.dirname(installedCliRequire.resolve("@habitat-ai/sdk/package.json")),
+      ],
+    ]);
     for (const product of products) {
-      const packageRoot = path.join(consumerRoot, "node_modules", product.name);
+      const packageRoot = installedProductRoots.get(product.name);
+      if (packageRoot === undefined) throw new Error(`Missing installed root for ${product.name}.`);
       const stats = await lstat(packageRoot);
       expect(stats.isDirectory() || stats.isSymbolicLink()).toBe(true);
       const installedRoot = await realpath(packageRoot);
@@ -482,11 +542,10 @@ describe("installed Habitat products", () => {
 
     expect((await readdir(path.join(consumerRoot, "node_modules/@habitat-ai"))).sort()).toEqual([
       "cli",
-      "sdk",
     ]);
 
     const cliManifest = JSON.parse(
-      await readFile(path.join(consumerRoot, "node_modules/@habitat-ai/cli/package.json"), "utf8")
+      await readFile(path.join(installedCliRoot, "package.json"), "utf8")
     ) as { readonly dependencies?: Readonly<Record<string, string>> };
     const habitatDependencies = Object.keys(cliManifest.dependencies ?? {})
       .filter((name) => name.startsWith("@habitat-ai/"))
@@ -494,8 +553,15 @@ describe("installed Habitat products", () => {
     expect(habitatDependencies).toEqual(["@habitat-ai/sdk"]);
     expect(cliManifest.dependencies?.["@habitat-ai/sdk"]).toBe(productVersion("@habitat-ai/sdk"));
 
+    const installedSdkRoot = installedProductRoots.get("@habitat-ai/sdk");
+    if (installedSdkRoot === undefined) throw new Error("Missing installed SDK root.");
+    const generatedServiceRoot = path.join(consumerRoot, "services/greeting");
+    const generatedServiceRequire = createRequire(path.join(generatedServiceRoot, "package.json"));
+    expect(
+      await realpath(path.dirname(generatedServiceRequire.resolve("@habitat-ai/sdk/package.json")))
+    ).toBe(await realpath(installedSdkRoot));
     const sdkManifest = JSON.parse(
-      await readFile(path.join(consumerRoot, "node_modules/@habitat-ai/sdk/package.json"), "utf8")
+      await readFile(path.join(installedSdkRoot, "package.json"), "utf8")
     ) as { readonly dependencies?: Readonly<Record<string, string>> };
     expect(sdkManifest.dependencies).toMatchObject({
       "@effect/platform-node": "4.0.0-beta.101",
@@ -506,10 +572,87 @@ describe("installed Habitat products", () => {
       effect: "4.0.0-beta.101",
     });
     expect(Object.values(sdkManifest.dependencies ?? {})).not.toContain("2.0.0-beta.20");
+    expect(
+      Object.keys(sdkManifest.dependencies ?? {}).filter((name) => name.startsWith("@habitat-ai/"))
+    ).toEqual([]);
 
-    const consumerRequire = createRequire(path.join(consumerRoot, "package.json"));
-    const installedPackPath = consumerRequire.resolve("@habitat-ai/sdk/habitat-pack.json");
-    const installedBlueprintPath = consumerRequire.resolve(
+    const consumerManifest = JSON.parse(
+      await readFile(path.join(consumerRoot, "package.json"), "utf8")
+    ) as Readonly<
+      Record<
+        "dependencies" | "devDependencies" | "optionalDependencies" | "peerDependencies",
+        Readonly<Record<string, string>> | undefined
+      >
+    >;
+    const directHabitatDependencies = (
+      ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"] as const
+    ).flatMap((bucket) =>
+      Object.entries(consumerManifest[bucket] ?? {})
+        .filter(([name]) => name.startsWith("@habitat-ai/"))
+        .map(([name, version]) => ({ bucket, name, version }))
+    );
+    expect(directHabitatDependencies).toEqual([
+      { bucket: "devDependencies", name: "@habitat-ai/cli", version: CANDIDATE_VERSION },
+    ]);
+
+    const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
+    await writeFile(
+      coldCliEntrypoint,
+      [
+        'const command = await import("@habitat-ai/cli/command");',
+        'const plugin = await import("@habitat-ai/cli/nx-plugin");',
+        'await import("@habitat-ai/cli/package.json", { with: { type: "json" } });',
+        "console.log(JSON.stringify({ command: Object.keys(command), plugin: Object.keys(plugin) }));",
+      ].join("\n"),
+      "utf8"
+    );
+    const coldCli = await run("bun", [coldCliEntrypoint], { cwd: consumerRoot });
+    await rm(coldCliEntrypoint);
+    expect(coldCli, coldCli.stderr || coldCli.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(JSON.parse(coldCli.stdout)).toEqual({
+      command: ["HabitatCommand"],
+      plugin: ["createNodes"],
+    });
+
+    const coldSdkEntrypoint = path.join(generatedServiceRoot, "cold-habitat-sdk.mjs");
+    await writeFile(
+      coldSdkEntrypoint,
+      [
+        'const sdk = await import("@habitat-ai/sdk");',
+        'const service = await import("@habitat-ai/sdk/service");',
+        'const schema = await import("@habitat-ai/sdk/service/schema");',
+        'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
+        'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
+        "console.log(JSON.stringify({ sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service) }));",
+      ].join("\n"),
+      "utf8"
+    );
+    const coldSdk = await run("bun", [coldSdkEntrypoint], { cwd: generatedServiceRoot });
+    await rm(coldSdkEntrypoint);
+    expect(coldSdk, coldSdk.stderr || coldSdk.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(JSON.parse(coldSdk.stdout)).toMatchObject({
+      sdk: ["createHabitatClientForWorkspace"],
+      schema: ["standard"],
+      service: expect.arrayContaining([
+        "createAnalyticsMiddlewareCallback",
+        "createObservabilityMiddlewareCallback",
+        "getProcedureMetadata",
+        "procedureMetadata",
+      ]),
+    });
+
+    expect(await readFile(path.join(installedCliRoot, "dist/command.js"))).toEqual(
+      await readFile(path.join(workspaceRoot, "apps/habitat/dist/command.js"))
+    );
+
+    const installedPackPath = generatedServiceRequire.resolve("@habitat-ai/sdk/habitat-pack.json");
+    const installedBlueprintPath = generatedServiceRequire.resolve(
       "@habitat-ai/sdk/blueprints/package/blueprint.toml"
     );
     expect(JSON.parse(await readFile(installedPackPath, "utf8"))).toEqual(
@@ -520,23 +663,40 @@ describe("installed Habitat products", () => {
 
     const canonicalBlueprintRoot = path.join(workspaceRoot, ".habitat/blueprints");
     const installedBlueprintRoot = path.resolve(path.dirname(installedBlueprintPath), "..");
-    const blueprintInventory = await listFiles(canonicalBlueprintRoot);
+    const installedBlueprintEntries = await readdir(installedBlueprintRoot, {
+      withFileTypes: true,
+    });
+    expect(installedBlueprintEntries.every((entry) => entry.isDirectory())).toBe(true);
+    expect(installedBlueprintEntries.map(({ name }) => name).sort()).toEqual(
+      PACKED_BLUEPRINT_DIRECTORIES
+    );
+    const blueprintInventory = (
+      await Promise.all(
+        PACKED_BLUEPRINT_DIRECTORIES.map(async (directory) => {
+          const directoryInventory = await listFiles(path.join(canonicalBlueprintRoot, directory));
+          return directoryInventory.map((relativePath) => path.posix.join(directory, relativePath));
+        })
+      )
+    )
+      .flat()
+      .sort();
+    const nestedBlueprintResidue = blueprintInventory.filter((relativePath) => {
+      const segments = relativePath.split("/");
+      const filename = segments.at(-1);
+      return (
+        filename === "baseline.json" ||
+        filename === "rule.json" ||
+        filename === "staged-rule.json" ||
+        (segments.length > 2 && filename === "structure.toml")
+      );
+    });
+    expect(nestedBlueprintResidue).toEqual([]);
     expect(await listFiles(installedBlueprintRoot)).toEqual(blueprintInventory);
     for (const relativePath of blueprintInventory) {
-      expect(await readFile(path.join(installedBlueprintRoot, relativePath))).toEqual(
+      expect(await readFile(path.join(installedBlueprintRoot, relativePath)), relativePath).toEqual(
         await readFile(path.join(canonicalBlueprintRoot, relativePath))
       );
     }
-
-    const typecheck = await run(process.execPath, [
-      path.join(workspaceRoot, "node_modules/typescript/bin/tsc"),
-      "-p",
-      path.join(consumerRoot, "tsconfig.json"),
-    ]);
-    expect(typecheck, typecheck.stderr || typecheck.stdout).toMatchObject({
-      exitCode: 0,
-      stderr: "",
-    });
 
     const oclifManifest = JSON.parse(
       await readFile(
@@ -668,12 +828,6 @@ describe("installed Habitat products", () => {
     expect(JSON.parse(bunChecked.stdout)).toEqual(JSON.parse(nodeChecked.stdout));
 
     const nx = path.join(consumerRoot, "node_modules/.bin/nx");
-    const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
-      cwd: consumerRoot,
-      timeoutMs: 120_000,
-    });
-    expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
-
     const nxPath = path.join(consumerRoot, "nx.json");
     const hooksPath = path.join(consumerRoot, ".codex/hooks.json");
     const prePushPath = path.join(consumerRoot, ".husky/pre-push");
@@ -688,10 +842,15 @@ describe("installed Habitat products", () => {
     const firstInstance = await readFile(instancePath, "utf8");
     expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
     expect(firstInstance).not.toContain("source =");
-    expect(JSON.parse(firstNx)).toMatchObject({ plugins: ["@habitat-ai/cli/nx-plugin"] });
+    expect(JSON.parse(firstNx)).toMatchObject({
+      plugins: [
+        "@habitat-ai/cli/nx-plugin",
+        { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
+      ],
+    });
     expect(JSON.parse(firstPackage)).toMatchObject({
-      scripts: { check: "node hook-check.mjs", prepare: "husky" },
-      devDependencies: { husky: "9.1.7" },
+      scripts: { check: "nx run-many -t check", prepare: "husky" },
+      devDependencies: { "@habitat-ai/cli": CANDIDATE_VERSION, husky: "9.1.7" },
       trustedDependencies: ["@getgrit/cli"],
     });
     const huskyManifest = JSON.parse(
@@ -699,6 +858,9 @@ describe("installed Habitat products", () => {
     ) as { readonly version?: string };
     expect(huskyManifest.version).toBe("9.1.7");
     expect(firstLock).toContain('"husky": ["husky@9.1.7"');
+    expect(firstLock).toContain(`"@habitat-ai/cli": "${CANDIDATE_VERSION}"`);
+    expect(firstLock).toContain(`"@habitat-ai/sdk": "${CANDIDATE_VERSION}"`);
+    expect(firstLock).not.toMatch(/@habitat-ai\/(?:cli|sdk)@(?:file|link|workspace):/u);
     expect(firstPrePush).toBe(
       "# Nested Git work must discover its own repository.\n" +
         "unset $(git rev-parse --local-env-vars)\n" +
@@ -727,50 +889,6 @@ describe("installed Habitat products", () => {
       },
     });
 
-    const inertRepeat = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
-      cwd: consumerRoot,
-      timeoutMs: 120_000,
-    });
-    expect(inertRepeat, inertRepeat.stderr || inertRepeat.stdout).toMatchObject({ exitCode: 0 });
-    expect(await readFile(nxPath, "utf8")).toBe(firstNx);
-    expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
-    expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
-    expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
-    expect(await readFile(lockPath, "utf8")).toBe(firstLock);
-    expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
-    expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
-
-    await rename(path.join(consumerRoot, ".husky/_"), path.join(consumerRoot, ".husky/_disabled"));
-    const brokeHookConfig = await run("git", ["config", "core.hooksPath", ".broken-hooks"], {
-      cwd: consumerRoot,
-    });
-    expect(brokeHookConfig, brokeHookConfig.stderr || brokeHookConfig.stdout).toMatchObject({
-      exitCode: 0,
-    });
-    const repeated = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
-      cwd: consumerRoot,
-      timeoutMs: 120_000,
-    });
-    expect(repeated, repeated.stderr || repeated.stdout).toMatchObject({ exitCode: 0 });
-    expect(await readFile(nxPath, "utf8")).toBe(firstNx);
-    expect(await readFile(hooksPath, "utf8")).toBe(firstHooks);
-    expect(await readFile(prePushPath, "utf8")).toBe(firstPrePush);
-    expect(await readFile(packagePath, "utf8")).toBe(firstPackage);
-    expect(await readFile(lockPath, "utf8")).toBe(firstLock);
-    expect(await readFile(instancePath, "utf8")).toBe(firstInstance);
-    expect(await listFiles(consumerBlueprintRoot)).toEqual(consumerBlueprintInventory);
-    expect((await lstat(path.join(consumerRoot, ".husky/_/pre-push"))).isFile()).toBe(true);
-    const repairedHookConfig = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
-      cwd: consumerRoot,
-    });
-    expect(
-      repairedHookConfig,
-      repairedHookConfig.stderr || repairedHookConfig.stdout
-    ).toMatchObject({
-      exitCode: 0,
-      stdout: ".husky/_\n",
-    });
-
     const prePush = await run("git", ["hook", "run", "pre-push", "--", "origin"], {
       cwd: consumerRoot,
       env: { GIT_DIR: path.join(consumerRoot, ".git") },
@@ -785,23 +903,6 @@ describe("installed Habitat products", () => {
       cwd: path.join(consumerRoot, ".hook-check-repository"),
     });
     expect(nestedIdentity.stdout).toBe("nested-fixture\n");
-
-    const customPrePush = 'printf "%s\\n" "consumer-hook" > .consumer-hook-ran\n';
-    await writeFile(prePushPath, customPrePush);
-    const preserved = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
-      cwd: consumerRoot,
-      timeoutMs: 120_000,
-    });
-    expect(preserved, preserved.stderr || preserved.stdout).toMatchObject({ exitCode: 0 });
-    expect(await readFile(prePushPath, "utf8")).toBe(customPrePush);
-    const customHook = await run("git", ["hook", "run", "pre-push", "--", "origin"], {
-      cwd: consumerRoot,
-      timeoutMs: 60_000,
-    });
-    expect(customHook, customHook.stderr || customHook.stdout).toMatchObject({ exitCode: 0 });
-    expect(await readFile(path.join(consumerRoot, ".consumer-hook-ran"), "utf8")).toBe(
-      "consumer-hook\n"
-    );
 
     const projected = await run(nx, ["show", "project", "@fixture/package", "--json"], {
       cwd: consumerRoot,
@@ -865,6 +966,205 @@ function publicProduct(name: PublicProduct["name"]): PublicProduct {
   const product = products.find((candidate) => candidate.name === name);
   if (product === undefined) throw new Error(`Unknown public Habitat product: ${name}`);
   return product;
+}
+
+async function assertInstalledServiceConsumer(nx: string, fixturePath: string): Promise<void> {
+  const generatorArguments = [
+    "generate",
+    "@habitat-ai/cli:service",
+    "--name=@fixture/greeting-service",
+    "--directory=services/greeting",
+    "--module=greeting",
+    "--operation=greet",
+    "--no-interactive",
+  ] as const;
+  const generated = await run(nx, generatorArguments, {
+    cwd: consumerRoot,
+    env: { PATH: fixturePath },
+    timeoutMs: 120_000,
+  });
+  expect(generated, generated.stderr || generated.stdout).toMatchObject({ exitCode: 0 });
+
+  const serviceRoot = path.join(consumerRoot, "services/greeting");
+  expect(await listGeneratedServiceFiles(serviceRoot)).toEqual(GENERATED_SERVICE_INVENTORY);
+  const generatedBeforeRefusal = await Promise.all(
+    GENERATED_SERVICE_INVENTORY.map((relativePath) =>
+      readFile(path.join(serviceRoot, relativePath), "utf8")
+    )
+  );
+  const servicePackage = JSON.parse(
+    await readFile(path.join(serviceRoot, "package.json"), "utf8")
+  ) as { readonly dependencies?: Readonly<Record<string, string>> };
+  expect(servicePackage.dependencies).toEqual({
+    "@habitat-ai/sdk": installVersion,
+    "@orpc/contract": "2.0.0-beta.23",
+    "@orpc/server": "2.0.0-beta.23",
+    typebox: "1.3.8",
+  });
+
+  const generatedSources = (
+    await Promise.all(
+      GENERATED_SERVICE_INVENTORY.filter((relativePath) => relativePath.endsWith(".ts")).map(
+        (relativePath) => readFile(path.join(serviceRoot, relativePath), "utf8")
+      )
+    )
+  ).join("\n");
+  expect(generatedSources).toContain(".greet.handler(");
+  expect(generatedSources).not.toContain("@orpc/experimental-effect");
+  expect(generatedSources).not.toContain('from "effect"');
+  expect(generatedSources).not.toContain("Effect.run");
+  expect(generatedSources).not.toContain("ProcessExecutionRuntime");
+
+  const callerRoot = path.join(consumerRoot, "apps/caller");
+  const callerSourcePath = path.join(callerRoot, "src/index.ts");
+  const publicClientImport =
+    'import { createClient } from "@fixture/greeting-service/client";\n\nvoid createClient;\n';
+  await mkdir(path.dirname(callerSourcePath), { recursive: true });
+  await writeFile(
+    path.join(callerRoot, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "@fixture/caller",
+        private: true,
+        dependencies: { "@fixture/greeting-service": "workspace:*" },
+      },
+      null,
+      2
+    )}\n`
+  );
+  await writeFile(
+    path.join(callerRoot, "project.json"),
+    `${JSON.stringify(
+      {
+        name: "@fixture/caller",
+        root: "apps/caller",
+        sourceRoot: "apps/caller/src",
+        tags: ["npm:private", "type:app", "role:consumer"],
+        targets: { check: { executor: "nx:noop" } },
+      },
+      null,
+      2
+    )}\n`
+  );
+  await writeFile(callerSourcePath, publicClientImport);
+
+  const linkedCaller = await run("bun", ["install", "--ignore-scripts"], {
+    cwd: consumerRoot,
+    timeoutMs: 120_000,
+  });
+  expect(linkedCaller, linkedCaller.stderr || linkedCaller.stdout).toMatchObject({ exitCode: 0 });
+
+  const refused = await run(nx, generatorArguments, {
+    cwd: consumerRoot,
+    env: { PATH: fixturePath },
+    timeoutMs: 120_000,
+  });
+  expect(refused.exitCode).not.toBe(0);
+  expect(await listGeneratedServiceFiles(serviceRoot)).toEqual(GENERATED_SERVICE_INVENTORY);
+  expect(
+    await Promise.all(
+      GENERATED_SERVICE_INVENTORY.map((relativePath) =>
+        readFile(path.join(serviceRoot, relativePath), "utf8")
+      )
+    )
+  ).toEqual(generatedBeforeRefusal);
+
+  const projected = await run(nx, ["show", "project", "@fixture/greeting-service", "--json"], {
+    cwd: consumerRoot,
+    env: { PATH: fixturePath },
+    timeoutMs: 60_000,
+  });
+  expect(projected, projected.stderr || projected.stdout).toMatchObject({ exitCode: 0 });
+  const project = JSON.parse(projected.stdout) as {
+    readonly targets?: Readonly<Record<string, unknown>>;
+  };
+  expect(project.targets).toMatchObject({
+    build: expect.any(Object),
+    check: expect.any(Object),
+    "check:boundaries": expect.any(Object),
+    "check:policy": expect.any(Object),
+    typecheck: expect.any(Object),
+  });
+
+  const typechecked = await run(
+    nx,
+    ["run", "@fixture/greeting-service:typecheck", "--outputStyle=static"],
+    { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+  );
+  expect(typechecked, `${typechecked.stdout}\n${typechecked.stderr}`).toMatchObject({
+    exitCode: 0,
+  });
+
+  const staleOutput = path.join(serviceRoot, "dist/stale.js");
+  await mkdir(path.dirname(staleOutput), { recursive: true });
+  await writeFile(staleOutput, "throw new Error('stale');\n");
+  for (const target of ["build", "check:policy", "check"]) {
+    const checked = await run(
+      nx,
+      ["run", `@fixture/greeting-service:${target}`, "--outputStyle=static", "--skipNxCache"],
+      { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+    );
+    expect(checked, `${target}\n${checked.stdout}\n${checked.stderr}`).toMatchObject({
+      exitCode: 0,
+    });
+  }
+  await expect(lstat(staleOutput)).rejects.toMatchObject({ code: "ENOENT" });
+
+  const coldClient = path.join(callerRoot, "cold-service-client.mjs");
+  await writeFile(
+    coldClient,
+    [
+      'import { createClient } from "@fixture/greeting-service/client";',
+      "const client = createClient({ config: {}, deps: { greeting: {} }, scope: {} });",
+      "const native = await client.greeting.greet({});",
+      "console.log(JSON.stringify({ native }));",
+      "",
+    ].join("\n")
+  );
+  const invoked = await run("bun", [coldClient], { cwd: callerRoot, timeoutMs: 60_000 });
+  expect(invoked, invoked.stderr || invoked.stdout).toMatchObject({
+    exitCode: 0,
+    stderr: "",
+    stdout: '{"native":{}}\n',
+  });
+
+  const publicCheck = await run(
+    nx,
+    ["run", "@fixture/caller:check", "--outputStyle=static", "--skipNxCache"],
+    { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+  );
+  expect(publicCheck, `${publicCheck.stdout}\n${publicCheck.stderr}`).toMatchObject({
+    exitCode: 0,
+  });
+
+  await writeFile(callerSourcePath, 'import "../../../services/greeting/src/service/router.ts";\n');
+  const rejectedPrivateImport = await run(
+    nx,
+    ["run", "@fixture/caller:check", "--outputStyle=static", "--skipNxCache"],
+    { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+  );
+  expect(rejectedPrivateImport.exitCode).not.toBe(0);
+  expect(`${rejectedPrivateImport.stdout}\n${rejectedPrivateImport.stderr}`).toContain(
+    "Projects cannot be imported by a relative or absolute path"
+  );
+  await writeFile(callerSourcePath, publicClientImport);
+}
+
+async function listGeneratedServiceFiles(
+  root: string,
+  relativeRoot = ""
+): Promise<readonly string[]> {
+  const entries = await readdir(path.join(root, relativeRoot), { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      if (relativeRoot === "" && entry.name === "node_modules") return [];
+      const relativePath = path.posix.join(relativeRoot, entry.name);
+      if (entry.isDirectory()) return listGeneratedServiceFiles(root, relativePath);
+      if (entry.isFile()) return [relativePath];
+      throw new Error(`Unexpected generated service entry: ${relativePath}`);
+    })
+  );
+  return files.flat().sort();
 }
 
 async function listFiles(root: string, relativeRoot = ""): Promise<readonly string[]> {
@@ -996,51 +1296,8 @@ async function publishCandidateProducts(): Promise<void> {
   }
 }
 
-async function createAdoptionConsumer(): Promise<void> {
-  const files: Readonly<Record<string, string>> = {
-    "nx.json": "{}\n",
-    "package.json": `${JSON.stringify(
-      {
-        name: "habitat-adoption-consumer",
-        private: true,
-        type: "module",
-        packageManager: "bun@1.3.14",
-        dependencies: { "@habitat-ai/sdk": installVersion },
-        devDependencies: { nx: "23.1.1" },
-      },
-      null,
-      2
-    )}\n`,
-  };
-
-  for (const [relativePath, contents] of Object.entries(files)) {
-    const absolutePath = path.join(adoptionRoot, relativePath);
-    await mkdir(path.dirname(absolutePath), { recursive: true });
-    await writeFile(absolutePath, contents);
-  }
-
-  const initialized = await run("git", ["init", "--quiet"], { cwd: adoptionRoot });
-  if (initialized.exitCode !== 0) {
-    throw new Error(`Could not initialize adoption fixture: ${initialized.stderr}`);
-  }
-}
-
-async function installAdoptionConsumer(): Promise<void> {
-  const installed = await run("bun", ["install", "--ignore-scripts"], {
-    cwd: adoptionRoot,
-    timeoutMs: 180_000,
-  });
-  if (installed.exitCode !== 0) {
-    throw new Error(`Could not install adoption fixture: ${installed.stderr || installed.stdout}`);
-  }
-}
-
 async function createConsumer(): Promise<void> {
-  const dependencies = Object.fromEntries([
-    ...products.map((product) => [product.name, installVersion]),
-    ["nx", "23.1.1"],
-    ["typebox", "1.3.8"],
-  ]);
+  const devDependencies = { nx: "23.1.1" };
   const subjectCount = process.platform === "win32" ? 64 : 1_815;
   const subjectIds = Array.from(
     { length: subjectCount },
@@ -1053,10 +1310,10 @@ async function createConsumer(): Promise<void> {
     path.join(consumerRoot, relativePath)
   );
   const files: Readonly<Record<string, string>> = {
+    ".gitignore": ["node_modules/", "dist/", ".nx/", ".habitat/cache/", ""].join("\n"),
     ".habitat/blueprints/grit-acceptance/blueprint.toml": gritAcceptanceBlueprintToml(),
     ".habitat/blueprints/grit-acceptance/no-forbidden.md":
       "# No forbidden calls\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
-    "consumer.ts": consumerSource(),
     "hook-check.mjs": `import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 
@@ -1072,9 +1329,9 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
         private: true,
         type: "module",
         packageManager: "bun@1.3.14",
-        workspaces: ["packages/*"],
-        scripts: { check: "node hook-check.mjs" },
-        dependencies,
+        workspaces: ["apps/*", "packages/*", "services/*", "tools/*"],
+        scripts: { check: "nx run-many -t check" },
+        devDependencies,
       },
       null,
       2
@@ -1123,27 +1380,23 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
-    "packages/producer-sdk/project.json": `${JSON.stringify(
-      { name: "@habitat-ai/sdk", projectType: "library", targets: {} },
-      null,
-      2
-    )}\n`,
-    "tsconfig.json": `${JSON.stringify(
+    "tools/hook-check/project.json": `${JSON.stringify(
       {
-        compilerOptions: {
-          lib: ["ES2022", "ESNext.Disposable", "DOM", "DOM.Iterable"],
-          module: "NodeNext",
-          moduleResolution: "NodeNext",
-          noEmit: true,
-          skipLibCheck: false,
-          strict: true,
-          target: "ES2022",
+        name: "@fixture/hook-check",
+        root: "tools/hook-check",
+        tags: ["type:tool", "role:acceptance-fixture"],
+        targets: {
+          check: {
+            executor: "nx:run-commands",
+            cache: false,
+            options: { command: "node hook-check.mjs" },
+          },
         },
-        include: ["consumer.ts"],
       },
       null,
       2
     )}\n`,
+    "tools/hook-check/src/index.ts": "export const customRoot = true;\n",
   };
 
   for (const [relativePath, contents] of Object.entries(files)) {
@@ -1180,7 +1433,7 @@ async function installConsumer(): Promise<void> {
     timeoutMs: 180_000,
   });
   if (installed.exitCode !== 0) {
-    throw new Error(`Could not install Habitat products: ${installed.stderr || installed.stdout}`);
+    throw new Error(`Could not install bare Nx consumer: ${installed.stderr || installed.stdout}`);
   }
 }
 
@@ -1266,25 +1519,6 @@ async function run(
       )
     );
   });
-}
-
-function consumerSource(): string {
-  return `import {
-  createHabitatClientForWorkspace,
-  standard,
-  type HabitatClient,
-  type TypeBoxStandardSchema,
-} from "@habitat-ai/sdk";
-import { Type } from "typebox";
-
-const Ready = Type.Object({ ready: Type.Boolean() });
-const readySchema: TypeBoxStandardSchema<typeof Ready> = standard(Ready);
-const createClient: (workspaceRoot: string) => Promise<HabitatClient> =
-  createHabitatClientForWorkspace;
-
-void readySchema;
-void createClient;
-`;
 }
 
 function instanceToml(): string {

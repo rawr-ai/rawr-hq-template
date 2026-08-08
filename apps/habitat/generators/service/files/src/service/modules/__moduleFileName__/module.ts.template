@@ -1,0 +1,6 @@
+import { service } from "../../impl.js";
+
+/** Projects the module's named dependency into the direct handler vocabulary. */
+export const module = service.<%= moduleName %>.use(({ context, next }) =>
+  next({ context: { <%= moduleName %>: context.deps.<%= moduleName %> } })
+);

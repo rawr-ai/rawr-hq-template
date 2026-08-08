@@ -1,0 +1,11 @@
+{
+  "extends": "<%= tsconfigBasePath %>",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "noUnusedLocals": true
+  },
+  "include": [
+    "src"
+  ]
+}

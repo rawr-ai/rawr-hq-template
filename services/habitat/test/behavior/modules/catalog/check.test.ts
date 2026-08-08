@@ -969,7 +969,7 @@ forbidden = ["forbidden.txt"]
     }
   });
 
-  test("enforces the unselected service blueprint as a closed file-kind topology", async () => {
+  test("enforces the selected service blueprint as a closed file-kind topology", async () => {
     const structureContents = await Bun.file(
       new URL("../../../../../../.habitat/blueprints/service/structure.toml", import.meta.url)
     ).text();
@@ -992,8 +992,18 @@ forbidden = ["forbidden.txt"]
       {
         file: "packages/example/src/service/db/state.ts",
         code: "unexpected-child",
-        path: "packages/example/src/service/db",
+        path: "packages/example/src/service/db/state.ts",
       },
+      ...["generated.ts", "helpers.ts", "index.ts"].map((name) => ({
+        file: `packages/example/src/service/db/schema/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/src/service/db/schema/${name}`,
+      })),
+      ...["helpers.ts", "index.ts", "provider.ts"].map((name) => ({
+        file: `packages/example/src/service/db/stores/${name}`,
+        code: "forbidden-child" as const,
+        path: `packages/example/src/service/db/stores/${name}`,
+      })),
       {
         file: "packages/example/src/service/middleware/index.ts",
         code: "forbidden-child",
@@ -1039,6 +1049,7 @@ forbidden = ["forbidden.txt"]
       serviceStructureFixture(structureContents, {
         extraFiles: {
           ...Object.fromEntries(violations.map(({ file }) => [file, "export {};\n"])),
+          "packages/example/test/mechanics/client/client.test.ts": "export {};\n",
           "packages/example/src/service/modules/greeting/middleware/index.ts": "export {};\n",
           "packages/example/src/service/modules/greeting/model/dto/index.ts": "export {};\n",
           "packages/example/src/service/model/policy/index.ts": "export {};\n",
@@ -2352,6 +2363,8 @@ function serviceStructureFixture(
     "packages/example/src/client.ts": "export {};\n",
     "packages/example/src/service/base.ts": "export {};\n",
     "packages/example/src/service/contract.ts": "export {};\n",
+    "packages/example/src/service/db/migrations/0001_create_item.sql": "select 1;\n",
+    "packages/example/src/service/db/stores/items.ts": "export {};\n",
     "packages/example/src/service/impl.ts": "export {};\n",
     "packages/example/src/service/modules/greeting/AGENTS.md": "# Greeting\n",
     "packages/example/src/service/modules/greeting/contract/greet.ts": "export {};\n",
@@ -2360,6 +2373,8 @@ function serviceStructureFixture(
     "packages/example/src/service/modules/greeting/router.ts": "export {};\n",
     "packages/example/src/service/modules/greeting/router/greet.ts": "export {};\n",
     "packages/example/src/service/router.ts": "export {};\n",
+    "packages/example/test/mechanics/db/database.test.ts": "export {};\n",
+    "packages/example/test/support/db/database.ts": "export {};\n",
     "packages/example/tsconfig.json": "{}\n",
     ...options.extraFiles,
   };

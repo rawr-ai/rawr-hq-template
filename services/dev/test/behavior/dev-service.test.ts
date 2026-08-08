@@ -1,12 +1,4 @@
-import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
-import {
-  createEmbeddedPlaceholderAnalyticsAdapter,
-  type EmbeddedPlaceholderAnalyticsEntry,
-} from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
-import {
-  createEmbeddedPlaceholderLoggerAdapter,
-  type EmbeddedPlaceholderLogEntry,
-} from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
+import { getProcedureMetadata } from "@habitat-ai/sdk/service";
 import { Value } from "typebox/value";
 import { describe, expect, it } from "vitest";
 import { contract, createClient } from "../../src/client";
@@ -21,7 +13,14 @@ import {
   StackDrainResultSchema,
 } from "../../src/service/modules/stack/model/dto/stack-operations.dto";
 import { router } from "../../src/service/router";
-import { createClientOptions, createFakeResources } from "../support/service/helpers";
+import {
+  createClientOptions,
+  createFakeResources,
+  createTestAnalytics,
+  createTestLogger,
+  type TestAnalyticsEntry,
+  type TestLogEntry,
+} from "../support/service/helpers";
 
 const cleanStatus = "## agent/devops...origin/agent/devops\n";
 const worktrees = [
@@ -132,8 +131,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("feeds recursive scratch observation into every active policy mode", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources } = createFakeResources({
       dirs: {
         "/repo/rawr/docs/projects": [
@@ -148,8 +147,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -246,8 +245,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports one error lifecycle without replacing scratch observation failures", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const failure = new Error("scratch observation failed");
     const { resources } = createFakeResources();
     resources.fs.readDir = async () => {
@@ -256,8 +255,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -289,8 +288,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports one success lifecycle for a healthy stack diagnosis", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
@@ -301,8 +300,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -358,8 +357,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports unreadable Git status as a successful stack diagnosis needing attention", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         {
@@ -376,8 +375,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -432,8 +431,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("plans stack drain by default and does not run mutating Graphite commands", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
@@ -443,8 +442,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -500,8 +499,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("blocks applied stack drain when initial Git status is unreadable", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         {
@@ -517,8 +516,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -631,8 +630,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("stops applied stack drain when closing Graphite observation fails", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         { command: "git", args: ["status", "--short", "--branch"], stdout: cleanStatus },
@@ -669,8 +668,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -772,8 +771,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports one error lifecycle without replacing stack admission failures", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const failure = new Error("stack scratch observation failed");
     const { resources, calls } = createFakeResources();
     resources.fs.readDir = async () => {
@@ -782,8 +781,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -893,8 +892,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports applied repo sync command failures through execution status", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         { command: "git", args: ["config", "--get", "rawr.upstreamRef"], exitCode: 1 },
@@ -924,8 +923,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -974,8 +973,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports one error lifecycle without replacing repo admission failures", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const failure = new Error("repo admission failed");
     const { resources, calls } = createFakeResources();
     resources.fs.readDir = async () => {
@@ -984,8 +983,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -1021,8 +1020,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("uses strict basename prefix for worktree cleanup and never plans prune", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const { resources, calls } = createFakeResources({
       commands: [
         { command: "pwd", args: ["-P"], stdout: "/repo/rawr\n" },
@@ -1037,8 +1036,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 
@@ -1126,8 +1125,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
   });
 
   it("reports one error lifecycle without replacing worktree admission failures", async () => {
-    const analyticsEntries: EmbeddedPlaceholderAnalyticsEntry[] = [];
-    const logEntries: EmbeddedPlaceholderLogEntry[] = [];
+    const analyticsEntries: TestAnalyticsEntry[] = [];
+    const logEntries: TestLogEntry[] = [];
     const failure = new Error("worktree admission failed");
     const { resources, calls } = createFakeResources();
     resources.fs.readDir = async () => {
@@ -1136,8 +1135,8 @@ describe("@habitat-ai/rawr-dev service behavior", () => {
     const client = createClient(
       createClientOptions({
         resources,
-        analytics: createEmbeddedPlaceholderAnalyticsAdapter({ sink: analyticsEntries }),
-        logger: createEmbeddedPlaceholderLoggerAdapter({ sink: logEntries }),
+        analytics: createTestAnalytics({ sink: analyticsEntries }),
+        logger: createTestLogger({ sink: logEntries }),
       })
     );
 

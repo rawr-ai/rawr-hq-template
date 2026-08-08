@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 214,
+      "pattern": "^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*$",
+      "description": "Exact Nx project, package, Habitat instance, and owner identity."
+    },
+    "directory": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Full workspace-relative root for the service package."
+    },
+    "module": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Kebab-case semantic module name."
+    },
+    "operation": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Kebab-case semantic operation name."
+    }
+  },
+  "required": ["name", "directory", "module", "operation"],
+  "additionalProperties": false
+}

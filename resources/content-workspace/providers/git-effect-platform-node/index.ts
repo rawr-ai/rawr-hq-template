@@ -18,7 +18,6 @@ import type {
   GitObjectFormat,
   GitRefObservation,
   GitRemoteSelection,
-  GitStagedBlobObservation,
   GitStagedIndexBinding,
   GitStagedIndexEntry,
   GitStagedIndexObservation,
@@ -3612,11 +3611,6 @@ function gitBlobId(bytes: Uint8Array, objectFormat: GitObjectFormat): string {
 
 function fileMode(mode: ContentFileMode): number {
   return mode === "100755" ? 0o755 : 0o644;
-}
-
-function parseContentFileMode(input: string): ContentFileMode {
-  if (input === "100644" || input === "100755") return input;
-  throw new Error(`Unsupported content file mode: ${input}`);
 }
 
 function receipt(

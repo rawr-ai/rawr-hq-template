@@ -7,7 +7,7 @@ on:
       - .github/workflows/publish-habitat.yml
       - apps/habitat/**
       - packages/habitat-sdk/**
-      - packages/typebox-adapter/**
+      - packages/core/runtime/schema/**
       - resources/rule-evaluation/**
       - resources/source-inventory/**
       - services/habitat/**

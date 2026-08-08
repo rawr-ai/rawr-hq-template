@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "noUnusedLocals": true
   },
-  "include": ["src", "test"]
+  "include": ["src", "test"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
 }
