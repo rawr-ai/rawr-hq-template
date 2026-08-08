@@ -46,3 +46,14 @@ bunx nx migrate --run-migrations
 The first command updates the fixed CLI/SDK pair and writes any applicable
 Habitat migrations. The final command applies those package-owned repository
 changes; no consumer copies or independently maintains the preset wiring.
+
+Habitat `0.5.3` used Nx `23.1.0`, whose provenance reader predates npm 12. When
+that exact historical pair is upgraded under npm 12, scope Nx's documented
+compatibility flag to the migration-generation command only:
+
+```sh
+NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
+  bunx nx migrate @habitat-ai/cli@0.5.8
+```
+
+Nx `23.1.1` and later verify provenance normally.

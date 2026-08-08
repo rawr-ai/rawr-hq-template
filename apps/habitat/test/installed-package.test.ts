@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.7";
+const CANDIDATE_VERSION = "0.5.8";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -497,7 +497,12 @@ describe("installed Habitat products", () => {
         cwd: root,
         env: {
           NX_MIGRATE_CLI_VERSION: "23.1.1",
-          ...(publishedRegistryVersion === undefined ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
+          // Nx 23.1.0 cannot parse npm 12's one-item provenance response. The
+          // 23.1.1 row below verifies the same target artifact without this
+          // vendor-documented compatibility flag.
+          ...(publishedRegistryVersion === undefined || previousNxVersion === "23.1.0"
+            ? { NX_SKIP_PROVENANCE_CHECK: "true" }
+            : {}),
         },
         timeoutMs: 120_000,
       }
