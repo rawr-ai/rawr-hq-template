@@ -69,6 +69,7 @@ required = [
   "router.ts",
 ]
 allowed = [
+  "db",
   "middleware",
   "model",
 ]
@@ -79,6 +80,92 @@ rootRole = "project"
 relativePath = "src/service/@(base.ts|contract.ts|impl.ts|router.ts)"
 kind = "file"
 mode = "closed"
+
+[[scopes]]
+name = "service-database"
+rootRole = "project"
+relativePath = "src/service/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "migrations",
+  "stores",
+]
+allowed = [
+  "schema",
+]
+
+[[scopes]]
+name = "service-database-migrations"
+rootRole = "project"
+relativePath = "src/service/db/migrations"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.sql",
+]
+allowed = [
+]
+
+[[scopes]]
+name = "service-database-migration-files"
+rootRole = "project"
+relativePath = "src/service/db/migrations/*.sql"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-database-schema"
+rootRole = "project"
+relativePath = "src/service/db/schema"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+allowed = []
+forbidden = [
+  "generated.ts",
+  "helpers.ts",
+  "index.ts",
+]
+
+[[scopes]]
+name = "service-database-schema-files"
+rootRole = "project"
+relativePath = "src/service/db/schema/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-database-stores"
+rootRole = "project"
+relativePath = "src/service/db/stores"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+allowed = []
+forbidden = [
+  "helpers.ts",
+  "index.ts",
+  "provider.ts",
+]
+
+[[scopes]]
+name = "service-database-store-files"
+rootRole = "project"
+relativePath = "src/service/db/stores/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "service-root-middleware"

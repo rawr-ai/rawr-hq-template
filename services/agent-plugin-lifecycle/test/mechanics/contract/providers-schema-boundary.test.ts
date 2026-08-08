@@ -1,5 +1,5 @@
-import { getProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
-import { standard } from "@habitat-ai/typebox-adapter";
+import { getProcedureMetadata } from "@habitat-ai/sdk/service";
+import { standard } from "@habitat-ai/sdk/service/schema";
 import type { InferRouterContractInputs, InferRouterContractOutputs } from "@orpc/contract";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";

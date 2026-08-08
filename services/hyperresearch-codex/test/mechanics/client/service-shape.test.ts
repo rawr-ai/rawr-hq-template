@@ -21,6 +21,6 @@ describe("hyperresearch-codex service shell", () => {
   });
 
   it("keeps package mechanics behind the public service boundary", () => {
-    expect(Object.keys(publicApi).sort()).toEqual(["createClient"]);
+    expect(Object.keys(publicApi).sort()).toEqual(["contract", "createClient"]);
   });
 });

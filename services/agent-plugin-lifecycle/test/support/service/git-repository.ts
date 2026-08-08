@@ -63,17 +63,7 @@ export async function createGeneratedGitRepository(
   const repositoryIdentity = must(parseRepositoryIdentity("git:fixture-agent-plugins"));
   const releaseInputPath = must(parseReleaseRelativePath(".rawr/release-input.json"));
   const pluginRoot = must(parseReleaseRelativePath("plugins/agent"));
-  const payloadRelativePath = must(parseReleaseRelativePath("skills/example/SKILL.md"));
   const payloadBytes = generatedPayloadBytes(pluginName);
-  const payload = must(
-    createAgentPluginPayload([
-      {
-        path: payloadRelativePath,
-        mode: 0o644,
-        bytes: payloadBytes,
-      },
-    ])
-  );
   const releaseInput = must(
     createAgentPluginReleaseInput({
       schemaVersion: 1,

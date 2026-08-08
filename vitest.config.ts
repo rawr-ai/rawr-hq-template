@@ -77,6 +77,11 @@ export default defineConfig({
       },
       {
         extends: true,
+        root: r("packages/habitat-sdk"),
+        test: { name: "habitat-sdk", environment: "node", include: [...includes] },
+      },
+      {
+        extends: true,
         root: r("packages/hq-sdk"),
         test: { name: "hq-sdk", environment: "node", include: [...includes] },
       },
@@ -104,11 +109,6 @@ export default defineConfig({
         extends: true,
         root: r("services/agent-plugin-lifecycle"),
         test: { name: "agent-plugin-lifecycle", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/example-todo"),
-        test: { name: "example-todo", environment: "node", include: [...includes] },
       },
       {
         extends: true,

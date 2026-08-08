@@ -25,7 +25,6 @@
         "services/*/AGENTS.md",
         "services/!(*.*)/src/service/modules/*/AGENTS.md",
         "plugins/server/api/*/AGENTS.md",
-        "plugins/server/api/!(*.*)/src/service/modules/*/AGENTS.md",
         "plugins/async/workflows/*/AGENTS.md",
         "plugins/async/schedules/*/AGENTS.md",
         "plugins/cli/commands/*/AGENTS.md",

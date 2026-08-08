@@ -1,0 +1,8 @@
+import { oc } from "@orpc/contract";
+import { contract as <%= moduleLocalName %> } from "./modules/<%= moduleFileName %>/contract/index.js";
+
+/** Public service contract composed from its semantic modules. */
+export const contract = oc.router({ <%= moduleName %>: <%= moduleLocalName %> });
+
+/** Caller contract type exposed through the public client face. */
+export type Contract = typeof contract;

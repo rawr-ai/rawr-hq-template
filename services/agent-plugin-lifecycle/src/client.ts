@@ -1,4 +1,8 @@
-import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
+import {
+  createRouterClient,
+  type InferRouterInitialContext,
+  type RouterClient,
+} from "@orpc/server";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 
@@ -36,20 +40,7 @@ type Invocation = RouterInitialContext["invocation"];
 /** Host-supplied boundary required to construct one local lifecycle client. */
 export type CreateClientOptions = Pick<RouterInitialContext, "deps" | "scope" | "config">;
 
-function createWireClient({ deps, scope, config }: CreateClientOptions) {
-  return createRouterClient(router, {
-    context: ({ invocation }: { invocation: Invocation }) =>
-      ({
-        deps,
-        scope,
-        config,
-        invocation: { ...invocation },
-        provided: {},
-      }) satisfies RouterInitialContext,
-  });
-}
-
-type WireClient = ReturnType<typeof createWireClient>;
+type WireClient = RouterClient<typeof router, { invocation: Invocation }>;
 type Procedure = (...args: never[]) => Promise<unknown>;
 type Tail<T extends readonly unknown[]> = T extends readonly [unknown, ...infer Rest]
   ? Rest
@@ -95,8 +86,17 @@ export type Client = Omit<WireClient, "releases" | "governance"> &
 /** Constructs the sole public local client over the private lifecycle router. */
 export function createClient(options: CreateClientOptions): Client;
 /** Implements local client construction through the service's native in-process router client. */
-export function createClient(options: CreateClientOptions): Client | WireClient {
-  return createWireClient(options);
+export function createClient({ deps, scope, config }: CreateClientOptions): Client | WireClient {
+  return createRouterClient(router, {
+    context: ({ invocation }: { invocation: Invocation }) =>
+      ({
+        deps,
+        scope,
+        config,
+        invocation: { ...invocation },
+        provided: {},
+      }) satisfies RouterInitialContext,
+  });
 }
 
 /** Admits one caller-supplied current-main record operation request. */

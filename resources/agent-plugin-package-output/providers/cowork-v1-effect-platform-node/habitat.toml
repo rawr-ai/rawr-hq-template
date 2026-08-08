@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "provider-agent-plugin-package-output-cowork-v1-effect-platform-node"
+ownerProject = "provider-agent-plugin-package-output-cowork-v1-effect-platform-node"
+blueprint = "provider"
+blueprintVersion = 1
+
+[roots]
+project = "resources/agent-plugin-package-output/providers/cowork-v1-effect-platform-node"
+
+[selections]

@@ -15,6 +15,11 @@
       "factory": "./dist/generators/remove-hook.js",
       "schema": "./generators.schema.json",
       "description": "Remove Habitat's named Codex hook contribution."
+    },
+    "service": {
+      "factory": "./dist/generators/service.js",
+      "schema": "./generators/service/schema.json",
+      "description": "Construct one closed Habitat service package."
     }
   }
 }

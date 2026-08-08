@@ -5,13 +5,9 @@ import { NodeServices } from "@effect/platform-node";
 import { makeNodeGritRuleEvaluationResource } from "@habitat-ai/resource-rule-evaluation/providers/grit-effect-platform-node";
 import { makeNodeGitSourceInventoryResource } from "@habitat-ai/resource-source-inventory/providers/git-effect-platform-node";
 import { type Client, createClient, type Deps } from "@habitat-ai/service/client";
-import { standard, type TypeBoxStandardSchema } from "@habitat-ai/typebox-adapter";
 import { Effect, FileSystem, Path } from "effect";
 import { Type } from "typebox";
 import { Validator } from "typebox/schema";
-
-export type { TypeBoxStandardSchema };
-export { standard };
 
 /** Typed local Habitat operations bound to one workspace. */
 export type HabitatClient = Client;

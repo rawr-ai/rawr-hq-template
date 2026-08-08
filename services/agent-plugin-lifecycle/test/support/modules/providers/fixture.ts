@@ -61,7 +61,6 @@ import type {
 import type { SelectedContent } from "../../../../src/service/modules/providers/model/dto/selected-content";
 import {
   createLifecycleTestClient,
-  testInvocation,
   unavailableContentWorkspace,
   unavailableVersionedContent,
 } from "../../service/client";

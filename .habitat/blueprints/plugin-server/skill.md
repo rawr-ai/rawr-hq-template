@@ -39,5 +39,4 @@ or an application.
 - [[../skill|Blueprint direction]]
 - [[README|Server-plugin boundary]]
 - [[../plugin/skill|Plugin frame]]
-- [[../plugin-server-api/skill|API server-plugin frame]]
 - [[../../AUTHORITY|Habitat authority]]

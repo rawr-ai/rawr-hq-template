@@ -1,0 +1,22 @@
+# <%= moduleName %> Module Router
+
+## Purpose
+
+- Own the `<%= operationName %>` operation at this service boundary.
+
+## Boundaries
+
+- The contract directory owns caller-visible schemas.
+- `module.ts` projects the named dependency into the direct handler vocabulary without acquiring
+  resources or providers.
+- Native oRPC retains inherited context additively; the projection narrows authorship rather than
+  claiming runtime erasure.
+- The named router leaf owns operation behavior; router faces only compose.
+
+## Interfaces
+
+- `<%= operationName %>` is the module's native operation.
+
+## Validation
+
+- Run the owning service's typecheck and build targets.

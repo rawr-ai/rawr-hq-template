@@ -9,6 +9,8 @@
     "skipLibCheck": true,
     "types": ["node"],
     "paths": {
+      "@habitat-internal/runtime-schema": ["packages/core/runtime/schema/src/index.ts"],
+      "@habitat-ai/sdk/service/schema": ["packages/core/runtime/schema/src/index.ts"],
       "@habitat-ai/rawr-hq-sdk/apis": ["packages/hq-sdk/src/apis.ts"],
       "@rawr/runtime-context": ["packages/runtime-context/src/index.ts"]
     }

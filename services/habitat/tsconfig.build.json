@@ -4,5 +4,6 @@
     "declaration": true,
     "rootDir": "src"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
 }

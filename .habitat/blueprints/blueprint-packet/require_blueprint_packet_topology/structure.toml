@@ -2,7 +2,7 @@ schemaVersion = 1
 
 [[scopes]]
 name = "generic-blueprint-rule-packets"
-root = ".habitat/blueprints/!(*.*)/!(*.*)"
+root = ".habitat/blueprints/!(*.*)/!(*.*|components)"
 kind = "directory"
 mode = "closed"
 required = [
@@ -13,6 +13,29 @@ allowed = [
   "pattern.md",
   "structure.toml",
 ]
+
+[[scopes]]
+name = "blueprint-component-roots"
+root = ".habitat/blueprints/!(*.*)/components"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = ["!(*.*)"]
+
+[[scopes]]
+name = "blueprint-component-groups"
+root = ".habitat/blueprints/!(*.*)/components/!(*.*)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = ["*.md"]
+
+[[scopes]]
+name = "blueprint-component-sources"
+root = ".habitat/blueprints/!(*.*)/components/!(*.*)/*.md"
+kind = "file"
+mode = "closed"
+allowEmpty = true
 
 [[scopes]]
 name = "repository-niche-rule-packets"

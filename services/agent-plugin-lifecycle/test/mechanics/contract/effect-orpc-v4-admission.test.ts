@@ -1,6 +1,6 @@
 import "@orpc/experimental-effect/extensions/effect";
-import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
-import { standard } from "@habitat-ai/typebox-adapter";
+import { procedureMetadata } from "@habitat-ai/sdk/service";
+import { standard } from "@habitat-ai/sdk/service/schema";
 import { ORPCError } from "@orpc/client";
 import { oc, ValidationError } from "@orpc/contract";
 import { createRouterClient, implement } from "@orpc/server";

@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-hyperresearch-codex"
+ownerProject = "@habitat-ai/rawr-hyperresearch-codex"
+blueprint = "service"
+blueprintVersion = 1
+
+[roots]
+project = "services/hyperresearch-codex"
+
+[selections]

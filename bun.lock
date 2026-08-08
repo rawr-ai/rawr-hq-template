@@ -8,14 +8,12 @@
         "@habitat-ai/rawr-core": "workspace:*",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@habitat-ai/service": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
         "@orpc/client": "2.0.0-beta.23",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/experimental-effect": "2.0.0-beta.23",
         "@orpc/json-schema": "2.0.0-beta.23",
         "@orpc/openapi": "2.0.0-beta.23",
         "@orpc/server": "2.0.0-beta.23",
-        "@rawr/example-todo": "workspace:*",
         "@rawr/runtime-context": "workspace:*",
         "@standard-schema/spec": "1.1.0",
         "elysia": "^1.3.12",
@@ -151,7 +149,7 @@
     },
     "packages/habitat-sdk": {
       "name": "@habitat-ai/sdk",
-      "version": "0.5.5",
+      "version": "0.5.6",
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
         "@effect/platform-node-shared": "4.0.0-beta.101",
@@ -193,18 +191,6 @@
     "packages/test-utils": {
       "name": "@rawr/test-utils",
       "version": "0.1.0",
-    },
-    "packages/typebox-adapter": {
-      "name": "@habitat-ai/typebox-adapter",
-      "version": "0.1.1",
-      "dependencies": {
-        "@standard-schema/spec": "1.1.0",
-        "typebox": "1.3.8",
-      },
-      "devDependencies": {
-        "bun-types": "1.3.14",
-        "typescript": "^5.9.3",
-      },
     },
     "packages/ui-sdk": {
       "name": "@rawr/ui-sdk",
@@ -374,12 +360,11 @@
       "name": "@habitat-ai/rawr-agent-plugin-lifecycle",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
         "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
         "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
         "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/sdk": "workspace:*",
         "@noble/hashes": "2.2.0",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/client": "2.0.0-beta.23",
@@ -402,8 +387,7 @@
       "name": "@habitat-ai/rawr-chatgpt-corpus",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/sdk": "workspace:*",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/server": "2.0.0-beta.23",
         "typebox": "1.3.8",
@@ -418,8 +402,7 @@
       "name": "@habitat-ai/rawr-dev",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/sdk": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/server": "2.0.0-beta.23",
@@ -432,29 +415,12 @@
         "typescript": "^5.9.3",
       },
     },
-    "services/example-todo": {
-      "name": "@rawr/example-todo",
-      "dependencies": {
-        "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
-        "@opentelemetry/api": "^1.9.0",
-        "@orpc/contract": "2.0.0-beta.23",
-        "@orpc/server": "2.0.0-beta.23",
-        "typebox": "1.3.8",
-      },
-      "devDependencies": {
-        "@opentelemetry/context-async-hooks": "^2.6.0",
-        "@opentelemetry/sdk-trace-base": "^2.6.0",
-        "typescript": "^5.9.3",
-      },
-    },
     "services/habitat": {
       "name": "@habitat-ai/service",
       "version": "0.3.1",
       "dependencies": {
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/experimental-effect": "2.0.0-beta.23",
         "@orpc/server": "2.0.0-beta.23",
@@ -475,7 +441,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/sdk": "workspace:*",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/server": "2.0.0-beta.23",
         "typebox": "1.3.8",
@@ -488,8 +454,7 @@
       "name": "@habitat-ai/rawr-session-intelligence",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/typebox-adapter": "workspace:*",
+        "@habitat-ai/sdk": "workspace:*",
         "@opentelemetry/api": "^1.9.0",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/server": "2.0.0-beta.23",
@@ -918,8 +883,6 @@
 
     "@habitat-ai/service": ["@habitat-ai/service@workspace:services/habitat"],
 
-    "@habitat-ai/typebox-adapter": ["@habitat-ai/typebox-adapter@workspace:packages/typebox-adapter"],
-
     "@hey-api/spec-types": ["@hey-api/spec-types@0.0.0-next-20260408030107", "", { "dependencies": { "@hey-api/types": "0.1.4" } }, "sha512-P5DKr4dpZ7lmZpZt2bc2KWuzU9vl4GZcN7VrjchZF1WWKNGZFnwWhBxZo1t6P2muOCopIvqD2Fvp5os4QiitKA=="],
 
     "@hey-api/types": ["@hey-api/types@0.1.4", "", {}, "sha512-thWfawrDIP7wSI9ioT13I5soaaqB5vAPIiZmgD8PbeEVKNrkonc0N/Sjj97ezl7oQgusZmaNphGdMKipPO6IBg=="],
@@ -1293,8 +1256,6 @@
     "@radix-ui/rect": ["@radix-ui/rect@1.1.1", "", {}, "sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw=="],
 
     "@rawr/bootgraph": ["@rawr/bootgraph@workspace:packages/bootgraph"],
-
-    "@rawr/example-todo": ["@rawr/example-todo@workspace:services/example-todo"],
 
     "@rawr/plugin-hello": ["@rawr/plugin-hello@workspace:plugins/cli/commands/hello"],
 

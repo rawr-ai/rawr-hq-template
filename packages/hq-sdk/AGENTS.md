@@ -2,29 +2,25 @@
 
 ## Purpose
 
-- Give services, plugins, workflows, applications, and hosts a shared
-  vocabulary for metadata, operational middleware, ports, and declared-surface
-  composition without replacing native framework authoring.
+- Route the remaining pre-separation API, workflow, binding, and host-adapter
+  source until each classified reader reaches its final owner.
 
 ## Scope
 
-- Applies to host-neutral service, plugin, workflow, and composition contracts
-  in `packages/hq-sdk/**`.
+- Applies only to the remaining predecessor source in `packages/hq-sdk/**`.
 
 ## Boundaries
 
-- Owns RAWR's stable procedure metadata plugin, one-shot analytics and
-  observability middleware callbacks, capability ports, host adapters, and
-  declared-surface composition.
+- Does not own service metadata, analytics or observability middleware, or the
+  analytics and logger contracts. Those have one authority at
+  `@habitat-ai/sdk/service`.
+- Remaining API, workflow, binding, and host-adapter declarations are migration
+  input, not Habitat platform authority or compatibility surfaces.
 - Native oRPC owns contracts, service context, middleware construction,
-  implementers, routers, and clients. `@habitat-ai/typebox-adapter` owns the
+  implementers, routers, and clients. `@habitat-ai/sdk/service/schema` exposes the
   product-free TypeBox standards bridge.
 - Must not own a domain service's operations, application plugin selection,
   concrete host resources, route mounting, or process and provider state.
-- SDK middleware callbacks declare only the minimum context they consume and
-  contribute no parallel context lane. Service bases own their complete
-  context, decorate those callbacks, and retain native oRPC composition
-  authority.
 
 ## Behavior
 
@@ -33,18 +29,12 @@
 
 ## Concepts
 
-- A **capability port** names a required host satisfier. A **declared surface**
-  is a composed tree awaiting host realization. Procedure metadata remains
-  outside execution context and flows through oRPC's native metadata plugin.
+- A **declared surface** is a predecessor composition tree awaiting final
+  classification. It does not establish a generic Habitat API or workflow
+  contract.
 
 ## Flow
 
-- A service declares contracts, context, middleware, routers, and clients with
-  native oRPC. It attaches its service-wide analytics and observability
-  lifecycle once at the service root, where that single analytics event may be
-  classified by the native operation path. Qualified module or operation
-  branches may attach owner-local runtime signals through middleware derived
-  from the same base; they must not recreate the service lifecycle.
 - An application declares selected surfaces, then a host supplies concrete
   ports and composes the declared trees.
 - The host projects the composed internal and published surfaces to its
@@ -52,13 +42,13 @@
 
 ## Interfaces
 
-- Native oRPC and `@habitat-ai/typebox-adapter` face service authors; composition APIs
-  face apps and plugins; capability ports and realized trees face hosts.
+- `@habitat-ai/sdk/service` and `@habitat-ai/sdk/service/schema` face service
+  authors. No service author imports this predecessor.
 
 ## Routing
 
 - [Packages router](../AGENTS.md)
-- [[../typebox-adapter/AGENTS|TypeBox adapter]]
+- [[../core/runtime/schema/AGENTS|Private runtime-schema owner]]
 
 ## Validation
 

@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import {
   getProjects,
   type NxJsonConfiguration,
+  type PluginConfiguration,
   readJson,
   readNxJson,
   type Tree,
@@ -26,7 +27,9 @@ const ALTERNATE_PACKAGE_MANAGER_PATHS = [
 ] as const;
 const BUN_VERSION = "1.3.14";
 const BIOME_VERSION = "2.5.3";
+const ESLINT_VERSION = "10.0.3";
 const NX_VERSION = "23.1.1";
+const TYPESCRIPT_ESLINT_PARSER_VERSION = "8.66.0";
 
 const RootPackageSchema = Type.Object(
   {
@@ -181,8 +184,12 @@ const standardScripts = {
 
 const standardDevDependencies = {
   "@biomejs/biome": BIOME_VERSION,
+  "@nx/eslint": NX_VERSION,
+  "@nx/eslint-plugin": NX_VERSION,
+  "@typescript-eslint/parser": TYPESCRIPT_ESLINT_PARSER_VERSION,
   "@types/node": "24.13.3",
   "bun-types": BUN_VERSION,
+  eslint: ESLINT_VERSION,
   nx: NX_VERSION,
   typescript: "5.9.3",
 } as const;
@@ -204,6 +211,11 @@ const nativeNxPresetNamedInputs: Readonly<Record<string, unknown>> = {
   production: ["default"],
 };
 
+const nxEslintPlugin = {
+  plugin: "@nx/eslint/plugin",
+  options: { targetName: "check:boundaries" },
+} as const satisfies PluginConfiguration;
+
 const standardTargetDefaults: NonNullable<NxJsonConfiguration["targetDefaults"]> = {
   build: {
     cache: true,
@@ -215,6 +227,7 @@ const standardTargetDefaults: NonNullable<NxJsonConfiguration["targetDefaults"]>
     cache: false,
     dependsOn: [
       { projects: ["habitat"], target: "lint" },
+      "check:boundaries",
       "typecheck",
       "verify",
       "check:policy",
@@ -247,6 +260,46 @@ const bunfig = `env = false
 linker = "isolated"
 # Registry versions remain registry consumers; source relationships opt in with workspace:*.
 linkWorkspacePackages = false
+`;
+
+const eslintConfig = `import nxPlugin from "@nx/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+
+export default [
+  ...nxPlugin.configs["flat/base"],
+  {
+    files: ["**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}"],
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "**/.nx/**",
+      "**/.habitat/cache/**",
+      "**/.tmp/**",
+    ],
+    rules: {
+      "@nx/enforce-module-boundaries": [
+        "error",
+        {
+          allow: [],
+          depConstraints: [],
+          enforceBuildableLibDependency: false,
+        },
+      ],
+    },
+  },
+  {
+    files: ["**/*.{ts,tsx,cts,mts}"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
+  },
+];
 `;
 
 const standardTypeScriptCompilerOptions = {
@@ -605,11 +658,30 @@ function planNxJson(nxJson: NxJsonConfiguration): NxJsonConfiguration {
     nativeNxPresetNamedInputs
   );
   assertReservedNxValues("target default", nxJson.targetDefaults, standardTargetDefaults);
+  const plugins = planNxEslintRegistration(nxJson.plugins);
   return {
     ...nxJson,
+    plugins,
     namedInputs: { ...nxJson.namedInputs, ...standardNamedInputs },
     targetDefaults: { ...nxJson.targetDefaults, ...standardTargetDefaults },
   };
+}
+
+function planNxEslintRegistration(
+  plugins: PluginConfiguration[] | undefined
+): PluginConfiguration[] {
+  const existing = plugins ?? [];
+  const matches = existing.filter(
+    (plugin) => (typeof plugin === "string" ? plugin : plugin.plugin) === nxEslintPlugin.plugin
+  );
+  if (matches.length > 1) {
+    throw new Error("nx.json contains multiple Nx ESLint plugin registrations.");
+  }
+  const match = matches[0];
+  if (match !== undefined && !isDeepStrictEqual(match, nxEslintPlugin)) {
+    throw new Error("nx.json contains an incompatible Nx ESLint plugin registration.");
+  }
+  return match === undefined ? [...existing, nxEslintPlugin] : [...existing];
 }
 
 function assertReservedNxValues(
@@ -656,6 +728,7 @@ function plannedTextFiles(tree: Tree): readonly TextFilePlan[] {
   return [
     { path: "biome.json", contents: biomeConfig },
     { path: "bunfig.toml", contents: bunfig },
+    { path: "eslint.config.mjs", contents: eslintConfig },
     { path: HABITAT_PROJECT_PATH, contents: habitatProject },
   ].filter((file) => !tree.exists(file.path) || isEmptyTextFile(tree, file.path));
 }

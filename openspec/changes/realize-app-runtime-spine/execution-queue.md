@@ -7,14 +7,20 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 ## Ground
 
 - Canonical Habitat ground: `main@c0ebd800a45e4afb682e6669d037931eb62092c2`.
-- Sole active source container: `codex/finalize-habitat-foundation`.
+- Sole active source container: `codex/gate-a-foundation-producer`, directly
+  above the accepted semantic-sieve parent
+  `codex/remove-rejected-habitat-rawr-closures`.
+- The accepted pre-Gate-A semantic sieve removes only closures already
+  classified for deletion and carrying no retained capability. It does not
+  weaken or substitute for the publication barrier around surviving readers.
 - The root remains bootstrapped by registry `@habitat-ai/cli@0.5.2` while
   `apps/habitat` remains outside the Bun workspaces. Bun 1.3.14 must keep a
   valid frozen lock; the candidate CLI is never added as a `file:`, `link:`, or
   duplicate workspace dependency.
 - oRPC service execution follows native authority: `.handler` owns non-Effect
-  operations; official `handlerGen` or `.effect` owns Effect-backed request
-  fibers. The app/process supplies `effect/context` plus `effect/wrap`, and no
+  operations; the official `.effect` extension, installed once in
+  `src/service/impl.ts`, owns Effect-backed request fibers through `handlerGen`.
+  The app/process supplies `effect/context` plus `effect/wrap`, and no
   oRPC service Effect enters `ProcessExecutionRuntime`.
 - Telemetry, Session Metrics, and Fluree worktrees are held adoption sources;
   they are not parallel Habitat implementation lanes.
@@ -27,17 +33,17 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   service faces, and `HabitatCommand`; complete the admitted toolchain move;
   pass isolated-registry installed-candidate acceptance; and land the accepted
   exact-main producer. Prove plain `.handler` plus the official Effect bridge
-  and reject every manual/custom runner. Leave existing private
-  `RawrCommand`/`RawrResult` readers untouched and admit no second
-  public/candidate command model.
+  and reject every manual/custom runner. Leave the remaining private
+  `RawrCommand`/`RawrResult` source and readers untouched, revive no condemned
+  closure, and admit no second public/candidate command model.
 - [ ] **Gate B - exact-main publication**: from the accepted Gate A exact-main
   revision, use the fixed Nx Release group to publish and registry-smoke only
   `@habitat-ai/sdk` and `@habitat-ai/cli`, then record the exact receipt.
 - [ ] **Gate C - reader cutover**: only after that registry receipt, migrate
   the root Nx bootstrap to the exact released CLI, move surviving readers to
-  released `HabitatCommand`, delete condemned reader
-  closures, and remove `RawrCommand`, `RawrResult`, and every predecessor reader
-  with no shim, alias, fallback, or dual public authority.
+  released `HabitatCommand`, delete any condemned reader closure still
+  remaining, and remove `RawrCommand`, `RawrResult`, and every predecessor
+  reader with no shim, alias, fallback, or dual public authority.
 - [ ] **Rawr**: install that release, restack Session Metrics, import the three
   services and three CLI topics through native Nx, and pass destination-owned
   behavior.

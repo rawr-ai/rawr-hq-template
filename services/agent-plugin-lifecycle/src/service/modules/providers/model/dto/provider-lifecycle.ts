@@ -16,11 +16,7 @@ import {
   RepositoryIdentitySchema,
 } from "../../../../model/dto/release-identity";
 import { MAX_RELEASE_MEMBERS } from "../../../../model/dto/release-input";
-import {
-  BoundedReadonlyArray,
-  EmptyReadonlyArray,
-  NonEmptyReadonlyArray,
-} from "../../../../model/dto/structural";
+import { BoundedReadonlyArray, EmptyReadonlyArray } from "../../../../model/dto/structural";
 
 const MAX_TARGETS = 16;
 export const MAX_CONFIRMED_NATIVE_OPERATIONS =

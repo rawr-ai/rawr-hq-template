@@ -108,9 +108,9 @@
   resources from inherited service dependencies. Its package handler owns
   source observation, derivation, encoding, revalidation, publication, and
   settlement order; pure policy classifies typed facts and public results.
-- Content-workspace, versioned-content, package-output, and native-provider
-  mechanics remain behind host-supplied dependencies. Vendors owns the domain
-  meaning of its observation-clock port; the host supplies its implementation.
+- Content-workspace, versioned-content, package-output, native-provider, and
+  clock mechanics remain behind host-supplied service dependencies. Vendors
+  owns how an admitted observation instant participates in vendor policy.
 - Pure deterministic byte policy may use a portable implementation directly;
   it must not create a resource or provider facade for computation without a
   runtime acquisition or lifecycle protocol.

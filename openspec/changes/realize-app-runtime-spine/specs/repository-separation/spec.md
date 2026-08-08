@@ -115,11 +115,23 @@ package joins that group. The SDK's installed Habitat pack MUST select a
 constructible `service@1` kind with one public contract, in-process client,
 router, and private implementation. Service dependencies MUST use public
 clients, resources/providers MUST enter at app composition, and plugin/app
-owners MUST retain transport projection and orchestration. The packed service
-subtree MUST contain only the positive closed `service@1` kind. Product terms,
-legacy v2 rule metadata, generic `forbids` packets, and superseded service
-source-policy variants MUST be absent. oRPC 2 and Effect 4 MUST be the sole
-vendor substrate; no compatibility kind or legacy construction path may ship.
+owners MUST retain transport projection and orchestration. The installed pack
+MUST contain the complete recursively packed composed authority bytes for
+`service@1`: its definition manifest, required root `structure.toml` anchor,
+and every focused Grit rule asset nested under its informal authoring component
+directories at preserved relative paths. Those installed bytes MUST equal their
+selected source-authority bytes. The root `structure.toml` MUST remain exactly
+one ordinary Habitat structure rule and own the complete positive service
+filesystem closure. Every nested service packet MUST remain an ordinary
+schema-version-1 Grit rule with its normal application and focused target; the
+blueprint and instance schemas MUST remain unchanged. At the pre-separation
+checkpoint `service@1` MUST declare zero blueprint relations; module and
+database law MUST remain service-owned authoring organization. The composed
+service authority MUST contain only the positive closed `service@1` kind.
+Product terms, legacy v2 rule
+metadata, generic `forbids` packets, and superseded service source-policy
+variants MUST be absent. oRPC 2 and Effect 4 MUST be the sole vendor substrate;
+no compatibility kind or legacy construction path may ship.
 The final SDK MUST assemble the
 provider-neutral semantic-ledger contract at
 `@habitat-ai/sdk/resources/semantic-ledger` and its Fluree provider only through
@@ -148,7 +160,10 @@ commit authorizes only that checkpoint.
 - **WHEN** an exact Habitat-main SDK and CLI candidate is ready for release
 - **THEN** the local installed-package Nx acceptance packs both public tarballs, publishes both exact candidates only to an isolated local registry, and invokes native `nx add @habitat-ai/cli@<candidate-version>` once in a disposable Bun/Nx consumer with neither Habitat product preinstalled before any tag or public-registry mutation
 - **AND** that one operation installs the exact paired SDK, converges the repository foundation, and proves generated `service@1` construction, cold public imports, Nx rejection of a relative cross-project private-service import, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
-- **AND** artifact inspection proves the packed `dist/blueprints/service` subtree contains only the positive closed kind and no product vocabulary or legacy service rule packet
+- **AND** artifact inspection proves the service definition, sole root structure asset, and every focused nested Grit asset is recursively present at its declared path and byte-identical to selected source authority
+- **AND** the root asset remains exactly one ordinary Habitat structure rule owning complete positive filesystem closure, while every nested packet remains an ordinary schema-version-1 Grit rule/application/focused target that registry `@habitat-ai/cli@0.5.2` can project without candidate plugin authority
+- **AND** the installed `service@1` definition declares zero blueprint relations
+- **AND** the composed installed authority contains only the positive closed kind and no product vocabulary or legacy service rule packet
 - **AND** any workspace import, missing public face, unpublished dependency, or source/installed divergence blocks publication
 
 #### Scenario: A later Rawr workstream adopts semantic ledger capability

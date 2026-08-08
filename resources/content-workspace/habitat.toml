@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-resource-content-workspace"
+ownerProject = "@habitat-ai/rawr-resource-content-workspace"
+blueprint = "resource"
+blueprintVersion = 1
+
+[roots]
+project = "resources/content-workspace"
+
+[selections]

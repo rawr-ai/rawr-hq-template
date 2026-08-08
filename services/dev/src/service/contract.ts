@@ -1,4 +1,4 @@
-import { procedureMetadata } from "@habitat-ai/rawr-hq-sdk";
+import { procedureMetadata } from "@habitat-ai/sdk/service";
 import { oc } from "@orpc/contract";
 import { metadataDefaults } from "./model/policy/procedure-metadata";
 import { contract as repo } from "./modules/repo/contract";

@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-chatgpt-corpus"
+ownerProject = "@habitat-ai/rawr-chatgpt-corpus"
+blueprint = "service"
+blueprintVersion = 1
+
+[roots]
+project = "services/chatgpt-corpus"
+
+[selections]

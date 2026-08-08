@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "provider-source-inventory-git-effect-platform-node"
+ownerProject = "provider-source-inventory-git-effect-platform-node"
+blueprint = "provider"
+blueprintVersion = 1
+
+[roots]
+project = "resources/source-inventory/providers/git-effect-platform-node"
+
+[selections]

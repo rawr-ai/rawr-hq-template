@@ -7,7 +7,13 @@
         "production",
         "^production",
         "typescriptRuntime",
-        "{workspaceRoot}/.habitat/blueprints/**/*"
+        "{workspaceRoot}/.habitat/blueprints/app/**/*",
+        "{workspaceRoot}/.habitat/blueprints/package/**/*",
+        "{workspaceRoot}/.habitat/blueprints/plugin/**/*",
+        "{workspaceRoot}/.habitat/blueprints/plugin-nx/**/*",
+        "{workspaceRoot}/.habitat/blueprints/provider/**/*",
+        "{workspaceRoot}/.habitat/blueprints/resource/**/*",
+        "{workspaceRoot}/.habitat/blueprints/service/**/*"
       ]
     },
     "check": {

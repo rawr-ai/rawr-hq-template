@@ -1,4 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
 }

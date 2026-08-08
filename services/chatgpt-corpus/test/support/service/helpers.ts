@@ -1,5 +1,4 @@
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import type { CreateClientOptions } from "../../../src/client";
 import type {
   RawSourceMaterials,
@@ -15,6 +14,9 @@ type WorkspaceState = {
   sourceMaterials: RawSourceMaterials;
   artifactBundle?: WorkspaceArtifactBundle;
 };
+
+const testAnalytics: AnalyticsClient = { track: () => {} };
+const testLogger: Logger = { info: () => {}, error: () => {} };
 
 function cloneSourceMaterials(materials: RawSourceMaterials): RawSourceMaterials {
   return {
@@ -115,8 +117,8 @@ export function createClientOptions(
 ): CreateClientOptions {
   return {
     deps: {
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+      logger: testLogger,
+      analytics: testAnalytics,
       workspaceStore,
     },
     scope: {

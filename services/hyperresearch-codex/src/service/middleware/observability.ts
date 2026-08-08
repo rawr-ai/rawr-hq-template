@@ -1,13 +1,14 @@
 /**
  * @fileoverview Required service-wide observability middleware.
  */
-import { createObservabilityMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
+import { createObservabilityMiddlewareCallback } from "@habitat-ai/sdk/service";
 import { base } from "../base";
 import { metadataDefaults } from "../model/policy";
 
 /** Authors run lifecycle signals through the Hyperresearch service context. */
 export const middleware = base.middleware(
   createObservabilityMiddlewareCallback(metadataDefaults, {
+    attributeNamespace: "rawr",
     spanAttributes: ({ context }) => ({
       repo_root: context.scope.repoRoot,
       invocation_trace_id: context.invocation.traceId,

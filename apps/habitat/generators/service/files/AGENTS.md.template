@@ -1,0 +1,31 @@
+# <%= name %> Service Router
+
+## Purpose
+
+- Own the runtime capability exposed through this package's public client.
+
+## Scope
+
+- Applies to this service package and its private implementation spine.
+
+## Boundaries
+
+- Consumers enter only through `src/client.ts` and the package's `./client` export.
+- App composition supplies ready resources and public service clients through context.
+- Transports, orchestration, provider acquisition, and runtime mounting stay outside this service.
+
+## Flow
+
+- The public contract descends through one native oRPC implementation lineage.
+- The module projects its named dependency into the direct handler vocabulary, and its router leaf
+  authors `<%= operationName %>`.
+- Native oRPC retains inherited context additively; the direct projection narrows authorship rather
+  than claiming runtime erasure.
+- Module and service routers only compose already-authored operations.
+- The initial operation uses an inline native `.handler(...)`. When authored operations genuinely
+  require Effect, install the official `.effect(...)` extension once in `src/service/impl.ts` and
+  author their generators directly in the operation routers.
+
+## Validation
+
+- Run `bunx nx run <%= name %>:typecheck` and `bunx nx run <%= name %>:build`.

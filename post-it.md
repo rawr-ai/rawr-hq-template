@@ -6,6 +6,203 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-08 - Packet Granularity Is Semantic
+
+A rule packet follows one reviewer action, not one matcher branch. Adjacent
+edges remain together when they share one subject, owner, evaluator,
+diagnostic, and remediation; they split only when one part can stand and move
+independently. This preserves readable constitutional layers without turning
+every AST alternative into another process.
+
+For Effect-backed procedures, `impl.ts` is the sole production bootstrap role.
+Grit confines that role and rejects alternate terminals, TypeScript proves the
+augmentation is available to `.effect(...)`, and behavior proof owns runtime
+order and module identity. Habitat does not pretend a single-file source rule
+proves global import cardinality.
+
+### Bag Of Keywords
+
+packet, claim, subject, owner, evaluator, remedy.
+
+clarity, locality, restraint, speed, truth.
+
+Habitat, Grit, TypeScript, Nx, oRPC, Effect.
+
+## 2026-08-08 - Effect Authorship Has One Native Surface
+
+An Effect-backed service operation uses the official `.effect(...)` implementer
+extension. The service imports that extension once in `impl.ts`; every operation
+descends through `module.ts` from that implementation, so ESM establishes the
+bootstrap before procedure authorship. TypeScript module augmentation makes the
+bridge a prerequisite for `.effect(...)`, while Habitat confines the import and
+Grit keeps the generator inline.
+
+This is not a Habitat adapter. Exact oRPC beta.23 `.effect(...)` delegates to
+official `handlerGen(...)` and preserves the implementer's error map. Direct
+`handlerGen(...)` has an empty-error inference hole in this contract-first
+shape, so repeated casts would encode a vendor defect into authoring. Manual
+Effect terminals and custom runners remain outside the service kind.
+
+### Bag Of Keywords
+
+procedure, effect, handler, context, error, bootstrap.
+
+inference, locality, provenance, simplicity, ownership.
+
+oRPC, Effect, TypeScript, Habitat, Grit, ESM.
+
+## 2026-08-08 - Service Law Has One Spine And Focused Relations
+
+The final service frame is one closed root `structure.toml` plus small source
+relations. Contract authority, contract composition, context descent, router
+composition, client lineage, public face, and source boundary each have one
+ordinary Grit packet. No packet models the whole service. The component
+directories organize authorship only; the selected kind, instance, scheduler,
+and target model remain unchanged.
+
+The release lineage follows the same ownership rule. A semantic sieve first
+deletes closures that have no retained capability. Gate A seals and packages
+the surviving Habitat substrate without reviving that dead code or changing
+the remaining private command readers. Publication establishes the exact
+artifact authority; only then does Gate C migrate those readers and delete the
+predecessor command model.
+
+### Bag Of Keywords
+
+service, contract, context, router, client, boundary, structure.
+
+ownership, closure, locality, simplicity, speed.
+
+Habitat, Grit, TypeScript, Nx, oRPC, Effect.
+
+## 2026-08-08 - Service Law Is Sealed
+
+The service constitution is one complete positive filesystem spine and four
+small source claims. Contract authority owns native oRPC and the canonical
+TypeBox bridge. Local composition owns the adjacent context and assembly
+funnel. Public face owns the sole client export. Source boundary keeps
+platforms, providers, sibling modules, proof, and manual Effect terminals out
+of service production.
+
+Nothing else is a service source law. TypeScript owns assignability and
+inference. Nx owns project edges and scheduling. Behavior tests own outcomes,
+ordering, and lifetime. Authoring directories make these claims readable but
+create no runtime concept. The native generator constructs the same shape, and
+the installed `nx add` proof establishes it in a bare Bun workspace without
+consumer-owned Habitat wiring.
+
+### Bag Of Keywords
+
+service, contract, client, context, module, router, operation.
+
+ownership, closure, locality, simplicity, speed.
+
+Habitat, Grit, TypeScript, Nx, oRPC, Effect.
+
+## 2026-08-08 - Composition Was Already Native
+
+The entry immediately below corrected instance inflation but still invented a
+component runtime that Habitat does not need. Protocol 1 already has the
+composition surface: one blueprint declares a sorted set of ordinary rules;
+one instance binds that blueprint; each rule resolves as an application owned
+by the same project. Nested declared asset paths already work.
+
+An authoring component is therefore only a context-bearing directory for small
+ordinary rule packets. It has no DTO, manifest, selection, merge, application,
+or target. The service keeps one root `structure.toml` containing its complete
+positive topology. Focused Grit packets may be grouped by spine, module, model,
+persistence, or proof context, but `blueprint.toml` remains their sole
+activation surface.
+
+This removes the bootstrap problem entirely. There is no schema bump,
+intermediate reader release, source-linked CLI, component evaluator, or
+relation engine. The only substrate correction is recursive preservation of
+declared blueprint assets in the SDK package. The service correction is to
+delete the overgrown source rule, retain only small native claims, and let
+structure, TypeScript, Nx, and behavior keep their own truth.
+
+### Bag Of Keywords
+
+blueprint, rule, instance, application, packet.
+
+ownership, closure, locality, simplicity, speed.
+
+declare, resolve, structure, pattern, TypeScript, Nx.
+
+## 2026-08-08 - Habitat Composes Without Flattening
+
+The service-family entry below found the right layering defect but chose the
+wrong realization cost. Habitat does not require one manifest, Nx project, or
+target for every interior member. One root instance selects one primary
+blueprint. Ordered definition components then compose that kind's complete law
+as one application.
+
+`include` and `contains` remain reserved vocabulary for a later independently
+constructible reusable child kind. Gate A needs neither relation: service
+modules, model, persistence, and proof are roles inside the service kind.
+Directory nesting alone activates nothing.
+
+Rule packets are smaller still. A packet owns one reviewable policy claim
+inside one blueprint. It is an authoring unit, not a kind, instance,
+capability, niche, project, or target. Packets restore the small layered
+authority tree without inflating the public ontology.
+
+A definition component groups the packets and structural fragment for one
+stable role inside a blueprint. Components compose one logical spine and one
+resolved application; they do not become blueprints merely because the
+authoring tree gives them names.
+
+One project-root `habitat.toml` remains the ordinary authoring cost. Catalog
+resolution composes the root structural anchor and ordered component
+fragments, proves their asset closure, and emits one structure application. Nx
+schedules that application once for the owning project. Packaging preserves
+the recursive definition assets; it never decides their shape.
+
+### Bag Of Keywords
+
+Habitat, blueprint, component, packet, instance, application.
+
+ownership, closure, reuse, locality, clarity, scale.
+
+anchor, compose, bind, merge, batch, structure, pattern, Nx.
+
+## 2026-08-08 - Service Authority Is A Family
+
+The monolithic `service@1` frame below is superseded. A service blueprint owns
+the service enclosure and public capability boundary. It does not recursively
+become the module, operation, model, database, or proof kinds inside that
+enclosure. Each constructible interior kind has its own closed blueprint,
+anchor, skill, and small local law. The service requires those child anchors;
+it does not copy their rules upward.
+
+The hierarchy is declarative rather than inferential. One service instance
+names its project. Interior instances name the same owning project and anchor
+their own concrete roots. Nx schedules every application on that declared
+project root; manifest placement identifies the interior anchor, never a new
+Nx project. No child inheritance, variant engine, whole-service scan, alias
+chase, or custom parser is needed.
+
+Structure owns closed filesystem shape. Grit owns only small, file-local or
+kind-local source relations over exact acquired roots. TypeScript owns oRPC
+surface compatibility, inference, and composition. Nx owns project edges,
+scheduling, and cache. Behavior proof owns callable outcomes. A rule that must
+rediscover the whole service, simulate TypeScript, or enumerate syntax evasions
+belongs to no blueprint and is deleted rather than optimized.
+
+An operation remains a selected module member while its canonical contract and
+router faces are files. It becomes a blueprint only if it gains an independent
+constructible anchor. Middleware remains service- or module-owned composition
+unless it likewise becomes independently constructible. Blueprint boundaries
+follow kinds, not folders for their own sake.
+
+### Bag Of Keywords
+
+service, module, operation, model, database, proof.
+
+ownership, closure, locality, clarity, speed, trust.
+
+blueprint, structure, pattern, instance, Habitat, Grit, Nx.
+
 ## 2026-08-07 - Native Boundaries Keep Their Authority
 
 The prior custom-terminal premise below is superseded. Habitat owns the

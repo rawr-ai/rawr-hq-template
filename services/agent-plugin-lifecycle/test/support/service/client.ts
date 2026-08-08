@@ -1,14 +1,49 @@
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import type { AgentPluginPackageOutputResource } from "@habitat-ai/rawr-resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@habitat-ai/rawr-resource-content-workspace";
 import type { NativeAgentProviderResources } from "@habitat-ai/rawr-resource-native-agent-provider";
 import type { VersionedContentResource } from "@habitat-ai/rawr-resource-versioned-content";
+import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import { Effect } from "effect";
 
 import { type Client, type CreateClientOptions, createClient } from "../../../src/client";
 
 type LifecycleTestDeps = CreateClientOptions["deps"];
+
+/** Analytics observation captured by lifecycle-owned test instrumentation. */
+export type TestAnalyticsEntry = {
+  event: string;
+  payload: Record<string, unknown>;
+};
+
+/** Structured log observation captured by lifecycle-owned test instrumentation. */
+export type TestLogEntry = {
+  level: "info" | "error";
+  event: string;
+  payload: Record<string, unknown>;
+};
+
+/** Records service analytics without introducing a production adapter. */
+export function createTestAnalytics(
+  options: { sink?: TestAnalyticsEntry[] } = {}
+): AnalyticsClient {
+  return {
+    track(event, payload) {
+      options.sink?.push({ event, payload: payload ?? {} });
+    },
+  };
+}
+
+/** Records structured service logs inside the lifecycle test owner. */
+export function createTestLogger(options: { sink?: TestLogEntry[] } = {}): Logger {
+  return {
+    info(event, payload) {
+      options.sink?.push({ level: "info", event, payload: payload ?? {} });
+    },
+    error(event, payload) {
+      options.sink?.push({ level: "error", event, payload: payload ?? {} });
+    },
+  };
+}
 
 export const testInvocation = Object.freeze({
   context: {
@@ -21,8 +56,8 @@ export const testInvocation = Object.freeze({
 
 export function createLifecycleTestClient(overrides: Partial<LifecycleTestDeps> = {}): Client {
   const deps: LifecycleTestDeps = {
-    logger: createEmbeddedPlaceholderLoggerAdapter(),
-    analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+    logger: createTestLogger(),
+    analytics: createTestAnalytics(),
     contentWorkspace: unavailableContentWorkspace(),
     clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packageOutput: unavailablePackageOutput(),

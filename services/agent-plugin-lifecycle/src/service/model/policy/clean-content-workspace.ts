@@ -285,7 +285,7 @@ export function classifyCleanReleaseInput(
     }>
   > = [];
   const uniqueBlobEntries = new Map<string, CleanContentTreeEntry>();
-  for (const [index, member] of releaseInput.body.members.entries()) {
+  for (const index of releaseInput.body.members.keys()) {
     const pluginId = memberIds[index]!;
     const rootResult = parseReleaseRelativePath(`${pluginRoot.value}/${pluginId}`, "memberRoot");
     if (!rootResult.ok) {

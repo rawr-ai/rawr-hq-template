@@ -9,14 +9,48 @@
 
 ## 2. Define Generic Law Without A Red Landing
 
+- [x] 2.0 Before Gate A, land the minimum blueprint-definition authoring fix in
+  this order. **(a)** Keep the existing schema-version-1 `blueprint.toml`
+  `[[rules]]` sequence as the only ordered composition surface. Treat a
+  component as informal shorthand for a named authoring subdirectory. For the
+  Gate A service proof, keep exactly one root Habitat structure rule whose
+  `structure.toml` owns the complete positive filesystem closure; group only
+  focused ordinary Grit `pattern.md` assets beneath the component directories;
+  reference them through existing rule runners; and preserve every rule's
+  ordinary application and focused target. Retain one
+  project-root `habitat.toml`, one selected blueprint/version, one Nx owner, and
+  owner `check:policy` composition per instance. Restore recursive
+  source-to-installed byte parity for every rule-referenced authority asset
+  instead of the shallow `${id}/*` copy; this recursive pack correction is the
+  only engine/build change. Add no `components` definition field,
+  schema version, runner-array form, runtime DTO, parser branch, evaluator merge,
+  downstream configuration, component application, or component-named target;
+  registry `@habitat-ai/cli@0.5.2` MUST remain able to project the repository
+  before candidate publication. **(b)** Record `include` / `contains` only as a
+  separately gated future extension. Gate A MUST implement zero blueprint
+  relations. Any later relation slice must prove independently constructible
+  reusable child law, create no child manifest/project/target, batch repeated
+  occurrences of one related rule into one parent-owned application, and fail
+  closed on missing definitions, cycles, escaping binds, overlaps, and
+  cardinality violations. **(c)** Recast `service@1` as the first proof using
+  the root structure anchor rule plus small ordinary rule packets grouped under
+  the context-bearing `contract`, `funnel`, and `spine` authoring directories.
+  Keep project, `client.ts`, and the source boundary in the root anchor; keep
+  optional database law inside service-owned persistence; retain every packet's
+  normal application and focused target; assign TypeScript, Nx, and behavior to
+  their proper truths; and delete the current monolithic roughly 900-line
+  source-law direction rather than optimizing it. Preserve the one-operation
+  `nx add @habitat-ai/cli` consumer path. Add no inheritance, variants,
+  capabilities, niches, manual inventories, custom runner, custom parser, open
+  scopes, or downstream author configuration expansion.
 - [ ] 2.1 Reconcile Habitat app law with Magic's abstract app boundary and record one app, profile, process, adapter, and harness model without product names; distinguish the Habitat self-host from downstream products in project metadata, require `apps/<app-id>/<app-id>.app.ts`, `startApp(...)`, mount/process-role entrypoint filenames, and surface suffixes only for single-surface mounts. Record `scripts/habitat` as a Habitat tool rather than an application. No Rawr product app or predecessor `@habitat-ai/rawr`, `@rawr/hq-app`, `@rawr/server`, or `@rawr/web` identity may survive in Habitat.
-- [ ] 2.2 Author closed blueprint packets and mental-model skill documents for the exact ten private runtime owners: `runtime-schema`, `runtime-definition`, `runtime-derivation`, `runtime-compiler`, `runtime-bootgraph`, `runtime-substrate-effect`, `runtime-process-runtime`, `runtime-harnesses`, `runtime-observation`, and `runtime-mounting`; keep each singular `structure.toml` at its blueprint root, and express adapter law only as owner-local overlays within the process-runtime and harness packets rather than as a generic adapter packet or project.
+- [ ] 2.2 Author closed blueprint packets and mental-model skill documents for the exact ten private runtime owners: `runtime-schema`, `runtime-definition`, `runtime-derivation`, `runtime-compiler`, `runtime-bootgraph`, `runtime-substrate-effect`, `runtime-process-runtime`, `runtime-harnesses`, `runtime-observation`, and `runtime-mounting`; retain schema-version-1 ordered ordinary rules, use blueprint-internal directories only as informal authoring organization, preserve each packet's ordinary application and target, require separate blueprint-specific authority before adding any extra structure rule/application, and express adapter law only as an owner-local packet within the process-runtime or harness blueprint rather than as a generic adapter blueprint or project.
 - [ ] 2.3 Limit Grit to positive local declaration, composition, and internal import forms; assign filesystem closure to Habitat, cross-project/package edges to Nx, internal module direction to focused Grit plus owner-local fixtures, capability visibility to TypeScript, and runtime uniqueness/lifecycle to behavior tests.
 - [ ] 2.4 Record the existing repository scheduler as the one Nx contract for the public SDK, ten private runtime owners, tools, and app projects: one workspace-owned cacheable `habitat:lint`; cacheable owner `typecheck`, `test`, and `build`; optional qualified `verify` and generated `check:policy`; and non-cacheable no-op `check` depending on shared lint, owner typecheck/verify/policy, and `^check`. Keep `test` and `build` as explicit `ci` graph targets rather than hiding them in `check`. Define complete cache inputs, including `.editorconfig` and every command-read tool/config file, plus explicit SDK/app manifest and `acceptance:<capability>` contracts. Create or normalize no project and run no target in this law-only task; each owner's first implementation owns project creation, exact edges, target realization, cache-hit proof, and one relevant-input invalidation proof.
 - [ ] 2.5 Extend the global AGENTS router law to every admitted runtime owner with purpose, boundary, flow, interfaces, and ownership rather than code narration; retain `tools/workstream-plugin-pack` as qualified non-public Habitat tooling and remove stale Rawr-owned-generic wording.
 - [x] 2.6 Apply the completed semantic sieve in [[classification-ledger]] to every current app, service, resource/provider, plugin, CLI command, package, tool, policy, test, and product record. Classify each as Habitat platform, proven Rawr product, qualified conformance fixture, or delete from behavior and invariant evidence rather than its current name. Record one exact destination and acceptance owner for every retained capability; ambiguity results in deletion.
 - [x] 2.7 Select the existing independent Rawr repository `/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr` (`rawr-ai/rawr`, canonical `origin/main` `b02a9394a1476a90c11a871b678e28591d69bfa3`) through a clean worktree and author its owner-local OpenSpec. Treat the dirty primary checkout as read-only and excluded; do not edit, clean, or derive deletion authority from its user changes. Disposition the tracked Turborepo-era baseline, establish the destination Nx consumer shape, and record the initial finite migration ledger for the six admitted service/topic projects plus the Session Metrics lineage. Record later workstream and research adoption sources separately without admitting or importing them at the initial separation gate. Land this planning/scaffold checkpoint without importing product source or selecting commands.
-- [ ] 2.8 Land the foundational Habitat service constitution and its first complete repository descent as small truthful Graphite nodes, then cross the command publication barrier through exactly Gates A, B, and C below. This barrier exists only to order producer publication before reader cutover; it is not a retained compatibility architecture.
+- [ ] 2.8 Land the foundational Habitat service constitution and its first complete repository descent as small truthful Graphite nodes, then cross the command publication barrier through exactly Gates A, B, and C below. Before Gate A, delete predecessor reader closures already classified for deletion and requiring no retained-capability transfer. This semantic sieve neither revives condemned code nor substitutes for the publication barrier around surviving readers. The barrier exists only to order producer publication before reader cutover; it is not a retained compatibility architecture.
   **Gate A - foundation producer.** Define the settled generic service kind as
   selected, closed, and natively constructible `service@1` law in the SDK
   Habitat pack; it is not an interface prerequisite, compatibility packet, or
@@ -36,11 +70,18 @@
   its standard `test` target passes. The repository root MUST retain registry
   `@habitat-ai/cli@0.5.2` as its Nx bootstrap, `apps/habitat` MUST remain outside
   the Bun workspaces, and Bun 1.3.14 MUST retain a valid frozen lock. Do not
-  source-link the candidate CLI through `file:`, `link:`, a second workspace
-  identity, or any equivalent local dependency. Existing private
-  `RawrCommand`/`RawrResult` source and its untouched readers remain only in the
-  predecessor owner during this gate; add no reader, export, shim, alias, or
-  fallback. Before any tag or public-registry mutation, run
+  introduce any blueprint or instance schema change, component DTO, parser
+  branch, structure merge, or target-collapse behavior that requires the
+  unpublished candidate plugin to project Gate A; every service packet MUST
+  remain an ordinary schema-version-1 rule that the `0.5.2` bootstrap can
+  project, and exactly one root Habitat structure rule MUST own the complete
+  positive service filesystem closure. Do not source-link the candidate CLI
+  through `file:`, `link:`, a second workspace
+  identity, or any equivalent local dependency. The remaining private
+  `RawrCommand`/`RawrResult` source and readers remain unchanged in the
+  predecessor owner during this gate; Gate A revives no condemned closure and
+  adds no reader, export, shim, alias, or fallback. Before any tag or
+  public-registry mutation, run
   `nx run @habitat-ai/cli:acceptance:oclif-installed-package` against the exact
   candidate: it MUST pack both public tarballs, publish both exact candidates
   only to its isolated local registry, start a disposable Bun/Nx consumer with
@@ -49,7 +90,8 @@
   installs the paired SDK, converges the repository foundation, constructs
   `service@1`, loads the installed CLI/plugin, preserves exact dependency
   closure and cold imports, and exposes exactly one public/candidate command
-  model, `HabitatCommand`. Gate A MUST NOT claim predecessor reader absence.
+  model, `HabitatCommand`. Gate A MUST NOT claim predecessor-model or reader
+  absence.
   Land this accepted producer on exact Habitat `main`.
   **Gate B - exact-main publication.** From the accepted Gate A exact-main
   revision, use only the existing fixed Nx Release group to publish
@@ -61,7 +103,7 @@
   registry receipt exists, replace the root Nx bootstrap with that exact
   registry CLI version, migrate the admitted six-project Rawr readers and
   retained Habitat readers to the released `HabitatCommand` contract, delete
-  already-condemned reader closures rather than adapting them, and delete
+  any condemned reader closures still remaining rather than adapting them, and delete
   `RawrCommand`, `RawrResult`, their exports, source, and every remaining reader
   in the same green node. Gate C MUST end with zero predecessor command model or
   reader and MUST retain no shim, alias, fallback, or dual public authority.
@@ -73,8 +115,8 @@
   resources/providers MUST enter at app composition; and
   transport/orchestration MUST remain plugin/app concerns. A non-Effect oRPC
   operation MUST use native `.handler`; an Effect-backed operation MUST use the
-  selected official `@orpc/experimental-effect` `handlerGen` or `.effect`
-  bridge. Gate A MUST reject service-authored direct `Effect.run*`, a manual Promise bridge, a
+  selected official `@orpc/experimental-effect` `.effect` extension installed
+  once in `src/service/impl.ts`. Gate A MUST reject service-authored direct `Effect.run*`, a manual Promise bridge, a
   custom Effect runner, or `ProcessExecutionRuntime` as the executor of an oRPC
   service Effect. Delete each
   non-command predecessor export or standalone adapter in the same node as its
@@ -83,11 +125,21 @@
   acquisition, compatibility alias, product policy, or embedded placeholder
   adapter.
   Task 2.8 replaces the legacy v2 service packets atomically with the positive
-  closed `service@1` authoring tree. Product-named rule metadata, generic
-  `forbids` packets, and superseded service source-policy variants are deleted,
-  not shipped beside the new kind. The installed-package acceptance MUST inspect
-  the packed `dist/blueprints/service` subtree and refuse any product vocabulary
-  or legacy rule packet. Selection MUST co-land with explicit `service@1`
+  closed `service@1` authority from task 2.0. Root `structure.toml` remains one
+  ordinary Habitat structure rule and owns the complete positive filesystem
+  closure. Blueprint-owned context-bearing authoring directories group focused
+  ordinary Grit assets only; each
+  asset is referenced from the existing ordered `blueprint.rules` surface and
+  retains its normal application and focused target. The definition and instance
+  schemas remain unchanged and declare zero blueprint relations.
+  Modules and optional database persistence are not child kinds. No monolithic
+  source-law packet is required. Product-named rule metadata,
+  generic `forbids` packets, and superseded service source-policy variants are
+  deleted, not shipped beside the new kind. The installed-package acceptance
+  MUST inspect every recursively packed service definition, root anchor,
+  authoring directory, and rule-referenced asset for source-byte parity and
+  refuse a missing nested asset, product vocabulary, or legacy rule packet.
+  Selection MUST co-land with explicit `service@1`
   manifests for every service project still present in Habitat and with the
   repository-wide service structure, declaration, composition, direction,
   type, and behavior checks green. A generated fixture or green predecessor
@@ -99,7 +151,7 @@
   consumer.
 - [ ] 2.9 After task 2.8 Gate C has closed, in the clean Rawr destination run only `bunx nx add @habitat-ai/cli@<released-version> --no-interactive` against the exact Gate B receipt; record the initializer-installed exact `@habitat-ai/sdk` dependency and complete repository foundation rather than hand-authoring Habitat wiring. Then use the recorded native `nx import` invocations to import the ChatGPT corpus, Hyperresearch, and session-intelligence service/topic projects from one frozen Habitat source branch into Rawr with filtered Git history. First restack the Session Metrics lineage onto the admitted session service and include its accepted product behavior in the same owner transfer. Import service leaves before topic dependents, move topics to `plugins/cli/topics/<topic>`, remove synthetic Hyperresearch production fixtures, retarget every edge to the released interfaces, pass the Rawr Nx graph and named behavior targets from [[classification-ledger#behavioral-acceptance-matrix]], and land Rawr canonical `main`. Create no custom copier, mirror, sync, compatibility app, or continuing ancestry dependency.
 - [ ] 2.10 In Habitat, move every sieve-retained platform capability and all readers to its exact existing or newly qualified owner without adding new runtime behavior: the Habitat CLI/catalog and native Oclif plugin mechanics; agent-plugin lifecycle; content-workspace, package-output, native-provider, and versioned-content resources/providers; development/repository operations; and Habitat CLI generators. Move `packages/dev-node` scratch policy into the development service, replace its Node mechanics with explicit filesystem, path, process, and clock context ports, pass `@habitat-ai/dev-service:test`, and delete the package plus every reader in that same checkpoint; task 12.2 later proves the selected Effect Platform Node provider supplies those ports in the installed app. Move every retained `findWorkspaceRoot`/product-named workspace-discovery reader to explicit Habitat workspace input at its final owner; product-owned Rawr configuration transfers unchanged. Preserve the already-selected `service@1` descent while moving service dependencies to public clients and passing resources/providers only through app composition; do not defer service conformance to this task. Move retained CLI projections to canonical `plugins/cli/topics/<topic>` owners. Move indispensable fixtures beside the behavior they verify and keep them out of production membership. Delete the predecessor HQ shell/PID control under task 2.11; do not transfer its source into runtime owners that do not yet exist.
-- [ ] 2.11 Land the Habitat deletion boundary that renames the root package and Nx project exactly to the private `habitat-workspace`, updates every root-identity reader, and removes the imported Rawr service/topic copies; every other Rawr product document, capability spec, app root, package identity, and `.habitat/rawr` policy name; the live `runtime-realization-type-env` tool/project after preserving only its frozen Git commit as provenance; the unused agent-plugin export-destination resource/provider; the remaining `packages/hq-sdk`, `packages/runtime-context`, and `packages/bootgraph` predecessor source after task 2.8 has moved its admitted interfaces; predecessor `findWorkspaceRoot` and product-named Habitat discovery plus every doomed reader; the predecessor `agent plugins create` command; root `doctor`; every HQ shell/PID command and `hq graph`; `reflect`; `routine check` and `routine snapshot`; `tools export`; `workflow harden`; `security posture`; config, journal, and security implementations that remain Rawr-specific or have no live platform owner; `hello`; example-todo production projects; synthetic `codex-slice` and `run-fixture` production commands/projects; and every remaining dead, mixed, duplicate, or unclassified reader. Co-land `habitat:acceptance:product-separation-absence` with the exact cumulative task-2.11 predecessor inventory from [[classification-ledger#deletion-and-replacement-oracles]] and run it before landing. Later runtime owners may port admitted lab algorithms or tests only beside the owner-local behavior they verify. Retain no `rawr-hq-template` root identity, `apps/rawr`, source path, Git synchronization, alias, fallback, duplicate executable owner, or production example project.
+- [ ] 2.11 Land the Habitat deletion boundary that renames the root package and Nx project exactly to the private `habitat-workspace`, updates every root-identity reader, and removes the imported Rawr service/topic copies; every other Rawr product document, capability spec, app root, package identity, and `.habitat/rawr` policy name; the live `runtime-realization-type-env` tool/project after preserving only its frozen Git commit as provenance; the unused agent-plugin export-destination resource/provider; the remaining `packages/hq-sdk`, `packages/runtime-context`, and `packages/bootgraph` predecessor source after task 2.8 has moved its admitted interfaces; predecessor `findWorkspaceRoot` and product-named Habitat discovery plus every doomed reader; synthetic `codex-slice` and `run-fixture` production commands/projects; and every remaining dead, mixed, duplicate, or unclassified reader. The cumulative absence gate MUST also prove the pre-Gate-A semantic-sieve deletions remain absent, including predecessor HQ/server/example projects and their commands, state, and readers; it MUST NOT re-stage or revive them as task-2.11 work. Co-land `habitat:acceptance:product-separation-absence` with the exact cumulative task-2.11 predecessor inventory from [[classification-ledger#deletion-and-replacement-oracles]] and run it before landing. Later runtime owners may port admitted lab algorithms or tests only beside the owner-local behavior they verify. Retain no `rawr-hq-template` root identity, `apps/rawr`, source path, Git synchronization, alias, fallback, duplicate executable owner, or production example project.
 - [ ] 2.12 Pass the Rawr exact-main repository gate and land the Habitat product-separation boundary before task 3 opens. Require Rawr's initial migrated source to contain only the surviving ChatGPT corpus, Hyperresearch, and session-intelligence product closures under its owner-local OpenSpec; require Habitat's root package and Nx project to be exactly the private `habitat-workspace`, contain no downstream product source or app and no live `runtime-realization-type-env` project; run `nx run habitat:acceptance:product-separation-absence` from Habitat exact main; and verify Marketplace remains an independent content repository. Later stack-only Rawr product adoption is independent post-separation work and cannot weaken or delay this gate. Tasks 3.1 through 3.4 remain cleanup and core reservation only; other than the bounded non-live `runtime-schema` adaptation from task 2.8, no private runtime implementation begins until task 3.4 passes Habitat exact-main with all Rawr-named, dead, and mixed predecessors absent.
 - [ ] 2.13 Keep new packets non-enforcing until their first conforming owner is ready; co-land each closed enabled law with that owner and admit no red baseline, exception, or open scope.
 - [ ] 2.14 Co-land every TypeBox structural schema with the semantic owner whose data crosses a boundary; keep `runtime-schema` limited to canonical schema adaptation, and create no ownerless service-wide or runtime-wide schema directory ahead of its owners.
@@ -124,7 +176,7 @@ every other private runtime owner.
 ## 4. Seal Definition And Derivation
 
 - [ ] 4.1 Create the private package-less Nx project `runtime-definition` at `packages/core/runtime/definition`; inherit the exact task 2.4 scheduler contract, set its sole direct private edge to `runtime-definition -> runtime-schema`, add `@habitat-ai/sdk -> runtime-definition`, and prove unchanged cache hits plus relevant-input invalidation. In that same node, implement import-safe `AppDefinition`, `Entrypoint`, `RuntimeProfile`, service, plugin, and cold Effect descriptor authoring; direct provider-neutral resource and provider-owned config faces; the TypeBox `RuntimeObservationRecord`; and the narrow non-authorizing `RuntimeObservationPort` consumed by upstream phases and implemented downstream by runtime observation. Keep live `startApp(...)` and read-model projection out of definition. Expose only conforming app, Effect, execution, service, plugin, resource, provider, profile, and schema subpaths through the terminal SDK and co-activate their closed SDK/resource/provider law.
-- [ ] 4.2 Author the accepted topology-specific server/internal plugin face and host-neutral async plugin face fresh in the terminal `@habitat-ai/sdk/plugins/server` and `@habitat-ai/sdk/plugins/async` subpaths. Use the native oRPC, Effect-oRPC, Effect, and Inngest contracts as the mechanism authority; exact `@orpc/experimental-effect` beta.23/beta.25 source establishes that `.effect` delegates to official `handlerGen` and that `handlerGen` owns `Effect.runPromiseExit`. Admit plain native `.handler` for non-Effect service operations and only official `handlerGen` or `.effect` for Effect-backed operations; reject a manual/custom Effect runner. Reuse only independently admitted generic merge or trace-forwarding algorithms. Do not preserve the predecessor self-classifying `defineApiPlugin*` / `composeApiPlugins` builders, Inngest-shaped `defineWorkflowPlugin*` / `composeWorkflowPlugins` builders, names, or wire authority. Consume the already-landed `@habitat-ai/sdk/service` metadata and middleware contracts without redefining them, and admit no concrete placeholder adapter or product procedure policy.
+- [ ] 4.2 Author the accepted topology-specific server/internal plugin face and host-neutral async plugin face fresh in the terminal `@habitat-ai/sdk/plugins/server` and `@habitat-ai/sdk/plugins/async` subpaths. Use the native oRPC, Effect-oRPC, Effect, and Inngest contracts as the mechanism authority; exact `@orpc/experimental-effect` beta.23/beta.25 source establishes that official `.effect` delegates to `handlerGen`, which owns `Effect.runPromiseExit`. Admit an inline native `.handler` for non-Effect service operations and the official `.effect` extension, installed once in the service implementation, for Effect-backed operations; reject a manual/custom Effect runner. Reuse only independently admitted generic merge or trace-forwarding algorithms. Do not preserve the predecessor self-classifying `defineApiPlugin*` / `composeApiPlugins` builders, Inngest-shaped `defineWorkflowPlugin*` / `composeWorkflowPlugins` builders, names, or wire authority. Consume the already-landed `@habitat-ai/sdk/service` metadata and middleware contracts without redefining them, and admit no concrete placeholder adapter or product procedure policy.
 - [ ] 4.3 Author the cold `ProcessView`, `RoleView`, `ServiceBoundary`, and `ServiceBinding` declarations fresh in `runtime-definition` and the SDK service face; leave live `BoundService`, `bindService`, and cache mechanics for task 8.3.
 - [ ] 4.4 Bind production platform readers to profile-selected qualified resources/providers and give analytics/logger tests owner-local fakes. Assert `FeedbackClient`, `DbPool`, `Sql`, their embedded adapters, and the example-todo production projects remain absent; create no generic host-adapter or test-helper package.
 - [ ] 4.5 Author the five canonical service context lanes fresh in `@habitat-ai/sdk/service` from the landed architecture law and prove module projection narrows them without overwriting; preserve no predecessor runtime-context package or workflow/support state. Leave execution-facing contracts for task 8.4.
@@ -211,7 +263,7 @@ fixtures. A fixture does not become a production app, service, plugin, or
 published example project.
 
 - [ ] 13.1 Add the Elysia adapter/harness with an owner-local live gated-request fixture and the exact `runtime-harnesses:acceptance:server` target: after one request is admitted, begin one `stop(false)` and prove a second connection is rejected while the first remains gated; observe the deadline, shared repeated-stop operation, no release/dispose/completed-drain claim, then unblock the first request and prove one release/dispose. Never escalate to `stop(true)`; WebSocket drain is required only when the fixture selects a WebSocket surface.
-- [ ] 13.2 Through the Elysia/oRPC owner-local fixture, exercise one non-Effect operation through native `.handler` and one Effect-backed operation through the selected official `@orpc/experimental-effect` `handlerGen` or `.effect` bridge. Prove `.effect` delegates to `handlerGen`; the bridge alone owns the request-fiber signal, Cause reconciliation, `Effect.runPromiseExit`, and Promise boundary; a real aborted request interrupts the Effect and preserves oRPC's native outcome; `effect/context` plus `effect/wrap` supply the app/process-owned Context, resource lifetime, policy, and telemetry; acquired resources release once after native settlement; and oRPC, the bridge, and Effect resolve through one module realm. Fail on a manual/custom runner, service- or adapter-authored direct `Effect.run*`, or any oRPC service Effect entering `ProcessExecutionRuntime`. Retain no app composition or product reader.
+- [ ] 13.2 Through the Elysia/oRPC owner-local fixture, exercise one non-Effect operation through an inline native `.handler` and one Effect-backed operation through the selected official `@orpc/experimental-effect` `.effect` extension installed once in the service implementation. Prove the bridge alone owns the request-fiber signal, Cause reconciliation, `Effect.runPromiseExit`, and Promise boundary; a real aborted request interrupts the Effect and preserves oRPC's native outcome; `effect/context` plus `effect/wrap` supply the app/process-owned Context, resource lifetime, policy, and telemetry; acquired resources release once after native settlement; and oRPC, the bridge, and Effect resolve through one module realm. Fail on a manual/custom runner, service- or adapter-authored direct `Effect.run*`, or any oRPC service Effect entering `ProcessExecutionRuntime`. Retain no app composition or product reader.
 - [ ] 13.3 Add Inngest Serve and Connect harness modes plus `FunctionBundle` with an owner-local async conformance fixture; through the exact pinned native Inngest runtime and the exact `runtime-harnesses:acceptance:inngest-native-telemetry` target, execute a real function and `step.run` boundary that discriminates transient retry from native `NonRetriableError`, preserves history/cancellation, and proves the async telemetry observations named in the classification ledger. A mocked worker, protocol emulator, or source inspection is not acceptance.
 - [ ] 13.4 Through disposable native `connect({ handleShutdownSignals: [] })`, prove zero process-listener delta, repeated/concurrent runtime stops sharing one native close, admitted in-flight/flush settlement before provider release, and retained native Inngest outcomes without a Connect test double. Retain no app composition or product reader.
 

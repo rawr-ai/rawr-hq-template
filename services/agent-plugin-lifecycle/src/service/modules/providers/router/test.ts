@@ -77,7 +77,6 @@ import {
   type NativePluginFileAssessment,
   type NativePluginFileReadPlan,
   type NativeReconciliationPolicy,
-  type NativeTargetAssessment,
   type NativeUnavailableTargetAssessment,
   planNativePluginFileReads,
   unavailableNativeTarget,

@@ -99,14 +99,19 @@ describe("Habitat Bun repository preset", () => {
       },
       devDependencies: {
         "@biomejs/biome": "2.5.3",
+        "@nx/eslint": "23.1.1",
+        "@nx/eslint-plugin": "23.1.1",
+        "@typescript-eslint/parser": "8.66.0",
         "@types/node": "24.13.3",
         "bun-types": "1.3.14",
+        eslint: "10.0.3",
         nx: "23.1.1",
         typescript: "5.9.3",
       },
     });
     expect(readJson<{ readonly plugins: readonly unknown[] }>(tree, "nx.json").plugins).toEqual([
       "@habitat-ai/cli/nx-plugin",
+      { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
     ]);
     expect(readJson(tree, "nx.json")).toMatchObject({
       namedInputs: {
@@ -115,7 +120,7 @@ describe("Habitat Bun repository preset", () => {
       },
       targetDefaults: {
         build: { cache: true, dependsOn: ["^build"] },
-        check: { cache: false },
+        check: { cache: false, dependsOn: expect.arrayContaining(["check:boundaries"]) },
         test: { cache: true },
         typecheck: { cache: true },
         verify: { cache: false },
@@ -133,6 +138,8 @@ describe("Habitat Bun repository preset", () => {
     });
     expect(readJson(tree, "scripts/habitat/project.json")).not.toHaveProperty("projectType");
     expect(tree.exists("biome.json")).toBe(true);
+    expect(tree.read("eslint.config.mjs", "utf8")).toContain('...nxPlugin.configs["flat/base"]');
+    expect(tree.read("eslint.config.mjs", "utf8")).toContain('files: ["**/*.{ts,tsx,cts,mts}"]');
     expect(tree.read("bunfig.toml", "utf8")).toContain('linker = "isolated"');
     expect(readJson(tree, "tsconfig.base.json")).toMatchObject({
       compilerOptions: { types: ["bun-types", "node"] },
@@ -204,6 +211,7 @@ describe("Habitat Bun repository preset", () => {
     expect(readJson<{ readonly plugins: readonly unknown[] }>(tree, "nx.json").plugins).toEqual([
       "consumer-plugin",
       "@habitat-ai/cli/nx-plugin",
+      { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
     ]);
     expect(readJson(tree, "nx.json")).toMatchObject({
       namedInputs: { docs: ["{workspaceRoot}/docs/**/*"] },

@@ -1,10 +1,11 @@
-import { createObservabilityMiddlewareCallback } from "@habitat-ai/rawr-hq-sdk";
+import { createObservabilityMiddlewareCallback } from "@habitat-ai/sdk/service";
 import { base } from "../base";
 import { metadataDefaults } from "../model/policy/procedure-metadata";
 
 /** Authors workspace lifecycle signals through the Dev service context. */
 export const middleware = base.middleware(
   createObservabilityMiddlewareCallback(metadataDefaults, {
+    attributeNamespace: "rawr",
     spanAttributes: ({ context }) => ({
       workspace_root: context.scope.workspaceRoot,
       invocation_trace_id: context.invocation.traceId,

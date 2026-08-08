@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-resource-agent-plugin-package-output"
+ownerProject = "@habitat-ai/rawr-resource-agent-plugin-package-output"
+blueprint = "resource"
+blueprintVersion = 1
+
+[roots]
+project = "resources/agent-plugin-package-output"
+
+[selections]

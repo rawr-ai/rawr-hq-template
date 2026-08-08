@@ -1,0 +1,17 @@
+import { os } from "@orpc/server";
+
+type EmptyContextLane = Readonly<Record<PropertyKey, never>>;
+
+/** Complete five-lane context supplied before module-local curation. */
+export type Context = {
+  readonly deps: {
+    readonly <%= moduleName %>: unknown;
+  };
+  readonly scope: EmptyContextLane;
+  readonly config: EmptyContextLane;
+  readonly invocation: EmptyContextLane;
+  readonly provided: EmptyContextLane;
+};
+
+/** Standalone middleware author rooted in the complete service context. */
+export const base = os.$context<Context>();

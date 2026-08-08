@@ -181,11 +181,11 @@ them.
 
 An adapter-lowered oRPC procedure MUST retain native oRPC validation,
 middleware, context, declared errors, transport, and abort outcomes. A
-synchronous or Promise-returning operation MAY use native `.handler(...)`. An
-Effect-backed operation MUST use exact
-`@orpc/experimental-effect@2.0.0-beta.23` `handlerGen(...)` or an admitted
-official `.effect(...)` extension, whose exact source delegates to
-`.handler(handlerGen(...))`. The selected bridge MUST alone run the request
+synchronous or Promise-returning operation MAY use an inline native
+`.handler(...)`. An Effect-backed Habitat service operation MUST use exact
+`@orpc/experimental-effect@2.0.0-beta.23` `.effect(...)`, installed once in
+`src/service/impl.ts`; the official extension delegates to `handlerGen(...)`.
+The selected bridge MUST alone run the request
 Effect: it provides native `effect/context`, applies native `effect/wrap`,
 forwards the request signal to `Effect.runPromiseExit`, maps the resulting
 Cause, and returns the Promise to oRPC. `ProcessExecutionRuntime`, a manual
@@ -194,10 +194,10 @@ wrap that oRPC Effect.
 
 The application/process MUST own construction and release of Effect Context and
 scoped resources, policy and telemetry composition through `effect/wrap`, and
-shutdown. Runtime mounting alone coordinates cross-owner finalization. If the
-`.effect(...)` extension is selected, the extension and the native oRPC builder
-and implementer prototypes it patches MUST resolve in one physical module
-realm; equal version strings or compatible types do not satisfy that proof.
+shutdown. Runtime mounting alone coordinates cross-owner finalization. The
+official extension and native oRPC builder and implementer prototypes it
+patches MUST resolve in one physical module realm; equal version strings or
+compatible types do not satisfy that proof.
 
 #### Scenario: HTTP caller aborts an oRPC request
 
@@ -216,10 +216,9 @@ realm; equal version strings or compatible types do not satisfy that proof.
 
 #### Scenario: Official extension shares the native oRPC realm
 
-- **WHEN** acceptance selects `.effect(...)` rather than direct `handlerGen(...)`
-- **THEN** the loaded extension delegates through official `handlerGen(...)` on
-  the exact `Builder` or `ProcedureImplementer` prototype used by the mounted
-  procedure
+- **WHEN** acceptance selects the service's official `.effect(...)` operation
+- **THEN** the loaded extension delegates through official `handlerGen(...)`
+  on the exact native implementer prototype used by the mounted procedure
 - **AND** runtime resolution reports one physical `@orpc/server` and one
   physical `@orpc/experimental-effect` copy for that process boundary
 

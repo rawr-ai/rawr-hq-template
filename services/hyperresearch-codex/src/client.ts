@@ -4,6 +4,7 @@
 import { createRouterClient, type InferRouterInitialContext } from "@orpc/server";
 import { router } from "./service/router";
 
+export { type Contract, contract } from "./service/contract";
 export type { HyperresearchIntegrityFinding } from "./service/model/dto";
 export type {
   HyperresearchAgentJob,

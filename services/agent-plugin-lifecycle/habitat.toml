@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-agent-plugin-lifecycle"
+ownerProject = "@habitat-ai/rawr-agent-plugin-lifecycle"
+blueprint = "service"
+blueprintVersion = 1
+
+[roots]
+project = "services/agent-plugin-lifecycle"
+
+[selections]

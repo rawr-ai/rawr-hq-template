@@ -3,8 +3,8 @@
 ## Purpose
 
 - Ship Habitat's public local runtime as one conventional npm SDK.
-- Bundle the private service, resource, provider, and TypeBox adapter owners
-  behind one small public client surface.
+- Bundle the private service, resource, provider, and runtime-schema owners
+  behind isolated public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
   `.habitat/blueprints` tree as generated package assets.
 
@@ -14,8 +14,12 @@
 
 ## Boundaries
 
-- The public root exports only `createHabitatClientForWorkspace`,
-  `HabitatClient`, `standard`, and `TypeBoxStandardSchema`.
+- The public root exports only `createHabitatClientForWorkspace` and
+  `HabitatClient`.
+- `@habitat-ai/sdk/service` exposes only host-neutral procedure metadata,
+  analytics and observability middleware, and their required capability ports.
+- `standard` and `TypeBoxStandardSchema` are available only through
+  `@habitat-ai/sdk/service/schema`.
 - Low-level service constructors, resource contracts, provider factories, and
   implementation package identities stay private and must be bundled out of
   both JavaScript and declarations.
@@ -39,10 +43,11 @@
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
   member set is `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
-  and `resource@1`. The positive `service@1` root definition is copied as an
-  unselected candidate until its portable source rules, native Nx generator,
-  and packed-consumer construction proof land with pack admission; shipped files
-  are not members merely by being present.
+  `resource@1`, and `service@1`. The service member carries one closed
+  structure anchor with portable project-root package and source laws; its
+  native Nx generator and packed-consumer proof make the selected kind
+  constructible.
+  Shipped files are not members merely by being present.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
   qualified overlays remain repository-owned.
@@ -52,7 +57,9 @@
 ## Flow
 
 - `src/index.ts` composes the private service and concrete Node providers into
-  the public workspace-bound client.
+  the public workspace-bound client. `src/service/index.ts` owns the generic
+  service authoring surface, while `src/service/schema.ts` separately assembles
+  the private runtime-schema owner.
 - `tsdown` bundles workspace implementation owners into `dist` and leaves only
   declared third-party dependencies external.
 - The build copies `.habitat/blueprints` into `dist/blueprints` without
@@ -63,6 +70,8 @@
 ## Interfaces
 
 - Public runtime: `@habitat-ai/sdk`.
+- Public service authoring substrate: `@habitat-ai/sdk/service`.
+- Public service schema adapter: `@habitat-ai/sdk/service/schema`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and
   `@habitat-ai/sdk/blueprints/*`.
 - Ordinary package metadata: `@habitat-ai/sdk/package.json`.
@@ -73,7 +82,7 @@
 - [[../../services/habitat/AGENTS|Private Habitat service authority]]
 - [[../../resources/rule-evaluation/AGENTS|Private rule-evaluation resource]]
 - [[../../resources/source-inventory/AGENTS|Private source-inventory resource]]
-- [[../../packages/typebox-adapter/AGENTS|Private TypeBox adapter]]
+- [[../core/runtime/schema/AGENTS|Private runtime-schema owner]]
 
 ## Validation
 

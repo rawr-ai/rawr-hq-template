@@ -1,5 +1,4 @@
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import type {
   CodexSessionFile,
   CodexSessionSource,
@@ -28,6 +27,9 @@ type FixtureSession = {
   project?: string;
   modifiedMs: number;
 };
+
+const testAnalytics: AnalyticsClient = { track: () => {} };
+const testLogger: Logger = { info: () => {}, error: () => {} };
 
 function parentDirectory(filePath: string): string {
   const separator = filePath.lastIndexOf("/");
@@ -349,8 +351,8 @@ export function createClientOptions(
 ): CreateClientOptions {
   return {
     deps: {
-      logger: createEmbeddedPlaceholderLoggerAdapter(),
-      analytics: createEmbeddedPlaceholderAnalyticsAdapter(),
+      logger: testLogger,
+      analytics: testAnalytics,
       sessionSourceRuntime: input.sourceRuntime ?? createFixtureSourceRuntime(),
       sessionIndexRuntime: input.indexRuntime ?? new MemorySessionIndexRuntime(),
     },

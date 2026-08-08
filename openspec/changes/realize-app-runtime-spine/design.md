@@ -92,7 +92,7 @@ conformance fixtures.
 | Current owner or capability | Authority | Qualified destination and disposition |
 |---|---|---|
 | Mixed `packages/core` project | none as an aggregate | Delete the project identity; `packages/core` remains only the Habitat core namespace. |
-| `RawrCommand`, `RawrResult`, and duplicate Habitat output support | Habitat CLI mechanics across the task 2.8 publication barrier | Gate A exposes exactly one public/candidate `HabitatCommand` contract while the private predecessor remains only for untouched existing readers; Gate B publishes the accepted SDK/CLI pair; Gate C migrates those readers and deletes both Rawr symbols. Preserve no shim, alias, fallback, or dual public authority. |
+| `RawrCommand`, `RawrResult`, and duplicate Habitat output support | Habitat CLI mechanics across the task 2.8 publication barrier | A pre-Gate-A semantic sieve deletes condemned closures with no retained capability. Gate A exposes exactly one public/candidate `HabitatCommand` contract while the private predecessor remains only for unchanged surviving readers; Gate B publishes the accepted SDK/CLI pair; Gate C migrates those readers and deletes both Rawr symbols. Preserve no shim, alias, fallback, or dual public authority. |
 | `findWorkspaceRoot` and Habitat-side Rawr workspace-discovery lookups | no retained owner | Delete product-named workspace discovery and bind explicit Habitat workspace input at the CLI boundary. Product-owned Rawr configuration transfers unchanged with its product owner. |
 | Generic runtime observation contracts | Habitat core | Define through `@habitat-ai/sdk`; they carry correlation and observation law but select no backend. |
 | Current Rawr-named telemetry singleton and signal hooks | adoption evidence, not a merge owner | Hold the mixed telemetry root. Re-author its path-qualified OpenTelemetry Node resource/provider and singleton retirement into fresh Habitat-owned nodes before core reservation; do not restack or merge the predecessor root. Assemble the selected provider through one optional `@habitat-ai/sdk/telemetry` integration subpath, re-author later profile/process/harness obligations beside their final owners, and retire the source only after destination acceptance. |
@@ -607,11 +607,12 @@ Vendor realizations retain their native laws:
   truthful `draining` outcome and never triggers a second `stop(true)` call.
 - oRPC native callbacks retain validation, middleware, declared-error,
   transport, and abort semantics. Plain non-Effect operations use native
-  `.handler`; Effect-backed operations use the selected official
-  `@orpc/experimental-effect` `handlerGen` or `.effect` bridge. Exact beta.23 and
-  beta.25 source establishes that `.effect` delegates to `handlerGen`, and
-  `handlerGen` owns the request-fiber signal, Cause reconciliation,
-  `Effect.runPromiseExit`, and Promise boundary. The app/process supplies the
+  `.handler`; Effect-backed Habitat service operations use the official
+  `@orpc/experimental-effect` `.effect` extension installed once in
+  `src/service/impl.ts`. Exact beta.23 and beta.25 source establishes that the
+  extension delegates to `handlerGen`, which owns the request-fiber signal,
+  Cause reconciliation, `Effect.runPromiseExit`, and Promise boundary. The
+  app/process supplies the
   one Context, resource lifetime, policy, and telemetry decoration through
   `effect/context` plus `effect/wrap`; it does not replace the bridge terminal.
   Acceptance resolves oRPC, the official bridge, and Effect through one module
@@ -639,24 +640,87 @@ single vendor substrate; no compatibility blueprint or legacy construction
 branch survives. Habitat law asserts durable ownership and topology rather than
 vendor-syntax snapshots.
 
-Within that spine, a non-Effect operation uses native `.handler`; an
-Effect-backed operation uses the official `handlerGen` or `.effect` bridge after
-`effect/context` and `effect/wrap` apply the app/process-owned environment,
-lifetime, policy, and telemetry. Service law rejects service-authored direct `Effect.run*`, a
-manual Promise bridge, a custom Effect runner, or routing an oRPC service Effect
-through `ProcessExecutionRuntime`.
+Within that spine, a non-Effect operation uses an inline native `.handler`; an
+Effect-backed operation uses the once-installed official `.effect` extension
+after `effect/context` and `effect/wrap` apply the app/process-owned environment,
+lifetime, policy, and telemetry. Service law rejects service-authored direct
+`Effect.run*`, a manual Promise bridge, a custom Effect runner, or routing an
+oRPC service Effect through `ProcessExecutionRuntime`.
 
-The app, SDK, complete Oclif-app, and complete CLI-topic blueprint packets plus the exact `runtime-schema`,
-`runtime-definition`, `runtime-derivation`, `runtime-compiler`,
-`runtime-bootgraph`, `runtime-substrate-effect`, `runtime-process-runtime`,
-`runtime-harnesses`, `runtime-observation`, and `runtime-mounting` private-owner packets define one
-positive root shape and allowed descendants through root `structure.toml` files
-and focused Grit patterns. Adapter law is an owner-local overlay within the
-process-runtime or harness packet, not an additional runtime-owner packet. All enabled
-blueprints are closed. A packet may land as non-enforcing design material first,
-but each enabled kind law co-lands with its first conforming owner so every
-Graphite node remains green and truthful. There is no red baseline or exception
-lane.
+Blueprint definition composition is separate from instance realization. In
+Gate A, `component` is informal shorthand for authoring-tree organization only:
+a named subdirectory inside one blueprint groups small ordinary rule assets.
+The existing schema-version-1 `blueprint.toml` `[[rules]]` sequence remains the sole
+ordered composition surface and references nested rule assets through each
+rule's existing runner fields. For the Gate A service proof, root
+`structure.toml` remains exactly one ordinary Habitat structure rule and owns
+the complete positive filesystem closure; authoring component directories group
+focused ordinary Grit `pattern.md` packets only. Each structure or Grit packet
+remains a normal blueprint rule, application, and focused Nx target.
+
+A component name or directory creates no definition field, runtime DTO, parser
+branch, evaluator primitive, kind identity, manifest, Nx project, application,
+or component-named target. Directory placement alone activates nothing; only an
+ordinary root rule declaration gives a nested asset authority. One repository
+owner still pays only for one project-root `habitat.toml`, one selected
+blueprint/version, and one Nx project, while its existing `check:policy`
+composition evaluates the selected rule applications.
+
+The app, SDK, complete Oclif-app, and complete CLI-topic blueprints plus the
+exact `runtime-schema`, `runtime-definition`, `runtime-derivation`,
+`runtime-compiler`, `runtime-bootgraph`, `runtime-substrate-effect`,
+`runtime-process-runtime`, `runtime-harnesses`, `runtime-observation`, and
+`runtime-mounting` private-owner blueprints may organize ordinary packets into
+authoring directories where that improves locality. Adapter law remains an
+ordinary owner-local rule packet within the process-runtime or harness
+blueprint, not an additional runtime-owner blueprint. All enabled blueprints
+are closed. A packet may land as non-enforcing design material first, but each
+enabled kind law co-lands with its first conforming owner so every Graphite node
+remains green and truthful. There is no red baseline or exception lane.
+
+Directory nesting alone does not create blueprint composition. A blueprint
+relation is admitted only when the related law is independently constructible
+and reusable: `include` applies that law at the same anchor, while `contains`
+binds a closed child kind below a parent-owned boundary and cardinality. Neither
+relation creates a child manifest, project, or target; repeated occurrences of
+one related rule batch into one application owned by the parent instance. Gate
+A implements zero blueprint relations: the service proof is constructible from
+ordinary rules whose assets are grouped in its own authoring tree.
+Any later `include` / `contains` mechanism is a separately gated extension after
+Gate A and must prove an independently constructible reusable child kind before
+implementation. An admitted relation resolver fails closed on a missing
+definition, cycle, escaping bind, overlapping ownership, or cardinality
+violation.
+
+The SDK pack recursively preserves the complete declared authority tree and
+relative paths for every packaged blueprint, with source-to-installed byte
+parity for definition manifests, the required root structure anchor, informal
+authoring directories, and every rule-referenced asset. The current shallow `${id}/*`
+copy is a regression; packaging may not flatten, reinterpret, or omit nested
+authority. Recursive packing is the only Gate A engine/build correction;
+catalog decoding, rule applications, evaluator behavior, and Nx target
+projection remain unchanged.
+
+This current-native shape is also the Gate A bootstrap boundary. The repository
+continues to use registry `@habitat-ai/cli@0.5.2` for Nx projection before the
+candidate is published, so Gate A adds no blueprint or instance schema version,
+`components` field, runner-array form, component DTO, parser branch, or evaluator
+merge behavior that would require candidate plugin authority. No inheritance,
+variant, capability, niche, manual inventory, custom runner, custom parser, open
+scope, or expanded downstream composition configuration enters this change.
+
+`service@1` is the first end-to-end proof. Its current monolithic roughly
+900-line source-law direction is deleted rather than optimized, and the law is
+recast as a root structure anchor rule plus small ordinary rules whose assets
+are grouped under the context-bearing `contract`, `funnel`, and `spine`
+authoring directories. The nested packets are focused Grit rules only; the one
+root Habitat structure rule owns the complete positive filesystem closure. Each
+packet retains its normal application and focused target. The root anchor
+retains the project, `client.ts`, and source boundary. Database is optional
+closed service-owned persistence; modules, database, model, middleware,
+operations, and proof are not child kinds. TypeScript retains visibility proof,
+Nx retains project and dependency proof, and behavior tests retain service
+semantics and lifecycle proof.
 
 Nx owns package/project classification, cross-project/package import direction,
 standard task composition, and cache inputs. Habitat owns closed filesystem
@@ -703,16 +767,19 @@ becomes a Habitat app.
 
 Each ownership cut moves every reader and writer and deletes its predecessor in
 the same Graphite node, except for the bounded task 2.8 command publication
-barrier. Gate A lands the `HabitatCommand` producer and installed-candidate
-acceptance while existing private `RawrCommand`/`RawrResult` readers remain
-untouched. The root continues to use registry `@habitat-ai/cli@0.5.2` as its Nx
+barrier. Before Gate A, a semantic-sieve node deletes only predecessor reader
+closures already classified for deletion and requiring no retained-capability
+transfer. Gate A lands the `HabitatCommand` producer and installed-candidate
+acceptance while the remaining private `RawrCommand`/`RawrResult` source and
+readers remain unchanged; it neither revives nor preserves a condemned closure.
+The root continues to use registry `@habitat-ai/cli@0.5.2` as its Nx
 bootstrap, `apps/habitat` remains outside the Bun workspaces, and Bun 1.3.14
 retains a valid frozen lock; the candidate is not source-linked through a
 `file:`, `link:`, or duplicate workspace identity. Gate B publishes only the
 fixed SDK/CLI release pair from accepted exact main and records registry smoke.
 Gate C begins only after that receipt, replaces the root Nx bootstrap with the
-exact registry CLI, migrates surviving readers, and deletes
-the predecessor model and every reader in one green node. Gate A admits one
+exact registry CLI, migrates surviving readers, and deletes the predecessor
+model and every remaining reader in one green node. Gate A admits one
 public/candidate command model only, and Gate C admits zero predecessor models
 or readers. This changes release ordering, not authority, and creates no
 compatibility architecture.
@@ -787,6 +854,24 @@ project, or downstream product as another package.
   Nx project, make the public facade a terminal export surface, and verify the
   SDK's assembled output plus each installed subpath and selected-process
   dependency closure from a registry-built artifact.
+- **Authoring directories become a second runtime grammar** -> keep components
+  as informal shorthand for directory organization only, order their ordinary
+  Grit packets
+  through schema-v1 `blueprint.rules`, and retain each packet's existing
+  application and focused target without a component DTO, parser, or evaluator
+  merge.
+- **Gate A requires its unpublished candidate plugin to understand new law** ->
+  change no blueprint or instance schema and keep every nested asset behind an
+  existing rule runner so registry `@habitat-ai/cli@0.5.2` can project the
+  repository until the accepted candidate is published.
+- **Packaging silently drops nested composed authority** -> recursively pack
+  every declared definition, root anchor, authoring directory, and rule asset
+  with preserved relative paths, then compare source and installed bytes before
+  publication.
+- **Relations turn ordinary directories into an ontology and delay Gate A** ->
+  keep internal law as ordinary packets in informal authoring directories,
+  implement zero relations in Gate A, and gate any later `include` or `contains`
+  extension on independently constructible reusable law.
 - **Generic harness machinery absorbs vendor semantics** -> keep only the
   shared mount/stop shape generic and prove each vendor with native fixtures and
   exact installed-source review.
@@ -813,8 +898,25 @@ project, or downstream product as another package.
    OpenSpec, disposition its legacy Turborepo-era contents, establish the Nx
    consumer shape, and record the six-project finite import ledger without
    moving source.
-4. In Habitat, cross the bounded task 2.8 publication barrier in order. **Gate
-   A** produces the final TypeBox service-schema, service metadata/middleware,
+4. In Habitat, first reorganize blueprint authoring through the existing
+   schema-version-1 ordered rule surface and restore recursive
+   source-to-installed pack parity. Keep root `structure.toml` as one ordinary
+   Habitat structure rule that owns the complete positive service filesystem
+   closure; let root rules reference focused ordinary Grit assets under `spine`,
+   `modules`, `model`, `persistence`, and `proof` authoring directories; and
+   retain every packet's ordinary application and focused target. Recursive
+   packing is the only engine/build correction. Add no component field,
+   schema version, runner-array form, runtime DTO, parser branch, evaluator
+   merge, or downstream configuration. This keeps the unpublished candidate
+   out of the authority loop while registry `@habitat-ai/cli@0.5.2` remains the
+   root Nx bootstrap. Use `service@1` as the first proof: delete the monolithic
+   source-law direction and leave TypeScript, Nx, and behavior to their proper
+   truths. Gate A implements zero blueprint relations; module and database
+   remain service-owned law organized inside the service blueprint. Only after
+   Gate A may a separate `include` / `contains` slice be proposed for
+   independently constructible reusable law. Then cross the bounded task 2.8
+   publication barrier in order. **Gate A** produces the final TypeBox
+   service-schema, service metadata/middleware,
    host-neutral client, and sole public/candidate `HabitatCommand` interfaces;
    passes isolated-registry installed-candidate acceptance while the root keeps
    registry `@habitat-ai/cli@0.5.2`, `apps/habitat` remains outside Bun
@@ -871,7 +973,8 @@ project, or downstream product as another package.
    capabilities through the same platform-owned path.
 10. Add Elysia/oRPC, Inngest, and web adapter/harness realizations only with
    indispensable owner-local Habitat conformance fixtures. The oRPC fixture
-   proves native `.handler`, official `handlerGen`/`.effect`, bridge-owned
+   proves inline native `.handler`, the official `.effect` extension,
+   bridge-owned
    request-fiber execution, process-owned `effect/context`/`effect/wrap`, abort,
    resource release, and one module realm; it rejects every manual/custom Effect
    runner. No fixture becomes a production app, service, plugin, or package.

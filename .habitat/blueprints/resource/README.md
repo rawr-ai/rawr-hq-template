@@ -19,11 +19,8 @@ channels, and admits resource- or provider-owned tagged failures. TypeScript
 owns implementation assignability and inferred channels; native Effect
 diagnostics own catch construction and failure composition.
 
-That law is the one generic rule promoted from the Magic Migration evidence at
-commit `8f40bdff34dde18680352a9b91ce7b953c385942`. Habitat retained its
-semantics as one package-native v3 pattern; Magic's v2 manifest, baseline,
-consumer paths, and API, async-workflow, server-app, Nx, and tool overlays did
-not cross the package boundary.
+The law is package-native and product-neutral. Consumer paths and plugin, app,
+Nx, or tool overlays do not cross the resource boundary.
 
 See [[skill|Resource Capability Frame]], [[../provider/README|Provider]], and
 [[../../AUTHORITY|the repository-local authority boundary]].

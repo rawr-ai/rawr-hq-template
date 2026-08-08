@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-session-intelligence"
+ownerProject = "@habitat-ai/rawr-session-intelligence"
+blueprint = "service"
+blueprintVersion = 1
+
+[roots]
+project = "services/session-intelligence"
+
+[selections]

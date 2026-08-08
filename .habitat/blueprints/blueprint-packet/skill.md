@@ -10,15 +10,21 @@ description: Mental model for one Habitat rule packet as one reviewable policy c
 
 ## Frame
 
-A blueprint packet is one durable policy claim packaged with the evidence
-needed to evaluate it. The packet is smaller than the architectural kind and
-smaller than the product behavior. Its job is to make one monotonic constraint
-inspectable, executable, and reviewable without acquiring broader ownership.
+A rule packet is one durable policy claim declared by a blueprint's `[[rules]]`
+entry and evaluated through its named runner asset. The packet is smaller than
+the architectural kind and smaller than product behavior. Its job is to make
+one monotonic constraint inspectable, executable, and reviewable without
+acquiring broader ownership.
 
-`rule.json` names the claim, its owner, scope, reason, and remediation.
-`structure.toml` owns positive filesystem topology. `pattern.md` owns source
-relationships. `baseline.json` records admitted findings during convergence;
-it is not a source of truth and does not turn debt into design.
+One root `structure.toml` owns the kind's complete positive filesystem
+topology. Focused `pattern.md` assets own source relationships and may be
+arranged under `components/<role>/` for authoring clarity. That directory has
+no manifest or execution semantics; `blueprint.toml` is the activation surface.
+
+Remaining v2 compatibility packets use a physical `rule.json` and
+`baseline.json` envelope until their authority moves into a versioned
+blueprint. The baseline records admitted findings during convergence; it is not
+a source of truth and does not turn debt into design.
 
 ## Gradient
 

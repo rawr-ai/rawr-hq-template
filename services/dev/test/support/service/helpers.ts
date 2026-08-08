@@ -1,11 +1,46 @@
 import path from "node:path";
-import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
-import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
+import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import type { CreateClientOptions } from "../../../src/client";
 import type { Context } from "../../../src/service/base";
 import type { DevResources } from "../../../src/service/model/ports/dev-resources";
 
 const encoder = new TextEncoder();
+
+/** Analytics observation captured by Dev service tests. */
+export type TestAnalyticsEntry = {
+  event: string;
+  payload: Record<string, unknown>;
+};
+
+/** Structured log observation captured by Dev service tests. */
+export type TestLogEntry = {
+  level: "info" | "error";
+  event: string;
+  payload: Record<string, unknown>;
+};
+
+/** Records analytics emitted by the Dev service under test. */
+export function createTestAnalytics(
+  options: { sink?: TestAnalyticsEntry[] } = {}
+): AnalyticsClient {
+  return {
+    track(event, payload) {
+      options.sink?.push({ event, payload: payload ?? {} });
+    },
+  };
+}
+
+/** Records structured logs emitted by the Dev service under test. */
+export function createTestLogger(options: { sink?: TestLogEntry[] } = {}): Logger {
+  return {
+    info(event, payload) {
+      options.sink?.push({ level: "info", event, payload: payload ?? {} });
+    },
+    error(event, payload) {
+      options.sink?.push({ level: "error", event, payload: payload ?? {} });
+    },
+  };
+}
 
 export type FakeCommand = {
   command: string;
@@ -76,8 +111,8 @@ export function createClientOptions(
   } = {}
 ): CreateClientOptions {
   const deps: Context["deps"] = {
-    logger: input.logger ?? createEmbeddedPlaceholderLoggerAdapter(),
-    analytics: input.analytics ?? createEmbeddedPlaceholderAnalyticsAdapter(),
+    logger: input.logger ?? createTestLogger(),
+    analytics: input.analytics ?? createTestAnalytics(),
     resources: input.resources ?? createFakeResources().resources,
   };
   return {

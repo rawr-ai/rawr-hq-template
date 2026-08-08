@@ -1,0 +1,5 @@
+import { impl } from "./impl.js";
+import { router as <%= moduleLocalName %> } from "./modules/<%= moduleFileName %>/router.js";
+
+/** Completes the contract from already-authored module routers. */
+export const router = impl.router({ <%= moduleName %>: <%= moduleLocalName %> });

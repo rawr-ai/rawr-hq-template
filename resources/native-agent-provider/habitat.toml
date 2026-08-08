@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/rawr-resource-native-agent-provider"
+ownerProject = "@habitat-ai/rawr-resource-native-agent-provider"
+blueprint = "resource"
+blueprintVersion = 1
+
+[roots]
+project = "resources/native-agent-provider"
+
+[selections]

@@ -1,4 +1,4 @@
-import { procedureMetadata as createProcedureMetadata } from "@habitat-ai/rawr-hq-sdk";
+import { procedureMetadata as createProcedureMetadata } from "@habitat-ai/sdk/service";
 
 export const metadataDefaults = {
   idempotent: true,
