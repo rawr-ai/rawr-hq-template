@@ -74,7 +74,7 @@
     "@catenarycloud/linteffect@0.0.6": "patches/@catenarycloud%2Flinteffect@0.0.6.patch"
   },
   "dependencies": {
-    "@habitat-ai/service": "workspace:*",
+    "@habitat-ai/catalog-service": "workspace:*",
     "@orpc/client": "2.0.0-beta.23",
     "@orpc/contract": "2.0.0-beta.23",
     "@orpc/experimental-effect": "2.0.0-beta.23",

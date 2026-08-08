@@ -104,6 +104,14 @@ same semantic node that introduces the destination capability.
 | Semantic ledger and later Rawr workstream | **co-land** `nx run @habitat-ai/resource-semantic-ledger:test`, `nx run provider-semantic-ledger-fluree-http:test`; later in Rawr, `nx run @rawr/workstream-frame:test` and `nx run-many -t manifest,test -p @rawr/plugin-workstream` | Prove provider-neutral ledger reads/writes and Fluree conformance, including guarded proposal and concurrency behavior; then prove the Rawr workstream service consumes only the released public ledger face. | Direct Fluree coupling in Rawr, stale head acceptance, lost proposal guard, or a copied Habitat implementation fails. |
 | Later Rawr research and governance references | In Rawr, **co-land** `nx run @rawr/research-experiment:test` and `nx run rawr:check:governance` | Re-author the accepted service design through released `service@1`, TypeBox, and runtime provisioning, while the unique authority-freeze/toolbox references remain non-executable owner-local guidance. | Package-shaped runtime, manual structural decoding, copied Habitat law, provider construction by a host, or executable authority granted to a reference fails. |
 
+Task 2.9 landed in Rawr through PR #57 and PR #59 at canonical
+`main@a1a4fe7ed051ff405605c82c09ccd73332595383`, consuming the exact
+`@habitat-ai/cli` / `@habitat-ai/sdk` `0.5.10` pair. The destination proof
+passed 46 genuine Hyperresearch service tests, 3 Hyperresearch topic tests,
+the exact four-command manifest, and the selected service/topic typecheck,
+boundary, and Habitat-policy targets with no production fixture backend,
+selector, or command remaining.
+
 ### Deletion And Replacement Oracles
 
 Every deletion closes in the same node as its last reader and writer. The
@@ -169,7 +177,7 @@ MUST NOT claim this predecessor absence before the Gate B registry receipt.
 
 | Current surface | Class | Disposition and acceptance owner |
 |---|---|---|
-| `agent plugins check/package/status/sync/test` and `agent plugins vendors update` | Habitat | Reproject through `habitat agent plugins`; lifecycle behavior and native-provider acceptance own the commands. |
+| `agent plugins check/package/status/sync/test` and `agent plugins vendors update` | Habitat | Move the service-client-only projections to `plugins/cli/topics/agent-plugins` as `@habitat-ai/plugin-agent-plugins` and reproject through `habitat agent plugins`; lifecycle behavior and native-provider acceptance own the commands, while provider construction remains app composition. |
 | `agent plugins create` | Delete | Remove the predecessor authoring surface and its private helpers/tests. |
 | Native Oclif `plugins install/link/list/inspect/update/reset/uninstall` | Habitat | Keep under `habitat plugins`; Oclif manifest and installed-package behavior own the surface. |
 | `cli command create`, `cli extension create` | Habitat | Re-author as Habitat Nx generators plus thin CLI projections; generated-output acceptance owns them. |
