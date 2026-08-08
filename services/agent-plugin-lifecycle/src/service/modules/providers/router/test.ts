@@ -1,15 +1,15 @@
+import type { DisposableContentTreeEntry } from "@habitat-ai/resource-content-workspace";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
   NativeProviderCapabilities,
   NativeProviderInventory,
-} from "@habitat-ai/rawr-resource-native-agent-provider";
+} from "@habitat-ai/resource-native-agent-provider";
 import {
   NativeProviderCapabilitiesSchema,
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
-} from "@habitat-ai/rawr-resource-native-agent-provider";
-import type { DisposableContentTreeEntry } from "@habitat-ai/resource-content-workspace";
+} from "@habitat-ai/resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import {

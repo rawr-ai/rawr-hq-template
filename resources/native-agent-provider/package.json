@@ -1,5 +1,5 @@
 {
-  "name": "@habitat-ai/rawr-resource-native-agent-provider",
+  "name": "@habitat-ai/resource-native-agent-provider",
   "version": "0.1.0",
   "private": true,
   "repository": {

@@ -1,4 +1,4 @@
-import { NativeProviderHomeSchema } from "@habitat-ai/rawr-resource-native-agent-provider";
+import { NativeProviderHomeSchema } from "@habitat-ai/resource-native-agent-provider";
 import { Value } from "typebox/value";
 
 /** Reserved direct child that keeps one native marketplace reachable for a disposable root. */

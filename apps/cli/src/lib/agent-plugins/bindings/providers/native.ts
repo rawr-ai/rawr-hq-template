@@ -1,4 +1,4 @@
-import type { NativeAgentProviderResources } from "@habitat-ai/rawr-resource-native-agent-provider";
+import type { NativeAgentProviderResources } from "@habitat-ai/resource-native-agent-provider";
 
 /**
  * Exact factories selected by an app for the closed native provider catalog.

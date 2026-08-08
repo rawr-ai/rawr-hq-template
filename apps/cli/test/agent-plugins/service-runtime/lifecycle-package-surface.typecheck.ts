@@ -36,7 +36,7 @@ import * as retiredRouterSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/r
 import * as retiredContractSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/service/contract";
 // @ts-expect-error Contract types are exposed only through the public client face.
 import * as retiredTypesSurface from "@habitat-ai/rawr-agent-plugin-lifecycle/types";
-import type { NativeAgentProviderResources } from "@habitat-ai/rawr-resource-native-agent-provider";
+import type { NativeAgentProviderResources } from "@habitat-ai/resource-native-agent-provider";
 
 const lifecycleContract: Contract = contract;
 void lifecycleContract;

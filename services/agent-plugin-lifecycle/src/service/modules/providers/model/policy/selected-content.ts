@@ -1,4 +1,4 @@
-import type { NativeMarketplaceSource } from "@habitat-ai/rawr-resource-native-agent-provider";
+import type { NativeMarketplaceSource } from "@habitat-ai/resource-native-agent-provider";
 import { Value } from "typebox/value";
 import type { SourceEligibilityIssue } from "../../../../model/dto/content-workspace";
 import { MAX_OWNERSHIP_CLAIMS } from "../../../../model/dto/distribution-ownership";
