@@ -12,7 +12,7 @@ peer lifecycle services, HQ Ops plugin-lifecycle and workspace-plugin-catalog
 modules, or an active import, dependency, project, command, router, contract,
 repository, test, hook, or guard that requires them. Retained behavior MUST live
 only in the five bounded modules of
-`@habitat-ai/rawr-agent-plugin-lifecycle` or in the separately owned `create`
+`@habitat-ai/agent-plugin-lifecycle-service` or in the separately owned `create`
 source-authoring command. No renamed aggregate,
 controller application, wrapper, dormant copy, forwarding package, or
 compatibility facade may replace them.

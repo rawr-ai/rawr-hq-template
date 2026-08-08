@@ -10,7 +10,7 @@
   "operation": {
     "kind": "check"
   },
-  "ownerProject": "@habitat-ai/rawr-agent-plugin-lifecycle",
+  "ownerProject": "@habitat-ai/agent-plugin-lifecycle-service",
   "lane": "enforced",
   "forbids": "a literal module-loading edge from curated agent-plugin command or command-support source to @oclif/plugin-plugins or one of its subpaths",
   "why": "Native Oclif extension lifecycle and curated agent-plugin lifecycle are separate command channels. Curated command source must not acquire the native external-plugin implementation.",

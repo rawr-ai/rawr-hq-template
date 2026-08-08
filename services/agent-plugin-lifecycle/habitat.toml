@@ -1,6 +1,6 @@
 schemaVersion = 1
-id = "@habitat-ai/rawr-agent-plugin-lifecycle"
-ownerProject = "@habitat-ai/rawr-agent-plugin-lifecycle"
+id = "@habitat-ai/agent-plugin-lifecycle-service"
+ownerProject = "@habitat-ai/agent-plugin-lifecycle-service"
 blueprint = "service"
 blueprintVersion = 1
 

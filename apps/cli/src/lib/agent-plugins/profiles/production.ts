@@ -1,4 +1,4 @@
-import type { CreateClientOptions } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
+import type { CreateClientOptions } from "@habitat-ai/agent-plugin-lifecycle-service/client";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
 import { makeNodeAgentPluginPackageOutputResource } from "@habitat-ai/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";

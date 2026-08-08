@@ -52,6 +52,6 @@
 
 ## Validation
 
-- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:typecheck`.
-- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:test` for current-main record,
+- Run `bunx nx run @habitat-ai/agent-plugin-lifecycle-service:typecheck`.
+- Run `bunx nx run @habitat-ai/agent-plugin-lifecycle-service:test` for current-main record,
   selection, schema-boundary, and context-boundary behavior.

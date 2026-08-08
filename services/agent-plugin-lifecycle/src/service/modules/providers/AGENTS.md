@@ -102,6 +102,6 @@
 
 ## Validation
 
-- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:typecheck`.
-- Run `bunx nx run @habitat-ai/rawr-agent-plugin-lifecycle:test` for selection, status,
+- Run `bunx nx run @habitat-ai/agent-plugin-lifecycle-service:typecheck`.
+- Run `bunx nx run @habitat-ai/agent-plugin-lifecycle-service:test` for selection, status,
   disposable test, sync, revalidation, and native convergence behavior.

@@ -7,7 +7,7 @@ context flow, owner-local models and routers, and qualified resource boundaries.
 ### Requirement: Curated lifecycle is one oRPC service
 
 Template MUST implement curated agent-plugin lifecycle as one
-`@habitat-ai/rawr-agent-plugin-lifecycle` oRPC service with exactly the
+`@habitat-ai/agent-plugin-lifecycle-service` oRPC service with exactly the
 `releases`, `vendors`, `packaging`, `providers`, and `governance` domain
 modules. Distinct Personal Git records, native provider homes, and explicit
 package outputs remain qualified state owners without becoming peer service

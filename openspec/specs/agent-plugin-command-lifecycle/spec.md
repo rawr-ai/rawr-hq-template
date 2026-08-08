@@ -43,7 +43,7 @@ bag.
 
 Each service-backed lifecycle transition command MUST perform command-local
 value adaptation and invoke exactly one
-`@habitat-ai/rawr-agent-plugin-lifecycle` client procedure. CLI code MUST NOT
+`@habitat-ai/agent-plugin-lifecycle-service` client procedure. CLI code MUST NOT
 import a module-local router handler or repository,
 resolve lifecycle prerequisites, sequence plan/apply/verify/retire across
 modules, aggregate procedure results, persist another ledger/receipt/capsule, or
@@ -108,7 +108,7 @@ staged/clean repository validation, release-input body/envelope
 canonicalization, release-input staged refresh, current-main v3 direct-record encode/validate,
 or current-main selection validation before acquiring any Git, filesystem,
 provider, Oclif, app, or runtime port. Each selected mode MUST invoke exactly one
-typed `@habitat-ai/rawr-agent-plugin-lifecycle` procedure once.
+typed `@habitat-ai/agent-plugin-lifecycle-service` procedure once.
 
 The prior protected-lane runtime mode MUST be absent. C6 settlement MUST select
 the exact canonical personal-main workspace/release input and MUST NOT supply or

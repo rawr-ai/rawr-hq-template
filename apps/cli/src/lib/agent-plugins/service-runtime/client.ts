@@ -2,7 +2,7 @@ import {
   type Client,
   type CreateClientOptions,
   createClient,
-} from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
+} from "@habitat-ai/agent-plugin-lifecycle-service/client";
 import { createNativeAgentProviderResources } from "../bindings/providers";
 import {
   type LifecycleOperation,
