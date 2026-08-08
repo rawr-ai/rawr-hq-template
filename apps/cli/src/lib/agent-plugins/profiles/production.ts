@@ -1,11 +1,11 @@
 import type { CreateClientOptions } from "@habitat-ai/rawr-agent-plugin-lifecycle/client";
 import { createEmbeddedPlaceholderAnalyticsAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/analytics/embedded-placeholder";
 import { createEmbeddedPlaceholderLoggerAdapter } from "@habitat-ai/rawr-hq-sdk/host-adapters/logger/embedded-placeholder";
-import { makeNodeVersionedContentResource } from "@habitat-ai/rawr-resource-versioned-content/providers/git-effect-platform-node";
 import { makeNodeAgentPluginPackageOutputResource } from "@habitat-ai/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { makeNodeContentWorkspaceResource } from "@habitat-ai/resource-content-workspace/providers/git-effect-platform-node";
 import { makeNodeClaudeNativeAgentProviderResource } from "@habitat-ai/resource-native-agent-provider/providers/claude-effect-platform-node";
 import { makeNodeCodexNativeAgentProviderResource } from "@habitat-ai/resource-native-agent-provider/providers/codex-effect-platform-node";
+import { makeNodeVersionedContentResource } from "@habitat-ai/resource-versioned-content/providers/git-effect-platform-node";
 
 import type { NativeAgentProviderResourceFactories } from "../bindings/providers";
 

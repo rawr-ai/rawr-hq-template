@@ -1,7 +1,7 @@
-import type { VersionedContentResource } from "@habitat-ai/rawr-resource-versioned-content";
 import type { AgentPluginPackageOutputResource } from "@habitat-ai/resource-agent-plugin-package-output";
 import type { ContentWorkspaceResource } from "@habitat-ai/resource-content-workspace";
 import type { NativeAgentProviderResources } from "@habitat-ai/resource-native-agent-provider";
+import type { VersionedContentResource } from "@habitat-ai/resource-versioned-content";
 import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
 import { os } from "@orpc/server";
 import type { ClockPort } from "./model/ports";

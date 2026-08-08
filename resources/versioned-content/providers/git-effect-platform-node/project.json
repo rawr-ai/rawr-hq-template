@@ -2,7 +2,7 @@
   "name": "provider-versioned-content-git-effect-platform-node",
   "projectType": "library",
   "sourceRoot": "resources/versioned-content/providers/git-effect-platform-node",
-  "implicitDependencies": ["@habitat-ai/rawr-resource-versioned-content"],
+  "implicitDependencies": ["@habitat-ai/resource-versioned-content"],
   "tags": [
     "type:provider",
     "layer:resource-provider",

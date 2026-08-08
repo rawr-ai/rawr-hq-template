@@ -1,5 +1,5 @@
 {
-  "name": "@habitat-ai/rawr-resource-versioned-content",
+  "name": "@habitat-ai/resource-versioned-content",
   "version": "0.1.0",
   "private": true,
   "repository": {

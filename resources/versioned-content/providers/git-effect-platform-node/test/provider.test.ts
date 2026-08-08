@@ -18,7 +18,7 @@ import { NodeServices } from "@effect/platform-node";
 import {
   MAX_VERSIONED_CONTENT_FAILURE_DETAIL,
   type VersionedContentFailure,
-} from "@habitat-ai/rawr-resource-versioned-content";
+} from "@habitat-ai/resource-versioned-content";
 import { Cause, Effect, Exit, Fiber, FileSystem, PlatformError } from "effect";
 
 import { makeNodeVersionedContentResource, makeVersionedContentResource } from "../index";

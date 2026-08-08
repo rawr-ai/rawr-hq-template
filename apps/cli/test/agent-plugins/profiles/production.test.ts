@@ -31,7 +31,7 @@ vi.mock("@habitat-ai/resource-native-agent-provider/providers/codex-effect-platf
 vi.mock("@habitat-ai/resource-native-agent-provider/providers/claude-effect-platform-node", () => ({
   makeNodeClaudeNativeAgentProviderResource: selected.claude,
 }));
-vi.mock("@habitat-ai/rawr-resource-versioned-content/providers/git-effect-platform-node", () => ({
+vi.mock("@habitat-ai/resource-versioned-content/providers/git-effect-platform-node", () => ({
   makeNodeVersionedContentResource: selected.versionedContent,
 }));
 
