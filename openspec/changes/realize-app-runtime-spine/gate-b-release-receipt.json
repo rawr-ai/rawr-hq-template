@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "releaseGroup": "habitat-cli",
+  "version": "0.5.6",
+  "source": {
+    "commit": "98f34ca4c931a5e0fa4868825f86709ade603633",
+    "tag": "habitat-cli-v0.5.6"
+  },
+  "policyPack": {
+    "package": "@habitat-ai/sdk",
+    "protocolVersion": 1,
+    "digestFormat": "habitat-policy-pack-source-v1",
+    "digest": "sha256:7428aab8c314f04d861578844090f9e75ab3f5b2599b87a2fb4f969bf3da4123"
+  },
+  "packages": [
+    {
+      "name": "@habitat-ai/cli",
+      "version": "0.5.6",
+      "integrity": "sha512-35V8VjhDCTBQGIICI6hday2R1Dm+TZj1GOlOE9g81k4NKGjbPHefPmduqkFTK0xIbfM/5pq5KtnW918hWICA4g==",
+      "provenance": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@habitat-ai%2fcli@0.5.6",
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    },
+    {
+      "name": "@habitat-ai/sdk",
+      "version": "0.5.6",
+      "integrity": "sha512-tWy6PGPAY73HgUafm9ObECxQ854/Jz+4AqzQarBhZoXcrojRpueH9Ph+DZqsSrVnSmTcTiPaUXAce1bnWpAY0w==",
+      "provenance": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@habitat-ai%2fsdk@0.5.6",
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    }
+  ],
+  "acceptance": {
+    "workflow": "Publish Habitat",
+    "runId": 31259793651,
+    "runAttempt": 1,
+    "target": "@habitat-ai/cli:acceptance:oclif-installed-package",
+    "registry": "https://registry.npmjs.org",
+    "conclusion": "success"
+  }
+}

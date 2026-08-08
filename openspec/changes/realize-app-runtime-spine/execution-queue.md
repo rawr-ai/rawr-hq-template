@@ -6,10 +6,11 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 ## Ground
 
-- Canonical Habitat ground: `main@c0ebd800a45e4afb682e6669d037931eb62092c2`.
-- Sole active source container: `codex/gate-a-foundation-producer`, directly
-  above the accepted semantic-sieve parent
-  `codex/remove-rejected-habitat-rawr-closures`.
+- Canonical Habitat ground and release source:
+  `main@98f34ca4c931a5e0fa4868825f86709ade603633`, tagged
+  `habitat-cli-v0.5.6`.
+- Gates A and B are sealed. The first active source container is Gate C's
+  released-reader cutover.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -28,17 +29,19 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 ## Containers
 
-- [ ] **Gate A - foundation producer**: finish the bounded task 2.8 sieve; seal
+- [x] **Gate A - foundation producer**: finish the bounded task 2.8 sieve; seal
   selected, closed, constructible `service@1`; produce `runtime-schema`, the SDK
   service faces, and `HabitatCommand`; complete the admitted toolchain move;
   pass isolated-registry installed-candidate acceptance; and land the accepted
   exact-main producer. Prove plain `.handler` plus the official Effect bridge
   and reject every manual/custom runner. Leave the remaining private
   `RawrCommand`/`RawrResult` source and readers untouched, revive no condemned
-  closure, and admit no second public/candidate command model.
-- [ ] **Gate B - exact-main publication**: from the accepted Gate A exact-main
+  closure, and admit no second public/candidate command model. Landed at
+  `main@98f34ca4c931a5e0fa4868825f86709ade603633`.
+- [x] **Gate B - exact-main publication**: from the accepted Gate A exact-main
   revision, use the fixed Nx Release group to publish and registry-smoke only
-  `@habitat-ai/sdk` and `@habitat-ai/cli`, then record the exact receipt.
+  `@habitat-ai/sdk` and `@habitat-ai/cli`, then record the exact
+  [release receipt](gate-b-release-receipt.json).
 - [ ] **Gate C - reader cutover**: only after that registry receipt, migrate
   the root Nx bootstrap to the exact released CLI, move surviving readers to
   released `HabitatCommand`, delete any condemned reader closure still
