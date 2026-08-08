@@ -1,16 +1,4 @@
 import type {
-  ClaudeNativeAgentProviderSession,
-  CodexNativeAgentProviderSession,
-  NativeAgentProviderFailure,
-  NativeAgentProviderResources,
-  NativeMarketplaceSource,
-  NativeProviderCapabilities,
-  NativeProviderInventory,
-  NativeProviderPluginFiles,
-  NativeProviderPluginFilesReadInput,
-  NativeProviderPluginObservation,
-} from "@habitat-ai/rawr-resource-native-agent-provider";
-import type {
   ObserveRemoteInput,
   VersionedContentFailure,
   VersionedContentResource,
@@ -22,6 +10,18 @@ import type {
   DisposableContentTreeEntry,
   MaterializeContentTreeInput,
 } from "@habitat-ai/resource-content-workspace";
+import type {
+  ClaudeNativeAgentProviderSession,
+  CodexNativeAgentProviderSession,
+  NativeAgentProviderFailure,
+  NativeAgentProviderResources,
+  NativeMarketplaceSource,
+  NativeProviderCapabilities,
+  NativeProviderInventory,
+  NativeProviderPluginFiles,
+  NativeProviderPluginFilesReadInput,
+  NativeProviderPluginObservation,
+} from "@habitat-ai/resource-native-agent-provider";
 import { Effect } from "effect";
 
 import type { Client } from "../../../../src/client";

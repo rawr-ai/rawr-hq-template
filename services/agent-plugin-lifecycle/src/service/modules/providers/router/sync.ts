@@ -1,16 +1,16 @@
+import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
   NativeProviderCapabilities,
   NativeProviderInventory,
   NativeProviderMutationResult,
-} from "@habitat-ai/rawr-resource-native-agent-provider";
+} from "@habitat-ai/resource-native-agent-provider";
 import {
   NativeProviderCapabilitiesSchema,
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
-} from "@habitat-ai/rawr-resource-native-agent-provider";
-import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
+} from "@habitat-ai/resource-native-agent-provider";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import type { ReleaseRelativePath } from "../../../model/dto/release-identity";

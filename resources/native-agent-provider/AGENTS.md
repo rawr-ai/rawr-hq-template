@@ -58,6 +58,6 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @habitat-ai/rawr-resource-native-agent-provider:typecheck`.
-- Run `bunx nx run @habitat-ai/rawr-resource-native-agent-provider:test` when contract
+  `bunx nx run @habitat-ai/resource-native-agent-provider:typecheck`.
+- Run `bunx nx run @habitat-ai/resource-native-agent-provider:test` when contract
   behavior changes.

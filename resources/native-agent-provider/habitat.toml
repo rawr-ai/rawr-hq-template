@@ -1,6 +1,6 @@
 schemaVersion = 1
-id = "@habitat-ai/rawr-resource-native-agent-provider"
-ownerProject = "@habitat-ai/rawr-resource-native-agent-provider"
+id = "@habitat-ai/resource-native-agent-provider"
+ownerProject = "@habitat-ai/resource-native-agent-provider"
 blueprint = "resource"
 blueprintVersion = 1
 

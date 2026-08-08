@@ -33,7 +33,7 @@
     "@habitat-ai/rawr-plugin-session-tools": "workspace:*",
     "@habitat-ai/resource-agent-plugin-package-output": "workspace:*",
     "@habitat-ai/resource-content-workspace": "workspace:*",
-    "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
+    "@habitat-ai/resource-native-agent-provider": "workspace:*",
     "@habitat-ai/rawr-resource-versioned-content": "workspace:*",
     "effect": "4.0.0-beta.101",
     "zod": "^3.24.3"
