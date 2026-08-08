@@ -52,7 +52,8 @@
 ## Routing
 
 - [Apps router](../AGENTS.md)
-- [Core command primitives](../../packages/core/AGENTS.md)
+- [Habitat CLI command contract](../habitat/AGENTS.md) for the released
+  `@habitat-ai/cli/command` authority
 - [Agent-plugin lifecycle service](../../services/agent-plugin-lifecycle/AGENTS.md)
 
 ## Validation

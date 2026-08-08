@@ -1,14 +1,15 @@
-import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
+import { findWorkspaceRoot } from "@habitat-ai/rawr-core";
 import { resolveNodeScratchPolicyInput } from "@habitat-ai/rawr-dev-node/scratch-policy";
 import { Flags } from "@oclif/core";
 import { createDevClient } from "../../../lib/dev-binding";
 import { devHumanRenderer, exitForPreflight } from "../../../lib/render";
 
-export default class DevWorktreeCleanup extends RawrCommand {
+export default class DevWorktreeCleanup extends HabitatCommand {
   static description = "Plan or apply strict-prefix worktree cleanup";
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     apply: Flags.boolean({ description: "Execute planned worktree removals", default: false }),
     prefix: Flags.string({ description: "Required worktree basename prefix", required: true }),
     "merged-only": Flags.boolean({
@@ -25,14 +26,14 @@ export default class DevWorktreeCleanup extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(DevWorktreeCleanup);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(DevWorktreeCleanup);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
       const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", {
         code: "WORKSPACE_ROOT_MISSING",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -50,7 +51,7 @@ export default class DevWorktreeCleanup extends RawrCommand {
       { context: { invocation: { traceId: "plugin-devops.worktree.cleanup" } } }
     );
     const result = this.ok(data);
-    this.outputResult(result, { flags: baseFlags, human: devHumanRenderer(this) });
+    await this.outputResult(result, { flags: baseFlags, human: devHumanRenderer(this) });
     const exitCode = exitForPreflight(data);
     if (exitCode !== 0) this.exit(exitCode);
   }

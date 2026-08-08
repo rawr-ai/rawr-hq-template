@@ -31,7 +31,7 @@ const admittedStatusArgs = [
   "codex=/tmp/codex-home",
   "--json",
 ] as const;
-let outputLines: string[];
+let stdoutWrites: string[];
 
 describe("production lifecycle command binding", () => {
   beforeEach(() => {
@@ -39,12 +39,7 @@ describe("production lifecycle command binding", () => {
     binding.bind.mockReset();
     binding.select.mockReset();
     binding.status.mockReset();
-    outputLines = [];
-    const captureOutput = (message?: string) => {
-      if (message !== undefined) outputLines.push(message);
-    };
-    vi.spyOn(AgentPluginsCheck.prototype, "log").mockImplementation(captureOutput);
-    vi.spyOn(AgentPluginsStatus.prototype, "log").mockImplementation(captureOutput);
+    stdoutWrites = captureStdoutWrites();
   });
 
   afterEach(() => {
@@ -84,8 +79,8 @@ describe("production lifecycle command binding", () => {
     expect(binding.bind).not.toHaveBeenCalled();
     expect(binding.select).not.toHaveBeenCalled();
     expect(binding.status).not.toHaveBeenCalled();
-    expect(outputLines).toHaveLength(1);
-    expect(JSON.parse(String(outputLines[0]))).toEqual({
+    expect(stdoutWrites).toHaveLength(1);
+    expect(JSON.parse(stdoutWrites.join(""))).toEqual({
       ok: false,
       error: {
         message: "--current-main-body-json must contain a valid current-main body",
@@ -150,7 +145,7 @@ describe("production lifecycle command binding", () => {
     expect(binding.bind).toHaveBeenCalledWith(binding.profile);
     expect(binding.select).not.toHaveBeenCalled();
     expect(binding.status).not.toHaveBeenCalled();
-    expect(JSON.parse(String(outputLines.at(-1)))).toEqual({
+    expect(JSON.parse(stdoutWrites.join(""))).toEqual({
       ok: false,
       error: {
         message: "Lifecycle procedure failed",
@@ -180,7 +175,7 @@ describe("production lifecycle command binding", () => {
     expect(binding.bind).toHaveBeenCalledWith(binding.profile);
     expect(binding.select).toHaveBeenCalledExactlyOnceWith("providers.status");
     expect(binding.status).toHaveBeenCalledOnce();
-    expect(JSON.parse(String(outputLines.at(-1)))).toEqual({
+    expect(JSON.parse(stdoutWrites.join(""))).toEqual({
       ok: false,
       error: {
         message: "Lifecycle procedure failed",
@@ -193,3 +188,18 @@ describe("production lifecycle command binding", () => {
     });
   });
 });
+
+function captureStdoutWrites(): string[] {
+  const writes: string[] = [];
+  vi.spyOn(process.stdout, "write").mockImplementation(((
+    chunk: string | Uint8Array,
+    encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
+    callback?: (error?: Error | null) => void
+  ) => {
+    writes.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+    const complete = typeof encodingOrCallback === "function" ? encodingOrCallback : callback;
+    complete?.();
+    return true;
+  }) as typeof process.stdout.write);
+  return writes;
+}

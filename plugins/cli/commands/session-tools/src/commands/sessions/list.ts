@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import type { Client } from "@habitat-ai/rawr-session-intelligence/client";
 import { Flags } from "@oclif/core";
 import { formatSessionTable } from "../../lib/format";
@@ -8,11 +8,11 @@ import type { SessionSourceFilter } from "../../lib/session-types";
 
 type CatalogListOptions = NonNullable<Parameters<Client["catalog"]["list"]>[1]>;
 
-export default class SessionsList extends RawrCommand {
+export default class SessionsList extends HabitatCommand {
   static description = "List Claude/Codex sessions";
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     source: Flags.string({
       description: "Session source",
       options: ["claude", "codex", "all"],
@@ -38,8 +38,8 @@ export default class SessionsList extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(SessionsList);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(SessionsList);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const source = String(flags.source) as SessionSourceFilter;
     const limit = Number(flags.limit);
 
@@ -71,7 +71,7 @@ export default class SessionsList extends RawrCommand {
     }
 
     const result = this.ok({ sessions, outDir });
-    this.outputResult(result, {
+    await this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         if (flags.quiet) return;

@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Flags } from "@oclif/core";
 
 import { AgentPluginLifecycleCommand } from "../../../../lib/agent-plugins/commands/command";
@@ -13,14 +13,14 @@ export default class AgentPluginsUpdateVendors extends AgentPluginLifecycleComma
   static description = "Author reviewable updates for explicitly selected tracked vendor sources";
 
   static flags = {
-    json: RawrCommand.baseFlags.json,
+    json: HabitatCommand.baseFlags.json,
     ...contentWorkspaceFlags,
     source: Flags.string({ multiple: true, description: "Declared vendor source identity" }),
   } as const;
 
   async run(): Promise<void> {
-    const { flags } = await this.parseRawr(AgentPluginsUpdateVendors);
-    const input = this.parseInput(flags, parseVendorUpdateRequest);
+    const { flags } = await this.parse(AgentPluginsUpdateVendors);
+    const input = await this.parseInput(flags, parseVendorUpdateRequest);
     if (input !== undefined) await this.project({ operation: "vendors.update", input }, flags);
   }
 }

@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Args } from "@oclif/core";
 
 import {
@@ -7,7 +7,7 @@ import {
 } from "../../../lib/authoring/cli-command";
 import { authoringResultView } from "../../../lib/authoring/shared";
 
-export default class CliCommandCreate extends RawrCommand {
+export default class CliCommandCreate extends HabitatCommand {
   static description = "Create one official command in a verified Template workspace";
 
   static args = {
@@ -16,12 +16,12 @@ export default class CliCommandCreate extends RawrCommand {
   } as const;
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
   } as const;
 
   async run(): Promise<void> {
-    const { args, flags } = await this.parseRawr(CliCommandCreate);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { args, flags } = await this.parse(CliCommandCreate);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const request = parseOfficialCommandAuthoringRequest({
       topic: args.topic,
       name: args.name,
@@ -29,7 +29,7 @@ export default class CliCommandCreate extends RawrCommand {
       dryRun: baseFlags.dryRun,
     });
     if (!request.ok) {
-      this.outputResult(
+      await this.outputResult(
         this.fail("Official command request rejected", { details: request.issues }),
         { flags: baseFlags }
       );
@@ -42,7 +42,7 @@ export default class CliCommandCreate extends RawrCommand {
       result.kind === "AuthoringRejected" ||
       result.kind === "AuthoringFailed" ||
       result.kind === "AuthoringPartial";
-    this.outputResult(
+    await this.outputResult(
       failed
         ? this.fail("Official command authoring did not complete", { details: view })
         : this.ok(view),

@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Flags } from "@oclif/core";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
@@ -19,7 +19,7 @@ export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
     "Test a targeted release selection or complete release set in explicit provider homes";
 
   static flags = {
-    json: RawrCommand.baseFlags.json,
+    json: HabitatCommand.baseFlags.json,
     ...releaseWorkspaceFlags,
     plugin: Flags.string({ multiple: true, description: "Target one declared agent plugin" }),
     "disposable-root": providerTestDisposableRootFlag,
@@ -27,8 +27,8 @@ export default class AgentPluginsTest extends AgentPluginLifecycleCommand {
   } as const;
 
   async run(): Promise<void> {
-    const { flags } = await this.parseRawr(AgentPluginsTest);
-    const input = this.parseInput(flags, parseTestRequest);
+    const { flags } = await this.parse(AgentPluginsTest);
+    const input = await this.parseInput(flags, parseTestRequest);
     if (input === undefined) return;
     await this.project({ operation: "providers.test", input }, flags);
   }

@@ -1,12 +1,13 @@
-import { findWorkspaceRoot, RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
+import { findWorkspaceRoot } from "@habitat-ai/rawr-core";
 import { Flags } from "@oclif/core";
 import { createDevClient } from "../../../lib/dev-binding";
 
-export default class DevStackDoctor extends RawrCommand {
+export default class DevStackDoctor extends HabitatCommand {
   static description = "Inspect Git, Graphite, and worktree state for stack work";
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     "no-fail": Flags.boolean({
       description: "Return zero even when stack requires attention",
       default: false,
@@ -16,14 +17,14 @@ export default class DevStackDoctor extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(DevStackDoctor);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(DevStackDoctor);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const workspaceRoot = await findWorkspaceRoot(process.cwd());
     if (!workspaceRoot) {
       const result = this.fail("Unable to locate workspace root (expected a ./plugins directory)", {
         code: "WORKSPACE_ROOT_MISSING",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -36,7 +37,7 @@ export default class DevStackDoctor extends RawrCommand {
       { context: { invocation: { traceId: "plugin-devops.stack.doctor" } } }
     );
     const result = this.ok(data);
-    this.outputResult(result, {
+    await this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         this.log(`workspace: ${workspaceRoot}`);

@@ -23,8 +23,8 @@
   },
   "dependencies": {
     "@oclif/core": "^4.13.2",
+    "@habitat-ai/cli": "0.5.6",
     "@habitat-ai/rawr-chatgpt-corpus": "workspace:*",
-    "@habitat-ai/rawr-core": "workspace:*",
     "@habitat-ai/rawr-hq-sdk": "workspace:*"
   },
   "devDependencies": {

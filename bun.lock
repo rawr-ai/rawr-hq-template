@@ -5,7 +5,6 @@
     "": {
       "name": "rawr-hq-template",
       "dependencies": {
-        "@habitat-ai/rawr-core": "workspace:*",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@habitat-ai/service": "workspace:*",
         "@orpc/client": "2.0.0-beta.23",
@@ -25,7 +24,7 @@
         "@catenarycloud/linteffect": "0.0.6",
         "@effect/platform-node": "4.0.0-beta.101",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
-        "@habitat-ai/cli": "0.5.2",
+        "@habitat-ai/cli": "0.5.6",
         "@habitat-ai/rawr-agent-plugin-lifecycle": "workspace:*",
         "@habitat-ai/resource-rule-evaluation": "workspace:*",
         "@habitat-ai/resource-source-inventory": "workspace:*",
@@ -58,8 +57,8 @@
       },
       "dependencies": {
         "@effect/platform-node": "4.0.0-beta.101",
+        "@habitat-ai/cli": "0.5.6",
         "@habitat-ai/rawr-agent-plugin-lifecycle": "workspace:*",
-        "@habitat-ai/rawr-core": "workspace:*",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@habitat-ai/rawr-plugin-chatgpt-corpus": "workspace:*",
         "@habitat-ai/rawr-plugin-devops": "workspace:*",
@@ -119,7 +118,6 @@
       "name": "@habitat-ai/rawr-core",
       "version": "0.1.0",
       "dependencies": {
-        "@oclif/core": "^4.13.2",
         "@opentelemetry/api": "^1.9.0",
         "@opentelemetry/core": "^2.6.0",
         "@opentelemetry/exporter-metrics-otlp-http": "^0.213.0",
@@ -202,8 +200,8 @@
       "name": "@habitat-ai/rawr-plugin-chatgpt-corpus",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/cli": "0.5.6",
         "@habitat-ai/rawr-chatgpt-corpus": "workspace:*",
-        "@habitat-ai/rawr-core": "workspace:*",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@oclif/core": "^4.13.2",
       },
@@ -217,6 +215,7 @@
       "name": "@habitat-ai/rawr-plugin-devops",
       "version": "0.1.0",
       "dependencies": {
+        "@habitat-ai/cli": "0.5.6",
         "@habitat-ai/rawr-core": "workspace:*",
         "@habitat-ai/rawr-dev": "workspace:*",
         "@habitat-ai/rawr-dev-node": "workspace:*",
@@ -245,7 +244,7 @@
       "name": "@habitat-ai/rawr-plugin-hyperresearch",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-core": "workspace:*",
+        "@habitat-ai/cli": "0.5.6",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@habitat-ai/rawr-hyperresearch-codex": "workspace:*",
         "@oclif/core": "^4.13.2",
@@ -260,7 +259,7 @@
       "name": "@habitat-ai/rawr-plugin-session-tools",
       "version": "0.1.0",
       "dependencies": {
-        "@habitat-ai/rawr-core": "workspace:*",
+        "@habitat-ai/cli": "0.5.6",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
         "@habitat-ai/rawr-session-intelligence": "workspace:*",
         "@oclif/core": "^4.13.2",
@@ -839,7 +838,7 @@
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
 
-    "@habitat-ai/cli": ["@habitat-ai/cli@0.5.2", "", { "dependencies": { "@habitat-ai/sdk": "0.5.2", "@nx/devkit": "23.1.0", "@oclif/core": "^4.13.2", "@oclif/plugin-help": "^6.2.27", "typebox": "1.3.8" }, "bin": { "habitat": "bin/run.js" } }, "sha512-/gDZg9sWYkOxoYpzMS/XqSIJ8QxfOWffYjPDWTc7ALIsOWuQ8LafPRrB61YueQXH/V9fKdR2z//3ol65kMh/nw=="],
+    "@habitat-ai/cli": ["@habitat-ai/cli@0.5.6", "", { "dependencies": { "@habitat-ai/sdk": "0.5.6", "@nx/devkit": "23.1.1", "@oclif/core": "^4.13.2", "@oclif/plugin-help": "^6.2.27", "typebox": "1.3.8" }, "bin": { "habitat": "bin/run.js" } }, "sha512-35V8VjhDCTBQGIICI6hday2R1Dm+TZj1GOlOE9g81k4NKGjbPHefPmduqkFTK0xIbfM/5pq5KtnW918hWICA4g=="],
 
     "@habitat-ai/rawr": ["@habitat-ai/rawr@workspace:apps/cli"],
 
@@ -3065,9 +3064,7 @@
 
     "@cypress/request/uuid": ["uuid@8.3.2", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="],
 
-    "@habitat-ai/cli/@habitat-ai/sdk": ["@habitat-ai/sdk@0.5.2", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effect/platform-node-shared": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.23", "@orpc/experimental-effect": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@standard-schema/spec": "1.1.0", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-xz/bRXej6swKJLRruo7Bj/UZLxcZGVCGKtpiaue3dALmcHK2aMtT5kKrtEb04nYPFx3twd70AVoPLY8bOYimsw=="],
-
-    "@habitat-ai/cli/@nx/devkit": ["@nx/devkit@23.1.0", "", { "dependencies": { "@zkochan/js-yaml": "0.0.7", "ejs": "5.0.1", "enquirer": "~2.3.6", "minimatch": "10.2.5", "semver": "^7.6.3", "tslib": "^2.3.0", "yaml": "^2.8.3", "yargs-parser": "21.1.1" }, "peerDependencies": { "nx": ">= 22 <= 24 || ^23.0.0-0" } }, "sha512-4LPBrjwtretBQksqph2aXqz2Atd5+oO7RTVlQoOweU8Sh2A0wM8CNig8n+LX2iwxniPYRooLN4kRtKxO4mi2Mw=="],
+    "@habitat-ai/cli/@habitat-ai/sdk": ["@habitat-ai/sdk@0.5.6", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effect/platform-node-shared": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@opentelemetry/api": "^1.9.0", "@orpc/contract": "2.0.0-beta.23", "@orpc/experimental-effect": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@standard-schema/spec": "1.1.0", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-tWy6PGPAY73HgUafm9ObECxQ854/Jz+4AqzQarBhZoXcrojRpueH9Ph+DZqsSrVnSmTcTiPaUXAce1bnWpAY0w=="],
 
     "@inngest/ai/@types/node": ["@types/node@22.19.11", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-BH7YwL6rA93ReqeQS1c4bsPpcfOmJasG+Fkr6Y59q83f9M1WcBRHR2vM+P9eOisYRcN3ujQoiZY8uk5W+1WL8w=="],
 

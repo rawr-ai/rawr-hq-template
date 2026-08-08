@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import type { Client } from "@habitat-ai/rawr-session-intelligence/client";
 import { Args, Flags } from "@oclif/core";
 import { ensureDir, writeJsonFile } from "../../lib/out-dir";
@@ -19,7 +19,7 @@ function formatResolveHuman(input: unknown, format: OutputFormat): string {
   return p;
 }
 
-export default class SessionsResolve extends RawrCommand {
+export default class SessionsResolve extends HabitatCommand {
   static description = "Resolve a session id/path to a concrete file";
 
   static args = {
@@ -27,7 +27,7 @@ export default class SessionsResolve extends RawrCommand {
   } as const;
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     source: Flags.string({
       description: "Session source",
       options: ["claude", "codex", "all"],
@@ -43,8 +43,8 @@ export default class SessionsResolve extends RawrCommand {
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(SessionsResolve);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { args, flags } = await this.parse(SessionsResolve);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const source = String(flags.source) as SessionSourceFilter;
     const session = String(args.session);
     const format = String(flags.format) as OutputFormat;
@@ -56,7 +56,7 @@ export default class SessionsResolve extends RawrCommand {
     const resolved = await client.catalog.resolve({ session, source }, options);
     if ("error" in resolved) {
       const result = this.fail(String(resolved.error), { code: "SESSION_NOT_FOUND" });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -68,7 +68,7 @@ export default class SessionsResolve extends RawrCommand {
     }
 
     const result = this.ok({ resolved, outDir });
-    this.outputResult(result, {
+    await this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         if (flags.quiet) return;

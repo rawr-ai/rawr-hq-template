@@ -1,4 +1,4 @@
-import { RawrCommand, type RawrResult } from "@habitat-ai/rawr-core";
+import { HabitatCommand, type HabitatResult } from "@habitat-ai/cli/command";
 
 type DevResultProjection = {
   preflight?: { ok: boolean; issues: Array<{ severity: string; code: string; message: string }> };
@@ -7,8 +7,8 @@ type DevResultProjection = {
 };
 
 export function devHumanRenderer<T extends DevResultProjection>(
-  command: RawrCommand
-): (result: RawrResult<T>) => void {
+  command: HabitatCommand
+): (result: HabitatResult<T>) => void {
   return (output) => {
     if (!output.ok) {
       command.log(`error: ${output.error.message}`);

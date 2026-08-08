@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 
 import { AgentPluginLifecycleCommand } from "../../../lib/agent-plugins/commands/command";
 import {
@@ -21,7 +21,7 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
   static description = "Check curated release or repository data without publishing it";
 
   static flags = {
-    json: RawrCommand.baseFlags.json,
+    json: HabitatCommand.baseFlags.json,
     mode: checkModeFlag,
     "current-main-body-json": currentMainBodyJsonFlag,
     "current-main-record-json": currentMainRecordJsonFlag,
@@ -30,7 +30,7 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
   } as const;
 
   async run(): Promise<void> {
-    const { flags } = await this.parseRawr(AgentPluginsCheck);
+    const { flags } = await this.parse(AgentPluginsCheck);
     const releaseInputRecord =
       flags.mode === "release-input-record"
         ? await readReleaseInputRecordStdin({
@@ -39,10 +39,10 @@ export default class AgentPluginsCheck extends AgentPluginLifecycleCommand {
           })
         : undefined;
     if (releaseInputRecord !== undefined && !releaseInputRecord.ok) {
-      this.rejectInput(releaseInputRecord.message, RawrCommand.extractBaseFlags(flags));
+      await this.rejectInput(releaseInputRecord.message, HabitatCommand.extractBaseFlags(flags));
       return;
     }
-    const request = this.parseInput(flags, (inputFlags) =>
+    const request = await this.parseInput(flags, (inputFlags) =>
       parseCheckOperationRequest(inputFlags, releaseInputRecord?.bytes)
     );
     if (request === undefined) return;

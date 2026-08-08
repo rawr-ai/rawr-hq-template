@@ -9,14 +9,14 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 - Canonical Habitat ground and release source:
   `main@98f34ca4c931a5e0fa4868825f86709ade603633`, tagged
   `habitat-cli-v0.5.6`.
-- Gates A and B are sealed. The first active source container is Gate C's
-  released-reader cutover.
+- Gates A through C are sealed. The first active source container is Rawr's
+  released-substrate adoption and owner transfer.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
-- The root remains bootstrapped by registry `@habitat-ai/cli@0.5.2` while
-  `apps/habitat` remains outside the Bun workspaces. Bun 1.3.14 must keep a
-  valid frozen lock; the candidate CLI is never added as a `file:`, `link:`, or
+- The root is bootstrapped by registry `@habitat-ai/cli@0.5.6` while
+  `apps/habitat` remains outside the Bun workspaces. Bun 1.3.14 keeps a valid
+  frozen lock; the released CLI is not added as a `file:`, `link:`, or
   duplicate workspace dependency.
 - oRPC service execution follows native authority: `.handler` owns non-Effect
   operations; the official `.effect` extension, installed once in
@@ -42,11 +42,12 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   revision, use the fixed Nx Release group to publish and registry-smoke only
   `@habitat-ai/sdk` and `@habitat-ai/cli`, then record the exact
   [release receipt](gate-b-release-receipt.json).
-- [ ] **Gate C - reader cutover**: only after that registry receipt, migrate
+- [x] **Gate C - reader cutover**: only after that registry receipt, migrate
   the root Nx bootstrap to the exact released CLI, move surviving readers to
   released `HabitatCommand`, delete any condemned reader closure still
   remaining, and remove `RawrCommand`, `RawrResult`, and every predecessor
-  reader with no shim, alias, fallback, or dual public authority.
+  reader with no shim, alias, fallback, or dual public authority. Sealed against
+  registry `@habitat-ai/cli@0.5.6` and its exact paired SDK.
 - [ ] **Rawr**: install that release, restack Session Metrics, import the three
   services and three CLI topics through native Nx, and pass destination-owned
   behavior.

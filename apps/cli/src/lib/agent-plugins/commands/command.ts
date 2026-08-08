@@ -1,5 +1,4 @@
-import type { RawrBaseFlags } from "@habitat-ai/rawr-core";
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { type HabitatBaseFlags, HabitatCommand } from "@habitat-ai/cli/command";
 import { productionLifecycleProfile } from "../profiles/production";
 import { bindProductionLifecycleService } from "../service-runtime/client";
 import { LifecycleInputError } from "./input";
@@ -11,18 +10,18 @@ import {
   projectLifecycleResultForOutput,
 } from "./projection";
 
-export abstract class AgentPluginLifecycleCommand extends RawrCommand {
-  protected parseInput<T>(
+export abstract class AgentPluginLifecycleCommand extends HabitatCommand {
+  protected async parseInput<T>(
     flags: Readonly<Record<string, unknown>>,
     parser: (flags: Readonly<Record<string, unknown>>) => T
-  ): T | undefined {
+  ): Promise<T | undefined> {
     try {
       return parser(flags);
     } catch (error) {
       if (error instanceof LifecycleInputError) {
-        this.rejectInput(
+        await this.rejectInput(
           error.message,
-          RawrCommand.extractBaseFlags(flags as Record<string, unknown>),
+          HabitatCommand.extractBaseFlags(flags as Record<string, unknown>),
           error.code
         );
         return undefined;
@@ -35,9 +34,9 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     request: LifecycleOperationRequest,
     flags: Readonly<Record<string, unknown>>
   ): Promise<void> {
-    const baseFlags = RawrCommand.extractBaseFlags(flags as Record<string, unknown>);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags as Record<string, unknown>);
     if (baseFlags.dryRun || baseFlags.yes) {
-      this.rejectInput(
+      await this.rejectInput(
         "--dry-run and --yes are not part of the closed lifecycle procedure contract",
         baseFlags
       );
@@ -49,7 +48,7 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       const outcome = await invokeLifecycleProcedure(request, selectClient);
       exitCode = lifecycleResultExitCode(outcome);
       const projectedOutcome = projectLifecycleResultForOutput(outcome);
-      this.outputResult(this.ok(projectedOutcome), {
+      await this.outputResult(this.ok(projectedOutcome), {
         flags: baseFlags,
         human: () => {
           for (const line of lifecycleHumanLines(projectedOutcome)) this.log(line);
@@ -57,11 +56,11 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
       });
     } catch (error) {
       if (error instanceof LifecycleInputError) {
-        this.rejectInput(error.message, baseFlags, error.code);
+        await this.rejectInput(error.message, baseFlags, error.code);
         return;
       }
       const message = error instanceof Error ? error.message : String(error);
-      this.outputResult(
+      await this.outputResult(
         this.fail("Lifecycle procedure failed", {
           code: "LIFECYCLE_PROCEDURE_FAILED",
           details: { operation: request.operation, message },
@@ -73,12 +72,12 @@ export abstract class AgentPluginLifecycleCommand extends RawrCommand {
     if (exitCode !== 0) this.exit(exitCode);
   }
 
-  protected rejectInput(
+  protected async rejectInput(
     message: string,
-    flags: RawrBaseFlags,
+    flags: HabitatBaseFlags,
     code = "LIFECYCLE_INPUT_INVALID"
-  ): void {
-    this.outputResult(this.fail(message, { code }), { flags });
+  ): Promise<void> {
+    await this.outputResult(this.fail(message, { code }), { flags });
     this.exit(2);
   }
 }

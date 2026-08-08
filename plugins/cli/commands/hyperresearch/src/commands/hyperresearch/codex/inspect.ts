@@ -1,14 +1,14 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Flags } from "@oclif/core";
 import { FixtureHyperresearchCliBackend } from "../../../lib/fixture-cli";
 import { createHyperresearchCodexClient } from "../../../lib/hyperresearch-codex-binding";
 import { summarizeV8Result } from "../../../lib/v8-result";
 
-export default class HyperresearchCodexInspect extends RawrCommand {
+export default class HyperresearchCodexInspect extends HabitatCommand {
   static description = "Inspect a Hyperresearch Codex V8 run ledger";
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     ledger: Flags.string({
       required: true,
       description: "Path to research/temp/hyperresearch-codex-run.json",
@@ -16,8 +16,8 @@ export default class HyperresearchCodexInspect extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(HyperresearchCodexInspect);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(HyperresearchCodexInspect);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const client = createHyperresearchCodexClient({
       repoRoot: process.cwd(),
       cli: new FixtureHyperresearchCliBackend(),
@@ -37,7 +37,7 @@ export default class HyperresearchCodexInspect extends RawrCommand {
         }
       );
       const result = this.ok(summarizeV8Result(resultData));
-      this.outputResult(result, {
+      await this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           this.log(`hyperresearch codex v8: ${resultData.status}`);
@@ -49,7 +49,7 @@ export default class HyperresearchCodexInspect extends RawrCommand {
       const result = this.fail(error instanceof Error ? error.message : String(error), {
         code: "HYPERRESEARCH_CODEX_V8_INSPECT_FAILED",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }
   }

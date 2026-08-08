@@ -1,13 +1,13 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import { Flags } from "@oclif/core";
 import { createHyperresearchCodexClientForBackend } from "../../../lib/hyperresearch-codex-binding";
 import { hasBlockingV8Findings, summarizeV8Result } from "../../../lib/v8-result";
 
-export default class HyperresearchCodexStart extends RawrCommand {
+export default class HyperresearchCodexStart extends HabitatCommand {
   static description = "Start a Hyperresearch Codex V8 run ledger";
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     query: Flags.string({
       required: true,
       description: "Canonical research query to persist in the V8 ledger",
@@ -38,8 +38,8 @@ export default class HyperresearchCodexStart extends RawrCommand {
   } as const;
 
   async run() {
-    const { flags } = await this.parseRawr(HyperresearchCodexStart);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { flags } = await this.parse(HyperresearchCodexStart);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const client = createHyperresearchCodexClientForBackend({
       repoRoot: process.cwd(),
       backend: String(flags.backend) as "fixture" | "real",
@@ -72,7 +72,7 @@ export default class HyperresearchCodexStart extends RawrCommand {
           })
         : this.ok(responseData);
 
-      this.outputResult(result, {
+      await this.outputResult(result, {
         flags: baseFlags,
         human: () => {
           this.log(`hyperresearch codex v8: ${resultData.status}`);
@@ -85,7 +85,7 @@ export default class HyperresearchCodexStart extends RawrCommand {
       const result = this.fail(error instanceof Error ? error.message : String(error), {
         code: "HYPERRESEARCH_CODEX_V8_START_FAILED",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(1);
     }
   }

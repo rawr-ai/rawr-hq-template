@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@oclif/core": "^4.13.2",
-    "@habitat-ai/rawr-core": "workspace:*",
+    "@habitat-ai/cli": "0.5.6",
     "@habitat-ai/rawr-hq-sdk": "workspace:*",
     "@habitat-ai/rawr-hyperresearch-codex": "workspace:*"
   },

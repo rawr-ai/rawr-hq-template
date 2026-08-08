@@ -1,4 +1,4 @@
-import { RawrCommand } from "@habitat-ai/rawr-core";
+import { HabitatCommand } from "@habitat-ai/cli/command";
 import type { Client } from "@habitat-ai/rawr-session-intelligence/client";
 import { Args, Flags } from "@oclif/core";
 import { ensureDir, writeJsonFile, writeTextFile } from "../../lib/out-dir";
@@ -9,7 +9,7 @@ import { buildTranscriptOutputs } from "../../lib/transcript-output";
 type CatalogResolveOptions = NonNullable<Parameters<Client["catalog"]["resolve"]>[1]>;
 type TranscriptsExtractOptions = NonNullable<Parameters<Client["transcripts"]["extract"]>[1]>;
 
-export default class SessionsExtract extends RawrCommand {
+export default class SessionsExtract extends HabitatCommand {
   static description = "Extract a session transcript";
 
   static args = {
@@ -17,7 +17,7 @@ export default class SessionsExtract extends RawrCommand {
   } as const;
 
   static flags = {
-    ...RawrCommand.baseFlags,
+    ...HabitatCommand.baseFlags,
     source: Flags.string({
       description: "Session source",
       options: ["claude", "codex", "all"],
@@ -70,8 +70,8 @@ export default class SessionsExtract extends RawrCommand {
   } as const;
 
   async run() {
-    const { args, flags } = await this.parseRawr(SessionsExtract);
-    const baseFlags = RawrCommand.extractBaseFlags(flags);
+    const { args, flags } = await this.parse(SessionsExtract);
+    const baseFlags = HabitatCommand.extractBaseFlags(flags);
     const source = String(flags.source) as SessionSourceFilter;
     const session = String(args.session);
     const format = String(flags.format) as OutputFormat;
@@ -89,7 +89,7 @@ export default class SessionsExtract extends RawrCommand {
       const result = this.fail("--chunk-output split requires --out-dir", {
         code: "MISSING_OUT_DIR",
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -101,7 +101,7 @@ export default class SessionsExtract extends RawrCommand {
     const resolved = await client.catalog.resolve({ session, source }, resolveOptions);
     if ("error" in resolved) {
       const result = this.fail(String(resolved.error), { code: "SESSION_NOT_FOUND" });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(2);
       return;
     }
@@ -128,7 +128,7 @@ export default class SessionsExtract extends RawrCommand {
         code: "EXTRACT_FAILED",
         meta: { path: resolved.resolved.path },
       });
-      this.outputResult(result, { flags: baseFlags });
+      await this.outputResult(result, { flags: baseFlags });
       this.exit(1);
       return;
     }
@@ -156,7 +156,7 @@ export default class SessionsExtract extends RawrCommand {
       outFiles,
       outputs: outputs.map((o) => ({ name: o.name })),
     });
-    this.outputResult(result, {
+    await this.outputResult(result, {
       flags: baseFlags,
       human: () => {
         if (flags.quiet) return;
