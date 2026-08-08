@@ -25,10 +25,13 @@ meaning.
 
 A surface adapter MUST translate one `CompiledSurfacePlan` into a
 harness-facing native payload using scoped access, bound services, the
-execution registry, and `ProcessExecutionRuntime`. It MAY create native Promise
-callbacks that delegate invocation to `ProcessExecutionRuntime`, but MUST NOT
-execute business logic during lowering, independently pair plans and
-descriptors, mount a host, acquire a provider, or consume raw declarations.
+execution registry, and `ProcessExecutionRuntime` for non-oRPC descriptor
+lanes. It MAY create native Promise callbacks that delegate non-oRPC invocation
+to `ProcessExecutionRuntime`, but MUST NOT execute business logic during
+lowering, independently pair plans and descriptors, mount a host, acquire a
+provider, or consume raw declarations. An Effect-backed oRPC operation MUST
+retain the native oRPC builder and use the official Effect bridge described
+below; an adapter MUST NOT replace that bridge with `ProcessExecutionRuntime`.
 
 #### Scenario: CLI surface is lowered
 
@@ -174,25 +177,51 @@ them.
   still pending
 - **AND** provider release waits for the first request and native stop to settle
 
-### Requirement: oRPC request abort uses the one execution runtime
+### Requirement: oRPC request abort uses the official native Effect bridge
 
-An adapter-lowered oRPC procedure MUST use a native oRPC callback that
-propagates the request signal and delegates the selected Effect execution
-directly to `ProcessExecutionRuntime`. The runtime-realized callback MUST NOT
-invoke `@orpc/experimental-effect` `handlerGen`, its `.effect` extension, or any
-other bridge that calls an independent Effect terminal. Native oRPC retains
-validation, middleware, declared errors, transport, and abort outcomes while
-process runtime retains Effect execution, cancellation, invocation-local Effect
-finalization, and its idempotent process stop operation. Runtime mounting alone
-coordinates cross-owner finalization.
+An adapter-lowered oRPC procedure MUST retain native oRPC validation,
+middleware, context, declared errors, transport, and abort outcomes. A
+synchronous or Promise-returning operation MAY use native `.handler(...)`. An
+Effect-backed operation MUST use exact
+`@orpc/experimental-effect@2.0.0-beta.23` `handlerGen(...)` or an admitted
+official `.effect(...)` extension, whose exact source delegates to
+`.handler(handlerGen(...))`. The selected bridge MUST alone run the request
+Effect: it provides native `effect/context`, applies native `effect/wrap`,
+forwards the request signal to `Effect.runPromiseExit`, maps the resulting
+Cause, and returns the Promise to oRPC. `ProcessExecutionRuntime`, a manual
+`Effect.run*` call, a custom runner, and a Habitat imitation MUST NOT execute or
+wrap that oRPC Effect.
+
+The application/process MUST own construction and release of Effect Context and
+scoped resources, policy and telemetry composition through `effect/wrap`, and
+shutdown. Runtime mounting alone coordinates cross-owner finalization. If the
+`.effect(...)` extension is selected, the extension and the native oRPC builder
+and implementer prototypes it patches MUST resolve in one physical module
+realm; equal version strings or compatible types do not satisfy that proof.
 
 #### Scenario: HTTP caller aborts an oRPC request
 
-- **WHEN** a real Elysia/oRPC request is aborted while its Effect body is active
-- **THEN** the signal interrupts that body through the one process execution
-  runtime and the caller observes oRPC's native abort result
-- **AND** neither `handlerGen`, the `.effect` extension, nor a second
-  `Effect.runPromiseExit` terminal executes the body
+- **WHEN** a real Elysia/oRPC request is aborted while the selected official
+  bridge is running a gated Effect body
+- **THEN** the bridge observes the same request signal, interrupts the request
+  fiber, runs the body's finalizer exactly once, and the caller observes oRPC's
+  native abort result
+- **AND** one application/process-owned service supplied through
+  `effect/context` is observable in the body and `effect/wrap` observes the same
+  path, procedure, and signal exactly once
+- **AND** the application/process-owned scoped resource releases exactly once,
+  after the request finalizer and native Elysia stop settle
+- **AND** neither `ProcessExecutionRuntime`, a manual `Effect.run*`, a custom
+  runner, nor another Effect terminal executes the body
+
+#### Scenario: Official extension shares the native oRPC realm
+
+- **WHEN** acceptance selects `.effect(...)` rather than direct `handlerGen(...)`
+- **THEN** the loaded extension delegates through official `handlerGen(...)` on
+  the exact `Builder` or `ProcedureImplementer` prototype used by the mounted
+  procedure
+- **AND** runtime resolution reports one physical `@orpc/server` and one
+  physical `@orpc/experimental-effect` copy for that process boundary
 
 ### Requirement: Inngest harness preserves durable execution ownership
 

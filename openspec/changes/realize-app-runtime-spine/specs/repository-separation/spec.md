@@ -103,9 +103,12 @@ migration, or create a continuing source relationship.
 
 ### Requirement: Downstream consumers use released Habitat integration
 
-A downstream Nx repository MUST add Habitat through `nx add @habitat-ai/cli`.
-That package's exported `./nx-plugin` and shipped `init` generator MUST pull the
-exact `@habitat-ai/sdk` dependency. Later upgrades MUST use `nx migrate`.
+A downstream Bun/Nx repository MUST add Habitat through
+`bunx nx add @habitat-ai/cli --no-interactive`. That package's exported
+`./nx-plugin` and shipped `init` generator MUST directly install the exact paired
+`@habitat-ai/sdk` dependency and converge the complete repository foundation in
+that one operation. There is no SDK preseed, custom installer, second preset
+invocation, or manual producer-file copy. Later upgrades MUST use `nx migrate`.
 Habitat distribution MUST remain the existing Nx Release group containing
 exactly `@habitat-ai/sdk` and `@habitat-ai/cli`; no product or internal runtime
 package joins that group. The SDK's installed Habitat pack MUST select a
@@ -136,15 +139,15 @@ commit authorizes only that checkpoint.
 
 #### Scenario: A service consumer installs Habitat law
 
-- **WHEN** Civ7, Rawr, Magic Migration, or another downstream repository installs the exact released SDK pack
-- **THEN** `service@1` is selected and constructible without repository-local generic service law
+- **WHEN** Civ7, Rawr, Magic Migration, or another downstream repository runs the required CLI `nx add` flow
+- **THEN** the initializer-installed SDK makes `service@1` selected and constructible without repository-local generic service law
 - **AND** the consumer retains only product-qualified overlays and proof
 
 #### Scenario: Public artifacts are admitted before publication
 
 - **WHEN** an exact Habitat-main SDK and CLI candidate is ready for release
-- **THEN** the local installed-package Nx acceptance packs both public tarballs, installs the exact SDK candidate, and invokes native `nx add @habitat-ai/cli@file:<absolute-packed-cli-tarball>` in a disposable consumer before any tag or registry mutation
-- **AND** that consumer proves generated `service@1` construction, cold public imports, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
+- **THEN** the local installed-package Nx acceptance packs both public tarballs, publishes both exact candidates only to an isolated local registry, and invokes native `nx add @habitat-ai/cli@<candidate-version>` once in a disposable Bun/Nx consumer with neither Habitat product preinstalled before any tag or public-registry mutation
+- **AND** that one operation installs the exact paired SDK, converges the repository foundation, and proves generated `service@1` construction, cold public imports, Nx rejection of a relative cross-project private-service import, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
 - **AND** artifact inspection proves the packed `dist/blueprints/service` subtree contains only the positive closed kind and no product vocabulary or legacy service rule packet
 - **AND** any workspace import, missing public face, unpublished dependency, or source/installed divergence blocks publication
 

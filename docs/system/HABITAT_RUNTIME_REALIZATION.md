@@ -92,15 +92,28 @@ Runtime observation projects non-authorizing read models.
 Runtime mounting starts apps and coordinates cross-owner finalization.
 ```
 
-Effect is the execution layer for Habitat-managed local execution. Services,
-server API/internal plugins, CLI commands, agent tools, desktop background
-logic, web-local application execution, resource operations, provider
+Effect is the execution layer for Habitat-managed local execution. Non-oRPC
+plugin callbacks, CLI commands, agent tools, desktop background logic,
+web-local application execution, resource operations, provider
 acquisition/release, process-local coordination resources, and async step-local
-execution retain their nearest application, service, plugin, resource, or
-provider owner while using Habitat-defined authoring surfaces and
-Habitat-managed runtime bridges.
+execution retain their nearest application, plugin, resource, or provider owner
+while using Habitat-defined authoring surfaces and Habitat-managed runtime
+bridges.
 
-There is one Habitat execution terminal:
+Effect-backed oRPC operations follow the native vendor boundary instead. Exact
+`@orpc/experimental-effect@2.0.0-beta.23` `handlerGen(...)` owns their request
+fiber, native `effect/context`, native `effect/wrap`, request signal, Cause
+mapping, and Promise boundary. The optional official `.effect(...)` extension
+is only `.handler(handlerGen(...))` prototype sugar. Native `.handler(...)`
+remains valid for synchronous and Promise-returning operations. The
+application/process owns Effect Context construction, resource lifetime, policy,
+telemetry, and shutdown through those native hooks. A manual `Effect.run*`, a
+custom runner, a Habitat imitation, or `ProcessExecutionRuntime` MUST NOT
+execute an oRPC Effect. If the extension is selected, it and the native oRPC
+builders MUST share one physical module realm.
+
+There is one Habitat execution terminal for non-oRPC descriptor lanes. The
+official oRPC bridge is a native vendor boundary, not a second Habitat terminal:
 
 File: `specification://runtime-realization/single-execution-terminal.txt`  
 Layer: execution terminal law  
@@ -112,14 +125,14 @@ One Habitat execution terminal.
 One owner for each source, artifact, and lifecycle state.
 ```
 
-The service/plugin executable boundary spine is:
+The non-oRPC plugin executable boundary spine is:
 
 File: `specification://runtime-realization/service-plugin-execution-spine.txt`  
 Layer: runtime execution spine  
-Exactness: normative handoff sequence for service/plugin executable boundaries.
+Exactness: normative handoff sequence for non-oRPC executable boundaries.
 
 ```text
-service/plugin executable authoring
+non-oRPC plugin executable authoring
   -> EffectExecutionDescriptor
   -> runtime-derivation normalized authoring graph
   -> runtime compiler
@@ -129,6 +142,23 @@ service/plugin executable authoring
   -> EffectRuntimeAccess
   -> ManagedRuntimeHandle
   -> result / exit / diagnostics / telemetry / finalization
+```
+
+The native Effect-oRPC spine is:
+
+File: `specification://runtime-realization/native-effect-orpc-spine.txt`  
+Layer: native oRPC execution spine  
+Exactness: normative for the selected bridge and ownership handoff.
+
+```text
+native oRPC operation
+  -> .handler(handlerGen(function* ...)) or admitted .effect(function* ...)
+  -> application/process-owned effect/context
+  -> application/process-owned effect/wrap
+  -> official handlerGen request Effect
+  -> Effect.runPromiseExit(effect, { signal: requestSignal })
+  -> official Cause mapping
+  -> Promise returned to native oRPC
 ```
 
 The provider spine is:
@@ -166,7 +196,12 @@ provisioned RuntimeResource value
   -> executed by the enclosing boundary's runtime path
 ```
 
-When a `HabitatEffect`-returning resource operation is composed inside a service, plugin, CLI command, agent tool, desktop background body, web-local execution body, or async step-local body, it executes as part of the enclosing `EffectExecutionDescriptor` through `ProcessExecutionRuntime`.
+When a `HabitatEffect`-returning resource operation is composed inside a
+non-oRPC plugin, CLI command, agent tool, desktop background body, web-local
+execution body, or async step-local body, it executes as part of the enclosing
+`EffectExecutionDescriptor` through `ProcessExecutionRuntime`. A resource
+operation used by an Effect-backed oRPC handler is a native Effect value and
+executes through the official bridge instead.
 
 When a `HabitatEffect`-returning resource operation is composed inside provider acquisition or release, it executes as part of the enclosing `ProviderEffectPlan` through `runtime-substrate-effect` provider lowering under bootgraph order metadata, not through `CompiledExecutionPlan` or `ProcessExecutionRuntime`.
 
@@ -189,7 +224,12 @@ WorkflowDefinition / ScheduleDefinition / ConsumerDefinition
 
 Effect may appear inside durable async steps only as local execution. Inngest remains the durable owner of workflow run identity, retry, replay, history, schedules, durable queues, and durable async semantics.
 
-Native hosts may require Promise-compatible callbacks. Those callbacks are generated by runtime-process-runtime adapter lowering, owned by a harness, or exposed through an SDK delegating hook that calls `ProcessExecutionRuntime`. They do not become business or capability execution terminals and do not take ownership of the application-authored body they invoke.
+Native hosts may require Promise-compatible callbacks. Non-oRPC callbacks are
+generated by runtime-process-runtime adapter lowering, owned by a harness, or
+exposed through an SDK delegating hook that calls `ProcessExecutionRuntime`.
+Effect-backed oRPC callbacks return the Promise produced by official
+`handlerGen(...)`; adapters do not wrap that Promise in another Effect runner.
+Neither form takes semantic ownership of the application-authored body.
 
 Shutdown, rollback, provider release, harness stop order, finalizers, managed runtime disposal, and final catalog records are deterministic runtime finalization and observation behavior. They are not an eighth lifecycle phase.
 
@@ -200,7 +240,7 @@ Each `startApp(...)` invocation produces exactly one started process runtime ass
 | Runtime result | Owner | Meaning |
 | --- | --- | --- |
 | One root managed runtime | Runtime substrate / Effect provisioning and execution kernel | Process-local provisioning, `HabitatEffect` execution, process-local coordination, and disposal owner |
-| One process execution runtime | Runtime / process runtime | Executes Effect descriptors through the process-owned runtime bridge |
+| One process execution runtime | Runtime / process runtime | Executes non-oRPC Effect descriptors through the process-owned runtime bridge; never oRPC service Effects |
 | One execution registry | Runtime / process runtime | Pairs compiled execution plans with their matching descriptors for adapter invocation |
 | One process runtime assembly | Runtime / process runtime | Bound services, role access, mount-ready surface records, adapter lowering, and its own stop handle |
 | Zero or more mounted roles | App-selected process shape | Selected role slices from the app composition |
@@ -212,7 +252,12 @@ A cohosted development process and a split production process use the same seman
 
 Effect-backed is an execution posture. It does not create a second public ontology. There are no public architecture kinds named `EffectService`, `EffectPlugin`, `EffectApp`, `EffectWorkflow`, `EffectProvider`, `EffectResource`, `EffectWorkstream`, or `EffectReviewLoop`.
 
-A runtime that executes owner-authored service, plugin, resource, or provider bodies as ordinary Promise-only business callbacks instead of through the Habitat-managed Effect bridge is not compliant. Runtime management does not transfer body ownership away from the nearest semantic owner.
+A runtime that executes owner-authored non-oRPC descriptor, resource, or provider
+bodies as ordinary Promise-only business callbacks instead of through the
+Habitat-managed Effect bridge is not compliant. Native synchronous or
+Promise-returning oRPC `.handler(...)` operations remain valid, and Effect-backed
+oRPC operations use the official bridge. Runtime management does not transfer
+body ownership away from the nearest semantic owner.
 
 ## 3. Owners And Lifecycle Boundaries
 
@@ -387,7 +432,7 @@ meaning and projection-local bodies, apps retain product composition and
 entrypoints, and resource/provider packages retain contracts and implementation
 bodies.
 
-A service is a domain capability boundary. It owns the domain contracts, invariants, schemas, migrations, repositories, domain policy, and authoritative write access for the domain state it governs. It may declare dependencies on runtime resources, sibling services, semantic adapters, config, scope, and invocation context. Those dependencies may have runtime lifecycle, but the service does not provision or release them. The runtime binds and provisions them from app-selected providers and compiled plans. It does not own public API projection, internal API projection, workflow execution, command projection, web projection, agent projection, desktop projection, app membership, provider selection, process placement, harness mounting, raw Effect runtime construction, or raw effect-oRPC adapter wiring.
+A service is a domain capability boundary. It owns the domain contracts, invariants, schemas, migrations, repositories, domain policy, and authoritative write access for the domain state it governs. It may declare dependencies on runtime resources, sibling services, semantic adapters, config, scope, and invocation context. Those dependencies may have runtime lifecycle, but the service does not provision or release them. The runtime binds and provisions them from app-selected providers and compiled plans. It does not own public API projection, internal API projection, workflow execution, command projection, web projection, agent projection, desktop projection, app membership, provider selection, process placement, harness mounting, raw Effect runtime construction, or custom Effect-oRPC runner wiring. Its operation leaves may select native `.handler(...)`, official `handlerGen(...)`, or an admitted official `.effect(...)` extension.
 
 A plugin is a lane projection boundary. It projects underlying capabilities into exactly one role/surface/capability lane. The underlying capability may be service-owned domain capability, workflow dispatch capability, host/native capability, agent/shell capability, desktop capability, web/client capability, or another runtime-authorized capability. A plugin owns the lane-native contract, caller shape, boundary policy, authentication/authorization/redaction/transformation, service/resource use declarations, executable boundary, and native mount facts for that lane. It does not own the underlying domain authority, provider implementation, app membership, provider selection, runtime acquisition, or native host runtime.
 
@@ -405,15 +450,34 @@ The runtime compiler is the planning boundary. It consumes the normalized author
 
 Bootgraph is the lifecycle ordering boundary. It consumes only compiler-owned provider/resource identity and dependency input and emits deterministic acquisition order, rollback order, and reverse release metadata. It owns ordering and dedupe, not execution: it does not consume `ProviderEffectPlan`, acquire or release providers, execute rollback, register live finalizers, assemble process/role scopes, or produce `ProvisionedProcess`.
 
-The Effect provisioning/execution kernel is the process-local execution substrate. It owns the single process managed runtime, raw Effect lowering, provider-plan lowering, scoped acquisition/release/rollback mechanics, process-local coordination primitives, interruption, timeout, retry mechanics, and `HabitatEffect` execution under runtime-owned policy. It consumes compiler-owned provider plans plus bootgraph order/rollback metadata and is the sole producer of `ProvisionedProcess`. It does not import the SDK or observation-owned projection types and does not own service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics, or public authoring grammar.
+The Effect provisioning/execution kernel is the process-local execution substrate. It owns the single process managed runtime, raw Effect lowering for non-oRPC descriptor lanes, provider-plan lowering, scoped acquisition/release/rollback mechanics, process-local coordination primitives, interruption, timeout, retry mechanics, and `HabitatEffect` execution under runtime-owned policy. It consumes compiler-owned provider plans plus bootgraph order/rollback metadata and is the sole producer of `ProvisionedProcess`. It does not execute Effect-backed oRPC operations, import the SDK or observation-owned projection types, or own service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics, or public authoring grammar.
 
 The process runtime is the live process assembly boundary. It turns a compiled process plan, non-portable execution descriptor table, and `ProvisionedProcess` into bound service clients, role/surface runtime access, workflow dispatchers, execution registry, process execution runtime, `EffectRuntimeAccess`, mount-ready surface records, adapter-lowered payloads, owner-local findings, and a process-runtime-owned stop handle. It owns service binding, binding cache, invocation-bound client views, execution registry and execution runtime assembly, workflow dispatcher materialization, plugin projection, and runtime adapter lowering. It does not invoke harnesses, collect `StartedHarness`, project observation-owned types, coordinate cross-owner shutdown, or own service/domain/plugin/app/provider/native-host meaning.
 
 The execution registry is the executable-boundary matching boundary. It pairs each compiled execution plan with exactly one matching Effect execution descriptor before adapter invocation. It owns execution identity matching, descriptor/plan boundary agreement, duplicate/missing executable detection, and lookup of matched executable boundaries for adapters. It does not execute `HabitatEffect`, lower Effect, own execution policy, create descriptors, compile plans, or contain business logic.
 
-The process execution runtime is the invocation execution boundary. It receives a matched executable boundary plus an explicit procedure execution context, resolves error and telemetry bridges, invokes the Effect descriptor, receives `HabitatEffect`, runs it through `EffectRuntimeAccess`, applies execution policy, and returns a host-compatible result or structured exit. It owns invocation-time execution through Habitat-managed executable boundaries; it does not own the service/plugin/resource/provider body being executed. It does not bind services, acquire providers, mount harnesses, choose apps, project plugins, own domain authority, or run native host logic.
+The process execution runtime is the invocation execution boundary for non-oRPC
+descriptor lanes. It receives a matched executable boundary plus an explicit
+procedure execution context, resolves error and telemetry bridges, invokes the
+Effect descriptor, receives `HabitatEffect`, runs it through
+`EffectRuntimeAccess`, applies execution policy, and returns a host-compatible
+result or structured exit. It MUST NOT execute an Effect-backed oRPC operation;
+official `handlerGen(...)` owns that native boundary. It does not own the
+service/plugin/resource/provider body being executed, bind services, acquire
+providers, mount harnesses, choose apps, project plugins, own domain authority,
+or run native host logic.
 
-A surface adapter is the native-payload translation boundary. It lowers compiled surface plans into harness-facing native payloads and callbacks. It resolves executable boundaries through the execution registry and produces host-compatible closures that delegate to `ProcessExecutionRuntime` at invocation time. It owns translation from Habitat compiled surface shape into native host payload shape. It does not execute business logic, run `HabitatEffect`, construct managed runtimes, acquire providers, consume raw authoring declarations, consume normalized authoring graphs directly, or own native host lifecycle.
+A surface adapter is the native-payload translation boundary. It lowers
+compiled surface plans into harness-facing native payloads and callbacks. For
+non-oRPC descriptor lanes it resolves executable boundaries through the
+execution registry and produces host-compatible closures that delegate to
+`ProcessExecutionRuntime`. For native oRPC it preserves the procedure and
+application/process-owned `effect/context` and `effect/wrap` so official
+`handlerGen(...)` remains the executor. It owns translation from Habitat
+compiled surface shape into native host payload shape. It does not execute
+business logic, run `HabitatEffect`, construct managed runtimes, acquire
+providers, consume raw authoring declarations, consume normalized authoring
+graphs directly, or own native host lifecycle.
 
 A harness is the native host mounting boundary. Runtime mounting invokes it with adapter-lowered payloads; it mounts them into a native host such as Elysia, Inngest, OCLIF, web, agent/OpenShell, or desktop and returns `StartedHarness` with owner-local findings and its stop handle. It owns native host lifecycle after Habitat lowering. It does not consume normalized authoring graphs, compile plans, acquire providers, bind services, lower `HabitatEffect`, import observation-owned projection types, own service/plugin/app meaning, or create managed runtimes.
 
@@ -456,8 +520,8 @@ Capabilities name projections.
 | Layer | Owns | Does not own |
 | --- | --- | --- |
 | Habitat platform | Authoring and runtime law, foundational SDK/CLI tooling, execution law and grammar, runtime bridges, lifecycle handoffs, generic reusable platform resources/providers, self-hosted Habitat commands/topics | Downstream app composition, service/domain semantics, plugin projection meaning, owner-authored executable bodies |
-| Services | Domain contracts, invariants, schemas, repositories, migrations, domain policy, stable service config, service-to-service dependency declarations, authoritative write access, service procedure implementation through Effect execution bodies | Public API projection, app membership, provider selection, harness mounting, process placement, raw Effect runtime construction, raw effect-oRPC adapter wiring |
-| Plugins | One role/surface/capability projection, topology-implied caller classification, native builder facts, lane-native contract, boundary policy, service-use declarations, resource-use declarations, projection-local Effect execution bodies | Service domain authority, provider acquisition, app selection, projection reclassification, raw Effect runtime construction, raw effect-oRPC adapter wiring |
+| Services | Domain contracts, invariants, schemas, repositories, migrations, domain policy, stable service config, service-to-service dependency declarations, authoritative write access, native oRPC operation implementation through handler or official Effect bridge | Public API projection, app membership, provider selection, harness mounting, process placement, raw Effect runtime construction, custom Effect-oRPC runners |
+| Plugins | One role/surface/capability projection, topology-implied caller classification, native builder facts, lane-native contract, boundary policy, service-use declarations, resource-use declarations, projection-local Effect execution bodies | Service domain authority, provider acquisition, app selection, projection reclassification, raw Effect runtime construction, custom Effect-oRPC runners |
 | Apps | Product identity, selected projections, runtime profiles, provider selections, config source selection, entrypoints, process role shapes, process defaults, selected publication artifacts | Service domain authority, plugin species, provider implementation, runtime acquisition, `HabitatEffect` execution, managed runtime construction |
 | Resources | Runtime capability contract, consumed value shape, lifetime requirement, public resource identity, closed provider family with direct contract/provider public faces, diagnostic-safe snapshot contribution rules, `HabitatEffect`-returning value operations where effectful | Provider implementation, domain authority, app selection, raw Effect runtime construction |
 | Providers | Runtime capability implementation plan, acquisition/release plan, native client construction, health, refresh, provider-local config schema and redaction metadata, telemetry, diagnostics | Resource identity, app selection, service domain authority, raw managed runtime construction |
@@ -470,7 +534,7 @@ Capabilities name projections.
 | Effect kernel | Single process managed runtime, raw Effect lowering, provider plan execution, process-local coordination, acquisition/release/rollback, interruption, timeout, retry, `HabitatEffect` execution under runtime-owned bridges, sole production of `ProvisionedProcess` | Service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics |
 | Process runtime | Runtime access scoping, service binding, binding cache, invocation-bound client views, workflow dispatcher materialization, execution registry and `EffectRuntimeAccess` assembly, plugin projection, runtime adapter lowering, mount-ready records, owner-local findings, process-runtime stop handle | Harness invocation, `StartedHarness` collection, topology projection, cross-owner shutdown, service/public API/app/provider/durable-workflow authority |
 | Execution registry | Matching compiled execution plans to Effect descriptors, identity/boundary agreement, executable boundary lookup | `HabitatEffect` execution, Effect lowering, plan compilation, descriptor construction, business logic |
-| Process execution runtime | Invocation-time execution through `EffectRuntimeAccess`, bridge resolution, policy application, result/exit mapping | Service binding, provider acquisition, harness mounting, app selection, plugin projection, domain authority |
+| Process execution runtime | Invocation-time execution through `EffectRuntimeAccess`, bridge resolution, policy application, result/exit mapping for non-oRPC descriptor lanes | oRPC Effect execution, service binding, provider acquisition, harness mounting, app selection, plugin projection, domain authority |
 | Surface adapters | Lowering compiled surface plans to host payloads, resolving executable boundaries through registry, producing native callbacks | Business logic, `HabitatEffect` execution, managed runtime construction, provider acquisition, raw authoring consumption |
 | Harnesses | Native host mounting and native lifecycle after adapter lowering, `StartedHarness`, owner-local harness findings and stop handles | Normalized-authoring-graph consumption, runtime compilation, provider acquisition, topology projection, service domain authority, `HabitatEffect` lowering, managed runtime construction |
 | Runtime mounting | Live `startApp(...)` coordination, harness invocation, `StartedHarness` collection, reverse-order harness stop, and cross-owner finalization | Observation projection, composition authority, provider acquisition, service binding, adapter lowering, native host interiors |
@@ -841,8 +905,8 @@ composition, execute `HabitatEffect`, or mount native hosts.
 
 | Module kind | Import-safe content |
 | --- | --- |
-| Service modules | Boundary schemas, service declarations, service contracts, router factories, Effect execution descriptors |
-| Plugin modules | One plugin factory, lane-specific definitions, oRPC routers/contracts, workflow definitions, command definitions, web/agent/desktop surface definitions, Effect execution descriptors |
+| Service modules | Boundary schemas, service declarations, service contracts, router factories, native handlers, and official Effect-oRPC bridge calls |
+| Plugin modules | One plugin factory, lane-specific definitions, native oRPC routers/contracts where selected, workflow definitions, command definitions, web/agent/desktop surface definitions, and non-oRPC Effect execution descriptors |
 | Resource modules | `RuntimeResource` descriptors, requirement helpers, value types, and no provider imports |
 | Provider modules | Cold `RuntimeProvider` descriptors, provider-local config schemas, and `ProviderEffectPlan` acquisition/release plans behind direct package public faces |
 | App modules | App membership declarations and runtime profile selection |
@@ -853,15 +917,19 @@ composition, execute `HabitatEffect`, or mount native hosts.
 Provider configuration and its `RuntimeSchema` are provider-local. App profiles
 select the direct resource and provider faces through the generic SDK helper.
 
-Ordinary authoring modules must not import raw Effect or effect-oRPC.
+Ordinary authoring modules must not construct an Effect runtime or call a manual
+Effect runner. Effect-backed oRPC operation leaves may import native Effect
+authoring primitives and the exact official bridge; non-oRPC descriptor lanes
+use the curated Habitat facade.
 
 File: `specification://runtime-realization/raw-effect-import-ban.txt`  
 Layer: import law  
 Exactness: normative.
 
 ```text
-Raw Effect imports are forbidden in authored service, plugin, app,
-ordinary resource, provider implementation, profile, and entrypoint modules.
+Raw Effect runtime construction and execution imports are forbidden in authored
+service, plugin, app, ordinary resource, provider implementation, profile, and
+entrypoint modules.
 
 This includes:
 
@@ -880,11 +948,15 @@ Layer: import law
 Exactness: normative for ordinary authoring.
 
 ```ts
-import { Effect } from "effect";
-import { Layer } from "effect";
-import { ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime } from "effect";
 import { makeEffectORPC } from "effect-orpc";
+
+Effect.runPromise(program);
+ManagedRuntime.make(layer);
 ```
+
+Native Effect constructors and combinators remain valid inside an Effect-backed
+oRPC operation executed by official `handlerGen(...)`.
 
 Canonical public Effect import:
 
@@ -909,7 +981,8 @@ import { providerFx } from "@habitat-ai/sdk/runtime/providers/effect";
 
 Provider implementations use `providerFx` for acquisition/release plans. They may use the curated `@habitat-ai/sdk/effect` facade for returned resource value operations. They must not import raw `effect`, `@effect/*`, or construct `ManagedRuntime`.
 
-Raw Effect imports are allowed only in:
+Raw Effect runtime construction and generic descriptor lowering are allowed
+only in:
 
 File: `specification://runtime-realization/raw-effect-import-allowlist.txt`  
 Layer: import law  
@@ -919,20 +992,32 @@ Exactness: normative.
 packages/core/runtime/substrate/effect/**
 ```
 
-Raw effect-oRPC imports are allowed only in:
+Official Effect-oRPC imports are allowed in operation and bootstrap roles:
 
 File: `specification://runtime-realization/effect-orpc-import-allowlist.txt`  
 Layer: import law  
 Exactness: normative.
 
 ```text
-packages/core/runtime/process-runtime/src/adapters/service-effect-orpc/**
-packages/core/runtime/process-runtime/src/adapters/server-effect-orpc/**
+service or oRPC plugin operation leaves:
+  import { handlerGen } from "@orpc/experimental-effect"
+
+one admitted bootstrap in the selected physical oRPC realm:
+  import "@orpc/experimental-effect/extensions/effect"
 ```
 
-Service and plugin packages do not import effect-oRPC directly.
+Community `effect-orpc`, direct bridge `runPromise`, manual `Effect.run*`, and
+custom runner imports remain invalid. The optional extension is valid only with
+one physical `@orpc/server`/bridge realm proof. A generated plain-handler service
+does not need the experimental package.
 
-No service, plugin, resource, provider, app, or entrypoint creates or receives its own `ManagedRuntime`. `runtime-substrate-effect` owns `ManagedRuntimeHandle` and raw Effect lowering. `runtime-process-runtime` owns `EffectRuntimeAccess` and runtime adapter lowering. SDK hooks delegate to those private owners and never receive raw runtime authority. Ordinary authoring does not.
+No service, plugin, resource, provider, app, or entrypoint creates or receives
+its own `ManagedRuntime`. `runtime-substrate-effect` owns
+`ManagedRuntimeHandle` and raw Effect lowering for non-oRPC descriptor lanes.
+`runtime-process-runtime` owns `EffectRuntimeAccess` and non-oRPC runtime adapter
+lowering. The application/process instead owns the Effect Context and scoped
+resources supplied to official oRPC `handlerGen(...)` through native hooks; it
+does not replace that bridge with its managed runtime.
 
 ## 6. Layered naming and artifact ownership
 
@@ -967,7 +1052,15 @@ Names remain layer-specific. Similar concepts in different layers use different 
 
 Every illustrated code or type block in this specification includes `File:`, `Layer:`, and `Exactness:` labels immediately before it.
 
-Code and type blocks are normative for locked names, ownership boundaries, required fields, producer/consumer shape, lifecycle handoff, layer handoff, public `HabitatEffect`/`Effect` import surfaces, forbidden raw Effect/effect-oRPC import locations, Effect terminal ownership, execution descriptor producer/consumer shape, `ExecutionDescriptorTable`, `ExecutionRegistry` matching, `ProcessExecutionRuntime` ownership, process-local coordination semantics, and bridge ownership. They are illustrative for overloads, generic parameters, helper placement, and non-`@habitat-ai/sdk` import paths unless a block states otherwise.
+Code and type blocks are normative for locked names, ownership boundaries,
+required fields, producer/consumer shape, lifecycle handoff, layer handoff,
+public `HabitatEffect`/`Effect` import surfaces, Effect runtime-authority
+confinement, admitted official Effect-oRPC imports, terminal ownership,
+execution descriptor producer/consumer shape, `ExecutionDescriptorTable`,
+`ExecutionRegistry` matching, non-oRPC `ProcessExecutionRuntime` ownership,
+process-local coordination semantics, and bridge ownership. They are
+illustrative for overloads, generic parameters, helper placement, and
+non-`@habitat-ai/sdk` import paths unless a block states otherwise.
 
 Where this document shows public facade helper generics, the public helper name, public import path, export/forbidden-export law, and architectural authority are normative. Exact generic spellings and overloads are illustrative unless explicitly labeled implementation-proven.
 
@@ -1046,13 +1139,26 @@ Plain string labels may name capabilities, routes, ids, triggers, cron expressio
 
 ## 9. Effect execution components
 
+Sections 9.1 through 9.6 define Habitat's non-oRPC descriptor runtime and
+provider substrate. They do not define or imitate the native Effect-oRPC
+request executor. Effect-backed oRPC operations stay native and use official
+`handlerGen(...)` or its admitted `.effect(...)` sugar as specified in §1.
+
 ### 9.1 `HabitatEffect` and curated `Effect`
 
 `HabitatEffect` is the author-facing execution value type. It represents a lazy effectful program without exposing raw Effect runtime ownership.
 
 `runtime-definition` owns the cold `HabitatEffect` value, curated `Effect` authoring contract, tagged-error helper contract, and execution-policy descriptors. The SDK re-exports those public authoring facades. They are not raw Effect and export no runtime authority.
 
-`HabitatEffect` is generator-yield-compatible. Generator-native `.effect(function*)` bodies produce cold definition-owned descriptors; yielded `HabitatEffect` values remain cold until `runtime-substrate-effect` performs raw Effect lowering. Authors may use `yield*` with `HabitatEffect` values inside sanctioned generator-native bodies and helper functions. The public type must preserve success, failure, and requirement inference through generator-native `.effect(function*)` bodies. The cold iterator contract is `runtime-definition` authority; the SDK only re-exports it.
+`HabitatEffect` is generator-yield-compatible. Generator-native
+`.effect(function*)` bodies in non-oRPC lanes produce cold definition-owned
+descriptors; yielded `HabitatEffect` values remain cold until
+`runtime-substrate-effect` performs raw Effect lowering. Authors may use
+`yield*` with `HabitatEffect` values inside those sanctioned bodies and helper
+functions. The public type must preserve success, failure, and requirement
+inference through the non-oRPC descriptor body. Native oRPC `.effect(...)` is a
+different vendor method that delegates to `handlerGen(...)` and consumes native
+Effect, not `HabitatEffect`.
 
 File: `packages/core/runtime/definition/src/effect/habitat-effect.ts`  
 Layer: private runtime-definition cold Effect contract re-exported by `@habitat-ai/sdk/effect`  
@@ -1306,18 +1412,6 @@ export type AsyncExecutionOwnerIdentity =
 
 export type ExecutionDescriptorRef =
   | (ExecutionDescriptorRefBase & {
-      readonly boundary: "service.procedure";
-      readonly procedurePath: string;
-    })
-  | (ExecutionDescriptorRefBase & {
-      readonly boundary: "plugin.server-api";
-      readonly routePath: string;
-    })
-  | (ExecutionDescriptorRefBase & {
-      readonly boundary: "plugin.server-internal";
-      readonly routePath: string;
-    })
-  | (ExecutionDescriptorRefBase & {
       readonly boundary: "plugin.async-step";
       readonly stepId: string;
     } & AsyncExecutionOwnerIdentity)
@@ -1345,9 +1439,6 @@ export type ExecutionDescriptorIdentityInput =
   DistributiveOmit<ExecutionDescriptorRef, "kind" | "executionId">;
 
 export type ExecutionBoundaryKind =
-  | "service.procedure"
-  | "plugin.server-api"
-  | "plugin.server-internal"
   | "plugin.async-step"
   | "plugin.cli-command"
   | "plugin.web-surface"
@@ -1364,13 +1455,29 @@ export type RuntimeEffectBoundaryKind =
   | "resource.operation";
 ```
 
-`ExecutionDescriptorRef` is a discriminated union keyed by `boundary`, not an optional-field bag. Runtime derivation derives refs from lane-native authoring facts through the SDK facade; authors do not construct refs manually. For `plugin.async-step` refs, exactly one of `workflowId`, `scheduleId`, or `consumerId` identifies the enclosing async definition, and `stepId` identifies the step-local executable body. `executionId` remains the canonical derived id, but the boundary-specific fields are required identity ingredients for diagnostics, descriptor lookup, and registry matching.
+`ExecutionDescriptorRef` is a discriminated union keyed by `boundary`, not an
+optional-field bag. Native oRPC service, server API, and server-internal
+operations are intentionally absent because the official bridge executes their
+Effect bodies. Runtime derivation derives refs for the remaining lane-native
+authoring facts through the SDK facade; authors do not construct refs manually.
+For `plugin.async-step` refs, exactly one of `workflowId`, `scheduleId`, or
+`consumerId` identifies the enclosing async definition, and `stepId` identifies
+the step-local executable body. `executionId` remains the canonical derived id,
+but the boundary-specific fields are required identity ingredients for
+diagnostics, descriptor lookup, and registry matching.
 
 `RuntimeEffectBoundaryKind` is policy and telemetry vocabulary. It does not mean every resource operation or provider operation has a compiled execution plan.
 
 `resource.operation` is policy and telemetry vocabulary for resource-value operations. It does not create an independent compiled execution plan. Resource operations inherit the execution path and policy of their enclosing `EffectExecutionDescriptor` or `ProviderEffectPlan` unless a resource facade explicitly narrows local policy.
 
-The public executable service/plugin terminal is `.effect(...)`. It accepts generator-native bodies as canonical procedure, route, tool, command, and local execution syntax. `Effect.gen(...)` remains valid for helpers, repositories, resource operations, provider-local composition where appropriate, generated code, and lower-level composition.
+The public executable terminal for a non-oRPC plugin descriptor lane may be
+Habitat `.effect(...)`. Native oRPC keeps its own terminals: `.handler(...)` for
+synchronous or Promise operations and official `handlerGen(...)` or admitted
+official `.effect(...)` for Effect-backed operations. The two `.effect`
+spellings have different owners and must not be implemented by imitating each
+other. `Effect.gen(...)` remains valid for native Effect helpers, repositories,
+resource operations, provider-local composition where appropriate, generated
+code, and lower-level composition.
 
 File: `packages/core/sdk/src/execution/context.ts`  
 Layer: SDK operational execution context  
@@ -1489,7 +1596,12 @@ The process runtime constructs `ExecutionRegistry` after compilation and provisi
 
 ### 9.5 `EffectRuntimeAccess`
 
-`EffectRuntimeAccess` is the `runtime-process-runtime`-owned handle used by `ProcessExecutionRuntime` and runtime-owned adapter lowering to execute `HabitatEffect` programs against the single process managed runtime. SDK hooks may delegate to those runtime adapters but do not own or implement the handle.
+`EffectRuntimeAccess` is the `runtime-process-runtime`-owned handle used by
+`ProcessExecutionRuntime` and runtime-owned adapter lowering to execute
+non-oRPC `HabitatEffect` descriptor programs against the single process managed
+runtime. SDK hooks may delegate to those runtime adapters but do not own or
+implement the handle. Native oRPC `handlerGen(...)` does not call or receive
+`EffectRuntimeAccess`.
 
 It is not app authoring, service dependency declaration, plugin projection fact, provider selection, or a public runtime handle.
 
@@ -1528,7 +1640,12 @@ export interface EffectRuntimeAccess {
 }
 ```
 
-Services, plugins, harnesses, and SDK facade modules do not receive `EffectRuntimeAccess` directly. `runtime-process-runtime` supplies it only to its own execution and adapter-lowering interiors; SDK delegating hooks invoke those interiors without importing or exposing the handle.
+Services, plugins, harnesses, and SDK facade modules do not receive
+`EffectRuntimeAccess` directly. `runtime-process-runtime` supplies it only to
+its non-oRPC execution and adapter-lowering interiors; SDK delegating hooks
+invoke those interiors without importing or exposing the handle. The
+application/process supplies native Effect Context and wrap functions directly
+through oRPC context without exposing this handle.
 
 `CompiledExecutionPlan` bridge references are resolved by `ProcessExecutionRuntime` before `EffectRuntimeAccess` is called. The resolution path is:
 
@@ -1603,32 +1720,17 @@ Only runtime substrate code creates `ManagedRuntimeHandle`.
 
 ### 9.6 Effect execution policy
 
-Execution policy applies to Effect-only Habitat-managed execution. It does not differentiate terminal modes or transfer ownership of an application-authored body.
+Execution policy applies to non-oRPC Habitat-managed descriptor execution. It
+does not differentiate terminal modes or transfer ownership of an
+application-authored body. Native oRPC request policy is composed by the
+application/process through oRPC middleware and `effect/wrap`; cancellation is
+the native request signal forwarded by official `handlerGen(...)`.
 
 File: `specification://runtime-realization/effect-execution-policy.txt`  
 Layer: runtime execution policy  
 Exactness: normative policy defaults.
 
 ```text
-service.procedure:
-  retry: none by default
-  timeout: request default
-  interruption: interrupt-on-request-close
-  detachedFibers: forbidden
-  telemetry labels: serviceId, procedurePath, requestId, traceId
-
-plugin.server-api:
-  retry: none by default
-  timeout: public request default
-  interruption: interrupt-on-request-close
-  detachedFibers: forbidden
-
-plugin.server-internal:
-  retry: explicit only
-  timeout: internal request default
-  interruption: interrupt-on-request-close
-  detachedFibers: forbidden
-
 plugin.async-step:
   durable retry: Inngest first
   local Effect retry: explicit transient only
@@ -1893,7 +1995,13 @@ Services are transport-neutral and placement-neutral. API, workflow, process, CL
 
 A service may declare dependencies on runtime resources, sibling services, semantic adapters, config, scope, and invocation context. Those dependencies may have runtime lifecycle, but the service does not provision or release them. The runtime binds and provisions them from app-selected providers and compiled plans.
 
-A service does not own public API projection, internal API projection, async workflow execution, command projection, web projection, agent projection, desktop projection, app membership, provider selection, process placement, harness mounting, raw Effect runtime construction, or raw effect-oRPC adapter wiring.
+A service does not own public API projection, internal API projection, async
+workflow execution, command projection, web projection, agent projection,
+desktop projection, app membership, provider selection, process placement,
+harness mounting, raw Effect runtime construction, or a custom Effect-oRPC
+runner. It may author native `.handler(...)` operations and Effect-backed
+operations through official `handlerGen(...)` or admitted official
+`.effect(...)`.
 
 ### 11.2 Service package boundary
 
@@ -1912,7 +2020,7 @@ callable contracts
 dependency declarations
 runtime-carried lane schemas
 service binding inputs
-Effect execution descriptors
+native oRPC operations using handler or the official Effect bridge
 service boundary exports
 ```
 
@@ -1929,9 +2037,10 @@ provider acquisition
 service binding
 service binding cache
 compiled execution plans
-execution registry
-ProcessExecutionRuntime
-EffectRuntimeAccess
+execution registry for non-oRPC process lanes
+ProcessExecutionRuntime for non-oRPC process lanes
+EffectRuntimeAccess for non-oRPC process lanes
+application/process-owned oRPC effect/context and effect/wrap
 ManagedRuntimeHandle
 adapter lowering
 harness handoff
@@ -1944,7 +2053,11 @@ The companion service-package specification owns service-private files, reposito
 
 The service package root exports boundary surfaces only. It must not export repositories, migrations, module internals, service-private schemas, service-private middleware, Effect internals, or runtime provider internals.
 
-A realistic service may have multiple internal modules without changing species. Runtime sees boundary contracts, dependency declarations, lane schemas, and Effect execution descriptors.
+A realistic service may have multiple internal modules without changing
+species. Runtime sees boundary contracts, dependency declarations, lane
+schemas, native oRPC operations, and the context/wrap hooks needed by the
+official bridge. It does not translate service operation bodies into Habitat
+Effect execution descriptors.
 
 The exact service-private topology belongs to the companion service-package
 specification and the closed Habitat service blueprint. This runtime
@@ -2147,63 +2260,31 @@ Runtime derivation normalizes resource dependencies, service dependencies, seman
 
 ### 11.6 Service procedure implementation terminal
 
-Service procedures expose one Habitat execution terminal: `.effect(...)`.
+Service procedures retain the native oRPC implementer. Native
+`.handler(...)` is valid for synchronous and Promise-returning operations. An
+Effect-backed operation uses official `handlerGen(...)` or the admitted official
+`.effect(...)` extension. Habitat MUST NOT create a
+`HabitatServiceProcedureImplementer`, translate the operation into
+`HabitatEffect`, or execute it through `ProcessExecutionRuntime`.
 
-File: `packages/core/runtime/definition/src/service/implement-service.ts`  
-Layer: private `runtime-definition` service contract exposed through the SDK facade  
-Exactness: normative for Effect-only service procedure terminal; illustrative for exact generic spelling.
+File: `node_modules/@orpc/experimental-effect/dist/shared/experimental-effect.C9oJcd5q.mjs`  
+Layer: exact published Effect-oRPC service bridge  
+Exactness: normative for `handlerGen(...)`, `effect/context`, `effect/wrap`, request signal, Cause mapping, and returned Promise.
 
-```ts
-export function implementService<const TContract>(
-  contract: TContract,
-  options: ServiceImplementerOptions,
-): HabitatServiceImplementer<TContract>;
-
-export interface HabitatServiceImplementer<TContract> {
-  readonly kind: "service.implementer";
-
-  use<TNextContext>(
-    middleware: ServiceMiddleware<TNextContext>,
-  ): HabitatServiceImplementer<TContract>;
-
-  router<TImplementation extends ServiceRouterImplementation<TContract>>(
-    implementation: TImplementation,
-  ): ServiceRouter<TContract, TImplementation>;
-}
-
-export interface HabitatServiceProcedureImplementer<
-  TInput,
-  TOutput,
-  TProjectedContext,
-  TServiceBoundaryContext,
-  TErrors,
-> {
-  effect<TEffectError, TRequirements>(
-    fn: (
-      ctx: ServiceProcedureExecutionContext<
-        TInput,
-        TProjectedContext,
-        TServiceBoundaryContext,
-        TErrors
-      >,
-    ) =>
-      | Generator<unknown, TOutput, unknown>
-      | HabitatEffect<TOutput, TEffectError, TRequirements>,
-  ): ServiceProcedureImplementation<TInput, TOutput>;
-}
-```
-
-Canonical examples prefer generator-native terminal bodies. Returning an already-built `HabitatEffect` directly is allowed for helper reuse, generated code, and lower-level composition.
+Canonical Effect-backed examples use direct `handlerGen(function*)` unless the
+application has deliberately admitted the same-realm `.effect(...)` extension.
+Plain handlers do not require the bridge package.
 
 File: `services/work-items/src/service/modules/items/router/create.ts`  
 Layer: service module procedure implementation  
-Exactness: normative for generator-native `.effect(function*)` terminal and yielded `HabitatEffect`; illustrative for service-internal context projection, repository shape, module names, and business body.
+Exactness: normative for official `handlerGen(function*)` and native Effect; illustrative for service-internal context projection, repository shape, module names, and business body.
 
 ```ts
-import { Effect } from "@habitat-ai/sdk/effect";
+import { handlerGen } from "@orpc/experimental-effect";
+import { Effect } from "effect";
 import { module } from "../module";
 
-export const create = module.create.effect(function* ({ input, context, errors }) {
+export const create = module.create.handler(handlerGen(function* ({ input, context, errors }) {
   if (input.title.trim().length === 0) {
     return yield* Effect.fail(
       errors.INVALID_WORK_ITEM_TITLE({
@@ -2218,7 +2299,7 @@ export const create = module.create.effect(function* ({ input, context, errors }
     description: input.description,
     createdAt: context.clock.nowIso(),
   });
-});
+}));
 ```
 
 Read-only or cross-cutting service policy should be middleware-driven from metadata. Procedure-local checks are allowed when they represent procedure-specific behavior, not duplicated global policy.
@@ -2259,7 +2340,11 @@ export const contract = {
 };
 ```
 
-`runtime-process-runtime` adapters lower service lanes into oRPC initial context and oRPC execution context. SDK service helpers are public type facades or delegating hooks only. The lowering does not transfer service domain authority to oRPC or runtime.
+Application/process composition lowers service lanes into native oRPC context,
+including `effect/context` and optional `effect/wrap` for Effect-backed
+operations. SDK service helpers remain public type/composition facades and do
+not implement a runner. This handoff does not transfer service domain authority
+to oRPC or runtime.
 
 ### 11.8 Service clients
 
@@ -2568,66 +2653,26 @@ plugins/server/api/work-items/
     router.ts
 ```
 
-Server API routes use `.effect(...)`.
+Server API routes retain the native oRPC implementer. Synchronous or Promise
+routes use native `.handler(...)`; Effect-backed routes use official
+`handlerGen(...)` or the admitted official `.effect(...)` extension. Habitat
+MUST NOT publish or implement a `HabitatServerApiRouteImplementer.effect`
+imitation. Application/process composition supplies a native
+`WithEffectContext`-compatible context containing `effect/context` and optional
+`effect/wrap`; the official bridge consumes it.
 
-File: `packages/core/runtime/definition/src/plugins/server/implement-server-api-plugin.ts`  
-Layer: private `runtime-definition` server API contract exposed through the SDK facade  
-Exactness: normative for Effect-only server API route terminal; illustrative for exact generic spelling.
-
-```ts
-export function implementServerApiPlugin<const TContract>(
-  contract: TContract,
-  options: ServerApiImplementerOptions,
-): HabitatServerApiPluginImplementer<TContract>;
-
-export interface ServerApiExecutionContext<
-  TInput,
-  TContext,
-  TErrors,
-  TServiceUses extends ServiceUses = ServiceUses,
-> {
-  readonly input: TInput;
-  readonly context: ServerApiInvocationContext<TContext, TServiceUses>;
-  readonly telemetry: BoundaryTelemetry;
-  readonly errors: TErrors;
-  readonly execution: EffectBoundaryContext;
-}
-
-export interface ServerApiInvocationContext<
-  TContext,
-  TServiceUses extends ServiceUses = ServiceUses,
-> {
-  readonly route: TContext;
-  readonly request: PublicServerRequestContext;
-  readonly clients: ConstructionBoundServiceClients<TServiceUses>;
-  readonly resources: RuntimeResourceAccess;
-  readonly workflows: WorkflowDispatcher;
-}
-
-export interface HabitatServerApiRouteImplementer<
-  TInput,
-  TOutput,
-  TContext,
-  TErrors,
-  TServiceUses extends ServiceUses = ServiceUses,
-> {
-  effect<TEffectError, TRequirements>(
-    fn: (
-      ctx: ServerApiExecutionContext<TInput, TContext, TErrors, TServiceUses>,
-    ) =>
-      | Generator<unknown, TOutput, unknown>
-      | HabitatEffect<TOutput, TEffectError, TRequirements>,
-  ): ServerApiRouteImplementation<TInput, TOutput>;
-}
-```
+File: `node_modules/@orpc/experimental-effect/dist/shared/experimental-effect.C9oJcd5q.mjs`  
+Layer: exact published native Effect-oRPC bridge selected by the application  
+Exactness: normative for beta.23 `handlerGen(...)`, context/wrap order, signal forwarding, Cause mapping, and Promise ownership.
 
 File: `plugins/server/api/work-items/src/router.ts`  
 Layer: public server API projection router  
-Exactness: normative for `.effect(function*)` route terminal, invocation-bound service client creation, declared plugin error mapping, and Effect-facing service boundary calls; illustrative for public API body details.
+Exactness: normative for official `handlerGen(function*)`, invocation-bound service client creation, declared plugin error mapping, and Effect-facing service boundary calls; illustrative for public API body details.
 
 ```ts
-import { Effect } from "@habitat-ai/sdk/effect";
-import { implementServerApiPlugin } from "@habitat-ai/sdk/plugins/server/effect";
+import { handlerGen } from "@orpc/experimental-effect";
+import { Effect } from "effect";
+import { implementServerApiPlugin } from "@habitat-ai/sdk/plugins/server";
 
 import { workItemsPublicApiContract } from "./contract";
 
@@ -2637,7 +2682,7 @@ const os = implementServerApiPlugin(workItemsPublicApiContract, {
 
 export function createWorkItemsPublicRouter() {
   return os.router({
-    create: os.create.effect(function* ({ input: payload, context, execution, errors }) {
+    create: os.create.handler(handlerGen(function* ({ input: payload, context, execution, errors }) {
       const actor = yield* context.request.requireActor();
 
       if (!actor.canCreateWorkItems) {
@@ -2659,9 +2704,9 @@ export function createWorkItemsPublicRouter() {
         title: payload.title,
         description: payload.description,
       });
-    }),
+    })),
 
-    get: os.get.effect(function* ({ input: payload, context, execution }) {
+    get: os.get.handler(handlerGen(function* ({ input: payload, context, execution }) {
       const workItems = context.clients.workItems.withInvocation({
         invocation: {
           traceId: execution.traceId,
@@ -2671,28 +2716,28 @@ export function createWorkItemsPublicRouter() {
       return yield* workItems.items.get({
         id: payload.id,
       });
-    }),
+    })),
   });
 }
 ```
 
 The public API plugin may redact, transform, authenticate, authorize, rate-limit, and publish public contracts. It does not own the domain invariant that determines whether a work item may be created.
 
-Raw effect-oRPC remains inside `runtime-process-runtime` adapter lowering. SDK
-helpers expose authoring facades and delegating hooks only. Habitat uses a
-descriptor-first posture:
+Effect-oRPC remains native. SDK helpers may supply contracts, bound service
+clients, and context/wrap composition, but they do not implement a second
+runner. Habitat uses this bridge posture:
 
-File: `specification://runtime-realization/descriptor-first-orpc-posture.txt`  
+File: `specification://runtime-realization/native-effect-orpc-posture.txt`  
 Layer: oRPC/effect-oRPC boundary law  
 Exactness: normative.
 
 ```text
-.effect(function*) authoring
-  -> runtime-definition-backed authoring facade captures EffectExecutionDescriptor
-  -> oRPC route/procedure wrapper remains contract-shaped
-  -> runtime-process-runtime adapter lowers the wrapper
-  -> invocation calls ProcessExecutionRuntime
-  -> ProcessExecutionRuntime runs HabitatEffect through EffectRuntimeAccess
+native .handler(...) for synchronous or Promise operation
+or official handlerGen(function*) / admitted official .effect(function*)
+  -> native oRPC validation and middleware
+  -> application/process-owned effect/context and effect/wrap
+  -> official handlerGen forwards signal and owns runPromiseExit/Cause/Promise
+  -> native oRPC result and transport
 ```
 
 ### 12.6 Trusted server internal plugin wrapping `WorkflowDispatcher`
@@ -2703,11 +2748,12 @@ A `plugins/server/internal/<capability>` package uses `defineServerInternalPlugi
 
 File: `plugins/server/internal/work-items-ops/src/router.ts`  
 Layer: server internal plugin router  
-Exactness: normative for internal projection wrapping `WorkflowDispatcher` through `.effect(...)`; illustrative for exact workflow names.
+Exactness: normative for internal projection wrapping `WorkflowDispatcher` through official `handlerGen(...)`; illustrative for exact workflow names.
 
 ```ts
-import { Effect } from "@habitat-ai/sdk/effect";
-import { implementServerInternalPlugin } from "@habitat-ai/sdk/plugins/server/effect";
+import { handlerGen } from "@orpc/experimental-effect";
+import { Effect } from "effect";
+import { implementServerInternalPlugin } from "@habitat-ai/sdk/plugins/server";
 
 import { workItemsOpsInternalContract } from "./contract";
 import { WorkItemsSyncWorkflow } from "@rawr/plugins/async/workflows/work-items-sync";
@@ -2718,7 +2764,7 @@ const os = implementServerInternalPlugin(workItemsOpsInternalContract, {
 
 export function createWorkItemsOpsRouter() {
   return os.router({
-    triggerSync: os.triggerSync.effect(function* ({ input: payload, context }) {
+    triggerSync: os.triggerSync.handler(handlerGen(function* ({ input: payload, context }) {
       return yield* Effect.tryPromise({
         try: () =>
           context.workflows.send(WorkItemsSyncWorkflow, {
@@ -2731,7 +2777,7 @@ export function createWorkItemsOpsRouter() {
             cause,
           }),
       });
-    }),
+    })),
   });
 }
 ```
@@ -4202,7 +4248,7 @@ Process runtime owns:
 | Plugin projection | Compiled surface plans, bound clients, role access | `MountReadySurfaceRuntimeRecord` values |
 | Runtime adapter lowering | Compiled surface plans | Adapter-lowered payloads and callbacks |
 | Mount-ready handoff | Mount-ready surface runtime records, lowered payloads, harness plans | Records consumed by runtime mounting |
-| Process execution runtime | Execution registry, execution plans, execution descriptors, Effect runtime access | Centralized Effect execution bridge |
+| Process execution runtime | Execution registry, non-oRPC execution plans and descriptors, Effect runtime access | Centralized non-oRPC Effect execution bridge |
 | Owner-local observation | Compiler observation seed and process events | Process-runtime findings consumed by runtime mounting and forwarded through the definition-owned observation boundary |
 | Process-runtime stop | Bound services, runtime adapters, dispatchers, and provisioned process | Process-owned stop handle; no harness handles |
 
@@ -4217,7 +4263,11 @@ Runtime mounting invokes harnesses only after this handoff succeeds. On shutdown
 
 The registry matches execution.
 
-`ExecutionRegistry` is assembled once per started process after provisioning and before adapter lowering. It maps every executable boundary ref used by compiled surfaces to exactly one matched `CompiledExecutionPlan` and `EffectExecutionDescriptor`.
+`ExecutionRegistry` is assembled once per started process after provisioning and
+before adapter lowering. It maps every non-oRPC executable boundary ref used by
+compiled surfaces to exactly one matched `CompiledExecutionPlan` and
+`EffectExecutionDescriptor`. Native oRPC operations are deliberately absent;
+their native implementer plus official bridge is already executable.
 
 File: `packages/core/runtime/process-runtime/execution-registry.ts`  
 Layer: process runtime execution registry  
@@ -4252,9 +4302,11 @@ Adapters do not independently pair plans and descriptors. They resolve executabl
 
 ### 18.4 `ProcessExecutionRuntime`
 
-The execution runtime runs invocations.
+The execution runtime runs non-oRPC descriptor invocations.
 
-Runtime invocation of Effect descriptors is centralized. Harnesses and adapters do not independently lower or run `HabitatEffect`.
+Runtime invocation of non-oRPC Effect descriptors is centralized. Harnesses and
+adapters do not independently lower or run `HabitatEffect`. This owner never
+executes an Effect-backed oRPC operation; official `handlerGen(...)` does.
 
 File: `packages/core/runtime/process-runtime/execution-runtime.ts`  
 Layer: process runtime execution bridge  
@@ -4295,7 +4347,9 @@ execution.effect
   -> return Promise result or structured exit to adapter/native host interop
 ```
 
-The process runtime supplies `EffectRuntimeAccess`. Services and plugins do not.
+The process runtime supplies `EffectRuntimeAccess` only to non-oRPC descriptor
+lanes. Services and plugins do not receive it, and official Effect-oRPC does not
+call it.
 
 ### 18.5 `ServiceBindingCache` and `ServiceBindingCacheKey`
 
@@ -4518,7 +4572,14 @@ Effect retries inside async steps are local/transient unless explicitly coordina
 
 Adapters translate surfaces.
 
-Surface adapters lower `CompiledSurfacePlan` artifacts emitted by the runtime compiler into native harness-facing payloads. They do not lower runtime-derived `SurfaceRuntimePlan` descriptors, raw authoring declarations, or SDK facades directly. They may produce native payload closures that call `ProcessExecutionRuntime` at invocation time. They do not execute descriptors during lowering.
+Surface adapters lower `CompiledSurfacePlan` artifacts emitted by the runtime
+compiler into native harness-facing payloads. They do not lower runtime-derived
+`SurfaceRuntimePlan` descriptors, raw authoring declarations, or SDK facades
+directly. They may produce non-oRPC native payload closures that call
+`ProcessExecutionRuntime` at invocation time. For oRPC they preserve the native
+procedure and application/process-owned `effect/context` and `effect/wrap`, and
+official `handlerGen(...)` owns invocation. Adapters do not execute descriptors
+during lowering.
 
 File: `packages/core/runtime/process-runtime/src/surface-adapter.ts`  
 Layer: runtime adapter lowering contract  
@@ -4539,7 +4600,8 @@ export interface SurfaceAdapter<
     roleAccess: RoleRuntimeAccess;
     serviceBindings: BoundServiceBindingMap;
     executionRegistry: ExecutionRegistry;
-    executionRuntime: ProcessExecutionRuntime;
+    executionRuntime?: ProcessExecutionRuntime;
+    effectORPCContext?: WithEffectContext<unknown>;
   }): AdapterLoweringResult<TPayload>;
 }
 
@@ -4562,19 +4624,21 @@ Layer: adapter lowering law
 Exactness: normative.
 
 ```text
-Adapters may produce native payload closures that call ProcessExecutionRuntime at invocation time.
-Adapters resolve plan/descriptor pairs through ExecutionRegistry.
+Adapters may produce non-oRPC native payload closures that call ProcessExecutionRuntime at invocation time.
+Adapters resolve non-oRPC plan/descriptor pairs through ExecutionRegistry.
+Adapters preserve native oRPC procedures and application/process effect/context and effect/wrap.
+Adapters never wrap an oRPC Effect in ProcessExecutionRuntime or another runner.
 Adapters do not execute descriptors during lowering.
 Adapters do not construct raw Effect runtimes.
 Adapters do not import raw Effect; raw Effect lowering belongs only to runtime-substrate-effect.
 Adapters do not contain application business/capability execution logic.
 ```
 
-A native host callback is conceptually:
+A non-oRPC native host callback is conceptually:
 
 File: `specification://runtime-realization/native-host-callback.ts`  
 Layer: native host interop  
-Exactness: illustrative shape; normative registry resolution and delegation rule.
+Exactness: illustrative shape; normative for non-oRPC registry resolution and delegation rule.
 
 ```ts
 async function nativeHostCallback(nativeInput: unknown) {
@@ -4587,22 +4651,26 @@ async function nativeHostCallback(nativeInput: unknown) {
 }
 ```
 
-The Promise returned by a native callback is host interop. The underlying
+The Promise returned by a non-oRPC callback is host interop. The underlying
 owner-authored execution body remains Effect and runs through the
-Habitat-managed bridge.
+Habitat-managed bridge. An oRPC callback instead returns the Promise from
+official `handlerGen(...)` without another runner.
 
-Raw effect-oRPC adapter code is contained in:
+Official Effect-oRPC bridge code is selected from:
 
 File: `specification://runtime-realization/effect-orpc-adapter-containment.txt`  
-Layer: adapter import law  
-Exactness: normative.
+Layer: native bridge import law  
+Exactness: normative for the exact selected package.
 
 ```text
-packages/core/runtime/process-runtime/src/adapters/service-effect-orpc/**
-packages/core/runtime/process-runtime/src/adapters/server-effect-orpc/**
+@orpc/experimental-effect@2.0.0-beta.23 handlerGen
+@orpc/experimental-effect@2.0.0-beta.23 extensions/effect (optional)
 ```
 
-Service and plugin authors never construct effect-oRPC adapters directly.
+Service and plugin authors select official `handlerGen(...)` or the admitted
+official extension. They never construct an adapter, call bridge `runPromise`
+directly, use manual `Effect.run*`, or route oRPC execution through
+`ProcessExecutionRuntime`.
 
 ## 21. Harness and native boundary contracts
 
@@ -4643,7 +4711,11 @@ Placement: `packages/core/runtime/harnesses/elysia`.
 
 Input: mounted server API and server internal surface runtimes, adapter-lowered oRPC/Elysia route payloads, server harness config, process access for host-level needs.
 
-Output: mounted Elysia routes, mounted oRPC callbacks that delegate to `ProcessExecutionRuntime`, public OpenAPI publication for selected public API projections, internal RPC handlers for selected internal projections, `StartedHarness`.
+Output: mounted Elysia routes; mounted native oRPC callbacks whose
+Effect-backed operations execute through official `handlerGen(...)`; public
+OpenAPI publication for selected public API projections; internal RPC handlers
+for selected internal projections; `StartedHarness`. Non-oRPC descriptor
+callbacks may delegate to `ProcessExecutionRuntime`.
 
 Boundary rule: Elysia owns HTTP host lifecycle and request routing. It does not own public API meaning, service construction, provider selection, app membership, or runtime provisioning.
 
@@ -4965,15 +5037,15 @@ Runtime diagnostics cover at least:
 | Duplicate executable boundary | `execution.registry.boundary_duplicate` |
 | Mismatched compiled plan and descriptor | `execution.registry.identity_mismatch` |
 | Invalid execution policy | `execution.policy.invalid` |
-| Forbidden public handler terminal | `execution.handler-terminal.forbidden` |
+| Forbidden handler terminal in a non-oRPC descriptor lane | `execution.handler-terminal.forbidden` |
 | Forbidden handler descriptor | `execution.handler-descriptor.forbidden` |
 | Forbidden execution mode branch | `execution.mode-branch.forbidden` |
 | Forbidden noncanonical global `fx` authoring import | `execution.fx-canonical-import.forbidden` |
-| Forbidden raw Effect import | `execution.raw-effect-import.forbidden` |
+| Forbidden raw Effect runtime-authority import | `execution.raw-effect-import.forbidden` |
 | Forbidden raw Effect run call | `execution.raw-effect-run.forbidden` |
-| Forbidden raw effect-oRPC import | `execution.effect-orpc-import.forbidden` |
+| Forbidden manual, community, or custom Effect-oRPC runner import | `execution.effect-orpc-import.forbidden` |
 | Managed runtime construction in authoring | `execution.managed-runtime.authoring-forbidden` |
-| Missing process execution bridge | `execution.bridge.missing` |
+| Missing process execution bridge for a non-oRPC descriptor lane | `execution.bridge.missing` |
 | Missing error bridge | `execution.error-bridge.missing` |
 | Missing telemetry labels | `execution.telemetry-labels.missing` |
 | Invalid `HabitatEffect` yieldability | `execution.habitat-effect-yieldability.invalid` |
@@ -5127,7 +5199,7 @@ sequenceDiagram
 
 | Phase | Required output | Producer | Consumer | Gate |
 | --- | --- | --- | --- | --- |
-| Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, cold Effect executable bodies | Authors | Runtime derivation through the SDK facade | Declaration import safety, topology/builder check, Effect-only terminal gate |
+| Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, native oRPC operations, and cold non-oRPC Effect executable bodies | Authors | Runtime derivation through the SDK facade and native oRPC implementers | Declaration import safety, topology/builder check, native handler/official Effect bridge gate |
 | Selection | App membership, profile, provider choices, process roles, selected harnesses | App/entrypoint | Runtime derivation/runtime compiler | App/profile/entrypoint snapshot |
 | Derivation | `NormalizedAuthoringGraph`, `ExecutionDescriptorRef`, non-portable `ExecutionDescriptorTable`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `PortableRuntimePlanArtifact` | Runtime derivation | Runtime compiler and process runtime | Derivation artifact snapshot |
 | Compilation | `CompiledProcessPlan`, provider dependency graph, compiled service/surface/harness plans, `CompiledExecutionPlan[]`, `CompiledExecutionRegistryInput` | Runtime compiler | Bootgraph/process runtime/adapters | Compiler validation and provider coverage |
@@ -5146,12 +5218,12 @@ services/work-items
   owns modules: items, labels, allocations
   declares dbPool, clock, logger resource deps
   owns domain contracts and repository writes
-  produces Effect execution descriptors at procedure boundaries
+  implements native oRPC procedures with the official Effect bridge
 
 plugins/server/api/work-items
   uses workItems service
   owns public oRPC API schemas and public route policy
-  produces cold Effect route descriptors
+  composes native effect/context and effect/wrap for public routes
 
 apps/rawr/rawr.app.ts
   selects workItems public API plugin
@@ -5164,13 +5236,13 @@ apps/rawr/server.ts
   calls startApp(rawrApp, { profile: productionProfile, roles: ["server"] })
 
 Runtime derivation through the SDK facade
-  derives service binding plan, surface runtime plan, Effect descriptor refs, and execution descriptor table
+  derives service binding plan and surface runtime plan
 
 Runtime compiler
   validates provider coverage
   validates provider dependency closure
-  validates Effect execution boundary policy and import law
-  emits provider dependency graph, compiled execution plans, registry input, and compiled process plan
+  validates native Effect-oRPC bridge authority and import law
+  emits provider dependency graph and compiled process plan
 
 Bootgraph
   orders SQL pool, clock, and logger from compiler-owned ordering input
@@ -5180,19 +5252,19 @@ Effect provisioning/execution kernel
   acquires SQL pool, clock, and logger and alone produces ProvisionedProcess
 
 Process runtime
-  creates RuntimeAccess, ExecutionRegistry, ProcessExecutionRuntime, and EffectRuntimeAccess
+  creates RuntimeAccess and application/process-owned oRPC Effect Context and wrap
   binds workItems service client with deps/scope/config
   caches binding by ServiceBindingCacheKey
   projects API plugin into mount-ready surface runtime records
 
 Surface adapter
-  lowers server API compiled plan to oRPC/Elysia payload closure
-  resolves executable boundaries through ExecutionRegistry
+  lowers server API compiled plan while preserving the native oRPC procedure
   supplies invocation context with request and invocation-bound clients at call time
 
 Elysia harness
   mounts public routes and selected publication artifacts
-  invokes adapter-lowered closure, which executes Effect descriptors through ProcessExecutionRuntime
+  invokes the native procedure; official handlerGen owns Effect execution,
+  request signal, Cause mapping, and Promise return
 
 Runtime mounting
   invokes Elysia harness and collects StartedHarness
@@ -5262,7 +5334,8 @@ Inngest harness
   mounts native functions or connect worker
 
 Server internal harness path
-  mounts trusted internal RPC procedure that calls dispatcher through ProcessExecutionRuntime
+  mounts a trusted internal native oRPC procedure that calls the dispatcher
+  through official handlerGen with application/process-owned effect/context and effect/wrap
 ```
 
 Workflow plugin identity and internal API identity remain separate. The internal API can trigger the workflow; the workflow plugin does not become an API.
@@ -5430,7 +5503,10 @@ Harnesses consume mount-ready surface runtime records or adapter-lowered payload
 
 Surface adapters lower compiled surface plans. They do not lower raw authoring declarations or normalized authoring graphs directly.
 
-Native Promise callbacks are adapter/harness/external-client interop only. They delegate to `ProcessExecutionRuntime`.
+Non-oRPC native Promise callbacks are adapter/harness/external-client interop
+only and may delegate to `ProcessExecutionRuntime`. Native oRPC handlers and
+official `handlerGen(...)` callbacks remain owned by oRPC and its selected
+bridge.
 
 ### 25.8 Diagnostics
 
@@ -5442,9 +5518,11 @@ Diagnostic payloads are schema-backed and redacted. Secrets do not appear in cat
 
 Runtime access hooks may emit owner-local findings or definition-owned observation records. An admitted downstream consumer adapts findings into records when projection is required; runtime observation alone projects those records into topology records and diagnostics. Neither path acquires resources, retrieves live values for observation, exposes raw Effect/provider/config internals, or mutates running composition.
 
-### 25.9 Effect-only execution
+### 25.9 Effect execution boundaries
 
-Raw Effect imports are forbidden in ordinary authoring.
+Effect runtime construction and manual `Effect.run*` are forbidden in ordinary
+authoring. Native Effect constructors and combinators are admitted inside
+Effect-backed oRPC operations executed by the official bridge.
 
 File: `specification://runtime-realization/ordinary-authoring-raw-effect-forbidden.txt`  
 Layer: enforcement law  
@@ -5459,15 +5537,15 @@ resources/**
 entrypoints
 ```
 
-Raw effect-oRPC imports are forbidden outside:
+Effect-oRPC imports are limited to the exact official bridge forms:
 
 File: `specification://runtime-realization/effect-orpc-forbidden-boundary.txt`  
 Layer: enforcement law  
 Exactness: normative.
 
 ```text
-packages/core/runtime/process-runtime/src/adapters/service-effect-orpc/**
-packages/core/runtime/process-runtime/src/adapters/server-effect-orpc/**
+operation leaf: import { handlerGen } from "@orpc/experimental-effect"
+admitted same-realm bootstrap: import "@orpc/experimental-effect/extensions/effect"
 ```
 
 `ManagedRuntime.make(...)` is forbidden outside runtime substrate code.
@@ -5476,7 +5554,10 @@ Raw Effect `runPromise`, `runSync`, `runFork`, or equivalent runtime execution c
 
 Provider `build(...)` must return `ProviderEffectPlan`. Ad hoc Promise acquisition as the public provider authoring result is invalid.
 
-A public `.handler(...)` terminal is invalid for canonical service/plugin authoring. Native host handlers may exist only as adapter/harness interop callbacks that delegate to `ProcessExecutionRuntime`.
+Native oRPC `.handler(...)` is valid for synchronous and Promise-returning
+operations. Effect-backed oRPC operations use official `handlerGen(...)` or an
+admitted official `.effect(...)` extension. No oRPC handler delegates its
+Effect to `ProcessExecutionRuntime`.
 
 `HandlerExecutionDescriptor` is invalid.
 
@@ -5484,9 +5565,12 @@ A public `.handler(...)` terminal is invalid for canonical service/plugin author
 
 `CompiledExecutionPlan.mode` is invalid.
 
-A Promise/handler execution branch is invalid.
+A Promise/handler execution branch is invalid inside Habitat's non-oRPC
+descriptor runtime; it remains valid at the native oRPC boundary.
 
-A server route implementation must not use raw effect-oRPC builders.
+A server route implementation must not use community Effect-oRPC, bridge
+`runPromise` directly, manual `Effect.run*`, a custom runner, or a Habitat
+imitation. It may use the selected official bridge.
 
 Executable descriptor bodies must not close over runtime-bound clients, request objects, dispatcher handles, resource instances, `RuntimeAccess`, or `EffectRuntimeAccess`. Those values arrive only through invocation context supplied by process runtime and adapter-lowered callbacks.
 
@@ -5494,7 +5578,10 @@ An entrypoint must not manually run `HabitatEffect`, construct `EffectRuntimeAcc
 
 A harness must not lower `HabitatEffect`, construct `EffectRuntimeAccess`, import raw Effect, consume raw authoring declarations, consume normalized authoring graphs, or consume compiler plans directly.
 
-The global `fx` authoring spelling is noncanonical. Canonical authoring imports `Effect`, `TaggedError`, and `HabitatEffect` from `@habitat-ai/sdk/effect`.
+The global `fx` authoring spelling is noncanonical. Non-oRPC descriptor
+authoring imports `Effect`, `TaggedError`, and `HabitatEffect` from
+`@habitat-ai/sdk/effect`; native oRPC operations use native Effect values with
+the official bridge.
 
 ### 25.10 Process-local coordination
 
@@ -5534,12 +5621,12 @@ Gate families are:
 
 | Gate family | Required coverage |
 | --- | --- |
-| Static/import gates | no raw Effect imports outside runtime substrate, no effect-oRPC imports outside process-runtime adapter interiors, no managed runtime construction outside runtime substrate, no raw Effect run calls in ordinary authoring, contracts/providers cold, no sibling service internals |
-| Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, generator-native `.effect(function*)` inference, `HabitatEffect` yieldability, contract errors, `HabitatEffect` composition |
-| Runtime behavior gates | Effect execution through `ProcessExecutionRuntime`, `EffectRuntimeAccess` internal-only, declared boundary error bridging, internal error diagnostics, service binding cache invocation exclusion, provider acquire/release finalization |
+| Static/import gates | no managed runtime construction outside runtime substrate; no manual `Effect.run*`; no community/custom Effect-oRPC runner; official `handlerGen` or admitted same-realm `.effect` for Effect-backed oRPC; contracts/providers cold; no sibling service internals |
+| Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
+| Runtime behavior gates | non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `handlerGen`; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
 | Registry gates | descriptor table is present; descriptors are derivable without runtime-bound closure capture; every executable boundary ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation |
 | Fixture/plan gates | `NormalizedAuthoringGraph`, `ServiceBindingPlan`, `CompiledExecutionPlan`, `CompiledExecutionRegistryInput`, provider dependency graph, `RuntimeCatalog`, telemetry labels, startup rollback, finalization records |
-| Effect-only terminal gates | no public `.handler(...)` terminal in normalized graphs, compiled plans, fixtures, examples, or public SDK implementers; no inline async step executable body hidden inside workflow invocation |
+| Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `handlerGen(...)` or admitted official `.effect(...)` for Effect-backed oRPC; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation |
 | Provider separation gates | provider acquire/release represented as `ProviderEffectPlan`; bootgraph modules carry identity/dependency ordering facts only; neither is an ordinary `EffectExecutionDescriptor` procedure plan |
 | Private dependency-boundary gates | exact §4 graph only; no private owner imports SDK; no upstream owner imports observation-owned projection types; runtime mounting alone starts, invokes and stops harnesses, and coordinates cross-owner finalization; runtime observation alone projects observation read models |
 
@@ -5556,7 +5643,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Service lanes | `deps`, `scope`, `config`, `invocation`, `provided` | Service-specific schemas and middleware |
 | Service dependencies | `serviceDep(...)`; no sibling internals | Semantic adapters via `semanticDep(...)` |
 | Plugin classification | Topology plus lane-specific builder | Surface-local route, command, workflow, shell, desktop facts |
-| Execution | cold `.effect(...)` bodies, `defineAsyncStepEffect(...)`, `EffectExecutionDescriptor`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess` | Additional definition-owned Effect policies and process-runtime-owned adapters exposed through SDK delegating hooks |
+| Execution | native oRPC handler/official Effect bridge plus cold non-oRPC `.effect(...)` bodies, `defineAsyncStepEffect(...)`, `EffectExecutionDescriptor`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess` | Additional definition-owned policies and process-runtime-owned adapters for non-oRPC lanes; application/process-owned oRPC context/wrap composition |
 | Resources/providers/profiles | Resource contract, provider implementation, app profile selection | New resource families and providers |
 | Runtime compiler | Coverage, closure, topology validation, provider dependency graph, compiled process plan | Additional plan findings and optimization |
 | Bootgraph | Acquisition/release order and rollback metadata only | Provider-specific refresh and retry strategies |
@@ -5593,7 +5680,7 @@ closed source topology for each kind.
 | `CompiledExecutionPlan` | Runtime compiler | `packages/core/runtime/compiler` | `compile-execution-plans.ts` | Execution registry / process execution runtime / adapters | Compilation/mounting/invocation | Owner-local missing plan/policy/bridge findings | Execution plan gate |
 | `CompiledExecutionRegistryInput` | Runtime compiler | `packages/core/runtime/compiler` | Runtime compiler | Process runtime | Compilation/mounting | Owner-local registry-input findings | Registry input gate |
 | `ExecutionRegistry` | Process runtime | `packages/core/runtime/process-runtime/execution-registry.ts` | Process runtime | Adapters and process execution runtime | Mounting/invocation | Owner-local identity mismatch and missing-boundary findings | Registry matching gate |
-| `ProcessExecutionRuntime` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/execution-runtime.ts` | Process runtime | Runtime adapter-lowered closures and SDK delegating hooks | Mounting/invocation | Owner-local execution bridge findings | Execution bridge gate |
+| `ProcessExecutionRuntime` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/execution-runtime.ts` | Process runtime | Non-oRPC runtime adapter-lowered closures and SDK delegating hooks only | Mounting/invocation | Owner-local non-oRPC execution bridge findings | Execution bridge gate |
 | `EffectRuntimeAccess` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/src/effect-runtime-access.ts` | Process runtime | Process execution and process-runtime adapter interiors only | Mounting/invocation | Owner-local `HabitatEffect` execution findings | Effect runtime access gate |
 | `ManagedRuntimeHandle` | Runtime substrate | `packages/core/runtime/substrate/effect` | Runtime substrate | `EffectRuntimeAccess`, provisioning/finalization | Provisioning/invocation/finalization | Owner-local managed-runtime findings or definition-owned observation records | Managed runtime ownership gate |
 | `NormalizedAuthoringGraph` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation | Runtime compiler | Derivation | Owner-local derivation findings | Normalized graph snapshot |
@@ -5685,7 +5772,7 @@ runtime compiler
   plans processes
   validates selection, topology, provider coverage, provider dependency closure, service closure
   validates Effect execution boundary policy
-  validates raw Effect and effect-oRPC import law
+  validates raw Effect authority and official Effect-oRPC bridge import law
   emits one compiled process plan
   emits provider dependency graph
   emits compiled execution plans without terminal modes
@@ -5712,8 +5799,8 @@ process runtime
   assembles processes
   scopes runtime access
   creates ExecutionRegistry from compiled registry input and non-portable descriptor table
-  creates ProcessExecutionRuntime
-  owns EffectRuntimeAccess and supplies it only to process-runtime interiors
+  creates ProcessExecutionRuntime for non-oRPC descriptor lanes
+  owns EffectRuntimeAccess and supplies it only to non-oRPC process-runtime interiors
   binds services
   caches bindings
   creates invocation-bound Effect client views
@@ -5729,8 +5816,8 @@ execution registry
   gives adapters matched executable boundaries
 
 process execution runtime
-  runs invocations
-  executes Effect descriptors at invocation time
+  runs non-oRPC descriptor invocations
+  executes non-oRPC Effect descriptors at invocation time
   receives explicit ProcedureExecutionContext
   resolves error and telemetry bridge refs from CompiledExecutionPlan
   runs HabitatEffect through EffectRuntimeAccess
@@ -5739,8 +5826,9 @@ process execution runtime
 surface adapters
   translate surfaces
   lower compiled surface plans
-  resolve executable boundaries through ExecutionRegistry
-  produce harness-facing native payload closures that delegate to ProcessExecutionRuntime
+  resolve non-oRPC executable boundaries through ExecutionRegistry
+  produce non-oRPC harness-facing native payload closures that delegate to ProcessExecutionRuntime
+  preserve native oRPC procedures, effect/context, and effect/wrap for official handlerGen
 
 async surface adapter
   lowers workflow, schedule, and consumer plans

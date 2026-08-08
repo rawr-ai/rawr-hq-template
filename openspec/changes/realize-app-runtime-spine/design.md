@@ -92,7 +92,7 @@ conformance fixtures.
 | Current owner or capability | Authority | Qualified destination and disposition |
 |---|---|---|
 | Mixed `packages/core` project | none as an aggregate | Delete the project identity; `packages/core` remains only the Habitat core namespace. |
-| `RawrCommand`, `RawrResult`, and duplicate Habitat output support | Habitat CLI mechanics after deletion of the Rawr symbols | Consolidate retained result, error, and output behavior into one Habitat command contract owned by `@habitat-ai/cli`; do not preserve or rename either Rawr symbol. |
+| `RawrCommand`, `RawrResult`, and duplicate Habitat output support | Habitat CLI mechanics across the task 2.8 publication barrier | Gate A exposes exactly one public/candidate `HabitatCommand` contract while the private predecessor remains only for untouched existing readers; Gate B publishes the accepted SDK/CLI pair; Gate C migrates those readers and deletes both Rawr symbols. Preserve no shim, alias, fallback, or dual public authority. |
 | `findWorkspaceRoot` and Habitat-side Rawr workspace-discovery lookups | no retained owner | Delete product-named workspace discovery and bind explicit Habitat workspace input at the CLI boundary. Product-owned Rawr configuration transfers unchanged with its product owner. |
 | Generic runtime observation contracts | Habitat core | Define through `@habitat-ai/sdk`; they carry correlation and observation law but select no backend. |
 | Current Rawr-named telemetry singleton and signal hooks | adoption evidence, not a merge owner | Hold the mixed telemetry root. Re-author its path-qualified OpenTelemetry Node resource/provider and singleton retirement into fresh Habitat-owned nodes before core reservation; do not restack or merge the predecessor root. Assemble the selected provider through one optional `@habitat-ai/sdk/telemetry` integration subpath, re-author later profile/process/harness obligations beside their final owners, and retire the source only after destination acceptance. |
@@ -153,9 +153,11 @@ the owner, and native acceptance proves that an instance cannot bypass it.
 - Realize the canonical seven-phase runtime once, as generic platform kinds.
 - Make app, profile, compiler, provider plan, bootgraph, process runtime,
   adapter, harness, and observation ownership mechanically visible and closed.
-- Preserve one process-owned Effect runtime and one execution path for every
-  owner-authored Effect body reached from a native host through Habitat runtime;
-  the nearest service, plugin, or app remains its owner.
+- Give each app/process one Effect `Context`, resource lifetime, policy, and
+  telemetry wrapper through the public `effect/context` and `effect/wrap`
+  faces. Preserve the selected native bridge's execution authority:
+  `ProcessExecutionRuntime`, if retained for other invocation classes, never
+  executes oRPC service Effects.
 - Realize the Habitat self-host on the substrate after all downstream product
   source and flattened process-app owners have left the repository.
 - Keep `@habitat-ai/sdk` as the sole public runtime and authoring distribution
@@ -349,21 +351,25 @@ platform harness acceptance. A downstream repository owns its own product
 acceptance after installing released Habitat packages. No project-specific
 synonym may replace the shared target name.
 
-The generated owner-local `check:policy` target remains cacheable, lists the
-exact closed blueprint, rule, owner-root, toolchain, and environment inputs it
-can read, and declares `outputs: []`; a broad workspace glob is not an accepted
+The generated owner-local `check:policy` target is a non-cacheable `nx:noop`
+composition target with a deterministic dependency list of its inferred policy
+leaves. Each cacheable application or compatibility leaf alone lists its exact
+closed blueprint, rule, owner-root, toolchain, environment, and inspected-corpus
+inputs and declares `outputs: []`; a broad workspace glob is not an accepted
 stand-in. Project creation, exact direct edges, the SDK assembly edge, and
 target realization land atomically with the owner's first conforming
 implementation. Acceptance runs each new owner target once cold and once
-unchanged to prove cache hits, then changes one declared relevant input and
-proves only the expected dependent work invalidates. The underlying command of
-any restored cacheable task must not execute.
+unchanged to prove cached leaf replays, then changes one declared relevant input
+and proves only the affected leaf work invalidates. The composition target never
+executes a Habitat command, and the underlying command of any restored cacheable
+leaf must not execute.
 
 `schema`, `definition`, and `derivation` are the upstream private owners
 consumed by later runtime phases. The terminal SDK exposes only the stable
 public subpaths and assembles the reachable runtime closure into the SDK package
-output. Consumers install one SDK package and its ordinary external
-dependencies, never an internal runtime cohort or workspace link.
+output. The CLI initializer installs one exact paired SDK package and its
+ordinary external dependencies, never an internal runtime cohort or workspace
+link.
 
 Artifact and dependency flow follows the canonical producer/consumer chain:
 
@@ -398,6 +404,8 @@ The exact public export contract is:
 @habitat-ai/sdk
 @habitat-ai/sdk/app
 @habitat-ai/sdk/effect
+@habitat-ai/sdk/effect/context
+@habitat-ai/sdk/effect/wrap
 @habitat-ai/sdk/execution
 @habitat-ai/sdk/service
 @habitat-ai/sdk/service/schema
@@ -547,21 +555,28 @@ Magic's root `Effect.scoped` ordering and provider-local
 `Effect.acquireRelease` implementations are additional vendor-shaped evidence;
 its live product resource bag and entrypoint-selected providers are not.
 
-### Centralize live execution in process runtime
+### Centralize process context without stealing native execution
 
 Process runtime consumes `CompiledProcessPlan`, the matching non-portable
 descriptor table, and `ProvisionedProcess`. It owns service binding and cache,
-execution-registry assembly, `ProcessExecutionRuntime`, scoped runtime access,
-adapter coordination, mount-ready records, and one idempotent process stop
-handle. It never invokes a harness or projects observation read models. Runtime
-mounting owns harness invocation and cross-owner single-flight settlement;
-runtime observation alone projects final read models.
+execution-registry assembly, scoped runtime access, the app/process Effect
+`Context`, resource lifetime, policy and telemetry decoration exposed through
+`effect/context` and `effect/wrap`, adapter coordination, mount-ready records,
+and one idempotent process stop handle. It may retain
+`ProcessExecutionRuntime` only for invocation classes whose selected native
+boundary does not already own Effect execution. It never invokes a harness or
+projects observation read models. Runtime mounting owns harness invocation and
+cross-owner single-flight settlement; runtime observation alone projects final
+read models.
 
 The execution registry admits an executable only when compiled plan and
-descriptor identity agree exactly. Native callbacks may return Promises, but
-every app-, service-, or plugin-owned Effect body invoked through the Habitat
-runtime delegates to `ProcessExecutionRuntime`; oRPC
-context, Inngest steps, and Oclif hooks are projections, not alternate runners.
+descriptor identity agree exactly. `effect/context` assembles the one
+process-owned environment from provisioned values; `effect/wrap` decorates an
+owner-authored Effect with the selected lifetime, policy, and telemetry without
+calling an Effect terminal. Native callbacks may return Promises. A boundary
+delegates to `ProcessExecutionRuntime` only when Habitat owns that execution
+terminal. Effect-backed oRPC service operations instead use the selected
+official bridge and MUST NOT pass through `ProcessExecutionRuntime`.
 
 The lab's exact registry matching and post-stop refusal logic are ported after
 removing its runtime construction and incomplete invocation context.
@@ -578,8 +593,9 @@ define a drain protocol or interpret command, HTTP, durable workflow, or web
 semantics. When a native host drains, its idempotent `stop()` owns that behavior.
 
 Surface adapters alone translate `CompiledSurfacePlan` into native payloads.
-They may create callbacks that delegate to `ProcessExecutionRuntime`; they do
-not execute during lowering or mount hosts.
+They may create callbacks that delegate to `ProcessExecutionRuntime` only for
+invocation classes without a selected native Effect bridge; they do not execute
+during lowering, replace the oRPC bridge, or mount hosts.
 
 Vendor realizations retain their native laws:
 
@@ -590,11 +606,17 @@ Vendor realizations retain their native laws:
   provider release; deadline expiry remains a
   truthful `draining` outcome and never triggers a second `stop(true)` call.
 - oRPC native callbacks retain validation, middleware, declared-error,
-  transport, and abort semantics while delegating Effect execution directly to
-  `ProcessExecutionRuntime`. The installed
-  `@orpc/experimental-effect@2.0.0-beta.23` `handlerGen` and `.effect` extension
-  are excluded from this path because they call their own
-  `Effect.runPromiseExit` terminal.
+  transport, and abort semantics. Plain non-Effect operations use native
+  `.handler`; Effect-backed operations use the selected official
+  `@orpc/experimental-effect` `handlerGen` or `.effect` bridge. Exact beta.23 and
+  beta.25 source establishes that `.effect` delegates to `handlerGen`, and
+  `handlerGen` owns the request-fiber signal, Cause reconciliation,
+  `Effect.runPromiseExit`, and Promise boundary. The app/process supplies the
+  one Context, resource lifetime, policy, and telemetry decoration through
+  `effect/context` plus `effect/wrap`; it does not replace the bridge terminal.
+  Acceptance resolves oRPC, the official bridge, and Effect through one module
+  realm and rejects a manual/custom runner or `ProcessExecutionRuntime` for
+  oRPC service Effects.
 - Inngest Serve drains with the owning HTTP harness; Connect uses native
   `close()` and disables vendor signal ownership; stable `step.run` callbacks
   delegate Effect work to process execution.
@@ -616,6 +638,13 @@ prove, not another local service design branch. oRPC 2 and Effect 4 are the
 single vendor substrate; no compatibility blueprint or legacy construction
 branch survives. Habitat law asserts durable ownership and topology rather than
 vendor-syntax snapshots.
+
+Within that spine, a non-Effect operation uses native `.handler`; an
+Effect-backed operation uses the official `handlerGen` or `.effect` bridge after
+`effect/context` and `effect/wrap` apply the app/process-owned environment,
+lifetime, policy, and telemetry. Service law rejects service-authored direct `Effect.run*`, a
+manual Promise bridge, a custom Effect runner, or routing an oRPC service Effect
+through `ProcessExecutionRuntime`.
 
 The app, SDK, complete Oclif-app, and complete CLI-topic blueprint packets plus the exact `runtime-schema`,
 `runtime-definition`, `runtime-derivation`, `runtime-compiler`,
@@ -673,12 +702,26 @@ belong to Habitat runtime adapters and harnesses. Product composition never
 becomes a Habitat app.
 
 Each ownership cut moves every reader and writer and deletes its predecessor in
-the same Graphite node. The old `apps/cli`, `apps/server`, `apps/hq`, and
-`apps/web` project identities, mixed `packages/core` contents, direct telemetry
-singleton, bootgraph shell, and entrypoint-local runtime acquisition cannot
-coexist with a completed replacement owner. No compatibility path survives any
-cutover; the final repository pass only verifies that unreachable residue is
-absent.
+the same Graphite node, except for the bounded task 2.8 command publication
+barrier. Gate A lands the `HabitatCommand` producer and installed-candidate
+acceptance while existing private `RawrCommand`/`RawrResult` readers remain
+untouched. The root continues to use registry `@habitat-ai/cli@0.5.2` as its Nx
+bootstrap, `apps/habitat` remains outside the Bun workspaces, and Bun 1.3.14
+retains a valid frozen lock; the candidate is not source-linked through a
+`file:`, `link:`, or duplicate workspace identity. Gate B publishes only the
+fixed SDK/CLI release pair from accepted exact main and records registry smoke.
+Gate C begins only after that receipt, replaces the root Nx bootstrap with the
+exact registry CLI, migrates surviving readers, and deletes
+the predecessor model and every reader in one green node. Gate A admits one
+public/candidate command model only, and Gate C admits zero predecessor models
+or readers. This changes release ordering, not authority, and creates no
+compatibility architecture.
+
+The old `apps/cli`, `apps/server`, `apps/hq`, and `apps/web` project identities,
+mixed `packages/core` contents, direct telemetry singleton, bootgraph shell, and
+entrypoint-local runtime acquisition cannot coexist with a completed cutover.
+No compatibility path survives Gate C or any other cutover; the final
+repository pass only verifies that unreachable residue is absent.
 
 ### Keep observation and telemetry downstream of runtime authority
 
@@ -711,17 +754,22 @@ This migration has exactly two public checkpoints, both through the existing
 fixed Nx Release group and both containing only `@habitat-ai/sdk` and
 `@habitat-ai/cli`:
 
-1. The **pre-separation interface release** follows task 2.8. It contains only
-   the final `service@1` pack, `runtime-schema` adaptation, service metadata and
-   middleware contracts, host-neutral client contracts, and Habitat command
-   contract needed for the finite Rawr move. Its exact main commit exclusively
-   authorizes that first release.
+1. The **pre-separation foundation release** occurs at task 2.8 Gate B, after
+   Gate A has landed the final `service@1` pack, `runtime-schema` adaptation,
+   service metadata and middleware contracts, host-neutral client contracts,
+   and sole public/candidate `HabitatCommand` contract. The accepted Gate A
+   exact-main commit exclusively authorizes that release. Its registry receipt
+   then authorizes Gate C reader cutover and predecessor deletion; task 2.8 does
+   not close until Gate C proves zero predecessor command model or reader.
 2. The **final runtime release** follows task 15.5. It contains the completed
    runtime, harness, resource-integration, telemetry, and CLI closure. Its exact
    main commit exclusively authorizes that second release.
 
-Each checkpoint passes the local packed-tarball installed-package acceptance
-before tag or registry mutation and then registry-smokes the same two packages.
+Before each public checkpoint, installed-package acceptance publishes the local
+candidate pair only to an isolated registry and passes the one-operation
+`nx add` flow. The exact-main fixed Nx Release group then publishes and
+registry-smokes the same two packages; at the first checkpoint, that public
+receipt is the barrier between Gates B and C.
 Neither checkpoint publishes a service, resource, provider, private runtime
 project, or downstream product as another package.
 
@@ -748,8 +796,10 @@ project, or downstream product as another package.
   write-only from the realization path and prove observation failures do not
   change product outcomes or release ordering.
 - **Source movement disrupts existing consumers** -> move each reader and
-  writer in the same semantic node, run Nx affected gates, and delete the old
-  owner rather than retain aliases.
+  writer in the same semantic node except at the explicit command publication
+  barrier; there, accept the producer, publish from exact main, and only after
+  registry receipt cut every surviving reader over and delete the old owner.
+  Never retain aliases or claim Gate A has already closed predecessor readers.
 
 ## Migration Plan
 
@@ -763,19 +813,26 @@ project, or downstream product as another package.
    OpenSpec, disposition its legacy Turborepo-era contents, establish the Nx
    consumer shape, and record the six-project finite import ledger without
    moving source.
-4. In Habitat, land and registry-smoke the bounded pre-separation interface
-   release containing the final TypeBox service-schema,
-   service metadata/middleware, host-neutral client, and Habitat command
-   interfaces needed by the destination projects. Delete the Rawr command base,
-   migrate only admitted Rawr and retained Habitat readers to the one Habitat
-   command contract, and delete already-condemned reader closures rather than
-   adapting them. Defer retained Habitat workspace-discovery readers and the
-   predecessor discovery deletion to their final owner/deletion boundaries;
-   product-owned Rawr configuration stays with its product owner. Expose no
-   Oclif host seam before the final runtime vertical. This is the sole non-live private runtime
-   prerequisite before separation and publishes only `@habitat-ai/sdk` plus
-   `@habitat-ai/cli`. Its accepted exact-main commit authorizes only this first
-   release checkpoint.
+4. In Habitat, cross the bounded task 2.8 publication barrier in order. **Gate
+   A** produces the final TypeBox service-schema, service metadata/middleware,
+   host-neutral client, and sole public/candidate `HabitatCommand` interfaces;
+   passes isolated-registry installed-candidate acceptance while the root keeps
+   registry `@habitat-ai/cli@0.5.2`, `apps/habitat` remains outside Bun
+   workspaces, and existing private predecessor readers remain untouched; then
+   lands that accepted producer on exact main. **Gate B** uses the fixed Nx
+   Release group from that exact revision to publish and registry-smoke only
+   `@habitat-ai/sdk` and `@habitat-ai/cli`, and records the exact receipt. **Gate
+   C** starts only from that receipt, replaces the root Nx bootstrap with the
+   exact registry CLI, migrates admitted Rawr and retained Habitat readers, deletes
+   condemned reader closures rather than adapting them, and removes
+   `RawrCommand`, `RawrResult`, and every predecessor reader without a shim,
+   alias, fallback, or dual public authority. Defer retained Habitat
+   workspace-discovery readers and the predecessor discovery deletion to their
+   final owner/deletion boundaries; product-owned Rawr configuration stays with
+   its product owner. Expose no Oclif host seam before the final runtime
+   vertical. This is the sole non-live private runtime prerequisite before
+   separation. The barrier changes publication order only; it does not preserve
+   a compatibility model.
 5. Restack Session Metrics onto the admitted session service. Use native
    `nx import` from the frozen Habitat source/ref with explicit source and
    destination directories to import only the proven ChatGPT corpus,
@@ -813,8 +870,11 @@ project, or downstream product as another package.
    and generator
    capabilities through the same platform-owned path.
 10. Add Elysia/oRPC, Inngest, and web adapter/harness realizations only with
-   indispensable owner-local Habitat conformance fixtures. No fixture becomes a
-   production app, service, plugin, or package.
+   indispensable owner-local Habitat conformance fixtures. The oRPC fixture
+   proves native `.handler`, official `handlerGen`/`.effect`, bridge-owned
+   request-fiber execution, process-owned `effect/context`/`effect/wrap`, abort,
+   resource release, and one module realm; it rejects every manual/custom Effect
+   runner. No fixture becomes a production app, service, plugin, or package.
 11. Audit unreachable residue and pass the complete local Habitat gate. Publish
    each sealed runtime checkpoint to the telemetry adoption owner so it can
    re-author the admitted profile, process, and harness obligations beside the
@@ -829,7 +889,8 @@ project, or downstream product as another package.
 13. The Rawr owner-local OpenSpec then upgrades the already installed consumer
     integration through `nx migrate @habitat-ai/cli@<released-version>`. The
     migrated CLI dependency supplies the exact `@habitat-ai/sdk` version. New
-    consumers use `nx add @habitat-ai/cli` once; later upgrades use `nx migrate`.
+    consumers use `bunx nx add @habitat-ai/cli --no-interactive` once; later
+    upgrades use `nx migrate`.
     Genuine corpus, Hyperresearch, and session commands receive Rawr-native runtime
     acceptance there. Separate later Rawr changes may then adopt the workstream
     domain through the released semantic-ledger subpath, re-author the accepted

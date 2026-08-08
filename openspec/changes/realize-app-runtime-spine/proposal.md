@@ -30,6 +30,13 @@ The exact sectional source ledger is [[authority-amendment]].
 - Implement the minimum generic runtime spine that preserves every canonical
   phase: definition, selection, derivation, compilation, provisioning,
   mounting, and observation.
+- Keep Effect lifetime authority with the app/process and native execution
+  authority with the selected bridge. Public `effect/context` and `effect/wrap`
+  carry the process-owned Context, resource lifetime, policy, and telemetry;
+  plain oRPC operations use `.handler`, Effect-backed operations use official
+  `@orpc/experimental-effect` `handlerGen` or `.effect`, and
+  `ProcessExecutionRuntime` never executes oRPC service Effects. Reject manual
+  or custom Effect runners.
 - Define harness as one platform kind with a shared lifecycle contract, then
   realize Oclif first and retain explicit Elysia and Inngest extension points
   without encoding their native semantics in runtime mounting or observation.
@@ -38,11 +45,17 @@ The exact sectional source ledger is [[authority-amendment]].
   self-host, its control-plane API plugin, or another qualified platform owner;
   proven product capability moves to Rawr; the rest is deleted. Retain no
   compatibility app, alias, fallback, or duplicate Nx identity.
-- Delete `RawrCommand` and `RawrResult`, consolidate their reusable output
-  behavior with the duplicate Habitat output support into one Habitat command
-  contract, and replace Habitat-side Rawr workspace discovery with explicit
-  Habitat workspace input. Product-owned Rawr configuration transfers with its
-  product owner. Agent-plugin lifecycle, development/repository
+- Cross one bounded publication barrier for the command migration: Gate A
+  accepts and lands the sole public/candidate `HabitatCommand` contract while
+  existing private `RawrCommand`/`RawrResult` readers remain untouched; Gate B
+  publishes and registry-smokes only the exact SDK/CLI pair from accepted main;
+  Gate C starts only from that receipt, moves the root Nx bootstrap to that
+  exact registry CLI, migrates surviving readers, and deletes both Rawr symbols
+  and every reader without a shim, alias, fallback, or dual public authority.
+  This is release ordering, not retained compatibility. Replace Habitat-side
+  Rawr workspace discovery with explicit Habitat workspace input. Product-owned
+  Rawr configuration transfers with its product owner. Agent-plugin lifecycle,
+  development/repository
   operations, native Oclif plugin mechanics, and CLI generators are Habitat
   capabilities. Current doctor, HQ graph, reflect, routine, tools-export,
   workflow-harden, config, journal, security, hello, and the predecessor
@@ -96,7 +109,8 @@ The exact sectional source ledger is [[authority-amendment]].
   package-less Nx runtime projects whose exact outputs assemble into that one
   public package.
 - Habitat control-plane and Oclif source/compiled entrypoints, command mounting,
-  error handling, cancellation, drain, and release ordering.
+  error handling, cancellation, drain, the task 2.8 publication barrier, and
+  official oRPC/Effect bridge ownership.
 - Current peer app roots and the telemetry change's runtime prerequisite.
 - No provider-home mutation, marketplace settlement, Marketplace-repository code
   sharing, app-composition repair outside the canonical runtime, or new public

@@ -113,6 +113,48 @@ The following later landed sources supersede only the named frozen clauses:
 These amendments change placement and selection ownership; they do not change
 the frozen realization phases or authorize a second runtime.
 
+## Official Effect-oRPC Source Authority
+
+The repository-selected bridge is exactly
+`@orpc/experimental-effect@2.0.0-beta.23` with the exact beta.23 oRPC family and
+`effect@4.0.0-beta.101`, as pinned in `package.json` and `bun.lock`. The
+published artifact is the source authority for its boundary mechanics:
+
+- `dist/shared/experimental-effect.C9oJcd5q.mjs`, SHA-256
+  `7dc87009d1f0a32c6249222ed57958778caa7d0c772c909a70a92651e95fc4a9`,
+  defines `handlerGen(...)` and `runPromise(...)`;
+- `dist/extensions/effect.mjs`, SHA-256
+  `0f04cfc7d4793d3d70960da6643095433ee5d33191b946f3b554a5848c1609b6`,
+  defines `.effect(...)` only as prototype sugar for
+  `.handler(handlerGen(...))`; and
+- the published `package.json`, SHA-256
+  `55a225ee8ad7167f060e52deb6864691a6218336e3d95552351c4982c88d49d5`,
+  declares the exact family dependencies, Effect peer, exports, and extension
+  side effects.
+
+`handlerGen(...)` constructs the handler Effect, turns handler-originated
+`ORPCError` failures into returned values, provides native `effect/context`,
+applies native `effect/wrap`, calls `Effect.runPromiseExit` with the request
+signal, maps the resulting Cause, and returns the Promise to native oRPC.
+The same implementation remains present in beta.25, but beta.25 is comparison
+evidence rather than the selected repository artifact.
+
+This exact vendor source supersedes any frozen or reviewed wording that assigns
+execution of an Effect-backed oRPC operation to `ProcessExecutionRuntime`, a
+Habitat Effect imitation, a manual `Effect.run*` call, or a custom runner.
+Native `.handler(...)` remains valid for synchronous and Promise operations.
+Effect-backed oRPC operations MUST use official `handlerGen(...)` or an admitted
+official `.effect(...)` extension. The application/process owns Effect Context
+construction, resource lifetime, policy, telemetry, and shutdown through the
+native context and wrap hooks; the selected bridge alone owns the request
+fiber/signal/Cause/Promise boundary. `ProcessExecutionRuntime` remains available
+only for non-oRPC descriptor lanes.
+
+If `.effect(...)` is selected, its side-effect import and the native oRPC
+builders it patches MUST resolve to one physical module realm. Source identity
+proves the mechanism, not the application lifecycle, abort behavior, resource
+release, or module realm; those remain executable acceptance obligations.
+
 ## Explicit Rejections
 
 - A root `plugins/cli/commands/*` projection lane is rejected. A selectable

@@ -6,6 +6,203 @@ belong to [[.habitat/AUTHORITY|Habitat authority]] and its blueprint packets.
 Durable lifecycle decisions belong to
 [[openspec/changes/archive/2026-08-05-complete-agent-plugin-lifecycle-public-interface/README|the archived OpenSpec]].
 
+## 2026-08-07 - Native Boundaries Keep Their Authority
+
+The prior custom-terminal premise below is superseded. Habitat owns the
+application and process lifecycle: it selects resources, constructs one Effect
+context, supplies policy and telemetry through `effect/wrap`, and releases the
+process scope. Native oRPC owns the procedure boundary. The selected official
+Effect bridge owns the request fiber, signal propagation, Cause conversion,
+and Promise handoff. Habitat does not imitate that bridge or route its work
+through a second runner.
+
+A service operation chooses one native authoring mode from its actual
+semantics. A synchronous or Promise operation uses `.handler(...)`. An Effect
+operation uses official `handlerGen(...)` or the deliberately admitted
+`.effect(...)` extension. Manual `Effect.run*`, custom runners, and hidden
+provider acquisition remain outside the service kind. This preserves native
+vendor behavior while keeping runtime ownership visible and singular.
+
+### Bag Of Keywords
+
+service, operation, context, bridge, runtime.
+
+ownership, lifecycle, clarity, idiom, truth.
+
+Habitat, oRPC, Effect, signal, wrap.
+
+## 2026-08-07 - The Foundation Has One Identity
+
+A generic contract needed by retained services is Habitat substrate, not Rawr
+heritage. Move it into the sole public SDK before adapting readers, then delete
+the predecessor package and every rejected surface in the same cut. API,
+workflow, binding, placeholder, and product machinery do not earn a Habitat
+home merely because they once shared that package.
+
+The same sieve applies to source projects. A retained Habitat owner receives
+its final Habitat name and boundary now. A downstream Rawr owner is transferred
+through the released substrate. A rejected owner disappears with its readers.
+No alias, compatibility export, or temporary hybrid package is a destination.
+
+### Bag Of Keywords
+
+substrate, service, metadata, middleware, client, product.
+
+authority, identity, closure, clarity, deletion.
+
+Habitat, SDK, Nx, oRPC, Effect.
+
+## 2026-08-07 - Service Law Precedes Product Migration
+
+The service constitution is not a compatibility layer for every project that
+happens to exist in the workspace. First classify each capability by behavior:
+Habitat authority, Rawr product, fixture, or deletion. Then apply the one
+generic service kind only to valid services that still have an owner. A
+condemned service and its readers disappear in the same cut; they are never
+translated into temporary Habitat vocabulary.
+
+The definition follows a narrowing funnel. Applications select ready
+resources, providers, and public service clients. The service base declares
+the complete input context. Root middleware projects service concerns. Modules
+curate their smaller operation vocabulary. Routers author handlers against
+that vocabulary. Contracts and routers compose upward while capabilities flow
+downward. TypeBox, oRPC, and Effect retain their native roles; Habitat closes
+the kind, Nx owns project edges, and Grit asserts only local source relations.
+
+### Bag Of Keywords
+
+service, contract, client, context, module, router, handler, resource, provider.
+
+ownership, closure, locality, portability, clarity, reuse.
+
+Habitat, TypeBox, oRPC, Effect, Nx, Grit.
+
+## 2026-08-07 - Service Proof Follows Native Ownership
+
+This refines the relational-closure frame below. A complete service
+constitution does not pretend one checker proves every
+semantic fact. Habitat structure closes the possible filesystem. Per-file Grit
+closes declarations, adjacent imported composition, context authorship, and
+import direction. TypeScript proves composed surface compatibility. Owner-local
+behavior proves the callable operation set and outcomes. Nx composes those
+proofs without inventing another evaluator.
+
+An admitted leaf that is never imported is a behavior and reachability defect,
+not an excuse to counterfeit cross-file Grit authority. The pinned Grit CLI can
+detect that relation with `multifile`, but its JSON check interface suppresses
+the diagnostic. Until the vendor interface can report it through Habitat's
+native runner, the constitutional claim remains exact rather than silently
+promoting a human-output parser or manual script.
+
+### Bag Of Keywords
+
+service, structure, source, type, behavior.
+
+truth, closure, ownership, precision.
+
+Habitat, Grit, TypeScript, Nx, tests.
+
+## 2026-08-07 - Service Closure Is Relational
+
+A closed service tree is necessary but not sufficient. Constitutional closure
+also accounts for every admitted child in upward composition, narrows authored
+context before operation handlers, and exposes the package only through its
+deliberate public client. Otherwise the filesystem is closed while execution
+still contains hidden side doors or disconnected islands.
+
+The law therefore meets each concern at its native owner. Habitat closes the
+tree and public package face. Grit proves the local descent and composition
+relations across the selected project. TypeScript proves the resulting oRPC
+types. Behavior tests prove the capability. Nx composes those focused proofs.
+No layer compensates for a missing assertion in another.
+
+### Bag Of Keywords
+
+service, context, child, client, boundary.
+
+closure, reachability, locality, ownership.
+
+Habitat, Grit, TypeScript, oRPC, Nx.
+
+## 2026-08-07 - Nx Composes Policy; Leaves Execute It
+
+The prior owner-batch frame is superseded. An owner does not rerun a second
+Habitat evaluation over rules that Nx has already projected. Each resolved
+rule application is one cacheable leaf with exact inputs. `check:policy` is a
+non-cacheable native Nx composition target whose only work is scheduling those
+leaves. This preserves one policy authority while giving Nx the dependency,
+parallelism, and cache facts it needs.
+
+The same separation holds at repository scale: Habitat defines and resolves
+law; Nx schedules the resulting work; Grit or structure evaluation executes
+one focused leaf. No wrapper, batch runner, or owner-local loop may collapse
+those roles again.
+
+### Bag Of Keywords
+
+policy, leaf, owner, target, graph.
+
+precision, parallelism, reuse, clarity.
+
+Habitat, Nx, Grit, cache, inputs.
+
+## 2026-08-07 - Service Law Is A Foundation, Not An Interface Prerequisite
+
+The prior "interface-only" frame below is superseded. It confused a generated
+example and repository-wide compatibility checks with constitutional
+membership. A service kind is complete only when Habitat selects one positive,
+closed definition and every service in the owning repository is an explicit
+instance that passes the same structure, source, type, and behavior law.
+
+The service definition is the reference form for Habitat law: name the kind,
+close its complete topology, assert the few source relations that make the kind
+what it is, construct it natively through Nx, and descend real owners through
+it before release. A green predecessor packet is migration evidence. It is not
+kind selection, instance lineage, or closure.
+
+Context and authorship narrow from service to module to operation. Completed
+contracts and routers compose upward. Applications supply ready resources and
+service clients. Plugins own transport and orchestration. No consumer-specific
+exception, open interior, compatibility packet, or deferred repository descent
+may substitute for that funnel.
+
+### Bag Of Keywords
+
+service, client, contract, module, operation.
+
+ownership, closure, locality, reuse.
+
+Habitat, Nx, TypeBox, oRPC, Effect.
+
+## 2026-08-07 - Service Admission Is Interface-Only
+
+The first `service@1` release establishes a constructible capability boundary,
+not a premature runtime. Habitat owns the closed topology in
+[[.habitat/blueprints/service/structure|the service structure]], portable role
+declarations in
+[[.habitat/blueprints/service/service_v1_source_declarations|the declaration law]],
+adjacent composition in
+[[.habitat/blueprints/service/service_v1_source_composition|the composition law]],
+and inward dependency flow in
+[[.habitat/blueprints/service/service_v1_internal_import_direction|the direction law]].
+Nx generates the conforming project and owns cross-project direction; package
+exports own foreign visibility.
+
+The generated starter uses a native oRPC handler. Effect 4 remains the selected
+service substrate, but Effect execution waits for the one app-owned process
+runtime. `handlerGen`, the `.effect` extension, and direct `Effect.run*` would
+create a second terminal now, so none enters this interface release. This is
+not a compatibility branch: it is the smallest truthful surface available
+before runtime provisioning exists.
+
+### Bag Of Keywords
+
+contract, context, module, operation, client.
+
+ownership, closure, locality, portability.
+
+Habitat, Grit, TypeScript, oRPC, Effect.
+
 ## 2026-08-07 - Habitat Has Gravity
 
 Habitat is the platform and substrate, not a bag of files that consumers copy.
