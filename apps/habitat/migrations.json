@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "generators": {
+    "0-5-7-repository-foundation": {
+      "version": "0.5.7",
+      "description": "Converge an existing Habitat consumer on the released repository foundation.",
+      "cli": "nx",
+      "implementation": "./dist/migrations/0-5-7-repository-foundation"
+    }
+  }
+}

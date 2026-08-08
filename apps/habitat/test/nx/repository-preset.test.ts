@@ -1,6 +1,7 @@
 import { readJson, type Tree, writeJson } from "@nx/devkit";
 import { createTreeWithEmptyWorkspace } from "@nx/devkit/testing";
 import { describe, expect, it, vi } from "vitest";
+import migrateRepositoryFoundation from "../../src/migrations/0-5-7-repository-foundation";
 import {
   type HabitatRepositoryPresetOptions,
   initializeHabitatBunRepository,
@@ -147,6 +148,100 @@ describe("Habitat Bun repository preset", () => {
     expect(tree.exists(".habitat")).toBe(false);
     expect(tree.exists("AGENTS.md")).toBe(false);
     expect(tree.exists(".github/workflows/repository-ratchet.yml")).toBe(false);
+  });
+
+  it.each([
+    "23.1.0",
+    "23.1.1",
+  ])("migrates the prior boundary-free repository foundation from Nx %s", (nxVersion) => {
+    const tree = bunRepository({
+      packageManager: "bun@1.3.14",
+      nxPlugins: ["@habitat-ai/cli/nx-plugin"],
+      targetDefaults: {
+        check: {
+          cache: false,
+          dependsOn: [
+            { projects: ["habitat"], target: "lint" },
+            "typecheck",
+            "verify",
+            "check:policy",
+            "^check",
+          ],
+          outputs: [],
+        },
+      },
+    });
+    const packageJson = readJson<Record<string, unknown>>(tree, "package.json");
+    writeJson(tree, "package.json", {
+      ...packageJson,
+      devDependencies: {
+        ...(packageJson.devDependencies as Record<string, string>),
+        "@nx/workspace": nxVersion,
+        nx: nxVersion,
+      },
+    });
+
+    expect(migrateRepositoryFoundation(tree)).toEqual(expect.any(Function));
+
+    expect(readJson<{ readonly plugins: readonly unknown[] }>(tree, "nx.json").plugins).toEqual([
+      "@habitat-ai/cli/nx-plugin",
+      { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
+    ]);
+    expect(readJson(tree, "nx.json")).toMatchObject({
+      targetDefaults: {
+        check: { dependsOn: expect.arrayContaining(["check:boundaries"]) },
+      },
+    });
+    expect(readJson(tree, "package.json")).toMatchObject({
+      devDependencies: {
+        "@nx/eslint": "23.1.1",
+        "@nx/eslint-plugin": "23.1.1",
+        "@nx/workspace": "23.1.1",
+        "@typescript-eslint/parser": "8.66.0",
+        eslint: "10.0.3",
+        nx: "23.1.1",
+      },
+    });
+    expect(tree.read("eslint.config.mjs", "utf8")).toContain("@nx/enforce-module-boundaries");
+
+    const migratedPackage = tree.read("package.json", "utf8");
+    const migratedNx = tree.read("nx.json", "utf8");
+    expect(migrateRepositoryFoundation(tree)).toBeUndefined();
+    expect(tree.read("package.json", "utf8")).toBe(migratedPackage);
+    expect(tree.read("nx.json", "utf8")).toBe(migratedNx);
+  });
+
+  it("does not rewrite an unrecognized Nx workspace version", () => {
+    const tree = bunRepository({
+      packageManager: "bun@1.3.14",
+      nxPlugins: ["@habitat-ai/cli/nx-plugin"],
+      targetDefaults: {
+        check: {
+          cache: false,
+          dependsOn: [
+            { projects: ["habitat"], target: "lint" },
+            "typecheck",
+            "verify",
+            "check:policy",
+            "^check",
+          ],
+          outputs: [],
+        },
+      },
+    });
+    const packageJson = readJson<Record<string, unknown>>(tree, "package.json");
+    writeJson(tree, "package.json", {
+      ...packageJson,
+      devDependencies: {
+        ...(packageJson.devDependencies as Record<string, string>),
+        "@nx/workspace": "23.0.0",
+      },
+    });
+
+    expect(migrateRepositoryFoundation(tree)).toEqual(expect.any(Function));
+    expect(readJson(tree, "package.json")).toMatchObject({
+      devDependencies: { "@nx/workspace": "23.0.0", nx: "23.1.1" },
+    });
   });
 
   it("preserves consumer configuration and repeats without a Tree write", () => {
