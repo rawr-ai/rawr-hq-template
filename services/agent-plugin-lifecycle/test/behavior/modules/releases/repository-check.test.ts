@@ -7,7 +7,7 @@ import type {
   GitTrackedPathFlag,
   GitWorkspaceAnchor,
   GitWorkspaceEvidence,
-} from "@habitat-ai/rawr-resource-content-workspace";
+} from "@habitat-ai/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import type { AgentPluginPayload } from "../../../../src/service/model/dto/agent-plugin-payload";

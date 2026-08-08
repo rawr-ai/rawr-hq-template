@@ -1,4 +1,3 @@
-import type { DisposableContentTreeEntry } from "@habitat-ai/rawr-resource-content-workspace";
 import type {
   NativeAgentProviderFailure,
   NativeAgentProviderSession,
@@ -10,6 +9,7 @@ import {
   NativeProviderInventorySchema,
   NativeProviderPluginFilesSchema,
 } from "@habitat-ai/rawr-resource-native-agent-provider";
+import type { DisposableContentTreeEntry } from "@habitat-ai/resource-content-workspace";
 import { Effect, Result } from "effect";
 import { Value } from "typebox/value";
 import {

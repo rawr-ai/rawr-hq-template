@@ -1,8 +1,8 @@
+import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
 import type {
   ContentWorkspaceFailure,
   ContentWorkspaceResource,
-} from "@habitat-ai/rawr-resource-content-workspace";
-import { MAX_VERSIONED_CONTENT_ENTRIES } from "@habitat-ai/rawr-resource-versioned-content";
+} from "@habitat-ai/resource-content-workspace";
 import { Effect } from "effect";
 import { describe, expect, it } from "vitest";
 import {

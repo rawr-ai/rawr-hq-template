@@ -5,7 +5,7 @@ import type {
   GitBlobObservation,
   GitRefObservation,
   MaterializedContentTree,
-} from "@habitat-ai/rawr-resource-content-workspace";
+} from "@habitat-ai/resource-content-workspace";
 import type { Result } from "effect";
 import { MAX_PAYLOAD_BYTES_PER_MEMBER } from "../../../../model/dto/agent-plugin-payload";
 import type { ContentWorkspaceSnapshot } from "../../../../model/dto/content-workspace";
