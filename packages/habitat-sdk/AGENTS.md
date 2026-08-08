@@ -79,7 +79,7 @@
 ## Routing
 
 - [[../AGENTS|Packages router]]
-- [[../../services/habitat/AGENTS|Private Habitat service authority]]
+- [[../../services/catalog/AGENTS|Private Habitat catalog service authority]]
 - [[../../resources/rule-evaluation/AGENTS|Private rule-evaluation resource]]
 - [[../../resources/source-inventory/AGENTS|Private source-inventory resource]]
 - [[../core/runtime/schema/AGENTS|Private runtime-schema owner]]

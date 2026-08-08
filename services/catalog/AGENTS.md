@@ -6,7 +6,7 @@
 
 ## Scope
 
-- Applies to `services/habitat/**`.
+- Applies to `services/catalog/**`.
 - This service owns Habitat blueprint and instance admission semantics.
 
 ## Boundaries
@@ -59,4 +59,4 @@
 
 ## Validation
 
-- Run `bunx nx run @habitat-ai/service:typecheck`, `:test`, and `:build`.
+- Run `bunx nx run @habitat-ai/catalog-service:typecheck`, `:test`, and `:build`.

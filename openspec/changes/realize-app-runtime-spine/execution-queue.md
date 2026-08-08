@@ -6,11 +6,11 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 ## Ground
 
-- Canonical Habitat ground and release source:
-  `main@98f34ca4c931a5e0fa4868825f86709ade603633`, tagged
-  `habitat-cli-v0.5.6`.
-- Gates A through C are sealed. The first active source container is Rawr's
-  released-substrate adoption and owner transfer.
+- Canonical Habitat ground and current foundation release source:
+  `main@85b0e49eb5385dfae3a1a1522e7c50df04e06580`, tagged
+  `habitat-cli-v0.5.10`.
+- Gates A through C and Rawr's finite owner transfer are sealed. The first
+  active source container is Habitat platform separation.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -23,8 +23,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `src/service/impl.ts`, owns Effect-backed request fibers through `handlerGen`.
   The app/process supplies `effect/context` plus `effect/wrap`, and no
   oRPC service Effect enters `ProcessExecutionRuntime`.
-- Telemetry, Session Metrics, and Fluree worktrees are held adoption sources;
-  they are not parallel Habitat implementation lanes.
+- Telemetry and Fluree worktrees are held adoption sources. The Session Metrics
+  source is completed transfer provenance. None is a parallel Habitat
+  implementation lane.
 - Merged local residue is removed before source work resumes.
 
 ## Containers
@@ -48,12 +49,31 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   remaining, and remove `RawrCommand`, `RawrResult`, and every predecessor
   reader with no shim, alias, fallback, or dual public authority. Sealed against
   registry `@habitat-ai/cli@0.5.6` and its exact paired SDK.
-- [ ] **Rawr**: install that release, restack Session Metrics, import the three
-  services and three CLI topics through native Nx, and pass destination-owned
-  behavior.
+- [x] **Rawr**: migrated through the released substrate to exact Habitat
+  `0.5.10`, imported the three services and three CLI topics through native Nx,
+  reconciled Session Metrics, and retired Hyperresearch production fixtures.
+  Canonical Rawr `main@a1a4fe7ed051ff405605c82c09ccd73332595383`
+  owns the accepted product closure.
 - [ ] **Separation**: retain and rename Habitat platform owners, delete every
   transferred or rejected predecessor, rename the workspace, and pass the
   cumulative absence gate.
+
+Task 2.10 drains through one straight owner lineage before the deletion gate:
+
+1. establish `services/catalog` as `@habitat-ai/catalog-service`;
+2. qualify package-output, content-workspace, native-provider, and
+   versioned-content resource families with their existing provider projects;
+3. qualify `@habitat-ai/agent-plugin-lifecycle-service` and its public-client
+   readers;
+4. move native Oclif mechanics to `@habitat-ai/cli` and the lifecycle command
+   projections to `plugins/cli/topics/agent-plugins` as
+   `@habitat-ai/plugin-agent-plugins`;
+5. move the complete development vertical to `@habitat-ai/dev-service` and
+   `plugins/cli/topics/dev`, then delete `packages/dev-node` and its readers;
+6. move retained generator mechanics and indispensable fixtures beside their
+   Habitat owners; and
+7. run the cumulative task-2.10 graph, behavior, and predecessor-reader oracle.
+
 - [ ] **Runtime**: realize the private runtime owners in specification order,
   one green owner and its readers at a time; keep process-owned Effect
   context/lifetime/policy/telemetry separate from native bridge execution.

@@ -10,7 +10,7 @@ on:
       - packages/core/runtime/schema/**
       - resources/rule-evaluation/**
       - resources/source-inventory/**
-      - services/habitat/**
+      - services/catalog/**
       - bun.lock
       - nx.json
       - package.json

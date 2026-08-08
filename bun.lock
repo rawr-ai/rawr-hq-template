@@ -5,8 +5,8 @@
     "": {
       "name": "rawr-hq-template",
       "dependencies": {
+        "@habitat-ai/catalog-service": "workspace:*",
         "@habitat-ai/rawr-hq-sdk": "workspace:*",
-        "@habitat-ai/service": "workspace:*",
         "@orpc/client": "2.0.0-beta.23",
         "@orpc/contract": "2.0.0-beta.23",
         "@orpc/experimental-effect": "2.0.0-beta.23",
@@ -382,6 +382,27 @@
         "vitest": "^4.0.18",
       },
     },
+    "services/catalog": {
+      "name": "@habitat-ai/catalog-service",
+      "version": "0.3.1",
+      "dependencies": {
+        "@habitat-ai/resource-rule-evaluation": "workspace:*",
+        "@habitat-ai/resource-source-inventory": "workspace:*",
+        "@orpc/contract": "2.0.0-beta.23",
+        "@orpc/experimental-effect": "2.0.0-beta.23",
+        "@orpc/server": "2.0.0-beta.23",
+        "effect": "4.0.0-beta.101",
+        "picomatch": "4.0.4",
+        "smol-toml": "1.7.0",
+        "typebox": "1.3.8",
+      },
+      "devDependencies": {
+        "@effect/platform-node": "4.0.0-beta.101",
+        "@types/picomatch": "4.0.3",
+        "bun-types": "1.3.14",
+        "typescript": "^5.9.3",
+      },
+    },
     "services/chatgpt-corpus": {
       "name": "@habitat-ai/rawr-chatgpt-corpus",
       "version": "0.1.0",
@@ -411,27 +432,6 @@
         "@opentelemetry/context-async-hooks": "^2.6.0",
         "@opentelemetry/sdk-trace-base": "^2.6.0",
         "@types/node": "^24.13.3",
-        "typescript": "^5.9.3",
-      },
-    },
-    "services/habitat": {
-      "name": "@habitat-ai/service",
-      "version": "0.3.1",
-      "dependencies": {
-        "@habitat-ai/resource-rule-evaluation": "workspace:*",
-        "@habitat-ai/resource-source-inventory": "workspace:*",
-        "@orpc/contract": "2.0.0-beta.23",
-        "@orpc/experimental-effect": "2.0.0-beta.23",
-        "@orpc/server": "2.0.0-beta.23",
-        "effect": "4.0.0-beta.101",
-        "picomatch": "4.0.4",
-        "smol-toml": "1.7.0",
-        "typebox": "1.3.8",
-      },
-      "devDependencies": {
-        "@effect/platform-node": "4.0.0-beta.101",
-        "@types/picomatch": "4.0.3",
-        "bun-types": "1.3.14",
         "typescript": "^5.9.3",
       },
     },
@@ -838,6 +838,8 @@
 
     "@grpc/proto-loader": ["@grpc/proto-loader@0.8.0", "", { "dependencies": { "lodash.camelcase": "^4.3.0", "long": "^5.0.0", "protobufjs": "^7.5.3", "yargs": "^17.7.2" }, "bin": { "proto-loader-gen-types": "build/bin/proto-loader-gen-types.js" } }, "sha512-rc1hOQtjIWGxcxpb9aHAfLpIctjEnsDehj0DAiVfBlmT84uvR0uUtN2hEi/ecvWVjXUGf5qPF4qEgiLOx1YIMQ=="],
 
+    "@habitat-ai/catalog-service": ["@habitat-ai/catalog-service@workspace:services/catalog"],
+
     "@habitat-ai/cli": ["@habitat-ai/cli@0.5.6", "", { "dependencies": { "@habitat-ai/sdk": "0.5.6", "@nx/devkit": "23.1.1", "@oclif/core": "^4.13.2", "@oclif/plugin-help": "^6.2.27", "typebox": "1.3.8" }, "bin": { "habitat": "bin/run.js" } }, "sha512-35V8VjhDCTBQGIICI6hday2R1Dm+TZj1GOlOE9g81k4NKGjbPHefPmduqkFTK0xIbfM/5pq5KtnW918hWICA4g=="],
 
     "@habitat-ai/rawr": ["@habitat-ai/rawr@workspace:apps/cli"],
@@ -879,8 +881,6 @@
     "@habitat-ai/resource-source-inventory": ["@habitat-ai/resource-source-inventory@workspace:resources/source-inventory"],
 
     "@habitat-ai/sdk": ["@habitat-ai/sdk@workspace:packages/habitat-sdk"],
-
-    "@habitat-ai/service": ["@habitat-ai/service@workspace:services/habitat"],
 
     "@hey-api/spec-types": ["@hey-api/spec-types@0.0.0-next-20260408030107", "", { "dependencies": { "@hey-api/types": "0.1.4" } }, "sha512-P5DKr4dpZ7lmZpZt2bc2KWuzU9vl4GZcN7VrjchZF1WWKNGZFnwWhBxZo1t6P2muOCopIvqD2Fvp5os4QiitKA=="],
 

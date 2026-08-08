@@ -3,7 +3,7 @@ import { defineConfig } from "tsdown";
 const privateWorkspacePackages = [
   "@habitat-ai/resource-rule-evaluation",
   "@habitat-ai/resource-source-inventory",
-  "@habitat-ai/service",
+  "@habitat-ai/catalog-service",
 ];
 
 const blueprintIds = ["app", "package", "plugin", "plugin-nx", "provider", "resource", "service"];

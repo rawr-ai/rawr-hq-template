@@ -83,7 +83,7 @@ export default class ShowCommand extends Command {}
 
 ```typescript
 // @filename: plugins/cli/commands/example/src/commands/show.ts
-import { client } from "@habitat-ai/service/src/client";
+import { client } from "@habitat-ai/catalog-service/src/client";
 
 export default class ShowCommand extends Command {}
 ```
