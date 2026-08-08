@@ -39,4 +39,10 @@ Later package releases use ordinary Nx migrations:
 
 ```sh
 bunx nx migrate @habitat-ai/cli@latest
+bun install
+bunx nx migrate --run-migrations
 ```
+
+The first command updates the fixed CLI/SDK pair and writes any applicable
+Habitat migrations. The final command applies those package-owned repository
+changes; no consumer copies or independently maintains the preset wiring.

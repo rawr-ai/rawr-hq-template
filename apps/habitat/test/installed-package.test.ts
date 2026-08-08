@@ -33,8 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.6";
-const PREVIOUS_RELEASE_VERSION = "0.5.5";
+const CANDIDATE_VERSION = "0.5.7";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -422,10 +421,38 @@ describe("installed Habitat products", () => {
     expect(generatedAuthority).not.toContain(workspaceRoot);
   });
 
-  it("migrates the CLI and SDK as one native Nx package group", async () => {
-    const root = path.join(acceptanceRoot, "migration-consumer");
+  it.each([
+    ["0.5.3", "23.1.0"],
+    ["0.5.6", "23.1.1"],
+  ])("migrates CLI %s and its SDK as one native Nx package group", async (previousVersion, previousNxVersion) => {
+    const root = path.join(
+      acceptanceRoot,
+      `migration-consumer-${previousVersion.replaceAll(".", "-")}`
+    );
     await mkdir(root, { recursive: true });
-    await writeFile(path.join(root, "nx.json"), "{}\n");
+    await writeFile(
+      path.join(root, "nx.json"),
+      `${JSON.stringify(
+        {
+          plugins: ["@habitat-ai/cli/nx-plugin"],
+          targetDefaults: {
+            check: {
+              cache: false,
+              dependsOn: [
+                { projects: ["habitat"], target: "lint" },
+                "typecheck",
+                "verify",
+                "check:policy",
+                "^check",
+              ],
+              outputs: [],
+            },
+          },
+        },
+        null,
+        2
+      )}\n`
+    );
     await writeFile(
       path.join(root, "package.json"),
       `${JSON.stringify(
@@ -435,9 +462,10 @@ describe("installed Habitat products", () => {
           type: "module",
           packageManager: "bun@1.3.14",
           devDependencies: {
-            "@habitat-ai/cli": PREVIOUS_RELEASE_VERSION,
-            "@habitat-ai/sdk": PREVIOUS_RELEASE_VERSION,
-            nx: "23.1.1",
+            "@habitat-ai/cli": previousVersion,
+            "@habitat-ai/sdk": previousVersion,
+            "@nx/workspace": previousNxVersion,
+            nx: previousNxVersion,
           },
         },
         null,
@@ -481,9 +509,9 @@ describe("installed Habitat products", () => {
         "@habitat-ai/sdk": installVersion,
       },
     });
-    await expect(lstat(path.join(root, "migrations.json"))).rejects.toMatchObject({
-      code: "ENOENT",
-    });
+    expect(await readFile(path.join(root, "migrations.json"), "utf8")).toContain(
+      "0-5-7-repository-foundation"
+    );
 
     const installedMigratedPair = await run("bun", ["install", "--ignore-scripts"], {
       cwd: root,
@@ -492,6 +520,53 @@ describe("installed Habitat products", () => {
     expect(
       installedMigratedPair,
       installedMigratedPair.stderr || installedMigratedPair.stdout
+    ).toMatchObject({ exitCode: 0 });
+
+    const applied = await run(
+      "bunx",
+      ["nx", "migrate", "--run-migrations=migrations.json", "--interactive=false"],
+      {
+        cwd: root,
+        env: {
+          NX_DAEMON: "false",
+          ...(publishedRegistryVersion === undefined ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
+        },
+        timeoutMs: 120_000,
+      }
+    );
+    expect(applied, applied.stderr || applied.stdout).toMatchObject({ exitCode: 0 });
+    expect(JSON.parse(await readFile(path.join(root, "package.json"), "utf8"))).toMatchObject({
+      devDependencies: {
+        "@nx/eslint": "23.1.1",
+        "@nx/eslint-plugin": "23.1.1",
+        "@nx/workspace": "23.1.1",
+        "@typescript-eslint/parser": "8.66.0",
+        eslint: "10.0.3",
+      },
+    });
+    expect(JSON.parse(await readFile(path.join(root, "nx.json"), "utf8"))).toMatchObject({
+      plugins: expect.arrayContaining([
+        { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
+      ]),
+      targetDefaults: {
+        check: { dependsOn: expect.arrayContaining(["check:boundaries"]) },
+      },
+    });
+    expect(await readFile(path.join(root, "eslint.config.mjs"), "utf8")).toContain(
+      "@nx/enforce-module-boundaries"
+    );
+
+    const frozenMigratedPair = await run(
+      "bun",
+      ["install", "--frozen-lockfile", "--ignore-scripts"],
+      {
+        cwd: root,
+        timeoutMs: 120_000,
+      }
+    );
+    expect(
+      frozenMigratedPair,
+      frozenMigratedPair.stderr || frozenMigratedPair.stdout
     ).toMatchObject({ exitCode: 0 });
     for (const product of products) {
       expect(
