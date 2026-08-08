@@ -20,7 +20,7 @@ vi.mock("@habitat-ai/rawr-resource-content-workspace/providers/git-effect-platfo
   makeNodeContentWorkspaceResource: selected.contentWorkspace,
 }));
 vi.mock(
-  "@habitat-ai/rawr-resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
+  "@habitat-ai/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
   () => ({
     makeNodeAgentPluginPackageOutputResource: selected.packageOutput,
   })

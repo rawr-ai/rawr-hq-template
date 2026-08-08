@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "@habitat-ai/rawr-resource-agent-plugin-package-output",
+  "name": "@habitat-ai/resource-agent-plugin-package-output",
   "namedInputs": {
     "production": [
       "default",

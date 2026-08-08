@@ -54,4 +54,4 @@
 ## Validation
 
 - Run `bunx nx run habitat:lint` and
-  `bunx nx run @habitat-ai/rawr-resource-agent-plugin-package-output:typecheck`.
+  `bunx nx run @habitat-ai/resource-agent-plugin-package-output:typecheck`.

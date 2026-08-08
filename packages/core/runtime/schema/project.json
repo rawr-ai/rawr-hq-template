@@ -17,6 +17,7 @@
     },
     "test": {
       "executor": "nx:run-commands",
+      "parallelism": false,
       "options": {
         "command": "bun test packages/core/runtime/schema/test"
       }

@@ -31,7 +31,7 @@
     "@habitat-ai/rawr-plugin-devops": "workspace:*",
     "@habitat-ai/rawr-plugin-hyperresearch": "workspace:*",
     "@habitat-ai/rawr-plugin-session-tools": "workspace:*",
-    "@habitat-ai/rawr-resource-agent-plugin-package-output": "workspace:*",
+    "@habitat-ai/resource-agent-plugin-package-output": "workspace:*",
     "@habitat-ai/rawr-resource-content-workspace": "workspace:*",
     "@habitat-ai/rawr-resource-native-agent-provider": "workspace:*",
     "@habitat-ai/rawr-resource-versioned-content": "workspace:*",

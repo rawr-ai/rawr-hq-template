@@ -1,5 +1,5 @@
 {
-  "name": "@habitat-ai/rawr-resource-agent-plugin-package-output",
+  "name": "@habitat-ai/resource-agent-plugin-package-output",
   "version": "0.1.0",
   "private": true,
   "repository": {

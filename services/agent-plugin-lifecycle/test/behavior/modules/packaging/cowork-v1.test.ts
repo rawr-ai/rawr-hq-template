@@ -1,5 +1,5 @@
 import { Buffer } from "node:buffer";
-import { makeNodeAgentPluginPackageOutputResource } from "@habitat-ai/rawr-resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
+import { makeNodeAgentPluginPackageOutputResource } from "@habitat-ai/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node";
 import { Effect } from "effect";
 import { afterEach, describe, expect, it } from "vitest";
 import type { AgentPluginRelease } from "../../../../src/service/model/dto/agent-plugin-release";
