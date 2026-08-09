@@ -191,7 +191,7 @@
   Rewrite no archive or quarantine history. This transfer
   adds no agent-plugin topic or profile, app/provider selection, runtime owner,
   final Oclif-app or CLI-topic law, or private CLI source-bundle contract.
-- [ ] 2.10b Before task 2.11 freezes the pre-deletion tree, adopt the latest
+- [x] 2.10b Before task 2.11 freezes the pre-deletion tree, adopt the latest
   exact-main bounded foundation-continuation release inside the sealed first
   functional checkpoint.
   Require `habitat-cli-v0.5.14` at

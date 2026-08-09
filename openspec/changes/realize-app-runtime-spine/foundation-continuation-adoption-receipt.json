@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "releaseReceipt": "foundation-continuation-release-receipt.json",
+  "source": {
+    "commit": "b7d53c902d565975ccd2c66f034dda647ca9ad98",
+    "tree": "0bb26d2649bda61a846498d54ce6133c94b48f47",
+    "pullRequest": 920
+  },
+  "root": {
+    "cli": {
+      "version": "0.5.14",
+      "integrity": "sha512-G3lesRaqVni7ioqaKcxnZPE0v+Nob3trs0rMfnxu12JOqoS+sKtAGa9HUORthyEP6dqYdQr+bgc6wEurPvysCw=="
+    },
+    "producerSdk": "workspace:*",
+    "pairedRegistrySdk": {
+      "version": "0.5.14",
+      "integrity": "sha512-ZFy2oBmjDMvz2f/NoSQOfUaiotHgwORsLTUUm2YObjWcCwQcWgw2vgbnlozf9DoOBmTAV3r01QI1fVFeaBT8Fw=="
+    }
+  },
+  "selections": {
+    "serviceV2": ["services/agent-plugin-lifecycle/habitat.toml", "services/catalog/habitat.toml"],
+    "resourceV2": [
+      "resources/agent-plugin-package-output/habitat.toml",
+      "resources/content-workspace/habitat.toml",
+      "resources/native-agent-provider/habitat.toml",
+      "resources/rule-evaluation/habitat.toml",
+      "resources/source-inventory/habitat.toml",
+      "resources/versioned-content/habitat.toml"
+    ],
+    "providerV1": [
+      "resources/agent-plugin-export-destination/providers/effect-platform-node/habitat.toml",
+      "resources/agent-plugin-package-output/providers/cowork-v1-effect-platform-node/habitat.toml",
+      "resources/content-workspace/providers/git-effect-platform-node/habitat.toml",
+      "resources/native-agent-provider/providers/claude-effect-platform-node/habitat.toml",
+      "resources/native-agent-provider/providers/codex-effect-platform-node/habitat.toml",
+      "resources/rule-evaluation/providers/grit-effect-platform-node/habitat.toml",
+      "resources/source-inventory/providers/git-effect-platform-node/habitat.toml",
+      "resources/versioned-content/providers/git-effect-platform-node/habitat.toml"
+    ],
+    "condemnedV1": [
+      "resources/agent-plugin-export-destination/habitat.toml",
+      "services/chatgpt-corpus/habitat.toml",
+      "services/dev/habitat.toml",
+      "services/hyperresearch-codex/habitat.toml",
+      "services/session-intelligence/habitat.toml"
+    ]
+  },
+  "verification": {
+    "frozenInstall": {
+      "command": "bun install --frozen-lockfile",
+      "conclusion": "success"
+    },
+    "noCrossVersionFallback": {
+      "command": "bun test services/catalog/test/behavior/modules/catalog/resolve.test.ts",
+      "tests": 43,
+      "conclusion": "success"
+    },
+    "catalogTypecheck": {
+      "target": "@habitat-ai/catalog-service:typecheck",
+      "conclusion": "success"
+    },
+    "retainedOwnerPolicy": {
+      "target": "check:policy",
+      "projects": [
+        "@habitat-ai/agent-plugin-lifecycle-service",
+        "@habitat-ai/catalog-service",
+        "@habitat-ai/resource-agent-plugin-package-output",
+        "@habitat-ai/resource-content-workspace",
+        "@habitat-ai/resource-native-agent-provider",
+        "@habitat-ai/resource-rule-evaluation",
+        "@habitat-ai/resource-source-inventory",
+        "@habitat-ai/resource-versioned-content"
+      ],
+      "parallelism": false,
+      "conclusion": "success"
+    },
+    "openspec": {
+      "command": "openspec validate realize-app-runtime-spine --strict",
+      "conclusion": "success"
+    },
+    "installedAcceptance": {
+      "workflow": "Publish Habitat",
+      "runId": 31313349985,
+      "ubuntuJobId": 93244533291,
+      "windowsJobId": 93244533227,
+      "conclusion": "success"
+    },
+    "mainRatchet": {
+      "workflow": "Repository Ratchet",
+      "runId": 31314285111,
+      "jobId": 93246899100,
+      "conclusion": "success"
+    }
+  }
+}
