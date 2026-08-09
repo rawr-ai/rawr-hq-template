@@ -15,7 +15,6 @@ from .core_config import (
     CORE_SWEEP_BASE_FILES,
     DEFAULT_SWEEP_EXCLUDE_SEGMENTS,
     DEFAULT_SWEEP_INCLUDE_GLOBS,
-    DEFAULT_SWEEP_ROOTS,
     SWEEP_CURRENT_FILES,
     SWEEP_HIGH_AMBIGUITY_MIN,
     SWEEP_HIGH_AMBIGUITY_RATIO,
@@ -33,10 +32,15 @@ from .semantic_evidence import (
     render_semantic_compare_report,
     semantic_compare_turtle,
 )
-from .semantica_adapter import iri_fragment, turtle_literal
+from .semantica_adapter import (
+    WORKBENCH_EVIDENCE_NAMESPACE,
+    WORKBENCH_ONTOLOGY_NAMESPACE,
+    iri_fragment,
+    turtle_literal,
+)
 from .semantica_pipeline import semantica_pipeline_probe
 
-SWEEP_SCHEMA_VERSION = "rawr-semantic-doc-sweep-v1"
+SWEEP_SCHEMA_VERSION = "semantica-workbench-document-sweep-v1"
 
 
 def run_document_sweep(
@@ -49,10 +53,12 @@ def run_document_sweep(
     run: str | None = "latest",
     fail_on: str = "none",
 ) -> Path:
+    if not roots and not documents:
+        raise ValueError("Explicit document sweep input required: pass at least one root or document")
     base_run_dir = resolve_run(run)
     graph = read_json(base_run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(base_run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
-    roots = [] if roots is None and documents else DEFAULT_SWEEP_ROOTS if roots is None else roots
+    roots = [] if roots is None else roots
     include_globs = DEFAULT_SWEEP_INCLUDE_GLOBS if include_globs is None else include_globs
     exclude_segments = effective_exclude_segments(exclude_segments)
     discovered, skipped = discover_documents(roots, include_globs, exclude_segments)
@@ -559,24 +565,24 @@ def write_sweep_csv(path: Path, sweep: dict[str, Any]) -> None:
 
 def sweep_turtle(sweep: dict[str, Any]) -> str:
     lines = [
-        "@prefix rawr: <https://rawr.dev/ontology/> .",
-        "@prefix evidence: <https://rawr.dev/evidence/> .",
+        f"@prefix workbench: <{WORKBENCH_ONTOLOGY_NAMESPACE}> .",
+        f"@prefix evidence: <{WORKBENCH_EVIDENCE_NAMESPACE}> .",
         "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
         "",
     ]
     run_node = iri_fragment(sweep["run_id"])
-    lines.append(f"evidence:{run_node} a rawr:DocumentSweep ;")
-    lines.append(f"  rawr:gitSha {turtle_literal(sweep['git_sha'])} ;")
-    lines.append(f"  rawr:documentsAnalyzed {turtle_literal(str(sweep['summary']['documents_analyzed']))} .")
+    lines.append(f"evidence:{run_node} a workbench:DocumentSweep ;")
+    lines.append(f"  workbench:gitSha {turtle_literal(sweep['git_sha'])} ;")
+    lines.append(f"  workbench:documentsAnalyzed {turtle_literal(str(sweep['summary']['documents_analyzed']))} .")
     lines.append("")
     for record in sweep["documents"]:
         node = iri_fragment(f"doc-{record['document_path']}")
-        lines.append(f"evidence:{node} a rawr:DocumentSweepRecord ;")
+        lines.append(f"evidence:{node} a workbench:DocumentSweepRecord ;")
         lines.append(f"  rdfs:label {turtle_literal(record['document_path'])} ;")
-        lines.append(f"  rawr:partOfSweep evidence:{run_node} ;")
-        lines.append(f"  rawr:pathClass {turtle_literal(record['path_class'])} ;")
-        lines.append(f"  rawr:recommendation {turtle_literal(record['recommendation'])} ;")
-        lines.append(f"  rawr:confidence {turtle_literal(record['confidence'])} .")
+        lines.append(f"  workbench:partOfSweep evidence:{run_node} ;")
+        lines.append(f"  workbench:pathClass {turtle_literal(record['path_class'])} ;")
+        lines.append(f"  workbench:recommendation {turtle_literal(record['recommendation'])} ;")
+        lines.append(f"  workbench:confidence {turtle_literal(record['confidence'])} .")
         lines.append("")
         for item in record.get("top_findings", []):
             finding_node = iri_fragment(
@@ -585,16 +591,18 @@ def sweep_turtle(sweep: dict[str, Any]) -> str:
             claim_node = iri_fragment(
                 item.get("claim_id") or f"claim-{record['document_path']}-{item.get('line_start')}"
             )
-            lines.append(f"evidence:{finding_node} a rawr:ReviewFinding ;")
-            lines.append(f"  rawr:findingKind {turtle_literal(item.get('verdict') or '')} ;")
-            lines.append(f"  rawr:derivedFrom evidence:{claim_node} ;")
-            lines.append(f"  rawr:sourcePath {turtle_literal(item.get('source_path') or record['document_path'])} ;")
-            lines.append(f"  rawr:lineStart {turtle_literal(str(item.get('line_start') or ''))} ;")
-            lines.append(f"  rawr:lineEnd {turtle_literal(str(item.get('line_end') or ''))} ;")
-            lines.append(f"  rawr:partOfSweepRecord evidence:{node} ;")
+            lines.append(f"evidence:{finding_node} a workbench:ReviewFinding ;")
+            lines.append(f"  workbench:findingKind {turtle_literal(item.get('verdict') or '')} ;")
+            lines.append(f"  workbench:derivedFrom evidence:{claim_node} ;")
+            lines.append(
+                f"  workbench:sourcePath {turtle_literal(item.get('source_path') or record['document_path'])} ;"
+            )
+            lines.append(f"  workbench:lineStart {turtle_literal(str(item.get('line_start') or ''))} ;")
+            lines.append(f"  workbench:lineEnd {turtle_literal(str(item.get('line_end') or ''))} ;")
+            lines.append(f"  workbench:partOfSweepRecord evidence:{node} ;")
             if item.get("entity_id"):
-                lines.append(f"  rawr:resolvedTarget rawr:{iri_fragment(item['entity_id'])} ;")
-            lines.append(f"  rawr:rule {turtle_literal(item.get('rule') or '')} .")
+                lines.append(f"  workbench:resolvedTarget workbench:{iri_fragment(item['entity_id'])} ;")
+            lines.append(f"  workbench:rule {turtle_literal(item.get('rule') or '')} .")
             lines.append("")
     return "\n".join(lines)
 
@@ -638,7 +646,7 @@ def ontology_metadata(run_dir: Path) -> dict[str, Any]:
     metadata_path = run_dir / CORE_GRAPH_FILENAMES["metadata"]
     metadata = read_json(metadata_path) if metadata_path.exists() else {}
     return {
-        "version": metadata.get("kind", "rawr-core-ontology"),
+        "version": metadata.get("kind", "reviewed-core-ontology"),
         "source_files": [metadata.get("source")] if metadata.get("source") else [],
     }
 

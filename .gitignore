@@ -11,6 +11,7 @@ oclif.manifest.json
 .rawr/
 .habitat/cache/
 .semantica/
+.venv/
 __pycache__/
 *.py[cod]
 .context/

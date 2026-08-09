@@ -13,13 +13,13 @@ from pathlib import Path
 
 from .chunking import chunk_markdown
 from .core_ontology import (
-    TESTING_PLAN,
     build_core_ontology_run,
     compare_architecture_proposal,
     compare_document_evidence,
     diff_document_against_core_ontology,
     extract_document_evidence,
     export_core_ontology,
+    resolve_document_input,
     validate_core_ontology,
     visualize_core_ontology,
     write_architecture_change_frame,
@@ -37,9 +37,9 @@ from .manifest import load_manifest
 from .ontology import load_definitions, normalize_run
 from .paths import (
     AUTHORITY_CLAIM_PROMPT,
-    DEFAULT_MANIFEST,
     ENTITY_RESOLUTION_PROMPT,
     FIXTURE_MANIFEST,
+    FIXTURE_ONTOLOGY_ROOT,
     QUALITY_REVIEW_PROMPT,
     RELATION_EDGE_PROMPT,
     REPO_ROOT,
@@ -47,6 +47,7 @@ from .paths import (
     WORKBENCH_ROOT,
 )
 from .reporting import render_report
+from .semantic_evidence import fixture_document_path
 from .semantica_adapter import semantica_status
 from .seeding import build_seed_graph
 
@@ -67,9 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
     check.set_defaults(func=cmd_check)
 
     core_validate = sub.add_parser("core:validate")
+    add_ontology_input_args(core_validate)
     core_validate.set_defaults(func=cmd_core_validate)
 
     core_build = sub.add_parser("core:build")
+    add_ontology_input_args(core_build)
     core_build.set_defaults(func=cmd_core_build)
 
     core_export = sub.add_parser("core:export")
@@ -97,36 +100,32 @@ def build_parser() -> argparse.ArgumentParser:
 
     doc_diff = sub.add_parser("doc:diff")
     doc_diff.add_argument("--run", default="latest")
-    doc_diff.add_argument("--document", default=str(TESTING_PLAN))
     doc_diff.add_argument("--mode", choices=["lexical", "semantic"], default="lexical")
-    doc_diff.add_argument("--fixture", action="store_true")
+    add_document_input_args(doc_diff)
     doc_diff.set_defaults(func=cmd_doc_diff)
 
     doc_triage = sub.add_parser("doc:triage")
     doc_triage.add_argument("--run", default="latest")
-    doc_triage.add_argument("--document", default=str(TESTING_PLAN))
+    add_document_input_args(doc_triage)
     doc_triage.set_defaults(func=cmd_doc_triage)
 
     doc_extract = sub.add_parser("doc:extract")
     doc_extract.add_argument("--run", default="latest")
-    doc_extract.add_argument("--document", default=str(TESTING_PLAN))
-    doc_extract.add_argument("--fixture", action="store_true")
+    add_document_input_args(doc_extract)
     doc_extract.add_argument("--semantica-pilot", action="store_true")
     add_evidence_mode_args(doc_extract)
     doc_extract.set_defaults(func=cmd_doc_extract)
 
     doc_compare = sub.add_parser("doc:compare")
     doc_compare.add_argument("--run", default="latest")
-    doc_compare.add_argument("--document", default=str(TESTING_PLAN))
-    doc_compare.add_argument("--fixture", action="store_true")
+    add_document_input_args(doc_compare)
     doc_compare.add_argument("--semantica-pilot", action="store_true")
     add_evidence_mode_args(doc_compare)
     doc_compare.set_defaults(func=cmd_doc_compare)
 
     doc_frame = sub.add_parser("doc:frame")
     doc_frame.add_argument("--run", default="latest")
-    doc_frame.add_argument("--document", default=str(TESTING_PLAN))
-    doc_frame.add_argument("--fixture", action="store_true")
+    add_document_input_args(doc_frame)
     doc_frame.add_argument("--semantica-pilot", action="store_true")
     add_evidence_mode_args(doc_frame)
     doc_frame.add_argument("--reference-bundle", default=None)
@@ -134,8 +133,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     doc_proposal_compare = sub.add_parser("doc:proposal-compare")
     doc_proposal_compare.add_argument("--run", default="latest")
-    doc_proposal_compare.add_argument("--document", default=str(TESTING_PLAN))
-    doc_proposal_compare.add_argument("--fixture", action="store_true")
+    add_document_input_args(doc_proposal_compare)
     doc_proposal_compare.add_argument("--semantica-pilot", action="store_true")
     add_evidence_mode_args(doc_proposal_compare)
     doc_proposal_compare.add_argument("--reference-bundle", default=None)
@@ -192,11 +190,46 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def add_extract_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
-    parser.add_argument("--fixture", action="store_true")
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument("--manifest", default=None)
+    input_group.add_argument("--fixture", action="store_true")
     parser.add_argument("--limit-chunks", type=int, default=None)
     parser.add_argument("--mode", choices=["auto", "heuristic", "llm"], default="auto")
     parser.add_argument("--model", default=DEFAULT_MODEL)
+
+
+def add_ontology_input_args(parser: argparse.ArgumentParser) -> None:
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument("--ontology-root", default=None)
+    input_group.add_argument("--fixture", action="store_true")
+
+
+def add_document_input_args(parser: argparse.ArgumentParser) -> None:
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument("--document", default=None)
+    input_group.add_argument("--fixture", action="store_true")
+
+
+def ontology_input(args) -> tuple[Path, bool]:
+    if args.fixture:
+        return FIXTURE_ONTOLOGY_ROOT, True
+    if not args.ontology_root:
+        raise RuntimeError("Explicit reviewed ontology input required: pass --ontology-root <path> or --fixture")
+    return Path(args.ontology_root), False
+
+
+def document_argument(args) -> Path | None:
+    if not args.fixture and not args.document:
+        raise RuntimeError("Explicit document input required: pass --document <path> or --fixture")
+    return Path(args.document) if args.document else None
+
+
+def manifest_input(args) -> Path:
+    if args.fixture:
+        return FIXTURE_MANIFEST
+    if not args.manifest:
+        raise RuntimeError("Explicit reviewed manifest required: pass --manifest <path> or --fixture")
+    return Path(args.manifest)
 
 
 def add_evidence_mode_args(parser: argparse.ArgumentParser) -> None:
@@ -224,8 +257,9 @@ def cmd_check(_args) -> int:
     return 0
 
 
-def cmd_core_validate(_args) -> int:
-    report = validate_core_ontology()
+def cmd_core_validate(args) -> int:
+    ontology_root, _fixture = ontology_input(args)
+    report = validate_core_ontology(ontology_root)
     print(
         "core_ontology_valid="
         f"{report['valid']} entities={report['summary']['entity_count']} "
@@ -239,8 +273,9 @@ def cmd_core_validate(_args) -> int:
     return 0
 
 
-def cmd_core_build(_args) -> int:
-    run_dir = build_core_ontology_run()
+def cmd_core_build(args) -> int:
+    ontology_root, fixture = ontology_input(args)
+    run_dir = build_core_ontology_run(ontology_root, fixture=fixture)
     print(f"core_graph={rel(run_dir)}")
     return 0
 
@@ -307,14 +342,16 @@ def cmd_core_query(args) -> int:
 
 def cmd_doc_diff(args) -> int:
     if args.mode == "semantic":
-        run_dir = compare_document_evidence(Path(args.document), args.run, fixture=args.fixture)
+        run_dir = compare_document_evidence(document_argument(args), args.run, fixture=args.fixture)
         print(f"semantic_compare={rel(run_dir / CORE_GRAPH_FILENAMES['semantic_compare_report'])}")
         return 0
     return cmd_doc_triage(args)
 
 
 def cmd_doc_triage(args) -> int:
-    document = Path(args.document)
+    document = resolve_document_input(
+        document_argument(args), fixture=args.fixture, fixture_path=fixture_document_path()
+    )
     run_dir = diff_document_against_core_ontology(document, args.run)
     print(f"document_diff={rel(run_dir / CORE_GRAPH_FILENAMES['document_diff_report'])}")
     return 0
@@ -322,7 +359,7 @@ def cmd_doc_triage(args) -> int:
 
 def cmd_doc_extract(args) -> int:
     run_dir = extract_document_evidence(
-        Path(args.document),
+        document_argument(args),
         args.run,
         fixture=args.fixture,
         semantica_pilot=args.semantica_pilot,
@@ -345,7 +382,7 @@ def cmd_doc_extract(args) -> int:
 
 def cmd_doc_compare(args) -> int:
     run_dir = compare_document_evidence(
-        Path(args.document),
+        document_argument(args),
         args.run,
         fixture=args.fixture,
         semantica_pilot=args.semantica_pilot,
@@ -360,7 +397,7 @@ def cmd_doc_compare(args) -> int:
 def cmd_doc_frame(args) -> int:
     reference_bundle = Path(args.reference_bundle) if args.reference_bundle else None
     run_dir = write_architecture_change_frame(
-        Path(args.document),
+        document_argument(args),
         args.run,
         fixture=args.fixture,
         semantica_pilot=args.semantica_pilot,
@@ -377,7 +414,7 @@ def cmd_doc_frame(args) -> int:
 def cmd_doc_proposal_compare(args) -> int:
     reference_bundle = Path(args.reference_bundle) if args.reference_bundle else None
     run_dir = compare_architecture_proposal(
-        Path(args.document),
+        document_argument(args),
         args.run,
         fixture=args.fixture,
         semantica_pilot=args.semantica_pilot,
@@ -466,7 +503,7 @@ def cmd_semantic_capability(args) -> int:
 
 
 def cmd_extract(args) -> int:
-    manifest_path = FIXTURE_MANIFEST if args.fixture else Path(args.manifest)
+    manifest_path = manifest_input(args)
     if not manifest_path.is_absolute():
         manifest_path = REPO_ROOT / manifest_path
     manifest = load_manifest(manifest_path)

@@ -52,13 +52,9 @@
 ## Routing
 
 - [Repository router](../AGENTS.md)
-- [Bootgraph package](bootgraph/AGENTS.md)
-- [Core package](core/AGENTS.md)
-- [Development node package](dev-node/AGENTS.md)
-- [HQ SDK package](hq-sdk/AGENTS.md)
-- [Runtime context package](runtime-context/AGENTS.md)
-- [Test utilities package](test-utils/AGENTS.md)
-- [UI SDK package](ui-sdk/AGENTS.md)
+- [Public Habitat SDK](habitat-sdk/AGENTS.md)
+- [Transitional telemetry package](core/AGENTS.md)
+- [Runtime schema adapter](core/runtime/schema/AGENTS.md)
 
 ## Parent Coverage
 

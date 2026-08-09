@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rawr.dev/schemas/sweep-llm-evidence-augmentation.schema.json",
-  "title": "RAWR Sweep LLM Evidence Augmentation",
+  "$id": "urn:semantica-workbench:schema:sweep-llm-evidence-augmentation:v1",
+  "title": "Semantica Workbench Sweep LLM Evidence Augmentation",
   "type": "object",
   "required": [
     "schema_version",
@@ -15,7 +15,7 @@
     "diagnostics"
   ],
   "properties": {
-    "schema_version": { "const": "rawr-sweep-llm-evidence-augmentation-v1" },
+    "schema_version": { "const": "semantica-workbench-sweep-llm-evidence-augmentation-v1" },
     "run": { "type": "string" },
     "run_id": { "type": ["string", "null"] },
     "source_index": { "type": "string", "minLength": 1 },
@@ -23,7 +23,7 @@
       "type": "object",
       "required": [
         "generated_evidence_is_truth",
-        "reviewed_rawr_ontology_remains_authority",
+        "reviewed_ontology_input_remains_authority",
         "promotion_requires_human_review",
         "llm_output_is_evidence_only",
         "augmentation_is_truth",
@@ -33,7 +33,7 @@
       ],
       "properties": {
         "generated_evidence_is_truth": { "const": false },
-        "reviewed_rawr_ontology_remains_authority": { "const": true },
+        "reviewed_ontology_input_remains_authority": { "const": true },
         "promotion_requires_human_review": { "const": true },
         "llm_output_is_evidence_only": { "const": true },
         "augmentation_is_truth": { "const": false },

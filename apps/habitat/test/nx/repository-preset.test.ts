@@ -138,7 +138,9 @@ describe("Habitat Bun repository preset", () => {
       },
     });
     expect(readJson(tree, "scripts/habitat/project.json")).not.toHaveProperty("projectType");
-    expect(tree.exists("biome.json")).toBe(true);
+    expect(readJson(tree, "biome.json")).toMatchObject({
+      files: { includes: expect.arrayContaining(["!**/.venv/**"]) },
+    });
     expect(tree.read("eslint.config.mjs", "utf8")).toContain('...nxPlugin.configs["flat/base"]');
     expect(tree.read("eslint.config.mjs", "utf8")).toContain('files: ["**/*.{ts,tsx,cts,mts}"]');
     expect(tree.read("bunfig.toml", "utf8")).toContain('linker = "isolated"');

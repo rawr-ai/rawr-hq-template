@@ -347,6 +347,7 @@ const biomeConfig = jsonDocument({
       "!**/node_modules/**",
       "!**/dist/**",
       "!**/coverage/**",
+      "!**/.venv/**",
       "!.nx/**",
       "!.habitat/cache/**",
       "!**/.tmp/**",

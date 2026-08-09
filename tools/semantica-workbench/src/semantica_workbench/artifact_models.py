@@ -10,7 +10,7 @@ JsonObject = dict[str, Any]
 
 class AuthorityBoundary(TypedDict, total=False):
     generated_evidence_is_truth: Literal[False]
-    reviewed_rawr_ontology_remains_authority: Literal[True]
+    reviewed_ontology_input_remains_authority: Literal[True]
     promotion_requires_human_review: Literal[True]
     llm_output_is_evidence_only: Literal[True]
     augmentation_is_truth: Literal[False]
@@ -168,7 +168,7 @@ def validate_evidence_authority_boundary(payload: JsonObject) -> list[JsonObject
         return [{"kind": "authority_boundary_missing", "path": ["authority_boundary"]}]
     expected = {
         "generated_evidence_is_truth": False,
-        "reviewed_rawr_ontology_remains_authority": True,
+        "reviewed_ontology_input_remains_authority": True,
         "promotion_requires_human_review": True,
         "llm_output_is_evidence_only": True,
     }

@@ -13,6 +13,7 @@
       "!**/dist/**",
       "!**/oclif.manifest.json",
       "!**/coverage/**",
+      "!**/.venv/**",
       "!.turbo/**",
       "!.nx/**",
       "!.habitat/cache/**",
@@ -30,16 +31,7 @@
       "!docs/**/_provenance/**",
       "!openspec/changes/archive/**",
       "!openspec/changes/**/workstream/**",
-      "!tools/runtime-realization-type-env/evidence/**",
-      "!tools/runtime-realization-type-env/fixtures/**",
-      "!tools/semantica-workbench/fixtures/**",
-      "!scripts/chatgpt-corpus-template/source-material/conversations/raw-json/**",
-      "!scripts/chatgpt-corpus-template/work/docs/source/**",
-      "!scripts/chatgpt-corpus-template/work/generated/**",
-      "!scripts/chatgpt-corpus-template/work/README.md",
-      "!services/chatgpt-corpus/test/fixtures/**",
-      "!services/hyperresearch-codex/spec/evidence/**",
-      "!services/hyperresearch-codex/spec/fixtures/**"
+      "!tools/semantica-workbench/fixtures/**"
     ]
   },
   "formatter": {
@@ -81,20 +73,6 @@
       }
     }
   },
-  "overrides": [
-    {
-      "includes": ["apps/web/src/**/*.{js,jsx,ts,tsx}"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "useExhaustiveDependencies": "warn",
-            "useHookAtTopLevel": "error",
-            "useJsxKeyInIterable": "error"
-          }
-        }
-      }
-    }
-  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double",

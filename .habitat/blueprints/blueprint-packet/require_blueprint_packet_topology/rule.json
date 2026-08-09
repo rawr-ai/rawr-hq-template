@@ -3,7 +3,7 @@
   "id": "require_blueprint_packet_topology",
   "title": "Require Habitat Authority Packet Topology",
   "placement": {
-    "niche": "rawr",
+    "niche": "habitat",
     "blueprint": "blueprint-packet",
     "category": "structure"
   },
@@ -19,11 +19,7 @@
   "pathCoverage": [
     {
       "kind": "exact-path",
-      "patterns": [
-        ".habitat/blueprints/*/*/**",
-        ".habitat/*/*/rules/*/**",
-        ".habitat/*/*/*/rules/*/**"
-      ]
+      "patterns": [".habitat/blueprints/*/*/**", ".habitat/overlays/*/rules/*/**"]
     }
   ],
   "supportFiles": {

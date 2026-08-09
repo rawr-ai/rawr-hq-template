@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 2,
+  "id": "require_repository_script_topology",
+  "title": "Require Repository Script Topology",
+  "placement": {
+    "niche": "habitat",
+    "blueprint": "nx-workspace",
+    "category": "structure"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a repository scripts root outside its closed platform-mechanics topology, or a repository hook surface outside its three owned events",
+  "why": "Repository scripts are bounded platform mechanics with explicit owners. Husky owns hook activation while the repository owns the three tracked event policies. Closing both roots prevents orchestration and policy concerns from accumulating in an unowned script or hook namespace.",
+  "remediate": "Keep only AGENTS.md and the dev and habitat roots directly under scripts. Keep post-checkout, post-merge, and pre-push as the only tracked Husky events, with Husky's generated dispatcher admitted under .husky/_. Move other concerns to their declared policy or tool owner.",
+  "message": "Repository scripts and Husky events must retain their closed platform-mechanics topology.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [".husky/**", "scripts/**"]
+    }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/blueprints/nx-workspace/require_repository_script_topology/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/blueprints/nx-workspace/structure.toml"
+    }
+  }
+}

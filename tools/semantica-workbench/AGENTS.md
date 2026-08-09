@@ -20,7 +20,7 @@
 - Generated environments, runs, indexes, and reports belong under ignored
   `.semantica/**`; do not commit generated state beside the workbench source.
 - Generated comparisons and model output are evidence and review aids. They do
-  not promote ontology facts or become RAWR architecture authority.
+  not promote ontology facts or become architecture authority.
 
 ## Behavior
 

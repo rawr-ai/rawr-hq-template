@@ -85,9 +85,9 @@ terminal, or promote module matter for access convenience.
 
 ## Repository Overlays
 
-Rules under `.habitat/rawr` are qualified repository, product, lifecycle, or
-host constraints rather than reusable blueprint law. They may select exact
-product inventory, but cannot duplicate, weaken, or replace generic kind law.
+Rules under `.habitat/overlays` are qualified repository constraints rather
+than reusable blueprint law. They may select exact owner-local inventory, but
+cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 

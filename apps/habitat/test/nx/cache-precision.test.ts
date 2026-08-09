@@ -14,8 +14,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { runCommand } from "@rawr/test-utils";
 import { afterEach, describe, expect, it } from "vitest";
+
+import { runCommand } from "../support/run-command";
 
 type Invocation = Readonly<{
   args: readonly string[];

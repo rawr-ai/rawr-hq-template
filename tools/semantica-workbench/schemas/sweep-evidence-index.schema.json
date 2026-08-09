@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rawr.dev/schemas/sweep-evidence-index.schema.json",
-  "title": "RAWR Sweep Evidence Index",
+  "$id": "urn:semantica-workbench:schema:sweep-evidence-index:v1",
+  "title": "Semantica Workbench Sweep Evidence Index",
   "type": "object",
   "required": ["schema_version", "run_id", "git_sha", "authority_boundary", "summary", "findings"],
   "properties": {
-    "schema_version": { "const": "rawr-sweep-evidence-index-v1" },
+    "schema_version": { "const": "semantica-workbench-sweep-evidence-index-v1" },
     "run_id": { "type": "string", "minLength": 1 },
     "git_sha": { "type": "string", "minLength": 1 },
     "created_at": { "type": "string" },
@@ -34,13 +34,13 @@
       "type": "object",
       "required": [
         "generated_evidence_is_truth",
-        "reviewed_rawr_ontology_remains_authority",
+        "reviewed_ontology_input_remains_authority",
         "promotion_requires_human_review",
         "llm_output_is_evidence_only"
       ],
       "properties": {
         "generated_evidence_is_truth": { "const": false },
-        "reviewed_rawr_ontology_remains_authority": { "const": true },
+        "reviewed_ontology_input_remains_authority": { "const": true },
         "promotion_requires_human_review": { "const": true },
         "llm_output_is_evidence_only": { "const": true },
         "promotion_allowed": { "const": false }

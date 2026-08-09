@@ -7,7 +7,7 @@ from .core_config import CORE_GRAPH_FILENAMES, NAMED_QUERY_DESCRIPTIONS
 from .io import rel, write_json
 from .semantica_review_surface import mcp_inventory
 
-EVIDENCE_AGENT_MANIFEST_SCHEMA_VERSION = "rawr-sweep-evidence-agent-manifest-v1"
+EVIDENCE_AGENT_MANIFEST_SCHEMA_VERSION = "semantica-workbench-sweep-evidence-agent-manifest-v1"
 
 AGENT_EVIDENCE_QUERIES = [
     "evidence-summary",
@@ -136,8 +136,8 @@ def build_evidence_agent_manifest(run_dir: Path, index: dict[str, Any]) -> dict[
             "tool_names": tool_names,
             "resource_uris": resource_uris,
             "generic_semantica_mcp_status": "available" if mcp_status.get("available") else "blocked",
-            "rawr_evidence_access_status": "not-wired",
-            "usage_policy": "Use named RAWR CLI queries for generated evidence. Semantica MCP inventory is recorded here only as generic package capability until a RAWR evidence resource/tool is explicitly wired and tested.",
+            "workbench_evidence_access_status": "not-wired",
+            "usage_policy": "Use named workbench queries for generated evidence. Semantica MCP inventory is recorded here only as generic package capability until a workbench evidence resource or tool is explicitly wired and tested.",
         },
     }
 

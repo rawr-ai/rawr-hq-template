@@ -12,7 +12,7 @@
 
 ## Boundaries
 
-- Personal's reviewed record owns desired membership and exact Git objects own
+- Marketplace's reviewed record owns desired membership and exact Git objects own
   selected bytes. The service model owns release derivation shared with
   Packaging; Providers owns its provider-specific selected-content resolution.
 - The service model owns clean-content eligibility and declared-tree policy

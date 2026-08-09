@@ -606,7 +606,7 @@ def infer_entity_type(name: str) -> str:
     clean = normalize_display_name(name)
     if clean in {"server", "async", "web", "cli", "agent", "desktop"}:
         return "Role"
-    if clean.startswith("@rawr/"):
+    if clean.startswith("@") and "/" in clean:
         return "PackageSurface"
     if clean.startswith(("packages/", "resources/", "services/", "plugins/", "apps/")):
         return "ComponentArtifact"

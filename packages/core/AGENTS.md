@@ -1,50 +1,45 @@
-# Core Package Router (`@habitat-ai/rawr-core`)
+# Transitional Core Package Router (`@habitat-ai/rawr-core`)
 
 ## Purpose
 
-- Provide neutral workspace discovery and reusable telemetry installation
-  across process entrypoints.
+- Retain the predecessor telemetry installer until its Habitat-owned readers
+  move in task 3.3.
 
 ## Scope
 
-- Applies to the workspace discovery and telemetry primitives in
-  `packages/core/**`.
+- Applies to the remaining telemetry source in `packages/core/**`.
 
 ## Boundaries
 
-- Owns neutral workspace discovery and the exported oRPC telemetry installer.
+- Temporarily owns only the exported oRPC telemetry installer.
 - Must not own CLI command lifecycle, parsing, result rendering,
   command-specific behavior, plugin lifecycle policy, workspace manifest
   semantics, or application composition.
-- Workspace discovery may locate a workspace for bootstrap; it does not make a
-  checkout the identity of an installed command.
+- Must not restore workspace discovery or become a permanent Habitat SDK owner.
 
 ## Behavior
 
-- Core provides shared process support while leaving every command's lifecycle
-  and domain operation, and every host's composition decision, with its owner.
+- The package preserves the existing telemetry behavior only until task 3.3
+  moves its final readers and deletes this mixed predecessor.
 
 ## Concepts
 
-- **Workspace discovery** locates bootstrap context without assigning product
-  identity. **Telemetry installation** configures one compatible OpenTelemetry
-  SDK instance at a process boundary.
+- **Telemetry installation** configures one compatible OpenTelemetry SDK
+  instance at a process boundary.
 
 ## Flow
 
-- Entrypoints use `findWorkspaceRoot` before binding workspace-owned services.
-- Runtime hosts import the dedicated telemetry export and install it at their
+- Runtime hosts may import the dedicated telemetry export and install it at their
   process boundary.
 
 ## Interfaces
 
-- Entrypoints consume the workspace locator; process hosts consume the
-  telemetry installer.
+- Process hosts consume the telemetry installer through its qualified subpath.
 
 ## Routing
 
 - [Packages router](../AGENTS.md)
-- [CLI application](../../apps/cli/AGENTS.md)
+- [Repository router](../../AGENTS.md)
 
 ## Validation
 

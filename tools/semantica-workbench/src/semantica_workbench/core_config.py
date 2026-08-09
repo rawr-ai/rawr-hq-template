@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any
 
 from .paths import REPO_ROOT, VIEWER_ROOT
@@ -99,19 +98,13 @@ SWEEP_CURRENT_FILES = [
     CORE_GRAPH_FILENAMES["sweep_no_signal_documents"],
 ]
 
-DEFAULT_TESTING_PLAN_CANDIDATES = [
-    REPO_ROOT / "docs/projects/rawr-final-architecture-migration/resources/spec/RAWR_Canonical_Testing_Plan.md",
-    REPO_ROOT
-    / "docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md",
-]
-
 DEFAULT_CORE_VIEWER_HOST = "127.0.0.1"
 DEFAULT_CORE_VIEWER_PORT = 8765
 CYTOSCAPE_BUNDLE = REPO_ROOT / "node_modules/cytoscape/dist/cytoscape.min.js"
 VIEWER_CSS = VIEWER_ROOT / "graph-viewer.css"
 VIEWER_JS = VIEWER_ROOT / "graph-viewer.js"
-VIEWER_TITLE = "RAWR Core Ontology Graph"
-VIEWER_SUBTITLE = "Derived inspection surface. Reviewed YAML ontology remains authoritative."
+VIEWER_TITLE = "Reviewed Ontology Graph"
+VIEWER_SUBTITLE = "Derived inspection surface. Explicitly reviewed YAML input remains authoritative."
 
 LAYER_COLORS = {
     "core": "#2f6fed",
@@ -149,7 +142,7 @@ NAMED_QUERY_DESCRIPTIONS = {
     "entityless-findings": "Semantic findings that have no resolved ontology entity and need review or suppression.",
     "verification-policy-gaps": "Subordinate testing/verification-policy claims that still need ontology or document review.",
     "decision-review-queue": "Actionable semantic findings for document update and migration-planning review.",
-    "semantica-review-surface": "semantica MCP, export, visualization, and RAWR review-surface capability proof.",
+    "semantica-review-surface": "semantica MCP, export, visualization, and workbench review-surface capability proof.",
     "proposal-review-summary": "Architecture proposal frame, claim comparison, verdict, and repair summary.",
     "proposal-repair-queue": "Source-backed proposal claims that need repair, addendum, evidence, or human review.",
     "sweep-summary": "Aggregate recommendation counts from the latest document sweep.",
@@ -170,7 +163,6 @@ NAMED_QUERY_DESCRIPTIONS = {
     "evidence-agent-manifest": "Stable agent-facing commands, artifacts, MCP status, and authority guardrails for corpus evidence queries.",
 }
 
-DEFAULT_SWEEP_ROOTS = ["docs"]
 DEFAULT_SWEEP_INCLUDE_GLOBS = ["**/*.md"]
 DEFAULT_SWEEP_EXCLUDE_SEGMENTS = [
     ".context",
@@ -195,13 +187,6 @@ SWEEP_RECOMMENDATIONS = [
 SWEEP_REVIEW_RECOMMENDATIONS = {"quarantine-candidate", "update-needed", "review-needed"}
 SWEEP_HIGH_AMBIGUITY_MIN = 10
 SWEEP_HIGH_AMBIGUITY_RATIO = 0.75
-
-
-def default_testing_plan() -> Path:
-    for candidate in DEFAULT_TESTING_PLAN_CANDIDATES:
-        if candidate.exists():
-            return candidate
-    return DEFAULT_TESTING_PLAN_CANDIDATES[0]
 
 
 def layer_color(layer: str | None) -> str:

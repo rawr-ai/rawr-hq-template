@@ -25,14 +25,12 @@
 - Habitat owns the platform SDK, foundational Oclif CLI, runtime, adapters,
   generic services/resources, schemas, tooling, blueprints, and validators.
 - Rawr is the first downstream app built on Habitat. Its domain services,
-  plugins, topics, profiles, and composition remain product source even while
-  co-located here pending repository extraction.
+  plugins, topics, profiles, and composition live in its independent product
+  repository and consume released Habitat interfaces.
 - Marketplace (legacy repository locator `RAWR HQ`) owns curated agent-plugin content, vendor provenance,
   declarative policy/evaluation inputs, and its own governed release/channel records.
-- The Habitat and Marketplace repositories are independent. Rawr remains
-  product-owned while co-located pending extraction. No executable
-  implementation or repository ownership crosses the Habitat/Marketplace
-  boundary.
+- Habitat, Rawr, and Marketplace are independent repositories. No executable
+  implementation or repository ownership crosses their boundaries.
 - Cross-repository use is limited to explicit versioned data interfaces and
   ordinary package artifacts. A Marketplace repository path is a Git content
   locator, never CLI installation identity or executable ancestry.
@@ -59,11 +57,10 @@
 ## Command Surface Policy
 
 - Current external CLI plugin channel: `habitat plugins ...`
-- Current curated agent-plugin lifecycle channel: `rawr agent plugins ...`
-- The curated channel's accepted Habitat destination is not current operational
-  truth until its source and policy land together. The later private Rawr CLI
-  may contain only downstream product topics and must not duplicate or alias a
-  Habitat channel.
+- Curated agent-plugin lifecycle has no current CLI projection in this
+  repository. Task 12.1 must land its Habitat command, manifest, profile, and
+  policy together before `habitat agent plugins ...` becomes operational.
+- No Rawr alias or premature Habitat route is admitted.
 - Product composition, web hosts, and runtime mounting consume these lifecycle
   commands and cannot own either channel.
 - Do not mix these command surfaces in guidance or examples.
@@ -120,8 +117,7 @@
 
 - [Repository destination guide](AGENTS_SPLIT.md) for "where should this
   change land?" (Habitat vs Rawr vs Marketplace).
-- [Apps router](apps/AGENTS.md) for runtime surfaces (`cli`, `hq`, `server`,
-  `web`).
+- [Apps router](apps/AGENTS.md) for the foundational Habitat CLI package source.
 - [Packages router](packages/AGENTS.md) for shared libraries and dependency
   direction.
 - [Services router](services/AGENTS.md) for sealed domain capability suites,
@@ -147,9 +143,6 @@
   [Graphite workflow](docs/process/GRAPHITE.md).
 - Ongoing doc and process health cadence:
   [Maintenance cadence](docs/process/MAINTENANCE_CADENCE.md).
-- Operational usage conventions:
-  [HQ usage](docs/process/HQ_USAGE.md) and
-  [HQ operations](docs/process/HQ_OPERATIONS.md).
 - Documentation architecture contract: [Docs architecture](docs/DOCS.md).
 - Quarantined docs live under `quarantine/` directories and are provenance only.
 

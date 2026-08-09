@@ -25,10 +25,9 @@ Lanes are sequenced by SKILL.md write order so step renumbering is correct on fi
 
 - Brief: `docs/projects/workstream-runner-skill-improvements/README.md`.
 - Existing skill: `tools/workstream-plugin-pack/skills/workstream-runner/{SKILL.md, references/*, assets/*}` for voice match.
-- Working references on branch `align-arch-spec-with-runtime-realization`:
-  - `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/decisions.md` (shape model for Rec #2's `assets/decisions.md`).
-  - `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/findings/wave-1-packet.md` (cross-phase state reference for Rec #5 Pattern A).
-  - `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/findings/lane-1-1-patch.md` (lane-X-patch reference for Rec #5 Pattern B).
+- Current reusable references:
+  - `tools/workstream-plugin-pack/skills/workstream-runner/assets/decisions.md`.
+  - `tools/workstream-plugin-pack/skills/workstream-runner/references/coordination-patterns.md`.
 - This workstream's record + decisions.md.
 
 ## Forbidden scope (across all lanes)
@@ -59,9 +58,9 @@ The DRA stages and commits, not the worker.
 
 - **L1 (Rec #4):** Step 1 in `SKILL.md` reads "Ground the workstream" + bullet list of preflight categories (repo state, repo conventions, authority inputs, project-local quarantine/archive directories). Tool-agnostic phrasing (no `gt`, no `npm`, no `bun` by name; "stacking convention" not "Graphite"). One commit.
 - **L2 (Rec #1):** new Step 0 in `SKILL.md` Default Workflow named "Before you frame." References `references/before-you-frame.md`. New `references/before-you-frame.md` covers the four meta-design passes (team design, perspective cycling, system design, information assessment) as mandatory, with the brittleness-guard verbatim from brief §3.1. One commit (single rec, two files).
-- **L3 (Rec #2):** new `assets/decisions.md` template + new Asset Map row in `SKILL.md` + new Quality Gate ("Every borderline call has explicit rationale recorded in `decisions.md` or in a finding record") + Step 4 mention of `decisions.md` as a sibling artifact (not buried in the workstream record). Template shape models the prior workstream's decisions.md (question / options / chosen / rationale / downstream effect). One commit.
+- **L3 (Rec #2):** new `assets/decisions.md` template + new Asset Map row in `SKILL.md` + new Quality Gate ("Every borderline call has explicit rationale recorded in `decisions.md` or in a finding record") + Step 4 mention of `decisions.md` as a sibling artifact (not buried in the workstream record). The template captures question / options / chosen / rationale / downstream effect. One commit.
 - **L4 (Rec #3):** new "DRA Finalize" step in `SKILL.md` Default Workflow inserted between current Step 7 (Review and repair) and current Step 8 (Close or hand off) — total step count grows from 8 to 10 (counting new Step 0). Reinforcement paragraph in `references/closure.md`: closure-steward catches what the DRA missed; DRA Finalize precedes the steward. One commit.
-- **L5 (Rec #5):** new `references/coordination-patterns.md` with Pattern A (cross-phase state propagation via `decisions.md` live-state header + worker brief slot) and Pattern B (parallel-lane patches via `findings/lane-X-patch.md` BEFORE/AFTER blocks + DRA serialization). Cite working-reference paths verbatim. New Reference Map row in `SKILL.md`. One commit.
+- **L5 (Rec #5):** new `references/coordination-patterns.md` with Pattern A (cross-phase state propagation via `decisions.md` live-state header + worker brief slot) and Pattern B (parallel-lane patches via `findings/lane-X-patch.md` BEFORE/AFTER blocks + DRA serialization). New Reference Map row in `SKILL.md`. One commit.
 - **L6 (Rec #6):** expansion in `references/records-and-packets.md` adding the three-question rubric (delegation? multi-phase? ≥ 5 child artifacts?). Replaces the current binary "minimal-vs-full" implicit framing without renaming or restructuring the file. One commit.
 
 ## Per-lane self-check (leaf review)

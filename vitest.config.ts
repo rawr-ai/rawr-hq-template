@@ -22,18 +22,6 @@ export default defineConfig({
     projects: [
       {
         extends: true,
-        root: r("apps/cli"),
-        test: {
-          name: "cli",
-          environment: "node",
-          maxWorkers: 2,
-          include: [...includes],
-          env: { NODE_ENV: "production" },
-          testTimeout: 60_000,
-        },
-      },
-      {
-        extends: true,
         root: r("apps/habitat"),
         test: {
           name: "habitat-cli",
@@ -71,11 +59,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("apps/web"),
-        test: { name: "web", environment: "jsdom", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("packages/core"),
         test: { name: "core", environment: "node", include: [...includes] },
       },
@@ -86,63 +69,8 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/hq-sdk"),
-        test: { name: "hq-sdk", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/dev"),
-        test: { name: "dev", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/dev-node"),
-        test: { name: "dev-node", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/chatgpt-corpus"),
-        test: { name: "chatgpt-corpus", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/hyperresearch-codex"),
-        test: { name: "hyperresearch-codex", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("services/agent-plugin-lifecycle"),
         test: { name: "agent-plugin-lifecycle", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("services/session-intelligence"),
-        test: { name: "session-intelligence", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("packages/ui-sdk"),
-        test: { name: "ui-sdk", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/commands/chatgpt-corpus"),
-        test: { name: "plugin-chatgpt-corpus", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/commands/devops"),
-        test: { name: "plugin-devops", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/commands/hyperresearch"),
-        test: { name: "plugin-hyperresearch", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/commands/session-tools"),
-        test: { name: "plugin-session-tools", environment: "node", include: [...includes] },
       },
     ],
   },

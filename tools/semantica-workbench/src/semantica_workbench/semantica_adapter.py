@@ -9,6 +9,11 @@ from typing import Any
 
 from .core_config import CORE_GRAPH_FILENAMES
 
+WORKBENCH_ONTOLOGY_NAMESPACE = "urn:semantica-workbench:ontology:"
+WORKBENCH_EVIDENCE_NAMESPACE = "urn:semantica-workbench:evidence:"
+WORKBENCH_PROPOSAL_NAMESPACE = "urn:semantica-workbench:proposal:"
+WORKBENCH_REFERENCE_GEOMETRY_NAMESPACE = "urn:semantica-workbench:reference-geometry:"
+
 
 def semantica_status() -> dict[str, Any]:
     try:
@@ -94,7 +99,7 @@ def export_semantica_ontology(
             for relation in relations
         ],
         "metadata": {
-            "source": "rawr-core-architecture-reviewed-ontology",
+            "source": "explicit-reviewed-ontology",
             "truth_model": "reviewed_yaml_authoritative_semantica_substrate",
         },
     }
@@ -175,7 +180,7 @@ def call_engine_kwargs(engine: Any, method_name: str, *args: Any, **kwargs: Any)
 
 def to_data_graph_turtle(entities: list[dict[str, Any]], relations: list[dict[str, Any]]) -> str:
     lines = [
-        "@prefix rawr: <https://rawr.dev/ontology/> .",
+        f"@prefix workbench: <{WORKBENCH_ONTOLOGY_NAMESPACE}> .",
         "@prefix sem: <https://semantica.dev/ontology/> .",
         "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
         "",
@@ -184,14 +189,14 @@ def to_data_graph_turtle(entities: list[dict[str, Any]], relations: list[dict[st
         node = iri_fragment(entity["id"])
         entity_type = iri_fragment(entity.get("type", "Concept"))
         label = turtle_literal(str(entity.get("label") or entity["id"]))
-        lines.append(f"rawr:{node} a sem:{entity_type} ;")
+        lines.append(f"workbench:{node} a sem:{entity_type} ;")
         lines.append(f"  rdfs:label {label} .")
         lines.append("")
     for relation in relations:
         subject = iri_fragment(relation["subject"])
         predicate = iri_fragment(relation["predicate"])
         obj = iri_fragment(relation["object"])
-        lines.append(f"rawr:{subject} rawr:{predicate} rawr:{obj} .")
+        lines.append(f"workbench:{subject} workbench:{predicate} workbench:{obj} .")
     return "\n".join(lines) + "\n"
 
 

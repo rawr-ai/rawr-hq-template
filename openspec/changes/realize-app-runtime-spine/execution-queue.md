@@ -28,6 +28,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   service/resource owners select the immutable v2 acquisition successors.
   Providers remain at v1, and every transferred or deleted instance remains
   untouched for task 2.11.
+- The exact pre-deletion source authority for task 2.11 is
+  `main@cc494354449465fa4178f36d4d5222b4d4072f5d`, with whole-tree identity
+  `2eacd194803e542a579b9c6c845605123fcb2bbb`; later fresh owners may consult
+  that frozen source only as provenance and owner-local test evidence.
 - Gates A through C, Rawr's finite owner transfer, and the bounded Habitat
   `0.5.14` adoption are sealed. The active source container is platform
   separation.
@@ -79,17 +83,17 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   uses that pair and selects `service@2` / `resource@2` only for retained
   platform owners. This remains inside the first functional checkpoint, not
   another package cohort or runtime release.
-- [ ] **Separation**: retain and rename Habitat platform owners, delete every
+- [x] **Separation**: retain and rename Habitat platform owners, delete every
   transferred or rejected predecessor, rename the workspace, and pass the
   cumulative absence gate.
 
 The active queue has one bounded node:
 
-1. land task 2.11 after the sealed task 2.10a and 2.10b receipts: freeze the exact
-   pre-deletion source commit/tree, delete `apps/cli`, the product-bound
-   Oclif-command-plugin packet, and the exact task-2.11 predecessor inventory
-   while retaining mixed `@habitat-ai/rawr-core` / `packages/core` for task 3.3,
-   then pass the checkpoint-aware cumulative product-separation absence gate.
+1. pass task 2.12's exact-main repository gate: land the verified Habitat
+   product-separation boundary, require Rawr's canonical main to contain only
+   its three admitted product closures, run the cumulative Habitat absence gate
+   from exact main, and verify Marketplace remains an independent content
+   repository before task 3 opens.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle

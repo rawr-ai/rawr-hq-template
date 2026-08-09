@@ -3,7 +3,7 @@
   "id": "require_package_publication_coherence",
   "title": "Require Package Publication Coherence",
   "placement": {
-    "niche": "rawr",
+    "niche": "habitat",
     "blueprint": "nx-workspace",
     "category": "boundary"
   },

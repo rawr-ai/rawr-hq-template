@@ -58,7 +58,7 @@ describe("cowork-v1", () => {
       const archiveText = Buffer.from(first.bytes).toString("utf8");
       expect(archiveText).not.toContain(firstRoot.path);
       expect(archiveText).not.toContain(secondRoot.path);
-      expect(archiveText).not.toContain("rawr-hq-template");
+      expect(archiveText).not.toContain("habitat-workspace");
     } finally {
       process.chdir(originalCwd);
       if (originalTimezone === undefined) delete process.env.TZ;

@@ -1,6 +1,6 @@
 # Migration Plan
 
-M2 aligns the runtime shell around `@rawr/runtime-context`, `@rawr/hq-sdk`, and `apps/server`.
+The fixture aligns a runtime shell around `@example/runtime-context`, `@example/sdk`, and `apps/example`.
 
 The migration plan should preserve existing docs as authoritative where they describe valid target behavior. Claims that mention legacy startup remain transitional until the canonical runtime shell is complete.
 

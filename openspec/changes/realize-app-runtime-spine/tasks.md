@@ -217,11 +217,12 @@
   [[foundation-continuation-release-receipt]]. After the source adoption lands,
   record its exact-main commit/tree and these named local checks in
   [[foundation-continuation-adoption-receipt]] before checking this task.
-- [ ] 2.11 Only after the task 2.10a installed receipt and the task 2.10b
-  [[foundation-continuation-adoption-receipt]] is sealed, record the exact
-  source commit and whole-tree identity immediately before deletion as frozen
-  provenance and later owner-local test oracles, then land the Habitat deletion
-  boundary. Rename the root package and Nx project exactly to the private
+- [x] 2.11 Only after the task 2.10a installed receipt and the task 2.10b
+  [[foundation-continuation-adoption-receipt]] is sealed, freeze
+  `main@cc494354449465fa4178f36d4d5222b4d4072f5d` with whole-tree identity
+  `2eacd194803e542a579b9c6c845605123fcb2bbb` as the exact source immediately
+  before deletion and as later owner-local test provenance, then land the
+  Habitat deletion boundary. Rename the root package and Nx project exactly to the private
   `habitat-workspace`, update every root-identity reader, and delete `apps/cli`
   and its remaining manifest/source; the imported Rawr service/topic copies;
   the predecessor `services/dev`, `packages/dev-node`, and
@@ -259,10 +260,21 @@
   absence gate MUST also prove the pre-Gate-A semantic-sieve deletions remain
   absent, including predecessor HQ/server/example projects and their commands,
   state, and readers; it MUST NOT re-stage or revive them as task-2.11 work.
+  Execute this gate through the fixed `@habitat-ai/cli` /
+  `@habitat-ai/sdk` `0.5.14` pair published from
+  `habitat-cli-v0.5.14` at exact
+  `main@9e650107ac8c292ca13be5edc2390b870b952c68`; Publish Habitat run
+  `31311235419` passed both installed-package platforms, npm OIDC
+  publication, provenance, and registry-installed smoke. This released runtime
+  serializes every inferred Habitat policy target and excludes generated,
+  dependency, environment, and evidence directories before Grit acquisition.
   Co-land `habitat:acceptance:product-separation-absence` with the exact
   cumulative task-2.11 predecessor inventory from
-  [[classification-ledger#deletion-and-replacement-oracles]] and run it before
-  landing. This deletion and its frozen source oracles do not realize or accept
+  [[classification-ledger#deletion-and-replacement-oracles]] and run it together
+  with `bun run check` before landing. The source overlay owns source-spelled,
+  unescaped static ES-style specifiers; project-owned TypeScript checks own
+  cooked or escaped module resolution and TypeScript import-equals. This
+  deletion and its frozen source oracles do not realize or accept
   the final agent-plugin topic/overlay/profile, development topic, Habitat
   generators, runtime, private CLI source-bundle contract, or final generic
   Oclif laws; tasks 11.4, 11.6, and 12.1 through 12.3 own those fresh

@@ -37,21 +37,17 @@ Before changing docs:
 1. Check Graphite and Git state.
 2. Confirm trunk and current branch.
 3. Inspect staged and unstaged changes.
-4. Use the private repository-owned Oclif application through
-   `bun run rawr -- ...`. Do not invoke or update the obsolete predecessor
-   distribution. Registry publication and package metadata establish released
-   Habitat versions, Nx Release configuration defines membership, and release
-   records preserve evidence; this runbook carries no version or inventory.
-5. If the `bun run rawr -- sessions ...` surface is unavailable, extract transcript
-   evidence directly from the session JSONL and record that tooling gap in the
-   workstream notes. Do not repair it with an Oclif extension link.
+4. Use only the repository's current Habitat/Nx surfaces. Do not restore a
+   product CLI, checkout link, or obsolete distribution to complete doc work.
+5. When transcript evidence is needed, use the owning repository's explicit
+   session tooling or the source JSONL and record the evidence path.
 
 Minimum commands:
 
 ```sh
 git status --short --branch
 gt trunk
-bun run rawr -- --help
+bun habitat --help
 ```
 
 ## Workflow

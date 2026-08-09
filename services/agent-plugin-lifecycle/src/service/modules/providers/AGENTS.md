@@ -12,7 +12,7 @@
 
 ## Boundaries
 
-- Personal's reviewed record owns desired membership, exact Git objects own the
+- Marketplace's reviewed record owns desired membership, exact Git objects own the
   selected bytes, and native inventory owns installed state.
 - The service model owns the current-main and release meanings that genuinely
   cross modules. This module owns selected-content DTOs, native marketplace

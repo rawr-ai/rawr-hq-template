@@ -45,11 +45,11 @@ def minimal_architecture_change_frame() -> dict:
             "status": "pilot",
             "llm_provider_status": "available",
             "semantica_version": "0.4.0",
-            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "deterministic_oracle": "semantica-workbench-semantic-heuristic-v1",
             "promotion_allowed": False,
         },
         "governance": {
-            "truth_authority": "rawr-reviewed-ontology",
+            "truth_authority": "reviewed-ontology-input",
             "semantica_output_authoritative": False,
             "reference_geometry_status": "comparison-only",
             "requires_human_promotion": True,
@@ -80,7 +80,7 @@ def minimal_architecture_change_frame() -> dict:
             "status": "extraction-only",
             "overall_verdict": "not-evaluated",
             "recommended_next_action": "none",
-            "ruleset": "rawr-frame-pilot-unresolved",
+            "ruleset": "semantica-workbench-frame-pilot-unresolved",
             "explanation_chain_complete": False,
         },
     }
@@ -89,30 +89,30 @@ def minimal_architecture_change_frame() -> dict:
 def write_reference_geometry_bundle(directory: Path) -> Path:
     bundle_path = directory / "reference-geometry.zip"
     ttl = """@prefix dct: <http://purl.org/dc/terms/> .
-@prefix rawr: <https://rawr.dev/ontology/instances#> .
-@prefix rg: <https://rawr.dev/ontology/reference-geometry#> .
+@prefix geometry: <urn:semantica-workbench:reference-geometry:instances:> .
+@prefix rg: <urn:semantica-workbench:reference-geometry:vocabulary:> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 
-rawr:diagnosticsExtensionSlot a rg:ExtensionSlot ;
+geometry:diagnosticsExtensionSlot a rg:ExtensionSlot ;
   dct:description "New read model, catalog, topology, or telemetry concern attaches under diagnostics/observation." ;
   skos:prefLabel "diagnostics extension slot" .
 
-rawr:comparisonVocabularyExtensionSlot a rg:ExtensionSlot ;
+geometry:comparisonVocabularyExtensionSlot a rg:ExtensionSlot ;
   dct:description "New analysis vocabulary attaches as comparison/change-frame layer, not as product architecture kind." ;
   skos:prefLabel "comparison vocabulary extension slot" .
 
-rawr:laneAgentTools a rg:ProjectionLane ;
+geometry:laneAgentTools a rg:ProjectionLane ;
   skos:prefLabel "agent/tools" ;
   rg:pathPattern "plugins/agent/tools/<capability>" .
 
-rawr:bindPhase a rg:RuntimePhase ;
+geometry:bindPhase a rg:RuntimePhase ;
   skos:prefLabel "bind" .
 """
     import zipfile
 
     with zipfile.ZipFile(bundle_path, "w") as archive:
-        archive.writestr("rawr-reference-geometry-v0.2/README.md", "# RAWR Reference Geometry v0.2\n")
-        archive.writestr("rawr-reference-geometry-v0.2/rawr-reference-geometry-core.ttl", ttl)
+        archive.writestr("reference-geometry-v0.2/README.md", "# Reference Geometry v0.2\n")
+        archive.writestr("reference-geometry-v0.2/reference-geometry-core.ttl", ttl)
     return bundle_path
 
 
@@ -248,12 +248,12 @@ def synthetic_evidence_index() -> dict:
             "text": row["text"],
         }
     return {
-        "schema_version": "rawr-sweep-evidence-index-v1",
+        "schema_version": "semantica-workbench-sweep-evidence-index-v1",
         "run_id": "synthetic-run",
         "git_sha": "test",
         "authority_boundary": {
             "generated_evidence_is_truth": False,
-            "reviewed_rawr_ontology_remains_authority": True,
+            "reviewed_ontology_input_remains_authority": True,
             "promotion_requires_human_review": True,
             "llm_output_is_evidence_only": True,
         },

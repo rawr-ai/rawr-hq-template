@@ -1,8 +1,8 @@
 # Semantic Evidence Extraction Prompt
 
-Extract source-backed evidence claims for semantic comparison against the reviewed RAWR ontology.
+Extract source-backed evidence claims for semantic comparison against the explicitly reviewed ontology input.
 
-Do not decide RAWR truth. Do not promote new entities into the ontology. Return evidence claims only.
+Do not decide architecture truth. Do not promote new entities into the ontology. Return evidence claims only.
 
 For each claim, preserve:
 

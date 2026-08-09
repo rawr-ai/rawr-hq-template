@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rawr.dev/schemas/architecture-change-frame-v1.schema.json",
-  "title": "RAWR Architecture Change Frame",
-  "description": "Evidence-only intermediate frame for comparing an architecture proposal against RAWR-reviewed ontology and comparison geometry. It is not canonical architecture truth.",
+  "$id": "urn:semantica-workbench:schema:architecture-change-frame:v1",
+  "title": "Semantica Workbench Architecture Change Frame",
+  "description": "Evidence-only intermediate frame for comparing an architecture proposal against an explicitly reviewed ontology input and comparison geometry. It is not canonical architecture truth.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,7 +18,7 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "rawr-architecture-change-frame-v1"
+      "const": "semantica-workbench-architecture-change-frame-v1"
     },
     "frame_id": {
       "type": "string",
@@ -223,7 +223,7 @@
           "enum": [
             "semantica-llm-pilot",
             "semantica-pattern-pilot",
-            "rawr-deterministic-oracle",
+            "semantica-workbench-deterministic-oracle",
             "manual-review",
             "external-import"
           ]
@@ -257,7 +257,7 @@
           "enum": [
             "semantica-llm-pilot",
             "semantica-pattern-pilot",
-            "rawr-deterministic-oracle",
+            "semantica-workbench-deterministic-oracle",
             "manual-review",
             "external-import"
           ]
@@ -317,7 +317,7 @@
       ],
       "properties": {
         "truth_authority": {
-          "const": "rawr-reviewed-ontology"
+          "const": "reviewed-ontology-input"
         },
         "semantica_output_authoritative": {
           "const": false

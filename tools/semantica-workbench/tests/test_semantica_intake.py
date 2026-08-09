@@ -20,7 +20,6 @@ from semantica_workbench.architecture_change_frame import (
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +46,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -79,7 +78,7 @@ class SemanticaIntakeTests(WorkbenchTestCase):
         manifest = load_manifest(FIXTURE_MANIFEST)
         source = manifest.sources[0]
         probe = semantica_intake_probe(source)
-        self.assertEqual("rawr-semantica-intake-v1", probe["schema_version"])
+        self.assertEqual("semantica-workbench-intake-v1", probe["schema_version"])
         self.assertEqual(source.rel_path, probe["source"]["path"])
         self.assertTrue(probe["fallback"]["chunk_markdown_retained"])
         self.assertIn(probe["fallback"]["decision_grade_source"], {"chunk_markdown", "semantica-intake"})

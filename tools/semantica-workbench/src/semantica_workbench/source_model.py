@@ -6,6 +6,9 @@ from pathlib import Path
 from .paths import REPO_ROOT
 
 
+PROVENANCE_PATH_SEGMENTS = frozenset({"archive", "_archive", "quarantine"})
+
+
 @dataclass(frozen=True)
 class SourceSpan:
     line_start: int
@@ -28,6 +31,16 @@ def source_ref_to_path(source_path: str) -> Path:
     return path if path.is_absolute() else REPO_ROOT / path
 
 
+def provenance_segment_for_path(path: Path) -> str | None:
+    """Return the repository provenance segment that makes a path non-authoritative."""
+    resolved = path.expanduser().resolve()
+    try:
+        parts = resolved.relative_to(REPO_ROOT).parts
+    except ValueError:
+        return None
+    return next((part for part in parts if part.lower() in PROVENANCE_PATH_SEGMENTS), None)
+
+
 def source_scope_for_path(path: Path, *, fixture: bool = False) -> str:
     if fixture:
         return "fixture"
@@ -36,9 +49,10 @@ def source_scope_for_path(path: Path, *, fixture: bool = False) -> str:
         parts = resolved.relative_to(REPO_ROOT).parts
     except ValueError:
         return "external"
-    if "quarantine" in parts:
+    provenance_segment = next((part for part in parts if part.lower() in PROVENANCE_PATH_SEGMENTS), None)
+    if provenance_segment == "quarantine":
         return "quarantine"
-    if "archive" in parts or "_archive" in parts:
+    if provenance_segment:
         return "archive"
     return "comparison-source"
 

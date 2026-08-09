@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "id": "require_exported_value_declarations_have_jsdoc",
+  "title": "Require Exported Value Declarations To Have JSDoc",
+  "placement": {
+    "niche": "repository",
+    "blueprint": "_self",
+    "category": "contract"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "an authored value implementation export in a qualified public resource, provider, or service face without adjacent nonempty declaration-site JSDoc or with an obvious placeholder JSDoc block",
+  "why": "Exported values cross module boundaries. Declaration-site documentation keeps their owner, purpose, and intended semantics visible through reuse and relocation while review owns semantic quality.",
+  "remediate": "Delete an unused export or add adjacent nonempty, non-placeholder JSDoc before its defining runtime declaration. Explain purpose, behavior, ownership, or invariants. Document a direct anonymous default value at its export statement; leave type-only and ambient declarations to TypeScript and re-export barrels to inherit documentation from the owner.",
+  "message": "Exported authored value declarations require adjacent nonempty non-placeholder declaration-site JSDoc.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "resources/*/contract.ts",
+        "resources/*/providers/*/index.ts",
+        "services/*/src/client.ts"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/repository/rules/require_exported_value_declarations_have_jsdoc/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/repository/rules/require_exported_value_declarations_have_jsdoc/pattern.md"
+    },
+    "patternName": "require_exported_value_declarations_have_jsdoc",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["."]
+    }
+  }
+}

@@ -1,17 +1,17 @@
-PREFIX rawr: <https://rawr.dev/ontology/>
-PREFIX evidence: <https://rawr.dev/evidence/>
+PREFIX workbench: <urn:semantica-workbench:ontology:>
+PREFIX evidence: <urn:semantica-workbench:evidence:>
 
 SELECT ?finding ?kind ?sourcePath ?lineStart ?lineEnd ?charStart ?charEnd ?rule ?reviewAction WHERE {
-  ?finding a rawr:ReviewFinding ;
-    rawr:partOfEvidenceIndex ?evidenceIndex ;
-    rawr:findingKind ?kind ;
-    rawr:decisionGrade "true" ;
-    rawr:sourcePath ?sourcePath ;
-    rawr:lineStart ?lineStart ;
-    rawr:lineEnd ?lineEnd ;
-    rawr:charStart ?charStart ;
-    rawr:charEnd ?charEnd ;
-    rawr:rule ?rule .
-  OPTIONAL { ?finding rawr:reviewAction ?reviewAction . }
+  ?finding a workbench:ReviewFinding ;
+    workbench:partOfEvidenceIndex ?evidenceIndex ;
+    workbench:findingKind ?kind ;
+    workbench:decisionGrade "true" ;
+    workbench:sourcePath ?sourcePath ;
+    workbench:lineStart ?lineStart ;
+    workbench:lineEnd ?lineEnd ;
+    workbench:charStart ?charStart ;
+    workbench:charEnd ?charEnd ;
+    workbench:rule ?rule .
+  OPTIONAL { ?finding workbench:reviewAction ?reviewAction . }
 }
 ORDER BY ?sourcePath ?lineStart

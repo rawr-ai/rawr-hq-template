@@ -23,7 +23,7 @@ Repositories retain authority for their own instances and overlays.
 .habitat/blueprints/<kind>/versions/<version>/structure.toml
 .habitat/blueprints/<kind>/versions/<version>/<rule>.md
 .habitat/blueprints/<kind>/versions/<version>/components/<role>/<rule>.md
-.habitat/rawr/<niche>/rules/<rule>/
+.habitat/overlays/<niche>/rules/<rule>/
 .habitat/staged/blueprints/<kind>/<rule>/
 ```
 
@@ -79,23 +79,16 @@ Nested-member closure remains Habitat-owned. The closed package export law and
 Nx's `@nx/enforce-module-boundaries` rule own workspace-wide foreign-consumer
 direction.
 
-The `rawr/` tree carries owner-qualified constraints that are not generic
-package laws. It is the current physical overlay for repository governance,
-not the complete definition of a Habitat niche. Its repository niche owns the
-cross-kind `AGENTS.md` placement
-relation without acquiring the topology of the heterogeneous package and
-module roots it inspects, plus the positively closed root for repository
-scripts and the exported-value documentation contract on the admitted public
-lifecycle boundary. Its Runtime Realization lab niche owns that tool's closed
-container axes and parser-visible plane containment. Its workstream-plugin-pack
-niche closes that tool's asset roots and requires checked-in SessionStart and
-Stop configuration to invoke the canonical hook sources. Its agent-plugin
-lifecycle niche closes the curated command channel and keeps curated command
-source independent from the native external-plugin package. Its web-host niche
-admits public environment fields only through the web-owned projection funnel.
-The service structure and Oclif packets own their admitted relationships, and
-TypeScript package exports own public compatibility. These qualified niches do
-not duplicate generic laws as package-name or path blacklists.
+Compatibility packets below `agent-router`, `grit-pattern`, and `nx-workspace`
+retain the current frame laws: agent-router document shape, Grit helper
+documentation, and the closed repository script and hook topology. Durable
+cross-kind `AGENTS.md` placement and qualified public-face JSDoc instead live as
+repository law under `.habitat/overlays/repository`. The `nx-workspace` frame's
+singular structural spine remains at its blueprint root. The
+`workstream-plugin-pack` overlay closes that retained platform tool's asset
+roots and requires checked-in SessionStart and Stop configuration to invoke its
+canonical hook sources. Qualified overlays do not duplicate generic laws as
+package-name or path blacklists.
 
 Remaining v2 `rule.json` packets outside a selected kind are repository
 compatibility law, not reusable kind authority. An intentionally unfinished
@@ -103,15 +96,16 @@ law lives under `.habitat/staged/blueprints/**` with a `staged-rule.json`
 candidate manifest and has no enforcement authority until it is completed,
 selected, and moved into its owning definition.
 
-Each enforced v2 compatibility rule has a stable `rule.json` plus a locked `baseline.json`
-beside its `structure.toml` or Grit pattern. Structure rules own filesystem
-topology. Every Grit packet exposes its executable source as `pattern.md`;
-rule-specific semantics belong in the packet directory and rule metadata, not
-in a second filename convention. Grit rules own source relationships. This repository
-currently admits no script-backed Habitat rule. A future native capability gap
-requires a named authority decision before the packet topology can change.
-Behavioral semantics stay in TypeScript tests and owner review rather than
-being approximated as source shape.
+Each enforced v2 compatibility rule has a stable `rule.json` plus a locked
+`baseline.json` beside it. Structure rules declare a blueprint-root or
+packet-local `structure.toml`; Grit packets expose their executable source as
+`pattern.md`. Rule-specific semantics belong in the packet directory and rule
+metadata, not in a second filename convention. Structure rules own filesystem
+topology, and Grit rules own source relationships. This repository currently
+admits no script-backed Habitat rule. A future native capability gap requires a
+named authority decision before the packet topology can change. Behavioral
+semantics stay in TypeScript tests and owner review rather than being
+approximated as source shape.
 
 The Habitat-owned `@habitat-ai/cli` release resolves rule applications into one
 cacheable focused target per rule application or compatibility rule plus one
@@ -171,8 +165,9 @@ Magic's API, workflow, app, Nx, and tool overlays remain outside this package
 release. Their exercised variance informs later generic Habitat kinds; the
 product instances, adapters, policy, and qualified overlay rules remain local.
 
-The Oclif and Nx workspace packets are Habitat-authored. They apply the same
-positive, closed-kind posture to the executable app, its command plugins, and
-the repository scheduler without claiming Magic Migration provenance.
+The Nx workspace packets are Habitat-authored. They apply the same positive,
+closed-kind posture to the repository scheduler and script topology without
+claiming Magic Migration provenance. No Oclif app or command-topic law is
+currently active.
 
 See [[AUTHORITY|the authority boundary]] and [[AGENTS|the repository router]].

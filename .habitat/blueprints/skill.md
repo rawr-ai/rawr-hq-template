@@ -1,6 +1,6 @@
 ---
 name: habitat-blueprint-direction
-description: Mental model for locating work in RAWR's blueprint kinds while keeping semantic direction, ownership, and structural proof distinct.
+description: Mental model for locating work in Habitat's blueprint kinds while keeping semantic direction, ownership, and structural proof distinct.
 ---
 
 # Habitat Blueprint Direction
@@ -21,7 +21,7 @@ to an admitted instance. A niche governs a community selected from accepted
 instance and capability facts. Those relations are additive; neither may
 silently weaken the instance's blueprint kind.
 
-RAWR's durable direction is:
+Habitat's durable direction is:
 
 ```text
 packages support
@@ -69,7 +69,6 @@ None may impersonate another.
 - [[blueprint-packet/skill|Blueprint packets]]
 - [[grit-pattern/skill|Grit patterns]]
 - [[nx-workspace/skill|Nx workspaces]]
-- [[oclif-command-plugin/skill|Oclif command plugins]]
 - [[plugin/skill|Plugins]]
 - [[plugin-server/skill|Server plugins]]
 - [[provider/skill|Providers]]

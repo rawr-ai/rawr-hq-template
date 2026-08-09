@@ -26,10 +26,10 @@ locator.
 - Invoke Habitat platform operations through the released Habitat CLI.
 - Manage genuine external extensions through the `habitat plugins`
   channel.
-- Manage curated agent releases through the current `rawr agent plugins`
-  channel. Its Habitat command destination activates only after migration.
-- Invoke any surviving private `rawr` application through its independent
-  repository revision and Nx-owned targets.
+- Curated agent lifecycle has no current Habitat CLI projection. Task 12.1
+  activates it only by landing command, manifest, profile, and policy together.
+- Invoke Rawr product behavior only through its independent repository and
+  released Habitat interfaces.
 - Reconcile Marketplace provider, provenance, and export records through
   Habitat-owned lifecycle interfaces, and repeat converged operations without
   writes.
@@ -38,12 +38,9 @@ locator.
 
 Habitat SDK and CLI registry publication plus package metadata establish
 released versions, Nx Release configuration defines release membership, and
-release records preserve evidence. Private `rawr` development and acceptance
-use `bun run rawr -- ...`; this gateway does not duplicate package versions or
-release inventory. No compatibility or fallback path preserves the retired
-custom distribution or selector.
+release records preserve evidence. This gateway does not duplicate package
+versions or release inventory. No compatibility or fallback path preserves a
+retired distribution or selector.
 
-Platform-native Habitat code remains in this repository. The currently
-co-located product source is migration input: surviving Rawr behavior must move
-to its independent repository before Habitat runtime implementation opens, and
-everything else must resolve to a platform owner or be deleted.
+Only platform-native Habitat code remains in this repository. Rawr and
+Marketplace consume it through versioned data and ordinary package artifacts.

@@ -6,8 +6,9 @@ description: Mental model for AGENTS.md as a local navigation and boundary surfa
 # Agent Router Frame
 
 > **Activation:** None. This lowercase `skill.md` is an unregistered design
-> seed; the adjacent Habitat packets remain the only structural and source
-> authority.
+> seed; the adjacent shape packet remains the document-form authority, while
+> durable cross-kind router placement is repository law under
+> `.habitat/overlays/repository`.
 
 ## Frame
 

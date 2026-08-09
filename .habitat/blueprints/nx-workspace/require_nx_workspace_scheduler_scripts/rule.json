@@ -3,7 +3,7 @@
   "id": "require_nx_workspace_scheduler_scripts",
   "title": "Require Nx Workspace Scheduler Scripts",
   "placement": {
-    "niche": "rawr",
+    "niche": "habitat",
     "blueprint": "nx-workspace",
     "category": "quality"
   },

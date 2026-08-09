@@ -3,7 +3,6 @@
 This index is the canonical entrypoint for active process runbooks.
 
 Use this when you need exact commands for:
-- operating the managed local HQ runtime,
 - running a bounded workstream as a coordination object,
 - containing migration-doc drift with path-obvious quarantine,
 - draining Graphite stacks,
@@ -16,16 +15,15 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 | Goal | Runbook |
 | --- | --- |
 | Run a bounded workstream as a coordination object | [[docs/process/WORKSTREAMS]] |
-| Operate the managed local HQ runtime | [[docs/process/runbooks/HQ_RUNTIME_OPERATIONS]] |
 | Contain migration-doc drift with quarantine-first topology | [[docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW]] |
 | Drain Graphite stacks safely (publish/merge/prune loop) | [[docs/process/runbooks/STACK_DRAIN_LOOP]] |
 | Validate Habitat/Rawr/Marketplace separation and released interfaces | [[docs/process/CROSS_REPO_WORKFLOWS]] |
-| Canonical repo-boundary + transient retry + final acceptance policy | [[docs/process/HQ_OPERATIONS]] |
 
 ## Command Surface Invariant
 
 - External Oclif extensions: `habitat plugins ...`
-- Curated agent-plugin lifecycle: `rawr agent plugins ...`
+- Curated agent-plugin lifecycle: no current Habitat CLI projection; task 12.1
+  must land its command, manifest, profile, and policy together.
 - Marketplace owns agent-plugin source, provenance, policy/evaluation inputs, and
   governed release, acceptance, and channel records. Reviewed `current-main`
   selects the exact Git and release-input identity for the canonical channel.
@@ -37,11 +35,10 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 - Creation, packaging, vendor updates, and destination export remain qualified
   adjacent capabilities. They do not select a channel or create build,
   promotion, retirement, undo, or persistent local lifecycle authority.
-- Private `rawr` application development uses repository-local Nx targets and
-  `bun run rawr -- ...`. Registry publication and package metadata establish
-  released Habitat versions, Nx Release configuration defines membership, and
-  release records preserve evidence; the private Rawr application is not a
-  Habitat release-group member.
+- Rawr product development remains in its independent repository. Registry
+  publication and package metadata establish released Habitat versions, Nx
+  Release configuration defines membership, and release records preserve
+  evidence.
 
 Do not mix command families. App, web, and runtime composition are not lifecycle
 fallbacks.
@@ -56,8 +53,8 @@ fallbacks.
   workspace-owned `habitat:lint`, project-owned typecheck, optional owner
   verification, Habitat policy, and dependency checks.
 - Repository separation, Habitat topology and source law, and CLI Oclif parity
-  remain qualified owner work. Habitat's inferred owner targets own the
-  required Oclif structure laws and lifecycle command-channel law.
+  remain qualified owner work. Habitat's inferred owner targets own only the
+  registered laws selected by current conforming owners.
 - `habitat:check` composes workspace lint and the inferred `check:policy`
   target. The package-owned Nx plugin discovers the registry, exact inputs, and
   owner graph.
@@ -84,13 +81,6 @@ fallbacks.
   identity; the admitted graph also includes builds and behavior tests.
 - Protected `main` must require that exact context. Remote branch protection,
   not the bypassable local hook, is merge authority.
-
-Scratch-first policy for mutating multi-phase commands:
-- Required docs: `docs/projects/*/PLAN_SCRATCH.md` and `docs/projects/*/WORKING_PAD.md`
-- Mode controls:
-  - `RAWR_SCRATCH_POLICY_MODE=off|warn|block`
-  - `git config rawr.scratchPolicyMode <off|warn|block>`
-  - `RAWR_SKIP_SCRATCH_POLICY=1` (one-off bypass)
 
 ## Related Process Docs
 

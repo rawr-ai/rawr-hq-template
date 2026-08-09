@@ -71,9 +71,9 @@
 - `.husky/pre-push` enforces remote safety and then runs the complete
   required repository check:
   - remote must be `origin`
-  - origin must match this Template repository
+  - origin must match this Habitat repository's configured remote
   - every admitted project check and its declared prerequisites must pass
-- Do not ship a Template-managed path guard for personal. The repositories own
+- Do not ship a Habitat-managed path guard for Marketplace. The repositories own
   separate trees and process configuration; there is no sync or equivalence relation.
 - The released Habitat initializer installs exact Husky as a direct consumer
   development dependency and sets the root `prepare` script to the vendor's
@@ -107,7 +107,7 @@
 - Nx derives the complete target population from the project graph. The root
   scheduler maintains no project-name list; project targets remain ordinary Nx
   configuration rather than a second Habitat runner implemented in JavaScript.
-- `.habitat/**` is RAWR HQ-Template's small, positive structural authority
+- `.habitat/**` is the Habitat repository's small, positive structural authority
   tree. It constrains declared architectural kinds and relations, including
   the closed `scripts/` mechanics root, without expanding into app composition
   or content-repository governance.
@@ -116,7 +116,7 @@
   source relationships; those remain native Habitat `structure.toml` and
   `pattern.md` laws.
 - `package.json` and `bun.lock` pin the portable Habitat package release and
-  integrity. Template consumes that package and does not vendor its SDK source
+  integrity. The Habitat repository consumes that package and does not vendor its SDK source
   or maintain another executable selector.
 - The `Repository Ratchet` workflow runs for ordinary pull requests, merge
   groups, and pushes to `main`. Branch protection must require its exact job

@@ -15,7 +15,7 @@ class SpanMapping:
 
 
 def semantica_intake_probe(source: Source, max_chars: int = 6000) -> dict[str, Any]:
-    """Probe semantica-backed split output while preserving RAWR source metadata."""
+    """Probe semantica-backed split output while preserving reviewed source metadata."""
     raw_text = source.path.read_text(encoding="utf-8")
     local_chunks = chunk_markdown(source, max_chars=max_chars)
     status = semantica_intake_status()
@@ -67,7 +67,7 @@ def semantica_intake_probe(source: Source, max_chars: int = 6000) -> dict[str, A
 
     exact_spans = bool(chunks) and not errors and all(chunk["line_start"] <= chunk["line_end"] for chunk in chunks)
     return {
-        "schema_version": "rawr-semantica-intake-v1",
+        "schema_version": "semantica-workbench-intake-v1",
         "source": source_metadata(source),
         "status": status,
         "chunks": chunks,
@@ -108,7 +108,7 @@ def semantica_intake_status() -> dict[str, Any]:
             "markdown_parser_available": markdown_parser_available,
             "limitation": ""
             if markdown_parser_available
-            else "Pinned semantica package lacks MarkdownParser; RAWR span adapter and chunk_markdown remain required.",
+            else "Pinned semantica package lacks MarkdownParser; the workbench span adapter and chunk_markdown remain required.",
         }
     except Exception as exc:
         return {

@@ -52,6 +52,9 @@
   },
   "plugins": ["@habitat-ai/cli/nx-plugin"],
   "targetDefaults": {
+    "check:policy": {
+      "parallelism": false
+    },
     "check": {
       "cache": false,
       "dependsOn": [
@@ -140,5 +143,6 @@
       "cache": false,
       "dependsOn": ["build", "^build"]
     }
-  }
+  },
+  "analytics": false
 }

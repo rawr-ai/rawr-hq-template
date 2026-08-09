@@ -11,7 +11,7 @@ from .io import rel
 from .semantic_evidence import stable_id
 from .source_model import anchor_quote_to_source, span_from_offsets
 
-LLM_SCHEMA_VERSION = "rawr-semantica-llm-extraction-v1"
+LLM_SCHEMA_VERSION = "semantica-workbench-llm-extraction-v1"
 LLM_EXTRACTOR_VERSION = "semantica-llm-openai-v1"
 
 
@@ -373,7 +373,7 @@ def llm_result(
             "raw_triplet_count": len(raw_triplets),
             "evidence_claim_count": len(evidence_claims),
             "extractor": llm_extractor_version(str(status.get("provider") or "openai")),
-            "decision_grade_source": "rawr-deterministic-policy-v1",
+            "decision_grade_source": "semantica-workbench-deterministic-policy-v1",
             "promotion_allowed": False,
             "fallback_used": status.get("fallback_used", False),
             "blocked_reason": status.get("blocked_reason"),
@@ -383,7 +383,7 @@ def llm_result(
         "evidence_claims": evidence_claims,
         "diagnostics": diagnostics,
         "fallback": {
-            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "deterministic_oracle": "semantica-workbench-semantic-heuristic-v1",
             "fallback_used": False,
             "removal_trigger": "None; explicit LLM mode must fail closed instead of silently substituting deterministic evidence.",
         },

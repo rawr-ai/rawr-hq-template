@@ -16,7 +16,7 @@ def write_sweep_report_html(path: Path, sweep: dict[str, Any]) -> None:
     body = [
         hero(
             "Semantic Evidence Sweep",
-            "Architecture-document review queues generated from source-backed evidence. This is a review surface, not RAWR truth.",
+            "Architecture-document review queues generated from source-backed evidence. This is a review surface, not architecture truth.",
             [
                 ("Run", sweep["run_id"]),
                 ("Git", sweep["git_sha"][:12]),
@@ -130,7 +130,7 @@ def write_sweep_evidence_index_html(path: Path, index: dict[str, Any]) -> None:
     body = [
         hero(
             "Corpus Evidence Index",
-            "Structured cross-document evidence navigation generated from sweep JSON. This is a discovery and review surface, not RAWR truth.",
+            "Structured cross-document evidence navigation generated from sweep JSON. This is a discovery and review surface, not architecture truth.",
             [
                 ("Run", index["run_id"]),
                 ("Git", str(index.get("git_sha", ""))[:12]),
@@ -154,7 +154,7 @@ def write_sweep_evidence_index_html(path: Path, index: dict[str, Any]) -> None:
             [
                 "Use this page to decide where to inspect next. The JSON index remains the source artifact for generated evidence.",
                 "Rows preserve source spans and links to per-document reports so reviewers can verify findings without scanning every document first.",
-                "Generated evidence, candidates, and LLM output remain non-authoritative until reviewed promotion changes RAWR sources.",
+                "Generated evidence, candidates, and LLM output remain non-authoritative until reviewed promotion changes the ontology input.",
             ]
         ),
         evidence_breakdown_panel(summary),
@@ -399,7 +399,7 @@ def authority_panel(frame: dict[str, Any]) -> str:
     return f"""
 <section class="meaning">
   <h2>Authority Boundary</h2>
-  <p>RAWR reviewed ontology remains truth authority. Semantica, LLM, frame, and reference geometry outputs remain evidence until human-governed promotion.</p>
+  <p>The explicitly reviewed ontology input remains truth authority. Semantica, LLM, frame, and reference geometry outputs remain evidence until human-governed promotion.</p>
   <div class="kv">
     <div><span>Semantica authoritative</span><strong>{escape(str(governance["semantica_output_authoritative"]))}</strong></div>
     <div><span>Reference geometry</span><strong>{escape(governance["reference_geometry_status"])}</strong></div>

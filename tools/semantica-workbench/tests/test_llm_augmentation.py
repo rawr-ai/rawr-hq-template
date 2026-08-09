@@ -21,7 +21,6 @@ from semantica_workbench.architecture_change_frame import (
 from semantica_workbench.artifact_models import validate_artifact_schema, validate_evidence_authority_boundary
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -48,7 +47,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -89,7 +88,9 @@ class LlmAugmentationTests(WorkbenchTestCase):
                 model=None,
                 limit=2,
             )
-            self.assertEqual("rawr-sweep-llm-evidence-augmentation-v1", augmentation["schema_version"])
+            self.assertEqual(
+                "semantica-workbench-sweep-llm-evidence-augmentation-v1", augmentation["schema_version"]
+            )
             self.assertEqual("blocked", augmentation["status"]["actual_mode"])
             self.assertIn(augmentation["status"]["blocked_reason"], {"blocked-missing-extra", "blocked-requires-model"})
             self.assertEqual(2, augmentation["selection"]["selected_count"])

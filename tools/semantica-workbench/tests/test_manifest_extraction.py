@@ -19,8 +19,8 @@ from semantica_workbench.architecture_change_frame import (
     validate_frame_policy_shape,
 )
 from semantica_workbench.chunking import chunk_markdown
+from semantica_workbench.cli import main
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +47,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -75,6 +75,10 @@ from support import (
 
 
 class ManifestExtractionTests(WorkbenchTestCase):
+    def test_extract_requires_explicit_manifest_or_fixture(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "Explicit reviewed manifest required"):
+            main(["extract"])
+
     def test_fixture_manifest_chunks_and_normalizes(self) -> None:
         manifest = load_manifest(FIXTURE_MANIFEST)
         chunks = [chunk for source in manifest.sources for chunk in chunk_markdown(source)]
@@ -92,3 +96,18 @@ class ManifestExtractionTests(WorkbenchTestCase):
     def test_manifest_sources_carry_authority_rank(self) -> None:
         manifest = load_manifest(FIXTURE_MANIFEST)
         self.assertEqual(manifest.sources[0].authority_rank, 99)
+
+    def test_manifest_rejects_archive_and_quarantine_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = Path(directory) / "manifest.yaml"
+            manifest_path.write_text(
+                """version: 1
+project: provenance-rejection
+sources:
+  - id: archived
+    path: tools/semantica-workbench/fixtures/docs/sweep/archive/skipped.md
+""",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "provenance-only"):
+                load_manifest(manifest_path)

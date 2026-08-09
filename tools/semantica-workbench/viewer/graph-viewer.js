@@ -457,7 +457,7 @@ function exportPng() {
   const url = cy.png({ full: true, scale: 2, bg: "#f6f7f9" });
   const link = document.createElement("a");
   link.href = url;
-  link.download = "rawr-core-ontology-graph.png";
+  link.download = "reviewed-ontology-graph.png";
   link.click();
 }
 
