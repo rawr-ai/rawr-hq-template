@@ -230,6 +230,12 @@ describe("OpenTelemetry Node provider", () => {
         metrics: { headers: {}, timeoutMilliseconds: 100 },
       })
     ).toThrow();
+    expect(() =>
+      decodeOpenTelemetryNodeConfig({
+        ...enabledConfig,
+        surplus: true,
+      })
+    ).toThrow();
   });
 
   test("constructs zero vendor topology and records zero callback items while disabled", async () => {

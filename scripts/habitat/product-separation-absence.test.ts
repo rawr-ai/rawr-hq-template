@@ -277,6 +277,8 @@ const dependencyFields = [
   "peerDependencies",
 ] as const;
 
+const ROOT_FORBIDDEN_HOST_DEPENDENCY_IDS = ["elysia", "inngest"] as const;
+
 function readJson(relativePath: string): JsonObject {
   const value: unknown = JSON.parse(readFileSync(path.join(workspaceRoot, relativePath), "utf8"));
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -528,6 +530,19 @@ describe("task 2.11 product-separation absence", () => {
     });
     expect(rootPackage.workspaces).toContain("packages/core/sdk");
     expect(rootPackage.workspaces).not.toContain("packages/core");
+    const rootPackageDependencyFindings = dependencyFields.flatMap((field) => {
+      const dependencies = rootPackage[field];
+      if (
+        typeof dependencies !== "object" ||
+        dependencies === null ||
+        Array.isArray(dependencies)
+      ) {
+        return [];
+      }
+      return ROOT_FORBIDDEN_HOST_DEPENDENCY_IDS.filter(
+        (dependencyId) => dependencyId in dependencies
+      ).map((dependencyId) => `package.json#${field}.${dependencyId}`);
+    });
 
     const sdkPackage = readJson("packages/core/sdk/package.json");
     expect({ name: sdkPackage.name, repository: sdkPackage.repository }).toEqual({
@@ -549,6 +564,28 @@ describe("task 2.11 product-separation absence", () => {
     const lockfile = readJsonc("bun.lock");
     const lockWorkspaces = lockfile.workspaces as JsonObject;
     const lockPackages = lockfile.packages as JsonObject;
+    const rootLockWorkspace = lockWorkspaces[""];
+    if (
+      typeof rootLockWorkspace !== "object" ||
+      rootLockWorkspace === null ||
+      Array.isArray(rootLockWorkspace)
+    ) {
+      throw new Error("bun.lock must contain an object record for the root workspace importer.");
+    }
+    const rootLockDependencyFindings = dependencyFields.flatMap((field) => {
+      const dependencies = (rootLockWorkspace as JsonObject)[field];
+      if (
+        typeof dependencies !== "object" ||
+        dependencies === null ||
+        Array.isArray(dependencies)
+      ) {
+        return [];
+      }
+      return ROOT_FORBIDDEN_HOST_DEPENDENCY_IDS.filter(
+        (dependencyId) => dependencyId in dependencies
+      ).map((dependencyId) => `bun.lock#workspaces[\"\"].${field}.${dependencyId}`);
+    });
+    expect([...rootPackageDependencyFindings, ...rootLockDependencyFindings]).toEqual([]);
     expect(lockWorkspaces["packages/core/sdk"]).toMatchObject({
       name: "@habitat-ai/sdk",
       version: "0.5.15",

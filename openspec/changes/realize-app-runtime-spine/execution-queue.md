@@ -124,11 +124,18 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 The active queue has one bounded node:
 
-1. execute task 3.4 as the final core-reservation closure: admit native hosts
-   only as optional peers supplied by the selected app and resolved through
-   owner-local conditional dynamic imports; prove cold import, packed metadata,
-   vendor isolation, real decode-boundary rejection, and exact-main absence
-   before any other private runtime owner opens.
+1. execute task 3.4 as dependency cleanup and negative artifact proof only:
+   remove the ownerless root Elysia and Inngest declarations, reconcile the
+   lockfile, and prove the current packed SDK/CLI public artifacts stay cold and
+   vendor-isolated with no peer metadata, export, subpath, loader, runtime
+   project, or blueprint added. Use the existing real TypeBox runtime-schema
+   and OpenTelemetry Node config decoders for structural rejection, never a
+   walker or whole-plan snapshot, and pass exact-main absence before task 4.
+   Elysia peer metadata plus its conditional import belongs to task 13.1;
+   Inngest peer metadata plus its conditional import belongs to tasks
+   13.3/13.4. Task 4.2 remains cold and host-neutral. Oclif stays directly
+   owned by `@habitat-ai/cli`; OpenTelemetry, Effect, and oRPC remain current
+   substrate or mechanism dependencies.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle

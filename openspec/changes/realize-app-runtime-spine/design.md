@@ -434,6 +434,10 @@ identity is removed.
 The predecessor `packages/habitat-sdk` path then moves atomically to
 `packages/core/sdk`, leaving `packages/core` as a namespace rather than a
 package. No alias or compatibility facade survives.
+Task 3.4 then removes only the ownerless root Elysia and Inngest declarations
+and proves the current packed SDK/CLI public artifacts remain cold and
+vendor-isolated. That cleanup adds no SDK metadata or export, loader, runtime
+project, native host implementation, or blueprint.
 
 The exact public export contract is:
 
@@ -482,16 +486,28 @@ contract already consumed by workspaces.
 The two resource families above remain source-owned by their qualified Habitat
 resource/provider projects. Their provider-neutral contracts assemble into the
 SDK's resource subpaths. Their Fluree providers assemble only into optional
-integration subpaths behind conditional imports and optional peer metadata;
-they are not additional release members or eagerly loaded SDK dependencies.
+integration subpaths behind conditional imports and optional peer metadata
+when each named integration owner lands; task 3.4 adds none of that metadata or
+loading machinery. They are not additional release members or eagerly loaded
+SDK dependencies.
 
 Native host vendors are optional peer dependencies supplied by the selected
 application. Each vendor import lives behind its owner-local conditional dynamic
-import boundary and is reached only from that selected subpath. The installed
-Habitat CLI must not install, load, or declare direct dependencies on server- or
-async-only vendor packages. Registry acceptance inspects packed metadata,
-static reachability, and real loading for each public subpath and selected
-process rather than accepting one aggregate bundle smoke.
+import boundary and is reached only from that selected subpath. This is a
+later owner-local realization rule, not a task-3.4 output: Elysia optional peer
+metadata and its conditional import co-land with the first conforming
+`runtime-harnesses` owner in task 13.1, while Inngest metadata and its import
+co-land in the task 13.3/13.4 owner sequence. Task 4.2's async face remains cold
+and host-neutral. The installed Habitat CLI must not install, load, or declare
+direct dependencies on server- or async-only vendor packages. Oclif remains a
+direct `@habitat-ai/cli` dependency and native owner rather than an SDK peer;
+OpenTelemetry, Effect, and oRPC retain their current substrate or mechanism
+dependencies. Registry acceptance inspects packed metadata, static
+reachability, and real loading for each public subpath and selected process
+rather than accepting one aggregate bundle smoke. Structural rejection uses
+the existing real TypeBox and OpenTelemetry decode boundaries during task 3.4
+and the selected host owner's real decoder when that owner lands, never a
+schema walker or whole-plan snapshot.
 
 The existing TypeBox adapter becomes the core runtime's one canonical private
 schema adapter under `packages/core/runtime/schema`.
@@ -1077,8 +1093,11 @@ project, or downstream product as another package.
    independent content repository.
 7. Finish the non-runtime Habitat cleanup: classify existing SDK exports without
    empty shells, land the qualified telemetry owner, remove the mixed core
-   identity, and move the terminal SDK atomically to `packages/core/sdk`. Pass
-   Habitat exact-main with all Rawr-named, dead, and mixed predecessors absent.
+   identity, move the terminal SDK atomically to `packages/core/sdk`, then
+   remove the ownerless root Elysia/Inngest declarations and prove current
+   SDK/CLI cold packed isolation without adding metadata, exports, loaders,
+   runtime projects, or blueprints. Pass Habitat exact-main with all Rawr-named,
+   dead, and mixed predecessors absent.
    Write generic packets as design material, then activate each closed kind law
    only with its first conforming owner. The first live private runtime
    implementation opens only after this gate.
