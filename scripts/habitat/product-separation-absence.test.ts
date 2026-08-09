@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProjectGraphAsync, readProjectsConfigurationFromProjectGraph } from "@nx/devkit";
+import { parseConfigFileTextToJson } from "typescript";
 
 type JsonObject = Record<string, unknown>;
 
@@ -51,13 +52,26 @@ const EXPECTED_PROJECT_ROOTS = {
   "@habitat-ai/resource-source-inventory": "resources/source-inventory",
   "@habitat-ai/resource-rule-evaluation": "resources/rule-evaluation",
   "@habitat-ai/resource-telemetry": "resources/telemetry",
-  "@habitat-ai/sdk": "packages/habitat-sdk",
+  "@habitat-ai/sdk": "packages/core/sdk",
   "@habitat-ai/catalog-service": "services/catalog",
   habitat: "scripts/habitat",
-  "@habitat-ai/rawr-core": "packages/core",
   "@habitat-ai/cli": "apps/habitat",
   "habitat-workspace": ".",
 } as const;
+
+const EXPECTED_SDK_DEPENDENCIES = [
+  "@habitat-ai/catalog-service",
+  "@habitat-ai/resource-rule-evaluation",
+  "@habitat-ai/resource-source-inventory",
+  "@habitat-ai/resource-telemetry",
+  "runtime-schema",
+] as const;
+
+const EXPECTED_SDK_DEPENDENTS = [
+  "@habitat-ai/agent-plugin-lifecycle-service",
+  "@habitat-ai/cli",
+  "habitat-workspace",
+] as const;
 
 const FORBIDDEN_PROJECT_AND_PACKAGE_IDS = [
   "@habitat-ai/service",
@@ -88,6 +102,7 @@ const FORBIDDEN_PROJECT_AND_PACKAGE_IDS = [
   "@habitat-ai/rawr-hq-ops",
   "@rawr/ui-sdk",
   "@habitat-ai/rawr",
+  "@habitat-ai/rawr-core",
   "@habitat-ai/rawr-hq-sdk",
   "@rawr/runtime-context",
   "@rawr/test-utils",
@@ -120,8 +135,13 @@ const FORBIDDEN_SOURCE_ROOTS = [
   "packages/test-utils",
   "packages/bootgraph",
   "packages/typebox-adapter",
-  "packages/core/src/workspace-root.ts",
-  "packages/core/test/workspace-root.test.ts",
+  "packages/core/src",
+  "packages/core/test",
+  "packages/core/package.json",
+  "packages/core/project.json",
+  "packages/core/tsconfig.json",
+  "packages/core/tsconfig.build.json",
+  "packages/habitat-sdk",
   "resources/agent-plugin-export-destination",
   "tools/runtime-realization-type-env",
   "tools/semantica-workbench/ontologies/rawr-core-architecture",
@@ -265,6 +285,20 @@ function readJson(relativePath: string): JsonObject {
   return value as JsonObject;
 }
 
+function readJsonc(relativePath: string): JsonObject {
+  const parsed = parseConfigFileTextToJson(
+    relativePath,
+    readFileSync(path.join(workspaceRoot, relativePath), "utf8")
+  );
+  if (parsed.error !== undefined) {
+    throw new Error(`${relativePath} must contain valid JSONC.`);
+  }
+  if (typeof parsed.config !== "object" || parsed.config === null || Array.isArray(parsed.config)) {
+    throw new Error(`${relativePath} must contain a JSON object.`);
+  }
+  return parsed.config as JsonObject;
+}
+
 function repositoryFiles(): ReadonlySet<string> {
   const listed = execFileSync(
     "git",
@@ -374,6 +408,13 @@ function referencesIdentity(value: string, identity: string): boolean {
   return normalized === identity || normalized.startsWith(`${identity}/`);
 }
 
+function forbiddenIdentityReference(value: string): string | undefined {
+  const normalized = value.replace(/^(?:npm|workspace):/u, "");
+  return FORBIDDEN_PROJECT_AND_PACKAGE_IDS.find(
+    (identity) => referencesIdentity(normalized, identity) || normalized.startsWith(`${identity}@`)
+  );
+}
+
 function condemnedState(homeRoot: string, fixtureWorkspaceRoot: string): readonly string[] {
   return CONDEMNED_STATE_LOCATIONS.filter(({ base, relativePath }) =>
     existsSync(path.join(base === "home" ? homeRoot : fixtureWorkspaceRoot, relativePath))
@@ -381,7 +422,7 @@ function condemnedState(homeRoot: string, fixtureWorkspaceRoot: string): readonl
 }
 
 describe("task 2.11 product-separation absence", () => {
-  it("has exactly the 24 retained Nx projects at their canonical roots", async () => {
+  it("has exactly the 23 retained Nx projects at their canonical roots", async () => {
     const graph = await createProjectGraphAsync({ exitOnError: true });
     const projects = readProjectsConfigurationFromProjectGraph(graph).projects;
     const actualProjectIds = Object.keys(projects).sort();
@@ -396,6 +437,43 @@ describe("task 2.11 product-separation absence", () => {
         expectedProjectIds.map((projectId) => [projectId, projects[projectId]?.root])
       )
     ).toEqual(EXPECTED_PROJECT_ROOTS);
+    expect(
+      (graph.dependencies["@habitat-ai/sdk"] ?? [])
+        .map(({ target }) => target)
+        .filter((target) => target in graph.nodes)
+        .sort()
+    ).toEqual(EXPECTED_SDK_DEPENDENCIES);
+    expect(
+      Object.entries(graph.dependencies)
+        .filter(([, dependencies]) =>
+          dependencies.some(({ target }) => target === "@habitat-ai/sdk")
+        )
+        .map(([source]) => source)
+        .sort()
+    ).toEqual(EXPECTED_SDK_DEPENDENTS);
+
+    const sdkMetadata = graph.nodes["@habitat-ai/sdk"]?.data.metadata as
+      | { readonly js?: { readonly isInPackageManagerWorkspaces?: unknown } }
+      | undefined;
+    expect(sdkMetadata?.js?.isInPackageManagerWorkspaces).toBe(true);
+
+    const graphIdentityValues = [
+      ...Object.keys(graph.nodes),
+      ...Object.entries(graph.externalNodes ?? {}).flatMap(([nodeId, node]) => [
+        nodeId,
+        ...structuredStrings(node),
+      ]),
+      ...Object.entries(graph.dependencies).flatMap(([source, dependencies]) => [
+        source,
+        ...dependencies.map(({ target }) => target),
+      ]),
+    ];
+    expect(
+      graphIdentityValues.flatMap((value) => {
+        const identity = forbiddenIdentityReference(value);
+        return identity === undefined ? [] : [`${value}:${identity}`];
+      })
+    ).toEqual([]);
   }, 30_000);
 
   it("has no tracked predecessor source or active product-document path", () => {
@@ -426,10 +504,18 @@ describe("task 2.11 product-separation absence", () => {
     expect(hashWorktreeFiles(destinationPaths)).toEqual(expectedBlobIds);
   });
 
-  it("retains mixed rawr-core and the active OpenSpec removal authority", () => {
+  it("removes the mixed rawr-core shell and retains active OpenSpec authority", () => {
     const files = repositoryFiles();
-    expect(files.has("packages/core/package.json")).toBe(true);
-    expect(readJson("packages/core/package.json").name).toBe("@habitat-ai/rawr-core");
+    expect(
+      [
+        "packages/core/package.json",
+        "packages/core/project.json",
+        "packages/core/tsconfig.json",
+        "packages/core/tsconfig.build.json",
+      ].filter((file) => files.has(file))
+    ).toEqual([]);
+    expect(filesAtRoot(files, "packages/core/src")).toEqual([]);
+    expect(filesAtRoot(files, "packages/core/test")).toEqual([]);
     expect(RETAINED_OPENSPEC_PATHS.filter((file) => !files.has(file))).toEqual([]);
   });
 
@@ -440,6 +526,63 @@ describe("task 2.11 product-separation absence", () => {
       name: "habitat-workspace",
       private: true,
     });
+    expect(rootPackage.workspaces).toContain("packages/core/sdk");
+    expect(rootPackage.workspaces).not.toContain("packages/core");
+
+    const sdkPackage = readJson("packages/core/sdk/package.json");
+    expect({ name: sdkPackage.name, repository: sdkPackage.repository }).toEqual({
+      name: "@habitat-ai/sdk",
+      repository: {
+        type: "git",
+        url: "git+https://github.com/rawr-ai/rawr-hq-template.git",
+        directory: "packages/core/sdk",
+      },
+    });
+
+    const lockfileText = readFileSync(path.join(workspaceRoot, "bun.lock"), "utf8");
+    expect(
+      FORBIDDEN_PROJECT_AND_PACKAGE_IDS.filter((identity) => lockfileText.includes(identity))
+    ).toEqual([]);
+    expect(lockfileText).not.toContain('"packages/core": {');
+    expect(lockfileText).not.toMatch(/workspace:packages\/core(?=["\]])/u);
+
+    const lockfile = readJsonc("bun.lock");
+    const lockWorkspaces = lockfile.workspaces as JsonObject;
+    const lockPackages = lockfile.packages as JsonObject;
+    expect(lockWorkspaces["packages/core/sdk"]).toMatchObject({
+      name: "@habitat-ai/sdk",
+      version: "0.5.15",
+    });
+    expect(lockPackages["@habitat-ai/sdk"]).toEqual([
+      "@habitat-ai/sdk@workspace:packages/core/sdk",
+    ]);
+
+    const catalogAuthority = (readJson("nx.json").namedInputs as JsonObject)
+      .habitatCatalogAuthority;
+    expect(catalogAuthority).toContain("{workspaceRoot}/packages/core/sdk/package.json");
+    expect(catalogAuthority).toContain("{workspaceRoot}/packages/core/sdk/habitat-pack.json");
+    expect(structuredStrings(catalogAuthority)).not.toContain(
+      "{workspaceRoot}/packages/habitat-sdk/package.json"
+    );
+
+    const publishWorkflow = readFileSync(
+      path.join(workspaceRoot, ".github/workflows/publish-habitat.yml"),
+      "utf8"
+    );
+    expect(publishWorkflow).toContain("      - packages/core/sdk/**");
+    expect(publishWorkflow).toContain("          packages/core/sdk/package.json");
+    expect(publishWorkflow).not.toContain("packages/habitat-sdk");
+
+    const tsconfigFindings = [...files]
+      .filter((file) => /(?:^|\/)tsconfig(?:\.[^/]+)?\.json$/u.test(file))
+      .sort()
+      .flatMap((file) =>
+        structuredStrings(readJsonc(file)).flatMap((value) => {
+          const identity = forbiddenIdentityReference(value);
+          return identity === undefined ? [] : [`${file}:${identity}`];
+        })
+      );
+    expect(tsconfigFindings).toEqual([]);
 
     const findings: string[] = [];
     const packageManifests = [...files]

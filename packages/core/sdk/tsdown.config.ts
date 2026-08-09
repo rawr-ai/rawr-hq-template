@@ -42,7 +42,7 @@ export default defineConfig({
     ],
   },
   copy: blueprintIds.map((id) => ({
-    from: `../../.habitat/blueprints/${id}`,
+    from: `../../../.habitat/blueprints/${id}`,
     to: "dist/blueprints",
   })),
 });

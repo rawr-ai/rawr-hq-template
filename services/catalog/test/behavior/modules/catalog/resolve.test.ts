@@ -1331,10 +1331,6 @@ describe("Habitat catalog resolve", () => {
         ".habitat/blueprints/nx-workspace/require_repository_script_topology/rule.json",
       ],
       [
-        "require_repository_separation_predecessor_source_absence",
-        ".habitat/overlays/repository-separation/rules/require_repository_separation_predecessor_source_absence/rule.json",
-      ],
-      [
         "require_workstream_plugin_pack_hook_configuration",
         ".habitat/overlays/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/rule.json",
       ],
@@ -1355,26 +1351,6 @@ describe("Habitat catalog resolve", () => {
     expect(documentationRule?.runner).toMatchObject({
       acquisition: { entries: [{ kind: "directory", path: "." }] },
       name: "grit",
-    });
-
-    const repositorySeparationRule = compatibility.rules.find(
-      ({ ruleId }) => ruleId === "require_repository_separation_predecessor_source_absence"
-    );
-    expect(repositorySeparationRule?.ownerProject).toBe("habitat");
-    expect(repositorySeparationRule?.coveragePatterns).toEqual([
-      "*.config.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "apps/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "packages/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "plugins/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "resources/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "scripts/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "services/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-      "tools/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
-    ]);
-    expect(repositorySeparationRule?.runner).toMatchObject({
-      acquisition: { entries: [{ kind: "directory", path: "." }] },
-      name: "grit",
-      patternName: "require_repository_separation_predecessor_source_absence",
     });
   });
 
@@ -1551,7 +1527,7 @@ async function resolveRepositoryCorpus() {
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const workspaceRoot = path.resolve(import.meta.dirname, "../../../../../..");
-      const policyPackRoot = path.join(workspaceRoot, "packages/habitat-sdk");
+      const policyPackRoot = path.join(workspaceRoot, "packages/core/sdk");
       const client: Client = createClient({
         deps: {
           fileSystem,

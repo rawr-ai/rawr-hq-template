@@ -1,50 +1,57 @@
-# Mixed-Core Reservation Router (`@habitat-ai/rawr-core`)
+# Habitat Core Router
 
 ## Purpose
 
-- Retain the empty predecessor package/project identity until task 3.3 removes
-  it atomically while preserving `packages/core` as a Habitat namespace.
+- Route Habitat's public SDK and private runtime implementation owners beneath
+  one platform-only namespace.
 
 ## Scope
 
-- Applies to the transitional package shell at `packages/core`.
-- Deeper owners, including `runtime/schema`, follow their own routers.
+- Applies to `packages/core/**` unless a deeper `AGENTS.md` takes ownership.
 
 ## Boundaries
 
-- Owns no telemetry, runtime, SDK, application, or provider capability.
-- Must not own CLI command lifecycle, parsing, result rendering,
-  command-specific behavior, plugin lifecycle policy, workspace manifest
-  semantics, or application composition.
-- Must not restore a telemetry export, add new source, or become a permanent
-  Habitat SDK owner.
+- `packages/core` is a namespace, not a package or Nx project.
+- `packages/core/sdk` is the sole public Habitat SDK package and retains the
+  `@habitat-ai/sdk` identity.
+- Private runtime owners remain Nx-only implementation projects and do not
+  become package-manager workspaces, publication identities, or public import
+  surfaces.
+- Product-specific application, command, plugin, and composition behavior does
+  not belong under this namespace.
 
 ## Behavior
 
-- Keep the empty package/project identity stable for task 3.3; do not turn this
-  reservation into a capability owner.
+- Route work to the narrowest concrete SDK or runtime owner rather than adding
+  source, package metadata, or project metadata at the namespace root.
 
 ## Concepts
 
-- A **reservation shell** preserves only the path and identity needed for the
-  later atomic namespace transfer.
+- A **namespace root** groups related owners without becoming an executable or
+  publishable owner itself. The **terminal SDK** assembles admitted private
+  implementation owners behind its declared public exports.
 
 ## Flow
 
-- No runtime or application flow passes through this package.
+- Private runtime capabilities flow toward the terminal SDK.
+- Consumers enter through declared `@habitat-ai/sdk` exports; private runtime
+  owners do not import the SDK facade.
 
 ## Interfaces
 
-- The root package export remains empty; there is no supported capability
-  subpath.
+- The SDK's package exports are the public interface. Project-local contracts
+  and Nx dependency edges govern private runtime composition.
 
 ## Routing
 
 - [Packages router](../AGENTS.md)
 - [Repository router](../../AGENTS.md)
+- [Public Habitat SDK](sdk/AGENTS.md)
+- [Private runtime-schema owner](runtime/schema/AGENTS.md)
 
 ## Validation
 
-- `bunx nx run habitat:lint`
-- `bunx nx run @habitat-ai/rawr-core:typecheck`
-- `bunx nx run @habitat-ai/rawr-core:build`
+- Use `bunx nx show project <project-name> --json` for the concrete owner.
+- Use the Nx graph to confirm private runtime dependency direction and the
+  terminal SDK assembly edges.
+- Run the selected owner's focused typecheck, build, and behavior tests.

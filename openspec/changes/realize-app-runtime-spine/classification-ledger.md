@@ -103,6 +103,12 @@ the policy-pack data exports remain unchanged. Task 3.2 creates no `app`,
 `effect`, `execution`, `plugins/*`, or `runtime/*` shell, no private runtime
 project, and no SDK path move; task 3.3 owns the one atomic path transfer.
 
+Task 3.3 moves that complete package unchanged to `packages/core/sdk`, deletes
+the empty `@habitat-ai/rawr-core` package/project shell, and leaves
+`packages/core` as a namespace rather than an owner. The final Nx graph retains
+the SDK's exact five private dependencies and three dependents, with
+`runtime-schema` still rooted at `packages/core/runtime/schema`.
+
 ## Behavioral Acceptance Matrix
 
 The inventory names each owner. This matrix names the executable local oracle
@@ -163,16 +169,18 @@ absence-only gate may claim a behavior survived.
 | Empty bootgraph predecessor | **co-land** `nx run runtime-bootgraph:test` | The fresh owner emits deterministic dependency order and refuses missing/cyclic closure; the reservation shell preserves no implementation. |
 | HQ/server/web app roots and UI mount protocol | Later `@habitat-ai/cli:acceptance:oclif-native-runtime`, `runtime-harnesses:acceptance:server`, and `runtime-harnesses:acceptance:web` are fresh-owner acceptance | The predecessor apps and UI protocol are explicitly not preserved. Habitat self-host and owner-local harness behavior is authored fresh without claiming deletion-time equivalence. |
 | `packages/dev-node` | Task 2.11 exact source freeze plus package/reader absence; task 12.2 `nx run @habitat-ai/dev-service:test` and `nx run @habitat-ai/cli:acceptance:dev-native` are fresh-owner acceptance | The predecessor package is not transferred. Task 12.2 authors scratch policy in the development service and explicit filesystem, path, process, and clock ports at their final owners, then proves the app-selected Effect Platform Node provider across dry, admitted, and refused operations. Deletion is not behavioral equivalence. |
-| Example-todo, hello, hq-ops, config, journal, security, removed root commands, generic test-utils, and lab identities | `nx run habitat:acceptance:product-separation-absence` | The finite absence inventory below contains every deleted project identity, command, export/import identity, reader, and condemned state path. These implementations preserve no product capability. |
+| Example-todo, hello, hq-ops, config, journal, security, removed root commands, generic test-utils, and lab identities | `nx run habitat:acceptance:product-separation-absence` | The finite absence inventory below contains every deleted project identity, command, declared or executable reader, and condemned state path. These implementations preserve no product capability. |
 
-`habitat:acceptance:product-separation-absence` uses selected closed Habitat law
-for surviving topology and one repository-separation Grit overlay for
-source-spelled, unescaped static ES-style import and re-export specifiers that
-directly name predecessor package identities. The full repository check owns
-project TypeScript programs, including cooked or escaped module resolution and
-TypeScript import-equals. The acceptance target then composes native Nx project,
-package-export, Oclif-manifest, and filesystem-fixture observations against the
-checkpoint's exact inventory below. The inventory is cumulative but
+At the task-2.11 checkpoint, one temporary repository-separation Grit overlay
+observed source-spelled static predecessor imports. Task 3.3 retires that
+repository-wide package-name blacklist with the final mixed predecessor rather
+than preserving it as Habitat law. The final exact-main gate composes selected
+closed Habitat law and every project-owned TypeScript program through
+`bun run check` with the focused acceptance target's native Nx graph,
+structured package/lock/tsconfig, Oclif-manifest, and filesystem observations.
+It asserts executable and declared reader absence without claiming arbitrary
+lexical absence in uncompiled source or adding a task-local parser. The
+inventory is cumulative but
 phase-aware: a deletion enters when its owning task lands, and a later fresh
 owner at the same path replaces path absence with positive owner law plus exact
 predecessor-identity/signature absence. No checkpoint applies a future deletion
@@ -200,9 +208,10 @@ or compatibility reader:
   `@habitat-ai/rawr`, `@habitat-ai/rawr-hq-sdk`,
   `@rawr/runtime-context`, `@rawr/test-utils`,
   `@habitat-ai/typebox-adapter`, and `@rawr/bootgraph`.
-- Task 3.3 project-identity extension: add `@habitat-ai/rawr-core` only when
-  task 3.3 deletes that mixed package/project and every reader; task 2.11 does
-  not claim this future absence.
+- Task 3.3 project-identity extension: `@habitat-ai/rawr-core` is absent from
+  the Nx graph, package manifests, lockfile, and TypeScript configuration after
+  task 3.3 deletes that mixed package/project and every executable or declared
+  reader. Task 2.11 did not claim this then-future absence.
 - Predecessor source roots and manifests: `apps/cli/**`, `apps/hq/**`,
   `apps/server/**`, `apps/web/**`, `services/dev/**`, `packages/dev-node/**`,
   `plugins/cli/commands/devops/**`, `plugins/cli/commands/hello/**`,
@@ -215,7 +224,10 @@ or compatibility reader:
   `packages/bootgraph/**`, `resources/agent-plugin-export-destination/**`,
   `tools/runtime-realization-type-env/**`,
   `tools/semantica-workbench/ontologies/rawr-core-architecture/**`,
-  `scripts/chatgpt-corpus-template/**`, and `.habitat/rawr/**`. The finite
+  `scripts/chatgpt-corpus-template/**`, and `.habitat/rawr/**`. Task 3.3 adds
+  `packages/habitat-sdk/**` and
+  `packages/core/{package.json,project.json,src/**,test/**,tsconfig.json,tsconfig.build.json}`.
+  The finite
   frozen-reader closure also requires `packages/core/src/workspace-root.ts` and
   `packages/core/test/workspace-root.test.ts` absent.
 - Task 2.11 active product-document roots: every active file under
@@ -265,17 +277,18 @@ or compatibility reader:
   `tools:export`, `workflow:harden`, `config`, `journal`, `security`, `hello`,
   `hyperresearch:codex-slice`, and `hyperresearch:codex:run-fixture`, including
   every former descendant in the final Oclif manifest.
-- Export/import and reader identities: every dependency, package export,
-  manifest member, and source-spelled, unescaped static ES-style import or
-  re-export specifier for the project identities above, plus the predecessor HQ
-  shell/PID readers. Project-owned TypeScript checks own cooked or escaped
-  module resolution and TypeScript import-equals. Gate C
+- Export/import and reader identities: every predecessor identity above is
+  absent from the Nx project/dependency graph, package dependencies and
+  exports/imports, lockfile members, TypeScript path mappings, and Oclif
+  manifest members, including the predecessor HQ shell/PID readers. Gate C
   already removed `RawrCommand`, `RawrResult`, and their readers; task 2.11
   deletes the finite frozen `findWorkspaceRoot` source/export closure, including
-  the `workspace-root` export identity. Nx owns project edges, and behavior owns
-  runtime loader execution. Literal or computed
-  runtime loaders are not falsely modeled as an enduring Grit relation, and the
-  target introduces no task-local source parser to compensate.
+  the `workspace-root` export identity. Project-owned TypeScript checks own
+  executable module resolution, Nx owns project edges, and behavior owns
+  runtime loader execution. Arbitrary lexical spelling in uncompiled source and
+  literal or computed runtime loaders are not falsely modeled as enduring Grit
+  relations, and the target introduces no task-local source parser to
+  compensate.
 - Condemned state paths in disposable fixtures: `$HOME/.rawr/config.json`,
   `<workspace>/rawr.config.ts`, and `<workspace>/.rawr/hq/**`,
   `.rawr/journal/**`, `.rawr/security/**`, and `.rawr/routines/**`. The retained
