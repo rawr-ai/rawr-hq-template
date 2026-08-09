@@ -47,6 +47,12 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `apps/habitat` remains outside the Bun workspaces. Bun 1.3.14 keeps a valid
   frozen lock; the released CLI is not added as a `file:`, `link:`, or
   duplicate workspace dependency.
+- Task 3.3 is sealed at Habitat
+  `main@d29177af06810b9de905ed133d2dad9fab8abe29` / tree
+  `c83b7aecf6bfe06630dbe0fcc17dff4c551e9198`. The sole SDK package now lives at
+  `packages/core/sdk`, the empty mixed `@habitat-ai/rawr-core` owner is absent,
+  and push-to-main Repository Ratchet run `31339103432` passed the complete
+  platform graph.
 - oRPC service execution follows native authority: `.handler` owns non-Effect
   operations; the official `.effect` extension, installed once in
   `src/service/impl.ts`, owns Effect-backed request fibers through `handlerGen`.
@@ -109,16 +115,20 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   is published, registry-smoked, and adopted. No runtime,
   provider acquisition, app/profile selection, mount, or instrumentation
   bootstrap lands in this continuation.
+- [x] **Core SDK reservation**: task 3.3 deletes the empty mixed-core package,
+  moves the unchanged `@habitat-ai/sdk` package wholly into
+  `packages/core/sdk`, preserves `packages/core/runtime/schema`, retires the
+  temporary predecessor-name overlay, and passes the exact-main platform-only
+  gate with no predecessor path, package, reader, alias, or compatibility
+  facade.
 
 The active queue has one bounded node:
 
-1. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
-   `@habitat-ai/rawr-core` package/project identity, preserve `packages/core` as
-   a Habitat namespace, move `packages/habitat-sdk` wholly to
-   `packages/core/sdk` without changing `@habitat-ai/sdk`, update every reader
-   and repository edge, extend the cumulative absence inventory, and pass the
-   exact-main platform-only gate. Preserve no predecessor path, alias, or
-   compatibility facade.
+1. execute task 3.4 as the final core-reservation closure: admit native hosts
+   only as optional peers supplied by the selected app and resolved through
+   owner-local conditional dynamic imports; prove cold import, packed metadata,
+   vendor isolation, real decode-boundary rejection, and exact-main absence
+   before any other private runtime owner opens.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle
