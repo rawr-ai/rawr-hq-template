@@ -586,6 +586,80 @@ describe("Habitat catalog check", () => {
     });
   });
 
+  test("excludes ignored repository directories from compatibility Grit subjects and findings", async () => {
+    const fixture = compatibilityFixture();
+    const gritRoot = ".habitat/legacy/legacy_grit";
+    const encodedRule = fixture.files[`${gritRoot}/rule.json`];
+    if (encodedRule === undefined) throw new Error("Compatibility fixture has no Grit rule.");
+    const rule = JSON.parse(encodedRule) as Record<string, unknown>;
+    const coverage = (rule.pathCoverage as Array<Record<string, unknown>>)[0];
+    const patterns = coverage?.patterns;
+    if (!Array.isArray(patterns)) throw new Error("Compatibility fixture has no path coverage.");
+    const ignoredSegments: readonly string[] = [
+      ".git",
+      ".nx",
+      ".semantica",
+      ".turbo",
+      ".venv",
+      "build",
+      "coverage",
+      "dist",
+      "generated",
+      "node_modules",
+      "vendor",
+    ];
+    const ignoredPaths = ignoredSegments.map(
+      (segment) => `scripts/habitat/covered/${segment}/predecessor.ts`
+    );
+    const checked = await checkFixture(
+      {
+        ...fixture,
+        files: {
+          ...fixture.files,
+          [`${gritRoot}/rule.json`]: JSON.stringify({
+            ...rule,
+            pathCoverage: [{ ...coverage, patterns: [...patterns, ...ignoredPaths] }],
+          }),
+          ...Object.fromEntries(
+            ignoredPaths.map((subject) => [subject, "export const predecessor = true;\n"])
+          ),
+        },
+      },
+      { selectors: { rule: "legacy_grit" } },
+      (input) =>
+        Effect.succeed(
+          evaluationResults(input, () =>
+            input.subjectPaths.map((subject) => finding(subject, "admitted subject"))
+          )
+        )
+    );
+
+    expect(checked.calls).toHaveLength(1);
+    const subjects =
+      checked.calls[0]?.subjectPaths.map((subject) =>
+        subject.slice(subject.indexOf("scripts/habitat/"))
+      ) ?? [];
+    expect(subjects).toEqual([
+      "scripts/habitat/.codex/hooks.json",
+      "scripts/habitat/covered/child.ts",
+      "scripts/habitat/exact.ts",
+    ]);
+    expect(
+      subjects.some((subject) =>
+        subject.split("/").some((segment) => ignoredSegments.includes(segment))
+      )
+    ).toBe(false);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          ruleId: "legacy_grit",
+          findings: subjects.map((subject) => ({ path: subject })),
+        },
+      ],
+    });
+  });
+
   test("keeps compatibility rules with one declared root in separate final-subject batches", async () => {
     const fixture = compatibilityFixture();
     const gritRoot = ".habitat/legacy/legacy_grit";

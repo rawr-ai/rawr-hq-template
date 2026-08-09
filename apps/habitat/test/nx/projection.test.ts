@@ -331,6 +331,7 @@ describe("Habitat Nx projection", () => {
     expect(serviceLeaf).toMatchObject({
       command: "habitat check --instance service-a --rule source-law",
       cache: true,
+      parallelism: false,
       outputs: [],
       options: { cwd: "{workspaceRoot}" },
     });
@@ -355,6 +356,7 @@ describe("Habitat Nx projection", () => {
     expect(serviceTargets?.["check:policy"]).toEqual({
       command: "habitat check --owner service-a",
       cache: true,
+      parallelism: false,
       inputs: serviceLeaf?.inputs,
       outputs: [],
       options: { cwd: "{workspaceRoot}" },
@@ -456,6 +458,7 @@ describe("Habitat Nx projection", () => {
     expect(gritLeaf).toMatchObject({
       command: "habitat check --rule source-compat",
       cache: true,
+      parallelism: false,
       outputs: [],
       options: { cwd: "{workspaceRoot}" },
     });
@@ -482,6 +485,7 @@ describe("Habitat Nx projection", () => {
     expect(gritTargets?.["check:policy"]).toMatchObject({
       command: "habitat check --owner service-a",
       cache: true,
+      parallelism: false,
       inputs: gritLeaf?.inputs,
       outputs: [],
       options: { cwd: "{workspaceRoot}" },
@@ -497,6 +501,7 @@ describe("Habitat Nx projection", () => {
     expect(structureLeaf).toMatchObject({
       command: "habitat check --rule plugin-compat",
       cache: true,
+      parallelism: false,
       outputs: [],
       options: { cwd: "{workspaceRoot}" },
     });
@@ -519,6 +524,7 @@ describe("Habitat Nx projection", () => {
     expect(structureTargets?.["check:policy"]).toMatchObject({
       command: "habitat check --owner plugin-b",
       cache: true,
+      parallelism: false,
       inputs: structureLeaf?.inputs,
       outputs: [],
       options: { cwd: "{workspaceRoot}" },

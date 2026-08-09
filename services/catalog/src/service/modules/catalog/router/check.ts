@@ -23,6 +23,7 @@ import {
   notApplicableApplication,
   selectCheckApplications,
 } from "../model/policy/check.js";
+import { excludedRepositoryDirectorySegments } from "../model/policy/repository-paths.js";
 import {
   type AdmittedStructureApplication,
   admitStructureDocument,
@@ -35,13 +36,7 @@ import {
 } from "../model/policy/structure.js";
 import { module } from "../module.js";
 
-const compatibilityProtectedRoots = [
-  ".git",
-  ".habitat/cache/patterns",
-  "dist",
-  "node_modules",
-  "tools/habitat/dist",
-];
+const compatibilityProtectedRoots = [".habitat/cache/patterns"];
 
 type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
 type StructurePreparation =
@@ -537,7 +532,9 @@ function prepareGritSubjects(
     const resolvedCoveragePatterns = application.coveragePatterns.map((pattern) =>
       path.resolve(workspaceRoot, pattern)
     );
-    const compatibilityExcludes = [path.resolve(workspaceRoot, "**/node_modules/**")];
+    const compatibilityExcludes = [...excludedRepositoryDirectorySegments].map((segment) =>
+      path.resolve(workspaceRoot, `**/${segment}/**`)
+    );
     const globAttempts = yield* Effect.all(
       resolvedCoveragePatterns.map((pattern) =>
         Effect.result(fileSystem.glob(pattern, { exclude: compatibilityExcludes }))
@@ -648,7 +645,9 @@ function isCompatibilityProtectedSubject(
   path: Path.Path
 ): boolean {
   const relative = toRepositoryPath(path.relative(workspaceRoot, candidate), path.sep);
-  if (relative.split("/").includes("node_modules")) return true;
+  if (relative.split("/").some((segment) => excludedRepositoryDirectorySegments.has(segment))) {
+    return true;
+  }
   return compatibilityProtectedRoots.some(
     (root) => relative === root || relative.startsWith(`${root}/`)
   );

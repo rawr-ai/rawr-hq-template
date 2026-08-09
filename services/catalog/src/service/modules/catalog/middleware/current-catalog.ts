@@ -24,6 +24,7 @@ import {
   rejected,
   resolveCatalog,
 } from "../model/policy/catalog.js";
+import { excludedRepositoryDirectorySegments } from "../model/policy/repository-paths.js";
 
 const authorityGlobs = [
   { kind: "blueprint" as const, pattern: ".habitat/blueprints/*/blueprint.toml" },
@@ -31,18 +32,9 @@ const authorityGlobs = [
 ];
 const compatibilityIndexAuthorityPath = ".habitat/index.json";
 
-const excludedDirectorySegments = new Set([
-  ".git",
-  ".nx",
-  ".turbo",
-  "build",
-  "coverage",
-  "dist",
-  "generated",
-  "node_modules",
-  "vendor",
-]);
-const excludedRepositoryGlobs = [...excludedDirectorySegments].map((segment) => `**/${segment}/**`);
+const excludedRepositoryGlobs = [...excludedRepositoryDirectorySegments].map(
+  (segment) => `**/${segment}/**`
+);
 const MAX_MANIFEST_DIRECTORIES = 50_000;
 
 /** Derives the request-local catalog resolution Effect from the complete service context. */
@@ -325,7 +317,7 @@ export const middleware = base.middleware(async ({ context, next }) => {
         continue;
       }
       for (const entry of stablePaths(readDirectoryAttempt.success)) {
-        if (excludedDirectorySegments.has(entry)) continue;
+        if (excludedRepositoryDirectorySegments.has(entry)) continue;
         const relativePath = toRepositoryPath(
           directory.relativePath === "" ? entry : `${directory.relativePath}/${entry}`,
           path.sep

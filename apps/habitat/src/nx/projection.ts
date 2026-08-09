@@ -308,6 +308,7 @@ function applicationTarget(
   return {
     command: `${HABITAT_EXECUTABLE} check --instance ${application.instanceId} --rule ${application.ruleId}`,
     cache: true,
+    parallelism: false,
     inputs: applicationInputs(application, runtimeInputs),
     outputs: [],
     options: { cwd: "{workspaceRoot}" },
@@ -324,6 +325,7 @@ function compatibilityTarget(
   return {
     command: `${HABITAT_EXECUTABLE} check --rule ${rule.ruleId}`,
     cache: true,
+    parallelism: false,
     inputs: compatibilityInputs(rule, runtimeInputs),
     outputs: [],
     options: { cwd: "{workspaceRoot}" },
@@ -344,6 +346,7 @@ function ownerTarget(
   return {
     command: `${HABITAT_EXECUTABLE} check --owner ${ownerProject}`,
     cache: true,
+    parallelism: false,
     inputs,
     outputs: [],
     options: { cwd: "{workspaceRoot}" },

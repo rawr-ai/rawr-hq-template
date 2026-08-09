@@ -442,6 +442,8 @@ describe("Habitat catalog resolve", () => {
       files: {
         ...fixture.files,
         ".habitat/blueprints/package/nested/blueprint.toml": "not = [valid",
+        ".semantica/ignored/habitat.toml": "not = [valid",
+        ".venv/ignored/habitat.toml": "not = [valid",
         "dist/ignored/habitat.toml": "not = [valid",
         "generated/ignored/habitat.toml": "not = [valid",
         "vendor/ignored/habitat.toml": "not = [valid",
