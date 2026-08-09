@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "releaseReceipt": "foundation-continuation-0-5-15-release-receipt.json",
+  "source": {
+    "commit": "b9015adb104e63c28eb806b7d098a1751ab36ee5",
+    "tree": "e9984064102c3e303dee38aec2437098ae892205",
+    "pullRequest": 929
+  },
+  "root": {
+    "cli": {
+      "version": "0.5.15",
+      "integrity": "sha512-5Sndfo5US/AR2VqDUBedbkQQJWy+atwcn4iysgp47PmMexBOu/WP56Q6cotOqn1FG0nb4TiPZ/1euCacS7cLCA=="
+    },
+    "producerSdk": "workspace:*",
+    "pairedRegistrySdk": {
+      "version": "0.5.15",
+      "integrity": "sha512-jn34/4bxmtzR0wGYYV+xv9jDEJO1zPF5PL/6B/5QBWe67FFrFOH19/vpsVbFD2Ls5cFYg2OoVLTGb10oTNAGrw=="
+    }
+  },
+  "verification": {
+    "frozenInstall": {
+      "command": "bun install --frozen-lockfile",
+      "conclusion": "success"
+    },
+    "productSeparationAbsence": {
+      "command": "bunx nx run habitat:acceptance:product-separation-absence --skipNxCache --outputStyle=static",
+      "conclusion": "success"
+    },
+    "openspec": {
+      "command": "openspec validate realize-app-runtime-spine --strict",
+      "conclusion": "success"
+    },
+    "installedAcceptance": {
+      "workflow": "Publish Habitat",
+      "runId": 31336104300,
+      "ubuntuJobId": 93302099739,
+      "windowsJobId": 93302099726,
+      "conclusion": "success"
+    },
+    "mainRatchet": {
+      "workflow": "Repository Ratchet",
+      "runId": 31336818859,
+      "jobId": 93303933161,
+      "conclusion": "success"
+    }
+  }
+}
