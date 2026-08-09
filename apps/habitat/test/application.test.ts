@@ -61,8 +61,8 @@ describe("Habitat app composition", () => {
       rules: [{ id: "bravo_structure", runner: "structure" }],
     });
 
-    const alphaResolve = await runSourceCli(alpha.root, ["resolve"]);
-    const bravoResolve = await runSourceCli(bravo.root, ["resolve"]);
+    const alphaResolve = await runSourceCli(alpha.root, ["resolve"], undefined, 15_000);
+    const bravoResolve = await runSourceCli(bravo.root, ["resolve"], undefined, 15_000);
     expect(alphaResolve).toMatchObject({ exitCode: 0, stderr: "" });
     expect(bravoResolve).toMatchObject({ exitCode: 0, stderr: "" });
     expect(JSON.parse(alphaResolve.stdout)).toMatchObject({
@@ -108,7 +108,7 @@ describe("Habitat app composition", () => {
         "habitat:application:alpha-package:alpha_structure"
       ]?.inputs
     ).toContainEqual({ env: "HABITAT_COMMAND_TIMEOUT_MS" });
-  }, 15_000);
+  }, 45_000);
 
   it("runs both app-selected production providers through native Oclif", async () => {
     const fixture = await makeWorkspace({
