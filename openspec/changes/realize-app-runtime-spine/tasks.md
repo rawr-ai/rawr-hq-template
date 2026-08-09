@@ -107,9 +107,11 @@
   `RawrCommand`, `RawrResult`, their exports, source, and every remaining reader
   in the same green node. Gate C MUST end with zero predecessor command model or
   reader and MUST retain no shim, alias, fallback, or dual public authority.
-  The six transfer projects do not depend on `findWorkspaceRoot`; task 2.10
-  moves its retained Habitat readers to explicit workspace input and task 2.11
-  deletes the predecessor discovery plus every doomed reader. `service@1` MUST
+  The six transfer projects do not depend on `findWorkspaceRoot`; task 2.11
+  freezes and deletes the predecessor discovery plus every remaining reader,
+  while later fresh command owners receive explicit workspace input at their
+  own realization tasks. Task 2.10 moves none of this discovery closure.
+  `service@1` MUST
   require one public contract, in-process client, router, and private
   implementation; service-to-service edges MUST use public clients;
   resources/providers MUST enter at app composition; and
@@ -150,8 +152,98 @@
   and only after Gate C closes may that handoff go to Civ7 and every waiting
   consumer.
 - [x] 2.9 After task 2.8 Gate C has closed, in the clean Rawr destination run only `bunx nx add @habitat-ai/cli@<released-version> --no-interactive` against the exact Gate B receipt; record the initializer-installed exact `@habitat-ai/sdk` dependency and complete repository foundation rather than hand-authoring Habitat wiring. Then use the recorded native `nx import` invocations to import the ChatGPT corpus, Hyperresearch, and session-intelligence service/topic projects from one frozen Habitat source branch into Rawr with filtered Git history. First restack the Session Metrics lineage onto the admitted session service and include its accepted product behavior in the same owner transfer. Import service leaves before topic dependents, move topics to `plugins/cli/topics/<topic>`, remove synthetic Hyperresearch production fixtures, retarget every edge to the released interfaces, pass the Rawr Nx graph and named behavior targets from [[classification-ledger#behavioral-acceptance-matrix]], and land Rawr canonical `main`. Create no custom copier, mirror, sync, compatibility app, or continuing ancestry dependency. Rawr migrated to exact `@habitat-ai/cli` / `@habitat-ai/sdk` `0.5.10`, landed the six native imports through PR #57 at `7bce8bd1069b0d8c1c92fedb6f6ca01a633c5ac6`, and sealed the Hyperresearch production-fixture retirement through PR #59 at canonical `main@a1a4fe7ed051ff405605c82c09ccd73332595383`.
-- [ ] 2.10 In Habitat, move every sieve-retained platform capability and all readers to its exact existing or newly qualified owner without adding new runtime behavior: the Habitat CLI/catalog and native Oclif plugin mechanics; agent-plugin lifecycle; content-workspace, package-output, native-provider, and versioned-content resources/providers; development/repository operations; and Habitat CLI generators. Move `packages/dev-node` scratch policy into the development service, replace its Node mechanics with explicit filesystem, path, process, and clock context ports, pass `@habitat-ai/dev-service:test`, and delete the package plus every reader in that same checkpoint; task 12.2 later proves the selected Effect Platform Node provider supplies those ports in the installed app. Move every retained `findWorkspaceRoot`/product-named workspace-discovery reader to explicit Habitat workspace input at its final owner; product-owned Rawr configuration transfers unchanged. Preserve the already-selected `service@1` descent while moving service dependencies to public clients and passing resources/providers only through app composition; do not defer service conformance to this task. Move retained CLI projections to canonical `plugins/cli/topics/<topic>` owners. Move indispensable fixtures beside the behavior they verify and keep them out of production membership. Delete the predecessor HQ shell/PID control under task 2.11; do not transfer its source into runtime owners that do not yet exist.
-- [ ] 2.11 Land the Habitat deletion boundary that renames the root package and Nx project exactly to the private `habitat-workspace`, updates every root-identity reader, and removes the imported Rawr service/topic copies; every other Rawr product document, capability spec, app root, package identity, and `.habitat/rawr` policy name; the live `runtime-realization-type-env` tool/project after preserving only its frozen Git commit as provenance; the unused agent-plugin export-destination resource/provider; the remaining `packages/hq-sdk`, `packages/runtime-context`, and `packages/bootgraph` predecessor source after task 2.8 has moved its admitted interfaces; predecessor `findWorkspaceRoot` and product-named Habitat discovery plus every doomed reader; synthetic `codex-slice` and `run-fixture` production commands/projects; and every remaining dead, mixed, duplicate, or unclassified reader. The cumulative absence gate MUST also prove the pre-Gate-A semantic-sieve deletions remain absent, including predecessor HQ/server/example projects and their commands, state, and readers; it MUST NOT re-stage or revive them as task-2.11 work. Co-land `habitat:acceptance:product-separation-absence` with the exact cumulative task-2.11 predecessor inventory from [[classification-ledger#deletion-and-replacement-oracles]] and run it before landing. Later runtime owners may port admitted lab algorithms or tests only beside the owner-local behavior they verify. Retain no `rawr-hq-template` root identity, `apps/rawr`, source path, Git synchronization, alias, fallback, duplicate executable owner, or production example project.
+- [x] 2.10 In Habitat, qualify only the existing pre-runtime Habitat owners and
+  their current readers without adding runtime or installed-vertical behavior:
+  `services/catalog` / `@habitat-ai/catalog-service`; the provider-neutral
+  agent-plugin package-output, content-workspace, native-agent-provider, and
+  versioned-content resource families plus their existing provider projects;
+  and `services/agent-plugin-lifecycle` /
+  `@habitat-ai/agent-plugin-lifecycle-service` plus its public-client readers
+  and owner-local tests. Preserve the already-selected `service@1` descent,
+  move service dependencies only through public clients, pass each resource,
+  provider, catalog, and lifecycle owner-local contract/conformance target, and
+  remove each superseded Rawr-prefixed owner identity and reader in its own
+  accepted node. This task does not create an agent-plugin CLI topic or overlay,
+  select an app profile or provider, prove an installed command vertical, move
+  the development vertical, move generators, activate final Oclif-app or
+  CLI-topic law, or define the private CLI source-bundle contract.
+- [ ] 2.10a Before task 2.11, transfer the bounded native Oclif plugin owner from
+  `apps/cli` to `@habitat-ai/cli`: move the exact `@oclif/plugin-plugins`
+  dependency, Oclif configuration/manifest composition, and installed
+  root `plugins` listing operation plus `install`, `link`, `inspect`, `update`,
+  `reset`, and `uninstall` roundtrip. Co-land and record the
+  `@habitat-ai/cli:acceptance:oclif-native-plugins` receipt against packed,
+  installed CLI artifacts and disposable extension/state homes. Keep its
+  indispensable prebuilt package fixture owner-local to `@habitat-ai/cli` test
+  support, with no Nx project, workspace membership, source owner, command
+  topic, application, or release membership. In the same node, delete the
+  obsolete product-bound `.habitat/blueprints/oclif-app/**` packet and its three
+  registered rule applications/catalog expectations; prove no replacement
+  Oclif-app or topic law is active. The active
+  `external-cli-extension-boundary` modification delta is the governing command
+  authority for this cutover; do not hand-edit or delete its canonical main spec
+  before task 15.9 applies the complete change. Update `AGENTS.md`,
+  `AGENTS_SPLIT.md`, `README.md`, `CONTRIBUTING.md`, the `apps`/`apps/cli`/
+  `plugins` routers, and the active product/process/cross-repository/HQ usage,
+  operations, and runbook gateways to state exact current truth: external
+  extensions use `habitat plugins`, while curated lifecycle remains the
+  unmigrated `rawr agent plugins` channel until task 2.11 deletes that source.
+  Rewrite no archive or quarantine history. This transfer
+  adds no agent-plugin topic or profile, app/provider selection, runtime owner,
+  final Oclif-app or CLI-topic law, or private CLI source-bundle contract.
+- [ ] 2.11 Only after the task 2.10a installed receipt exists, record the exact
+  source commit and whole-tree identity immediately before deletion as frozen
+  provenance and later owner-local test oracles, then land the Habitat deletion
+  boundary. Rename the root package and Nx project exactly to the private
+  `habitat-workspace`, update every root-identity reader, and delete `apps/cli`
+  and its remaining manifest/source; the imported Rawr service/topic copies;
+  the predecessor `services/dev`, `packages/dev-node`, and
+  `plugins/cli/commands/devops` roots/readers while preserving only their frozen
+  source evidence for task 12.2;
+  the product-bound `.habitat/blueprints/oclif-command-plugin/**` packet and all
+  of its registered rule applications/catalog expectations, leaving no
+  replacement CLI-topic law until task 11.4;
+  every other Rawr product document, superseded product-only capability, app root,
+  package identity, and `.habitat/rawr` policy name, while retaining this active
+  canonical change, its current removal deltas, and the canonical removal
+  targets `openspec/specs/{rawr-cli-application,legacy-membership-retirement,mixed-plugin-lifecycle-retirement}/spec.md`
+  until task 15.9 applies and archives them. Relocate only already archived or quarantined members of
+  `docs/projects/rawr-final-architecture-migration/**` beneath
+  `docs/projects/_archive/rawr-final-architecture-migration/**`, delete every
+  active member plus the product-only HQ/design/coordination guides, example-todo
+  project packet, reactive-codebase essay, and Rawr coordination spike named in
+  [[classification-ledger#behavioral-acceptance-matrix]], and update every
+  retained Habitat gateway/index, workstream reference, and Semantica default
+  reader so no active link or executable default resolves into deleted product
+  documentation. Retain every canonical agent-plugin/external/authoring spec
+  named by this change's modification deltas; those active deltas govern the
+  target during implementation and update main specs only at task 15.9. After
+  deletion, current Habitat guidance MUST state that `habitat plugins` is
+  operational and the curated CLI projection is absent until task 12.1; it MUST
+  NOT advertise a Rawr alias or a premature `habitat agent plugins` route; the live
+  `runtime-realization-type-env` tool/project after preserving only its frozen
+  Git commit as provenance; the unused agent-plugin export-destination
+  resource/provider; the remaining `packages/hq-sdk`,
+  `packages/runtime-context`, and `packages/bootgraph` predecessor source after
+  task 2.8 has moved its admitted interfaces; predecessor `findWorkspaceRoot`
+  and product-named Habitat discovery plus every doomed reader; synthetic
+  `codex-slice` and `run-fixture` production commands/projects; and every
+  remaining dead, mixed, duplicate, or unclassified reader. The cumulative
+  absence gate MUST also prove the pre-Gate-A semantic-sieve deletions remain
+  absent, including predecessor HQ/server/example projects and their commands,
+  state, and readers; it MUST NOT re-stage or revive them as task-2.11 work.
+  Co-land `habitat:acceptance:product-separation-absence` with the exact
+  cumulative task-2.11 predecessor inventory from
+  [[classification-ledger#deletion-and-replacement-oracles]] and run it before
+  landing. This deletion and its frozen source oracles do not realize or accept
+  the final agent-plugin topic/overlay/profile, development topic, Habitat
+  generators, runtime, private CLI source-bundle contract, or final generic
+  Oclif laws; tasks 11.4, 11.6, and 12.1 through 12.3 own those fresh
+  realizations. Later owners may consult frozen source only as provenance or
+  port admitted algorithms/tests beside the behavior they verify. Retain no
+  `rawr-hq-template` root identity, `apps/rawr`, source path, Git
+  synchronization, alias, fallback, duplicate executable owner, or production
+  example project.
 - [ ] 2.12 Pass the Rawr exact-main repository gate and land the Habitat product-separation boundary before task 3 opens. Require Rawr's initial migrated source to contain only the surviving ChatGPT corpus, Hyperresearch, and session-intelligence product closures under its owner-local OpenSpec; require Habitat's root package and Nx project to be exactly the private `habitat-workspace`, contain no downstream product source or app and no live `runtime-realization-type-env` project; run `nx run habitat:acceptance:product-separation-absence` from Habitat exact main; and verify Marketplace remains an independent content repository. Later stack-only Rawr product adoption is independent post-separation work and cannot weaken or delay this gate. Tasks 3.1 through 3.4 remain cleanup and core reservation only; other than the bounded non-live `runtime-schema` adaptation from task 2.8, no private runtime implementation begins until task 3.4 passes Habitat exact-main with all Rawr-named, dead, and mixed predecessors absent.
 - [ ] 2.13 Keep new packets non-enforcing until their first conforming owner is ready; co-land each closed enabled law with that owner and admit no red baseline, exception, or open scope.
 - [ ] 2.14 Co-land every TypeBox structural schema with the semantic owner whose data crosses a boundary; keep `runtime-schema` limited to canonical schema adaptation, and create no ownerless service-wide or runtime-wide schema directory ahead of its owners.
@@ -168,7 +260,7 @@ selection, acquisition, execution, mounting, or observation. Task 3.3 is the
 sole atomic SDK path transfer; task 3.4 closes the platform-only gate before
 every other private runtime owner.
 
-- [ ] 3.1 Re-author the path-qualified provider-neutral telemetry resource, OpenTelemetry Node provider, provider conformance, and core-singleton retirement from the held mixed telemetry source into fresh destination-owned Habitat nodes before core reservation. Move every surviving telemetry reader, delete the mixed-core telemetry export and signal hooks, and leave backend activation and Habitat profile selection to task 15.1. Do not merge or restack the predecessor telemetry root, copy its obsolete host wiring, or duplicate the provider; retire that source only after destination acceptance. Downstream products select only the later released interface from their own repositories.
+- [ ] 3.1 Re-author the path-qualified provider-neutral telemetry resource, OpenTelemetry Node provider, provider conformance, and core-singleton retirement from the held mixed telemetry source into fresh destination-owned Habitat nodes before core reservation. Move every surviving telemetry reader, delete the mixed-core telemetry export and signal hooks, and leave backend activation and Habitat profile selection to the exact runtime/app owners, with app-selected Oclif proof required no later than task 12.1. Do not merge or restack the predecessor telemetry root, copy its obsolete host wiring, or duplicate the provider; retire that source only after destination acceptance. Downstream products select only the later released interface from their own repositories.
 - [ ] 3.2 Classify every current `@habitat-ai/sdk` root export, move an existing export only when its qualified destination already has a conforming implementation, and otherwise preserve that export at the root until its owning later task replaces it; do not create or publish absent `app`, `effect`, `execution`, `service`, `plugins/*`, or `runtime/*` families as empty shells.
 - [ ] 3.3 After tasks 3.1 and 3.2 leave no mixed-core reader or writer, atomically delete the `@habitat-ai/rawr-core` package/project identity, preserve `packages/core` as a Habitat-only namespace, move `packages/habitat-sdk` wholly to `packages/core/sdk` without changing `@habitat-ai/sdk`, replace `packages/core/AGENTS.md` with the Habitat-core router, and update every SDK reader, Nx edge, package path, release input, and repository metadata. Extend the cumulative `habitat:acceptance:product-separation-absence` inventory with the mixed-core identity and every removed reader and run it in the same node. Preserve no Rawr declaration, predecessor path, workspace dependency, alias, or compatibility import; land and pass the exact-main Habitat platform-only gate before task 3.4 opens.
 - [ ] 3.4 Declare native hosts as optional peers supplied by the selected app and resolve each only through its owner-local conditional dynamic import; for every export as it lands, prove cold import, packed metadata, no unpublished workspace dependency, selected-process vendor isolation, and structural rejection through real decode boundaries rather than a schema walker or whole-plan snapshot. Pass the exact-main gate with every Rawr-named, dead, and mixed predecessor absent before task 4 opens.
@@ -239,10 +331,10 @@ every other private runtime owner.
 
 - [ ] 11.1 Bind the already qualified `services/catalog` / `@habitat-ai/catalog-service` owner and every retained reader into the Habitat self-host; prove the predecessor path and package identity remain absent and change no tool identity in that node.
 - [ ] 11.2 Normalize `scripts/habitat` Nx metadata as exactly one `type:tool` / `role:architecture-policy` project, remove its application classification, and prove the repository-wide project inventory contains no second project rooted there; change no service or app identity in that node.
-- [ ] 11.3 Define the self-hosted `apps/habitat/habitat.app.ts`, its local profile, `cli.ts` process entrypoint, selected source-inventory and rule-evaluation providers, and import-safe foundational command membership; start only through the terminal SDK `startApp(...)` facade and co-activate app/profile/entrypoint law.
-- [ ] 11.4 In one atomic Oclif vertical, implement the Oclif `SurfaceAdapter` lowering inside `runtime-process-runtime`, the foundational Oclif loader/native harness inside `@habitat-ai/cli`, and the import-safe `@habitat-ai/cli/host` consumer entrypoint; realize one real `habitat resolve` command through all seven phases; and wire the `acceptance:oclif-native-runtime` Nx target to the complete built-child-process matrix. Use low-level `run`, root `finally`, awaited output flush, cancellation, and `handle` last; prove source/installed parity, exact selected inventory, registry/adapter/harness observations, real catalog/resource execution, one process runtime, one provider acquisition, success with zero `handle` calls, declared failure code `2`, command-primary cleanup failure code `2`, SIGINT/SIGTERM numeric code `1`, exact call order, complete output, and no surviving handle. Co-activate the complete positive closed Oclif-app and CLI-topic laws only in this passing node; prove the predecessor `apps/cli`, `plugins/cli/commands`, Rawr package families and niches, legacy `forbids`, alternate-launcher, and compatibility assertions are absent. No second Oclif adapter, loader, harness, app law, or topic law may exist.
-- [ ] 11.5 Realize `habitat check` and `habitat hook` through the same seven-phase vertical, move every Habitat client and entrypoint reader, and delete module-global `createHabitatClientForWorkspace` acquisition in the same node.
-- [ ] 11.6 Author foundational Habitat generator and authoring topics as platform capabilities over the native Nx plugin/generator boundary, extracting only neutral verified-write mechanics from predecessors. Migrate the Habitat Oclif manifest, Nx plugin/generator entrypoints, and installed surface, and co-land `@habitat-ai/cli:acceptance:generators-installed-package`: from local tarballs in a disposable consumer, run command and extension generation plus existing-path refusal, then prove compilable Habitat-only output, exact Nx/manifest registration, atomic writes, and zero refused-write mutation without importing Rawr templates, destinations, package identities, or topics.
+- [ ] 11.3 Define the self-hosted `apps/habitat/habitat.app.ts`, its local profile, `cli.ts` process entrypoint, and selected source-inventory and rule-evaluation providers; start only through the terminal SDK `startApp(...)` facade and co-activate app/profile/entrypoint law. Command-topic membership waits for the conforming topic owner in task 11.4 rather than creating an ownerless selection.
+- [ ] 11.4 In one atomic Oclif vertical, create `plugins/cli/topics/foundation` as the private `@habitat-ai/plugin-foundation`, select that topic into the Habitat app/profile, implement the Oclif `SurfaceAdapter` lowering inside `runtime-process-runtime`, the foundational Oclif loader/native harness inside `@habitat-ai/cli`, and the import-safe `@habitat-ai/cli/host` consumer entrypoint; define the topic-neutral private CLI source-bundle contract consumed by that loader; realize the topic's one real `habitat resolve` command through all seven phases; and wire the `acceptance:oclif-native-runtime` Nx target to the complete built-child-process matrix. Use low-level `run`, root `finally`, awaited output flush, cancellation, and `handle` last; prove source/installed parity, exact selected inventory, registry/adapter/harness observations, real catalog/resource execution, one process runtime, one provider acquisition, success with zero `handle` calls, declared failure code `2`, command-primary cleanup failure code `2`, SIGINT/SIGTERM numeric code `1`, exact call order, complete output, and no surviving handle. First co-land and activate the final complete positive closed Oclif-app and CLI-topic laws plus the private source-bundle contract only in this passing node; prove the predecessor `apps/cli`, `plugins/cli/commands`, Rawr package families and niches, legacy `forbids`, alternate-launcher, and compatibility assertions are absent. This foundational vertical creates no agent-plugin topic, overlay, or profile. No second Oclif adapter, loader, harness, source-bundle contract, app law, or topic law may exist.
+- [ ] 11.5 Add `habitat check` and `habitat hook` to the same private `@habitat-ai/plugin-foundation` topic and realize them through the same seven-phase vertical, move every Habitat client and entrypoint reader, and delete module-global `createHabitatClientForWorkspace` acquisition in the same node.
+- [ ] 11.6 Implement the two native `@habitat-ai/cli` Nx generator entrypoints and their shared qualified verified-write mechanics without creating a command topic or Oclif projection. Co-land `@habitat-ai/cli:acceptance:generators-installed-package`: from local tarballs in a disposable consumer, invoke both generators through native `nx generate`, exercise exact-existing convergence and divergent-path refusal, and prove compilable Habitat/public-extension output, exact Nx registration, complete atomic writes, and zero refused-write mutation without importing Rawr templates, destinations, package identities, command bases, or topics.
 - [ ] 11.7 Implement child-process fixtures only beside the CLI or semantic owner whose behavior they verify; prove the deleted generic test-utils package and every predecessor reader remain absent.
 - [ ] 11.8 Pack local `@habitat-ai/sdk` and `@habitat-ai/cli` tarballs, publish them only to the isolated acceptance registry, and install-smoke the Habitat Oclif vertical through the same one-operation `nx add` acceptance targets; verify per-subpath closure and no internal runtime package cohort. This is a pre-release artifact check, not public-registry publication.
 
@@ -252,9 +344,40 @@ Every task in this section extends the already selected Habitat self-host. No
 downstream product command, app, manifest, or compatibility path enters this
 repository.
 
-- [ ] 12.1 Realize every retained `habitat agent plugins` command through the sealed Habitat command contract, explicit host/workspace binding, agent-plugin lifecycle service, selected content-workspace/package-output/native-provider/versioned-content resources, runtime mounting, and non-authorizing observation. Through the installed binary, invoke `check`, `package`, `status`, `sync`, `test`, and `vendors update` against disposable real Git/provider homes and assert each command's exact result, refusal, mutation prefix, output, and exit classification. Repeat the converged native operation with zero mutation, acquire one process lease per invocation, and settle one Oclif harness plus all resources in canonical reverse order.
-- [ ] 12.2 Realize the retained `habitat dev repo`, `habitat dev stack`, and `habitat dev worktree` command families through their qualified Habitat service/resource owners and the same Oclif/runtime path. Through the installed binary and app-selected Effect Platform Node provider, prove filesystem, path, process, and clock ports plus each family's exact dry, admitted, and refused result, mutation prefix, output, and exit classification, source/compiled command membership, and absence of the deleted `packages/dev-node` reader path. Delete no behavior by alias or fallback; the removed root doctor, HQ, reflect, routine, tools-export, workflow-harden, config, journal, security, hello, and agent-plugin-create commands remain absent.
-- [ ] 12.3 Realize Habitat CLI command and extension generators through the native `@habitat-ai/cli` Nx plugin/generator entrypoints and verified-write boundary. Extend and pass `@habitat-ai/cli:acceptance:generators-installed-package`; prove generated output targets only Habitat/public extension contracts, uses the one Habitat command contract, and contains no Rawr template, path, package identity, environment variable, command base, partial write, or manifest/project drift.
+- [ ] 12.1 Create the final `plugins/cli/topics/agent-plugins` owner as the private
+  `@habitat-ai/plugin-agent-plugins`, re-author the qualified
+  `.habitat/overlays/agent-plugin-lifecycle` policy there, and add its command
+  membership plus cold content-workspace/package-output/native-provider/
+  versioned-content and telemetry provider selections to the Habitat app
+  profile. Realize every retained `habitat agent plugins` command through the
+  sealed Habitat command contract and task 11.4 private source-bundle contract,
+  explicit host/workspace binding, the already-qualified agent-plugin lifecycle
+  service/resources/providers, runtime mounting, and non-authorizing
+  observation. The qualified telemetry resource/provider from task 3.1 and the
+  real Oclif telemetry integration MUST already be accepted or MUST co-land
+  atomically here with `@habitat-ai/cli:acceptance:oclif-native-telemetry`; no
+  placeholder provider, backend, topic, profile, or command bundle is admitted.
+  Through the installed binary, invoke `check`, `package`, `status`, `sync`,
+  `test`, and `vendors update` against disposable real Git/provider homes and
+  assert each command's exact result, refusal, mutation prefix, output, exit
+  classification, and correlated telemetry receipt. Repeat the converged native
+  operation with zero mutation, acquire one process lease per invocation, and
+  settle one Oclif harness plus all resources in canonical reverse order. This
+  is the first final agent-plugin topic, overlay, app-profile selection, and
+  installed agent-plugin acceptance; task 2.11 deletion is not its proof.
+- [ ] 12.2 Re-author the final `services/dev` / `@habitat-ai/dev-service`
+  owner, its explicit filesystem, path, process, and clock ports, and
+  `plugins/cli/topics/dev` from accepted contracts plus the task 2.11 frozen
+  evidence; then realize `habitat dev repo`, `habitat dev stack`, and `habitat
+  dev worktree` through those final owners and the same Oclif/runtime path.
+  Through the installed binary and app-selected Effect Platform Node provider,
+  prove each family's exact dry, admitted, and refused result, mutation prefix,
+  output, exit classification, source/compiled command membership, and absence
+  of the deleted `packages/dev-node` reader path. Delete no behavior by alias or
+  fallback; the removed root doctor, HQ, reflect, routine, tools-export,
+  workflow-harden, config, journal, security, hello, and agent-plugin-create
+  commands remain absent.
+- [ ] 12.3 Create `plugins/cli/topics/authoring` as the private `@habitat-ai/plugin-authoring`, select it into the Habitat app, and realize exactly `habitat cli command create` and `habitat cli extension create` as thin projections over the task 11.6 native `@habitat-ai/cli` Nx generator entrypoints. Extend and pass `@habitat-ai/cli:acceptance:generators-installed-package` through the installed command surface; prove exact topic/source-bundle membership, generated output targeting only Habitat/public-extension contracts, the one Habitat command contract, and absence of every Rawr template, path, package identity, environment variable, command base, partial write, aggregate factory, or manifest/project drift.
 
 ## 13. Realize Qualified Server And Async Harnesses
 
@@ -274,12 +397,26 @@ published example project.
 
 ## 15. Audit, Handoff, Land, And Drain
 
-- [ ] 15.1 Publish each sealed runtime checkpoint to the telemetry adoption owner as it becomes available. That owner MUST re-author the admitted Habitat profile-selection and runtime-provider obligations beside their fresh runtime owners, consuming the already-landed qualified telemetry resource/provider from task 3.1 without restacking or merging the mixed predecessor root. The integration MUST co-land `runtime-process-runtime:test`, `runtime-mounting:test`, `runtime-observation:test`, `@habitat-ai/cli:acceptance:oclif-native-telemetry`, and `runtime-harnesses:acceptance:server-native-telemetry` at their exact owners; task 13.3 owns the async counterpart. A later aggregate MAY depend on these targets but MUST NOT replace them. This runtime-spine change supplies contracts and checkpoints only; it MUST NOT duplicate provider implementation or backend wiring. Retire the held source only after destination acceptance; downstream products consume only the later released integration from their own repositories.
+- [ ] 15.1 Audit the telemetry checkpoint, acceptance receipts, and held-source
+  retirement only. Verify that task 3.1 already owns the qualified telemetry
+  resource/provider and singleton retirement; the exact runtime owner nodes
+  already own passing `runtime-process-runtime:test`,
+  `runtime-mounting:test`, and `runtime-observation:test`; task 12.1 already
+  records the app-selected installed-Oclif
+  `@habitat-ai/cli:acceptance:oclif-native-telemetry` receipt; the server owner
+  records `runtime-harnesses:acceptance:server-native-telemetry`; and task 13.3
+  owns the async counterpart. A later aggregate MAY depend on these targets but
+  MUST NOT replace them. This audit adds no provider implementation, backend
+  activation, app/profile selection, Oclif wiring, acceptance placeholder, or
+  delayed authority transfer. Retire the held mixed source only when every
+  destination receipt is exact, accepted, and mapped to its final owner;
+  downstream products consume only the later released integration from their
+  own repositories.
 - [ ] 15.2 Audit and remove only unreachable guidance, metadata, tests, and files left after same-node cutovers; the audit MUST NOT perform a delayed authority transfer. Extend the finite cumulative separation-absence inventory in the same node as any newly admitted deletion.
-- [ ] 15.3 Run repository-wide Habitat topology, Nx graph, import reachability, exact final SDK export closure, Oclif manifests, lint, typecheck, test, build, local package, installed-package checks, and `nx run habitat:acceptance:product-separation-absence`. Require `apps/habitat` to be Habitat's only production app identity and require no Rawr product source, package identity, capability spec, product documentation, compatibility path, or production example project.
+- [ ] 15.3 Run repository-wide Habitat topology, Nx graph, import reachability, exact final SDK export closure, Oclif manifests, lint, typecheck, test, build, local package, installed-package checks, and `nx run habitat:acceptance:product-separation-absence`. Require `apps/habitat` to be Habitat's only production app identity and require no Rawr product source, package identity, superseded capability spec, product documentation, compatibility path, or production example project except the exact canonical removal targets `openspec/specs/{rawr-cli-application,legacy-membership-retirement,mixed-plugin-lifecycle-retirement}/spec.md`. Those targets, this active canonical change, and their current removal deltas remain only until task 15.9 applies and archives them.
 - [ ] 15.4 Record architecture and structural-quality review for every boundary-changing semantic node. Record TypeScript and behavior-first test review for each source-bearing node. Add Oclif, Effect, oRPC, or Inngest review only when that node touches the corresponding vendor boundary. Resolve and record every P0/P1 disposition before landing each owner/artifact handoff and its activated law as a truthful Graphite node; never create a law-only red node, deferred deletion node, or oversized aggregate.
 - [ ] 15.5 Land the complete Habitat runtime stack on canonical `main`, pass the exact-main Repository Ratchet and canonical CI, and record the exact source commit. Only this landed exact-main revision may authorize the final runtime release; it does not retroactively replace the bounded pre-separation foundation-release authority at task 2.8 Gate B.
-- [ ] 15.6 From that exact Habitat `main`, use the existing Nx Release group for the second and final initiative release: tag, publish, and registry-install-smoke exactly `@habitat-ai/sdk` and `@habitat-ai/cli`. Assemble the qualified telemetry provider only into `@habitat-ai/sdk/telemetry`, the semantic-ledger contract/provider only into `@habitat-ai/sdk/resources/semantic-ledger` and its optional `/fluree` integration, and temporal inquiry only into its equivalent SDK subpaths; exercise every subpath through installed-package acceptance. Publish no third telemetry package, internal runtime package, resource/service/plugin cohort, or Rawr package. Record exact versions, source commit, package provenance, and integrity.
+- [ ] 15.6 From that exact Habitat `main`, use the existing Nx Release group for the second and final initiative release: tag, publish, and registry-install-smoke exactly `@habitat-ai/sdk` and `@habitat-ai/cli`. Assemble the qualified telemetry provider only into `@habitat-ai/sdk/telemetry`, the semantic-ledger contract/provider only into `@habitat-ai/sdk/resources/semantic-ledger` and its optional `/fluree` integration, and temporal inquiry only into its equivalent SDK subpaths; exercise every subpath through installed-package acceptance. Publish no third telemetry package, internal runtime package, resource/service/plugin cohort, `@habitat-ai/plugin-agent-plugins`, or Rawr package. Record exact versions, source commit, package provenance, and integrity.
 - [ ] 15.7 Publish the exact runtime/package checkpoint and migration notes to the already separated Rawr owner, research-service, Civ7, Magic Migration, Inngest, and oRPC lanes. Because Rawr installed the initial plugin release through task 2.9, its owner-local OpenSpec MUST generate and apply this later `@habitat-ai/cli@<released-version>` upgrade through `nx migrate`; the migrated CLI dependency supplies the exact `@habitat-ai/sdk` version. Migration notes MAY direct a consumer without Habitat to use `bunx nx add @habitat-ai/cli --no-interactive` once. Rawr performs its own corpus, Hyperresearch, and session-intelligence runtime acceptance, and consumers install or migrate rather than copy internal owners.
 - [ ] 15.8 Through separate Rawr owner-local records after the final Habitat release, adopt the workstream domain against `@habitat-ai/sdk/resources/semantic-ledger`, re-author the accepted research-experiment service against the released runtime, and transfer the unique authority-freeze/specification-toolbox references as non-executable guidance. Pass the named Rawr targets in [[classification-ledger#behavioral-acceptance-matrix]] and retire each Habitat-side source only after destination acceptance; retire the mixed Fluree root only after both its Habitat and Rawr sinks have landed.
-- [ ] 15.9 Re-run exact-main gates in Habitat and Rawr after consumer migration and later-product acceptance, and verify Marketplace remains an independent content-only repository. Record that every retained or transferred stack has landed at its destination, record the explicit retirement allowlist, and release only clean completed worktrees. Retire remaining unsubmitted superseded sources explicitly, then run `gt sync --force --no-restack --no-interactive` separately from canonical `main` in each Graphite repository to prune only the already-dispositioned residue. Verify Habitat, Rawr, Marketplace, Graphite, worktrees, releases, and runtime state are clean. This task performs no source extraction, delayed ownership transfer, or deletion of an occupied/undispositioned branch.
+- [ ] 15.9 Re-run exact-main gates in Habitat and Rawr after consumer migration and later-product acceptance, and verify Marketplace remains an independent content-only repository. While the three canonical removal targets `openspec/specs/{rawr-cli-application,legacy-membership-retirement,mixed-plugin-lifecycle-retirement}/spec.md` still exist, invoke the pinned OpenSpec 1.3.1 archive workflow with its documented `--no-validate` option for these full-capability removals: the native archive cannot validate intentional intermediate empty targets. Require the archive to apply every delta and preserve all three complete removal records, delete only those now-empty retired canonical targets, then normalize exactly the three retained Purpose blocks recorded in [[design#canonical-purpose-normalization]] and immediately run strict canonical validation. Prove no superseded capability spec, Personal/Template product-era authority, or Rawr-positive command/application law remains. Any incomplete archive, nonempty retired target, purpose mismatch, unrelated main-spec mutation, or strict-validation failure restores the pre-archive Git tree and fails the node. Record that every retained or transferred stack has landed at its destination, record the explicit retirement allowlist, and release only clean completed worktrees. Retire remaining unsubmitted superseded sources explicitly, then run `gt sync --force --no-restack --no-interactive` separately from canonical `main` in each Graphite repository to prune only the already-dispositioned residue. Verify Habitat, Rawr, Marketplace, Graphite, worktrees, releases, and runtime state are clean. This task performs no source extraction, delayed ownership transfer, or deletion of an occupied/undispositioned branch.

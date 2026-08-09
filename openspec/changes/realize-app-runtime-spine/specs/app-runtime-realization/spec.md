@@ -75,6 +75,60 @@ remain as an alias, fallback, duplicate project, or import source.
   service and resources
 - **AND** no command or module-global helper acquires a provider directly
 
+### Requirement: CLI source bundles preserve topic ownership
+
+Each first-party CLI topic MUST own its command declarations, command bodies,
+and private topic package. An application MUST select topic membership as cold
+data. Derivation and compilation MUST lower exactly that selected membership
+into one topic-neutral private CLI source bundle consumed by the shared Oclif
+loader. The app, loader, public CLI package, adapter, and harness MUST NOT
+re-author command bodies, infer topic membership, scan source directories, or
+load an unselected topic. Private topic packages MUST NOT become public release
+members.
+
+Habitat MUST govern the self-host and each selected first-party topic through
+separate complete positive closed Oclif-app and CLI-topic blueprints. The app
+law owns app/profile/entrypoint topology and selected topic membership; the
+topic law owns one topic package, its `commands/` interior, and command-source
+closure. Neither law may encode a product path, product niche, legacy negative
+`forbids` corpus, alternate launcher, compatibility route, or another owner's
+interior. Each law MUST activate only with its first conforming owner.
+
+The Habitat self-host MUST use `plugins/cli/topics/foundation` /
+`@habitat-ai/plugin-foundation` for `resolve`, `check`, and `hook`;
+`plugins/cli/topics/authoring` / `@habitat-ai/plugin-authoring` for `cli command
+create` and `cli extension create`; and `plugins/cli/topics/agent-plugins` /
+`@habitat-ai/plugin-agent-plugins` for the curated lifecycle commands and the
+qualified `.habitat/overlays/agent-plugin-lifecycle` policy. The app owns
+selection of those topic packages and their profile/provider inputs, not their
+command implementations or overlay interiors.
+
+#### Scenario: Habitat compiles a selected command inventory
+
+- **WHEN** the Habitat app selects one or more private CLI topics
+- **THEN** the compiled private source bundle contains exactly the selected
+  topic-owned commands and the shared Oclif loader consumes that bundle without
+  scanning or reconstructing membership
+- **AND** command bodies remain owned by their topic packages while
+  `@habitat-ai/cli` owns only the public host, loader, harness, and native Nx
+  generator mechanics
+
+#### Scenario: Unselected or public topic authority is attempted
+
+- **WHEN** a loader discovers an unselected command directory, a public package
+  claims a private topic, or an app/loader authors a first-party command body
+- **THEN** compilation, package closure, or installed acceptance rejects before
+  Oclif dispatch
+
+#### Scenario: Oclif law ownership is inspected
+
+- **WHEN** the Habitat app and selected CLI topics are checked against their
+  active blueprints
+- **THEN** one closed app law and one reusable closed topic law cover their
+  distinct owner interiors
+- **AND** no product identity, predecessor path, compatibility assertion, or
+  duplicate app/topic law remains
+
 ### Requirement: Runtime realization preserves the seven-phase chain
 
 The platform MUST realize a selected process through the ordered phases

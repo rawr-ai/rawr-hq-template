@@ -140,6 +140,36 @@ a second harness, or acquire runtime resources in its bin entrypoint.
 | `SIGINT` | Oclif-native numeric `1` | `1` | `cancel -> finally -> flush -> runtime release -> handle` |
 | `SIGTERM` | Oclif-native numeric `1` | `1` | `cancel -> finally -> flush -> runtime release -> handle` |
 
+### Requirement: Oclif telemetry is app-selected and process-scoped
+
+An application profile MUST select the telemetry resource and concrete provider
+for each Oclif process. Runtime provisioning MUST acquire that provider once for
+the process, and process runtime, the Oclif adapter, harness, command boundary,
+bound services, and invoked providers MUST project observations through the one
+resulting process context. A command, topic, service, adapter, harness, or public
+CLI package MUST NOT construct an exporter, select a backend, create a second
+trace root, or retain telemetry beyond process settlement.
+
+#### Scenario: Installed command emits one correlated observation chain
+
+- **WHEN** an installed `habitat agent plugins` command crosses Oclif dispatch,
+  its topic-owned projection, the bound lifecycle service, and a selected native
+  provider
+- **THEN** the app-selected telemetry provider observes one correlated trace
+  identity across those owners with command result, output, and native outcome
+  preserved
+- **AND** the Oclif harness flushes observation before process-runtime release
+  and no exporter or process handle survives
+
+#### Scenario: Terminal paths preserve telemetry and native outcomes
+
+- **WHEN** installed Oclif acceptance exercises success, declared failure,
+  cancellation, and command-primary cleanup failure
+- **THEN** each path emits its final correlated observations exactly once and
+  retains the native exit classification and complete output
+- **AND** telemetry failure cannot replace the command outcome, trigger another
+  provider acquisition, or delay release beyond the selected process policy
+
 ### Requirement: Elysia harness owns HTTP intake and drain
 
 The Elysia harness MUST mount adapter-lowered route payloads and own the native
