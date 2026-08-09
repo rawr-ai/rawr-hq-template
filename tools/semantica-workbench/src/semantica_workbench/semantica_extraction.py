@@ -71,25 +71,25 @@ def semantica_extraction_pilot(
         )
 
     return {
-        "schema_version": "rawr-semantica-extraction-pilot-v1",
+        "schema_version": "semantica-workbench-extraction-pilot-v1",
         "document": rel(document),
         "status": status,
         "summary": {
             "raw_item_count": len(raw_items),
             "evidence_claim_count": len(evidence_claims),
-            "decision_grade_source": "rawr-semantic-heuristic-v1",
+            "decision_grade_source": "semantica-workbench-semantic-heuristic-v1",
             "promotion_allowed": False,
-            "adapter_mode": "semantica-triplet-proof-with-rawr-evidence-line-adapter",
+            "adapter_mode": "semantica-triplet-proof-with-workbench-evidence-line-adapter",
         },
         "raw_items": raw_items,
         "evidence_claims": evidence_claims,
         "diagnostics": diagnostics,
         "fallback": {
-            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "deterministic_oracle": "semantica-workbench-semantic-heuristic-v1",
             "removal_trigger": "Use semantica extraction for decision-grade comparison only after fixture parity and provider/span gates pass.",
         },
         "limitations": [
-            "Pilot evidence claims are produced by RAWR line resolution and claim classification, not directly from semantica triplets.",
+            "Pilot evidence claims are produced by workbench line resolution and claim classification, not directly from semantica triplets.",
             "semantica triplets are retained as raw evidence items until a direct triplet-to-claim adapter is proven.",
         ],
     }
@@ -107,7 +107,7 @@ def semantica_extraction_status() -> dict[str, Any]:
             "llm_available": hasattr(semantic_extract, "LLMExtraction")
             and any(optional[name]["available"] for name in ["openai", "anthropic", "litellm", "ollama"]),
             "optional_dependencies": optional,
-            "limitation": "Pattern extraction is evidence-only and does not preserve RAWR claim semantics without the adapter.",
+            "limitation": "Pattern extraction is evidence-only and does not preserve workbench claim semantics without the adapter.",
         }
     except Exception as exc:
         return {

@@ -1,12 +1,6 @@
 # Semantica Workbench
 
-Repository-local workbench for using Semantica against Habitat architecture and migration documents.
-
-The existing `rawr-core-architecture` directory and `rawr-*` ontology ids are
-stable machine compatibility identifiers. They do not assign platform authority
-to Rawr. Canonical document references resolve to
-`docs/system/HABITAT_ARCHITECTURE.md` and
-`docs/system/HABITAT_RUNTIME_REALIZATION.md`.
+Repository-local workbench for running Semantica over explicitly reviewed architecture inputs.
 
 The workbench is intentionally single-repo:
 
@@ -22,27 +16,27 @@ Run from the repository root:
 bun run semantica:setup
 bun run semantica:check
 bun run semantica:quality
-bun run semantica:core:validate
-bun run semantica:core:build
+bun run semantica:core:validate -- --fixture
+bun run semantica:core:build -- --fixture
 bun run semantica:core:export
 bun run semantica:core:visualize
 bun run semantica:core:serve
 bun run semantica:core:query -- --named forbidden-terms
 bun run semantica:core:query -- --sparql tools/semantica-workbench/queries/runtime-artifacts.rq
 bun run semantica:semantic:capability
-bun run semantica:doc:triage -- --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+bun run semantica:doc:triage -- --fixture
 bun run semantica:doc:extract -- --fixture
 bun run semantica:doc:compare -- --fixture
 bun run semantica:doc:frame -- --fixture
 bun run semantica:doc:proposal-compare -- --fixture
-bun run semantica:doc:sweep
+bun run semantica:doc:sweep -- --root tools/semantica-workbench/fixtures/docs/sweep
 bun run semantica:doc:index -- --run latest
 bun run semantica:doc:augment-llm -- --run latest
-bun run semantica:doc:diff -- --mode semantic --document docs/projects/rawr-final-architecture-migration/resources/spec/quarantine/RAWR_Canonical_Testing_Plan.md
+bun run semantica:doc:diff -- --mode semantic --fixture
 bun run semantica:core:query -- --named proposal-review-summary
 bun run semantica:core:query -- --named proposal-repair-queue
 bun run semantica:run -- --fixture
-bun run semantica:extract -- --manifest docs/projects/rawr-final-architecture-migration/semantic-source-manifest.yaml --limit-chunks 2
+bun run semantica:extract -- --manifest tools/semantica-workbench/fixtures/semantic-source-manifest.yaml --limit-chunks 2
 bun run semantica:ontology -- --run latest
 bun run semantica:diff -- --run latest
 bun run semantica:report -- --run latest
@@ -50,9 +44,21 @@ bun run semantica:report -- --run latest
 
 `semantica:setup` creates `.semantica/venv` using `uv` and Python 3.12. Other commands run through that environment. `semantica:quality` runs the Python quality gate: Ruff lint, Pyright type analysis, and the pytest workbench suite.
 
-## Core Ontology Path
+## Reviewed Inputs
 
-The core ontology commands are seed-first and treat reviewed YAML as the authority:
+No repository document or ontology bundle is an implicit input. Production-style runs must name the reviewed input explicitly:
+
+```bash
+bun run semantica:core:validate -- --ontology-root path/to/reviewed-ontology
+bun run semantica:core:build -- --ontology-root path/to/reviewed-ontology
+bun run semantica:extract -- --manifest path/to/reviewed-source-manifest.yaml
+```
+
+`core:validate` and `core:build` refuse to run without `--ontology-root` or `--fixture`. The ontology root must contain exactly one contract YAML, exactly one candidate queue YAML, and one layer YAML for every layer declared by the contract. `extract` and `run` likewise refuse to run without `--manifest` or `--fixture`.
+
+Inputs under an `archive`, `_archive`, or `quarantine` path are provenance, not canonical source material. The manifest loader rejects those sources, and core validation rejects canonical entities or relations whose source references resolve there. Comparison commands may still inspect an explicitly named provenance document as evidence; doing so never promotes it to ontology authority.
+
+The core ontology commands treat the explicitly reviewed YAML bundle as the authority:
 
 - `semantica:core:validate` checks the layered ontology contract, source refs, relation signatures, controlled predicates, and canonical-view leakage.
 - `semantica:core:build` writes canonical/layered graph JSON, candidate queue JSON, validation report, and a Markdown graph report under ignored `.semantica/runs/...`.
@@ -71,13 +77,13 @@ The core ontology commands are seed-first and treat reviewed YAML as the authori
 - `semantica:doc:augment-llm` writes an optional `sweep-llm-evidence-augmentation.json` sidecar over selected ambiguous, unresolved, and candidate evidence rows. It is fail-closed without provider/model availability, and it never changes deterministic verdicts, index rows, ontology facts, or candidate promotion state.
 - `semantica:doc:diff -- --mode semantic` is the compatibility command for the semantic evidence path. The default mode remains lexical for compatibility.
 
-The reviewed source files live under:
+The tracked fixture bundle lives under:
 
 ```text
-tools/semantica-workbench/ontologies/rawr-core-architecture/
+tools/semantica-workbench/fixtures/ontology/
 ```
 
-The CloudPro draft is snapshotted in the ontology workflow context packet for provenance, but the machine-readable YAML files are the normalized ingestion source.
+It is synthetic, non-authoritative, and exists only for deterministic tests and `--fixture` smoke runs.
 
 ## Graph Inspection And Agent Queries
 
@@ -153,7 +159,7 @@ The frame pipeline schema lives at:
 tools/semantica-workbench/schemas/architecture-change-frame.schema.json
 ```
 
-It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps evidence ownership explicit: Semantica output is evidence, the reviewed Habitat ontology remains canonical, reference geometry is comparison-only, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
+It adapts the external `ArchitectureChangeFrame` vocabulary as an intermediate extraction target for semantica/LLM pilots. The schema keeps evidence ownership explicit: Semantica output is evidence, the explicitly reviewed ontology input remains canonical, reference geometry is comparison-only, and every claim or noun mapping must carry structured evidence refs with source path, heading context, line span, char span, extraction method, confidence, review state, and `promotion_allowed: false`.
 
 The first executable path is deterministic and evidence-backed:
 
@@ -168,16 +174,6 @@ source evidence claims
 ```
 
 `doc:frame` stops at an extraction-only frame. `doc:proposal-compare` applies repository-owned verdict policy and review-action generation. Generated artifacts are review aids; they do not promote ontology truth.
-
-## Source Scope
-
-The default manifest is packet-scoped to:
-
-```text
-docs/projects/rawr-final-architecture-migration/.context/M2-runtime-realization-lock-spike/integrated-architecture-alignment-cloud-pro-inputs
-```
-
-It includes `01`, `02`, and `03`. It intentionally excludes `00-cloud-pro-task-prompt.md` because that file is task scaffolding, not graph source truth.
 
 ## Generated State
 

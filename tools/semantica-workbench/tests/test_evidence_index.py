@@ -21,7 +21,6 @@ from semantica_workbench.architecture_change_frame import (
 from semantica_workbench.artifact_models import validate_artifact_schema, validate_evidence_authority_boundary
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -48,7 +47,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -144,7 +143,7 @@ class EvidenceIndexTests(WorkbenchTestCase):
         with tempfile.TemporaryDirectory(dir=base_root) as directory:
             run_dir = Path(directory)
             index = {
-                "schema_version": "rawr-sweep-evidence-index-v1",
+                "schema_version": "semantica-workbench-sweep-evidence-index-v1",
                 "run_id": "synthetic-evidence-index",
                 "git_sha": "test",
                 "summary": {"documents_indexed": 2, "claim_count": 1, "finding_count": 1},
@@ -203,15 +202,15 @@ class EvidenceIndexTests(WorkbenchTestCase):
             (run_dir / CORE_GRAPH_FILENAMES["doc_sweep_ttl"]).write_text(
                 "\n".join(
                     [
-                        "@prefix rawr: <https://rawr.dev/ontology/> .",
-                        "@prefix evidence: <https://rawr.dev/evidence/> .",
+                        "@prefix workbench: <urn:semantica-workbench:ontology:> .",
+                        "@prefix evidence: <urn:semantica-workbench:evidence:> .",
                         "",
-                        "evidence:legacy-finding a rawr:ReviewFinding ;",
-                        '  rawr:findingKind "candidate-new" ;',
-                        "  rawr:partOfSweepRecord evidence:legacy-sweep ;",
-                        "  rawr:derivedFrom evidence:legacy-claim ;",
-                        '  rawr:sourcePath "docs/a-b.md" ;',
-                        '  rawr:lineStart "10" .',
+                        "evidence:legacy-finding a workbench:ReviewFinding ;",
+                        '  workbench:findingKind "candidate-new" ;',
+                        "  workbench:partOfSweepRecord evidence:legacy-sweep ;",
+                        "  workbench:derivedFrom evidence:legacy-claim ;",
+                        '  workbench:sourcePath "docs/a-b.md" ;',
+                        '  workbench:lineStart "10" .',
                         "",
                     ]
                 ),
@@ -219,8 +218,8 @@ class EvidenceIndexTests(WorkbenchTestCase):
             )
             graph = Graph()
             graph.parse(evidence_ttl, format="turtle")
-            rawr = Namespace("https://rawr.dev/ontology/")
-            self.assertEqual(2, len(list(graph.subjects(RDF.type, rawr.IndexedDocument))))
+            workbench = Namespace("urn:semantica-workbench:ontology:")
+            self.assertEqual(2, len(list(graph.subjects(RDF.type, workbench.IndexedDocument))))
             candidate_rows = run_sparql_query(
                 str(run_dir), Path("tools/semantica-workbench/queries/evidence-candidate-new.rq")
             )
@@ -236,13 +235,13 @@ class EvidenceIndexTests(WorkbenchTestCase):
             (run_dir / CORE_GRAPH_FILENAMES["semantic_evidence_ttl"]).write_text(
                 "\n".join(
                     [
-                        "@prefix rawr: <https://rawr.dev/ontology/> .",
-                        "@prefix evidence: <https://rawr.dev/evidence/> .",
+                        "@prefix workbench: <urn:semantica-workbench:ontology:> .",
+                        "@prefix evidence: <urn:semantica-workbench:evidence:> .",
                         "",
-                        "evidence:finding-1 a rawr:ReviewFinding ;",
-                        '  rawr:findingKind "aligned" ;',
-                        "  rawr:derivedFrom evidence:claim-1 ;",
-                        '  rawr:rule "synthetic_rule" .',
+                        "evidence:finding-1 a workbench:ReviewFinding ;",
+                        '  workbench:findingKind "aligned" ;',
+                        "  workbench:derivedFrom evidence:claim-1 ;",
+                        '  workbench:rule "synthetic_rule" .',
                         "",
                     ]
                 ),
@@ -255,7 +254,7 @@ class EvidenceIndexTests(WorkbenchTestCase):
                 run_sparql_query(str(run_dir), Path("tools/semantica-workbench/queries/relation-samples.rq"))
 
     def test_document_sweep_evidence_index_reports_missing_artifacts(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -281,7 +280,7 @@ class EvidenceIndexTests(WorkbenchTestCase):
         self.assertEqual("missing-semantic-compare-artifact", index["warnings"][0]["kind"])
 
     def test_document_sweep_evidence_index_rejects_dangling_finding_claims(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -309,7 +308,7 @@ class EvidenceIndexTests(WorkbenchTestCase):
         self.assertIsNotNone(index["findings"][0]["source_span"])
 
     def test_document_sweep_evidence_index_rejects_malformed_claim_ids(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"

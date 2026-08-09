@@ -15,7 +15,7 @@ from .semantica_llm_extraction import (
     triplet_to_dict,
 )
 
-LLM_AUGMENTATION_SCHEMA_VERSION = "rawr-sweep-llm-evidence-augmentation-v1"
+LLM_AUGMENTATION_SCHEMA_VERSION = "semantica-workbench-sweep-llm-evidence-augmentation-v1"
 
 SELECTED_KINDS = {"ambiguous", "candidate-new"}
 SELECTED_BUCKETS = {"unresolved-target", "weak-modality", "subordinate-policy-gap"}

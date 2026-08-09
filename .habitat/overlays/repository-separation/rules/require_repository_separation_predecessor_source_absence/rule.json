@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 2,
+  "id": "require_repository_separation_predecessor_source_absence",
+  "title": "Require Repository Separation Predecessor Source Absence",
+  "placement": {
+    "niche": "repository-separation",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "source-spelled, unescaped static ES-style import and re-export specifiers that exactly name a task-2.11 predecessor package identity or subpath",
+  "why": "Repository separation leaves Habitat source dependent only on current Habitat owners and released interfaces. This parser-visible law owns only the direct source-spelling relation; project-owned TypeScript checks own cooked or escaped module resolution and TypeScript import-equals.",
+  "remediate": "Import from the current Habitat owner or remove the obsolete dependency. Do not add an alias, shim, fallback, or copied predecessor path.",
+  "message": "Habitat JavaScript and TypeScript source must not use a source-spelled predecessor identity in a static ES-style import or re-export specifier.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "*.config.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "apps/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "packages/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "plugins/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "resources/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "scripts/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "services/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+        "tools/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/repository-separation/rules/require_repository_separation_predecessor_source_absence/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/repository-separation/rules/require_repository_separation_predecessor_source_absence/pattern.md"
+    },
+    "patternName": "require_repository_separation_predecessor_source_absence",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["."]
+    }
+  }
+}

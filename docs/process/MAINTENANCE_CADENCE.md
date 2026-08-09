@@ -10,7 +10,7 @@ Run from repo root:
 git status --short
 gt trunk
 ./scripts/dev/check-remotes.sh
-bun run rawr -- --version
+bun habitat --version
 bun run check
 rg -n "\]\(([^)#]+)\)" docs --glob '*.md'
 ```
@@ -19,8 +19,7 @@ Interpretation:
 - `git status` must be clean before and after the check.
 - `gt trunk` must print `main`.
 - `check-remotes.sh` must pass.
-- The repository-local Oclif CLI must start from checked-out owner source.
-  Habitat graph bootstrap is different: it must resolve the exact
+- Habitat graph bootstrap and the operator command must resolve the exact
   registry-installed `@habitat-ai/cli` package selected by `package.json` and
   `bun.lock`, never a workspace-source fallback.
 - The root check must schedule every admitted non-root project's plain public
@@ -28,9 +27,9 @@ Interpretation:
 - Shared defaults must preserve one workspace lint task, project-owned
   typecheck, optional owner verification, Habitat policy, and dependency
   checks. The root scheduler and single lint relationship belong to Habitat's
-  `nx-workspace` rule; CLI Oclif parity remains with the CLI owner. Required
-  Oclif structure, repository-script topology, and lifecycle command-channel
-  laws belong to Habitat's inferred owner targets. Habitat, Rawr, and
+  `nx-workspace` rule; CLI Oclif parity remains with the CLI owner. Registered
+  repository topology and source laws belong to Habitat's inferred owner
+  targets. Habitat, Rawr, and
   Marketplace remain independent repositories rather than a source-scanner
   relationship.
 - `habitat:check` must run workspace lint and the inferred owner-local policy

@@ -1,0 +1,12 @@
+id: semantica-workbench-fixture-candidate-queue-v1
+candidates:
+  - id: candidate.classifier.constraint-graph
+    label: constraint graph
+    why_it_might_matter: Synthetic candidate for testing non-promotion behavior.
+    source_span_suggests_it:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Candidates
+    decision_required_before_promotion: A human reviewer must admit the candidate.
+    classifier_relevance: true
+    status: candidate
+exclusions: []

@@ -5,6 +5,24 @@
   "projectType": "application",
   "tags": ["type:tool", "role:architecture-policy"],
   "targets": {
+    "acceptance:product-separation-absence": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": [
+        {
+          "projects": ["habitat"],
+          "target": "check:policy"
+        },
+        {
+          "projects": ["@habitat-ai/cli"],
+          "target": "manifest"
+        }
+      ],
+      "outputs": [],
+      "options": {
+        "command": "bun test scripts/habitat/product-separation-absence.test.ts"
+      }
+    },
     "check:policy": {
       "parallelism": false
     },

@@ -32,7 +32,7 @@ def semantica_review_surface_probe(
     export_status = export_inventory(run_dir, semantica_export)
     visualization_status = visualization_inventory(run_dir)
     return {
-        "schema_version": "rawr-semantica-review-surface-v1",
+        "schema_version": "semantica-workbench-review-surface-v1",
         "run": str(run_dir),
         "mcp": {
             **mcp_status,
@@ -45,7 +45,7 @@ def semantica_review_surface_probe(
         },
         "review_affordances": {
             "stable_query_interface": "semantica:core:query -- --named semantica-review-surface",
-            "rawr_cli_wrapper_retained": True,
+            "workbench_cli_wrapper_retained": True,
             "scrape_semantica_current_required": False,
             "semantica_output_authoritative": False,
         },
@@ -65,7 +65,7 @@ def semantica_review_surface_probe(
         "visualization": visualization_status,
         "fallback": {
             "cytoscape_static_artifact_retained": True,
-            "removal_trigger": "Replace or reduce Cytoscape only after semantica visualization/export preserves RAWR IDs, source lineage, candidate separation, and review finding context.",
+            "removal_trigger": "Replace or reduce Cytoscape only after semantica visualization/export preserves reviewed input IDs, source lineage, candidate separation, and review finding context.",
         },
     }
 
@@ -127,7 +127,7 @@ def export_inventory(run_dir: Path, semantica_export: dict[str, Any]) -> dict[st
         "exporters_present": exporters,
         "local_outputs_present": local_outputs,
         "semantica_outputs": output_paths,
-        "rawr_export_contract": {
+        "workbench_export_contract": {
             "source_lineage_required": True,
             "candidate_separation_required": True,
             "preservation_validated": preservation_validated,

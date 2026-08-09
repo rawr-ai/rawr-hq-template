@@ -20,7 +20,6 @@ from semantica_workbench.architecture_change_frame import (
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +46,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -76,7 +75,7 @@ from support import (
 
 class SemanticEvidenceTests(WorkbenchTestCase):
     def test_semantic_evidence_fixture_verdicts(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -108,16 +107,18 @@ class SemanticEvidenceTests(WorkbenchTestCase):
                 self.assertEqual(case["expected_ambiguity_bucket"], finding["ambiguity_bucket"])
 
     def test_semantica_extraction_pilot_is_evidence_only(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         pilot = semantica_extraction_pilot(fixture_document_path(), graph["layered_graph"], graph["candidate_queue"])
-        self.assertEqual("rawr-semantica-extraction-pilot-v1", pilot["schema_version"])
-        self.assertEqual("rawr-semantic-heuristic-v1", pilot["summary"]["decision_grade_source"])
-        self.assertEqual("semantica-triplet-proof-with-rawr-evidence-line-adapter", pilot["summary"]["adapter_mode"])
+        self.assertEqual("semantica-workbench-extraction-pilot-v1", pilot["schema_version"])
+        self.assertEqual("semantica-workbench-semantic-heuristic-v1", pilot["summary"]["decision_grade_source"])
+        self.assertEqual(
+            "semantica-triplet-proof-with-workbench-evidence-line-adapter", pilot["summary"]["adapter_mode"]
+        )
         self.assertTrue(pilot["limitations"])
         self.assertFalse(pilot["summary"]["promotion_allowed"])
-        self.assertEqual("rawr-semantic-heuristic-v1", pilot["fallback"]["deterministic_oracle"])
+        self.assertEqual("semantica-workbench-semantic-heuristic-v1", pilot["fallback"]["deterministic_oracle"])
         self.assertGreaterEqual(pilot["summary"]["raw_item_count"], 0)
         for claim in pilot["evidence_claims"]:
             self.assertEqual("semantica-pilot-pattern-v1", claim["extractor"])
@@ -127,7 +128,7 @@ class SemanticEvidenceTests(WorkbenchTestCase):
             self.assertGreaterEqual(claim["line_start"], 1)
 
     def test_semantic_evidence_records_semantica_pilot_without_changing_oracle(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -138,16 +139,21 @@ class SemanticEvidenceTests(WorkbenchTestCase):
             semantica_pilot_enabled=True,
         )
         self.assertIn("semantica_pilot", evidence)
-        self.assertEqual("rawr-semantic-heuristic-v1", evidence["semantica_pilot"]["summary"]["decision_grade_source"])
         self.assertEqual(
-            "semantica-triplet-proof-with-rawr-evidence-line-adapter",
+            "semantica-workbench-semantic-heuristic-v1",
+            evidence["semantica_pilot"]["summary"]["decision_grade_source"],
+        )
+        self.assertEqual(
+            "semantica-triplet-proof-with-workbench-evidence-line-adapter",
             evidence["semantica_pilot"]["summary"]["adapter_mode"],
         )
         self.assertFalse(evidence["semantica_pilot"]["summary"]["promotion_allowed"])
-        self.assertTrue(all(claim["extractor"] == "rawr-semantic-heuristic-v1" for claim in evidence["claims"]))
+        self.assertTrue(
+            all(claim["extractor"] == "semantica-workbench-semantic-heuristic-v1" for claim in evidence["claims"])
+        )
 
     def test_semantic_evidence_defaults_semantica_pilot_off(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -157,7 +163,7 @@ class SemanticEvidenceTests(WorkbenchTestCase):
         self.assertFalse(evidence["semantica_pilot"]["summary"]["promotion_allowed"])
 
     def test_semantic_opposite_claims_do_not_collapse(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -178,7 +184,7 @@ class SemanticEvidenceTests(WorkbenchTestCase):
         self.assertTrue(any(finding["kind"] == "conflict" and finding["polarity"] == "positive" for finding in line7))
 
     def test_bare_match_heading_context_does_not_create_conflict(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         temp_root = REPO_ROOT / ".semantica" / "test-docs"
@@ -198,7 +204,7 @@ class SemanticEvidenceTests(WorkbenchTestCase):
         self.assertTrue(any(item["kind"] == "ambiguous" and item["assertion_scope"] == "unknown" for item in findings))
 
     def test_verification_policy_negation_is_not_aligned(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         temp_root = REPO_ROOT / ".semantica" / "test-docs"
@@ -214,7 +220,7 @@ class SemanticEvidenceTests(WorkbenchTestCase):
         self.assertTrue(any(item.get("ambiguity_bucket") == "subordinate-policy-negation" for item in policy_findings))
 
     def test_decision_grade_semantic_findings_have_claim_semantics(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -233,15 +239,19 @@ class SemanticEvidenceTests(WorkbenchTestCase):
             self.assertTrue(finding.get("entity_id"))
 
     def test_semantic_findings_have_explanation_chain(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
             fixture_document_path(), graph["layered_graph"], graph["candidate_queue"], fixture=True
         )
         compare = compare_evidence_to_ontology(evidence, graph["layered_graph"], graph["candidate_queue"])
-        self.assertEqual("rawr-semantica-reasoning-proof-v1", compare["semantica_reasoning"]["schema_version"])
-        self.assertTrue(compare["semantica_reasoning"]["rawr_policy"]["review_actions_owned_by_rawr"])
+        self.assertEqual(
+            "semantica-workbench-reasoning-proof-v1", compare["semantica_reasoning"]["schema_version"]
+        )
+        self.assertTrue(
+            compare["semantica_reasoning"]["workbench_policy"]["review_actions_defined_by_workbench"]
+        )
         self.assertTrue(compare["semantica_reasoning"]["summary"]["explanation_chain_complete"])
         decision_grade = [finding for finding in compare["findings"] if finding["decision_grade"]]
         self.assertTrue(decision_grade)
@@ -254,7 +264,7 @@ class SemanticEvidenceTests(WorkbenchTestCase):
             self.assertEqual(finding["review_action"], chain["finding"]["review_action"])
 
     def test_semantic_extraction_suppresses_scaffold_and_records_ledger(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(

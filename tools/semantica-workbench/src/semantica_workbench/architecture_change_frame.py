@@ -11,7 +11,15 @@ from typing import Any
 
 from .io import git_sha, read_json, rel
 from .paths import ARCHITECTURE_CHANGE_FRAME_SCHEMA, REPO_ROOT, WORKBENCH_ROOT
-from .semantica_adapter import iri_fragment, semantica_status, turtle_literal
+from .semantica_adapter import (
+    WORKBENCH_EVIDENCE_NAMESPACE,
+    WORKBENCH_ONTOLOGY_NAMESPACE,
+    WORKBENCH_PROPOSAL_NAMESPACE,
+    WORKBENCH_REFERENCE_GEOMETRY_NAMESPACE,
+    iri_fragment,
+    semantica_status,
+    turtle_literal,
+)
 from .source_model import source_ref_to_path, source_scope_for_path, span_text_for_ref
 from .semantic_evidence import (
     compare_evidence_to_ontology,
@@ -21,18 +29,16 @@ from .semantic_evidence import (
     term_in_line,
 )
 
-FRAME_SCHEMA_VERSION = "rawr-architecture-change-frame-v1"
-FRAME_PROVENANCE_SCHEMA_VERSION = "rawr-architecture-proposal-provenance-v1"
-FRAME_VALIDATION_SCHEMA_VERSION = "rawr-architecture-change-frame-validation-v1"
-CLAIM_COMPARISON_SCHEMA_VERSION = "rawr-architecture-claim-comparison-v1"
-NOUN_MAPPING_SCHEMA_VERSION = "rawr-architecture-noun-mappings-v1"
-VERDICT_REPAIR_SCHEMA_VERSION = "rawr-architecture-verdict-repair-v1"
-PROPOSAL_PACKAGE_SCHEMA_VERSION = "rawr-architecture-proposal-package-v1"
-REFERENCE_GEOMETRY_SCHEMA_VERSION = "rawr-reference-geometry-summary-v1"
+FRAME_SCHEMA_VERSION = "semantica-workbench-architecture-change-frame-v1"
+FRAME_PROVENANCE_SCHEMA_VERSION = "semantica-workbench-architecture-proposal-provenance-v1"
+FRAME_VALIDATION_SCHEMA_VERSION = "semantica-workbench-architecture-change-frame-validation-v1"
+CLAIM_COMPARISON_SCHEMA_VERSION = "semantica-workbench-architecture-claim-comparison-v1"
+NOUN_MAPPING_SCHEMA_VERSION = "semantica-workbench-architecture-noun-mappings-v1"
+VERDICT_REPAIR_SCHEMA_VERSION = "semantica-workbench-architecture-verdict-repair-v1"
+PROPOSAL_PACKAGE_SCHEMA_VERSION = "semantica-workbench-architecture-proposal-package-v1"
+REFERENCE_GEOMETRY_SCHEMA_VERSION = "semantica-workbench-reference-geometry-summary-v1"
 
 FRAME_FIXTURE_DOCUMENT = WORKBENCH_ROOT / "fixtures/docs/architecture-change-proposal.md"
-REFERENCE_BUNDLE_ENV = "RAWR_REFERENCE_GEOMETRY_BUNDLE"
-
 REQUIRED_EVIDENCE_REF_FIELDS = {
     "id",
     "source_path",
@@ -84,13 +90,6 @@ GEOMETRY_TYPES = {
     "PlatformOperation",
     "ContextLane",
 }
-
-DEFAULT_REFERENCE_BUNDLE_CANDIDATES = [
-    Path(os.environ[REFERENCE_BUNDLE_ENV]).expanduser() for _ in [None] if os.environ.get(REFERENCE_BUNDLE_ENV)
-] + [
-    Path.home() / "Documents/projects/RAWR/companion/RAWR_Ontology_Packet_Draft_v0.2.zip",
-]
-
 
 def load_architecture_change_frame_schema() -> dict[str, Any]:
     return read_json(ARCHITECTURE_CHANGE_FRAME_SCHEMA)
@@ -226,7 +225,7 @@ def evidence_to_architecture_change_frame(
         method = (
             "semantica-pattern-pilot"
             if pilot_summary.get("enabled") or pilot_summary.get("adapter_mode", "").startswith("semantica")
-            else "rawr-deterministic-oracle"
+            else "semantica-workbench-deterministic-oracle"
         )
         status = "pilot" if method.startswith("semantica") else "fallback"
     llm_provider_status = llm_provider_status_from_capability(semantica)
@@ -242,11 +241,11 @@ def evidence_to_architecture_change_frame(
         "method": method,
         "extractor": llm_summary.get("extractor")
         or pilot_summary.get("adapter_mode")
-        or "rawr-architecture-change-frame-deterministic-v1",
+        or "semantica-workbench-architecture-change-frame-deterministic-v1",
         "status": status,
         "llm_provider_status": llm_provider_status,
         "semantica_version": semantica_version,
-        "deterministic_oracle": "rawr-semantic-heuristic-v1",
+        "deterministic_oracle": "semantica-workbench-semantic-heuristic-v1",
         "promotion_allowed": False,
         "diagnostics": frame_diagnostics(evidence, semantic_compare, reference_geometry),
     }
@@ -262,7 +261,7 @@ def evidence_to_architecture_change_frame(
         "proposal_summary": proposal_summary(claims),
         "extraction": extraction_run,
         "governance": {
-            "truth_authority": "rawr-reviewed-ontology",
+            "truth_authority": "reviewed-ontology-input",
             "semantica_output_authoritative": False,
             "reference_geometry_status": "comparison-only" if reference_geometry.get("loaded") else "not-used",
             "requires_human_promotion": True,
@@ -274,7 +273,9 @@ def evidence_to_architecture_change_frame(
             "status": "evaluated" if evaluate else "extraction-only",
             "overall_verdict": "not-evaluated",
             "recommended_next_action": "none",
-            "ruleset": "rawr-architecture-frame-deterministic-v1" if evaluate else "rawr-frame-pilot-unresolved",
+            "ruleset": "semantica-workbench-architecture-frame-deterministic-v1"
+            if evaluate
+            else "semantica-workbench-frame-pilot-unresolved",
             "explanation_chain_complete": False,
         },
         "unresolved_questions": unresolved_questions_for_compare(semantic_compare),
@@ -353,7 +354,11 @@ def no_evidence_claim(document: Path, evidence: dict[str, Any] | None = None) ->
     source_path = display_path(document)
     llm = (evidence or {}).get("semantica_llm") or {}
     requested_mode = (evidence or {}).get("extraction_mode", {}).get("requested")
-    extraction_method = "semantica-llm-pilot" if requested_mode == "semantica-llm" else "rawr-deterministic-oracle"
+    extraction_method = (
+        "semantica-llm-pilot"
+        if requested_mode == "semantica-llm"
+        else "semantica-workbench-deterministic-oracle"
+    )
     blocked_reason = llm.get("status", {}).get("blocked_reason")
     issue = "The document did not produce source-backed architecture claims."
     if blocked_reason:
@@ -465,7 +470,7 @@ def build_noun_mapping_payload(frame: dict[str, Any], reference_geometry: dict[s
             {
                 **mapping,
                 "mapping_category": noun_mapping_category(mapping),
-                "source_authority": "rawr-reviewed-ontology"
+                "source_authority": "reviewed-ontology-input"
                 if mapping.get("mapping_state") in {"resolved", "candidate", "rejected"}
                 else "reference-geometry-comparison-only"
                 if mapping.get("mapping_state") == "extension-slot"
@@ -499,7 +504,7 @@ def build_claim_comparison_payload(
         "summary": {
             "claim_count": len(comparisons),
             "verdicts": dict(summary),
-            "decision_source": "rawr-deterministic-policy-v1",
+            "decision_source": "semantica-workbench-deterministic-policy-v1",
             "semantica_output_authoritative": False,
             "promotion_allowed": False,
         },
@@ -577,7 +582,7 @@ def selected_comparison_for_frame_claim(
             for item in geometry_matches[:5]
         ],
         "authority_context": {
-            "source": "rawr-reviewed-ontology",
+            "source": "reviewed-ontology-input",
             "reference_geometry": "comparison-only" if geometry_matches else "not-used",
             "polarity": frame_claim.get("polarity"),
             "modality": frame_claim.get("modality"),
@@ -588,7 +593,7 @@ def selected_comparison_for_frame_claim(
             {
                 "finding_kind": "none",
                 "rule": "reference_geometry_or_unresolved_frame_claim",
-                "reason": "No RAWR semantic finding resolved for this frame claim.",
+                "reason": "No workbench semantic finding resolved for this frame claim.",
                 "decision_grade": False,
                 "review_action": action,
             }
@@ -629,7 +634,7 @@ def build_verdict_repair_payload(frame: dict[str, Any], claim_comparisons: dict[
         "schema_version": VERDICT_REPAIR_SCHEMA_VERSION,
         "frame_id": frame["frame_id"],
         "document": frame["document"]["source_path"],
-        "ruleset": "rawr-architecture-frame-deterministic-v1",
+        "ruleset": "semantica-workbench-architecture-frame-deterministic-v1",
         "overall_verdict": overall_verdict,
         "recommended_next_action": recommended_action,
         "summary": {
@@ -684,7 +689,7 @@ def build_provenance_payload(
             "claim_count": len(evidence.get("claims", [])),
             "decision_grade_source": evidence.get("semantica_pilot", {})
             .get("summary", {})
-            .get("decision_grade_source", "rawr-semantic-heuristic-v1"),
+            .get("decision_grade_source", "semantica-workbench-semantic-heuristic-v1"),
         },
         "comparison_source": {
             "schema_version": semantic_compare.get("schema_version"),
@@ -699,7 +704,7 @@ def build_provenance_payload(
             "json_schema_validator": validation.get("json_schema_validator"),
         },
         "authority_policy": {
-            "truth_authority": "rawr-reviewed-ontology",
+            "truth_authority": "reviewed-ontology-input",
             "semantica_output_authoritative": False,
             "reference_geometry_status": frame["governance"]["reference_geometry_status"],
             "promotion_allowed": False,
@@ -802,7 +807,7 @@ def validate_frame_policy_shape(frame: dict[str, Any]) -> list[dict[str, Any]]:
 
     governance = frame.get("governance") or {}
     expected_governance = {
-        "truth_authority": "rawr-reviewed-ontology",
+        "truth_authority": "reviewed-ontology-input",
         "semantica_output_authoritative": False,
         "requires_human_promotion": True,
         "promotion_allowed": False,
@@ -984,11 +989,12 @@ def load_reference_geometry(reference_bundle: Path | None = None) -> dict[str, A
 
 
 def resolve_reference_bundle(reference_bundle: Path | None) -> Path | None:
-    candidates = [reference_bundle] if reference_bundle else DEFAULT_REFERENCE_BUNDLE_CANDIDATES
-    for candidate in candidates:
-        if candidate and candidate.exists() and candidate.is_file():
-            return candidate
-    return None
+    if reference_bundle is None:
+        return None
+    bundle = reference_bundle.expanduser().resolve()
+    if not bundle.exists() or not bundle.is_file():
+        raise FileNotFoundError(f"Explicit reference bundle does not exist or is not a file: {bundle}")
+    return bundle
 
 
 def parse_reference_geometry_turtle(payload: str) -> list[dict[str, Any]]:
@@ -1001,7 +1007,6 @@ def parse_reference_geometry_turtle(payload: str) -> list[dict[str, Any]]:
         graph.parse(data=payload, format="turtle")
         skos = Namespace("http://www.w3.org/2004/02/skos/core#")
         dct = Namespace("http://purl.org/dc/terms/")
-        rg = Namespace("https://rawr.dev/ontology/reference-geometry#")
         rows = []
         for subject, _, object_ in graph.triples((None, RDF.type, None)):
             type_name = local_name(str(object_))
@@ -1017,7 +1022,7 @@ def parse_reference_geometry_turtle(payload: str) -> list[dict[str, Any]]:
                 "description": description,
             }
             for predicate_name in ["kindFamily", "pathPattern", "status", "rootPath"]:
-                value = first_literal(graph, subject, getattr(rg, predicate_name))
+                value = first_literal_by_local_name(graph, subject, predicate_name)
                 if value is not None:
                     row[predicate_name] = value
             rows.append(row)
@@ -1028,18 +1033,25 @@ def parse_reference_geometry_turtle(payload: str) -> list[dict[str, Any]]:
 
 def parse_reference_geometry_turtle_fallback(payload: str) -> list[dict[str, Any]]:
     rows = []
-    for match in re.finditer(r"rawr:([A-Za-z0-9_]+)\s+a\s+rg:([A-Za-z0-9_]+)\s*;(.*?)(?:\n\n|\Z)", payload, re.S):
-        type_name = match.group(2)
+    prefixes = dict(re.findall(r"@prefix\s+([A-Za-z][A-Za-z0-9_-]*):\s*<([^>]+)>", payload))
+    pattern = (
+        r"([A-Za-z][A-Za-z0-9_-]*):([A-Za-z0-9_]+)\s+a\s+"
+        r"[A-Za-z][A-Za-z0-9_-]*:([A-Za-z0-9_]+)\s*;(.*?)(?:\n\n|\Z)"
+    )
+    for match in re.finditer(pattern, payload, re.S):
+        type_name = match.group(3)
         if type_name not in GEOMETRY_TYPES:
             continue
-        body = match.group(3)
+        body = match.group(4)
         label_match = re.search(r'skos:prefLabel\s+"([^"]+)"', body)
         description_match = re.search(r'dct:description\s+"([^"]+)"', body)
+        entity_id = match.group(2)
+        namespace = prefixes.get(match.group(1), WORKBENCH_REFERENCE_GEOMETRY_NAMESPACE)
         rows.append(
             {
-                "id": match.group(1),
-                "iri": f"https://rawr.dev/ontology/instances#{match.group(1)}",
-                "label": label_match.group(1) if label_match else match.group(1),
+                "id": entity_id,
+                "iri": f"{namespace}{entity_id}",
+                "label": label_match.group(1) if label_match else entity_id,
                 "type": type_name,
                 "description": description_match.group(1) if description_match else None,
             }
@@ -1064,11 +1076,19 @@ def first_literal(graph: Any, subject: Any, predicate: Any) -> str | None:
     return None
 
 
+def first_literal_by_local_name(graph: Any, subject: Any, predicate_name: str) -> str | None:
+    for predicate, value in graph.predicate_objects(subject):
+        if local_name(str(predicate)) == predicate_name:
+            return str(value)
+    return None
+
+
 def local_name(value: str) -> str:
     value = value.rstrip("/")
     if "#" in value:
         return value.rsplit("#", 1)[-1]
-    return value.rsplit("/", 1)[-1]
+    tail = value.rsplit("/", 1)[-1]
+    return tail.rsplit(":", 1)[-1]
 
 
 def reference_geometry_matches(text: str, reference_geometry: dict[str, Any]) -> list[dict[str, Any]]:
@@ -1102,49 +1122,53 @@ def proposal_graph_turtle(
     reference_geometry: dict[str, Any],
 ) -> str:
     lines = [
-        "@prefix rawr: <https://rawr.dev/ontology/> .",
-        "@prefix proposal: <https://rawr.dev/proposal/> .",
-        "@prefix evidence: <https://rawr.dev/evidence/> .",
+        f"@prefix workbench: <{WORKBENCH_ONTOLOGY_NAMESPACE}> .",
+        f"@prefix proposal: <{WORKBENCH_PROPOSAL_NAMESPACE}> .",
+        f"@prefix evidence: <{WORKBENCH_EVIDENCE_NAMESPACE}> .",
         "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .",
         "",
     ]
     frame_node = iri_fragment(frame["frame_id"])
-    lines.append(f"proposal:{frame_node} a rawr:ArchitectureChangeFrame ;")
+    lines.append(f"proposal:{frame_node} a workbench:ArchitectureChangeFrame ;")
     lines.append(f"  rdfs:label {turtle_literal(frame['proposal_summary'])} ;")
-    lines.append(f"  rawr:document {turtle_literal(frame['document']['source_path'])} ;")
-    lines.append(f"  rawr:overallVerdict {turtle_literal(verdict_repair['overall_verdict'])} ;")
-    lines.append(f"  rawr:referenceGeometryStatus {turtle_literal(frame['governance']['reference_geometry_status'])} .")
+    lines.append(f"  workbench:document {turtle_literal(frame['document']['source_path'])} ;")
+    lines.append(f"  workbench:overallVerdict {turtle_literal(verdict_repair['overall_verdict'])} ;")
+    lines.append(
+        f"  workbench:referenceGeometryStatus "
+        f"{turtle_literal(frame['governance']['reference_geometry_status'])} ."
+    )
     lines.append("")
     for claim in frame.get("claims", []):
         claim_node = iri_fragment(claim["id"])
-        lines.append(f"proposal:{claim_node} a rawr:ArchitectureChangeClaim ;")
-        lines.append(f"  rawr:partOf proposal:{frame_node} ;")
+        lines.append(f"proposal:{claim_node} a workbench:ArchitectureChangeClaim ;")
+        lines.append(f"  workbench:partOf proposal:{frame_node} ;")
         lines.append(f"  rdfs:label {turtle_literal(claim['subject'])} ;")
-        lines.append(f"  rawr:claimType {turtle_literal(claim['claim_type'])} ;")
-        lines.append(f"  rawr:verdict {turtle_literal(claim['verdict'])} ;")
-        lines.append(f"  rawr:reviewAction {turtle_literal(claim['review_action'])} ;")
+        lines.append(f"  workbench:claimType {turtle_literal(claim['claim_type'])} ;")
+        lines.append(f"  workbench:verdict {turtle_literal(claim['verdict'])} ;")
+        lines.append(f"  workbench:reviewAction {turtle_literal(claim['review_action'])} ;")
         evidence_ref = claim["evidence_refs"][0]
-        lines.append(f"  rawr:derivedFrom evidence:{iri_fragment(evidence_ref['id'])} .")
+        lines.append(f"  workbench:derivedFrom evidence:{iri_fragment(evidence_ref['id'])} .")
         lines.append("")
     for mapping in noun_mappings.get("mappings", []):
         mapping_node = iri_fragment(mapping["id"])
-        lines.append(f"proposal:{mapping_node} a rawr:NounMapping ;")
-        lines.append(f"  rawr:partOf proposal:{frame_node} ;")
+        lines.append(f"proposal:{mapping_node} a workbench:NounMapping ;")
+        lines.append(f"  workbench:partOf proposal:{frame_node} ;")
         lines.append(f"  rdfs:label {turtle_literal(mapping['proposed_noun'])} ;")
-        lines.append(f"  rawr:mappingState {turtle_literal(mapping['mapping_state'])} ;")
-        lines.append(f"  rawr:mappingCategory {turtle_literal(mapping['mapping_category'])} .")
+        lines.append(f"  workbench:mappingState {turtle_literal(mapping['mapping_state'])} ;")
+        lines.append(f"  workbench:mappingCategory {turtle_literal(mapping['mapping_category'])} .")
         lines.append("")
     for comparison in claim_comparisons.get("comparisons", []):
         comparison_node = iri_fragment(comparison["id"])
-        lines.append(f"proposal:{comparison_node} a rawr:ClaimComparison ;")
-        lines.append(f"  rawr:partOf proposal:{frame_node} ;")
-        lines.append(f"  rawr:comparesClaim proposal:{iri_fragment(comparison['claim_id'])} ;")
-        lines.append(f"  rawr:verdict {turtle_literal(comparison['verdict'])} ;")
-        lines.append(f"  rawr:reviewAction {turtle_literal(comparison['review_action'])} .")
+        lines.append(f"proposal:{comparison_node} a workbench:ClaimComparison ;")
+        lines.append(f"  workbench:partOf proposal:{frame_node} ;")
+        lines.append(f"  workbench:comparesClaim proposal:{iri_fragment(comparison['claim_id'])} ;")
+        lines.append(f"  workbench:verdict {turtle_literal(comparison['verdict'])} ;")
+        lines.append(f"  workbench:reviewAction {turtle_literal(comparison['review_action'])} .")
         lines.append("")
     if reference_geometry.get("loaded"):
         lines.append(
-            f"proposal:{frame_node} rawr:usesReferenceGeometryHash {turtle_literal(reference_geometry.get('sha256'))} ."
+            f"proposal:{frame_node} workbench:usesReferenceGeometryHash "
+            f"{turtle_literal(reference_geometry.get('sha256'))} ."
         )
         lines.append("")
     return "\n".join(lines)
@@ -1260,7 +1284,7 @@ def render_proposal_review_report(
             "",
             "## Authority Boundary",
             "",
-            "This report is a review artifact. RAWR reviewed ontology remains truth authority; semantica, LLM, frame, and reference-geometry outputs remain evidence until human-governed promotion.",
+            "This report is a review artifact. The explicitly reviewed ontology input remains truth authority; semantica, LLM, frame, and reference-geometry outputs remain evidence until human-governed promotion.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -1343,7 +1367,7 @@ def action_for_overall_verdict(verdict: str) -> str:
 def repair_hint_for_verdict(verdict: str, findings: list[dict[str, Any]], frame_claim: dict[str, Any]) -> str:
     if verdict == "conflicts":
         targets = ", ".join(sorted({item.get("entity_id") or item.get("label") or "target" for item in findings}))
-        return f"Rewrite or remove the claim that conflicts with RAWR authority ({targets}). Use canonical replacement guidance before treating it as target architecture."
+        return f"Rewrite or remove the claim that conflicts with reviewed ontology authority ({targets}). Use canonical replacement guidance before treating it as target architecture."
     if verdict == "needs-canonical-addendum":
         return "Review the candidate concept and write a canonical addendum only if source authority, owner, operational consequence, and promotion gate are accepted."
     if verdict == "compatible-extension":
@@ -1363,7 +1387,7 @@ def issue_for_verdict(verdict: str, findings: list[dict[str, Any]]) -> str | Non
     if verdict == "unclear":
         return "The claim did not resolve to enough decision-grade evidence."
     if verdict == "conflicts":
-        return "The claim conflicts with RAWR-reviewed authority."
+        return "The claim conflicts with reviewed ontology authority."
     return None
 
 
@@ -1448,7 +1472,7 @@ def extraction_method_for_claim(claim: dict[str, Any]) -> str:
         return "semantica-pattern-pilot"
     if extractor.startswith("semantica-llm"):
         return "semantica-llm-pilot"
-    return "rawr-deterministic-oracle"
+    return "semantica-workbench-deterministic-oracle"
 
 
 def llm_provider_status_from_capability(capability: dict[str, Any]) -> str:
@@ -1497,7 +1521,7 @@ def proposal_summary(claims: list[dict[str, Any]]) -> str:
 def infer_target_app(claims: list[dict[str, Any]]) -> str | None:
     for claim in claims:
         text = normalize_text(claim.get("evidence_refs", [{}])[0].get("text", ""))
-        match = re.search(r"\brawr\.([a-z0-9_-]+)\.ts\b", text)
+        match = re.search(r"\btarget app(?:lication)?\s*[:=]\s*`?([a-z0-9_-]+)", text)
         if match:
             return match.group(1)
     return None
@@ -1512,7 +1536,7 @@ def frame_diagnostics(
             "claim_count": len(evidence.get("claims", [])),
             "decision_grade_source": evidence.get("semantica_pilot", {})
             .get("summary", {})
-            .get("decision_grade_source", "rawr-semantic-heuristic-v1"),
+            .get("decision_grade_source", "semantica-workbench-semantic-heuristic-v1"),
         },
         {
             "kind": "semantic_compare_findings",

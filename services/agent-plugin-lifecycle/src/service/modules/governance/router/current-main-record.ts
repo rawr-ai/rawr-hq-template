@@ -6,7 +6,7 @@ import {
 import { module } from "../module";
 
 /**
- * @purpose Encode or validate Personal's versioned current-main record.
+ * @purpose Encode or validate Marketplace's versioned current-main record.
  * @capability Consume only the operation input and Governance's record policy.
  * @behavior Return the same closed TypeBox-backed record result for both actions.
  * @relation Keep record authorship separate from exact Git selection.

@@ -1,4 +1,3 @@
 # product/
 
-Evergreen product-facing artifacts for `RAWR HQ-Template`.
-
+Evergreen platform-facing artifacts for Habitat.

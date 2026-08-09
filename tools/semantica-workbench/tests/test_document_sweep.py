@@ -20,7 +20,6 @@ from semantica_workbench.architecture_change_frame import (
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +46,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -75,6 +74,10 @@ from support import (
 
 
 class DocumentSweepTests(WorkbenchTestCase):
+    def test_document_sweep_requires_an_explicit_root_or_document(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Explicit document sweep input required"):
+            run_document_sweep()
+
     def test_document_sweep_discovery_excludes_quarantine_and_archive(self) -> None:
         root = REPO_ROOT / "tools/semantica-workbench/fixtures/docs/sweep"
         discovered, skipped = discover_documents([str(root)], ["**/*.md"], ["quarantine", "archive"])
@@ -94,7 +97,7 @@ class DocumentSweepTests(WorkbenchTestCase):
         self.assertIn("node_modules", excludes)
 
     def test_document_sweep_missing_explicit_document_fails(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -107,7 +110,7 @@ class DocumentSweepTests(WorkbenchTestCase):
                 run_document_sweep(documents=["missing-doc.md"], run=str(base_run))
 
     def test_document_sweep_generates_aggregate_outputs(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -135,8 +138,8 @@ class DocumentSweepTests(WorkbenchTestCase):
             sum(record["counts"]["claims"] for record in sweep["documents"]), sweep["summary"]["total_claims"]
         )
         pipeline = sweep["semantica_pipeline"]
-        self.assertEqual("rawr-semantica-pipeline-proof-v1", pipeline["schema_version"])
-        self.assertTrue(pipeline["rawr_policy"]["recommendation_categories_owned_by_rawr"])
+        self.assertEqual("semantica-workbench-pipeline-proof-v1", pipeline["schema_version"])
+        self.assertTrue(pipeline["workbench_policy"]["recommendation_categories_defined_by_workbench"])
         self.assertTrue(pipeline["fallback"]["current_sweep_loop_retained"])
         self.assertEqual(sweep["summary"]["recommendations"], pipeline["sweep_shape"]["recommendations"])
         self.assertTrue(pipeline["status"]["available"])
@@ -149,7 +152,7 @@ class DocumentSweepTests(WorkbenchTestCase):
         index_path = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_index"]
         self.assertTrue(index_path.exists())
         index = read_json(index_path)
-        self.assertEqual("rawr-sweep-evidence-index-v1", index["schema_version"])
+        self.assertEqual("semantica-workbench-sweep-evidence-index-v1", index["schema_version"])
         self.assertEqual(2, index["summary"]["documents_indexed"])
         self.assertEqual(
             sum(record["counts"]["claims"] for record in sweep["documents"]), index["summary"]["claim_count"]
@@ -160,7 +163,7 @@ class DocumentSweepTests(WorkbenchTestCase):
         self.assertEqual(sweep["summary"]["decision_grade_findings"], index["summary"]["decision_grade_finding_count"])
         self.assertEqual(0, index["summary"]["warning_count"])
         self.assertFalse(index["authority_boundary"]["generated_evidence_is_truth"])
-        self.assertTrue(index["authority_boundary"]["reviewed_rawr_ontology_remains_authority"])
+        self.assertTrue(index["authority_boundary"]["reviewed_ontology_input_remains_authority"])
         self.assertTrue(index["authority_boundary"]["promotion_requires_human_review"])
         self.assertTrue(index["authority_boundary"]["llm_output_is_evidence_only"])
         self.assertEqual(
@@ -240,13 +243,15 @@ class DocumentSweepTests(WorkbenchTestCase):
 
         rdf_graph = Graph()
         rdf_graph.parse(evidence_ttl, format="turtle")
-        rawr = Namespace("https://rawr.dev/ontology/")
-        self.assertEqual(len(index["documents"]), len(list(rdf_graph.subjects(RDF.type, rawr.IndexedDocument))))
-        self.assertEqual(len(index["claims"]), len(list(rdf_graph.subjects(RDF.type, rawr.EvidenceClaim))))
-        self.assertEqual(len(index["findings"]), len(list(rdf_graph.subjects(RDF.type, rawr.ReviewFinding))))
+        workbench = Namespace("urn:semantica-workbench:ontology:")
+        self.assertEqual(
+            len(index["documents"]), len(list(rdf_graph.subjects(RDF.type, workbench.IndexedDocument)))
+        )
+        self.assertEqual(len(index["claims"]), len(list(rdf_graph.subjects(RDF.type, workbench.EvidenceClaim))))
+        self.assertEqual(len(index["findings"]), len(list(rdf_graph.subjects(RDF.type, workbench.ReviewFinding))))
         self.assertEqual(
             len(index["documents"]) + len(index["claims"]) + len(index["findings"]),
-            len(list(rdf_graph.subjects(rawr.partOfEvidenceIndex, None))),
+            len(list(rdf_graph.subjects(workbench.partOfEvidenceIndex, None))),
         )
         sparql = run_sparql_query(
             str(run_dir), Path("tools/semantica-workbench/queries/evidence-prohibited-patterns.rq")
@@ -279,7 +284,7 @@ class DocumentSweepTests(WorkbenchTestCase):
         agent_manifest_path = run_dir / CORE_GRAPH_FILENAMES["sweep_evidence_agent_manifest"]
         self.assertTrue(agent_manifest_path.exists())
         agent_manifest = read_json(agent_manifest_path)
-        self.assertEqual("rawr-sweep-evidence-agent-manifest-v1", agent_manifest["schema_version"])
+        self.assertEqual("semantica-workbench-sweep-evidence-agent-manifest-v1", agent_manifest["schema_version"])
         self.assertFalse(agent_manifest["authority_boundary"]["generated_evidence_is_truth"])
         self.assertTrue(agent_manifest["authority_boundary"]["agent_outputs_are_review_aids"])
         self.assertIn(
@@ -298,7 +303,7 @@ class DocumentSweepTests(WorkbenchTestCase):
         self.assertFalse(aggregate_examples[0]["preserves_review_context"])
         self.assertIn("mcp", agent_manifest)
         self.assertIn(agent_manifest["mcp"]["generic_semantica_mcp_status"], {"available", "blocked"})
-        self.assertEqual("not-wired", agent_manifest["mcp"]["rawr_evidence_access_status"])
+        self.assertEqual("not-wired", agent_manifest["mcp"]["workbench_evidence_access_status"])
         self.assertNotIn(".semantica/current", json.dumps(agent_manifest["stable_interfaces"]["named_queries"]))
         for document in index["documents"]:
             report_html = document.get("report_html_artifact")
@@ -332,7 +337,7 @@ class DocumentSweepTests(WorkbenchTestCase):
         self.assertEqual(2, payload["sweep"]["summary"]["documents_analyzed"])
 
     def test_document_sweep_explicit_excluded_doc_is_tagged_and_compared(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"

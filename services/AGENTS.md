@@ -8,7 +8,7 @@
 ## Scope
 
 - Applies to `services/**`; inherit the
-  [RAWR HQ-Template router](../AGENTS.md).
+  [Habitat repository router](../AGENTS.md).
 - A service package owns one domain capability suite and its private modules,
   policy, persistence semantics, and implementation.
 

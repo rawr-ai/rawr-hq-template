@@ -4,20 +4,6 @@ from collections import Counter
 from typing import Any
 
 
-FORBIDDEN_NAMES = {
-    "packages/runtime/*",
-    "packages/hq-sdk",
-    "@rawr/hq-sdk",
-    "@rawr/runtime",
-    "startAppRole(...)",
-    "startAppRoles(...)",
-    "RuntimeView",
-    "ProcessView",
-    "RoleView",
-    "Shutdown",
-}
-
-
 def validate_graph(ontology: dict[str, Any]) -> dict[str, Any]:
     entities_by_id = {entity["id"]: entity for entity in ontology["entities"]}
     claims_by_id = {claim["id"]: claim for claim in ontology["claims"]}
@@ -42,11 +28,7 @@ def validate_graph(ontology: dict[str, Any]) -> dict[str, Any]:
         if not prov.get("path") or not prov.get("line_start") or not relation.get("authority_rank"):
             issues.append({"kind": "relation_missing_provenance", "relation_id": relation["id"]})
 
-    forbidden_entities = [
-        entity
-        for entity in ontology["entities"]
-        if entity["name"] in FORBIDDEN_NAMES or entity.get("type") == "ForbiddenPattern"
-    ]
+    forbidden_entities = [entity for entity in ontology["entities"] if entity.get("type") == "ForbiddenPattern"]
     canonical_forbidden = [
         entity
         for entity in forbidden_entities
@@ -61,22 +43,11 @@ def validate_graph(ontology: dict[str, Any]) -> dict[str, Any]:
     )
     replacement_rules = [relation for relation in ontology["relations"] if relation["predicate"] == "replaces"]
     forbidden_edges = [relation for relation in ontology["relations"] if relation["predicate"] == "forbids"]
-    component_contract_entities = [
-        entity
-        for entity in ontology["entities"]
-        if entity.get("seed_kind") == "component-contract" and entity["type"] == "RuntimeArtifact"
-    ]
-
-    packet_has_alignment_authority = "alignment-authority" in source_counts
-    packet_has_runtime_spec = "runtime-realization-spec" in source_counts
     checks = {
         "claim_provenance_complete": not any(issue["kind"] == "claim_missing_provenance" for issue in issues),
         "relation_endpoints_resolved": not any(issue["kind"] == "unresolved_relation_endpoint" for issue in issues),
         "no_mentions_edges": predicate_counts.get("mentions", 0) == 0,
         "forbidden_terms_not_canonical": not canonical_forbidden,
-        "replacement_rules_present": bool(replacement_rules) if packet_has_alignment_authority else True,
-        "forbidden_edges_present": bool(forbidden_edges) if packet_has_alignment_authority else True,
-        "component_contracts_seeded": bool(component_contract_entities) if packet_has_runtime_spec else True,
     }
 
     return {
@@ -88,5 +59,4 @@ def validate_graph(ontology: dict[str, Any]) -> dict[str, Any]:
         "source_counts": dict(sorted(source_counts.items())),
         "replacement_rule_count": len(replacement_rules),
         "forbidden_edge_count": len(forbidden_edges),
-        "component_contract_count": len(component_contract_entities),
     }

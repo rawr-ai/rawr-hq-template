@@ -1,0 +1,39 @@
+id: semantica-workbench-fixture-verification-v1
+layer: verification-policy-overlay
+entities:
+  - id: verification.policy.harness-selection
+    label: harness selection
+    type: VerificationPolicyConcept
+    layer: verification-policy-overlay
+    status: evidence-only
+    definition: Each claim uses the boundary that owns the behavior being tested.
+    aliases:
+      - harness selection
+      - createRouterClient
+      - in-process
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Verification Policy
+    operational_consequence:
+      - synthetic-harness-review
+    classifier_readiness:
+      status: not-applicable
+  - id: verification.policy.merge-gating-lane
+    label: merge-gating lane
+    type: VerificationPolicyConcept
+    layer: verification-policy-overlay
+    status: evidence-only
+    definition: Graph law and proof-band checks are synthetic verification evidence.
+    aliases:
+      - graph law
+      - proof band
+      - proof-band
+      - merge gating
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Verification Policy
+    operational_consequence:
+      - synthetic-gating-review
+    classifier_readiness:
+      status: not-applicable
+relations: []

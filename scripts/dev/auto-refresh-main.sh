@@ -21,15 +21,15 @@ elif git rev-parse --verify --quiet ORIG_HEAD^{commit} >/dev/null; then
 fi
 
 if [ -n "${changed_files}" ]; then
-  if ! printf '%s\n' "${changed_files}" | grep -Eq '^(apps/cli/|packages/|plugins/|package.json|bun.lock|nx\.json|tsconfig)'; then
+  if ! printf '%s\n' "${changed_files}" | grep -Eq '^(apps/habitat/|packages/|resources/|services/|plugins/|\.habitat/|package.json|bun.lock|nx\.json|tsconfig)'; then
     exit 0
   fi
 fi
 
-echo "[rawr-auto-refresh] source=${SOURCE} branch=main"
+echo "[habitat-auto-refresh] source=${SOURCE} branch=main"
 
 if ! bun install --frozen-lockfile >/dev/null 2>&1; then
   bun install >/dev/null
 fi
 
-echo "[rawr-auto-refresh] repository dependencies refreshed; no CLI package installed"
+echo "[habitat-auto-refresh] repository dependencies refreshed"

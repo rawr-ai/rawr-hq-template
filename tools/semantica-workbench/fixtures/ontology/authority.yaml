@@ -1,0 +1,30 @@
+id: semantica-workbench-fixture-authority-v1
+layer: authority-and-document-overlay
+entities:
+  - id: fixture.authority.review-guide
+    label: fixture review guide
+    type: DocumentAuthority
+    layer: authority-and-document-overlay
+    status: evidence-only
+    definition: Non-authoritative fixture metadata for verification policy tests.
+    aliases:
+      - review guide
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Verification Policy
+    operational_consequence:
+      - synthetic-review-only
+    classifier_readiness:
+      status: not-applicable
+relations:
+  - id: fixture.relation.review-guide-covers-harness
+    subject: fixture.authority.review-guide
+    predicate: is_authority_for
+    object: verification.policy.harness-selection
+    layer: authority-and-document-overlay
+    status: evidence-only
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Verification Policy
+    operational_consequence:
+      - synthetic-review-only

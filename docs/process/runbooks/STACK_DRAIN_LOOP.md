@@ -21,7 +21,7 @@ gt log --all
 ```bash
 gt sync --no-restack
 ```
-3. Apply repository boundary policy from `docs/process/HQ_OPERATIONS.md`:
+3. Apply repository boundary policy from `docs/process/CROSS_REPO_WORKFLOWS.md`:
 - Do not run CLI publication, content lifecycle, or provider mutation as part of stack mechanics.
 - Keep stack mutation Graphite-first (`gt`), not ad-hoc `git rebase`.
 - Promote Habitat, Rawr, and Marketplace independently; never merge one repository into another.
@@ -78,4 +78,4 @@ Use Graphite publish/merge/sync/prune behavior as canonical.
 - Merged branches are pruned by Graphite.
 - `gt ls` reflects the expected stable stack state.
 - `git status --short` is clean.
-- Each repository independently satisfies `docs/process/HQ_OPERATIONS.md` final acceptance checklist.
+- Each repository independently satisfies its required local and remote checks.

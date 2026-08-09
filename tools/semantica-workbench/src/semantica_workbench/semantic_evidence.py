@@ -117,13 +117,13 @@ def extract_evidence_claims(
             semantica_pilot = semantica_extraction_pilot(document, graph, candidate_queue)
         except Exception as exc:
             semantica_pilot = {
-                "schema_version": "rawr-semantica-extraction-pilot-v1",
+                "schema_version": "semantica-workbench-extraction-pilot-v1",
                 "document": rel(document),
                 "status": {"available": False, "classification": "blocked"},
                 "summary": {
                     "raw_item_count": 0,
                     "evidence_claim_count": 0,
-                    "decision_grade_source": "rawr-semantic-heuristic-v1",
+                    "decision_grade_source": "semantica-workbench-semantic-heuristic-v1",
                     "promotion_allowed": False,
                     "adapter_mode": "blocked",
                 },
@@ -131,7 +131,7 @@ def extract_evidence_claims(
                 "evidence_claims": [],
                 "diagnostics": [{"kind": "semantica_pilot_failed", "error": str(exc)}],
                 "fallback": {
-                    "deterministic_oracle": "rawr-semantic-heuristic-v1",
+                    "deterministic_oracle": "semantica-workbench-semantic-heuristic-v1",
                     "removal_trigger": "Fix pilot execution and prove fixture parity before use.",
                 },
             }
@@ -279,7 +279,7 @@ def extract_evidence_claims(
             else "deterministic-with-blocked-semantica-llm-sidecar"
         )
     return {
-        "schema_version": "rawr-semantic-evidence-v1",
+        "schema_version": "semantica-workbench-semantic-evidence-v1",
         "document": rel(document),
         "fixture": fixture,
         "extraction_mode": {
@@ -318,12 +318,12 @@ def extract_evidence_claims(
 
 def disabled_semantica_pilot(document: Path) -> dict[str, Any]:
     return {
-        "schema_version": "rawr-semantica-extraction-pilot-v1",
+        "schema_version": "semantica-workbench-extraction-pilot-v1",
         "document": rel(document),
         "status": {"available": True, "classification": "disabled"},
         "summary": {
             "enabled": False,
-            "decision_grade_source": "rawr-semantic-heuristic-v1",
+            "decision_grade_source": "semantica-workbench-semantic-heuristic-v1",
             "promotion_allowed": False,
             "adapter_mode": "disabled",
         },
@@ -331,7 +331,7 @@ def disabled_semantica_pilot(document: Path) -> dict[str, Any]:
         "evidence_claims": [],
         "diagnostics": [],
         "fallback": {
-            "deterministic_oracle": "rawr-semantic-heuristic-v1",
+            "deterministic_oracle": "semantica-workbench-semantic-heuristic-v1",
             "removal_trigger": "Enable pilot mode and prove fixture parity before use.",
         },
     }
@@ -517,7 +517,7 @@ def build_claim(
         "assertion_scope": classification["assertion_scope"],
         "authority_context": classification["authority_context"],
         "confidence": confidence,
-        "extractor": "rawr-semantic-heuristic-v1",
+        "extractor": "semantica-workbench-semantic-heuristic-v1",
         "model": None,
         "resolved_ids": resolved_ids,
         "review_state": "machine-classified",
@@ -545,7 +545,7 @@ def compare_evidence_to_ontology(
 
     reasoning = semantica_reasoning_probe(findings)
     return {
-        "schema_version": "rawr-semantic-compare-v1",
+        "schema_version": "semantica-workbench-semantic-compare-v1",
         "document": evidence["document"],
         "ontology_graph": graph["id"],
         "summary": {

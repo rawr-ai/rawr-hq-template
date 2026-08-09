@@ -19,7 +19,9 @@ The next session must read this file in full before framing. Everything needed t
 
 ## 1. Background: how this recommendation set was generated
 
-The prior session ran a multi-phase, multi-fleet workstream that applied the seven recommendations from `docs/projects/rawr-final-architecture-migration/resources/research/runtime-architecture-alignment-plan.md` to the canonical architecture spec. The workstream used the `habitat:workstream-runner` skill as its operating scaffold. After closure (PR #308 open + Graphite-tracked), a meta-conversation surfaced four observations:
+The prior session ran a multi-phase, multi-fleet architecture-alignment
+workstream using the `habitat:workstream-runner` skill as its operating
+scaffold. After closure, a meta-conversation surfaced four observations:
 
 1. The workstream went well largely because the **input** (the alignment plan) was research-grade, not because the workstream design was robust.
 2. The prior session's workstream **design** had four real gaps: no project-convention preflight (caused a Graphite miss), no DRA-finalize step before closure stewards (caused a steward warn), fleet sizing was over-spec'd in Phase 2/3 then quietly consolidated at execution time, and dependency-lattice handling within Phase 1 was implicit.
@@ -65,7 +67,7 @@ Stated by the user during the conversation that produced this set:
 
 **Where:** New `assets/decisions.md` template + Asset Map entry in `SKILL.md` + new Quality Gate.
 
-**What the asset contains:** for each user-decision item or workstream-level execution-scope choice — the question, options considered, option chosen, rationale, and downstream effect on lanes / phases / output. The shape used in `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/decisions.md` is a working reference.
+**What the asset contains:** for each user-decision item or workstream-level execution-scope choice — the question, options considered, option chosen, rationale, and downstream effect on lanes / phases / output.
 
 **Workflow integration:** named in Default Workflow Step 4 ("Create the record") as a sibling artifact, not buried inside the workstream record. New Quality Gate: *"Every borderline call has explicit rationale recorded in `decisions.md` or in a finding record."*
 
@@ -152,7 +154,8 @@ In order:
 2. `tools/workstream-plugin-pack/skills/workstream-runner/SKILL.md` and all files in its `references/` and `assets/` subdirectories.
 3. `tools/workstream-plugin-pack/skills/workstream-review-loops/SKILL.md` and `references/review-lanes.md`.
 4. The companion steward agent files at `tools/workstream-plugin-pack/agents/` (workstream-opening-steward, workstream-proof-ledger-auditor, workstream-closure-steward).
-5. **Evidence of the patterns this set asks the skill to canonicalize:** `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/` — the prior workstream's record, decisions.md, and findings/ directory. The decisions.md there is the working reference for Recommendation #2; the lane-X-patch.md files are working references for the parallel-lane pattern in Recommendation #5; the wave-1-packet.md is a working reference for cross-phase state propagation in Recommendation #5.
+5. **Canonical pattern evidence:** the workstream-runner's `assets/decisions.md`
+   and `references/coordination-patterns.md` own the accepted reusable shapes.
 6. The prior workstream's PR (`gh pr view 308`) — context for the kind of work the skill is being improved to scaffold.
 
 ### Required output contract
@@ -184,8 +187,8 @@ The deployed `habitat:workstream-runner` skill, after improvement, would have ca
 | `tools/workstream-plugin-pack/skills/workstream-runner/assets/` | Where `decisions.md` template lands |
 | `tools/workstream-plugin-pack/skills/workstream-review-loops/` | Sibling skill; light edits possible |
 | `tools/workstream-plugin-pack/agents/` | Companion stewards; reference only |
-| `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/` | Working reference for the patterns being canonicalized |
-| `docs/projects/rawr-final-architecture-migration/resources/research/runtime-architecture-alignment-plan.md` | Optional context — what the prior workstream operated on |
+| `tools/workstream-plugin-pack/skills/workstream-runner/assets/decisions.md` | Accepted decision-record shape |
+| `tools/workstream-plugin-pack/skills/workstream-runner/references/coordination-patterns.md` | Accepted coordination patterns |
 | GitHub PR #308 | Optional context — prior workstream's output |
 
 ---

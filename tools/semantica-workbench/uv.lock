@@ -1720,45 +1720,6 @@ wheels = [
 ]
 
 [[package]]
-name = "rawr-semantica-workbench"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "openai" },
-    { name = "pyyaml" },
-    { name = "rdflib" },
-    { name = "semantica" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "jsonschema" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "ruff" },
-    { name = "types-pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "openai", specifier = ">=1.109.0" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rdflib", specifier = ">=7.6.0" },
-    { name = "semantica", git = "https://github.com/Hawksight-AI/semantica.git?rev=ca5f08179374dcb8326046249d919717f2769a04" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "jsonschema", specifier = ">=4.26.0" },
-    { name = "pyright", specifier = ">=1.1.409" },
-    { name = "pytest", specifier = ">=9.0.3" },
-    { name = "pytest-cov", specifier = ">=7.1.0" },
-    { name = "ruff", specifier = ">=0.15.12" },
-    { name = "types-pyyaml", specifier = ">=6.0.12.20260408" },
-]
-
-[[package]]
 name = "rdflib"
 version = "7.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2008,6 +1969,45 @@ dependencies = [
     { name = "tqdm" },
     { name = "transformers" },
     { name = "umap-learn" },
+]
+
+[[package]]
+name = "semantica-workbench"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "openai" },
+    { name = "pyyaml" },
+    { name = "rdflib" },
+    { name = "semantica" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "jsonschema" },
+    { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "types-pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "openai", specifier = ">=1.109.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rdflib", specifier = ">=7.6.0" },
+    { name = "semantica", git = "https://github.com/Hawksight-AI/semantica.git?rev=ca5f08179374dcb8326046249d919717f2769a04" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "jsonschema", specifier = ">=4.26.0" },
+    { name = "pyright", specifier = ">=1.1.409" },
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+    { name = "ruff", specifier = ">=0.15.12" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20260408" },
 ]
 
 [[package]]

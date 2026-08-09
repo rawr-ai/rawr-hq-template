@@ -38,22 +38,8 @@ mode = "closed"
 allowEmpty = true
 
 [[scopes]]
-name = "repository-niche-rule-packets"
-root = ".habitat/!(*.*)/!(*.*)/rules/!(*.*)"
-kind = "directory"
-mode = "closed"
-required = [
-  "baseline.json",
-  "rule.json",
-]
-allowed = [
-  "pattern.md",
-  "structure.toml",
-]
-
-[[scopes]]
-name = "nested-repository-niche-rule-packets"
-root = ".habitat/!(*.*)/!(*.*)/!(*.*)/rules/!(*.*)"
+name = "repository-overlay-rule-packets"
+root = ".habitat/overlays/!(*.*)/rules/!(*.*)"
 kind = "directory"
 mode = "closed"
 required = [

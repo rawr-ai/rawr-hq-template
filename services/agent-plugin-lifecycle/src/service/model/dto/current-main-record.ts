@@ -1,6 +1,6 @@
 import { type Static, Type } from "typebox";
 
-/** Canonical branch whose reviewed record selects Personal content. */
+/** Canonical branch whose reviewed record selects Marketplace content. */
 export const CURRENT_MAIN_V3_CANONICAL_REF = "refs/heads/main" as const;
 
 /** Repository-owned location of the reviewed current-main selection. */

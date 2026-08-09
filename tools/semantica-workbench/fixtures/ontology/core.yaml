@@ -1,0 +1,122 @@
+id: semantica-workbench-fixture-core-v1
+layer: core
+entities:
+  - id: fixture.kind.service
+    label: service
+    type: ArchitectureKind
+    layer: core
+    status: locked
+    definition: Services own semantic capability truth.
+    aliases:
+      - services
+      - service truth
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Core Concepts
+    operational_consequence:
+      - synthetic-ownership-check
+    classifier_readiness:
+      status: locked
+  - id: fixture.boundary.semantic-capability
+    label: semantic capability truth
+    type: SemanticBoundary
+    layer: core
+    status: locked
+    definition: Synthetic semantic capability boundary used to exercise ownership relations.
+    aliases:
+      - semantic capability
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Core Concepts
+    operational_consequence:
+      - synthetic-boundary-check
+    classifier_readiness:
+      status: locked
+  - id: forbidden.pattern.root-core-authoring-root
+    label: root-level core/ authoring root
+    type: ForbiddenPattern
+    layer: core
+    status: forbidden
+    definition: A root-level core/ authoring root is invalid in this synthetic fixture.
+    aliases:
+      - core/ root
+    constraint:
+      kind: prohibited-construction
+      prohibited_action: create-authoring-root
+      terms:
+        - root-level core/ authoring root
+        - core/ root
+      replacement: packages/core/*
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Constraints
+    operational_consequence:
+      - synthetic-placement-rejection
+    classifier_readiness:
+      status: locked
+  - id: forbidden.pattern.root-runtime-authoring-root
+    label: root-level runtime/ authoring root
+    type: ForbiddenPattern
+    layer: core
+    status: forbidden
+    definition: A root-level runtime/ authoring root is invalid in this synthetic fixture.
+    aliases:
+      - runtime/ root
+    constraint:
+      kind: prohibited-construction
+      prohibited_action: create-authoring-root
+      terms:
+        - root-level runtime/ authoring root
+        - runtime/ root
+      replacement: packages/runtime/*
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Constraints
+    operational_consequence:
+      - synthetic-placement-rejection
+    classifier_readiness:
+      status: locked
+  - id: forbidden.pattern.role-specific-public-start-verb
+    label: role-specific public start verb
+    type: ForbiddenPattern
+    layer: core
+    status: forbidden
+    definition: Role-specific public start verbs are invalid in this synthetic fixture.
+    aliases:
+      - startServer(...)
+    constraint:
+      kind: prohibited-construction
+      prohibited_action: use-role-specific-public-start-verb
+      terms:
+        - startServer(...)
+      replacement: startApp(...)
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Constraints
+    operational_consequence:
+      - synthetic-entrypoint-rejection
+    classifier_readiness:
+      status: locked
+relations:
+  - id: fixture.relation.service-owns-truth
+    subject: fixture.kind.service
+    predicate: owns_truth
+    object: fixture.boundary.semantic-capability
+    layer: core
+    status: locked
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Core Concepts
+    operational_consequence:
+      - synthetic-owner-resolution
+  - id: fixture.relation.service-forbids-root-core
+    subject: fixture.kind.service
+    predicate: forbids
+    object: forbidden.pattern.root-core-authoring-root
+    layer: core
+    status: forbidden
+    source_refs:
+      - path: tools/semantica-workbench/fixtures/docs/ontology-source.md
+        section: Constraints
+    operational_consequence:
+      - synthetic-placement-rejection

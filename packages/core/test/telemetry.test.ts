@@ -32,12 +32,12 @@ describe("oRPC telemetry bootstrap", () => {
     const exporter = createExporter();
 
     const first = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
     });
     const second = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
     });
@@ -46,7 +46,7 @@ describe("oRPC telemetry bootstrap", () => {
     expect(first.instrumentationNames).toEqual(
       expect.arrayContaining(["ORPCInstrumentation", "HttpInstrumentation"])
     );
-    expect(first.options.serviceName).toBe("@rawr/server-test");
+    expect(first.options.serviceName).toBe("habitat-test-service");
     expect(first.options.metrics).toBeDefined();
     expect(first.options.metrics?.exportIntervalMillis).toBe(1000);
     const instrumentation = enable.mock.instances[0] as ORPCInstrumentation | undefined;
@@ -68,7 +68,7 @@ describe("oRPC telemetry bootstrap", () => {
     };
 
     const installed = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
     });
@@ -96,7 +96,7 @@ describe("oRPC telemetry bootstrap", () => {
     };
 
     const first = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
     });
@@ -104,7 +104,7 @@ describe("oRPC telemetry bootstrap", () => {
     await expect(first.shutdown()).rejects.toThrow("exporter shutdown failed");
 
     const replacement = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
     });
@@ -118,7 +118,7 @@ describe("oRPC telemetry bootstrap", () => {
     const exporter = createExporter();
 
     await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
     });
@@ -136,7 +136,7 @@ describe("oRPC telemetry bootstrap", () => {
     const exporter = createExporter();
 
     await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: exporter,
       metrics: {
@@ -146,7 +146,7 @@ describe("oRPC telemetry bootstrap", () => {
 
     await expect(
       installRawrOrpcTelemetry({
-        serviceName: "@rawr/server-test",
+        serviceName: "habitat-test-service",
         environment: "test",
         traceExporter: exporter,
         metrics: {
@@ -160,7 +160,7 @@ describe("oRPC telemetry bootstrap", () => {
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
 
     const installed = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: createExporter(),
     });
@@ -176,7 +176,7 @@ describe("oRPC telemetry bootstrap", () => {
     process.env.OTEL_EXPORTER_OTLP_METRICS_ENDPOINT = "http://127.0.0.1:4318/custom/metrics";
 
     const installed = await installRawrOrpcTelemetry({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       environment: "test",
       traceExporter: createExporter(),
     });
@@ -201,7 +201,7 @@ describe("oRPC telemetry bootstrap", () => {
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:4318";
 
     const resolved = __resolveRawrOrpcTelemetryOptionsForTests({
-      serviceName: "@rawr/server-test",
+      serviceName: "habitat-test-service",
       metrics: {
         exportIntervalMillis: 2500,
       },

@@ -24,7 +24,6 @@ generic workstream mechanics. Habitat owns one checked-in
 hook config invokes the pack's canonical hook sources directly; the workstream
 installer must not rewrite it or create a second hook-source projection.
 
-Runtime Realization Lab material under `tools/runtime-realization-type-env/`
-may specialize workstreams with lab-specific authority order, proof/evidence
-classes, gates, evidence homes, and phase dossier placement. It must not own
-the generic workstream schema or lifecycle model.
+Owner-local workstreams may specialize authority order, proof classes, gates,
+and evidence homes, but they must not redefine the generic workstream schema or
+lifecycle model.

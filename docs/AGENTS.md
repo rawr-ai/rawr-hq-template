@@ -49,8 +49,6 @@ Applies to `docs/**`.
 - `docs/process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md`
 - `docs/process/runbooks/STACK_DRAIN_LOOP.md`
 - `docs/process/MAINTENANCE_CADENCE.md`
-- `docs/process/HQ_USAGE.md`
-- `docs/process/HQ_OPERATIONS.md`
 
 ## Naming Invariant
 

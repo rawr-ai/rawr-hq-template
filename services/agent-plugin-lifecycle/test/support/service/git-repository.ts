@@ -44,14 +44,6 @@ export interface GeneratedMultiMemberGitRepository extends GeneratedGitRepositor
   readonly payloadFiles: readonly string[];
 }
 
-export interface GeneratedMisleadingExecutableRepository extends GeneratedGitRepository {
-  readonly misleadingExecutableFile: string;
-  readonly misleadingExecutableRepositoryPath: ReleaseRelativePath;
-  readonly misleadingPackageFile: string;
-  readonly misleadingPackageRepositoryPath: ReleaseRelativePath;
-  readonly misleadingAdjacentOutput: string;
-}
-
 export async function createGeneratedGitRepository(
   fixture: GitRepositoryFixtureRoot,
   pluginName = "fixture-plugin"
@@ -194,56 +186,6 @@ export async function createGeneratedMultiMemberGitRepository(
     policy,
     pluginIds: Object.freeze([repository.pluginId, secondPluginId]),
     payloadFiles: Object.freeze([repository.payloadFile, secondPayloadFile]),
-  };
-}
-
-export async function installMisleadingExecutableFiles(
-  repository: GeneratedGitRepository
-): Promise<GeneratedMisleadingExecutableRepository> {
-  const misleadingExecutableRepositoryPath = must(
-    parseReleaseRelativePath("apps/cli/src/personal-controller.mjs")
-  );
-  const misleadingPackageRepositoryPath = must(parseReleaseRelativePath("package.json"));
-  const executableDirectory = join(repository.root, "apps", "cli", "src");
-  await mkdir(executableDirectory, { recursive: true, mode: 0o700 });
-  const misleadingExecutableFile = join(
-    repository.root,
-    ...misleadingExecutableRepositoryPath.split("/")
-  );
-  const misleadingPackageFile = join(repository.root, misleadingPackageRepositoryPath);
-  const misleadingAdjacentOutput = join(executableDirectory, "personal-controller-ran.txt");
-  await writeFile(
-    misleadingExecutableFile,
-    [
-      "#!/usr/bin/env node",
-      'import { writeFileSync } from "node:fs";',
-      'writeFileSync(new URL("./personal-controller-ran.txt", import.meta.url), "executed\\n");',
-      "",
-    ].join("\n"),
-    { mode: 0o755 }
-  );
-  await writeFile(
-    misleadingPackageFile,
-    `${JSON.stringify({
-      name: "personal-content-executable-lookalike",
-      private: true,
-      type: "module",
-      bin: { rawr: `./${misleadingExecutableRepositoryPath}` },
-      scripts: { postinstall: `node ./${misleadingExecutableRepositoryPath}` },
-    })}\n`
-  );
-  const policy = await commitGeneratedGitRepository(
-    repository,
-    "add misleading personal executable files"
-  );
-  return {
-    ...repository,
-    policy,
-    misleadingExecutableFile,
-    misleadingExecutableRepositoryPath,
-    misleadingPackageFile,
-    misleadingPackageRepositoryPath,
-    misleadingAdjacentOutput,
   };
 }
 

@@ -1,57 +1,40 @@
-# Updating The CLI And Interfaces
+# Updating Habitat And Its Consumers
 
-`RAWR HQ-Template` and personal `RAWR HQ` update independently from their own
-canonical `main` branches. There is no Template-to-personal Git sync workflow.
+Habitat, Rawr, and Marketplace update independently from their own canonical
+`main` branches. They share no Git synchronization workflow.
 
-## Template Repository
+## Habitat Repository
 
-Update this checkout from its own `origin`, install the locked dependencies, and
-run the repository-owned Nx gates. Use the repository-local Oclif development
-command when working from source:
+Update this checkout from its own `origin`, then use the locked Bun/Nx
+foundation:
 
 ```bash
-git pull --ff-only origin main
+gt sync --no-restack
 bun install --frozen-lockfile
-bun run build
-bun run test
-bun run rawr -- --version
+bunx nx show projects
 ```
 
-The fixed Habitat Nx Release group contains exactly `@habitat-ai/sdk` and
-`@habitat-ai/cli`. Version `0.5.2` is the current published release of the
-reusable substrate and its Oclif entrypoint through ordinary package
-dependencies and installed-package acceptance;
-internal RAWR services, resources, plugins, and applications remain private
-workspace projects. The `@habitat-ai/rawr` Oclif application uses the
-repository-local command above; releasing that private application is outside
-this workstream.
-Do not restore the removed custom installer, selector, release store, or launcher.
-The predecessor distribution, global alias, and legacy `@rawr/cli` data root
-are absent. Development and acceptance have no installed-RAWR fallback.
+Use Graphite for branch and stack changes. Before pushing, run `bun run check`;
+the remote Repository Ratchet is merge authority.
 
-## Personal Repository
+## Public Interface Changes
 
-Update Personal from its own `origin`. Personal owns repository-local content
-validation and must consume an exact supported `@habitat-ai/cli` release rather
-than copy Template tooling or executable code. The current supported release is
-`0.5.2`. Template performs lifecycle acceptance against explicit Personal Git
-records from its own exact revision; do not install the private `rawr`
-application into Personal or substitute a checkout link or retired custom
-distribution.
+1. Change the Habitat owner and its focused proof.
+2. Release only the fixed `@habitat-ai/sdk` and `@habitat-ai/cli` Nx group.
+3. Record registry integrity and provenance in the owning release receipt.
+4. Let each consumer use native `nx migrate` and Bun install against that exact
+   release.
+5. Validate consumer behavior in its own repository and review process.
 
-Do not add a Template remote, merge or cherry-pick Template commits, copy runtime
-files, or use tree equivalence as compatibility proof.
+Do not introduce a checkout link, source fallback, private package cohort,
+custom installer, or cross-repository Git ancestry.
 
-## Interface Changes
+## Command Surfaces
 
-1. Publish reusable Habitat schema and tooling interfaces from Template.
-2. Record the exact accepted interface versions in personal where consumed.
-3. Validate Personal declarative inputs with repository-owned checks.
-4. Run Template lifecycle acceptance against explicit Personal Git records.
-5. Promote each repository through its own review, Graphite, and `main` process.
+- `habitat plugins ...` is operational for external Oclif extensions.
+- Curated agent-plugin lifecycle has no current Habitat CLI projection. Task
+  12.1 must land its command, manifest, profile, and policy together.
+- No Rawr alias or premature `habitat agent plugins ...` route is supported.
 
-Git commit and tree IDs may be retained as audit provenance. They are never runtime
-identity, an interface version, or permission to share code.
-
-See [[docs/process/CROSS_REPO_WORKFLOWS]] for the repository boundary and
-[[docs/process/HQ_USAGE]] for current development commands.
+See [[docs/process/CROSS_REPO_WORKFLOWS]] for repository boundaries and
+[[docs/process/GRAPHITE]] for Habitat stack operations.

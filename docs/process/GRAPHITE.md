@@ -32,7 +32,6 @@ gt log --all
 For canonical merge/prune and repository/interface workflows, use:
 - `docs/process/runbooks/STACK_DRAIN_LOOP.md`
 - `docs/process/CROSS_REPO_WORKFLOWS.md`
-- `docs/process/HQ_OPERATIONS.md` (retry and independent acceptance policy)
 
 ## Related workflow docs
 

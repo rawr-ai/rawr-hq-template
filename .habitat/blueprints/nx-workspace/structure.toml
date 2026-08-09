@@ -1,0 +1,25 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "repository-script-topology"
+root = "scripts"
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "dev",
+  "habitat",
+]
+allowed = []
+
+[[scopes]]
+name = "repository-hook-topology"
+root = ".husky"
+kind = "directory"
+mode = "closed"
+required = [
+  "post-checkout",
+  "post-merge",
+  "pre-push",
+]
+allowed = ["_"]

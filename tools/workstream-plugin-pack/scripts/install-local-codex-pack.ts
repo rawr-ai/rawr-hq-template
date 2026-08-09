@@ -37,7 +37,7 @@ const AGENTS = [
 function repoRoot(): string {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
   if (!existsSync(join(root, ".git")) || !existsSync(join(root, "package.json"))) {
-    throw new Error(`installer is not running from a RAWR HQ-Template checkout: ${root}`);
+    throw new Error(`installer is not running from a Habitat checkout: ${root}`);
   }
   return root;
 }

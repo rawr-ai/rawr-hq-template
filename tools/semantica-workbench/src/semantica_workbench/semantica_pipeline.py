@@ -17,7 +17,7 @@ def semantica_pipeline_probe(
     document_count: int, skipped_count: int, recommendations: dict[str, int]
 ) -> dict[str, Any]:
     proof: dict[str, Any] = {
-        "schema_version": "rawr-semantica-pipeline-proof-v1",
+        "schema_version": "semantica-workbench-pipeline-proof-v1",
         "status": {
             "available": False,
             "classification": "blocked",
@@ -28,14 +28,14 @@ def semantica_pipeline_probe(
             "skipped_count": skipped_count,
             "recommendations": recommendations,
         },
-        "rawr_policy": {
-            "recommendation_categories_owned_by_rawr": True,
-            "review_queues_owned_by_rawr": True,
-            "source_authority_policy_owned_by_rawr": True,
+        "workbench_policy": {
+            "recommendation_categories_defined_by_workbench": True,
+            "review_queues_defined_by_workbench": True,
+            "source_authority_policy_defined_by_workbench": True,
         },
         "fallback": {
             "current_sweep_loop_retained": True,
-            "removal_trigger": "Move orchestration mechanics only after semantica pipeline proves checkpoint/retry/run-state behavior without changing RAWR recommendation semantics.",
+            "removal_trigger": "Move orchestration mechanics only after semantica pipeline proves checkpoint/retry/run-state behavior without changing workbench recommendation semantics.",
         },
     }
     try:
@@ -45,10 +45,10 @@ def semantica_pipeline_probe(
         with contextlib.redirect_stdout(stream), contextlib.redirect_stderr(stream):
             builder = PipelineBuilder()
             for step in SWEEP_PIPELINE_STEPS:
-                builder.add_step(step, f"rawr.{step}")
+                builder.add_step(step, f"workbench.{step}")
             for before, after in zip(SWEEP_PIPELINE_STEPS, SWEEP_PIPELINE_STEPS[1:], strict=False):
                 builder.connect_steps(before, after)
-            pipeline = builder.build("rawr_document_sweep_probe")
+            pipeline = builder.build("semantica_workbench_document_sweep_probe")
             engine = ExecutionEngine()
             result = engine.execute_pipeline(
                 pipeline,

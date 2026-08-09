@@ -17,7 +17,7 @@ def semantica_graph_probe(
     controlled_predicates = allowed_predicates or {relation["predicate"] for relation in graph.get("relations", [])}
 
     proof: dict[str, Any] = {
-        "schema_version": "rawr-semantica-graph-proof-v1",
+        "schema_version": "semantica-workbench-graph-proof-v1",
         "status": status,
         "summary": {
             "entity_count": len(graph.get("entities", [])),
@@ -27,7 +27,7 @@ def semantica_graph_probe(
             "candidate_count": len(candidate_ids),
             "duplicate_label_group_count": len(duplicate_labels),
         },
-        "rawr_guards": {
+        "workbench_guards": {
             "stable_ids_preserved": all(entity.get("id") for entity in graph.get("entities", [])),
             "controlled_predicates_preserved": all(
                 relation.get("predicate") in controlled_predicates for relation in graph.get("relations", [])
@@ -51,8 +51,8 @@ def semantica_graph_probe(
             "action": "review-only",
         },
         "fallback": {
-            "rawr_id_authority": True,
-            "rawr_predicate_authority": True,
+            "reviewed_input_id_authority": True,
+            "contract_predicate_authority": True,
             "removal_trigger": "Use semantica normalization/dedup for graph mutation only after stable IDs, predicates, and target-view leakage tests pass.",
         },
     }
@@ -73,7 +73,7 @@ def semantica_graph_probe(
                 }
                 for relation in graph.get("relations", [])
             ],
-            metadata={"source": "rawr-reviewed-ontology", "truth_model": "rawr-owned"},
+            metadata={"source": "reviewed-ontology-input", "truth_model": "reviewed-input-authoritative"},
         )
         proof["semantica"] = {
             "knowledge_graph_constructible": True,
@@ -101,7 +101,7 @@ def semantica_graph_status() -> dict[str, Any]:
             "graph_builder_available": hasattr(kg, "GraphBuilder"),
             "normalizer_available": hasattr(normalize, "EntityNormalizer"),
             "dedup_available": hasattr(deduplication, "DuplicateDetector"),
-            "limitation": "RAWR IDs, predicates, candidate queues, and target views remain authoritative.",
+            "limitation": "Reviewed input IDs, contract predicates, candidate queues, and target views remain authoritative.",
         }
     except Exception as exc:
         return {

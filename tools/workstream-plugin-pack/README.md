@@ -1,6 +1,6 @@
 # Workstream Plugin Pack
 
-This is the Template-owned generic tooling pack for reusable workstream
+This is the Habitat-owned generic tooling pack for reusable workstream
 operation. Its skills, role briefs, hooks, and reusable assets are maintained
 here independently from any curated-content repository.
 
@@ -12,16 +12,16 @@ resources, but they do not own continuity by themselves.
 
 | Surface | Path | Status |
 | --- | --- | --- |
-| Workstream runner skill | `skills/workstream-runner/` | Generic Template tool |
-| Review-loop skill | `skills/workstream-review-loops/` | Generic Template tool |
-| Provider-neutral steward roles | `agents/` | Generic Template tool |
-| Reusable hook scripts | `hooks/` | Generic Template tool |
-| Local install script | `scripts/` | Template-local projection helper |
-| Copy-forward scaffolds | `skills/workstream-runner/assets/` | Generic Template tool |
+| Workstream runner skill | `skills/workstream-runner/` | Generic Habitat tool |
+| Review-loop skill | `skills/workstream-review-loops/` | Generic Habitat tool |
+| Provider-neutral steward roles | `agents/` | Generic Habitat tool |
+| Reusable hook scripts | `hooks/` | Generic Habitat tool |
+| Local install script | `scripts/` | Habitat-local projection helper |
+| Copy-forward scaffolds | `skills/workstream-runner/assets/` | Generic Habitat tool |
 
 ## Local Activation
 
-The pack can project local runtime surfaces when this Template checkout needs
+The pack can project local runtime surfaces when this Habitat checkout needs
 to use or test Workstream material in Codex.
 
 - `scripts/install-local-codex-pack.ts` projects pack content into this
@@ -47,14 +47,14 @@ Do not keep checked-in placeholder projections for workstream skills or
 workstream agents. The checked-in hook composition and standing Habitat roles
 are repository authority, not generated pack output. When local testing is
 needed, run the installer from this checkout. It rejects destinations outside
-its closed Template-local allowlist, including aliases, before any recursive
+its closed Habitat-local allowlist, including aliases, before any recursive
 removal.
 
 ## Repository Boundary
 
-The installer has no personal-checkout, repository-sync, or copy target.
-Personal RAWR HQ owns curated agent-plugin content and its own lifecycle
-records; this pack remains Template-owned generic tooling. Any future exchange
+The installer has no Marketplace-checkout, repository-sync, or copy target.
+Marketplace owns curated agent-plugin content and its own lifecycle records;
+this pack remains Habitat-owned generic tooling. Any future exchange
 must use an explicit versioned data or immutable-artifact interface rather than
 a repository path, copied implementation, or tree-equivalence rule.
 
@@ -64,6 +64,5 @@ This pack defines one bounded workstream primitive. It does not define a
 program layer, subordinate workstreams, recursive workstream structure, or
 cross-workstream sequence authority.
 
-Runtime-specific proof classes, lab authority order, phase dossiers, evidence
-homes, and Nx gates belong in `tools/runtime-realization-type-env/**` as
-specialization overlays that point back to this pack.
+Owner-local proof classes, authority order, evidence homes, and Nx gates may
+specialize this pack without redefining its generic workstream model.

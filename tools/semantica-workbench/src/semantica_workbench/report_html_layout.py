@@ -12,7 +12,7 @@ def hero(title: str, subtitle: str, facts: list[tuple[str, str]]) -> str:
     return f"""
 <header class="hero">
   <div>
-    <p class="eyebrow">RAWR document intelligence</p>
+    <p class="eyebrow">Ontology evidence workbench</p>
     <h1>{escape(title)}</h1>
     <p class="lede">{escape(subtitle)}</p>
   </div>

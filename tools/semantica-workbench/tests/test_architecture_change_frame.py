@@ -16,11 +16,11 @@ from semantica_workbench.architecture_change_frame import (
     frame_schema_summary,
     fixture_frame_document_path,
     load_architecture_change_frame_schema,
+    resolve_reference_bundle,
     validate_frame_policy_shape,
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +47,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -75,6 +75,15 @@ from support import (
 
 
 class ArchitectureChangeFrameTests(WorkbenchTestCase):
+    def test_reference_geometry_requires_an_explicit_existing_bundle(self) -> None:
+        self.assertIsNone(resolve_reference_bundle(None))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = write_reference_geometry_bundle(root)
+            self.assertEqual(bundle.resolve(), resolve_reference_bundle(bundle))
+            with self.assertRaises(FileNotFoundError):
+                resolve_reference_bundle(root / "missing.zip")
+
     def test_architecture_change_frame_schema_requires_structured_evidence_refs(self) -> None:
         schema = load_architecture_change_frame_schema()
         summary = frame_schema_summary()
@@ -134,7 +143,7 @@ class ArchitectureChangeFrameTests(WorkbenchTestCase):
         self.assertNotIn("accepted", schema["$defs"]["review_state"]["enum"])
 
     def test_architecture_change_frame_package_produces_evidence_only_fixture_frame(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:
@@ -174,7 +183,7 @@ class ArchitectureChangeFrameTests(WorkbenchTestCase):
             self.assertFalse(ref["promotion_allowed"])
 
     def test_architecture_proposal_compare_generates_verdict_repair_package(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:
@@ -207,11 +216,11 @@ class ArchitectureChangeFrameTests(WorkbenchTestCase):
         for item in comparisons:
             self.assertFalse(item["promotion_allowed"])
             self.assertTrue(item["source_claim"]["document_path"])
-        self.assertIn("rawr:ArchitectureChangeFrame", package["proposal_graph_ttl"])
-        self.assertIn("RAWR reviewed ontology remains truth authority", package["review_report"])
+        self.assertIn("workbench:ArchitectureChangeFrame", package["proposal_graph_ttl"])
+        self.assertIn("explicitly reviewed ontology input remains truth authority", package["review_report"])
 
     def test_architecture_change_frame_commands_write_expected_outputs(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -250,7 +259,7 @@ class ArchitectureChangeFrameTests(WorkbenchTestCase):
             self.assertGreaterEqual(len(repair_queue["items"]), 1)
 
     def test_external_document_paths_and_exact_line_spans_are_first_class(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:

@@ -82,8 +82,8 @@ facts. It may govern combinations of kinds, capabilities, ownership, metadata,
 or explicit membership. It does not construct a kind or redefine a capability.
 
 The `niche.toml` definition and derived-membership protocol are reserved future
-work. Current `.habitat/rawr/**` paths are repository-qualified policy overlays,
-not the complete semantic definition of a niche.
+work. Current `.habitat/overlays/**` paths are repository-qualified policy
+overlays, not the complete semantic definition of a niche.
 
 ## Rule Application
 

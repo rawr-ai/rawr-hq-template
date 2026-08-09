@@ -1,6 +1,6 @@
 {
   "id": "software-architecture-content-v2",
-  "description": "Decision-grade content ontology for packet-scoped RAWR architecture authority extraction.",
+  "description": "Decision-grade content ontology for packet-scoped architecture authority extraction.",
   "entity_types": [
     {
       "id": "Document",
@@ -12,7 +12,7 @@
     },
     {
       "id": "ArchitectureLayer",
-      "description": "A named layer or plane in the RAWR architecture."
+      "description": "A named layer or plane in the reviewed architecture input."
     },
     {
       "id": "ArchitectureKind",

@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml
 
 from .paths import REPO_ROOT
+from .source_model import provenance_segment_for_path
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,13 @@ class Manifest:
 
 
 def load_manifest(path: Path) -> Manifest:
+    path = path.expanduser().resolve()
+    manifest_provenance = provenance_segment_for_path(path)
+    if manifest_provenance:
+        raise ValueError(
+            f"Manifest is provenance-only and cannot seed canonical extraction: {path} "
+            f"(segment: {manifest_provenance})"
+        )
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
         raise ValueError(f"Manifest must be a mapping: {path}")
@@ -42,9 +50,15 @@ def load_manifest(path: Path) -> Manifest:
     for raw in data.get("sources", []):
         if not raw.get("include", True):
             continue
-        source_path = REPO_ROOT / raw["path"]
+        source_path = (REPO_ROOT / raw["path"]).resolve()
         if not source_path.exists():
             raise FileNotFoundError(f"Manifest source does not exist: {source_path}")
+        source_provenance = provenance_segment_for_path(source_path)
+        if source_provenance:
+            raise ValueError(
+                f"Manifest source is provenance-only and cannot seed canonical extraction: {source_path} "
+                f"(segment: {source_provenance})"
+            )
         sources.append(
             Source(
                 id=str(raw["id"]),

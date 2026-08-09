@@ -1286,35 +1286,96 @@ describe("Habitat catalog resolve", () => {
     }
   });
 
-  test("admits the repository's frozen version 2 compatibility corpus", async () => {
+  test("admits the repository's exact surviving version 2 compatibility corpus", async () => {
     const result = await resolveRepositoryCorpus();
 
     expect(result._tag).toBe("Resolved");
     if (result._tag !== "Resolved") throw new Error("Expected the repository corpus to resolve.");
 
     const compatibility = result.catalog.compatibility;
-    const ruleIds = compatibility.rules.map(({ ruleId }) => ruleId);
-    expect(Object.keys(compatibility.ownerRoots)).toHaveLength(5);
-    expect(ruleIds).toEqual([
-      "require_agent_plugin_command_channel_source_relationships",
-      "require_agent_plugin_command_channel_topology",
-      "require_agent_router_placement",
-      "require_agent_router_shape",
-      "require_blueprint_packet_topology",
-      "require_exported_value_declarations_have_jsdoc",
-      "require_grit_helper_comments",
-      "require_nx_workspace_scheduler_scripts",
-      "require_oclif_command_plugin_configuration",
-      "require_oclif_command_plugin_topology",
-      "require_oclif_command_source_relationships",
-      "require_package_publication_coherence",
-      "require_repository_script_topology",
-      "require_runtime_realization_lab_source_relationships",
-      "require_runtime_realization_lab_topology",
-      "require_web_public_environment_funnel",
-      "require_workstream_plugin_pack_hook_configuration",
-      "require_workstream_plugin_pack_topology",
+    expect(compatibility.ownerRoots).toEqual({
+      habitat: "scripts/habitat",
+      "workstream-plugin-pack": "tools/workstream-plugin-pack",
+    });
+    expect(compatibility.rules.map(({ ruleId, manifestPath }) => [ruleId, manifestPath])).toEqual([
+      [
+        "require_agent_router_placement",
+        ".habitat/overlays/repository/rules/require_agent_router_placement/rule.json",
+      ],
+      [
+        "require_agent_router_shape",
+        ".habitat/blueprints/agent-router/require_agent_router_shape/rule.json",
+      ],
+      [
+        "require_blueprint_packet_topology",
+        ".habitat/blueprints/blueprint-packet/require_blueprint_packet_topology/rule.json",
+      ],
+      [
+        "require_exported_value_declarations_have_jsdoc",
+        ".habitat/overlays/repository/rules/require_exported_value_declarations_have_jsdoc/rule.json",
+      ],
+      [
+        "require_grit_helper_comments",
+        ".habitat/blueprints/grit-pattern/require_grit_helper_comments/rule.json",
+      ],
+      [
+        "require_nx_workspace_scheduler_scripts",
+        ".habitat/blueprints/nx-workspace/require_nx_workspace_scheduler_scripts/rule.json",
+      ],
+      [
+        "require_package_publication_coherence",
+        ".habitat/blueprints/nx-workspace/require_package_publication_coherence/rule.json",
+      ],
+      [
+        "require_repository_script_topology",
+        ".habitat/blueprints/nx-workspace/require_repository_script_topology/rule.json",
+      ],
+      [
+        "require_repository_separation_predecessor_source_absence",
+        ".habitat/overlays/repository-separation/rules/require_repository_separation_predecessor_source_absence/rule.json",
+      ],
+      [
+        "require_workstream_plugin_pack_hook_configuration",
+        ".habitat/overlays/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/rule.json",
+      ],
+      [
+        "require_workstream_plugin_pack_topology",
+        ".habitat/overlays/workstream-plugin-pack/rules/require_workstream_plugin_pack_topology/rule.json",
+      ],
     ]);
+
+    const documentationRule = compatibility.rules.find(
+      ({ ruleId }) => ruleId === "require_exported_value_declarations_have_jsdoc"
+    );
+    expect(documentationRule?.coveragePatterns).toEqual([
+      "resources/*/contract.ts",
+      "resources/*/providers/*/index.ts",
+      "services/*/src/client.ts",
+    ]);
+    expect(documentationRule?.runner).toMatchObject({
+      acquisition: { entries: [{ kind: "directory", path: "." }] },
+      name: "grit",
+    });
+
+    const repositorySeparationRule = compatibility.rules.find(
+      ({ ruleId }) => ruleId === "require_repository_separation_predecessor_source_absence"
+    );
+    expect(repositorySeparationRule?.ownerProject).toBe("habitat");
+    expect(repositorySeparationRule?.coveragePatterns).toEqual([
+      "*.config.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "apps/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "packages/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "plugins/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "resources/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "scripts/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "services/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+      "tools/**/*.{js,mjs,cjs,jsx,ts,mts,cts,tsx}",
+    ]);
+    expect(repositorySeparationRule?.runner).toMatchObject({
+      acquisition: { entries: [{ kind: "directory", path: "." }] },
+      name: "grit",
+      patternName: "require_repository_separation_predecessor_source_absence",
+    });
   });
 
   test("resolves executable version 2 Grit authority without retaining asset bytes", async () => {

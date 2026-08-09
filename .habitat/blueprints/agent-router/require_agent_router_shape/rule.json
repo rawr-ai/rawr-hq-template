@@ -3,7 +3,7 @@
   "id": "require_agent_router_shape",
   "title": "Require Agent Router Shape",
   "placement": {
-    "niche": "rawr",
+    "niche": "habitat",
     "blueprint": "agent-router",
     "category": "quality"
   },

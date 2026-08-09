@@ -52,7 +52,7 @@ resolves from `dist/blueprints/<id>/versions/2/blueprint.toml`. Presence in
 The selected SDK package owns each reusable definition, version, runner asset,
 and its policy-pack provenance. A repository remains the authority for its own
 `habitat.toml` instances and qualified overlays; installing the package does
-not select an instance or create an application. Template's exact tracked
+not select an instance or create an application. The Habitat workspace's exact tracked
 authoring copy is inert during resolution, while a different local definition
 at the same identity is rejected as drift.
 Each member path locates one immutable, complete definition and runner-asset

@@ -41,11 +41,11 @@ const memberIds = [
 ].map((memberId) => parsed(parsePluginId(memberId)));
 const releaseInputPath = parsed(parseReleaseRelativePath(".rawr/release-input.json"));
 const pluginRoot = parsed(parseReleaseRelativePath("plugins/agents"));
-const remoteUrl = "https://example.invalid/rawr-hq.git";
+const remoteUrl = "https://example.invalid/marketplace-content.git";
 
 describe("releases.refreshReleaseInput", () => {
-  it("authors and deterministically converges a fresh Personal-shaped closed release input", async () => {
-    const entries = personalShapedEntries();
+  it("authors and deterministically converges a fresh Marketplace-shaped closed release input", async () => {
+    const entries = marketplaceShapedEntries();
     expect(entries).toHaveLength(1_610);
     const firstObservation = stagedObservation(entries);
     const selections: Array<Readonly<{ paths: readonly string[]; roots: readonly string[] }>> = [];
@@ -126,8 +126,8 @@ describe("releases.refreshReleaseInput", () => {
     const decoded = decodeAgentPluginReleaseInput(fresh.bytes);
     if (!decoded.ok) throw new Error("Fresh fixture did not decode");
     const binding = {
-      id: "personal-provenance",
-      protocol: "personal-v1",
+      id: "marketplace-provenance",
+      protocol: "marketplace-v1",
       contentDigest: `sha256_${"a".repeat(64)}`,
     } as const;
     const seeded = createAgentPluginReleaseInput({
@@ -434,7 +434,7 @@ describe("releases.refreshReleaseInput", () => {
     }
     const decoded = decodeAgentPluginReleaseInput(result.bytes);
     if (!decoded.ok) throw new Error("Snapshot fixture did not decode");
-    expect(decoded.value.body.contentAuthority).toBe("personal-rawr-hq");
+    expect(decoded.value.body.contentAuthority).toBe("marketplace-content");
     expect(decoded.value.body.members.map((member) => member.pluginId)).toEqual(["cognition"]);
   });
 
@@ -522,8 +522,8 @@ function refreshRequest(ids: readonly string[] = memberIds) {
   return {
     contentWorkspace: {
       locator: "/tmp/rawr-release-input-refresh",
-      repositoryIdentity: parsed(parseRepositoryIdentity("git:personal-rawr-hq")),
-      contentAuthority: parsed(parseContentAuthority("personal-rawr-hq")),
+      repositoryIdentity: parsed(parseRepositoryIdentity("git:marketplace-content")),
+      contentAuthority: parsed(parseContentAuthority("marketplace-content")),
       remoteName: "origin",
       remoteUrl,
       refName: "refs/heads/main",
@@ -544,7 +544,7 @@ async function refreshWith(entries: readonly StagedEntry[], ids: readonly string
   return client.releases.refreshReleaseInput(refreshRequest(ids), testInvocation);
 }
 
-function personalShapedEntries(): StagedEntry[] {
+function marketplaceShapedEntries(): StagedEntry[] {
   const entries: StagedEntry[] = [];
   let skillIndex = 0;
   for (const [memberIndex, memberId] of memberIds.entries()) {

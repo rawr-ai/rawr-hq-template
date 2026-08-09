@@ -5,8 +5,8 @@ foundational Oclif/Nx CLI, architecture law, and reusable platform capabilities.
 `RAWR HQ-Template` is a legacy remote locator, not the platform's semantic name.
 
 Rawr is the first downstream product built on Habitat. Its private app, domain
-services, resources, plugins, and CLI topics remain co-located only during
-extraction. Marketplace (legacy remote `RAWR HQ`) is a separate curated-content
+services, resources, plugins, and CLI topics live in its independent repository.
+Marketplace (legacy remote `RAWR HQ`) is a separate curated-content
 repository that owns agent-plugin source, provenance, policy/evaluation inputs,
 and governed content lifecycle records. Neither downstream owner inherits,
 mirrors, or merges Habitat implementation.
@@ -16,15 +16,13 @@ mirrors, or merges Habitat implementation.
 ```bash
 bun install
 bun run test
-# Optional project-focused lane
-bun run test:web
 ```
 
 ## Narsil Code Intel
 
 This repo should use a dedicated `narsil-mcp` instance as its primary code-intel MCP server.
 
-- Give `rawr-hq-template` its own Narsil instance instead of folding it into an unrelated shared domain index.
+- Give this Habitat repository its own Narsil instance instead of folding it into an unrelated shared domain index.
 - Keep the Narsil index outside the repo; do not commit generated cache or index state.
 - Prefer the persistent daemon model with `--persist --git --call-graph --watch --neural`.
 - Verify the repo is present in `list_repos`, then use Narsil tools such as `hybrid_search`, `find_symbols`, `find_references`, and `find_call_path`.
@@ -64,11 +62,12 @@ bunx nx graph
 - Habitat owns the foundational Oclif/Nx CLI, core runtime, generic adapters,
   schemas/tooling implementations, validators, reusable platform law, and the
   generic agent-plugin lifecycle.
-- Rawr owns its private app, selected product topics, and domain services.
+- Rawr owns its private app, selected product topics, and domain services in
+  its independent repository.
 - External Oclif extensions are managed only by `habitat plugins ...`.
-- Curated agent-plugin lifecycle is currently managed only by
-  `rawr agent plugins ...`. Its accepted Habitat command destination is a
-  migration target, not current operator guidance.
+- Curated agent-plugin lifecycle currently has no Habitat CLI projection. Task
+  12.1 must land the command, manifest, profile, and policy together before
+  `habitat agent plugins ...` becomes operational; no Rawr alias is admitted.
 - Marketplace curated content enters through explicit versioned data or ordinary
   package/artifact interfaces. A repository path is only a locator.
 - App composition consumes declared outputs; it does not own lifecycle state.
@@ -76,7 +75,7 @@ bunx nx graph
 ## Contribution Boundaries
 
 - Reusable platform machinery and law belong to Habitat.
-- Rawr product behavior belongs to Rawr owners, even while co-located here.
+- Rawr product behavior belongs in the independent Rawr repository.
 - Curated agent content and governed content records belong in Marketplace.
 - A concept may be reimplemented intentionally on either side of a published
   interface, but code is never copied or synchronized between repositories.

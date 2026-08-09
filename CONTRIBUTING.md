@@ -1,66 +1,53 @@
-# Contributing to RAWR HQ-Template
+# Contributing To Habitat
 
 ## Purpose
 
-This repository owns the executable Oclif CLI and generic lifecycle/tooling
-authority. Personal `RAWR HQ` is a separate curated-content repository, not a
-downstream fork.
-
-## Contribution Types
-
-- CLI contribution: official Oclif contracts, ordinary package/release behavior,
-  generic lifecycle services, provider adapters, schemas, tooling, and validators.
-- Fixture contribution: non-personal artifacts used only to validate Template behavior.
+This repository owns the Habitat platform: its public SDK and foundational
+Oclif/Nx CLI, reusable runtime machinery, generic capability owners, tooling,
+and constitutional law.
 
 ## What Belongs Here
 
-Contribute here when the change implements generic executable behavior:
-- CLI UX and command contract improvements.
-- Shared package behavior (`@habitat-ai/rawr-core`, `@rawr/control-plane`, `@rawr/state`, `@rawr/security`, `@rawr/journal`).
-- Template governance/docs/process improvements.
+- Reusable Habitat SDK, CLI, runtime, adapter, resource, provider, service, and
+  schema behavior.
+- Generic Nx, Oclif, validation, release, and repository machinery.
+- Habitat-owned fixtures that prove a public platform contract without becoming
+  product source.
+- Habitat governance, architecture, process, and operator documentation.
 
-## What Belongs In Personal `RAWR HQ`
+## What Belongs Elsewhere
 
-- Curated agent-plugin source/content and vendor provenance.
-- Declarative policy/evaluation inputs.
-- Content acceptance, release, and channel records.
-- Personal repository process and configuration.
+- Rawr domain services, topics, profiles, app composition, and product policy
+  belong in Rawr's independent repository.
+- Marketplace owns curated agent-plugin content, vendor provenance, declarative
+  evaluation inputs, and governed content release/channel records.
+- Machine-specific settings and personal workflows remain outside all three
+  repositories.
 
-Do not copy Template runtime code into personal or merge repository histories.
-Publish a versioned data/artifact interface when the two products must interact.
+Cross-repository behavior uses a versioned data interface or ordinary package
+artifact. Never copy executable implementation or merge repository histories.
 
-## Fixture Admission Policy
+## Fixture Admission
 
-A plugin can be added as a Template fixture only when:
-- Its behavior is generally reusable.
-- It has stable command/runtime contracts.
-- It includes tests and documentation.
-- It contains no personal curated content or machine-specific assumptions.
-- It remains outside repository app/topic membership and is covered by
-  `@habitat-ai/cli:acceptance:oclif-native-plugins`.
+A Habitat fixture must be owner-local, deterministic, non-product, and scoped
+to one public contract. It cannot become an Nx product project, app/topic
+member, release-group member, or source-workspace fallback.
 
-## API Surface Policy
+## Command Surfaces
 
-- `habitat plugins ...` is reserved for external Oclif extension management.
-- `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
-- App composition commands do not acquire lifecycle authority.
-- Command-surface changes require migration notes in `UPDATING.md`.
-- `@habitat-ai/rawr` and every `@habitat-ai/rawr-*` project are private
-  workspace identities, not public npm products.
-
-Use `bun run rawr -- ...` for CLI development. After the SDK collapse lands,
-public Habitat consumers install the Habitat CLI/SDK substrate; do not restore a RAWR package cohort, custom
-installer, selector, or release store.
+- `habitat plugins ...` is the operational external Oclif extension channel.
+- Curated agent-plugin lifecycle has no current CLI projection. Task 12.1 must
+  land its command, manifest, profile, and policy together before
+  `habitat agent plugins ...` becomes operational.
+- No Rawr alias is admitted in Habitat.
 
 ## Quality Gates
 
-Before merging:
-- `bun run build`
-- `bun run test`
-- docs updated for user-visible behavior changes
+Use Nx to select the owning project and run its focused typecheck, test, build,
+manifest, or acceptance target. Before pushing, run `bun run check`; the remote
+Repository Ratchet remains merge authority.
 
-## Commit Scope Expectations
+## Change Shape
 
-Keep changes narrow and explicit:
-- One behavior change per PR where practical.
-- Include rationale and migration impact in PR description.
+Keep each change owner-complete: move one behavior through implementation,
+proof, documentation, and migration impact without unrelated refactors.

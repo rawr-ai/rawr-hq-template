@@ -17,7 +17,7 @@
 - Consumers cross only through the declared `/client` package export.
   `src/client.ts` admits the callable client surface; `src/service/**` remains
   private implementation owned by this package.
-- Personal's reviewed record owns desired plugin membership; exact Git objects
+- Marketplace's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes; native provider inventory owns installed state.
 - The service model owns pure current-main selection, clean-content
   classification, declared-tree validation, release derivation, and release
@@ -114,7 +114,7 @@
 - Pure deterministic byte policy may use a portable implementation directly;
   it must not create a resource or provider facade for computation without a
   runtime acquisition or lifecycle protocol.
-- It does not own the Oclif installation, Personal repository contents, app
+- It does not own the Oclif installation, Marketplace repository contents, app
   composition, or provider-home state. Native provider inventory is the live
   installed-state authority.
 

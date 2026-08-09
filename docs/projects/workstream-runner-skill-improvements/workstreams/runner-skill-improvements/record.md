@@ -38,7 +38,9 @@ Authority inputs:
 
 - `docs/projects/workstream-runner-skill-improvements/README.md` — handoff brief, full authority over scope.
 - `tools/workstream-plugin-pack/skills/workstream-runner/SKILL.md` and existing references — authority over voice/conventions for new content.
-- `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/{decisions.md,findings/wave-1-packet.md,findings/lane-1-1-patch.md}` on branch `align-arch-spec-with-runtime-realization` — pattern evidence only, not authority over voice.
+- The original architecture-alignment examples are frozen task-2.11
+  provenance only. The accepted patterns now live in the workstream-runner
+  asset and reference files.
 
 Authority order on conflict: brief (`README.md`) > existing skill files (voice/conventions in `SKILL.md` and current references) > pattern-evidence references on `align-arch-spec-with-runtime-realization`. Conflicts resolved by editing the brief first per brief §7, not by reinterpreting the workstream.
 

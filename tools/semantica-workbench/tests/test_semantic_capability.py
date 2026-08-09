@@ -20,7 +20,6 @@ from semantica_workbench.architecture_change_frame import (
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +46,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -79,7 +78,7 @@ class SemanticCapabilityTests(WorkbenchTestCase):
         report = semantic_capability_probe()
         self.assertTrue(report["checked_modules"]["semantica.semantic_extract"]["available"])
         self.assertIn("triplet_extractor_pattern", report["proofs"])
-        self.assertEqual("rawr-semantica-capability-v2", report["schema_version"])
+        self.assertEqual("semantica-workbench-capability-v2", report["schema_version"])
 
     def test_semantic_capability_probe_records_feature_gates(self) -> None:
         report = semantic_capability_probe()
@@ -88,7 +87,7 @@ class SemanticCapabilityTests(WorkbenchTestCase):
         self.assertIn("mcp_agent_interface", gates)
         self.assertIn(gates["semantic_extraction_llm"]["status"], {"probe-ready", "blocked-missing-extra"})
         self.assertIn(gates["document_ingest_parse_split"]["status"], {"probe-ready", "partial", "blocked"})
-        self.assertTrue(gates["semantic_extraction_llm"]["rawr_adapter_required"])
+        self.assertTrue(gates["semantic_extraction_llm"]["workbench_adapter_requirement"])
         self.assertTrue(report["optional_dependencies"]["openai"]["enables"])
         if not report["checked_modules"]["semantica.parse"]["classes"].get("MarkdownParser"):
             self.assertEqual("partial", gates["document_ingest_parse_split"]["status"])

@@ -46,7 +46,7 @@ def render_query_text(result: dict[str, Any]) -> str:
                 f"- findings: {separation.get('finding_count', 0)}",
                 f"- target_view_excludes_candidates: {separation.get('target_view_excludes_candidates')}",
                 f"- export_available: {export.get('available')}",
-                f"- export_preservation_validated: {export.get('rawr_export_contract', {}).get('preservation_validated')}",
+                f"- export_preservation_validated: {export.get('workbench_export_contract', {}).get('preservation_validated')}",
                 f"- visualization_available: {visualization.get('available')}",
                 f"- static_viewer_present: {visualization.get('static_viewer_present')}",
             ]

@@ -79,7 +79,7 @@ def semantic_capability_probe() -> dict[str, Any]:
         },
         {
             "id": "deprecated-replacement-table",
-            "text": "| Old pattern | Replacement |\n| --- | --- |\n| `@rawr/hq-sdk` | `@rawr/hq` |",
+            "text": "| Old pattern | Replacement |\n| --- | --- |\n| `@example/legacy-sdk` | `@example/sdk` |",
             "expected_policy_bucket": "replacement-context",
         },
         {
@@ -95,7 +95,7 @@ def semantic_capability_probe() -> dict[str, Any]:
     ]
     report: dict[str, Any] = {
         **status,
-        "schema_version": "rawr-semantica-capability-v2",
+        "schema_version": "semantica-workbench-capability-v2",
         "checked_modules": {},
         "optional_dependencies": {},
         "feature_gates": {},
@@ -104,8 +104,8 @@ def semantic_capability_probe() -> dict[str, Any]:
         "proofs": {},
         "replacement_matrix": capability_replacement_matrix(),
         "limitations": [
-            "semantica extraction does not define RAWR architecture truth.",
-            "Decision-grade findings still require RAWR claim polarity, modality, assertion scope, and authority rules.",
+            "semantica extraction does not define architecture truth.",
+            "Decision-grade findings still require workbench claim polarity, modality, assertion scope, and authority rules.",
             "Any semantica extraction that loses line spans is evidence-only until resolved back to local spans.",
             "Missing optional extras are blockers for that semantica feature, not permission to rebuild a parallel semantic platform.",
         ],
@@ -234,58 +234,58 @@ def capability_feature_gates(report: dict[str, Any]) -> dict[str, dict[str, Any]
             "note": "MarkdownParser is required before semantica intake can replace local Markdown chunking."
             if ingest_parse_split_modules and not markdown_intake_classes
             else "",
-            "rawr_adapter_required": "Exact Markdown line-span mapping and source-authority metadata.",
+            "workbench_adapter_requirement": "Exact Markdown line-span mapping and source-authority metadata.",
         },
         "semantic_extraction_non_llm": {
             "status": "probe-ready" if module_available("semantic_extract") else "blocked",
             "requires": ["semantica.semantic_extract"],
-            "rawr_adapter_required": "Polarity, modality, assertion scope, authority context, and stable ID resolution.",
+            "workbench_adapter_requirement": "Polarity, modality, assertion scope, authority context, and stable ID resolution.",
         },
         "semantic_extraction_llm": {
             "status": "probe-ready" if provider_dependency_available else "blocked-missing-extra",
             "requires": ["semantica.semantic_extract.LLMExtraction", "openai or equivalent provider extra"],
-            "rawr_adapter_required": "LLM output remains evidence-only until reviewed.",
+            "workbench_adapter_requirement": "LLM output remains evidence-only until reviewed.",
         },
         "provenance_lineage": {
             "status": "probe-ready" if module_available("provenance") else "blocked",
             "requires": ["semantica.provenance"],
-            "rawr_adapter_required": "Line-span and checksum fields must be queryable.",
+            "workbench_adapter_requirement": "Line-span and checksum fields must be queryable.",
         },
         "kg_normalize_dedup": {
             "status": "probe-ready"
             if module_available("kg") and module_available("normalize") and module_available("deduplication")
             else "blocked",
             "requires": ["semantica.kg", "semantica.normalize", "semantica.deduplication"],
-            "rawr_adapter_required": "Candidates and evidence cannot leak into locked target views.",
+            "workbench_adapter_requirement": "Candidates and evidence cannot leak into locked target views.",
         },
         "conflict_reasoning_explanations": {
             "status": "probe-ready" if module_available("conflicts") and module_available("reasoning") else "blocked",
             "requires": ["semantica.conflicts", "semantica.reasoning"],
-            "rawr_adapter_required": "RAWR owns decision-grade verdict meanings and review actions.",
+            "workbench_adapter_requirement": "The workbench defines decision-grade verdict meanings and review actions.",
         },
         "mcp_agent_interface": {
             "status": "probe-ready" if module_available("mcp_server") else "blocked",
             "requires": ["semantica.mcp_server"],
-            "rawr_adapter_required": "Graph questions are review aids, not architecture promotion.",
+            "workbench_adapter_requirement": "Graph questions are review aids, not architecture promotion.",
         },
         "rest_explorer_interface": {
             "status": "blocked-missing-extra"
             if not (dependency_available("fastapi") and dependency_available("uvicorn"))
             else "probe-ready",
             "requires": ["fastapi", "uvicorn"],
-            "rawr_adapter_required": "Explorer must preserve canonical/evidence/candidate separation.",
+            "workbench_adapter_requirement": "Explorer must preserve canonical/evidence/candidate separation.",
         },
         "export_validation": {
             "status": "probe-ready"
             if export_module_available and export_dependencies_available
             else ("partial" if export_module_available and dependency_available("rdflib") else "blocked"),
             "requires": ["semantica.export", "rdflib", "pyshacl for SHACL validation"],
-            "rawr_adapter_required": "Generated exports are derived artifacts.",
+            "workbench_adapter_requirement": "Generated exports are derived artifacts.",
         },
         "pipeline_orchestration": {
             "status": "probe-ready" if module_available("pipeline") else "blocked",
             "requires": ["semantica.pipeline"],
-            "rawr_adapter_required": "RAWR keeps recommendation policy and source scope.",
+            "workbench_adapter_requirement": "The workbench keeps recommendation policy and source scope.",
         },
     }
 
@@ -295,7 +295,7 @@ def capability_replacement_matrix() -> list[dict[str, str]]:
         {
             "surface": "document intake and chunking",
             "target": "replace mechanics with semantica ingest/parse/split where span parity holds",
-            "keep": "RAWR manifest scope, authority ranks, quarantine/archive policy",
+            "keep": "workbench manifest scope, authority ranks, quarantine/archive policy",
         },
         {
             "surface": "comparison document parsing",
@@ -310,22 +310,22 @@ def capability_replacement_matrix() -> list[dict[str, str]]:
         {
             "surface": "graph construction and candidate discovery",
             "target": "reduce local alias/dedup logic in favor of semantica KG/normalize/dedup",
-            "keep": "stable RAWR IDs, locked target view, candidate queue, and promotion rules",
+            "keep": "stable reviewed input IDs, locked target view, candidate queue, and promotion rules",
         },
         {
             "surface": "conflict and reasoning",
             "target": "wrap or move verdict explanations into semantica conflict/reasoning surfaces",
-            "keep": "RAWR decision-grade policy and review-action semantics",
+            "keep": "workbench decision-grade policy and review-action semantics",
         },
         {
             "surface": "agent and review access",
             "target": "use semantica MCP/export surfaces where proven",
-            "keep": "RAWR CLI commands and portable static review artifacts",
+            "keep": "workbench CLI commands and portable static review artifacts",
         },
         {
             "surface": "batch sweep orchestration",
             "target": "use semantica pipeline primitives for DAG/checkpoint/retry where proven",
-            "keep": "RAWR recommendation categories and source-authority regression policy",
+            "keep": "workbench recommendation categories and source-authority regression policy",
         },
     ]
 
@@ -334,7 +334,7 @@ def render_semantica_capability_report(report: dict[str, Any]) -> str:
     lines = [
         "# semantica Capability Report",
         "",
-        "This report records the pinned semantica surfaces available to the RAWR semantic evidence pipeline. It is a capability proof, not an ontology authority document.",
+        "This report records the pinned semantica surfaces available to the workbench semantic evidence pipeline. It is a capability proof, not an ontology authority document.",
         "",
         "## Status",
         "",
@@ -364,7 +364,7 @@ def render_semantica_capability_report(report: dict[str, Any]) -> str:
         lines.append(f"- `{feature}`: `{gate.get('status')}`")
         if gate.get("note"):
             lines.append(f"  - Note: {gate['note']}")
-        lines.append(f"  - RAWR adapter: {gate.get('rawr_adapter_required')}")
+        lines.append(f"  - Workbench adapter: {gate.get('workbench_adapter_requirement')}")
     mcp = report.get("mcp_server", {})
     lines.extend(["", "## MCP Server", ""])
     lines.append(f"- Available: `{mcp.get('available')}`")
@@ -391,6 +391,6 @@ def render_semantica_capability_report(report: dict[str, Any]) -> str:
         lines.append(f"  - Keep: {item['keep']}")
     lines.extend(["", "## Decision", ""])
     lines.append(
-        "semantica has enough local surface area to be the intended substrate, but each surface must pass pinned-package probes before local workbench logic is replaced. RAWR-specific claim semantics, authority rules, promotion policy, and exact source-span guarantees remain explicit adapters and review gates."
+        "semantica has enough local surface area to be the intended substrate, but each surface must pass pinned-package probes before local workbench logic is replaced. Workbench claim semantics, authority rules, promotion policy, and exact source-span guarantees remain explicit adapters and review gates."
     )
     return "\n".join(lines) + "\n"

@@ -16,7 +16,7 @@ def semantica_reasoning_probe(findings: list[dict[str, Any]]) -> dict[str, Any]:
     explanation_complete = all(bool(finding.get("explanation_chain")) for finding in findings)
     probe_findings = (decision_grade or findings)[:REASONING_PROBE_LIMIT]
     proof = {
-        "schema_version": "rawr-semantica-reasoning-proof-v1",
+        "schema_version": "semantica-workbench-reasoning-proof-v1",
         "status": status,
         "summary": {
             "finding_count": len(findings),
@@ -25,14 +25,14 @@ def semantica_reasoning_probe(findings: list[dict[str, Any]]) -> dict[str, Any]:
             "findings_by_kind": dict(Counter(finding.get("kind", "unknown") for finding in findings)),
             "explanation_chain_complete": explanation_complete,
         },
-        "rawr_policy": {
-            "review_actions_owned_by_rawr": True,
-            "decision_grade_meaning_owned_by_rawr": True,
+        "workbench_policy": {
+            "review_actions_defined_by_workbench": True,
+            "decision_grade_meaning_defined_by_workbench": True,
             "raw_phrase_hits_are_not_conflicts": True,
         },
         "fallback": {
-            "rawr_rules_authoritative": True,
-            "removal_trigger": "Move verdict execution only after semantica reasoning can preserve RAWR source claim, target, authority, rule, finding kind, and review action chain.",
+            "workbench_rules_define_review_verdicts": True,
+            "removal_trigger": "Move verdict execution only after semantica reasoning can preserve the source claim, target, authority, rule, finding kind, and review action chain.",
         },
     }
     semantica_proof: dict[str, Any] = {
@@ -106,7 +106,7 @@ def semantica_reasoning_status() -> dict[str, Any]:
             "provider_dependency_available": provider_dependency_available,
             "provider_env_available": provider_env_available,
             "graph_reasoner_execution_status": graph_reasoner_execution_status,
-            "limitation": "RAWR still owns verdict rules and review-action semantics.",
+            "limitation": "The workbench still defines verdict rules and review-action semantics.",
         }
     except Exception as exc:
         return {

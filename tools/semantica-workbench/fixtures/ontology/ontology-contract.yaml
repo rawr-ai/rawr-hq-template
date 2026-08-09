@@ -1,0 +1,70 @@
+id: semantica-workbench-fixture-ontology-v1
+description: Minimal non-authoritative ontology bundle for workbench tests.
+layers:
+  - id: core
+    description: Synthetic architecture concepts.
+  - id: authority-and-document-overlay
+    description: Synthetic document authority metadata.
+  - id: verification-policy-overlay
+    description: Synthetic verification policy evidence.
+statuses:
+  - id: locked
+    canonical_view: true
+  - id: forbidden
+    canonical_view: true
+  - id: deprecated
+    canonical_view: true
+  - id: candidate
+    canonical_view: false
+  - id: evidence-only
+    canonical_view: false
+  - id: not-applicable
+    canonical_view: false
+entity_types:
+  - id: ArchitectureKind
+    layer: core
+  - id: SemanticBoundary
+    layer: core
+  - id: RuntimeArtifact
+    layer: core
+  - id: ForbiddenPattern
+    layer: core
+  - id: DeprecatedTerm
+    layer: authority-and-document-overlay
+  - id: DocumentAuthority
+    layer: authority-and-document-overlay
+  - id: VerificationPolicyConcept
+    layer: verification-policy-overlay
+  - id: ReviewFinding
+    layer: authority-and-document-overlay
+  - id: CandidateEntity
+    layer: authority-and-document-overlay
+predicates:
+  - id: owns_truth
+    domain: ArchitectureKind
+    range: SemanticBoundary
+  - id: forbids
+    domain: ArchitectureKind
+    range: ForbiddenPattern
+  - id: is_authority_for
+    domain: DocumentAuthority
+    range: VerificationPolicyConcept
+canonical_view_statuses:
+  - locked
+  - forbidden
+  - deprecated
+canonical_graph_excluded_types:
+  - VerificationPolicyConcept
+  - ReviewFinding
+  - CandidateEntity
+target_architecture_view_statuses:
+  - locked
+target_architecture_excluded_types:
+  - DeprecatedTerm
+  - VerificationPolicyConcept
+  - ForbiddenPattern
+  - ReviewFinding
+  - CandidateEntity
+candidate_statuses:
+  - candidate
+  - evidence-only

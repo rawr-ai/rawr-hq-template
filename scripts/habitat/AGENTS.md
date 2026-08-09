@@ -7,12 +7,12 @@
 
 ## Scope
 
-- Applies to Template's Habitat consumer boundary in `scripts/habitat/**`.
+- Applies to the Habitat repository's installed-package boundary in `scripts/habitat/**`.
 
 ## Boundaries
 
 - `package.json` and `bun.lock` pin the released `@habitat-ai/cli` package and
-  its exact bytes. Template owns the package source separately; Nx graph
+  its exact bytes. Habitat owns the package source separately; Nx graph
   bootstrap never executes that workspace source as a fallback.
 - `.habitat/**` owns structure, source, and blueprint authority. The installed
   Habitat package owns registry discovery, rule selection, inputs, caching,

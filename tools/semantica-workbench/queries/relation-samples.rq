@@ -1,10 +1,10 @@
-PREFIX rawr: <https://rawr.dev/ontology/>
+PREFIX workbench: <urn:semantica-workbench:ontology:>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 SELECT ?subjectLabel ?predicate ?objectLabel
 WHERE {
   ?subject ?predicate ?object .
-  FILTER(STRSTARTS(STR(?predicate), STR(rawr:)))
+  FILTER(STRSTARTS(STR(?predicate), STR(workbench:)))
   OPTIONAL { ?subject rdfs:label ?subjectLabel . }
   OPTIONAL { ?object rdfs:label ?objectLabel . }
 }

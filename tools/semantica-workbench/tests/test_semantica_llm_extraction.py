@@ -20,7 +20,6 @@ from semantica_workbench.architecture_change_frame import (
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +46,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -76,7 +75,7 @@ from support import (
 
 class SemanticaLlmExtractionTests(WorkbenchTestCase):
     def test_semantica_llm_mode_blocks_without_provider_and_no_fallback_claims(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -95,7 +94,9 @@ class SemanticaLlmExtractionTests(WorkbenchTestCase):
             {"blocked-missing-extra", "blocked-no-api-key", "blocked-provider-unavailable", "blocked-requires-model"},
         )
         self.assertGreater(len(evidence["claims"]), 0)
-        self.assertTrue(all(claim["extractor"] == "rawr-semantic-heuristic-v1" for claim in evidence["claims"]))
+        self.assertTrue(
+            all(claim["extractor"] == "semantica-workbench-semantic-heuristic-v1" for claim in evidence["claims"])
+        )
 
     def test_semantica_llm_fake_provider_outputs_evidence_only_source_anchored_claims(self) -> None:
         old_status = llm_module.semantica_llm_status
@@ -147,7 +148,7 @@ class SemanticaLlmExtractionTests(WorkbenchTestCase):
                 ),
             )
 
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         llm_module.semantica_llm_status = fake_status

@@ -20,7 +20,6 @@ from semantica_workbench.architecture_change_frame import (
 )
 from semantica_workbench.chunking import chunk_markdown
 from semantica_workbench.core_ontology import (
-    TESTING_PLAN,
     build_document_diff,
     build_graph_payload,
     compare_architecture_proposal,
@@ -47,7 +46,7 @@ from semantica_workbench.extraction import heuristic_extract
 from semantica_workbench.io import read_json, rel, write_json
 import semantica_workbench.llm_augmentation as augmentation_module
 from semantica_workbench.manifest import load_manifest
-from semantica_workbench.paths import FIXTURE_MANIFEST, REPO_ROOT
+from semantica_workbench.paths import FIXTURE_MANIFEST, FIXTURE_ONTOLOGY_ROOT, REPO_ROOT
 from semantica_workbench.seeding import build_seed_graph
 from semantica_workbench.semantica_extraction import semantica_extraction_pilot
 import semantica_workbench.semantica_llm_extraction as llm_module
@@ -76,7 +75,7 @@ from support import (
 
 class CoreQueryTests(WorkbenchTestCase):
     def test_semantic_query_names_execute(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -111,7 +110,7 @@ class CoreQueryTests(WorkbenchTestCase):
             self.assertIn("document:", text)
 
     def test_semantica_review_surface_query_reports_mcp_export_and_boundaries(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         evidence = extract_evidence_claims(
@@ -126,7 +125,7 @@ class CoreQueryTests(WorkbenchTestCase):
             result = run_named_query(str(run_dir), "semantica-review-surface")
         self.assertEqual("semantica-review-surface", result["query"])
         surface = result["surface"]
-        self.assertEqual("rawr-semantica-review-surface-v1", surface["schema_version"])
+        self.assertEqual("semantica-workbench-review-surface-v1", surface["schema_version"])
         self.assertTrue(surface["mcp"]["available"])
         self.assertIn("run_reasoning", surface["mcp"]["required_review_tools_present"])
         self.assertIn("semantica://graph/summary", surface["mcp"]["required_review_resources_present"])
@@ -135,13 +134,13 @@ class CoreQueryTests(WorkbenchTestCase):
         self.assertEqual("present", surface["separation"]["semantic_compare_status"])
         self.assertIsNotNone(surface["separation"]["finding_count"])
         self.assertTrue(surface["separation"]["target_view_excludes_candidates"])
-        self.assertFalse(surface["export"]["rawr_export_contract"]["preservation_validated"])
+        self.assertFalse(surface["export"]["workbench_export_contract"]["preservation_validated"])
         text = render_query_text(result)
         self.assertIn("semantica review surface", text)
         self.assertIn("mcp_available: True", text)
 
     def test_semantica_review_surface_marks_missing_semantic_artifact(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:
@@ -156,7 +155,7 @@ class CoreQueryTests(WorkbenchTestCase):
         self.assertIsNone(separation["decision_grade_finding_count"])
 
     def test_semantica_review_surface_detects_candidate_like_target_leakage(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         mutated = deepcopy(graph["layered_graph"])
@@ -174,7 +173,7 @@ class CoreQueryTests(WorkbenchTestCase):
         self.assertFalse(result["surface"]["separation"]["target_view_excludes_candidates"])
 
     def test_semantic_query_requires_semantic_artifact(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:
@@ -189,7 +188,7 @@ class CoreQueryTests(WorkbenchTestCase):
                 run_named_query(str(run_dir), "decision-review-queue")
 
     def test_sweep_named_queries_execute(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -218,7 +217,7 @@ class CoreQueryTests(WorkbenchTestCase):
             self.assertIn("artifact:", text)
 
     def test_evidence_index_named_queries_execute(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         base_root = REPO_ROOT / ".semantica" / "test-runs"
@@ -306,7 +305,10 @@ class CoreQueryTests(WorkbenchTestCase):
         self.assertTrue(by_entity["entities"])
         self.assertTrue(all("kind_counts" in entity for entity in by_entity["entities"]))
         agent_manifest = run_named_query(str(run_dir), "evidence-agent-manifest")
-        self.assertEqual("rawr-sweep-evidence-agent-manifest-v1", agent_manifest["manifest"]["schema_version"])
+        self.assertEqual(
+            "semantica-workbench-sweep-evidence-agent-manifest-v1",
+            agent_manifest["manifest"]["schema_version"],
+        )
         self.assertIn("stable_interfaces", agent_manifest["manifest"])
         self.assertEqual(
             ["evidence-review-queue", "evidence-candidate-new", "evidence-by-entity"],
@@ -315,12 +317,12 @@ class CoreQueryTests(WorkbenchTestCase):
         entity_question = agent_manifest["manifest"]["question_map"][2]
         self.assertIn("resolved target concepts", entity_question["question"])
         self.assertIn("candidate", entity_question["authority_note"])
-        self.assertEqual("not-wired", agent_manifest["manifest"]["mcp"]["rawr_evidence_access_status"])
+        self.assertEqual("not-wired", agent_manifest["manifest"]["mcp"]["workbench_evidence_access_status"])
         listed = run_named_query(str(run_dir), "evidence-summary")
         self.assertEqual(agent_manifest["summary"]["claim_count"], listed["summary"]["claim_count"])
 
     def test_evidence_named_query_requires_index(self) -> None:
-        ontology = load_core_ontology()
+        ontology = load_core_ontology(FIXTURE_ONTOLOGY_ROOT)
         validation = validate_loaded_core_ontology(ontology)
         graph = build_graph_payload(ontology, validation)
         with tempfile.TemporaryDirectory() as directory:

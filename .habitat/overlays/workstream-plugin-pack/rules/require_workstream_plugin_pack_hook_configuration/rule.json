@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "id": "require_workstream_plugin_pack_hook_configuration",
+  "title": "Require Workstream Plugin Pack Hook Configuration",
+  "placement": {
+    "niche": "workstream-plugin-pack",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "workstream-plugin-pack",
+  "lane": "enforced",
+  "forbids": "checked-in workstream hook configuration whose SessionStart or Stop event does not invoke the canonical workstream-plugin-pack hook source",
+  "why": "Checked-in hook configuration projects the pack's canonical startup and closure behavior directly. Parser-visible configuration relationships prevent copied hooks and alternate runtime sources without moving operational hook behavior into policy code.",
+  "remediate": "Point SessionStart to tools/workstream-plugin-pack/hooks/workstream_startup.ts and Stop to tools/workstream-plugin-pack/hooks/workstream_closure_guard.ts through the canonical repository-root command.",
+  "message": "Checked-in workstream hook configuration must target the canonical pack hook sources.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [".codex/hooks.json", "tools/workstream-plugin-pack/hooks/hooks.json"]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/pattern.md"
+    },
+    "patternName": "require_workstream_plugin_pack_hook_configuration",
+    "acquisition": {
+      "kind": "check",
+      "roots": [".codex/hooks.json", "tools/workstream-plugin-pack/hooks/hooks.json"]
+    }
+  }
+}

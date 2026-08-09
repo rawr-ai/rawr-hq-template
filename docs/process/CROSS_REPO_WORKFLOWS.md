@@ -112,9 +112,9 @@ Cross-repository acceptance is protocol compatibility, not Git integration:
 ## Command Boundaries
 
 - `habitat plugins ...` owns external Oclif extension operations.
-- `rawr agent plugins ...` currently owns curated agent-plugin lifecycle
-  operations. Its accepted Habitat command destination becomes operational only
-  with its command, manifest, and policy migration.
+- Curated agent-plugin lifecycle has no current Habitat CLI projection. Task
+  12.1 must land its command, manifest, profile, and policy together before
+  `habitat agent plugins ...` becomes operational; no Rawr alias is admitted.
 - Provider and export commands mutate only the named destination through its
   declared owner.
 - Habitat supplies reusable mechanics; Rawr selects product behavior;

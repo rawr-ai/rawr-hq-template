@@ -25,10 +25,9 @@ pair.
   profiles, app composition, or product policy.
 - You are changing a command that expresses Rawr product behavior rather than
   Habitat platform operation.
-- Until extraction completes, predecessor product owners may remain co-located
-  in this repository only as migration input. They do not receive new behavior
-  and may consume only public Habitat faces and qualified non-core platform
-  capabilities.
+- Make those changes in Rawr's independent repository. Rawr consumes released
+  Habitat faces and qualified non-core platform capabilities; product source
+  does not return to this repository.
 
 ## Do NOT put in Habitat platform owners:
 
@@ -61,13 +60,13 @@ pair.
 
 - Oclif owns external CLI extension mechanics; Habitat owns the foundational
   Oclif loader, runtime bridges, SDK contracts, generic provider mechanics, and
-  the agent-plugin lifecycle service plus its control-plane and CLI projections.
+  the agent-plugin lifecycle service. Its curated CLI projection lands only
+  when task 12.1 supplies the command, manifest, profile, and policy together.
   Rawr owns only downstream product topics.
 - Marketplace owns the closed curated agent-plugin content set and its governance records.
 - External Oclif extensions live only under `habitat plugins`.
-- Curated agent lifecycle currently lives only under `rawr agent plugins`.
-- The curated Habitat command destination becomes operational only when its
-  command, manifest, and policy migration lands together.
+- Curated agent lifecycle currently has no CLI projection in Habitat.
+- Neither a Rawr alias nor a premature `habitat agent plugins` route is admitted.
 - App composition is a consumer and never a lifecycle owner.
 
 ## Platform Distribution Ownership
@@ -79,9 +78,8 @@ pair.
   versions; Nx Release configuration defines release membership; release
   records preserve evidence. Marketplace and Rawr may consume exact released
   interfaces but do not vendor their implementation.
-- The `rawr` executable remains a private downstream Rawr Oclif application invoked
-  through its Nx-owned source/build targets. It is not installed into Marketplace
-  or published as a cross-repository interface.
+- Any Rawr executable is owned and built in the downstream Rawr repository. It
+  is not installed into Marketplace or published as a Habitat interface.
 - No checkout, worktree, or private release selector becomes executable or
   lifecycle identity.
 

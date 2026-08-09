@@ -1,6 +1,6 @@
 # Entity Resolution
 
-Resolve extracted claim mentions against the seeded RAWR architecture entity catalog.
+Resolve extracted claim mentions against the explicitly reviewed architecture entity catalog.
 
 Return structured JSON matching the supplied schema. Do not include markdown.
 

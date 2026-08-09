@@ -1,6 +1,6 @@
 # Repository Tools
 
-This directory contains repository-local tooling that supports RAWR HQ-Template development and migration work.
+This directory contains repository-local tooling that supports Habitat development and migration work.
 
 ## Tool Semantics
 

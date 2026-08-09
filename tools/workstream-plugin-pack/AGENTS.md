@@ -14,7 +14,7 @@
 
 - Owns reusable workstream skills, role briefs, record and packet assets, and
   the bounded hooks that support those materials.
-- The installer is a Template-local projection helper. It may write only its
+- The installer is a Habitat-local projection helper. It may write only its
   closed workstream-skill and workstream-agent allowlist and must continue to
   reject aliases and destinations outside this checkout.
 - Generated workstream activation files are not source assets and must not be
@@ -59,7 +59,6 @@
 - [Repository router](../../AGENTS.md)
 - [Pack overview](README.md)
 - [Repository workstream policy](../../docs/process/WORKSTREAMS.md)
-- [Runtime Realization Lab router](../runtime-realization-type-env/AGENTS.md)
 
 ## Validation
 

@@ -17,8 +17,6 @@ invalidation: any brief whose cited decisions have been re-decided must be
 re-issued. Copy-paste of decision content into briefs is forbidden — it loses
 the invalidation signal.
 
-Working reference: `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/findings/wave-1-packet.md`. The packet cites Decisions #2, #4, #5, and W-4 by ID rather than restating their content.
-
 ## Pattern B — Parallel-lane coordination on a shared artifact
 
 When multiple lanes edit one file in parallel, workers do not edit the
@@ -30,8 +28,6 @@ lane-level commits atomic.
 Optional alternative: dedicated lane branches that the DRA merges in order.
 Use when the patch-file pattern would lose semantic context (e.g., multiline
 structural edits where AFTER blocks are hard to read in isolation).
-
-Working reference: `docs/projects/rawr-final-architecture-migration/workstreams/runtime-architecture-alignment/findings/lane-1-1-patch.md`. The patch file uses explicit BEFORE/AFTER blocks that the DRA applied serially.
 
 ## When neither pattern fits
 

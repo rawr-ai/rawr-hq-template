@@ -20,8 +20,9 @@ Current Habitat system authority is scoped, not duplicated:
 - `docs/system/HABITAT_RUNTIME_REALIZATION.md` owns runtime realization
   mechanics, artifact handoffs, execution, and settlement.
 
-The M2 planning packet under `docs/projects/rawr-final-architecture-migration`
-is temporal provenance and execution context, not current platform authority.
+Archived architecture-migration records under
+`docs/projects/_archive/rawr-final-architecture-migration` are provenance only,
+not current platform authority.
 
 The previous `docs/SYSTEM.md` is preserved at `docs/quarantine/SYSTEM.md` and is not active system authority.
 

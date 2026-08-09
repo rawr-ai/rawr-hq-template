@@ -11,7 +11,7 @@
 
 ## Boundaries
 
-- Personal's reviewed record owns desired plugin membership; exact Git objects
+- Marketplace's reviewed record owns desired plugin membership; exact Git objects
   own the selected bytes. Governance does not become either authority.
 - The service model owns shared selection representation and policy. This
   module owns its operation DTOs, handlers, results, issues, and operation
@@ -28,7 +28,7 @@
 
 ## Concepts
 
-- A **current-main record** is Personal's versioned declaration of desired
+- A **current-main record** is Marketplace's versioned declaration of desired
   membership. A **content locator** identifies the reviewed record to resolve;
   a **selection** binds that declaration to exact Git content for lifecycle
   policy.

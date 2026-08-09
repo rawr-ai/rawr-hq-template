@@ -148,8 +148,12 @@ absence-only gate may claim a behavior survived.
 | `packages/dev-node` | Task 2.11 exact source freeze plus package/reader absence; task 12.2 `nx run @habitat-ai/dev-service:test` and `nx run @habitat-ai/cli:acceptance:dev-native` are fresh-owner acceptance | The predecessor package is not transferred. Task 12.2 authors scratch policy in the development service and explicit filesystem, path, process, and clock ports at their final owners, then proves the app-selected Effect Platform Node provider across dry, admitted, and refused operations. Deletion is not behavioral equivalence. |
 | Example-todo, hello, hq-ops, config, journal, security, removed root commands, generic test-utils, and lab identities | `nx run habitat:acceptance:product-separation-absence` | The finite absence inventory below contains every deleted project identity, command, export/import identity, reader, and condemned state path. These implementations preserve no product capability. |
 
-`habitat:acceptance:product-separation-absence` delegates structural and source
-absence to selected closed Habitat law, then composes native Nx project,
+`habitat:acceptance:product-separation-absence` uses selected closed Habitat law
+for surviving topology and one repository-separation Grit overlay for
+source-spelled, unescaped static ES-style import and re-export specifiers that
+directly name predecessor package identities. The full repository check owns
+project TypeScript programs, including cooked or escaped module resolution and
+TypeScript import-equals. The acceptance target then composes native Nx project,
 package-export, Oclif-manifest, and filesystem-fixture observations against the
 checkpoint's exact inventory below. The inventory is cumulative but
 phase-aware: a deletion enters when its owning task lands, and a later fresh
@@ -192,8 +196,11 @@ or compatibility reader:
   `plugins/server/api/example-todo/**`, `packages/ui-sdk/**`,
   `packages/hq-sdk/**`, `packages/runtime-context/**`, `packages/test-utils/**`,
   `packages/bootgraph/**`, `resources/agent-plugin-export-destination/**`,
-  `tools/runtime-realization-type-env/**`, `scripts/chatgpt-corpus-template/**`,
-  and `.habitat/rawr/**`.
+  `tools/runtime-realization-type-env/**`,
+  `tools/semantica-workbench/ontologies/rawr-core-architecture/**`,
+  `scripts/chatgpt-corpus-template/**`, and `.habitat/rawr/**`. The finite
+  frozen-reader closure also requires `packages/core/src/workspace-root.ts` and
+  `packages/core/test/workspace-root.test.ts` absent.
 - Task 2.11 active product-document roots: every active file under
   `docs/projects/rawr-final-architecture-migration/**` whose path has no
   `_archive`, `archive`, or `quarantine` segment;
@@ -216,7 +223,10 @@ or compatibility reader:
   `README.md`, `CONTRIBUTING.md`, `UPDATING.md`, the retained `docs/**` and
   kind-router indexes, the workstream-runner references, and
   `tools/semantica-workbench/**` readers; archives and quarantine receive no
-  link repair.
+  link repair. Semantica's owner-local explicit-input tests prove executable
+  default removal, while final current-gateway review proves document-link
+  closure. Neither claim is attributed to the JavaScript/TypeScript source
+  overlay.
 - Repository configuration absence at task 2.11 includes root `rawr.config.ts`.
 - Blueprint-law checkpoint extensions: task 2.10 already adds
   `services/habitat/**` after the accepted catalog rename; task 2.10a adds
@@ -238,10 +248,17 @@ or compatibility reader:
   `tools:export`, `workflow:harden`, `config`, `journal`, `security`, `hello`,
   `hyperresearch:codex-slice`, and `hyperresearch:codex:run-fixture`, including
   every former descendant in the final Oclif manifest.
-- Export/import and reader identities: every dependency, import, package export,
-  manifest member, and source reader of the project identities above, plus
-  `RawrCommand`, `RawrResult`, `findWorkspaceRoot`, and the predecessor HQ
-  shell/PID readers.
+- Export/import and reader identities: every dependency, package export,
+  manifest member, and source-spelled, unescaped static ES-style import or
+  re-export specifier for the project identities above, plus the predecessor HQ
+  shell/PID readers. Project-owned TypeScript checks own cooked or escaped
+  module resolution and TypeScript import-equals. Gate C
+  already removed `RawrCommand`, `RawrResult`, and their readers; task 2.11
+  deletes the finite frozen `findWorkspaceRoot` source/export closure, including
+  the `workspace-root` export identity. Nx owns project edges, and behavior owns
+  runtime loader execution. Literal or computed
+  runtime loaders are not falsely modeled as an enduring Grit relation, and the
+  target introduces no task-local source parser to compensate.
 - Condemned state paths in disposable fixtures: `$HOME/.rawr/config.json`,
   `<workspace>/rawr.config.ts`, and `<workspace>/.rawr/hq/**`,
   `.rawr/journal/**`, `.rawr/security/**`, and `.rawr/routines/**`. The retained
@@ -265,8 +282,8 @@ MUST NOT claim this predecessor absence before the Gate B registry receipt.
 | Config, journal, security | Delete | Remove current product paths, dead writers, state, gates, commands, and tests; a later qualified owner starts fresh. |
 | Root doctor, HQ, reflect, routine, tools export, workflow harden | Delete | Remove commands and private readers without aliases. |
 | `.habitat/rawr/agent-plugin-lifecycle` | Habitat | Delete the Rawr namespace during separation, then re-author the final `.habitat/overlays/agent-plugin-lifecycle` only with the conforming agent-plugin topic/app vertical at task 12.1. |
-| `.habitat/rawr/repository/contracts/rules/require_exported_value_declarations_have_jsdoc` | Habitat | Move the generic source law to `.habitat/blueprints/grit-pattern/require_exported_value_declarations_have_jsdoc` and select it from each qualified kind; delete the Rawr namespace copy. |
-| `.habitat/rawr/repository/rules/require_agent_router_placement` | Habitat | Fold its positive topology into `.habitat/blueprints/agent-router/structure.toml`; delete the nested Rawr rule. |
+| `.habitat/rawr/repository/contracts/rules/require_exported_value_declarations_have_jsdoc` | Habitat | Move the generic source law to `.habitat/overlays/repository/rules/require_exported_value_declarations_have_jsdoc`; delete the Rawr namespace copy. No kind definition or blueprint relation is added. |
+| `.habitat/rawr/repository/rules/require_agent_router_placement` | Habitat | Move the durable cross-kind placement law to `.habitat/overlays/repository/rules/require_agent_router_placement`; delete the nested Rawr rule. No kind definition or blueprint relation is added. |
 | `.habitat/rawr/repository/rules/require_repository_script_topology` | Habitat | Fold its positive topology into `.habitat/blueprints/nx-workspace/structure.toml`; delete the nested Rawr rule. |
 | Other `.habitat/rawr/repository` rules | Delete | Remove product namespace and rules that do not have a qualified generic kind owner. |
 | Complete `.habitat/blueprints/oclif-app/**` packet | Delete, then fresh-author | Task 2.10a deletes the product-bound packet and its registered applications when native extension management leaves `apps/cli`; no Oclif-app law remains active. Task 11.4 later authors one positive closed generic Oclif-app law fresh beside the conforming foundational vertical and private source-bundle contract. |

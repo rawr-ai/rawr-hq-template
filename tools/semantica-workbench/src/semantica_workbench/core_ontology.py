@@ -11,17 +11,13 @@ import yaml
 
 from .io import git_sha, mark_current, new_run_dir, read_json, rel, resolve_run, write_json
 from .architecture_change_frame import build_architecture_change_frame_package, fixture_frame_document_path
-from .core_config import CORE_CURRENT_FILES, CORE_GRAPH_FILENAMES, default_testing_plan
+from .core_config import CORE_CURRENT_FILES, CORE_GRAPH_FILENAMES
 from .core_viewer import write_html_viewer
-from .paths import (
-    RAWR_CORE_CANDIDATE_QUEUE,
-    RAWR_CORE_ONTOLOGY_CONTRACT,
-    RAWR_CORE_ONTOLOGY_LAYERS,
-    REPO_ROOT,
-)
+from .paths import REPO_ROOT
 from .report_html import write_proposal_review_html, write_semantic_compare_report_html
 from .semantica_adapter import export_semantica_ontology, semantica_status
 from .semantica_graph import semantica_graph_probe
+from .source_model import provenance_segment_for_path
 from .text_normalization import normalize_match_text, normalize_section_text, term_in_normalized_text
 from .semantic_evidence import (
     compare_evidence_to_ontology,
@@ -33,13 +29,57 @@ from .semantic_evidence import (
     semantic_compare_turtle,
 )
 
-TESTING_PLAN = default_testing_plan()
+def load_core_ontology(ontology_root: Path) -> dict[str, Any]:
+    root = resolve_ontology_root(ontology_root)
+    yaml_files = sorted({*root.glob("*.yaml"), *root.glob("*.yml")})
+    if not yaml_files:
+        raise ValueError(f"Ontology root has no YAML inputs: {root}")
 
+    contracts: list[tuple[Path, dict[str, Any]]] = []
+    candidate_queues: list[tuple[Path, dict[str, Any]]] = []
+    layer_inputs: list[tuple[Path, dict[str, Any]]] = []
+    unknown_inputs: list[Path] = []
+    for path in yaml_files:
+        payload = read_yaml(path)
+        if "layer" in payload:
+            layer_inputs.append((path, payload))
+        elif "entity_types" in payload and "predicates" in payload and "statuses" in payload:
+            contracts.append((path, payload))
+        elif "candidates" in payload or "exclusions" in payload:
+            candidate_queues.append((path, payload))
+        else:
+            unknown_inputs.append(path)
 
-def load_core_ontology() -> dict[str, Any]:
-    contract = read_yaml(RAWR_CORE_ONTOLOGY_CONTRACT)
-    layers = [read_yaml(path) for path in RAWR_CORE_ONTOLOGY_LAYERS]
-    candidate_queue = read_yaml(RAWR_CORE_CANDIDATE_QUEUE)
+    if len(contracts) != 1:
+        raise ValueError(f"Ontology root must contain exactly one contract YAML; found {len(contracts)} in {root}")
+    if len(candidate_queues) != 1:
+        raise ValueError(
+            f"Ontology root must contain exactly one candidate queue YAML; found {len(candidate_queues)} in {root}"
+        )
+    if unknown_inputs:
+        names = ", ".join(path.name for path in unknown_inputs)
+        raise ValueError(f"Ontology root contains unrecognized YAML inputs: {names}")
+
+    contract_path, contract = contracts[0]
+    candidate_queue_path, candidate_queue = candidate_queues[0]
+    layer_ids = [str(item.get("id")) for item in contract.get("layers", [])]
+    layers_by_id: dict[str, tuple[Path, dict[str, Any]]] = {}
+    for path, layer in layer_inputs:
+        layer_id = str(layer.get("layer") or "")
+        if not layer_id:
+            raise ValueError(f"Ontology layer does not declare its layer id: {path}")
+        if layer_id in layers_by_id:
+            raise ValueError(f"Ontology root contains duplicate layer input for {layer_id}: {root}")
+        layers_by_id[layer_id] = (path, layer)
+    missing_layers = [layer_id for layer_id in layer_ids if layer_id not in layers_by_id]
+    extra_layers = sorted(set(layers_by_id) - set(layer_ids))
+    if missing_layers or extra_layers:
+        raise ValueError(
+            f"Ontology layer inputs do not match the contract in {root}: "
+            f"missing={missing_layers or 'none'} extra={extra_layers or 'none'}"
+        )
+
+    layers = [layers_by_id[layer_id][1] for layer_id in layer_ids]
     entities: list[dict[str, Any]] = []
     relations: list[dict[str, Any]] = []
     for layer in layers:
@@ -51,16 +91,37 @@ def load_core_ontology() -> dict[str, Any]:
         "candidate_queue": candidate_queue,
         "entities": entities,
         "relations": relations,
+        "source": {
+            "root": root,
+            "contract": contract_path,
+            "layers": [layers_by_id[layer_id][0] for layer_id in layer_ids],
+            "candidate_queue": candidate_queue_path,
+        },
     }
 
 
-def validate_core_ontology() -> dict[str, Any]:
-    ontology = load_core_ontology()
+def resolve_ontology_root(ontology_root: Path) -> Path:
+    root = ontology_root.expanduser()
+    if not root.is_absolute():
+        root = REPO_ROOT / root
+    root = root.resolve()
+    provenance_segment = provenance_segment_for_path(root)
+    if provenance_segment:
+        raise ValueError(
+            f"Ontology input is provenance-only and cannot be canonical: {root} (segment: {provenance_segment})"
+        )
+    if not root.exists() or not root.is_dir():
+        raise FileNotFoundError(f"Ontology root does not exist or is not a directory: {root}")
+    return root
+
+
+def validate_core_ontology(ontology_root: Path) -> dict[str, Any]:
+    ontology = load_core_ontology(ontology_root)
     return validate_loaded_core_ontology(ontology)
 
 
-def build_core_ontology_run() -> Path:
-    ontology = load_core_ontology()
+def build_core_ontology_run(ontology_root: Path, *, fixture: bool = False) -> Path:
+    ontology = load_core_ontology(ontology_root)
     validation = validate_loaded_core_ontology(ontology)
     if validation["errors"]:
         run_dir = new_run_dir("core-invalid")
@@ -73,8 +134,9 @@ def build_core_ontology_run() -> Path:
     metadata = {
         "run_id": run_dir.name,
         "git_sha": git_sha(),
-        "kind": "rawr-core-ontology",
-        "source": rel(RAWR_CORE_ONTOLOGY_CONTRACT.parent),
+        "kind": "fixture-core-ontology" if fixture else "reviewed-core-ontology",
+        "source": rel(ontology["source"]["root"]),
+        "input_kind": "fixture" if fixture else "explicit-reviewed-input",
         "semantica": semantica_status(),
     }
     write_json(run_dir / CORE_GRAPH_FILENAMES["metadata"], metadata)
@@ -161,13 +223,7 @@ def extract_document_evidence(
     run_dir = resolve_run(run)
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
-    document_path = fixture_document_path() if fixture else document
-    if document_path is None:
-        document_path = TESTING_PLAN
-    if not document_path.is_absolute():
-        document_path = REPO_ROOT / document_path
-    if not document_path.exists() and document_path.name == TESTING_PLAN.name and TESTING_PLAN.exists():
-        document_path = TESTING_PLAN
+    document_path = resolve_document_input(document, fixture=fixture, fixture_path=fixture_document_path())
     evidence = extract_evidence_claims(
         document_path,
         graph,
@@ -304,11 +360,7 @@ def write_architecture_proposal_package(
     run_dir = resolve_run(run)
     graph = read_json(run_dir / CORE_GRAPH_FILENAMES["layered_graph"])
     candidate_queue = read_json(run_dir / CORE_GRAPH_FILENAMES["candidate_queue"])
-    document_path = fixture_frame_document_path() if fixture else document
-    if document_path is None:
-        document_path = TESTING_PLAN
-    if not document_path.is_absolute():
-        document_path = REPO_ROOT / document_path
+    document_path = resolve_document_input(document, fixture=fixture, fixture_path=fixture_frame_document_path())
     package = build_architecture_change_frame_package(
         document_path,
         graph,
@@ -347,6 +399,18 @@ def write_architecture_proposal_package(
 
 def read_yaml(path: Path) -> dict[str, Any]:
     return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+
+
+def resolve_document_input(document: Path | None, *, fixture: bool, fixture_path: Path) -> Path:
+    document_path = fixture_path if fixture else document
+    if document_path is None:
+        raise RuntimeError("Explicit document input required: pass --document <path> or --fixture")
+    if not document_path.is_absolute():
+        document_path = REPO_ROOT / document_path
+    document_path = document_path.expanduser().resolve()
+    if not document_path.exists() or not document_path.is_file():
+        raise FileNotFoundError(f"Document input does not exist or is not a file: {document_path}")
+    return document_path
 
 
 def validate_loaded_core_ontology(ontology: dict[str, Any]) -> dict[str, Any]:
@@ -741,6 +805,17 @@ def validate_source_refs(
                 errors.append(issue)
             else:
                 warnings.append(issue)
+        provenance_segment = provenance_segment_for_path(Path(path_value) if Path(path_value).is_absolute() else REPO_ROOT / path_value)
+        if strict and provenance_segment:
+            errors.append(
+                {
+                    "kind": "canonical_source_ref_uses_provenance",
+                    "owner_kind": owner_kind,
+                    "owner_id": owner_id,
+                    "path": path_value,
+                    "segment": provenance_segment,
+                }
+            )
         if strict and not ref.get("section"):
             errors.append(
                 {
@@ -828,6 +903,7 @@ def section_end(lines: list[str], line_start: int) -> int:
 
 def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) -> dict[str, Any]:
     contract = ontology["contract"]
+    graph_id = str(contract.get("id") or "reviewed-ontology")
     canonical_statuses = set(contract["canonical_view_statuses"])
     canonical_excluded_types = set(contract.get("canonical_graph_excluded_types", []))
     target_statuses = set(contract.get("target_architecture_view_statuses", ["locked"]))
@@ -885,7 +961,7 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
     return {
         "summary": summary,
         "canonical_graph": {
-            "id": "rawr-core-architecture-canonical-view",
+            "id": f"{graph_id}-canonical-view",
             "entities": sorted(canonical_entities, key=lambda item: item["id"]),
             "relations": sorted(canonical_relations, key=lambda item: item["id"]),
             "summary": {
@@ -894,7 +970,7 @@ def build_graph_payload(ontology: dict[str, Any], validation: dict[str, Any]) ->
             },
         },
         "layered_graph": {
-            "id": "rawr-core-architecture-layered-graph",
+            "id": f"{graph_id}-layered-graph",
             "entities": sorted(entities, key=lambda item: item["id"]),
             "relations": sorted(relations, key=lambda item: item["id"]),
             "canonical_view": {
@@ -968,7 +1044,7 @@ def enrich_candidate_source_refs(item: dict[str, Any]) -> dict[str, Any]:
 def render_core_report(run_dir: Path, graph: dict[str, Any], validation: dict[str, Any]) -> None:
     summary = graph["summary"]
     lines = [
-        "# RAWR Core Ontology Graph Report",
+        "# Reviewed Ontology Graph Report",
         "",
         f"- Run: `{run_dir.name}`",
         f"- Valid: `{validation['valid']}`",
@@ -1020,7 +1096,7 @@ def write_graphml(path: Path, entities: list[dict[str, Any]], relations: list[di
         '  <key id="type" for="node" attr.name="type" attr.type="string"/>',
         '  <key id="layer" for="node" attr.name="layer" attr.type="string"/>',
         '  <key id="predicate" for="edge" attr.name="predicate" attr.type="string"/>',
-        '  <graph id="rawr-core-architecture" edgedefault="directed">',
+        '  <graph id="reviewed-ontology" edgedefault="directed">',
     ]
     for entity in entities:
         node_id = xml.sax.saxutils.escape(entity["id"])

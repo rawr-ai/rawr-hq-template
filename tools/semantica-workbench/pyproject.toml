@@ -1,7 +1,7 @@
 [project]
-name = "rawr-semantica-workbench"
+name = "semantica-workbench"
 version = "0.1.0"
-description = "Repository-local Semantica workbench for RAWR architecture migration documents."
+description = "Repository-local Semantica workbench for explicitly reviewed architecture inputs."
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "openai>=1.109.0",
