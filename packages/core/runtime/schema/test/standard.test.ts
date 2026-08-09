@@ -18,6 +18,7 @@ describe("TypeBox Standard Schema adapter", () => {
       value: { label: "ok" },
     });
     expect(schema["~standard"].validate({ label: "x" })).toHaveProperty("issues");
+    expect(schema["~standard"].validate({ label: "ok", surplus: true })).toHaveProperty("issues");
 
     const first = schema["~standard"].jsonSchema.input({
       target: "draft-2020-12",

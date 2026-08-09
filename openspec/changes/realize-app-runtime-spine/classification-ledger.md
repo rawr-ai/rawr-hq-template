@@ -109,6 +109,36 @@ the empty `@habitat-ai/rawr-core` package/project shell, and leaves
 the SDK's exact five private dependencies and three dependents, with
 `runtime-schema` still rooted at `packages/core/runtime/schema`.
 
+## Task 3.4 Native-Host Dependency Reservation
+
+Task 3.4 is dependency cleanup and negative artifact proof, not a native-host
+implementation node. The root currently declares Elysia and Inngest without a
+selected app, runtime-harness owner, public face, or current SDK/CLI reader.
+Those ownerless declarations leave now; the first conforming owner later adds
+the minimum vendor metadata and loading boundary it can prove.
+
+| Current dependency surface | Task 3.4 disposition | First positive owner |
+|---|---|---|
+| Root `elysia` declaration | Remove the direct root declaration and reconcile the lockfile. Add no SDK peer/optional metadata, export, subpath, loader, runtime project, or blueprint. | `runtime-harnesses` task 13.1 co-lands Elysia optional peer metadata and its owner-local conditional dynamic import with the real server harness. |
+| Root `inngest` declaration | Remove the direct root declaration and reconcile the lockfile. Add no SDK peer/optional metadata, export, subpath, loader, runtime project, or blueprint. | The `runtime-harnesses` task 13.3/13.4 sequence co-lands Inngest optional peer metadata and its owner-local conditional dynamic import with the real Serve/Connect harness. |
+| Oclif package family | Retain its current direct `@habitat-ai/cli` dependency, configuration, manifest, and installed behavior. Oclif is not an SDK peer and is not part of this cleanup. | `@habitat-ai/cli` remains the direct native owner; task 11.4 later adds its runtime host vertical without changing this ownership. |
+| OpenTelemetry, Effect, and oRPC package families | Retain their current resource/provider, substrate, service, SDK, and CLI mechanism dependencies. Task 3.4 neither removes nor reclassifies them as native-host peers. | Their already named semantic owners and later runtime consumers retain the acceptance obligations elsewhere in this ledger. |
+
+The negative artifact proof extends the current SDK/CLI tests and packed
+installed-package acceptance. It MUST show that every currently exported
+packed subpath remains cold with Elysia and Inngest
+unavailable; SDK and CLI packed manifests contain no Elysia/Inngest dependency,
+peer, optional declaration, export, load path, or unpublished workspace
+dependency; and task 4.2 adds only a cold host-neutral async face. No empty
+export, conditional loader, private runtime owner, or host blueprint may be
+introduced to manufacture that proof.
+
+Structural rejection in this node uses the existing real TypeBox
+runtime-schema validation boundary and OpenTelemetry Node provider config
+decoder with invalid and surplus inputs. It does not introduce a schema walker,
+package walker, or whole-plan snapshot. Each later host owner co-lands the real
+decoder and rejection proof for its own boundary when that owner lands.
+
 ## Behavioral Acceptance Matrix
 
 The inventory names each owner. This matrix names the executable local oracle
@@ -127,6 +157,7 @@ task 2.11 deletion preserved those verticals.
 | Capability class | Named local Nx oracle | Input and observable result | Failure condition |
 |---|---|---|---|
 | Public Habitat SDK and Oclif CLI | `nx run @habitat-ai/cli:acceptance:oclif-installed-package` | At Gate A, retain root registry `@habitat-ai/cli@0.5.2` as the Nx bootstrap, keep `apps/habitat` outside the Bun workspaces, and preserve the Bun 1.3.14 frozen lock. Build and locally pack both candidate products without a `file:`, `link:`, or duplicate workspace identity; publish both exact candidates only to an isolated local registry; and inspect `dist/blueprints/service` for only the positive closed `service@1` kind and zero product/legacy rule vocabulary. Start a disposable Bun/Nx consumer with neither Habitat product installed and invoke native `nx add @habitat-ai/cli@<candidate-version>` once; observe the exact paired SDK dependency, complete repository foundation, generated service with TypeBox schemas, router, in-process client, and one ordinary operation using native `.handler`, Nx admission of its public client and rejection of a relative cross-project private-service import, the pinned Effect 4 substrate without premature manual Effect execution, every public cold subpath, the installed `habitat` binary, its Oclif manifest, its initializer/plugin path, and exactly one public/candidate command model: `HabitatCommand`. The task-3.2a continuation additionally cold-imports the exact declarative `@habitat-ai/sdk/telemetry` face and proves an ignored filesystem-present compatibility subject is not evaluated. Effect-oRPC execution and automatic telemetry attachment are proved later by the runtime/harness owners that own the needed process context. | A second setup operation, preinstalled SDK, source link, duplicate workspace package identity, invalid frozen lock, workspace import, unpublished dependency, missing service face, provider lifecycle or telemetry bootstrap export, ignored compatibility subject evaluation, private cross-project reach-in, Rawr command export, second public/candidate command model, manual/custom Effect runner, service-authored direct `Effect.run*`, `ProcessExecutionRuntime` for an oRPC service Effect, compatibility substrate, product term, legacy v2 or `forbids` packet in the packed SDK policy pack, manifest drift, source/installed divergence, or nonzero installed command result fails before release. |
+| Native-host dependency reservation | At task 3.4, **extend** `nx run @habitat-ai/cli:acceptance:oclif-installed-package` and run `nx run runtime-schema:test`, `nx run provider-telemetry-opentelemetry-node:test`, `nx run @habitat-ai/sdk:test`, and `nx run @habitat-ai/cli:test` | Remove the ownerless root Elysia/Inngest declarations and reconcile the lockfile. With both vendors unavailable, import every current packed public subpath, inspect every packed dependency bucket/export/load path, and observe no vendor load or unpublished workspace dependency. Feed invalid and surplus structures through the real TypeBox runtime-schema and OpenTelemetry Node provider config decode boundaries. | Any Elysia/Inngest SDK/CLI dependency, peer, optional declaration, export, subpath, loader, load, runtime project, or blueprint; a walker/snapshot substitute; a warm import; or removal/reclassification of direct Oclif ownership or current OpenTelemetry/Effect/oRPC mechanism dependencies fails this cleanup node. |
 | Habitat command and extension generators | At task 11.6, **co-land** native Nx generator acceptance; at task 12.3, **extend** `nx run @habitat-ai/cli:acceptance:generators-installed-package` through the selected command surface | From the same fresh consumer installed through the isolated-registry `nx add` flow, run both native `nx generate` entrypoints into empty destinations and against exact-existing/divergent-path fixtures; then select `plugins/cli/topics/authoring` / private `@habitat-ai/plugin-authoring` and invoke the two installed `habitat cli ... create` projections. Observe compilable Habitat/public-extension projects, exact Nx/source-bundle/manifest registration, complete atomic writes, and no change on refusal. The task 2.11 frozen source is evidence only. | Rawr vocabulary, predecessor templates or command bases, a command body outside `@habitat-ai/plugin-authoring`, partial output, overwrite, project/manifest drift, a workspace-source import, or a claim that deletion already accepted the generator fails. |
 | Service, schema, middleware, and command prerequisite | **co-land** `nx run runtime-schema:test`, `nx run @habitat-ai/sdk:test`, and `nx run @habitat-ai/cli:test` | Feed TypeBox values whose keys contain `%`, `%2F`, `/`, `~`, and nested arrays through native `Check`/`Errors`; observe message-only issues when an exact path is ambiguous. Propagate procedure metadata and curated context through the service middleware lineage, and exercise `HabitatCommand` as the one public/candidate result/error/output contract. Gate A deliberately does not assert predecessor-source or reader absence. | URI decoding, invented issue paths, manual structural decoding, metadata/context loss, context overwrite, a second public/candidate command result model, or divergent source/installed command semantics fails. |
 | Catalog owner qualification | At task 2.10, `nx run @habitat-ai/catalog-service:test` | Resolve a real repository-local Habitat instance through the owner-qualified catalog and prove the predecessor service identity/readers are absent without selecting an app profile. | A second catalog identity, predecessor reader, or claim of self-host/installed realization fails qualification. |

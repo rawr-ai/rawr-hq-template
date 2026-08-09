@@ -31,9 +31,40 @@ type PublicProduct = Readonly<{
   version: string;
 }>;
 
+type PackedProductManifest = Readonly<Record<string, unknown>>;
+
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
 const CANDIDATE_VERSION = "0.5.15";
+const ABSENT_VENDOR_PACKAGES = ["elysia", "inngest"] as const;
+const PACKAGE_DEPENDENCY_FIELDS = [
+  "dependencies",
+  "devDependencies",
+  "peerDependencies",
+  "peerDependenciesMeta",
+  "optionalDependencies",
+  "bundledDependencies",
+  "bundleDependencies",
+] as const;
+const PACKAGE_LOAD_PATH_FIELDS = [
+  "exports",
+  "imports",
+  "main",
+  "module",
+  "browser",
+  "bin",
+  "types",
+  "typesVersions",
+] as const;
+const PUBLIC_JAVASCRIPT_EXPORTS = {
+  "@habitat-ai/cli": ["@habitat-ai/cli/command", "@habitat-ai/cli/nx-plugin"],
+  "@habitat-ai/sdk": [
+    "@habitat-ai/sdk",
+    "@habitat-ai/sdk/service",
+    "@habitat-ai/sdk/service/schema",
+    "@habitat-ai/sdk/telemetry",
+  ],
+} as const satisfies Readonly<Record<PublicProduct["name"], readonly string[]>>;
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -629,11 +660,16 @@ describe("installed Habitat products", () => {
       expect(installedRelativePath.startsWith(`..${path.sep}`)).toBe(false);
 
       const manifestText = await readFile(path.join(packageRoot, "package.json"), "utf8");
+      const packedManifest = JSON.parse(manifestText) as PackedProductManifest;
       expect(manifestText).not.toContain("workspace:");
-      expect(JSON.parse(manifestText)).toMatchObject({
+      expect(packedManifest).toMatchObject({
         name: product.name,
         version: product.version,
       });
+      assertPackedManifestExcludesVendors(packedManifest, product.name);
+      expect(publicJavaScriptExportSpecifiers(packedManifest, product.name)).toEqual(
+        PUBLIC_JAVASCRIPT_EXPORTS[product.name]
+      );
     }
 
     expect((await readdir(path.join(consumerRoot, "node_modules/@habitat-ai"))).sort()).toEqual([
@@ -690,6 +726,13 @@ describe("installed Habitat products", () => {
     expect(directHabitatDependencies).toEqual([
       { bucket: "devDependencies", name: "@habitat-ai/cli", version: CANDIDATE_VERSION },
     ]);
+    const consumerRequire = createRequire(path.join(consumerRoot, "package.json"));
+    for (const vendorPackage of ABSENT_VENDOR_PACKAGES) {
+      expect(
+        resolvePackageIfPresent(consumerRequire, vendorPackage),
+        vendorPackage
+      ).toBeUndefined();
+    }
 
     const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
     await writeFile(
@@ -761,6 +804,13 @@ describe("installed Habitat products", () => {
         "TelemetryProcessIdentitySchema",
       ],
     });
+
+    for (const product of products) {
+      const callerRoot = product.name === "@habitat-ai/cli" ? consumerRoot : generatedServiceRoot;
+      for (const specifier of PUBLIC_JAVASCRIPT_EXPORTS[product.name]) {
+        await assertColdPublicJavaScriptExport(callerRoot, specifier);
+      }
+    }
 
     expect(await readFile(path.join(installedCliRoot, "dist/command.js"))).toEqual(
       await readFile(path.join(workspaceRoot, "apps/habitat/dist/command.js"))
@@ -1291,6 +1341,133 @@ describe("installed Habitat products", () => {
     expect(executed.stdout).toContain('"status": "pass"');
   });
 });
+
+function assertPackedManifestExcludesVendors(
+  manifest: PackedProductManifest,
+  productName: PublicProduct["name"]
+): void {
+  for (const field of PACKAGE_DEPENDENCY_FIELDS) {
+    const declarations = manifest[field];
+    if (declarations === undefined) continue;
+    const declaredPackages = Array.isArray(declarations)
+      ? declarations
+      : isRecord(declarations)
+        ? Object.keys(declarations)
+        : undefined;
+    if (
+      declaredPackages === undefined ||
+      !declaredPackages.every((dependency) => typeof dependency === "string")
+    ) {
+      throw new Error(`${productName} packed manifest has an invalid ${field} field.`);
+    }
+    for (const vendorPackage of ABSENT_VENDOR_PACKAGES) {
+      expect(declaredPackages, `${productName} ${field}`).not.toContain(vendorPackage);
+    }
+  }
+
+  for (const field of PACKAGE_LOAD_PATH_FIELDS) {
+    const declarations = manifest[field];
+    if (declarations === undefined) continue;
+    const loadPathStrings = collectManifestStrings(declarations);
+    for (const vendorPackage of ABSENT_VENDOR_PACKAGES) {
+      expect(
+        loadPathStrings.filter((candidate) => candidate.includes(vendorPackage)),
+        `${productName} ${field}`
+      ).toEqual([]);
+    }
+  }
+}
+
+function collectManifestStrings(value: unknown): readonly string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(collectManifestStrings);
+  if (!isRecord(value)) return [];
+  return Object.entries(value).flatMap(([key, child]) => [key, ...collectManifestStrings(child)]);
+}
+
+function publicJavaScriptExportSpecifiers(
+  manifest: PackedProductManifest,
+  productName: PublicProduct["name"]
+): readonly string[] {
+  if (!isRecord(manifest.exports)) {
+    throw new Error(`${productName} packed manifest has no public exports map.`);
+  }
+
+  return Object.entries(manifest.exports)
+    .filter(([, target]) => hasJavaScriptExportTarget(target))
+    .map(([subpath]) => {
+      if (subpath === ".") return productName;
+      if (!subpath.startsWith("./") || subpath.includes("*")) {
+        throw new Error(`${productName} has an unsupported public JavaScript export: ${subpath}`);
+      }
+      return `${productName}/${subpath.slice(2)}`;
+    });
+}
+
+function hasJavaScriptExportTarget(target: unknown): boolean {
+  if (typeof target === "string") return /\.[cm]?js$/u.test(target);
+  if (Array.isArray(target)) return target.some(hasJavaScriptExportTarget);
+  if (isRecord(target)) return Object.values(target).some(hasJavaScriptExportTarget);
+  return false;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function resolvePackageIfPresent(
+  requireFromConsumer: NodeJS.Require,
+  specifier: string
+): string | undefined {
+  try {
+    return requireFromConsumer.resolve(specifier);
+  } catch (error) {
+    if (isRecord(error) && error.code === "MODULE_NOT_FOUND") return undefined;
+    throw error;
+  }
+}
+
+async function assertColdPublicJavaScriptExport(
+  callerRoot: string,
+  specifier: string
+): Promise<void> {
+  const coldEntrypoint = path.join(callerRoot, "cold-public-javascript-export.mjs");
+  await writeFile(
+    coldEntrypoint,
+    [
+      'import { createRequire } from "node:module";',
+      "const specifier = process.argv[2];",
+      'if (specifier === undefined) throw new Error("Missing public export specifier.");',
+      "const require = createRequire(import.meta.url);",
+      `for (const name of ${JSON.stringify(ABSENT_VENDOR_PACKAGES)}) {`,
+      "  try {",
+      "    const resolved = require.resolve(name);",
+      "    throw new Error(`${name} unexpectedly resolved to ${resolved}`);",
+      "  } catch (error) {",
+      '    if (error?.code !== "MODULE_NOT_FOUND") throw error;',
+      "  }",
+      "}",
+      "await import(specifier);",
+      "console.log(specifier);",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  try {
+    const imported = await run("bun", [coldEntrypoint, specifier], {
+      cwd: callerRoot,
+      timeoutMs: 30_000,
+    });
+    expect(imported, `${specifier}\n${imported.stderr || imported.stdout}`).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+      stdout: `${specifier}\n`,
+    });
+  } finally {
+    await rm(coldEntrypoint, { force: true });
+  }
+}
 
 async function readPackageVersion(root: string): Promise<string> {
   const manifest = JSON.parse(
