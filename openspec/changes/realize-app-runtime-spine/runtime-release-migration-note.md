@@ -11,9 +11,9 @@ process health/readiness, or the Elysia/Inngest/MCP runtime
 acceptance. A downstream repository must not infer or locally backport those
 APIs from the architecture documents.
 
-The exact registry `0.5.15` adoption receipt now seals task 3.2a and authorizes
-task 3.3 only; it does not open later runtime owners out of sequence. Tasks 3.3
-through 15 then proceed in the active queue. Only task 15.7 may replace this
+The exact registry `0.5.15` adoption receipt sealed task 3.2a and authorized the
+completed task 3.3 SDK ownership transfer only; it did not open later runtime
+owners out of sequence. Tasks 3.4 through 15 proceed in the active queue. Only task 15.7 may replace this
 planned note with an exact adoption contract after task 15.5 lands the complete
 runtime on canonical `main` and task 15.6 publishes the paired SDK/CLI release.
 

@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
-    "directory": "packages/habitat-sdk"
+    "directory": "packages/core/sdk"
   },
   "description": "Habitat workspace client, runtime composition, and generic blueprints",
   "license": "MIT",

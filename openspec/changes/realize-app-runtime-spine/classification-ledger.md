@@ -202,9 +202,10 @@ or compatibility reader:
   `@habitat-ai/rawr`, `@habitat-ai/rawr-hq-sdk`,
   `@rawr/runtime-context`, `@rawr/test-utils`,
   `@habitat-ai/typebox-adapter`, and `@rawr/bootgraph`.
-- Task 3.3 project-identity extension: add `@habitat-ai/rawr-core` only when
-  task 3.3 deletes that mixed package/project and every reader; task 2.11 does
-  not claim this future absence.
+- Task 3.3 project-identity extension: `@habitat-ai/rawr-core` is now part of
+  the forbidden identity inventory, and the former `packages/habitat-sdk`
+  source root plus the removed `packages/core` package/project shell are part
+  of the cumulative absence corpus.
 - Predecessor source roots and manifests: `apps/cli/**`, `apps/hq/**`,
   `apps/server/**`, `apps/web/**`, `services/dev/**`, `packages/dev-node/**`,
   `plugins/cli/commands/devops/**`, `plugins/cli/commands/hello/**`,

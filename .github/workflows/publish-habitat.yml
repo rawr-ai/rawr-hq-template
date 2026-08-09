@@ -6,7 +6,7 @@ on:
       - .habitat/blueprints/**
       - .github/workflows/publish-habitat.yml
       - apps/habitat/**
-      - packages/habitat-sdk/**
+      - packages/core/sdk/**
       - packages/core/runtime/schema/**
       - resources/rule-evaluation/**
       - resources/source-inventory/**
@@ -105,7 +105,7 @@ jobs:
         run: >-
           test "$(jq -r .version
           apps/habitat/package.json
-          packages/habitat-sdk/package.json
+          packages/core/sdk/package.json
           | sort -u)"
           = "${GITHUB_REF_NAME#habitat-cli-v}"
 

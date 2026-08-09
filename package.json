@@ -8,6 +8,7 @@
     "!apps/habitat",
     "services/*",
     "packages/*",
+    "packages/core/sdk",
     "packages/runtime/*",
     "packages/runtime/harnesses/*",
     "resources/*",

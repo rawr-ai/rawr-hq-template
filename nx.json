@@ -44,8 +44,8 @@
     "habitatCatalogAuthority": [
       "{workspaceRoot}/.habitat/**/*",
       "{workspaceRoot}/**/habitat.toml",
-      "{workspaceRoot}/packages/habitat-sdk/package.json",
-      "{workspaceRoot}/packages/habitat-sdk/habitat-pack.json"
+      "{workspaceRoot}/packages/core/sdk/package.json",
+      "{workspaceRoot}/packages/core/sdk/habitat-pack.json"
     ],
     "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
     "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]

@@ -10,7 +10,7 @@
 
 ## Scope
 
-- Applies to `packages/habitat-sdk/**`.
+- Applies to `packages/core/sdk/**`.
 
 ## Boundaries
 
@@ -94,12 +94,13 @@
 
 ## Routing
 
-- [[../AGENTS|Packages router]]
-- [[../../services/catalog/AGENTS|Private Habitat catalog service authority]]
-- [[../../resources/rule-evaluation/AGENTS|Private rule-evaluation resource]]
-- [[../../resources/source-inventory/AGENTS|Private source-inventory resource]]
-- [[../../resources/telemetry/AGENTS|Private telemetry resource]]
-- [[../core/runtime/schema/AGENTS|Private runtime-schema owner]]
+- [[../AGENTS|Habitat core router]]
+- [[../../AGENTS|Packages router]]
+- [[../../../services/catalog/AGENTS|Private Habitat catalog service authority]]
+- [[../../../resources/rule-evaluation/AGENTS|Private rule-evaluation resource]]
+- [[../../../resources/source-inventory/AGENTS|Private source-inventory resource]]
+- [[../../../resources/telemetry/AGENTS|Private telemetry resource]]
+- [[../runtime/schema/AGENTS|Private runtime-schema owner]]
 
 ## Validation
 

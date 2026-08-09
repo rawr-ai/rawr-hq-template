@@ -71,7 +71,7 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
   .trim()
   .split("\n")
   .filter((name) => name.length > 0);
-const sdkVersion = await readPackageVersion("packages/habitat-sdk");
+const sdkVersion = await readPackageVersion("packages/core/sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
 if (sdkVersion !== CANDIDATE_VERSION || cliVersion !== CANDIDATE_VERSION) {
   throw new Error(`Habitat acceptance requires the exact ${CANDIDATE_VERSION} CLI/SDK pair.`);
@@ -91,7 +91,7 @@ const products: readonly PublicProduct[] = [
   {
     filename: `habitat-ai-sdk-${sdkVersion}.tgz`,
     name: "@habitat-ai/sdk",
-    root: "packages/habitat-sdk",
+    root: "packages/core/sdk",
     version: sdkVersion,
   },
   {
@@ -772,7 +772,7 @@ describe("installed Habitat products", () => {
     );
     expect(JSON.parse(await readFile(installedPackPath, "utf8"))).toEqual(
       JSON.parse(
-        await readFile(path.join(workspaceRoot, "packages/habitat-sdk/habitat-pack.json"), "utf8")
+        await readFile(path.join(workspaceRoot, "packages/core/sdk/habitat-pack.json"), "utf8")
       )
     );
 

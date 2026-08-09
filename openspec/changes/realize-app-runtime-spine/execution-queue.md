@@ -112,19 +112,20 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 The active queue has one bounded node:
 
-1. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
-   `@habitat-ai/rawr-core` package/project identity, preserve `packages/core` as
-   a Habitat namespace, move `packages/habitat-sdk` wholly to
-   `packages/core/sdk` without changing `@habitat-ai/sdk`, update every reader
-   and repository edge, extend the cumulative absence inventory, and pass the
-   exact-main platform-only gate. Preserve no predecessor path, alias, or
-   compatibility facade.
+1. execute task 3.4 as the final platform-only predecessor: declare native
+   hosts as optional peers, resolve each only through its owner-local
+   conditional dynamic import, and prove cold import, packed metadata,
+   unpublished-workspace-dependency absence, selected-process vendor
+   isolation, and structural decode rejection for every export that lands.
+   Preserve no generic host adapter, compatibility facade, or unselected
+   native-host import.
 
 The corrected authority admits sole `app@2`, peer `server` and `async` roles,
 MCP as a native `server` surface, Inngest Serve/Connect as final harness modes,
 process-local lifecycle/readiness/observation, and deployment's cold handoff.
-The app packet and policy-pack locator are corrected now; runtime source still
-opens only in owner order after task 3.3 and the remaining task-3 predecessors.
+The app packet and policy-pack locator are corrected, and task 3.3 has moved
+the sole SDK to `packages/core/sdk` while deleting the mixed-core package identity.
+Runtime source still opens only in owner order after task 3.4 passes.
 Task 3.2a's exact adoption receipt remains a foundation checkpoint only. It is
 not a runtime/coexistence contract and authorizes no public runtime release.
 

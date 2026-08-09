@@ -1,42 +1,41 @@
-# Mixed-Core Reservation Router (`@habitat-ai/rawr-core`)
+# Habitat Core Router
 
 ## Purpose
 
-- Retain the empty predecessor package/project identity until task 3.3 removes
-  it atomically while preserving `packages/core` as a Habitat namespace.
+- Route Habitat's public SDK and private runtime substrate through one core
+  namespace without making the namespace itself a package or Nx project.
 
 ## Scope
 
-- Applies to the transitional package shell at `packages/core`.
-- Deeper owners, including `runtime/schema`, follow their own routers.
+- Applies to `packages/core/**` unless a deeper router narrows the boundary.
 
 ## Boundaries
 
-- Owns no telemetry, runtime, SDK, application, or provider capability.
-- Must not own CLI command lifecycle, parsing, result rendering,
-  command-specific behavior, plugin lifecycle policy, workspace manifest
-  semantics, or application composition.
-- Must not restore a telemetry export, add new source, or become a permanent
-  Habitat SDK owner.
+- `sdk` owns the sole public `@habitat-ai/sdk` package.
+- `runtime/*` projects own private runtime phases and must not import the public
+  SDK facade to reconstruct upstream decisions.
+- `packages/core` itself owns no package manifest, project identity, source
+  barrel, compatibility alias, or predecessor export.
 
 ## Behavior
 
-- Keep the empty package/project identity stable for task 3.3; do not turn this
-  reservation into a capability owner.
+- Add each runtime owner only with its accepted implementation and proof. Keep
+  one direction from private runtime phases into the terminal SDK facade.
 
 ## Concepts
 
-- A **reservation shell** preserves only the path and identity needed for the
-  later atomic namespace transfer.
+- The **core namespace** groups Habitat substrate owners; it is not itself an
+  importable capability.
 
 ## Flow
 
-- No runtime or application flow passes through this package.
+- Private runtime phases expose qualified contracts and implementations to the
+  terminal SDK. Apps consume the SDK rather than core internals.
 
 ## Interfaces
 
-- The root package export remains empty; there is no supported capability
-  subpath.
+- [Public Habitat SDK](sdk/AGENTS.md)
+- [Runtime schema adapter](runtime/schema/AGENTS.md)
 
 ## Routing
 
@@ -45,6 +44,6 @@
 
 ## Validation
 
-- `bunx nx run habitat:lint`
-- `bunx nx run @habitat-ai/rawr-core:typecheck`
-- `bunx nx run @habitat-ai/rawr-core:build`
+- `bunx nx show project @habitat-ai/sdk --json`
+- `bunx nx run @habitat-ai/sdk:check`
+- `bunx nx run runtime-schema:check`

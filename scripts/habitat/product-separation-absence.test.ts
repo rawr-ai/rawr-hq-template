@@ -51,10 +51,9 @@ const EXPECTED_PROJECT_ROOTS = {
   "@habitat-ai/resource-source-inventory": "resources/source-inventory",
   "@habitat-ai/resource-rule-evaluation": "resources/rule-evaluation",
   "@habitat-ai/resource-telemetry": "resources/telemetry",
-  "@habitat-ai/sdk": "packages/habitat-sdk",
+  "@habitat-ai/sdk": "packages/core/sdk",
   "@habitat-ai/catalog-service": "services/catalog",
   habitat: "scripts/habitat",
-  "@habitat-ai/rawr-core": "packages/core",
   "@habitat-ai/cli": "apps/habitat",
   "habitat-workspace": ".",
 } as const;
@@ -89,6 +88,7 @@ const FORBIDDEN_PROJECT_AND_PACKAGE_IDS = [
   "@rawr/ui-sdk",
   "@habitat-ai/rawr",
   "@habitat-ai/rawr-hq-sdk",
+  "@habitat-ai/rawr-core",
   "@rawr/runtime-context",
   "@rawr/test-utils",
   "@habitat-ai/typebox-adapter",
@@ -120,6 +120,7 @@ const FORBIDDEN_SOURCE_ROOTS = [
   "packages/test-utils",
   "packages/bootgraph",
   "packages/typebox-adapter",
+  "packages/habitat-sdk",
   "packages/core/src/workspace-root.ts",
   "packages/core/test/workspace-root.test.ts",
   "resources/agent-plugin-export-destination",
@@ -129,6 +130,14 @@ const FORBIDDEN_SOURCE_ROOTS = [
   ".habitat/rawr",
   ".habitat/blueprints/oclif-app",
   ".habitat/blueprints/oclif-command-plugin",
+] as const;
+
+const FORBIDDEN_SOURCE_PATHS = [
+  "packages/core/package.json",
+  "packages/core/project.json",
+  "packages/core/src/index.ts",
+  "packages/core/tsconfig.build.json",
+  "packages/core/tsconfig.json",
 ] as const;
 
 const FORBIDDEN_DOCUMENT_ROOTS = [
@@ -381,7 +390,7 @@ function condemnedState(homeRoot: string, fixtureWorkspaceRoot: string): readonl
 }
 
 describe("task 2.11 product-separation absence", () => {
-  it("has exactly the 24 retained Nx projects at their canonical roots", async () => {
+  it("has exactly the 23 retained Nx projects at their canonical roots", async () => {
     const graph = await createProjectGraphAsync({ exitOnError: true });
     const projects = readProjectsConfigurationFromProjectGraph(graph).projects;
     const actualProjectIds = Object.keys(projects).sort();
@@ -402,7 +411,9 @@ describe("task 2.11 product-separation absence", () => {
     const files = repositoryFiles();
     const forbiddenRoots = [...FORBIDDEN_SOURCE_ROOTS, ...FORBIDDEN_DOCUMENT_ROOTS];
     const rootResidue = forbiddenRoots.flatMap((root) => filesAtRoot(files, root));
-    const exactResidue = FORBIDDEN_DOCUMENT_PATHS.filter((file) => files.has(file));
+    const exactResidue = [...FORBIDDEN_SOURCE_PATHS, ...FORBIDDEN_DOCUMENT_PATHS].filter((file) =>
+      files.has(file)
+    );
 
     expect([...rootResidue, ...exactResidue]).toEqual([]);
   });
@@ -426,10 +437,9 @@ describe("task 2.11 product-separation absence", () => {
     expect(hashWorktreeFiles(destinationPaths)).toEqual(expectedBlobIds);
   });
 
-  it("retains mixed rawr-core and the active OpenSpec removal authority", () => {
+  it("removes mixed rawr-core while retaining the active OpenSpec authority", () => {
     const files = repositoryFiles();
-    expect(files.has("packages/core/package.json")).toBe(true);
-    expect(readJson("packages/core/package.json").name).toBe("@habitat-ai/rawr-core");
+    expect(FORBIDDEN_SOURCE_PATHS.filter((file) => files.has(file))).toEqual([]);
     expect(RETAINED_OPENSPEC_PATHS.filter((file) => !files.has(file))).toEqual([]);
   });
 

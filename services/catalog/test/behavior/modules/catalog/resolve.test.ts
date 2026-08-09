@@ -1551,7 +1551,7 @@ async function resolveRepositoryCorpus() {
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const workspaceRoot = path.resolve(import.meta.dirname, "../../../../../..");
-      const policyPackRoot = path.join(workspaceRoot, "packages/habitat-sdk");
+      const policyPackRoot = path.join(workspaceRoot, "packages/core/sdk");
       const client: Client = createClient({
         deps: {
           fileSystem,

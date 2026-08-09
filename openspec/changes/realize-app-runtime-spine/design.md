@@ -40,12 +40,12 @@ The current Nx graph has five `type:app` projects: the Habitat self-host plus
 four flattened Rawr process roots for CLI, server, HQ composition, and web.
 Those process roots are not peer product identities. `apps/hq` contains a
 useful declaration-only manifest and process selection sketch, but entrypoints
-still assemble live hosts. `packages/habitat-sdk` publishes one public package from a single source
-file and directly constructs Effect-backed dependencies behind a module-global
-Promise. `packages/bootgraph` is a reservation shell. `packages/core` remains a
-mixed package containing Oclif support, workspace lookup, and the direct
-telemetry singleton. There is no production compiler, bootgraph, root managed
-runtime, process runtime, adapter owner, or harness owner.
+still assemble live hosts. Before task 3.3, `packages/habitat-sdk` published one
+public package from a single source file and directly constructed Effect-backed
+dependencies behind a module-global Promise. Task 3.3 moved that sole package
+to `packages/core/sdk` and removed the mixed `packages/core` package/project
+identity. There is no production compiler, bootgraph, root managed runtime,
+process runtime, adapter owner, or harness owner.
 
 The latest applicable Runtime Realization Lab is commit
 `3147acbdcdd916883cee5b081c0868e3d1bf09b9`; the frozen refs all contain its
@@ -96,7 +96,7 @@ conformance fixtures.
 | `findWorkspaceRoot` and Habitat-side Rawr workspace-discovery lookups | no retained owner | Delete product-named workspace discovery and bind explicit Habitat workspace input at the CLI boundary. Product-owned Rawr configuration transfers unchanged with its product owner. |
 | Generic runtime observation contracts | Habitat core | Define through `@habitat-ai/sdk`; they carry correlation and observation law but select no backend. |
 | Current Rawr-named telemetry singleton and signal hooks | adoption evidence, not a merge owner | Hold the mixed telemetry root. Task 3.1 re-authors its path-qualified OpenTelemetry Node resource/provider and singleton retirement into fresh Habitat-owned nodes; it does not select an app. Exact runtime owners receive process/mounting/observation integration, and real app-selected Oclif proof must exist or co-land no later than task 12.1. Task 15.1 audits receipts and retirement only. Do not restack or merge the predecessor root. |
-| `packages/habitat-sdk` | Habitat core | Move wholly to `packages/core/sdk` while retaining the sole public package identity `@habitat-ai/sdk`. |
+| `packages/core/sdk` | Habitat core | Retain the sole public package identity `@habitat-ai/sdk`; task 3.3 moved it wholly from `packages/habitat-sdk` with no alias or compatibility facade. |
 | `packages/hq-sdk` API/workflow declarations and composition | predecessor evidence | Do not move the current self-classifying API builders or Inngest-shaped workflow builders into the public SDK. After the canonical runtime owners exist, implement the accepted topology-specific server/internal faces and host-neutral async faces fresh, reusing only proven generic algorithms. |
 | `packages/hq-sdk` service metadata and generic middleware/dependency contracts | Habitat authoring | Move `BaseMetadata`, `ServiceMetadataOf`, `procedureMetadata`, `getProcedureMetadata`, analytics/observability middleware factories, `AnalyticsClient`, and `Logger` to `@habitat-ai/sdk/service` with their retained platform readers. Product policy wrappers do not remain in Habitat. |
 | `packages/hq-sdk` service binding declarations and mechanics | predecessor evidence | Delete the current pre-runtime declarations, `BoundService`, `bindService`, and cache mechanics during separation. Author the canonical cold binding declarations fresh in `runtime-definition` and live mechanics fresh in `runtime-process-runtime`; retain no bridge. |
