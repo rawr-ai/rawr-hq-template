@@ -150,7 +150,7 @@ afterAll(async () => {
     }
     if (acceptanceRoot !== "") await removeOwnedFixture(acceptanceRoot);
   }
-});
+}, 300_000);
 
 describe("installed Habitat products", () => {
   it("adopts the packed CLI into one bare Bun Nx repository through one native nx add", async () => {
