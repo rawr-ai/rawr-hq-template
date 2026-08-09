@@ -91,14 +91,17 @@ cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 
-The accepted protocol-1 SDK pack contains `app@1`, `package@1`, `plugin@1`,
+The accepted protocol-1 SDK pack contains `app@2`, `package@1`, `plugin@1`,
 `plugin-nx@1`, `provider@1`, `resource@1`, `resource@2`, `service@1`, and
-`service@2`. Version 1 remains immutable for exact existing selections. The
-version-2 resource and service definitions are complete acquisition successors
-with the same semantic law and structure, narrower declared `rootPatterns`, and
-their own recursive package closure and installed-consumer proof. Retained
-Habitat owners select the successors explicitly; no inheritance, fallback,
-component engine, or relation engine is part of this gate.
+`service@2`. The published `app@1` locator remains immutable historical
+artifact identity, but it is not an admitted member of the current policy pack
+and receives no compatibility or coexistence path. `app@2` is the sole complete
+application definition: one app project owns composition, runtime profiles, a
+cold process catalog, thin entrypoints, and proof. The version-2 resource and
+service definitions remain complete acquisition successors with narrower
+declared `rootPatterns`. No inheritance, fallback, cross-version traversal,
+component engine, relation engine, or legacy-consumer lane is part of this
+system.
 
 See [[README|the Habitat policy index]], [[AUTHORITY-ONTOLOGY|the authority
 ontology]], [[BLUEPRINT-COMPOSITION|blueprint composition]], and

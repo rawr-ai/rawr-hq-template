@@ -329,14 +329,23 @@ There is no `standard` root or Nx project. A generic runtime package would hide
 ownership rather than name a capability; reusable private code stays with the
 qualified runtime owner whose invariant it serves.
 
-`runtime-definition` remains cold. It owns app/profile/entrypoint declarations,
-the TypeBox `RuntimeObservationRecord` accepted from upstream owners, and the
-narrow non-authorizing `RuntimeObservationPort` earlier phases can consume.
+`runtime-definition` remains cold. It owns app/profile/process-catalog/
+entrypoint declarations, immutable process launch identity, the TypeBox
+`RuntimeObservationRecord` accepted from upstream owners, and the narrow
+non-authorizing `RuntimeObservationPort` earlier phases can consume. The
+complete `app@2` law adds composition, profiles, one cold process catalog, and
+thin one-`startApp(...)` entrypoints as the sole admitted app packet. The
+published `app@1` locator remains immutable outside current policy and
+acceptance; no compatibility or coexistence path is retained. `app@2` creates
+no process child project or kind.
 `runtime-observation` implements that port and projects read models only.
 `runtime-mounting` owns the live `startApp(...)` path, harness invocation, and
-cross-owner finalization. The terminal SDK exposes `startApp(...)`, but no
+process-local cross-owner finalization. Each invocation owns one process lease,
+one stop operation, and one frozen launch identity; a sibling invocation from
+the same app is independent. The terminal SDK exposes `startApp(...)`, but no
 upstream private owner imports the SDK facade, mounting owner, or observation
-implementation.
+implementation. Process runtime, lifecycle, readiness, and observation remain
+local to that one entrypoint-selected process.
 
 There is no `adapters` root or generic adapter Nx project. The generic
 `SurfaceAdapter` contract and coordination stay owner-local inside
@@ -357,6 +366,23 @@ private Oclif apps. It accepts the selected app definition and native process
 inputs, supplies the loader and harness, and selects no topic. Habitat and
 downstream app definitions therefore share released host mechanics without
 sharing command membership or executable identity.
+
+The SDK exposes the import-safe native harness contract through
+`@habitat-ai/sdk/runtime/harnesses`. It includes the frozen app/process/
+entrypoint plus opaque deployment/source identity, a read-only required-resource
+readiness gate, distinct optional native liveness/readiness probes, and an
+idempotent native handle. Required acquisition fails before mount. A published
+liveness claim proves only process/native-host response; readiness fails closed
+over required resources and every selected harness contribution. Missing,
+negative, rejected, or timed-out evidence stays not ready, and logs or
+observations never promote it. Habitat ships Elysia, Inngest Serve/Connect, MCP
+stdio/Streamable HTTP, web, desktop, and OpenShell harness verticals. MCP is a
+`server` surface, never a process, role, kind, service, app, or execution plane.
+
+Deployment consumes the cold portable process plan and immutable source/
+deployment identity only. It owns placement, supervision, networking, and
+replicas but receives no live runtime handle, readiness gate, resource, or
+process-local observation authority.
 
 The repository keeps one scheduler vocabulary rather than manufacturing a
 private-runtime variant. `habitat:lint` remains the sole workspace-owned
@@ -673,7 +699,12 @@ Vendor realizations retain their native laws:
   oRPC service Effects.
 - Inngest Serve drains with the owning HTTP harness; Connect uses native
   `close()` and disables vendor signal ownership; stable `step.run` callbacks
-  delegate Effect work to process execution.
+  delegate Effect work to process execution. Serve and Connect are final native
+  harness selections, not architecture or deployment variants.
+- MCP stdio and Streamable HTTP mount adapter-lowered `server` surfaces through
+  the official MCP SDK and own protocol sessions, transport ingress/egress,
+  origin/session policy, and native stop without becoming another execution
+  plane.
 - Web mounting remains a distinct native harness; it is not another app.
 
 The lab's native passage fixtures are ported as black-box acceptance tests, not
@@ -1121,13 +1152,18 @@ project, or downstream product as another package.
    authoring topic/command projections at task 12.3; native
    plugin management is already transferred by task 2.10a rather than rebuilt
    here.
-10. Add Elysia/oRPC, Inngest, and web adapter/harness realizations only with
-   indispensable owner-local Habitat conformance fixtures. The oRPC fixture
+10. Add Elysia/oRPC, Inngest Serve/Connect, MCP stdio/Streamable HTTP, and web adapter/harness realizations only with
+   indispensable owner-local Habitat conformance fixtures. One `app@2` fixture
+   launches separate Elysia server and native Inngest Serve children, proves
+   distinct leases, launch identities, fail-closed readiness, and independent
+   stops, and never becomes a production example app. The oRPC fixture
    proves inline native `.handler`, the official `.effect` extension,
    bridge-owned
    request-fiber execution, process-owned `effect/context`/`effect/wrap`, abort,
    resource release, and one module realm; it rejects every manual/custom Effect
-   runner. No fixture becomes a production app, service, plugin, or package.
+   runner. The MCP fixture proves one real tool and resource boundary through
+   each native transport and proves MCP remains a server surface. No fixture
+   becomes a production app, service, plugin, or package.
 11. Audit unreachable residue and pass the complete local Habitat gate. Audit
    the already-landed telemetry resource/provider, runtime-owner, app-selected
    Oclif, server, and async receipts, then retire the held mixed source only when

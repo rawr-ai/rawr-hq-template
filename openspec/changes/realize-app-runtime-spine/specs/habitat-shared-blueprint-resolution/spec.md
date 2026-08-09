@@ -16,13 +16,21 @@ rule identities and narrower declared `rootPatterns`. This equality is an exact
 property of those two admitted successors, not a promise that arbitrary future
 versions are semantic equivalents.
 
-#### Scenario: Existing and successor selections coexist
+#### Scenario: Exact selected versions resolve independently
 
 - **WHEN** a package contains both version 1 and a canonical successor for one blueprint id
 - **THEN** a version-1 instance resolves only the version-1 closure
 - **AND** a successor instance resolves only the exact successor closure
 - **AND** selecting the successor emits no version-1 application for that instance
 - **AND** both definitions retain their own applications, provenance, and cache inputs
+
+#### Scenario: Current app policy is resolved
+
+- **WHEN** the SDK policy pack is inspected for the application kind
+- **THEN** complete `app@2` is the sole admitted app member
+- **AND** the immutable published `app@1` locator is absent from current pack
+  membership, application emission, cache inputs, and installed acceptance
+- **AND** no compatibility, fallback, or coexistence machinery is present
 
 #### Scenario: A successor locator disagrees with its definition
 

@@ -12,6 +12,29 @@ normalized authoring graphs, or compiler plans; acquire providers; bind services
 `HabitatEffect`; create a managed runtime; or own app, plugin, or service
 meaning.
 
+The SDK MUST re-export the import-safe `HarnessDescriptor<TPayload>`,
+`HarnessMountInput<TPayload>`, `RuntimeLaunchIdentity`,
+`RequiredResourceReadiness`, `RuntimeProbeResult`, the closed `required` or
+`not-applicable` health-participation field, `NativeHarnessHealth`, owner-local
+finding/observation contracts, and `NativeHarnessHandle` through
+`@habitat-ai/sdk/runtime/harnesses` for Habitat's native harness verticals.
+Private `StartedHarness` state MUST remain runtime-mounting-owned and MUST NOT
+be constructed or returned by a native harness.
+
+The mount input MUST carry one runtime-frozen launch identity and a read-only
+required-resource readiness gate. A harness that publishes health MUST keep
+liveness separate from readiness and MUST echo that identity unchanged in both
+results. Readiness MUST fail closed when the resource gate or a required
+harness-owned native/upstream check is missing, negative, rejected, or timed
+out. A finding, log, telemetry event, successful mount, or listener liveness
+MUST NOT satisfy readiness.
+
+Every descriptor MUST declare health participation as `required` or
+`not-applicable`. Runtime mounting MUST treat a `required` descriptor that
+returns no native health implementation as a mount failure, stop the mounted
+prefix, and publish no started process. Finite processes may select only
+`not-applicable` harnesses and publish no health boundary.
+
 #### Scenario: New native harness is added
 
 - **WHEN** a vendor-specific harness realization is introduced
@@ -20,6 +43,30 @@ meaning.
 - **AND** vendor-specific configuration and native handles remain inside that
   realization
 - **AND** runtime mounting creates the `StartedHarness` record after mount
+
+#### Scenario: Packed native harness is selected
+
+- **WHEN** a package outside the Habitat workspace installs the packed SDK/CLI
+  and starts an admitted native harness through one `app@2` process record
+- **THEN** the harness mounts only lowered payloads and bounded access and
+  returns one idempotent native handle
+- **AND** runtime mounting creates `StartedHarness` privately and settles the
+  native handle before releasing that process lease
+- **AND** liveness can remain successful while a required native check makes
+  readiness fail closed
+- **AND** both results preserve the exact runtime-supplied deployment/source
+  identity
+- **AND** the consumer uses no source link, private runtime import, compiler
+  plan, or provider acquisition
+
+#### Scenario: Native readiness check fails
+
+- **WHEN** a native harness can answer its liveness probe but its required
+  upstream or native readiness check rejects, times out, or returns negative
+- **THEN** liveness and readiness remain distinct and readiness reports false
+- **AND** Habitat records the bounded result without interpreting the vendor or
+  product meaning of that check
+- **AND** no log or health diagnostic is promoted into readiness evidence
 
 ### Requirement: Surface adapters are the sole lowering boundary
 
@@ -61,6 +108,11 @@ native-stop policy is `waitForNativeStop`: a deadline emits a bounded
 observation but does not complete finalization, release providers, dispose the
 root runtime, or create a force-stop path. A future forced-termination policy
 requires its own authority amendment and child-process contract.
+
+This coordination is local to one `startApp(...)` invocation. Habitat MUST NOT
+provide a cross-process stop, readiness, lifecycle, or observation controller.
+Stopping one process from an app MUST NOT invoke, await, or release a sibling
+process.
 
 #### Scenario: Multiple harnesses share one process
 
@@ -263,6 +315,11 @@ signals. Adapter-lowered functions MUST execute plugin-owned Effects from stable
 fibers, or waits MUST NOT replace Inngest retry, memoization, history, or
 cancellation semantics.
 
+Habitat MUST retain `server` and `async` as roles rather than introducing
+`process`, `MCP`, or `async-server` kinds. Serve and Connect MUST remain final
+native harness selections, not roles, process kinds, deployment variants, or
+alternate execution planes.
+
 #### Scenario: Durable step is retried
 
 - **WHEN** an adapter-lowered Inngest function executes a step and a transient
@@ -272,6 +329,17 @@ cancellation semantics.
   native non-retryable error boundary
 - **AND** acceptance executes the pinned native Inngest function and
   `step.run` boundary rather than a protocol or worker test double
+
+#### Scenario: Same app isolates Elysia and Inngest processes
+
+- **WHEN** one `app@2` definition and process catalog start an Elysia `server`
+  child and native Inngest Serve `async` child through separate thin
+  entrypoints
+- **THEN** each child acquires its own process lease and executes one real
+  native boundary operation
+- **AND** each child exposes an independent idempotent stop operation
+- **AND** stopping either child leaves the other child live until its own stop
+  is requested
 
 #### Scenario: Connect process shuts down
 
@@ -288,6 +356,32 @@ cancellation semantics.
   native `close()` runs exactly once through a disposable pinned native Connect
   boundary
 - **AND** provider release begins only after `close()` settles
+
+### Requirement: MCP is a server surface with native transports
+
+Habitat MUST provide generic MCP server-surface authoring plus native stdio and
+Streamable HTTP harnesses over the official MCP SDK. Selected MCP tools,
+resources, and prompts MUST be projected from service truth by a `server`
+plugin, lowered from `CompiledSurfacePlan` by the process-runtime adapter, and
+mounted through the generic harness contract. MCP MUST NOT become a role,
+blueprint kind, service, app, execution plane, provider-acquisition owner, or
+process lifecycle owner.
+
+The stdio harness MUST keep stdout protocol-only, route diagnostics to stderr,
+and own transport/session shutdown. The Streamable HTTP harness MUST own native
+origin validation, sessions, request cancellation, and stop. Both MUST settle
+native work before the process lease releases.
+
+#### Scenario: Native MCP transports execute the same server surface
+
+- **WHEN** installed-package acceptance starts the same adapter-lowered MCP
+  server surface through stdio and Streamable HTTP entrypoints
+- **THEN** each transport executes one real tool and one real resource boundary
+  through the official MCP SDK
+- **AND** protocol errors, cancellation, correlation, readiness, and native stop
+  preserve the selected process semantics
+- **AND** no MCP role, kind, service, app, companion attachment, or second
+  execution plane exists
 
 ### Requirement: Harness law is generic before vendor instances
 

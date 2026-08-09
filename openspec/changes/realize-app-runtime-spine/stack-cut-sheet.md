@@ -27,11 +27,12 @@ Each stack receives one disposition:
 
 ## Consumer Gate
 
-Civ7 has installed Habitat `0.5.2` and selected `app@1`, `package@1`,
-`plugin@1`, `plugin-nx@1`, `provider@1`, and `resource@1`. Its refusal on the
-absent `service@1` member is correct: it neither leaves services ungoverned nor
-authors a local generic substitute. Task 2.8 owns the next versioned Habitat
-handoff and its installed-consumer evidence.
+Civ7's historical Habitat `0.5.2` and `app@1` selection is migration evidence,
+not a compatibility constraint on the current platform. The current policy
+pack admits only complete `app@2`; no legacy consumer or coexistence lane is
+retained. Civ7 adopts the eventual complete runtime through its owner-local
+installed-consumer migration after the final SDK/CLI release and does not
+author a local generic substitute.
 
 Habitat itself must also retain registry `@habitat-ai/cli@0.5.2` as the root Nx
 bootstrap while `apps/habitat` remains outside the Bun workspaces. Vendor proof

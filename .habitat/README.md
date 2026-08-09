@@ -59,7 +59,7 @@ The current selected generic kinds are:
   host-specific runtime and entrypoint faces.
 
 The accepted SDK protocol-1 policy pack admits exactly nine sorted members:
-`app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
+`app@2`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
 `resource@2`, `service@1`, and `service@2`.
 Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
@@ -69,7 +69,11 @@ repository compatibility rules continue to execute beside resolved package
 rule applications. The selected `service` definitions co-land their focused
 positive law, native Nx generator, complete package closure, and
 packed-consumer construction proof.
-The version-1 resource and service closures preserve the exact
+The published `app@1` locator remains immutable but is not a current pack
+member, compatibility target, or acceptance obligation. `app@2` is the sole
+admitted application packet and closes composition, profiles, one cold process
+catalog, thin entrypoints, and proof inside one app/Nx project. The version-1
+resource and service closures preserve the exact
 `habitat-cli-v0.5.13` definition and runner-asset bytes. Their version-2
 successors retain the same structure and semantic law while narrowing Grit
 acquisition to definition-owned `rootPatterns`. Each definition exposes only

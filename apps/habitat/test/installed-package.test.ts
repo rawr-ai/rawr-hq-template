@@ -851,6 +851,7 @@ describe("installed Habitat products", () => {
       return segments.length > 2 && filename === "structure.toml";
     });
     expect(nestedStructureFiles).toEqual([
+      "app/versions/2/structure.toml",
       "resource/versions/2/structure.toml",
       "service/versions/2/structure.toml",
     ]);
@@ -1007,7 +1008,11 @@ describe("installed Habitat products", () => {
       },
     });
     expect(resolvedCatalog.catalog.policyPack.blueprints).toEqual([
-      { id: "app", path: "dist/blueprints/app/blueprint.toml", version: 1 },
+      {
+        id: "app",
+        path: "dist/blueprints/app/versions/2/blueprint.toml",
+        version: 2,
+      },
       { id: "package", path: "dist/blueprints/package/blueprint.toml", version: 1 },
       { id: "plugin", path: "dist/blueprints/plugin/blueprint.toml", version: 1 },
       { id: "plugin-nx", path: "dist/blueprints/plugin-nx/blueprint.toml", version: 1 },
