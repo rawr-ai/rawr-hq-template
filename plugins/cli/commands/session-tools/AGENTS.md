@@ -24,7 +24,7 @@
 - Provider-home discovery belongs to the source adapter, while candidate
   selection, indexing policy, and query semantics belong to the service.
 - This is a core Oclif command plugin composed by `@habitat-ai/rawr`, not an external
-  extension installed through `rawr plugins`.
+  extension installed through `habitat plugins`.
 
 ## Behavior
 

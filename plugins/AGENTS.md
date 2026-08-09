@@ -66,13 +66,13 @@
 
 ## Boundaries
 
-- External Oclif extensions use `rawr plugins ...` and native Oclif state only.
+- External Oclif extensions use `habitat plugins ...` and native Oclif state only.
 - The curated agent-plugin lifecycle uses `rawr agent plugins ...`; one
-  reviewed Personal Git channel record selects exact Git objects, while native
+  reviewed Marketplace Git channel record selects exact Git objects, while native
   provider inventory is installed-state truth.
-- Personal alone owns curated agent-plugin content. Template owns the generic
+- Marketplace alone owns curated agent-plugin content. Habitat owns the generic
   lifecycle mechanics behind the qualified command.
-- Template owns no persistent agent-plugin release store or competing provider
+- Habitat owns no persistent agent-plugin release store or competing provider
   state.
 - Authoring changes source only. It never triggers build, export, provider
   convergence, or retirement automatically.

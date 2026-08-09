@@ -2,6 +2,9 @@
 node_modules/
 dist/
 oclif.manifest.json
+!apps/habitat/test/fixtures/native-oclif-extension/dist/
+!apps/habitat/test/fixtures/native-oclif-extension/dist/**
+!apps/habitat/test/fixtures/native-oclif-extension/oclif.manifest.json
 .turbo/
 .nx/
 .tmp/

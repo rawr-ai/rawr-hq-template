@@ -39,5 +39,4 @@ retains only the policy and presentation specific to its caller lane.
 
 - [[../skill|Blueprint direction]]
 - [[README|Command-plugin boundary]]
-- [[../oclif-app/skill|Oclif app frame]]
 - [[../../AUTHORITY|Habitat authority]]

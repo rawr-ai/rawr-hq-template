@@ -44,16 +44,15 @@ describe("qualified lifecycle command boundary", () => {
     expect(Object.hasOwn(projectionSurface, "bindAgentPluginUndoApplication")).toBe(false);
   });
 
-  it("loads representative admitted commands and preserves native not-found behavior", () => {
-    for (const id of ["agent:plugins:status", "plugins:install"] as const) {
-      const result = runRawr([...id.split(":"), "--help"]);
-      expect(result.status, `${id}\n${result.stderr}`).toBe(0);
-    }
+  it("loads the curated command and rejects moved or retired native routes", () => {
+    const admitted = runRawr(["agent", "plugins", "status", "--help"]);
+    expect(admitted.status, admitted.stderr).toBe(0);
 
-    const retired = ["plugins", "sync"];
-    const result = runRawr(retired);
-    expect(result.status, retired.join(" ")).toBe(2);
-    expect(result.stderr).toContain(`command ${retired.join(":")} not found`);
+    for (const id of ["plugins:install", "plugins:sync"] as const) {
+      const result = runRawr(id.split(":"));
+      expect(result.status, id).toBe(2);
+      expect(result.stderr).toContain(`command ${id} not found`);
+    }
   });
 
   it("rejects executable binding on every native provider lifecycle command", () => {

@@ -3,6 +3,18 @@
 Habitat's Oclif CLI and native Nx integration. The package owns the portable
 repository preset, Habitat policy projection, and the public `habitat` command.
 
+## External Oclif Extensions
+
+The CLI composes Oclif's native extension lifecycle without wrapping or
+reimplementing it:
+
+```sh
+habitat plugins --help
+```
+
+`@oclif/plugin-plugins` owns listing, installation, linking, inspection,
+updates, reset, uninstallation, aliases, and its native per-user state.
+
 ## Create A Repository
 
 Nx invokes the package's Bun-only `preset` generator while creating the workspace:

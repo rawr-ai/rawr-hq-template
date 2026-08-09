@@ -26,7 +26,6 @@ export default defineConfig({
         test: {
           name: "cli",
           environment: "node",
-          exclude: ["test/native-oclif-extension-roundtrip.test.ts"],
           maxWorkers: 2,
           include: [...includes],
           env: { NODE_ENV: "production" },
@@ -35,22 +34,27 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("apps/cli"),
+        root: r("apps/habitat"),
         test: {
-          name: "cli-native-acceptance",
+          name: "habitat-cli",
           environment: "node",
-          fileParallelism: false,
-          include: ["test/native-oclif-extension-roundtrip.test.ts"],
+          exclude: [
+            "test/installed-package.test.ts",
+            "test/native-oclif-extension-roundtrip.test.ts",
+          ],
+          include: [...includes],
         },
       },
       {
         extends: true,
         root: r("apps/habitat"),
         test: {
-          name: "habitat-cli",
+          name: "habitat-cli-native-plugins-acceptance",
           environment: "node",
-          exclude: ["test/installed-package.test.ts"],
-          include: [...includes],
+          fileParallelism: false,
+          hookTimeout: 180_000,
+          include: ["test/native-oclif-extension-roundtrip.test.ts"],
+          testTimeout: 180_000,
         },
       },
       {
@@ -119,11 +123,6 @@ export default defineConfig({
         extends: true,
         root: r("packages/ui-sdk"),
         test: { name: "ui-sdk", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
-        root: r("plugins/cli/commands/hello"),
-        test: { name: "plugin-hello", environment: "node", include: [...includes] },
       },
       {
         extends: true,

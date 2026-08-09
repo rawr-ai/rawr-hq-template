@@ -18,7 +18,7 @@ is not Habitat platform architecture or distribution authority.
 
 ## Command Boundary
 
-- `rawr plugins ...` currently manages external Oclif extensions only.
+- `habitat plugins ...` manages external Oclif extensions only.
 - `rawr agent plugins ...` currently manages curated agent-plugin lifecycle
   only. Do not invoke the accepted Habitat command destination before the
   command, manifest, and policy migration lands.

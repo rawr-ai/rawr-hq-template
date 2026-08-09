@@ -16,6 +16,8 @@
   private implementation projects.
 - Oclif owns command discovery, argv parsing, dispatch, help, and the generated
   command manifest. Habitat commands and their Oclif binding live in this app.
+- Oclif's native `@oclif/plugin-plugins` owns external extension state and the
+  `habitat plugins ...` lifecycle; Habitat only composes the vendor plugin.
 - Nx owns consumer initialization, project inference, target hashing, caching,
   and scheduling. The native Nx projection and generators live in this app.
 - The `@habitat-ai/cli` package is an ordinary Oclif distribution boundary, not a
@@ -52,6 +54,7 @@
 ## Interfaces
 
 - Executable: `habitat`.
+- Native external-extension lifecycle: `habitat plugins ...`.
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
 - Nx generators: `@habitat-ai/cli:preset`, `@habitat-ai/cli:init`, and
   `@habitat-ai/cli:remove-hook`.
@@ -72,3 +75,5 @@
 - Start with `bunx nx show project @habitat-ai/cli --json`.
 - Run `@habitat-ai/cli:typecheck`, `@habitat-ai/cli:test`,
   `@habitat-ai/cli:build`, and `@habitat-ai/cli:manifest` through Nx.
+- Run `@habitat-ai/cli:acceptance:oclif-native-plugins` when native extension
+  installation or state behavior changes.

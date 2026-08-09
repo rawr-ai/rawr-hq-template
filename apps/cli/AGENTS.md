@@ -13,7 +13,8 @@
 
 ## Boundaries
 
-- `rawr plugins ...` is the native Oclif extension surface.
+- This Rawr app owns no native external-extension surface; `habitat plugins ...`
+  is the sole current owner.
 - `rawr agent plugins ...` is the curated agent-plugin lifecycle surface.
 - Command classes stay thin: lifecycle policy belongs to its service and
   concrete filesystem or provider behavior belongs to the bound resource.
@@ -62,5 +63,3 @@
 - `bunx nx run @habitat-ai/rawr:typecheck`
 - `bunx nx run @habitat-ai/rawr:test`
 - `bunx nx run @habitat-ai/rawr:acceptance:oclif`
-- `bunx nx run @habitat-ai/rawr:acceptance:oclif-native-plugins` when native extension
-  installation behavior changes

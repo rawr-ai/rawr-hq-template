@@ -24,10 +24,10 @@ locator.
 
 - Install the supported Habitat SDK/CLI through ordinary Nx/npm distribution.
 - Invoke Habitat platform operations through the released Habitat CLI.
-- Manage genuine external extensions through the current `rawr plugins`
+- Manage genuine external extensions through the `habitat plugins`
   channel.
 - Manage curated agent releases through the current `rawr agent plugins`
-  channel. Their Habitat command destinations activate only after migration.
+  channel. Its Habitat command destination activates only after migration.
 - Invoke any surviving private `rawr` application through its independent
   repository revision and Nx-owned targets.
 - Reconcile Marketplace provider, provenance, and export records through

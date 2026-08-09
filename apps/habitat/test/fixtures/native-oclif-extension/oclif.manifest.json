@@ -1,0 +1,25 @@
+{
+  "commands": {
+    "native-fixture": {
+      "aliases": [],
+      "args": {},
+      "description": "Exercise a prebuilt native Oclif extension.",
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "native-fixture",
+      "pluginAlias": "@fixture/native-oclif-extension",
+      "pluginName": "@fixture/native-oclif-extension",
+      "pluginType": "core",
+      "strict": true,
+      "enableJsonFlag": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "native-fixture.js"
+      ]
+    }
+  },
+  "version": "1.0.0"
+}

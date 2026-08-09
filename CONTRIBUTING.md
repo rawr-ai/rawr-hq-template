@@ -36,12 +36,12 @@ A plugin can be added as a Template fixture only when:
 - It has stable command/runtime contracts.
 - It includes tests and documentation.
 - It contains no personal curated content or machine-specific assumptions.
-- It remains outside `@habitat-ai/rawr#oclif.plugins` and is covered by the explicit
-  native Oclif extension acceptance target.
+- It remains outside repository app/topic membership and is covered by
+  `@habitat-ai/cli:acceptance:oclif-native-plugins`.
 
 ## API Surface Policy
 
-- `rawr plugins ...` is reserved for external Oclif extension management.
+- `habitat plugins ...` is reserved for external Oclif extension management.
 - `rawr agent plugins ...` is reserved for curated agent-plugin lifecycle.
 - App composition commands do not acquire lifecycle authority.
 - Command-surface changes require migration notes in `UPDATING.md`.

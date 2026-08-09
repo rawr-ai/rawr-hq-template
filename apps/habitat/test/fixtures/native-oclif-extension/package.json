@@ -1,0 +1,23 @@
+{
+  "name": "@fixture/native-oclif-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prebuilt Oclif extension fixture for Habitat installed-package acceptance",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "oclif.manifest.json",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.17.0"
+  },
+  "dependencies": {
+    "@oclif/core": "^4.13.2"
+  },
+  "oclif": {
+    "commands": "./dist/commands",
+    "topicSeparator": " "
+  }
+}

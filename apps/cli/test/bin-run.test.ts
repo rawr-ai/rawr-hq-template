@@ -27,16 +27,7 @@ const firstPartyCommandPluginRoots = [
   "hyperresearch",
   "session-tools",
 ].map((name) => path.resolve(cliRoot, "..", "..", "plugins", "cli", "commands", name));
-const externalFixtureRoot = path.resolve(
-  cliRoot,
-  "..",
-  "..",
-  "plugins",
-  "cli",
-  "commands",
-  "hello"
-);
-const commandPluginRoots = [cliRoot, ...firstPartyCommandPluginRoots, externalFixtureRoot];
+const commandPluginRoots = [cliRoot, ...firstPartyCommandPluginRoots];
 const releaseManifestRoots = [cliRoot, ...firstPartyCommandPluginRoots];
 
 afterAll(() => {
@@ -147,20 +138,13 @@ describe("bin/run.js", () => {
     expect(sourceCommandIds).toContain("agent:plugins:update:vendors");
     expect(sourceCommandIds).not.toContain("agent:plugins:vendors:status");
     expect(sourceCommandIds).not.toContain("agent:plugins:vendors:update");
-    expect(sourceCommandIds).toContain("plugins");
-    expect(sourceCommandIds).toContain("plugins:install");
     expect(sourceCommandIds).not.toContain("plugins:list");
-    for (const id of REQUIRED_EXTERNAL_PLUGIN_COMMANDS) {
-      expect(sourceCommandIds).toContain(id);
+    for (const id of NATIVE_EXTERNAL_PLUGIN_COMMANDS) {
+      expect(sourceCommandIds).not.toContain(id);
     }
     for (const id of RETIRED_COMMANDS) {
       expect(sourceCommandIds).not.toContain(id);
     }
-    const external = sourceInventory.filter(
-      ({ id }) => id === "plugins" || id.startsWith("plugins:")
-    );
-    expect(external.length).toBeGreaterThan(0);
-    expect(external.every(({ pluginName }) => pluginName === "@oclif/plugin-plugins")).toBe(true);
   });
 
   it("discovers the CLI and every command plugin from source and compiled output without manifests", () => {
@@ -197,7 +181,7 @@ describe("bin/run.js", () => {
   });
 });
 
-const REQUIRED_EXTERNAL_PLUGIN_COMMANDS = [
+const NATIVE_EXTERNAL_PLUGIN_COMMANDS = [
   "plugins",
   "plugins:inspect",
   "plugins:install",

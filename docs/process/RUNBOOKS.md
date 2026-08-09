@@ -24,7 +24,7 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 
 ## Command Surface Invariant
 
-- External Oclif extensions: `rawr plugins ...`
+- External Oclif extensions: `habitat plugins ...`
 - Curated agent-plugin lifecycle: `rawr agent plugins ...`
 - Marketplace owns agent-plugin source, provenance, policy/evaluation inputs, and
   governed release, acceptance, and channel records. Reviewed `current-main`

@@ -15,7 +15,7 @@ export function externalExtensionWritePlan(
   return completeOrderedWritePlan(root, [
     qualifiedTextWrite(
       "README.md",
-      `# ${packageName}\n\nPortable external Oclif extension source. Build and test it locally, then use the explicit \`rawr plugins\` lifecycle commands when activation is intended.\n`
+      `# ${packageName}\n\nPortable external Oclif extension source. Build and test it locally, then use the explicit \`habitat plugins\` lifecycle commands when activation is intended.\n`
     ),
     qualifiedTextWrite(
       "package.json",

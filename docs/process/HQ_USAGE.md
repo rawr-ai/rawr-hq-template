@@ -38,7 +38,7 @@ or global alias. There is no installed RAWR distribution or compatibility path.
 
 - Habitat fixtures validate foundational Oclif mechanics; Rawr fixtures validate
   product commands and lifecycle behavior. Neither is Marketplace content.
-- External Oclif extension management uses `rawr plugins ...` only.
+- External Oclif extension management uses `habitat plugins ...` only.
 - Curated agent-plugin source and records live in Marketplace; their
   lifecycle currently uses `rawr agent plugins ...` only. The Habitat command
   destination is not operator guidance until its migration lands.

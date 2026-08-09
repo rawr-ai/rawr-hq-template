@@ -56,7 +56,22 @@ describe("Habitat Oclif projection binding", () => {
     const config = await loadProjection(client);
 
     expect(habitatClientFrom(config)).toBe(client);
-    expect(config.commandIDs).toEqual(["check", "hook", "resolve", "help"]);
+    expect([...config.commandIDs].sort()).toEqual([
+      "check",
+      "help",
+      "hook",
+      "plugins",
+      "plugins:add",
+      "plugins:inspect",
+      "plugins:install",
+      "plugins:link",
+      "plugins:remove",
+      "plugins:reset",
+      "plugins:uninstall",
+      "plugins:unlink",
+      "plugins:update",
+      "resolve",
+    ]);
     await expect(config.runCommand("resolve")).resolves.toMatchObject({ _tag: "Resolved" });
     await expect(config.runCommand("check")).resolves.toEqual(completed);
     await expect(config.runCommand("hook", ["agent-stop"])).resolves.toEqual(completed);

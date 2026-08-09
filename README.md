@@ -65,10 +65,10 @@ bunx nx graph
   schemas/tooling implementations, validators, reusable platform law, and the
   generic agent-plugin lifecycle.
 - Rawr owns its private app, selected product topics, and domain services.
-- External Oclif extensions are currently managed only by `rawr plugins ...`.
+- External Oclif extensions are managed only by `habitat plugins ...`.
 - Curated agent-plugin lifecycle is currently managed only by
-  `rawr agent plugins ...`. Their accepted Habitat command destinations are
-  migration targets, not current operator guidance.
+  `rawr agent plugins ...`. Its accepted Habitat command destination is a
+  migration target, not current operator guidance.
 - Marketplace curated content enters through explicit versioned data or ordinary
   package/artifact interfaces. A repository path is only a locator.
 - App composition consumes declared outputs; it does not own lifecycle state.
