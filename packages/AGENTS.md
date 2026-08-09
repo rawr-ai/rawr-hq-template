@@ -52,8 +52,8 @@
 ## Routing
 
 - [Repository router](../AGENTS.md)
-- [Public Habitat SDK](habitat-sdk/AGENTS.md)
-- [Mixed-core reservation shell](core/AGENTS.md)
+- [Habitat core namespace](core/AGENTS.md)
+- [Public Habitat SDK](core/sdk/AGENTS.md)
 - [Runtime schema adapter](core/runtime/schema/AGENTS.md)
 
 ## Parent Coverage

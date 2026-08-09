@@ -271,9 +271,13 @@
   Co-land `habitat:acceptance:product-separation-absence` with the exact
   cumulative task-2.11 predecessor inventory from
   [[classification-ledger#deletion-and-replacement-oracles]] and run it together
-  with `bun run check` before landing. The source overlay owns source-spelled,
-  unescaped static ES-style specifiers; project-owned TypeScript checks own
-  cooked or escaped module resolution and TypeScript import-equals. This
+  with `bun run check` before landing. At this checkpoint, the temporary source
+  overlay owns source-spelled, unescaped static ES-style specifiers while
+  project-owned TypeScript checks own executable module resolution. Task 3.3
+  retires that repository-wide predecessor-name blacklist with the final mixed
+  package and leaves the permanent gate composed from project TypeScript plus
+  native Nx graph, package/lock/tsconfig, Oclif-manifest, and filesystem
+  observations. This
   deletion and its frozen source oracles do not realize or accept
   the final agent-plugin topic/overlay/profile, development topic, Habitat
   generators, runtime, private CLI source-bundle contract, or final generic

@@ -10,10 +10,6 @@
       "cache": false,
       "dependsOn": [
         {
-          "projects": ["habitat"],
-          "target": "check:policy"
-        },
-        {
           "projects": ["@habitat-ai/cli"],
           "target": "manifest"
         }
