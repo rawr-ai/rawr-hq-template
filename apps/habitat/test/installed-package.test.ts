@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.12";
+const CANDIDATE_VERSION = "0.5.13";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -598,6 +598,8 @@ describe("installed Habitat products", () => {
     const consumerBlueprintInventory = [
       "grit-acceptance/blueprint.toml",
       "grit-acceptance/no-forbidden.md",
+      "root-pattern-acceptance/blueprint.toml",
+      "root-pattern-acceptance/no-forbidden.md",
     ];
     const installedCliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
     const resolvedInstalledCliRoot = await realpath(installedCliRoot);
@@ -859,6 +861,28 @@ describe("installed Habitat products", () => {
               }),
             }),
           }),
+          expect.objectContaining({
+            blueprintVersion: 3,
+            instanceId: "root-pattern-acceptance",
+            ruleId: "root_pattern_acceptance_no_forbidden",
+            runner: expect.objectContaining({
+              acquisition: {
+                entries: [
+                  {
+                    kind: "file",
+                    path: "packages/root-pattern-acceptance/src/**/*.ts",
+                    source: {
+                      id: "project",
+                      kind: "root-pattern",
+                      pattern: "src/**/*.ts",
+                    },
+                  },
+                ],
+                kind: "check",
+              },
+              name: "grit",
+            }),
+          }),
         ]),
       },
     });
@@ -867,6 +891,10 @@ describe("installed Habitat products", () => {
     );
     expect(resolvedCatalog.catalog.blueprints).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "root-pattern-acceptance", version: 3 }),
+          provenance: expect.objectContaining({ kind: "local" }),
+        }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "package", version: 1 }),
           provenance: expect.objectContaining({ kind: "policy-pack" }),
@@ -1025,6 +1053,104 @@ describe("installed Habitat products", () => {
         (input) => typeof input === "string" && input.includes("blueprints/package/structure.toml")
       )
     ).toBe(false);
+
+    const rootPatternTarget =
+      "habitat:application:root-pattern-acceptance:root_pattern_acceptance_no_forbidden";
+    const projectedRootPattern = await run(
+      nx,
+      ["show", "project", "@fixture/root-pattern-acceptance", "--json"],
+      { cwd: consumerRoot, timeoutMs: 60_000 }
+    );
+    expect(
+      projectedRootPattern,
+      projectedRootPattern.stderr || projectedRootPattern.stdout
+    ).toMatchObject({ exitCode: 0, stderr: "" });
+    const rootPatternProject = JSON.parse(projectedRootPattern.stdout) as typeof project;
+    expect(rootPatternProject.targets?.[rootPatternTarget]).toMatchObject({
+      cache: true,
+      executor: "nx:run-commands",
+      options: {
+        command:
+          "habitat check --instance root-pattern-acceptance --rule root_pattern_acceptance_no_forbidden",
+      },
+      parallelism: false,
+    });
+    expect(rootPatternProject.targets?.[rootPatternTarget]?.inputs).toEqual([
+      { externalDependencies: ["@habitat-ai/cli"] },
+      "{workspaceRoot}/bun.lock",
+      "{workspaceRoot}/package.json",
+      { env: "HABITAT_COMMAND_TIMEOUT_MS" },
+      { env: "NX_WORKSPACE_ROOT_PATH" },
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/root-pattern-acceptance/no-forbidden.md",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/packages/root-pattern-acceptance/src/**/*.ts",
+    ]);
+
+    const includedSubjectPath = path.join(
+      consumerRoot,
+      "packages/root-pattern-acceptance/src/included.ts"
+    );
+    await writeFile(includedSubjectPath, "forbidden();\n");
+    const evaluatedRootPattern = await run(
+      habitat,
+      [
+        "check",
+        "--instance",
+        "root-pattern-acceptance",
+        "--rule",
+        "root_pattern_acceptance_no_forbidden",
+      ],
+      { cwd: consumerRoot, timeoutMs: 120_000 }
+    );
+    await writeFile(includedSubjectPath, "allowed();\n");
+    expect(
+      evaluatedRootPattern,
+      evaluatedRootPattern.stderr || evaluatedRootPattern.stdout
+    ).toMatchObject({ exitCode: 1, stderr: "" });
+    const rootPatternEvaluation = JSON.parse(evaluatedRootPattern.stdout);
+    expect(rootPatternEvaluation).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        {
+          disposition: { kind: "evaluated" },
+          findings: [
+            expect.objectContaining({
+              path: "packages/root-pattern-acceptance/src/included.ts",
+            }),
+          ],
+          instanceId: "root-pattern-acceptance",
+          ruleId: "root_pattern_acceptance_no_forbidden",
+          runner: "grit",
+          status: "fail",
+        },
+      ],
+      ok: false,
+    });
+    expect(
+      rootPatternEvaluation.applications.flatMap(
+        (application: { readonly findings: readonly { readonly path: string }[] }) =>
+          application.findings.map((finding) => finding.path)
+      )
+    ).toEqual(["packages/root-pattern-acceptance/src/included.ts"]);
+
+    const executedRootPattern = await run(
+      nx,
+      [
+        "run",
+        `@fixture/root-pattern-acceptance:${rootPatternTarget}`,
+        "--outputStyle=static",
+        "--skip-nx-cache",
+      ],
+      { cwd: consumerRoot, timeoutMs: 120_000 }
+    );
+    expect(
+      executedRootPattern,
+      executedRootPattern.stderr || executedRootPattern.stdout
+    ).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(executedRootPattern.stdout).toContain('"status": "pass"');
 
     const executed = await run(
       nx,
@@ -1413,6 +1539,10 @@ async function createConsumer(): Promise<void> {
     ".habitat/blueprints/grit-acceptance/blueprint.toml": gritAcceptanceBlueprintToml(),
     ".habitat/blueprints/grit-acceptance/no-forbidden.md":
       "# No forbidden calls\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
+    ".habitat/blueprints/root-pattern-acceptance/blueprint.toml":
+      rootPatternAcceptanceBlueprintToml(),
+    ".habitat/blueprints/root-pattern-acceptance/no-forbidden.md":
+      "# No forbidden calls\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
     "hook-check.mjs": `import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 
@@ -1479,6 +1609,23 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
+    "packages/root-pattern-acceptance/habitat.toml": rootPatternAcceptanceInstanceToml(),
+    "packages/root-pattern-acceptance/package.json": `${JSON.stringify(
+      { name: "@fixture/root-pattern-acceptance", private: true, version: "0.0.0" },
+      null,
+      2
+    )}\n`,
+    "packages/root-pattern-acceptance/project.json": `${JSON.stringify(
+      {
+        name: "@fixture/root-pattern-acceptance",
+        projectType: "library",
+        sourceRoot: "packages/root-pattern-acceptance/src",
+      },
+      null,
+      2
+    )}\n`,
+    "packages/root-pattern-acceptance/src/included.ts": "allowed();\n",
+    "packages/root-pattern-acceptance/test/excluded.ts": "forbidden();\n",
     "tools/hook-check/project.json": `${JSON.stringify(
       {
         name: "@fixture/hook-check",
@@ -1685,5 +1832,53 @@ project = "packages/grit-acceptance"
 
 [selections]
 subjects = ${JSON.stringify(subjectIds)}
+`;
+}
+
+function rootPatternAcceptanceBlueprintToml(): string {
+  return `schemaVersion = 1
+id = "root-pattern-acceptance"
+version = 3
+
+[[rules]]
+id = "root_pattern_acceptance_no_forbidden"
+lane = "enforced"
+message = "Root-pattern acceptance subjects must not call forbidden()."
+remediate = "Remove the forbidden call."
+
+[rules.runner]
+name = "grit"
+pattern = "no-forbidden.md"
+patternName = "root_pattern_acceptance_no_forbidden"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/**/*.ts"] }]
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
+`;
+}
+
+function rootPatternAcceptanceInstanceToml(): string {
+  return `schemaVersion = 1
+id = "root-pattern-acceptance"
+ownerProject = "@fixture/root-pattern-acceptance"
+blueprint = "root-pattern-acceptance"
+blueprintVersion = 3
+
+[roots]
+project = "packages/root-pattern-acceptance"
+
+[selections]
 `;
 }

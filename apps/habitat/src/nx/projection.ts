@@ -383,7 +383,11 @@ function applicationInputs(
   if (application.runner.name === "grit") {
     addLocalAssetInput(files, application.runner.pattern);
     for (const entry of application.runner.acquisition.entries) {
-      addSubjectInputs(files, entry.path, entry.kind);
+      if (entry.source.kind === "root-pattern") {
+        files.add(workspaceInput(entry.path));
+      } else {
+        addSubjectInputs(files, entry.path, entry.kind);
+      }
     }
   } else {
     addLocalAssetInput(files, application.runner.structure);

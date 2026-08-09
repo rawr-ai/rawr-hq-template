@@ -52,6 +52,15 @@ applications or targets; their declared rules do.
 Rule order is deterministic serialization and report order, not precedence.
 One rule cannot override, suppress, or weaken another.
 
+A Grit packet's acquisition is part of its claim. Definition-authored,
+bounded literal/star `rootPatterns` let a packet name fixed interiors relative
+to an existing instance root; variable instance matter continues to use whole
+root roles or explicit selections. Declaring the relation is explicit packet
+authoring and does not reinterpret an existing whole-root rule. Patterns
+introduce no child kinds, generated root bindings, or manifest membership.
+Catalog resolution, Nx inputs, and native evaluation consume the same resolved
+relation so corpus precision is both correctness and performance authority.
+
 ## Instance Cost
 
 One repository component selects one blueprint and version through one

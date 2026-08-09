@@ -10,6 +10,9 @@ import {
 type ResolveCatalogResult = Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>>;
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
 type ResolvedApplication = ResolvedCatalog["applications"][number];
+type ResolvedGritApplication = ResolvedApplication & {
+  readonly runner: Extract<ResolvedApplication["runner"], { name: "grit" }>;
+};
 type ResolvedInstance = ResolvedCatalog["instances"][number];
 type CompatibilityCatalog = ResolvedCatalog["compatibility"];
 type CompatibilityRule = CompatibilityCatalog["rules"][number];
@@ -40,7 +43,7 @@ const pluginInstance: ResolvedInstance = {
   selections: [],
 };
 
-const gritApplication: ResolvedApplication = {
+const gritApplication: ResolvedGritApplication = {
   ownerProject: "service-a",
   instanceId: "service-a",
   blueprint: "service",
@@ -66,6 +69,29 @@ const gritApplication: ResolvedApplication = {
           source: { kind: "root-role", id: "project" },
           kind: "directory",
           path: "services/a/src",
+        },
+      ],
+    },
+  },
+};
+
+const rootPatternApplication: ResolvedApplication = {
+  ...gritApplication,
+  ruleId: "root-pattern-law",
+  runner: {
+    ...gritApplication.runner,
+    acquisition: {
+      kind: "check",
+      entries: [
+        {
+          source: { kind: "root-pattern", id: "project", pattern: "package.json" },
+          kind: "file",
+          path: "services/a/package.json",
+        },
+        {
+          source: { kind: "root-pattern", id: "project", pattern: "src/**/*.ts" },
+          kind: "file",
+          path: "services/a/src/**/*.ts",
         },
       ],
     },
@@ -426,6 +452,43 @@ describe("Habitat Nx projection", () => {
     expect(JSON.stringify(projects["packages/example"])).not.toContain(
       policyPackProvenance.packageRoot
     );
+  });
+
+  it("projects automatically bound root patterns exactly without manifest member configuration", async () => {
+    expect(serviceInstance.selections).toEqual([]);
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () => resolvedCatalog([rootPatternApplication], [serviceInstance]),
+      },
+    }));
+
+    const result = await createNodes(configFiles, undefined, {
+      workspaceRoot: "/workspace",
+      nxJsonConfiguration: {},
+    });
+    const targets = projectMap(result)["services/a"]?.targets;
+    const leaf = targets?.["habitat:application:service-a:root-pattern-law"];
+
+    expect(leaf).toMatchObject({
+      command: "habitat check --instance service-a --rule root-pattern-law",
+      cache: true,
+      parallelism: false,
+    });
+    expect(leaf?.inputs).toEqual([
+      ...runtimeInputs,
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/services/a/package.json",
+      "{workspaceRoot}/services/a/src/**/*.ts",
+    ]);
+    expect(leaf?.inputs).not.toContain("{workspaceRoot}/services/a");
+    expect(leaf?.inputs).not.toContain("{workspaceRoot}/services/a/**/*");
+    expect(leaf?.inputs).not.toContain("{workspaceRoot}/**/*");
+    expect(targets?.["check:policy"]?.inputs).toEqual(leaf?.inputs);
+    expect(targets?.["check:policy"]?.parallelism).toBe(false);
   });
 
   it("projects compatibility-only Grit and structure leaves on exact owner roots", async () => {
