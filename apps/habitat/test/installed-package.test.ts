@@ -31,6 +31,12 @@ type PublicProduct = Readonly<{
   version: string;
 }>;
 
+type PackageManifest = Readonly<{
+  dependencies?: Readonly<Record<string, string>>;
+  optionalDependencies?: Readonly<Record<string, string>>;
+  peerDependencies?: Readonly<Record<string, string>>;
+}>;
+
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
 const CANDIDATE_VERSION = "0.5.15";
@@ -62,6 +68,7 @@ const GENERATED_SERVICE_INVENTORY = [
   "tsconfig.build.json",
   "tsconfig.json",
 ] as const;
+const UNSELECTED_NATIVE_HOST_PACKAGES = ["@modelcontextprotocol/sdk", "elysia", "inngest"] as const;
 const temporaryParent = await realpath(tmpdir());
 const workspaceRoot = fileURLToPath(new URL("../../..", import.meta.url));
 const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-env-vars"], {
@@ -642,7 +649,7 @@ describe("installed Habitat products", () => {
 
     const cliManifest = JSON.parse(
       await readFile(path.join(installedCliRoot, "package.json"), "utf8")
-    ) as { readonly dependencies?: Readonly<Record<string, string>> };
+    ) as PackageManifest;
     const habitatDependencies = Object.keys(cliManifest.dependencies ?? {})
       .filter((name) => name.startsWith("@habitat-ai/"))
       .sort();
@@ -658,7 +665,7 @@ describe("installed Habitat products", () => {
     ).toBe(await realpath(installedSdkRoot));
     const sdkManifest = JSON.parse(
       await readFile(path.join(installedSdkRoot, "package.json"), "utf8")
-    ) as { readonly dependencies?: Readonly<Record<string, string>> };
+    ) as PackageManifest;
     expect(sdkManifest.dependencies).toMatchObject({
       "@effect/platform-node": "4.0.0-beta.101",
       "@effect/platform-node-shared": "4.0.0-beta.101",
@@ -671,6 +678,18 @@ describe("installed Habitat products", () => {
     expect(
       Object.keys(sdkManifest.dependencies ?? {}).filter((name) => name.startsWith("@habitat-ai/"))
     ).toEqual([]);
+    for (const manifest of [cliManifest, sdkManifest]) {
+      const declaredNativeHosts = (
+        ["dependencies", "optionalDependencies", "peerDependencies"] as const
+      ).flatMap((field) =>
+        Object.keys(manifest[field] ?? {}).filter((name) =>
+          UNSELECTED_NATIVE_HOST_PACKAGES.includes(
+            name as (typeof UNSELECTED_NATIVE_HOST_PACKAGES)[number]
+          )
+        )
+      );
+      expect(declaredNativeHosts).toEqual([]);
+    }
 
     const consumerManifest = JSON.parse(
       await readFile(path.join(consumerRoot, "package.json"), "utf8")

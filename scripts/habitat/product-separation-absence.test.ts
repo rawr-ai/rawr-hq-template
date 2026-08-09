@@ -266,6 +266,8 @@ const dependencyFields = [
   "peerDependencies",
 ] as const;
 
+const UNOWNED_ROOT_NATIVE_HOST_PACKAGES = ["@modelcontextprotocol/sdk", "elysia", "inngest"];
+
 function readJson(relativePath: string): JsonObject {
   const value: unknown = JSON.parse(readFileSync(path.join(workspaceRoot, relativePath), "utf8"));
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -511,6 +513,25 @@ describe("task 2.11 product-separation absence", () => {
     }
 
     expect(findings).toEqual([]);
+  });
+
+  it("keeps native host vendors out of the ownerless workspace root", () => {
+    const rootPackage = readJson("package.json");
+    const declaredNativeHosts = dependencyFields.flatMap((field) => {
+      const dependencies = rootPackage[field];
+      if (
+        typeof dependencies !== "object" ||
+        dependencies === null ||
+        Array.isArray(dependencies)
+      ) {
+        return [];
+      }
+      return Object.keys(dependencies).filter((name) =>
+        UNOWNED_ROOT_NATIVE_HOST_PACKAGES.includes(name)
+      );
+    });
+
+    expect(declaredNativeHosts).toEqual([]);
   });
 
   it("omits every condemned command, alias, and owner from the built Oclif manifest", () => {

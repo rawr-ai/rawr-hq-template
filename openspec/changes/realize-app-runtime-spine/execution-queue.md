@@ -112,20 +112,19 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 The active queue has one bounded node:
 
-1. execute task 3.4 as the final platform-only predecessor: declare native
-   hosts as optional peers, resolve each only through its owner-local
-   conditional dynamic import, and prove cold import, packed metadata,
-   unpublished-workspace-dependency absence, selected-process vendor
-   isolation, and structural decode rejection for every export that lands.
-   Preserve no generic host adapter, compatibility facade, or unselected
-   native-host import.
+1. execute task 4.1 as the first runtime owner: create the private package-less
+   `runtime-definition` project and implement the complete cold definition
+   contract, including its TypeBox observation record and narrow observation
+   port, then expose only implemented authoring subpaths through the terminal
+   SDK and co-activate their closed source law.
 
 The corrected authority admits sole `app@2`, peer `server` and `async` roles,
 MCP as a native `server` surface, Inngest Serve/Connect as final harness modes,
 process-local lifecycle/readiness/observation, and deployment's cold handoff.
-The app packet and policy-pack locator are corrected, and task 3.3 has moved
-the sole SDK to `packages/core/sdk` while deleting the mixed-core package identity.
-Runtime source still opens only in owner order after task 3.4 passes.
+The app packet and policy-pack locator are corrected, task 3.3 has moved the
+sole SDK to `packages/core/sdk` while deleting the mixed-core package identity,
+and task 3.4 has removed ownerless native-host dependencies without introducing
+placeholder peers. Runtime source is now open only in owner order from task 4.1.
 Task 3.2a's exact adoption receipt remains a foundation checkpoint only. It is
 not a runtime/coexistence contract and authorizes no public runtime release.
 
