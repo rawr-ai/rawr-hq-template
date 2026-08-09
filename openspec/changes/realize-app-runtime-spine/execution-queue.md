@@ -102,10 +102,20 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   conforming destination yet; task 11.5 owns their reader migration and
   replacement. No source, package export, empty SDK family, or runtime owner
   changed in this node.
+- [ ] **Compatibility acquisition continuation**: replace repeated live-filesystem
+  compatibility globs with one Git-visible inventory per owner check, prove the
+  mechanism locally and through installed candidate acceptance, publish only the
+  `0.5.15` SDK/CLI pair with the already-qualified declarative telemetry face,
+  then adopt that exact registry pair before task 3.3 resumes. No runtime,
+  provider acquisition, app/profile selection, mount, or instrumentation
+  bootstrap lands in this continuation.
 
-The active queue has one bounded node:
+The active queue has two ordered bounded nodes:
 
-1. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
+1. seal task 3.2a through the exact
+   [[foundation-continuation-0-5-15-release-receipt]] and
+   [[foundation-continuation-0-5-15-adoption-receipt]].
+2. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
    `@habitat-ai/rawr-core` package/project identity, preserve `packages/core` as
    a Habitat namespace, move `packages/habitat-sdk` wholly to
    `packages/core/sdk` without changing `@habitat-ai/sdk`, update every reader

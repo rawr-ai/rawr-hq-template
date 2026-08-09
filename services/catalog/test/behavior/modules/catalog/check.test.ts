@@ -946,6 +946,136 @@ describe("Habitat catalog check", () => {
     });
   });
 
+  test("excludes filesystem-present compatibility matches absent from source inventory", async () => {
+    const fixture = compatibilityFixture();
+    const omittedPath = "scripts/habitat/covered/child.ts";
+    const checked = await checkFixture(
+      fixture,
+      { selectors: { rule: "legacy_grit" } },
+      undefined,
+      () =>
+        Effect.succeed({
+          ...defaultInventory(fixture),
+          paths: defaultInventory(fixture).paths.filter((candidate) => candidate !== omittedPath),
+        })
+    );
+
+    expect(checked.inventoryCalls).toHaveLength(1);
+    expect(
+      checked.calls[0]?.subjectPaths.map((subject) =>
+        subject.slice(subject.indexOf("scripts/habitat/"))
+      )
+    ).toEqual(["scripts/habitat/.codex/hooks.json", "scripts/habitat/exact.ts"]);
+    expect(checked.calls[0]?.subjectPaths.some((subject) => subject.endsWith(omittedPath))).toBe(
+      false
+    );
+  });
+
+  test("keeps compatibility wildcards out of hidden directories while admitting explicit dot paths", async () => {
+    const hiddenPath = "scripts/habitat/.hidden/hidden.ts";
+    const fixture = compatibilityFixture();
+    const checked = await checkFixture(
+      { ...fixture, files: { ...fixture.files, [hiddenPath]: "export const hidden = true;\n" } },
+      { selectors: { rule: "legacy_grit" } }
+    );
+
+    const subjects = checked.calls[0]?.subjectPaths ?? [];
+    expect(subjects.some((subject) => subject.endsWith("scripts/habitat/.codex/hooks.json"))).toBe(
+      true
+    );
+    expect(subjects.some((subject) => subject.endsWith(hiddenPath))).toBe(false);
+  });
+
+  test("prunes stale compatibility descendants when realPath or stat reports ENOTDIR", async () => {
+    const ancestorPath = "scripts/habitat/covered/ancestor.ts";
+    const stalePath = `${ancestorPath}/stale.ts`;
+    const base = compatibilityFixture();
+
+    for (const failingMethod of ["realPath", "stat"] as const) {
+      const fixture = {
+        ...base,
+        files: { ...base.files, [ancestorPath]: "export const ancestor = true;\n" },
+        clientFileSystem: (fileSystem, _path, workspaceRoot) => {
+          const staleAbsolutePath = `${workspaceRoot}/${stalePath}`;
+          return FileSystem.makeNoop({
+            ...fileSystem,
+            realPath: (candidate) => {
+              if (candidate !== staleAbsolutePath) return fileSystem.realPath(candidate);
+              return failingMethod === "realPath"
+                ? Effect.fail(
+                    PlatformError.systemError({
+                      _tag: "Unknown",
+                      module: "FileSystem",
+                      method: "realPath",
+                      pathOrDescriptor: candidate,
+                      cause: { code: "ENOTDIR" },
+                    })
+                  )
+                : fileSystem
+                    .realPath(workspaceRoot)
+                    .pipe(Effect.map((canonicalRoot) => `${canonicalRoot}/${stalePath}`));
+            },
+            stat: (candidate) =>
+              candidate.endsWith(`/${stalePath}`)
+                ? Effect.fail(
+                    PlatformError.systemError({
+                      _tag: "Unknown",
+                      module: "FileSystem",
+                      method: "stat",
+                      pathOrDescriptor: candidate,
+                      cause: { code: "ENOTDIR" },
+                    })
+                  )
+                : fileSystem.stat(candidate),
+          });
+        },
+      } satisfies Fixture;
+      const checked = await checkFixture(
+        fixture,
+        { selectors: { rule: "legacy_grit" } },
+        undefined,
+        () =>
+          Effect.succeed({
+            paths: [...defaultInventory(fixture).paths, stalePath].sort(textOrder),
+            trackedNonFilePaths: [],
+          })
+      );
+
+      expect(checked.calls).toHaveLength(1);
+      expect(checked.calls[0]?.subjectPaths.some((subject) => subject.endsWith(ancestorPath))).toBe(
+        true
+      );
+      expect(checked.calls[0]?.subjectPaths.some((subject) => subject.endsWith(stalePath))).toBe(
+        false
+      );
+    }
+  });
+
+  test("never calls filesystem glob for compatibility Grit acquisition", async () => {
+    const fixture = compatibilityFixture();
+    let compatibilityGlobCalls = 0;
+    const checked = await checkFixture(
+      {
+        ...fixture,
+        clientFileSystem: (fileSystem, _path, workspaceRoot) =>
+          FileSystem.makeNoop({
+            ...fileSystem,
+            glob: (pattern, options) => {
+              if (pattern.startsWith(`${workspaceRoot}/scripts/habitat/`)) {
+                compatibilityGlobCalls += 1;
+              }
+              return fileSystem.glob(pattern, options);
+            },
+          }),
+      },
+      { selectors: { rule: "legacy_grit" } }
+    );
+
+    expect(compatibilityGlobCalls).toBe(0);
+    expect(checked.inventoryCalls).toHaveLength(1);
+    expect(checked.calls).toHaveLength(1);
+  });
+
   test("excludes ignored repository directories from compatibility Grit subjects and findings", async () => {
     const fixture = compatibilityFixture();
     const gritRoot = ".habitat/legacy/legacy_grit";
@@ -1071,24 +1201,34 @@ describe("Habitat catalog check", () => {
         subjectPaths.map((subject) => subject.slice(subject.indexOf("scripts/habitat/")))
       )
     ).toEqual([["scripts/habitat/covered/child.ts"], ["scripts/habitat/exact.ts"]]);
+    expect(checked.inventoryCalls).toHaveLength(1);
   });
 
   test("refuses compatibility Grit subjects selected through symbolic links", async () => {
+    const fixture = compatibilityFixture({
+      symlinks: [
+        {
+          path: "scripts/habitat/covered/linked.ts",
+          target: "file",
+          contents: "export const linked = true;\n",
+        },
+      ],
+    });
     const checked = await checkFixture(
-      compatibilityFixture({
-        symlinks: [
-          {
-            path: "scripts/habitat/covered/linked.ts",
-            target: "file",
-            contents: "export const linked = true;\n",
-          },
-        ],
-      }),
-      { selectors: { rule: "legacy_grit" } }
+      fixture,
+      { selectors: { rule: "legacy_grit" } },
+      undefined,
+      () =>
+        Effect.succeed({
+          paths: [...defaultInventory(fixture).paths, "scripts/habitat/covered/linked.ts"].sort(
+            textOrder
+          ),
+          trackedNonFilePaths: [],
+        })
     );
 
     expect(checked.calls).toEqual([]);
-    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.inventoryCalls).toHaveLength(1);
     expect(checked.result).toMatchObject({
       _tag: "Completed",
       ok: false,
@@ -1129,7 +1269,7 @@ describe("Habitat catalog check", () => {
     );
 
     expect(checked.calls).toEqual([]);
-    expect(checked.inventoryCalls).toEqual([]);
+    expect(checked.inventoryCalls).toHaveLength(1);
     expect(checked.result).toMatchObject({
       _tag: "Completed",
       ok: false,
@@ -1144,6 +1284,57 @@ describe("Habitat catalog check", () => {
             reason: "SetupFailed",
             detail: expect.stringContaining("acquisition root"),
           },
+        },
+      ],
+    });
+  });
+
+  test("prunes tracked non-files and live non-file compatibility candidates", async () => {
+    const linkedPath = "scripts/habitat/covered/tracked-linked.ts";
+    const directoryPath = "scripts/habitat/covered/directory.ts";
+    const fixture = {
+      ...compatibilityFixture({
+        symlinks: [{ path: linkedPath, target: "file" }],
+      }),
+      directories: [directoryPath],
+    } satisfies Fixture;
+    const checked = await checkFixture(
+      fixture,
+      { selectors: { rule: "legacy_grit" } },
+      undefined,
+      () =>
+        Effect.succeed({
+          paths: [...defaultInventory(fixture).paths, directoryPath, linkedPath].sort(textOrder),
+          trackedNonFilePaths: [linkedPath],
+        })
+    );
+
+    expect(checked.inventoryCalls).toHaveLength(1);
+    expect(checked.calls).toHaveLength(1);
+    expect(
+      checked.calls[0]?.subjectPaths.some(
+        (subject) => subject.endsWith(linkedPath) || subject.endsWith(directoryPath)
+      )
+    ).toBe(false);
+  });
+
+  test("treats an empty compatibility inventory as not applicable", async () => {
+    const checked = await checkFixture(
+      compatibilityFixture(),
+      { selectors: { rule: "legacy_grit" } },
+      undefined,
+      () => Effect.succeed({ paths: [], trackedNonFilePaths: [] })
+    );
+
+    expect(checked.inventoryCalls).toHaveLength(1);
+    expect(checked.calls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [
+        {
+          ruleId: "legacy_grit",
+          disposition: { kind: "not-applicable", reason: "no-matched-acquisition-roots" },
         },
       ],
     });
@@ -1694,14 +1885,13 @@ mode = "open"
 `,
         },
       },
-      {}
+      { selectors: { rule: "legacy_structure" } }
     );
 
     expect(checked.inventoryCalls).toEqual([]);
     expect(checked.result).toMatchObject({
       _tag: "Completed",
       applications: [
-        { ruleId: "legacy_grit", status: "pass" },
         {
           ruleId: "legacy_structure",
           status: "error",
