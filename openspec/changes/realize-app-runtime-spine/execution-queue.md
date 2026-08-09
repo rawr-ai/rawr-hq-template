@@ -96,14 +96,22 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   exposes only contracts and declarative configuration through the SDK, and
   deletes the mixed-core telemetry singleton. Runtime provisioning and harness
   observation remain with their exact later owners.
+- [x] **SDK root export classification**: task 3.2 exhaustively preserves the
+  current type-only `HabitatClient` and runtime
+  `createHabitatClientForWorkspace` exports at the SDK root. Neither has a
+  conforming destination yet; task 11.5 owns their reader migration and
+  replacement. No source, package export, empty SDK family, or runtime owner
+  changed in this node.
 
 The active queue has one bounded node:
 
-1. execute task 3.2 as one classification pass over the current public SDK root
-   exports. Move an export only when its qualified destination already has a
-   conforming implementation; preserve every other root export until its owning
-   later task replaces it. Create no empty SDK family or private runtime owner,
-   and do not disturb task 3.3's reserved SDK-path transfer.
+1. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
+   `@habitat-ai/rawr-core` package/project identity, preserve `packages/core` as
+   a Habitat namespace, move `packages/habitat-sdk` wholly to
+   `packages/core/sdk` without changing `@habitat-ai/sdk`, update every reader
+   and repository edge, extend the cumulative absence inventory, and pass the
+   exact-main platform-only gate. Preserve no predecessor path, alias, or
+   compatibility facade.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle

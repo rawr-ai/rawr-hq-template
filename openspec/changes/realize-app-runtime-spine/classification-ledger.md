@@ -86,6 +86,23 @@ later-owned; and `services/{dev,chatgpt-corpus,hyperresearch-codex,session-intel
 plus `resources/agent-plugin-export-destination` remain at version 1 until task
 2.11 deletes the already-dispositioned Habitat-side substrate.
 
+## Current SDK Root Export Classification
+
+Task 3.2 classifies the complete current `@habitat-ai/sdk` root face at
+`main@6fbe3b25234458521aaa4d36083c89eafd0047de`. Neither export has a
+conforming qualified destination yet, so both remain at the root without a
+compatibility facade or a new SDK family.
+
+| Current root export | Current owner/readers | Exact disposition | Replacement owner and proof |
+|---|---|---|---|
+| `HabitatClient` | `@habitat-ai/sdk`; type-only readers in the foundational Habitat CLI and Nx projection | Preserve at the root. It remains the exact typed catalog client used by the current installed CLI. | Task 11.5 moves every Habitat-client reader after the final app/runtime/Oclif vertical exists. SDK and CLI typechecks prove the public type remains available until then. |
+| `createHabitatClientForWorkspace` | `@habitat-ai/sdk`; production readers in the foundational Habitat CLI application and Nx plugin | Preserve at the root. No current app or runtime owner can replace its workspace-bound acquisition without creating an empty or premature runtime family. | Task 11.5 moves every entrypoint reader and explicitly deletes the module-global acquisition. Installed-package acceptance cold-imports the SDK root and requires this to be its sole runtime export. |
+
+The already-qualified `service`, `service/schema`, and `telemetry` subpaths and
+the policy-pack data exports remain unchanged. Task 3.2 creates no `app`,
+`effect`, `execution`, `plugins/*`, or `runtime/*` shell, no private runtime
+project, and no SDK path move; task 3.3 owns the one atomic path transfer.
+
 ## Behavioral Acceptance Matrix
 
 The inventory names each owner. This matrix names the executable local oracle
